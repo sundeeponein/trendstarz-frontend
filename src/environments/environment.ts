@@ -1,5 +1,7 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:3000',
-  mongoDbUri: '<your-local-mongodb-uri>'
+  production: true,
+  apiUrl: 'https://trendstarz-backend.onrender.com'
+
+//   production:false,
+//   apiUrl: 'http://localhost:3000'
 };
