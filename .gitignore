@@ -1,0 +1,37 @@
+# Angular build output
+/dist/
+/out-tsc/
+
+# Node dependencies
+/node_modules/
+
+# IDE and OS files
+/.vscode/
+/.idea/
+.DS_Store
+
+# Environment files
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Angular SSR
+/server/
+
+# Coverage reports
+/coverage/
+
+# Misc
+*.tgz
+
+# Optional: ignore generated files
+*.js
+*.js.map
+*.tsbuildinfo
+
+# Optional: ignore test output
+/test-results/
