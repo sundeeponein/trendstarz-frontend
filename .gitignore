@@ -4,6 +4,7 @@
 
 # Node dependencies
 /node_modules/
+.Angular
 
 # IDE and OS files
 /.vscode/
