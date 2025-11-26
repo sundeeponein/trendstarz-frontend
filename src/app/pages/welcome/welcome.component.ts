@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { NavbarLayoutComponent } from '../../layout/navbar-layout.component';
 import { Meta, Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-welcome',
-  templateUrl: './welcome.component.html',
-  styleUrls: ['./welcome.component.scss']
+  standalone: true,
+  imports: [NavbarLayoutComponent],
+  templateUrl: './welcome.component.html'
 })
 export class WelcomeComponent implements OnInit {
   constructor(private meta: Meta, private title: Title) {}

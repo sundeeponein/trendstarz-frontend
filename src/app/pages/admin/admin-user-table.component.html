@@ -1,0 +1,45 @@
+<div class="admin-tabs">
+  <button [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+  <button [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+</div>
+<div *ngIf="activeTab === 'influencer'">
+  <div *ngFor="let user of influencers">
+    <app-user-card [profileImage]="user.profileImages[0]"
+                  [name]="user.name"
+                  [username]="user.username"
+                  [email]="user.email"
+                  [phoneNumber]="user.phoneNumber"
+                  [categories]="user.categories"
+                  [state]="user.location.state"
+                  [district]="user.location.district"
+                  [socialMedia]="user.socialMedia"
+                  [isPremium]="user.isPremium"></app-user-card>
+    <div class="actions">
+      <button (click)="acceptUser(user._id)">Accept</button>
+      <button (click)="declineUser(user._id)">Decline</button>
+      <button (click)="deleteUser(user._id)">Delete</button>
+      <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
+      <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
+    </div>
+  </div>
+</div>
+<div *ngIf="activeTab === 'brand'">
+  <div *ngFor="let user of brands">
+    <app-user-card [profileImage]="user.brandLogo[0]"
+                  [brandName]="user.brandName"
+                  [email]="user.email"
+                  [phoneNumber]="user.phoneNumber"
+                  [categories]="user.categories"
+                  [state]="user.location.state"
+                  [district]="user.location.district"
+                  [socialMedia]="user.socialMedia"
+                  [isPremium]="user.isPremium"></app-user-card>
+    <div class="actions">
+      <button (click)="acceptUser(user._id)">Accept</button>
+      <button (click)="declineUser(user._id)">Decline</button>
+      <button (click)="deleteUser(user._id)">Delete</button>
+      <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
+      <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
+    </div>
+  </div>
+</div>
