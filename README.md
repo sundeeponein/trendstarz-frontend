@@ -57,3 +57,15 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+
+
+
+## Best for build and SSR
+Daily coding workflow:
+ng serve
+
+Before deploying or testing SEO:
+npm run build:ssr
+node dist/frontend/server/server.mjs
