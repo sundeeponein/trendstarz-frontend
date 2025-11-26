@@ -4,6 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { of } from 'rxjs';
+import { timeout, catchError } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile-form',
@@ -51,11 +54,19 @@ export class ProfileFormComponent implements OnInit {
   }
 
   fetchDropdowns() {
-    // Fetch categories, states, districts, socialMedia from backend
-    this.http.get('/api/categories').subscribe((res: any) => this.categories = res);
-    this.http.get('/api/states').subscribe((res: any) => this.states = res);
-    this.http.get('/api/districts').subscribe((res: any) => this.districts = res);
-    this.http.get('/api/social-media').subscribe((res: any) => this.socialMediaList = res);
+    // Fetch categories, states, districts, socialMedia from backend with timeout and graceful fallback
+    this.http.get(`${environment.apiBaseUrl}/categories`)
+      .pipe(timeout(5000), catchError(err => { console.error('categories fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.categories = res || []);
+    this.http.get(`${environment.apiBaseUrl}/states`)
+      .pipe(timeout(5000), catchError(err => { console.error('states fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.states = res || []);
+    this.http.get(`${environment.apiBaseUrl}/districts`)
+      .pipe(timeout(5000), catchError(err => { console.error('districts fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.districts = res || []);
+    this.http.get(`${environment.apiBaseUrl}/social-media`)
+      .pipe(timeout(5000), catchError(err => { console.error('social-media fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.socialMediaList = res || []);
   }
 
   onImageChange(event: any) {
@@ -98,9 +109,11 @@ export class ProfileFormComponent implements OnInit {
       socialMedia: this.socialMedia,
       isPremium: this.isPremium,
     };
-    const endpoint = this.isInfluencer ? '/api/users/register-influencer' : '/api/users/register-brand';
-    this.http.post(endpoint, payload).subscribe(res => {
-      // Handle success, show message, redirect, etc.
-    });
+    const endpoint = this.isInfluencer ? `${environment.apiBaseUrl}/users/register-influencer` : `${environment.apiBaseUrl}/users/register-brand`;
+    this.http.post(endpoint, payload)
+      .pipe(timeout(5000), catchError(err => { console.error('registration failed', err); return of(null); }))
+      .subscribe(res => {
+        // Handle success, show message, redirect, etc.
+      });
   }
 }
