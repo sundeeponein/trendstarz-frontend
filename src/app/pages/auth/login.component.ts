@@ -4,6 +4,9 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -25,15 +28,12 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.loginForm.invalid) return;
-    this.http.post('/api/auth/login', this.loginForm.value).subscribe({
-      next: (res: any) => {
-        // Store token, redirect to profile
+    this.http.post(`${environment.apiBaseUrl}/auth/login`, this.loginForm.value)
+      .pipe(timeout(5000), catchError(err => { this.errorMsg = err?.error?.message || 'Login failed'; console.error('login failed', err); return of(null); }))
+      .subscribe((res: any) => {
+        if (!res) return;
         localStorage.setItem('token', res.token);
         this.router.navigate(['/profile']);
-      },
-      error: err => {
-        this.errorMsg = err.error?.message || 'Login failed';
-      }
-    });
+      });
   }
 }

@@ -6,6 +6,9 @@ import { DropdownComponent } from '../../../shared/dropdown.component';
 import { UserCardComponent } from '../../../shared/user-card/user-card.component';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { of } from 'rxjs';
+import { timeout, catchError } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile-view-edit',
@@ -42,21 +45,40 @@ export class ProfileViewEditComponent implements OnInit {
   }
 
   fetchUserProfile() {
-    this.http.get('/api/users/me').subscribe((user: any) => {
-      this.user = user;
-      this.isPremium = user.isPremium;
-      this.isInfluencer = !!user.username;
-      this.isBrand = !!user.brandName;
-      this.profileImages = user.profileImages || user.brandLogo || [];
-      this.initForm();
-    });
+    // fetch user profile, but don't block rendering if it fails (SSR/token not present)
+    this.http.get(`${environment.apiBaseUrl}/users/me`)
+      .pipe(timeout(5000), catchError(err => { console.error('user profile fetch failed', err); return of(null); }))
+      .subscribe((user: any) => {
+        if (user) {
+          this.user = user;
+          this.isPremium = user.isPremium;
+          this.isInfluencer = !!user.username;
+          this.isBrand = !!user.brandName;
+          this.profileImages = user.profileImages || user.brandLogo || [];
+        } else {
+          this.user = {} as any;
+          this.isPremium = false;
+          this.isInfluencer = false;
+          this.isBrand = false;
+          this.profileImages = [];
+        }
+        this.initForm();
+      });
   }
 
   fetchDropdowns() {
-    this.http.get('/api/categories').subscribe((res: any) => this.categories = res);
-    this.http.get('/api/states').subscribe((res: any) => this.states = res);
-    this.http.get('/api/districts').subscribe((res: any) => this.districts = res);
-    this.http.get('/api/social-media').subscribe((res: any) => this.socialMediaList = res);
+    this.http.get(`${environment.apiBaseUrl}/categories`)
+      .pipe(timeout(5000), catchError(err => { console.error('categories fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.categories = res || []);
+    this.http.get(`${environment.apiBaseUrl}/states`)
+      .pipe(timeout(5000), catchError(err => { console.error('states fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.states = res || []);
+    this.http.get(`${environment.apiBaseUrl}/districts`)
+      .pipe(timeout(5000), catchError(err => { console.error('districts fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.districts = res || []);
+    this.http.get(`${environment.apiBaseUrl}/social-media`)
+      .pipe(timeout(5000), catchError(err => { console.error('social-media fetch failed', err); return of([]); }))
+      .subscribe((res: any) => this.socialMediaList = res || []);
   }
 
   initForm() {
@@ -124,9 +146,11 @@ export class ProfileViewEditComponent implements OnInit {
       profileImages: this.profileImages,
       isPremium: this.isPremium,
     };
-    this.http.patch('/api/users/me', payload).subscribe(res => {
+    this.http.patch(`${environment.apiBaseUrl}/users/me`, payload)
+      .pipe(timeout(5000), catchError(err => { console.error('profile update failed', err); return of(null); }))
+      .subscribe(res => {
       this.editMode = false;
       this.fetchUserProfile();
-    });
+      });
   }
 }
