@@ -1,0 +1,17 @@
+<div class="user-card">
+  <img [src]="profileImage" class="user-image" />
+  <div class="user-details">
+    <h3>{{ name }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
+    <p *ngIf="username">@{{ username }}</p>
+    <p *ngIf="brandName">Brand: {{ brandName }}</p>
+    <p>Email: {{ email }}</p>
+    <p>Phone: {{ phoneNumber }}</p>
+  <p>Categories: {{ categories.join(', ') }}</p>
+    <p>Location: {{ state }}, {{ district }}</p>
+  <div *ngIf="socialMedia.length">
+      <span *ngFor="let sm of socialMedia">
+        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+      </span>
+    </div>
+  </div>
+</div>
