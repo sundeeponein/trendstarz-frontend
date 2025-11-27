@@ -1,8 +1,9 @@
 export const environment = {
-  production: false,
-  apiBaseUrl: 'https://trendstarz-backend.onrender.com/api'
+  apiBaseUrl: 'http://localhost:3000',
+  production:false,
+  // apiUrl: 'http://localhost:3000'
 
+  // production: false,
+  // apiBaseUrl: 'https://trendstarz-backend.onrender.com/api'
 
-//   production:false,
-//   apiUrl: 'http://localhost:3000'
 };
