@@ -9,9 +9,9 @@
   <p>Categories: {{ categories.join(', ') }}</p>
     <p>Location: {{ state }}, {{ district }}</p>
   <div *ngIf="socialMedia.length">
-      <span *ngFor="let sm of socialMedia">
-        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
-      </span>
-    </div>
+    <span *ngFor="let sm of socialMedia">
+      {{ sm.socialMedia }}: {{ sm.handleName }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+    </span>
+  </div>
   </div>
 </div>
