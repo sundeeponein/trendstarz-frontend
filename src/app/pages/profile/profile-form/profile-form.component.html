@@ -45,9 +45,11 @@
   <div>
     <label>Social Media</label>
     <div *ngFor="let sm of socialMediaList; let i = index">
-      <ng-select [items]="sm.tiers" bindLabel="tier" bindValue="tier" [(ngModel)]="socialMedia[i].tier"></ng-select>
-      <input [(ngModel)]="socialMedia[i].handle" placeholder="Handle" />
-      <input [(ngModel)]="socialMedia[i].followersCount" type="number" placeholder="Followers" />
+      <span>{{ sm.socialMedia }}</span>
+      <ng-select [items]="['Starter','Nano','Rising Nano','Micro','Strong Micro','Mid-Tier','Upper Mid-Tier','Macro','Mega / Celebrity']"
+        bindLabel="tier" bindValue="tier" [(ngModel)]="socialMedia[i].tier" placeholder="Tier"></ng-select>
+      <input [(ngModel)]="socialMedia[i].handleName" placeholder="Handle Name" />
+      <input [(ngModel)]="socialMedia[i].followersCount" type="number" placeholder="Followers Count" />
     </div>
   </div>
   <div>
