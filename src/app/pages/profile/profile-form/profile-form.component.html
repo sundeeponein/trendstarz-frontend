@@ -29,28 +29,34 @@
   </div>
   <div>
     <label>Category</label>
-    <ng-select [items]="categories" bindLabel="name" bindValue="_id" [multiple]="isPremium" formControlName="categories"></ng-select>
+  <ng-select [items]="categories" bindLabel="name" bindValue="_id" [multiple]="isPremium" formControlName="categories" (change)="profileForm.get('categories')?.markAsTouched()"></ng-select>
     <div *ngIf="profileForm.get('categories')?.invalid && profileForm.get('categories')?.touched" class="error">Category is required</div>
   </div>
   <div>
     <label>State</label>
-    <ng-select [items]="states" bindLabel="name" bindValue="_id" formControlName="state"></ng-select>
+  <ng-select [items]="states" bindLabel="state" bindValue="state" formControlName="state" (change)="profileForm.get('state')?.markAsTouched()"></ng-select>
     <div *ngIf="profileForm.get('state')?.invalid && profileForm.get('state')?.touched" class="error">State is required</div>
   </div>
   <div>
     <label>District</label>
-    <ng-select [items]="districts" bindLabel="name" bindValue="_id" formControlName="district"></ng-select>
+  <ng-select [items]="districts" bindLabel="name" bindValue="_id" formControlName="district" (change)="profileForm.get('district')?.markAsTouched()"></ng-select>
     <div *ngIf="profileForm.get('district')?.invalid && profileForm.get('district')?.touched" class="error">District is required</div>
   </div>
   <div>
+    <label>Language</label>
+    <ng-select [items]="languages" bindLabel="name" bindValue="name" formControlName="language"></ng-select>
+    <div *ngIf="profileForm.get('language')?.invalid && profileForm.get('language')?.touched" class="error">Language is required</div>
+  </div>
+  <div formArrayName="socialMedia">
     <label>Social Media</label>
-    <div *ngFor="let sm of socialMediaList; let i = index">
-      <span>{{ sm.socialMedia }}</span>
-      <ng-select [items]="['Starter','Nano','Rising Nano','Micro','Strong Micro','Mid-Tier','Upper Mid-Tier','Macro','Mega / Celebrity']"
-        bindLabel="tier" bindValue="tier" [(ngModel)]="socialMedia[i].tier" placeholder="Tier"></ng-select>
-      <input [(ngModel)]="socialMedia[i].handleName" placeholder="Handle Name" />
-      <input [(ngModel)]="socialMedia[i].followersCount" type="number" placeholder="Followers Count" />
+    <div *ngFor="let smGroup of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="social-media-row">
+      <ng-select [items]="socialMediaList" bindLabel="name" bindValue="name" formControlName="socialMedia" placeholder="Select Platform"></ng-select>
+      <ng-select [items]="tiers" bindLabel="name" bindValue="name" formControlName="tier" placeholder="Tier"></ng-select>
+      <input formControlName="handleName" placeholder="Handle Name" />
+      <input formControlName="followersCount" type="number" placeholder="Followers Count" />
+      <button type="button" (click)="removeSocialMedia(i)" [disabled]="socialMediaFormArray.length === 1">Remove</button>
     </div>
+    <button type="button" (click)="addSocialMedia()">Add More</button>
   </div>
   <div>
     <label>Contact</label>

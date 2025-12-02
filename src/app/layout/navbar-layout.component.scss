@@ -1,0 +1,83 @@
+/* User Navbar Styles - matches the screenshot */
+.navbar {
+  background: #2a0855;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  height: 80px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.navbar .logo {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fff;
+  text-decoration: none;
+  margin-right: 40px;
+}
+.navbar ul {
+  list-style: none;
+  display: flex;
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+}
+.navbar ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.navbar ul li a.active,
+.navbar ul li a:hover {
+  background: #fff;
+  color: #2a0855;
+}
+.user-profile {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 12px;
+}
+.user-avatar {
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+.dropdown {
+  position: relative;
+}
+.dropdown-toggle {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.dropdown-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  background: #fff;
+  color: #2a0855;
+  min-width: 140px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 8px 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+.dropdown-menu a {
+  color: #2a0855;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.dropdown-menu a:hover {
+  background: #eee;
+}

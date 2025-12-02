@@ -33,7 +33,13 @@ export class LoginComponent {
       .subscribe((res: any) => {
         if (!res) return;
         localStorage.setItem('token', res.token);
-        this.router.navigate(['/profile']);
+        if (res.userType === 'admin') {
+          this.router.navigate(['/']).then(() => {
+            this.router.navigate(['/admin']);
+          });
+        } else {
+          this.router.navigate(['/']);
+        }
       });
   }
 }
