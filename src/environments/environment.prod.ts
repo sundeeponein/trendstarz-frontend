@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://trendstarz-backend-u824.onrender.com'
+  apiBaseUrl: 'https://trendstarz-backend-on1h.onrender.com'
 };
