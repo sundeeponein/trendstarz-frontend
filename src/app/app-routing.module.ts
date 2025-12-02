@@ -7,22 +7,34 @@ import { AdminUserTableComponent } from './pages/admin/admin-user-table.componen
 import { NavbarLayoutComponent } from './layout/navbar-layout.component';
 import { NoNavbarLayoutComponent } from './layout/no-navbar-layout.component';
 
+import { AdminManagementComponent } from './pages/admin/admin-management.component';
+import { AdminLayoutComponent } from './layout/admin-layout.component';
+
 const routes: Routes = [
   {
     path: '',
     component: NavbarLayoutComponent,
     children: [
       { path: 'profile', component: ProfileViewEditComponent },
-      { path: 'admin', component: AdminUserTableComponent },
       { path: '', redirectTo: 'profile', pathMatch: 'full' },
     ],
   },
   {
-    path: '',
+    path: 'admin',
+    component: AdminLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'admin-user-table', pathMatch: 'full' },
+      { path: 'admin-user-table', component: AdminUserTableComponent },
+      { path: 'admin-management', component: AdminManagementComponent },
+    ],
+  },
+  {
+    path: 'auth',
     component: NoNavbarLayoutComponent,
     children: [
       { path: 'login', component: LoginComponent },
       { path: 'register', component: RegisterComponent },
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
 ];

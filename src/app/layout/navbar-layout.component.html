@@ -2,10 +2,19 @@
   <a routerLink="/" class="logo">TrendStarz</a>
   <ul>
     <li><a routerLink="/login">Login</a></li>
-    <li><a routerLink="/profile">Profile</a></li>
-    <li><a routerLink="/admin">Admin</a></li>
-    <li><a routerLink="/logout">Logout</a></li>
     <li><a routerLink="/register">Register</a></li>
   </ul>
+  <div class="user-profile" *ngIf="user">
+    <img [src]="user.profileImage || 'assets/default-profile.png'" class="user-avatar" width="32" height="32" />
+    <span>{{ user.name }}</span>
+    <div class="dropdown" [class.open]="dropdownOpen">
+      <button class="dropdown-toggle" (click)="toggleDropdown()">▼</button>
+      <div class="dropdown-menu" *ngIf="dropdownOpen">
+        <a routerLink="/profile">Profile</a>
+        <a routerLink="/settings">Settings</a>
+        <a routerLink="/logout">Logout</a>
+      </div>
+    </div>
+  </div>
 </nav>
 <router-outlet></router-outlet>

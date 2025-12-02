@@ -1,0 +1,46 @@
+{
+  "socialMediaPlatforms": [
+    { "name": "Instagram", "visible": true },
+    { "name": "YouTube", "visible": true },
+    { "name": "Twitter", "visible": true },
+    { "name": "Facebook", "visible": true }
+  ],
+  "categories": [
+    { "name": "Fashion", "visible": true },
+    { "name": "Tech", "visible": true },
+    { "name": "Travel", "visible": true },
+    { "name": "Food", "visible": true }
+  ],
+  "languages": [
+    { "name": "English", "visible": true },
+    { "name": "Hindi", "visible": true },
+    { "name": "Marathi", "visible": true },
+    { "name": "Kannada", "visible": true }
+  ],
+  "tiers": [
+    { "name": "Starter", "visible": true },
+    { "name": "Nano", "visible": true },
+    { "name": "Micro", "visible": true },
+    { "name": "Mid-Tier", "visible": true },
+    { "name": "Macro", "visible": true },
+    { "name": "Mega / Celebrity", "visible": true }
+  ],
+  "locations": [
+    {
+      "state": "Maharashtra",
+      "visible": true,
+      "districts": [
+        { "name": "Mumbai", "visible": true },
+        { "name": "Pune", "visible": true }
+      ]
+    },
+    {
+      "state": "Karnataka",
+      "visible": true,
+      "districts": [
+        { "name": "Bangalore", "visible": true },
+        { "name": "Mysore", "visible": true }
+      ]
+    }
+  ]
+}

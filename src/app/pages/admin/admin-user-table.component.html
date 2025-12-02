@@ -1,45 +1,110 @@
+<div class="container-fluid p-4">
+
 <div class="admin-tabs">
   <button [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
   <button [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+    <button (click)="logout()">Logout</button>
 </div>
 <div *ngIf="activeTab === 'influencer'">
-  <div *ngFor="let user of influencers">
-    <app-user-card [profileImage]="user.profileImages[0]"
-                  [name]="user.name"
-                  [username]="user.username"
-                  [email]="user.email"
-                  [phoneNumber]="user.phoneNumber"
-                  [categories]="user.categories"
-                  [state]="user.location.state"
-                  [district]="user.location.district"
-                  [socialMedia]="user.socialMedia"
-                  [isPremium]="user.isPremium"></app-user-card>
-    <div class="actions">
-      <button (click)="acceptUser(user._id)">Accept</button>
-      <button (click)="declineUser(user._id)">Decline</button>
-      <button (click)="deleteUser(user._id)">Delete</button>
-      <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
-      <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
-    </div>
-  </div>
+  <table class="table table-hover admin-table">
+    <thead>
+      <tr>
+        <th>Profile</th>
+        <th>Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Categories</th>
+        <th>State</th>
+        <th>District</th>
+        <th>Social Media</th>
+        <th>Premium</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of influencers">
+        <td>
+          <img [src]="user.profileImages && user.profileImages[0] ? user.profileImages[0] : 'assets/default-profile.png'" alt="Profile" width="40" height="40">
+        </td>
+        <td>{{ user.name || '-' }}</td>
+        <td>{{ user.username || '-' }}</td>
+        <td>{{ user.email || '-' }}</td>
+        <td>{{ user.phoneNumber || '-' }}</td>
+        <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
+        <td>{{ user.location?.state || '-' }}</td>
+        <td>{{ user.location?.district || '-' }}</td>
+        <td>
+          <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocial">
+            <span *ngFor="let sm of user.socialMedia">
+              {{ sm.platform || '-' }}: {{ sm.handle || '-' }} <span *ngIf="sm.followersCount">({{ sm.followersCount }})</span><br>
+            </span>
+          </span>
+          <ng-template #noSocial>-</ng-template>
+        </td>
+        <td>{{ user.isPremium ? 'Premium' : 'Free' }}</td>
+        <td>{{ user.status || '-' }}</td>
+        <td class="actions">
+          <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>
+          <button (click)="declineUser(user._id)">Decline</button>
+          <button (click)="deleteUser(user._id)">Delete</button>
+          <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
+          <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 <div *ngIf="activeTab === 'brand'">
-  <div *ngFor="let user of brands">
-    <app-user-card [profileImage]="user.brandLogo[0]"
-                  [brandName]="user.brandName"
-                  [email]="user.email"
-                  [phoneNumber]="user.phoneNumber"
-                  [categories]="user.categories"
-                  [state]="user.location.state"
-                  [district]="user.location.district"
-                  [socialMedia]="user.socialMedia"
-                  [isPremium]="user.isPremium"></app-user-card>
-    <div class="actions">
-      <button (click)="acceptUser(user._id)">Accept</button>
-      <button (click)="declineUser(user._id)">Decline</button>
-      <button (click)="deleteUser(user._id)">Delete</button>
-      <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
-      <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
-    </div>
-  </div>
+  <table class="admin-table table table-hover">
+    <thead>
+      <tr>
+        <th>Logo</th>
+        <th>Brand Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Categories</th>
+        <th>State</th>
+        <th>District</th>
+        <th>Products</th>
+        <th>Social Media</th>
+        <th>Premium</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of brands">
+        <td>
+          <img [src]="user.brandLogo && user.brandLogo[0] ? user.brandLogo[0] : 'assets/default-logo.png'" alt="Logo" width="40" height="40">
+        </td>
+        <td>{{ user.brandName || '-' }}</td>
+        <td>{{ user.email || '-' }}</td>
+        <td>{{ user.phoneNumber || '-' }}</td>
+        <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
+        <td>{{ user.location?.state || '-' }}</td>
+        <td>{{ user.location?.district || '-' }}</td>
+        <td>{{ user.products && user.products.length ? user.products.join(', ') : '-' }}</td>
+        <td>
+          <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocialBrand">
+            <span *ngFor="let sm of user.socialMedia">
+              {{ sm.platform || '-' }}: {{ sm.handle || '-' }}<br>
+            </span>
+          </span>
+          <ng-template #noSocialBrand>-</ng-template>
+        </td>
+        <td>{{ user.isPremium ? 'Premium' : 'Free' }}</td>
+        <td>{{ user.status === 'accepted' ? 'Accepted' : (user.status || '-') }}</td>
+        <td class="actions">
+           <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>
+          <button (click)="declineUser(user._id)" [disabled]="user.status === 'declined'">Decline</button>
+          <button (click)="deleteUser(user._id)">Delete</button>
+          <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
+          <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 </div>

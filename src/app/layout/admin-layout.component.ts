@@ -3,37 +3,32 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-navbar-layout',
+  selector: 'app-admin-layout',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './navbar-layout.component.html'
+  templateUrl: './admin-layout.component.html'
 })
-export class NavbarLayoutComponent {
-  user: any = null;
-  dropdownOpen = false;
+export class AdminLayoutComponent {
+  adminUser: any = null;
 
   constructor() {
-    this.loadUser();
+    this.loadAdminUser();
   }
 
-  loadUser() {
+  loadAdminUser() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        this.user = {
-          name: payload.name || 'User',
+        this.adminUser = {
+          name: payload.name || 'Admin',
           profileImage: payload.profileImage || null
         };
       } catch {
-        this.user = null;
+        this.adminUser = null;
       }
     } else {
-      this.user = null;
+      this.adminUser = null;
     }
-  }
-
-  toggleDropdown() {
-    this.dropdownOpen = !this.dropdownOpen;
   }
 }

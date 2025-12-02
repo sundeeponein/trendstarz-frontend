@@ -21,6 +21,21 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./profile-form.component.scss']
 })
 export class ProfileFormComponent implements OnInit {
+  // Add/remove social media entries
+  addSocialMedia() {
+    this.socialMediaFormArray.push(this.fb.group({
+      socialMedia: ['', Validators.required],
+      handleName: ['', Validators.required],
+      followersCount: [0, [Validators.required, Validators.min(0)]],
+      tier: ['', Validators.required]
+    }));
+  }
+
+  removeSocialMedia(index: number) {
+    if (this.socialMediaFormArray.length > 1) {
+      this.socialMediaFormArray.removeAt(index);
+    }
+  }
   @Input() isInfluencer = false;
   @Input() isBrand = false;
   @Input() isPremium = false;
@@ -29,10 +44,18 @@ export class ProfileFormComponent implements OnInit {
   categories: any[] = [];
   states: any[] = [];
   districts: any[] = [];
+  selectedState: any = null;
+  selectedSocialMedia: string = '';
+  languages: any[] = [];
+  tiers: any[] = [];
   socialMediaList: any[] = [];
   socialMedia: any[] = [];
   profileImages: string[] = [];
   imageError = '';
+
+  get socialMediaFormArray() {
+    return this.profileForm.get('socialMedia') as import('@angular/forms').FormArray;
+  }
 
   constructor(private fb: FormBuilder, private http: HttpClient) {}
 
@@ -45,28 +68,58 @@ export class ProfileFormComponent implements OnInit {
       categories: [[], Validators.required],
       state: ['', Validators.required],
       district: ['', Validators.required],
+      language: ['', Validators.required],
+      tier: ['', Validators.required],
       whatsapp: [false],
       emailContact: [false],
       call: [false],
       googleMapLink: [this.isBrand ? '' : null],
+      socialMedia: this.fb.array([
+        this.fb.group({
+          socialMedia: ['', Validators.required],
+          handleName: ['', Validators.required],
+          followersCount: [0, [Validators.required, Validators.min(0)]],
+          tier: ['', Validators.required]
+        })
+      ])
     });
     this.fetchDropdowns();
+    this.profileForm.get('state')?.valueChanges.subscribe(stateId => {
+      this.onStateChange(stateId);
+    });
+  }
+
+  onStateChange(stateId: string) {
+    const stateObj = this.states.find(s => s._id === stateId);
+    this.selectedState = stateObj;
+    this.districts = stateObj ? (stateObj.districts || []).filter((d: any) => d.visible) : [];
+    // Only reset if not already set
+    if (!this.districts.find(d => d._id === this.profileForm.get('district')?.value)) {
+      this.profileForm.get('district')?.setValue('');
+    }
   }
 
   fetchDropdowns() {
-    // Fetch categories, states, districts, socialMedia from backend with timeout and graceful fallback
-    this.http.get(`${environment.apiBaseUrl}/categories`)
-      .pipe(timeout(5000), catchError(err => { console.error('categories fetch failed', err); return of([]); }))
-      .subscribe((res: any) => this.categories = res || []);
-    this.http.get(`${environment.apiBaseUrl}/states`)
-      .pipe(timeout(5000), catchError(err => { console.error('states fetch failed', err); return of([]); }))
-      .subscribe((res: any) => this.states = res || []);
-    this.http.get(`${environment.apiBaseUrl}/districts`)
-      .pipe(timeout(5000), catchError(err => { console.error('districts fetch failed', err); return of([]); }))
-      .subscribe((res: any) => this.districts = res || []);
-    this.http.get(`${environment.apiBaseUrl}/social-media`)
-      .pipe(timeout(5000), catchError(err => { console.error('social-media fetch failed', err); return of([]); }))
-      .subscribe((res: any) => this.socialMediaList = res || []);
+    // Fetch categories, states, districts, socialMedia, languages, tiers from adminConfig (localStorage or asset)
+    let config: any;
+    const saved = localStorage.getItem('adminConfig');
+    if (saved) {
+      config = JSON.parse(saved);
+    } else {
+      config = require('../../../../assets/admin-config.json');
+    }
+    this.categories = (config.categories || []).filter((c: any) => c.visible);
+    this.states = (config.locations || []).filter((s: any) => s.visible);
+    if (this.profileForm && this.states.length) {
+      // Only set value if not already set
+      if (!this.profileForm.get('state')?.value) {
+        this.profileForm.get('state')?.setValue(this.states[0]._id);
+      }
+      this.districts = this.states[0].districts.filter((d: any) => d.visible);
+    }
+    this.languages = (config.languages || []).filter((l: any) => l.visible);
+    this.tiers = (config.tiers || []).filter((t: any) => t.visible);
+    this.socialMediaList = (config.socialMediaPlatforms || []).filter((sm: any) => sm.visible);
   }
 
   onImageChange(event: any) {

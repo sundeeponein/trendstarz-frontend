@@ -1,0 +1,25 @@
+<nav class="admin-navbar">
+  <a routerLink="/admin/admin-user-table" class="logo">TrendStarz Admin</a>
+  <ul>
+    <li><a routerLink="/admin/admin-user-table" routerLinkActive="active">Admin Users</a></li>
+    <li><a routerLink="/admin/admin-management" routerLinkActive="active">Admin Management</a></li>
+  </ul>
+  <div class="admin-profile" *ngIf="adminUser">
+    <img [src]="adminUser.profileImage || 'assets/default-profile.png'" class="admin-avatar" width="32" height="32" />
+    <span>{{ adminUser.name }}</span>
+    <div class="dropdown">
+      <button class="dropdown-toggle">▼</button>
+      <div class="dropdown-menu">
+        <a routerLink="/admin/profile">Profile</a>
+        <a routerLink="/admin/settings">Settings</a>
+        <a routerLink="/logout">Logout</a>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="!adminUser">
+    <a routerLink="/login">Login</a>
+  </div>
+</nav>
+<div class="container-fluid p-4">
+  <router-outlet></router-outlet>
+</div>
