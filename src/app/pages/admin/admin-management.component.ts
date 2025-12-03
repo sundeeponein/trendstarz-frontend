@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import adminConfig from '../../../assets/admin-config.json';
 
 @Component({
   selector: 'app-admin-management',
@@ -22,15 +21,8 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadConfig() {
-    // SSR-safe: only use localStorage if window is defined
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem('adminConfig');
-      if (saved) {
-        this.config = JSON.parse(saved);
-        return;
-      }
-    }
-    this.config = adminConfig;
+    // TODO: Fetch config from backend API instead of static file/localStorage
+    // Example: this.http.get('/api/admin/config').subscribe(cfg => this.config = cfg);
   }
 
   toggleVisible(type: string, idx: number, subIdx?: number) {
@@ -47,8 +39,6 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'district' && subIdx !== undefined) {
       this.config.locations[idx].districts[subIdx].visible = !this.config.locations[idx].districts[subIdx].visible;
     }
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('adminConfig', JSON.stringify(this.config));
-    }
+    // TODO: Save config changes to backend via API
   }
 }

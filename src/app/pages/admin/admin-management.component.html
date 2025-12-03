@@ -11,73 +11,6 @@
   <!-- Details tab content here -->
 </div>
 
-<div *ngIf="activeTab === 'socialMedia'">
-  <h2>Manage Social Media Platforms</h2>
-  <ul>
-    <li *ngFor="let sm of config.socialMediaPlatforms; let i = index">
-      {{ sm.name }}
-      <label>
-        <input type="checkbox" [checked]="sm.visible" (change)="toggleVisible('socialMedia', i)"> Show
-      </label>
-    </li>
-  </ul>
-</div>
-
-<div *ngIf="activeTab === 'categories'">
-  <h2>Manage Categories</h2>
-  <ul>
-    <li *ngFor="let cat of config.categories; let i = index">
-      {{ cat.name }}
-      <label>
-        <input type="checkbox" [checked]="cat.visible" (change)="toggleVisible('categories', i)"> Show
-      </label>
-    </li>
-  </ul>
-</div>
-
-<div *ngIf="activeTab === 'location'">
-  <h2>Manage Locations</h2>
-  <ul>
-    <li *ngFor="let state of config.locations; let i = index">
-      <strong>{{ state.state }}</strong>
-      <label>
-        <input type="checkbox" [checked]="state.visible" (change)="toggleVisible('state', i)"> Show
-      </label>
-      <ul>
-        <li *ngFor="let dist of state.districts; let j = index">
-          {{ dist.name }}
-          <label>
-            <input type="checkbox" [checked]="dist.visible" (change)="toggleVisible('district', i, j)"> Show
-          </label>
-        </li>
-      </ul>
-    </li>
-  </ul>
-</div>
-
-<div *ngIf="activeTab === 'languages'">
-  <h2>Manage Languages</h2>
-  <ul>
-    <li *ngFor="let lang of config.languages; let i = index">
-      {{ lang.name }}
-      <label>
-        <input type="checkbox" [checked]="lang.visible" (change)="toggleVisible('languages', i)"> Show
-      </label>
-    </li>
-  </ul>
-</div>
-
-<div *ngIf="activeTab === 'tiers'">
-  <h2>Manage Tiers</h2>
-  <ul>
-    <li *ngFor="let tier of config.tiers; let i = index">
-      {{ tier.name }}
-      <label>
-        <input type="checkbox" [checked]="tier.visible" (change)="toggleVisible('tiers', i)"> Show
-      </label>
-    </li>
-  </ul>
-</div>
 
 <div *ngIf="activeTab === 'socialMedia'">
   <h2>Manage Social Media Platforms</h2>
@@ -122,6 +55,36 @@
     </li>
   </ul>
 </div>
+
+<div *ngIf="activeTab === 'languages'">
+  <h2>Manage Languages</h2>
+  <ul>
+    <li *ngFor="let lang of config.languages; let i = index">
+      {{ lang.name }}
+      <label>
+        <input type="checkbox" [checked]="lang.visible" (change)="toggleVisible('languages', i)"> Show
+      </label>
+    </li>
+  </ul>
+</div>
+
+<div *ngIf="activeTab === 'tiers'">
+  <h2>Manage Tiers</h2>
+  <ul>
+    <li *ngFor="let tier of config.tiers; let i = index">
+      {{ tier.name }}
+      <label>
+        <input type="checkbox" [checked]="tier.visible" (change)="toggleVisible('tiers', i)"> Show
+      </label>
+    </li>
+  </ul>
+</div>
+
+
+
+
+
+
 <!-- Existing influencer and brand tables -->
 <div *ngIf="activeTab === 'influencer'">
   <!-- ...existing influencer table code... -->
