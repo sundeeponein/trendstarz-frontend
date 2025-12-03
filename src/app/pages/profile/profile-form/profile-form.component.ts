@@ -1,6 +1,7 @@
 // ...existing imports...
 // (Removed duplicate @Component and class declaration)
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -24,14 +25,18 @@ import { environment } from '../../../../environments/environment';
 })
 export class ProfileFormComponent implements OnInit {
   onCategoryChange(event: any) {
-    this.profileForm.get('categories')?.setValue(event);
-    this.profileForm.get('categories')?.markAsTouched();
+    if (this.profileForm && this.profileForm.get('categories')) {
+      this.profileForm.get('categories')?.setValue(event);
+      this.profileForm.get('categories')?.markAsTouched();
+    }
   }
 
 
   onDistrictChange(event: any) {
-    this.profileForm.get('district')?.setValue(event);
-    this.profileForm.get('district')?.markAsTouched();
+    if (this.profileForm && this.profileForm.get('district')) {
+      this.profileForm.get('district')?.setValue(event);
+      this.profileForm.get('district')?.markAsTouched();
+    }
   }
   // Add/remove social media entries
   addSocialMedia() {
@@ -66,10 +71,16 @@ export class ProfileFormComponent implements OnInit {
   imageError = '';
 
   get socialMediaFormArray() {
-    return this.profileForm.get('socialMedia') as import('@angular/forms').FormArray;
+    return this.profileForm && this.profileForm.get('socialMedia')
+      ? (this.profileForm.get('socialMedia') as import('@angular/forms').FormArray)
+      : ([] as any);
   }
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {}
+  constructor(
+    private fb: FormBuilder,
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit() {
     this.profileForm = this.fb.group({
@@ -106,7 +117,11 @@ export class ProfileFormComponent implements OnInit {
     this.selectedState = stateObj;
     this.districts = stateObj ? (stateObj.districts || []).filter((d: any) => d.visible) : [];
     // Only reset if not already set
-    if (!this.districts.find(d => d._id === this.profileForm.get('district')?.value)) {
+    if (
+      this.profileForm &&
+      this.profileForm.get('district') &&
+      !this.districts.find(d => d._id === this.profileForm.get('district')?.value)
+    ) {
       this.profileForm.get('district')?.setValue('');
     }
   }
@@ -114,7 +129,10 @@ export class ProfileFormComponent implements OnInit {
   fetchDropdowns() {
     // Fetch categories, states, districts, socialMedia, languages, tiers from adminConfig (localStorage or asset)
     let config: any;
-    const saved = localStorage.getItem('adminConfig');
+    let saved: string | null = null;
+    if (isPlatformBrowser(this.platformId)) {
+      saved = localStorage.getItem('adminConfig');
+    }
     if (saved) {
       config = JSON.parse(saved);
     } else {
