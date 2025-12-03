@@ -1,3 +1,5 @@
+// ...existing imports...
+// (Removed duplicate @Component and class declaration)
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -25,6 +27,7 @@ export class ProfileFormComponent implements OnInit {
     this.profileForm.get('categories')?.setValue(event);
     this.profileForm.get('categories')?.markAsTouched();
   }
+
 
   onDistrictChange(event: any) {
     this.profileForm.get('district')?.setValue(event);

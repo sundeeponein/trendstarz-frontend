@@ -15,7 +15,29 @@ input, ng-select {
 }
 .error {
   color: #e74c3c;
-  font-size: 0.9em;
+  ng-select {
+    background: #fff !important;
+    color: #222 !important;
+    z-index: 1000;
+    width: 100%;
+  }
+
+  .ng-dropdown-panel {
+    background: #fff !important;
+    color: #222 !important;
+    z-index: 2000 !important;
+  }
+
+  .ng-select .ng-select-container {
+    background: #fff !important;
+    color: #222 !important;
+    border: 1px solid #ccc;
+  }
+
+  .ng-select .ng-option {
+    color: #222 !important;
+    background: #fff !important;
+  }
 }
 .preview {
   width: 60px;
