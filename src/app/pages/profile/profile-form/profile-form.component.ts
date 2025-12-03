@@ -138,8 +138,8 @@ export class ProfileFormComponent implements OnInit {
   }
 
   uploadImagesToCloudinary(files: FileList) {
-    const uploadPreset = 'YOUR_CLOUDINARY_PRESET';
-    const url = 'https://api.cloudinary.com/v1_1/YOUR_CLOUDINARY_CLOUD_NAME/image/upload';
+  const uploadPreset = 'your_actual_upload_preset';
+  const url = 'https://api.cloudinary.com/v1_1/ddnsoypf8/image/upload';
     this.profileImages = [];
     Array.from(files).forEach(file => {
       const formData = new FormData();
