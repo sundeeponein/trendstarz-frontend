@@ -29,7 +29,7 @@
   </div>
   <div>
     <label>Category</label>
-  <ng-select [items]="categories" bindLabel="name" bindValue="_id" [multiple]="isPremium" formControlName="categories" (change)="profileForm.get('categories')?.markAsTouched()"></ng-select>
+  <ng-select [items]="categories" bindLabel="name" bindValue="_id" [multiple]="isPremium" formControlName="categories" (change)="onCategoryChange($event)"></ng-select>
     <div *ngIf="profileForm.get('categories')?.invalid && profileForm.get('categories')?.touched" class="error">Category is required</div>
   </div>
   <div>
@@ -39,7 +39,7 @@
   </div>
   <div>
     <label>District</label>
-  <ng-select [items]="districts" bindLabel="name" bindValue="_id" formControlName="district" (change)="profileForm.get('district')?.markAsTouched()"></ng-select>
+  <ng-select [items]="districts" bindLabel="name" bindValue="_id" formControlName="district" (change)="onDistrictChange($event)"></ng-select>
     <div *ngIf="profileForm.get('district')?.invalid && profileForm.get('district')?.touched" class="error">District is required</div>
   </div>
   <div>
@@ -50,8 +50,14 @@
   <div formArrayName="socialMedia">
     <label>Social Media</label>
     <div *ngFor="let smGroup of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="social-media-row">
+      <ng-container *ngIf="tiers && tiers.length">
+        <ng-select [items]="tiers" bindLabel="name" bindValue="name" formControlName="tier" placeholder="Tier">
+          <ng-template ng-option-tmp let-item="item">
+            <span>{{item.icon}} <b>{{item.name}}</b> <small>{{item.desc}}</small></span>
+          </ng-template>
+        </ng-select>
+      </ng-container>
       <ng-select [items]="socialMediaList" bindLabel="name" bindValue="name" formControlName="socialMedia" placeholder="Select Platform"></ng-select>
-      <ng-select [items]="tiers" bindLabel="name" bindValue="name" formControlName="tier" placeholder="Tier"></ng-select>
       <input formControlName="handleName" placeholder="Handle Name" />
       <input formControlName="followersCount" type="number" placeholder="Followers Count" />
       <button type="button" (click)="removeSocialMedia(i)" [disabled]="socialMediaFormArray.length === 1">Remove</button>
