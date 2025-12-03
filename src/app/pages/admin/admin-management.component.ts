@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-admin-management',
@@ -10,7 +11,15 @@ import { CommonModule } from '@angular/common';
 })
 export class AdminManagementComponent implements OnInit {
   activeTab: string = 'influencer';
-  config: any = {};
+  config: any = {
+    socialMediaPlatforms: [],
+    categories: [],
+    locations: [],
+    languages: [],
+    tiers: []
+  };
+
+  constructor(private http: HttpClient) {}
 
   ngOnInit() {
     this.loadConfig();
@@ -21,8 +30,22 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadConfig() {
-    // TODO: Fetch config from backend API instead of static file/localStorage
-    // Example: this.http.get('/api/admin/config').subscribe(cfg => this.config = cfg);
+    // Fetch all management data from backend
+    this.http.get('/api/social-media').subscribe((data: any) => {
+      this.config.socialMediaPlatforms = Array.isArray(data) ? data : [];
+    });
+    this.http.get('/api/categories').subscribe((data: any) => {
+      this.config.categories = Array.isArray(data) ? data : [];
+    });
+    this.http.get('/api/states').subscribe((data: any) => {
+      this.config.locations = Array.isArray(data) ? data : [];
+    });
+    this.http.get('/api/languages').subscribe((data: any) => {
+      this.config.languages = Array.isArray(data) ? data : [];
+    });
+    this.http.get('/api/tiers').subscribe((data: any) => {
+      this.config.tiers = Array.isArray(data) ? data : [];
+    });
   }
 
   toggleVisible(type: string, idx: number, subIdx?: number) {
