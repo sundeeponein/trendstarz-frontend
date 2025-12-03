@@ -21,6 +21,15 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./profile-form.component.scss']
 })
 export class ProfileFormComponent implements OnInit {
+  onCategoryChange(event: any) {
+    this.profileForm.get('categories')?.setValue(event);
+    this.profileForm.get('categories')?.markAsTouched();
+  }
+
+  onDistrictChange(event: any) {
+    this.profileForm.get('district')?.setValue(event);
+    this.profileForm.get('district')?.markAsTouched();
+  }
   // Add/remove social media entries
   addSocialMedia() {
     this.socialMediaFormArray.push(this.fb.group({
@@ -138,8 +147,8 @@ export class ProfileFormComponent implements OnInit {
   }
 
   uploadImagesToCloudinary(files: FileList) {
-    const uploadPreset = 'YOUR_CLOUDINARY_PRESET';
-    const url = 'https://api.cloudinary.com/v1_1/YOUR_CLOUDINARY_CLOUD_NAME/image/upload';
+  const uploadPreset = 'trendstarz_unsigned';
+  const url = 'https://api.cloudinary.com/v1_1/ddnsoypf8/image/upload';
     this.profileImages = [];
     Array.from(files).forEach(file => {
       const formData = new FormData();
