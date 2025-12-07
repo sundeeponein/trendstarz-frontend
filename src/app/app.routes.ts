@@ -1,7 +1,11 @@
+import { ProfileComponent } from './pages/profile/profile.component';
+import { InfluencerRegistrationComponent } from './pages/influencer-registration/influencer-registration.component';
+import { BrandRegistrationComponent } from './pages/brand-registration/brand-registration.component';
 import { Routes } from '@angular/router';
+import { PaymentComponent } from './pages/payment/payment.component';
+import { StripePaymentComponent } from './pages/payment/stripe-payment.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { LoginComponent } from './pages/auth/login.component';
-import { RegisterComponent } from './pages/auth/register.component';
 import { AdminUserTableComponent } from './pages/admin/admin-user-table.component';
 import { AdminManagementComponent } from './pages/admin/admin-management.component';
 import { AdminLayoutComponent } from './layout/admin-layout.component';
@@ -15,7 +19,11 @@ export const DummyLogoutComponent = Component({
 export const routes: Routes = [
 	{ path: '', component: WelcomeComponent },
 	{ path: 'login', component: LoginComponent },
-	{ path: 'register', component: RegisterComponent },
+	{ path: 'register-influencer', component: InfluencerRegistrationComponent },
+	{ path: 'register-brand', component: BrandRegistrationComponent },
+	{ path: 'profile', component: ProfileComponent },
+	// { path: 'register', component: ProfileFormComponent },
+	{ path: 'payment', component: StripePaymentComponent },
 	{
 		path: 'admin',
 		component: AdminLayoutComponent,

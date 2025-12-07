@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
@@ -8,7 +9,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
@@ -16,6 +17,12 @@ export class AdminUserTableComponent implements OnInit {
   activeTab: 'influencer' | 'brand' = 'influencer';
   influencers: any[] = [];
   brands: any[] = [];
+
+  // Premium modal state
+  showPremiumModal = false;
+  premiumUserId: string | null = null;
+  premiumDuration: '1m' | '3m' | '1y' | '' = '';
+  premiumIsPremium = true;
 
   constructor(private http: HttpClient) {}
 
@@ -61,6 +68,33 @@ export class AdminUserTableComponent implements OnInit {
   deletePermanently(userId: string) {
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete-permanent`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
   }
+    setPremium(userId: string, isPremium: boolean) {
+      if (isPremium) {
+        this.premiumUserId = userId;
+        this.premiumDuration = '';
+        this.premiumIsPremium = true;
+        this.showPremiumModal = true;
+      } else {
+        this.http.patch(`${environment.apiBaseUrl}/users/${userId}/premium`, { isPremium: false }, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+      }
+    }
+
+    confirmPremium() {
+      if (!this.premiumUserId || !this.premiumDuration) return;
+      this.http.patch(`${environment.apiBaseUrl}/users/${this.premiumUserId}/premium`, { isPremium: true, premiumDuration: this.premiumDuration }, this.getAuthHeaders())
+        .subscribe(() => {
+          this.showPremiumModal = false;
+          this.premiumUserId = null;
+          this.premiumDuration = '';
+          this.fetchUsers();
+        });
+    }
+
+    closePremiumModal() {
+      this.showPremiumModal = false;
+      this.premiumUserId = null;
+      this.premiumDuration = '';
+    }
   logout() {
     localStorage.removeItem('token');
     window.location.href = '/login';

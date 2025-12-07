@@ -1,0 +1,94 @@
+[
+  {
+    "_id": "admin1",
+    "role": "admin",
+    "name": "Admin User",
+    "email": "admin@trendstarz.com",
+    "password": "admin123",
+    "visible": true
+  },
+  {
+    "_id": "inf1",
+    "role": "influencer",
+    "name": "Priya Sharma",
+    "email": "priya@trendstarz.com",
+    "password": "Priya@1234",
+    "categories": ["fashion", "health"],
+    "languages": ["english", "hindi"],
+    "state": "TG",
+    "district": "Hyderabad",
+    "tiers": ["micro"],
+    "socialMedia": [
+      {"platform": "instagram", "handle": "@priyasharma", "followers": 25000, "tier": "micro"}
+    ],
+    "visible": true
+  },
+  {
+    "_id": "inf2",
+    "role": "influencer",
+    "name": "Rahul Verma",
+    "email": "rahul@trendstarz.com",
+    "password": "Rahul@1234",
+    "categories": ["gaming", "tech"],
+    "languages": ["english"],
+    "state": "AP",
+    "district": "Visakhapatnam",
+    "tiers": ["mid"],
+    "socialMedia": [
+      {"platform": "youtube", "handle": "@rahulplays", "followers": 120000, "tier": "mid"}
+    ],
+    "visible": true
+  },
+  {
+    "_id": "inf3",
+    "role": "influencer",
+    "name": "Sneha Patel",
+    "email": "sneha@trendstarz.com",
+    "password": "Sneha@1234",
+    "categories": ["food", "travel"],
+    "languages": ["english", "telugu"],
+    "state": "AP",
+    "district": "Guntur",
+    "tiers": ["nano"],
+    "socialMedia": [
+      {"platform": "instagram", "handle": "@snehapatel", "followers": 8000, "tier": "nano"}
+    ],
+    "visible": true
+  },
+  {
+    "_id": "brand1",
+    "role": "brand",
+    "name": "Fashionista",
+    "email": "contact@fashionista.com",
+    "password": "Fashion@1234",
+    "categories": ["fashion"],
+    "languages": ["english"],
+    "state": "TG",
+    "district": "Hyderabad",
+    "visible": true
+  },
+  {
+    "_id": "brand2",
+    "role": "brand",
+    "name": "TechGuru",
+    "email": "info@techguru.com",
+    "password": "Tech@1234",
+    "categories": ["tech"],
+    "languages": ["english", "hindi"],
+    "state": "AP",
+    "district": "Visakhapatnam",
+    "visible": true
+  },
+  {
+    "_id": "brand3",
+    "role": "brand",
+    "name": "Foodies",
+    "email": "hello@foodies.com",
+    "password": "Food@1234",
+    "categories": ["food"],
+    "languages": ["english", "telugu"],
+    "state": "AP",
+    "district": "Guntur",
+    "visible": true
+  }
+]

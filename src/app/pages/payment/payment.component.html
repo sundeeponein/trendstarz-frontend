@@ -1,0 +1,18 @@
+<div class="payment-container">
+  <h2>Make a Payment</h2>
+  <form [formGroup]="paymentForm" (ngSubmit)="submitPayment()">
+    <label>User ID:</label>
+    <input formControlName="userId" placeholder="Enter your User ID" />
+    <label>Amount:</label>
+    <input formControlName="amount" type="number" min="1" />
+    <label>Payment Method:</label>
+    <select formControlName="method">
+      <option value="card">Card</option>
+      <option value="upi">UPI</option>
+      <option value="netbanking">Net Banking</option>
+    </select>
+    <button type="submit" [disabled]="paymentForm.invalid">Pay</button>
+  </form>
+  <div *ngIf="paymentSuccess" class="success">Payment successful! You are now a premium user.</div>
+  <div *ngIf="paymentError" class="error">{{ paymentError }}</div>
+</div>

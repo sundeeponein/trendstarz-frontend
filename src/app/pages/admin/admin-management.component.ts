@@ -40,38 +40,74 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadConfig() {
-    // Fetch all management data from backend
-    this.http.get('/api/social-media').subscribe((data: any) => {
-      this.config.socialMediaPlatforms = Array.isArray(data) ? data : [];
+    // Fetch all management data from backend using environment.apiBaseUrl
+    const baseUrl = (window as any).environment?.apiBaseUrl || 'https://trendstarz-backend-on1h.onrender.com';
+    this.http.get(baseUrl + '/social-media').subscribe((data: any) => {
+      this.config.socialMediaPlatforms = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
     });
-    this.http.get('/api/categories').subscribe((data: any) => {
-      this.config.categories = Array.isArray(data) ? data : [];
+    this.http.get(baseUrl + '/categories').subscribe((data: any) => {
+      this.config.categories = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
     });
-    this.http.get('/api/states').subscribe((data: any) => {
-      this.config.locations = Array.isArray(data) ? data : [];
+    this.http.get(baseUrl + '/states').subscribe((data: any) => {
+      this.config.locations = Array.isArray(data)
+        ? data.map((state: any) => ({
+            ...state,
+            visible: !!state.showInFrontend,
+            districts: (state.districts || []).map((dist: any) => ({ ...dist, visible: !!dist.showInFrontend }))
+          }))
+        : [];
     });
-    this.http.get('/api/languages').subscribe((data: any) => {
-      this.config.languages = Array.isArray(data) ? data : [];
+    this.http.get(baseUrl + '/languages').subscribe((data: any) => {
+      this.config.languages = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
     });
-    this.http.get('/api/tiers').subscribe((data: any) => {
-      this.config.tiers = Array.isArray(data) ? data : [];
+    this.http.get(baseUrl + '/tiers').subscribe((data: any) => {
+      this.config.tiers = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
     });
   }
 
   toggleVisible(type: string, idx: number, subIdx?: number) {
-    if (type === 'socialMedia') {
-      this.config.socialMediaPlatforms[idx].visible = !this.config.socialMediaPlatforms[idx].visible;
+    // Only update local state, do not persist yet
+    if (type === 'tiers') {
+      const tier = this.config.tiers[idx];
+      tier.visible = !tier.visible;
+    } else if (type === 'socialMedia') {
+      const sm = this.config.socialMediaPlatforms[idx];
+      sm.visible = !sm.visible;
     } else if (type === 'categories') {
-      this.config.categories[idx].visible = !this.config.categories[idx].visible;
+      const cat = this.config.categories[idx];
+      cat.visible = !cat.visible;
     } else if (type === 'languages') {
-      this.config.languages[idx].visible = !this.config.languages[idx].visible;
-    } else if (type === 'tiers') {
-      this.config.tiers[idx].visible = !this.config.tiers[idx].visible;
+      const lang = this.config.languages[idx];
+      lang.visible = !lang.visible;
     } else if (type === 'state') {
-      this.config.locations[idx].visible = !this.config.locations[idx].visible;
+      const state = this.config.locations[idx];
+      state.visible = !state.visible;
     } else if (type === 'district' && subIdx !== undefined) {
-      this.config.locations[idx].districts[subIdx].visible = !this.config.locations[idx].districts[subIdx].visible;
+      const dist = this.config.locations[idx].districts[subIdx];
+      dist.visible = !dist.visible;
     }
-    // TODO: Save config changes to backend via API
+  }
+
+  saveAllVisibility() {
+    const baseUrl = (window as any).environment?.apiBaseUrl || 'https://trendstarz-backend-on1h.onrender.com';
+    const payload = {
+      tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })),
+      socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
+      categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
+      languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
+      states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
+      districts: ([] as any[]).concat(...this.config.locations.map((s: any) => (s.districts || []).map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))))
+    };
+    this.http.post(baseUrl + '/admin/batch-update-visibility', payload)
+      .subscribe({
+        next: () => {
+          alert('Visibility updated successfully!');
+          this.loadConfig();
+        },
+        error: (err) => {
+          alert('Error saving visibility.');
+          console.error('Batch update error:', err);
+        }
+      });
   }
 }

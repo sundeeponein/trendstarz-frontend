@@ -1,0 +1,103 @@
+{
+  "locations": [
+    {
+      "_id": "AP",
+      "state": "Andhra Pradesh",
+      "visible": true,
+      "districts": [
+        {"_id": "Srikakulam", "name": "Srikakulam", "visible": true},
+        {"_id": "Vizianagaram", "name": "Vizianagaram", "visible": true},
+        {"_id": "Visakhapatnam", "name": "Visakhapatnam", "visible": true},
+        {"_id": "Anakapalli", "name": "Anakapalli", "visible": true},
+        {"_id": "Alluri", "name": "Alluri Sitharama Raju", "visible": true},
+        {"_id": "Kakinada", "name": "Kakinada", "visible": true},
+        {"_id": "EastGodavari", "name": "East Godavari", "visible": true},
+        {"_id": "Konaseema", "name": "Konaseema", "visible": true},
+        {"_id": "WestGodavari", "name": "West Godavari", "visible": true},
+        {"_id": "Eluru", "name": "Eluru", "visible": true},
+        {"_id": "Krishna", "name": "Krishna", "visible": true},
+        {"_id": "NTR", "name": "NTR", "visible": true},
+        {"_id": "Guntur", "name": "Guntur", "visible": true},
+        {"_id": "Palnadu", "name": "Palnadu", "visible": true},
+        {"_id": "Bapatla", "name": "Bapatla", "visible": true},
+        {"_id": "Prakasam", "name": "Prakasam", "visible": true},
+        {"_id": "SPSRNellore", "name": "SPSR Nellore", "visible": true},
+        {"_id": "Kurnool", "name": "Kurnool", "visible": true},
+        {"_id": "Nandyal", "name": "Nandyal", "visible": true},
+        {"_id": "Anantapur", "name": "Anantapur", "visible": true},
+        {"_id": "SriSathyaSai", "name": "Sri Sathya Sai", "visible": true},
+        {"_id": "YSRKadapa", "name": "YSR Kadapa", "visible": true},
+        {"_id": "Annamayya", "name": "Annamayya", "visible": true},
+        {"_id": "Chittoor", "name": "Chittoor", "visible": true},
+        {"_id": "Tirupati", "name": "Tirupati", "visible": true}
+      ]
+    },
+    {
+      "_id": "TG",
+      "state": "Telangana",
+      "visible": true,
+      "districts": [
+        {"_id": "Adilabad", "name": "Adilabad", "visible": true},
+        {"_id": "Bhadradri", "name": "Bhadradri Kothagudem", "visible": true},
+        {"_id": "Hanumakonda", "name": "Hanumakonda", "visible": true},
+        {"_id": "Hyderabad", "name": "Hyderabad", "visible": true},
+        {"_id": "Jagitial", "name": "Jagitial", "visible": true},
+        {"_id": "Jangaon", "name": "Jangaon", "visible": true},
+        {"_id": "Jayashankar", "name": "Jayashankar Bhupalpally", "visible": true},
+        {"_id": "Jogulamba", "name": "Jogulamba Gadwal", "visible": true},
+        {"_id": "Kamareddy", "name": "Kamareddy", "visible": true},
+        {"_id": "Karimnagar", "name": "Karimnagar", "visible": true},
+        {"_id": "Khammam", "name": "Khammam", "visible": true},
+        {"_id": "KumuramBheem", "name": "Kumuram Bheem Asifabad", "visible": true},
+        {"_id": "Mahabubabad", "name": "Mahabubabad", "visible": true},
+        {"_id": "Mahabubnagar", "name": "Mahabubnagar", "visible": true},
+        {"_id": "Mancherial", "name": "Mancherial", "visible": true},
+        {"_id": "Medak", "name": "Medak", "visible": true},
+        {"_id": "Medchal", "name": "Medchal-Malkajgiri", "visible": true},
+        {"_id": "Mulugu", "name": "Mulugu", "visible": true},
+        {"_id": "Nagarkurnool", "name": "Nagarkurnool", "visible": true},
+        {"_id": "Nalgonda", "name": "Nalgonda", "visible": true},
+        {"_id": "Narayanpet", "name": "Narayanpet", "visible": true},
+        {"_id": "Nirmal", "name": "Nirmal", "visible": true},
+        {"_id": "Nizamabad", "name": "Nizamabad", "visible": true},
+        {"_id": "Peddapalli", "name": "Peddapalli", "visible": true},
+        {"_id": "Rajanna", "name": "Rajanna Sircilla", "visible": true},
+        {"_id": "Rangareddy", "name": "Rangareddy", "visible": true},
+        {"_id": "Sangareddy", "name": "Sangareddy", "visible": true},
+        {"_id": "Siddipet", "name": "Siddipet", "visible": true},
+        {"_id": "Suryapet", "name": "Suryapet", "visible": true},
+        {"_id": "Vikarabad", "name": "Vikarabad", "visible": true},
+        {"_id": "Wanaparthy", "name": "Wanaparthy", "visible": true},
+        {"_id": "Warangal", "name": "Warangal", "visible": true},
+        {"_id": "Yadadri", "name": "Yadadri Bhuvanagiri", "visible": true}
+      ]
+    }
+  ],
+  "categories": [
+    {"_id": "fashion", "name": "Fashion and beauty", "visible": true},
+    {"_id": "food", "name": "Food and travel", "visible": true},
+    {"_id": "health", "name": "Health and wellness", "visible": true},
+    {"_id": "tech", "name": "Technology", "visible": true},
+    {"_id": "gaming", "name": "Gaming", "visible": true},
+    {"_id": "parenting", "name": "Parenting", "visible": true},
+    {"_id": "finance", "name": "Finance", "visible": true}
+  ],
+  "languages": [
+    {"_id": "telugu", "name": "Telugu", "visible": true},
+    {"_id": "hindi", "name": "Hindi", "visible": true},
+    {"_id": "english", "name": "English", "visible": true},
+    {"_id": "tamil", "name": "Tamil", "visible": true}
+  ],
+  "tiers": [
+    {"_id": "nano", "name": "Nano", "range": "1K-10K", "visible": true},
+    {"_id": "micro", "name": "Micro", "range": "10K-50K", "visible": true},
+    {"_id": "mid", "name": "Mid-Tier", "range": "50K-500K", "visible": true},
+    {"_id": "macro", "name": "Macro", "range": "500K-1M", "visible": true},
+    {"_id": "mega", "name": "Mega", "range": "1M+", "visible": true}
+  ],
+  "socialMediaPlatforms": [
+    {"_id": "instagram", "name": "Instagram", "visible": true},
+    {"_id": "facebook", "name": "Facebook", "visible": true},
+    {"_id": "youtube", "name": "Youtube", "visible": true}
+  ]
+}

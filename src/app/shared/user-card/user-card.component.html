@@ -4,14 +4,28 @@
     <h3>{{ name }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
     <p *ngIf="username">@{{ username }}</p>
     <p *ngIf="brandName">Brand: {{ brandName }}</p>
-    <p>Email: {{ email }}</p>
-    <p>Phone: {{ phoneNumber }}</p>
-  <p>Categories: {{ categories.join(', ') }}</p>
+    <p *ngIf="isPremium">Email: {{ email }}</p>
+    <p *ngIf="isPremium">Phone: {{ phoneNumber }}</p>
+    <p>Categories: {{ categories.join(', ') }}</p>
     <p>Location: {{ state }}, {{ district }}</p>
-  <div *ngIf="socialMedia.length">
-    <span *ngFor="let sm of socialMedia">
-      {{ sm.socialMedia }}: {{ sm.handleName }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
-    </span>
-  </div>
+    <div *ngIf="isPremium && socialMedia.length">
+      <span *ngFor="let sm of socialMedia">
+        {{ sm.socialMedia }}: {{ sm.handleName }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+      </span>
+    </div>
+  <div *ngIf="isPremium && productImages.length">
+      <label>Product Images:</label>
+      <div class="product-images">
+        <img *ngFor="let img of productImages" [src]="img" class="product-image" />
+      </div>
+    </div>
+    <div *ngIf="isPremium && website">
+      <label>Website:</label>
+      <a [href]="website" target="_blank">{{ website }}</a>
+    </div>
+    <div *ngIf="isPremium && googleMapAddress">
+      <label>Google Map Address:</label>
+      <span>{{ googleMapAddress }}</span>
+    </div>
   </div>
 </div>

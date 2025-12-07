@@ -1,0 +1,81 @@
+<div *ngIf="justUpgraded" class="upgrade-message">
+  <strong>Congratulations! You are now a premium user.</strong><br>
+  You can now upload up to 3 profile images, 5 product images, and choose to make your contact/social media visible to brands.
+</div>
+<form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+  <label>Name</label>
+  <input formControlName="name" type="text" required />
+
+  <label>Email</label>
+  <input formControlName="email" type="email" required />
+
+  <label>Contact</label>
+  <input formControlName="contact" type="text" required [disabled]="!isPremium" />
+
+  <label>Payment Option</label>
+  <select formControlName="paymentOption">
+    <option value="free">Free (Contact/Social hidden)</option>
+    <option value="premium">Premium (Contact/Social visible, images, website, map)</option>
+  </select>
+
+    <div *ngIf="profileForm.get('paymentOption')?.value === 'premium' && !isPremium">
+      <button type="button" (click)="goToPayment()">Proceed to Payment</button>
+    </div>
+
+  <label>State</label>
+  <select formControlName="state">
+    <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+  </select>
+
+  <label>District</label>
+  <select formControlName="district">
+    <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
+  </select>
+
+  <div *ngIf="isPremium">
+    <label>Website</label>
+    <input formControlName="website" type="url" />
+
+    <label>Google Map Address (optional)</label>
+    <input formControlName="googleMapAddress" type="text" />
+
+    <label>Profile Images</label>
+    <div formArrayName="profileImages">
+      <div *ngFor="let imgCtrl of profileImagesFormArray.controls; let i = index">
+  <input [formControlName]="i" type="text" placeholder="Image URL" />
+        <button type="button" (click)="removeProfileImage(i)">Remove</button>
+      </div>
+      <button type="button" (click)="addProfileImage()" [disabled]="profileImagesFormArray.length >= 3">Add Image</button>
+    </div>
+
+    <label>Product Images</label>
+    <div formArrayName="productImages">
+      <div *ngFor="let imgCtrl of productImagesFormArray.controls; let i = index">
+  <input [formControlName]="i" type="text" placeholder="Image URL" />
+        <button type="button" (click)="removeProductImage(i)">Remove</button>
+      </div>
+      <button type="button" (click)="addProductImage()" [disabled]="productImagesFormArray.length >= 5">Add Product Image</button>
+    </div>
+  </div>
+
+  <div formArrayName="socialMedia" *ngIf="isPremium">
+    <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i">
+      <label>Social Media</label>
+      <select formControlName="platform">
+        <option *ngFor="let s of socialMediaList" [value]="s.name">{{ s.name }}</option>
+      </select>
+      <label>Handle Name</label>
+      <input formControlName="handle" type="text" required />
+      <label>Tier</label>
+      <select formControlName="tier">
+        <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+      </select>
+      <label>Followers/Subscribers Count</label>
+      <input formControlName="count" type="number" required />
+      <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+    </div>
+    <button type="button" (click)="addSocialMedia()">Add Social Media</button>
+  </div>
+
+  <button type="submit">Update</button>
+</form>

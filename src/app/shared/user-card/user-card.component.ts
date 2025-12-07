@@ -21,4 +21,7 @@ export class UserCardComponent {
   @Input() district = '';
   @Input() socialMedia: any[] = [];
   @Input() isPremium = false;
+  @Input() productImages: string[] = [];
+  @Input() website = '';
+  @Input() googleMapAddress = '';
 }

@@ -22,6 +22,7 @@
       </label>
     </li>
   </ul>
+  <button (click)="saveAllVisibility()">Save</button>
 </div>
 
 <div *ngIf="activeTab === 'categories'">
@@ -34,13 +35,14 @@
       </label>
     </li>
   </ul>
+  <button (click)="saveAllVisibility()">Save</button>
 </div>
 
 <div *ngIf="activeTab === 'location'">
   <h2>Manage Locations (India States & Districts)</h2>
   <ul>
     <li *ngFor="let state of config.locations; let i = index">
-      <strong>{{ state.state }}</strong>
+      <strong>{{ state.name }}</strong>
       <label>
         <input type="checkbox" [checked]="state.visible" (change)="toggleVisible('state', i)"> Show
       </label>
@@ -54,6 +56,7 @@
       </ul>
     </li>
   </ul>
+  <button (click)="saveAllVisibility()">Save</button>
 </div>
 
 <div *ngIf="activeTab === 'languages'">
@@ -66,6 +69,7 @@
       </label>
     </li>
   </ul>
+  <button (click)="saveAllVisibility()">Save</button>
 </div>
 
 <div *ngIf="activeTab === 'tiers'">
@@ -78,6 +82,7 @@
       </label>
     </li>
   </ul>
+  <button (click)="saveAllVisibility()">Save</button>
 </div>
 
 

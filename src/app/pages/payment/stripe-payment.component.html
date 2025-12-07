@@ -1,0 +1,23 @@
+<div class="stripe-payment-container">
+  <h2>Choose Your Premium Plan</h2>
+  <div class="plan-options">
+    <label><input type="radio" name="plan" value="1m" [(ngModel)]="premiumDuration" (change)="selectPlan('1m')"> 1 Month - ₹399</label><br>
+    <label><input type="radio" name="plan" value="3m" [(ngModel)]="premiumDuration" (change)="selectPlan('3m')"> 3 Months - ₹999</label><br>
+    <label><input type="radio" name="plan" value="1y" [(ngModel)]="premiumDuration" (change)="selectPlan('1y')"> 1 Year - ₹1999</label><br>
+  </div>
+  <div class="plan-features" *ngIf="premiumDuration">
+    <strong>Premium Features:</strong>
+    <ul>
+      <li>Everything in Pro</li>
+      <li>Post unlimited campaigns per month</li>
+      <li>Track live analytics for 15 posts at a time</li>
+      <li>5% marketplace fee</li>
+      <li>Priority customer support</li>
+      <li>25 Influencer engagement & audience reports</li>
+    </ul>
+  </div>
+  <div id="card-element" *ngIf="premiumDuration"></div>
+  <button (click)="pay()" [disabled]="!premiumDuration">Pay</button>
+  <div *ngIf="paymentSuccess" class="success">Payment successful! You are now a premium user.</div>
+  <div *ngIf="paymentError" class="error">{{ paymentError }}</div>
+</div>
