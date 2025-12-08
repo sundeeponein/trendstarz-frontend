@@ -39,21 +39,13 @@
 </div>
 
 <div *ngIf="activeTab === 'location'">
-  <h2>Manage Locations (India States & Districts)</h2>
+  <h2>Manage Locations (India States)</h2>
   <ul>
     <li *ngFor="let state of config.locations; let i = index">
       <strong>{{ state.name }}</strong>
       <label>
         <input type="checkbox" [checked]="state.visible" (change)="toggleVisible('state', i)"> Show
       </label>
-      <ul>
-        <li *ngFor="let dist of state.districts; let j = index">
-          {{ dist.name }}
-          <label>
-            <input type="checkbox" [checked]="dist.visible" (change)="toggleVisible('district', i, j)"> Show
-          </label>
-        </li>
-      </ul>
     </li>
   </ul>
   <button (click)="saveAllVisibility()">Save</button>

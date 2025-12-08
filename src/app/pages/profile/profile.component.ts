@@ -13,7 +13,6 @@ import { CommonModule } from '@angular/common';
 export class ProfileComponent implements OnInit {
   profileForm!: FormGroup;
   states: any[] = [];
-  districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
 
@@ -33,7 +32,6 @@ export class ProfileComponent implements OnInit {
       contact: ['', Validators.required],
       paymentOption: ['free', Validators.required],
       state: ['', Validators.required],
-      district: ['', Validators.required],
       website: [''],
       googleMapAddress: [''],
       profileImages: this.fb.array([]),

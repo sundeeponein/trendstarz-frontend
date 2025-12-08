@@ -7,7 +7,7 @@
     <p *ngIf="isPremium">Email: {{ email }}</p>
     <p *ngIf="isPremium">Phone: {{ phoneNumber }}</p>
     <p>Categories: {{ categories.join(', ') }}</p>
-    <p>Location: {{ state }}, {{ district }}</p>
+    <p>Location: {{ state }}</p>
     <div *ngIf="isPremium && socialMedia.length">
       <span *ngFor="let sm of socialMedia">
         {{ sm.socialMedia }}: {{ sm.handleName }} ({{ sm.tier }}) - {{ sm.followersCount }} followers

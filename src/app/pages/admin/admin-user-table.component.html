@@ -16,7 +16,6 @@
           <th>Phone</th>
           <th>Categories</th>
           <th>State</th>
-          <th>District</th>
           <th>Social Media</th>
           <th>Premium</th>
           <th>Status</th>
@@ -34,7 +33,6 @@
           <td>{{ user.phoneNumber || '-' }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
-          <td>{{ user.location?.district || '-' }}</td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocial">
               <span *ngFor="let sm of user.socialMedia">
@@ -94,7 +92,6 @@
           <th>Phone</th>
           <th>Categories</th>
           <th>State</th>
-          <th>District</th>
           <th>Products</th>
           <th>Social Media</th>
           <th>Premium</th>
@@ -112,7 +109,6 @@
           <td>{{ user.phoneNumber || '-' }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
-          <td>{{ user.location?.district || '-' }}</td>
           <td>{{ user.products && user.products.length ? user.products.join(', ') : '-' }}</td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocialBrand">
