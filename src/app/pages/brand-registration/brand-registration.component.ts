@@ -29,26 +29,33 @@ export class BrandRegistrationComponent implements OnInit {
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
-      name: ['', Validators.required],
+      brandName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
-      contact: ['', Validators.required],
-      paymentOption: ['free', Validators.required],
-      state: ['', Validators.required],
-      district: ['', Validators.required],
-      languages: [[], Validators.required],
+      confirmPassword: ['', Validators.required],
+      phoneNumber: ['', Validators.required],
+      isPremium: [false],
+      location: this.fb.group({
+        state: ['', Validators.required],
+        district: [''], // optional
+        googleMapLink: ['']
+      }),
       categories: [[], Validators.required],
-      website: [''],
-      googleMapAddress: [''],
-      productImages: this.fb.array([]),
+      brandLogo: this.fb.array([]),
+      products: this.fb.array([]),
       socialMedia: this.fb.array([
         this.fb.group({
           platform: ['', Validators.required],
           handle: ['', Validators.required],
           tier: ['', Validators.required],
-          count: ['', Validators.required]
+          followersCount: ['', Validators.required]
         })
-      ])
+      ]),
+      contact: this.fb.group({
+        whatsapp: [false],
+        email: [false],
+        call: [false]
+      })
     });
 
   // Fetch dropdown data from API
@@ -58,10 +65,10 @@ export class BrandRegistrationComponent implements OnInit {
   this.configService.getLanguages().subscribe(data => this.languagesList = data);
   this.configService.getCategories().subscribe(data => this.categoriesList = data);
 
-    // Districts should be filtered by selected state
-    this.registrationForm.get('state')?.valueChanges.subscribe(stateId => {
+    // Districts should be filtered by selected state (optional)
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
       if (stateId) {
-  this.configService.getDistrictsByState(stateId).subscribe((data: any[]) => this.districts = data);
+        this.configService.getDistrictsByState(stateId).subscribe((data: any[]) => this.districts = data);
       } else {
         this.districts = [];
       }
@@ -81,7 +88,7 @@ export class BrandRegistrationComponent implements OnInit {
       platform: ['', Validators.required],
       handle: ['', Validators.required],
       tier: ['', Validators.required],
-      count: ['', Validators.required]
+      followersCount: ['', Validators.required]
     }));
   }
 
@@ -143,7 +150,28 @@ export class BrandRegistrationComponent implements OnInit {
     if (this.registrationForm.invalid) return;
     this.registrationError = '';
     this.registrationSuccess = false;
-    this.configService.registerUser(this.registrationForm.value).subscribe({
+    // Prepare payload to match backend DTO
+    const raw = this.registrationForm.value;
+    const payload: any = {
+      ...raw,
+      isPremium: raw.paymentOption === 'premium',
+      location: {
+        state: raw.location.state,
+        district: raw.location.district || undefined,
+        googleMapLink: raw.location.googleMapLink || undefined
+      },
+      socialMedia: (raw.socialMedia || []).map((sm: any) => ({
+        ...sm,
+        followersCount: Number(sm.followersCount)
+      })),
+      brandLogo: raw.brandLogo || [],
+      products: raw.products || [],
+      contact: raw.contact
+    };
+    // Remove fields not in DTO
+    delete payload.confirmPassword;
+    delete payload.paymentOption;
+    this.configService.registerUser(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;
         this.registrationForm.reset();

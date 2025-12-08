@@ -30,12 +30,17 @@ export class InfluencerRegistrationComponent implements OnInit {
   ngOnInit() {
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
+      username: ['', Validators.required],
+      phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
-      contact: ['', Validators.required],
+      confirmPassword: ['', Validators.required],
+      isPremium: [false],
       paymentOption: ['free', Validators.required],
-      state: ['', Validators.required],
-      // district: ['', Validators.required],
+      location: this.fb.group({
+        state: ['', Validators.required],
+        district: [''] // optional
+      }),
       languages: [[], Validators.required],
       categories: [[], Validators.required],
       profileImages: this.fb.array([]),
@@ -44,9 +49,14 @@ export class InfluencerRegistrationComponent implements OnInit {
           platform: ['', Validators.required],
           handle: ['', Validators.required],
           tier: ['', Validators.required],
-          count: ['', Validators.required]
+          followersCount: ['', Validators.required]
         })
-      ])
+      ]),
+      contact: this.fb.group({
+        whatsapp: [false],
+        email: [false],
+        call: [false]
+      })
     });
   // removed misplaced property declarations
 
@@ -57,10 +67,10 @@ export class InfluencerRegistrationComponent implements OnInit {
   this.configService.getLanguages().subscribe(data => this.languagesList = data);
   this.configService.getCategories().subscribe(data => this.categoriesList = data);
 
-    // Districts should be filtered by selected state
-    this.registrationForm.get('state')?.valueChanges.subscribe(stateId => {
+    // Districts should be filtered by selected state (optional)
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
       if (stateId) {
-  this.configService.getDistrictsByState(stateId).subscribe((data: any[]) => this.districts = data);
+        this.configService.getDistrictsByState(stateId).subscribe((data: any[]) => this.districts = data);
       } else {
         this.districts = [];
       }
@@ -100,7 +110,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       platform: ['', Validators.required],
       handle: ['', Validators.required],
       tier: ['', Validators.required],
-      count: ['', Validators.required]
+      followersCount: ['', Validators.required]
     }));
   }
 
@@ -145,8 +155,26 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.registrationForm.invalid) return;
     this.registrationError = '';
     this.registrationSuccess = false;
-    // Example API call (replace with your actual endpoint)
-  this.configService.registerUser(this.registrationForm.value).subscribe({
+    // Prepare payload to match backend DTO
+    const raw = this.registrationForm.value;
+    const payload: any = {
+      ...raw,
+      isPremium: raw.paymentOption === 'premium',
+      location: {
+        state: raw.location.state,
+        district: raw.location.district || undefined // allow undefined
+      },
+      socialMedia: (raw.socialMedia || []).map((sm: any) => ({
+        ...sm,
+        followersCount: Number(sm.followersCount)
+      })),
+      profileImages: raw.profileImages || [],
+      contact: raw.contact
+    };
+    // Remove fields not in DTO
+    delete payload.confirmPassword;
+    delete payload.paymentOption;
+    this.configService.registerUser(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;
         this.registrationForm.reset();

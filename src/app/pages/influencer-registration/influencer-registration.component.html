@@ -1,53 +1,88 @@
+<div class="container">
 <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+ <div class="row my-5">
+  <div class="col-6">
+    <label>Username</label>
+    <input formControlName="username" type="text" class="form-control w-100" required />
+  </div>
+  <div class="col-6">
+    <label>Phone Number</label>
+    <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+  </div>
 
-  <label>Name</label>
-  <input formControlName="name" type="text" required />
+  <div class="col-6">
+    <label>Premium</label>
+    <input type="checkbox" formControlName="isPremium" />
+  </div>
 
+  <div class="col-6" formGroupName="contact">
+    <label>Contact Options</label>
+    <label><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
+    <label><input type="checkbox" formControlName="email" /> Email</label>
+    <label><input type="checkbox" formControlName="call" /> Call</label>
+  </div>
 
-  <label>Email</label>
-  <input formControlName="email" type="email" required />
+  <div class="col-6">
+    <label>Name</label>
+    <input formControlName="name" type="text" class="form-control w-100" required />
+  </div>
 
-  <label>Password</label>
-  <input formControlName="password" type="password" required />
+  <!-- Removed duplicate Username and Phone Number fields -->
 
-  <label>Password</label>
-  <input formControlName="password" type="password" required />
+  <div class="col-6">
+    <label>Email</label>
+    <input formControlName="email" type="email" class="form-control w-100" required />
+  </div>
 
-  <label>Contact</label>
-  <input formControlName="contact" type="text" required />
+  <div class="col-6">
+    <label>Password</label>
+    <input formControlName="password" type="password" class="form-control w-100" required />
+  </div>
+  <div class="col-6">
+    <label>Confirm Password</label>
+    <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
+  </div>
 
-  <label>Payment Option</label>
-  <select formControlName="paymentOption">
-    <option value="free">Free (Contact/Social hidden)</option>
-    <option value="premium">Premium (Contact/Social visible, 3 images)</option>
-  </select>
+  <div class="col-6">
+    <label>Payment Option</label>
+    <select formControlName="paymentOption" class="form-control w-100">
+      <option value="free">Free (Contact/Social hidden)</option>
+      <option value="premium">Premium (Contact/Social visible, 3 images)</option>
+    </select>
+  </div>
 
-  <label>State</label>
-  <select formControlName="state">
-    <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
-  </select>
+  <div class="col-6" formGroupName="location">
+    <label>State</label>
+    <select formControlName="state" class="form-control w-100">
+      <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+    </select>
+  </div>
+  <div class="col-6" formGroupName="location">
+    <label>District (optional)</label>
+    <input formControlName="district" type="text" class="form-control w-100" placeholder="District (optional)" />
+  </div>
 
-
-
-  <div>
+  <div class="col-6">
     <label>Languages</label>
-    <select formControlName="languages" multiple>
+    <select formControlName="languages" multiple class="form-control w-100">
       <option *ngFor="let lang of languagesList" [value]="lang._id">{{ lang.name }}</option>
     </select>
+  </div>
 
+  <div class="col-6">
     <label>Categories</label>
-    <select formControlName="categories" multiple>
+    <select formControlName="categories" multiple class="form-control w-100">
       <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
     </select>
   </div>
 
 
     <!-- Profile Images: Free user can upload 1, Premium can upload up to 3 -->
-    <div>
+    <div class="col-12">
       <label>Profile Images</label>
       <div formArrayName="profileImages">
         <div *ngFor="let imgCtrl of profileImagesFormArray.controls; let i = index">
-          <input [formControlName]="i" type="text" placeholder="Image URL" />
+          <input [formControlName]="i" type="text" class="form-control w-100" placeholder="Image URL" />
           <button type="button" (click)="removeProfileImage(i)">Remove</button>
         </div>
         <button type="button"
@@ -59,11 +94,11 @@
     </div>
 
     <!-- Social Media: Only allow adding for premium, hide for free -->
-    <div formArrayName="socialMedia">
+    <div class="col-12" formArrayName="socialMedia">
       <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i">
         <label>Social Media</label>
         <select formControlName="platform">
-          <option *ngFor="let s of socialMediaList" [value]="s.name">{{ s.name }}</option>
+          <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
         </select>
         <label>Handle Name</label>
         <input formControlName="handle" type="text" required />
@@ -72,7 +107,7 @@
           <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
         </select>
         <label>Followers/Subscribers Count</label>
-        <input formControlName="count" type="number" required />
+        <input formControlName="followersCount" type="number" required />
         <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
       </div>
       <button type="button" (click)="addSocialMedia()">Add Social Media</button>
@@ -81,7 +116,10 @@
     <!-- Apply similar logic for brand registration forms: restrict image uploads and hide social media for free users -->
 
   <button type="submit">Register</button>
+</div>
+</form>
 
+</div>
 
 
 <div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
