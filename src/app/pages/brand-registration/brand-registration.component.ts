@@ -18,7 +18,6 @@ export class BrandRegistrationComponent implements OnInit {
   registrationError = '';
   registrationForm!: FormGroup;
   states: any[] = [];
-  districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
 
@@ -37,7 +36,6 @@ export class BrandRegistrationComponent implements OnInit {
       isPremium: [false],
       location: this.fb.group({
         state: ['', Validators.required],
-        district: [''], // optional
         googleMapLink: ['']
       }),
       categories: [[], Validators.required],
@@ -64,16 +62,6 @@ export class BrandRegistrationComponent implements OnInit {
   this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
   this.configService.getLanguages().subscribe(data => this.languagesList = data);
   this.configService.getCategories().subscribe(data => this.categoriesList = data);
-
-    // Districts should be filtered by selected state (optional)
-    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
-      if (stateId) {
-        this.configService.getDistrictsByState(stateId).subscribe((data: any[]) => this.districts = data);
-      } else {
-        this.districts = [];
-      }
-    });
-
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
       this.isPremium = val === 'premium';
     });
@@ -157,7 +145,6 @@ export class BrandRegistrationComponent implements OnInit {
       isPremium: raw.paymentOption === 'premium',
       location: {
         state: raw.location.state,
-        district: raw.location.district || undefined,
         googleMapLink: raw.location.googleMapLink || undefined
       },
       socialMedia: (raw.socialMedia || []).map((sm: any) => ({

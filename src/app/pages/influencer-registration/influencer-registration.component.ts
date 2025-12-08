@@ -17,7 +17,6 @@ export class InfluencerRegistrationComponent implements OnInit {
   registrationError = '';
   registrationForm!: FormGroup;
   states: any[] = [];
-  districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
 
@@ -38,8 +37,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       isPremium: [false],
       paymentOption: ['free', Validators.required],
       location: this.fb.group({
-        state: ['', Validators.required],
-        district: [''] // optional
+        state: ['', Validators.required]
       }),
       languages: [[], Validators.required],
       categories: [[], Validators.required],
@@ -58,23 +56,14 @@ export class InfluencerRegistrationComponent implements OnInit {
         call: [false]
       })
     });
-  // removed misplaced property declarations
+    // removed misplaced property declarations
 
-  // Fetch dropdown data from API
-  this.configService.getStates().subscribe(data => this.states = data);
-  this.configService.getTiers().subscribe(data => this.tiers = data);
-  this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
-  this.configService.getLanguages().subscribe(data => this.languagesList = data);
-  this.configService.getCategories().subscribe(data => this.categoriesList = data);
-
-    // Districts should be filtered by selected state (optional)
-    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
-      if (stateId) {
-        this.configService.getDistrictsByState(stateId).subscribe((data: any[]) => this.districts = data);
-      } else {
-        this.districts = [];
-      }
-    });
+    // Fetch dropdown data from API
+    this.configService.getStates().subscribe(data => this.states = data);
+    this.configService.getTiers().subscribe(data => this.tiers = data);
+    this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
+    this.configService.getLanguages().subscribe(data => this.languagesList = data);
+    this.configService.getCategories().subscribe(data => this.categoriesList = data);
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
       this.isPremium = val === 'premium';
@@ -161,8 +150,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       ...raw,
       isPremium: raw.paymentOption === 'premium',
       location: {
-        state: raw.location.state,
-        district: raw.location.district || undefined // allow undefined
+        state: raw.location.state
       },
       socialMedia: (raw.socialMedia || []).map((sm: any) => ({
         ...sm,

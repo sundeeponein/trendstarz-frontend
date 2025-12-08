@@ -57,10 +57,6 @@
       <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
     </select>
   </div>
-  <div class="col-6" formGroupName="location">
-    <label>District (optional)</label>
-    <input formControlName="district" type="text" class="form-control w-100" placeholder="District (optional)" />
-  </div>
 
   <div class="col-6">
     <label>Languages</label>
@@ -132,7 +128,6 @@
 <div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" style="color:red">Valid email is required.</div>
 <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
 <div *ngIf="registrationForm.get('state')?.invalid && registrationForm.get('state')?.touched" style="color:red">State is required.</div>
-<div *ngIf="registrationForm.get('district')?.invalid && registrationForm.get('district')?.touched" style="color:red">District is required.</div>
 <div *ngIf="registrationForm.get('languages')?.invalid && registrationForm.get('languages')?.touched" style="color:red">Select at least one language.</div>
 <div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
 <div *ngIf="profileImagesFormArray.length === 0" style="color:red">Add at least one profile image.</div>

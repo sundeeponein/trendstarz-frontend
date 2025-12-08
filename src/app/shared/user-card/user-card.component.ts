@@ -18,7 +18,6 @@ export class UserCardComponent {
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
   @Input() state = '';
-  @Input() district = '';
   @Input() socialMedia: any[] = [];
   @Input() isPremium = false;
   @Input() productImages: string[] = [];

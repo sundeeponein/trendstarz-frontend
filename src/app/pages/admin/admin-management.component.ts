@@ -56,8 +56,7 @@ export class AdminManagementComponent implements OnInit {
       this.config.locations = Array.isArray(data)
         ? data.map((state: any) => ({
             ...state,
-            visible: !!state.showInFrontend,
-            districts: (state.districts || []).map((dist: any) => ({ ...dist, visible: !!dist.showInFrontend }))
+            visible: !!state.showInFrontend
           }))
         : [];
     });
@@ -86,9 +85,6 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'state') {
       const state = this.config.locations[idx];
       state.visible = !state.visible;
-    } else if (type === 'district' && subIdx !== undefined) {
-      const dist = this.config.locations[idx].districts[subIdx];
-      dist.visible = !dist.visible;
     }
   }
 
@@ -103,8 +99,7 @@ export class AdminManagementComponent implements OnInit {
       socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
       categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
       languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
-      states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
-      districts: ([] as any[]).concat(...this.config.locations.map((s: any) => (s.districts || []).map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))))
+      states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible }))
     };
     this.http.post(baseUrl + '/admin/batch-update-visibility', payload)
       .subscribe({

@@ -27,11 +27,6 @@
     <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
   </select>
 
-  <label>District</label>
-  <select formControlName="district">
-    <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
-  </select>
-
   <div *ngIf="isPremium">
     <label>Website</label>
     <input formControlName="website" type="url" />

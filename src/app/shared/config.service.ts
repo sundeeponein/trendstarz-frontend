@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
   registerUser(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/users/register`, data);
+    return this.http.post(`${this.apiUrl}/auth/register-influencer`, data);
   }
   private apiUrl = environment.apiBaseUrl || '/api';
 
@@ -45,7 +45,4 @@ export class ConfigService {
     return this.http.get<any[]>(`${this.apiUrl}/social-media`);
   }
 
-  getDistrictsByState(stateId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/districts?state=${stateId}`);
-  }
 }
