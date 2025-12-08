@@ -40,8 +40,12 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadConfig() {
-    // Fetch all management data from backend using environment.apiBaseUrl
-    const baseUrl = (window as any).environment?.apiBaseUrl || 'https://trendstarz-backend-on1h.onrender.com';
+    // Use environment variable for baseUrl
+    const baseUrl = (window as any).environment?.apiBaseUrl;
+    if (!baseUrl) {
+      console.error('API base URL is not set in environment.');
+      return;
+    }
     this.http.get(baseUrl + '/social-media').subscribe((data: any) => {
       this.config.socialMediaPlatforms = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
     });
@@ -89,7 +93,11 @@ export class AdminManagementComponent implements OnInit {
   }
 
   saveAllVisibility() {
-    const baseUrl = (window as any).environment?.apiBaseUrl || 'https://trendstarz-backend-on1h.onrender.com';
+    const baseUrl = (window as any).environment?.apiBaseUrl;
+    if (!baseUrl) {
+      console.error('API base URL is not set in environment.');
+      return;
+    }
     const payload = {
       tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })),
       socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
