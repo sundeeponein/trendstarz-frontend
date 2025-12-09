@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ConfigService } from '../../shared/config.service';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -24,7 +25,7 @@ export class AdminUserTableComponent implements OnInit {
   premiumDuration: '1m' | '3m' | '1y' | '' = '';
   premiumIsPremium = true;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private configService: ConfigService) {}
 
   ngOnInit() {
     this.fetchUsers();
@@ -36,10 +37,10 @@ export class AdminUserTableComponent implements OnInit {
       token = localStorage.getItem('token') || '';
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get(`${environment.apiBaseUrl}/users/influencers`, headers)
+    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, headers)
       .pipe(timeout(5000), catchError(err => { console.error('influencers fetch failed', err); return of([]); }))
       .subscribe((res: any) => this.influencers = res || []);
-    this.http.get(`${environment.apiBaseUrl}/users/brands`, headers)
+    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, headers)
       .pipe(timeout(5000), catchError(err => { console.error('brands fetch failed', err); return of([]); }))
       .subscribe((res: any) => this.brands = res || []);
   }

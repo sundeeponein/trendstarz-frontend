@@ -1,25 +1,15 @@
 <div class="container">
 <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
  <div class="row my-5">
+
   <div class="col-6">
     <label>Username</label>
     <input formControlName="username" type="text" class="form-control w-100" required />
   </div>
+
   <div class="col-6">
     <label>Phone Number</label>
     <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
-  </div>
-
-  <div class="col-6">
-    <label>Premium</label>
-    <input type="checkbox" formControlName="isPremium" />
-  </div>
-
-  <div class="col-6" formGroupName="contact">
-    <label>Contact Options</label>
-    <label><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
-    <label><input type="checkbox" formControlName="email" /> Email</label>
-    <label><input type="checkbox" formControlName="call" /> Call</label>
   </div>
 
   <div class="col-6">
@@ -74,7 +64,7 @@
 
 
     <!-- Profile Images: Free user can upload 1, Premium can upload up to 3 -->
-    <div class="col-12">
+    <div class="col-12 mt-3">
       <label>Profile Images</label>
       <div formArrayName="profileImages">
         <div *ngFor="let imgCtrl of profileImagesFormArray.controls; let i = index">
@@ -83,36 +73,55 @@
         </div>
         <button type="button"
           (click)="addProfileImage()"
-          [disabled]="isPremium ? profileImagesFormArray.length >= 3 : profileImagesFormArray.length >= 1">
+          [disabled]="profileImagesFormArray.length >= 1">
           Add Image
         </button>
       </div>
     </div>
 
     <!-- Social Media: Only allow adding for premium, hide for free -->
-    <div class="col-12" formArrayName="socialMedia">
-      <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i">
+    <div class="col-12 mt-3" formArrayName="socialMedia">
+      <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
         <label>Social Media</label>
-        <select formControlName="platform">
-          <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-        </select>
-        <label>Handle Name</label>
-        <input formControlName="handle" type="text" required />
-        <label>Tier</label>
-        <select formControlName="tier">
-          <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-        </select>
-        <label>Followers/Subscribers Count</label>
-        <input formControlName="followersCount" type="number" required />
-        <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+        <div class="col-3">
+          <label>Social Platform</label>
+          <select formControlName="platform"  class="form-control w-100">
+            <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
+          </select>
+        </div>
+        <div class="col-3">
+          <label>Handle Name</label>
+          <input formControlName="handle" type="text" required  class="form-control w-100" />
+        </div>
+        <div class="col-3">
+          <label>Tier</label>
+          <select formControlName="tier" class="form-control w-100">
+            <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+          </select>
+        </div>
+        <div class="col-3">
+          <label>Followers/Subscribers Count</label>
+          <input formControlName="followersCount" type="number" required  class="form-control w-100" />
+          <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+        </div>
       </div>
       <button type="button" (click)="addSocialMedia()">Add Social Media</button>
     </div>
 
     <!-- Apply similar logic for brand registration forms: restrict image uploads and hide social media for free users -->
 
-  <button type="submit">Register</button>
-</div>
+  <div class="col-6 mt-3" formGroupName="contact">
+    <label>Contact Options</label>
+    <div class="row">
+      <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
+      <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
+      <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+    </div>
+  </div>
+
+  <div class="col-12 mt-3"><button type="submit" class="btn btn-primary">Register</button></div>
+
+  </div>
 </form>
 
 </div>

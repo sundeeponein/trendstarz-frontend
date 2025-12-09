@@ -20,7 +20,6 @@ export class InfluencerRegistrationComponent implements OnInit {
   socialMediaList: any[] = [];
   tiers: any[] = [];
 
-  isPremium = false;
   profileImages: string[] = [];
   languagesList: any[] = [];
   categoriesList: any[] = [];
@@ -34,7 +33,6 @@ export class InfluencerRegistrationComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
       confirmPassword: ['', Validators.required],
-      isPremium: [false],
       paymentOption: ['free', Validators.required],
       location: this.fb.group({
         state: ['', Validators.required]
@@ -65,9 +63,6 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
 
-    this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
-      this.isPremium = val === 'premium';
-    });
   }
 
   get profileImagesFormArray() {
@@ -75,7 +70,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   addProfileImage() {
-    const maxImages = this.isPremium ? 3 : 1;
+  const maxImages = 1;
     if (this.profileImagesFormArray.length < maxImages) {
       this.profileImagesFormArray.push(this.fb.control('', Validators.required));
     }
@@ -146,23 +141,40 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationSuccess = false;
     // Prepare payload to match backend DTO
     const raw = this.registrationForm.value;
+    // Map state ID to name
+    const stateObj = this.states.find(s => s._id === raw.location.state);
+    // Map language IDs to names
+    const languageNames = (raw.languages || []).map((id: string) => {
+      const lang = this.languagesList.find((l: any) => l._id === id);
+      return lang ? lang.name : id;
+    });
+    // Map category IDs to names
+    const categoryNames = (raw.categories || []).map((id: string) => {
+      const cat = this.categoriesList.find((c: any) => c._id === id);
+      return cat ? cat.name : id;
+    });
+    // Map social media platform ID to name
+    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
+      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+      return {
+        ...sm,
+        platform: platformObj ? platformObj.name : sm.platform,
+        followersCount: Number(sm.followersCount)
+      };
+    });
     const payload: any = {
       ...raw,
-      isPremium: raw.paymentOption === 'premium',
       location: {
-        state: raw.location.state
+        state: stateObj ? stateObj.name : raw.location.state
       },
-      socialMedia: (raw.socialMedia || []).map((sm: any) => ({
-        ...sm,
-        followersCount: Number(sm.followersCount)
-      })),
+      languages: languageNames,
+      categories: categoryNames,
+      socialMedia,
       profileImages: raw.profileImages || [],
       contact: raw.contact
     };
-    // Remove fields not in DTO
-    delete payload.confirmPassword;
-    delete payload.paymentOption;
-    this.configService.registerUser(payload).subscribe({
+    console.log('Payload sent to backend:', payload);
+    this.configService.registerInfluencer(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;
         this.registrationForm.reset();

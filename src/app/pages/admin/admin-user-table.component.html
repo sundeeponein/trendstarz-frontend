@@ -3,7 +3,7 @@
   <div class="admin-tabs">
     <button [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
     <button [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-      <button (click)="logout()">Logout</button>
+    <button (click)="logout()">Logout</button>
   </div>
   <div *ngIf="activeTab === 'influencer'">
     <table class="table table-hover admin-table">
