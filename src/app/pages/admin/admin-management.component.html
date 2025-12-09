@@ -18,7 +18,9 @@
     <li *ngFor="let sm of config.socialMediaPlatforms; let i = index">
       {{ sm.name }}
       <label>
-        <input type="checkbox" [checked]="sm.visible" (change)="toggleVisible('socialMedia', i)"> Show
+        <input type="checkbox" [checked]="sm.visible" (change)="toggleVisible('socialMedia', i)">
+        <span *ngIf="sm.visible; else hideSM">Show</span>
+        <ng-template #hideSM>Hide</ng-template>
       </label>
     </li>
   </ul>
@@ -31,7 +33,9 @@
     <li *ngFor="let cat of config.categories; let i = index">
       {{ cat.name }}
       <label>
-        <input type="checkbox" [checked]="cat.visible" (change)="toggleVisible('categories', i)"> Show
+        <input type="checkbox" [checked]="cat.visible" (change)="toggleVisible('categories', i)">
+        <span *ngIf="cat.visible; else hideCat">Show</span>
+        <ng-template #hideCat>Hide</ng-template>
       </label>
     </li>
   </ul>
@@ -44,7 +48,9 @@
     <li *ngFor="let state of config.locations; let i = index">
       <strong>{{ state.name }}</strong>
       <label>
-        <input type="checkbox" [checked]="state.visible" (change)="toggleVisible('state', i)"> Show
+        <input type="checkbox" [checked]="state.visible" (change)="toggleVisible('state', i)">
+        <span *ngIf="state.visible; else hideState">Show</span>
+        <ng-template #hideState>Hide</ng-template>
       </label>
     </li>
   </ul>
@@ -57,7 +63,9 @@
     <li *ngFor="let lang of config.languages; let i = index">
       {{ lang.name }}
       <label>
-        <input type="checkbox" [checked]="lang.visible" (change)="toggleVisible('languages', i)"> Show
+        <input type="checkbox" [checked]="lang.visible" (change)="toggleVisible('languages', i)">
+        <span *ngIf="lang.visible; else hideLang">Show</span>
+        <ng-template #hideLang>Hide</ng-template>
       </label>
     </li>
   </ul>
@@ -70,7 +78,9 @@
     <li *ngFor="let tier of config.tiers; let i = index">
       {{ tier.name }}
       <label>
-        <input type="checkbox" [checked]="tier.visible" (change)="toggleVisible('tiers', i)"> Show
+        <input type="checkbox" [checked]="tier.visible" (change)="toggleVisible('tiers', i)">
+        <span *ngIf="tier.visible; else hideTier">Show</span>
+        <ng-template #hideTier>Hide</ng-template>
       </label>
     </li>
   </ul>

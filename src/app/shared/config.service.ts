@@ -6,12 +6,17 @@ import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
-  registerUser(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/register-influencer`, data);
-  }
   private apiUrl = environment.apiBaseUrl || '/api';
 
   constructor(private http: HttpClient) {}
+
+  registerInfluencer(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/register-influencer`, data);
+  }
+
+  registerBrand(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/register-brand`, data);
+  }
 
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categories`);
@@ -28,7 +33,7 @@ export class ConfigService {
       catchError(() => this.http.get<any[]>('assets/sample-users.json'))
     );
   }
-  
+
   getStates(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/states`);
   }
@@ -45,4 +50,13 @@ export class ConfigService {
     return this.http.get<any[]>(`${this.apiUrl}/social-media`);
   }
 
+  getInfluencers(token: string): Observable<any[]> {
+  const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  return this.http.get<any[]>(`${this.apiUrl}/users/influencers`, headers);
+  }
+
+  getBrands(token: string): Observable<any[]> {
+  const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  return this.http.get<any[]>(`${this.apiUrl}/users/brands`, headers);
+  }
 }

@@ -34,9 +34,7 @@ export class LoginComponent {
         if (!res) return;
         localStorage.setItem('token', res.token);
         if (res.userType === 'admin') {
-          this.router.navigate(['/']).then(() => {
-            this.router.navigate(['/admin']);
-          });
+          this.router.navigate(['/admin']);
         } else {
           this.router.navigate(['/']);
         }

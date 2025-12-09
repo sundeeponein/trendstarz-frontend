@@ -2,6 +2,7 @@ import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-management',
@@ -40,12 +41,7 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadConfig() {
-    // Use environment variable for baseUrl
-    const baseUrl = (window as any).environment?.apiBaseUrl;
-    if (!baseUrl) {
-      console.error('API base URL is not set in environment.');
-      return;
-    }
+    const baseUrl = environment.apiBaseUrl;
     this.http.get(baseUrl + '/social-media').subscribe((data: any) => {
       this.config.socialMediaPlatforms = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
     });
@@ -89,11 +85,12 @@ export class AdminManagementComponent implements OnInit {
   }
 
   saveAllVisibility() {
-    const baseUrl = (window as any).environment?.apiBaseUrl;
+    const baseUrl = environment.apiBaseUrl;
     if (!baseUrl) {
       console.error('API base URL is not set in environment.');
       return;
     }
+
     const payload = {
       tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })),
       socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
@@ -101,7 +98,10 @@ export class AdminManagementComponent implements OnInit {
       languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
       states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible }))
     };
-    this.http.post(baseUrl + '/admin/batch-update-visibility', payload)
+    console.log('[BatchUpdate] Payload:', payload);
+    const token = localStorage.getItem('token');
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.post(baseUrl + '/admin/batch-update-visibility', payload, headers)
       .subscribe({
         next: () => {
           alert('Visibility updated successfully!');

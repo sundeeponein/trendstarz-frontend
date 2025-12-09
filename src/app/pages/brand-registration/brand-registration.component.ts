@@ -34,13 +34,18 @@ export class BrandRegistrationComponent implements OnInit {
       confirmPassword: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       isPremium: [false],
+      paymentOption: ['', Validators.required],
       location: this.fb.group({
         state: ['', Validators.required],
         googleMapLink: ['']
       }),
       categories: [[], Validators.required],
+      languages: [[], Validators.required],
+      website: [''],
+      googleMapAddress: [''],
       brandLogo: this.fb.array([]),
       products: this.fb.array([]),
+      productImages: this.fb.array([]),
       socialMedia: this.fb.array([
         this.fb.group({
           platform: ['', Validators.required],
@@ -53,7 +58,7 @@ export class BrandRegistrationComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false]
-      })
+      }),
     });
 
   // Fetch dropdown data from API
@@ -158,7 +163,7 @@ export class BrandRegistrationComponent implements OnInit {
     // Remove fields not in DTO
     delete payload.confirmPassword;
     delete payload.paymentOption;
-    this.configService.registerUser(payload).subscribe({
+    (this.configService as any).registerUser(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;
         this.registrationForm.reset();

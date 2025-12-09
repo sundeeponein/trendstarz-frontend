@@ -4,8 +4,6 @@
       <div class="col-6">
         <label>Brand Name</label>
         <input formControlName="brandName" type="text" class="form-control w-100" required />
-        <label>Premium</label>
-        <input type="checkbox" formControlName="isPremium" />
       </div>
 
       <div class="col-6">
@@ -13,18 +11,14 @@
         <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
       </div>
 
-
       <div class="col-6" formGroupName="location">
-        
         <label>State</label>
         <select formControlName="state" class="form-control w-100">
           <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
         </select>
       </div>
 
-
       <div class="col-6">
-        
         <label>Email</label>
         <input formControlName="email" type="email" class="form-control w-100" required />
 
@@ -35,15 +29,6 @@
 
       </div>
 
-      <div class="col-6" formGroupName="contact">
-        <label>Contact</label>
-        <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
-        
-        <label>Contact Options</label>
-        <label><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
-        <label><input type="checkbox" formControlName="email" /> Email</label>
-        <label><input type="checkbox" formControlName="call" /> Call</label>
-      </div>
 
       <div class="col-6">
         <label>Payment Option</label>
@@ -95,23 +80,43 @@
 
 
       <!-- Social Media: Only allow adding for premium, hide for free -->
-      <div class="col-6" formArrayName="socialMedia">
-        <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i">
+      <div class="col-12 mt-3" formArrayName="socialMedia">
+        <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
           <label>Social Media</label>
-          <select formControlName="platform">
-            <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-          </select>
-          <label>Handle Name</label>
-          <input formControlName="handle" type="text" required />
-          <label>Tier</label>
-          <select formControlName="tier">
-            <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-          </select>
-          <label>Followers/Subscribers Count</label>
-          <input formControlName="followersCount" type="number" required />
-          <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+          <div class="col-3">
+            <label>Social Platform</label>
+            <select formControlName="platform"  class="form-control w-100">
+              <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Handle Name</label>
+            <input formControlName="handle" type="text" required  class="form-control w-100" />
+          </div>
+          <div class="col-3">
+            <label>Tier</label>
+            <select formControlName="tier" class="form-control w-100">
+              <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Followers/Subscribers Count</label>
+            <input formControlName="followersCount" type="number" required  class="form-control w-100" />
+            <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+          </div>
         </div>
         <button type="button" (click)="addSocialMedia()">Add Social Media</button>
+      </div>
+
+      <div class="col-12 mt-3">
+        <div class="col-6 row" formGroupName="contact">
+          <label>Contact Options</label>
+          <div class="row">
+            <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
+            <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
+            <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+          </div>
+        </div>
       </div>
 
       <button type="submit">Register</button>
