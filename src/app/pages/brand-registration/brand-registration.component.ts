@@ -163,7 +163,7 @@ export class BrandRegistrationComponent implements OnInit {
     // Remove fields not in DTO
     delete payload.confirmPassword;
     delete payload.paymentOption;
-    (this.configService as any).registerUser(payload).subscribe({
+  this.configService.registerBrand(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;
         this.registrationForm.reset();

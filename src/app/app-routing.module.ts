@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './pages/auth/login.component';
-import { AdminUserTableComponent } from './pages/admin/admin-user-table.component';
-import { NavbarLayoutComponent } from './layout/navbar-layout.component';
-import { NoNavbarLayoutComponent } from './layout/no-navbar-layout.component';
+import { AdminUserTableComponent } from './pages/admin/admin-users-table/admin-user-table.component';
+import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.component';
+import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.component';
 
-import { AdminManagementComponent } from './pages/admin/admin-management.component';
-import { AdminLayoutComponent } from './layout/admin-layout.component';
+import { AdminManagementComponent } from './pages/admin/admin-management/admin-management.component';
+import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
 const routes: Routes = [
   {

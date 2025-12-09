@@ -7,6 +7,11 @@
     <label>Password</label>
     <input formControlName="password" type="password" />
     <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error">Password is required</div>
+    
     <button type="submit" [disabled]="loginForm.invalid">Login</button>
+
+    <div *ngIf="errorMsg" class="error">
+      {{ errorMsg === 'Your account is pending approval. Please wait for admin to activate your account.' ? 'Admin needs to verify your ID. Your account is in pending/verification status.' : errorMsg }}
+    </div>
   </form>
 </div>

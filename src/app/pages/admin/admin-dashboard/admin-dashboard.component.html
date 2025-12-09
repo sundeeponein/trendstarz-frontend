@@ -1,0 +1,51 @@
+<div class="admin-dashboard container py-4">
+  <h2 class="mb-4">Admin Dashboard</h2>
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">Influencers</div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>Registered</span>
+            <span class="badge bg-primary">{{ influencerCount }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>Activated</span>
+            <span class="badge bg-success">{{ influencerActivated }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>Pending</span>
+            <span class="badge bg-warning text-dark">{{ influencerPending }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Premium Users</span>
+            <span class="badge bg-info text-dark">{{ influencerPremium }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-secondary text-white">Brands</div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>Registered</span>
+            <span class="badge bg-primary">{{ brandCount }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>Activated</span>
+            <span class="badge bg-success">{{ brandActivated }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>Pending</span>
+            <span class="badge bg-warning text-dark">{{ brandPending }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Premium Users</span>
+            <span class="badge bg-info text-dark">{{ brandPremium }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

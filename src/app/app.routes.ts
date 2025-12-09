@@ -6,9 +6,9 @@ import { PaymentComponent } from './pages/payment/payment.component';
 import { StripePaymentComponent } from './pages/payment/stripe-payment.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { LoginComponent } from './pages/auth/login.component';
-import { AdminUserTableComponent } from './pages/admin/admin-user-table.component';
-import { AdminManagementComponent } from './pages/admin/admin-management.component';
-import { AdminLayoutComponent } from './layout/admin-layout.component';
+import { AdminUserTableComponent } from './pages/admin/admin-users-table/admin-user-table.component';
+import { AdminManagementComponent } from './pages/admin/admin-management/admin-management.component';
+import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
 import { Component } from '@angular/core';
 export const DummyLogoutComponent = Component({
@@ -27,11 +27,12 @@ export const routes: Routes = [
 	{
 		path: 'admin',
 		component: AdminLayoutComponent,
-		children: [
-			{ path: '', redirectTo: 'admin-user-table', pathMatch: 'full' },
-			{ path: 'admin-user-table', component: AdminUserTableComponent },
-			{ path: 'admin-management', component: AdminManagementComponent },
-		]
+		   children: [
+			   { path: '', redirectTo: 'admin-dashboard', pathMatch: 'full' },
+			   { path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
+			   { path: 'admin-user-table', component: AdminUserTableComponent },
+			   { path: 'admin-management', component: AdminManagementComponent },
+		   ]
 	},
 	{ path: 'logout', component: DummyLogoutComponent },
 	// Add other routes as needed

@@ -1,0 +1,28 @@
+<nav class="admin-navbar">
+  <a routerLink="/admin/admin-dashboard" class="logo">TrendStar - Admin</a>
+  <ul>
+    <li><a routerLink="/admin/admin-user-table" routerLinkActive="active">Admin Users</a></li>
+    <li><a routerLink="/admin/admin-management" routerLinkActive="active">Admin Management</a></li>
+  </ul>
+  <div class="admin-profile" *ngIf="adminUser">
+    <div class="btn-group">
+      <button class="btn btn-secondary btn-sm" type="button">
+        <img [src]="adminUser.profileImage || 'assets/default-profile.png'" class="admin-avatar" width="32" height="32" />
+        <span>{{ adminUser.name }}</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="visually-hidden">Toggle Dropdown</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+  <div *ngIf="!adminUser">
+    <a routerLink="/login">Login</a>
+  </div>
+  
+</nav>
+<div class="container-fluid p-4">
+  <router-outlet></router-outlet>
+</div>
