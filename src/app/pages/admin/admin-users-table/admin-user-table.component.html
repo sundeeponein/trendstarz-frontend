@@ -44,12 +44,22 @@
           <td>{{ user.isPremium ? 'Premium' : 'Free' }}</td>
           <td>{{ user.status || '-' }}</td>
           <td class="actions">
-            <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>
-            <button (click)="declineUser(user._id)">Decline</button>
-            <button (click)="deleteUser(user._id)">Delete</button>
-            <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
-            <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
-              <button (click)="setPremium(user._id, !user.isPremium)">{{ user.isPremium ? 'Set Free' : 'Set Premium' }}</button>
+            <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
+              <i class="bi bi-check-circle-fill"></i> Accept
+            </button>
+            <button (click)="declineUser(user._id)" title="Decline">
+              <i class="bi bi-x-circle-fill"></i> Decline
+            </button>
+            <button (click)="deleteUser(user._id)" title="Delete">
+              <i class="bi bi-trash-fill"></i> Delete
+            </button>
+            <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)" title="Restore">
+              <i class="bi bi-arrow-counterclockwise"></i> Restore
+            </button>
+            <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)" title="Delete Permanently">
+              <i class="bi bi-x-octagon-fill"></i> Delete Permanently
+            </button>
+            <button (click)="setPremium(user._id, !user.isPremium)">{{ user.isPremium ? 'Set Free' : 'Set Premium' }}</button>
           </td>
         </tr>
       </tbody>
@@ -122,10 +132,11 @@
           <td>{{ user.status === 'accepted' ? 'Accepted' : (user.status || '-') }}</td>
           <td class="actions">
             <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>
-            <button (click)="declineUser(user._id)" [disabled]="user.status === 'declined'">Decline</button>
+            <button (click)="declineUser(user._id)">Decline</button>
             <button (click)="deleteUser(user._id)">Delete</button>
             <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
             <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
+            <button (click)="setPremium(user._id, !user.isPremium)">{{ user.isPremium ? 'Set Free' : 'Set Premium' }}</button>
           </td>
         </tr>
       </tbody>

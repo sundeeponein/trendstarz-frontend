@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-navbar-layout',
@@ -9,12 +10,16 @@ import { RouterModule } from '@angular/router';
   templateUrl: './navbar-layout.component.html'
 })
 export class NavbarLayoutComponent {
-  user: any = null;
-  dropdownOpen = false;
-
-  constructor() {
+  constructor(private router: Router) {
     this.loadUser();
   }
+  logout() {
+    localStorage.removeItem('token');
+    this.user = null;
+    this.router.navigate(['/']);
+  }
+  user: any = null;
+  dropdownOpen = false;
 
   loadUser() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

@@ -2,7 +2,7 @@ import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-admin-management',
@@ -87,7 +87,7 @@ export class AdminManagementComponent implements OnInit {
   saveAllVisibility() {
     const baseUrl = environment.apiBaseUrl;
     if (!baseUrl) {
-      console.error('API base URL is not set in environment.');
+  // console.error('API base URL is not set in environment.');
       return;
     }
 
@@ -98,7 +98,7 @@ export class AdminManagementComponent implements OnInit {
       languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
       states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible }))
     };
-    console.log('[BatchUpdate] Payload:', payload);
+  // console.log('[BatchUpdate] Payload:', payload);
     const token = localStorage.getItem('token');
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.post(baseUrl + '/admin/batch-update-visibility', payload, headers)
@@ -109,7 +109,7 @@ export class AdminManagementComponent implements OnInit {
         },
         error: (err) => {
           alert('Error saving visibility.');
-          console.error('Batch update error:', err);
+          // console.error('Batch update error:', err);
         }
       });
   }

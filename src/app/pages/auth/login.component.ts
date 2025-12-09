@@ -29,7 +29,15 @@ export class LoginComponent {
   onSubmit() {
     if (this.loginForm.invalid) return;
     this.http.post(`${environment.apiBaseUrl}/auth/login`, this.loginForm.value)
-      .pipe(timeout(5000), catchError(err => { this.errorMsg = err?.error?.message || 'Login failed'; console.error('login failed', err); return of(null); }))
+      .pipe(timeout(5000), catchError(err => {
+        if (err?.error?.message?.includes('pending')) {
+          this.errorMsg = 'Your account is pending approval. Please wait for admin to activate your account.';
+        } else {
+          this.errorMsg = err?.error?.message || 'Login failed';
+        }
+  // console.error('login failed', err);
+        return of(null);
+      }))
       .subscribe((res: any) => {
         if (!res) return;
         localStorage.setItem('token', res.token);

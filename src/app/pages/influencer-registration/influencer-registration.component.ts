@@ -173,7 +173,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       profileImages: raw.profileImages || [],
       contact: raw.contact
     };
-    console.log('Payload sent to backend:', payload);
+  // console.log('Payload sent to backend:', payload);
     this.configService.registerInfluencer(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;

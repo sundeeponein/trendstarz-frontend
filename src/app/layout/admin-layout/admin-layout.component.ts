@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin-layout',
@@ -9,11 +9,16 @@ import { RouterModule } from '@angular/router';
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {
-  adminUser: any = null;
-
-  constructor() {
+  constructor(private router: Router) {
     this.loadAdminUser();
   }
+  logout() {
+    localStorage.removeItem('token');
+    this.adminUser = null;
+    this.router.navigate(['/']);
+  }
+  adminUser: any = null;
+
 
   loadAdminUser() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

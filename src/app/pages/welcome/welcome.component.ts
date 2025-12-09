@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NavbarLayoutComponent } from '../../layout/navbar-layout.component';
+import { NavbarLayoutComponent } from '../../layout/navbar-layout/navbar-layout.component';
 import { Meta, Title } from '@angular/platform-browser';
 
 @Component({
