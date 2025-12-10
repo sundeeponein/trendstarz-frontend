@@ -1,25 +1,47 @@
-<nav class="navbar">
-  <a routerLink="/" class="logo">TrendStarz</a>
-  <ul *ngIf="!user">
-    <li><a routerLink="/login">Login</a></li>
-    <li><a routerLink="/register-influencer">Register as Influencer</a></li>
-    <li><a routerLink="/register-brand">Register as Brand</a></li>
-  </ul>
-  <div class="user-profile" *ngIf="user">
-    <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" type="button">
-        <img [src]="user.profileImage || 'assets/default-profile.png'" class="user-avatar" width="32" height="32" />
-        <span>{{ user.name }}</span>
-      </button>
-      <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-        <span class="visually-hidden">Toggle Dropdown</span>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" routerLink="/profile">Profile</a></li>
-        <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
-  <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
-      </ul>
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <div class="row w-100 align-items-center">
+      <div class="col-6 col-lg-2 d-flex align-items-center">
+        <a routerLink="/" class="logo"><img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" height="40" /></a>
+      </div>
+      <div class="col-6 col-lg-10">
+        <button class="navbar-toggler bg-body-tertiary ms-auto mb-2 mb-lg-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon text-white"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
+          <ul class="navbar-nav me-lg-3">
+            <li class="nav-item"><a class="nav-link text-white" routerLink="/search">Search</a></li>
+            <li class="nav-item"><a class="nav-link text-white" routerLink="/how-it-works">How it works</a></li>
+            <!-- <li class="nav-item"><a class="nav-link text-white" routerLink="/pricing">Pricing</a></li> -->
+          </ul>
+          <ul class="navbar-nav" *ngIf="!user">
+            <li class="nav-item"><a class="nav-link text-white" routerLink="/register-influencer">Register as Influencer</a></li>
+            <li class="nav-item"><a class="nav-link text-white" routerLink="/register-brand">Register as Brand</a></li>
+            <li class="nav-item"><a class="nav-link bg-primary-subtle text-dark rounded-3" routerLink="/login">Login</a></li>
+          </ul>
+          <div class="user-profile" *ngIf="user">
+            <div class="btn-group">
+              <button class="btn btn-secondary btn-sm" type="button">
+                <img [src]="user.profileImage || 'assets/default-profile.png'" class="user-avatar" width="32" height="32" />
+                <span>{{ user.name }}</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" routerLink="/profile">Profile</a></li>
+                <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
+                <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
 <router-outlet></router-outlet>
+
+<footer class="mt-4 text-muted small position-fixed bottom-0 start-0 end-0 p-3 bg-light" aria-label="Copyright">
+  &copy; 2025 Trend Starz. All rights reserved.
+</footer>

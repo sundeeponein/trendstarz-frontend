@@ -37,7 +37,7 @@
     <label>Profile Images</label>
     <div formArrayName="profileImages">
       <div *ngFor="let imgCtrl of profileImagesFormArray.controls; let i = index">
-  <input [formControlName]="i" type="text" placeholder="Image URL" />
+        <input [formControlName]="i" type="text" placeholder="Image URL" />
         <button type="button" (click)="removeProfileImage(i)">Remove</button>
       </div>
       <button type="button" (click)="addProfileImage()" [disabled]="profileImagesFormArray.length >= 3">Add Image</button>

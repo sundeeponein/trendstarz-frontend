@@ -62,7 +62,7 @@ export class StripePaymentComponent implements OnInit {
         next: () => {
           this.paymentSuccess = true;
           setTimeout(() => {
-            window.location.href = '/profile?upgraded=1';
+            window.location.href = '/';
           }, 2000);
         },
         error: () => {

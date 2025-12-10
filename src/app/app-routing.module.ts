@@ -7,13 +7,19 @@ import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.com
 
 import { AdminManagementComponent } from './pages/admin/admin-management/admin-management.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
+import { WelcomeComponent } from './pages/welcome/welcome.component';
 
 const routes: Routes = [
   {
     path: '',
     component: NavbarLayoutComponent,
     children: [
-      { path: '', redirectTo: 'profile', pathMatch: 'full' },
+      { path: '', component: WelcomeComponent },
+      { path: 'welcome', component: WelcomeComponent },
+      { path: 'register-influencer', loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },
+      { path: 'register-brand', loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
+      { path: 'login', component: LoginComponent },
+      // { path: 'how-it-works', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
     ],
   },
   {
