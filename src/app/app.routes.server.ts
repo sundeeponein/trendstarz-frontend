@@ -10,11 +10,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/admin-management', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Prerender },
   { path: 'register-brand', renderMode: RenderMode.Prerender },
-  { path: 'profile', renderMode: RenderMode.Prerender },
   { path: 'payment', renderMode: RenderMode.Prerender },
-  // Add your actual user/brand profile and grid routes below, matching your app.routes.ts
-  // Example dynamic routes (update as needed):
-  // { path: 'profile/:id', renderMode: RenderMode.Prerender },
-  // { path: 'user-grid', renderMode: RenderMode.Prerender },
-  // { path: 'brand-profile/:id', renderMode: RenderMode.Prerender },
+  { path: 'influencer-profile', renderMode: RenderMode.Prerender },
+  { path: 'brand-profile', renderMode: RenderMode.Prerender },
 ];

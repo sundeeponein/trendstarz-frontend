@@ -15,6 +15,33 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  // Helper to calculate premium end date for display if backend does not provide
+  getPremiumPeriod(user: any): { start: Date, end: Date } | null {
+    if (!user.isPremium) return null;
+    // Prefer backend dates if present
+    if (user.premiumStart && user.premiumEnd) {
+      return { start: new Date(user.premiumStart), end: new Date(user.premiumEnd) };
+    }
+    // Fallback: calculate from acceptedAt and premiumDuration
+    if (user.acceptedAt && user.premiumDuration) {
+      const start = new Date(user.acceptedAt);
+      let end = new Date(start);
+      if (user.premiumDuration === '1m') end.setMonth(end.getMonth() + 1);
+      else if (user.premiumDuration === '3m') end.setMonth(end.getMonth() + 3);
+      else if (user.premiumDuration === '1y') end.setFullYear(end.getFullYear() + 1);
+      return { start, end };
+    }
+    return null;
+  }
+  openPremiumModal(userId: string) {
+    console.log('[ADMIN] Set Premium clicked for user:', userId, 'activeTab:', this.activeTab);
+    this.premiumUserId = userId;
+    this.premiumDuration = '';
+    this.premiumIsPremium = true;
+    this.premiumType = this.activeTab;
+    this.showPremiumModal = true;
+    console.log('[ADMIN] showPremiumModal:', this.showPremiumModal);
+  }
   activeTab: 'influencer' | 'brand' = 'influencer';
   influencers: any[] = [];
   brands: any[] = [];
@@ -104,18 +131,21 @@ export class AdminUserTableComponent implements OnInit {
           alert('Please select a premium duration.');
           return;
         }
-        this.http.patch(`${environment.apiBaseUrl}/users/${this.premiumUserId}/premium`, { isPremium: true, premiumDuration: this.premiumDuration, type: this.premiumType }, this.getAuthHeaders())
+        const payload = { isPremium: true, premiumDuration: this.premiumDuration, type: this.premiumType };
+        this.http.patch(`${environment.apiBaseUrl}/users/${this.premiumUserId}/premium`, payload, this.getAuthHeaders())
           .pipe(catchError(err => {
-            // console.error('Set Premium failed', err);
             alert('Error setting user as Premium: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
             return of(null);
           }))
-          .subscribe(() => {
+          .subscribe((res) => {
             this.showPremiumModal = false;
             this.premiumUserId = null;
             this.premiumDuration = '';
             this.premiumType = null;
             this.fetchUsers();
+            if (res) {
+              alert('User has been set as Premium successfully!');
+            }
           });
       }
 

@@ -28,7 +28,8 @@ export class NavbarLayoutComponent {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.user = {
           name: payload.name || 'User',
-          profileImage: payload.profileImage || null
+          profileImage: payload.profileImage || null,
+          role: payload.role || payload.userType || null
         };
       } catch {
         this.user = null;

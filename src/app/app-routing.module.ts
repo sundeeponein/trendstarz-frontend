@@ -20,6 +20,8 @@ const routes: Routes = [
       { path: 'register-brand', loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
       { path: 'login', component: LoginComponent },
       // { path: 'how-it-works', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
+      { path: 'influencer-profile', loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
+      { path: 'brand-profile', loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },
     ],
   },
   {

@@ -59,4 +59,24 @@ export class ConfigService {
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   return this.http.get<any[]>(`${this.apiUrl}/users/brands`, headers);
   }
+
+  getInfluencerProfileById(token: string): Observable<any> {
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return this.http.get(`${this.apiUrl}/users/influencer-profile`, headers);
+  }
+
+  updateInfluencerProfile(data: any, token: string): Observable<any> {
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return this.http.patch(`${this.apiUrl}/users/influencer-profile`, data, headers);
+  }
+
+  getBrandProfileById(token: string): Observable<any> {
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return this.http.get(`${this.apiUrl}/users/brand-profile`, headers);
+  }
+
+  updateBrandProfile(data: any, token: string): Observable<any> {
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return this.http.put(`${this.apiUrl}/users/brand-profile`, data, headers);
+  }
 }

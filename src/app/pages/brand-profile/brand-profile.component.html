@@ -1,0 +1,143 @@
+<div class="container">
+  <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+    <div class="row my-5">
+      <div class="col-6">
+        <label>Brand Name</label>
+        <input formControlName="brandName" type="text" class="form-control w-100" required />
+      </div>
+
+      <div class="col-6">
+        <label>Phone Number</label>
+        <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+      </div>
+
+      <div class="col-6" formGroupName="location">
+        <label>State</label>
+        <select formControlName="state" class="form-control w-100">
+          <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+        </select>
+      </div>
+
+      <div class="col-6">
+        <label>Email</label>
+        <input formControlName="email" type="email" class="form-control w-100" required />
+
+        <label>Password</label>
+        <input formControlName="password" type="password" class="form-control w-100" required />
+        <label>Confirm Password</label>
+        <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
+
+      </div>
+
+
+      <div class="col-6">
+        <label>Payment Option</label>
+        <select formControlName="paymentOption" class="form-control w-100">
+          <option value="free">Free (Contact/Social hidden)</option>
+          <option value="premium">Premium (Contact/Social visible, 3-5 product images)</option>
+        </select>
+      </div>
+
+      <div class="col-6">
+        <label>Languages</label>
+        <select formControlName="languages" multiple class="form-control w-100">
+          <option *ngFor="let lang of languagesList" [value]="lang._id">{{ lang.name }}</option>
+        </select>
+      </div>
+
+      <div class="col-6">
+        <label>Categories</label>
+        <select formControlName="categories" multiple class="form-control w-100">
+          <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
+        </select>
+      </div>
+
+      <!-- Product Images: Free user can upload 1, Premium can upload up to 5 -->
+      <div class="col-6">
+        <label>Website</label>
+        <input formControlName="website" type="url" class="form-control w-100" />
+      </div>
+
+      <div class="col-6">
+        <label>Google Map Address (optional)</label>
+        <input formControlName="googleMapAddress" type="text" class="form-control w-100" />
+      </div>
+
+      <div class="col-6">
+        <label>Product Images</label>
+        <div formArrayName="productImages">
+          <div *ngFor="let imgCtrl of productImagesFormArray.controls; let i = index">
+            <input [formControlName]="i" type="text" placeholder="Product Image URL" />
+            <button type="button" (click)="removeProductImage(i)">Remove</button>
+          </div>
+          <button type="button"
+            (click)="addProductImage()"
+            [disabled]="isPremium ? productImagesFormArray.length >= 5 : productImagesFormArray.length >= 1">
+            Add Product Image
+          </button>
+        </div>
+      </div>
+
+
+      <!-- Social Media: Only allow adding for premium, hide for free -->
+      <div class="col-12 mt-3" formArrayName="socialMedia">
+        <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
+          <label>Social Media</label>
+          <div class="col-3">
+            <label>Social Platform</label>
+            <select formControlName="platform"  class="form-control w-100">
+              <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Handle Name</label>
+            <input formControlName="handle" type="text" required  class="form-control w-100" />
+          </div>
+          <div class="col-3">
+            <label>Tier</label>
+            <select formControlName="tier" class="form-control w-100">
+              <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Followers/Subscribers Count</label>
+            <input formControlName="followersCount" type="number" required  class="form-control w-100" />
+            <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+          </div>
+        </div>
+        <button type="button" (click)="addSocialMedia()">Add Social Media</button>
+      </div>
+
+      <div class="col-12 mt-3">
+        <div class="col-6 row" formGroupName="contact">
+          <label>Contact Options</label>
+          <div class="row">
+            <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
+            <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
+            <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit">Update</button>
+
+      </div>
+  </form>
+</div>
+
+<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
+  Registration successful! <a href="/login">Login here</a>
+</div>
+<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
+  {{ registrationError }}
+</div>
+<div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
+<div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" style="color:red">Valid email is required.</div>
+<div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
+<div *ngIf="registrationForm.get('state')?.invalid && registrationForm.get('state')?.touched" style="color:red">State is required.</div>
+<div *ngIf="registrationForm.get('languages')?.invalid && registrationForm.get('languages')?.touched" style="color:red">Select at least one language.</div>
+<div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
+<div *ngIf="productImagesFormArray.length === 0" style="color:red">Add at least one product image.</div>
+<div *ngIf="registrationForm.invalid" style="color: red; margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
+<pre>{{ registrationForm.errors | json }}</pre>
+<pre>{{ registrationForm.value | json }}</pre>
