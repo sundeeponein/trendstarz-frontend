@@ -7,9 +7,9 @@
     "start:prod": "ng serve --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "dev:ssr": "ng serve --ssr",
     "build:ssr": "ng build --configuration production",
     "serve:ssr": "node dist/frontend/server/server.mjs",
-    "dev:ssr": "ng serve"
   },
   "prettier": {
     "printWidth": 100,
