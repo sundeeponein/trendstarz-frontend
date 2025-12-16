@@ -2,16 +2,22 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  premiumStart: Date | null = null;
+  premiumEnd: Date | null = null;
+  showPayment = false;
+  selectedDuration: '1m' | '3m' | '1y' | '' = '';
+  paymentSuccess = false;
+  paymentError = '';
   registrationSuccess = false;
   registrationError = '';
   registrationForm!: FormGroup;
@@ -26,7 +32,7 @@ export class InfluencerProfileComponent implements OnInit {
   constructor(private fb: FormBuilder, private configService: ConfigService) {}
 
   ngOnInit() {
-    this.registrationForm = this.fb.group({
+  this.registrationForm = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
       username: [{ value: '', disabled: true }, Validators.required],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
@@ -104,12 +110,48 @@ export class InfluencerProfileComponent implements OnInit {
             }));
           });
           this.originalFormValue = this.registrationForm.getRawValue();
+          // Set premium period if available
+          this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
+          this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
         },
         error: (err) => {
           this.registrationError = 'Error fetching profile.';
         }
       });
     }
+  }
+
+  payAndUpgrade() {
+    this.paymentError = '';
+    this.paymentSuccess = false;
+    if (!this.selectedDuration) {
+      this.paymentError = 'Please select a premium duration.';
+      // Close the modal after showing the error
+      setTimeout(() => {
+        this.showPayment = false;
+        this.paymentError = '';
+      }, 1200);
+      return;
+    }
+    // Simulate payment (replace with real payment integration as needed)
+    // On success, call backend to set premium
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      this.paymentError = 'Not logged in.';
+      return;
+    }
+    // Call backend PATCH to set premium
+    this.configService.setPremiumForCurrentUser(true, this.selectedDuration, token).subscribe({
+      next: (res: any) => {
+        this.paymentSuccess = true;
+        this.showPayment = false;
+        // Refresh profile to show premium status
+        this.ngOnInit();
+      },
+      error: (err) => {
+        this.paymentError = 'Payment failed or could not upgrade. Please try again.';
+      }
+    });
   }
 
   enableEdit(): void {
@@ -228,3 +270,4 @@ export class InfluencerProfileComponent implements OnInit {
 
 
 }
+

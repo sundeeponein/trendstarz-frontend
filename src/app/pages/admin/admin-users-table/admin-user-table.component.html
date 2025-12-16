@@ -45,7 +45,20 @@
             <ng-container *ngIf="user.isPremium; else freeTpl">
               Premium
               <span *ngIf="getPremiumPeriod(user) as period">
-                (from {{ period.start | date:'dd MMM yyyy' }} to {{ period.end | date:'dd MMM yyyy' }})
+                <span *ngIf="user.premiumStart || user.acceptedAt">
+                  — {{ user.premiumStart ? 'Paid on' : 'Accepted on' }}
+                  {{ (user.premiumStart || user.acceptedAt) | date:'dd MMM yyyy' }}
+                </span>
+                <span>
+                  <br>from {{ period.start | date:'dd MMM yyyy' }}
+                  <span *ngIf="period.end"> till {{ period.end | date:'dd MMM yyyy' }}</span>
+                </span>
+                <div style="font-size: 0.8em; color: #888; margin-top: 2px;">
+                  <!-- Debug: show raw date fields -->
+                  <div>premiumStart: {{ user.premiumStart }}</div>
+                  <div>premiumEnd: {{ user.premiumEnd }}</div>
+                  <div>acceptedAt: {{ user.acceptedAt }}</div>
+                </div>
               </span>
             </ng-container>
             <ng-template #freeTpl>Free</ng-template>
@@ -135,7 +148,28 @@
             </span>
             <ng-template #noSocialBrand>-</ng-template>
           </td>
-          <td>{{ user.isPremium ? 'Premium' : 'Free' }}</td>
+          <td>
+            <ng-container *ngIf="user.isPremium; else freeTplBrand">
+              Premium
+              <span *ngIf="getPremiumPeriod(user) as period">
+                <span *ngIf="user.premiumStart || user.acceptedAt">
+                  — {{ user.premiumStart ? 'Paid on' : 'Accepted on' }}
+                  {{ (user.premiumStart || user.acceptedAt) | date:'dd MMM yyyy' }}
+                </span>
+                <span>
+                  <br>from {{ period.start | date:'dd MMM yyyy' }}
+                  <span *ngIf="period.end"> till {{ period.end | date:'dd MMM yyyy' }}</span>
+                </span>
+                <div style="font-size: 0.8em; color: #888; margin-top: 2px;">
+                  <!-- Debug: show raw date fields -->
+                  <div>premiumStart: {{ user.premiumStart }}</div>
+                  <div>premiumEnd: {{ user.premiumEnd }}</div>
+                  <div>acceptedAt: {{ user.acceptedAt }}</div>
+                </div>
+              </span>
+            </ng-container>
+            <ng-template #freeTplBrand>Free</ng-template>
+          </td>
           <td>{{ user.status === 'accepted' ? 'Accepted' : (user.status || '-') }}</td>
           <td class="actions">
             <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>

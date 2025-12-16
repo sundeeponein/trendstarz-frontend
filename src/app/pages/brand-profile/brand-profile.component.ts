@@ -3,35 +3,40 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
 
 export class BrandProfileComponent implements OnInit {
+  isEditMode = false;
+  originalFormValue: any = null;
+  premiumStart: Date | null = null;
+  premiumEnd: Date | null = null;
+  showPayment = false;
+  selectedDuration: '1m' | '3m' | '1y' | '' = '';
+  paymentSuccess = false;
+  paymentError = '';
   registrationSuccess = false;
   registrationError = '';
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
-
-  isPremium = false;
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  isPremium = false;
   constructor(private fb: FormBuilder, private configService: ConfigService) {}
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
-      confirmPassword: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       isPremium: [false],
       paymentOption: ['', Validators.required],
@@ -60,15 +65,153 @@ export class BrandProfileComponent implements OnInit {
         call: [false]
       }),
     });
+      this.registrationForm.get('password')?.disable();
+      this.registrationForm.get('confirmPassword')?.disable();
 
-  // Fetch dropdown data from API
-  this.configService.getStates().subscribe(data => this.states = data);
-  this.configService.getTiers().subscribe(data => this.tiers = data);
-  this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
-  this.configService.getLanguages().subscribe(data => this.languagesList = data);
-  this.configService.getCategories().subscribe(data => this.categoriesList = data);
-    this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
-      this.isPremium = val === 'premium';
+    // Fetch dropdown data from API, then fetch and patch brand profile
+    Promise.all([
+      this.configService.getStates().toPromise(),
+      this.configService.getTiers().toPromise(),
+      this.configService.getSocialMedia().toPromise(),
+      this.configService.getLanguages().toPromise(),
+      this.configService.getCategories().toPromise()
+    ]).then(([states, tiers, socialMediaList, languagesList, categoriesList]) => {
+      this.states = states || [];
+      this.tiers = tiers || [];
+      this.socialMediaList = socialMediaList || [];
+      this.languagesList = languagesList || [];
+      this.categoriesList = categoriesList || [];
+
+      this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
+        this.isPremium = val === 'premium';
+      });
+
+      // Fetch brand profile and patch form
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (token) {
+        this.configService.getBrandProfileById(token).subscribe({
+          next: (profile) => {
+            if (!profile) {
+              this.registrationError = 'Profile not found or you are not logged in.';
+              return;
+            }
+            // Map state name to ID
+            const stateId = this.states.find(s => s.name === profile.location?.state)?.['_id'] || '';
+            // Map language names to IDs
+            const languageIds = (profile.languages || []).map((name: string) =>
+              this.languagesList.find(l => l.name === name)?._id
+            ).filter(Boolean);
+            // Map category names to IDs
+            const categoryIds = (profile.categories || []).map((name: string) =>
+              this.categoriesList.find(c => c.name === name)?._id
+            ).filter(Boolean);
+            // Map social media platform name to ID
+            const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
+              ...sm,
+              platform: this.socialMediaList.find(s => s.name === sm.platform)?._id || sm.platform
+            }));
+            this.registrationForm.patchValue({
+              brandName: profile.brandName || '',
+              email: profile.email || '',
+              phoneNumber: profile.phoneNumber || '',
+              paymentOption: profile.paymentOption || 'free',
+              location: { state: stateId, googleMapLink: profile.location?.googleMapLink || '' },
+              languages: languageIds,
+              categories: categoryIds,
+              website: profile.website || '',
+              googleMapAddress: profile.googleMapAddress || '',
+              contact: profile.contact || { whatsapp: false, email: false, call: false }
+            });
+            // Patch productImages
+            const arr = this.registrationForm.get('productImages') as FormArray;
+            arr.clear();
+            (profile.productImages || []).forEach((img: string) => arr.push(this.fb.control(img)));
+            // Patch socialMedia
+            const smArr = this.registrationForm.get('socialMedia') as FormArray;
+            smArr.clear();
+            socialMedia.forEach((sm: any) => {
+              smArr.push(this.fb.group({
+                platform: sm.platform || '',
+                handle: sm.handle || '',
+                tier: sm.tier || '',
+                followersCount: sm.followersCount || ''
+              }));
+            });
+            // Patch brandLogo and products if needed
+            // Patch premium period if available
+            this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
+            this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+            // Save original value for cancel
+            this.originalFormValue = this.registrationForm.getRawValue();
+            this.registrationForm.disable();
+          },
+          error: (err) => {
+            this.registrationError = 'Error fetching profile.';
+          }
+        });
+      }
+    });
+  }
+
+  enableEdit(): void {
+    this.isEditMode = true;
+    this.registrationForm.enable();
+  // Password fields are disabled and removed from the form
+  }
+
+  cancelEdit(): void {
+    this.isEditMode = false;
+    if (this.originalFormValue) {
+      this.registrationForm.reset(this.originalFormValue);
+    }
+    this.registrationForm.disable();
+    this.registrationForm.get('password')?.disable();
+    this.registrationForm.get('confirmPassword')?.disable();
+  }
+
+  payAndUpgrade() {
+    this.paymentError = '';
+    this.paymentSuccess = false;
+    if (!this.selectedDuration) {
+      this.paymentError = 'Please select a premium duration.';
+      setTimeout(() => {
+        this.showPayment = false;
+        this.paymentError = '';
+      }, 1200);
+      return;
+    }
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      this.paymentError = 'Not logged in.';
+      return;
+    }
+    // Simulate payment, then call backend PATCH to set premium for brand
+    this.configService.getBrandProfileById(token).subscribe({
+      next: (profile: any) => {
+        if (!profile || !profile._id) {
+          this.paymentError = 'User ID not found';
+          return;
+        }
+        const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        this.configService['http'].patch(
+          `${this.configService['apiUrl']}/users/${profile._id}/premium`,
+          { isPremium: true, premiumDuration: this.selectedDuration },
+          headers
+        ).subscribe({
+          next: (res: any) => {
+            this.paymentSuccess = true;
+            this.showPayment = false;
+            // Refresh profile to show premium status
+            this.ngOnInit();
+          },
+          error: (err: any) => {
+            this.paymentError = 'Payment failed or could not upgrade. Please try again.';
+          }
+        });
+      },
+      error: (err: any) => {
+        this.paymentError = 'Could not fetch profile.';
+      }
     });
   }
 
@@ -140,36 +283,61 @@ export class BrandProfileComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.registrationForm.invalid) return;
+    if (!this.isEditMode || this.registrationForm.invalid) return;
     this.registrationError = '';
     this.registrationSuccess = false;
     // Prepare payload to match backend DTO
-    const raw = this.registrationForm.value;
+    const raw = this.registrationForm.getRawValue();
+    // Map state ID to name
+    const stateObj = this.states.find(s => s._id === raw.location.state);
+    // Map language IDs to names
+    const languageNames = (raw.languages || []).map((id: string) => {
+      const lang = this.languagesList.find((l: any) => l._id === id);
+      return lang ? lang.name : id;
+    });
+    // Map category IDs to names
+    const categoryNames = (raw.categories || []).map((id: string) => {
+      const cat = this.categoriesList.find((c: any) => c._id === id);
+      return cat ? cat.name : id;
+    });
+    // Map social media platform ID to name (for backend compatibility)
+    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
+      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+      return {
+        ...sm,
+        platform: platformObj ? platformObj.name : sm.platform,
+        followersCount: Number(sm.followersCount)
+      };
+    });
     const payload: any = {
       ...raw,
-      isPremium: raw.paymentOption === 'premium',
       location: {
-        state: raw.location.state,
+        state: stateObj ? stateObj.name : raw.location.state,
         googleMapLink: raw.location.googleMapLink || undefined
       },
-      socialMedia: (raw.socialMedia || []).map((sm: any) => ({
-        ...sm,
-        followersCount: Number(sm.followersCount)
-      })),
+      languages: languageNames,
+      categories: categoryNames,
+      socialMedia,
       brandLogo: raw.brandLogo || [],
       products: raw.products || [],
       contact: raw.contact
     };
     // Remove fields not in DTO
-    delete payload.confirmPassword;
+  delete payload.password;
+  delete payload.confirmPassword;
     delete payload.paymentOption;
-  this.configService.registerBrand(payload).subscribe({
+    let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
+    this.configService.updateBrandProfile(payload, token).subscribe({
       next: () => {
         this.registrationSuccess = true;
-        this.registrationForm.reset();
+        this.isEditMode = false;
+        this.registrationForm.disable();
+        this.registrationForm.get('password')?.disable();
+        this.registrationForm.get('confirmPassword')?.disable();
+        this.originalFormValue = this.registrationForm.getRawValue();
       },
-      error: (err: any) => {
-        this.registrationError = 'Registration failed. Please try again.';
+      error: err => {
+        this.registrationError = 'Update failed. Please try again.';
       }
     });
   }

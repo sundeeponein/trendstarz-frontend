@@ -111,16 +111,17 @@ export class AdminUserTableComponent implements OnInit {
             this.premiumIsPremium = true;
             this.showPremiumModal = true;
           } else {
-            this.http.patch(`${environment.apiBaseUrl}/users/${userId}/premium`, { isPremium: false, type: this.premiumType }, this.getAuthHeaders())
-              .pipe(catchError(err => {
-                // console.error('Set Free failed', err);
-                alert('Error setting user as Free: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
-                return of(null);
-              }))
-              .subscribe(() => this.fetchUsers());
+            // Show confirmation before setting free
+            if (confirm('Are you sure you want to set this user as Free? This will remove their premium status.')) {
+              this.http.patch(`${environment.apiBaseUrl}/users/${userId}/premium`, { isPremium: false, type: this.premiumType }, this.getAuthHeaders())
+                .pipe(catchError(err => {
+                  alert('Error setting user as Free: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
+                  return of(null);
+                }))
+                .subscribe(() => this.fetchUsers());
+            }
           }
         } catch (err) {
-          // console.error('setPremium error', err);
           let msg = (err && typeof err === 'object' && 'message' in err) ? (err as any).message : String(err);
           alert('Error in setPremium: ' + msg);
         }
@@ -138,6 +139,7 @@ export class AdminUserTableComponent implements OnInit {
             return of(null);
           }))
           .subscribe((res) => {
+            // Close modal after success
             this.showPremiumModal = false;
             this.premiumUserId = null;
             this.premiumDuration = '';

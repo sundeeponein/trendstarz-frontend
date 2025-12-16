@@ -1,4 +1,55 @@
+<!-- Premium Status and Payment Features -->
 <div class="container">
+  <div class="premium-status-box rounded-3 bg-light p-3">
+    <ng-container *ngIf="registrationForm.get('paymentOption')?.value === 'premium'; else notPremiumTpl">
+      <div class="fw-bold text-black">You are a Premium Influencer!</div>
+      <div *ngIf="premiumStart && premiumEnd" class="text-success">
+        Premium Period: <strong>{{ premiumStart | date:'dd MMM yyyy' }}</strong> to <strong>{{ premiumEnd | date:'dd MMM yyyy' }}</strong>
+      </div>
+      <div style="margin-top: 0.5rem;" class="text-black">
+        <strong>Premium Features:</strong>
+        <ul>
+          <li>Contact/Social visible</li>
+          <li>Upload up to 3 profile images</li>
+          <li>Priority support</li>
+          <li>Access to premium campaigns</li>
+        </ul>
+      </div>
+    </ng-container>
+    <ng-template #notPremiumTpl>
+      <div class="text-danger">You are on a Free plan.</div>
+      <div class="text-warning">Upgrade to Premium to unlock all features!</div>
+      <button class="btn btn-success" (click)="showPayment = true" type="button">Upgrade to Premium</button>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Payment Modal/Section -->
+<div *ngIf="showPayment" class="payment-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 2000;">
+  <div style="background: #fff; padding: 2rem 2.5rem; border-radius: 10px; min-width: 320px; max-width: 95vw;">
+    <h4>Upgrade to Premium</h4>
+    <label><input type="radio" name="duration" value="1m" [(ngModel)]="selectedDuration"> 1 Month (₹499)</label><br>
+    <label><input type="radio" name="duration" value="3m" [(ngModel)]="selectedDuration"> 3 Months (₹1299)</label><br>
+    <label><input type="radio" name="duration" value="1y" [(ngModel)]="selectedDuration"> 1 Year (₹3999)</label><br>
+    <div style="margin-top: 1rem;">
+      <button class="btn btn-primary" (click)="payAndUpgrade()" [disabled]="!selectedDuration">Pay & Upgrade</button>
+      <button class="btn btn-outline-secondary" (click)="showPayment = false" type="button">Cancel</button>
+    </div>
+    <div *ngIf="paymentSuccess" style="color: green; margin-top: 1rem;">Payment successful! You are now a premium user.</div>
+    <div *ngIf="paymentError" style="color: red; margin-top: 1rem;">{{ paymentError }}</div>
+  </div>
+</div>
+
+
+
+<div class="container">
+  <div class="d-flex justify-content-end mb-2">
+    <button *ngIf="!isEditMode" class="btn btn-primary" type="button" (click)="enableEdit()">Edit Profile</button>
+    <ng-container *ngIf="isEditMode">
+      <button class="btn btn-success me-2" type="submit" [disabled]="registrationForm.invalid" (click)="onSubmit()">Save</button>
+      <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+    </ng-container>
+  </div>
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
       <div class="col-6">
@@ -22,10 +73,6 @@
         <label>Email</label>
         <input formControlName="email" type="email" class="form-control w-100" required />
 
-        <label>Password</label>
-        <input formControlName="password" type="password" class="form-control w-100" required />
-        <label>Confirm Password</label>
-        <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
 
       </div>
 
