@@ -24,7 +24,21 @@ export class BrandRegistrationComponent implements OnInit {
   isPremium = false;
   languagesList: any[] = [];
   categoriesList: any[] = [];
-  constructor(private fb: FormBuilder, private configService: ConfigService) {}
+  constructor(public fb: FormBuilder, private configService: ConfigService) {}
+  // Getter for brandLogo FormArray
+  get brandLogoFormArray(): FormArray {
+    return this.registrationForm.get('brandLogo') as FormArray;
+  }
+
+  addBrandLogo() {
+    this.brandLogoFormArray.push(this.fb.control(''));
+  }
+
+  removeBrandLogo(index: number) {
+    if (this.brandLogoFormArray.length > 1) {
+      this.brandLogoFormArray.removeAt(index);
+    }
+  }
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
@@ -145,28 +159,43 @@ export class BrandRegistrationComponent implements OnInit {
     this.registrationSuccess = false;
     // Prepare payload to match backend DTO
     const raw = this.registrationForm.value;
+    // Map productImages to products for backend
+    const products = raw.productImages || [];
+    // Map social media platform ID to name (for backend compatibility)
+    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
+      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+      return {
+        ...sm,
+        platform: platformObj ? platformObj.name : sm.platform,
+        followersCount: Number(sm.followersCount)
+      };
+    });
     const payload: any = {
       ...raw,
       isPremium: raw.paymentOption === 'premium',
-      location: {
-        state: raw.location.state,
-        googleMapLink: raw.location.googleMapLink || undefined
-      },
-      socialMedia: (raw.socialMedia || []).map((sm: any) => ({
-        ...sm,
-        followersCount: Number(sm.followersCount)
-      })),
+      // location: keep as is, but do not overwrite googleMapLink
+      socialMedia,
       brandLogo: raw.brandLogo || [],
-      products: raw.products || [],
-      contact: raw.contact
+      products,
+      contact: raw.contact,
+      googleMapAddress: raw.googleMapAddress || '',
     };
     // Remove fields not in DTO
     delete payload.confirmPassword;
     delete payload.paymentOption;
-  this.configService.registerBrand(payload).subscribe({
-      next: () => {
+    delete payload.productImages;
+    this.configService.registerBrand(payload).subscribe({
+      next: (savedBrand) => {
         this.registrationSuccess = true;
-        this.registrationForm.reset();
+        // Patch the form with the saved data so previews show
+        this.registrationForm.patchValue({
+          ...savedBrand,
+          brandLogo: undefined // We'll handle this below
+        });
+        // Patch FormArray for brandLogo
+        const arr = this.brandLogoFormArray;
+        arr.clear();
+        (savedBrand.brandLogo || []).forEach((logo: string) => arr.push(this.fb.control(logo)));
       },
       error: (err: any) => {
         this.registrationError = 'Registration failed. Please try again.';

@@ -14,6 +14,9 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 })
 
 export class BrandProfileComponent implements OnInit {
+  get brandLogoFormArray(): FormArray {
+    return this.registrationForm.get('brandLogo') as FormArray;
+  }
   isEditMode = false;
   originalFormValue: any = null;
   premiumStart: Date | null = null;
@@ -31,7 +34,19 @@ export class BrandProfileComponent implements OnInit {
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isPremium = false;
-  constructor(private fb: FormBuilder, private configService: ConfigService) {}
+  constructor(public fb: FormBuilder, private configService: ConfigService) {}
+
+  // Getter for brandLogo FormArray
+
+  addBrandLogo() {
+    this.brandLogoFormArray.push(this.fb.control(''));
+  }
+
+  removeBrandLogo(index: number) {
+    if (this.brandLogoFormArray.length > 1) {
+      this.brandLogoFormArray.removeAt(index);
+    }
+  }
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
@@ -65,6 +80,8 @@ export class BrandProfileComponent implements OnInit {
         call: [false]
       }),
     });
+    // Getter for brandLogo FormArray
+
       this.registrationForm.get('password')?.disable();
       this.registrationForm.get('confirmPassword')?.disable();
 
@@ -309,23 +326,29 @@ export class BrandProfileComponent implements OnInit {
         followersCount: Number(sm.followersCount)
       };
     });
+    // Map productImages to products for backend
+    const products = raw.productImages || [];
+    // Map googleMapAddress to location.googleMapLink for backend
+    const location = {
+      state: stateObj ? stateObj.name : raw.location.state,
+      googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || undefined
+    };
     const payload: any = {
       ...raw,
-      location: {
-        state: stateObj ? stateObj.name : raw.location.state,
-        googleMapLink: raw.location.googleMapLink || undefined
-      },
+      location,
       languages: languageNames,
       categories: categoryNames,
       socialMedia,
       brandLogo: raw.brandLogo || [],
-      products: raw.products || [],
+      products,
       contact: raw.contact
     };
     // Remove fields not in DTO
-  delete payload.password;
-  delete payload.confirmPassword;
+    delete payload.password;
+    delete payload.confirmPassword;
     delete payload.paymentOption;
+    delete payload.productImages;
+    delete payload.googleMapAddress;
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
     this.configService.updateBrandProfile(payload, token).subscribe({
       next: () => {
@@ -341,4 +364,5 @@ export class BrandProfileComponent implements OnInit {
       }
     });
   }
+  
 }

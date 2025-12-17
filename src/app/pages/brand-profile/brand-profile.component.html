@@ -25,8 +25,8 @@
 </div>
 
 <!-- Payment Modal/Section -->
-<div *ngIf="showPayment" class="payment-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 2000;">
-  <div style="background: #fff; padding: 2rem 2.5rem; border-radius: 10px; min-width: 320px; max-width: 95vw;">
+<div *ngIf="showPayment" class="payment-modal">
+  <div>
     <h4>Upgrade to Premium</h4>
     <label><input type="radio" name="duration" value="1m" [(ngModel)]="selectedDuration"> 1 Month (₹499)</label><br>
     <label><input type="radio" name="duration" value="3m" [(ngModel)]="selectedDuration"> 3 Months (₹1299)</label><br>
@@ -43,15 +43,21 @@
 
 
 <div class="container">
-  <div class="d-flex justify-content-end mb-2">
-    <button *ngIf="!isEditMode" class="btn btn-primary" type="button" (click)="enableEdit()">Edit Profile</button>
-    <ng-container *ngIf="isEditMode">
-      <button class="btn btn-success me-2" type="submit" [disabled]="registrationForm.invalid" (click)="onSubmit()">Save</button>
-      <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
-    </ng-container>
-  </div>
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
+      <div class="col-6">
+        <label>Brand Logo (URL)</label>
+        <div formArrayName="brandLogo">
+          <div *ngFor="let logoCtrl of brandLogoFormArray.controls; let i = index">
+            <div *ngIf="logoCtrl.value">
+              <img [src]="logoCtrl.value" alt="Brand Logo" style="max-width: 120px; max-height: 120px; margin-bottom: 8px; display: block;" />
+            </div>
+            <input [formControlName]="i" type="text" placeholder="Brand Logo URL" class="form-control w-100" />
+            <button type="button" (click)="brandLogoFormArray.removeAt(i)" *ngIf="brandLogoFormArray.length > 1">Remove</button>
+          </div>
+          <button type="button" (click)="brandLogoFormArray.push(fb.control(''))" [disabled]="brandLogoFormArray.length >= 3">Add Logo</button>
+        </div>
+      </div>
       <div class="col-6">
         <label>Brand Name</label>
         <input formControlName="brandName" type="text" class="form-control w-100" required />
@@ -166,25 +172,20 @@
         </div>
       </div>
 
-      <button type="submit">Update</button>
-
+      <!-- <button type="submit">Update</button> -->
+        <div class="d-flex justify-content-end mb-2">
+          <button *ngIf="!isEditMode" class="btn btn-primary" type="button" (click)="enableEdit()">Edit Profile</button>
+          <ng-container *ngIf="isEditMode">
+            <button class="btn btn-success me-2" type="submit" [disabled]="registrationForm.invalid" (click)="onSubmit()">Save</button>
+            <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+          </ng-container>
+        </div>
       </div>
   </form>
 </div>
 
 <div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
-  Registration successful! <a href="/login">Login here</a>
-</div>
+  Profile Update successful! </div>
 <div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
   {{ registrationError }}
 </div>
-<div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
-<div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" style="color:red">Valid email is required.</div>
-<div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
-<div *ngIf="registrationForm.get('state')?.invalid && registrationForm.get('state')?.touched" style="color:red">State is required.</div>
-<div *ngIf="registrationForm.get('languages')?.invalid && registrationForm.get('languages')?.touched" style="color:red">Select at least one language.</div>
-<div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
-<div *ngIf="productImagesFormArray.length === 0" style="color:red">Add at least one product image.</div>
-<div *ngIf="registrationForm.invalid" style="color: red; margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
-<pre>{{ registrationForm.errors | json }}</pre>
-<pre>{{ registrationForm.value | json }}</pre>
