@@ -2,6 +2,19 @@
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
       <div class="col-6">
+        <label>Brand Logo (URL)</label>
+        <div formArrayName="brandLogo">
+          <div *ngFor="let logoCtrl of brandLogoFormArray.controls; let i = index">
+            <div *ngIf="logoCtrl.value">
+              <img [src]="logoCtrl.value" alt="Brand Logo" style="max-width: 120px; max-height: 120px; margin-bottom: 8px; display: block;" />
+            </div>
+            <input [formControlName]="i" type="text" placeholder="Brand Logo URL" class="form-control w-100" />
+            <button type="button" (click)="removeBrandLogo(i)" *ngIf="brandLogoFormArray.length > 1">Remove</button>
+          </div>
+          <button type="button" (click)="addBrandLogo()" [disabled]="brandLogoFormArray.length >= 3">Add Logo</button>
+        </div>
+      </div>
+      <div class="col-6">
         <label>Brand Name</label>
         <input formControlName="brandName" type="text" class="form-control w-100" required />
       </div>
@@ -81,8 +94,9 @@
 
       <!-- Social Media: Only allow adding for premium, hide for free -->
       <div class="col-12 mt-3" formArrayName="socialMedia">
+        <label>Social Media</label>
         <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
-          <label>Social Media</label>
+          
           <div class="col-3">
             <label>Social Platform</label>
             <select formControlName="platform"  class="form-control w-100">
@@ -121,7 +135,7 @@
 
       <button type="submit">Register</button>
 
-      </div>
+    </div>
   </form>
 </div>
 
