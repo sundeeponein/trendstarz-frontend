@@ -198,7 +198,12 @@ export class BrandRegistrationComponent implements OnInit {
         (savedBrand.brandLogo || []).forEach((logo: string) => arr.push(this.fb.control(logo)));
       },
       error: (err: any) => {
-        this.registrationError = 'Registration failed. Please try again.';
+        // Show specific error if duplicate
+        if (err?.error?.message && err.error.message.includes('already exists')) {
+          this.registrationError = err.error.message;
+        } else {
+          this.registrationError = 'Registration failed. Please try again.';
+        }
       }
     });
   }

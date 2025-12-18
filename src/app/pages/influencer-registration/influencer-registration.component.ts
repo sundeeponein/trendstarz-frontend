@@ -180,7 +180,11 @@ export class InfluencerRegistrationComponent implements OnInit {
         this.registrationForm.reset();
       },
       error: err => {
-        this.registrationError = 'Registration failed. Please try again.';
+        if (err?.error?.message && err.error.message.includes('already exists')) {
+          this.registrationError = err.error.message;
+        } else {
+          this.registrationError = 'Registration failed. Please try again.';
+        }
       }
     });
   }
