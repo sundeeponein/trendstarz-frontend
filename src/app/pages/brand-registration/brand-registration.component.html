@@ -53,16 +53,40 @@
 
       <div class="col-6">
         <label>Languages</label>
-        <select formControlName="languages" multiple class="form-control w-100">
-          <option *ngFor="let lang of languagesList" [value]="lang._id">{{ lang.name }}</option>
-        </select>
+        <ng-select
+          [items]="languagesList"
+          bindLabel="name"
+          bindValue="_id"
+          [multiple]="true"
+          [searchable]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          formControlName="languages"
+          class="form-control w-100"
+        >
+          <ng-template ng-option-tmp let-item="item" let-selected="selected">
+            <input type="checkbox" [checked]="selected" /> {{ item.name }}
+          </ng-template>
+        </ng-select>
       </div>
 
       <div class="col-6">
         <label>Categories</label>
-        <select formControlName="categories" multiple class="form-control w-100">
-          <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
-        </select>
+        <ng-select
+          [items]="categoriesList"
+          bindLabel="name"
+          bindValue="_id"
+          [multiple]="true"
+          [searchable]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          formControlName="categories"
+          class="form-control w-100"
+        >
+          <ng-template ng-option-tmp let-item="item" let-selected="selected">
+            <input type="checkbox" [checked]="selected" /> {{ item.name }}
+          </ng-template>
+        </ng-select>
       </div>
 
       <!-- Product Images: Free user can upload 1, Premium can upload up to 5 -->
@@ -133,19 +157,17 @@
         </div>
       </div>
 
+      <div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
+        Registration successful! <a href="/login">Login here</a>
+      </div>
+
       <button type="submit">Register</button>
 
     </div>
   </form>
 </div>
 
-<div>
-  
-</div>
-<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
-  Registration successful! <a href="/login">Login here</a>
-</div>
-<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
+<!-- <div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
   {{ registrationError }}
 </div>
 <div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
@@ -157,4 +179,4 @@
 <div *ngIf="productImagesFormArray.length === 0" style="color:red">Add at least one product image.</div>
 <div *ngIf="registrationForm.invalid" style="color: red; margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
 <pre>{{ registrationForm.errors | json }}</pre>
-<pre>{{ registrationForm.value | json }}</pre>
+<pre>{{ registrationForm.value | json }}</pre> -->

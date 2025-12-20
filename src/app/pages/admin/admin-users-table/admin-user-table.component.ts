@@ -33,16 +33,16 @@ export class AdminUserTableComponent implements OnInit {
     }
     return null;
   }
-  openPremiumModal(userId: string) {
-    console.log('[ADMIN] Set Premium clicked for user:', userId, 'activeTab:', this.activeTab);
-    this.premiumUserId = userId;
-    this.premiumDuration = '';
-    this.premiumIsPremium = true;
-    this.premiumType = this.activeTab;
-    this.showPremiumModal = true;
-    console.log('[ADMIN] showPremiumModal:', this.showPremiumModal);
-  }
-  activeTab: 'influencer' | 'brand' = 'influencer';
+  openPremiumModal(userId: string, userType: 'influencer' | 'brand') {
+      console.log('[ADMIN] Set Premium clicked for user:', userId, 'userType:', userType);
+      this.premiumUserId = userId;
+      this.premiumDuration = '';
+      this.premiumIsPremium = true;
+      this.premiumType = userType;
+      this.showPremiumModal = true;
+      console.log('[ADMIN] showPremiumModal:', this.showPremiumModal);
+    }
+  activeTab: 'influencer' | 'brand' = 'influencer'; // Default to influencer tab
   influencers: any[] = [];
   brands: any[] = [];
 
@@ -66,11 +66,15 @@ export class AdminUserTableComponent implements OnInit {
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, headers)
-  .pipe(timeout(5000), catchError(err => { /* console.error('influencers fetch failed', err); */ return of([]); }))
-      .subscribe((res: any) => this.influencers = res || []);
+      .pipe(timeout(5000), catchError(err => { return of([]); }))
+      .subscribe((res: any) => {
+        this.influencers = (res || []).filter((u: any) => u.status !== 'deleted');
+      });
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, headers)
-  .pipe(timeout(5000), catchError(err => { /* console.error('brands fetch failed', err); */ return of([]); }))
-      .subscribe((res: any) => this.brands = res || []);
+      .pipe(timeout(5000), catchError(err => { return of([]); }))
+      .subscribe((res: any) => {
+        this.brands = (res || []).filter((u: any) => u.status !== 'deleted');
+      });
   }
 
   setTab(tab: 'influencer' | 'brand') {
@@ -102,63 +106,76 @@ export class AdminUserTableComponent implements OnInit {
   deletePermanently(userId: string) {
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete-permanent`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
   }
-    setPremium(userId: string, isPremium: boolean) {
-        try {
-          this.premiumType = this.activeTab;
-          if (isPremium) {
-            this.premiumUserId = userId;
-            this.premiumDuration = '';
-            this.premiumIsPremium = true;
-            this.showPremiumModal = true;
-          } else {
-            // Show confirmation before setting free
-            if (confirm('Are you sure you want to set this user as Free? This will remove their premium status.')) {
-              this.http.patch(`${environment.apiBaseUrl}/users/${userId}/premium`, { isPremium: false, type: this.premiumType }, this.getAuthHeaders())
-                .pipe(catchError(err => {
-                  alert('Error setting user as Free: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
-                  return of(null);
-                }))
-                .subscribe(() => this.fetchUsers());
-            }
+  setPremium(userId: string, isPremium: boolean, userType: 'influencer' | 'brand') {
+      try {
+        this.premiumType = userType;
+        if (isPremium) {
+          this.premiumUserId = userId;
+          this.premiumDuration = '';
+          this.premiumIsPremium = true;
+          this.showPremiumModal = true;
+        } else {
+          // Show confirmation before setting free
+          if (confirm('Are you sure you want to set this user as Free? This will remove their premium status.')) {
+            this.http.patch(`${environment.apiBaseUrl}/users/${userId}/premium`, { isPremium: false, type: userType }, this.getAuthHeaders())
+              .pipe(catchError(err => {
+                alert('Error setting user as Free: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
+                return of(null);
+              }))
+              .subscribe(() => this.fetchUsers());
           }
-        } catch (err) {
-          let msg = (err && typeof err === 'object' && 'message' in err) ? (err as any).message : String(err);
-          alert('Error in setPremium: ' + msg);
         }
-    }
-
-      confirmPremium() {
-        if (!this.premiumUserId || !this.premiumDuration) {
-          alert('Please select a premium duration.');
-          return;
-        }
-        const payload = { isPremium: true, premiumDuration: this.premiumDuration, type: this.premiumType };
-        this.http.patch(`${environment.apiBaseUrl}/users/${this.premiumUserId}/premium`, payload, this.getAuthHeaders())
-          .pipe(catchError(err => {
-            alert('Error setting user as Premium: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
-            return of(null);
-          }))
-          .subscribe((res) => {
-            // Close modal after success
-            this.showPremiumModal = false;
-            this.premiumUserId = null;
-            this.premiumDuration = '';
-            this.premiumType = null;
-            this.fetchUsers();
-            if (res) {
-              alert('User has been set as Premium successfully!');
-            }
-          });
+      } catch (err) {
+        let msg = (err && typeof err === 'object' && 'message' in err) ? (err as any).message : String(err);
+        alert('Error in setPremium: ' + msg);
       }
+  }
 
-    closePremiumModal() {
+  confirmPremium() {
+    if (!this.premiumUserId || !this.premiumDuration) {
+      alert('Please select a premium duration.');
+      return;
+    }
+    const payload = { isPremium: true, premiumDuration: this.premiumDuration, type: this.premiumType };
+    this.http.patch(`${environment.apiBaseUrl}/users/${this.premiumUserId}/premium`, payload, this.getAuthHeaders())
+      .pipe(catchError(err => {
+        alert('Error setting user as Premium: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
+        return of(null);
+      }))
+      .subscribe((res) => {
+        // Close modal after success
+        this.showPremiumModal = false;
+        this.premiumUserId = null;
+        this.premiumDuration = '';
+        this.premiumType = null;
+        this.fetchUsers();
+        if (res) {
+          alert('User has been set as Premium successfully!');
+        }
+      });
+  }
+
+  closePremiumModal() {
     this.showPremiumModal = false;
     this.premiumUserId = null;
     this.premiumDuration = '';
     this.premiumType = null;
-    }
+  }
+
   logout() {
     localStorage.removeItem('token');
     window.location.href = '/login';
+  }
+
+  // Handle product link click
+  onProductClick(user: any, product: any, index: number) {
+    // Open product image in new tab if available
+    if (typeof product === 'string' && product.startsWith('http')) {
+      window.open(product, '_blank');
+    } else if (product && product.imageUrl) {
+      window.open(product.imageUrl, '_blank');
+    } else {
+      alert('No image available for this product.');
+    }
   }
 }

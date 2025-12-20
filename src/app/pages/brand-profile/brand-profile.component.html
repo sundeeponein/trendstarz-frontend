@@ -93,16 +93,40 @@
 
       <div class="col-6">
         <label>Languages</label>
-        <select formControlName="languages" multiple class="form-control w-100">
-          <option *ngFor="let lang of languagesList" [value]="lang._id">{{ lang.name }}</option>
-        </select>
+        <ng-select
+          [items]="languagesList"
+          bindLabel="name"
+          bindValue="_id"
+          [multiple]="true"
+          [searchable]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          formControlName="languages"
+          class="form-control w-100"
+        >
+          <ng-template ng-option-tmp let-item="item" let-selected="selected">
+            <input type="checkbox" [checked]="selected" /> {{ item.name }}
+          </ng-template>
+        </ng-select>
       </div>
 
       <div class="col-6">
         <label>Categories</label>
-        <select formControlName="categories" multiple class="form-control w-100">
-          <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
-        </select>
+        <ng-select
+          [items]="categoriesList"
+          bindLabel="name"
+          bindValue="_id"
+          [multiple]="true"
+          [searchable]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          formControlName="categories"
+          class="form-control w-100"
+        >
+          <ng-template ng-option-tmp let-item="item" let-selected="selected">
+            <input type="checkbox" [checked]="selected" /> {{ item.name }}
+          </ng-template>
+        </ng-select>
       </div>
 
       <!-- Product Images: Free user can upload 1, Premium can upload up to 5 -->

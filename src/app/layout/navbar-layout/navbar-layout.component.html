@@ -33,6 +33,7 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/influencer-profile">Profile</a></li>
                 <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
+                <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Deleted Users</a></li>
                 <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
                 <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
               </ul>

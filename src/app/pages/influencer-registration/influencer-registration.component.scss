@@ -1,0 +1,30 @@
+::ng-deep ng-select,
+::ng-deep .ng-select-container {
+  background: #ffffff !important;
+  color: #000 !important;
+  .ng-select-container .ng-value {
+    color: #000 !important;
+    margin-right:5px; padding: 5px;
+    .ng-value-icon.left {
+      padding-right: 3px;
+    }
+    .ng-placeholder {
+      color: #000 !important;
+      opacity: 0.8;
+    }
+  }
+}
+
+::ng-deep .ng-dropdown-panel { border-radius: 5px !important; 
+  background: #ffffff !important;
+  color: #000 !important;
+  margin-left: -12px !important;
+  .ng-option {
+    color: #000 !important;
+    padding-left: 10px !important; padding-right: 10px !important;
+  }
+  .ng-option-selected {
+    background: #4b1e7c !important;
+    color: #fff !important;
+  }
+}

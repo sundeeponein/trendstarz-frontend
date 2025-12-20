@@ -3,8 +3,8 @@
   <div class="admin-tabs">
     <button [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
     <button [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-    <button (click)="logout()">Logout</button>
   </div>
+  
   <div *ngIf="activeTab === 'influencer'">
     <table class="table table-hover admin-table">
       <thead>
@@ -74,44 +74,12 @@
             <button (click)="deleteUser(user._id)" title="Delete" tooltip="Delete">
               <i class="bi bi-trash-fill"></i>
             </button>
-            <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)" title="Restore" tooltip="Restore">
-              <i class="bi bi-arrow-counterclockwise"></i>
-            </button>
-            <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)" title="Delete Permanently" tooltip="Delete Permanently">
-              <i class="bi bi-x-octagon-fill"></i>
-            </button>
-            <button *ngIf="!user.isPremium" (click)="openPremiumModal(user._id)">Set Premium</button>
-            <button *ngIf="user.isPremium" (click)="setPremium(user._id, false)">Set Free</button>
+            <button *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'influencer')">Set Premium</button>
+            <button *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'influencer')">Set Free</button>
           </td>
         </tr>
       </tbody>
     </table>
-
-<!-- Premium Duration Modal (always present, not inside tab divs) -->
-<div *ngIf="showPremiumModal" class="modal-backdrop">
-  <div class="modal premium-modal">
-    <h4>Select Premium Duration</h4>
-  <label><input type="radio" name="premiumDurationGroup" [value]="'1m'" [(ngModel)]="premiumDuration"> 1 Month</label><br>
-  <label><input type="radio" name="premiumDurationGroup" [value]="'3m'" [(ngModel)]="premiumDuration"> 3 Months</label><br>
-  <label><input type="radio" name="premiumDurationGroup" [value]="'1y'" [(ngModel)]="premiumDuration"> 1 Year</label><br>
-    <div class="modal-actions">
-      <button (click)="confirmPremium()" [disabled]="!premiumDuration">Confirm</button>
-      <button (click)="closePremiumModal()">Cancel</button>
-    </div>
-    <div class="modal-features">
-      <strong>Premium Features:</strong>
-      <ul>
-        <li>Everything in Pro</li>
-        <li>Post unlimited campaigns per month</li>
-        <li>Track live analytics for 15 posts at a time</li>
-        <li>5% marketplace fee</li>
-        <li>Priority customer support</li>
-        <li>25 Influencer engagement & audience reports</li>
-      </ul>
-    </div>
-  </div>
-</div>
-     
   </div>
 
   <div *ngIf="activeTab === 'brand'">
@@ -139,7 +107,16 @@
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
-          <td>{{ user.products && user.products.length ? user.products.join(', ') : '-' }}</td>
+          <td>
+            <ng-container *ngIf="user.products && user.products.length; else noProducts">
+              <ng-container *ngFor="let product of user.products; let i = index">
+                <a href="#" (click)="$event.preventDefault(); onProductClick(user, product, i)" style="cursor:pointer; text-decoration:underline;">
+                  Product {{ i + 1 }}
+                </a><span *ngIf="i < user.products.length - 1">, </span>
+              </ng-container>
+            </ng-container>
+            <ng-template #noProducts>-</ng-template>
+          </td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocialBrand">
               <span *ngFor="let sm of user.socialMedia">
@@ -175,12 +152,42 @@
             <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>
             <button (click)="declineUser(user._id)">Decline</button>
             <button (click)="deleteUser(user._id)">Delete</button>
-            <button *ngIf="user.status === 'deleted'" (click)="restoreUser(user._id)">Restore</button>
-            <button *ngIf="user.status === 'deleted'" (click)="deletePermanently(user._id)">Delete Permanently</button>
-            <button (click)="setPremium(user._id, !user.isPremium)">{{ user.isPremium ? 'Set Free' : 'Set Premium' }}</button>
+            <!-- Restore and Delete Permanently buttons removed -->
+            <button *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'brand')">Set Premium</button>
+            <button *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'brand')">Set Free</button>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
+  
 </div>
+
+
+
+
+
+  <!-- Premium Duration Modal (always present, not inside tab divs) -->
+  <div *ngIf="showPremiumModal" class="modal-backdrop">
+    <div class="modal premium-modal">
+      <h4>Select Premium Duration</h4>
+      <label><input type="radio" name="premiumDurationGroup" [value]="'1m'" [(ngModel)]="premiumDuration"> 1 Month</label><br>
+      <label><input type="radio" name="premiumDurationGroup" [value]="'3m'" [(ngModel)]="premiumDuration"> 3 Months</label><br>
+      <label><input type="radio" name="premiumDurationGroup" [value]="'1y'" [(ngModel)]="premiumDuration"> 1 Year</label><br>
+      <div class="modal-actions">
+        <button (click)="confirmPremium()" [disabled]="!premiumDuration">Confirm</button>
+        <button (click)="closePremiumModal()">Cancel</button>
+      </div>
+      <div class="modal-features">
+        <strong>Premium Features:</strong>
+        <ul>
+          <li>Everything in Pro</li>
+          <li>Post unlimited campaigns per month</li>
+          <li>Track live analytics for 15 posts at a time</li>
+          <li>5% marketplace fee</li>
+          <li>Priority customer support</li>
+          <li>25 Influencer engagement & audience reports</li>
+        </ul>
+      </div>
+    </div>
+  </div>
