@@ -8,6 +8,8 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./admin-dashboard.component.scss']
 })
 export class AdminDashboardComponent implements OnInit {
+  influencerDeleted = 0;
+  brandDeleted = 0;
   getAuthHeaders() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -33,15 +35,15 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
-          // console.log('Influencer API response:', data);
-          // data.forEach(u => console.log('Influencer:', u.name || u.email, 'status:', u.status, 'isPremium:', u.isPremium));
-          this.influencerCount = Array.isArray(data) ? data.length : 0;
-          this.influencerActivated = Array.isArray(data) ? data.filter(u => (u.status || '').toLowerCase() === 'accepted').length : 0;
-          this.influencerPending = Array.isArray(data) ? data.filter(u => (u.status || '').toLowerCase() === 'pending').length : 0;
-          this.influencerPremium = Array.isArray(data) ? data.filter(u => !!u.isPremium).length : 0;
+          const all = Array.isArray(data) ? data : [];
+          const filtered = all.filter(u => (u.status || '').toLowerCase() !== 'deleted');
+          this.influencerCount = filtered.length;
+          this.influencerActivated = filtered.filter(u => (u.status || '').toLowerCase() === 'accepted').length;
+          this.influencerPending = filtered.filter(u => (u.status || '').toLowerCase() === 'pending').length;
+          this.influencerPremium = filtered.filter(u => !!u.isPremium).length;
+          this.influencerDeleted = all.filter(u => (u.status || '').toLowerCase() === 'deleted').length;
         },
         error: (err) => {
-          // console.error('Influencer API error:', err);
           alert('Error fetching influencers: ' + (err?.message || err));
         }
       });
@@ -51,15 +53,15 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
-          // console.log('Brand API response:', data);
-          // data.forEach(u => console.log('Brand:', u.brandName || u.email, 'status:', u.status, 'isPremium:', u.isPremium));
-          this.brandCount = Array.isArray(data) ? data.length : 0;
-          this.brandActivated = Array.isArray(data) ? data.filter(u => (u.status || '').toLowerCase() === 'accepted').length : 0;
-          this.brandPending = Array.isArray(data) ? data.filter(u => (u.status || '').toLowerCase() === 'pending').length : 0;
-          this.brandPremium = Array.isArray(data) ? data.filter(u => !!u.isPremium).length : 0;
+          const all = Array.isArray(data) ? data : [];
+          const filtered = all.filter(u => (u.status || '').toLowerCase() !== 'deleted');
+          this.brandCount = filtered.length;
+          this.brandActivated = filtered.filter(u => (u.status || '').toLowerCase() === 'accepted').length;
+          this.brandPending = filtered.filter(u => (u.status || '').toLowerCase() === 'pending').length;
+          this.brandPremium = filtered.filter(u => !!u.isPremium).length;
+          this.brandDeleted = all.filter(u => (u.status || '').toLowerCase() === 'deleted').length;
         },
         error: (err) => {
-          // console.error('Brand API error:', err);
           alert('Error fetching brands: ' + (err?.message || err));
         }
       });

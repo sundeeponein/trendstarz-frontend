@@ -1,0 +1,70 @@
+<div class="container-fluid p-4">
+  <div class="admin-tabs">
+    <button [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+    <button [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+  </div>
+  <div *ngIf="activeTab === 'influencer'">
+    <table class="table table-hover admin-table">
+      <thead>
+        <tr>
+          <th>Profile</th>
+          <th>Name</th>
+          <th>Username</th>
+          <th>Email <br> <small>Phone</small></th>
+          <th>Categories</th>
+          <th>Languages</th>
+          <th>State</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of influencers">
+          <td>
+            <img [src]="user.profileImages && user.profileImages[0] ? user.profileImages[0] : 'assets/default-profile.png'" alt="Profile" width="40" height="40">
+          </td>
+          <td>{{ user.name || '-' }}</td>
+          <td>{{ user.username || '-' }}</td>
+          <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
+          <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
+          <td>{{ user.languages && user.languages.length ? user.languages.join(', ') : '-' }}</td>
+          <td>{{ user.location?.state || '-' }}</td>
+          <td class="actions">
+            <button (click)="restoreUser(user._id)">Restore</button>
+            <button (click)="deletePermanently(user._id)">Delete Permanently</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="activeTab === 'brand'">
+    <table class="admin-table table table-hover">
+      <thead>
+        <tr>
+          <th>Logo</th>
+          <th>Brand Name</th>
+          <th>Email <br> <small>Phone</small></th>
+          <th>Categories</th>
+          <th>State</th>
+          <th>Products</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of brands">
+          <td>
+            <img [src]="user.brandLogo && user.brandLogo[0] ? user.brandLogo[0] : 'assets/default-logo.png'" alt="Logo" width="40" height="40">
+          </td>
+          <td>{{ user.brandName || '-' }}</td>
+          <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
+          <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
+          <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.products && user.products.length ? user.products.join(', ') : '-' }}</td>
+          <td class="actions">
+            <button (click)="restoreUser(user._id)">Restore</button>
+            <button (click)="deletePermanently(user._id)">Delete Permanently</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

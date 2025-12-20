@@ -11,6 +11,7 @@ import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.compone
 import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.component';
 import { InfluencerProfileComponent } from './pages/influencer-profile/influencer-profile.component';
 import { BrandProfileComponent } from './pages/brand-profile/brand-profile.component';
+import { DeletedUsersTableComponent } from './pages/admin/deleted-users-table/deleted-users-table.component';
 
 import { Component } from '@angular/core';
 export const DummyLogoutComponent = Component({
@@ -40,6 +41,7 @@ export const routes: Routes = [
 			   { path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
 			   { path: 'admin-user-table', component: AdminUserTableComponent },
 			   { path: 'admin-management', component: AdminManagementComponent },
+               { path: 'deleted-users', component: DeletedUsersTableComponent },
 		   ]
 	},
 	{ path: 'logout', component: DummyLogoutComponent },

@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss']
 })

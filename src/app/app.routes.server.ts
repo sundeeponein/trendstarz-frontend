@@ -8,6 +8,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/admin-dashboard', renderMode: RenderMode.Prerender },
   { path: 'admin/admin-user-table', renderMode: RenderMode.Prerender },
   { path: 'admin/admin-management', renderMode: RenderMode.Prerender },
+  { path: 'admin/deleted-users', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Prerender },
   { path: 'register-brand', renderMode: RenderMode.Prerender },
   { path: 'payment', renderMode: RenderMode.Prerender },
