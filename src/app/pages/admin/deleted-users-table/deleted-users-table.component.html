@@ -20,7 +20,7 @@
       <tbody>
         <tr *ngFor="let user of influencers">
           <td>
-            <img [src]="user.profileImages && user.profileImages[0] ? user.profileImages[0] : 'assets/default-profile.png'" alt="Profile" width="40" height="40">
+            <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40">
           </td>
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
@@ -52,13 +52,29 @@
       <tbody>
         <tr *ngFor="let user of brands">
           <td>
-            <img [src]="user.brandLogo && user.brandLogo[0] ? user.brandLogo[0] : 'assets/default-logo.png'" alt="Logo" width="40" height="40">
+            <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-logo.png')" alt="Logo" width="40" height="40">
           </td>
           <td>{{ user.brandName || '-' }}</td>
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
-          <td>{{ user.products && user.products.length ? user.products.join(', ') : '-' }}</td>
+          <!-- <td>{{ user.products && user.products.length ? user.products.join(', ') : '-' }}</td> -->
+          <td>
+            <ng-container *ngIf="user.products && user.products.length; else noProducts">
+              <ng-container *ngFor="let product of user.products; let i = index">
+                <ng-container *ngIf="product && product.imageUrl; else textProduct">
+                  <a href="#" (click)="$event.preventDefault(); onProductClick(product)">
+                    <img [src]="product.imageUrl" alt="Product Image" width="32" height="32" style="object-fit:cover; border-radius:4px; margin-right:4px;">
+                  </a>
+                </ng-container>
+                <ng-template #textProduct>
+                  <span>{{ product && product.name ? product.name : (typeof product === 'string' ? product : 'Product ' + (i+1)) }}</span>
+                </ng-template>
+                <span *ngIf="i < user.products.length - 1">, </span>
+              </ng-container>
+            </ng-container>
+            <ng-template #noProducts>-</ng-template>
+          </td>
           <td class="actions">
             <button class="btn btn-success btn-sm me-1" (click)="restoreUser(user._id)">Restore</button>
             <button class="btn btn-danger btn-sm" (click)="deletePermanently(user._id)">Delete Permanently</button>

@@ -15,6 +15,21 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  getProfileImage(user: any): string {
+    if (!user.profileImages || !user.profileImages.length) return 'assets/default-profile.png';
+    const img = user.profileImages[0];
+    if (img && typeof img === 'object' && img.url) return img.url;
+    if (typeof img === 'string' && img) return img;
+    return 'assets/default-profile.png';
+  }
+
+  getBrandLogo(user: any): string {
+    if (!user.brandLogo || !user.brandLogo.length) return 'assets/default-logo.png';
+    const img = user.brandLogo[0];
+    if (img && typeof img === 'object' && img.url) return img.url;
+    if (typeof img === 'string' && img) return img;
+    return 'assets/default-logo.png';
+  }
   // Helper to calculate premium end date for display if backend does not provide
   getPremiumPeriod(user: any): { start: Date, end: Date } | null {
     if (!user.isPremium) return null;
