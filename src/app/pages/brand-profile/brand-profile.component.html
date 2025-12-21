@@ -46,17 +46,18 @@
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
       <div class="col-6">
-        <label>Brand Logo (URL)</label>
-        <div formArrayName="brandLogo">
-          <div *ngFor="let logoCtrl of brandLogoFormArray.controls; let i = index">
-            <div *ngIf="logoCtrl.value">
-              <img [src]="logoCtrl.value" alt="Brand Logo" style="max-width: 120px; max-height: 120px; margin-bottom: 8px; display: block;" />
-            </div>
-            <input [formControlName]="i" type="text" placeholder="Brand Logo URL" class="form-control w-100" />
-            <button type="button" (click)="brandLogoFormArray.removeAt(i)" *ngIf="brandLogoFormArray.length > 1">Remove</button>
+        <label>Brand Logo</label>
+        <ng-container *ngIf="isEditMode; else viewBrandLogoTpl">
+          <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
+          <div *ngIf="brandLogoPreview" class="mt-2">
+            <img [src]="brandLogoPreview" alt="Brand Logo Preview" style="max-width: 120px; max-height: 120px; display: block;" />
           </div>
-          <button type="button" (click)="brandLogoFormArray.push(fb.control(''))" [disabled]="brandLogoFormArray.length >= 3">Add Logo</button>
-        </div>
+        </ng-container>
+        <ng-template #viewBrandLogoTpl>
+          <div *ngIf="brandLogoFormArray.controls.length > 0 && brandLogoFormArray.at(0).value">
+            <img [src]="brandLogoFormArray.at(0).value" alt="Brand Logo" style="max-width: 120px; max-height: 120px; display: block;" />
+          </div>
+        </ng-template>
       </div>
       <div class="col-6">
         <label>Brand Name</label>
@@ -144,12 +145,23 @@
         <label>Product Images</label>
         <div formArrayName="productImages">
           <div *ngFor="let imgCtrl of productImagesFormArray.controls; let i = index">
-            <input [formControlName]="i" type="text" placeholder="Product Image URL" />
-            <button type="button" (click)="removeProductImage(i)">Remove</button>
+            <ng-container *ngIf="isEditMode; else viewProductImageTpl">
+              <input type="file" accept="image/*" (change)="onProductImageFileChange($event, i)" />
+              <div *ngIf="productImagesPreview[i]" class="mt-2">
+                <img [src]="productImagesPreview[i]" alt="Product Image Preview" style="max-width: 120px; max-height: 120px; display: block;" />
+              </div>
+            </ng-container>
+            <ng-template #viewProductImageTpl>
+              <div *ngIf="imgCtrl.value">
+                <img [src]="imgCtrl.value" alt="Product Image" style="max-width: 120px; max-height: 120px; display: block;" />
+              </div>
+            </ng-template>
+            <button type="button" (click)="removeProductImage(i)" *ngIf="isEditMode">Remove</button>
           </div>
           <button type="button"
             (click)="addProductImage()"
-            [disabled]="isPremium ? productImagesFormArray.length >= 5 : productImagesFormArray.length >= 1">
+            [disabled]="isPremium ? productImagesFormArray.length >= 5 : productImagesFormArray.length >= 1"
+            *ngIf="isEditMode">
             Add Product Image
           </button>
         </div>

@@ -123,21 +123,20 @@
   </div>
 
 
-    <!-- Profile Images: Free user can upload 1, Premium can upload up to 3 -->
+    <!-- Profile Image Upload (single image for now) -->
     <div class="col-12 mt-3">
-      <label>Profile Images</label>
-      <div formArrayName="profileImages">
-        <div *ngFor="let imgCtrl of profileImagesFormArray.controls; let i = index">
-          <input [formControlName]="i" type="text" class="form-control w-100" placeholder="Image URL" />
-          <button type="button" (click)="removeProfileImage(i)" *ngIf="isEditMode">Remove</button>
+      <label>Profile Image</label>
+      <ng-container *ngIf="isEditMode; else viewProfileImageTpl">
+        <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" />
+        <div *ngIf="profileImagePreview" class="mt-2">
+          <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
         </div>
-        <button type="button"
-          (click)="addProfileImage()"
-          [disabled]="profileImagesFormArray.length >= 1 || !isEditMode"
-          *ngIf="isEditMode">
-          Add Image
-        </button>
-      </div>
+      </ng-container>
+      <ng-template #viewProfileImageTpl>
+        <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value">
+          <img [src]="profileImagesFormArray.at(0).value" alt="Profile Image" style="max-width: 120px; max-height: 120px; display: block;" />
+        </div>
+      </ng-template>
     </div>
 
     <!-- Social Media: Only allow adding for premium, hide for free -->
