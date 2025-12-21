@@ -156,20 +156,7 @@
         </div>
       </div>
 
-      <!-- Registration Success Modal -->
-      <div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" style="color: green;">Registration Successful!</h5>
-            </div>
-            <div class="modal-body">
-              <p>Your brand has been registered successfully.</p>
-              <a href="/login" class="btn btn-success">Login here</a>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       <button type="submit">Register</button>
 
@@ -189,3 +176,19 @@
 <div *ngIf="registrationForm.invalid" style="color: red; margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
 <pre>{{ registrationForm.errors | json }}</pre>
 <pre>{{ registrationForm.value | json }}</pre>
+
+
+<!-- Registration Success Modal -->
+<div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color: green;">Registration Successful!</h5>
+      </div>
+      <div class="modal-body">
+        <p>Your brand has been registered successfully.</p>
+        <a href="/login" class="btn btn-success">Login here</a>
+      </div>
+    </div>
+  </div>
+</div>
