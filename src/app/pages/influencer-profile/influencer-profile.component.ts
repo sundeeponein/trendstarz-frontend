@@ -1,3 +1,6 @@
+import { environment } from '../../../environments/environment';
+const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
+const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
@@ -25,7 +28,8 @@ export class InfluencerProfileComponent implements OnInit {
   states: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
-  // profileImages: string[] = [];
+  profileImagePreview: string | null = null;
+  profileImageFile: File | null = null;
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isEditMode = false;
@@ -177,12 +181,26 @@ export class InfluencerProfileComponent implements OnInit {
     return this.registrationForm.get('profileImages') as FormArray;
   }
 
-  addProfileImage() {
+
+  // Only allow 1 image for now (can extend for premium)
+  onProfileImageFileChange(event: any) {
     if (!this.isEditMode) return;
-    const maxImages = 1;
-    if (this.profileImagesFormArray.length < maxImages) {
-      this.profileImagesFormArray.push(this.fb.control('', Validators.required));
+    const file: File = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
     }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size must be below 2MB.');
+      return;
+    }
+    this.profileImageFile = file;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.profileImagePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
   }
 
   removeProfileImage(index: number) {
@@ -215,11 +233,10 @@ export class InfluencerProfileComponent implements OnInit {
 
 
 
-  onSubmit() {
+  async onSubmit() {
     if (!this.isEditMode || this.registrationForm.invalid) return;
     this.registrationError = '';
     this.registrationSuccess = false;
-    // Prepare payload to match backend DTO
     const raw = this.registrationForm.getRawValue();
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
@@ -242,6 +259,32 @@ export class InfluencerProfileComponent implements OnInit {
         followersCount: Number(sm.followersCount)
       };
     });
+    // Handle Cloudinary upload for profile image if file selected
+    let profileImages: { url: string, public_id: string }[] = [];
+    if (this.profileImageFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', this.profileImageFile);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.secure_url && data.public_id) {
+          profileImages = [{ url: data.secure_url, public_id: data.public_id }];
+        } else {
+          this.registrationError = 'Profile image upload failed.';
+          return;
+        }
+      } catch (err) {
+        this.registrationError = 'Profile image upload failed.';
+        return;
+      }
+    } else if (raw.profileImages && Array.isArray(raw.profileImages) && raw.profileImages.length > 0) {
+      // If editing and image already exists, just send it as-is
+      profileImages = raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
+    }
     const payload: any = {
       ...raw,
       location: {
@@ -250,7 +293,7 @@ export class InfluencerProfileComponent implements OnInit {
       languages: languageNames,
       categories: categoryNames,
       socialMedia,
-      profileImages: raw.profileImages || [],
+      profileImages,
       contact: raw.contact
     };
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
@@ -259,6 +302,8 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationSuccess = true;
         this.isEditMode = false;
         this.registrationForm.disable();
+        this.profileImagePreview = null;
+        this.profileImageFile = null;
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();

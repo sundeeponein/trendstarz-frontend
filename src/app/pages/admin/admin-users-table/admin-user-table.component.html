@@ -1,8 +1,8 @@
 <div class="container-fluid p-4">
 
   <div class="admin-tabs">
-    <button [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-    <button [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+  <button class="btn btn-outline-primary me-2" [class.active]="activeTab === 'influencer'" [class.btn-primary]="activeTab === 'influencer'" [class.btn-outline-primary]="activeTab !== 'influencer'" (click)="setTab('influencer')">Influencers</button>
+  <button class="btn btn-outline-primary" [class.active]="activeTab === 'brand'" [class.btn-primary]="activeTab === 'brand'" [class.btn-outline-primary]="activeTab !== 'brand'" (click)="setTab('brand')">Brands</button>
   </div>
   
   <div *ngIf="activeTab === 'influencer'">
@@ -12,7 +12,7 @@
           <th>Profile</th>
           <th>Name</th>
           <th>Username</th>
-          <th>Email <br> <small>Phone</small></th>
+          <th>Email & Phone</th>
           <th>Categories</th>
           <th>Languages</th>
           <th>State</th>
@@ -25,7 +25,7 @@
       <tbody>
         <tr *ngFor="let user of influencers">
           <td>
-            <img [src]="user.profileImages && user.profileImages[0] ? user.profileImages[0] : 'assets/default-profile.png'" alt="Profile" width="40" height="40">
+            <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40">
           </td>
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
@@ -65,17 +65,17 @@
           </td>
           <td>{{ user.status || '-' }}</td>
           <td class="actions">
-            <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept" tooltip="Accept">
+            <button class="btn btn-success btn-sm me-1" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept" tooltip="Accept">
               <i class="bi bi-check-circle-fill"></i>
             </button>
-            <button (click)="declineUser(user._id)" title="Decline" tooltip="Decline">
+            <button class="btn btn-warning btn-sm" (click)="declineUser(user._id)" title="Decline" tooltip="Decline">
               <i class="bi bi-x-circle-fill"></i>
             </button>
-            <button (click)="deleteUser(user._id)" title="Delete" tooltip="Delete">
+            <button class="btn btn-danger btn-sm" (click)="deleteUser(user._id)" title="Delete" tooltip="Delete">
               <i class="bi bi-trash-fill"></i>
             </button>
-            <button *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'influencer')">Set Premium</button>
-            <button *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'influencer')">Set Free</button>
+            <button class="btn btn-outline-primary btn-sm me-1" *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'influencer')">Set Premium</button>
+            <button class="btn btn-outline-secondary btn-sm" *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'influencer')">Set Free</button>
           </td>
         </tr>
       </tbody>
@@ -88,7 +88,7 @@
         <tr>
           <th>Logo</th>
           <th>Brand Name</th>
-          <th>Email <br> <small>Phone</small></th>
+          <th>Email & Phone</th>
           <th>Categories</th>
           <th>State</th>
           <th>Products</th>
@@ -101,7 +101,7 @@
       <tbody>
         <tr *ngFor="let user of brands">
           <td>
-            <img [src]="user.brandLogo && user.brandLogo[0] ? user.brandLogo[0] : 'assets/default-logo.png'" alt="Logo" width="40" height="40">
+            <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-logo.png')" alt="Logo" width="40" height="40">
           </td>
           <td>{{ user.brandName || '-' }}</td>
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
@@ -149,12 +149,18 @@
           </td>
           <td>{{ user.status === 'accepted' ? 'Accepted' : (user.status || '-') }}</td>
           <td class="actions">
-            <button (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">Accept</button>
-            <button (click)="declineUser(user._id)">Decline</button>
-            <button (click)="deleteUser(user._id)">Delete</button>
+            <button class="btn btn-success btn-sm me-1" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">
+              <i class="bi bi-check-circle-fill"></i>
+            </button>
+            <button class="btn btn-warning btn-sm me-1" (click)="declineUser(user._id)">
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+            <button class="btn btn-danger btn-sm me-1" (click)="deleteUser(user._id)">
+              <i class="bi bi-trash-fill"></i>
+            </button>
             <!-- Restore and Delete Permanently buttons removed -->
-            <button *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'brand')">Set Premium</button>
-            <button *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'brand')">Set Free</button>
+            <button class="btn btn-outline-primary btn-sm me-1" *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'brand')">Set Premium</button>
+            <button class="btn btn-outline-secondary btn-sm" *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'brand')">Set Free</button>
           </td>
         </tr>
       </tbody>
@@ -168,26 +174,34 @@
 
 
   <!-- Premium Duration Modal (always present, not inside tab divs) -->
-  <div *ngIf="showPremiumModal" class="modal-backdrop">
-    <div class="modal premium-modal">
-      <h4>Select Premium Duration</h4>
-      <label><input type="radio" name="premiumDurationGroup" [value]="'1m'" [(ngModel)]="premiumDuration"> 1 Month</label><br>
-      <label><input type="radio" name="premiumDurationGroup" [value]="'3m'" [(ngModel)]="premiumDuration"> 3 Months</label><br>
-      <label><input type="radio" name="premiumDurationGroup" [value]="'1y'" [(ngModel)]="premiumDuration"> 1 Year</label><br>
-      <div class="modal-actions">
-        <button (click)="confirmPremium()" [disabled]="!premiumDuration">Confirm</button>
-        <button (click)="closePremiumModal()">Cancel</button>
-      </div>
-      <div class="modal-features">
-        <strong>Premium Features:</strong>
-        <ul>
-          <li>Everything in Pro</li>
-          <li>Post unlimited campaigns per month</li>
-          <li>Track live analytics for 15 posts at a time</li>
-          <li>5% marketplace fee</li>
-          <li>Priority customer support</li>
-          <li>25 Influencer engagement & audience reports</li>
-        </ul>
+  <div *ngIf="showPremiumModal"  class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+    
+    <div class="modal-dialog modal-dialog-centered premium-modal">
+
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>Select Premium Duration</h4>
+        </div>
+        <div class="modal-body">
+          <label><input type="radio" name="premiumDurationGroup" [value]="'1m'" [(ngModel)]="premiumDuration"> 1 Month</label><br>
+          <label><input type="radio" name="premiumDurationGroup" [value]="'3m'" [(ngModel)]="premiumDuration"> 3 Months</label><br>
+          <label><input type="radio" name="premiumDurationGroup" [value]="'1y'" [(ngModel)]="premiumDuration"> 1 Year</label><br>
+          <div class="modal-actions">
+            <button (click)="confirmPremium()" [disabled]="!premiumDuration">Confirm</button>
+            <button (click)="closePremiumModal()">Cancel</button>
+          </div>
+          <div class="modal-features">
+            <strong>Premium Features:</strong>
+            <ul>
+              <li>Everything in Pro</li>
+              <li>Post unlimited campaigns per month</li>
+              <li>Track live analytics for 15 posts at a time</li>
+              <li>5% marketplace fee</li>
+              <li>Priority customer support</li>
+              <li>25 Influencer engagement & audience reports</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </div>

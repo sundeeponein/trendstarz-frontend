@@ -87,19 +87,12 @@
   </div>
 
 
-    <!-- Profile Images: Free user can upload 1, Premium can upload up to 3 -->
+    <!-- Profile Image Upload (single image for now) -->
     <div class="col-12 mt-3">
-      <label>Profile Images</label>
-      <div formArrayName="profileImages">
-        <div *ngFor="let imgCtrl of profileImagesFormArray.controls; let i = index">
-          <input [formControlName]="i" type="text" class="form-control w-100" placeholder="Image URL" />
-          <button type="button" (click)="removeProfileImage(i)">Remove</button>
-        </div>
-        <button type="button"
-          (click)="addProfileImage()"
-          [disabled]="profileImagesFormArray.length >= 1">
-          Add Image
-        </button>
+      <label>Profile Image</label>
+      <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" />
+      <div *ngIf="profileImagePreview" class="mt-2">
+        <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
       </div>
     </div>
 
@@ -144,10 +137,6 @@
   </div>
 
 
-  <div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
-    Registration successful! <a href="/login">Login here</a>
-  </div>
-
   <div class="col-12 mt-3"><button type="submit" class="btn btn-primary">Register</button></div>
 
   </div>
@@ -169,3 +158,19 @@
 <div *ngIf="registrationForm.invalid" style="color: red, margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
 <pre>{{ registrationForm.errors | json }}</pre>
 <pre>{{ registrationForm.value | json }}</pre> -->
+
+
+<!-- Registration Success Modal -->
+<div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color: green;">Registration Successful!</h5>
+      </div>
+      <div class="modal-body">
+        <p>Your influencer account has been registered successfully.</p>
+        <a href="/login" class="btn btn-success">Login here</a>
+      </div>
+    </div>
+  </div>
+</div>
