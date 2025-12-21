@@ -1,0 +1,47 @@
+/* Modal backdrop and modal styles for Premium Duration Modal */
+.modal-backdrop {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0,0,0,0.5);
+	z-index: 1050;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.modal.premium-modal {
+	background: #fff;
+	border-radius: 8px;
+	padding: 2rem 2.5rem 1.5rem 2.5rem;
+	box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+	min-width: 320px;
+	max-width: 95vw;
+	max-height: 90vh;
+	overflow-y: auto;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 2000;
+	animation: fadeInModal 0.2s;
+}
+
+@keyframes fadeInModal {
+	from { opacity: 0; transform: translate(-50%, -40%); }
+	to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.modal-actions {
+	margin-top: 1.5rem;
+	display: flex;
+	gap: 1rem;
+	justify-content: flex-end;
+}
+
+.modal-features {
+	margin-top: 1.5rem;
+	font-size: 0.98em;
+}
