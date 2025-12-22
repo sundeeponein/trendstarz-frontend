@@ -1,3 +1,4 @@
+<!-- Removed duplicate registrationSuccess debug/modal block for clarity -->
 <div class="container">
 <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
  <div class="row my-5">
@@ -156,19 +157,6 @@
 <pre>{{ registrationForm.errors | json }}</pre>
 <pre>{{ registrationForm.value | json }}</pre>
 
-
-<!-- Registration Success Modal -->
-<div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" style="color: green;">Registration Successful!</h5>
-      </div>
-      <div class="modal-body">
-        <p>Your influencer account has been registered successfully.</p>
-        <a href="/login" class="btn btn-success">Login here</a>
-        <button class="btn btn-secondary ms-2" (click)="closeSuccessModal()">Close</button>
-      </div>
-    </div>
-  </div>
+<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px; font-weight: bold;">
+  Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
 </div>

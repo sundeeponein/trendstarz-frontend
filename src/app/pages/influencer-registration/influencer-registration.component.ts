@@ -2,7 +2,7 @@ import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
@@ -28,7 +28,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   profileImageFile: File | null = null;
   languagesList: any[] = [];
   categoriesList: any[] = [];
-  constructor(private fb: FormBuilder, private configService: ConfigService) {}
+  constructor(private fb: FormBuilder, private configService: ConfigService, private ngZone: NgZone) {}
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
@@ -196,9 +196,9 @@ export class InfluencerRegistrationComponent implements OnInit {
                 }).subscribe({
                   next: (res) => {
                     console.log('PATCH success:', res);
-                    setTimeout(() => {
+                    this.ngZone.run(() => {
                       this.registrationSuccess = true;
-                    }, 0);
+                    });
                   },
                   error: (err) => {
                     console.error('PATCH error:', err);
@@ -215,9 +215,9 @@ export class InfluencerRegistrationComponent implements OnInit {
             });
         } else {
           // No image to upload, registration complete
-          setTimeout(() => {
+          this.ngZone.run(() => {
             this.registrationSuccess = true;
-          }, 0);
+          });
           // Do not reset form here; let modal show
         }
       },
