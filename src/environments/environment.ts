@@ -4,6 +4,6 @@ export const environment = {
   production: false,
   apiBaseUrl: 'https://trendstarz-backend-production.up.railway.app',
   stripePublicKey: 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXX', // <-- Replace with your real Stripe public key
-  cloudinaryUploadPreset: 'your_upload_preset', // <-- Replace with your unsigned upload preset
+  cloudinaryUploadPreset: 'trendstarz_dev', // <-- Replace with your unsigned upload preset
   cloudinaryCloudName: 'ddnsoypf8' // <-- Replace with your cloud name
 };
