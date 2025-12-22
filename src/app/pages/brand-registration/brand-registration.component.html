@@ -164,7 +164,7 @@
   </form>
 </div>
 
-<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
+<!-- <div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
   {{ registrationError }}
 </div>
 <div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
@@ -175,8 +175,22 @@
 <div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
 <div *ngIf="registrationForm.invalid" style="color: red; margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
 <pre>{{ registrationForm.errors | json }}</pre>
-<pre>{{ registrationForm.value | json }}</pre>
+<pre>{{ registrationForm.value | json }}</pre> -->
 
+<!-- Registration Error Modal -->
+<div *ngIf="registrationError" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color: red;">Registration Failed</h5>
+      </div>
+      <div class="modal-body">
+        <p>{{ registrationError }}</p>
+        <button class="btn btn-danger" (click)="registrationError = ''">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Registration Success Modal -->
 <div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">

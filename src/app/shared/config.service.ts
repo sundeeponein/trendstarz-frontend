@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -58,9 +57,18 @@ export class ConfigService {
   }
 
   getBrands(token: string): Observable<any[]> {
-  const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  return this.http.get<any[]>(`${this.apiUrl}/users/brands`, headers);
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return this.http.get<any[]>(`${this.apiUrl}/users/brands`, headers);
   }
+
+  updateBrandImages(id: string, images: { brandLogo?: any[]; products?: any[] }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
+  }
+
+  updateUserImages(id: string, images: { profileImages?: any[]; brandLogo?: any[]; products?: any[] }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
+  }
+
 
   getInfluencerProfileById(token: string): Observable<any> {
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};

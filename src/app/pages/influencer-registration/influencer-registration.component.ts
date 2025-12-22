@@ -151,32 +151,7 @@ export class InfluencerRegistrationComponent implements OnInit {
         followersCount: Number(sm.followersCount)
       };
     });
-    // Handle Cloudinary upload for profile image if file selected
-    let profileImages: { url: string, public_id: string }[] = [];
-    if (this.profileImageFile) {
-      try {
-        const formData = new FormData();
-        formData.append('file', this.profileImageFile);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          profileImages = [{ url: data.secure_url, public_id: data.public_id }];
-        } else {
-          this.registrationError = 'Profile image upload failed.';
-          return;
-        }
-      } catch (err) {
-        this.registrationError = 'Profile image upload failed.';
-        return;
-      }
-    } else if (raw.profileImages && Array.isArray(raw.profileImages) && raw.profileImages.length > 0) {
-      // If editing and image already exists, just send it as-is
-      profileImages = raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
-    }
+    // Step 1: Register influencer without images
     const payload: any = {
       ...raw,
       location: {
@@ -185,15 +160,66 @@ export class InfluencerRegistrationComponent implements OnInit {
       languages: languageNames,
       categories: categoryNames,
       socialMedia,
-      profileImages,
+      profileImages: [], // Don't send images yet
       contact: raw.contact
     };
     this.configService.registerInfluencer(payload).subscribe({
-      next: () => {
-        this.registrationSuccess = true;
-        this.registrationForm.reset();
-        this.profileImagePreview = null;
-        this.profileImageFile = null;
+      next: (savedInfluencer) => {
+        console.log('Registration response:', savedInfluencer);
+        // Step 2: Upload image to Cloudinary if selected
+        let influencerId = '';
+        // Handle both {success, message, influencer} and direct influencer object
+        let influencerObj = savedInfluencer && savedInfluencer.influencer ? savedInfluencer.influencer : savedInfluencer;
+        if (influencerObj && (typeof influencerObj._id === 'string' || typeof influencerObj._id === 'object')) {
+          influencerId = influencerObj._id.toString();
+        } else if (influencerObj && influencerObj.id) {
+          influencerId = influencerObj.id.toString();
+        }
+        if (!influencerId || influencerId === 'undefined') {
+          this.registrationError = 'Could not determine influencer ID for image upload.';
+          return;
+        }
+        if (this.profileImageFile) {
+          const formData = new FormData();
+          formData.append('file', this.profileImageFile);
+          formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+          fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: formData
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.secure_url && data.public_id) {
+                // Step 3: PATCH user with image info
+                this.configService.updateUserImages(influencerId, {
+                  profileImages: [{ url: data.secure_url, public_id: data.public_id }]
+                }).subscribe({
+                  next: (res) => {
+                    console.log('PATCH success:', res);
+                    setTimeout(() => {
+                      this.registrationSuccess = true;
+                    }, 0);
+                  },
+                  error: (err) => {
+                    console.error('PATCH error:', err);
+                    this.registrationError = 'Image update failed after registration.';
+                  }
+                });
+              } else {
+                this.registrationError = 'Profile image upload failed.';
+              }
+            })
+            .catch((err) => {
+              console.error('Cloudinary upload error:', err);
+              this.registrationError = 'Profile image upload failed.';
+            });
+        } else {
+          // No image to upload, registration complete
+          setTimeout(() => {
+            this.registrationSuccess = true;
+          }, 0);
+          // Do not reset form here; let modal show
+        }
       },
       error: err => {
         if (err?.error?.message && err.error.message.includes('already exists')) {
@@ -203,6 +229,14 @@ export class InfluencerRegistrationComponent implements OnInit {
         }
       }
     });
+  }
+
+  // Add a method to close the modal and reset the form
+  closeSuccessModal() {
+    this.registrationSuccess = false;
+    this.registrationForm.reset();
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
   }
 
 
