@@ -1,162 +1,139 @@
-<!-- Removed duplicate registrationSuccess debug/modal block for clarity -->
+
 <div class="container">
-<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
- <div class="row my-5">
 
-  <div class="col-6">
-    <label>Username</label>
-    <input formControlName="username" type="text" class="form-control w-100" required />
-  </div>
-
-  <div class="col-6">
-    <label>Phone Number</label>
-    <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
-  </div>
-
-  <div class="col-6">
-    <label>Name</label>
-    <input formControlName="name" type="text" class="form-control w-100" required />
-  </div>
-
-  <!-- Removed duplicate Username and Phone Number fields -->
-
-  <div class="col-6">
-    <label>Email</label>
-    <input formControlName="email" type="email" class="form-control w-100" required />
-  </div>
-
-  <div class="col-6">
-    <label>Password</label>
-    <input formControlName="password" type="password" class="form-control w-100" required />
-  </div>
-  <div class="col-6">
-    <label>Confirm Password</label>
-    <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
-  </div>
-
-  <div class="col-6">
-    <label>Payment Option</label>
-    <select formControlName="paymentOption" class="form-control w-100">
-      <option value="free">Free (Contact/Social hidden)</option>
-      <option value="premium">Premium (Contact/Social visible, 3 images)</option>
-    </select>
-  </div>
-
-  <div class="col-6" formGroupName="location">
-    <label>State</label>
-    <select formControlName="state" class="form-control w-100">
-      <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
-    </select>
-  </div>
-
-  <div class="col-6">
-    <label>Languages</label>
-    <ng-select
-      [items]="languagesList"
-      bindLabel="name"
-      bindValue="_id"
-      [multiple]="true"
-      [searchable]="true"
-      [closeOnSelect]="false"
-      [clearable]="true"
-      formControlName="languages"
-      class="form-control w-100"
-    >
-      <ng-template ng-option-tmp let-item="item" let-selected="selected">
-        <input type="checkbox" [checked]="selected" /> {{ item.name }}
-      </ng-template>
-    </ng-select>
-  </div>
-
-  <div class="col-6">
-    <label>Categories</label>
-    <ng-select
-      [items]="categoriesList"
-      bindLabel="name"
-      bindValue="_id"
-      [multiple]="true"
-      [searchable]="true"
-      [closeOnSelect]="false"
-      [clearable]="true"
-      formControlName="categories"
-      class="form-control w-100"
-    >
-      <ng-template ng-option-tmp let-item="item" let-selected="selected">
-        <input type="checkbox" [checked]="selected" /> {{ item.name }}
-      </ng-template>
-    </ng-select>
-  </div>
-
-
-    <!-- Profile Image Upload (single image for now) -->
-    <div class="col-12 mt-3">
-      <label>Profile Image</label>
-      <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" />
-      <div *ngIf="profileImagePreview" class="mt-2">
-        <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
-      </div>
+  <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+    <div *ngIf="registrationSuccess" style="display: block; color: green; margin-bottom: 10px; font-weight: bold;">
+      Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
     </div>
-
-    <!-- Social Media: Only allow adding for premium, hide for free -->
-    <div class="col-12 mt-3" formArrayName="socialMedia">
-      <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
-        <label>Social Media</label>
-        <div class="col-3">
-          <label>Social Platform</label>
-          <select formControlName="platform"  class="form-control w-100">
-            <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-          </select>
-        </div>
-        <div class="col-3">
-          <label>Handle Name</label>
-          <input formControlName="handle" type="text" required  class="form-control w-100" />
-        </div>
-        <div class="col-3">
-          <label>Tier</label>
-          <select formControlName="tier" class="form-control w-100">
-            <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-          </select>
-        </div>
-        <div class="col-3">
-          <label>Followers/Subscribers Count</label>
-          <input formControlName="followersCount" type="number" required  class="form-control w-100" />
-          <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+    <div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
+      {{ registrationError }}
+    </div>
+    <div class="row my-5">
+      <div class="col-6">
+        <label>Username</label>
+        <input formControlName="username" type="text" class="form-control w-100" required />
+      </div>
+      <div class="col-6">
+        <label>Phone Number</label>
+        <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+      </div>
+      <div class="col-6">
+        <label>Name</label>
+        <input formControlName="name" type="text" class="form-control w-100" required />
+        <div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
+      </div>
+      <div class="col-6">
+        <label>Email</label>
+        <input formControlName="email" type="email" class="form-control w-100" required />
+        <div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" style="color:red">Valid email is required.</div>
+      </div>
+      <div class="col-6">
+        <label>Password</label>
+        <input formControlName="password" type="password" class="form-control w-100" required />
+      </div>
+      <div class="col-6">
+        <label>Confirm Password</label>
+        <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
+      </div>
+      <div class="col-6">
+        <label>Payment Option</label>
+        <select formControlName="paymentOption" class="form-control w-100">
+          <option value="free">Free (Contact/Social hidden)</option>
+          <option value="premium">Premium (Contact/Social visible, 3 images)</option>
+        </select>
+      </div>
+      <div class="col-6" formGroupName="location">
+        <label>State</label>
+        <select formControlName="state" class="form-control w-100">
+          <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+        </select>
+        <div *ngIf="registrationForm.get('location.state')?.invalid && registrationForm.get('location.state')?.touched" style="color:red">State is required.</div>
+      </div>
+      <div class="col-6">
+        <label>Languages</label>
+        <ng-select
+          [items]="languagesList"
+          bindLabel="name"
+          bindValue="_id"
+          [multiple]="true"
+          [searchable]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          formControlName="languages"
+          class="form-control w-100"
+        >
+          <ng-template ng-option-tmp let-item="item" let-selected="selected">
+            <input type="checkbox" [checked]="selected" /> {{ item.name }}
+          </ng-template>
+        </ng-select>
+        <div *ngIf="registrationForm.get('languages')?.invalid && registrationForm.get('languages')?.touched" style="color:red">Select at least one language.</div>
+      </div>
+      <div class="col-6">
+        <label>Categories</label>
+        <ng-select
+          [items]="categoriesList"
+          bindLabel="name"
+          bindValue="_id"
+          [multiple]="true"
+          [searchable]="true"
+          [closeOnSelect]="false"
+          [clearable]="true"
+          formControlName="categories"
+          class="form-control w-100"
+        >
+          <ng-template ng-option-tmp let-item="item" let-selected="selected">
+            <input type="checkbox" [checked]="selected" /> {{ item.name }}
+          </ng-template>
+        </ng-select>
+        <div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
+      </div>
+      <!-- Profile Image Upload (single image for now) -->
+      <div class="col-12 mt-3">
+        <label>Profile Image</label>
+        <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" />
+        <div *ngIf="profileImagePreview" class="mt-2">
+          <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
         </div>
       </div>
-      <button type="button" (click)="addSocialMedia()">Add Social Media</button>
-    </div>
-
-    <div class="col-6 mt-3" formGroupName="contact">
-      <label>Contact Options</label>
-      <div class="row">
-        <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
-        <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
-        <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+      <!-- Social Media: Only allow adding for premium, hide for free -->
+      <div class="col-12 mt-3" formArrayName="socialMedia">
+        <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
+          <label>Social Media</label>
+          <div class="col-3">
+            <label>Social Platform</label>
+            <select formControlName="platform"  class="form-control w-100">
+              <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Handle Name</label>
+            <input formControlName="handle" type="text" required  class="form-control w-100" />
+          </div>
+          <div class="col-3">
+            <label>Tier</label>
+            <select formControlName="tier" class="form-control w-100">
+              <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Followers/Subscribers Count</label>
+            <input formControlName="followersCount" type="number" required  class="form-control w-100" />
+            <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
+          </div>
+        </div>
+        <button type="button" (click)="addSocialMedia()">Add Social Media</button>
       </div>
+      <div class="col-6 mt-3" formGroupName="contact">
+        <label>Contact Options</label>
+        <div class="row">
+          <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
+          <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
+          <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+        </div>
+        <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
+      </div>
+      <div class="col-12 mt-3"><button type="submit" class="btn btn-primary">Register</button></div>
     </div>
-
-
-    <div class="col-12 mt-3"><button type="submit" class="btn btn-primary">Register</button></div>
-
-  </div>
-</form>
-
-</div>
-
-
-<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
-  {{ registrationError }}
-</div>
-<div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
-<div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" style="color:red">Valid email is required.</div>
-<div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
-<div *ngIf="registrationForm.get('state')?.invalid && registrationForm.get('state')?.touched" style="color:red">State is required.</div>
-<div *ngIf="registrationForm.get('languages')?.invalid && registrationForm.get('languages')?.touched" style="color:red">Select at least one language.</div>
-<div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
-<div *ngIf="registrationForm.invalid" style="color: red">Form is invalid. Please fill all required fields.</div>
-<pre>{{ registrationForm.errors | json }}</pre>
-<pre>{{ registrationForm.value | json }}</pre>
-
-<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px; font-weight: bold;">
-  Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
-</div>
+  </form>
+  <pre>{{ registrationForm.errors | json }}</pre>
+  <!-- <pre>{{ registrationForm.value | json }}</pre> -->
