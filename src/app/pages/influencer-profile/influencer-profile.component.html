@@ -127,15 +127,22 @@
     <div class="col-12 mt-3">
       <label>Profile Image</label>
       <ng-container *ngIf="isEditMode; else viewProfileImageTpl">
-        <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" />
-        <div *ngIf="profileImagePreview" class="mt-2">
-          <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
+        <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url; else addImageTpl">
+          <img [src]="profileImagesFormArray.at(0).value.url" alt="Current Profile Image" style="max-width: 120px; max-height: 120px; display: block; margin-bottom: 8px;" />
+          <button type="button" class="btn btn-warning btn-sm mb-2" (click)="removeProfileImage(0)">Remove/Replace Image</button>
         </div>
+        <ng-template #addImageTpl>
+          <div *ngIf="profileImagePreview" class="mt-2">
+            <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
+          </div>
+        </ng-template>
+        <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [disabled]="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url" />
       </ng-container>
       <ng-template #viewProfileImageTpl>
-        <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value">
-          <img [src]="profileImagesFormArray.at(0).value" alt="Profile Image" style="max-width: 120px; max-height: 120px; display: block;" />
+        <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url">
+          <img [src]="profileImagesFormArray.at(0).value.url" alt="Profile Image" style="max-width: 120px; max-height: 120px; display: block;" />
         </div>
+        <div *ngIf="!profileImagesFormArray.controls.length || !profileImagesFormArray.at(0).value || !profileImagesFormArray.at(0).value.url" class="text-muted">No profile image uploaded.</div>
       </ng-template>
     </div>
 

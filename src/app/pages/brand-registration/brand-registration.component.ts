@@ -174,18 +174,37 @@ export class BrandRegistrationComponent implements OnInit {
     if (this.registrationForm.invalid) return;
     this.registrationError = '';
     this.registrationSuccess = false;
-    // Prepare payload to match backend DTO
     const raw = this.registrationForm.value;
-    // Upload product images to Cloudinary if any
-    let productImageObjs: { url: string, public_id: string }[] = [];
-    if (this.productImagesFiles.length > 0) {
-      for (let i = 0; i < this.productImagesFiles.length; i++) {
-        const fileOrObj = this.productImagesFiles[i];
-        if (!fileOrObj) continue;
-        if (fileOrObj instanceof File) {
+    // Prepare payload without images
+    const payload: any = {
+      ...raw,
+      isPremium: raw.paymentOption === 'premium',
+      socialMedia: (raw.socialMedia || []).map((sm: any) => {
+        const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+        return {
+          ...sm,
+          platform: platformObj ? platformObj.name : sm.platform,
+          followersCount: Number(sm.followersCount)
+        };
+      }),
+      brandLogo: [],
+      products: [],
+      contact: raw.contact,
+      googleMapAddress: raw.googleMapAddress || '',
+    };
+    delete payload.confirmPassword;
+    delete payload.paymentOption;
+    delete payload.productImages;
+
+    // 1. Register brand (no images)
+    this.configService.registerBrand(payload).subscribe({
+      next: async (savedBrand) => {
+        // 2. Upload images to Cloudinary
+        let brandLogoObjs: { url: string, public_id: string }[] = [];
+        if (this.brandLogoFile) {
           try {
             const formData = new FormData();
-            formData.append('file', fileOrObj);
+            formData.append('file', this.brandLogoFile);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
             const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
               method: 'POST',
@@ -193,81 +212,58 @@ export class BrandRegistrationComponent implements OnInit {
             });
             const data = await response.json();
             if (data.secure_url && data.public_id) {
-              productImageObjs.push({ url: data.secure_url, public_id: data.public_id });
-            } else {
+              brandLogoObjs = [{ url: data.secure_url, public_id: data.public_id }];
+            }
+          } catch (err) {
+            this.registrationError = 'Image upload failed.';
+            return;
+          }
+        }
+        let productImageObjs: { url: string, public_id: string }[] = [];
+        for (let i = 0; i < this.productImagesFiles.length; i++) {
+          const fileOrObj = this.productImagesFiles[i];
+          if (fileOrObj instanceof File) {
+            try {
+              const formData = new FormData();
+              formData.append('file', fileOrObj);
+              formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+              const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+              });
+              const data = await response.json();
+              if (data.secure_url && data.public_id) {
+                productImageObjs.push({ url: data.secure_url, public_id: data.public_id });
+              }
+            } catch (err) {
               this.registrationError = 'Product image upload failed.';
               return;
             }
-          } catch (err) {
-            this.registrationError = 'Product image upload failed.';
-            return;
           }
-        } else if (typeof fileOrObj === 'object' && fileOrObj !== null && 'url' in fileOrObj && 'public_id' in fileOrObj) {
-          productImageObjs.push(fileOrObj as { url: string, public_id: string });
         }
-      }
-    }
-    // Map social media platform ID to name (for backend compatibility)
-    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
-      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
-      return {
-        ...sm,
-        platform: platformObj ? platformObj.name : sm.platform,
-        followersCount: Number(sm.followersCount)
-      };
-    });
-
-    // Handle Cloudinary upload for brand logo if file selected
-    let brandLogoObjs: { url: string, public_id: string }[] = [];
-    if (this.brandLogoFile) {
-      try {
-        const formData = new FormData();
-        formData.append('file', this.brandLogoFile);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          brandLogoObjs = [{ url: data.secure_url, public_id: data.public_id }];
-        } else {
-          this.registrationError = 'Image upload failed.';
+        // 3. Update brand with images
+        console.log('Registration response:', savedBrand);
+        const brandId = savedBrand._id || savedBrand.id;
+        if (!brandId) {
+          this.registrationError = 'Could not determine brand ID for image upload.';
           return;
         }
-      } catch (err) {
-        this.registrationError = 'Image upload failed.';
-        return;
-      }
-    } else if (raw.brandLogo && Array.isArray(raw.brandLogo) && raw.brandLogo.length > 0) {
-      brandLogoObjs = raw.brandLogo.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
-    }
-
-    const payload: any = {
-      ...raw,
-      isPremium: raw.paymentOption === 'premium',
-      socialMedia,
-      brandLogo: brandLogoObjs,
-      products: productImageObjs,
-      contact: raw.contact,
-      googleMapAddress: raw.googleMapAddress || '',
-    };
-    // Remove fields not in DTO
-    delete payload.confirmPassword;
-    delete payload.paymentOption;
-    delete payload.productImages;
-    this.configService.registerBrand(payload).subscribe({
-      next: (savedBrand) => {
-        this.registrationSuccess = true;
-        // Patch the form with the saved data so previews show
-        this.registrationForm.patchValue({
-          ...savedBrand,
-          brandLogo: undefined // We'll handle this below
+        this.configService.updateBrandImages(brandId, {
+          brandLogo: brandLogoObjs,
+          products: productImageObjs
+        }).subscribe({
+          next: () => {
+            this.registrationSuccess = true;
+            this.registrationForm.reset();
+            this.brandLogoPreview = null;
+            this.brandLogoFile = null;
+            this.productImagesPreview = [];
+            this.productImagesFiles = [];
+          },
+          error: () => {
+            this.registrationError = 'Failed to update brand with images.';
+          }
         });
-        // Patch FormArray for brandLogo
-        const arr = this.brandLogoFormArray;
-        arr.clear();
-        (savedBrand.brandLogo || []).forEach((logo: string) => arr.push(this.fb.control(logo)));
       },
       error: (err: any) => {
         if (err?.error?.message && err.error.message.includes('already exists')) {

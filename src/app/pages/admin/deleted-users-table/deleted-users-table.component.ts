@@ -56,4 +56,10 @@ export class DeletedUsersTableComponent implements OnInit {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
+
+  onProductClick(product: any) {
+    if (product && product.imageUrl) {
+      window.open(product.imageUrl, '_blank');
+    }
+  }
 }

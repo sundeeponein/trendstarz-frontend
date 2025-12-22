@@ -1,3 +1,4 @@
+<!-- Removed duplicate registrationSuccess debug/modal block for clarity -->
 <div class="container">
 <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
  <div class="row my-5">
@@ -125,19 +126,17 @@
       <button type="button" (click)="addSocialMedia()">Add Social Media</button>
     </div>
 
-    <!-- Apply similar logic for brand registration forms: restrict image uploads and hide social media for free users -->
-
-  <div class="col-6 mt-3" formGroupName="contact">
-    <label>Contact Options</label>
-    <div class="row">
-      <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
-      <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
-      <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+    <div class="col-6 mt-3" formGroupName="contact">
+      <label>Contact Options</label>
+      <div class="row">
+        <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
+        <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
+        <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+      </div>
     </div>
-  </div>
 
 
-  <div class="col-12 mt-3"><button type="submit" class="btn btn-primary">Register</button></div>
+    <div class="col-12 mt-3"><button type="submit" class="btn btn-primary">Register</button></div>
 
   </div>
 </form>
@@ -145,7 +144,7 @@
 </div>
 
 
-<!-- <div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
+<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
   {{ registrationError }}
 </div>
 <div *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched" style="color:red">Name is required.</div>
@@ -154,23 +153,10 @@
 <div *ngIf="registrationForm.get('state')?.invalid && registrationForm.get('state')?.touched" style="color:red">State is required.</div>
 <div *ngIf="registrationForm.get('languages')?.invalid && registrationForm.get('languages')?.touched" style="color:red">Select at least one language.</div>
 <div *ngIf="registrationForm.get('categories')?.invalid && registrationForm.get('categories')?.touched" style="color:red">Select at least one category.</div>
-<div *ngIf="profileImagesFormArray.length === 0" style="color:red">Add at least one profile image.</div>
-<div *ngIf="registrationForm.invalid" style="color: red, margin-bottom: 10px;">Form is invalid. Please fill all required fields.</div>
+<div *ngIf="registrationForm.invalid" style="color: red">Form is invalid. Please fill all required fields.</div>
 <pre>{{ registrationForm.errors | json }}</pre>
-<pre>{{ registrationForm.value | json }}</pre> -->
+<pre>{{ registrationForm.value | json }}</pre>
 
-
-<!-- Registration Success Modal -->
-<div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" style="color: green;">Registration Successful!</h5>
-      </div>
-      <div class="modal-body">
-        <p>Your influencer account has been registered successfully.</p>
-        <a href="/login" class="btn btn-success">Login here</a>
-      </div>
-    </div>
-  </div>
+<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px; font-weight: bold;">
+  Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
 </div>
