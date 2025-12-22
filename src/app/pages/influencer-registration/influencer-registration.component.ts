@@ -59,6 +59,15 @@ export class InfluencerRegistrationComponent implements OnInit {
         call: [false]
       })
     });
+    // Only reset success/error flags if the form is dirty and success is showing
+    this.registrationForm.valueChanges.subscribe(() => {
+      if (this.registrationSuccess && this.registrationForm.dirty) {
+        this.registrationSuccess = false;
+      }
+      if (this.registrationError && this.registrationForm.dirty) {
+        this.registrationError = '';
+      }
+    });
     // removed misplaced property declarations
 
     // Fetch dropdown data from API
@@ -198,6 +207,9 @@ export class InfluencerRegistrationComponent implements OnInit {
                     console.log('PATCH success:', res);
                     this.ngZone.run(() => {
                       this.registrationSuccess = true;
+                      this.registrationForm.reset();
+                      this.profileImagePreview = null;
+                      this.profileImageFile = null;
                     });
                   },
                   error: (err) => {
@@ -217,8 +229,10 @@ export class InfluencerRegistrationComponent implements OnInit {
           // No image to upload, registration complete
           this.ngZone.run(() => {
             this.registrationSuccess = true;
+            this.registrationForm.reset();
+            this.profileImagePreview = null;
+            this.profileImageFile = null;
           });
-          // Do not reset form here; let modal show
         }
       },
       error: err => {

@@ -48,7 +48,7 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   deletePermanently(userId: string) {
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete-permanent`, {}, this.getAuthHeaders())
+    this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders())
       .subscribe(() => this.fetchDeletedUsers());
   }
 
