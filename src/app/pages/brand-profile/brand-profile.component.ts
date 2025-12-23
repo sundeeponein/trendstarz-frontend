@@ -31,6 +31,7 @@ export class BrandProfileComponent implements OnInit {
   paymentError = '';
   registrationSuccess = false;
   registrationError = '';
+  submitted = false;
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
@@ -39,9 +40,9 @@ export class BrandProfileComponent implements OnInit {
   categoriesList: any[] = [];
   isPremium = false;
   brandLogoPreview: string | null = null;
-  brandLogoFile: File | null = null;
+  brandLogoFile: { url: string, public_id: string } | null = null;
   productImagesPreview: (string | null)[] = [];
-  productImagesFiles: (File | string | null)[] = [];
+  productImagesFiles: ({ url: string, public_id: string } | null)[] = [];
   constructor(public fb: FormBuilder, private configService: ConfigService) {}
 
   // Getter for brandLogo FormArray
@@ -78,8 +79,12 @@ export class BrandProfileComponent implements OnInit {
       });
       const data = await response.json();
       if (data.secure_url && data.public_id) {
-        this.brandLogoPreview = data.secure_url;
-        this.brandLogoFile = compressedFile;
+  this.brandLogoPreview = data.secure_url;
+  this.brandLogoFile = { url: data.secure_url, public_id: data.public_id };
+  // Sync with form array for validation
+  const logoArray = this.registrationForm.get('brandLogo') as FormArray;
+  logoArray.clear();
+  logoArray.push(this.fb.control(this.brandLogoFile));
       } else {
         this.registrationError = 'Brand logo upload failed.';
       }
@@ -122,7 +127,14 @@ export class BrandProfileComponent implements OnInit {
       const data = await response.json();
       if (data.secure_url && data.public_id) {
         this.productImagesPreview[index] = data.secure_url;
-        this.productImagesFiles[index] = compressedFile;
+        this.productImagesFiles[index] = { url: data.secure_url, public_id: data.public_id };
+        // Sync with form array for validation
+        const prodArray = this.registrationForm.get('productImages') as FormArray;
+        // Ensure enough controls
+        while (prodArray.length <= index) {
+          prodArray.push(this.fb.control(null));
+        }
+        prodArray.setControl(index, this.fb.control(this.productImagesFiles[index]));
       } else {
         this.registrationError = 'Product image upload failed.';
       }
@@ -362,6 +374,7 @@ export class BrandProfileComponent implements OnInit {
 
 
   async onSubmit() {
+    this.submitted = true;
     if (!this.isEditMode || this.registrationForm.invalid || !this.brandLogoPreview) {
       if (!this.brandLogoPreview) {
         this.registrationError = 'Brand logo is required.';
@@ -393,65 +406,9 @@ export class BrandProfileComponent implements OnInit {
       };
     });
     // Handle Cloudinary upload for brand logo if file selected
-    let brandLogoObjs: { url: string, public_id: string }[] = [];
-    if (this.brandLogoFile) {
-      try {
-        const formData = new FormData();
-        formData.append('file', this.brandLogoFile);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          brandLogoObjs = [{ url: data.secure_url, public_id: data.public_id }];
-        } else {
-          this.registrationError = 'Brand logo upload failed.';
-          return;
-        }
-      } catch (err) {
-        this.registrationError = 'Brand logo upload failed.';
-        return;
-      }
-    } else if (raw.brandLogo && Array.isArray(raw.brandLogo) && raw.brandLogo.length > 0) {
-      brandLogoObjs = raw.brandLogo.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
-    }
-
-    // Upload product images to Cloudinary if any
-    let productImageObjs: { url: string, public_id: string }[] = [];
-    if (this.productImagesFiles.length > 0) {
-      for (let i = 0; i < this.productImagesFiles.length; i++) {
-        const fileOrObj = this.productImagesFiles[i];
-        if (!fileOrObj) continue;
-        if (fileOrObj instanceof File) {
-          try {
-            const formData = new FormData();
-            formData.append('file', fileOrObj);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-              method: 'POST',
-              body: formData
-            });
-            const data = await response.json();
-            if (data.secure_url && data.public_id) {
-              productImageObjs.push({ url: data.secure_url, public_id: data.public_id });
-            } else {
-              this.registrationError = 'Product image upload failed.';
-              return;
-            }
-          } catch (err) {
-            this.registrationError = 'Product image upload failed.';
-            return;
-          }
-        } else if (typeof fileOrObj === 'object' && fileOrObj !== null && 'url' in fileOrObj && 'public_id' in fileOrObj) {
-          productImageObjs.push(fileOrObj as { url: string, public_id: string });
-        }
-      }
-    }
-    // Map productImages to products for backend
-    const products = productImageObjs.length > 0 ? productImageObjs : raw.productImages || [];
-    // Map googleMapAddress to location.googleMapLink for backend
+    // Only send image objects from file input handlers
+    const products = this.productImagesFiles.filter((img): img is { url: string, public_id: string } => !!img && typeof img === 'object' && 'url' in img && 'public_id' in img);
+    const brandLogoObjs = this.brandLogoFile ? [this.brandLogoFile] : [];
     const location = {
       state: stateObj ? stateObj.name : raw.location.state,
       googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || undefined
@@ -485,9 +442,11 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
+        this.submitted = false;
       },
       error: err => {
         this.registrationError = 'Update failed. Please try again.';
+        this.submitted = false;
       }
     });
   }

@@ -252,8 +252,8 @@ export class InfluencerProfileComponent implements OnInit {
 
 
   async onSubmit() {
-    if (!this.isEditMode || this.registrationForm.invalid || !this.profileImagePreview) {
-      if (!this.profileImagePreview) {
+    if (!this.isEditMode || this.registrationForm.invalid || (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url))) {
+      if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
         this.registrationError = 'Profile image is required.';
       }
       return;
@@ -327,7 +327,8 @@ export class InfluencerProfileComponent implements OnInit {
     console.log('[PATCH payload]', JSON.stringify(payload, null, 2));
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
     this.configService.updateInfluencerProfile(payload, token).subscribe({
-      next: () => {
+      next: (res: any) => {
+        console.log('[PATCH response]', res);
         this.registrationSuccess = true;
         this.isEditMode = false;
         this.registrationForm.disable();
@@ -349,6 +350,7 @@ export class InfluencerProfileComponent implements OnInit {
       },
       error: err => {
         this.registrationError = 'Update failed. Please try again.';
+        console.error('[PATCH error]', err);
       }
     });
   }

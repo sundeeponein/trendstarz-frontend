@@ -5,51 +5,56 @@
         <label>Brand Logo <span class="text-danger">*</span></label>
         <div>
           <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" class="form-control w-100" [required]="!brandLogoPreview" />
-          <div *ngIf="!brandLogoPreview && registrationForm.submitted" class="text-danger mt-1">Brand logo is required.</div>
+          <div *ngIf="submitted && !brandLogoPreview" class="text-danger mt-1">Brand logo is required.</div>
           <div *ngIf="brandLogoPreview">
             <img [src]="brandLogoPreview" alt="Brand Logo Preview" style="max-width: 120px; max-height: 120px; margin-bottom: 8px; display: block;" />
           </div>
         </div>
       </div>
       <div class="col-6">
-        <label>Brand Name</label>
+        <label>Brand Name <span class="text-danger">*</span></label>
         <input formControlName="brandName" type="text" class="form-control w-100" required />
+        <div *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger mt-1">Brand name is required.</div>
       </div>
 
       <div class="col-6">
-        <label>Phone Number</label>
+        <label>Phone Number <span class="text-danger">*</span></label>
         <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+        <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
       </div>
 
       <div class="col-6" formGroupName="location">
-        <label>State</label>
+        <label>State <span class="text-danger">*</span></label>
         <select formControlName="state" class="form-control w-100">
           <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
         </select>
+        <div *ngIf="submitted && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">State is required.</div>
       </div>
 
       <div class="col-6">
-        <label>Email</label>
+        <label>Email <span class="text-danger">*</span></label>
         <input formControlName="email" type="email" class="form-control w-100" required />
-
-        <label>Password</label>
+        <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
+        <label>Password <span class="text-danger">*</span></label>
         <input formControlName="password" type="password" class="form-control w-100" required />
-        <label>Confirm Password</label>
+        <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Password is required.</div>
+        <label>Confirm Password <span class="text-danger">*</span></label>
         <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
-
+        <div *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger mt-1">Confirm password is required.</div>
       </div>
 
 
       <div class="col-6">
-        <label>Payment Option</label>
+        <label>Payment Option <span class="text-danger">*</span></label>
         <select formControlName="paymentOption" class="form-control w-100">
           <option value="free">Free (Contact/Social hidden)</option>
           <option value="premium">Premium (Contact/Social visible, 3-5 product images)</option>
         </select>
+        <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Payment option is required.</div>
       </div>
 
       <div class="col-6">
-        <label>Languages</label>
+        <label>Languages <span class="text-danger">*</span></label>
         <ng-select
           [items]="languagesList"
           bindLabel="name"
@@ -65,10 +70,11 @@
             <input type="checkbox" [checked]="selected" /> {{ item.name }}
           </ng-template>
         </ng-select>
+        <div *ngIf="submitted && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Select at least one language.</div>
       </div>
 
       <div class="col-6">
-        <label>Categories</label>
+        <label>Categories <span class="text-danger">*</span></label>
         <ng-select
           [items]="categoriesList"
           bindLabel="name"
@@ -84,6 +90,7 @@
             <input type="checkbox" [checked]="selected" /> {{ item.name }}
           </ng-template>
         </ng-select>
+        <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Select at least one category.</div>
       </div>
 
       <!-- Product Images: Free user can upload 1, Premium can upload up to 5 -->
@@ -159,7 +166,10 @@
 
       
 
-      <button type="submit">Register</button>
+      <div class="col-12 mt-3 mb-5 d-flex gap-2">
+        <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !brandLogoPreview">Register</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="registrationForm.reset(); brandLogoPreview = null; brandLogoFile = null; productImagesPreview = []; productImagesFiles = []; submitted = false; registrationError = ''; registrationSuccess = false;">Reset</button>
+      </div>
 
     </div>
   </form>
@@ -202,7 +212,7 @@
       </div>
       <div class="modal-body">
         <p>Your brand has been registered successfully.</p>
-        <a href="/login" class="btn btn-success">Login here</a>
+        <button class="btn btn-success" (click)="registrationSuccess = false; registrationForm.reset(); brandLogoPreview = null; brandLogoFile = null; productImagesPreview = []; productImagesFiles = []; submitted = false; registrationError = '';">OK</button>
       </div>
     </div>
   </div>

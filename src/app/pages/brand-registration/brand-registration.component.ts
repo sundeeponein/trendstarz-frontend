@@ -32,9 +32,9 @@ export class BrandRegistrationComponent implements OnInit {
   languagesList: any[] = [];
   categoriesList: any[] = [];
   brandLogoPreview: string | null = null;
-  brandLogoFile: File | null = null;
+  brandLogoFile: { url: string, public_id: string } | null = null;
   productImagesPreview: (string | null)[] = [];
-  productImagesFiles: (File | string | null)[] = [];
+  productImagesFiles: ({ url: string, public_id: string } | null)[] = [];
   addProductImage() {
     const maxImages = this.isPremium ? 5 : 1;
     if (this.productImagesPreview.length < maxImages) {
@@ -78,12 +78,8 @@ export class BrandRegistrationComponent implements OnInit {
         body: formData
       });
       const data = await response.json();
-      if (data.secure_url && data.public_id) {
-        this.productImagesPreview[index] = data.secure_url;
-        this.productImagesFiles[index] = compressedFile;
-      } else {
-        this.registrationError = 'Product image upload failed.';
-      }
+          this.productImagesPreview[index] = data.secure_url;
+          this.productImagesFiles[index] = { url: data.secure_url, public_id: data.public_id };
     } catch (err) {
       this.registrationError = 'Product image upload failed.';
     }
@@ -119,12 +115,8 @@ export class BrandRegistrationComponent implements OnInit {
         body: formData
       });
       const data = await response.json();
-      if (data.secure_url && data.public_id) {
-        this.brandLogoPreview = data.secure_url;
-        this.brandLogoFile = compressedFile;
-      } else {
-        this.registrationError = 'Brand logo upload failed.';
-      }
+          this.brandLogoPreview = data.secure_url;
+          this.brandLogoFile = { url: data.secure_url, public_id: data.public_id };
     } catch (err) {
       this.registrationError = 'Brand logo upload failed.';
     }
@@ -211,105 +203,69 @@ export class BrandRegistrationComponent implements OnInit {
 
   async onSubmit() {
     this.submitted = true;
+    // Field-level error handling
     if (this.registrationForm.invalid || !this.brandLogoPreview) {
       if (!this.brandLogoPreview) {
         this.registrationError = 'Brand logo is required.';
       }
+      // Mark all controls as touched to show errors
+      Object.keys(this.registrationForm.controls).forEach(key => {
+        const control = this.registrationForm.get(key);
+        if (control) control.markAsTouched();
+      });
       return;
     }
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.value;
-    // Prepare payload without images
+    // Prepare payload with correct mapping (like influencer)
+    const stateObj = this.states.find((s: any) => s._id === raw.location.state);
+    const languageNames = (raw.languages || []).map((id: string) => {
+      const lang = this.languagesList.find((l: any) => l._id === id);
+      return lang ? lang.name : id;
+    });
+    const categoryNames = (raw.categories || []).map((id: string) => {
+      const cat = this.categoriesList.find((c: any) => c._id === id);
+      return cat ? cat.name : id;
+    });
+    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
+      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+      return {
+        ...sm,
+        platform: platformObj ? platformObj.name : sm.platform,
+        followersCount: Number(sm.followersCount)
+      };
+    });
     const payload: any = {
       ...raw,
       isPremium: raw.paymentOption === 'premium',
-      socialMedia: (raw.socialMedia || []).map((sm: any) => {
-        const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
-        return {
-          ...sm,
-          platform: platformObj ? platformObj.name : sm.platform,
-          followersCount: Number(sm.followersCount)
-        };
-      }),
-      brandLogo: [],
-      products: [],
+      location: {
+        state: stateObj ? stateObj.name : raw.location.state,
+        googleMapLink: raw.location.googleMapLink || ''
+      },
+      languages: languageNames,
+      categories: categoryNames,
+      socialMedia,
+      brandLogo: this.brandLogoFile ? [this.brandLogoFile] : [],
+      products: this.productImagesFiles.filter((img): img is { url: string, public_id: string } => !!img && typeof img === 'object' && 'url' in img && 'public_id' in img),
       contact: raw.contact,
       googleMapAddress: raw.googleMapAddress || '',
     };
     delete payload.confirmPassword;
     delete payload.paymentOption;
     delete payload.productImages;
-
-    // 1. Register brand (no images)
+    // Debug log: print payload
+    console.log('[BRAND REGISTER PAYLOAD]', JSON.stringify(payload, null, 2));
+    // Register brand with image URLs/public_ids only
     this.configService.registerBrand(payload).subscribe({
-      next: async (savedBrand) => {
-        // 2. Upload images to Cloudinary
-        let brandLogoObjs: { url: string, public_id: string }[] = [];
-        if (this.brandLogoFile) {
-          try {
-            const formData = new FormData();
-            formData.append('file', this.brandLogoFile);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-              method: 'POST',
-              body: formData
-            });
-            const data = await response.json();
-            if (data.secure_url && data.public_id) {
-              brandLogoObjs = [{ url: data.secure_url, public_id: data.public_id }];
-            }
-          } catch (err) {
-            this.registrationError = 'Image upload failed.';
-            return;
-          }
-        }
-        let productImageObjs: { url: string, public_id: string }[] = [];
-        for (let i = 0; i < this.productImagesFiles.length; i++) {
-          const fileOrObj = this.productImagesFiles[i];
-          if (fileOrObj instanceof File) {
-            try {
-              const formData = new FormData();
-              formData.append('file', fileOrObj);
-              formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-              const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-                method: 'POST',
-                body: formData
-              });
-              const data = await response.json();
-              if (data.secure_url && data.public_id) {
-                productImageObjs.push({ url: data.secure_url, public_id: data.public_id });
-              }
-            } catch (err) {
-              this.registrationError = 'Product image upload failed.';
-              return;
-            }
-          }
-        }
-        // 3. Update brand with images
-        console.log('Registration response:', savedBrand);
-        const brandId = savedBrand._id || savedBrand.id;
-        if (!brandId) {
-          this.registrationError = 'Could not determine brand ID for image upload.';
-          return;
-        }
-        this.configService.updateBrandImages(brandId, {
-          brandLogo: brandLogoObjs,
-          products: productImageObjs
-        }).subscribe({
-          next: () => {
-            this.registrationSuccess = true;
-            this.registrationForm.reset();
-            this.brandLogoPreview = null;
-            this.brandLogoFile = null;
-            this.productImagesPreview = [];
-            this.productImagesFiles = [];
-            this.submitted = false;
-          },
-          error: () => {
-            this.registrationError = 'Failed to update brand with images.';
-          }
-        });
+      next: () => {
+        this.registrationSuccess = true;
+        this.registrationForm.reset();
+        this.brandLogoPreview = null;
+        this.brandLogoFile = null;
+        this.productImagesPreview = [];
+        this.productImagesFiles = [];
+        this.submitted = false;
       },
       error: (err: any) => {
         if (err?.error?.message && err.error.message.includes('already exists')) {
@@ -317,6 +273,7 @@ export class BrandRegistrationComponent implements OnInit {
         } else {
           this.registrationError = 'Registration failed. Please try again.';
         }
+        console.error('[BRAND REGISTER ERROR]', err);
       }
     });
   }

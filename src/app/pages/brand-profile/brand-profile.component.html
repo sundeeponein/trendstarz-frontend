@@ -46,54 +46,58 @@
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
       <div class="col-6">
-        <label>Brand Logo</label>
+        <label>Brand Logo <span class="text-danger">*</span></label>
         <ng-container *ngIf="isEditMode; else viewBrandLogoTpl">
           <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
           <div *ngIf="brandLogoPreview" class="mt-2">
             <img [src]="brandLogoPreview" alt="Brand Logo Preview" style="max-width: 120px; max-height: 120px; display: block;" />
           </div>
+          <div *ngIf="isEditMode && !brandLogoPreview && submitted" class="text-danger mt-1">Brand logo is required.</div>
         </ng-container>
         <ng-template #viewBrandLogoTpl>
           <div *ngIf="brandLogoFormArray.controls.length > 0 && brandLogoFormArray.at(0).value">
-            <img [src]="brandLogoFormArray.at(0).value" alt="Brand Logo" style="max-width: 120px; max-height: 120px; display: block;" />
+            <img [src]="brandLogoFormArray.at(0).value?.url" alt="Brand Logo" style="max-width: 120px; max-height: 120px; display: block;" />
           </div>
         </ng-template>
       </div>
       <div class="col-6">
-        <label>Brand Name</label>
+        <label>Brand Name <span class="text-danger">*</span></label>
         <input formControlName="brandName" type="text" class="form-control w-100" required />
+        <div *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger mt-1">Brand name is required.</div>
       </div>
 
       <div class="col-6">
-        <label>Phone Number</label>
+        <label>Phone Number <span class="text-danger">*</span></label>
         <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+        <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
       </div>
 
       <div class="col-6" formGroupName="location">
-        <label>State</label>
+        <label>State <span class="text-danger">*</span></label>
         <select formControlName="state" class="form-control w-100">
           <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
         </select>
+        <div *ngIf="submitted && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">State is required.</div>
       </div>
 
       <div class="col-6">
-        <label>Email</label>
+        <label>Email <span class="text-danger">*</span></label>
         <input formControlName="email" type="email" class="form-control w-100" required />
-
-
+        <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
       </div>
 
 
       <div class="col-6">
-        <label>Payment Option</label>
+        <label>Payment Option <span class="text-danger">*</span></label>
         <select formControlName="paymentOption" class="form-control w-100">
           <option value="free">Free (Contact/Social hidden)</option>
           <option value="premium">Premium (Contact/Social visible, 3-5 product images)</option>
         </select>
+        <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Payment option is required.</div>
       </div>
 
       <div class="col-6">
-        <label>Languages</label>
+        <label>Languages <span class="text-danger">*</span></label>
         <ng-select
           [items]="languagesList"
           bindLabel="name"
@@ -109,10 +113,11 @@
             <input type="checkbox" [checked]="selected" /> {{ item.name }}
           </ng-template>
         </ng-select>
+        <div *ngIf="submitted && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Select at least one language.</div>
       </div>
 
       <div class="col-6">
-        <label>Categories</label>
+        <label>Categories <span class="text-danger">*</span></label>
         <ng-select
           [items]="categoriesList"
           bindLabel="name"
@@ -128,6 +133,7 @@
             <input type="checkbox" [checked]="selected" /> {{ item.name }}
           </ng-template>
         </ng-select>
+        <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Select at least one category.</div>
       </div>
 
       <!-- Product Images: Free user can upload 1, Premium can upload up to 5 -->
@@ -153,7 +159,7 @@
             </ng-container>
             <ng-template #viewProductImageTpl>
               <div *ngIf="imgCtrl.value">
-                <img [src]="imgCtrl.value" alt="Product Image" style="max-width: 120px; max-height: 120px; display: block;" />
+                <img [src]="imgCtrl.value?.url" alt="Product Image" style="max-width: 120px; max-height: 120px; display: block;" />
               </div>
             </ng-template>
             <button type="button" (click)="removeProductImage(i)" *ngIf="isEditMode">Remove</button>
@@ -212,7 +218,7 @@
         <div class="d-flex justify-content-end mb-2">
           <button *ngIf="!isEditMode" class="btn btn-primary" type="button" (click)="enableEdit()">Edit Profile</button>
           <ng-container *ngIf="isEditMode">
-            <button class="btn btn-success me-2" type="submit" [disabled]="registrationForm.invalid" (click)="onSubmit()">Save</button>
+            <button class="btn btn-success me-2" type="submit" [disabled]="registrationForm.invalid || !brandLogoPreview" (click)="onSubmit()">Save</button>
             <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
           </ng-container>
         </div>
@@ -220,8 +226,32 @@
   </form>
 </div>
 
-<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
-  Profile Update successful! </div>
-<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
-  {{ registrationError }}
+<!-- Profile Update Success Modal -->
+<div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color: green;">Profile Update Successful!</h5>
+      </div>
+      <div class="modal-body">
+        <p>Your brand profile has been updated successfully.</p>
+        <button class="btn btn-success" (click)="registrationSuccess = false; registrationForm.reset(originalFormValue); brandLogoPreview = null; brandLogoFile = null; productImagesPreview = []; productImagesFiles = []; submitted = false; registrationError = ''; isEditMode = false; registrationForm.disable();">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Update Error Modal -->
+<div *ngIf="registrationError" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color: red;">Profile Update Failed</h5>
+      </div>
+      <div class="modal-body">
+        <p>{{ registrationError }}</p>
+        <button class="btn btn-danger" (click)="registrationError = ''">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
