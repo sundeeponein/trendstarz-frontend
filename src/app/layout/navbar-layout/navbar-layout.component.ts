@@ -31,10 +31,17 @@ export class NavbarLayoutComponent {
     }, 500);
   }
   get validProfileImage(): string {
-    if (this.user && this.user.profileImage && typeof this.user.profileImage === 'string') {
-      // Basic check: must start with http or https
-      if (/^https?:\/\//.test(this.user.profileImage)) {
-        return this.user.profileImage;
+    if (this.user) {
+      // For brands, check brandLogo array
+      if (this.user.role === 'brand') {
+        if (Array.isArray(this.user.brandLogo) && this.user.brandLogo.length > 0 && this.user.brandLogo[0]?.url) {
+          return this.user.brandLogo[0].url;
+        }
+      } else if (this.user.profileImage && typeof this.user.profileImage === 'string') {
+        // For others, use profileImage
+        if (/^https?:\/\//.test(this.user.profileImage)) {
+          return this.user.profileImage;
+        }
       }
     }
     return 'assets/default-profile.png';
@@ -55,14 +62,15 @@ export class NavbarLayoutComponent {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // For brands, use brandLogo if available
         let profileImage = payload.profileImage || null;
-        if (payload.role === 'brand' && payload.brandLogo && Array.isArray(payload.brandLogo) && payload.brandLogo.length > 0) {
-          profileImage = payload.brandLogo[0].url || payload.brandLogo[0];
+        let brandLogo = Array.isArray(payload.brandLogo) ? payload.brandLogo : [];
+        if (payload.role === 'brand' && brandLogo.length > 0) {
+          profileImage = brandLogo[0]?.url || brandLogo[0] || null;
         }
         this.user = {
           name: payload.name || payload.fullname || payload.brandName || payload.email || 'User',
           profileImage,
+          brandLogo,
           role: payload.role || payload.userType || null
         };
       } catch {
