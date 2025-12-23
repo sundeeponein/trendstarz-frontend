@@ -47,45 +47,51 @@
  <div class="row my-5">
 
   <div class="col-6">
-    <label>Username</label>
+    <label>Username <span class="text-danger">*</span></label>
     <input formControlName="username" type="text" class="form-control w-100" required />
+    <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">Please enter your username.</div>
   </div>
 
   <div class="col-6">
-    <label>Phone Number</label>
+    <label>Phone Number <span class="text-danger">*</span></label>
     <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+    <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Please enter your phone number.</div>
   </div>
 
   <div class="col-6">
-    <label>Name</label>
+    <label>Name <span class="text-danger">*</span></label>
     <input formControlName="name" type="text" class="form-control w-100" required />
+    <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Please enter your name.</div>
   </div>
 
   <!-- Removed duplicate Username and Phone Number fields -->
 
   <div class="col-6">
-    <label>Email</label>
+    <label>Email <span class="text-danger">*</span></label>
     <input formControlName="email" type="email" class="form-control w-100" required />
+    <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Please enter a valid email address.</div>
   </div>
 
 
   <div class="col-6">
-    <label>Payment Option</label>
+    <label>Payment Option <span class="text-danger">*</span></label>
     <select formControlName="paymentOption" class="form-control w-100">
       <option value="free">Free (Contact/Social hidden)</option>
       <option value="premium">Premium (Contact/Social visible, 3 images)</option>
     </select>
+    <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
   </div>
 
   <div class="col-6" formGroupName="location">
-    <label>State</label>
+    <label>State <span class="text-danger">*</span></label>
     <select formControlName="state" class="form-control w-100">
       <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
     </select>
+    <div *ngIf="submitted && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
   </div>
 
   <div class="col-6">
-    <label>Languages</label>
+    <label>Languages <span class="text-danger">*</span></label>
     <ng-select
       [items]="languagesList"
       bindLabel="name"
@@ -101,10 +107,11 @@
         <input type="checkbox" [checked]="selected" /> {{ item.name }}
       </ng-template>
     </ng-select>
+    <div *ngIf="submitted && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
   </div>
 
   <div class="col-6">
-    <label>Categories</label>
+    <label>Categories <span class="text-danger">*</span></label>
     <ng-select
       [items]="categoriesList"
       bindLabel="name"
@@ -120,12 +127,18 @@
         <input type="checkbox" [checked]="selected" /> {{ item.name }}
       </ng-template>
     </ng-select>
+    <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
   </div>
 
 
     <!-- Profile Image Upload (single image for now) -->
     <div class="col-12 mt-3">
-      <label>Profile Image</label>
+      <label>Profile Image <span class="text-danger">*</span></label>
+      <!-- Debug: Show raw profileImages array and preview value -->
+      <div style="font-size: 0.8em; color: #888; margin-bottom: 4px;">
+        <div>profileImages: {{ profileImagesFormArray.value | json }}</div>
+        <div>profileImagePreview: {{ profileImagePreview }}</div>
+      </div>
       <ng-container *ngIf="isEditMode; else viewProfileImageTpl">
         <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url; else addImageTpl">
           <img [src]="profileImagesFormArray.at(0).value.url" alt="Current Profile Image" style="max-width: 120px; max-height: 120px; display: block; margin-bottom: 8px;" />
@@ -135,6 +148,7 @@
           <div *ngIf="profileImagePreview" class="mt-2">
             <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
           </div>
+          <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile image is required.</div>
         </ng-template>
         <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [disabled]="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url" />
       </ng-container>
@@ -148,8 +162,8 @@
 
     <!-- Social Media: Only allow adding for premium, hide for free -->
     <div class="col-12 mt-3" formArrayName="socialMedia">
+      <label>Social Media <span class="text-danger">*</span></label>
       <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
-        <label>Social Media</label>
         <div class="col-3">
           <label>Social Platform</label>
           <select formControlName="platform"  class="form-control w-100">
@@ -160,8 +174,8 @@
           <label>Handle Name</label>
           <input formControlName="handle" type="text" required  class="form-control w-100" />
         </div>
-        <div class="col-3">
-          <label>Tier</label>
+        <div class="col-2">
+          <label>Tier </label> <i class="bi bi-info-circle-fill" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#tierInfoModal" title="Select the tier for this social media account"></i>
           <select formControlName="tier" class="form-control w-100">
             <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
           </select>
@@ -169,26 +183,30 @@
         <div class="col-3">
           <label>Followers/Subscribers Count</label>
           <input formControlName="followersCount" type="number" required  class="form-control w-100" />
-          <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1 && isEditMode">Remove</button>
+          
+        </div>
+        <div class="col-1">
+          <button class="btn btn-outline-danger btn-sm mt-4" type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1 && isEditMode"><i class="bi bi-trash-fill"></i></button>
         </div>
       </div>
-  <button type="button" (click)="addSocialMedia()" *ngIf="isEditMode">Add Social Media</button>
+      <button type="button" class="btn btn-primary btn-sm me-1" (click)="addSocialMedia()" *ngIf="isEditMode">Add Social Media</button>
     </div>
 
     <!-- Apply similar logic for brand registration forms: restrict image uploads and hide social media for free users -->
 
   <div class="col-6 mt-3" formGroupName="contact">
-    <label>Contact Options</label>
+    <label>Contact Options <span class="text-danger">*</span></label>
     <div class="row">
       <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
       <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
       <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
     </div>
+    <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
   </div>
 
   <div class="col-12 mt-3 mb-5 d-flex gap-2">
     <button *ngIf="!isEditMode" type="button" class="btn btn-secondary" (click)="enableEdit()">Edit Profile</button>
-    <button *ngIf="isEditMode" type="submit" class="btn btn-primary">Save</button>
+    <button *ngIf="isEditMode" type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || (!profileImagePreview && (!profileImagesFormArray.controls.length || !profileImagesFormArray.at(0).value || !profileImagesFormArray.at(0).value.url))">Save</button>
     <button *ngIf="isEditMode" type="button" class="btn btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
   </div>
 
@@ -203,4 +221,37 @@
 </div>
 <div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
   {{ registrationError }}
+</div>
+
+<!-- Tier Info Modal -->
+<div class="modal fade" id="tierInfoModal" tabindex="-1" aria-labelledby="tierInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tierInfoModalLabel">Tier Information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Icon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let tier of tiers">
+              <td>{{ tier.name }}</td>
+              <td>{{ tier.desc }}</td>
+              <td style="font-size: 2rem; text-align: center;">{{ tier.icon }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
