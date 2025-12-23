@@ -47,18 +47,15 @@
     <div class="row my-5">
       <div class="col-6">
         <label>Brand Logo <span class="text-danger">*</span></label>
-        <ng-container *ngIf="isEditMode; else viewBrandLogoTpl">
-          <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
-          <div *ngIf="brandLogoPreview" class="mt-2">
-            <img [src]="brandLogoPreview" alt="Brand Logo Preview" style="max-width: 120px; max-height: 120px; display: block;" />
-          </div>
-          <div *ngIf="isEditMode && !brandLogoPreview && submitted" class="text-danger mt-1">Brand logo is required.</div>
-        </ng-container>
-        <ng-template #viewBrandLogoTpl>
-          <div *ngIf="brandLogoFormArray.controls.length > 0 && brandLogoFormArray.at(0).value">
-            <img [src]="brandLogoFormArray.at(0).value?.url" alt="Brand Logo" style="max-width: 120px; max-height: 120px; display: block;" />
-          </div>
-        </ng-template>
+        <input *ngIf="isEditMode" type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
+        <div class="mt-2">
+          <img *ngIf="brandLogoPreview; else brandLogoFallback" [src]="brandLogoPreview" alt="Brand Logo Preview" style="max-width: 120px; max-height: 120px; display: block;" />
+          <ng-template #brandLogoFallback>
+            <img *ngIf="brandLogoFormArray.controls.length > 0 && brandLogoFormArray.at(0).value?.url" [src]="brandLogoFormArray.at(0).value?.url" alt="Brand Logo" style="max-width: 120px; max-height: 120px; display: block;" />
+            <img *ngIf="!(brandLogoPreview || (brandLogoFormArray.controls.length > 0 && brandLogoFormArray.at(0).value?.url))" src="assets/default-logo.png" alt="Default Brand Logo" style="max-width: 120px; max-height: 120px; display: block; opacity: 0.5;" />
+          </ng-template>
+        </div>
+        <div *ngIf="isEditMode && !brandLogoPreview && submitted" class="text-danger mt-1">Brand logo is required.</div>
       </div>
       <div class="col-6">
         <label>Brand Name <span class="text-danger">*</span></label>

@@ -244,6 +244,15 @@ export class BrandProfileComponent implements OnInit {
               googleMapAddress: profile.googleMapAddress || '',
               contact: profile.contact || { whatsapp: false, email: false, call: false }
             });
+            // Patch brandLogo preview and form array if logo exists
+            const logoArr = this.registrationForm.get('brandLogo') as FormArray;
+            logoArr.clear();
+            if (profile.brandLogo && Array.isArray(profile.brandLogo) && profile.brandLogo.length > 0) {
+              logoArr.push(this.fb.control(profile.brandLogo[0]));
+              this.brandLogoPreview = profile.brandLogo[0].url || null;
+            } else {
+              this.brandLogoPreview = null;
+            }
             // Patch productImages
             const arr = this.registrationForm.get('productImages') as FormArray;
             arr.clear();
