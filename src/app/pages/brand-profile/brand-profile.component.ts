@@ -45,8 +45,8 @@ export class BrandProfileComponent implements OnInit {
   constructor(public fb: FormBuilder, private configService: ConfigService) {}
 
   // Getter for brandLogo FormArray
-  // Handle brand logo file selection and preview
-  onBrandLogoFileChange(event: any) {
+  // Handle brand logo file selection, compress, upload, and preview
+  async onBrandLogoFileChange(event: any) {
     if (!this.isEditMode) return;
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
@@ -58,16 +58,38 @@ export class BrandProfileComponent implements OnInit {
       alert('Image size must be below 2MB.');
       return;
     }
-    this.brandLogoFile = file;
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.brandLogoPreview = e.target.result;
+    // Compress image before upload
+    const options = {
+      maxSizeMB: 0.1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true
     };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await imageCompression(file, options);
+      // Upload to Cloudinary
+      this.brandLogoPreview = null;
+      this.brandLogoFile = null;
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.secure_url && data.public_id) {
+        this.brandLogoPreview = data.secure_url;
+        this.brandLogoFile = compressedFile;
+      } else {
+        this.registrationError = 'Brand logo upload failed.';
+      }
+    } catch (err) {
+      this.registrationError = 'Brand logo upload failed.';
+    }
   }
 
-  // Handle product image file selection and preview
-  onProductImageFileChange(event: any, index: number) {
+  // Handle product image file selection, compress, upload, and preview
+  async onProductImageFileChange(event: any, index: number) {
     if (!this.isEditMode) return;
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
@@ -79,12 +101,34 @@ export class BrandProfileComponent implements OnInit {
       alert('Image size must be below 2MB.');
       return;
     }
-    this.productImagesFiles[index] = file;
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.productImagesPreview[index] = e.target.result;
+    // Compress image before upload
+    const options = {
+      maxSizeMB: 0.1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true
     };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await imageCompression(file, options);
+      // Upload to Cloudinary
+      this.productImagesPreview[index] = null;
+      this.productImagesFiles[index] = null;
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.secure_url && data.public_id) {
+        this.productImagesPreview[index] = data.secure_url;
+        this.productImagesFiles[index] = compressedFile;
+      } else {
+        this.registrationError = 'Product image upload failed.';
+      }
+    } catch (err) {
+      this.registrationError = 'Product image upload failed.';
+    }
   }
 
   addBrandLogo() {
@@ -318,7 +362,12 @@ export class BrandProfileComponent implements OnInit {
 
 
   async onSubmit() {
-    if (!this.isEditMode || this.registrationForm.invalid) return;
+    if (!this.isEditMode || this.registrationForm.invalid || !this.brandLogoPreview) {
+      if (!this.brandLogoPreview) {
+        this.registrationError = 'Brand logo is required.';
+      }
+      return;
+    }
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.getRawValue();

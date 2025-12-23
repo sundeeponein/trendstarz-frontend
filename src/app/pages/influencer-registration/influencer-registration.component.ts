@@ -28,6 +28,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   profileImageFile: File | null = null;
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  submitted = false;
   constructor(private fb: FormBuilder, private configService: ConfigService, private ngZone: NgZone) {}
 
   ngOnInit() {
@@ -84,24 +85,51 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
 
+
   // Only allow 1 image for now (can extend for premium)
-  onProfileImageFileChange(event: any) {
-    const file: File = event.target.files && event.target.files[0];
+  async onProfileImageFileChange(event: any) {
+    const file = event.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image size must be below 2MB.');
-      return;
-    }
-    this.profileImageFile = file;
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.profileImagePreview = e.target.result;
+
+    const options = {
+      maxSizeMB: 0.1, // Target max size (100 KB)
+      maxWidthOrHeight: 1024, // Resize if larger than 1024px
+      useWebWorker: true
     };
-    reader.readAsDataURL(file);
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      // Upload and set preview only after successful upload
+      this.uploadImage(compressedFile);
+    } catch (error) {
+      console.error('Image compression error:', error);
+    }
+  }
+
+  uploadImage(file: File) {
+    // Clear previous preview while uploading
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.secure_url && data.public_id) {
+          this.profileImagePreview = data.secure_url;
+          this.profileImageFile = file;
+        } else {
+          this.registrationError = 'Profile image upload failed.';
+        }
+      })
+      .catch((err) => {
+        console.error('Cloudinary upload error:', err);
+        this.registrationError = 'Profile image upload failed.';
+      });
   }
 
   removeProfileImage(index: number) {
@@ -135,7 +163,13 @@ export class InfluencerRegistrationComponent implements OnInit {
 
 
   async onSubmit() {
-    if (this.registrationForm.invalid) return;
+    this.submitted = true;
+    if (this.registrationForm.invalid || !this.profileImagePreview) {
+      if (!this.profileImagePreview) {
+        this.registrationError = 'Profile image is required.';
+      }
+      return;
+    }
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.value;
@@ -210,6 +244,7 @@ export class InfluencerRegistrationComponent implements OnInit {
                       this.registrationForm.reset();
                       this.profileImagePreview = null;
                       this.profileImageFile = null;
+                      this.submitted = false;
                     });
                   },
                   error: (err) => {
@@ -228,10 +263,11 @@ export class InfluencerRegistrationComponent implements OnInit {
         } else {
           // No image to upload, registration complete
           this.ngZone.run(() => {
-            this.registrationSuccess = true;
-            this.registrationForm.reset();
-            this.profileImagePreview = null;
-            this.profileImageFile = null;
+        this.registrationSuccess = true;
+        this.registrationForm.reset();
+        this.profileImagePreview = null;
+        this.profileImageFile = null;
+        this.submitted = false;
           });
         }
       },
@@ -247,10 +283,11 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   // Add a method to close the modal and reset the form
   closeSuccessModal() {
-    this.registrationSuccess = false;
-    this.registrationForm.reset();
-    this.profileImagePreview = null;
-    this.profileImageFile = null;
+  this.registrationSuccess = false;
+  this.registrationForm.reset();
+  this.profileImagePreview = null;
+  this.profileImageFile = null;
+  this.submitted = false;
   }
 
 

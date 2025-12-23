@@ -20,6 +20,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 })
  
 export class BrandRegistrationComponent implements OnInit {
+  submitted = false;
   registrationSuccess = false;
   registrationError = '';
   registrationForm!: FormGroup;
@@ -46,49 +47,87 @@ export class BrandRegistrationComponent implements OnInit {
     this.productImagesPreview.splice(index, 1);
     this.productImagesFiles.splice(index, 1);
   }
-  // Handle product image file selection and preview
-  onProductImageFileChange(event: any, index: number) {
+  // Handle product image file selection, compress, upload, and preview
+  async onProductImageFileChange(event: any, index: number) {
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please select a valid image file.');
       return;
     }
-    // Validate file size (must be below 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('Image size must be below 2MB.');
       return;
     }
-    this.productImagesFiles[index] = file;
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.productImagesPreview[index] = e.target.result;
+    // Compress image before upload
+    const options = {
+      maxSizeMB: 0.1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true
     };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await imageCompression(file, options);
+      // Upload to Cloudinary
+      this.productImagesPreview[index] = null;
+      this.productImagesFiles[index] = null;
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.secure_url && data.public_id) {
+        this.productImagesPreview[index] = data.secure_url;
+        this.productImagesFiles[index] = compressedFile;
+      } else {
+        this.registrationError = 'Product image upload failed.';
+      }
+    } catch (err) {
+      this.registrationError = 'Product image upload failed.';
+    }
   }
-  // Handle brand logo file selection and preview
-  onBrandLogoFileChange(event: any) {
+  // Handle brand logo file selection, compress, upload, and preview
+  async onBrandLogoFileChange(event: any) {
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please select a valid image file.');
       return;
     }
-    // Validate file size (must be below 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('Image size must be below 2MB.');
       return;
     }
-    this.brandLogoFile = file;
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.brandLogoPreview = e.target.result;
+    // Compress image before upload
+    const options = {
+      maxSizeMB: 0.1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true
     };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await imageCompression(file, options);
+      // Upload to Cloudinary
+      this.brandLogoPreview = null;
+      this.brandLogoFile = null;
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.secure_url && data.public_id) {
+        this.brandLogoPreview = data.secure_url;
+        this.brandLogoFile = compressedFile;
+      } else {
+        this.registrationError = 'Brand logo upload failed.';
+      }
+    } catch (err) {
+      this.registrationError = 'Brand logo upload failed.';
+    }
   }
   constructor(public fb: FormBuilder, private configService: ConfigService) {}
   // Getter for brandLogo FormArray
@@ -171,7 +210,13 @@ export class BrandRegistrationComponent implements OnInit {
 
 
   async onSubmit() {
-    if (this.registrationForm.invalid) return;
+    this.submitted = true;
+    if (this.registrationForm.invalid || !this.brandLogoPreview) {
+      if (!this.brandLogoPreview) {
+        this.registrationError = 'Brand logo is required.';
+      }
+      return;
+    }
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.value;
@@ -259,6 +304,7 @@ export class BrandRegistrationComponent implements OnInit {
             this.brandLogoFile = null;
             this.productImagesPreview = [];
             this.productImagesFiles = [];
+            this.submitted = false;
           },
           error: () => {
             this.registrationError = 'Failed to update brand with images.';

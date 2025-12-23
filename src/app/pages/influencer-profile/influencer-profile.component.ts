@@ -7,6 +7,7 @@ import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import imageCompression from 'browser-image-compression';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -34,6 +35,7 @@ export class InfluencerProfileComponent implements OnInit {
   categoriesList: any[] = [];
   isEditMode = false;
   originalFormValue: any = null;
+  submitted = false;
   constructor(private fb: FormBuilder, private configService: ConfigService) {}
 
   ngOnInit() {
@@ -102,7 +104,10 @@ export class InfluencerProfileComponent implements OnInit {
           // Patch profileImages
           const arr = this.registrationForm.get('profileImages') as FormArray;
           arr.clear();
-          (profile.profileImages || []).forEach((img: string) => arr.push(this.fb.control(img)));
+          (profile.profileImages || []).forEach((img: any) => arr.push(this.fb.group({
+            url: img.url,
+            public_id: img.public_id
+          })));
           // Patch socialMedia
           const smArr = this.registrationForm.get('socialMedia') as FormArray;
           smArr.clear();
@@ -140,7 +145,7 @@ export class InfluencerProfileComponent implements OnInit {
     }
     // Simulate payment (replace with real payment integration as needed)
     // On success, call backend to set premium
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
     if (!token) {
       this.paymentError = 'Not logged in.';
       return;
@@ -159,7 +164,9 @@ export class InfluencerProfileComponent implements OnInit {
     });
   }
 
-  enableEdit(): void {
+  async enableEdit(): Promise<void> {
+    // Always fetch and patch the latest profile before edit
+    await this.fetchAndPatchProfile();
     this.isEditMode = true;
     this.registrationForm.enable();
     // Keep password fields disabled for security
@@ -183,24 +190,34 @@ export class InfluencerProfileComponent implements OnInit {
 
 
   // Only allow 1 image for now (can extend for premium)
-  onProfileImageFileChange(event: any) {
+  async onProfileImageFileChange(event: any) {
     if (!this.isEditMode) return;
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Please select a valid image file.');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image size must be below 2MB.');
+    // Compress and resize before upload
+    try {
+      const options = {
+        maxSizeMB: 0.2, // 200 KB
+        maxWidthOrHeight: 1024,
+        useWebWorker: true
+      };
+      const compressedFile = await imageCompression(file, options);
+      this.profileImageFile = compressedFile;
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.profileImagePreview = e.target.result;
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (err) {
+      alert('Image compression failed.');
       return;
     }
-    this.profileImageFile = file;
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.profileImagePreview = e.target.result;
-    };
-    reader.readAsDataURL(file);
   }
 
   removeProfileImage(index: number) {
@@ -229,12 +246,18 @@ export class InfluencerProfileComponent implements OnInit {
     if (this.socialMediaFormArray.length > 1) {
       this.socialMediaFormArray.removeAt(index);
     }
+      this.submitted = true; // Set submitted to true on form submission
   }
 
 
 
   async onSubmit() {
-    if (!this.isEditMode || this.registrationForm.invalid) return;
+    if (!this.isEditMode || this.registrationForm.invalid || !this.profileImagePreview) {
+      if (!this.profileImagePreview) {
+        this.registrationError = 'Profile image is required.';
+      }
+      return;
+    }
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.getRawValue();
@@ -272,7 +295,11 @@ export class InfluencerProfileComponent implements OnInit {
         });
         const data = await response.json();
         if (data.secure_url && data.public_id) {
-          profileImages = [{ url: data.secure_url, public_id: data.public_id }];
+          // Always include all images present in the FormArray (old image)
+          profileImages = [
+            ...raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img),
+            { url: data.secure_url, public_id: data.public_id }
+          ];
         } else {
           this.registrationError = 'Profile image upload failed.';
           return;
@@ -296,6 +323,8 @@ export class InfluencerProfileComponent implements OnInit {
       profileImages,
       contact: raw.contact
     };
+    // Debug log: print PATCH payload
+    console.log('[PATCH payload]', JSON.stringify(payload, null, 2));
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
     this.configService.updateInfluencerProfile(payload, token).subscribe({
       next: () => {
@@ -304,6 +333,16 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.disable();
         this.profileImagePreview = null;
         this.profileImageFile = null;
+        // After PATCH, clear FormArray and keep only the latest image
+        const arr = this.profileImagesFormArray;
+        if (arr.length > 0) {
+          const lastImage = arr.at(arr.length - 1).value;
+          arr.clear();
+          arr.push(this.fb.group({
+            url: lastImage.url,
+            public_id: lastImage.public_id
+          }));
+        }
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
@@ -314,6 +353,71 @@ export class InfluencerProfileComponent implements OnInit {
     });
   }
 
-
+  async fetchAndPatchProfile(): Promise<void> {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      await new Promise<void>((resolve) => {
+        this.configService.getInfluencerProfileById(token).subscribe({
+          next: (profile: any) => {
+            if (!profile || !this.registrationForm) {
+              this.registrationError = 'Profile not found or you are not logged in.';
+              resolve();
+              return;
+            }
+            const stateId = (this.states || []).find((s: any) => s.name === profile.location?.state)?.['_id'] || '';
+            const languageIds = (profile.languages || []).map((name: string) =>
+              (this.languagesList || []).find((l: any) => l.name === name)?._id
+            ).filter(Boolean);
+            const categoryIds = (profile.categories || []).map((name: string) =>
+              (this.categoriesList || []).find((c: any) => c.name === name)?._id
+            ).filter(Boolean);
+            const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
+              ...sm,
+              platform: (this.socialMediaList || []).find((s: any) => s.name === sm.platform)?._id || sm.platform
+            }));
+            this.registrationForm.patchValue({
+              name: profile.name || '',
+              username: profile.username || '',
+              phoneNumber: profile.phoneNumber || '',
+              email: profile.email || '',
+              paymentOption: profile.paymentOption || 'free',
+              location: { state: stateId },
+              languages: languageIds,
+              categories: categoryIds,
+              contact: profile.contact || { whatsapp: false, email: false, call: false }
+            });
+            const arr = this.registrationForm.get('profileImages') as FormArray;
+            if (arr) {
+              arr.clear();
+              (profile.profileImages || []).forEach((img: any) => arr.push(this.fb.group({
+                url: img.url,
+                public_id: img.public_id
+              })));
+            }
+            const smArr = this.registrationForm.get('socialMedia') as FormArray;
+            if (smArr) {
+              smArr.clear();
+              socialMedia.forEach((sm: any) => {
+                smArr.push(this.fb.group({
+                  platform: sm.platform || '',
+                  handle: sm.handle || '',
+                  tier: sm.tier || '',
+                  followersCount: sm.followersCount || ''
+                }));
+              });
+            }
+            this.originalFormValue = this.registrationForm.getRawValue();
+            this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
+            this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+            resolve();
+          },
+          error: () => {
+            this.registrationError = 'Error fetching profile.';
+            resolve();
+          }
+        });
+      });
+    }
+  }
 }
 

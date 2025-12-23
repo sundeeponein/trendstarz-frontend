@@ -2,9 +2,10 @@
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
       <div class="col-6">
-        <label>Brand Logo (URL)</label>
+        <label>Brand Logo <span class="text-danger">*</span></label>
         <div>
-          <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" class="form-control w-100" />
+          <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" class="form-control w-100" [required]="!brandLogoPreview" />
+          <div *ngIf="!brandLogoPreview && registrationForm.submitted" class="text-danger mt-1">Brand logo is required.</div>
           <div *ngIf="brandLogoPreview">
             <img [src]="brandLogoPreview" alt="Brand Logo Preview" style="max-width: 120px; max-height: 120px; margin-bottom: 8px; display: block;" />
           </div>

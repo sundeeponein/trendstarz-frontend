@@ -22,9 +22,9 @@
           <div class="user-profile" *ngIf="user">
             <div class="btn-group">
               <button class="btn btn-secondary btn-sm" type="button">
-                <img [src]="user.profileImage || 'assets/default-profile.png'" class="user-avatar" width="32" height="32" />
+                <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" class="user-avatar" width="32" height="32" />
                 <span>
-                  {{ user.name || user.fullname || user.brandName || user.email }}
+                  {{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : 'User') }}
                 </span>
               </button>
               <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
