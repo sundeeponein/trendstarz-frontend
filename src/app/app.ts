@@ -15,6 +15,8 @@ export class App implements OnInit {
   constructor(private session: SessionService, private router: Router) {}
 
   ngOnInit() {
+    // Always load user from storage before any layout is rendered
+    this.session.loadUserFromStorage();
     // Session expiration is now handled by route guards on protected routes only.
   }
 }

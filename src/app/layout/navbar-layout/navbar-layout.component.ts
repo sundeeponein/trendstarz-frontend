@@ -56,8 +56,7 @@ export class NavbarLayoutComponent {
     this.session.user$.subscribe(user => {
       this.user = user;
     });
-    // Load user from storage on init (in case of refresh)
-    this.session.loadUserFromStorage();
+    // No need to call loadUserFromStorage here; handled in App root
   }
   logout() {
     this.session.clearSession();

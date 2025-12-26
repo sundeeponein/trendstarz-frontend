@@ -18,11 +18,11 @@
           <div class="admin-profile" *ngIf="adminUser">
             <div class="btn-group">
               <button class="btn btn-secondary btn-sm" type="button">
-                <img [src]="adminUser.profileImage || 'assets/default-profile.png'" class="admin-avatar" width="32" height="32" />
-                <span>{{ adminUser.name }}</span>
+                <img [src]="adminUser.profileImage || 'assets/logo-trendstarz-text.png'" class="admin-avatar rounded-2" width="32" height="32" />
+                <span> {{ adminUser.name }}</span>
               </button>
               <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="visually-hidden">Toggle Dropdown</span>
+                <span class="visually-hidden"></span>
               </button>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" (click)="logout()">Logout</a></li>

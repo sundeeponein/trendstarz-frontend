@@ -4,9 +4,9 @@
     <h3>{{ brandName }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
     <p *ngIf="email">Email: {{ email }}</p>
     <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
-  <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
+    <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
     <p *ngIf="state">Location: {{ state }}</p>
-  <div *ngIf="productImages.length">
+    <div *ngIf="productImages.length">
       <label>Product Images:</label>
       <div class="product-images">
         <img *ngFor="let img of productImages || []" [src]="img.url || img" class="product-image" />
