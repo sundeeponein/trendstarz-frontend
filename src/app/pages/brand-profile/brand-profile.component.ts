@@ -154,6 +154,7 @@ export class BrandProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    console.log('BrandProfileComponent ngOnInit called');
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
@@ -210,9 +211,12 @@ export class BrandProfileComponent implements OnInit {
 
       // Fetch brand profile and patch form
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      console.log('Token for brand profile:', token);
       if (token) {
+        this.registrationError = '';
         this.configService.getBrandProfileById(token).subscribe({
           next: (profile) => {
+            console.log('Brand profile API response:', profile);
             if (!profile) {
               this.registrationError = 'Profile not found or you are not logged in.';
               return;
@@ -277,6 +281,7 @@ export class BrandProfileComponent implements OnInit {
             this.registrationForm.disable();
           },
           error: (err) => {
+            console.error('Error fetching brand profile:', err);
             this.registrationError = 'Error fetching profile.';
           }
         });

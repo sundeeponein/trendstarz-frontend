@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
+import { SessionService } from '../../core/session.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
+import { FooterComponent } from '../../shared/footer/footer.component';
 
 @Component({
   selector: 'app-navbar-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FooterComponent],
   templateUrl: './navbar-layout.component.html'
 })
 export class NavbarLayoutComponent {
@@ -19,8 +21,11 @@ export class NavbarLayoutComponent {
     setTimeout(() => {
       console.log('Navbar user:', this.user);
       // Extra debug: show raw token payload
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (token) {
+      let token: string | null | undefined = null;
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        token = localStorage.getItem('token');
+      }
+      if (token != null && token !== undefined && token !== 'undefined' && token !== '') {
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
           console.log('Raw JWT payload:', payload);
@@ -46,42 +51,29 @@ export class NavbarLayoutComponent {
     }
     return 'assets/default-profile.png';
   }
-  constructor(private router: Router) {
-    this.loadUser();
+  constructor(private router: Router, private session: SessionService) {
+    // Subscribe to user changes
+    this.session.user$.subscribe(user => {
+      this.user = user;
+    });
+    // Load user from storage on init (in case of refresh)
+    this.session.loadUserFromStorage();
   }
   logout() {
-    localStorage.removeItem('token');
-    this.user = null;
+    this.session.clearSession();
     this.router.navigate(['/']);
   }
   user: any = null;
   dropdownOpen = false;
 
-  loadUser() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        let profileImage = payload.profileImage || null;
-        let brandLogo = Array.isArray(payload.brandLogo) ? payload.brandLogo : [];
-        if (payload.role === 'brand' && brandLogo.length > 0) {
-          profileImage = brandLogo[0]?.url || brandLogo[0] || null;
-        }
-        this.user = {
-          name: payload.name || payload.fullname || payload.brandName || payload.email || 'User',
-          profileImage,
-          brandLogo,
-          role: payload.role || payload.userType || null
-        };
-      } catch {
-        this.user = null;
-      }
-    } else {
-      this.user = null;
-    }
-  }
+  // User is now managed reactively via SessionService
 
   toggleDropdown() {
     this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  isWelcomePage(): boolean {
+    // Checks if the current route is the root (welcome page)
+    return this.router.url === '/' || this.router.url === '/welcome';
   }
 }

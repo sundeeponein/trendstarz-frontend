@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { SessionService } from '../../core/session.service';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +20,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   errorMsg = '';
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router) {
+  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router, private session: SessionService) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
@@ -35,14 +36,23 @@ export class LoginComponent {
         } else {
           this.errorMsg = err?.error?.message || 'Login failed';
         }
-  // console.error('login failed', err);
         return of(null);
       }))
       .subscribe((res: any) => {
         if (!res) return;
-        localStorage.setItem('token', res.token);
+        this.session.setToken(res.token);
+        // Save user info for reactive use
+        if (res.user) {
+          this.session.setUser(res.user);
+        } else {
+          // fallback: try to decode from token if needed
+        }
         if (res.userType === 'admin') {
           this.router.navigate(['/admin']);
+        } else if (res.userType === 'brand') {
+          this.router.navigate(['/brand-profile']);
+        } else if (res.userType === 'influencer') {
+          this.router.navigate(['/influencer-profile']);
         } else {
           this.router.navigate(['/']);
         }

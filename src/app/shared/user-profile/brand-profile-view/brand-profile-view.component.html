@@ -1,0 +1,26 @@
+<div *ngIf="loading">Loading...</div>
+<div *ngIf="error">{{ error }}</div>
+<div *ngIf="!loading && !error && brand" class="profile-view brand-profile">
+  <img [src]="(brand?.brandLogo?.[0]?.url || (brand?.brandLogo && typeof brand?.brandLogo === 'string' ? brand?.brandLogo : undefined) || 'assets/default-profile.png')" (error)="onImgError($event)" class="profile-image" />
+  <div class="profile-details">
+    <h2>{{ brand?.name }} <span *ngIf="brand?.isPremium" class="premium-icon">★</span></h2>
+    <p *ngIf="brand?.email">Email: {{ brand?.email }}</p>
+    <p *ngIf="brand?.phoneNumber">Phone: {{ brand?.phoneNumber }}</p>
+    <p *ngIf="brand?.categories?.length">Categories: {{ brand?.categories?.join(', ') }}</p>
+    <p *ngIf="brand?.state">Location: {{ brand?.state }}</p>
+    <div *ngIf="brand?.products?.length">
+      <label>Product Images:</label>
+      <div class="product-images">
+        <img *ngFor="let img of brand?.products" [src]="img.url || img" class="product-image" />
+      </div>
+    </div>
+    <div *ngIf="brand?.website">
+      <label>Website:</label>
+      <a [href]="brand?.website" target="_blank">{{ brand?.website }}</a>
+    </div>
+    <div *ngIf="brand?.googleMapAddress">
+      <label>Google Map Address:</label>
+      <span>{{ brand?.googleMapAddress }}</span>
+    </div>
+  </div>
+</div>

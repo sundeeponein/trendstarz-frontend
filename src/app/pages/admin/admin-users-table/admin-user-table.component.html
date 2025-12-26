@@ -25,7 +25,7 @@
       <tbody>
         <tr *ngFor="let user of influencers">
           <td>
-            <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40">
+            <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle">
           </td>
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
@@ -101,9 +101,8 @@
       <tbody>
         <tr *ngFor="let user of brands">
           <td>
-            <!-- Debug: Show raw brandLogo array -->
-            <div style="font-size: 0.7em; color: #888;">brandLogo: {{ user.brandLogo | json }}</div>
-            <img [src]="getBrandLogo(user)" alt="Logo" width="40" height="40">
+            <!-- <div style="font-size: 0.7em; color: #888;">brandLogo: {{ user.brandLogo | json }}</div> -->
+            <img [src]="getBrandLogo(user)" alt="Logo" width="40" height="40" class="rounded-circle">
           </td>
           <td>{{ user.brandName || '-' }}</td>
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>

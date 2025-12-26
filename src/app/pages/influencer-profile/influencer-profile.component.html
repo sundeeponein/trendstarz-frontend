@@ -134,11 +134,7 @@
     <!-- Profile Image Upload (single image for now) -->
     <div class="col-12 mt-3">
       <label>Profile Image <span class="text-danger">*</span></label>
-      <!-- Debug: Show raw profileImages array and preview value -->
-      <div style="font-size: 0.8em; color: #888; margin-bottom: 4px;">
-        <div>profileImages: {{ profileImagesFormArray.value | json }}</div>
-        <div>profileImagePreview: {{ profileImagePreview }}</div>
-      </div>
+      
       <ng-container *ngIf="isEditMode; else viewProfileImageTpl">
         <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url; else addImageTpl">
           <img [src]="profileImagesFormArray.at(0).value.url" alt="Current Profile Image" style="max-width: 120px; max-height: 120px; display: block; margin-bottom: 8px;" />
