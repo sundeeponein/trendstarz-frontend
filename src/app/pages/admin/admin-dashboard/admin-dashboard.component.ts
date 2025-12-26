@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
@@ -24,7 +24,7 @@ export class AdminDashboardComponent implements OnInit {
   brandPending = 0;
   brandPremium = 0;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.fetchInfluencers();
@@ -35,6 +35,12 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
+          // console.log('[AdminDashboard] Influencer API response:', data);
+          // if (Array.isArray(data) && data.length > 0) {
+          //   console.log('[AdminDashboard] First influencer object keys:', Object.keys(data[0]));
+          //   console.log('[AdminDashboard] First influencer object:', data[0]);
+          //   console.log('[AdminDashboard] All influencer status values:', data.map(u => u.status));
+          // }
           const all = Array.isArray(data) ? data : [];
           const filtered = all.filter(u => (u.status || '').toLowerCase() !== 'deleted');
           this.influencerCount = filtered.length;
@@ -42,8 +48,10 @@ export class AdminDashboardComponent implements OnInit {
           this.influencerPending = filtered.filter(u => (u.status || '').toLowerCase() === 'pending').length;
           this.influencerPremium = filtered.filter(u => !!u.isPremium).length;
           this.influencerDeleted = all.filter(u => (u.status || '').toLowerCase() === 'deleted').length;
+          this.cd.detectChanges();
         },
         error: (err) => {
+          console.error('[AdminDashboard] Error fetching influencers:', err);
           alert('Error fetching influencers: ' + (err?.message || err));
         }
       });
@@ -53,6 +61,12 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
+          // console.log('[AdminDashboard] Brand API response:', data);
+          // if (Array.isArray(data) && data.length > 0) {
+          //   console.log('[AdminDashboard] First brand object keys:', Object.keys(data[0]));
+          //   console.log('[AdminDashboard] First brand object:', data[0]);
+          //   console.log('[AdminDashboard] All brand status values:', data.map(u => u.status));
+          // }
           const all = Array.isArray(data) ? data : [];
           const filtered = all.filter(u => (u.status || '').toLowerCase() !== 'deleted');
           this.brandCount = filtered.length;
@@ -60,8 +74,10 @@ export class AdminDashboardComponent implements OnInit {
           this.brandPending = filtered.filter(u => (u.status || '').toLowerCase() === 'pending').length;
           this.brandPremium = filtered.filter(u => !!u.isPremium).length;
           this.brandDeleted = all.filter(u => (u.status || '').toLowerCase() === 'deleted').length;
+          this.cd.detectChanges();
         },
         error: (err) => {
+          console.error('[AdminDashboard] Error fetching brands:', err);
           alert('Error fetching brands: ' + (err?.message || err));
         }
       });

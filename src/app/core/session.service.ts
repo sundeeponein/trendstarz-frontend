@@ -46,7 +46,28 @@ export class SessionService {
   }
 
   loadUserFromStorage() {
-    const user = this.getUser();
+    let user = this.getUser();
+    if (!user) {
+      // Try to decode user from JWT token if present
+      const token = this.getToken();
+      if (token && token !== 'undefined' && token !== '') {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          // Use standard JWT fields or your custom fields
+          user = {
+            id: payload.userId || payload.id,
+            email: payload.email,
+            role: payload.role,
+            name: payload.name || 'Admin',
+            // Add more fields if needed
+          };
+          this.setUser(user); // Save to localStorage and update subject
+        } catch (e) {
+          // If decoding fails, just set user to null
+          user = null;
+        }
+      }
+    }
     this.userSubject.next(user);
   }
 
