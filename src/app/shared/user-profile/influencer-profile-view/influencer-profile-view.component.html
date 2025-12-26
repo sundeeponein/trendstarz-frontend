@@ -1,0 +1,18 @@
+<div *ngIf="loading">Loading...</div>
+<div *ngIf="error">{{ error }}</div>
+<div *ngIf="!loading && !error && influencer" class="profile-view influencer-profile">
+  <img [src]="displayImage" (error)="onImgError($event)" class="profile-image w-100" />
+  <div class="profile-details">
+    <h2>{{ influencer?.name }} <span *ngIf="influencer?.isPremium" class="premium-icon">★</span></h2>
+    <p *ngIf="influencer?.username">@{{ influencer?.username }}</p>
+    <p *ngIf="influencer?.email">Email: {{ influencer?.email }}</p>
+    <p *ngIf="influencer?.phoneNumber">Phone: {{ influencer?.phoneNumber }}</p>
+    <p *ngIf="influencer?.categories?.length">Categories: {{ influencer?.categories?.join(', ') }}</p>
+    <p *ngIf="influencer?.state">Location: {{ influencer?.state }}</p>
+    <div *ngIf="influencer?.socialMedia?.length">
+      <span *ngFor="let sm of influencer?.socialMedia">
+        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+      </span>
+    </div>
+  </div>
+</div>

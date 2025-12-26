@@ -1,6 +1,4 @@
-<app-navbar-layout>
-
-</app-navbar-layout>
+<app-navbar-layout></app-navbar-layout>
 
 <section class="welcome-page d-flex flex-column align-items-center my-5" aria-label="Welcome to TrendStarz">
   <h1 class="mt-5">Welcome to</h1>
@@ -13,9 +11,57 @@
   </div>
 </section>
 
-<section class="text-center my-4" aria-label="How It Works">
-  show users card data of Influencers
+
+<section class="container my-5" aria-label="Influencers Grid">
+  <h2 class="mb-4">Featured Influencers</h2>
+  <div *ngIf="influencersLoading && influencers.length === 0" class="text-center">Loading influencers...</div>
+  <div *ngIf="!influencersLoading && !influencersError && influencers.length === 0" class="text-center">No influencers found.</div>
+  <div *ngIf="influencersError && influencers.length === 0" class="text-danger text-center">{{ influencersError }}</div>
+  <div class="row row-cols-1 row-cols-md-3 g-4" *ngIf="influencers.length > 0">
+    <div class="col-md-3 col bg-light text-dark" *ngFor="let influencer of influencers">
+      <div (click)="viewInfluencerProfile(influencer)" style="cursor:pointer;">
+        <app-influencer-user-card
+          [profileImage]="influencer.profileImage"
+          [profileImages]="influencer.profileImages"
+          [name]="influencer.name"
+          [username]="influencer.username"
+          [email]="influencer.email"
+          [phoneNumber]="influencer.phoneNumber"
+          [categories]="influencer.categories"
+          [state]="influencer.state"
+          [socialMedia]="influencer.socialMedia"
+          [isPremium]="influencer.isPremium"
+        ></app-influencer-user-card>
+      </div>
+    </div>
+  </div>
 </section>
+
+
+<section class="container my-5" aria-label="Brands Grid">
+  <h2 class="mb-4">Featured Brands</h2>
+  <div *ngIf="brandsLoading && brands.length === 0" class="text-center">Loading brands...</div>
+  <div *ngIf="!brandsLoading && !brandsError && brands.length === 0" class="text-center">No brands found.</div>
+  <div *ngIf="brandsError && brands.length === 0" class="text-danger text-center">{{ brandsError }}</div>
+  <div class="row row-cols-1 row-cols-md-3 g-4" *ngIf="brands.length > 0">
+    <div class="col-md-3 col bg-light text-dark" *ngFor="let brand of brands">
+      <div (click)="viewBrandProfile(brand)" style="cursor:pointer;">
+        <app-brand-user-card
+          [brandLogoUrl]="brand.brandLogo?.[0]?.url"
+          [brandName]="brand.brandName"
+          [email]="brand.email"
+          [phoneNumber]="brand.phoneNumber"
+          [categories]="brand.categories"
+          [state]="brand.state"
+          [productImages]="brand.productImages"
+          [website]="brand.website"
+          [isPremium]="brand.isPremium"
+        ></app-brand-user-card>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <section class="call-to-action text-center my-4" aria-label="Get Started with TrendStarz">
   <h2>Get Started Today!</h2>

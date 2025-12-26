@@ -1,0 +1,16 @@
+<div class="user-card influencer-card">
+  <img [src]="displayImage" (error)="onImgError($event)" class="user-image w-100" />
+  <div class="user-details">
+    <h3>{{ name }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
+    <p *ngIf="username">@{{ username }}</p>
+    <p *ngIf="email">Email: {{ email }}</p>
+    <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
+  <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
+    <p *ngIf="state">Location: {{ state }}</p>
+  <div *ngIf="socialMedia.length">
+      <span *ngFor="let sm of socialMedia">
+        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+      </span>
+    </div>
+  </div>
+</div>

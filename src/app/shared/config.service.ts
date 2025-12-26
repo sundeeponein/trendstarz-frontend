@@ -11,6 +11,28 @@ export class ConfigService {
 
   constructor(private http: HttpClient) {}
 
+
+  // Fetch influencer by ID (for public profile view)
+  getInfluencerById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/influencers/${id}`);
+  }
+
+  // Fetch brand by ID (for public profile view)
+  getBrandById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/brands/${id}`);
+  }
+
+  // Fetch brand by name (for public profile view)
+  getBrandByName(brandName: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/brands/name/${brandName}`)
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching brand by name:', error);
+          return of(null);
+        })
+      );
+  }
+
   registerInfluencer(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/register-influencer`, data);
   }
@@ -110,6 +132,11 @@ export class ConfigService {
         error: (err) => observer.error(err)
       });
     });
+  }
+
+  // Place this inside ConfigService class
+  getInfluencerByUsername(username: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/influencers/username/${username}`);
   }
 
 }
