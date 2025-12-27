@@ -59,5 +59,6 @@ export class BrandProfileViewComponent implements OnInit {
           this.cd.detectChanges();
         }
       });
+    console.log('Brand object:', this.brand);
   }
 }

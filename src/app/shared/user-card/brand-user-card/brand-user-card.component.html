@@ -2,8 +2,8 @@
   <img [src]="displayBrandLogo" (error)="onImgError($event)" class="user-image w-100" />
   <div class="user-details">
     <h3>{{ brandName }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
-    <!-- <p *ngIf="email">Email: {{ email }}</p> -->
-    <!-- <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p> -->
+    <p *ngIf="email">Email: {{ email }}</p>
+    <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
     <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
     <p *ngIf="location?.state">Location: {{ location.state }}</p>
     <div *ngIf="productImages.length">
