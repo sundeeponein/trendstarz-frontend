@@ -15,7 +15,7 @@ export class BrandUserCardComponent {
   @Input() email = '';
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
-  @Input() state = '';
+  @Input() location: any = {};
   @Input() productImages: any[] = [];
   @Input() website = '';
   @Input() isPremium = false;

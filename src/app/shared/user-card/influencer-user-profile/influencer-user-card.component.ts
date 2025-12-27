@@ -16,7 +16,7 @@ export class InfluencerUserCardComponent {
   @Input() email = '';
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
-  @Input() state = '';
+  @Input() location: any = {};
   @Input() socialMedia: any[] = [];
   @Input() isPremium = false;
   onImgError(event: Event) {

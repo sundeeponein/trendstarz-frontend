@@ -5,12 +5,12 @@
     <p *ngIf="username">@{{ username }}</p>
     <p *ngIf="email">Email: {{ email }}</p>
     <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
-  <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
-    <p *ngIf="state">Location: {{ state }}</p>
-  <div *ngIf="socialMedia.length">
-      <span *ngFor="let sm of socialMedia">
-        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
-      </span>
+    <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
+    <p *ngIf="location?.state">Location: {{ location.state }}</p>
+    <div *ngIf="socialMedia.length">
+        <span *ngFor="let sm of socialMedia">
+          {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+        </span>
+      </div>
     </div>
-  </div>
 </div>

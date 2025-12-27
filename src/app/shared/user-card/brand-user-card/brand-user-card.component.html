@@ -5,7 +5,7 @@
     <p *ngIf="email">Email: {{ email }}</p>
     <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
     <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
-    <p *ngIf="state">Location: {{ state }}</p>
+    <p *ngIf="location?.state">Location: {{ location.state }}</p>
     <div *ngIf="productImages.length">
       <label>Product Images:</label>
       <div class="product-images">
