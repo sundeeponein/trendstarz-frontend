@@ -6,10 +6,18 @@ const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+
+// Custom validator to require at least one contact option
+export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
+  if (!control || !control.value) return { required: true };
+  const { whatsapp, email, call } = control.value;
+  return whatsapp || email || call ? null : { required: true };
+};
 
 @Component({
   selector: 'app-brand-registration',
@@ -150,11 +158,12 @@ export class BrandRegistrationComponent implements OnInit {
         state: ['', Validators.required],
         googleMapLink: ['']
       }),
+      promotionalPrice: ['', Validators.required],
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
       googleMapAddress: [''],
-  brandLogo: this.fb.array([]),
+      brandLogo: this.fb.array([]),
       socialMedia: this.fb.array([
         this.fb.group({
           platform: ['', Validators.required],
@@ -167,7 +176,7 @@ export class BrandRegistrationComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false]
-      }),
+      }, { validators: [atLeastOneContactRequired] }),
     });
 
   // Fetch dropdown data from API
@@ -243,6 +252,7 @@ export class BrandRegistrationComponent implements OnInit {
         state: stateObj ? stateObj.name : raw.location.state,
         googleMapLink: raw.location.googleMapLink || ''
       },
+  promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
       socialMedia,

@@ -88,6 +88,7 @@
       <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
     </select>
     <div *ngIf="submitted && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
+  <div *ngIf="registrationForm.get('promotionalPrice')?.value !== undefined" class="mt-2"><strong>Promotional Price:</strong> ${{ registrationForm.get('promotionalPrice')?.value }}</div>
   </div>
 
   <div class="col-6">
@@ -198,6 +199,12 @@
       <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
     </div>
     <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
+  </div>
+
+  <div class="col-6 mt-3">
+    <label>Promotional Price <span class="text-danger">*</span></label>
+    <input formControlName="promotionalPrice" type="number" class="form-control w-100" required />
+    <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">Promotional Price is required.</div>
   </div>
 
   <div class="col-12 mt-3 mb-5 d-flex gap-2">

@@ -139,7 +139,7 @@
             <input formControlName="handle" type="text" required  class="form-control w-100" />
           </div>
           <div class="col-3">
-            <label>Tier</label>
+            <label>Tier</label> <i class="bi bi-info-circle-fill" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#tierInfoModal" title="Select the tier for this social media account"></i>
             <select formControlName="tier" class="form-control w-100">
               <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
             </select>
@@ -151,6 +151,11 @@
           </div>
         </div>
         <button type="button" (click)="addSocialMedia()">Add Social Media</button>
+      </div>
+
+      <div class="col-6 mt-3">
+        <label>Promotional Price <span class="text-danger">*</span></label>
+        <input formControlName="promotionalPrice" type="number" required class="form-control" />
       </div>
 
       <div class="col-12 mt-3">
@@ -213,6 +218,43 @@
       <div class="modal-body">
         <p>Your brand has been registered successfully.</p>
         <button class="btn btn-success" (click)="registrationSuccess = false; registrationForm.reset(); brandLogoPreview = null; brandLogoFile = null; productImagesPreview = []; productImagesFiles = []; submitted = false; registrationError = '';">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Tier Info Modal -->
+<div class="modal fade" id="tierInfoModal" tabindex="-1" aria-labelledby="tierInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tierInfoModalLabel">Tier Information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Icon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let tier of tiers">
+              <td>{{ tier.name }}</td>
+              <td>{{ tier.desc }}</td>
+              <td>
+                <i *ngIf="tier.icon" [class]="tier.icon" style="font-size: 1.5rem;"></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

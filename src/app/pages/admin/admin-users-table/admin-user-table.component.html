@@ -16,6 +16,7 @@
           <th>Categories</th>
           <th>Languages</th>
           <th>State</th>
+          <th>Promotional Price</th>
           <th>Social Media</th>
           <th>Premium</th>
           <th>Status</th>
@@ -23,7 +24,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of influencers">
+  <tr *ngFor="let user of influencers">
           <td>
             <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle">
           </td>
@@ -33,6 +34,7 @@
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.languages && user.languages.length ? user.languages.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.promotionalPrice !== undefined ? ('Promotional Price:' + user.promotionalPrice) : '-' }}</td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocial">
               <span *ngFor="let sm of user.socialMedia">
@@ -91,12 +93,14 @@
           <th>Email & Phone</th>
           <th>Categories</th>
           <th>State</th>
+          <th>Promotional Price</th>
           <th>Products</th>
           <th>Social Media</th>
           <th>Premium</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
+          
       </thead>
       <tbody>
         <tr *ngFor="let user of brands">
@@ -108,6 +112,7 @@
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.price !== undefined ? ('Promotional Price:' + user.price) : '-' }}</td>
           <td>
             <ng-container *ngIf="user.products && user.products.length; else noProducts">
               <ng-container *ngFor="let product of user.products; let i = index">

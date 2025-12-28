@@ -19,6 +19,7 @@ export class InfluencerUserCardComponent {
   @Input() location: any = {};
   @Input() socialMedia: any[] = [];
   @Input() isPremium = false;
+  @Input() promotionalPrice?: number;
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
   }

@@ -13,12 +13,12 @@
 
 
 <section class="container my-5" aria-label="Influencers Grid">
-  <h2 class="mb-4">Featured Influencers</h2>
+  <h2 class="mb-1">Featured Influencers</h2>
   <div *ngIf="influencersLoading && influencers.length === 0" class="text-center">Loading influencers...</div>
   <div *ngIf="!influencersLoading && !influencersError && influencers.length === 0" class="text-center">No influencers found.</div>
   <div *ngIf="influencersError && influencers.length === 0" class="text-danger text-center">{{ influencersError }}</div>
-  <div class="row row-cols-1 row-cols-md-3 g-4" *ngIf="influencers.length > 0">
-    <div class="col-md-3 col bg-light text-dark" *ngFor="let influencer of influencers">
+  <div class="row row-cols-1 row-cols-md-3 g-4 m-0" *ngIf="influencers.length > 0">
+    <div class="col-md-3 col bg-light text-dark p-2" *ngFor="let influencer of influencers">
       <div (click)="viewInfluencerProfile(influencer)" style="cursor:pointer;">
         <app-influencer-user-card
           [profileImage]="influencer.profileImage"
@@ -31,6 +31,8 @@
           [location]="influencer.location"
           [socialMedia]="influencer.socialMedia"
           [isPremium]="influencer.isPremium"
+          [promotionalPrice]="influencer.promotionalPrice"
+
         ></app-influencer-user-card>
       </div>
     </div>
@@ -39,12 +41,12 @@
 
 
 <section class="container my-5" aria-label="Brands Grid">
-  <h2 class="mb-4">Featured Brands</h2>
+  <h2 class="mb-1">Featured Brands</h2>
   <div *ngIf="brandsLoading && brands.length === 0" class="text-center">Loading brands...</div>
   <div *ngIf="!brandsLoading && !brandsError && brands.length === 0" class="text-center">No brands found.</div>
   <div *ngIf="brandsError && brands.length === 0" class="text-danger text-center">{{ brandsError }}</div>
-  <div class="row row-cols-1 row-cols-md-3 g-4" *ngIf="brands.length > 0">
-    <div class="col-md-3 col bg-light text-dark" *ngFor="let brand of brands">
+  <div class="row row-cols-1 row-cols-md-3 g-4 m-0" *ngIf="brands.length > 0">
+    <div class="col-md-3 col bg-light text-dark p-2" *ngFor="let brand of brands">
       <div (click)="viewBrandProfile(brand)" style="cursor:pointer;">
         <app-brand-user-card
           [brandLogoUrl]="brand.brandLogo?.[0]?.url"
@@ -56,6 +58,8 @@
           [productImages]="brand.productImages"
           [website]="brand.website"
           [isPremium]="brand.isPremium"
+          [promotionalPrice]="brand.promotionalPrice"
+
         ></app-brand-user-card>
       </div>
     </div>

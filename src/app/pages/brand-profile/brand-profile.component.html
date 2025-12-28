@@ -200,6 +200,11 @@
         <button type="button" (click)="addSocialMedia()">Add Social Media</button>
       </div>
 
+      <div class="col-6 mt-3">
+        <label>Promotional Price <span class="text-danger">*</span></label>
+        <input formControlName="promotionalPrice" type="number" required class="form-control" />
+      </div>
+
       <div class="col-12 mt-3">
         <div class="col-6 row" formGroupName="contact">
           <label>Contact Options</label>
@@ -210,6 +215,7 @@
           </div>
         </div>
       </div>
+
 
       <!-- <button type="submit">Update</button> -->
         <div class="d-flex justify-content-end mb-2">

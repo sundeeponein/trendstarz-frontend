@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
   styleUrls: []
 })
 export class BrandUserCardComponent {
+  @Input() promotionalPrice: number | string | undefined;
   @Input() brandLogoUrl = '';
   @Input() brandLogo: any;
   @Input() brandName = '';
@@ -16,18 +17,22 @@ export class BrandUserCardComponent {
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
   @Input() location: any = {};
-  @Input() productImages: any[] = [];
+  @Input() products: any[] = [];
   @Input() website = '';
   @Input() isPremium = false;
+
+  @Input() productImages: any[] = [];
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
   }
 
   get displayBrandLogo(): string {
-    // Support both array and string for brandLogo
     if (this.brandLogoUrl) return this.brandLogoUrl;
-    if (Array.isArray(this.brandLogo) && this.brandLogo.length > 0) return this.brandLogo[0]?.url || 'assets/default-profile.png';
+    if (Array.isArray(this.brandLogo) && this.brandLogo.length > 0) {
+      if (typeof this.brandLogo[0] === 'string') return this.brandLogo[0];
+      if (this.brandLogo[0]?.url) return this.brandLogo[0].url;
+    }
     if (typeof this.brandLogo === 'string') return this.brandLogo;
     return 'assets/default-profile.png';
   }
