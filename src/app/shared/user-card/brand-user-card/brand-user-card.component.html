@@ -6,10 +6,11 @@
     <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
     <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
     <p *ngIf="location?.state">Location: {{ location.state }}</p>
-    <div *ngIf="productImages.length">
-      <label>Product Images:</label>
+    <p *ngIf="promotionalPrice !== undefined">Promotional Price: {{ promotionalPrice }}</p>
+    <div *ngIf="products.length">
+      <label>Products:</label>
       <div class="product-images">
-        <img *ngFor="let img of productImages || []" [src]="img.url || img" class="product-image" />
+        <img *ngFor="let img of products || []" [src]="img.url || img" class="product-image" />
       </div>
     </div>
     <div *ngIf="website">

@@ -127,14 +127,22 @@
         </div>
         <button type="button" (click)="addSocialMedia()">Add Social Media</button>
       </div>
-      <div class="col-6 mt-3" formGroupName="contact">
-        <label>Contact Options  <span class="text-danger">*</span></label>
-        <div class="row">
-          <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
-          <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
-          <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+
+      <div class="col-6 mt-3">
+        <label>Promotional Price <span class="text-danger">*</span></label>
+        <input formControlName="promotionalPrice" type="number" required class="form-control" />
+      </div>
+
+      <div class="col-12 mt-3">
+        <div class="col-6 row" formGroupName="contact">
+          <label>Contact Options  <span class="text-danger">*</span></label>
+          <div class="row">
+            <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
+            <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
+            <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
+          </div>
+          <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
         </div>
-        <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
       </div>
 
       <div *ngIf="registrationSuccess" class="text-success font-weight-bold my-3">
@@ -148,7 +156,7 @@
       </div>
     </div>
   </form>
-  <pre>{{ registrationForm.errors | json }}</pre>
+  <!-- <pre>{{ registrationForm.errors | json }}</pre> -->
   <!-- <pre>{{ registrationForm.value | json }}</pre> -->
 
 

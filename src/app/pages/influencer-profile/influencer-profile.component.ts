@@ -48,6 +48,7 @@ export class InfluencerProfileComponent implements OnInit {
       location: this.fb.group({
         state: [{ value: '', disabled: true }, Validators.required]
       }),
+      promotionalPrice: [{ value: '', disabled: true }, Validators.required],
       languages: [{ value: [], disabled: true }, Validators.required],
       categories: [{ value: [], disabled: true }, Validators.required],
       profileImages: this.fb.array([]),
@@ -97,6 +98,7 @@ export class InfluencerProfileComponent implements OnInit {
             email: profile.email || '',
             paymentOption: profile.paymentOption || 'free',
             location: { state: stateId },
+            promotionalPrice: profile.promotionalPrice || '',
             languages: languageIds,
             categories: categoryIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false }
@@ -317,6 +319,7 @@ export class InfluencerProfileComponent implements OnInit {
       location: {
         state: stateObj ? stateObj.name : raw.location.state
       },
+      promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
       socialMedia,

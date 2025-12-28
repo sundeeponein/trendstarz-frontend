@@ -74,6 +74,7 @@ export class AdminUserTableComponent implements OnInit {
     this.fetchUsers();
   }
 
+
   fetchUsers() {
     let token = '';
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -83,12 +84,12 @@ export class AdminUserTableComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, headers)
       .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
-        this.influencers = (res || []).filter((u: any) => u.status !== 'deleted');
+    this.influencers = (res || []).filter((u: any) => u.status !== 'deleted');
       });
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, headers)
       .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
-        this.brands = (res || []).filter((u: any) => u.status !== 'deleted');
+    this.brands = (res || []).filter((u: any) => u.status !== 'deleted');
       });
   }
 
@@ -192,5 +193,27 @@ export class AdminUserTableComponent implements OnInit {
     } else {
       alert('No image available for this product.');
     }
+  }
+
+  updateUserPrice(user: any, userType: 'influencer' | 'brand') {
+    if (user.editPrice === undefined || user.editPrice === user.price) return;
+    const url = userType === 'influencer'
+      ? `${environment.apiBaseUrl}/users/influencer-profile`
+      : `${environment.apiBaseUrl}/users/brand-profile`;
+    const payload = { price: user.editPrice, _id: user._id };
+    this.http.patch(url, payload, this.getAuthHeaders())
+      .pipe(catchError(err => {
+        alert('Error updating price: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (res && res.user) {
+          user.price = res.user.price;
+          user.editPrice = res.user.price;
+          alert('Price updated successfully!');
+        } else {
+          alert('Price update failed.');
+        }
+      });
   }
 }

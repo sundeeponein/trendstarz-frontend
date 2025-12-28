@@ -165,6 +165,7 @@ export class BrandProfileComponent implements OnInit {
         state: ['', Validators.required],
         googleMapLink: ['']
       }),
+      promotionalPrice: ['', Validators.required],
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
@@ -242,6 +243,7 @@ export class BrandProfileComponent implements OnInit {
               phoneNumber: profile.phoneNumber || '',
               paymentOption: profile.paymentOption || 'free',
               location: { state: stateId, googleMapLink: profile.location?.googleMapLink || '' },
+              promotionalPrice: profile.promotionalPrice || '',
               languages: languageIds,
               categories: categoryIds,
               website: profile.website || '',
@@ -428,14 +430,15 @@ export class BrandProfileComponent implements OnInit {
       googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || undefined
     };
     const payload: any = {
-      ...raw,
-      location,
-      languages: languageNames,
-      categories: categoryNames,
-      socialMedia,
-      brandLogo: brandLogoObjs,
-      products,
-      contact: raw.contact
+  ...raw,
+  location,
+  promotionalPrice: raw.promotionalPrice,
+  languages: languageNames,
+  categories: categoryNames,
+  socialMedia,
+  brandLogo: brandLogoObjs.length > 0 ? brandLogoObjs : (raw.brandLogo || []),
+  products: products.length > 0 ? products : (raw.products || []),
+  contact: raw.contact
     };
     // Remove fields not in DTO
     delete payload.password;

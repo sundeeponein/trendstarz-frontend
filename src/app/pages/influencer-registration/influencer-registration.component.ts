@@ -3,11 +3,18 @@ const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+
+// Custom validator to require at least one contact option
+export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
+  if (!control || !control.value) return { required: true };
+  const { whatsapp, email, call } = control.value;
+  return whatsapp || email || call ? null : { required: true };
+};
 
 @Component({
   selector: 'app-influencer-registration',
@@ -43,6 +50,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       location: this.fb.group({
         state: ['', Validators.required]
       }),
+  promotionalPrice: ['', Validators.required],
       languages: [[], Validators.required],
       categories: [[], Validators.required],
       profileImages: this.fb.array([]),
@@ -58,7 +66,7 @@ export class InfluencerRegistrationComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false]
-      })
+      }, { validators: [atLeastOneContactRequired] }),
     });
     // Only reset success/error flags if the form is dirty and success is showing
     this.registrationForm.valueChanges.subscribe(() => {
@@ -200,6 +208,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       location: {
         state: stateObj ? stateObj.name : raw.location.state
       },
+  promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
       socialMedia,
