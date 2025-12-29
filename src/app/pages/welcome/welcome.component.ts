@@ -26,7 +26,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     private meta: Meta,
     private title: Title,
     private config: ConfigService,
-    private router: Router,
+    public router: Router,
     private cd: ChangeDetectorRef
   ) {}
 

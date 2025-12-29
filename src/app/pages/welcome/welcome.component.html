@@ -67,11 +67,11 @@
 </section>
 
 
-<section class="call-to-action text-center my-4" aria-label="Get Started with TrendStarz">
+<section class="call-to-action text-center mb-5 pb-5" aria-label="Get Started with TrendStarz">
   <h2>Get Started Today!</h2>
   <p class="lead">Join TrendStarz and elevate your brand or influencer journey.</p>
   <div class="d-flex gap-3 justify-content-center">
-    <a routerLink="/register-influencer" class="btn btn-primary btn-lg" role="button">Register as Influencer</a>
-    <a routerLink="/register-brand" class="btn btn-secondary btn-lg" role="button">Register as Brand</a>
+  <button class="btn btn-primary btn-lg" (click)="router.navigate(['/register-influencer'])" type="button">Register as Influencer</button>
+  <button class="btn btn-secondary btn-lg" (click)="router.navigate(['/register-brand'])" type="button">Register as Brand</button>
   </div>
 </section>
