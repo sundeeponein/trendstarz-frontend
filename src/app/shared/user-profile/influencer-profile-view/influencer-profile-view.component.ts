@@ -2,11 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../config.service';
 import { CommonModule } from '@angular/common';
+import { ResolvePlatformPipe } from '../../pipes/resolve-platform.pipe';
 
 @Component({
   selector: 'app-influencer-profile-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ResolvePlatformPipe],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: []
 })
@@ -15,6 +16,15 @@ export class InfluencerProfileViewComponent implements OnInit {
   influencer: any;
   loading = true;
   error = '';
+
+  resolvePlatform(sm: any): string {
+    if (!sm || !sm.platform) return '';
+    const p = sm.platform.toLowerCase();
+    if (p.includes('insta')) return 'instagram';
+    if (p.includes('face')) return 'facebook';
+    if (p.includes('youtube')) return 'youtube';
+    return p;
+  }
 
   onImgError(event: Event) {
     const img = event.target as HTMLImageElement;

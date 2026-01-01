@@ -1,4 +1,4 @@
-<div class="user-card influencer-card">
+<!-- <div class="user-card influencer-card mb-1">
   <img [src]="displayImage" (error)="onImgError($event)" class="user-image w-100" />
   <div class="user-details">
     <h3>{{ name }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
@@ -9,9 +9,51 @@
     <p *ngIf="location?.state">Location: {{ location.state }}</p>
     <p *ngIf="promotionalPrice !== undefined">Promotional Price: {{ promotionalPrice }}</p>
     <div *ngIf="socialMedia.length">
-        <span *ngFor="let sm of socialMedia">
-          {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
-        </span>
+      <span *ngFor="let sm of socialMedia">
+        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
+      </span>
+    </div>
+  </div>
+</div> -->
+
+<div class="user-card influencer-card rounded-4 col bg-white text-dark">
+  <img [src]="displayImage" (error)="onImgError($event)" class="user-image w-100 rounded-4 mb-2" style="aspect-ratio:1/1; object-fit:cover;" />
+  <div class="user-details p-2">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <div>
+        <div class="fw-bold">{{ name }}</div>
+        <div class="text-muted" style="font-size:0.95rem;">{{ location?.city }} {{ location?.state }} {{ location?.country }}</div>
+      </div>
+      <div>
+        <div class="fw-bold">{{ socialMedia[0]?.followersCount | number }}</div>
+        <small class="text-muted"> Followers</small>
       </div>
     </div>
+    <hr class="my-2" />
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <ng-container *ngFor="let sm of socialMedia">
+        <ng-container [ngSwitch]="sm | resolvePlatform">
+          <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
+            <i class="bi bi-instagram fs-5"></i>
+          </a>
+          <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
+            <i class="bi bi-youtube fs-5"></i>
+          </a>
+          <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
+            <i class="bi bi-facebook fs-5"></i>
+          </a>
+          <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="website">
+            <i class="bi bi-link-45deg fs-5"></i>
+          </a>
+        </ng-container>
+      </ng-container>
+      <span class="badge rounded-pill bg-light text-success ms-2" style="font-size:1rem;">{{ categories[0] }}</span>
+    </div>
+    <div class="text-muted mb-1" style="font-size:0.95rem;">Advertising Price</div>
+    <div class="fw-bold mb-2" style="font-size:1.25rem;">{{ promotionalPrice | number }}</div>
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <!-- <input type="checkbox" /> -->
+      <button class="btn btn-dark w-100" style="background:#3d0066; color:#fff;">Send message</button>
+    </div>
+  </div>
 </div>

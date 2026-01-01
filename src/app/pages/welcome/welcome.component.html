@@ -17,8 +17,8 @@
   <div *ngIf="influencersLoading && influencers.length === 0" class="text-center">Loading influencers...</div>
   <div *ngIf="!influencersLoading && !influencersError && influencers.length === 0" class="text-center">No influencers found.</div>
   <div *ngIf="influencersError && influencers.length === 0" class="text-danger text-center">{{ influencersError }}</div>
-  <div class="row row-cols-1 row-cols-md-3 g-4 m-0" *ngIf="influencers.length > 0">
-    <div class="col-md-3 col bg-light text-dark p-2" *ngFor="let influencer of influencers">
+  <div class="row row-cols-1 row-cols-md-3 gap-1 m-0" *ngIf="influencers.length > 0">
+    <div class="col-md-3 col text-dark" *ngFor="let influencer of influencers">
       <div (click)="viewInfluencerProfile(influencer)" style="cursor:pointer;">
         <app-influencer-user-card
           [profileImage]="influencer.profileImage"
