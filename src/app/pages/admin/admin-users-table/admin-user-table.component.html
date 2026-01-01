@@ -37,9 +37,25 @@
           <td>{{ user.promotionalPrice !== undefined ? ('Promotional Price:' + user.promotionalPrice) : '-' }}</td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocial">
-              <span *ngFor="let sm of user.socialMedia">
-                {{ sm.platform || '-' }}: {{ sm.handle || '-' }} <span *ngIf="sm.followersCount">({{ sm.followersCount }})</span><br>
-              </span>
+              <!-- <span *ngFor="let sm of user.socialMedia"> -->
+              <ng-container *ngFor="let sm of user.socialMedia">
+                <ng-container [ngSwitch]="sm | resolvePlatform">
+                  <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
+                    <i class="bi bi-instagram fs-5"></i>
+                  </a>
+                  <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
+                    <i class="bi bi-youtube fs-5"></i>
+                  </a>
+                  <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
+                    <i class="bi bi-facebook fs-5"></i>
+                  </a>
+                  <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="Social">
+                    <i class="bi bi-link-45deg fs-5"></i>
+                  </a>
+                </ng-container>
+                <span *ngIf="sm.followersCount">({{ sm.followersCount }})</span>
+                <br>
+              </ng-container>
             </span>
             <ng-template #noSocial>-</ng-template>
           </td>
@@ -132,7 +148,21 @@
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocialBrand">
               <span *ngFor="let sm of user.socialMedia">
-                {{ sm.platform || '-' }}: {{ sm.handle || '-' }}<br>
+                <ng-container [ngSwitch]="sm | resolvePlatform">
+                  <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
+                    <i class="bi bi-instagram fs-5"></i>
+                  </a>
+                  <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
+                    <i class="bi bi-youtube fs-5"></i>
+                  </a>
+                  <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
+                    <i class="bi bi-facebook fs-5"></i>
+                  </a>
+                  <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="Social">
+                    <i class="bi bi-link-45deg fs-5"></i>
+                  </a>
+                </ng-container>
+                <br>
               </span>
             </span>
             <ng-template #noSocialBrand>-</ng-template>

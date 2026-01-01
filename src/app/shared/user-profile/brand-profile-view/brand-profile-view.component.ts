@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../config.service';
 import { switchMap } from 'rxjs/operators';
+import { ResolvePlatformPipe } from '../../pipes/resolve-platform.pipe';
 
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ResolvePlatformPipe],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: []
 })
@@ -15,6 +16,15 @@ export class BrandProfileViewComponent implements OnInit {
   brand: any = null;
   loading = true;
   error = '';
+
+  resolvePlatform(sm: any): string {
+    if (!sm || !sm.platform) return '';
+    const p = sm.platform.toLowerCase();
+    if (p.includes('insta')) return 'instagram';
+    if (p.includes('face')) return 'facebook';
+    if (p.includes('youtube')) return 'youtube';
+    return p;
+  }
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';

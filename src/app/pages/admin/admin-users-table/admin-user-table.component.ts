@@ -1,3 +1,4 @@
+  
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,11 +7,12 @@ import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { ResolvePlatformPipe } from '../../../shared/pipes/resolve-platform.pipe';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ResolvePlatformPipe],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
@@ -216,4 +218,5 @@ export class AdminUserTableComponent implements OnInit {
         }
       });
   }
+
 }

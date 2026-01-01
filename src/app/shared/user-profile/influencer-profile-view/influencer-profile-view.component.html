@@ -12,10 +12,24 @@
       Location: {{ influencer?.location?.state}}
     </p>
     <!-- <pre style="font-size:12px; color:#888; background:#f9f9f9; padding:8px; border-radius:4px;">{{ influencer | json }}</pre> -->
-    <div *ngIf="influencer?.socialMedia?.length">
-      <span *ngFor="let sm of influencer?.socialMedia">
-        {{ sm.platform }}: {{ sm.handle }} ({{ sm.tier }}) - {{ sm.followersCount }} followers
-      </span>
+    <div *ngIf="influencer?.socialMedia?.length" class="d-flex align-items-center gap-2 mb-2">
+      <ng-container *ngFor="let sm of influencer.socialMedia">
+        <ng-container [ngSwitch]="sm | resolvePlatform">
+          <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
+            <i class="bi bi-instagram fs-5"></i>
+          </a>
+          <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
+            <i class="bi bi-youtube fs-5"></i>
+          </a>
+          <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
+            <i class="bi bi-facebook fs-5"></i>
+          </a>
+          <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="website">
+            <i class="bi bi-link-45deg fs-5"></i>
+          </a>
+        </ng-container>
+      </ng-container>
+      <span *ngIf="influencer.categories?.length" class="badge rounded-pill bg-light text-success ms-2" style="font-size:1rem;">{{ influencer.categories[0] }}</span>
     </div>
   </div>
 </div>
