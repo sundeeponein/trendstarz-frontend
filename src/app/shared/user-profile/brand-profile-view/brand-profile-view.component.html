@@ -17,6 +17,13 @@
       <label>Website:</label>
       <a [href]="brand?.website" target="_blank">{{ brand?.website }}</a>
     </div>
+    <div *ngIf="brand?.promotionalPrice">
+      <hr />
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="fw-bold">Advertising Price</span>
+        <span class="ms-auto fs-5">{{ brand.promotionalPrice }}</span>
+      </div>
+    </div>
     <div *ngIf="brand?.socialMedia?.length" class="d-flex align-items-center gap-2 mb-2">
       <ng-container *ngFor="let sm of brand.socialMedia">
         <ng-container [ngSwitch]="sm | resolvePlatform">
