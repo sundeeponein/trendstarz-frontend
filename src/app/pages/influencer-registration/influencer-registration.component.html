@@ -6,8 +6,10 @@
     <div class="row my-5">
       <div class="col-6">
         <label>Username <span class="text-danger">*</span></label>
-        <input formControlName="username" type="text" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">Please enter your username.</div>
+        <input formControlName="username" type="text" class="form-control w-100" required pattern="^[a-zA-Z0-9_-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
+        <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">
+          Username is required and can only contain letters, numbers, hyphens (-), and underscores (_). No spaces or special characters allowed.
+        </div>
       </div>
       <div class="col-6">
         <label>Phone Number <span class="text-danger">*</span></label>
