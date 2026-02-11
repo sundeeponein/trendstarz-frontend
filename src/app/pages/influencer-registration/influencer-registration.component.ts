@@ -6,8 +6,9 @@ import { Component, OnInit, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
 import { map, debounceTime, switchMap, first } from 'rxjs/operators';
 import { ConfigService } from '../../shared/config.service';
+import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 
 // Custom validator to require at least one contact option
@@ -20,11 +21,60 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+  // OTP dialog/expand state
+  showPhoneOtp: boolean = false;
+  showEmailOtp: boolean = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  emailOtp: string[] = ['', '', '', '', '', ''];
+
+  // Phone/email verification status and error
+  phoneVerified: boolean = false;
+  emailVerified: boolean = false;
+  phoneVerifyError: string = '';
+  emailVerifyError: string = '';
+
+  constructor(
+    private fb: FormBuilder,
+    private configService: ConfigService,
+    private ngZone: NgZone,
+    private otpService: OtpService
+  ) {}
+
+  sendPhoneOtp() {
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => { this.phoneVerifyError = ''; },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
+    });
+  }
+  confirmPhoneOtp() {
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    const otp = this.phoneOtp.join('');
+    this.otpService.verifyOtp('phone', phone, otp).subscribe({
+      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      error: () => { this.phoneVerifyError = 'Invalid OTP'; }
+    });
+  }
+  sendEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    this.otpService.sendOtp('email', email).subscribe({
+      next: () => { this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Failed to send OTP'; }
+    });
+  }
+  confirmEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    const otp = this.emailOtp.join('');
+    this.otpService.verifyOtp('email', email, otp).subscribe({
+      next: () => { this.emailVerified = true; this.showEmailOtp = false; this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Invalid OTP'; }
+    });
+  }
   registrationSuccess = false;
   registrationError = '';
   registrationForm!: FormGroup;
@@ -38,12 +88,26 @@ export class InfluencerRegistrationComponent implements OnInit {
   categoriesList: any[] = [];
   submitted = false;
   usernameError: string = '';
-  constructor(private fb: FormBuilder, private configService: ConfigService, private ngZone: NgZone) {}
+
+  // ...existing code...
+
+  // Utility to slugify username
+  slugifyUsername(username: string): string {
+    return username
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
-      username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)], [this.usernameUniqueValidator()]],
+      username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
@@ -185,6 +249,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.value;
+    // Always slugify username before saving
+    if (raw.username) {
+      raw.username = this.slugifyUsername(raw.username);
+    }
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
     // Map language IDs to names

@@ -95,8 +95,14 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   viewInfluencerProfile(influencer: any) {
-    if (influencer && influencer.username) {
-      this.router.navigate(['/influencer', influencer.username]);
+    if (influencer) {
+      let username = influencer.username;
+      if (!username || username.trim() === '') {
+        username = influencer.name || '';
+      }
+      // Always slugify for URL safety
+      const urlUsername = this.slugify(username);
+      this.router.navigate(['/influencer', urlUsername]);
     }
   }
 

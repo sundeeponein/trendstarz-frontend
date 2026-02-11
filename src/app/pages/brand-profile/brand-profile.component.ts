@@ -5,6 +5,7 @@ import imageCompression from 'browser-image-compression';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -18,6 +19,55 @@ import { NgSelectModule } from '@ng-select/ng-select';
 })
 
 export class BrandProfileComponent implements OnInit {
+  // OTP dialog/expand state
+  showPhoneOtp: boolean = false;
+  showEmailOtp: boolean = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  emailOtp: string[] = ['', '', '', '', '', ''];
+
+  // Phone/email verification status and error
+  phoneVerified: boolean = false;
+  emailVerified: boolean = false;
+  phoneVerifyError: string = '';
+  emailVerifyError: string = '';
+
+  constructor(
+    public fb: FormBuilder,
+    private configService: ConfigService,
+    private otpService: OtpService
+  ) {}
+
+  sendPhoneOtp() {
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => { this.phoneVerifyError = ''; },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
+    });
+  }
+  confirmPhoneOtp() {
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    const otp = this.phoneOtp.join('');
+    this.otpService.verifyOtp('phone', phone, otp).subscribe({
+      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      error: () => { this.phoneVerifyError = 'Invalid OTP'; }
+    });
+  }
+  sendEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    this.otpService.sendOtp('email', email).subscribe({
+      next: () => { this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Failed to send OTP'; }
+    });
+  }
+  confirmEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    const otp = this.emailOtp.join('');
+    this.otpService.verifyOtp('email', email, otp).subscribe({
+      next: () => { this.emailVerified = true; this.showEmailOtp = false; this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Invalid OTP'; }
+    });
+  }
+  brandUsernameError: string = '';
   get brandLogoFormArray(): FormArray {
     return this.registrationForm.get('brandLogo') as FormArray;
   }
@@ -43,7 +93,7 @@ export class BrandProfileComponent implements OnInit {
   brandLogoFile: { url: string, public_id: string } | null = null;
   productImagesPreview: (string | null)[] = [];
   productImagesFiles: ({ url: string, public_id: string } | null)[] = [];
-  constructor(public fb: FormBuilder, private configService: ConfigService) {}
+  // ...existing code...
 
   // Getter for brandLogo FormArray
   // Handle brand logo file selection, compress, upload, and preview

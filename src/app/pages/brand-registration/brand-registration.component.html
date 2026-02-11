@@ -15,12 +15,45 @@
         <label>Brand Name <span class="text-danger">*</span></label>
         <input formControlName="brandName" type="text" class="form-control w-100" required />
         <div *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger mt-1">Brand name is required.</div>
+
+        <label class="mt-3">Brand Username <span class="text-danger">*</span></label>
+        <input formControlName="brandUsername" type="text" class="form-control w-100" required pattern="^[a-zA-Z0-9-]+$" title="Only letters, numbers, and hyphens (-) are allowed. No spaces or underscores." />
+        <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid" class="text-danger mt-1">
+          Brand username is required and can only contain letters, numbers, and hyphens (-). No spaces or underscores allowed.
+        </div>
+        <div *ngIf="brandUsernameError === 'taken'" class="text-danger mt-1">
+          Brand username already exists. Please choose another.
+        </div>
+        <div *ngIf="brandUsernameError === 'invalid'" class="text-danger mt-1">
+          Brand username cannot contain spaces or underscores. Please use only letters, numbers, and hyphens (-).
+        </div>
       </div>
 
       <div class="col-6">
-        <label>Phone Number <span class="text-danger">*</span></label>
-        <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
+        <label>Mobile Number <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+          <input formControlName="phoneNumber" type="text" class="form-control w-100" required placeholder="Enter 10-digit number" />
+          <!-- Show tick if verified -->
+          <span *ngIf="phoneVerified" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
+          <!-- Show Verify button only if valid and not verified and not showing OTP -->
+          <button type="button" class="btn btn-outline-primary"
+            *ngIf="registrationForm.get('phoneNumber')?.valid && !phoneVerified && !showPhoneOtp"
+            (click)="showPhoneOtp = true; sendPhoneOtp()">Verify</button>
+        </div>
+        <!-- Show OTP dialog only after Verify is clicked and not verified -->
+        <div *ngIf="showPhoneOtp && !phoneVerified" class="mt-2 p-3 rounded-3" style="background: #faf6ff; border: 1px solid #e0d7fa;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold">Verify Mobile</span>
+            <span class="text-secondary small">SMS SENT</span>
+          </div>
+          <div class="d-flex gap-2 mb-2">
+            <input maxlength="1" *ngFor="let d of [0,1,2,3,4,5]; let i = index" [(ngModel)]="phoneOtp[i]" class="form-control text-center" style="width: 2.5rem; font-size: 1.5rem;" />
+          </div>
+          <button class="btn btn-primary w-100" (click)="confirmPhoneOtp()">Confirm OTP</button>
+        </div>
         <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
+        <div *ngIf="phoneVerifyError" class="text-danger mt-1">{{ phoneVerifyError }}</div>
       </div>
 
       <div class="col-6" formGroupName="location">
@@ -32,9 +65,30 @@
       </div>
 
       <div class="col-6">
-        <label>Email <span class="text-danger">*</span></label>
-        <input formControlName="email" type="email" class="form-control w-100" required />
+        <label>Email Address <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input formControlName="email" type="email" class="form-control w-100" required placeholder="example@mail.com" />
+          <!-- Show tick if verified -->
+          <span *ngIf="emailVerified" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
+          <!-- Show Verify button only if valid and not verified and not showing OTP -->
+          <button type="button" class="btn btn-outline-primary"
+            *ngIf="registrationForm.get('email')?.valid && !emailVerified && !showEmailOtp"
+            (click)="showEmailOtp = true; sendEmailOtp()">Verify</button>
+        </div>
+        <!-- Show OTP dialog only after Verify is clicked and not verified -->
+        <div *ngIf="showEmailOtp && !emailVerified" class="mt-2 p-3 rounded-3" style="background: #faf6ff; border: 1px solid #e0d7fa;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold">Verify Email</span>
+            <span class="text-secondary small">MAIL SENT</span>
+          </div>
+          <div class="d-flex gap-2 mb-2">
+            <input maxlength="1" *ngFor="let d of [0,1,2,3,4,5]; let i = index" [(ngModel)]="emailOtp[i]" class="form-control text-center" style="width: 2.5rem; font-size: 1.5rem;" />
+          </div>
+          <button class="btn btn-primary w-100" (click)="confirmEmailOtp()">Confirm OTP</button>
+        </div>
         <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
+        <div *ngIf="emailVerifyError" class="text-danger mt-1">{{ emailVerifyError }}</div>
         <label>Password <span class="text-danger">*</span></label>
         <input formControlName="password" type="password" class="form-control w-100" required />
         <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Password is required.</div>
@@ -175,7 +229,6 @@
         <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !brandLogoPreview">Register</button>
         <button type="button" class="btn btn-outline-secondary" (click)="registrationForm.reset(); brandLogoPreview = null; brandLogoFile = null; productImagesPreview = []; productImagesFiles = []; submitted = false; registrationError = ''; registrationSuccess = false;">Reset</button>
       </div>
-
     </div>
   </form>
 </div>
@@ -200,29 +253,29 @@
       <div class="modal-header">
         <h5 class="modal-title" style="color: red;">Registration Failed</h5>
       </div>
-      <div class="modal-body">
-        <p>{{ registrationError }}</p>
-        <button class="btn btn-danger" (click)="registrationError = ''">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Registration Success Modal -->
-<div *ngIf="registrationSuccess" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" style="color: green;">Registration Successful!</h5>
-      </div>
-      <div class="modal-body">
-        <p>Your brand has been registered successfully.</p>
-        <button class="btn btn-success" (click)="registrationSuccess = false; registrationForm.reset(); brandLogoPreview = null; brandLogoFile = null; productImagesPreview = []; productImagesFiles = []; submitted = false; registrationError = '';">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+      <div class="col-6">
+        <label>Mobile Number <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+          <input formControlName="phoneNumber" type="text" class="form-control w-100" required placeholder="Enter 10-digit number" />
+          <!-- Tick icon for valid phone -->
+          <span *ngIf="registrationForm.get('phoneNumber')?.valid" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
+          <!-- Show Verify button only if username is valid, phone is valid, not verified, and not showing OTP -->
+          <button type="button" class="btn btn-outline-primary"
+            *ngIf="registrationForm.get('brandUsername')?.valid && registrationForm.get('phoneNumber')?.valid && !phoneVerified && !showPhoneOtp"
+            (click)="showPhoneOtp = true; sendPhoneOtp()">Verify</button>
+        </div>
+        <!-- Show OTP dialog only after Verify is clicked and not verified -->
+        <div *ngIf="showPhoneOtp && !phoneVerified" class="mt-2 p-3 rounded-3" style="background: #faf6ff; border: 1px solid #e0d7fa;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold">Verify Mobile</span>
+            <span class="text-secondary small">SMS SENT</span>
+          </div>
+          <div class="d-flex gap-2 mb-2">
+            <input maxlength="1" *ngFor="let d of [0,1,2,3,4,5]; let i = index" [(ngModel)]="phoneOtp[i]" class="form-control text-center" style="width: 2.5rem; font-size: 1.5rem;" />
+          </div>
+          <button class="btn btn-primary w-100" (click)="confirmPhoneOtp()">Confirm OTP</button>
+        </div>
 
 
 <!-- Tier Info Modal -->
@@ -233,29 +286,29 @@
         <h5 class="modal-title" id="tierInfoModalLabel">Tier Information</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <table class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Icon</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let tier of tiers">
-              <td>{{ tier.name }}</td>
-              <td>{{ tier.desc }}</td>
-              <td>
-                <i *ngIf="tier.icon" [class]="tier.icon" style="font-size: 1.5rem;"></i>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
+      <div class="col-6">
+        <label>Email Address <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input formControlName="email" type="email" class="form-control w-100" required placeholder="example@mail.com" />
+          <!-- Tick icon for valid email -->
+          <span *ngIf="registrationForm.get('email')?.valid" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
+          <!-- Show Verify button only if username is valid, email is valid, not verified, and not showing OTP -->
+          <button type="button" class="btn btn-outline-primary"
+            *ngIf="registrationForm.get('brandUsername')?.valid && registrationForm.get('email')?.valid && !emailVerified && !showEmailOtp"
+            (click)="showEmailOtp = true; sendEmailOtp()">Verify</button>
+        </div>
+        <!-- Show OTP dialog only after Verify is clicked and not verified -->
+        <div *ngIf="showEmailOtp && !emailVerified" class="mt-2 p-3 rounded-3" style="background: #faf6ff; border: 1px solid #e0d7fa;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold">Verify Email</span>
+            <span class="text-secondary small">MAIL SENT</span>
+          </div>
+          <div class="d-flex gap-2 mb-2">
+            <input maxlength="1" *ngFor="let d of [0,1,2,3,4,5]; let i = index" [(ngModel)]="emailOtp[i]" class="form-control text-center" style="width: 2.5rem; font-size: 1.5rem;" />
+          </div>
+          <button class="btn btn-primary w-100" (click)="confirmEmailOtp()">Confirm OTP</button>
+        </div>
     </div>
   </div>
 </div>

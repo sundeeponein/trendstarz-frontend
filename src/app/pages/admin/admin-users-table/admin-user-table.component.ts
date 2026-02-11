@@ -1,4 +1,3 @@
-  
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -70,10 +69,27 @@ export class AdminUserTableComponent implements OnInit {
   premiumIsPremium = true;
   premiumType: 'influencer' | 'brand' | null = null;
 
+  // Holds an error message when profile/registration fetch fails
+  registrationError: string | null = null;
+
   constructor(private http: HttpClient, private configService: ConfigService) {}
 
   ngOnInit() {
     this.fetchUsers();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    console.log('Profile token:', token);
+    if (token) {
+      this.configService.getInfluencerProfileById(token).subscribe({
+        next: (profile) => {
+          console.log('Fetched profile:', profile);
+          // ...existing code...
+        },
+        error: (err) => {
+          console.error('Profile fetch error:', err);
+          this.registrationError = 'Error fetching profile.';
+        }
+      });
+    }
   }
 
 
