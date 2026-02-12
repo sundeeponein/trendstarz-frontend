@@ -38,6 +38,12 @@ export class InfluencerRegistrationComponent implements OnInit {
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
+  phoneOtpTimer: number = 300;
+  canResendPhoneOtp: boolean = false;
+  verifyingPhoneOtp: boolean = false;
+  phoneOtpError: string = '';
+  private phoneOtpInterval: any;
+
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
@@ -45,19 +51,42 @@ export class InfluencerRegistrationComponent implements OnInit {
     private otpService: OtpService
   ) {}
 
+  resendPhoneOtp() {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
+
+  startPhoneOtpTimer() {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) {
+        clearInterval(this.phoneOtpInterval);
+      }
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
+
   sendPhoneOtp() {
     const phone = this.registrationForm.get('phoneNumber')?.value;
     this.otpService.sendOtp('phone', phone).subscribe({
       next: () => { this.phoneVerifyError = ''; },
       error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
     });
+    this.phoneOtpError = '';
+    this.startPhoneOtpTimer();
   }
   confirmPhoneOtp() {
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
     const phone = this.registrationForm.get('phoneNumber')?.value;
     const otp = this.phoneOtp.join('');
     this.otpService.verifyOtp('phone', phone, otp).subscribe({
       next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
-      error: () => { this.phoneVerifyError = 'Invalid OTP'; }
+      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
     });
   }
   sendEmailOtp() {
@@ -88,8 +117,6 @@ export class InfluencerRegistrationComponent implements OnInit {
   categoriesList: any[] = [];
   submitted = false;
   usernameError: string = '';
-
-  // ...existing code...
 
   // Utility to slugify username
   slugifyUsername(username: string): string {

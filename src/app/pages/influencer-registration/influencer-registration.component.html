@@ -18,24 +18,7 @@
         <label>Mobile Number <span class="text-danger">*</span></label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-          <input formControlName="phoneNumber" type="text" class="form-control w-100" required placeholder="Enter 10-digit number" />
-          <!-- Show tick if verified -->
-          <span *ngIf="phoneVerified" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
-          <!-- Show Verify button only if valid and not verified and not showing OTP -->
-          <button type="button" class="btn btn-outline-primary"
-            *ngIf="registrationForm.get('phoneNumber')?.valid && !phoneVerified && !showPhoneOtp"
-            (click)="showPhoneOtp = true; sendPhoneOtp()">Verify</button>
-        </div>
-        <!-- Show OTP dialog only after Verify is clicked and not verified -->
-        <div *ngIf="showPhoneOtp && !phoneVerified" class="mt-2 p-3 rounded-3" style="background: #faf6ff; border: 1px solid #e0d7fa;">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold">Verify Mobile</span>
-            <span class="text-secondary small">SMS SENT</span>
-          </div>
-          <div class="d-flex gap-2 mb-2">
-            <input maxlength="1" *ngFor="let d of [0,1,2,3,4,5]; let i = index" [(ngModel)]="phoneOtp[i]" class="form-control text-center" style="width: 2.5rem; font-size: 1.5rem;" />
-          </div>
-          <button class="btn btn-primary w-100" (click)="confirmPhoneOtp()">Confirm OTP</button>
+          <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
         </div>
       </div>
       <div class="col-6">
@@ -47,24 +30,7 @@
         <label>Email Address <span class="text-danger">*</span></label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-          <input formControlName="email" type="email" class="form-control w-100" required placeholder="example@mail.com" />
-          <!-- Show tick if verified -->
-          <span *ngIf="emailVerified" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
-          <!-- Show Verify button only if valid and not verified and not showing OTP -->
-          <button type="button" class="btn btn-outline-primary"
-            *ngIf="registrationForm.get('email')?.valid && !emailVerified && !showEmailOtp"
-            (click)="showEmailOtp = true; sendEmailOtp()">Verify</button>
-        </div>
-        <!-- Show OTP dialog only after Verify is clicked and not verified -->
-        <div *ngIf="showEmailOtp && !emailVerified" class="mt-2 p-3 rounded-3" style="background: #faf6ff; border: 1px solid #e0d7fa;">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold">Verify Email</span>
-            <span class="text-secondary small">MAIL SENT</span>
-          </div>
-          <div class="d-flex gap-2 mb-2">
-            <input maxlength="1" *ngFor="let d of [0,1,2,3,4,5]; let i = index" [(ngModel)]="emailOtp[i]" class="form-control text-center" style="width: 2.5rem; font-size: 1.5rem;" />
-          </div>
-          <button class="btn btn-primary w-100" (click)="confirmEmailOtp()">Confirm OTP</button>
+          <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
         </div>
       </div>
       <div class="col-6">

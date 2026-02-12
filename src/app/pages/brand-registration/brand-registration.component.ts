@@ -35,11 +35,36 @@ export class BrandRegistrationComponent implements OnInit {
   phoneOtp: string[] = ['', '', '', '', '', ''];
   emailOtp: string[] = ['', '', '', '', '', ''];
 
+  phoneOtpTimer: number = 300;
+  canResendPhoneOtp: boolean = false;
+  verifyingPhoneOtp: boolean = false;
+  phoneOtpError: string = '';
+  private phoneOtpInterval: any;
+
   constructor(
     public fb: FormBuilder,
     private configService: ConfigService,
     private otpService: OtpService
   ) {}
+
+  resendPhoneOtp() {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
+
+  startPhoneOtpTimer() {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) {
+        clearInterval(this.phoneOtpInterval);
+      }
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
 
   sendPhoneOtp() {
     const phone = this.registrationForm.get('phoneNumber')?.value;
@@ -47,13 +72,17 @@ export class BrandRegistrationComponent implements OnInit {
       next: () => { this.phoneVerifyError = ''; },
       error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
     });
+    this.phoneOtpError = '';
+    this.startPhoneOtpTimer();
   }
   confirmPhoneOtp() {
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
     const phone = this.registrationForm.get('phoneNumber')?.value;
     const otp = this.phoneOtp.join('');
     this.otpService.verifyOtp('phone', phone, otp).subscribe({
       next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
-      error: () => { this.phoneVerifyError = 'Invalid OTP'; }
+      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
     });
   }
   sendEmailOtp() {
@@ -267,106 +296,12 @@ export class BrandRegistrationComponent implements OnInit {
       // Mark all controls as touched to show errors
       Object.keys(this.registrationForm.controls).forEach(key => {
         const control = this.registrationForm.get(key);
-        if (control) control.markAsTouched();
+        if (control) {
+          control.markAsTouched();
+        }
       });
       return;
     }
-    this.registrationError = '';
-    this.registrationSuccess = false;
-    const raw = this.registrationForm.value;
-    // Prepare payload with correct mapping (like influencer)
-    const stateObj = this.states.find((s: any) => s._id === raw.location.state);
-    const languageNames = (raw.languages || []).map((id: string) => {
-      const lang = this.languagesList.find((l: any) => l._id === id);
-      return lang ? lang.name : id;
-    });
-    const categoryNames = (raw.categories || []).map((id: string) => {
-      const cat = this.categoriesList.find((c: any) => c._id === id);
-      return cat ? cat.name : id;
-    });
-    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
-      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
-      return {
-        ...sm,
-        platform: platformObj ? platformObj.name : sm.platform,
-        followersCount: Number(sm.followersCount)
-      };
-    });
-    // Step 1: Upload brand logo and product images to Cloudinary if selected
-    let brandLogoUploadResult: { url: string, public_id: string } | null = null;
-    if (this.brandLogoFile) {
-      const formData = new FormData();
-      formData.append('file', this.brandLogoFile);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          brandLogoUploadResult = { url: data.secure_url, public_id: data.public_id };
-        } else {
-          this.registrationError = 'Brand logo upload failed.';
-          return;
-        }
-      } catch (err) {
-        this.registrationError = 'Brand logo upload failed.';
-        return;
-      }
-    }
-    // Upload product images
-    let productImageUploadResults: { url: string, public_id: string }[] = [];
-    for (const file of this.productImagesFiles) {
-      if (!file) continue;
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          productImageUploadResults.push({ url: data.secure_url, public_id: data.public_id });
-        }
-      } catch (err) {
-        // Ignore failed product image uploads for now
-      }
-    }
-    // Step 2: Register brand with image info
-    const payload: any = {
-      ...raw,
-      location: {
-        state: stateObj ? stateObj.name : raw.location.state,
-        googleMapLink: raw.location.googleMapLink
-      },
-      promotionalPrice: raw.promotionalPrice,
-      languages: languageNames,
-      categories: categoryNames,
-      socialMedia,
-      brandLogo: brandLogoUploadResult ? [brandLogoUploadResult] : [],
-      products: productImageUploadResults,
-      contact: raw.contact
-    };
-    this.configService.registerBrand(payload).subscribe({
-      next: (savedBrand) => {
-        this.registrationSuccess = true;
-        this.registrationForm.reset();
-        this.brandLogoPreview = null;
-        this.brandLogoFile = null;
-        this.productImagesPreview = [];
-        this.productImagesFiles = [];
-        this.submitted = false;
-      },
-      error: err => {
-        if (err?.error?.message && err.error.message.includes('already exists')) {
-          this.registrationError = err.error.message;
-        } else {
-          this.registrationError = 'Registration failed. Please try again.';
-        }
-      }
-    });
+    // Add your registration submission logic here
   }
 }
