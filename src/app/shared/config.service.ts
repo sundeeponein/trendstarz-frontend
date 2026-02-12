@@ -1,3 +1,4 @@
+import { map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -10,6 +11,12 @@ export class ConfigService {
   private apiUrl = environment.apiBaseUrl || '/api';
 
   constructor(private http: HttpClient) {}
+
+  // Check if username exists (for async validation)
+  checkUsernameExists(username: string) {
+    return this.http.get<{ exists: boolean }>(`${this.apiUrl}/users/check-username/${encodeURIComponent(username)}`)
+      .pipe(map(res => !!res.exists), catchError(() => of(false)));
+  }
 
 
   // Fetch influencer by ID (for public profile view)

@@ -1,0 +1,149 @@
+/* login.component.scss - Payoneer style inspired login page */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(120deg, #f5f6fa 60%, #181312 40%);
+}
+
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.left-panel {
+  flex: 1;
+  background: #181312;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-top-left-radius: 40px;
+  border-bottom-left-radius: 40px;
+  padding: 3rem 2rem;
+}
+
+.left-panel h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.left-panel .subtitle {
+  font-size: 1rem;
+  color: #bdbdbd;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.left-panel .mockup-img {
+  width: 260px;
+  margin-top: 2rem;
+  filter: drop-shadow(0 8px 32px rgba(0,0,0,0.4));
+}
+
+.right-panel {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-top-right-radius: 40px;
+  border-bottom-right-radius: 40px;
+  padding: 3rem 2rem;
+}
+
+.logo {
+  width: 140px;
+  margin-bottom: 2.5rem;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.07);
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #222;
+}
+
+.form-group {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 1rem;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.form-control:focus {
+  border-color: #ff6a00;
+  outline: none;
+}
+
+.forgot-link {
+  color: #ff6a00;
+  font-size: 0.95rem;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  display: block;
+  text-align: right;
+}
+
+.btn-signin {
+  width: 100%;
+  background: linear-gradient(90deg, #ff6a00 0%, #ff3576 100%);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 0.85rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255,106,0,0.08);
+  transition: background 0.2s;
+}
+
+.btn-signin:active, .btn-signin:focus {
+  background: linear-gradient(90deg, #ff3576 0%, #ff6a00 100%);
+}
+
+.signup-link {
+  position: absolute;
+  top: 2rem;
+  right: 2.5rem;
+  color: #222;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+  .left-panel, .right-panel {
+    border-radius: 0;
+    min-height: 320px;
+    padding: 2rem 1rem;
+  }
+}

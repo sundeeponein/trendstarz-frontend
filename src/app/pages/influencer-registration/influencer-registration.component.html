@@ -6,13 +6,20 @@
     <div class="row my-5">
       <div class="col-6">
         <label>Username <span class="text-danger">*</span></label>
-        <input formControlName="username" type="text" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">Please enter your username.</div>
+        <input formControlName="username" type="text" class="form-control w-100" required pattern="^[a-zA-Z0-9_-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
+        <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">
+          Username is required and can only contain letters, numbers, hyphens (-), and underscores (_). No spaces or special characters allowed.
+        </div>
+          <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">
+            Username cannot contain spaces. Please use only letters, numbers, and hyphens (-). Underscores are not allowed for SEO reasons.
+          </div>
       </div>
       <div class="col-6">
-        <label>Phone Number <span class="text-danger">*</span></label>
-        <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Please enter your phone number.</div>
+        <label>Mobile Number <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+          <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
+        </div>
       </div>
       <div class="col-6">
         <label>Name <span class="text-danger">*</span></label>
@@ -20,9 +27,11 @@
         <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Please enter your name.</div>
       </div>
       <div class="col-6">
-        <label>Email <span class="text-danger">*</span></label>
-        <input formControlName="email" type="email" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Please enter a valid email address.</div>
+        <label>Email Address <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
+        </div>
       </div>
       <div class="col-6">
         <label>Password <span class="text-danger">*</span></label>
@@ -151,8 +160,9 @@
       <div *ngIf="registrationError" class="text-danger font-weight-bold my-3">
         {{ registrationError }}
       </div>
-      <div class="col-12 mt-3">
+      <div class="col-12 mt-3 mb-5 d-flex gap-2">
         <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview">Register</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="registrationForm.reset(); profileImagePreview = null; submitted = false; registrationError = ''; registrationSuccess = false;">Reset</button>
       </div>
     </div>
   </form>

@@ -49,13 +49,23 @@
   <div class="col-6">
     <label>Username <span class="text-danger">*</span></label>
     <input formControlName="username" type="text" class="form-control w-100" required />
-    <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">Please enter your username.</div>
+    <div *ngIf="registrationForm.get('username')?.hasError('usernameTaken')" class="text-danger mt-1">
+      Username already exists. Please choose another.
+    </div>
+    <div *ngIf="submitted && registrationForm.get('username')?.invalid && !registrationForm.get('username')?.hasError('usernameTaken')" class="text-danger mt-1">Please enter your username.</div>
+      <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">
+  Username cannot contain spaces. Please use only letters, numbers, and hyphens (-). Underscores are not allowed for SEO reasons.
+      </div>
   </div>
 
   <div class="col-6">
-    <label>Phone Number <span class="text-danger">*</span></label>
-    <input formControlName="phoneNumber" type="text" class="form-control w-100" required />
-    <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Please enter your phone number.</div>
+    <label>Mobile Number <span class="text-danger">*</span></label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+      <input formControlName="phoneNumber" type="text" class="form-control w-100" required placeholder="Enter 10-digit number" />
+      <!-- Show tick if verified -->
+      <span *ngIf="phoneVerified" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
+    </div>
   </div>
 
   <div class="col-6">
@@ -67,9 +77,11 @@
   <!-- Removed duplicate Username and Phone Number fields -->
 
   <div class="col-6">
-    <label>Email <span class="text-danger">*</span></label>
-    <input formControlName="email" type="email" class="form-control w-100" required />
-    <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Please enter a valid email address.</div>
+    <label>Email Address <span class="text-danger">*</span></label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+      <input formControlName="email" type="email" class="form-control w-100" required placeholder="example@mail.com" />
+    </div>
   </div>
 
 

@@ -2,8 +2,10 @@ import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { OtpService } from '../../shared/otp.service';
+import { map, first } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -17,6 +19,83 @@ import imageCompression from 'browser-image-compression';
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  // OTP dialog/expand state
+  showPhoneOtp: boolean = false;
+  showEmailOtp: boolean = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  emailOtp: string[] = ['', '', '', '', '', ''];
+
+  // Phone/email verification status and error
+  phoneVerified: boolean = false;
+  emailVerified: boolean = false;
+  phoneVerifyError: string = '';
+  emailVerifyError: string = '';
+
+  phoneOtpTimer: number = 300;
+  canResendPhoneOtp: boolean = false;
+  verifyingPhoneOtp: boolean = false;
+  phoneOtpError: string = '';
+  private phoneOtpInterval: any;
+
+  constructor(
+    private fb: FormBuilder,
+    private configService: ConfigService,
+    private otpService: OtpService
+  ) {}
+
+  resendPhoneOtp() {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
+
+  startPhoneOtpTimer() {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) {
+        clearInterval(this.phoneOtpInterval);
+      }
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
+
+  sendPhoneOtp() {
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => { this.phoneVerifyError = ''; },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
+    });
+    this.phoneOtpError = '';
+    this.startPhoneOtpTimer();
+  }
+  confirmPhoneOtp() {
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    const otp = this.phoneOtp.join('');
+    this.otpService.verifyOtp('phone', phone, otp).subscribe({
+      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
+    });
+  }
+  sendEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    this.otpService.sendOtp('email', email).subscribe({
+      next: () => { this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Failed to send OTP'; }
+    });
+  }
+  confirmEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    const otp = this.emailOtp.join('');
+    this.otpService.verifyOtp('email', email, otp).subscribe({
+      next: () => { this.emailVerified = true; this.showEmailOtp = false; this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Invalid OTP'; }
+    });
+  }
   premiumStart: Date | null = null;
   premiumEnd: Date | null = null;
   showPayment = false;
@@ -36,12 +115,30 @@ export class InfluencerProfileComponent implements OnInit {
   isEditMode = false;
   originalFormValue: any = null;
   submitted = false;
-  constructor(private fb: FormBuilder, private configService: ConfigService) {}
+  usernameError: string = '';
+
+  // Utility to slugify username
+  slugifyUsername(username: string): string {
+    return username
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
 
   ngOnInit() {
-  this.registrationForm = this.fb.group({
+    // Initialize form first
+    this.registrationForm = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
-      username: [{ value: '', disabled: true }, Validators.required],
+      username: [
+        { value: '', disabled: true },
+        [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)],
+        [this.usernameUniqueValidator()]
+      ],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       paymentOption: [{ value: 'free', disabled: true }, Validators.required],
@@ -58,6 +155,15 @@ export class InfluencerProfileComponent implements OnInit {
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }]
       })
+    });
+    // Auto-replace spaces with hyphens in username input
+    this.registrationForm.get('username')?.valueChanges.subscribe(value => {
+      if (typeof value === 'string' && value.includes(' ')) {
+        const sanitized = value.replace(/\s+/g, '-');
+        this.registrationForm.get('username')?.setValue(sanitized, { emitEvent: false });
+      }
+      // Clear username error on change
+      this.usernameError = '';
     });
 
     // Fetch dropdown data from API
@@ -169,11 +275,13 @@ export class InfluencerProfileComponent implements OnInit {
   async enableEdit(): Promise<void> {
     // Always fetch and patch the latest profile before edit
     await this.fetchAndPatchProfile();
-    this.isEditMode = true;
-    this.registrationForm.enable();
-    // Keep password fields disabled for security
-    this.registrationForm.get('password')?.disable();
-    this.registrationForm.get('confirmPassword')?.disable();
+  this.isEditMode = true;
+  this.registrationForm.enable();
+  // Enable username for editing
+  this.registrationForm.get('username')?.enable();
+  // Keep password fields disabled for security
+  this.registrationForm.get('password')?.disable();
+  this.registrationForm.get('confirmPassword')?.disable();
   }
 
   cancelEdit(): void {
@@ -184,6 +292,18 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.disable();
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
+    this.registrationForm.get('username')?.disable();
+  }
+
+  // Async validator to check username uniqueness (for edit profile)
+  usernameUniqueValidator(): AsyncValidatorFn {
+    return (control: AbstractControl) => {
+      if (!control.value) return Promise.resolve(null);
+      return this.configService.checkUsernameExists(control.value).pipe(
+        map((exists: boolean) => (exists ? { usernameTaken: true } : null)),
+        first()
+      );
+    };
   }
 
   get profileImagesFormArray() {
@@ -263,6 +383,10 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.getRawValue();
+    // Always slugify username before saving
+    if (raw.username) {
+      raw.username = this.slugifyUsername(raw.username);
+    }
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
     // Map language IDs to names
@@ -316,6 +440,7 @@ export class InfluencerProfileComponent implements OnInit {
     }
     const payload: any = {
       ...raw,
+      username: raw.username, // ensure slugified username is sent
       location: {
         state: stateObj ? stateObj.name : raw.location.state
       },

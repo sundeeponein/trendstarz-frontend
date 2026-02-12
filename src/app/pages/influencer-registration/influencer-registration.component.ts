@@ -3,10 +3,12 @@ const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
+import { map, debounceTime, switchMap, first } from 'rxjs/operators';
 import { ConfigService } from '../../shared/config.service';
+import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 
 // Custom validator to require at least one contact option
@@ -19,11 +21,89 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+  // OTP dialog/expand state
+  showPhoneOtp: boolean = false;
+  showEmailOtp: boolean = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  emailOtp: string[] = ['', '', '', '', '', ''];
+
+  // Phone/email verification status and error
+  phoneVerified: boolean = false;
+  emailVerified: boolean = false;
+  phoneVerifyError: string = '';
+  emailVerifyError: string = '';
+
+  phoneOtpTimer: number = 300;
+  canResendPhoneOtp: boolean = false;
+  verifyingPhoneOtp: boolean = false;
+  phoneOtpError: string = '';
+  private phoneOtpInterval: any;
+
+  constructor(
+    private fb: FormBuilder,
+    private configService: ConfigService,
+    private ngZone: NgZone,
+    private otpService: OtpService
+  ) {}
+
+  resendPhoneOtp() {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
+
+  startPhoneOtpTimer() {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) {
+        clearInterval(this.phoneOtpInterval);
+      }
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
+
+  sendPhoneOtp() {
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => { this.phoneVerifyError = ''; },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
+    });
+    this.phoneOtpError = '';
+    this.startPhoneOtpTimer();
+  }
+  confirmPhoneOtp() {
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
+    const phone = this.registrationForm.get('phoneNumber')?.value;
+    const otp = this.phoneOtp.join('');
+    this.otpService.verifyOtp('phone', phone, otp).subscribe({
+      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
+    });
+  }
+  sendEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    this.otpService.sendOtp('email', email).subscribe({
+      next: () => { this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Failed to send OTP'; }
+    });
+  }
+  confirmEmailOtp() {
+    const email = this.registrationForm.get('email')?.value;
+    const otp = this.emailOtp.join('');
+    this.otpService.verifyOtp('email', email, otp).subscribe({
+      next: () => { this.emailVerified = true; this.showEmailOtp = false; this.emailVerifyError = ''; },
+      error: () => { this.emailVerifyError = 'Invalid OTP'; }
+    });
+  }
   registrationSuccess = false;
   registrationError = '';
   registrationForm!: FormGroup;
@@ -36,12 +116,25 @@ export class InfluencerRegistrationComponent implements OnInit {
   languagesList: any[] = [];
   categoriesList: any[] = [];
   submitted = false;
-  constructor(private fb: FormBuilder, private configService: ConfigService, private ngZone: NgZone) {}
+  usernameError: string = '';
+
+  // Utility to slugify username
+  slugifyUsername(username: string): string {
+    return username
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
 
   ngOnInit() {
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
-      username: ['', Validators.required],
+      username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
@@ -50,7 +143,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       location: this.fb.group({
         state: ['', Validators.required]
       }),
-  promotionalPrice: ['', Validators.required],
+      promotionalPrice: ['', Validators.required],
       languages: [[], Validators.required],
       categories: [[], Validators.required],
       profileImages: this.fb.array([]),
@@ -68,6 +161,8 @@ export class InfluencerRegistrationComponent implements OnInit {
         call: [false]
       }, { validators: [atLeastOneContactRequired] }),
     });
+    // Listen for username changes to sanitize and clear error
+    this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
     // Only reset success/error flags if the form is dirty and success is showing
     this.registrationForm.valueChanges.subscribe(() => {
       if (this.registrationSuccess && this.registrationForm.dirty) {
@@ -77,15 +172,33 @@ export class InfluencerRegistrationComponent implements OnInit {
         this.registrationError = '';
       }
     });
-    // removed misplaced property declarations
-
     // Fetch dropdown data from API
     this.configService.getStates().subscribe(data => this.states = data);
     this.configService.getTiers().subscribe(data => this.tiers = data);
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
+  }
+  // Sanitize username input (replace spaces with hyphens, remove invalid chars)
+  onUsernameInput() {
+    const ctrl = this.registrationForm.get('username');
+    if (!ctrl) return;
+    let value = ctrl.value || '';
+    value = value.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
+    ctrl.setValue(value, { emitEvent: false });
+    this.usernameError = '';
+  }
 
+  // Async validator to check username uniqueness
+  usernameUniqueValidator(): AsyncValidatorFn {
+    return (control: AbstractControl) => {
+      if (!control.value) return Promise.resolve(null);
+      return this.configService.checkUsernameExists(control.value).pipe(
+        debounceTime(300),
+        map((exists: boolean) => (exists ? { usernameTaken: true } : null)),
+        first()
+      );
+    };
   }
 
   get profileImagesFormArray() {
@@ -152,6 +265,9 @@ export class InfluencerRegistrationComponent implements OnInit {
   async onSubmit() {
     this.submitted = true;
     if (this.registrationForm.invalid || !this.profileImagePreview) {
+      if (this.registrationForm.get('username')?.hasError('usernameTaken')) {
+        this.usernameError = 'Username already exists. Please choose another.';
+      }
       if (!this.profileImagePreview) {
         this.registrationError = 'Profile image is required.';
       }
@@ -160,6 +276,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.value;
+    // Always slugify username before saving
+    if (raw.username) {
+      raw.username = this.slugifyUsername(raw.username);
+    }
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
     // Map language IDs to names
