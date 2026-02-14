@@ -19,6 +19,7 @@ import { SessionService } from '../../core/session.service';
 export class LoginComponent {
   loginForm: FormGroup;
   errorMsg = '';
+  submitted = false;
 
   constructor(private fb: FormBuilder, private http: HttpClient, private router: Router, private session: SessionService) {
     this.loginForm = this.fb.group({
@@ -28,7 +29,11 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (this.loginForm.invalid) return;
+  this.errorMsg = '';
+  this.submitted = true;
+  // Mark all controls as touched to show validation errors immediately
+  Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
+  if (this.loginForm.invalid) return;
     this.http.post(`${environment.apiBaseUrl}/auth/login`, this.loginForm.value)
       .pipe(timeout(5000), catchError(err => {
         if (err?.error?.message?.includes('pending')) {

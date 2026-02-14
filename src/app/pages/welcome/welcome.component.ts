@@ -69,7 +69,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.influencers = [];
     this.config.getInfluencers('').subscribe({
       next: (data) => {
-        this.influencers = data || [];
+        // Filter for accepted status only (defensive, in case backend ever returns others)
+        this.influencers = (data || []).filter((u: any) => u.status === 'accepted');
         this.influencersLoading = false;
         this.cd.detectChanges();
       },
@@ -112,7 +113,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brands = [];
     this.config.getBrands('').subscribe({
       next: (data) => {
-        this.brands = data || [];
+        // Filter for accepted status only (defensive, in case backend ever returns others)
+        this.brands = (data || []).filter((u: any) => u.status === 'accepted');
         this.brandsLoading = false;
         this.cd.detectChanges();
       },

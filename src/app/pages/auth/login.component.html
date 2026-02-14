@@ -1,27 +1,29 @@
 <div class="login-container row m-0 vh-100">
   <!-- Left Panel -->
   <div class="col d-flex flex-column justify-content-center align-items-center">
-    <div class="subtitle mb-4">Global payments made simple – online payment solutions for you.</div>
-    <h1 class="mb-3">Manage<br>your money</h1>
     <img src="assets/default-profile-brands.png" alt="App Mockup" class="mockup-img mt-4 w-100" />
   </div>
 
   <!-- Right Panel -->
   <div class="col position-relative d-flex flex-column justify-content-center align-items-center bg-white rounded-top-5">
-    <a class="signup-link" routerLink="/signup">Sign Up</a>
+    <div class="d-flex flex-column align-items-center mb-3">
+      <a class="btn btn-link p-0 mb-1" routerLink="/register-influencer">Register as Influencer</a>
+      <a class="btn btn-link p-0 mb-1" routerLink="/register-brand">Register as Brand</a>
+      <a class="btn btn-link p-0 mb-1" routerLink="/signup" *ngIf="false">Sign Up</a> <!-- Hidden fallback -->
+    </div>
     <div class="login-box">
       <img src="assets/logo-trendstarz-logo-text.png" alt="Logo" class="logo mb-3" style="height: 55px;" />
       <div class="login-title mb-4">Sign In</div>
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" class="w-100">
         <div class="form-group mb-3">
           <input formControlName="email" type="email" class="form-control" placeholder="Email or Username" />
-          <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="text-danger small mt-1">Valid email is required</div>
+          <div *ngIf="loginForm.get('email')?.invalid && (loginForm.get('email')?.touched || submitted)" class="text-danger small mt-1">Valid email is required</div>
         </div>
         <div class="form-group mb-2 position-relative">
           <input formControlName="password" type="password" class="form-control" placeholder="Password" />
-          <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-danger small mt-1">Password is required</div>
+          <div *ngIf="loginForm.get('password')?.invalid && (loginForm.get('password')?.touched || submitted)" class="text-danger small mt-1">Password is required</div>
         </div>
-        <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
+  <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
         <button type="submit" class="btn btn-signin mt-2" [disabled]="loginForm.invalid">
           <span class="me-2"><i class="bi bi-box-arrow-in-right"></i></span>Sign In
         </button>

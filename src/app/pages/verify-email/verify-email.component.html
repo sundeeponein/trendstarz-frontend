@@ -1,0 +1,3 @@
+<div *ngIf="status === 'pending'">Verifying your email...</div>
+<div *ngIf="status === 'success'" class="text-success">{{ message }}</div>
+<div *ngIf="status === 'error'" class="text-danger">{{ message }}</div>
