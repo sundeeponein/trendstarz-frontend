@@ -41,11 +41,39 @@ export class BrandRegistrationComponent implements OnInit {
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
 
+  // Email verification resend state
+  resendingEmailVerification: boolean = false;
+  resendEmailVerificationSuccess: boolean = false;
+  resendEmailVerificationError: string = '';
+
   constructor(
     public fb: FormBuilder,
     private configService: ConfigService,
     private otpService: OtpService
   ) {}
+  resendEmailVerification() {
+    this.resendingEmailVerification = true;
+    this.resendEmailVerificationSuccess = false;
+    this.resendEmailVerificationError = '';
+    const email = this.registrationForm.get('email')?.value;
+    if (!email) {
+      this.resendingEmailVerification = false;
+      this.resendEmailVerificationError = 'Email is required.';
+      return;
+    }
+    this.otpService.sendOtp('email', email).subscribe({
+      next: () => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationSuccess = true;
+        this.resendEmailVerificationError = '';
+      },
+      error: () => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationSuccess = false;
+        this.resendEmailVerificationError = 'Failed to send verification email.';
+      }
+    });
+  }
 
   resendPhoneOtp() {
     if (!this.canResendPhoneOtp) return;

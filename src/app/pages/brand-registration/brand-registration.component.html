@@ -1,4 +1,15 @@
 <div class="container">
+  <!-- Email Verification Prompt -->
+  <div *ngIf="!emailVerified" class="alert alert-warning mt-4">
+    <div>
+      <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
+      <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
+        Resend Verification Email
+      </button>
+      <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
+      <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
+    </div>
+  </div>
   <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
     <div class="row my-5">
       <div class="col-6">
