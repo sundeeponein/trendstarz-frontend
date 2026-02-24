@@ -27,6 +27,8 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+  emailVerificationSent: boolean = false;
+  emailVerificationError: string | null = null;
   // OTP dialog/expand state
   showPhoneOtp: boolean = false;
   showEmailOtp: boolean = false;
@@ -36,6 +38,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   // Phone/email verification status and error
   phoneVerified: boolean = false;
   emailVerified: boolean = false;
+  showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -157,6 +160,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Initialize the form first
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
       username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
@@ -185,6 +189,22 @@ export class InfluencerRegistrationComponent implements OnInit {
         email: [false],
         call: [false]
       }, { validators: [atLeastOneContactRequired] }),
+    });
+
+    // Now subscribe to valueChanges
+    this.registrationForm.get('email')?.valueChanges.subscribe(email => {
+      if (this.registrationForm.get('email')?.valid && email) {
+        this.otpService.sendOtp('email', email).subscribe({
+          next: () => {
+            this.emailVerificationSent = true;
+            this.emailVerificationError = null;
+          },
+          error: (err: any) => {
+            this.emailVerificationSent = false;
+            this.emailVerificationError = err?.error?.message || 'Failed to send verification email.';
+          }
+        });
+      }
     });
     // Listen for username changes to sanitize and clear error
     this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
@@ -299,6 +319,20 @@ export class InfluencerRegistrationComponent implements OnInit {
       return;
     }
     this.registrationError = '';
+    // Submit registration and handle response
+    // ...existing code for registration submission...
+    // Example:
+    // this.registrationService.registerInfluencer(this.registrationForm.value).subscribe({
+    //   next: (user) => {
+    //     this.registrationSuccess = true;
+    //     this.emailVerified = user.isEmailVerified;
+    //     this.showEmailVerificationPrompt = !user.isEmailVerified;
+    //   },
+    //   error: (err) => {
+    //     this.registrationError = err.message || 'Registration failed.';
+    //   }
+    // });
+    // ...existing code...
     this.registrationSuccess = false;
     const raw = this.registrationForm.value;
     // Always slugify username before saving

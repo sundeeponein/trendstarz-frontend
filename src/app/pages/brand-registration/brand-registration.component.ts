@@ -26,8 +26,11 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   styleUrls: ['./brand-registration.component.scss'],
 })
 export class BrandRegistrationComponent implements OnInit {
+  emailVerificationSent: boolean = false;
+  emailVerificationError: string | null = null;
   // Email verification state
   emailVerified: boolean = false;
+  showEmailVerificationPrompt: boolean = false;
   resendingEmailVerification: boolean = false;
   resendEmailVerificationSuccess: boolean = false;
   resendEmailVerificationError: string | null = null;
@@ -111,8 +114,8 @@ export class BrandRegistrationComponent implements OnInit {
     private otpService: OtpService
   ) {}
 
-  // Initialize the registration form and fetch any required data here
   ngOnInit() {
+    // Initialize the form first
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
       brandUsername: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.brandUsernameUniqueValidator()]],
@@ -145,6 +148,22 @@ export class BrandRegistrationComponent implements OnInit {
         email: [false],
         call: [false]
       }, { validators: [atLeastOneContactRequired] })
+    });
+
+    // Now subscribe to valueChanges
+    this.registrationForm.get('email')?.valueChanges.subscribe(email => {
+      if (this.registrationForm.get('email')?.valid && email) {
+        this.otpService.sendOtp('email', email).subscribe({
+          next: () => {
+            this.emailVerificationSent = true;
+            this.emailVerificationError = null;
+          },
+          error: (err: any) => {
+            this.emailVerificationSent = false;
+            this.emailVerificationError = err?.error?.message || 'Failed to send verification email.';
+          }
+        });
+      }
     });
 
     // Username input sanitization
@@ -295,6 +314,19 @@ export class BrandRegistrationComponent implements OnInit {
       });
       return;
     }
+    // Submit registration and handle response
+    // ...existing code for registration submission...
+    // Example:
+    // this.registrationService.registerBrand(this.registrationForm.value).subscribe({
+    //   next: (user) => {
+    //     this.registrationSuccess = true;
+    //     this.emailVerified = user.isEmailVerified;
+    //     this.showEmailVerificationPrompt = !user.isEmailVerified;
+    //   },
+    //   error: (err) => {
+    //     this.registrationError = err.message || 'Registration failed.';
+    //   }
+    // });
     // ...existing code...
   }
   // --- End of class ---

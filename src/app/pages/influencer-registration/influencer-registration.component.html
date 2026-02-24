@@ -1,7 +1,7 @@
 
 <div class="container">
   <!-- Email Verification Prompt -->
-  <div *ngIf="!emailVerified" class="alert alert-warning mt-4">
+  <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mt-4">
     <div>
       <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
       <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
@@ -43,6 +43,9 @@
           <span class="input-group-text"><i class="bi bi-envelope"></i></span>
           <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
         </div>
+        <div *ngIf="emailVerificationSent && !emailVerified" class="text-success mt-1">Verification email sent!</div>
+        <div *ngIf="emailVerified" class="text-success mt-1">Verified</div>
+        <div *ngIf="emailVerificationError" class="text-danger mt-1">{{ emailVerificationError }}</div>
       </div>
       <div class="col-6">
         <label>Password <span class="text-danger">*</span></label>
