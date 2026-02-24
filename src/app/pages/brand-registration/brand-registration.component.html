@@ -1,6 +1,6 @@
 <div class="container">
   <!-- Email Verification Prompt -->
-  <div *ngIf="!emailVerified" class="alert alert-warning mt-4">
+  <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mt-4">
     <div>
       <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
       <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
@@ -28,15 +28,21 @@
         <div *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger mt-1">Brand name is required.</div>
 
         <label class="mt-3">Brand Username <span class="text-danger">*</span></label>
-        <input formControlName="brandUsername" type="text" class="form-control w-100" required pattern="^[a-zA-Z0-9-]+$" title="Only letters, numbers, and hyphens (-) are allowed. No spaces or underscores." />
+        <input
+          formControlName="brandUsername"
+          (input)="onBrandUsernameInput()"
+          (blur)="onBrandUsernameBlur()"
+          type="text"
+          class="form-control w-100"
+          required
+          pattern="^[a-zA-Z0-9_-]+$"
+          title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters."
+        />
         <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid" class="text-danger mt-1">
-          Brand username is required and can only contain letters, numbers, and hyphens (-). No spaces or underscores allowed.
+          Brand username is required and can only contain letters, numbers, hyphens (-), and underscores (_). No spaces or special characters allowed.
         </div>
-        <div *ngIf="brandUsernameError === 'taken'" class="text-danger mt-1">
-          Brand username already exists. Please choose another.
-        </div>
-        <div *ngIf="brandUsernameError === 'invalid'" class="text-danger mt-1">
-          Brand username cannot contain spaces or underscores. Please use only letters, numbers, and hyphens (-).
+        <div *ngIf="brandUsernameError === 'spaces'" class="text-danger mt-1">
+          Brand username cannot contain spaces. Please use only letters, numbers, and hyphens (-). Underscores are not allowed for SEO reasons.
         </div>
       </div>
 
@@ -44,7 +50,7 @@
         <label>Mobile Number <span class="text-danger">*</span></label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-          <input formControlName="phoneNumber" type="text" class="form-control w-100" required placeholder="Enter 10-digit number" />
+          <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
         </div>
         <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
       </div>
@@ -61,8 +67,11 @@
         <label>Email Address <span class="text-danger">*</span></label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-          <input formControlName="email" type="email" class="form-control w-100" required placeholder="example@mail.com" />
+          <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
         </div>
+        <div *ngIf="emailVerificationSent && !emailVerified" class="text-success mt-1">Verification email sent!</div>
+        <div *ngIf="emailVerified" class="text-success mt-1">Verified</div>
+        <div *ngIf="emailVerificationError" class="text-danger mt-1">{{ emailVerificationError }}</div>
         <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
         <label>Password <span class="text-danger">*</span></label>
         <input formControlName="password" type="password" class="form-control w-100" required />

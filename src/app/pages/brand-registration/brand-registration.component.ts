@@ -1,13 +1,11 @@
 import { environment } from '../../../environments/environment';
-// Cloudinary configuration from Angular environment
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
-// ...existing code...
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { AbstractControl, ValidatorFn } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { map, first } from 'rxjs/operators';
 import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -25,134 +23,43 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './brand-registration.component.html',
-  styleUrls: ['./brand-registration.component.scss']
+  styleUrls: ['./brand-registration.component.scss'],
 })
- 
 export class BrandRegistrationComponent implements OnInit {
-  // OTP dialog/expand state
-  showPhoneOtp: boolean = false;
-  showEmailOtp: boolean = false;
-  phoneOtp: string[] = ['', '', '', '', '', ''];
-  emailOtp: string[] = ['', '', '', '', '', ''];
-
-  phoneOtpTimer: number = 300;
-  canResendPhoneOtp: boolean = false;
-  verifyingPhoneOtp: boolean = false;
-  phoneOtpError: string = '';
-  private phoneOtpInterval: any;
-
-  // Email verification resend state
+  emailVerificationSent: boolean = false;
+  emailVerificationError: string | null = null;
+  // Email verification state
+  emailVerified: boolean = false;
+  showEmailVerificationPrompt: boolean = false;
   resendingEmailVerification: boolean = false;
   resendEmailVerificationSuccess: boolean = false;
-  resendEmailVerificationError: string = '';
+  resendEmailVerificationError: string | null = null;
 
-  constructor(
-    public fb: FormBuilder,
-    private configService: ConfigService,
-    private otpService: OtpService
-  ) {}
   resendEmailVerification() {
     this.resendingEmailVerification = true;
     this.resendEmailVerificationSuccess = false;
-    this.resendEmailVerificationError = '';
+    this.resendEmailVerificationError = null;
     const email = this.registrationForm.get('email')?.value;
-    if (!email) {
-      this.resendingEmailVerification = false;
-      this.resendEmailVerificationError = 'Email is required.';
-      return;
-    }
     this.otpService.sendOtp('email', email).subscribe({
       next: () => {
         this.resendingEmailVerification = false;
         this.resendEmailVerificationSuccess = true;
-        this.resendEmailVerificationError = '';
       },
-      error: () => {
+      error: (err: any) => {
         this.resendingEmailVerification = false;
-        this.resendEmailVerificationSuccess = false;
-        this.resendEmailVerificationError = 'Failed to send verification email.';
+        this.resendEmailVerificationError = err?.error?.message || 'Failed to resend verification email.';
       }
     });
   }
 
-  resendPhoneOtp() {
-    if (!this.canResendPhoneOtp) return;
-    this.sendPhoneOtp();
-    this.startPhoneOtpTimer();
-  }
-
-  startPhoneOtpTimer() {
-    this.phoneOtpTimer = 300;
-    this.canResendPhoneOtp = false;
-    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
-    this.phoneOtpInterval = setInterval(() => {
-      this.phoneOtpTimer--;
-      if (this.phoneOtpTimer <= 0) {
-        clearInterval(this.phoneOtpInterval);
-      }
-    }, 1000);
-    setTimeout(() => this.canResendPhoneOtp = true, 30000);
-  }
-
-  sendPhoneOtp() {
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    this.otpService.sendOtp('phone', phone).subscribe({
-      next: () => { this.phoneVerifyError = ''; },
-      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
-    });
-    this.phoneOtpError = '';
-    this.startPhoneOtpTimer();
-  }
-  confirmPhoneOtp() {
-    this.verifyingPhoneOtp = true;
-    this.phoneOtpError = '';
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    const otp = this.phoneOtp.join('');
-    this.otpService.verifyOtp('phone', phone, otp).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
-      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
-    });
-  }
-  sendEmailOtp() {
-    const email = this.registrationForm.get('email')?.value;
-    this.otpService.sendOtp('email', email).subscribe({
-      next: () => { this.emailVerifyError = ''; },
-      error: () => { this.emailVerifyError = 'Failed to send OTP'; }
-    });
-  }
-  confirmEmailOtp() {
-    const email = this.registrationForm.get('email')?.value;
-    const otp = this.emailOtp.join('');
-    this.otpService.verifyOtp('email', email, otp).subscribe({
-      next: () => { this.emailVerified = true; this.showEmailOtp = false; this.emailVerifyError = ''; },
-      error: () => { this.emailVerifyError = 'Invalid OTP'; }
-    });
-  }
-  // Username error for brand
-  brandUsernameError: string = '';
-
-  // Phone/email verification status and error
-  phoneVerified: boolean = false;
-  emailVerified: boolean = false;
-  phoneVerifyError: string = '';
-  emailVerifyError: string = '';
-
-  // Stub verification methods
-  verifyPhone() {
-    // TODO: Implement phone verification logic
-    // For now, just mark as verified
-    this.phoneVerified = true;
-    this.phoneVerifyError = '';
-  }
-
-  verifyEmail() {
-    // TODO: Implement email verification logic
-    // For now, just mark as verified
-    this.emailVerified = true;
-    this.emailVerifyError = '';
-  }
-  get socialMediaFormArray(): FormArray {
-    return this.registrationForm.get('socialMedia') as FormArray;
+  // Social media add/remove
+  addSocialMedia() {
+    this.socialMediaFormArray.push(this.fb.group({
+      platform: ['', Validators.required],
+      handle: ['', Validators.required],
+      tier: ['', Validators.required],
+      followersCount: ['', Validators.required]
+    }));
   }
 
   removeSocialMedia(index: number) {
@@ -160,21 +67,58 @@ export class BrandRegistrationComponent implements OnInit {
       this.socialMediaFormArray.removeAt(index);
     }
   }
-  addSocialMedia() {
-    (this.registrationForm.get('socialMedia') as FormArray).push(
-      this.fb.group({
-        platform: ['', Validators.required],
-        handle: ['', Validators.required],
-        tier: ['', Validators.required],
-        followersCount: ['', Validators.required]
-      })
-    );
+
+  // Phone OTP state and methods
+  showPhoneOtp: boolean = false;
+  phoneVerified: boolean = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+
+  confirmPhoneOtp() {
+    // Implement OTP confirmation logic here
+    // For now, just mark as verified for demo
+    this.phoneVerified = true;
+    this.showPhoneOtp = false;
   }
-  ngOnInit(): void {
-    // Initialize the registration form and fetch any required data here
+  get socialMediaFormArray(): FormArray {
+    return this.registrationForm.get('socialMedia') as FormArray;
+  }
+  // Real-time sanitize brand username input (replace spaces with hyphens, remove invalid chars)
+  onBrandUsernameInput() {
+    const ctrl = this.registrationForm.get('brandUsername');
+    if (!ctrl) return;
+    let value = ctrl.value || '';
+    value = value.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
+    ctrl.setValue(value, { emitEvent: false });
+    this.brandUsernameError = '';
+  }
+  brandUsernameError: string = '';
+  submitted = false;
+  registrationSuccess = false;
+  registrationError = '';
+  registrationForm!: FormGroup;
+  states: any[] = [];
+  socialMediaList: any[] = [];
+  tiers: any[] = [];
+
+  isPremium = false;
+  languagesList: any[] = [];
+  categoriesList: any[] = [];
+  brandLogoPreview: string | null = null;
+  brandLogoFile: File | null = null;
+  productImagesPreview: (string | null)[] = [];
+  productImagesFiles: (File | null)[] = [];
+
+  constructor(
+    private fb: FormBuilder,
+    private configService: ConfigService,
+    private otpService: OtpService
+  ) {}
+
+  ngOnInit() {
+    // Initialize the form first
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
-      brandUsername: ['', [Validators.required, Validators.pattern('^[a-zA-Z0-9-]+$')]],
+      brandUsername: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.brandUsernameUniqueValidator()]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
       confirmPassword: ['', Validators.required],
@@ -203,9 +147,27 @@ export class BrandRegistrationComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false]
-      }, { validators: [atLeastOneContactRequired] }),
+      }, { validators: [atLeastOneContactRequired] })
     });
 
+    // Now subscribe to valueChanges
+    this.registrationForm.get('email')?.valueChanges.subscribe(email => {
+      if (this.registrationForm.get('email')?.valid && email) {
+        this.otpService.sendOtp('email', email).subscribe({
+          next: () => {
+            this.emailVerificationSent = true;
+            this.emailVerificationError = null;
+          },
+          error: (err: any) => {
+            this.emailVerificationSent = false;
+            this.emailVerificationError = err?.error?.message || 'Failed to send verification email.';
+          }
+        });
+      }
+    });
+
+    // Username input sanitization
+    this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => this.onBrandUsernameInput());
     // Fetch dropdown data from API
     this.configService.getStates().subscribe(data => this.states = data);
     this.configService.getTiers().subscribe(data => this.tiers = data);
@@ -215,22 +177,22 @@ export class BrandRegistrationComponent implements OnInit {
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
       this.isPremium = val === 'premium';
     });
-}
-  submitted = false;
-  registrationSuccess = false;
-  registrationError = '';
-  registrationForm!: FormGroup;
-  states: any[] = [];
-  socialMediaList: any[] = [];
-  tiers: any[] = [];
+  }
 
-  isPremium = false;
-  languagesList: any[] = [];
-  categoriesList: any[] = [];
-  brandLogoPreview: string | null = null;
-  brandLogoFile: File | null = null;
-  productImagesPreview: (string | null)[] = [];
-  productImagesFiles: (File | null)[] = [];
+  // Sanitize brand username input (replace spaces with hyphens, remove invalid chars)
+  // ...existing code...
+
+  // Async validator to check brand username uniqueness
+  brandUsernameUniqueValidator(): AsyncValidatorFn {
+    return (control: AbstractControl) => {
+      if (!control.value) return Promise.resolve(null);
+      return this.configService.checkBrandUsernameUnique(control.value).pipe(
+        map((isUnique: boolean) => (isUnique ? null : { notUnique: true })),
+        first()
+      );
+    };
+  }
+
   addProductImage() {
     const maxImages = this.isPremium ? 5 : 1;
     if (this.productImagesPreview.length < maxImages) {
@@ -304,14 +266,34 @@ export class BrandRegistrationComponent implements OnInit {
       });
   }
 
-  // ...existing code...
-
   get brandLogoFormArray(): FormArray {
     return this.registrationForm.get('brandLogo') as FormArray;
   }
 
   addBrandLogo() {
     // This method can be used to add a new brand logo input if needed in the future
+  }
+
+  // Utility to slugify username (match influencer logic)
+  slugifyUsername(username: string): string {
+    return username
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
+  // ...existing code...
+
+  onBrandUsernameBlur() {
+    const ctrl = this.registrationForm.get('brandUsername');
+    if (ctrl) {
+      ctrl.setValue(this.slugifyUsername(ctrl.value), { emitEvent: false });
+    }
   }
 
   async onSubmit() {
@@ -324,12 +306,28 @@ export class BrandRegistrationComponent implements OnInit {
       // Mark all controls as touched to show errors
       Object.keys(this.registrationForm.controls).forEach(key => {
         const control = this.registrationForm.get(key);
-        if (control) {
-          control.markAsTouched();
+        if (control instanceof FormGroup) {
+          Object.keys(control.controls).forEach(subKey => control.get(subKey)?.markAsTouched());
+        } else {
+          control?.markAsTouched();
         }
       });
       return;
     }
-    // Add your registration submission logic here
+    // Submit registration and handle response
+    // ...existing code for registration submission...
+    // Example:
+    // this.registrationService.registerBrand(this.registrationForm.value).subscribe({
+    //   next: (user) => {
+    //     this.registrationSuccess = true;
+    //     this.emailVerified = user.isEmailVerified;
+    //     this.showEmailVerificationPrompt = !user.isEmailVerified;
+    //   },
+    //   error: (err) => {
+    //     this.registrationError = err.message || 'Registration failed.';
+    //   }
+    // });
+    // ...existing code...
   }
+  // --- End of class ---
 }

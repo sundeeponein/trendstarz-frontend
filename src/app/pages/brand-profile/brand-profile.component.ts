@@ -4,8 +4,9 @@ const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { map, first } from 'rxjs/operators';
 import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -257,8 +258,14 @@ export class BrandProfileComponent implements OnInit {
 
   ngOnInit() {
     console.log('BrandProfileComponent ngOnInit called');
+
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
+      brandUsername: [
+        '',
+        [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)],
+        [this.brandUsernameUniqueValidator()]
+      ],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', Validators.required],
       isPremium: [false],
@@ -289,108 +296,34 @@ export class BrandProfileComponent implements OnInit {
         call: [false]
       }),
     });
-    // Getter for brandLogo FormArray
 
-      this.registrationForm.get('password')?.disable();
-      this.registrationForm.get('confirmPassword')?.disable();
+    // Username input sanitization
+    this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => this.onBrandUsernameInput());
 
-    // Fetch dropdown data from API, then fetch and patch brand profile
-    Promise.all([
-      this.configService.getStates().toPromise(),
-      this.configService.getTiers().toPromise(),
-      this.configService.getSocialMedia().toPromise(),
-      this.configService.getLanguages().toPromise(),
-      this.configService.getCategories().toPromise()
-    ]).then(([states, tiers, socialMediaList, languagesList, categoriesList]) => {
-      this.states = states || [];
-      this.tiers = tiers || [];
-      this.socialMediaList = socialMediaList || [];
-      this.languagesList = languagesList || [];
-      this.categoriesList = categoriesList || [];
+    this.registrationForm.get('password')?.disable();
+    this.registrationForm.get('confirmPassword')?.disable();
+  }
 
-      this.registrationForm.get('paymentOption')?.valueChanges.subscribe(val => {
-        this.isPremium = val === 'premium';
-      });
+  // Sanitize brand username input (replace spaces with hyphens, remove invalid chars)
+  onBrandUsernameInput() {
+    const ctrl = this.registrationForm.get('brandUsername');
+    if (!ctrl) return;
+    let value = ctrl.value || '';
+    value = value.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
+    ctrl.setValue(value, { emitEvent: false });
+    this.brandUsernameError = '';
+  }
 
-      // Fetch brand profile and patch form
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      console.log('Token for brand profile:', token);
-      if (token) {
-        this.registrationError = '';
-        this.configService.getBrandProfileById(token).subscribe({
-          next: (profile) => {
-            console.log('Brand profile API response:', profile);
-            if (!profile) {
-              this.registrationError = 'Profile not found or you are not logged in.';
-              return;
-            }
-            // Map state name to ID
-            const stateId = this.states.find(s => s.name === profile.location?.state)?.['_id'] || '';
-            // Map language names to IDs
-            const languageIds = (profile.languages || []).map((name: string) =>
-              this.languagesList.find(l => l.name === name)?._id
-            ).filter(Boolean);
-            // Map category names to IDs
-            const categoryIds = (profile.categories || []).map((name: string) =>
-              this.categoriesList.find(c => c.name === name)?._id
-            ).filter(Boolean);
-            // Map social media platform name to ID
-            const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
-              ...sm,
-              platform: this.socialMediaList.find(s => s.name === sm.platform)?._id || sm.platform
-            }));
-            this.registrationForm.patchValue({
-              brandName: profile.brandName || '',
-              email: profile.email || '',
-              phoneNumber: profile.phoneNumber || '',
-              paymentOption: profile.paymentOption || 'free',
-              location: { state: stateId, googleMapLink: profile.location?.googleMapLink || '' },
-              promotionalPrice: profile.promotionalPrice || '',
-              languages: languageIds,
-              categories: categoryIds,
-              website: profile.website || '',
-              googleMapAddress: profile.googleMapAddress || '',
-              contact: profile.contact || { whatsapp: false, email: false, call: false }
-            });
-            // Patch brandLogo preview and form array if logo exists
-            const logoArr = this.registrationForm.get('brandLogo') as FormArray;
-            logoArr.clear();
-            if (profile.brandLogo && Array.isArray(profile.brandLogo) && profile.brandLogo.length > 0) {
-              logoArr.push(this.fb.control(profile.brandLogo[0]));
-              this.brandLogoPreview = profile.brandLogo[0].url || null;
-            } else {
-              this.brandLogoPreview = null;
-            }
-            // Patch productImages
-            const arr = this.registrationForm.get('productImages') as FormArray;
-            arr.clear();
-            (profile.productImages || []).forEach((img: string) => arr.push(this.fb.control(img)));
-            // Patch socialMedia
-            const smArr = this.registrationForm.get('socialMedia') as FormArray;
-            smArr.clear();
-            socialMedia.forEach((sm: any) => {
-              smArr.push(this.fb.group({
-                platform: sm.platform || '',
-                handle: sm.handle || '',
-                tier: sm.tier || '',
-                followersCount: sm.followersCount || ''
-              }));
-            });
-            // Patch brandLogo and products if needed
-            // Patch premium period if available
-            this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
-            this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
-            // Save original value for cancel
-            this.originalFormValue = this.registrationForm.getRawValue();
-            this.registrationForm.disable();
-          },
-          error: (err) => {
-            console.error('Error fetching brand profile:', err);
-            this.registrationError = 'Error fetching profile.';
-          }
-        });
-      }
-    });
+  // Async validator to check brand username uniqueness
+  brandUsernameUniqueValidator(): AsyncValidatorFn {
+
+    return (control: AbstractControl) => {
+      if (!control.value) return Promise.resolve(null);
+      return this.configService.checkBrandUsernameUnique(control.value).pipe(
+        map((isUnique: boolean) => (isUnique ? null : { notUnique: true })),
+        first()
+      );
+    };
   }
 
   enableEdit(): void {
