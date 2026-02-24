@@ -37,6 +37,28 @@ export class InfluencerProfileComponent implements OnInit {
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
 
+
+  // Email verification resend state
+  resendingEmailVerification: boolean = false;
+  resendEmailVerificationSuccess: boolean = false;
+  resendEmailVerificationError: string | null = null;
+
+  resendEmailVerification() {
+    this.resendingEmailVerification = true;
+    this.resendEmailVerificationSuccess = false;
+    this.resendEmailVerificationError = null;
+    const email = this.registrationForm.get('email')?.value;
+    this.otpService.sendOtp('email', email).subscribe({
+      next: () => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationSuccess = true;
+      },
+      error: (err: any) => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationError = err?.error?.message || 'Failed to resend verification email.';
+      }
+    });
+  }
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,

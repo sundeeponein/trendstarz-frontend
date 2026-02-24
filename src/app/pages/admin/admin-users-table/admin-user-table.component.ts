@@ -72,6 +72,8 @@ export class AdminUserTableComponent implements OnInit {
   // Holds an error message when profile/registration fetch fails
   registrationError: string | null = null;
 
+  isLoading: boolean = false;
+
   constructor(private http: HttpClient, private configService: ConfigService) {}
 
   ngOnInit() {
@@ -94,6 +96,7 @@ export class AdminUserTableComponent implements OnInit {
 
 
   fetchUsers() {
+    this.isLoading = true;
     let token = '';
     if (typeof window !== 'undefined' && window.localStorage) {
       token = localStorage.getItem('token') || '';
@@ -102,12 +105,14 @@ export class AdminUserTableComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, headers)
       .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
-    this.influencers = (res || []).filter((u: any) => u.status !== 'deleted');
+        this.influencers = (res || []).filter((u: any) => u.status !== 'deleted');
+        this.isLoading = false;
       });
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, headers)
       .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
-    this.brands = (res || []).filter((u: any) => u.status !== 'deleted');
+        this.brands = (res || []).filter((u: any) => u.status !== 'deleted');
+        this.isLoading = false;
       });
   }
 
@@ -132,13 +137,21 @@ export class AdminUserTableComponent implements OnInit {
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/decline`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
   }
   deleteUser(userId: string) {
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+    this.isLoading = true;
+    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
+      this.fetchUsers();
+      setTimeout(() => { this.isLoading = false; }, 500);
+    });
   }
   restoreUser(userId: string) {
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/restore`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
   }
   deletePermanently(userId: string) {
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete-permanent`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+    this.isLoading = true;
+    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete-permanent`, {}, this.getAuthHeaders()).subscribe(() => {
+      this.fetchUsers();
+      setTimeout(() => { this.isLoading = false; }, 500);
+    });
   }
   setPremium(userId: string, isPremium: boolean, userType: 'influencer' | 'brand') {
       try {
