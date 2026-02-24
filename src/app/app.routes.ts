@@ -15,6 +15,10 @@ import { BrandProfileComponent } from './pages/brand-profile/brand-profile.compo
 import { DeletedUsersTableComponent } from './pages/admin/deleted-users-table/deleted-users-table.component';
 import { InfluencerProfileViewComponent } from './shared/user-profile/influencer-profile-view/influencer-profile-view.component';
 import { BrandProfileViewComponent } from './shared/user-profile/brand-profile-view/brand-profile-view.component';
+import { PrivacyPolicyComponent } from './legal/privacy-policy/privacy-policy.component';
+import { TermsComponent } from './legal/terms/terms.component';
+import { RefundPolicyComponent } from './legal/refund-policy/refund-policy.component';
+import { ContactComponent } from './legal/contact/contact.component';
 
 import { Component } from '@angular/core';
 export const DummyLogoutComponent = Component({
@@ -30,10 +34,17 @@ export const routes: Routes = [
 	{ path: 'register-influencer', component: InfluencerRegistrationComponent },
 	{ path: 'register-brand', component: BrandRegistrationComponent },
 	{ path: 'payment', component: StripePaymentComponent },
-	
+
 	// PUBLIC PROFILE ROUTES
 	{ path: 'influencer/:username', loadComponent: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.component').then(m => m.InfluencerProfileViewComponent) },
 	{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
+
+	// LEGAL PAGES
+	{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
+	{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },
+	{ path: 'refund-policy', loadComponent: () => import('./legal/refund-policy/refund-policy.component').then(m => m.RefundPolicyComponent) },
+	{ path: 'contact', loadComponent: () => import('./legal/contact/contact.component').then(m => m.ContactComponent) },
+
 	{
 	path: '',
 	component: NavbarLayoutComponent,
