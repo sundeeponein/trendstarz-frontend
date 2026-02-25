@@ -9,6 +9,20 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'refund-policy', renderMode: RenderMode.Prerender },
   { path: 'contact', renderMode: RenderMode.Prerender },
 
+  // ---- Other Static Pages
+  { path: 'welcome', renderMode: RenderMode.Prerender },
+  { path: 'login', renderMode: RenderMode.Prerender },
+  { path: 'auth/login', renderMode: RenderMode.Prerender },
+  { path: 'register-influencer', renderMode: RenderMode.Prerender },
+  { path: 'register-brand', renderMode: RenderMode.Prerender },
+  { path: 'payment', renderMode: RenderMode.Prerender },
+  { path: 'influencer-profile', renderMode: RenderMode.Prerender },
+  { path: 'brand-profile', renderMode: RenderMode.Prerender },
+  { path: 'admin/admin-dashboard', renderMode: RenderMode.Server },
+  { path: 'admin/admin-user-table', renderMode: RenderMode.Server },
+  { path: 'admin/admin-management', renderMode: RenderMode.Server },
+  { path: 'admin/deleted-users', renderMode: RenderMode.Server },
+
   // Optional prerender forms
   { path: 'login', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Prerender },

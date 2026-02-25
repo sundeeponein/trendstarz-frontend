@@ -81,18 +81,6 @@
               "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
             ]
           }
-        },
-        "prerender": {
-          "builder": "@angular-devkit/build-angular:prerender",
-          "options": {
-            "routes": [
-              "/",
-              "/privacy-policy",
-              "/terms-and-conditions",
-              "/refund-policy",
-              "/contact"
-            ]
-          }
         }
       }
     }
