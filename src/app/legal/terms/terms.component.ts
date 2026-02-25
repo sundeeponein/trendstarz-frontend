@@ -12,7 +12,7 @@ import { LegalPageWrapperComponent } from '../legal-page-wrapper.component';
 export class TermsComponent implements OnInit {
   constructor(private meta: Meta, private title: Title) {}
   ngOnInit() {
-    this.title.setTitle('Terms & Conditions – TrendStarz');
-    this.meta.updateTag({ name: 'description', content: 'Terms and conditions for using TrendStarz.' });
+    this.title.setTitle('Terms & Conditions | TrendStarz');
+    this.meta.updateTag({ name: 'description', content: 'Read the terms governing use of TrendStarz platform.' });
   }
 }

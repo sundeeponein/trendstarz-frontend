@@ -40,10 +40,10 @@ export const routes: Routes = [
 	{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 
 	// LEGAL PAGES
-	{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
-	{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },
-	{ path: 'refund-policy', loadComponent: () => import('./legal/refund-policy/refund-policy.component').then(m => m.RefundPolicyComponent) },
-	{ path: 'contact', loadComponent: () => import('./legal/contact/contact.component').then(m => m.ContactComponent) },
+	{ path: 'privacy-policy', component: PrivacyPolicyComponent },
+	{ path: 'terms-and-conditions', component: TermsComponent },
+	{ path: 'refund-policy', component: RefundPolicyComponent },
+	{ path: 'contact', component: ContactComponent },
 
 	{
 	path: '',

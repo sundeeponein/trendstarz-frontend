@@ -1,7 +1,28 @@
 <app-legal-page-wrapper title="Contact Us">
+  <p class="mb-4">We’re here to help! For questions, support, or partnership inquiries, please reach out to our team. We value your feedback and aim to respond promptly.</p>
+
+  <h2>Contact Information</h2>
   <ul>
-    <li>Email: <a href="mailto:support@trendstarz.in">support@trendstarz.in</a></li>
-    <li>Response Time: 24–48 business hours</li>
-    <li>Operating Region: India</li>
+    <li><strong>Email:</strong> <a href="mailto:support@trendstarz.in">support@trendstarz.in</a></li>
+    <li><strong>Response Time:</strong> 24–48 business hours</li>
+    <li><strong>Operating Region:</strong> India</li>
   </ul>
+
+  <h2>Send Us a Message</h2>
+  <form class="mt-3" autocomplete="off" novalidate>
+    <div class="mb-3">
+      <label for="contactName" class="form-label">Name</label>
+      <input type="text" class="form-control" id="contactName" name="name" placeholder="Your Name" required>
+    </div>
+    <div class="mb-3">
+      <label for="contactEmail" class="form-label">Email</label>
+      <input type="email" class="form-control" id="contactEmail" name="email" placeholder="you@email.com" required>
+    </div>
+    <div class="mb-3">
+      <label for="contactMessage" class="form-label">Message</label>
+      <textarea class="form-control" id="contactMessage" name="message" rows="4" placeholder="How can we help you?" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary" disabled>Send Message</button>
+    <div class="form-text mt-2">(Contact form coming soon. Please use email for urgent queries.)</div>
+  </form>
 </app-legal-page-wrapper>

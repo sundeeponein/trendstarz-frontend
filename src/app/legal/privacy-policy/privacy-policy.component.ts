@@ -12,7 +12,7 @@ import { LegalPageWrapperComponent } from '../legal-page-wrapper.component';
 export class PrivacyPolicyComponent implements OnInit {
   constructor(private meta: Meta, private title: Title) {}
   ngOnInit() {
-    this.title.setTitle('Privacy Policy – TrendStarz');
-    this.meta.updateTag({ name: 'description', content: 'How TrendStarz collects, uses, and protects your data.' });
+    this.title.setTitle('Privacy Policy | TrendStarz');
+    this.meta.updateTag({ name: 'description', content: 'Learn how TrendStarz collects, uses, and protects your personal information.' });
   }
 }
