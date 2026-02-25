@@ -8,15 +8,21 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'terms-and-conditions', renderMode: RenderMode.Prerender },
   { path: 'refund-policy', renderMode: RenderMode.Prerender },
   { path: 'contact', renderMode: RenderMode.Prerender },
-
-  // Optional prerender forms
+  { path: 'welcome', renderMode: RenderMode.Prerender },
   { path: 'login', renderMode: RenderMode.Prerender },
+  { path: 'auth/login', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Prerender },
   { path: 'register-brand', renderMode: RenderMode.Prerender },
   { path: 'payment', renderMode: RenderMode.Prerender },
+  { path: 'influencer-profile', renderMode: RenderMode.Prerender },
+  { path: 'brand-profile', renderMode: RenderMode.Prerender },
 
-  // Admin / logout (must exist here)
+  // Admin / dashboard routes
   { path: 'admin', renderMode: RenderMode.Server },
+  { path: 'admin/admin-dashboard', renderMode: RenderMode.Server },
+  { path: 'admin/admin-user-table', renderMode: RenderMode.Server },
+  { path: 'admin/admin-management', renderMode: RenderMode.Server },
+  { path: 'admin/deleted-users', renderMode: RenderMode.Server },
   { path: 'logout', renderMode: RenderMode.Server },
 
   // Dynamic profiles
