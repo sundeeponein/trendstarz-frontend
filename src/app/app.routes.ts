@@ -1,70 +1,59 @@
-import { InfluencerRegistrationComponent } from './pages/influencer-registration/influencer-registration.component';
-import { BrandRegistrationComponent } from './pages/brand-registration/brand-registration.component';
 import { Routes } from '@angular/router';
-import { authGuard } from './core/auth.guard';
-import { PaymentComponent } from './pages/payment/payment.component';
-import { StripePaymentComponent } from './pages/payment/stripe-payment.component';
-import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { LoginComponent } from './pages/auth/login.component';
 import { AdminUserTableComponent } from './pages/admin/admin-users-table/admin-user-table.component';
+import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.component';
+import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.component';
 import { AdminManagementComponent } from './pages/admin/admin-management/admin-management.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
-import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.component';
-import { InfluencerProfileComponent } from './pages/influencer-profile/influencer-profile.component';
-import { BrandProfileComponent } from './pages/brand-profile/brand-profile.component';
-import { DeletedUsersTableComponent } from './pages/admin/deleted-users-table/deleted-users-table.component';
-import { InfluencerProfileViewComponent } from './shared/user-profile/influencer-profile-view/influencer-profile-view.component';
-import { BrandProfileViewComponent } from './shared/user-profile/brand-profile-view/brand-profile-view.component';
-import { PrivacyPolicyComponent } from './legal/privacy-policy/privacy-policy.component';
-import { TermsComponent } from './legal/terms/terms.component';
-import { RefundPolicyComponent } from './legal/refund-policy/refund-policy.component';
-import { ContactComponent } from './legal/contact/contact.component';
-
-import { Component } from '@angular/core';
-export const DummyLogoutComponent = Component({
-	selector: 'app-logout',
-	template: '<div>Logging out...</div>'
-})(class {});
+import { WelcomeComponent } from './pages/welcome/welcome.component';
 
 export const routes: Routes = [
-	{ path: '', component: WelcomeComponent },
-	{ path: 'welcome', component: WelcomeComponent },
-	{ path: 'login', component: LoginComponent },
-	{ path: 'auth/login', component: LoginComponent },
-	{ path: 'register-influencer', component: InfluencerRegistrationComponent },
-	{ path: 'register-brand', component: BrandRegistrationComponent },
-	{ path: 'payment', component: StripePaymentComponent },
-
-	// PUBLIC PROFILE ROUTES
-	{ path: 'influencer/:username', loadComponent: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.component').then(m => m.InfluencerProfileViewComponent) },
-	{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
-
-	// LEGAL PAGES
-	{ path: 'privacy-policy', component: PrivacyPolicyComponent },
-	{ path: 'terms-and-conditions', component: TermsComponent },
-	{ path: 'refund-policy', component: RefundPolicyComponent },
-	{ path: 'contact', component: ContactComponent },
-
-	{
-	path: '',
-	component: NavbarLayoutComponent,
-		children: [
-			{ path: 'influencer-profile', component: InfluencerProfileComponent, canActivate: [authGuard] },
-			{ path: 'brand-profile', component: BrandProfileComponent, canActivate: [authGuard] },
-		]
+  	{
+    path: '',
+    component: NavbarLayoutComponent,
+    children: [
+			{ path: '', component: WelcomeComponent },
+			{ path: 'welcome', component: WelcomeComponent },
+			{ path: 'auth/login', component: LoginComponent },
+			// static pages legal/payment
+			{ path: 'payment', loadComponent: () => import('./pages/payment/payment.component').then(m => m.PaymentComponent) },
+			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
+			{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },
+			{ path: 'refund-policy', loadComponent: () => import('./legal/refund-policy/refund-policy.component').then(m => m.RefundPolicyComponent) },
+			{ path: 'contact', loadComponent: () => import('./legal/contact/contact.component').then(m => m.ContactComponent) },
+			// user/brand/influencer pages
+			{ path: 'register-influencer', loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },
+			{ path: 'register-brand', loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
+			{ path: 'influencer-profile', loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
+			{ path: 'influencer/:username', loadComponent: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.component').then(m => m.InfluencerProfileViewComponent) },
+			{ path: 'brand-profile', loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },
+			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
+		],
 	},
 	{
-	path: 'admin',
-	component: AdminLayoutComponent,
-		canActivate: [authGuard],
+		path: 'admin',
+		component: AdminLayoutComponent,
 		children: [
 			{ path: '', redirectTo: 'admin-dashboard', pathMatch: 'full' },
 			{ path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
 			{ path: 'admin-user-table', component: AdminUserTableComponent },
 			{ path: 'admin-management', component: AdminManagementComponent },
-			{ path: 'deleted-users', component: DeletedUsersTableComponent },
-		]
+			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
+			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
+		],
 	},
-	{ path: 'logout', component: DummyLogoutComponent },
-	// Add other routes as needed
+	{
+		path: '',
+		component: NoNavbarLayoutComponent,
+		children: [
+			{ path: 'login', component: LoginComponent },
+			{ path: '', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
+		],
+	},
+
+	// Top-level routes for SSR/server extraction
+	{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
+	{ path: 'admin/logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
+	{ path: 'auth', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
+	{ path: 'verify-email', loadComponent: () => import('./pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent) },
 ];

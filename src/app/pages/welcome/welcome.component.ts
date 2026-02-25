@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { NavbarLayoutComponent } from '../../layout/navbar-layout/navbar-layout.component';
 import { CommonModule } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
+// import { NavbarLayoutComponent } from '../../layout/navbar-layout/navbar-layout.component';
+// import { FooterComponent } from '../../shared/footer/footer.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [NavbarLayoutComponent, CommonModule, InfluencerUserCardComponent, BrandUserCardComponent],
+  imports: [CommonModule, InfluencerUserCardComponent, BrandUserCardComponent],
   templateUrl: './welcome.component.html'
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
