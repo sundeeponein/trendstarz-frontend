@@ -8,6 +8,8 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'terms-and-conditions', renderMode: RenderMode.Prerender },
   { path: 'refund-policy', renderMode: RenderMode.Prerender },
   { path: 'contact', renderMode: RenderMode.Prerender },
+
+  // User-facing pages
   { path: 'welcome', renderMode: RenderMode.Prerender },
   { path: 'login', renderMode: RenderMode.Prerender },
   { path: 'auth/login', renderMode: RenderMode.Prerender },
@@ -24,6 +26,9 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/admin-management', renderMode: RenderMode.Server },
   { path: 'admin/deleted-users', renderMode: RenderMode.Server },
   { path: 'logout', renderMode: RenderMode.Server },
+  { path: 'admin/logout', renderMode: RenderMode.Server },
+  { path: 'auth', renderMode: RenderMode.Server },
+  { path: 'verify-email', renderMode: RenderMode.Server },
 
   // Dynamic profiles
   { path: 'influencer/:username', renderMode: RenderMode.Server },
