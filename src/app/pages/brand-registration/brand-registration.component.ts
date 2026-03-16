@@ -223,7 +223,7 @@ export class BrandRegistrationComponent implements OnInit {
     return (control: AbstractControl) => {
       if (!control.value) return Promise.resolve(null);
       return this.configService.checkBrandUsernameUnique(control.value).pipe(
-        map((exists: boolean) => (exists ? { notUnique: true } : null)),
+        map((isUnique: boolean) => (isUnique ? null : { notUnique: true })),
         first()
       );
     };
