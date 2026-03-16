@@ -53,6 +53,10 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/register-brand`, data);
   }
 
+  sendEmailVerificationLink(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/send-email-verification`, { email });
+  }
+
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categories`);
   }

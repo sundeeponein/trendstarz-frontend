@@ -1,187 +1,280 @@
 
-<div class="container">
-  <!-- Email Verification Prompt -->
-  <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mt-4">
-    <div>
-      <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
-      <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
-        Resend Verification Email
-      </button>
-      <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
-      <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
-    </div>
-  </div>
+<div class="registration-shell">
+  <div class="registration-wrap">
+    <aside class="left-panel">
+      <div class="panel-card progress-panel">
+        <h4>Registration Progress</h4>
+        <p class="step-count">Step {{ currentStep }} of 3</p>
 
-  <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
-    
-    <div class="row my-5">
-      <div class="col-6">
-        <label>Username <span class="text-danger">*</span></label>
-        <input formControlName="username" type="text" class="form-control w-100" required pattern="^[a-zA-Z0-9_-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
-        <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">
-          Username is required and can only contain letters, numbers, hyphens (-), and underscores (_). No spaces or special characters allowed.
-        </div>
-          <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">
-            Username cannot contain spaces. Please use only letters, numbers, and hyphens (-). Underscores are not allowed for SEO reasons.
-          </div>
+        <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
+          <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
+          <span class="step-label">Basic Information</span>
+        </button>
+
+        <button type="button" class="step-item" [class.active]="currentStep === 2" [class.complete]="step2Complete" (click)="goToStep(2)">
+          <span class="step-icon">{{ step2Complete ? '✓' : '2' }}</span>
+          <span class="step-label">Social Media & Media</span>
+        </button>
+
+        <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
+          <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
+          <span class="step-label">Professional Details</span>
+        </button>
       </div>
-      <div class="col-6">
-        <label>Mobile Number <span class="text-danger">*</span></label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-          <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
-        </div>
+
+      <div class="panel-card tip-card" *ngIf="currentStep === 1">
+        <h5>Setup Tip</h5>
+        <p>Your username will be your public URL. Choose a clean, memorable handle.</p>
       </div>
-      <div class="col-6">
-        <label>Name <span class="text-danger">*</span></label>
-        <input formControlName="name" type="text" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Please enter your name.</div>
+
+      <div class="panel-card tip-card" *ngIf="currentStep === 2">
+        <h5>Growth Tip</h5>
+        <p>Add your strongest platform and a profile image to increase trust and visibility.</p>
       </div>
-      <div class="col-6">
-        <label>Email Address <span class="text-danger">*</span></label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-          <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
-        </div>
-        <div *ngIf="emailVerificationSent && !emailVerified" class="text-success mt-1">Verification email sent!</div>
-        <div *ngIf="emailVerified" class="text-success mt-1">Verified</div>
-        <div *ngIf="emailVerificationError" class="text-danger mt-1">{{ emailVerificationError }}</div>
+
+      <div class="panel-card tip-card" *ngIf="currentStep === 3">
+        <h5>Professional Tip</h5>
+        <p>Detailed pricing and contact options help brands shortlist you faster.</p>
       </div>
-      <div class="col-6">
-        <label>Password <span class="text-danger">*</span></label>
-        <input formControlName="password" type="password" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Please enter your password.</div>
-      </div>
-      <div class="col-6">
-        <label>Confirm Password <span class="text-danger">*</span></label>
-        <input formControlName="confirmPassword" type="password" class="form-control w-100" required />
-        <div *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger mt-1">Please confirm your password.</div>
-      </div>
-      <div class="col-6">
-        <label>Payment Option <span class="text-danger">*</span></label>
-        <select formControlName="paymentOption" class="form-control w-100">
-          <option value="free">Free (Contact/Social hidden)</option>
-          <option value="premium">Premium (Contact/Social visible, 3 images)</option>
-        </select>
-        <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-      </div>
-      <div class="col-6" formGroupName="location">
-        <label>State <span class="text-danger">*</span></label>
-        <select formControlName="state" class="form-control w-100">
-          <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
-        </select>
-        <div *ngIf="submitted && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
-      </div>
-      <div class="col-6">
-        <label>Languages <span class="text-danger">*</span></label>
-        <ng-select
-          [items]="languagesList"
-          bindLabel="name"
-          bindValue="_id"
-          [multiple]="true"
-          [searchable]="true"
-          [closeOnSelect]="false"
-          [clearable]="true"
-          formControlName="languages"
-          class="form-control w-100"
-        >
-          <ng-template ng-option-tmp let-item="item" let-selected="selected">
-            <input type="checkbox" [checked]="selected" /> {{ item.name }}
-          </ng-template>
-        </ng-select>
-        <div *ngIf="submitted && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
-      </div>
-      <div class="col-6">
-        <label>Categories <span class="text-danger">*</span></label>
-        <ng-select
-          [items]="categoriesList"
-          bindLabel="name"
-          bindValue="_id"
-          [multiple]="true"
-          [searchable]="true"
-          [closeOnSelect]="false"
-          [clearable]="true"
-          formControlName="categories"
-          class="form-control w-100"
-        >
-          <ng-template ng-option-tmp let-item="item" let-selected="selected">
-            <input type="checkbox" [checked]="selected" /> {{ item.name }}
-          </ng-template>
-        </ng-select>
-        <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
-      </div>
-      <!-- Profile Image Upload (single image for now) -->
-      <div class="col-12 mt-3">
-        <label>Profile Image <span class="text-danger">*</span></label>
-        <div *ngIf="profileImagePreview" class="mt-2">
-          <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
-        </div>
+    </aside>
+
+    <main class="content-panel">
+      <!-- Email Verification Prompt -->
+      <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mb-4">
         <div>
-          <button type="button" (click)="removeProfileImage(0)" *ngIf="profileImagePreview">Remove</button>
-          <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [required]="!profileImagePreview" />
-        </div>
-        <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile image is required.</div>
-      </div>
-      <!-- Social Media: Only allow adding for premium, hide for free -->
-      <div class="col-12 mt-3" formArrayName="socialMedia">
-        <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
-          <label>Social Media  <span class="text-danger">*</span></label>
-          <div class="col-3">
-            <label>Social Platform</label>
-            <select formControlName="platform"  class="form-control w-100">
-              <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-            </select>
-          </div>
-          <div class="col-3">
-            <label>Handle Name</label>
-            <input formControlName="handle" type="text" required  class="form-control w-100" />
-          </div>
-          <div class="col-3">
-            <label>Tier</label> <i class="bi bi-info-circle-fill" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#tierInfoModal" title="Select the tier for this social media account"></i>
-            <select formControlName="tier" class="form-control w-100">
-              <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-            </select>
-          </div>
-          <div class="col-3">
-            <label>Followers/Subscribers Count</label>
-            <input formControlName="followersCount" type="number" required  class="form-control w-100" />
-            <button type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1">Remove</button>
-          </div>
-        </div>
-        <button type="button" (click)="addSocialMedia()">Add Social Media</button>
-      </div>
-
-      <div class="col-6 mt-3">
-        <label>Promotional Price <span class="text-danger">*</span></label>
-        <input formControlName="promotionalPrice" type="number" required class="form-control" />
-      </div>
-
-      <div class="col-12 mt-3">
-        <div class="col-6 row" formGroupName="contact">
-          <label>Contact Options  <span class="text-danger">*</span></label>
-          <div class="row">
-            <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
-            <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
-            <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
-          </div>
-          <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
+          <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
+          <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
+            Resend Verification Email
+          </button>
+          <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
+          <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
         </div>
       </div>
 
-      <div *ngIf="registrationSuccess" class="text-success font-weight-bold my-3">
-        Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
-      </div>
-      <div *ngIf="registrationError" class="text-danger font-weight-bold my-3">
-        {{ registrationError }}
-      </div>
-      <div class="col-12 mt-3 mb-5 d-flex gap-2">
-        <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview">Register</button>
-        <button type="button" class="btn btn-outline-secondary" (click)="registrationForm.reset(); profileImagePreview = null; submitted = false; registrationError = ''; registrationSuccess = false;">Reset</button>
-      </div>
-    </div>
-  </form>
-  <!-- <pre>{{ registrationForm.errors | json }}</pre> -->
-  <!-- <pre>{{ registrationForm.value | json }}</pre> -->
+      <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+        <section class="form-card" *ngIf="currentStep === 1">
+          <h2>Basic Information</h2>
+          <p class="section-subtitle">Set up your account basics to start your creator journey.</p>
+
+          <div class="field-grid">
+            <div class="field-block">
+              <label>Full Name <span class="text-danger">*</span></label>
+              <input formControlName="name" type="text" class="form-control" required />
+              <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Please enter your name.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Username <span class="text-danger">*</span></label>
+              <input formControlName="username" type="text" class="form-control" required pattern="^[a-zA-Z0-9_-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
+              <div *ngIf="submitted && registrationForm.get('username')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Username is required and can only contain letters, numbers, hyphens (-), and underscores (_).</div>
+              <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
+              <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">Username cannot contain spaces.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Mobile Number <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
+              </div>
+              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
+            </div>
+
+            <div class="field-block">
+              <label>Email Address <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
+              </div>
+              <div class="text-muted mt-1">A verification link will be sent after successful registration.</div>
+              <div *ngIf="emailVerificationSent && !emailVerified" class="text-success mt-1">Verification link sent to your email.</div>
+              <div *ngIf="emailVerified" class="text-success mt-1">Email verified.</div>
+              <div *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</div>
+              <div *ngIf="emailVerificationError" class="text-danger mt-1">{{ emailVerificationError }}</div>
+            </div>
+
+            <div class="field-block">
+              <label>Password <span class="text-danger">*</span></label>
+              <input formControlName="password" type="password" class="form-control" required />
+              <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Please enter your password.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Confirm Password <span class="text-danger">*</span></label>
+              <input formControlName="confirmPassword" type="password" class="form-control" required />
+              <div *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger mt-1">Please confirm your password.</div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+          </div>
+        </section>
+
+        <section class="form-card" *ngIf="currentStep === 2">
+          <h2>Social Media & Media</h2>
+          <p class="section-subtitle">Add payment and discovery details with your media profile.</p>
+
+          <div class="field-grid">
+            <div class="field-block">
+              <label>Payment Option <span class="text-danger">*</span></label>
+              <select formControlName="paymentOption" class="form-control">
+                <option value="free">Free (Contact/Social hidden)</option>
+                <option value="premium">Premium (Contact/Social visible)</option>
+              </select>
+              <div *ngIf="(step2Attempted || registrationForm.get('paymentOption')?.touched) && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
+            </div>
+
+            <div class="field-block" formGroupName="location">
+              <label>State <span class="text-danger">*</span></label>
+              <select formControlName="state" class="form-control">
+                <option value="" disabled selected>Select your state</option>
+                <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+              </select>
+              <div *ngIf="(step2Attempted || registrationForm.get('location.state')?.touched) && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Languages <span class="text-danger">*</span></label>
+              <ng-select
+                [items]="languagesList"
+                bindLabel="name"
+                bindValue="_id"
+                [multiple]="true"
+                [searchable]="true"
+                [closeOnSelect]="false"
+                [clearable]="true"
+                [appendTo]="'body'"
+                placeholder="Select languages"
+                formControlName="languages"
+                class="multi-select"
+              >
+                <ng-template ng-option-tmp let-item="item" let-selected="selected">
+                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
+                </ng-template>
+              </ng-select>
+              <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Categories <span class="text-danger">*</span></label>
+              <ng-select
+                [items]="categoriesList"
+                bindLabel="name"
+                bindValue="_id"
+                [multiple]="true"
+                [searchable]="true"
+                [closeOnSelect]="false"
+                [clearable]="true"
+                [appendTo]="'body'"
+                placeholder="Select categories"
+                formControlName="categories"
+                class="multi-select"
+              >
+                <ng-template ng-option-tmp let-item="item" let-selected="selected">
+                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
+                </ng-template>
+              </ng-select>
+              <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
+            </div>
+          </div>
+
+          <div class="field-block media-uploader">
+            <label>Profile Image <span class="text-danger">*</span></label>
+            <div class="upload-box">
+              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="preview-image" />
+              <p *ngIf="!profileImagePreview">Upload your profile image</p>
+              <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [required]="!profileImagePreview" />
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeProfileImage(0)" *ngIf="profileImagePreview">Remove</button>
+            </div>
+            <div *ngIf="!profileImagePreview && step2Attempted" class="text-danger mt-1">Profile image is required.</div>
+          </div>
+          
+          <div class="social-media-section" formArrayName="socialMedia">
+            <h3>Social Media Profiles</h3>
+            <div class="subtitle">Link your primary platforms to help brands find you and analyze your reach.</div>
+
+            <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="social-media-card">
+              <div class="social-media-row">
+                <div class="social-media-col">
+                  <div class="social-media-label">Social Platform</div>
+                  <select formControlName="platform" class="social-media-select">
+                    <option value="" disabled selected>Select platform</option>
+                    <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
+                  </select>
+                </div>
+
+                <div class="social-media-col">
+                  <div class="social-media-label">Handle / Username</div>
+                  <input formControlName="handle" type="text" class="social-media-input" placeholder="@ username" />
+                </div>
+
+                <div class="social-media-col">
+                  <div class="social-media-label">Follower Count</div>
+                  <input formControlName="followersCount" type="number" class="social-media-input" placeholder="e.g. 10500" />
+                </div>
+
+                <div class="social-media-col">
+                  <div class="social-media-label">Primary Category</div>
+                  <select formControlName="tier" class="social-media-select">
+                    <option value="" disabled selected>Select tier</option>
+                    <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <button *ngIf="socialMediaFormArray.length > 1" type="button" class="close-btn" (click)="removeSocialMedia(i)" title="Remove">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+            <button type="button" class="add-social-btn" (click)="addSocialMedia()" [disabled]="!canAddSocialMedia()">Add Another Platform</button>
+            <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one social profile. Upgrade to premium to add multiple profiles.</div>
+          </div>
+
+          <div class="actions-row dual">
+            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+          </div>
+        </section>
+
+        <section class="form-card" *ngIf="currentStep === 3">
+          <h2>Professional Details</h2>
+          <p class="section-subtitle">Complete your professional setup for brand collaborations.</p>
+
+          <div class="field-grid">
+            <div class="field-block full-width">
+              <label>Promotional Price <span class="text-danger">*</span></label>
+              <input formControlName="promotionalPrice" type="number" required class="form-control" placeholder="Enter your promotional price" />
+            </div>
+
+            <div class="field-block full-width" formGroupName="contact">
+              <label>Contact Options <span class="text-danger">*</span></label>
+              <div class="contact-grid">
+                <label class="contact-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
+                <label class="contact-item"><input type="checkbox" formControlName="email" /> Email</label>
+                <label class="contact-item"><input type="checkbox" formControlName="call" /> Call</label>
+              </div>
+              <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" class="text-danger mt-1">Please select at least one contact option.</div>
+            </div>
+          </div>
+
+          <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">
+            Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
+          </div>
+          <div *ngIf="registrationError" class="text-danger fw-bold my-3">
+            {{ registrationError }}
+          </div>
+
+          <div class="actions-row dual">
+            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+            <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview || isSubmitting">{{ isSubmitting ? 'Registering...' : 'Complete Registration' }}</button>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+</div>
 
 
 

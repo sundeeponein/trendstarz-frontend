@@ -21,6 +21,13 @@ import { NgSelectModule } from '@ng-select/ng-select';
 })
 
 export class BrandProfileComponent implements OnInit {
+  currentStep: 1 | 2 | 3 = 1;
+  readonly totalSteps = 3;
+  step1Complete: boolean = false;
+  step2Complete: boolean = false;
+  step3Complete: boolean = false;
+  step2Attempted: boolean = false;
+
   // OTP dialog/expand state
   showPhoneOtp: boolean = false;
   showEmailOtp: boolean = false;
@@ -30,6 +37,7 @@ export class BrandProfileComponent implements OnInit {
   // Phone/email verification status and error
   phoneVerified: boolean = false;
   emailVerified: boolean = false;
+  showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -44,7 +52,7 @@ export class BrandProfileComponent implements OnInit {
     this.resendEmailVerificationSuccess = false;
     this.resendEmailVerificationError = null;
     const email = this.registrationForm.get('email')?.value;
-    this.otpService.sendOtp('email', email).subscribe({
+    this.configService.sendEmailVerificationLink(email).subscribe({
       next: () => {
         this.resendingEmailVerification = false;
         this.resendEmailVerificationSuccess = true;
@@ -188,6 +196,7 @@ export class BrandProfileComponent implements OnInit {
   const logoArray = this.registrationForm.get('brandLogo') as FormArray;
   logoArray.clear();
   logoArray.push(this.fb.control(this.brandLogoFile));
+  this.refreshStepCompletion();
       } else {
         this.registrationError = 'Brand logo upload failed.';
       }
@@ -238,6 +247,7 @@ export class BrandProfileComponent implements OnInit {
           prodArray.push(this.fb.control(null));
         }
         prodArray.setControl(index, this.fb.control(this.productImagesFiles[index]));
+        this.refreshStepCompletion();
       } else {
         this.registrationError = 'Product image upload failed.';
       }
@@ -299,9 +309,120 @@ export class BrandProfileComponent implements OnInit {
 
     // Username input sanitization
     this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => this.onBrandUsernameInput());
+    this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
+    this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+    // Fetch dropdown data from API
+    this.configService.getStates().subscribe(data => this.states = data);
+    this.configService.getTiers().subscribe(data => this.tiers = data);
+    this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
+    this.configService.getLanguages().subscribe(data => this.languagesList = data);
+    this.configService.getCategories().subscribe(data => this.categoriesList = data);
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      this.configService.getBrandProfileById(token).subscribe({
+        next: (profile: any) => {
+          if (!profile) {
+            this.registrationError = 'Profile not found or you are not logged in.';
+            return;
+          }
+
+          this.emailVerified = !!profile?.isEmailVerified;
+          this.showEmailVerificationPrompt = !this.emailVerified;
+
+          const stateId = this.states.find(s => s.name === profile.location?.state)?.['_id'] || '';
+          const languageIds = (profile.languages || []).map((name: string) =>
+            this.languagesList.find((l: any) => l.name === name)?._id
+          ).filter(Boolean);
+          const categoryIds = (profile.categories || []).map((name: string) =>
+            this.categoriesList.find((c: any) => c.name === name)?._id
+          ).filter(Boolean);
+          const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
+            ...sm,
+            platform: this.socialMediaList.find((s: any) => s.name === sm.platform)?._id || sm.platform
+          }));
+          const resolvedBrandUsername =
+            profile.brandUsername ||
+            profile.username ||
+            (profile.brandName
+              ? String(profile.brandName)
+                  .trim()
+                  .replace(/\s+/g, '-')
+                  .replace(/[^a-zA-Z0-9_-]/g, '')
+              : '');
+          const resolvedPromotionalPrice =
+            profile.promotionalPrice ?? profile.price ?? '';
+
+          this.registrationForm.patchValue({
+            brandName: profile.brandName || '',
+            brandUsername: resolvedBrandUsername,
+            email: profile.email || '',
+            phoneNumber: profile.phoneNumber || '',
+            isPremium: !!profile.isPremium,
+            paymentOption: profile.paymentOption || 'free',
+            location: {
+              state: stateId,
+              googleMapLink: profile.location?.googleMapLink || ''
+            },
+            promotionalPrice: resolvedPromotionalPrice,
+            categories: categoryIds,
+            languages: languageIds,
+            website: profile.website || '',
+            googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
+            contact: profile.contact || { whatsapp: false, email: false, call: false }
+          });
+
+          const logoArr = this.registrationForm.get('brandLogo') as FormArray;
+          logoArr.clear();
+          (profile.brandLogo || []).forEach((img: any) => logoArr.push(this.fb.group({
+            url: img.url,
+            public_id: img.public_id
+          })));
+          this.brandLogoPreview = (profile.brandLogo && profile.brandLogo[0]?.url) || null;
+          this.brandLogoFile = (profile.brandLogo && profile.brandLogo[0]) || null;
+
+          const productSource = Array.isArray(profile.products)
+            ? profile.products
+            : (Array.isArray(profile.productImages) ? profile.productImages : []);
+          const productArr = this.registrationForm.get('productImages') as FormArray;
+          productArr.clear();
+          productSource.forEach((img: any) => productArr.push(this.fb.group({
+            url: img.url,
+            public_id: img.public_id
+          })));
+          this.productImagesPreview = productSource.map((img: any) => img?.url || null);
+          this.productImagesFiles = productSource.map((img: any) =>
+            (img?.url && img?.public_id ? { url: img.url, public_id: img.public_id } : null)
+          );
+
+          const smArr = this.registrationForm.get('socialMedia') as FormArray;
+          smArr.clear();
+          socialMedia.forEach((sm: any) => {
+            smArr.push(this.fb.group({
+              platform: sm.platform || '',
+              handle: sm.handle || '',
+              tier: sm.tier || '',
+              followersCount: sm.followersCount || ''
+            }));
+          });
+
+          this.originalFormValue = this.registrationForm.getRawValue();
+          this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
+          this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+          this.registrationForm.disable();
+          this.refreshStepCompletion();
+        },
+        error: () => {
+          this.registrationError = 'Error fetching profile.';
+          this.showEmailVerificationPrompt = false;
+        },
+      });
+    }
 
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
+    this.refreshStepCompletion();
   }
 
   // Sanitize brand username input (replace spaces with hyphens, remove invalid chars)
@@ -329,6 +450,7 @@ export class BrandProfileComponent implements OnInit {
   enableEdit(): void {
     this.isEditMode = true;
     this.registrationForm.enable();
+    this.refreshStepCompletion();
   // Password fields are disabled and removed from the form
   }
 
@@ -340,6 +462,7 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.disable();
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
+    this.refreshStepCompletion();
   }
 
   payAndUpgrade() {
@@ -399,12 +522,14 @@ export class BrandProfileComponent implements OnInit {
       tier: ['', Validators.required],
       followersCount: ['', Validators.required]
     }));
+    this.refreshStepCompletion();
   }
 
   removeSocialMedia(index: number) {
     if (this.socialMediaFormArray.length > 1) {
       this.socialMediaFormArray.removeAt(index);
     }
+    this.refreshStepCompletion();
   }
 
   get productImagesFormArray() {
@@ -420,6 +545,124 @@ export class BrandProfileComponent implements OnInit {
 
   removeProductImage(index: number) {
     this.productImagesFormArray.removeAt(index);
+    this.refreshStepCompletion();
+  }
+
+  private hasBrandLogo(): boolean {
+    const logo = this.brandLogoFormArray.at(0)?.value;
+    return !!(
+      this.brandLogoPreview ||
+      (logo && typeof logo === 'object' && 'url' in logo && logo.url)
+    );
+  }
+
+  private computeStepComplete(step: number): boolean {
+    if (step === 1) {
+      return !!(
+        this.registrationForm.get('brandName')?.valid &&
+        this.registrationForm.get('brandUsername')?.valid &&
+        this.registrationForm.get('email')?.valid &&
+        this.registrationForm.get('phoneNumber')?.valid &&
+        this.hasBrandLogo()
+      );
+    }
+
+    if (step === 2) {
+      return !!(
+        this.registrationForm.get('paymentOption')?.valid &&
+        this.registrationForm.get('location.state')?.valid &&
+        this.registrationForm.get('languages')?.valid &&
+        this.registrationForm.get('categories')?.valid &&
+        this.socialMediaFormArray.valid
+      );
+    }
+
+    if (step === 3) {
+      return !!(
+        this.registrationForm.get('promotionalPrice')?.valid &&
+        this.registrationForm.get('contact')?.valid
+      );
+    }
+
+    return false;
+  }
+
+  private refreshStepCompletion() {
+    if (!this.isEditMode) {
+      this.step1Complete = this.currentStep > 1;
+      this.step2Complete = this.currentStep > 2;
+      this.step3Complete = false;
+      return;
+    }
+
+    this.step1Complete = this.computeStepComplete(1);
+    this.step2Complete = this.computeStepComplete(2);
+    this.step3Complete = this.computeStepComplete(3);
+  }
+
+  private canNavigateTo(step: 1 | 2 | 3): boolean {
+    if (step === 1) return true;
+    if (step === 2) return this.step1Complete;
+    if (step === 3) return this.step1Complete && this.step2Complete;
+    return false;
+  }
+
+  goToStep(step: 1 | 2 | 3) {
+    this.currentStep = step;
+    this.submitted = false;
+    this.registrationError = '';
+    if (step === 2) {
+      this.step2Attempted = false;
+    }
+    this.refreshStepCompletion();
+  }
+
+  private validateCurrentStep(): boolean {
+    if (this.currentStep === 1) {
+      const fields = ['brandName', 'brandUsername', 'email', 'phoneNumber'];
+      fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
+      return fields.every((path) => this.registrationForm.get(path)?.valid) && this.hasBrandLogo();
+    }
+
+    if (this.currentStep === 2) {
+      this.step2Attempted = true;
+      const required = ['paymentOption', 'location.state', 'languages', 'categories'];
+      required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
+      this.socialMediaFormArray.controls.forEach((ctrl) => ctrl.markAllAsTouched());
+      return required.every((path) => this.registrationForm.get(path)?.valid) && this.socialMediaFormArray.valid;
+    }
+
+    if (this.currentStep === 3) {
+      this.registrationForm.get('promotionalPrice')?.markAsTouched();
+      this.registrationForm.get('contact')?.markAsTouched();
+      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+    }
+
+    return false;
+  }
+
+  nextStep() {
+    if (this.isEditMode && !this.validateCurrentStep()) return;
+    if (this.currentStep < this.totalSteps) {
+      this.currentStep = (this.currentStep + 1) as 1 | 2 | 3;
+      this.submitted = false;
+      this.registrationError = '';
+      if (this.currentStep === 2) {
+        this.step2Attempted = false;
+      }
+      this.refreshStepCompletion();
+    }
+  }
+
+  prevStep() {
+    if (this.currentStep > 1) {
+      this.currentStep = (this.currentStep - 1) as 1 | 2 | 3;
+      this.submitted = false;
+      this.registrationError = '';
+      if (this.currentStep === 2) {
+        this.step2Attempted = false;
+      }
+    }
   }
 
 
