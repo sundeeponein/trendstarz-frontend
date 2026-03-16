@@ -138,7 +138,7 @@ export class AdminUserTableComponent implements OnInit {
   }
   deleteUser(userId: string) {
     this.isLoading = true;
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
+    this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders()).subscribe(() => {
       this.fetchUsers();
       setTimeout(() => { this.isLoading = false; }, 500);
     });
@@ -148,7 +148,7 @@ export class AdminUserTableComponent implements OnInit {
   }
   deletePermanently(userId: string) {
     this.isLoading = true;
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete-permanent`, {}, this.getAuthHeaders()).subscribe(() => {
+    this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders()).subscribe(() => {
       this.fetchUsers();
       setTimeout(() => { this.isLoading = false; }, 500);
     });
