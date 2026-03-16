@@ -19,6 +19,12 @@ import imageCompression from 'browser-image-compression';
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  currentStep: 1 | 2 | 3 = 1;
+  readonly totalSteps = 3;
+  step1Complete: boolean = false;
+  step2Complete: boolean = false;
+  step3Complete: boolean = false;
+  step2Attempted: boolean = false;
   // OTP dialog/expand state
   showPhoneOtp: boolean = false;
   showEmailOtp: boolean = false;
@@ -28,6 +34,7 @@ export class InfluencerProfileComponent implements OnInit {
   // Phone/email verification status and error
   phoneVerified: boolean = false;
   emailVerified: boolean = false;
+  showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -48,7 +55,7 @@ export class InfluencerProfileComponent implements OnInit {
     this.resendEmailVerificationSuccess = false;
     this.resendEmailVerificationError = null;
     const email = this.registrationForm.get('email')?.value;
-    this.otpService.sendOtp('email', email).subscribe({
+    this.configService.sendEmailVerificationLink(email).subscribe({
       next: () => {
         this.resendingEmailVerification = false;
         this.resendEmailVerificationSuccess = true;
@@ -188,6 +195,9 @@ export class InfluencerProfileComponent implements OnInit {
       this.usernameError = '';
     });
 
+    this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
+    this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
     // Fetch dropdown data from API
     this.configService.getStates().subscribe(data => this.states = data);
     this.configService.getTiers().subscribe(data => this.tiers = data);
@@ -204,6 +214,8 @@ export class InfluencerProfileComponent implements OnInit {
             this.registrationError = 'Profile not found or you are not logged in.';
             return;
           }
+          this.emailVerified = !!profile.isEmailVerified;
+          this.showEmailVerificationPrompt = !this.emailVerified;
           // Map state name to ID
           const stateId = this.states.find(s => s.name === profile.location?.state)?.['_id'] || '';
           // Map language names to IDs
@@ -253,11 +265,125 @@ export class InfluencerProfileComponent implements OnInit {
           // Set premium period if available
           this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
           this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+          this.refreshStepCompletion();
         },
         error: (err) => {
           this.registrationError = 'Error fetching profile.';
         }
       });
+    }
+
+    this.refreshStepCompletion();
+  }
+
+  private hasExistingProfileImage(): boolean {
+    return !!(
+      this.profileImagePreview ||
+      (this.profileImagesFormArray.controls.length > 0 &&
+        this.profileImagesFormArray.at(0)?.value &&
+        this.profileImagesFormArray.at(0)?.value.url)
+    );
+  }
+
+  private computeStepComplete(step: number): boolean {
+    if (step === 1) {
+      return !!(
+        this.registrationForm.get('name')?.valid &&
+        this.registrationForm.get('username')?.valid &&
+        this.registrationForm.get('phoneNumber')?.valid &&
+        this.registrationForm.get('email')?.valid
+      );
+    }
+
+    if (step === 2) {
+      return !!(
+        this.registrationForm.get('paymentOption')?.valid &&
+        this.registrationForm.get('location.state')?.valid &&
+        this.registrationForm.get('languages')?.valid &&
+        this.registrationForm.get('categories')?.valid &&
+        this.socialMediaFormArray.valid &&
+        this.hasExistingProfileImage()
+      );
+    }
+
+    if (step === 3) {
+      return !!(
+        this.registrationForm.get('promotionalPrice')?.valid &&
+        this.registrationForm.get('contact')?.valid
+      );
+    }
+
+    return false;
+  }
+
+  private refreshStepCompletion() {
+    if (!this.isEditMode) {
+      this.step1Complete = this.currentStep > 1;
+      this.step2Complete = this.currentStep > 2;
+      this.step3Complete = false;
+      return;
+    }
+
+    this.step1Complete = this.computeStepComplete(1);
+    this.step2Complete = this.computeStepComplete(2);
+    this.step3Complete = this.computeStepComplete(3);
+  }
+
+  goToStep(step: 1 | 2 | 3) {
+    this.currentStep = step;
+    this.submitted = false;
+    this.registrationError = '';
+    if (step === 2) {
+      this.step2Attempted = false;
+    }
+    this.refreshStepCompletion();
+  }
+
+  private validateCurrentStep(): boolean {
+    if (this.currentStep === 1) {
+      const fields = ['name', 'username', 'phoneNumber', 'email'];
+      fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
+      return fields.every((path) => this.registrationForm.get(path)?.valid);
+    }
+
+    if (this.currentStep === 2) {
+      this.step2Attempted = true;
+      const required = ['paymentOption', 'location.state', 'languages', 'categories'];
+      required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
+      this.socialMediaFormArray.controls.forEach((ctrl) => ctrl.markAllAsTouched());
+      return required.every((path) => this.registrationForm.get(path)?.valid) && this.socialMediaFormArray.valid && this.hasExistingProfileImage();
+    }
+
+    if (this.currentStep === 3) {
+      this.registrationForm.get('promotionalPrice')?.markAsTouched();
+      this.registrationForm.get('contact')?.markAsTouched();
+      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+    }
+
+    return false;
+  }
+
+  nextStep() {
+    if (this.isEditMode && !this.validateCurrentStep()) return;
+    if (this.currentStep < this.totalSteps) {
+      this.currentStep = (this.currentStep + 1) as 1 | 2 | 3;
+      this.submitted = false;
+      this.registrationError = '';
+      if (this.currentStep === 2) {
+        this.step2Attempted = false;
+      }
+      this.refreshStepCompletion();
+    }
+  }
+
+  prevStep() {
+    if (this.currentStep > 1) {
+      this.currentStep = (this.currentStep - 1) as 1 | 2 | 3;
+      this.submitted = false;
+      this.registrationError = '';
+      if (this.currentStep === 2) {
+        this.step2Attempted = false;
+      }
     }
   }
 
@@ -304,6 +430,7 @@ export class InfluencerProfileComponent implements OnInit {
   // Keep password fields disabled for security
   this.registrationForm.get('password')?.disable();
   this.registrationForm.get('confirmPassword')?.disable();
+  this.refreshStepCompletion();
   }
 
   cancelEdit(): void {
@@ -315,6 +442,7 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
     this.registrationForm.get('username')?.disable();
+    this.refreshStepCompletion();
   }
 
   // Async validator to check username uniqueness (for edit profile)
@@ -356,6 +484,7 @@ export class InfluencerProfileComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.profileImagePreview = e.target.result;
+        this.refreshStepCompletion();
       };
       reader.readAsDataURL(compressedFile);
     } catch (err) {
@@ -367,6 +496,7 @@ export class InfluencerProfileComponent implements OnInit {
   removeProfileImage(index: number) {
     if (!this.isEditMode) return;
     this.profileImagesFormArray.removeAt(index);
+    this.refreshStepCompletion();
   }
 
 
@@ -383,6 +513,7 @@ export class InfluencerProfileComponent implements OnInit {
       tier: ['', Validators.required],
       followersCount: ['', Validators.required]
     }));
+    this.refreshStepCompletion();
   }
 
   removeSocialMedia(index: number) {
@@ -391,6 +522,7 @@ export class InfluencerProfileComponent implements OnInit {
       this.socialMediaFormArray.removeAt(index);
     }
       this.submitted = true; // Set submitted to true on form submission
+      this.refreshStepCompletion();
   }
 
 
@@ -516,6 +648,8 @@ export class InfluencerProfileComponent implements OnInit {
               resolve();
               return;
             }
+            this.emailVerified = !!profile.isEmailVerified;
+            this.showEmailVerificationPrompt = !this.emailVerified;
             const stateId = (this.states || []).find((s: any) => s.name === profile.location?.state)?.['_id'] || '';
             const languageIds = (profile.languages || []).map((name: string) =>
               (this.languagesList || []).find((l: any) => l.name === name)?._id
@@ -561,6 +695,7 @@ export class InfluencerProfileComponent implements OnInit {
             this.originalFormValue = this.registrationForm.getRawValue();
             this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
             this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+            this.refreshStepCompletion();
             resolve();
           },
           error: () => {

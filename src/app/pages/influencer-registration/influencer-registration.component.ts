@@ -27,6 +27,14 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+  // MVP rollout switch: update this later when business rules change.
+  readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
+  currentStep: 1 | 2 | 3 = 1;
+  readonly totalSteps = 3;
+  step1Complete: boolean = false;
+  step2Complete: boolean = false;
+  step3Complete: boolean = false;
+  step2Attempted: boolean = false;
   emailVerificationSent: boolean = false;
   emailVerificationError: string | null = null;
   // OTP dialog/expand state
@@ -55,13 +63,19 @@ export class InfluencerRegistrationComponent implements OnInit {
   resendingEmailVerification: boolean = false;
   resendEmailVerificationSuccess: boolean = false;
   resendEmailVerificationError: string | null = null;
+  pendingVerificationEmail: string = '';
 
   resendEmailVerification() {
     this.resendingEmailVerification = true;
     this.resendEmailVerificationSuccess = false;
     this.resendEmailVerificationError = null;
-    const email = this.registrationForm.get('email')?.value;
-    this.otpService.sendOtp('email', email).subscribe({
+    const email = this.pendingVerificationEmail || this.registrationForm.get('email')?.value;
+    if (!email) {
+      this.resendingEmailVerification = false;
+      this.resendEmailVerificationError = 'No email found for verification resend.';
+      return;
+    }
+    this.configService.sendEmailVerificationLink(email).subscribe({
       next: () => {
         this.resendingEmailVerification = false;
         this.resendEmailVerificationSuccess = true;
@@ -145,6 +159,10 @@ export class InfluencerRegistrationComponent implements OnInit {
   categoriesList: any[] = [];
   submitted = false;
   usernameError: string = '';
+  duplicateUsernameError: string = '';
+  duplicateEmailError: string = '';
+  duplicatePhoneError: string = '';
+  isSubmitting: boolean = false;
 
   // Utility to slugify username
   slugifyUsername(username: string): string {
@@ -191,23 +209,14 @@ export class InfluencerRegistrationComponent implements OnInit {
       }, { validators: [atLeastOneContactRequired] }),
     });
 
-    // Now subscribe to valueChanges
-    this.registrationForm.get('email')?.valueChanges.subscribe(email => {
-      if (this.registrationForm.get('email')?.valid && email) {
-        this.otpService.sendOtp('email', email).subscribe({
-          next: () => {
-            this.emailVerificationSent = true;
-            this.emailVerificationError = null;
-          },
-          error: (err: any) => {
-            this.emailVerificationSent = false;
-            this.emailVerificationError = err?.error?.message || 'Failed to send verification email.';
-          }
-        });
-      }
-    });
     // Listen for username changes to sanitize and clear error
     this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
+    this.registrationForm.get('phoneNumber')?.valueChanges.subscribe(() => {
+      this.duplicatePhoneError = '';
+    });
+    this.registrationForm.get('email')?.valueChanges.subscribe(() => {
+      this.duplicateEmailError = '';
+    });
     // Only reset success/error flags if the form is dirty and success is showing
     this.registrationForm.valueChanges.subscribe(() => {
       if (this.registrationSuccess && this.registrationForm.dirty) {
@@ -223,6 +232,180 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
+
+    this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
+      this.enforceSocialProfileLimit();
+      this.refreshStepCompletion();
+    });
+
+    this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
+    this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+    this.enforceSocialProfileLimit();
+    this.applySocialMediaValidators();
+    this.refreshStepCompletion();
+  }
+
+  private refreshStepCompletion() {
+    this.step1Complete = this.computeStepComplete(1);
+    this.step2Complete = this.computeStepComplete(2);
+    this.step3Complete = this.computeStepComplete(3);
+  }
+
+  isPremiumPlan(): boolean {
+    return this.registrationForm.get('paymentOption')?.value === 'premium';
+  }
+
+  canAddSocialMedia(): boolean {
+    return this.isPremiumPlan() || this.socialMediaFormArray.length < this.FREE_SOCIAL_PROFILE_LIMIT;
+  }
+
+  private enforceSocialProfileLimit() {
+    if (this.isPremiumPlan()) {
+      return;
+    }
+
+    while (this.socialMediaFormArray.length > this.FREE_SOCIAL_PROFILE_LIMIT) {
+      this.socialMediaFormArray.removeAt(this.socialMediaFormArray.length - 1);
+    }
+  }
+
+  private applySocialMediaValidators() {
+    this.socialMediaFormArray.controls.forEach((group) => {
+      const platform = group.get('platform');
+      const handle = group.get('handle');
+      const tier = group.get('tier');
+      const followersCount = group.get('followersCount');
+
+      platform?.setValidators([Validators.required]);
+      handle?.setValidators([Validators.required]);
+      tier?.setValidators([Validators.required]);
+      followersCount?.setValidators([Validators.required]);
+
+      platform?.updateValueAndValidity({ emitEvent: false });
+      handle?.updateValueAndValidity({ emitEvent: false });
+      tier?.updateValueAndValidity({ emitEvent: false });
+      followersCount?.updateValueAndValidity({ emitEvent: false });
+    });
+  }
+
+  private computeStepComplete(step: number): boolean {
+    if (step === 1) {
+      const f = this.registrationForm;
+      return !!(
+        f.get('name')?.valid &&
+        f.get('username')?.valid &&
+        f.get('phoneNumber')?.valid &&
+        f.get('email')?.valid &&
+        f.get('password')?.valid &&
+        f.get('confirmPassword')?.valid
+      );
+    }
+    if (step === 2) {
+      const f = this.registrationForm;
+      const detailsValid = !!(
+        f.get('paymentOption')?.valid &&
+        f.get('location.state')?.valid &&
+        f.get('languages')?.valid &&
+        f.get('categories')?.valid
+      );
+      if (!detailsValid) {
+        return false;
+      }
+      return this.socialMediaFormArray.valid && !!this.profileImagePreview;
+    }
+    if (step === 3) {
+      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+    }
+    return false;
+  }
+
+  isStepComplete(step: number): boolean {
+    if (step === 1) return this.step1Complete;
+    if (step === 2) return this.step2Complete;
+    if (step === 3) return this.step3Complete;
+    return false;
+  }
+
+  goToStep(step: 1 | 2 | 3) {
+    if (step < this.currentStep || this.canNavigateTo(step)) {
+      this.currentStep = step;
+      this.submitted = false;
+      this.registrationError = '';
+      if (step === 2) {
+        this.step2Attempted = false;
+      }
+      this.refreshStepCompletion();
+    }
+  }
+
+  private canNavigateTo(step: 1 | 2 | 3): boolean {
+    if (step === 1) return true;
+    if (step === 2) return this.isStepComplete(1);
+    return this.isStepComplete(1) && this.isStepComplete(2);
+  }
+
+  nextStep() {
+    if (!this.validateCurrentStep()) return;
+    if (this.currentStep < this.totalSteps) {
+      this.currentStep = (this.currentStep + 1) as 1 | 2 | 3;
+      this.submitted = false;
+      this.registrationError = '';
+      if (this.currentStep === 2) {
+        this.step2Attempted = false;
+      }
+      this.refreshStepCompletion();
+    }
+  }
+
+  prevStep() {
+    if (this.currentStep > 1) {
+      this.currentStep = (this.currentStep - 1) as 1 | 2 | 3;
+      this.submitted = false;
+      this.registrationError = '';
+      if (this.currentStep === 2) {
+        this.step2Attempted = false;
+      }
+      this.refreshStepCompletion();
+    }
+  }
+
+  private validateCurrentStep(): boolean {
+    this.submitted = true;
+
+    if (this.currentStep === 1) {
+      this.registrationForm.get('name')?.markAsTouched();
+      this.registrationForm.get('username')?.markAsTouched();
+      this.registrationForm.get('phoneNumber')?.markAsTouched();
+      this.registrationForm.get('email')?.markAsTouched();
+      this.registrationForm.get('password')?.markAsTouched();
+      this.registrationForm.get('confirmPassword')?.markAsTouched();
+      return this.isStepComplete(1);
+    }
+
+    if (this.currentStep === 2) {
+      this.step2Attempted = true;
+      this.enforceSocialProfileLimit();
+      this.registrationForm.get('paymentOption')?.markAsTouched();
+      this.registrationForm.get('location.state')?.markAsTouched();
+      this.registrationForm.get('languages')?.markAsTouched();
+      this.registrationForm.get('categories')?.markAsTouched();
+      this.socialMediaFormArray.markAllAsTouched();
+      if (!this.profileImagePreview) {
+        this.registrationError = 'Profile image is required.';
+      } else {
+        this.registrationError = '';
+      }
+      return this.isStepComplete(2);
+    }
+
+    if (this.currentStep === 3) {
+      this.registrationForm.get('promotionalPrice')?.markAsTouched();
+      this.registrationForm.get('contact')?.markAsTouched();
+      return this.isStepComplete(3);
+    }
+
+    return false;
   }
   // Sanitize username input (replace spaces with hyphens, remove invalid chars)
   onUsernameInput() {
@@ -232,6 +415,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     value = value.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
     ctrl.setValue(value, { emitEvent: false });
     this.usernameError = '';
+    this.duplicateUsernameError = '';
   }
 
   // Async validator to check username uniqueness
@@ -270,6 +454,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       reader.onload = (e: any) => {
         this.profileImagePreview = e.target.result;
         this.profileImageFile = compressedFile;
+        this.refreshStepCompletion();
       };
       reader.readAsDataURL(compressedFile);
     } catch (error) {
@@ -278,7 +463,12 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   removeProfileImage(index: number) {
-    this.profileImagesFormArray.removeAt(index);
+    if (this.profileImagesFormArray.length > index) {
+      this.profileImagesFormArray.removeAt(index);
+    }
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.refreshStepCompletion();
   }
 
     goToPayment() {
@@ -291,12 +481,17 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   addSocialMedia() {
+    if (!this.canAddSocialMedia()) {
+      return;
+    }
+
     this.socialMediaFormArray.push(this.fb.group({
       platform: ['', Validators.required],
       handle: ['', Validators.required],
       tier: ['', Validators.required],
       followersCount: ['', Validators.required]
     }));
+    this.applySocialMediaValidators();
   }
 
   removeSocialMedia(index: number) {
@@ -308,7 +503,14 @@ export class InfluencerRegistrationComponent implements OnInit {
 
 
   async onSubmit() {
+    if (this.isSubmitting) {
+      return;
+    }
+
     this.submitted = true;
+    this.duplicateUsernameError = '';
+    this.duplicateEmailError = '';
+    this.duplicatePhoneError = '';
     if (this.registrationForm.invalid || !this.profileImagePreview) {
       if (this.registrationForm.get('username')?.hasError('usernameTaken')) {
         this.usernameError = 'Username already exists. Please choose another.';
@@ -318,6 +520,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       }
       return;
     }
+    this.isSubmitting = true;
     this.registrationError = '';
     // Submit registration and handle response
     // ...existing code for registration submission...
@@ -351,15 +554,21 @@ export class InfluencerRegistrationComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
-    // Map social media platform ID to name
-    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
-      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
-      return {
-        ...sm,
-        platform: platformObj ? platformObj.name : sm.platform,
-        followersCount: Number(sm.followersCount)
-      };
-    });
+    // MVP: allow social media for all users (free + premium).
+    // Free users: limited by FREE_SOCIAL_PROFILE_LIMIT.
+    // Premium users: multiple profiles allowed.
+    const socialLimit = this.isPremiumPlan() ? Number.MAX_SAFE_INTEGER : this.FREE_SOCIAL_PROFILE_LIMIT;
+    const socialMedia = (raw.socialMedia || [])
+      .filter((sm: any) => sm?.platform && sm?.handle && sm?.tier && sm?.followersCount !== '' && sm?.followersCount !== null)
+      .slice(0, socialLimit)
+      .map((sm: any) => {
+        const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+        return {
+          ...sm,
+          platform: platformObj ? platformObj.name : sm.platform,
+          followersCount: Number(sm.followersCount)
+        };
+      });
     // Step 1: Upload image to Cloudinary if selected
     let imageUploadResult: { url: string, public_id: string } | null = null;
     if (this.profileImageFile) {
@@ -376,10 +585,12 @@ export class InfluencerRegistrationComponent implements OnInit {
           imageUploadResult = { url: data.secure_url, public_id: data.public_id };
         } else {
           this.registrationError = 'Profile image upload failed.';
+          this.isSubmitting = false;
           return;
         }
       } catch (err) {
         this.registrationError = 'Profile image upload failed.';
+        this.isSubmitting = false;
         return;
       }
     }
@@ -400,18 +611,70 @@ export class InfluencerRegistrationComponent implements OnInit {
       next: (savedInfluencer) => {
         this.ngZone.run(() => {
           this.registrationSuccess = true;
+          this.pendingVerificationEmail = raw.email;
+          this.showEmailVerificationPrompt = true;
+          this.emailVerificationSent = true;
+          this.emailVerificationError = null;
           this.registrationForm.reset();
           this.profileImagePreview = null;
           this.profileImageFile = null;
           this.submitted = false;
+          this.isSubmitting = false;
         });
       },
       error: err => {
-        if (err?.error?.message && err.error.message.includes('already exists')) {
-          this.registrationError = err.error.message;
-        } else {
-          this.registrationError = 'Registration failed. Please try again.';
+        const backendMessage = String(err?.error?.message || err?.message || '').toLowerCase();
+        const duplicateFields: string[] = Array.isArray(err?.error?.duplicateFields)
+          ? err.error.duplicateFields.map((f: any) => String(f).toLowerCase())
+          : [];
+
+        if (duplicateFields.length) {
+          if (duplicateFields.includes('username')) {
+            this.duplicateUsernameError = 'Username already exists. Please choose another.';
+            this.registrationForm.get('username')?.setErrors({ ...(this.registrationForm.get('username')?.errors || {}), duplicate: true });
+          }
+          if (duplicateFields.includes('email')) {
+            this.duplicateEmailError = 'Email already exists. Please use another email or login.';
+            this.registrationForm.get('email')?.setErrors({ ...(this.registrationForm.get('email')?.errors || {}), duplicate: true });
+          }
+          if (duplicateFields.includes('phonenumber') || duplicateFields.includes('phone') || duplicateFields.includes('mobile')) {
+            this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
+            this.registrationForm.get('phoneNumber')?.setErrors({ ...(this.registrationForm.get('phoneNumber')?.errors || {}), duplicate: true });
+          }
+          this.currentStep = 1;
+          this.refreshStepCompletion();
+          this.isSubmitting = false;
+          return;
         }
+
+        if (backendMessage.includes('username') && backendMessage.includes('already exists')) {
+          this.duplicateUsernameError = 'Username already exists. Please choose another.';
+          this.registrationForm.get('username')?.setErrors({ ...(this.registrationForm.get('username')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.isSubmitting = false;
+          return;
+        }
+
+        if (backendMessage.includes('email') && backendMessage.includes('already exists')) {
+          this.duplicateEmailError = 'Email already exists. Please use another email or login.';
+          this.registrationForm.get('email')?.setErrors({ ...(this.registrationForm.get('email')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.isSubmitting = false;
+          return;
+        }
+
+        if ((backendMessage.includes('phone') || backendMessage.includes('phonenumber') || backendMessage.includes('mobile')) && backendMessage.includes('already exists')) {
+          this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
+          this.registrationForm.get('phoneNumber')?.setErrors({ ...(this.registrationForm.get('phoneNumber')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.refreshStepCompletion();
+          this.isSubmitting = false;
+          return;
+        }
+
+        this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
+        this.refreshStepCompletion();
+        this.isSubmitting = false;
       }
     });
   }
@@ -423,6 +686,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   this.profileImagePreview = null;
   this.profileImageFile = null;
   this.submitted = false;
+  this.pendingVerificationEmail = '';
   }
 
 
