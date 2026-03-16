@@ -1,283 +1,183 @@
-<!-- Premium Status and Payment Features -->
-<div class="container">
-  <!-- Email Verification Prompt -->
-  <div *ngIf="!emailVerified" class="alert alert-warning mt-4">
-    <div>
-      <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
-      <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
-        Resend Verification Email
-      </button>
-      <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
-      <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
-    </div>
-  </div>
-  <div class="premium-status-box rounded-3 bg-light p-3">
-    <ng-container *ngIf="registrationForm.get('paymentOption')?.value === 'premium'; else notPremiumTpl">
-      <div class="fw-bold text-black">You are a Premium Influencer!</div>
-      <div *ngIf="premiumStart && premiumEnd" class="text-success">
-        Premium Period: <strong>{{ premiumStart | date:'dd MMM yyyy' }}</strong> to <strong>{{ premiumEnd | date:'dd MMM yyyy' }}</strong>
+<div class="registration-shell">
+  <div class="registration-wrap">
+    <aside class="left-panel">
+      <div class="panel-card progress-panel">
+        <h4>Profile Progress</h4>
+        <p class="step-count">Step {{ currentStep }} of 3</p>
+
+        <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
+          <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
+          <span class="step-label">Basic Details</span>
+        </button>
+
+        <button type="button" class="step-item" [class.active]="currentStep === 2" [class.complete]="step2Complete" (click)="goToStep(2)">
+          <span class="step-icon">{{ step2Complete ? '✓' : '2' }}</span>
+          <span class="step-label">Media & Platforms</span>
+        </button>
+
+        <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
+          <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
+          <span class="step-label">Professional</span>
+        </button>
       </div>
-      <div style="margin-top: 0.5rem;" class="text-black">
-        <strong>Premium Features:</strong>
-        <ul>
-          <li>Contact/Social visible</li>
-          <li>Upload up to 3 profile images</li>
-          <li>Priority support</li>
-          <li>Access to premium campaigns</li>
-        </ul>
+    </aside>
+
+    <main class="content-panel">
+      <div *ngIf="showEmailVerificationPrompt && !emailVerified" class="alert alert-warning mb-4">
+        <strong>Email not verified.</strong> Please check your inbox and click the verification link.
+        <button class="btn btn-link p-0 ms-2" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">Resend Verification Email</button>
+        <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
+        <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
       </div>
-    </ng-container>
-    <ng-template #notPremiumTpl>
-      <div class="text-danger">You are on a Free plan.</div>
-      <div class="text-warning">Upgrade to Premium to unlock all features!</div>
-      <button class="btn btn-success" (click)="showPayment = true" type="button">Upgrade to Premium</button>
-    </ng-template>
-  </div>
-</div>
 
-<!-- Payment Modal/Section -->
-<div *ngIf="showPayment" class="payment-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 2000;">
-  <div style="background: #fff; padding: 2rem 2.5rem; border-radius: 10px; min-width: 320px; max-width: 95vw;">
-    <h4>Upgrade to Premium</h4>
-    <label><input type="radio" name="duration" value="1m" [(ngModel)]="selectedDuration"> 1 Month (₹499)</label><br>
-    <label><input type="radio" name="duration" value="3m" [(ngModel)]="selectedDuration"> 3 Months (₹1299)</label><br>
-    <label><input type="radio" name="duration" value="1y" [(ngModel)]="selectedDuration"> 1 Year (₹3999)</label><br>
-    <div style="margin-top: 1rem;">
-      <button class="btn btn-primary" (click)="payAndUpgrade()" [disabled]="!selectedDuration">Pay & Upgrade</button>
-      <button class="btn btn-outline-secondary" (click)="showPayment = false" type="button">Cancel</button>
-    </div>
-    <div *ngIf="paymentSuccess" style="color: green; margin-top: 1rem;">Payment successful! You are now a premium user.</div>
-    <div *ngIf="paymentError" style="color: red; margin-top: 1rem;">{{ paymentError }}</div>
-  </div>
-</div>
+      <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+        <section class="form-card" *ngIf="currentStep === 1">
+          <h2>Basic Details</h2>
+          <p class="section-subtitle">Update your core account and contact details.</p>
 
-
-
-<div class="container">
-<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
- <div class="row my-5">
-
-  <div class="col-6">
-    <label>Username <span class="text-danger">*</span></label>
-    <input formControlName="username" type="text" class="form-control w-100" required />
-    <div *ngIf="registrationForm.get('username')?.hasError('usernameTaken')" class="text-danger mt-1">
-      Username already exists. Please choose another.
-    </div>
-    <div *ngIf="submitted && registrationForm.get('username')?.invalid && !registrationForm.get('username')?.hasError('usernameTaken')" class="text-danger mt-1">Please enter your username.</div>
-      <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">
-  Username cannot contain spaces. Please use only letters, numbers, and hyphens (-). Underscores are not allowed for SEO reasons.
-      </div>
-  </div>
-
-  <div class="col-6">
-    <label>Mobile Number <span class="text-danger">*</span></label>
-    <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-      <input formControlName="phoneNumber" type="text" class="form-control w-100" required placeholder="Enter 10-digit number" />
-      <!-- Show tick if verified -->
-      <span *ngIf="phoneVerified" class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
-    </div>
-  </div>
-
-  <div class="col-6">
-    <label>Name <span class="text-danger">*</span></label>
-    <input formControlName="name" type="text" class="form-control w-100" required />
-    <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Please enter your name.</div>
-  </div>
-
-  <!-- Removed duplicate Username and Phone Number fields -->
-
-  <div class="col-6">
-    <label>Email Address <span class="text-danger">*</span></label>
-    <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-      <input formControlName="email" type="email" class="form-control w-100" required placeholder="example@mail.com" />
-    </div>
-  </div>
-
-
-  <div class="col-6">
-    <label>Payment Option <span class="text-danger">*</span></label>
-    <select formControlName="paymentOption" class="form-control w-100">
-      <option value="free">Free (Contact/Social hidden)</option>
-      <option value="premium">Premium (Contact/Social visible, 3 images)</option>
-    </select>
-    <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-  </div>
-
-  <div class="col-6" formGroupName="location">
-    <label>State <span class="text-danger">*</span></label>
-    <select formControlName="state" class="form-control w-100">
-      <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
-    </select>
-    <div *ngIf="submitted && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
-  <div *ngIf="registrationForm.get('promotionalPrice')?.value !== undefined" class="mt-2"><strong>Promotional Price:</strong> ${{ registrationForm.get('promotionalPrice')?.value }}</div>
-  </div>
-
-  <div class="col-6">
-    <label>Languages <span class="text-danger">*</span></label>
-    <ng-select
-      [items]="languagesList"
-      bindLabel="name"
-      bindValue="_id"
-      [multiple]="true"
-      [searchable]="true"
-      [closeOnSelect]="false"
-      [clearable]="true"
-      formControlName="languages"
-      class="form-control w-100"
-    >
-      <ng-template ng-option-tmp let-item="item" let-selected="selected">
-        <input type="checkbox" [checked]="selected" /> {{ item.name }}
-      </ng-template>
-    </ng-select>
-    <div *ngIf="submitted && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
-  </div>
-
-  <div class="col-6">
-    <label>Categories <span class="text-danger">*</span></label>
-    <ng-select
-      [items]="categoriesList"
-      bindLabel="name"
-      bindValue="_id"
-      [multiple]="true"
-      [searchable]="true"
-      [closeOnSelect]="false"
-      [clearable]="true"
-      formControlName="categories"
-      class="form-control w-100"
-    >
-      <ng-template ng-option-tmp let-item="item" let-selected="selected">
-        <input type="checkbox" [checked]="selected" /> {{ item.name }}
-      </ng-template>
-    </ng-select>
-    <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
-  </div>
-
-
-    <!-- Profile Image Upload (single image for now) -->
-    <div class="col-12 mt-3">
-      <label>Profile Image <span class="text-danger">*</span></label>
-      
-      <ng-container *ngIf="isEditMode; else viewProfileImageTpl">
-        <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url; else addImageTpl">
-          <img [src]="profileImagesFormArray.at(0).value.url" alt="Current Profile Image" style="max-width: 120px; max-height: 120px; display: block; margin-bottom: 8px;" />
-          <button type="button" class="btn btn-warning btn-sm mb-2" (click)="removeProfileImage(0)">Remove/Replace Image</button>
-        </div>
-        <ng-template #addImageTpl>
-          <div *ngIf="profileImagePreview" class="mt-2">
-            <img [src]="profileImagePreview" alt="Profile Preview" style="max-width: 120px; max-height: 120px; display: block;" />
+          <div class="field-grid">
+            <div class="field-block">
+              <label>Name</label>
+              <input formControlName="name" type="text" class="form-control" />
+            </div>
+            <div class="field-block">
+              <label>Username</label>
+              <input formControlName="username" type="text" class="form-control" />
+            </div>
+            <div class="field-block">
+              <label>Phone Number</label>
+              <input formControlName="phoneNumber" type="text" class="form-control" />
+            </div>
+            <div class="field-block">
+              <label>Email</label>
+              <input formControlName="email" type="email" class="form-control" />
+            </div>
           </div>
-          <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile image is required.</div>
-        </ng-template>
-        <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [disabled]="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url" />
-      </ng-container>
-      <ng-template #viewProfileImageTpl>
-        <div *ngIf="profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value && profileImagesFormArray.at(0).value.url">
-          <img [src]="profileImagesFormArray.at(0).value.url" alt="Profile Image" style="max-width: 120px; max-height: 120px; display: block;" />
-        </div>
-        <div *ngIf="!profileImagesFormArray.controls.length || !profileImagesFormArray.at(0).value || !profileImagesFormArray.at(0).value.url" class="text-muted">No profile image uploaded.</div>
-      </ng-template>
-    </div>
 
-    <!-- Social Media: Only allow adding for premium, hide for free -->
-    <div class="col-12 mt-3" formArrayName="socialMedia">
-      <label>Social Media <span class="text-danger">*</span></label>
-      <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="row">
-        <div class="col-3">
-          <label>Social Platform</label>
-          <select formControlName="platform"  class="form-control w-100">
-            <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-          </select>
-        </div>
-        <div class="col-3">
-          <label>Handle Name</label>
-          <input formControlName="handle" type="text" required  class="form-control w-100" />
-        </div>
-        <div class="col-2">
-          <label>Tier </label> <i class="bi bi-info-circle-fill" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#tierInfoModal" title="Select the tier for this social media account"></i>
-          <select formControlName="tier" class="form-control w-100">
-            <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-          </select>
-        </div>
-        <div class="col-3">
-          <label>Followers/Subscribers Count</label>
-          <input formControlName="followersCount" type="number" required  class="form-control w-100" />
-          
-        </div>
-        <div class="col-1">
-          <button class="btn btn-outline-danger btn-sm mt-4" type="button" (click)="removeSocialMedia(i)" *ngIf="socialMediaFormArray.length > 1 && isEditMode"><i class="bi bi-trash-fill"></i></button>
-        </div>
-      </div>
-      <button type="button" class="btn btn-primary btn-sm me-1" (click)="addSocialMedia()" *ngIf="isEditMode">Add Social Media</button>
-    </div>
+          <div class="actions-row dual">
+            <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
+            <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+          </div>
+        </section>
 
-    <!-- Apply similar logic for brand registration forms: restrict image uploads and hide social media for free users -->
+        <section class="form-card" *ngIf="currentStep === 2">
+          <h2>Media & Platforms</h2>
+          <p class="section-subtitle">Manage profile image, channels, and discovery filters.</p>
 
-  <div class="col-6 mt-3" formGroupName="contact">
-    <label>Contact Options <span class="text-danger">*</span></label>
-    <div class="row">
-      <div class="col"><label><input type="checkbox" formControlName="whatsapp" /> WhatsApp </label></div>
-      <div class="col"><label><input type="checkbox" formControlName="email" /> Email </label></div>
-      <div class="col"><label><input type="checkbox" formControlName="call" /> Call </label></div>
-    </div>
-    <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" style="color:red">Contact is required.</div>
-  </div>
+          <div class="field-grid">
+            <div class="field-block">
+              <label>Payment Option</label>
+              <select formControlName="paymentOption" class="form-control">
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
 
-  <div class="col-6 mt-3">
-    <label>Promotional Price <span class="text-danger">*</span></label>
-    <input formControlName="promotionalPrice" type="number" class="form-control w-100" required />
-    <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">Promotional Price is required.</div>
-  </div>
+            <div class="field-block" formGroupName="location">
+              <label>State</label>
+              <select formControlName="state" class="form-control">
+                <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+              </select>
+            </div>
 
-  <div class="col-12 mt-3 mb-5 d-flex gap-2">
-    <button *ngIf="!isEditMode" type="button" class="btn btn-secondary" (click)="enableEdit()">Edit Profile</button>
-    <button *ngIf="isEditMode" type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || (!profileImagePreview && (!profileImagesFormArray.controls.length || !profileImagesFormArray.at(0).value || !profileImagesFormArray.at(0).value.url))">Save</button>
-    <button *ngIf="isEditMode" type="button" class="btn btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
-  </div>
+            <div class="field-block">
+              <label>Languages</label>
+              <ng-select [items]="languagesList" bindLabel="name" bindValue="_id" [multiple]="true" [appendTo]="'body'" formControlName="languages" class="multi-select">
+                <ng-template ng-option-tmp let-item="item" let-selected="selected">
+                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
+                </ng-template>
+              </ng-select>
+            </div>
 
-  </div>
-</form>
+            <div class="field-block">
+              <label>Categories</label>
+              <ng-select [items]="categoriesList" bindLabel="name" bindValue="_id" [multiple]="true" [appendTo]="'body'" formControlName="categories" class="multi-select">
+                <ng-template ng-option-tmp let-item="item" let-selected="selected">
+                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
+                </ng-template>
+              </ng-select>
+            </div>
+          </div>
 
-</div>
+          <div class="field-block media-uploader mt-3">
+            <label>Profile Image</label>
+            <div class="upload-box">
+              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="preview-image" />
+              <img *ngIf="!profileImagePreview && profileImagesFormArray.controls.length > 0 && profileImagesFormArray.at(0).value?.url" [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="preview-image" />
+              <p *ngIf="!profileImagePreview && (!profileImagesFormArray.controls.length || !profileImagesFormArray.at(0).value?.url)">No profile image uploaded.</p>
+              <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" *ngIf="isEditMode" />
+              <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && profileImagesFormArray.controls.length > 0" (click)="removeProfileImage(0)">Remove</button>
+            </div>
+          </div>
 
+          <div class="social-media-section mt-3" formArrayName="socialMedia">
+            <h3>Social Media</h3>
+            <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="social-media-card">
+              <div class="social-media-row">
+                <div class="social-media-col">
+                  <div class="social-media-label">Platform</div>
+                  <select formControlName="platform" class="social-media-select">
+                    <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
+                  </select>
+                </div>
+                <div class="social-media-col">
+                  <div class="social-media-label">Handle</div>
+                  <input formControlName="handle" type="text" class="social-media-input" />
+                </div>
+                <div class="social-media-col">
+                  <div class="social-media-label">Tier</div>
+                  <select formControlName="tier" class="social-media-select">
+                    <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                  </select>
+                </div>
+                <div class="social-media-col">
+                  <div class="social-media-label">Followers</div>
+                  <input formControlName="followersCount" type="number" class="social-media-input" />
+                </div>
+              </div>
+              <button *ngIf="isEditMode && socialMediaFormArray.length > 1" type="button" class="close-btn" (click)="removeSocialMedia(i)">&times;</button>
+            </div>
+            <button *ngIf="isEditMode" type="button" class="add-social-btn" (click)="addSocialMedia()">Add Social Media</button>
+          </div>
 
-<div *ngIf="registrationSuccess" style="color: green; margin-bottom: 10px;">
-  Profile updated successfully!
-</div>
-<div *ngIf="registrationError" style="color: red; margin-bottom: 10px;">
-  {{ registrationError }}
-</div>
+          <div class="actions-row dual">
+            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+            <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
+            <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+          </div>
+        </section>
 
-<!-- Tier Info Modal -->
-<div class="modal fade" id="tierInfoModal" tabindex="-1" aria-labelledby="tierInfoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="tierInfoModalLabel">Tier Information</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Icon</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let tier of tiers">
-              <td>{{ tier.name }}</td>
-              <td>{{ tier.desc }}</td>
-              <td style="font-size: 2rem; text-align: center;">{{ tier.icon }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
+        <section class="form-card" *ngIf="currentStep === 3">
+          <h2>Professional</h2>
+          <p class="section-subtitle">Set pricing and preferred contact channels.</p>
+
+          <div class="field-grid">
+            <div class="field-block full-width">
+              <label>Promotional Price</label>
+              <input formControlName="promotionalPrice" type="number" class="form-control" />
+            </div>
+            <div class="field-block full-width" formGroupName="contact">
+              <label>Contact Options</label>
+              <div class="contact-grid">
+                <label class="contact-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
+                <label class="contact-item"><input type="checkbox" formControlName="email" /> Email</label>
+                <label class="contact-item"><input type="checkbox" formControlName="call" /> Call</label>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">Profile updated successfully.</div>
+          <div *ngIf="registrationError" class="text-danger fw-bold my-3">{{ registrationError }}</div>
+
+          <div class="actions-row dual">
+            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+            <button type="submit" class="btn btn-primary" *ngIf="isEditMode">Save Profile</button>
+            <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Enable Edit</button>
+          </div>
+        </section>
+      </form>
+    </main>
   </div>
 </div>
