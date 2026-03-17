@@ -128,7 +128,7 @@
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.location?.state || '-' }}</td>
-          <td>{{ user.price !== undefined ? ('Promotional Price:' + user.price) : '-' }}</td>
+          <td>{{ (user.promotionalPrice ?? user.price) !== undefined ? ('Promotional Price:' + (user.promotionalPrice ?? user.price)) : '-' }}</td>
           <td>
             <ng-container *ngIf="user.products && user.products.length; else noProducts">
               <ng-container *ngFor="let product of user.products; let i = index">

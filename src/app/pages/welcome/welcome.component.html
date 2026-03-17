@@ -1,80 +1,117 @@
-<!-- <app-navbar-layout></app-navbar-layout> -->
+<div class="home-shell">
 
-<section class="welcome-page d-flex flex-column align-items-center my-5" aria-label="Welcome to TrendStarz">
-  <h1 class="mt-5">Welcome to</h1>
-  <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz Logo" class="" style="max-width: 320px;" loading="eager" width="320" height="auto">
-  <!-- <p class="lead mb-4 text-center" itemprop="description">Connecting Influencers &amp; Brands.</p> -->
-  <div class="d-flex mt-3 gap-1 justify-content-center">
-    <span class="badge rounded-pill bg-light text-dark" itemprop="keywords">Discover</span>
-    <span class="badge rounded-pill bg-light text-dark" itemprop="keywords">Collaborate</span>
-    <span class="badge rounded-pill bg-light text-dark" itemprop="keywords">Grow Together</span>
-  </div>
-</section>
-
-
-<section class="container my-5" aria-label="Influencers Grid">
-  <h2 class="mb-1">Featured Influencers</h2>
-  <div *ngIf="influencersLoading && influencers.length === 0" class="text-center">Loading influencers...</div>
-  <div *ngIf="!influencersLoading && !influencersError && influencers.length === 0" class="text-center">No influencers found.</div>
-  <div *ngIf="influencersError && influencers.length === 0" class="text-danger text-center">{{ influencersError }}</div>
-  <div class="row row-cols-1 row-cols-md-3 gap-1 m-0" *ngIf="influencers.length > 0">
-    <div class="col-md-3 col text-dark" *ngFor="let influencer of influencers">
-      <div (click)="viewInfluencerProfile(influencer)" style="cursor:pointer;">
-        <app-influencer-user-card
-          [profileImage]="influencer.profileImage"
-          [profileImages]="influencer.profileImages"
-          [name]="influencer.name"
-          [username]="influencer.username"
-          [email]="influencer.email"
-          [phoneNumber]="influencer.phoneNumber"
-          [categories]="influencer.categories"
-          [location]="influencer.location"
-          [socialMedia]="influencer.socialMedia"
-          [isPremium]="influencer.isPremium"
-          [promotionalPrice]="influencer.promotionalPrice"
-
-        ></app-influencer-user-card>
+  <section class="hero-block py-5">
+    <div class="container">
+      <div class="row g-4 align-items-center">
+        <div class="col-12 col-lg-6">
+          <span class="pill-label">Next-Gen Influencer Platform</span>
+          <h1 class="hero-title mt-3">Connect with the World&apos;s <span>Top Creators</span></h1>
+          <p class="hero-copy mt-3">Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling.</p>
+          <div class="d-flex flex-wrap gap-3 mt-4">
+            <button class="btn btn-primary" (click)="router.navigate(['/register-brand'])" type="button">Start a Campaign</button>
+            <button class="btn btn-dark" (click)="router.navigate(['/register-influencer'])" type="button">Find Creators</button>
+          </div>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="hero-media">
+            <img src="assets/default-profile-brands.png" alt="Campaign success story" />
+            <div class="media-caption">
+              <small>SUCCESS STORY</small>
+              <h5>Luxe Cosmetics + Sarah Jenkins</h5>
+              <p>Grew brand awareness by 240% in 3 months</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-
-<section class="container my-5" aria-label="Brands Grid">
-  <h2 class="mb-1">Featured Brands</h2>
-  <div *ngIf="brandsLoading && brands.length === 0" class="text-center">Loading brands...</div>
-  <div *ngIf="!brandsLoading && !brandsError && brands.length === 0" class="text-center">No brands found.</div>
-  <div *ngIf="brandsError && brands.length === 0" class="text-danger text-center">{{ brandsError }}</div>
-  <div class="row row-cols-1 row-cols-md-3 g-4 m-0" *ngIf="brands.length > 0">
-    <div class="col-md-3 col bg-light text-dark p-2" *ngFor="let brand of brands">
-      <div (click)="viewBrandProfile(brand)" style="cursor:pointer;">
-        <app-brand-user-card
-          [brandLogoUrl]="brand.brandLogo?.[0]?.url"
-          [brandName]="brand.brandName"
-          [email]="brand.email"
-          [phoneNumber]="brand.phoneNumber"
-          [categories]="brand.categories"
-          [location]="brand.location"
-          [productImages]="brand.productImages"
-          [website]="brand.website"
-          [isPremium]="brand.isPremium"
-          [promotionalPrice]="brand.promotionalPrice"
-
-        ></app-brand-user-card>
+  <section class="trust-strip py-4" aria-label="Industry Leaders">
+    <div class="container text-center">
+      <p class="trust-title mb-3">INDUSTRY LEADERS WHO TRUST US</p>
+      <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 trust-logos">
+        <span>GLO-UP</span>
+        <span>LUMINA</span>
+        <span>TECHCORE</span>
+        <span>VIBE-X</span>
+        <span>UNIFY</span>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+ 
+  <section class="brands-strip py-5" aria-label="Brands Grid">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h2 class="section-title mb-1">Featured Brands</h2>
+          <p class="section-subtitle">Discover top companies actively hiring creators</p>
+        </div>
+        <button class="btn btn-link view-all" (click)="router.navigate(['/register-brand'])" type="button">View all brands</button>
+      </div>
 
+      <div *ngIf="brandsLoading && brands.length === 0" class="text-center text-muted">Loading brands...</div>
+      <div *ngIf="!brandsLoading && !brandsError && brands.length === 0" class="text-center text-muted">No brands found.</div>
+      <div *ngIf="brandsError && brands.length === 0" class="text-danger text-center">{{ brandsError }}</div>
 
-<section class="call-to-action text-center mb-5 pb-5" aria-label="Get Started with TrendStarz">
-  <h2>Get Started Today!</h2>
-  <p class="lead">Join TrendStarz and elevate your brand or influencer journey.</p>
-  <div class="d-flex gap-3 justify-content-center">
-  <button class="btn btn-primary btn-lg" (click)="router.navigate(['/register-influencer'])" type="button">Register as Influencer</button>
-  <button class="btn btn-secondary btn-lg" (click)="router.navigate(['/register-brand'])" type="button">Register as Brand</button>
-  </div>
-</section>
+      <div class="row g-3" *ngIf="brands.length > 0">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let brand of brands | slice:0:8">
+          <article class="brand-card h-100" (click)="viewBrandProfile(brand)">
+            <div class="brand-icon-wrap">
+              <img [src]="brand.brandLogo?.[0]?.url || 'assets/default-profile-brands.png'" [alt]="brand.brandName" />
+            </div>
+            <h5>{{ brand.brandName }}</h5>
+            <p>{{ brand.categories?.[0] || 'Brand Campaigns' }}</p>
+            <div class="brand-meta">
+              <span>ACTIVE CAMPAIGNS</span>
+              <span class="live-pill">{{ brand.isPremium ? '15 Live' : '5 Live' }}</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <section class="creators-strip py-5" aria-label="Influencers Grid">
+    <div class="container">
+      <h2 class="section-title text-white mb-1">Trending Creators</h2>
+      <div class="chip-row mb-4">
+        <span class="chip active">All Categories</span>
+        <span class="chip">Fashion</span>
+        <span class="chip">Tech</span>
+        <span class="chip">Gaming</span>
+        <span class="chip">Travel</span>
+      </div>
 
-<!-- <app-footer></app-footer> -->
+      <div *ngIf="influencersLoading && influencers.length === 0" class="text-center text-white-50">Loading influencers...</div>
+      <div *ngIf="!influencersLoading && !influencersError && influencers.length === 0" class="text-center text-white-50">No influencers found.</div>
+      <div *ngIf="influencersError && influencers.length === 0" class="text-warning text-center">{{ influencersError }}</div>
+
+      <div class="row g-3" *ngIf="influencers.length > 0">
+        <div class="col-12 col-md-6 col-lg-4" *ngFor="let influencer of influencers | slice:0:6">
+          <article class="creator-card" (click)="viewInfluencerProfile(influencer)">
+            <img
+              [src]="influencer.profileImages?.[0]?.url || influencer.profileImage || 'assets/default-profile-brands.png'"
+              [alt]="influencer.name"
+            />
+            <div class="overlay">
+              <span class="verify-pill" *ngIf="influencer.isPremium">VERIFIED</span>
+              <h5>{{ influencer.name }}</h5>
+              <p>{{ influencer.categories?.[0] || 'Creator' }} <span *ngIf="influencer.promotionalPrice">• {{ influencer.promotionalPrice }}</span></p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-strip py-5 text-center">
+    <div class="container">
+      <h2>Ready to Scale Your Brand?</h2>
+      <p>Join thousands of brands that use Trendstarz to discover and manage high-performing influencer campaigns.</p>
+      <div class="d-flex justify-content-center flex-wrap gap-3 mt-3">
+        <button class="btn btn-primary" (click)="router.navigate(['/register-brand'])" type="button">Get Started Today</button>
+        <button class="btn btn-outline-dark" (click)="router.navigate(['/login'])" type="button">Book a Demo</button>
+      </div>
+    </div>
+  </section>
+</div>

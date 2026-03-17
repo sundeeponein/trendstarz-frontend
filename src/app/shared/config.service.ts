@@ -10,8 +10,8 @@ import { environment } from '../../environments/environment';
 export class ConfigService {
   // Stub for brand username uniqueness check
   checkBrandUsernameUnique(username: string) {
-    // Replace with real API call
-    return this.http.get<boolean>(`${this.apiUrl}/brands/check-username-unique?username=${encodeURIComponent(username)}`);
+    return this.http.get<boolean>(`${this.apiUrl}/brands/check-username-unique?username=${encodeURIComponent(username)}`)
+      .pipe(catchError(() => of(true)));
   }
   private apiUrl = environment.apiBaseUrl || '/api';
 

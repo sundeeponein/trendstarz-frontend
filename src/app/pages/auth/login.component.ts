@@ -14,12 +14,13 @@ import { SessionService } from '../../core/session.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './login.component.html',
-  // styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
   loginForm: FormGroup;
   errorMsg = '';
   submitted = false;
+  showPassword = false;
 
   constructor(private fb: FormBuilder, private http: HttpClient, private router: Router, private session: SessionService) {
     this.loginForm = this.fb.group({
@@ -62,5 +63,9 @@ export class LoginComponent {
           this.router.navigate(['/']);
         }
       });
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }
