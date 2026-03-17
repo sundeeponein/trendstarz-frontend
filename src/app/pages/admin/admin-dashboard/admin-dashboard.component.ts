@@ -24,6 +24,12 @@ export class AdminDashboardComponent implements OnInit {
   brandPending = 0;
   brandPremium = 0;
 
+  private notifyClient(message: string) {
+    if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+      window.alert(message);
+    }
+  }
+
   constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
@@ -52,7 +58,7 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: (err) => {
           console.error('[AdminDashboard] Error fetching influencers:', err);
-          alert('Error fetching influencers: ' + (err?.message || err));
+          this.notifyClient('Error fetching influencers: ' + (err?.message || err));
         }
       });
   }
@@ -78,7 +84,7 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: (err) => {
           console.error('[AdminDashboard] Error fetching brands:', err);
-          alert('Error fetching brands: ' + (err?.message || err));
+          this.notifyClient('Error fetching brands: ' + (err?.message || err));
         }
       });
   }
