@@ -3,16 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
-import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
-import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 // import { NavbarLayoutComponent } from '../../layout/navbar-layout/navbar-layout.component';
 // import { FooterComponent } from '../../shared/footer/footer.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, InfluencerUserCardComponent, BrandUserCardComponent],
-  templateUrl: './welcome.component.html'
+  imports: [CommonModule],
+  templateUrl: './welcome.component.html',
+  styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
   private routerSubscription: any;

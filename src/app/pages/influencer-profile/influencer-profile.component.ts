@@ -5,7 +5,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
-import { map, first } from 'rxjs/operators';
+import { map, first, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -449,8 +450,13 @@ export class InfluencerProfileComponent implements OnInit {
   usernameUniqueValidator(): AsyncValidatorFn {
     return (control: AbstractControl) => {
       if (!control.value) return Promise.resolve(null);
+      // Skip validation if username hasn't changed from the loaded profile
+      if (this.originalFormValue && control.value === this.originalFormValue.username) {
+        return Promise.resolve(null);
+      }
       return this.configService.checkUsernameExists(control.value).pipe(
         map((exists: boolean) => (exists ? { usernameTaken: true } : null)),
+        catchError(() => of(null)),
         first()
       );
     };

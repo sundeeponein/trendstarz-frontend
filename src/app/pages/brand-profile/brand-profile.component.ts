@@ -6,7 +6,8 @@ import imageCompression from 'browser-image-compression';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
-import { map, first } from 'rxjs/operators';
+import { map, first, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -440,8 +441,13 @@ export class BrandProfileComponent implements OnInit {
 
     return (control: AbstractControl) => {
       if (!control.value) return Promise.resolve(null);
+      // Skip validation if username hasn't changed from the loaded profile
+      if (this.originalFormValue && control.value === this.originalFormValue.brandUsername) {
+        return Promise.resolve(null);
+      }
       return this.configService.checkBrandUsernameUnique(control.value).pipe(
         map((isUnique: boolean) => (isUnique ? null : { notUnique: true })),
+        catchError(() => of(null)),
         first()
       );
     };
@@ -669,8 +675,8 @@ export class BrandProfileComponent implements OnInit {
 
   async onSubmit() {
     this.submitted = true;
-    if (!this.isEditMode || this.registrationForm.invalid || !this.brandLogoPreview) {
-      if (!this.brandLogoPreview) {
+    if (!this.isEditMode || this.registrationForm.invalid || !this.hasBrandLogo()) {
+      if (!this.hasBrandLogo()) {
         this.registrationError = 'Brand logo is required.';
       }
       return;
@@ -730,10 +736,6 @@ export class BrandProfileComponent implements OnInit {
         this.registrationSuccess = true;
         this.isEditMode = false;
         this.registrationForm.disable();
-        this.brandLogoPreview = null;
-        this.brandLogoFile = null;
-        this.productImagesPreview = [];
-        this.productImagesFiles = [];
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
