@@ -1,45 +1,153 @@
-<div class="container mx-auto my-5 bg-white p-4 rounded-4 shadow-sm text-dark">
+<div class="profile-page-wrapper">
+  <!-- Loading / Error states -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status"></div>
+    <p class="mt-2 text-muted">Loading profile...</p>
+  </div>
+  <div *ngIf="error" class="text-center py-5 text-danger">{{ error }}</div>
 
-  <div *ngIf="loading">Loading...</div>
-  <div *ngIf="error">{{ error }}</div>
+  <!-- Main Profile Layout -->
+  <div *ngIf="!loading && !error && influencer" class="profile-grid">
 
-  <div *ngIf="!loading && !error && influencer" class="profile-view influencer-profile">
-    <img [src]="displayImage" (error)="onImgError($event)" class="profile-image" width="250" />
-    <div class="profile-details">
-      <h2>{{ influencer?.name }} <span *ngIf="influencer?.isPremium" class="premium-icon">★</span></h2>
-      <p *ngIf="influencer?.username">@{{ influencer?.username }}</p>
-      <p *ngIf="influencer?.email">Email: {{ influencer?.email }}</p>
-      <p *ngIf="influencer?.phoneNumber">Phone: {{ influencer?.phoneNumber }}</p>
-      <p *ngIf="influencer?.categories?.length">Categories: {{ influencer?.categories?.join(', ') }}</p>
-      <p *ngIf="influencer?.location?.state">
-        Location: {{ influencer?.location?.state}}
+    <!-- ======== LEFT COLUMN – Profile Card ======== -->
+    <div class="profile-card">
+      <div class="profile-photo-wrap">
+        <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" />
+        <span *ngIf="influencer.isPremium" class="verified-badge" title="Verified">
+          <i class="bi bi-patch-check-fill"></i>
+        </span>
+      </div>
+      <h2 class="profile-name">{{ influencer.name }}</h2>
+      <p class="profile-subtitle" *ngIf="influencer.categories?.length">
+        {{ influencer.categories.join(' & ') }}
       </p>
-      <div *ngIf="influencer?.promotionalPrice">
-        <hr />
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="fw-bold">Advertising Price</span>
-          <span class="ms-auto fs-5">{{ influencer.promotionalPrice }}</span>
+      <p class="profile-location" *ngIf="influencer.location?.state">
+        <i class="bi bi-geo-alt-fill"></i> {{ influencer.location.state }}
+      </p>
+
+      <!-- Action buttons -->
+      <div class="profile-actions">
+        <a class="btn btn-follow" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+        <button class="btn btn-contact" (click)="showContact = !showContact">Contact</button>
+      </div>
+
+      <!-- Contact details (toggled) -->
+      <div *ngIf="showContact" class="contact-details">
+        <p *ngIf="influencer.contact?.email"><i class="bi bi-envelope"></i> {{ influencer.email }}</p>
+        <p *ngIf="influencer.contact?.call"><i class="bi bi-telephone"></i> {{ influencer.phoneNumber }}</p>
+        <p *ngIf="influencer.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp available</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-cards">
+        <div class="stat-card">
+          <span class="stat-label">FOLLOWERS</span>
+          <span class="stat-value">{{ formatFollowers(getTotalFollowers()) }}</span>
+        </div>
+        <div class="stat-card" *ngIf="influencer.socialMedia?.length">
+          <span class="stat-label">PLATFORMS</span>
+          <span class="stat-value">{{ influencer.socialMedia.length }}</span>
+        </div>
+        <div class="stat-card" *ngIf="influencer.promotionalPrice">
+          <span class="stat-label">AD PRICE</span>
+          <span class="stat-value">${{ influencer.promotionalPrice }}</span>
         </div>
       </div>
-      <!-- <pre style="font-size:12px; color:#888; background:#f9f9f9; padding:8px; border-radius:4px;">{{ influencer | json }}</pre> -->
-      <div *ngIf="influencer?.socialMedia?.length" class="d-flex align-items-center gap-2 mb-2">
-        <ng-container *ngFor="let sm of influencer.socialMedia">
-          <ng-container [ngSwitch]="sm | resolvePlatform">
-            <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
-              <i class="bi bi-instagram fs-5"></i>
-            </a>
-            <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
-              <i class="bi bi-youtube fs-5"></i>
-            </a>
-            <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
-              <i class="bi bi-facebook fs-5"></i>
-            </a>
-            <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="website">
-              <i class="bi bi-link-45deg fs-5"></i>
+    </div>
+
+    <!-- ======== CENTER COLUMN – About & Links ======== -->
+    <div class="profile-center">
+      <!-- About -->
+      <div class="info-card">
+        <h5 class="section-label">ABOUT</h5>
+        <p class="about-text" *ngIf="influencer.categories?.length">
+          {{ influencer.name }} is a {{ influencer.categories.join(', ') }} creator
+          <span *ngIf="influencer.location?.state">based in {{ influencer.location.state }}</span>.
+          <span *ngIf="getTotalFollowers() > 0"> With {{ formatFollowers(getTotalFollowers()) }} followers across {{ influencer.socialMedia?.length || 0 }} platform{{ influencer.socialMedia?.length === 1 ? '' : 's' }}.</span>
+        </p>
+
+        <!-- Social links -->
+        <div *ngIf="influencer.socialMedia?.length" class="social-links">
+          <ng-container *ngFor="let sm of influencer.socialMedia">
+            <a [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-link-item">
+              <i [class]="getSocialIcon(sm)"></i>
+              <span>{{ getSocialLabel(sm) }}</span>
             </a>
           </ng-container>
-        </ng-container>
-        <span *ngIf="influencer.categories?.length" class="badge rounded-pill bg-light text-success ms-2" style="font-size:1rem;">{{ influencer.categories[0] }}</span>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div class="info-card">
+        <h5 class="section-label">DETAILS</h5>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="influencer.username">
+            <span class="detail-key">Username</span>
+            <span class="detail-val">&#64;{{ influencer.username }}</span>
+          </div>
+          <div class="detail-item" *ngIf="influencer.languages?.length">
+            <span class="detail-key">Languages</span>
+            <span class="detail-val">{{ influencer.languages.join(', ') }}</span>
+          </div>
+          <div class="detail-item" *ngIf="influencer.promotionalPrice">
+            <span class="detail-key">Advertising Price</span>
+            <span class="detail-val price-tag">${{ influencer.promotionalPrice }}</span>
+          </div>
+          <div class="detail-item" *ngIf="influencer.categories?.length">
+            <span class="detail-key">Categories</span>
+            <span class="detail-val">
+              <span *ngFor="let cat of influencer.categories" class="cat-chip">{{ cat }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== RIGHT COLUMN – Premium / Analytics ======== -->
+    <div class="profile-right">
+      <!-- FREE user: Premium upsell card -->
+      <div *ngIf="!influencer.isPremium" class="premium-card locked">
+        <div class="lock-icon"><i class="bi bi-lock-fill"></i></div>
+        <h5>Premium Insights</h5>
+        <p>Unlock detailed engagement history, audience demographics, and top performing keywords.</p>
+        <div class="premium-placeholder">
+          <div class="ph-row"></div>
+          <div class="ph-row short"></div>
+          <div class="ph-row"></div>
+          <div class="ph-row short"></div>
+        </div>
+        <button class="btn btn-upgrade">Upgrade to Pro $9.99/mo</button>
+        <span class="powered-by">POWERED BY TRENDSTARZ ENGINE</span>
+      </div>
+
+      <!-- PREMIUM user: Total Followers analytics -->
+      <div *ngIf="influencer.isPremium" class="analytics-card">
+        <h5 class="section-label">Total Followers</h5>
+        <div class="total-followers-number">{{ formatFollowers(getTotalFollowers()) }}</div>
+
+        <div class="platform-breakdown" *ngIf="influencer.socialMedia?.length">
+          <div *ngFor="let sm of influencer.socialMedia" class="platform-row">
+            <div class="platform-info">
+              <i [class]="getSocialIcon(sm)"></i>
+              <span>{{ getSocialLabel(sm) }}</span>
+            </div>
+            <div class="platform-bar-wrap">
+              <div class="platform-bar" [style.width.%]="getFollowerPercent(sm)"></div>
+            </div>
+            <span class="platform-count">{{ formatFollowers(sm.followersCount || 0) }}</span>
+          </div>
+        </div>
+
+        <div class="analytics-stat-row" *ngIf="influencer.promotionalPrice">
+          <div class="mini-stat">
+            <span class="mini-label">AD PRICE</span>
+            <span class="mini-value">${{ influencer.promotionalPrice }}</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-label">PLATFORMS</span>
+            <span class="mini-value">{{ influencer.socialMedia?.length || 0 }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

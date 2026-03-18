@@ -93,7 +93,7 @@
             <div class="overlay">
               <span class="verify-pill" *ngIf="influencer.isPremium">VERIFIED</span>
               <h5>{{ influencer.name }}</h5>
-              <p>{{ influencer.categories?.[0] || 'Creator' }} <span *ngIf="influencer.promotionalPrice">• {{ influencer.promotionalPrice }}</span></p>
+              <p>{{ influencer.categories?.[0] || 'Creator' }}<span *ngIf="getTotalFollowers(influencer) > 0"> · {{ formatFollowers(getTotalFollowers(influencer)) }} Followers</span></p>
             </div>
           </article>
         </div>

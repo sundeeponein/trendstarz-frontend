@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, afterNextRender } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
@@ -25,26 +25,18 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   selectedCategory: string = '';
   creatorCategories: string[] = [];
 
+  private isBrowser: boolean;
+
   constructor(
     private meta: Meta,
     private title: Title,
     private config: ConfigService,
     public router: Router,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private ngZone: NgZone,
+    @Inject(PLATFORM_ID) platformId: Object
   ) {
-    afterNextRender(() => {
-      this.fetchBrands();
-      this.fetchInfluencers();
-      this.routerSubscription = this.router.events.subscribe(event => {
-        if (event instanceof NavigationEnd) {
-          const url = event.urlAfterRedirects || event.url;
-          if (url === '/welcome' || url === '/' || url.startsWith('/welcome?')) {
-            this.fetchInfluencers();
-            this.fetchBrands();
-          }
-        }
-      });
-    });
+    this.isBrowser = isPlatformBrowser(platformId);
   }
 
   ngOnInit(): void {
@@ -61,6 +53,20 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'twitter:description', content: 'Connect influencers and brands. Discover, collaborate, and grow together!' },
       { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
     ]);
+    if (!this.isBrowser) return;
+    this.ngZone.run(() => {
+      this.fetchBrands();
+      this.fetchInfluencers();
+    });
+    this.routerSubscription = this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        const url = event.urlAfterRedirects || event.url;
+        if (url === '/welcome' || url === '/' || url.startsWith('/welcome?')) {
+          this.fetchInfluencers();
+          this.fetchBrands();
+        }
+      }
+    });
   }
   ngOnDestroy(): void {
     if (this.routerSubscription) {
@@ -74,8 +80,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.influencers = [];
     this.config.getInfluencers('').subscribe({
       next: (data) => {
-        // Filter for accepted status only (defensive, in case backend ever returns others)
-        this.allInfluencers = (data || []).filter((u: any) => u.status === 'accepted');
+        this.allInfluencers = data || [];
         // Extract top 5 categories by registered user count (descending)
         const catCounts = new Map<string, number>();
         this.allInfluencers.forEach((u: any) => (u.categories || []).forEach((c: string) => {
@@ -128,8 +133,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brands = [];
     this.config.getBrands('').subscribe({
       next: (data) => {
-        // Filter for accepted status only (defensive, in case backend ever returns others)
-        this.brands = (data || []).filter((u: any) => u.status === 'accepted');
+        this.brands = data || [];
         this.brandsLoading = false;
         this.cd.detectChanges();
       },
@@ -158,5 +162,15 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       );
     }
     this.cd.detectChanges();
+  }
+
+  getTotalFollowers(influencer: any): number {
+    return (influencer.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
+  }
+
+  formatFollowers(count: number): string {
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
   }
 }

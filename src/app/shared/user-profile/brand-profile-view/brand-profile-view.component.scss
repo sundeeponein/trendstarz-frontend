@@ -1,0 +1,603 @@
+$accent: #e8612d;
+$accent-light: #fff5f0;
+$accent-dark: #d4551f;
+$border: #e8e8e8;
+$text-dark: #1a1a2e;
+$text-muted: #7a7a8e;
+$radius: 12px;
+$bg-light: #fafafa;
+
+/* ── Wrapper ──────────────────────────────── */
+.brand-profile-wrapper {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+/* ══════ HEADER ══════ */
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 0;
+  flex-wrap: wrap;
+}
+
+.brand-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.brand-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid $border;
+  background: #fff;
+}
+
+.brand-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.brand-tagline {
+  font-size: 0.9rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+.brand-website {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: $accent;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 2px;
+  &:hover { text-decoration: underline; }
+  i { font-size: 0.9rem; }
+}
+
+.brand-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-follow {
+  background: #fff;
+  color: $text-dark;
+  border: 2px solid $border;
+  border-radius: 8px;
+  padding: 9px 28px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { border-color: $text-dark; }
+}
+
+.btn-contact {
+  background: $accent;
+  color: #fff;
+  border: 2px solid $accent;
+  border-radius: 8px;
+  padding: 9px 28px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: $accent-dark; border-color: $accent-dark; }
+}
+
+/* Contact bar */
+.contact-bar {
+  display: flex;
+  gap: 24px;
+  padding: 12px 20px;
+  background: $accent-light;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  span {
+    font-size: 0.85rem;
+    color: $text-dark;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    i { color: $accent; }
+  }
+}
+
+/* ══════ TAB BAR ══════ */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid $border;
+  margin-bottom: 28px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: $text-muted;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+
+  &.active {
+    color: $accent;
+    border-bottom-color: $accent;
+  }
+  &:hover:not(.active) {
+    color: $text-dark;
+  }
+  &.tab-locked {
+    color: #bbb;
+    cursor: default;
+    i { font-size: 0.72rem; margin-left: 4px; }
+  }
+}
+
+/* ══════ CONTENT GRID (two columns) ══════ */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  align-items: start;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── LEFT: Content sections ─── */
+.content-main {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.content-section {
+  // no card background — matches mockup (flat sections)
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0 0 14px;
+}
+
+.about-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #444;
+  margin: 0;
+}
+
+/* Section header row */
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  .section-title { margin: 0; }
+}
+
+.view-all-link {
+  font-size: 0.85rem;
+  color: $accent;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover { text-decoration: underline; }
+}
+
+/* Campaign cards */
+.campaign-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.campaign-card {
+  width: 240px;
+  border: 1px solid $border;
+  border-radius: $radius;
+  overflow: hidden;
+  background: #fff;
+  transition: box-shadow 0.2s;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+}
+
+.campaign-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  overflow: hidden;
+}
+
+.campaign-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.campaign-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  &.active {
+    background: #d4edda;
+    color: #155724;
+  }
+}
+
+.campaign-info {
+  padding: 14px;
+}
+
+.campaign-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0 0 6px;
+}
+
+.campaign-desc {
+  font-size: 0.8rem;
+  color: $text-muted;
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.campaign-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.campaign-price {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: $accent;
+}
+
+.btn-apply {
+  background: none;
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $text-dark;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { border-color: $text-dark; }
+}
+
+/* Details */
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.detail-label {
+  font-size: 0.84rem;
+  color: $text-muted;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: $text-dark;
+  font-weight: 600;
+  text-align: right;
+}
+
+.link-val {
+  color: $accent;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.price-val {
+  color: $accent;
+  font-size: 1rem;
+}
+
+.cat-chip {
+  display: inline-block;
+  background: $accent-light;
+  color: $accent;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* Social links */
+.social-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.social-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid $border;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: $text-dark;
+  text-decoration: none;
+  transition: all 0.2s;
+  i { color: $accent; font-size: 1rem; }
+  &:hover { border-color: $accent; background: $accent-light; }
+}
+
+/* ══════ RIGHT: Brand Insights Sidebar ══════ */
+.insights-sidebar {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0;
+}
+
+.insight-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 22px 18px;
+  text-align: center;
+}
+
+.insight-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0 0 6px;
+}
+
+.insight-desc {
+  font-size: 0.8rem;
+  color: $text-muted;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+/* Blurred sentiment area */
+.insight-blur-area {
+  background: linear-gradient(135deg, #ffe0d0 0%, #ffc8a8 100%);
+  border-radius: 8px;
+  padding: 24px 16px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.blur-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: $accent;
+  filter: blur(6px);
+  user-select: none;
+}
+
+/* Go Pro button */
+.btn-gopro {
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover { background: $accent-dark; }
+}
+
+/* ROI header */
+.roi-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.roi-metric {
+  font-size: 2rem;
+  font-weight: 800;
+  color: $text-dark;
+}
+
+.roi-label {
+  font-size: 0.85rem;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.roi-icon {
+  background: $accent;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  margin-left: 4px;
+}
+
+/* View sample button */
+.btn-view-sample {
+  background: $text-dark;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover { background: lighten($text-dark, 10%); }
+}
+
+/* Stats card */
+.stats-card {
+  text-align: left;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.88rem;
+  color: $text-dark;
+}
+
+.stat-positive {
+  color: #28a745;
+  font-weight: 700;
+}
+
+.stats-divider {
+  height: 1px;
+  background: $border;
+  margin: 8px 0;
+}
+
+.global-rank {
+  padding-top: 4px;
+}
+
+.rank-label {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 1.2px;
+  color: $text-muted;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.rank-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: $text-dark;
+}
+
+/* ══════ BOTTOM CTA ══════ */
+.bottom-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 32px;
+  margin-top: 48px;
+  border-top: 1px solid $border;
+}
+
+.cta-text {
+  h4 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0 0 4px;
+  }
+  p {
+    font-size: 0.88rem;
+    color: $text-muted;
+    margin: 0;
+  }
+}
+
+.btn-gopro-lg {
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+  &:hover { background: $accent-dark; }
+}
+
+/* ── Responsive ──────────────────────────── */
+@media (max-width: 768px) {
+  .brand-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .brand-header-actions {
+    width: 100%;
+    .btn-follow, .btn-contact { flex: 1; }
+  }
+  .tab-btn {
+    padding: 10px 14px;
+    font-size: 0.75rem;
+  }
+  .campaign-card {
+    width: 100%;
+  }
+  .bottom-cta {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 24px 16px;
+  }
+  .btn-gopro-lg { width: 100%; }
+}

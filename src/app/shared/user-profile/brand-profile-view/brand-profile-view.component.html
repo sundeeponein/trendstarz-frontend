@@ -1,60 +1,187 @@
-<div class="container mx-auto my-5 bg-white p-4 rounded-4 shadow-sm text-dark">
+<div class="brand-profile-wrapper">
+  <!-- Loading / Error states -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status"></div>
+    <p class="mt-2 text-muted">Loading profile...</p>
+  </div>
+  <div *ngIf="error" class="text-center py-5 text-danger">{{ error }}</div>
 
-  <div *ngIf="loading">Loading...</div>
-  <div *ngIf="error">{{ error }}</div>
-  <div *ngIf="!loading && !error && brand" class="profile-view brand-profile">
-    <img [src]="(brand?.brandLogo?.[0]?.url || (brand?.brandLogo && typeof brand?.brandLogo === 'string' ? brand?.brandLogo : undefined) || 'assets/default-profile.png')" (error)="onImgError($event)" class="profile-image" width="250" height="250" />
-    <div class="profile-details">
-      <h2>{{ brand?.name }} <span *ngIf="brand?.isPremium" class="premium-icon">★</span></h2>
-      <p *ngIf="brand?.email">Email: {{ brand?.email }}</p>
-      <p *ngIf="brand?.phoneNumber">Phone: {{ brand?.phoneNumber }}</p>
-      <p *ngIf="brand?.categories?.length">Categories: {{ brand?.categories?.join(', ') }}</p>
-      <div *ngIf="brand?.products?.length">
-        <label>Product Images:</label>
-        <div class="product-images">
-          <img *ngFor="let img of brand?.products" [src]="img.url || img" class="product-image" width="100" height="100"/>
+  <div *ngIf="!loading && !error && brand" class="brand-profile">
+
+    <!-- ══════ TOP HEADER ══════ -->
+    <div class="brand-header">
+      <div class="brand-header-left">
+        <img [src]="displayImage" (error)="onImgError($event)" alt="Brand logo" class="brand-logo" />
+        <div class="brand-header-info">
+          <h1 class="brand-name">{{ brand.brandName || brand.name }}</h1>
+          <p class="brand-tagline" *ngIf="brand.categories?.length">
+            {{ brand.categories.join(' · ') }}
+          </p>
+          <a *ngIf="brand.website" [href]="brand.website" target="_blank" rel="noopener noreferrer" class="brand-website">
+            <i class="bi bi-globe2"></i> {{ stripProtocol(brand.website) }}
+          </a>
         </div>
       </div>
-      <div *ngIf="brand?.website">
-        <label>Website:</label>
-        <a [href]="brand?.website" target="_blank">{{ brand?.website }}</a>
+      <div class="brand-header-actions">
+        <button class="btn btn-follow">Follow</button>
+        <button class="btn btn-contact" (click)="showContact = !showContact">Contact</button>
       </div>
-      <div *ngIf="brand?.promotionalPrice">
-        <hr />
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="fw-bold">Advertising Price</span>
-          <span class="ms-auto fs-5">{{ brand.promotionalPrice }}</span>
-        </div>
-      </div>
-      <div *ngIf="brand?.socialMedia?.length" class="d-flex align-items-center gap-2 mb-2">
-        <ng-container *ngFor="let sm of brand.socialMedia">
-          <ng-container [ngSwitch]="sm | resolvePlatform">
-            <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
-              <i class="bi bi-instagram fs-5"></i>
-            </a>
-            <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
-              <i class="bi bi-youtube fs-5"></i>
-            </a>
-            <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
-              <i class="bi bi-facebook fs-5"></i>
-            </a>
-            <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="website">
-              <i class="bi bi-link-45deg fs-5"></i>
-            </a>
-          </ng-container>
-        </ng-container>
-        <span *ngIf="brand.categories?.length" class="badge rounded-pill bg-light text-success ms-2" style="font-size:1rem;">{{ brand.categories[0] }}</span>
-      </div>
-      <div *ngIf="brand?.googleMapAddress">
-        <label>Google Map Address:</label>
-        <span>{{ brand?.googleMapAddress }}</span>
-      </div>
-      <p *ngIf="brand?.location?.state">
-        Location: {{ brand?.location?.state }}
-      </p>
-      <!-- <pre style="font-size:12px; color:#888; background:#f9f9f9; padding:8px; border-radius:4px;">{{ brand | json }}</pre> -->
-      
-
     </div>
+
+    <!-- Contact details (toggled) -->
+    <div *ngIf="showContact" class="contact-bar">
+      <span *ngIf="brand.contact?.email"><i class="bi bi-envelope"></i> {{ brand.email }}</span>
+      <span *ngIf="brand.contact?.call"><i class="bi bi-telephone"></i> {{ brand.phoneNumber }}</span>
+      <span *ngIf="brand.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp</span>
+    </div>
+
+    <!-- ══════ TAB BAR ══════ -->
+    <div class="tab-bar">
+      <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">
+        PROFILE OVERVIEW
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'campaigns'" (click)="activeTab = 'campaigns'">
+        CAMPAIGNS
+      </button>
+      <button class="tab-btn tab-locked" [class.active]="activeTab === 'analytics'">
+        ANALYTICS <i class="bi bi-lock-fill"></i>
+      </button>
+    </div>
+
+    <!-- ══════ CONTENT AREA (two columns) ══════ -->
+    <div class="content-grid">
+
+      <!-- LEFT: Main content -->
+      <div class="content-main">
+
+        <!-- About Brand -->
+        <div class="content-section">
+          <h3 class="section-title">About Brand</h3>
+          <p class="about-text">
+            {{ brand.brandName || brand.name }}
+            <span *ngIf="brand.categories?.length"> is a {{ brand.categories.join(', ').toLowerCase() }} brand</span>
+            <span *ngIf="brand.location?.state"> based in {{ brand.location.state }}</span>.
+            <span *ngIf="getTotalFollowers() > 0"> With {{ formatFollowers(getTotalFollowers()) }} followers across {{ brand.socialMedia?.length || 0 }} platform{{ brand.socialMedia?.length === 1 ? '' : 's' }}.</span>
+          </p>
+        </div>
+
+        <!-- Active Public Campaigns -->
+        <div class="content-section" *ngIf="brand.products?.length">
+          <div class="section-header-row">
+            <h3 class="section-title">Active Public Campaigns</h3>
+            <a class="view-all-link">View all campaigns</a>
+          </div>
+          <div class="campaign-cards">
+            <div *ngFor="let img of brand.products; let i = index" class="campaign-card">
+              <div class="campaign-img-wrap">
+                <img [src]="img.url || img" (error)="onImgError($event)" class="campaign-img" />
+                <span class="campaign-badge active">ACTIVE</span>
+              </div>
+              <div class="campaign-info">
+                <h4 class="campaign-title">{{ brand.brandName || brand.name }} Campaign</h4>
+                <p class="campaign-desc">Explore {{ brand.categories?.[0] || 'our' }} collections and featured products.</p>
+                <div class="campaign-footer">
+                  <span class="campaign-price" *ngIf="brand.promotionalPrice">
+                    ${{ brand.promotionalPrice }}
+                  </span>
+                  <button class="btn btn-apply">Apply Now</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details & Social -->
+        <div class="content-section" *ngIf="brand.socialMedia?.length || brand.languages?.length || brand.googleMapAddress">
+          <h3 class="section-title">Details</h3>
+          <div class="details-list">
+            <div class="detail-row" *ngIf="brand.website">
+              <span class="detail-label">Website</span>
+              <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="detail-value link-val">{{ stripProtocol(brand.website) }}</a>
+            </div>
+            <div class="detail-row" *ngIf="brand.languages?.length">
+              <span class="detail-label">Languages</span>
+              <span class="detail-value">{{ brand.languages.join(', ') }}</span>
+            </div>
+            <div class="detail-row" *ngIf="brand.promotionalPrice">
+              <span class="detail-label">Advertising Price</span>
+              <span class="detail-value price-val">${{ brand.promotionalPrice }}</span>
+            </div>
+            <div class="detail-row" *ngIf="brand.googleMapAddress">
+              <span class="detail-label">Address</span>
+              <span class="detail-value">{{ brand.googleMapAddress }}</span>
+            </div>
+            <div class="detail-row" *ngIf="brand.categories?.length">
+              <span class="detail-label">Categories</span>
+              <span class="detail-value">
+                <span *ngFor="let cat of brand.categories" class="cat-chip">{{ cat }}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Social links -->
+          <div *ngIf="brand.socialMedia?.length" class="social-links">
+            <a *ngFor="let sm of brand.socialMedia" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill">
+              <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Brand Insights Sidebar -->
+      <div class="insights-sidebar">
+        <h4 class="sidebar-title">Brand Insights</h4>
+
+        <!-- Unlock Sentiment card -->
+        <div class="insight-card">
+          <div class="insight-blur-area">
+            <div class="blur-text">Positive 88%</div>
+          </div>
+          <h5 class="insight-heading">Unlock Sentiment</h5>
+          <p class="insight-desc">See how the audience feels about this brand's recent campaigns.</p>
+          <button class="btn btn-gopro">Go Pro</button>
+        </div>
+
+        <!-- Historical ROI card -->
+        <div class="insight-card">
+          <div class="roi-header">
+            <span class="roi-metric">4.2x</span>
+            <span class="roi-label">Avg</span>
+            <span class="roi-icon"><i class="bi bi-bar-chart-fill"></i></span>
+          </div>
+          <h5 class="insight-heading">Historical ROI</h5>
+          <p class="insight-desc">Access detailed performance metrics from past creator collaborations.</p>
+          <button class="btn btn-view-sample">View Sample</button>
+        </div>
+
+        <!-- Industry Stats card -->
+        <div class="insight-card stats-card">
+          <h5 class="insight-heading">Industry Stats</h5>
+          <div class="stats-row">
+            <span>Follower Growth</span>
+            <span class="stat-positive">+12.4%</span>
+          </div>
+          <div class="stats-row">
+            <span>Avg Engagement</span>
+            <span>3.8%</span>
+          </div>
+          <div class="stats-divider"></div>
+          <div class="global-rank">
+            <span class="rank-label">GLOBAL RANK</span>
+            <span class="rank-value" *ngIf="brand.categories?.length">#1,402 in {{ brand.categories[0] }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ BOTTOM CTA BAR ══════ -->
+    <div class="bottom-cta">
+      <div class="cta-text">
+        <h4>Want more brand intelligence?</h4>
+        <p>Get unlimited access to brand deep dives, creator ROI, and market trends.</p>
+      </div>
+      <button class="btn btn-gopro-lg">Get Trendstarz Pro</button>
+    </div>
+
   </div>
 </div>
