@@ -78,7 +78,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.influencersLoading = true;
     this.influencersError = '';
     this.influencers = [];
-    this.config.getInfluencers('').subscribe({
+    this.config.getInfluencers().subscribe({
       next: (data) => {
         this.allInfluencers = data || [];
         // Extract top 5 categories by registered user count (descending)
@@ -131,7 +131,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brandsLoading = true;
     this.brandsError = '';
     this.brands = [];
-    this.config.getBrands('').subscribe({
+    this.config.getBrands().subscribe({
       next: (data) => {
         this.brands = data || [];
         this.brandsLoading = false;

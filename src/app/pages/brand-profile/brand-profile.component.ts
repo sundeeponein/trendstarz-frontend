@@ -322,7 +322,7 @@ export class BrandProfileComponent implements OnInit {
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
-      this.configService.getBrandProfileById(token).subscribe({
+      this.configService.getBrandProfileById().subscribe({
         next: (profile: any) => {
           if (!profile) {
             this.registrationError = 'Profile not found or you are not logged in.';
@@ -488,7 +488,7 @@ export class BrandProfileComponent implements OnInit {
       return;
     }
     // Simulate payment, then call backend PATCH to set premium for brand
-    this.configService.getBrandProfileById(token).subscribe({
+    this.configService.getBrandProfileById().subscribe({
       next: (profile: any) => {
         if (!profile || !profile._id) {
           this.paymentError = 'User ID not found';
@@ -729,7 +729,7 @@ export class BrandProfileComponent implements OnInit {
     delete payload.productImages;
     delete payload.googleMapAddress;
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
-    this.configService.updateBrandProfile(payload, token).subscribe({
+    this.configService.updateBrandProfile(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;
         this.isEditMode = false;

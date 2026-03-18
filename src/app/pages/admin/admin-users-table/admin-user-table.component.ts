@@ -81,7 +81,7 @@ export class AdminUserTableComponent implements OnInit {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     console.log('Profile token:', token);
     if (token) {
-      this.configService.getInfluencerProfileById(token).subscribe({
+      this.configService.getInfluencerProfileById().subscribe({
         next: (profile) => {
           console.log('Fetched profile:', profile);
           // ...existing code...
