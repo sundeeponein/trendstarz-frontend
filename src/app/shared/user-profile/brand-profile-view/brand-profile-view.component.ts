@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../config.service';
+import { SessionService } from '../../../core/session.service';
 import { switchMap } from 'rxjs/operators';
 import { Campaign } from '../../campaigns/campaign.model';
 import { CampaignListComponent } from '../../campaigns/campaign-list/campaign-list.component';
@@ -20,6 +21,7 @@ export class BrandProfileViewComponent implements OnInit {
   showContact = false;
   activeTab: 'overview' | 'campaigns' | 'analytics' = 'overview';
   campaigns: Campaign[] = [];
+  isOwner = false;
 
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -92,7 +94,7 @@ export class BrandProfileViewComponent implements OnInit {
     return '#';
   }
 
-  constructor(private route: ActivatedRoute, private config: ConfigService, private cd: ChangeDetectorRef) {}
+  constructor(private route: ActivatedRoute, private config: ConfigService, private session: SessionService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.route.paramMap
@@ -119,6 +121,7 @@ export class BrandProfileViewComponent implements OnInit {
             this.brand = null;
           } else {
             this.brand = data;
+            this.checkOwnership(data);
             // Fetch campaigns for this brand
             const brandName = data.brandName || data.brandUsername || data.name;
             if (brandName) {
@@ -140,5 +143,41 @@ export class BrandProfileViewComponent implements OnInit {
           this.cd.detectChanges();
         }
       });
+  }
+
+  private checkOwnership(brand: any) {
+    const user = this.session.getUser();
+    if (!user) { this.isOwner = false; return; }
+    this.isOwner = user.id === brand._id || user.id === brand.userId || user.email === brand.email;
+  }
+
+  onCreateCampaign(data: Partial<Campaign>) {
+    const brandId = this.brand?._id;
+    if (!brandId) return;
+    const payload: any = { ...data, brandId };
+    this.config.createCampaign(payload).subscribe({
+      next: (created: Campaign) => {
+        this.campaigns = [...this.campaigns, created];
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  onEditCampaign(event: { id: string; data: Partial<Campaign> }) {
+    this.config.updateCampaign(event.id, event.data).subscribe({
+      next: (updated: Campaign) => {
+        this.campaigns = this.campaigns.map(c => c._id === event.id ? { ...c, ...updated } : c);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  onDeleteCampaign(id: string) {
+    this.config.deleteCampaign(id).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.filter(c => c._id !== id);
+        this.cd.detectChanges();
+      }
+    });
   }
 }

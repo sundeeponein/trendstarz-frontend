@@ -6,7 +6,7 @@
       <h2 class="campaigns-title">Campaigns</h2>
       <p class="campaigns-subtitle">Manage and track your influencer marketing initiatives.</p>
     </div>
-    <button *ngIf="isOwner" class="btn btn-create">
+    <button *ngIf="isOwner" class="btn btn-create" (click)="openCreateForm()">
       <i class="bi bi-plus-lg"></i> Create New Campaign
     </button>
   </div>
@@ -51,5 +51,14 @@
       <button class="btn btn-page" [disabled]="currentPage >= totalPages" (click)="nextPage()">Next</button>
     </div>
   </div>
+
+  <!-- Campaign Form Modal -->
+  <app-campaign-form
+    *ngIf="showForm"
+    [mode]="formMode"
+    [campaign]="editingCampaign"
+    (save)="onFormSave($event)"
+    (cancel)="closeForm()"
+  ></app-campaign-form>
 
 </div>

@@ -179,7 +179,10 @@
       <app-campaign-list
         [campaigns]="campaigns"
         [brandName]="brand.brandName || brand.name"
-        [isOwner]="false"
+        [isOwner]="isOwner"
+        (createCampaign)="onCreateCampaign($event)"
+        (editCampaign)="onEditCampaign($event)"
+        (deleteCampaign)="onDeleteCampaign($event)"
       ></app-campaign-list>
     </div>
 

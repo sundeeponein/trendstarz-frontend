@@ -3,7 +3,7 @@ import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { map, first, catchError } from 'rxjs/operators';
@@ -12,21 +12,27 @@ import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { Campaign } from '../../shared/campaigns/campaign.model';
+import { CampaignListComponent } from '../../shared/campaigns/campaign-list/campaign-list.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CampaignListComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
 
 export class BrandProfileComponent implements OnInit {
-  currentStep: 1 | 2 | 3 = 1;
-  readonly totalSteps = 3;
+  currentStep: 1 | 2 | 3 | 4 = 1;
+  readonly totalSteps = 4;
   step1Complete: boolean = false;
   step2Complete: boolean = false;
   step3Complete: boolean = false;
+
+  // Campaign management
+  campaigns: Campaign[] = [];
+  brandId: string = '';
   step2Attempted: boolean = false;
 
   // OTP dialog/expand state
@@ -67,7 +73,8 @@ export class BrandProfileComponent implements OnInit {
   constructor(
     public fb: FormBuilder,
     private configService: ConfigService,
-    private otpService: OtpService
+    private otpService: OtpService,
+    private cd: ChangeDetectorRef
   ) {}
 
   phoneOtpTimer: number = 300;
@@ -413,6 +420,18 @@ export class BrandProfileComponent implements OnInit {
           this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
           this.registrationForm.disable();
           this.refreshStepCompletion();
+
+          // Fetch campaigns for this brand
+          this.brandId = profile._id || '';
+          const brandName = profile.brandName || profile.brandUsername || profile.name;
+          if (brandName) {
+            this.configService.getCampaignsByBrandName(brandName).subscribe({
+              next: (campaigns: any[]) => {
+                this.campaigns = campaigns;
+                this.cd.detectChanges();
+              }
+            });
+          }
         },
         error: () => {
           this.registrationError = 'Error fetching profile.';
@@ -613,7 +632,7 @@ export class BrandProfileComponent implements OnInit {
     return false;
   }
 
-  goToStep(step: 1 | 2 | 3) {
+  goToStep(step: 1 | 2 | 3 | 4) {
     this.currentStep = step;
     this.submitted = false;
     this.registrationError = '';
@@ -650,7 +669,7 @@ export class BrandProfileComponent implements OnInit {
   nextStep() {
     if (this.isEditMode && !this.validateCurrentStep()) return;
     if (this.currentStep < this.totalSteps) {
-      this.currentStep = (this.currentStep + 1) as 1 | 2 | 3;
+      this.currentStep = (this.currentStep + 1) as 1 | 2 | 3 | 4;
       this.submitted = false;
       this.registrationError = '';
       if (this.currentStep === 2) {
@@ -662,13 +681,46 @@ export class BrandProfileComponent implements OnInit {
 
   prevStep() {
     if (this.currentStep > 1) {
-      this.currentStep = (this.currentStep - 1) as 1 | 2 | 3;
+      this.currentStep = (this.currentStep - 1) as 1 | 2 | 3 | 4;
       this.submitted = false;
       this.registrationError = '';
       if (this.currentStep === 2) {
         this.step2Attempted = false;
       }
     }
+  }
+
+  // ── Campaign CRUD ──────────────────────
+  onCreateCampaign(data: Partial<Campaign>) {
+    if (!this.brandId) return;
+    const payload: any = { ...data, brandId: this.brandId };
+    delete payload._file; // don't send File object to API
+    this.configService.createCampaign(payload).subscribe({
+      next: (created: Campaign) => {
+        this.campaigns = [...this.campaigns, created];
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  onEditCampaign(event: { id: string; data: Partial<Campaign> }) {
+    const payload: any = { ...event.data };
+    delete payload._file;
+    this.configService.updateCampaign(event.id, payload).subscribe({
+      next: (updated: Campaign) => {
+        this.campaigns = this.campaigns.map(c => c._id === event.id ? { ...c, ...updated } : c);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  onDeleteCampaign(id: string) {
+    this.configService.deleteCampaign(id).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.filter(c => c._id !== id);
+        this.cd.detectChanges();
+      }
+    });
   }
 
 

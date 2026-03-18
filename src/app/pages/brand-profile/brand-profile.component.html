@@ -3,7 +3,7 @@
     <aside class="left-panel">
       <div class="panel-card progress-panel">
         <h4>Profile Progress</h4>
-        <p class="step-count">Step {{ currentStep }} of 3</p>
+        <p class="step-count">Step {{ currentStep }} of 4</p>
 
         <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
           <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
@@ -18,6 +18,11 @@
         <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
           <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
           <span class="step-label">Professional</span>
+        </button>
+
+        <button type="button" class="step-item" [class.active]="currentStep === 4" (click)="goToStep(4)">
+          <span class="step-icon">4</span>
+          <span class="step-label">Campaigns</span>
         </button>
       </div>
     </aside>
@@ -197,9 +202,26 @@
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
             <button type="submit" class="btn btn-primary" *ngIf="isEditMode">Save Profile</button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Enable Edit</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
           </div>
         </section>
       </form>
+
+      <!-- ══════ STEP 4: Campaigns ══════ -->
+      <section class="form-card" *ngIf="currentStep === 4">
+        <app-campaign-list
+          [campaigns]="campaigns"
+          [brandName]="registrationForm.get('brandName')?.value || ''"
+          [isOwner]="true"
+          (createCampaign)="onCreateCampaign($event)"
+          (editCampaign)="onEditCampaign($event)"
+          (deleteCampaign)="onDeleteCampaign($event)"
+        ></app-campaign-list>
+
+        <div class="actions-row dual mt-3">
+          <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+        </div>
+      </section>
     </main>
   </div>
 </div>
