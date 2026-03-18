@@ -1,38 +1,45 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
-import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
-import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 // import { NavbarLayoutComponent } from '../../layout/navbar-layout/navbar-layout.component';
 // import { FooterComponent } from '../../shared/footer/footer.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, InfluencerUserCardComponent, BrandUserCardComponent],
-  templateUrl: './welcome.component.html'
+  imports: [CommonModule],
+  templateUrl: './welcome.component.html',
+  styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
   private routerSubscription: any;
   influencers: any[] = [];
+  allInfluencers: any[] = [];
   brands: any[] = [];
   influencersLoading = false;
   brandsLoading = false;
   influencersError: string = '';
   brandsError: string = '';
+  selectedCategory: string = '';
+  creatorCategories: string[] = [];
+
+  private isBrowser: boolean;
 
   constructor(
     private meta: Meta,
     private title: Title,
     private config: ConfigService,
     public router: Router,
-    private cd: ChangeDetectorRef
-  ) {}
+    private cd: ChangeDetectorRef,
+    private ngZone: NgZone,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit(): void {
-    this.fetchBrands();
     this.title.setTitle('Welcome to TrendStarz Marketplace | Connect Influencers & Brands');
     this.meta.addTags([
       { name: 'description', content: 'TrendStarz Marketplace connects influencers and brands. Discover, collaborate, and grow together!' },
@@ -46,8 +53,11 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'twitter:description', content: 'Connect influencers and brands. Discover, collaborate, and grow together!' },
       { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
     ]);
-    this.fetchInfluencers();
-    // Listen for navigation events to re-fetch data on back/forward
+    if (!this.isBrowser) return;
+    this.ngZone.run(() => {
+      this.fetchBrands();
+      this.fetchInfluencers();
+    });
     this.routerSubscription = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects || event.url;
@@ -70,8 +80,17 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.influencers = [];
     this.config.getInfluencers('').subscribe({
       next: (data) => {
-        // Filter for accepted status only (defensive, in case backend ever returns others)
-        this.influencers = (data || []).filter((u: any) => u.status === 'accepted');
+        this.allInfluencers = data || [];
+        // Extract top 5 categories by registered user count (descending)
+        const catCounts = new Map<string, number>();
+        this.allInfluencers.forEach((u: any) => (u.categories || []).forEach((c: string) => {
+          catCounts.set(c, (catCounts.get(c) || 0) + 1);
+        }));
+        this.creatorCategories = Array.from(catCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([cat]) => cat);
+        this.filterByCategory(this.selectedCategory);
         this.influencersLoading = false;
         this.cd.detectChanges();
       },
@@ -114,8 +133,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brands = [];
     this.config.getBrands('').subscribe({
       next: (data) => {
-        // Filter for accepted status only (defensive, in case backend ever returns others)
-        this.brands = (data || []).filter((u: any) => u.status === 'accepted');
+        this.brands = data || [];
         this.brandsLoading = false;
         this.cd.detectChanges();
       },
@@ -133,5 +151,26 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.router.navigate(['/brand', this.slugify(brand.brandName)]);
     }
   }
-  
+
+  filterByCategory(category: string) {
+    this.selectedCategory = category;
+    if (!category) {
+      this.influencers = [...this.allInfluencers];
+    } else {
+      this.influencers = this.allInfluencers.filter(
+        (u: any) => (u.categories || []).some((c: string) => c.toLowerCase() === category.toLowerCase())
+      );
+    }
+    this.cd.detectChanges();
+  }
+
+  getTotalFollowers(influencer: any): number {
+    return (influencer.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
+  }
+
+  formatFollowers(count: number): string {
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
+  }
 }

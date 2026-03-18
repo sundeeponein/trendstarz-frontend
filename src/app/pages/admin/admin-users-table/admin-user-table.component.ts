@@ -227,11 +227,12 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   updateUserPrice(user: any, userType: 'influencer' | 'brand') {
-    if (user.editPrice === undefined || user.editPrice === user.price) return;
+    const currentPrice = user.promotionalPrice ?? user.price;
+    if (user.editPrice === undefined || user.editPrice === currentPrice) return;
     const url = userType === 'influencer'
       ? `${environment.apiBaseUrl}/users/influencer-profile`
       : `${environment.apiBaseUrl}/users/brand-profile`;
-    const payload = { price: user.editPrice, _id: user._id };
+    const payload = { promotionalPrice: user.editPrice, _id: user._id };
     this.http.patch(url, payload, this.getAuthHeaders())
       .pipe(catchError(err => {
         alert('Error updating price: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
@@ -239,8 +240,8 @@ export class AdminUserTableComponent implements OnInit {
       }))
       .subscribe((res: any) => {
         if (res && res.user) {
-          user.price = res.user.price;
-          user.editPrice = res.user.price;
+          user.promotionalPrice = res.user.promotionalPrice ?? res.user.price;
+          user.editPrice = user.promotionalPrice;
           alert('Price updated successfully!');
         } else {
           alert('Price update failed.');

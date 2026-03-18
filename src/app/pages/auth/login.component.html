@@ -1,40 +1,68 @@
-<div class="login-container row m-0 vh-100">
-  <!-- Left Panel -->
-  <div class="col d-flex flex-column justify-content-center align-items-center">
-    <img src="assets/default-profile-brands.png" alt="App Mockup" class="mockup-img mt-4 w-100" />
-  </div>
-
-  <!-- Right Panel -->
-  <div class="col position-relative d-flex flex-column justify-content-center align-items-center bg-white rounded-top-5">
-    <div class="d-flex flex-column align-items-center mb-3">
-      <a class="btn btn-link p-0 mb-1" routerLink="/register-influencer">Register as Influencer</a>
-      <a class="btn btn-link p-0 mb-1" routerLink="/register-brand">Register as Brand</a>
-      <a class="btn btn-link p-0 mb-1" routerLink="/signup" *ngIf="false">Sign Up</a> <!-- Hidden fallback -->
+<div class="login-shell container-fluid p-0">
+  <div class="row g-0 min-vh-100">
+    <div class="col-12 col-lg-6 visual-panel d-flex flex-column">
+      <div class="brand-strip d-flex align-items-center">
+        <img src="assets/logo-trendstarz-logo-text.png" alt="Trendstarz" class="brand-logo" />
+      </div>
+      <div class="visual-copy mt-auto">
+        <h1>Elevate your digital presence.</h1>
+        <p>Join thousands of brands and creators building the next generation of digital marketing.</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <span class="badge rounded-pill text-bg-light">Verified Creators</span>
+          <span class="badge rounded-pill text-bg-light">Premium Brands</span>
+        </div>
+      </div>
     </div>
-    <div class="login-box">
-      <img src="assets/logo-trendstarz-logo-text.png" alt="Logo" class="logo mb-3" style="height: 55px;" />
-      <div class="login-title mb-4">Sign In</div>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" class="w-100">
-        <div class="form-group mb-3">
-          <input formControlName="email" type="email" class="form-control" placeholder="Email or Username" />
-          <div *ngIf="loginForm.get('email')?.invalid && (loginForm.get('email')?.touched || submitted)" class="text-danger small mt-1">Valid email is required</div>
+
+    <div class="col-12 col-lg-6 form-panel d-flex align-items-center justify-content-center">
+      <div class="form-wrap w-100">
+        <h2 class="mb-2">Welcome back</h2>
+        <p class="text-muted mb-4">Please enter your details to sign in.</p>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <input formControlName="email" type="email" class="form-control" placeholder="name@company.com" />
+            <div *ngIf="loginForm.get('email')?.invalid && (loginForm.get('email')?.touched || submitted)" class="text-danger small mt-1">Valid email is required</div>
+          </div>
+
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="form-label mb-1">Password</label>
+              <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
+            </div>
+            <div class="password-wrap">
+              <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" placeholder="Enter password" />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              >
+                <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+            <div *ngIf="loginForm.get('password')?.invalid && (loginForm.get('password')?.touched || submitted)" class="text-danger small mt-1">Password is required</div>
+          </div>
+
+          <div class="form-check my-3 text-black-50">
+            <input id="remember" class="form-check-input" type="checkbox" />
+            <label for="remember" class="form-check-label"><small>Remember me for 30 days</small></label>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 btn-signin" [disabled]="loginForm.invalid">Sign In</button>
+
+          <div *ngIf="errorMsg" class="text-danger text-center mt-3">
+            {{ errorMsg === 'Your account is pending approval. Please wait for admin to activate your account.' ? 'Admin needs to verify your ID. Your account is in pending/verification status.' : errorMsg }}
+          </div>
+        </form>
+
+        <div class="divider my-4"><span>Don&apos;t have an account?</span></div>
+
+        <div class="d-grid gap-2 d-sm-flex">
+          <a class="btn btn-outline-secondary flex-fill" routerLink="/register-influencer">Register as Influencer</a>
+          <a class="btn btn-outline-secondary flex-fill" routerLink="/register-brand">Register as Brand</a>
         </div>
-        <div class="form-group mb-2 position-relative">
-          <input formControlName="password" type="password" class="form-control" placeholder="Password" />
-          <div *ngIf="loginForm.get('password')?.invalid && (loginForm.get('password')?.touched || submitted)" class="text-danger small mt-1">Password is required</div>
-        </div>
-  <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
-        <button type="submit" class="btn btn-signin mt-2" [disabled]="loginForm.invalid">
-          <span class="me-2"><i class="bi bi-box-arrow-in-right"></i></span>Sign In
-        </button>
-        <div *ngIf="errorMsg" class="text-danger text-center mt-3">
-          {{ errorMsg === 'Your account is pending approval. Please wait for admin to activate your account.' ? 'Admin needs to verify your ID. Your account is in pending/verification status.' : errorMsg }}
-        </div>
-      </form>
-      <div class="d-flex justify-content-between w-100 mt-4 small text-muted">
-        <span>&copy; 2005-2025 TrendStarz Inc.</span>
-        <span><a href="#" class="text-muted">Contact Us</a></span>
-        <span>English <i class="bi bi-chevron-down"></i></span>
       </div>
     </div>
   </div>
