@@ -209,7 +209,7 @@ export class InfluencerProfileComponent implements OnInit {
     // Fetch influencer profile and patch form
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
-      this.configService.getInfluencerProfileById(token).subscribe({
+      this.configService.getInfluencerProfileById().subscribe({
         next: (profile) => {
           if (!profile) {
             this.registrationError = 'Profile not found or you are not logged in.';
@@ -408,7 +408,7 @@ export class InfluencerProfileComponent implements OnInit {
       return;
     }
     // Call backend PATCH to set premium
-    this.configService.setPremiumForCurrentUser(true, this.selectedDuration, token).subscribe({
+    this.configService.setPremiumForCurrentUser(true, this.selectedDuration).subscribe({
       next: (res: any) => {
         this.paymentSuccess = true;
         this.showPayment = false;
@@ -614,7 +614,7 @@ export class InfluencerProfileComponent implements OnInit {
     // Debug log: print PATCH payload
     console.log('[PATCH payload]', JSON.stringify(payload, null, 2));
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
-    this.configService.updateInfluencerProfile(payload, token).subscribe({
+    this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
         console.log('[PATCH response]', res);
         this.registrationSuccess = true;
@@ -647,7 +647,7 @@ export class InfluencerProfileComponent implements OnInit {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
       await new Promise<void>((resolve) => {
-        this.configService.getInfluencerProfileById(token).subscribe({
+        this.configService.getInfluencerProfileById().subscribe({
           next: (profile: any) => {
             if (!profile || !this.registrationForm) {
               this.registrationError = 'Profile not found or you are not logged in.';

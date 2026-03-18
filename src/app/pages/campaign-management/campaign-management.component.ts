@@ -44,7 +44,7 @@ export class CampaignManagementComponent implements OnInit {
   ngOnInit() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
-      this.config.getBrandProfileById(token).subscribe({
+      this.config.getBrandProfileById().subscribe({
         next: (profile: any) => {
           if (profile) {
             this.brandId = profile._id || '';
