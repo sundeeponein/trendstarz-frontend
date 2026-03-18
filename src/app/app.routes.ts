@@ -27,6 +27,7 @@ export const routes: Routes = [
 			{ path: 'influencer-profile', loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
 			{ path: 'influencer/:username', loadComponent: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.component').then(m => m.InfluencerProfileViewComponent) },
 			{ path: 'brand-profile', loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },
+			{ path: 'campaigns', loadComponent: () => import('./pages/campaign-management/campaign-management.component').then(m => m.CampaignManagementComponent) },
 			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 		],
 	},

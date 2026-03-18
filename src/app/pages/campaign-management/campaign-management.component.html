@@ -1,0 +1,124 @@
+<div class="cm-page">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status"></div>
+    <p class="mt-2 text-muted">Loading campaigns...</p>
+  </div>
+
+  <div *ngIf="!loading">
+
+    <!-- Header -->
+    <div class="cm-header">
+      <div>
+        <h1 class="cm-title">Campaign Management</h1>
+        <p class="cm-subtitle">Monitor performance and manage your brand partnerships.</p>
+      </div>
+      <div class="cm-header-actions">
+        <button class="btn btn-create" (click)="openCreateForm()">
+          <i class="bi bi-plus-circle-fill"></i> New Campaign
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="cm-tabs">
+      <button
+        *ngFor="let tab of tabs"
+        class="cm-tab"
+        [class.active]="activeTab === tab.key"
+        (click)="switchTab(tab.key)"
+      >
+        {{ tab.label }}
+        <span class="tab-count" [class.active-count]="activeTab === tab.key">{{ getCount(tab.key) }}</span>
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="cm-table-wrap" *ngIf="pagedCampaigns.length; else emptyState">
+      <table class="cm-table">
+        <thead>
+          <tr>
+            <th class="col-details">CAMPAIGN DETAILS</th>
+            <th class="col-budget">BUDGET</th>
+            <th class="col-applicants">APPLICANTS</th>
+            <th class="col-timeline">TIMELINE</th>
+            <th class="col-status">STATUS</th>
+            <th class="col-action">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of pagedCampaigns">
+            <td class="cell-details">
+              <div class="campaign-detail-row">
+                <img
+                  class="campaign-thumb"
+                  [src]="c.image?.url || 'assets/default-profile.png'"
+                  (error)="onImgError($event)"
+                  alt=""
+                />
+                <div>
+                  <span class="campaign-name">{{ c.title }}</span>
+                  <span class="campaign-desc" *ngIf="c.description">{{ c.description | slice:0:50 }}{{ (c.description?.length || 0) > 50 ? '...' : '' }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-budget">
+              <span class="budget-amount">{{ formatBudget(c) }}</span>
+            </td>
+            <td class="cell-applicants">
+              <span class="applicant-count">{{ c.applicants || 0 }}</span>
+            </td>
+            <td class="cell-timeline">
+              <span class="timeline-text">{{ formatTimeline(c) }}</span>
+              <div class="timeline-bar" *ngIf="c.timelineStart && c.timelineEnd">
+                <div class="timeline-fill" [style.width.%]="timelineProgress(c)"></div>
+              </div>
+            </td>
+            <td class="cell-status">
+              <span class="status-badge" [ngClass]="c.status">{{ c.status | uppercase }}</span>
+            </td>
+            <td class="cell-action">
+              <button class="btn-manage" (click)="onManage(c)">Manage</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="cm-empty">
+        <i class="bi bi-megaphone"></i>
+        <p>No {{ activeTab }} campaigns yet.</p>
+        <button class="btn btn-create-sm" (click)="openCreateForm()">Create your first campaign</button>
+      </div>
+    </ng-template>
+
+    <!-- Pagination -->
+    <div class="cm-pagination" *ngIf="filtered.length > 0">
+      <span class="page-info">
+        Showing {{ showingFrom }} of {{ filtered.length }} {{ activeTab }} campaigns
+      </span>
+      <div class="page-controls">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="prevPage()">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <span class="page-num active">{{ currentPage }}</span>
+        <button class="page-btn" [disabled]="currentPage >= totalPages" (click)="nextPage()">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Campaign Form Modal -->
+  <app-campaign-form
+    *ngIf="showForm"
+    [mode]="formMode"
+    [campaign]="editingCampaign"
+    (save)="onFormSave($event)"
+    (cancel)="closeForm()"
+  ></app-campaign-form>
+
+</div>
