@@ -1,0 +1,345 @@
+$accent: #e8612d;
+$accent-dark: #d4551f;
+$border: #e8e8e8;
+$text-dark: #1a1a2e;
+$text-muted: #7a7a8e;
+
+.cm-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ── Header ─────────────────────────── */
+.cm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cm-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: $text-dark;
+  margin: 0 0 4px;
+}
+
+.cm-subtitle {
+  font-size: 0.9rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+.cm-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-create {
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 22px;
+  padding: 10px 24px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  transition: background 0.2s;
+  i { font-size: 1rem; }
+  &:hover { background: $accent-dark; }
+}
+
+/* ── Tabs ────────────────────────────── */
+.cm-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid $border;
+  margin-bottom: 0;
+}
+
+.cm-tab {
+  background: none;
+  border: none;
+  padding: 12px 22px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $text-muted;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &.active {
+    color: $accent;
+    border-bottom-color: $accent;
+  }
+  &:hover:not(.active) {
+    color: $text-dark;
+  }
+}
+
+.tab-count {
+  background: #eee;
+  color: $text-muted;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  &.active-count {
+    background: $accent;
+    color: #fff;
+  }
+}
+
+/* ── Table ───────────────────────────── */
+.cm-table-wrap {
+  background: #fff;
+  border: 1px solid $border;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+.cm-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background: #fafafa;
+    th {
+      padding: 14px 18px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: $text-muted;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      border-bottom: 1px solid $border;
+      text-align: left;
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f3f3f3;
+    transition: background 0.15s;
+    &:hover { background: #fafafa; }
+    &:last-child { border-bottom: none; }
+  }
+
+  td {
+    padding: 16px 18px;
+    vertical-align: middle;
+    font-size: 0.88rem;
+    color: $text-dark;
+  }
+}
+
+.col-details { width: 32%; }
+.col-budget { width: 16%; }
+.col-applicants { width: 12%; }
+.col-timeline { width: 18%; }
+.col-status { width: 12%; }
+.col-action { width: 10%; text-align: right; }
+
+/* Campaign detail cell */
+.campaign-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.campaign-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #f0f0f0;
+}
+
+.campaign-name {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: $text-dark;
+  line-height: 1.3;
+}
+
+.campaign-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: $text-muted;
+  margin-top: 2px;
+}
+
+/* Budget */
+.budget-amount {
+  font-weight: 600;
+  color: $text-dark;
+}
+
+/* Applicants */
+.applicant-count {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* Timeline */
+.timeline-text {
+  font-size: 0.82rem;
+  color: $text-dark;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.timeline-bar {
+  width: 100%;
+  height: 4px;
+  background: #e8e8e8;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.timeline-fill {
+  height: 100%;
+  background: $accent;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+
+  &.active     { background: #d4edda; color: #155724; }
+  &.pending    { background: #fff3cd; color: #856404; }
+  &.completed  { background: #d1ecf1; color: #0c5460; }
+  &.draft      { background: #e2e3e5; color: #383d41; }
+}
+
+/* Action */
+.cell-action {
+  text-align: right;
+}
+
+.btn-manage {
+  background: none;
+  border: none;
+  color: $accent;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  &:hover { background: rgba($accent, 0.08); }
+}
+
+/* ── Empty state ────────────────────── */
+.cm-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: $text-muted;
+  border: 1px solid $border;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+
+  i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+  p {
+    font-size: 1rem;
+    margin: 0 0 18px;
+  }
+}
+
+.btn-create-sm {
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  &:hover { background: $accent-dark; }
+}
+
+/* ── Pagination ─────────────────────── */
+.cm-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0;
+  margin-top: 8px;
+}
+
+.page-info {
+  font-size: 0.85rem;
+  color: $accent;
+  font-weight: 500;
+}
+
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-btn {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: $text-dark;
+  transition: all 0.15s;
+  &:hover:not(:disabled) { border-color: $text-dark; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.page-num {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  &.active {
+    background: $accent;
+    color: #fff;
+  }
+}
+
+/* ── Responsive ─────────────────────── */
+@media (max-width: 768px) {
+  .cm-page { padding: 16px 12px; }
+  .cm-header { flex-direction: column; }
+  .cm-table-wrap { overflow-x: auto; }
+  .cm-table { min-width: 700px; }
+}

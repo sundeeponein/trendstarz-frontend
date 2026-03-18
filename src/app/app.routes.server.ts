@@ -18,6 +18,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'payment', renderMode: RenderMode.Prerender },
   { path: 'influencer-profile', renderMode: RenderMode.Prerender },
   { path: 'brand-profile', renderMode: RenderMode.Prerender },
+  { path: 'campaigns', renderMode: RenderMode.Client },
 
   // Admin / dashboard routes
   { path: 'admin', renderMode: RenderMode.Server },

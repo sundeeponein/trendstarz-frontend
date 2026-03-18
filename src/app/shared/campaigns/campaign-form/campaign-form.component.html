@@ -1,0 +1,91 @@
+<div class="form-overlay" (click)="onCancel()">
+  <div class="form-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="form-header">
+      <h3>{{ isEdit ? 'Edit Campaign' : 'Create New Campaign' }}</h3>
+      <button class="btn-close-modal" (click)="onCancel()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-body">
+
+        <!-- Title -->
+        <div class="field-group">
+          <label class="field-label">Campaign Title <span class="required">*</span></label>
+          <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
+          <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
+          <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['minlength']">Minimum 3 characters</span>
+        </div>
+
+        <!-- Description -->
+        <div class="field-group">
+          <label class="field-label">Description</label>
+          <textarea formControlName="description" class="field-textarea" rows="3" placeholder="Describe the campaign objectives, deliverables, and expectations..."></textarea>
+        </div>
+
+        <!-- Image -->
+        <div class="field-group">
+          <label class="field-label">Campaign Image</label>
+          <div class="image-upload-area" *ngIf="!imagePreview">
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
+            <label for="campaign-img-input" class="upload-label">
+              <i class="bi bi-cloud-arrow-up"></i>
+              <span>Click to upload an image</span>
+            </label>
+          </div>
+          <div class="image-preview" *ngIf="imagePreview">
+            <img [src]="imagePreview" alt="Preview" />
+            <button type="button" class="btn-remove-img" (click)="removeImage()"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="field-group">
+          <label class="field-label">Status</label>
+          <select formControlName="status" class="field-select">
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <!-- Budget row -->
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Budget Min ($)</label>
+            <input type="number" formControlName="budgetMin" class="field-input" placeholder="0" min="0" />
+          </div>
+          <div class="field-group half">
+            <label class="field-label">Budget Max ($)</label>
+            <input type="number" formControlName="budgetMax" class="field-input" placeholder="0" min="0" />
+          </div>
+        </div>
+
+        <!-- Timeline row -->
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Start Date</label>
+            <input type="date" formControlName="timelineStart" class="field-input" />
+          </div>
+          <div class="field-group half">
+            <label class="field-label">End Date</label>
+            <input type="date" formControlName="timelineEnd" class="field-input" />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="form-footer">
+        <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="uploading">Cancel</button>
+        <button type="submit" class="btn btn-save" [disabled]="form.invalid || uploading">
+          <span *ngIf="uploading">Saving...</span>
+          <span *ngIf="!uploading">{{ isEdit ? 'Save Changes' : 'Create Campaign' }}</span>
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

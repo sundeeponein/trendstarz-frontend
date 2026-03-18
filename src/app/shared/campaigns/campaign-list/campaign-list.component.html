@@ -1,0 +1,64 @@
+<div class="campaigns-page">
+
+  <!-- Header -->
+  <div class="campaigns-header">
+    <div>
+      <h2 class="campaigns-title">Campaigns</h2>
+      <p class="campaigns-subtitle">Manage and track your influencer marketing initiatives.</p>
+    </div>
+    <button *ngIf="isOwner" class="btn btn-create" (click)="openCreateForm()">
+      <i class="bi bi-plus-lg"></i> Create New Campaign
+    </button>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="campaigns-tabs">
+    <button
+      *ngFor="let tab of tabs"
+      class="tab-btn"
+      [class.active]="activeTab === tab.key"
+      (click)="switchTab(tab.key)"
+    >
+      {{ tab.label }} ({{ getCount(tab.key) }})
+    </button>
+  </div>
+
+  <!-- Cards grid -->
+  <div class="campaigns-grid" *ngIf="pagedCampaigns.length; else emptyState">
+    <app-campaign-card
+      *ngFor="let c of pagedCampaigns"
+      [campaign]="c"
+      [isOwner]="isOwner"
+      (viewDetails)="onViewDetails($event)"
+      (manage)="onManage($event)"
+    ></app-campaign-card>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <i class="bi bi-megaphone"></i>
+      <p>No {{ activeTab }} campaigns yet.</p>
+    </div>
+  </ng-template>
+
+  <!-- Pagination -->
+  <div class="campaigns-pagination" *ngIf="filtered.length > 0">
+    <span class="page-info">
+      Showing {{ showingFrom }} to {{ showingTo }} of {{ filtered.length }} campaigns
+    </span>
+    <div class="page-btns">
+      <button class="btn btn-page" [disabled]="currentPage === 1" (click)="prevPage()">Previous</button>
+      <button class="btn btn-page" [disabled]="currentPage >= totalPages" (click)="nextPage()">Next</button>
+    </div>
+  </div>
+
+  <!-- Campaign Form Modal -->
+  <app-campaign-form
+    *ngIf="showForm"
+    [mode]="formMode"
+    [campaign]="editingCampaign"
+    (save)="onFormSave($event)"
+    (cancel)="closeForm()"
+  ></app-campaign-form>
+
+</div>

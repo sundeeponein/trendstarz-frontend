@@ -671,8 +671,6 @@ export class BrandProfileComponent implements OnInit {
     }
   }
 
-
-
   async onSubmit() {
     this.submitted = true;
     if (!this.isEditMode || this.registrationForm.invalid || !this.hasBrandLogo()) {

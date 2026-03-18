@@ -41,15 +41,15 @@
         PROFILE OVERVIEW
       </button>
       <button class="tab-btn" [class.active]="activeTab === 'campaigns'" (click)="activeTab = 'campaigns'">
-        CAMPAIGNS
+        CAMPAIGNS ({{ campaigns.length }})
       </button>
       <button class="tab-btn tab-locked" [class.active]="activeTab === 'analytics'">
         ANALYTICS <i class="bi bi-lock-fill"></i>
       </button>
     </div>
 
-    <!-- ══════ CONTENT AREA (two columns) ══════ -->
-    <div class="content-grid">
+    <!-- ══════ TAB: PROFILE OVERVIEW ══════ -->
+    <div *ngIf="activeTab === 'overview'" class="content-grid">
 
       <!-- LEFT: Main content -->
       <div class="content-main">
@@ -172,6 +172,18 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ══════ TAB: CAMPAIGNS ══════ -->
+    <div *ngIf="activeTab === 'campaigns'">
+      <app-campaign-list
+        [campaigns]="campaigns"
+        [brandName]="brand.brandName || brand.name"
+        [isOwner]="isOwner"
+        (createCampaign)="onCreateCampaign($event)"
+        (editCampaign)="onEditCampaign($event)"
+        (deleteCampaign)="onDeleteCampaign($event)"
+      ></app-campaign-list>
     </div>
 
     <!-- ══════ BOTTOM CTA BAR ══════ -->

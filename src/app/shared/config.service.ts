@@ -155,4 +155,26 @@ export class ConfigService {
     return this.http.get<any>(`${this.apiUrl}/users/influencers/username/${username}`);
   }
 
+  // ── Campaign endpoints ──────────────────────
+  getCampaignsByBrandName(brandName: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/campaigns/brand-name/${encodeURIComponent(brandName)}`)
+      .pipe(catchError(() => of([])));
+  }
+
+  getCampaignsByBrandId(brandId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/campaigns?brandId=${encodeURIComponent(brandId)}`)
+      .pipe(catchError(() => of([])));
+  }
+
+  createCampaign(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaigns`, data);
+  }
+
+  updateCampaign(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaigns/${id}`, data);
+  }
+
+  deleteCampaign(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/campaigns/${id}`);
+  }
 }
