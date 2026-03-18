@@ -89,14 +89,12 @@ export class ConfigService {
     return this.http.get<any[]>(`${this.apiUrl}/social-media`);
   }
 
-  getInfluencers(token: string): Observable<any[]> {
-  const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  return this.http.get<any[]>(`${this.apiUrl}/users/influencers`, headers);
+  getInfluencers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/influencers`);
   }
 
-  getBrands(token: string): Observable<any[]> {
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return this.http.get<any[]>(`${this.apiUrl}/users/brands`, headers);
+  getBrands(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/brands`);
   }
 
   updateBrandImages(id: string, images: { brandLogo?: any[]; products?: any[] }): Observable<any> {
@@ -108,37 +106,32 @@ export class ConfigService {
   }
 
 
-  getInfluencerProfileById(token: string): Observable<any> {
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return this.http.get(`${this.apiUrl}/users/influencer-profile`, headers);
+  getInfluencerProfileById(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/users/influencer-profile`);
   }
 
-  updateInfluencerProfile(data: any, token: string): Observable<any> {
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return this.http.patch(`${this.apiUrl}/users/influencer-profile`, data, headers);
+  updateInfluencerProfile(data: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/influencer-profile`, data);
   }
 
-  getBrandProfileById(token: string): Observable<any> {
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return this.http.get(`${this.apiUrl}/users/brand-profile`, headers);
+  getBrandProfileById(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/users/brand-profile`);
   }
 
-  updateBrandProfile(data: any, token: string): Observable<any> {
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return this.http.patch(`${this.apiUrl}/users/brand-profile`, data, headers);
+  updateBrandProfile(data: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/brand-profile`, data);
   }
 
 
-  setPremiumForCurrentUser(isPremium: boolean, premiumDuration: '1m' | '3m' | '1y', token: string): Observable<any> {
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  setPremiumForCurrentUser(isPremium: boolean, premiumDuration: '1m' | '3m' | '1y'): Observable<any> {
     return new Observable((observer) => {
-      this.getInfluencerProfileById(token).subscribe({
+      this.getInfluencerProfileById().subscribe({
         next: (profile: any) => {
           if (!profile || !profile._id) {
             observer.error('User ID not found');
             return;
           }
-          this.http.patch(`${this.apiUrl}/users/${profile._id}/premium`, { isPremium, premiumDuration }, headers)
+          this.http.patch(`${this.apiUrl}/users/${profile._id}/premium`, { isPremium, premiumDuration })
             .subscribe({
               next: (res) => observer.next(res),
               error: (err) => observer.error(err),
@@ -176,5 +169,26 @@ export class ConfigService {
 
   deleteCampaign(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/campaigns/${id}`);
+  }
+
+  // ── Campaign Invite endpoints ───────────────
+  createCampaignInvite(data: { campaignId: string; influencerId: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites`, data);
+  }
+
+  getInvitesByCampaign(campaignId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}`);
+  }
+
+  getMyInvites(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/campaign-invites/influencer`);
+  }
+
+  respondToInvite(inviteId: string, status: 'accepted' | 'declined'): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, { status });
+  }
+
+  submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/analytics`, analytics);
   }
 }

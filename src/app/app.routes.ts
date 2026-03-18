@@ -6,6 +6,7 @@ import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.com
 import { AdminManagementComponent } from './pages/admin/admin-management/admin-management.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
+import { authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   	{
@@ -24,16 +25,17 @@ export const routes: Routes = [
 			// user/brand/influencer pages
 			{ path: 'register-influencer', loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },
 			{ path: 'register-brand', loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
-			{ path: 'influencer-profile', loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
+			{ path: 'influencer-profile', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
 			{ path: 'influencer/:username', loadComponent: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.component').then(m => m.InfluencerProfileViewComponent) },
-			{ path: 'brand-profile', loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },
-			{ path: 'campaigns', loadComponent: () => import('./pages/campaign-management/campaign-management.component').then(m => m.CampaignManagementComponent) },
+			{ path: 'brand-profile', canActivate: [authGuard], loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },
+			{ path: 'campaigns', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-management/campaign-management.component').then(m => m.CampaignManagementComponent) },
 			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 		],
 	},
 	{
 		path: 'admin',
 		component: AdminLayoutComponent,
+		canActivate: [authGuard],
 		children: [
 			{ path: '', redirectTo: 'admin-dashboard', pathMatch: 'full' },
 			{ path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
