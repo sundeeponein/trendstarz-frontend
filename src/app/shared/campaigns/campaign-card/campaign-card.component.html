@@ -1,0 +1,38 @@
+<div class="campaign-card">
+  <div class="card-image-wrap">
+    <img
+      [src]="campaign.image?.url || 'assets/default-profile.png'"
+      (error)="onImgError($event)"
+      alt="{{ campaign.title }}"
+      class="card-image"
+    />
+    <span class="status-badge" [ngClass]="statusClass">
+      {{ campaign.status | uppercase }}
+    </span>
+  </div>
+
+  <div class="card-body">
+    <h4 class="card-title">{{ campaign.title }}</h4>
+
+    <div class="card-meta">
+      <div class="meta-item" *ngIf="budgetDisplay">
+        <span class="meta-label">BUDGET</span>
+        <span class="meta-value budget">{{ budgetDisplay }}</span>
+      </div>
+      <div class="meta-item" *ngIf="campaign.applicants !== undefined">
+        <span class="meta-label">APPLICANTS</span>
+        <span class="meta-value">{{ applicantLabel }}</span>
+      </div>
+    </div>
+
+    <div class="card-timeline" *ngIf="timelineDisplay">
+      <span class="meta-label">TIMELINE</span>
+      <span class="timeline-value">{{ timelineDisplay }}</span>
+    </div>
+
+    <div class="card-actions">
+      <button class="btn btn-details" (click)="viewDetails.emit(campaign)">View Details</button>
+      <button *ngIf="isOwner" class="btn btn-manage" (click)="manage.emit(campaign)">Manage</button>
+    </div>
+  </div>
+</div>

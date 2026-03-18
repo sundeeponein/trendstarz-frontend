@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../config.service';
 import { switchMap } from 'rxjs/operators';
+import { Campaign } from '../../campaigns/campaign.model';
+import { CampaignListComponent } from '../../campaigns/campaign-list/campaign-list.component';
 
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CampaignListComponent],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: ['./brand-profile-view.component.scss']
 })
@@ -17,6 +19,7 @@ export class BrandProfileViewComponent implements OnInit {
   error = '';
   showContact = false;
   activeTab: 'overview' | 'campaigns' | 'analytics' = 'overview';
+  campaigns: Campaign[] = [];
 
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -116,6 +119,16 @@ export class BrandProfileViewComponent implements OnInit {
             this.brand = null;
           } else {
             this.brand = data;
+            // Fetch campaigns for this brand
+            const brandName = data.brandName || data.brandUsername || data.name;
+            if (brandName) {
+              this.config.getCampaignsByBrandName(brandName).subscribe({
+                next: (campaigns: any[]) => {
+                  this.campaigns = campaigns;
+                  this.cd.detectChanges();
+                }
+              });
+            }
           }
           this.loading = false;
           this.cd.detectChanges();
