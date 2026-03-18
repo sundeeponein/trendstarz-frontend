@@ -75,11 +75,8 @@
     <div class="container">
       <h2 class="section-title text-white mb-1">Trending Creators</h2>
       <div class="chip-row mb-4">
-        <span class="chip active">All Categories</span>
-        <span class="chip">Fashion</span>
-        <span class="chip">Tech</span>
-        <span class="chip">Gaming</span>
-        <span class="chip">Travel</span>
+        <span class="chip" [class.active]="!selectedCategory" (click)="filterByCategory('')">All Categories</span>
+        <span class="chip" *ngFor="let cat of creatorCategories" [class.active]="selectedCategory === cat" (click)="filterByCategory(cat)">{{ cat }}</span>
       </div>
 
       <div *ngIf="influencersLoading && influencers.length === 0" class="text-center text-white-50">Loading influencers...</div>
@@ -96,7 +93,7 @@
             <div class="overlay">
               <span class="verify-pill" *ngIf="influencer.isPremium">VERIFIED</span>
               <h5>{{ influencer.name }}</h5>
-              <p>{{ influencer.categories?.[0] || 'Creator' }} <span *ngIf="influencer.promotionalPrice">• {{ influencer.promotionalPrice }}</span></p>
+              <p>{{ influencer.categories?.[0] || 'Creator' }}<span *ngIf="getTotalFollowers(influencer) > 0"> · {{ formatFollowers(getTotalFollowers(influencer)) }} Followers</span></p>
             </div>
           </article>
         </div>

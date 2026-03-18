@@ -3,14 +3,14 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 export const serverRoutes: ServerRoute[] = [
 
   // Static SEO pages
-  { path: '', renderMode: RenderMode.Prerender },
+  { path: '', renderMode: RenderMode.Client },
   { path: 'privacy-policy', renderMode: RenderMode.Prerender },
   { path: 'terms-and-conditions', renderMode: RenderMode.Prerender },
   { path: 'refund-policy', renderMode: RenderMode.Prerender },
   { path: 'contact', renderMode: RenderMode.Prerender },
 
   // User-facing pages
-  { path: 'welcome', renderMode: RenderMode.Prerender },
+  { path: 'welcome', renderMode: RenderMode.Client },
   { path: 'login', renderMode: RenderMode.Prerender },
   { path: 'auth/login', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Prerender },
