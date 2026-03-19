@@ -2,6 +2,7 @@ $accent: #e8612d;
 $accent-light: #fff5f0;
 $accent-dark: #d4551f;
 $border: #e8e8e8;
+@use 'sass:color';
 $text-dark: #1a1a2e;
 $text-muted: #7a7a8e;
 $radius: 12px;
@@ -490,7 +491,7 @@ $bg-light: #fafafa;
   font-size: 0.82rem;
   cursor: pointer;
   transition: background 0.2s;
-  &:hover { background: lighten($text-dark, 10%); }
+  &:hover { background: color.adjust($text-dark, $lightness: 10%); }
 }
 
 /* Stats card */
