@@ -1,3 +1,4 @@
+@use 'sass:color';
 $accent: #e8612d;
 $accent-light: #fff5f0;
 $border: #eee;
@@ -101,7 +102,7 @@ $radius: 16px;
   font-size: 0.85rem;
   text-decoration: none;
   transition: background 0.2s;
-  &:hover { background: darken($accent, 8%); color: #fff; }
+  &:hover { background: color.adjust($accent, $lightness: -8%); color: #fff; }
 }
 
 .btn-contact {
@@ -313,7 +314,7 @@ $radius: 16px;
   font-size: 0.88rem;
   width: 100%;
   transition: background 0.2s;
-  &:hover { background: darken($accent, 8%); }
+  &:hover { background: color.adjust($accent, $lightness: -8%); }
 }
 
 .powered-by {

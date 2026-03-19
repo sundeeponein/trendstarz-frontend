@@ -59,7 +59,7 @@
                 />
                 <div>
                   <span class="campaign-name">{{ c.title }}</span>
-                  <span class="campaign-desc" *ngIf="c.description">{{ c.description | slice:0:50 }}{{ (c.description?.length || 0) > 50 ? '...' : '' }}</span>
+                  <span class="campaign-desc" *ngIf="c.description">{{ c.description | slice:0:50 }}{{ c.description.length > 50 ? '...' : '' }}</span>
                 </div>
               </div>
             </td>
