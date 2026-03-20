@@ -6,7 +6,7 @@ import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, Abstra
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
 import { map, first, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of, forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -199,17 +199,25 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
-    // Fetch dropdown data from API
-    this.configService.getStates().subscribe(data => this.states = data);
-    this.configService.getTiers().subscribe(data => this.tiers = data);
-    this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
-    this.configService.getLanguages().subscribe(data => this.languagesList = data);
-    this.configService.getCategories().subscribe(data => this.categoriesList = data);
+    // Fetch dropdown data first, then profile
+    forkJoin({
+      states: this.configService.getStates(),
+      tiers: this.configService.getTiers(),
+      socialMedia: this.configService.getSocialMedia(),
+      languages: this.configService.getLanguages(),
+      categories: this.configService.getCategories()
+    }).subscribe({
+      next: (dropdownData) => {
+        this.states = dropdownData.states || [];
+        this.tiers = dropdownData.tiers || [];
+        this.socialMediaList = dropdownData.socialMedia || [];
+        this.languagesList = dropdownData.languages || [];
+        this.categoriesList = dropdownData.categories || [];
 
-    // Fetch influencer profile and patch form
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      this.configService.getInfluencerProfileById().subscribe({
+        // Now fetch influencer profile after dropdown data is loaded
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (token) {
+          this.configService.getInfluencerProfileById().subscribe({
         next: (profile) => {
           if (!profile) {
             this.registrationError = 'Profile not found or you are not logged in.';
@@ -271,8 +279,14 @@ export class InfluencerProfileComponent implements OnInit {
         error: (err) => {
           this.registrationError = 'Error fetching profile.';
         }
-      });
-    }
+          });
+        }
+      },
+      error: (err) => {
+        this.registrationError = 'Error fetching dropdown data.';
+        console.error('[Dropdown data error]', err);
+      }
+    });
 
     this.refreshStepCompletion();
   }

@@ -7,7 +7,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { map, first, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of, forkJoin } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -313,16 +313,24 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
-    // Fetch dropdown data from API
-    this.configService.getStates().subscribe(data => this.states = data);
-    this.configService.getTiers().subscribe(data => this.tiers = data);
-    this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
-    this.configService.getLanguages().subscribe(data => this.languagesList = data);
-    this.configService.getCategories().subscribe(data => this.categoriesList = data);
+    // Fetch dropdown data first, then profile
+    forkJoin({
+      states: this.configService.getStates(),
+      tiers: this.configService.getTiers(),
+      socialMedia: this.configService.getSocialMedia(),
+      languages: this.configService.getLanguages(),
+      categories: this.configService.getCategories()
+    }).subscribe({
+      next: (dropdownData) => {
+        this.states = dropdownData.states || [];
+        this.tiers = dropdownData.tiers || [];
+        this.socialMediaList = dropdownData.socialMedia || [];
+        this.languagesList = dropdownData.languages || [];
+        this.categoriesList = dropdownData.categories || [];
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      this.configService.getBrandProfileById().subscribe({
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (token) {
+          this.configService.getBrandProfileById().subscribe({
         next: (profile: any) => {
           if (!profile) {
             this.registrationError = 'Profile not found or you are not logged in.';
@@ -418,8 +426,14 @@ export class BrandProfileComponent implements OnInit {
           this.registrationError = 'Error fetching profile.';
           this.showEmailVerificationPrompt = false;
         },
-      });
-    }
+          });
+        }
+      },
+      error: () => {
+        this.registrationError = 'Error fetching dropdown data.';
+        console.error('[Dropdown data error]');
+      }
+    });
 
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();

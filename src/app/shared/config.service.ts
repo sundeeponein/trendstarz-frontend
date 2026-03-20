@@ -64,7 +64,9 @@ export class ConfigService {
   }
 
   getCategories(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/categories`);
+    return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
+      map((res) => this.extractData<any[]>(res) || [])
+    );
   }
 
   getConfig(): Observable<any> {
@@ -80,19 +82,27 @@ export class ConfigService {
   }
 
   getStates(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/states`);
+    return this.http.get<any>(`${this.apiUrl}/states`).pipe(
+      map((res) => this.extractData<any[]>(res) || [])
+    );
   }
 
   getLanguages(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/languages`);
+    return this.http.get<any>(`${this.apiUrl}/languages`).pipe(
+      map((res) => this.extractData<any[]>(res) || [])
+    );
   }
 
   getTiers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/tiers`);
+    return this.http.get<any>(`${this.apiUrl}/tiers`).pipe(
+      map((res) => this.extractData<any[]>(res) || [])
+    );
   }
 
   getSocialMedia(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/social-media`);
+    return this.http.get<any>(`${this.apiUrl}/social-media`).pipe(
+      map((res) => this.extractData<any[]>(res) || [])
+    );
   }
 
   private extractData<T>(payload: any): T {
@@ -132,7 +142,13 @@ export class ConfigService {
 
 
   getInfluencerProfileById(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/users/influencer-profile`);
+    return this.http.get<any>(`${this.apiUrl}/users/influencer-profile`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError((err) => {
+        console.error('Error fetching influencer profile:', err);
+        return of(null);
+      })
+    );
   }
 
   updateInfluencerProfile(data: any): Observable<any> {
@@ -140,7 +156,13 @@ export class ConfigService {
   }
 
   getBrandProfileById(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/users/brand-profile`);
+    return this.http.get<any>(`${this.apiUrl}/users/brand-profile`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError((err) => {
+        console.error('Error fetching brand profile:', err);
+        return of(null);
+      })
+    );
   }
 
   updateBrandProfile(data: any): Observable<any> {
