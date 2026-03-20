@@ -130,8 +130,8 @@ export class BrandProfileComponent implements OnInit {
     });
   }
   brandUsernameError: string = '';
-  get brandLogoFormArray(): FormArray {
-    return this.registrationForm.get('brandLogo') as FormArray;
+  get brandLogoFormArray(): FormArray | undefined {
+    return this.registrationForm?.get('brandLogo') as FormArray | undefined;
   }
   isEditMode = false;
   originalFormValue: any = null;
@@ -258,12 +258,12 @@ export class BrandProfileComponent implements OnInit {
   }
 
   addBrandLogo() {
-    this.brandLogoFormArray.push(this.fb.control(''));
+    this.brandLogoFormArray?.push(this.fb.control(''));
   }
 
   removeBrandLogo(index: number) {
-    if (this.brandLogoFormArray.length > 1) {
-      this.brandLogoFormArray.removeAt(index);
+    if ((this.brandLogoFormArray?.length || 0) > 1) {
+      this.brandLogoFormArray?.removeAt(index);
     }
   }
 
@@ -517,12 +517,12 @@ export class BrandProfileComponent implements OnInit {
     });
   }
 
-  get socialMediaFormArray() {
-    return this.registrationForm.get('socialMedia') as FormArray;
+  get socialMediaFormArray(): FormArray | undefined {
+    return this.registrationForm?.get('socialMedia') as FormArray | undefined;
   }
 
   addSocialMedia() {
-    this.socialMediaFormArray.push(this.fb.group({
+    this.socialMediaFormArray?.push(this.fb.group({
       platform: ['', Validators.required],
       handle: ['', Validators.required],
       tier: ['', Validators.required],
@@ -532,30 +532,30 @@ export class BrandProfileComponent implements OnInit {
   }
 
   removeSocialMedia(index: number) {
-    if (this.socialMediaFormArray.length > 1) {
-      this.socialMediaFormArray.removeAt(index);
+    if ((this.socialMediaFormArray?.length || 0) > 1) {
+      this.socialMediaFormArray?.removeAt(index);
     }
     this.refreshStepCompletion();
   }
 
-  get productImagesFormArray() {
-    return this.registrationForm.get('productImages') as FormArray;
+  get productImagesFormArray(): FormArray | undefined {
+    return this.registrationForm?.get('productImages') as FormArray | undefined;
   }
 
   addProductImage() {
     const maxImages = this.isPremium ? 5 : 1;
-    if (this.productImagesFormArray.length < maxImages) {
-      this.productImagesFormArray.push(this.fb.control('', Validators.required));
+    if ((this.productImagesFormArray?.length || 0) < maxImages) {
+      this.productImagesFormArray?.push(this.fb.control('', Validators.required));
     }
   }
 
   removeProductImage(index: number) {
-    this.productImagesFormArray.removeAt(index);
+    this.productImagesFormArray?.removeAt(index);
     this.refreshStepCompletion();
   }
 
   private hasBrandLogo(): boolean {
-    const logo = this.brandLogoFormArray.at(0)?.value;
+    const logo = this.brandLogoFormArray?.at(0)?.value;
     return !!(
       this.brandLogoPreview ||
       (logo && typeof logo === 'object' && 'url' in logo && logo.url)
@@ -579,7 +579,7 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        this.socialMediaFormArray.valid
+        (this.socialMediaFormArray?.valid ?? true)
       );
     }
 
@@ -634,8 +634,8 @@ export class BrandProfileComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      this.socialMediaFormArray.controls.forEach((ctrl) => ctrl.markAllAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.socialMediaFormArray.valid;
+      this.socialMediaFormArray?.controls?.forEach((ctrl) => ctrl.markAllAsTouched());
+      return required.every((path) => this.registrationForm.get(path)?.valid) && (this.socialMediaFormArray?.valid ?? true);
     }
 
     if (this.currentStep === 3) {
