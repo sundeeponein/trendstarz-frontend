@@ -104,16 +104,16 @@
             <label>Profile Image</label>
             <div class="upload-box">
               <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="preview-image" />
-              <img *ngIf="!profileImagePreview && (profileImagesFormArray?.length || 0) > 0 && profileImagesFormArray?.at(0)?.value?.url" [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="preview-image" />
+              <img *ngIf="!profileImagePreview && (profileImagesFormArray?.length || 0) > 0 && profileImagesFormArray?.at(0)?.value?.url" [src]="profileImagesFormArray?.at(0)?.value.url" alt="Current profile image" class="preview-image" />
               <p *ngIf="!profileImagePreview && ((profileImagesFormArray?.length || 0) === 0 || !profileImagesFormArray?.at(0)?.value?.url)">No profile image uploaded.</p>
               <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" *ngIf="isEditMode" />
-              <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && (profileImagesFormArray?.length || 0) > 0" (click)="removeProfileImage(0)">Remove</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && (profileImagesFormArray.length || 0) > 0" (click)="removeProfileImage(0)">Remove</button>
             </div>
           </div>
 
           <div class="social-media-section mt-3" formArrayName="socialMedia">
             <h3>Social Media</h3>
-            <div *ngFor="let sm of socialMediaFormArray?.controls || []; let i = index" [formGroupName]="i" class="social-media-card">
+            <div *ngFor="let sm of socialMediaFormArray.controls || []; let i = index" [formGroupName]="i" class="social-media-card">
               <div class="social-media-row">
                 <div class="social-media-col">
                   <div class="social-media-label">Platform</div>
@@ -136,7 +136,7 @@
                   <input formControlName="followersCount" type="number" class="social-media-input" />
                 </div>
               </div>
-              <button *ngIf="isEditMode && (socialMediaFormArray?.length || 0) > 1" type="button" class="close-btn" (click)="removeSocialMedia(i)">&times;</button>
+              <button *ngIf="isEditMode && (socialMediaFormArray.length || 0) > 1" type="button" class="close-btn" (click)="removeSocialMedia(i)">&times;</button>
             </div>
             <button *ngIf="isEditMode" type="button" class="add-social-btn" (click)="addSocialMedia()">Add Social Media</button>
           </div>
