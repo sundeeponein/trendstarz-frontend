@@ -42,13 +42,13 @@ export class ConfigService {
 
   // Fetch brand by name (for public profile view)
   getBrandByName(brandName: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/users/brands/name/${brandName}`)
-      .pipe(
-        catchError((error) => {
-          console.error('Error fetching brand by name:', error);
-          return of(null);
-        })
-      );
+    return this.http.get<any>(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError((error) => {
+        console.error('Error fetching brand by name:', error);
+        return of(null);
+      })
+    );
   }
 
   registerInfluencer(data: any): Observable<any> {
@@ -170,18 +170,31 @@ export class ConfigService {
 
   // Place this inside ConfigService class
   getInfluencerByUsername(username: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/users/influencers/username/${username}`);
+    return this.http.get<any>(`${this.apiUrl}/users/influencers/username/${encodeURIComponent(username)}`).pipe(
+      map(res => this.extractData<any>(res)),
+      catchError(() => of(null)),
+    );
   }
 
   // ── Campaign endpoints ──────────────────────
   getCampaignsByBrandName(brandName: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/campaigns/brand-name/${encodeURIComponent(brandName)}`)
-      .pipe(catchError(() => of([])));
+    return this.http.get<any>(`${this.apiUrl}/campaigns/brand-name/${encodeURIComponent(brandName)}`).pipe(
+      map(res => {
+        const data = this.extractData<any>(res);
+        return Array.isArray(data) ? data : [];
+      }),
+      catchError(() => of([])),
+    );
   }
 
   getCampaignsByBrandId(brandId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/campaigns?brandId=${encodeURIComponent(brandId)}`)
-      .pipe(catchError(() => of([])));
+    return this.http.get<any>(`${this.apiUrl}/campaigns?brandId=${encodeURIComponent(brandId)}`).pipe(
+      map(res => {
+        const data = this.extractData<any>(res);
+        return Array.isArray(data) ? data : [];
+      }),
+      catchError(() => of([])),
+    );
   }
 
   createCampaign(data: any): Observable<any> {
