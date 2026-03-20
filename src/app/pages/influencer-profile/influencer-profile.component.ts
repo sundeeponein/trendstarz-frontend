@@ -278,11 +278,12 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   private hasExistingProfileImage(): boolean {
+    const arr = this.profileImagesFormArray;
     return !!(
       this.profileImagePreview ||
-      (this.profileImagesFormArray.controls.length > 0 &&
-        this.profileImagesFormArray.at(0)?.value &&
-        this.profileImagesFormArray.at(0)?.value.url)
+      (arr && arr.controls.length > 0 &&
+        arr.at(0)?.value &&
+        arr.at(0)?.value.url)
     );
   }
 
@@ -302,7 +303,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        this.socialMediaFormArray.valid &&
+        (this.socialMediaFormArray?.valid ?? true) &&
         this.hasExistingProfileImage()
       );
     }
@@ -351,8 +352,8 @@ export class InfluencerProfileComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      this.socialMediaFormArray.controls.forEach((ctrl) => ctrl.markAllAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.socialMediaFormArray.valid && this.hasExistingProfileImage();
+      this.socialMediaFormArray?.controls?.forEach((ctrl) => ctrl.markAllAsTouched());
+      return required.every((path) => this.registrationForm.get(path)?.valid) && (this.socialMediaFormArray?.valid ?? true) && this.hasExistingProfileImage();
     }
 
     if (this.currentStep === 3) {
@@ -463,7 +464,7 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   get profileImagesFormArray() {
-    return this.registrationForm.get('profileImages') as FormArray;
+    return this.registrationForm?.get('profileImages') as FormArray;
   }
 
 
@@ -501,19 +502,19 @@ export class InfluencerProfileComponent implements OnInit {
 
   removeProfileImage(index: number) {
     if (!this.isEditMode) return;
-    this.profileImagesFormArray.removeAt(index);
+    this.profileImagesFormArray?.removeAt(index);
     this.refreshStepCompletion();
   }
 
 
 
   get socialMediaFormArray() {
-    return this.registrationForm.get('socialMedia') as FormArray;
+    return this.registrationForm?.get('socialMedia') as FormArray;
   }
 
   addSocialMedia() {
     if (!this.isEditMode) return;
-    this.socialMediaFormArray.push(this.fb.group({
+    this.socialMediaFormArray?.push(this.fb.group({
       platform: ['', Validators.required],
       handle: ['', Validators.required],
       tier: ['', Validators.required],
@@ -524,8 +525,8 @@ export class InfluencerProfileComponent implements OnInit {
 
   removeSocialMedia(index: number) {
     if (!this.isEditMode) return;
-    if (this.socialMediaFormArray.length > 1) {
-      this.socialMediaFormArray.removeAt(index);
+    if ((this.socialMediaFormArray?.length || 0) > 1) {
+      this.socialMediaFormArray?.removeAt(index);
     }
       this.submitted = true; // Set submitted to true on form submission
       this.refreshStepCompletion();
@@ -624,13 +625,15 @@ export class InfluencerProfileComponent implements OnInit {
         this.profileImageFile = null;
         // After PATCH, clear FormArray and keep only the latest image
         const arr = this.profileImagesFormArray;
-        if (arr.length > 0) {
-          const lastImage = arr.at(arr.length - 1).value;
+        if (arr && arr.length > 0) {
+          const lastImage = arr.at(arr.length - 1)?.value;
           arr.clear();
-          arr.push(this.fb.group({
-            url: lastImage.url,
-            public_id: lastImage.public_id
-          }));
+          if (lastImage) {
+            arr.push(this.fb.group({
+              url: lastImage.url,
+              public_id: lastImage.public_id
+            }));
+          }
         }
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
