@@ -26,12 +26,18 @@ export class ConfigService {
 
   // Fetch influencer by ID (for public profile view)
   getInfluencerById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/users/influencers/${id}`);
+    return this.http.get<any>(`${this.apiUrl}/users/influencers/${id}`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError(() => of(null)),
+    );
   }
 
   // Fetch brand by ID (for public profile view)
   getBrandById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/users/brands/${id}`);
+    return this.http.get<any>(`${this.apiUrl}/users/brands/${id}`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError(() => of(null)),
+    );
   }
 
   // Fetch brand by name (for public profile view)
@@ -89,12 +95,31 @@ export class ConfigService {
     return this.http.get<any[]>(`${this.apiUrl}/social-media`);
   }
 
+  private extractData<T>(payload: any): T {
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+      return payload.data as T;
+    }
+    return payload as T;
+  }
+
   getInfluencers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/users/influencers`);
+    return this.http.get<any>(`${this.apiUrl}/users/influencers`).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res);
+        return (data?.data || data || []) as any[];
+      }),
+      catchError(() => of([]))
+    );
   }
 
   getBrands(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/users/brands`);
+    return this.http.get<any>(`${this.apiUrl}/users/brands`).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res);
+        return (data?.data || data || []) as any[];
+      }),
+      catchError(() => of([]))
+    );
   }
 
   updateBrandImages(id: string, images: { brandLogo?: any[]; products?: any[] }): Observable<any> {
