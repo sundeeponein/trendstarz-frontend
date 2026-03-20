@@ -80,7 +80,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.influencers = [];
     this.config.getInfluencers().subscribe({
       next: (data) => {
-        this.allInfluencers = data || [];
+        console.debug('WelcomeComponent.fetchInfluencers data', data);
+        const influencerArray = Array.isArray(data)
+          ? data
+          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
+        this.allInfluencers = influencerArray;
+
         // Extract top 5 categories by registered user count (descending)
         const catCounts = new Map<string, number>();
         this.allInfluencers.forEach((u: any) => (u.categories || []).forEach((c: string) => {
@@ -133,9 +138,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brands = [];
     this.config.getBrands().subscribe({
       next: (data) => {
-        this.brands = data || [];
-        this.brandsLoading = false;
-        this.cd.detectChanges();
+        console.debug('WelcomeComponent.fetchBrands data', data);
+        const brandArray = Array.isArray(data)
+          ? data
+          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
+        this.brands = brandArray;
+        this.brandsLoading = false;        this.cd.detectChanges();
       },
       error: (err) => {
         this.brandsError = 'Could not load brands.';
