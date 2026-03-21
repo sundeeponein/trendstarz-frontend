@@ -104,10 +104,10 @@
             <label>Profile Image</label>
             <div class="upload-box">
               <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="preview-image" />
-              <img *ngIf="!profileImagePreview && (profileImagesFormArray?.length || 0) > 0 && profileImagesFormArray?.at(0)?.value?.url" [src]="profileImagesFormArray?.at(0)?.value.url" alt="Current profile image" class="preview-image" />
-              <p *ngIf="!profileImagePreview && ((profileImagesFormArray?.length || 0) === 0 || !profileImagesFormArray?.at(0)?.value?.url)">No profile image uploaded.</p>
+              <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url" [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="preview-image" />
+              <p *ngIf="!profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)">No profile image uploaded.</p>
               <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" *ngIf="isEditMode" />
-              <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && (profileImagesFormArray.length || 0) > 0" (click)="removeProfileImage(0)">Remove</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && profileImagesFormArray.length > 0" (click)="removeProfileImage(0)">Remove</button>
             </div>
           </div>
 

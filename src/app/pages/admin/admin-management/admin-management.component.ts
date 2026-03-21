@@ -42,25 +42,25 @@ export class AdminManagementComponent implements OnInit {
 
   loadConfig() {
     const baseUrl = environment.apiBaseUrl;
-    this.http.get(baseUrl + '/social-media').subscribe((data: any) => {
-      this.config.socialMediaPlatforms = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
+    this.http.get(baseUrl + '/social-media').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/categories').subscribe((data: any) => {
-      this.config.categories = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
+    this.http.get(baseUrl + '/categories').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/states').subscribe((data: any) => {
-      this.config.locations = Array.isArray(data)
-        ? data.map((state: any) => ({
-            ...state,
-            visible: !!state.showInFrontend
-          }))
-        : [];
+    this.http.get(baseUrl + '/states').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
     });
-    this.http.get(baseUrl + '/languages').subscribe((data: any) => {
-      this.config.languages = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
+    this.http.get(baseUrl + '/languages').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.languages = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/tiers').subscribe((data: any) => {
-      this.config.tiers = Array.isArray(data) ? data.map((item: any) => ({ ...item, visible: !!item.showInFrontend })) : [];
+    this.http.get(baseUrl + '/tiers').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
   }
 

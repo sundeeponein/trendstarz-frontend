@@ -15,6 +15,7 @@ export class DeletedUsersTableComponent implements OnInit {
   influencers: any[] = [];
   brands: any[] = [];
   activeTab: 'influencer' | 'brand' = 'influencer';
+  errorMessage: string | null = null;
 
   constructor(private http: HttpClient, private configService: ConfigService) {}
 
@@ -28,13 +29,47 @@ export class DeletedUsersTableComponent implements OnInit {
       token = localStorage.getItem('token') || '';
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers?status=deleted`, headers)
-      .subscribe((res: any) => {
-        this.influencers = (res || []).filter((u: any) => u.status === 'deleted');
+    if (!token) {
+      this.errorMessage = 'You are not authorized. Please log in again.';
+      if (typeof window !== 'undefined') {
+        setTimeout(() => { window.location.href = '/login'; }, 1500);
+      }
+      return;
+    }
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted`, headers)
+      .subscribe({
+        next: (res: any) => {
+          const users = res?.data || [];
+          console.log('[DeletedUsers] Influencers received:', users);
+          this.influencers = users;
+        },
+        error: (err) => {
+          if (err.status === 401) {
+            this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
+            if (typeof window !== 'undefined') {
+              setTimeout(() => { window.location.href = '/login'; }, 1500);
+            }
+          } else {
+            this.errorMessage = 'Failed to fetch deleted influencers.';
+          }
+        }
       });
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands?status=deleted`, headers)
-      .subscribe((res: any) => {
-        this.brands = (res || []).filter((u: any) => u.status === 'deleted');
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted`, headers)
+      .subscribe({
+        next: (res: any) => {
+          const users = res?.data || [];
+          this.brands = users;
+        },
+        error: (err) => {
+          if (err.status === 401) {
+            this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
+            if (typeof window !== 'undefined') {
+              setTimeout(() => { window.location.href = '/login'; }, 1500);
+            }
+          } else {
+            this.errorMessage = 'Failed to fetch deleted brands.';
+          }
+        }
       });
   }
 

@@ -102,16 +102,18 @@ export class AdminUserTableComponent implements OnInit {
       token = localStorage.getItem('token') || '';
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, headers)
-      .pipe(timeout(5000), catchError(err => { return of([]); }))
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers`, headers)
+      .pipe(timeout(5000), catchError(err => { return of({ data: [] }); }))
       .subscribe((res: any) => {
-        this.influencers = (res || []).filter((u: any) => u.status !== 'deleted');
+        const users = res?.data || [];
+        this.influencers = users.filter((u: any) => u.status !== 'deleted');
         this.isLoading = false;
       });
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, headers)
-      .pipe(timeout(5000), catchError(err => { return of([]); }))
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands`, headers)
+      .pipe(timeout(5000), catchError(err => { return of({ data: [] }); }))
       .subscribe((res: any) => {
-        this.brands = (res || []).filter((u: any) => u.status !== 'deleted');
+        const users = res?.data || [];
+        this.brands = users.filter((u: any) => u.status !== 'deleted');
         this.isLoading = false;
       });
   }
@@ -138,7 +140,7 @@ export class AdminUserTableComponent implements OnInit {
   }
   deleteUser(userId: string) {
     this.isLoading = true;
-    this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders()).subscribe(() => {
+    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
       this.fetchUsers();
       setTimeout(() => { this.isLoading = false; }, 500);
     });

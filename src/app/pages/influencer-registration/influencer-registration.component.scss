@@ -438,3 +438,72 @@ input {
     width: 100%;
   }
 }
+
+// Registration Success Modal
+.reg-success-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reg-success-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 36px 32px;
+  max-width: 440px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+
+  .reg-success-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+    &:hover { color: #333; }
+  }
+
+  .reg-success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #22c55e;
+    color: #fff;
+    font-size: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+  }
+
+  .reg-success-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 10px;
+  }
+
+  .reg-success-msg {
+    color: #555;
+    font-size: 1rem;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .reg-success-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}

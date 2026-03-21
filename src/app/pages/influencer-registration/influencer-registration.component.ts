@@ -679,14 +679,14 @@ export class InfluencerRegistrationComponent implements OnInit {
     });
   }
 
-  // Add a method to close the modal and reset the form
   closeSuccessModal() {
-  this.registrationSuccess = false;
-  this.registrationForm.reset();
-  this.profileImagePreview = null;
-  this.profileImageFile = null;
-  this.submitted = false;
-  this.pendingVerificationEmail = '';
+    this.registrationSuccess = false;
+    this.registrationForm.reset();
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/login';
   }
 
 
