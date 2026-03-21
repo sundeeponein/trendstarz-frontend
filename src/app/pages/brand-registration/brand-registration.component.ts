@@ -623,4 +623,13 @@ export class BrandRegistrationComponent implements OnInit {
       }
     });
   }
+
+  closeSuccessModal() {
+    this.registrationSuccess = false;
+    this.brandLogoPreview = null;
+    this.brandLogoFile = null;
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/login';
+  }
 }

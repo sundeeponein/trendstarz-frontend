@@ -287,9 +287,6 @@
             </div>
           </div>
 
-          <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">
-            Registration successful! <a href="/login" class="btn btn-link p-0 m-0 align-baseline">Login here</a>
-          </div>
           <div *ngIf="registrationError" class="text-danger fw-bold my-3">
             {{ registrationError }}
           </div>
@@ -301,5 +298,19 @@
         </section>
       </form>
     </main>
+  </div>
+
+  <!-- Registration Success Modal -->
+  <div *ngIf="registrationSuccess" class="reg-success-modal-overlay">
+    <div class="reg-success-modal">
+      <button class="reg-success-close" (click)="closeSuccessModal()" aria-label="Close">&times;</button>
+      <div class="reg-success-icon">&#10003;</div>
+      <h3 class="reg-success-title">Successfully Registered!</h3>
+      <p class="reg-success-msg">Your registration is complete. The admin needs to approve your account &mdash; please login after <strong>48 hours</strong>.</p>
+      <div class="reg-success-actions">
+        <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
+        <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+      </div>
+    </div>
   </div>
 </div>

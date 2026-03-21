@@ -31,7 +31,9 @@ export class DeletedUsersTableComponent implements OnInit {
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     if (!token) {
       this.errorMessage = 'You are not authorized. Please log in again.';
-      setTimeout(() => { window.location.href = '/login'; }, 1500);
+      if (typeof window !== 'undefined') {
+        setTimeout(() => { window.location.href = '/login'; }, 1500);
+      }
       return;
     }
     this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted`, headers)
@@ -44,7 +46,9 @@ export class DeletedUsersTableComponent implements OnInit {
         error: (err) => {
           if (err.status === 401) {
             this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
-            setTimeout(() => { window.location.href = '/login'; }, 1500);
+            if (typeof window !== 'undefined') {
+              setTimeout(() => { window.location.href = '/login'; }, 1500);
+            }
           } else {
             this.errorMessage = 'Failed to fetch deleted influencers.';
           }
@@ -54,13 +58,14 @@ export class DeletedUsersTableComponent implements OnInit {
       .subscribe({
         next: (res: any) => {
           const users = res?.data || [];
-          console.log('[DeletedUsers] Brands received:', users);
           this.brands = users;
         },
         error: (err) => {
           if (err.status === 401) {
             this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
-            setTimeout(() => { window.location.href = '/login'; }, 1500);
+            if (typeof window !== 'undefined') {
+              setTimeout(() => { window.location.href = '/login'; }, 1500);
+            }
           } else {
             this.errorMessage = 'Failed to fetch deleted brands.';
           }

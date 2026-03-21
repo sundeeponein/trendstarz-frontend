@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
@@ -30,11 +31,13 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
+  constructor(private http: HttpClient, private cd: ChangeDetectorRef, @Inject(PLATFORM_ID) private platformId: Object) {}
 
   ngOnInit() {
-    this.fetchInfluencers();
-    this.fetchBrands();
+    if (isPlatformBrowser(this.platformId)) {
+      this.fetchInfluencers();
+      this.fetchBrands();
+    }
   }
 
   fetchInfluencers() {
@@ -47,13 +50,13 @@ export class AdminDashboardComponent implements OnInit {
           //   console.log('[AdminDashboard] First influencer object:', data[0]);
           //   console.log('[AdminDashboard] All influencer status values:', data.map(u => u.status));
           // }
-          const all = Array.isArray(data) ? data : [];
-          const filtered = all.filter(u => (u.status || '').toLowerCase() !== 'deleted');
+          const all = Array.isArray(data) ? data : ((data as any)?.data || []);
+          const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
           this.influencerCount = filtered.length;
-          this.influencerActivated = filtered.filter(u => (u.status || '').toLowerCase() === 'accepted').length;
-          this.influencerPending = filtered.filter(u => (u.status || '').toLowerCase() === 'pending').length;
-          this.influencerPremium = filtered.filter(u => !!u.isPremium).length;
-          this.influencerDeleted = all.filter(u => (u.status || '').toLowerCase() === 'deleted').length;
+          this.influencerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
+          this.influencerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
+          this.influencerPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          this.influencerDeleted = all.filter((u: any) => (u.status || '').toLowerCase() === 'deleted').length;
           this.cd.detectChanges();
         },
         error: (err) => {
@@ -73,13 +76,13 @@ export class AdminDashboardComponent implements OnInit {
           //   console.log('[AdminDashboard] First brand object:', data[0]);
           //   console.log('[AdminDashboard] All brand status values:', data.map(u => u.status));
           // }
-          const all = Array.isArray(data) ? data : [];
-          const filtered = all.filter(u => (u.status || '').toLowerCase() !== 'deleted');
+          const all = Array.isArray(data) ? data : ((data as any)?.data || []);
+          const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
           this.brandCount = filtered.length;
-          this.brandActivated = filtered.filter(u => (u.status || '').toLowerCase() === 'accepted').length;
-          this.brandPending = filtered.filter(u => (u.status || '').toLowerCase() === 'pending').length;
-          this.brandPremium = filtered.filter(u => !!u.isPremium).length;
-          this.brandDeleted = all.filter(u => (u.status || '').toLowerCase() === 'deleted').length;
+          this.brandActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
+          this.brandPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
+          this.brandPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          this.brandDeleted = all.filter((u: any) => (u.status || '').toLowerCase() === 'deleted').length;
           this.cd.detectChanges();
         },
         error: (err) => {
