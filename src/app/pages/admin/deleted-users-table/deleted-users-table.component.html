@@ -1,9 +1,63 @@
 <div class="container-fluid p-4">
   <h2 class="text-white">Deleted Users</h2>
-  <div class="admin-tabs">
-    <button class="btn btn-outline-primary me-2" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-    <button class="btn btn-outline-primary" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+  
+  <!-- Tabs and Filters Header (Single Row) -->
+  <div class="tabs-filters-header">
+    <!-- Tabs on the left -->
+    <div class="admin-tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+      <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+    </div>
+
+    <!-- Filters on the right -->
+    <div class="filters-pills-container">
+      <span class="filter-label">FILTER BY:</span>
+      
+      <!-- Quick Filter Pills -->
+      <button class="filter-pill" 
+              [class.active]="activeTab === 'influencer' ? influencerFilters.category === '' : brandFilters.category === ''"
+              (click)="activeTab === 'influencer' ? influencerFilters.category = '' : brandFilters.category = ''; onFilterChange(activeTab)">
+        All
+      </button>
+      <button class="filter-pill" 
+              *ngFor="let category of categoriesArray.slice(0, 3)"
+              [class.active]="activeTab === 'influencer' ? influencerFilters.category === category : brandFilters.category === category"
+              (click)="activeTab === 'influencer' ? influencerFilters.category = category : brandFilters.category = category; onFilterChange(activeTab)">
+        {{ category }}
+      </button>
+    </div>
   </div>
+
+  <!-- Advanced Filters Section -->
+  <div class="filters-section mt-3">
+    <div class="filter-group">
+      <!-- Category Filter -->
+      <div class="filter-item">
+        <label for="category-filter">Category:</label>
+        <select id="category-filter"
+                [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
+                (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
+          <option value="">All Categories</option>
+          <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
+        </select>
+      </div>
+
+      <!-- State Filter -->
+      <div class="filter-item">
+        <label for="state-filter">State:</label>
+        <select id="state-filter"
+                [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
+                (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
+          <option value="">All States</option>
+          <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
+        </select>
+      </div>
+
+      <!-- Reset Button -->
+      <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
+    </div>
+  </div>
+  
   <div *ngIf="activeTab === 'influencer'">
     <table class="table table-hover admin-table">
       <thead>
@@ -19,7 +73,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of influencers">
+        <tr *ngFor="let user of filteredInfluencers">
           <td>
             <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40">
           </td>
@@ -37,6 +91,7 @@
       </tbody>
     </table>
   </div>
+  
   <div *ngIf="activeTab === 'brand'">
     <table class="admin-table table table-hover">
       <thead>
@@ -51,7 +106,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of brands">
+        <tr *ngFor="let user of filteredBrands">
           <td>
             <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-logo.png')" alt="Logo" width="40" height="40">
           </td>

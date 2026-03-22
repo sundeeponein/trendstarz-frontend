@@ -61,6 +61,27 @@ export class AdminUserTableComponent implements OnInit {
   activeTab: 'influencer' | 'brand' = 'influencer'; // Default to influencer tab
   influencers: any[] = [];
   brands: any[] = [];
+  filteredInfluencers: any[] = [];
+  filteredBrands: any[] = [];
+
+  // Filter properties
+  influencerFilters = {
+    status: '',
+    premium: '',
+    category: '',
+    state: ''
+  };
+  brandFilters = {
+    status: '',
+    premium: '',
+    category: '',
+    state: ''
+  };
+
+  // Available filter options
+  categoriesArray: string[] = [];
+  statesArray: string[] = [];
+  statusArray: string[] = [];
 
   // Premium modal state
   showPremiumModal = false;
@@ -107,6 +128,8 @@ export class AdminUserTableComponent implements OnInit {
       .subscribe((res: any) => {
         const users = res?.data || [];
         this.influencers = users.filter((u: any) => u.status !== 'deleted');
+        this.applyFilters('influencer');
+        this.updateAllFilterOptions();
         this.isLoading = false;
       });
     this.http.get<any>(`${environment.apiBaseUrl}/admin/brands`, headers)
@@ -114,8 +137,94 @@ export class AdminUserTableComponent implements OnInit {
       .subscribe((res: any) => {
         const users = res?.data || [];
         this.brands = users.filter((u: any) => u.status !== 'deleted');
+        this.applyFilters('brand');
+        this.updateAllFilterOptions();
         this.isLoading = false;
       });
+  }
+
+  updateAllFilterOptions() {
+    const categoriesSet = new Set<string>();
+    const statesSet = new Set<string>();
+    const statusSet = new Set<string>();
+    
+    // Collect from all influencers
+    this.influencers.forEach(user => {
+      if (user.categories && Array.isArray(user.categories)) {
+        user.categories.forEach((cat: string) => categoriesSet.add(cat));
+      }
+      if (user.location?.state) {
+        statesSet.add(user.location.state);
+      }
+      if (user.status) {
+        statusSet.add(user.status);
+      }
+    });
+    
+    // Collect from all brands
+    this.brands.forEach(user => {
+      if (user.categories && Array.isArray(user.categories)) {
+        user.categories.forEach((cat: string) => categoriesSet.add(cat));
+      }
+      if (user.location?.state) {
+        statesSet.add(user.location.state);
+      }
+      if (user.status) {
+        statusSet.add(user.status);
+      }
+    });
+    
+    this.categoriesArray = Array.from(categoriesSet).sort();
+    this.statesArray = Array.from(statesSet).sort();
+    this.statusArray = Array.from(statusSet).sort();
+  }
+
+  applyFilters(userType: 'influencer' | 'brand') {
+    const filters = userType === 'influencer' ? this.influencerFilters : this.brandFilters;
+    const source = userType === 'influencer' ? this.influencers : this.brands;
+    
+    this.filteredInfluencers = userType === 'influencer' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredInfluencers;
+    this.filteredBrands = userType === 'brand' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredBrands;
+  }
+
+  matchesFilters(user: any, filters: any): boolean {
+    // Status filter
+    if (filters.status && user.status !== filters.status) {
+      return false;
+    }
+    
+    // Premium filter
+    if (filters.premium === 'premium' && !user.isPremium) {
+      return false;
+    }
+    if (filters.premium === 'free' && user.isPremium) {
+      return false;
+    }
+    
+    // Category filter
+    if (filters.category && (!user.categories || !user.categories.includes(filters.category))) {
+      return false;
+    }
+    
+    // State filter
+    if (filters.state && user.location?.state !== filters.state) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  onFilterChange(userType: 'influencer' | 'brand') {
+    this.applyFilters(userType);
+  }
+
+  resetFilters(userType: 'influencer' | 'brand') {
+    if (userType === 'influencer') {
+      this.influencerFilters = { status: '', premium: '', category: '', state: '' };
+    } else {
+      this.brandFilters = { status: '', premium: '', category: '', state: '' };
+    }
+    this.applyFilters(userType);
   }
 
   setTab(tab: 'influencer' | 'brand') {

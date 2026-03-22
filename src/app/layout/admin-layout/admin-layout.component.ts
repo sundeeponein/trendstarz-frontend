@@ -1,24 +1,22 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './admin-layout.component.html'
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './admin-layout.component.html',
+  styleUrls: ['./admin-layout.component.scss']
 })
 export class AdminLayoutComponent {
+  searchQuery = '';
+  adminUser: any = null;
+
   constructor(private router: Router) {
     this.loadAdminUser();
   }
-  logout() {
-    localStorage.removeItem('token');
-    this.adminUser = null;
-    this.router.navigate(['/']);
-  }
-  adminUser: any = null;
-
 
   loadAdminUser() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -36,4 +34,11 @@ export class AdminLayoutComponent {
       this.adminUser = null;
     }
   }
+
+  logout() {
+    localStorage.removeItem('token');
+    this.adminUser = null;
+    this.router.navigate(['/']);
+  }
 }
+
