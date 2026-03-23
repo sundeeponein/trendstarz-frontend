@@ -1,65 +1,52 @@
 <div class="container-fluid p-4">
   <h2 class="text-white">Deleted Users</h2>
-  
-  <!-- Tabs and Filters Header (Single Row) -->
-  <div class="tabs-filters-header">
-    <!-- Tabs on the left -->
-    <div class="admin-tabs">
-      <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-      <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-    </div>
 
-    <!-- Filters on the right -->
-    <div class="filters-pills-container">
-      <span class="filter-label">FILTER BY:</span>
-      
-      <!-- Quick Filter Pills -->
-      <button class="filter-pill" 
-              [class.active]="activeTab === 'influencer' ? influencerFilters.category === '' : brandFilters.category === ''"
-              (click)="activeTab === 'influencer' ? influencerFilters.category = '' : brandFilters.category = ''; onFilterChange(activeTab)">
-        All
-      </button>
-      <button class="filter-pill" 
-              *ngFor="let category of categoriesArray.slice(0, 3)"
-              [class.active]="activeTab === 'influencer' ? influencerFilters.category === category : brandFilters.category === category"
-              (click)="activeTab === 'influencer' ? influencerFilters.category = category : brandFilters.category = category; onFilterChange(activeTab)">
-        {{ category }}
-      </button>
-    </div>
-  </div>
-
-  <!-- Advanced Filters Section -->
-  <div class="filters-section mt-3">
-    <div class="filter-group">
-      <!-- Category Filter -->
-      <div class="filter-item">
-        <label for="category-filter">Category:</label>
-        <select id="category-filter"
-                [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
-                (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
-          <option value="">All Categories</option>
-          <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
-        </select>
+  <div class="row">
+    <div class="col-4">
+      <div class="admin-tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+        <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
       </div>
-
-      <!-- State Filter -->
-      <div class="filter-item">
-        <label for="state-filter">State:</label>
-        <select id="state-filter"
-                [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
-                (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
-          <option value="">All States</option>
-          <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
-        </select>
-      </div>
-
-      <!-- Reset Button -->
-      <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
     </div>
+
+    <div class="col-8">
+      <div class="filters-section p-0 bg-transparent border-0">
+        <div class="filter-group justify-content-end">
+          <!-- Category Filter -->
+          <div class="filter-item">
+            <label>Category</label>
+            <select id="category-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
+                    (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All Categories</option>
+              <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
+            </select>
+          </div>
+
+          <!-- State Filter -->
+          <div class="filter-item">
+            <label>State</label>
+            <select id="state-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
+                    (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All States</option>
+              <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
+            </select>
+          </div>
+
+          <!-- Reset Button -->
+          <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
+        </div>
+      </div>
+    </div>
+
   </div>
   
   <div *ngIf="activeTab === 'influencer'">
-    <table class="table table-hover admin-table">
+    <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table">
       <thead>
         <tr>
           <th>Profile</th>
@@ -93,7 +80,10 @@
   </div>
   
   <div *ngIf="activeTab === 'brand'">
-    <table class="admin-table table table-hover">
+    <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
       <thead>
         <tr>
           <th>Logo</th>

@@ -14,6 +14,7 @@
         <div class="filter-group justify-content-end">
           <!-- Status Filter -->
           <div class="filter-item">
+            <label>Status</label>
             <select id="status-filter" 
                     [ngModel]="activeTab === 'influencer' ? influencerFilters.status : brandFilters.status"
                     (change)="activeTab === 'influencer' ? influencerFilters.status = $any($event.target).value : brandFilters.status = $any($event.target).value; onFilterChange(activeTab)">
@@ -24,6 +25,7 @@
 
           <!-- Premium Filter -->
           <div class="filter-item">
+            <label>Premium</label>
             <select id="premium-filter"
                     [ngModel]="activeTab === 'influencer' ? influencerFilters.premium : brandFilters.premium"
                     (change)="activeTab === 'influencer' ? influencerFilters.premium = $any($event.target).value : brandFilters.premium = $any($event.target).value; onFilterChange(activeTab)">
@@ -35,6 +37,7 @@
 
           <!-- Category Filter -->
           <div class="filter-item">
+            <label>Category</label>
             <select id="category-filter"
                     [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
                     (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
@@ -45,6 +48,7 @@
 
           <!-- State Filter -->
           <div class="filter-item">
+            <label>State</label>
             <select id="state-filter"
                     [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
                     (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
@@ -63,7 +67,10 @@
   
   
   <div *ngIf="activeTab === 'influencer'">
-    <table class="table table-hover admin-table">
+    <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table">
       <thead>
         <tr>
           <th>Profile</th>
@@ -158,7 +165,10 @@
   </div>
 
   <div *ngIf="activeTab === 'brand'">
-    <table class="admin-table table table-hover">
+    <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
       <thead>
         <tr>
           <th>Logo</th>

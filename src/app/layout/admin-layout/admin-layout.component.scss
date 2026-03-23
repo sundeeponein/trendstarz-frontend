@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 // Admin Navbar Styling
 $primary-dark: #0f172a;
 $secondary-dark: #1a2741;
@@ -311,8 +313,8 @@ $hover-bg: rgba(255, 255, 255, 0.08);
         color: $text-white;
 
         &:hover {
-          background-color: darken($orange-primary, 10%);
-          border-color: darken($orange-primary, 10%);
+          background-color: color.adjust($orange-primary, $lightness: -10%);
+          border-color: color.adjust($orange-primary, $lightness: -10%);
         }
       }
     }
@@ -410,8 +412,8 @@ $hover-bg: rgba(255, 255, 255, 0.08);
     border-color: $orange-primary;
 
     &:hover {
-      background-color: darken($orange-primary, 10%);
-      border-color: darken($orange-primary, 10%);
+      background-color: color.adjust($orange-primary, $lightness: -10%);
+      border-color: color.adjust($orange-primary, $lightness: -10%);
     }
   }
 }

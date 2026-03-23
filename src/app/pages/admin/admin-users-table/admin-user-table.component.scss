@@ -1,3 +1,22 @@
+.no-data-message {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 300px;
+	background-color: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 6px;
+	margin-top: 2rem;
+
+	p {
+		color: #888;
+		font-size: 1.2rem;
+		font-weight: 500;
+		margin: 0;
+		letter-spacing: 0.5px;
+	}
+}
+
 /* Modal backdrop and modal styles for Premium Duration Modal */
 .modal-backdrop {
 	position: fixed;
@@ -67,15 +86,15 @@
 
 .admin-tabs {
 	display: flex;
-	gap: 1rem;
+	// gap: 1rem;
 	background-color: rgba(255, 255, 255, 0.08);
-	padding: 0.5rem;
+	padding: 0;
 	border-radius: 12px;
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	width: fit-content;
 
 	.tab-btn {
-		padding: 0.75rem 1.75rem;
+		padding: 0.35rem 0.75rem;
 		background-color: transparent;
 		border: none;
 		color: #888;
