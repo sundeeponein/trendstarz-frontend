@@ -9,7 +9,8 @@ import { FooterComponent } from '../../shared/footer/footer.component';
   selector: 'app-navbar-layout',
   standalone: true,
   imports: [CommonModule, RouterModule, FooterComponent],
-  templateUrl: './navbar-layout.component.html'
+  templateUrl: './navbar-layout.component.html',
+  styleUrl: './navbar-layout.component.scss'
 })
 export class NavbarLayoutComponent {
   get displayName(): string {

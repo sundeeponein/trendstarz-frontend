@@ -1,49 +1,71 @@
-<nav class="navbar navbar-expand-lg">
-  <div class="container-fluid">
-    <div class="row w-100 align-items-center">
-      <div class="col-6 col-lg-2 d-flex align-items-center">
-        <a routerLink="/" class="logo"><img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" height="40" /></a>
-      </div>
-      <div class="col-6 col-lg-10">
-        <button class="navbar-toggler bg-body-tertiary ms-auto mb-2 mb-lg-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon text-white"></span>
+<nav class="navbar">
+  <div class="navbar-content d-flex justify-content-between w-100">
+    
+    <!-- Logo and Brand -->
+    <div class="navbar-brand">
+      <a routerLink="/" class="logo-link">
+        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
+      </a>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="navbar-tabs">
+      <a routerLink="/search" class="nav-tab">
+        Search
+      </a>
+      <a routerLink="/campaigns" *ngIf="user?.role === 'brand'" class="nav-tab">
+        Campaigns
+      </a>
+      <a routerLink="/how-it-works" class="nav-tab">
+        How it Works
+      </a>
+      <a routerLink="/register-influencer" *ngIf="!user" class="nav-tab">
+        Register as Influencer
+      </a>
+      <a routerLink="/register-brand" *ngIf="!user" class="nav-tab">
+        Register as Brand
+      </a>
+    </div>
+
+    <!-- Search and Icons -->
+    <div class="navbar-actions">
+      <!-- Icons -->
+      <div class="navbar-icons">
+        <!-- App Switcher Button -->
+        <button class="icon-btn app-switcher-btn" title="Settings" *ngIf="!user">
+          <i class="bi bi-gear"></i>
         </button>
-        <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
-          <ul class="navbar-nav me-lg-3">
-            <li class="nav-item"><a class="nav-link text-white" routerLink="/search">Search</a></li>
-            <li class="nav-item" *ngIf="user?.role === 'brand'"><a class="nav-link text-white" routerLink="/campaigns">Campaigns</a></li>
-            <li class="nav-item"><a class="nav-link text-white" routerLink="/how-it-works">How it works</a></li>
-            <!-- <li class="nav-item"><a class="nav-link text-white" routerLink="/pricing">Pricing</a></li> -->
-            <li class="nav-item" *ngIf="!user"><a class="nav-link text-white" routerLink="/register-influencer">Register as Influencer</a></li>
-            <li class="nav-item" *ngIf="!user"><a class="nav-link text-white" routerLink="/register-brand">Register as Brand</a></li>
-            <li class="nav-item" *ngIf="!user">
-              <a class="nav-link bg-primary-subtle text-dark rounded-3" routerLink="/login">Login</a>
-            </li>
+
+        <!-- Login Button (when not logged in) -->
+        <a routerLink="/login" class="btn btn-sm btn-login" *ngIf="!user">
+          Login
+        </a>
+
+        <!-- Profile Dropdown (when logged in) -->
+        <div class="profile-dropdown" *ngIf="user">
+          <button class="profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
+            <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" 
+                 [alt]="user.name || user.brandName || 'User'" 
+                 class="profile-avatar" />
+            <span class="profile-name">
+              {{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : 'User') }}
+            </span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-header">{{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : user.email) }}</span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/influencer-profile">Profile</a></li>
+            <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
+            <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
+            <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Admin Panel</a></li>
+            <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>
-          <div class="user-profile" *ngIf="user">
-            <div class="btn-group">
-              <button class="btn btn-secondary btn-sm" type="button">
-                <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" class="user-avatar" width="32" height="32" />
-                <span>
-                  {{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : 'User') }}
-                </span>
-              </button>
-              <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="visually-hidden">Toggle Dropdown</span>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/influencer-profile">Profile</a></li>
-                <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
-                <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
-                <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Deleted Users</a></li>
-                <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
-                <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
-              </ul>
-            </div>
-          </div>
         </div>
       </div>
     </div>
+
   </div>
 </nav>
 

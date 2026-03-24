@@ -1,12 +1,76 @@
 <div class="container-fluid p-4">
+  <h2 class="text-white">Admin Users</h2>
 
-  <div class="admin-tabs">
-  <button class="btn btn-outline-primary me-2" [class.active]="activeTab === 'influencer'" [class.btn-primary]="activeTab === 'influencer'" [class.btn-outline-primary]="activeTab !== 'influencer'" (click)="setTab('influencer')">Influencers</button>
-  <button class="btn btn-outline-primary" [class.active]="activeTab === 'brand'" [class.btn-primary]="activeTab === 'brand'" [class.btn-outline-primary]="activeTab !== 'brand'" (click)="setTab('brand')">Brands</button>
+  <div class="row">
+    <div class="col-4">
+      <div class="admin-tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+        <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+      </div>
+    </div>
+
+    <div class="col-8">
+      <div class="filters-section p-0 bg-transparent border-0">
+        <div class="filter-group justify-content-end">
+          <!-- Status Filter -->
+          <div class="filter-item">
+            <label>Status</label>
+            <select id="status-filter" 
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.status : brandFilters.status"
+                    (change)="activeTab === 'influencer' ? influencerFilters.status = $any($event.target).value : brandFilters.status = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All</option>
+              <option *ngFor="let status of statusArray" [value]="status">{{ status | titlecase }}</option>
+            </select>
+          </div>
+
+          <!-- Premium Filter -->
+          <div class="filter-item">
+            <label>Premium</label>
+            <select id="premium-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.premium : brandFilters.premium"
+                    (change)="activeTab === 'influencer' ? influencerFilters.premium = $any($event.target).value : brandFilters.premium = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All</option>
+              <option value="premium">Premium</option>
+              <option value="free">Free</option>
+            </select>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="filter-item">
+            <label>Category</label>
+            <select id="category-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
+                    (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All Categories</option>
+              <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
+            </select>
+          </div>
+
+          <!-- State Filter -->
+          <div class="filter-item">
+            <label>State</label>
+            <select id="state-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
+                    (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All States</option>
+              <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
+            </select>
+          </div>
+
+          <!-- Reset Button -->
+          <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
+        </div>
+      </div>
+    </div>
+
   </div>
   
+  
   <div *ngIf="activeTab === 'influencer'">
-    <table class="table table-hover admin-table">
+    <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table">
       <thead>
         <tr>
           <th>Profile</th>
@@ -24,7 +88,7 @@
         </tr>
       </thead>
       <tbody>
-  <tr *ngFor="let user of influencers">
+  <tr *ngFor="let user of filteredInfluencers">
           <td>
             <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle">
           </td>
@@ -101,7 +165,10 @@
   </div>
 
   <div *ngIf="activeTab === 'brand'">
-    <table class="admin-table table table-hover">
+    <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
       <thead>
         <tr>
           <th>Logo</th>
@@ -119,7 +186,7 @@
           
       </thead>
       <tbody>
-        <tr *ngFor="let user of brands">
+        <tr *ngFor="let user of filteredBrands">
           <td>
             <!-- <div style="font-size: 0.7em; color: #888;">brandLogo: {{ user.brandLogo | json }}</div> -->
             <img [src]="getBrandLogo(user)" alt="Logo" width="40" height="40" class="rounded-circle">
