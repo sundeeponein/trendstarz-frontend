@@ -1,20 +1,21 @@
 <div class="admin-dashboard container py-4">
-  <h2 class="mb-4">Admin Dashboard</h2>
-  <div class="row">
+  <h2 class="mb-4 text-white">Admin Dashboard</h2>
+  <div class="row mb-4">
+    <!-- Influencers Card -->
     <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-header bg-primary text-white">Influencers</div>
+      <div class="card shadow influencer-card">
+        <div class="card-header bg-primary text-white fw-bold">Influencers</div>
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span>Registered</span>
-            <span class="badge bg-primary">{{ influencerCount }}</span>
+            <span class="badge bg-primary fs-5">{{ influencerCount }}</span>
           </div>
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span>Activated</span>
             <span class="badge bg-success">{{ influencerActivated }}</span>
           </div>
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Pending</span>
+            <span>Pending Verification</span>
             <span class="badge bg-warning text-dark">{{ influencerPending }}</span>
           </div>
           <div class="d-flex justify-content-between align-items-center mb-2">
@@ -28,13 +29,14 @@
         </div>
       </div>
     </div>
+    <!-- Brands Card -->
     <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-header bg-secondary text-white">Brands</div>
+      <div class="card shadow brand-card">
+        <div class="card-header bg-secondary text-white fw-bold">Brands</div>
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span>Registered</span>
-            <span class="badge bg-primary">{{ brandCount }}</span>
+            <span class="badge bg-primary fs-5">{{ brandCount }}</span>
           </div>
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span>Activated</span>
@@ -52,6 +54,47 @@
             <span>Deleted Users</span>
             <span class="badge bg-info text-dark">{{ brandDeleted }}</span>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Management Section -->
+  <div class="admin-management mb-4">
+    <div class="d-flex align-items-center mb-2">
+      <span class="badge bg-warning text-dark me-2">SYSTEM CONFIG</span>
+      <h3 class="mb-0 text-white">Admin Management</h3>
+      <div class="ms-auto">
+        <button class="btn btn-warning"><i class="bi bi-person-plus"></i> Invite Admin</button>
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="card h-100 p-3">
+          <div class="mb-2"><i class="bi bi-gear fs-3 text-primary"></i></div>
+          <div class="fw-bold">Core Config</div>
+          <div class="text-muted small">API keys, global timeouts, and system flags.</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 p-3">
+          <div class="mb-2"><i class="bi bi-share fs-3 text-primary"></i></div>
+          <div class="fw-bold">Social Integration</div>
+          <div class="text-muted small">Auth providers, webhooks, and pixel tracking.</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 p-3">
+          <div class="mb-2"><i class="bi bi-translate fs-3 text-primary"></i></div>
+          <div class="fw-bold">Language &amp; I18n</div>
+          <div class="text-muted small">Dictionary management and region overrides.</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 p-3">
+          <div class="mb-2"><i class="bi bi-shield-lock fs-3 text-primary"></i></div>
+          <div class="fw-bold">Roles &amp; Policies</div>
+          <div class="text-muted small">RBAC, MFA enforcement, and access logs.</div>
         </div>
       </div>
     </div>
