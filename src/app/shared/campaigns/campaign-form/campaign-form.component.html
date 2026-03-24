@@ -75,6 +75,20 @@
           </div>
         </div>
 
+        <!-- Pre-selected Influencers (brand flow) -->
+        <div class="field-group" *ngIf="preSelectedInfluencers.length > 0">
+          <label class="field-label">
+            <i class="bi bi-people-fill" style="color:#ff6b35; margin-right:0.3rem"></i>
+            Sending to ({{ preSelectedInfluencers.length }} influencer{{ preSelectedInfluencers.length > 1 ? 's' : '' }})
+          </label>
+          <div class="influencer-pills">
+            <span class="influencer-pill" *ngFor="let inf of preSelectedInfluencers">
+              <i class="bi bi-person-circle"></i>
+              {{ inf.name }}<ng-container *ngIf="inf.username"> · @{{ inf.username }}</ng-container>
+            </span>
+          </div>
+        </div>
+
       </div>
 
       <!-- Footer -->
@@ -82,7 +96,7 @@
         <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="uploading">Cancel</button>
         <button type="submit" class="btn btn-save" [disabled]="form.invalid || uploading">
           <span *ngIf="uploading">Saving...</span>
-          <span *ngIf="!uploading">{{ isEdit ? 'Save Changes' : 'Create Campaign' }}</span>
+          <span *ngIf="!uploading">{{ isEdit ? 'Save Changes' : (preSelectedInfluencers.length > 0 ? 'Create & Send Invites' : 'Create Campaign') }}</span>
         </button>
       </div>
     </form>
