@@ -20,6 +20,9 @@ export class CampaignManagementComponent implements OnInit {
   brandName = '';
   loading = true;
 
+  /** True when an influencer is viewing — switches to read-only open-campaigns mode */
+  isInfluencerView = false;
+
   activeTab: TabStatus = 'active';
   pageSize = 10;
   currentPage = 1;
@@ -43,6 +46,25 @@ export class CampaignManagementComponent implements OnInit {
 
   ngOnInit() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const user = this.session.getUser();
+    this.isInfluencerView = user?.role === 'influencer';
+
+    if (this.isInfluencerView) {
+      // Influencer: load all active campaigns to browse
+      this.config.getAllCampaigns('active').subscribe({
+        next: (campaigns: any[]) => {
+          this.campaigns = campaigns;
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.cd.detectChanges();
+        }
+      });
+      return;
+    }
+
     if (token) {
       this.config.getBrandProfileById().subscribe({
         next: (profile: any) => {

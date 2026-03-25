@@ -10,19 +10,19 @@
 
     <!-- Navigation Tabs -->
     <div class="navbar-tabs">
-      <a routerLink="/search" class="nav-tab">
+      <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Search
       </a>
-      <a routerLink="/campaigns" *ngIf="user?.role === 'brand'" class="nav-tab">
+      <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Campaigns
       </a>
-      <a routerLink="/how-it-works" class="nav-tab">
+      <a routerLink="/how-it-works" routerLinkActive="active" class="nav-tab">
         How it Works
       </a>
-      <a routerLink="/register-influencer" *ngIf="!user" class="nav-tab">
+      <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
         Register as Influencer
       </a>
-      <a routerLink="/register-brand" *ngIf="!user" class="nav-tab">
+      <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="nav-tab">
         Register as Brand
       </a>
     </div>

@@ -1,0 +1,239 @@
+<div class="search-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          {{ isBrandUser ? 'Discover Influencers' : 'Discover Brands' }}
+        </h1>
+        <p class="page-subtitle" *ngIf="isBrandUser && !influencersLoading">
+          Showing {{ filteredInfluencers.length }} creators matching your criteria
+          <ng-container *ngIf="selectedCount > 0">
+            &nbsp;· <strong>{{ selectedCount }} selected</strong>
+          </ng-container>
+        </p>
+        <p class="page-subtitle" *ngIf="!isBrandUser && !brandsLoading">
+          Showing {{ filteredBrands.length }} brands matching your criteria
+        </p>
+      </div>
+      <!-- Right actions: Create Campaign for brand users only -->
+      <div class="header-actions">
+        <button class="btn-create-campaign" *ngIf="isBrandUser" (click)="router.navigate(['/campaigns'])">
+          <i class="bi bi-plus-lg"></i> Create Campaign
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── INFLUENCER FILTERS ───── -->
+  <div class="filter-bar" *ngIf="activeTab === 'influencers'">
+    <!-- Keyword Search -->
+    <div class="filter-item search-item">
+      <label class="filter-label">Search</label>
+      <div class="search-input-wrapper">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="filter-input"
+          placeholder="Search creators, keywords, or niches…"
+          [(ngModel)]="infFilters.keyword"
+          (ngModelChange)="applyInfluencerFilters()" />
+      </div>
+    </div>
+
+    <!-- Niche / Category -->
+    <div class="filter-item">
+      <label class="filter-label">Niche</label>
+      <select class="filter-select" [(ngModel)]="infFilters.category" (ngModelChange)="applyInfluencerFilters()">
+        <option value="">All Niches</option>
+        <option *ngFor="let cat of categoryOptions" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+
+    <!-- Location -->
+    <div class="filter-item">
+      <label class="filter-label">Location</label>
+      <select class="filter-select" [(ngModel)]="infFilters.location" (ngModelChange)="applyInfluencerFilters()">
+        <option value="">All Locations</option>
+        <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
+      </select>
+    </div>
+
+    <!-- Min Followers -->
+    <div class="filter-item followers-item">
+      <label class="filter-label">Reach (Followers)</label>
+      <div class="followers-range">
+        <input
+          type="number"
+          class="filter-input range-input"
+          placeholder="Min"
+          [(ngModel)]="infFilters.minFollowers"
+          (ngModelChange)="applyInfluencerFilters()"
+          min="0" />
+        <span class="range-sep">–</span>
+        <input
+          type="number"
+          class="filter-input range-input"
+          placeholder="Max"
+          [(ngModel)]="infFilters.maxFollowers"
+          (ngModelChange)="applyInfluencerFilters()"
+          min="0" />
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="filter-actions">
+      <button class="btn-clear" (click)="clearInfluencerFilters()">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- ───── BRAND FILTERS ───── -->
+  <div class="filter-bar" *ngIf="activeTab === 'brands'">
+    <!-- Keyword Search -->
+    <div class="filter-item search-item">
+      <label class="filter-label">Search</label>
+      <div class="search-input-wrapper">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="filter-input"
+          placeholder="Search brands, keywords, or niches…"
+          [(ngModel)]="brandFilters.keyword"
+          (ngModelChange)="applyBrandFilters()" />
+      </div>
+    </div>
+
+    <!-- Niche / Category -->
+    <div class="filter-item">
+      <label class="filter-label">Industry</label>
+      <select class="filter-select" [(ngModel)]="brandFilters.category" (ngModelChange)="applyBrandFilters()">
+        <option value="">All Industries</option>
+        <option *ngFor="let cat of brandCategoryOptions" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+
+    <!-- Location -->
+    <div class="filter-item">
+      <label class="filter-label">Location</label>
+      <select class="filter-select" [(ngModel)]="brandFilters.location" (ngModelChange)="applyBrandFilters()">
+        <option value="">All Locations</option>
+        <option *ngFor="let loc of brandLocationOptions" [value]="loc">{{ loc }}</option>
+      </select>
+    </div>
+
+    <!-- Actions -->
+    <div class="filter-actions">
+      <button class="btn-clear" (click)="clearBrandFilters()">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- ───── INFLUENCER RESULTS ───── -->
+  <div class="results-area" *ngIf="activeTab === 'influencers'">
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="influencersLoading">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Loading influencers…</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-state" *ngIf="!influencersLoading && influencersError">
+      <i class="bi bi-exclamation-circle"></i>
+      <p>{{ influencersError }}</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!influencersLoading && !influencersError && filteredInfluencers.length === 0">
+      <i class="bi bi-people"></i>
+      <p>No influencers found matching your filters.</p>
+      <button class="btn-clear" (click)="clearInfluencerFilters()">Clear Filters</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="results-grid" *ngIf="!influencersLoading && !influencersError && filteredInfluencers.length > 0">
+      <app-influencer-user-card
+        *ngFor="let influencer of filteredInfluencers"
+        [profileImage]="influencer.profileImage || ''"
+        [profileImages]="influencer.profileImages || []"
+        [name]="influencer.name || influencer.fullname || ''"
+        [username]="influencer.username || ''"
+        [categories]="influencer.categories || []"
+        [location]="influencer.location || {}"
+        [socialMedia]="influencer.socialMedia || []"
+        [isPremium]="influencer.isPremium || false"
+        [promotionalPrice]="influencer.promotionalPrice"
+        [engagementRate]="getEngagementRate(influencer)"
+        [showCampaignBtn]="isBrandUser"
+        [selectable]="isBrandUser"
+        [selected]="isInfluencerSelected(influencer)"
+        (viewProfileClick)="viewInfluencerProfile(influencer)"
+        (createCampaignClick)="createCampaignForOne(influencer)"
+        (toggleSelect)="toggleInfluencerSelection(influencer)">
+      </app-influencer-user-card>
+    </div>
+  </div>
+
+  <!-- ───── BRAND RESULTS ───── -->
+  <div class="results-area" *ngIf="activeTab === 'brands'">
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="brandsLoading">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Loading brands…</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error-state" *ngIf="!brandsLoading && brandsError">
+      <i class="bi bi-exclamation-circle"></i>
+      <p>{{ brandsError }}</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!brandsLoading && !brandsError && filteredBrands.length === 0">
+      <i class="bi bi-building"></i>
+      <p>No brands found matching your filters.</p>
+      <button class="btn-clear" (click)="clearBrandFilters()">Clear Filters</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="results-grid" *ngIf="!brandsLoading && !brandsError && filteredBrands.length > 0">
+      <app-brand-user-card
+        *ngFor="let brand of filteredBrands"
+        [brandLogo]="brand.brandLogo"
+        [brandLogoUrl]="getBrandLogoUrl(brand)"
+        [brandName]="brand.brandName || ''"
+        [categories]="brand.categories || []"
+        [location]="brand.location || {}"
+        [socialMedia]="brand.socialMedia || []"
+        [isPremium]="brand.isPremium || false"
+        [promotionalPrice]="brand.promotionalPrice"
+        [products]="brand.products || []"
+        [website]="brand.website || ''"
+        [showCampaignBtn]="isBrandUser"
+        (viewProfileClick)="viewBrandProfile(brand)"
+        (createCampaignClick)="router.navigate(['/campaigns'])">
+      </app-brand-user-card>
+    </div>
+  </div>
+
+  <!-- ───── FLOATING SELECTION TRAY (brand users) ───── -->
+  <div class="selection-tray" *ngIf="isBrandUser && selectedCount > 0">
+    <div class="selection-tray__info">
+      <i class="bi bi-people-fill"></i>
+      <span><strong>{{ selectedCount }}</strong> influencer{{ selectedCount > 1 ? 's' : '' }} selected</span>
+    </div>
+    <div class="selection-tray__actions">
+      <button class="tray-btn tray-btn--ghost" (click)="clearSelection()">
+        <i class="bi bi-x-lg"></i> Clear
+      </button>
+      <button class="tray-btn tray-btn--primary" (click)="router.navigate(['/campaigns'])">
+        <i class="bi bi-send-fill"></i> Go to Create Campaign
+      </button>
+    </div>
+  </div>
+
+
+</div>
