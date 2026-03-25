@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Campaign } from '../campaign.model';
+import { Campaign, CampaignInfluencer } from '../campaign.model';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -14,6 +14,8 @@ import { environment } from '../../../../environments/environment';
 export class CampaignFormComponent implements OnInit {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
+  /** Pre-selected influencers to attach to this campaign (brand flow) */
+  @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
   @Output() save = new EventEmitter<Partial<Campaign>>();
   @Output() cancel = new EventEmitter<void>();
 
@@ -86,6 +88,7 @@ export class CampaignFormComponent implements OnInit {
       budgetMax: formValue.budgetMax ? +formValue.budgetMax : undefined,
       timelineStart: formValue.timelineStart || undefined,
       timelineEnd: formValue.timelineEnd || undefined,
+      ...(this.preSelectedInfluencers.length > 0 ? { targetInfluencers: this.preSelectedInfluencers } : {}),
     };
 
     // Upload image to Cloudinary if a new file was selected

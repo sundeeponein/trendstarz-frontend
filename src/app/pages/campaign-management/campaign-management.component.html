@@ -11,18 +11,18 @@
     <!-- Header -->
     <div class="cm-header">
       <div>
-        <h1 class="cm-title">Campaign Management</h1>
-        <p class="cm-subtitle">Monitor performance and manage your brand partnerships.</p>
+        <h1 class="cm-title">{{ isInfluencerView ? 'Open Campaigns' : 'Campaign Management' }}</h1>
+        <p class="cm-subtitle">{{ isInfluencerView ? 'Browse active campaigns from brands looking for creators like you.' : 'Monitor performance and manage your brand partnerships.' }}</p>
       </div>
-      <div class="cm-header-actions">
+      <div class="cm-header-actions" *ngIf="!isInfluencerView">
         <button class="btn btn-create" (click)="openCreateForm()">
           <i class="bi bi-plus-circle-fill"></i> New Campaign
         </button>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="cm-tabs">
+    <!-- Tabs (brand only) -->
+    <div class="cm-tabs" *ngIf="!isInfluencerView">
       <button
         *ngFor="let tab of tabs"
         class="cm-tab"
@@ -79,7 +79,8 @@
               <span class="status-badge" [ngClass]="c.status">{{ c.status | uppercase }}</span>
             </td>
             <td class="cell-action">
-              <button class="btn-manage" (click)="onManage(c)">Manage</button>
+              <button class="btn-manage" (click)="onManage(c)" *ngIf="!isInfluencerView">Manage</button>
+              <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
             </td>
           </tr>
         </tbody>
@@ -89,8 +90,9 @@
     <ng-template #emptyState>
       <div class="cm-empty">
         <i class="bi bi-megaphone"></i>
-        <p>No {{ activeTab }} campaigns yet.</p>
-        <button class="btn btn-create-sm" (click)="openCreateForm()">Create your first campaign</button>
+        <p *ngIf="!isInfluencerView">No {{ activeTab }} campaigns yet.</p>
+        <p *ngIf="isInfluencerView">No open campaigns available right now. Check back soon!</p>
+        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView">Create your first campaign</button>
       </div>
     </ng-template>
 
@@ -112,9 +114,9 @@
 
   </div>
 
-  <!-- Campaign Form Modal -->
+    <!-- Campaign Form Modal (brand only) -->
   <app-campaign-form
-    *ngIf="showForm"
+    *ngIf="showForm && !isInfluencerView"
     [mode]="formMode"
     [campaign]="editingCampaign"
     (save)="onFormSave($event)"

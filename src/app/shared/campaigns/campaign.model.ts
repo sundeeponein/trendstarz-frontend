@@ -1,3 +1,9 @@
+export interface CampaignInfluencer {
+  id: string;
+  name: string;
+  username?: string;
+}
+
 export interface Campaign {
   _id?: string;
   brandId: string;
@@ -10,6 +16,7 @@ export interface Campaign {
   applicants?: number;
   timelineStart?: string;
   timelineEnd?: string;
+  targetInfluencers?: CampaignInfluencer[];
   createdAt?: string;
   updatedAt?: string;
 }
