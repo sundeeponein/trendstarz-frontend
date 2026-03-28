@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { Campaign } from '../../shared/campaigns/campaign.model';
@@ -10,7 +11,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, CampaignFormComponent],
+  imports: [CommonModule, FormsModule, CampaignFormComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -20,6 +21,9 @@ export class CampaignManagementComponent implements OnInit {
   brandName = '';
   loading = true;
 
+  /** True when an influencer is viewing — switches to read-only open-campaigns mode */
+  isInfluencerView = false;
+
   activeTab: TabStatus = 'active';
   pageSize = 10;
   currentPage = 1;
@@ -27,6 +31,32 @@ export class CampaignManagementComponent implements OnInit {
   showForm = false;
   formMode: 'create' | 'edit' = 'create';
   editingCampaign: Campaign | null = null;
+
+  // ── Invite panel (brand view) ─────────────────────────────────
+  invitePanelOpen = false;
+  invitePanelCampaign: Campaign | null = null;
+  invites: any[] = [];
+  invitesLoading = false;
+  inviteTab: 'invited' | 'search' = 'invited';
+  influencerSearch = '';
+  allInfluencersForInvite: any[] = [];
+  influencersForInviteLoading = false;
+
+  get invitedIds(): Set<string> {
+    return new Set(this.invites.map(i => String(i.influencerId?._id || i.influencerId)));
+  }
+
+  get filteredInfluencersForInvite(): any[] {
+    const kw = this.influencerSearch.trim().toLowerCase();
+    return this.allInfluencersForInvite.filter(inf => {
+      if (!kw) return true;
+      return (inf.name || inf.fullname || '').toLowerCase().includes(kw);
+    });
+  }
+
+  // ── My Invites (influencer view) ──────────────────────────────
+  myInvites: any[] = [];
+  myInvitesLoading = false;
 
   tabs: { key: TabStatus; label: string }[] = [
     { key: 'active', label: 'Active' },
@@ -43,6 +73,35 @@ export class CampaignManagementComponent implements OnInit {
 
   ngOnInit() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const user = this.session.getUser();
+    this.isInfluencerView = user?.role === 'influencer';
+
+    if (this.isInfluencerView) {
+      // Load my invites in parallel
+      this.myInvitesLoading = true;
+      this.config.getMyInvites().subscribe({
+        next: (invites: any[]) => {
+          this.myInvites = invites;
+          this.myInvitesLoading = false;
+          this.cd.detectChanges();
+        },
+        error: () => { this.myInvitesLoading = false; this.cd.detectChanges(); }
+      });
+      // Load open campaigns
+      this.config.getAllCampaigns('active').subscribe({
+        next: (campaigns: any[]) => {
+          this.campaigns = campaigns;
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.cd.detectChanges();
+        }
+      });
+      return;
+    }
+
     if (token) {
       this.config.getBrandProfileById().subscribe({
         next: (profile: any) => {
@@ -191,5 +250,105 @@ export class CampaignManagementComponent implements OnInit {
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
+  }
+
+  // ── Invite panel ─────────────────────────────────────────────
+
+  openInvitePanel(campaign: Campaign) {
+    this.invitePanelCampaign = campaign;
+    this.invitePanelOpen = true;
+    this.inviteTab = 'invited';
+    this.invitesLoading = true;
+    this.invites = [];
+    this.config.getInvitesByCampaign(campaign._id!).subscribe({
+      next: (invites: any[]) => {
+        this.invites = invites;
+        this.invitesLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => { this.invitesLoading = false; this.cd.detectChanges(); }
+    });
+    if (this.allInfluencersForInvite.length === 0) {
+      this.influencersForInviteLoading = true;
+      this.config.getInfluencers().subscribe({
+        next: (data: any) => {
+          const arr = Array.isArray(data) ? data : (data?.data ?? []);
+          this.allInfluencersForInvite = arr;
+          this.influencersForInviteLoading = false;
+          this.cd.detectChanges();
+        },
+        error: () => { this.influencersForInviteLoading = false; this.cd.detectChanges(); }
+      });
+    }
+  }
+
+  closeInvitePanel() {
+    this.invitePanelOpen = false;
+    this.invitePanelCampaign = null;
+    this.influencerSearch = '';
+  }
+
+  sendInvite(influencer: any) {
+    if (!this.invitePanelCampaign?._id) return;
+    this.config.createCampaignInvite({
+      campaignId: this.invitePanelCampaign._id,
+      influencerId: influencer._id
+    }).subscribe({
+      next: () => {
+        this.config.getInvitesByCampaign(this.invitePanelCampaign!._id!).subscribe({
+          next: (invites: any[]) => { this.invites = invites; this.cd.detectChanges(); }
+        });
+      },
+      error: (err: any) => console.error('Failed to send invite', err)
+    });
+  }
+
+  getInfluencerAvatar(inf: any): string {
+    if (Array.isArray(inf.profileImages) && inf.profileImages.length > 0) {
+      if (inf.profileImages[0]?.url) return inf.profileImages[0].url;
+      if (typeof inf.profileImages[0] === 'string') return inf.profileImages[0];
+    }
+    return 'assets/default-profile.png';
+  }
+
+  getBrandAvatar(invite: any): string {
+    const logo = invite.brandId?.brandLogo;
+    if (Array.isArray(logo) && logo.length > 0) {
+      if (logo[0]?.url) return logo[0].url;
+      if (typeof logo[0] === 'string') return logo[0];
+    }
+    return 'assets/default-profile.png';
+  }
+
+  getCampaignAvatar(invite: any): string {
+    return invite.campaignId?.image?.url || 'assets/default-profile.png';
+  }
+
+  getPendingInviteCount(): number {
+    return this.myInvites.filter(i => i.status === 'pending').length;
+  }
+
+  formatInviteBudget(inv: any): string {
+    const c = inv.campaignId;
+    if (!c) return '—';
+    const fmt = (n: number) => '$' + n.toLocaleString('en-US');
+    if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)} – ${fmt(c.budgetMax)}`;
+    if (c.budgetMin) return `From ${fmt(c.budgetMin)}`;
+    if (c.budgetMax) return `Up to ${fmt(c.budgetMax)}`;
+    return '—';
+  }
+
+  // ── My Invites (influencer) ───────────────────────────────────
+
+  respondToMyInvite(inviteId: string, status: 'accepted' | 'declined') {
+    this.config.respondToInvite(inviteId, status).subscribe({
+      next: () => {
+        this.myInvites = this.myInvites.map(i =>
+          i._id === inviteId ? { ...i, status } : i
+        );
+        this.cd.detectChanges();
+      },
+      error: (err: any) => console.error('Failed to respond to invite', err)
+    });
   }
 }

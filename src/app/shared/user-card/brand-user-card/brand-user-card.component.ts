@@ -1,11 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ResolvePlatformPipe } from '../../pipes/resolve-platform.pipe';
 
 @Component({
   selector: 'app-brand-user-card',
   standalone: true,
-  imports: [CommonModule, ResolvePlatformPipe],
+  imports: [CommonModule],
   templateUrl: './brand-user-card.component.html',
   styleUrls: ['./brand-user-card.component.scss']
 })
@@ -21,18 +20,13 @@ export class BrandUserCardComponent {
   @Input() products: any[] = [];
   @Input() website = '';
   @Input() isPremium = false;
-
   @Input() productImages: any[] = [];
   @Input() socialMedia: any[] = [];
+  /** Show the "+ Campaign" button — pass true for brand users */
+  @Input() showCampaignBtn = false;
 
-  resolvePlatform(sm: any): string {
-    if (!sm || !sm.platform) return '';
-    const p = sm.platform.toLowerCase();
-    if (p.includes('insta')) return 'instagram';
-    if (p.includes('face')) return 'facebook';
-    if (p.includes('youtube')) return 'youtube';
-    return p;
-  }
+  @Output() viewProfileClick = new EventEmitter<void>();
+  @Output() createCampaignClick = new EventEmitter<void>();
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
@@ -46,5 +40,12 @@ export class BrandUserCardComponent {
     }
     if (typeof this.brandLogo === 'string') return this.brandLogo;
     return 'assets/default-profile.png';
+  }
+
+  formatFollowers(count: number | undefined): string {
+    if (!count) return '—';
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
   }
 }

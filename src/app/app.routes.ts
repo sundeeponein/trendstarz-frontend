@@ -16,6 +16,7 @@ export const routes: Routes = [
 			{ path: '', component: WelcomeComponent },
 			{ path: 'welcome', component: WelcomeComponent },
 			{ path: 'auth/login', component: LoginComponent },
+			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
 			// static pages legal/payment
 			{ path: 'payment', loadComponent: () => import('./pages/payment/payment.component').then(m => m.PaymentComponent) },
 			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },

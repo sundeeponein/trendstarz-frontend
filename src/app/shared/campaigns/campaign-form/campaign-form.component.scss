@@ -207,6 +207,29 @@ form {
   &:hover { background: #dc3545; }
 }
 
+/* ── Pre-selected Influencer Pills ────── */
+.influencer-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.influencer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #cc4a1a;
+
+  i { color: #ff6b35; font-size: 0.85rem; }
+}
+
 /* ── Footer ───────────────────────────── */
 .form-footer {
   display: flex;

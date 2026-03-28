@@ -1,60 +1,38 @@
-<!-- <div class="user-card brand-card bg-white text-dark rounded-4 col">
-  <img [src]="displayBrandLogo" (error)="onImgError($event)" class="user-image w-100" />
-  <div class="user-details">
-    <h3>{{ brandName }} <span *ngIf="isPremium" class="premium-icon">★</span></h3>
-    <p *ngIf="email">Email: {{ email }}</p>
-    <p *ngIf="phoneNumber">Phone: {{ phoneNumber }}</p>
-    <p *ngIf="categories.length">Categories: {{ categories.join(', ') }}</p>
-    <p *ngIf="location?.state">Location: {{ location.state }}</p>
-    <p *ngIf="promotionalPrice !== undefined">Promotional Price: {{ promotionalPrice }}</p>
-    <div *ngIf="products.length">
-      <label>Products:</label>
-      <div class="product-images">
-        <img *ngFor="let img of products || []" [src]="img.url || img" class="product-image" />
-      </div>
-    </div>
-    <div *ngIf="website">
-      <label>Website:</label>
-      <a [href]="website" target="_blank">{{ website }}</a>
-    </div>
+<div class="brand-card">
+  <!-- Image + heart overlay -->
+  <div class="brand-card__img-wrap">
+    <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" />
+    <button class="brand-card__heart" (click)="$event.stopPropagation()" title="Save">
+      <i class="bi bi-heart"></i>
+    </button>
+    <span class="brand-card__premium" *ngIf="isPremium">★ Premium</span>
   </div>
-</div> -->
 
-<div class="user-card brand-card rounded-4 p-2 mb-1">
-  <img [src]="displayBrandLogo" (error)="onImgError($event)" class="user-image w-100 rounded-4 mb-2" style="aspect-ratio:1/1; object-fit:cover;" />
-  <div class="user-details px-2">
-    <div class="d-flex justify-content-between align-items-center mb-1">
-      <div>
-        <div class="fw-bold">{{ brandName }}</div>
-        <div class="text-muted" style="font-size:0.95rem;">{{ location?.city }}, {{ location?.state }}, {{ location?.country }}</div>
+  <!-- Body -->
+  <div class="brand-card__body">
+    <div class="brand-card__name">{{ brandName }}</div>
+    <div class="brand-card__category">{{ categories[0] || '—' }}</div>
+
+    <!-- Stats row -->
+    <div class="brand-card__stats">
+      <div class="brand-card__stat">
+        <span class="brand-card__stat-label">FOLLOWERS</span>
+        <span class="brand-card__stat-value">{{ formatFollowers(socialMedia[0]?.followersCount) }}</span>
       </div>
-      <div class="fw-bold" style="font-size:1.25rem;">{{ socialMedia[0]?.followersCount | number }}<span class="text-muted" style="font-size:0.9rem;"> Followers</span></div>
+      <div class="brand-card__stat" *ngIf="location?.state">
+        <span class="brand-card__stat-label">LOCATION</span>
+        <span class="brand-card__stat-value">{{ location.state }}</span>
+      </div>
     </div>
-    <hr class="my-2" />
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <ng-container *ngFor="let sm of socialMedia">
-        <ng-container [ngSwitch]="sm | resolvePlatform">
-          <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
-            <i class="bi bi-instagram fs-5"></i>
-          </a>
-          <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
-            <i class="bi bi-youtube fs-5"></i>
-          </a>
-          <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
-            <i class="bi bi-facebook fs-5"></i>
-          </a>
-          <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="Social">
-            <i class="bi bi-link-45deg fs-5"></i>
-          </a>
-        </ng-container>
-      </ng-container>
-      <span class="badge rounded-pill bg-light text-success ms-2" style="font-size:1rem;">{{ categories[0] }}</span>
-    </div>
-    <div class="text-muted mb-1" style="font-size:0.95rem;">Advertising Price</div>
-    <div class="fw-bold mb-2" style="font-size:1.25rem;">{{ promotionalPrice | number }}</div>
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <!-- <input type="checkbox" /> -->
-      <button class="btn btn-dark w-100" style="background:#3d0066; color:#fff;">Send message</button>
+
+    <!-- Buttons -->
+    <div class="brand-card__actions">
+      <button class="brand-card__btn brand-card__btn--outline" (click)="viewProfileClick.emit()">
+        View Profile
+      </button>
+      <button class="brand-card__btn brand-card__btn--primary" *ngIf="showCampaignBtn" (click)="createCampaignClick.emit(); $event.stopPropagation()">
+        <i class="bi bi-plus-lg"></i> Campaign
+      </button>
     </div>
   </div>
 </div>

@@ -199,6 +199,18 @@ export class ConfigService {
   }
 
   // ── Campaign endpoints ──────────────────────
+  /** Fetch all campaigns (optionally filter by status) — used for influencer browse view */
+  getAllCampaigns(status?: string): Observable<any[]> {
+    const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+    return this.http.get<any>(`${this.apiUrl}/campaigns${qs}`).pipe(
+      map(res => {
+        const d = this.extractData<any>(res);
+        return (Array.isArray(d) ? d : d?.data ?? []) as any[];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   getCampaignsByBrandName(brandName: string): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaigns/brand-name/${encodeURIComponent(brandName)}`).pipe(
       map(res => {
