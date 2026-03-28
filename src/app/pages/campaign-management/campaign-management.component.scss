@@ -343,3 +343,486 @@ $text-muted: #7a7a8e;
   .cm-table-wrap { overflow-x: auto; }
   .cm-table { min-width: 700px; }
 }
+
+/* ── Action buttons group ────────────── */
+.action-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-invite {
+  background: none;
+  border: 1.5px solid $accent;
+  color: $accent;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  i { font-size: 0.8rem; }
+  &:hover { background: $accent; color: #fff; }
+}
+
+/* ── Invite drawer + overlay ─────────── */
+.invite-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1050;
+  animation: fadeIn 0.2s ease;
+}
+
+.invite-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 460px;
+  max-width: 95vw;
+  height: 100vh;
+  background: #fff;
+  z-index: 1051;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 30px rgba(0,0,0,0.15);
+  animation: slideInRight 0.25s ease;
+  overflow: hidden;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+}
+
+.drawer-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: $text-dark;
+  margin: 0 0 3px;
+}
+
+.drawer-subtitle {
+  font-size: 0.83rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+.drawer-close {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: $text-muted;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  &:hover { background: #f5f5f5; color: $text-dark; }
+}
+
+.drawer-tabs {
+  display: flex;
+  border-bottom: 2px solid $border;
+  flex-shrink: 0;
+}
+
+.drawer-tab {
+  background: none;
+  border: none;
+  padding: 12px 22px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $text-muted;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+
+  &.active {
+    color: $accent;
+    border-bottom-color: $accent;
+  }
+  &:hover:not(.active) { color: $text-dark; }
+}
+
+.dtab-count {
+  background: #eee;
+  color: $text-muted;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* ── Rows inside drawer ──────────────── */
+.invited-list,
+.search-influencer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.invited-row,
+.search-inf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid $border;
+  background: #fafafa;
+  transition: background 0.15s;
+  &:hover { background: #f5f5f5; }
+}
+
+.invited-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #eee;
+}
+
+.invited-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.invited-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: $text-dark;
+  margin: 0 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.invited-username {
+  font-size: 0.78rem;
+  color: $text-muted;
+  margin: 0;
+}
+
+.invited-meta {
+  font-size: 0.75rem;
+  color: $text-muted;
+  margin: 2px 0 0;
+  text-transform: capitalize;
+}
+
+.invited-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Contact reveal chip */
+.contact-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba($accent, 0.08);
+  border: 1px solid rgba($accent, 0.25);
+  color: $accent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: background 0.15s;
+  &:hover { background: rgba($accent, 0.15); }
+  i { font-size: 0.75rem; }
+}
+
+/* Invite status badge used in both drawer and influencer cards */
+.inv-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  &.pending  { background: #fff3cd; color: #856404; }
+  &.accepted { background: #d4edda; color: #155724; }
+  &.declined { background: #f8d7da; color: #721c24; }
+}
+
+.already-invited {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #28a745;
+  font-weight: 600;
+}
+
+.btn-send-invite {
+  background: $accent;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+  &:hover { background: $accent-dark; }
+}
+
+/* Drawer search */
+.drawer-search-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.drawer-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+
+.drawer-search-input {
+  width: 100%;
+  padding: 10px 14px 10px 34px;
+  border: 1px solid $border;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: $text-dark;
+  outline: none;
+  transition: border 0.15s;
+  &:focus { border-color: $accent; }
+}
+
+.drawer-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: $text-muted;
+  i { font-size: 2rem; display: block; margin-bottom: 10px; }
+  p { font-size: 0.9rem; margin: 0; }
+}
+
+/* ── My Invites section (influencer) ─── */
+.my-invites-section {
+  margin-bottom: 8px;
+}
+
+.my-invites-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.my-invites-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: $text-dark;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  i { color: $accent; }
+}
+
+.pending-badge {
+  background: $accent;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.invite-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.inv-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 12px;
+  transition: box-shadow 0.2s;
+  &:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
+}
+
+.inv-card__thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #eee;
+}
+
+.inv-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.inv-card__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: $text-dark;
+  margin: 0 0 4px;
+}
+
+.inv-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: $text-muted;
+  margin: 0 0 4px;
+}
+
+.inv-brand-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #eee;
+}
+
+.inv-card__budget {
+  font-size: 0.8rem;
+  color: $accent;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inv-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.inv-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-accept {
+  background: #28a745;
+  border: none;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+  &:hover { background: #218838; }
+}
+
+.btn-decline {
+  background: none;
+  border: 1.5px solid #dc3545;
+  color: #dc3545;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  &:hover { background: #dc3545; color: #fff; }
+}
+
+.inv-accepted-note {
+  font-size: 0.8rem;
+  color: #28a745;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.empty-invites {
+  text-align: center;
+  padding: 32px 20px;
+  background: #fafafa;
+  border: 1px dashed $border;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  color: $text-muted;
+  i { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+  p { font-size: 0.88rem; margin: 0; }
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid $border;
+  margin: 28px 0 0;
+}
+
