@@ -8,7 +8,66 @@
 
   <div *ngIf="!loading">
 
-    <!-- Header -->
+    <!-- ───── MY INVITES (influencer view) ───── -->
+    <div class="my-invites-section" *ngIf="isInfluencerView">
+      <div class="my-invites-header">
+        <h2 class="my-invites-title">
+          <i class="bi bi-envelope-fill"></i> My Campaign Invites
+        </h2>
+        <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
+          {{ getPendingInviteCount() }} pending
+        </span>
+      </div>
+
+      <div class="text-center py-3" *ngIf="myInvitesLoading">
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+      </div>
+
+      <div *ngIf="!myInvitesLoading">
+        <div class="invite-cards-list" *ngIf="myInvites.length > 0">
+          <div class="inv-card" *ngFor="let inv of myInvites">
+            <img class="inv-card__thumb" [src]="getCampaignAvatar(inv)" (error)="onImgError($event)" alt="" />
+
+            <div class="inv-card__body">
+              <p class="inv-card__title">{{ inv.campaignId?.title || 'Campaign' }}</p>
+              <p class="inv-card__brand">
+                <img class="inv-brand-logo" [src]="getBrandAvatar(inv)" (error)="onImgError($event)" />
+                {{ inv.brandId?.brandName || 'Brand' }}
+              </p>
+              <p class="inv-card__budget" *ngIf="inv.campaignId?.budgetMin || inv.campaignId?.budgetMax">
+                <i class="bi bi-cash"></i> {{ formatInviteBudget(inv) }}
+              </p>
+            </div>
+
+            <div class="inv-card__right">
+              <span class="inv-status" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
+
+              <!-- Pending: accept / decline -->
+              <div class="inv-actions" *ngIf="inv.status === 'pending'">
+                <button class="btn-accept" (click)="respondToMyInvite(inv._id, 'accepted')">
+                  <i class="bi bi-check-lg"></i> Accept
+                </button>
+                <button class="btn-decline" (click)="respondToMyInvite(inv._id, 'declined')">
+                  <i class="bi bi-x-lg"></i> Decline
+                </button>
+              </div>
+
+              <!-- Accepted: nothing extra needed; brand was notified -->
+              <p class="inv-accepted-note" *ngIf="inv.status === 'accepted'">
+                <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-invites" *ngIf="myInvites.length === 0">
+          <i class="bi bi-inbox"></i>
+          <p>No invites yet. Browse open campaigns below to get started.</p>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+    </div>
     <div class="cm-header">
       <div>
         <h1 class="cm-title">{{ isInfluencerView ? 'Open Campaigns' : 'Campaign Management' }}</h1>
@@ -79,8 +138,13 @@
               <span class="status-badge" [ngClass]="c.status">{{ c.status | uppercase }}</span>
             </td>
             <td class="cell-action">
-              <button class="btn-manage" (click)="onManage(c)" *ngIf="!isInfluencerView">Manage</button>
-              <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
+              <div class="action-btns">
+                <button class="btn-manage" (click)="onManage(c)" *ngIf="!isInfluencerView">Manage</button>
+                <button class="btn-invite" (click)="openInvitePanel(c)" *ngIf="!isInfluencerView" title="Invite Influencers">
+                  <i class="bi bi-person-plus-fill"></i> Invite
+                </button>
+                <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -122,5 +186,105 @@
     (save)="onFormSave($event)"
     (cancel)="closeForm()"
   ></app-campaign-form>
+
+  <!-- ───── INVITE PANEL (brand view) ───── -->
+  <div class="invite-overlay" *ngIf="invitePanelOpen" (click)="closeInvitePanel()"></div>
+  <div class="invite-drawer" *ngIf="invitePanelOpen">
+
+    <!-- Drawer header -->
+    <div class="drawer-header">
+      <div>
+        <h3 class="drawer-title">Invite Influencers</h3>
+        <p class="drawer-subtitle">{{ invitePanelCampaign?.title }}</p>
+      </div>
+      <button class="drawer-close" (click)="closeInvitePanel()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Drawer tabs -->
+    <div class="drawer-tabs">
+      <button class="drawer-tab" [class.active]="inviteTab === 'invited'" (click)="inviteTab = 'invited'">
+        Invited
+        <span class="dtab-count">{{ invites.length }}</span>
+      </button>
+      <button class="drawer-tab" [class.active]="inviteTab === 'search'" (click)="inviteTab = 'search'">
+        Find &amp; Invite
+      </button>
+    </div>
+
+    <!-- Invited tab -->
+    <div class="drawer-body" *ngIf="inviteTab === 'invited'">
+      <div class="text-center py-4" *ngIf="invitesLoading">
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+      </div>
+
+      <div *ngIf="!invitesLoading">
+        <div class="invited-list" *ngIf="invites.length > 0">
+          <div class="invited-row" *ngFor="let inv of invites">
+            <img class="invited-avatar" [src]="getInfluencerAvatar(inv.influencerId)" (error)="onImgError($event)" />
+            <div class="invited-info">
+              <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}</p>
+              <p class="invited-username" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</p>
+            </div>
+            <div class="invited-right">
+              <span class="inv-status" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
+              <!-- Contact reveal for accepted invites -->
+              <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
+                <a class="contact-chip" *ngIf="inv.influencerId?.email"
+                   [href]="'mailto:' + inv.influencerId.email">
+                  <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="drawer-empty" *ngIf="invites.length === 0">
+          <i class="bi bi-people"></i>
+          <p>No influencers invited yet. Use <strong>Find &amp; Invite</strong> to get started.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Find & Invite tab -->
+    <div class="drawer-body" *ngIf="inviteTab === 'search'">
+      <div class="drawer-search-wrap">
+        <i class="bi bi-search drawer-search-icon"></i>
+        <input
+          type="text"
+          class="drawer-search-input"
+          placeholder="Search influencers by name…"
+          [(ngModel)]="influencerSearch" />
+      </div>
+
+      <div class="text-center py-4" *ngIf="influencersForInviteLoading">
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+      </div>
+
+      <div class="search-influencer-list" *ngIf="!influencersForInviteLoading">
+        <div class="search-inf-row" *ngFor="let inf of filteredInfluencersForInvite">
+          <img class="invited-avatar" [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" />
+          <div class="invited-info">
+            <p class="invited-name">{{ inf.name || inf.fullname }}</p>
+            <p class="invited-username" *ngIf="inf.username">@{{ inf.username }}</p>
+            <p class="invited-meta" *ngIf="inf.categories?.length">{{ inf.categories[0] }}</p>
+          </div>
+          <div class="invited-right">
+            <span class="already-invited" *ngIf="invitedIds.has(inf._id)">
+              <i class="bi bi-check-circle-fill"></i> Invited
+            </span>
+            <button class="btn-send-invite"
+              *ngIf="!invitedIds.has(inf._id)"
+              (click)="sendInvite(inf)">
+              <i class="bi bi-send-fill"></i> Invite
+            </button>
+          </div>
+        </div>
+        <div class="drawer-empty" *ngIf="filteredInfluencersForInvite.length === 0">
+          <i class="bi bi-person-x"></i>
+          <p>No influencers found.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 </div>
