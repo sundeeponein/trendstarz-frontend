@@ -49,6 +49,16 @@
         </div>
       </div>
 
+      <div *ngIf="preApproveActive" class="auto-approve-notice">
+        <div class="auto-approve-notice-line approve">
+          <i class="bi bi-check-circle-fill"></i>
+          Your account will be <strong>activated immediately</strong> upon completing registration.
+        </div>
+        <div class="auto-approve-notice-line warn">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Accounts with unsecured or misleading information may be <strong>removed or deleted</strong> by an admin without notice.
+        </div>
+      </div>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
           <h2>Brand Basics</h2>

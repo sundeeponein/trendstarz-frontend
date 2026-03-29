@@ -1,5 +1,6 @@
 
 <div class="registration-shell">
+  <span style="font-size:10px;color:green;word-break:break-all;position:fixed;top:0;right:0;z-index:9999;background:#fff;pointer-events:none;">[GLOBAL OUTSIDE DEBUG: {{profileImagePreview?.slice(0,40) || ''}}...]</span>
   <div class="registration-wrap">
     <aside class="left-panel">
       <div class="panel-card progress-panel">
@@ -51,6 +52,16 @@
         </div>
       </div>
 
+      <div *ngIf="preApproveActive" class="auto-approve-notice">
+        <div class="auto-approve-notice-line approve">
+          <i class="bi bi-check-circle-fill"></i>
+          Your account will be <strong>activated immediately</strong> upon completing registration.
+        </div>
+        <div class="auto-approve-notice-line warn">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Accounts with unsecured or misleading information may be <strong>removed or deleted</strong> by an admin without notice.
+        </div>
+      </div>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
           <h2>Basic Information</h2>
@@ -179,10 +190,12 @@
             </div>
           </div>
 
+          <span style="font-size:10px;color:blue;word-break:break-all;position:fixed;top:0;left:0;z-index:9999;background:#fff;" *ngIf="profileImagePreview">[GLOBAL DEBUG: {{profileImagePreview.slice(0,40)}}...]</span>
           <div class="field-block media-uploader">
             <label>Profile Image <span class="text-danger">*</span></label>
             <div class="upload-box">
               <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="preview-image" />
+              <span style="font-size:10px;color:red;word-break:break-all;" *ngIf="profileImagePreview">[DEBUG: {{profileImagePreview.slice(0,40)}}...]</span>
               <p *ngIf="!profileImagePreview">Upload your profile image</p>
               <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [required]="!profileImagePreview" />
               <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeProfileImage(0)" *ngIf="profileImagePreview">Remove</button>

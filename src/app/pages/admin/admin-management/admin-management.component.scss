@@ -29,3 +29,60 @@ h2 {
   margin-top: 1.5rem;
   color: #2c1452;
 }
+
+/* User Management settings styles */
+.settings-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 640px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  gap: 1rem;
+
+  .settings-info {
+    flex: 1;
+
+    strong { font-size: 1rem; }
+
+    p {
+      margin: 0.25rem 0 0;
+      font-size: 0.85rem;
+      color: #999;
+    }
+  }
+}
+
+.settings-toggle {
+  .form-check-input {
+    width: 2.75rem;
+    height: 1.4rem;
+    cursor: pointer;
+
+    &:checked {
+      background-color: #22c55e;
+      border-color: #22c55e;
+    }
+  }
+
+  .form-check-label {
+    color: #ccc;
+    font-size: 0.85rem;
+    margin-left: 0.4rem;
+  }
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+

@@ -38,6 +38,7 @@ export class BrandRegistrationComponent implements OnInit {
   isSubmitting = false;
   registrationSuccess = false;
   registrationError = '';
+  preApproveActive = false;
 
   emailVerificationSent: boolean = false;
   emailVerificationError: string | null = null;
@@ -136,6 +137,7 @@ export class BrandRegistrationComponent implements OnInit {
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
+    this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveBrands; });
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforceProductImageLimit();

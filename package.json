@@ -9,7 +9,12 @@
     "test": "ng test",
     "build:ssr": "ng build --configuration production",
     "serve:ssr": "node dist/frontend/server/server.mjs",
-    "dev:ssr": "ng serve"
+    "dev:ssr": "ng serve",
+    "e2e": "npx playwright test",
+    "e2e:headed": "npx playwright test --headed",
+    "e2e:ui": "npx playwright test --ui",
+    "e2e:prod": "BASE_URL=https://your-production-url.com npx playwright test",
+    "e2e:prod:headed": "BASE_URL=https://your-production-url.com npx playwright test --headed"
   },
   "prettier": {
     "printWidth": 100,
@@ -24,6 +29,7 @@
     ]
   },
   "private": true,
+  "type": "module",
   "packageManager": "npm@10.9.3",
   "dependencies": {
     "@angular/common": "^21.0.0",
@@ -50,10 +56,11 @@
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
     "@angular/platform-browser-dynamic": "^21.0.1",
+    "@playwright/test": "^1.58.2",
     "@types/browser-image-compression": "^1.0.1",
     "@types/express": "^5.0.1",
     "@types/jasmine": "^6.0.0",
-    "@types/node": "^20.17.19",
+    "@types/node": "^20.19.37",
     "jasmine-core": "^6.0.1",
     "jsdom": "^27.1.0",
     "karma": "^6.4.4",
