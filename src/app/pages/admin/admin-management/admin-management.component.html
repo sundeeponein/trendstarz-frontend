@@ -148,33 +148,92 @@
     </p>
 
     <div class="settings-block">
-      <div class="settings-row">
-        <div class="settings-info">
-          <strong class="text-white">Pre-approve Influencers</strong>
-          <p>New influencer registrations are automatically approved upon sign-up.</p>
+
+      <!-- Influencers -->
+      <div class="settings-row" [class.row-expanded]="settings.preApproveInfluencers">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong class="text-white">Pre-approve Influencers</strong>
+            <p>New influencer registrations are automatically approved upon email/mobile verification.</p>
+          </div>
+          <div class="form-check form-switch settings-toggle">
+            <input class="form-check-input" type="checkbox" role="switch"
+              id="preApproveInfluencers"
+              [(ngModel)]="settings.preApproveInfluencers">
+            <label class="form-check-label" for="preApproveInfluencers">
+              {{ settings.preApproveInfluencers ? 'On' : 'Off' }}
+            </label>
+          </div>
         </div>
-        <div class="form-check form-switch settings-toggle">
-          <input class="form-check-input" type="checkbox" role="switch"
-            id="preApproveInfluencers"
-            [(ngModel)]="settings.preApproveInfluencers">
-          <label class="form-check-label" for="preApproveInfluencers">
-            {{ settings.preApproveInfluencers ? 'On' : 'Off' }}
-          </label>
+
+        <div class="settings-conditions" *ngIf="settings.preApproveInfluencers">
+          <span class="conditions-label">Conditions required before approval:</span>
+          <div class="condition-item">
+            <span class="condition-name">Email verified</span>
+            <div class="form-check form-switch settings-toggle-sm">
+              <input class="form-check-input" type="checkbox" role="switch"
+                id="inflEmailReq"
+                [(ngModel)]="settings.influencerRequireEmailVerified">
+              <label class="form-check-label" for="inflEmailReq">
+                {{ settings.influencerRequireEmailVerified ? 'Yes' : 'No' }}
+              </label>
+            </div>
+          </div>
+          <div class="condition-item condition-disabled">
+            <span class="condition-name">Mobile verified <span class="badge-soon">Coming soon</span></span>
+            <div class="form-check form-switch settings-toggle-sm">
+              <input class="form-check-input" type="checkbox" role="switch"
+                id="inflMobileReq" disabled
+                [(ngModel)]="settings.influencerRequireMobileVerified">
+              <label class="form-check-label" for="inflMobileReq">
+                {{ settings.influencerRequireMobileVerified ? 'Yes' : 'No' }}
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="settings-row">
-        <div class="settings-info">
-          <strong class="text-white">Pre-approve Brands</strong>
-          <p>New brand registrations are automatically approved upon sign-up.</p>
+      <!-- Brands -->
+      <div class="settings-row" [class.row-expanded]="settings.preApproveBrands">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong class="text-white">Pre-approve Brands</strong>
+            <p>New brand registrations are automatically approved upon email/mobile verification.</p>
+          </div>
+          <div class="form-check form-switch settings-toggle">
+            <input class="form-check-input" type="checkbox" role="switch"
+              id="preApproveBrands"
+              [(ngModel)]="settings.preApproveBrands">
+            <label class="form-check-label" for="preApproveBrands">
+              {{ settings.preApproveBrands ? 'On' : 'Off' }}
+            </label>
+          </div>
         </div>
-        <div class="form-check form-switch settings-toggle">
-          <input class="form-check-input" type="checkbox" role="switch"
-            id="preApproveBrands"
-            [(ngModel)]="settings.preApproveBrands">
-          <label class="form-check-label" for="preApproveBrands">
-            {{ settings.preApproveBrands ? 'On' : 'Off' }}
-          </label>
+
+        <div class="settings-conditions" *ngIf="settings.preApproveBrands">
+          <span class="conditions-label">Conditions required before approval:</span>
+          <div class="condition-item">
+            <span class="condition-name">Email verified</span>
+            <div class="form-check form-switch settings-toggle-sm">
+              <input class="form-check-input" type="checkbox" role="switch"
+                id="brandEmailReq"
+                [(ngModel)]="settings.brandRequireEmailVerified">
+              <label class="form-check-label" for="brandEmailReq">
+                {{ settings.brandRequireEmailVerified ? 'Yes' : 'No' }}
+              </label>
+            </div>
+          </div>
+          <div class="condition-item condition-disabled">
+            <span class="condition-name">Mobile verified <span class="badge-soon">Coming soon</span></span>
+            <div class="form-check form-switch settings-toggle-sm">
+              <input class="form-check-input" type="checkbox" role="switch"
+                id="brandMobileReq" disabled
+                [(ngModel)]="settings.brandRequireMobileVerified">
+              <label class="form-check-label" for="brandMobileReq">
+                {{ settings.brandRequireMobileVerified ? 'Yes' : 'No' }}
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 

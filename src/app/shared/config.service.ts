@@ -59,13 +59,23 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/register-brand`, data);
   }
 
-  getAppSettings(): Observable<{ preApproveInfluencers: boolean; preApproveBrands: boolean }> {
+  getAppSettings(): Observable<{
+    preApproveInfluencers: boolean; influencerRequireEmailVerified: boolean; influencerRequireMobileVerified: boolean;
+    preApproveBrands: boolean; brandRequireEmailVerified: boolean; brandRequireMobileVerified: boolean;
+  }> {
     return this.http.get<any>(`${this.apiUrl}/auth/app-settings`).pipe(
       map(res => ({
         preApproveInfluencers: !!res?.preApproveInfluencers,
+        influencerRequireEmailVerified: res?.influencerRequireEmailVerified !== false,
+        influencerRequireMobileVerified: !!res?.influencerRequireMobileVerified,
         preApproveBrands: !!res?.preApproveBrands,
+        brandRequireEmailVerified: res?.brandRequireEmailVerified !== false,
+        brandRequireMobileVerified: !!res?.brandRequireMobileVerified,
       })),
-      catchError(() => of({ preApproveInfluencers: false, preApproveBrands: false }))
+      catchError(() => of({
+        preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
+        preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
+      }))
     );
   }
 

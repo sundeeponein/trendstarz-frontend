@@ -40,13 +40,23 @@ h2 {
 
 .settings-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 1rem 1.25rem;
-  gap: 1rem;
+  gap: 0;
+
+  &.row-expanded {
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+
+  .settings-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
 
   .settings-info {
     flex: 1;
@@ -58,6 +68,70 @@ h2 {
       font-size: 0.85rem;
       color: #999;
     }
+  }
+}
+
+.settings-conditions {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+
+  .conditions-label {
+    font-size: 0.78rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.1rem;
+  }
+
+  .condition-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    .condition-name {
+      font-size: 0.875rem;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge-soon {
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: #888;
+      border-radius: 4px;
+      padding: 1px 6px;
+    }
+  }
+
+  .condition-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+.settings-toggle-sm {
+  .form-check-input {
+    width: 2.2rem;
+    height: 1.15rem;
+    cursor: pointer;
+
+    &:checked {
+      background-color: #22c55e;
+      border-color: #22c55e;
+    }
+  }
+
+  .form-check-label {
+    color: #ccc;
+    font-size: 0.8rem;
+    margin-left: 0.35rem;
   }
 }
 
