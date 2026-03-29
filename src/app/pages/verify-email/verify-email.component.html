@@ -1,3 +1,35 @@
-<div *ngIf="status === 'pending'">Verifying your email...</div>
-<div *ngIf="status === 'success'" class="text-success">{{ message }}</div>
-<div *ngIf="status === 'error'" class="text-danger">{{ message }}</div>
+<div class="verify-shell">
+
+  <!-- Pending: no ?status yet, just landed on the page -->
+  <div *ngIf="status === 'pending'" class="verify-card verify-pending">
+    <div class="verify-icon">✉️</div>
+    <h2>Check your email</h2>
+    <p>A verification link has been sent to your email address. Click the link to verify your account.</p>
+    <p class="verify-hint">Didn't receive it? Check your spam folder or go back to registration to resend.</p>
+  </div>
+
+  <!-- Success: auto-approved -->
+  <div *ngIf="status === 'success' && autoApproved" class="verify-card verify-success">
+    <div class="verify-icon">🎉</div>
+    <h2>Email Verified &amp; Account Activated!</h2>
+    <p>Your email has been verified and your account is <strong>now active</strong>. You can log in right away.</p>
+    <a routerLink="/login" class="btn btn-success mt-3">Go to Login</a>
+  </div>
+
+  <!-- Success: pending manual approval -->
+  <div *ngIf="status === 'success' && !autoApproved" class="verify-card verify-success">
+    <div class="verify-icon">✅</div>
+    <h2>Email Verified!</h2>
+    <p>Your email has been verified. Your account is <strong>pending admin review</strong> and will be activated shortly.</p>
+    <a routerLink="/login" class="btn btn-outline-light mt-3">Go to Login</a>
+  </div>
+
+  <!-- Failed -->
+  <div *ngIf="status === 'failed'" class="verify-card verify-failed">
+    <div class="verify-icon">❌</div>
+    <h2>Verification Failed</h2>
+    <p>The link is invalid or has expired. Please request a new verification email.</p>
+    <a routerLink="/login" class="btn btn-outline-light mt-3">Back to Login</a>
+  </div>
+
+</div>
