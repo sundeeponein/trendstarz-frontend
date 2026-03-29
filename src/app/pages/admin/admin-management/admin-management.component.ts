@@ -75,12 +75,14 @@ export class AdminManagementComponent implements OnInit {
     const token = localStorage.getItem('token');
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, this.settings, headers).subscribe({
-      next: () => {
+      next: (res) => {
+        console.log('Settings save response:', res);
         this.settingsSaving = false;
         this.settingsSaved = true;
         setTimeout(() => this.settingsSaved = false, 3000);
       },
-      error: () => {
+      error: (err) => {
+        console.error('Settings save error:', err);
         this.settingsSaving = false;
         alert('Error saving settings.');
       }

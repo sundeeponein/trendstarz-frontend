@@ -46,7 +46,14 @@
             </div>
             <div class="field-block">
               <label>Email</label>
-              <input formControlName="email" type="email" class="form-control" />
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
+                <ng-container *ngIf="emailVerified">
+                  <span title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">
+                    ✔️
+                  </span>
+                </ng-container>
+              </div>
             </div>
             <div class="field-block">
               <label>Phone Number</label>
