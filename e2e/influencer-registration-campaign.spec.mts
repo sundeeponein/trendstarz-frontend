@@ -3,20 +3,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 test('Influencer registration and campaign discovery', async ({ page }) => {
-  // Collect browser console logs for debugging
-  page.on('console', msg => {
-    console.log('BROWSER LOG:', msg.type(), msg.text());
-  });
+    // Collect browser console logs for debugging
+    page.on('console', msg => {
+      console.log('BROWSER LOG:', msg.type(), msg.text());
+    });
+  // Upload profile image (required)
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const imagePath = path.resolve(__dirname, 'test-profile.png');
-  // Use a unique value for username/email
-  const unique = Date.now();
-  const email = `testinfluencer${unique}@example.com`;
-  const username = `testinfluencer${unique}`;
-  const phone = `9${String(unique).slice(-9)}`;
-
-
   // 1. Go to registration page
   await page.goto('/register-influencer');
 
@@ -34,6 +28,12 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
 
   // Wait for form to load (wait for name input to be visible)
   await page.waitForSelector('input[formControlName="name"]', { state: 'visible' });
+
+  // Use a unique value for username/email
+  const unique = Date.now();
+  const email = `testinfluencer${unique}@example.com`;
+  const username = `testinfluencer${unique}`;
+  const phone = `9${String(unique).slice(-9)}`;
 
   // 2. Fill registration form (step 1)
   // Fill Full Name
@@ -82,9 +82,6 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
   await page.type(confirmPasswordSelector, 'Test@1234', { delay: 100 });
   await page.keyboard.press('Tab');
 
-
-
-
   // Go to next step (step 2)
   await page.click('button:has-text("Next Step")');
   // Take screenshot and log errors after clicking Next Step
@@ -105,45 +102,6 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
     await page.waitForSelector('h2:has-text("Social Media & Media")', { timeout: 5000 });
   } catch (e) {
     throw new Error('Step 2 did not appear. See after-nextstep.png and console for errors.');
-  }
-
-  // Upload profile image (required, after language and categories in step 2)
-  const fileInputSelector = 'input[type="file"][accept="image/*"]';
-  const fileInput = await page.$(fileInputSelector);
-  if (fileInput) {
-    // Take a screenshot after file upload for debugging
-    await page.screenshot({ path: 'after-file-upload.png', fullPage: true });
-    await page.waitForSelector(fileInputSelector, { state: 'visible', timeout: 5000 });
-    // Log parent HTML of file input and upload box for debugging
-    const parentHtml = await page.$eval(fileInputSelector, el => el.parentElement?.outerHTML || 'no parent');
-    console.log('File input parent HTML:', parentHtml);
-    const uploadBoxHtml = await page.$eval('.upload-box', el => el.outerHTML).catch(() => 'upload-box not found');
-    console.log('Upload box HTML:', uploadBoxHtml);
-    // Set file and dispatch native change event to trigger Angular handler
-    await page.setInputFiles(fileInputSelector, imagePath);
-    // Wait a bit for Angular to process the change
-    await page.waitForTimeout(1000);
-    // Log all input and image elements for debugging
-    const allInputs = await page.$$eval('input', els => els.map(e => e.outerHTML));
-    const allImages = await page.$$eval('img', els => els.map(e => e.outerHTML));
-    console.log('All input elements after file upload:', allInputs);
-    console.log('All image elements after file upload:', allImages);
-    // Wait for the persistent debug span to appear and log its text content
-    try {
-      await page.waitForSelector('span:has-text("GLOBAL OUTSIDE DEBUG")', { timeout: 8000 });
-      const debugSpanText = await page.$eval('span:has-text("GLOBAL OUTSIDE DEBUG")', el => el.textContent);
-      console.log('GLOBAL OUTSIDE DEBUG span text:', debugSpanText);
-    } catch (e) {
-      // Extra logging if debug span does not appear
-      const uploadBoxHtml = await page.$eval('.upload-box', el => el.outerHTML).catch(() => 'upload-box not found');
-      console.log('Upload box HTML after file upload:', uploadBoxHtml);
-      throw new Error('GLOBAL OUTSIDE DEBUG span did not appear after file upload.');
-    }
-  } else {
-    // Log all input elements for debugging
-    const allInputs = await page.$$eval('input', els => els.map(e => els.outerHTML));
-    console.log('File input not found. All input elements:', allInputs);
-    throw new Error('File input for image upload not found. See console log for available inputs.');
   }
   // Now select state (handle possible nested form group)
   // Try both direct and nested selectors for robustness
@@ -169,6 +127,7 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
   // Payment option (optional, default is 'free')
   // await page.selectOption('select[formcontrolname="paymentOption"]', 'free');
 
+
   // Languages (ng-select)
   await page.click('ng-select[formcontrolname="languages"] .ng-select-container');
   await page.waitForSelector('.ng-dropdown-panel .ng-option', { timeout: 5000 });
@@ -179,6 +138,45 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
   await page.waitForSelector('.ng-dropdown-panel .ng-option', { timeout: 5000 });
   await page.click('.ng-dropdown-panel .ng-option');
 
+  // Upload profile image (required, after language and categories in step 2)
+  const fileInputSelector = 'input[type="file"][accept="image/*"]';
+  const fileInput = await page.$(fileInputSelector);
+  if (fileInput) {
+      // Take a screenshot after file upload for debugging
+      await page.screenshot({ path: 'after-file-upload.png', fullPage: true });
+    await page.waitForSelector(fileInputSelector, { state: 'visible', timeout: 5000 });
+    // Log parent HTML of file input and upload box for debugging
+    const parentHtml = await page.$eval(fileInputSelector, el => el.parentElement?.outerHTML || 'no parent');
+    console.log('File input parent HTML:', parentHtml);
+    const uploadBoxHtml = await page.$eval('.upload-box', el => el.outerHTML).catch(() => 'upload-box not found');
+    console.log('Upload box HTML:', uploadBoxHtml);
+    // Set file and dispatch native change event to trigger Angular handler
+    await page.setInputFiles(fileInputSelector, imagePath);
+    // Wait a bit for Angular to process the change
+    await page.waitForTimeout(1000);
+    // Log all input and image elements for debugging
+    const allInputs = await page.$$eval('input', els => els.map(e => e.outerHTML));
+    const allImages = await page.$$eval('img', els => els.map(e => e.outerHTML));
+    console.log('All input elements after file upload:', allInputs);
+    console.log('All image elements after file upload:', allImages);
+    // Wait for the profile image preview to appear (async handler)
+    try {
+      await page.waitForFunction(() => {
+        const img = document.querySelector('.upload-box img.preview-image');
+        return img && img instanceof HTMLImageElement && img.src && img.src.length > 10;
+      }, { timeout: 8000 });
+    } catch (e) {
+      // Extra logging if preview does not appear
+      const uploadBoxHtml = await page.$eval('.upload-box', el => el.outerHTML).catch(() => 'upload-box not found');
+      console.log('Upload box HTML after file upload:', uploadBoxHtml);
+      throw new Error('Profile image preview did not appear after file upload.');
+    }
+  } else {
+    // Log all input elements for debugging
+    const allInputs = await page.$$eval('input', els => els.map(e => els.outerHTML));
+    console.log('File input not found. All input elements:', allInputs);
+    throw new Error('File input for image upload not found. See console log for available inputs.');
+  }
 
   // Social media
   await page.selectOption('select[formControlName="platform"]', { label: 'Instagram' });
@@ -186,9 +184,17 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
   await page.selectOption('select[formControlName="tier"]', { label: 'Nano' });
   await page.fill('input[formControlName="followersCount"]', '1000');
 
+
   // Contact method
   // Wait for step 3 (Professional Details)
   await page.click('button:has-text("Next Step")');
+  // Log screenshot, errors, and visible elements after clicking Next Step (step 3)
+  await page.screenshot({ path: 'after-nextstep-step3.png', fullPage: true });
+  const errorsStep3 = await page.$$eval('.text-danger', els => els.map(e => e.textContent));
+  console.log('Validation errors after Next Step (step 3):', errorsStep3);
+  const visibleStep3 = await page.$$eval('input, select, ng-select, h2, .modal, .alert, .text-danger', els => els.filter(e => e instanceof HTMLElement && e.offsetParent !== null).map(e => e.outerHTML));
+  console.log('Visible elements after Next Step (step 3):', visibleStep3);
+  // Now wait for Professional Details heading
   await page.waitForSelector('h2:has-text("Professional Details")', { timeout: 5000 });
 
   // Contact method (check WhatsApp)

@@ -1,9 +1,9 @@
-  // ...existing code...
 import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
 import { map, debounceTime, switchMap, first } from 'rxjs/operators';
 import { ConfigService } from '../../shared/config.service';
@@ -27,6 +27,75 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+    ngOnInit(): void {
+      this.registrationForm = this.fb.group({
+        name: ['', Validators.required],
+        username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
+        phoneNumber: ['', Validators.required],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', Validators.required],
+        confirmPassword: ['', Validators.required],
+        paymentOption: ['free', Validators.required],
+        location: this.fb.group({
+          state: ['', Validators.required]
+        }),
+        promotionalPrice: ['', Validators.required],
+        languages: [[], Validators.required],
+        categories: [[], Validators.required],
+        profileImages: this.fb.array([]),
+        socialMedia: this.fb.array([
+          this.fb.group({
+            platform: ['', Validators.required],
+            handle: ['', Validators.required],
+            tier: ['', Validators.required],
+            followersCount: ['', Validators.required]
+          })
+        ]),
+        contact: this.fb.group({
+          whatsapp: [false],
+          email: [false],
+          call: [false]
+        }, { validators: [atLeastOneContactRequired] }),
+      });
+
+      // Listen for username changes to sanitize and clear error
+      this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
+      this.registrationForm.get('phoneNumber')?.valueChanges.subscribe(() => {
+        this.duplicatePhoneError = '';
+      });
+      this.registrationForm.get('email')?.valueChanges.subscribe(() => {
+        this.duplicateEmailError = '';
+      });
+      // Only reset success/error flags if the form is dirty and success is showing
+      this.registrationForm.valueChanges.subscribe(() => {
+        if (this.registrationSuccess && this.registrationForm.dirty) {
+          this.registrationSuccess = false;
+        }
+        if (this.registrationError && this.registrationForm.dirty) {
+          this.registrationError = '';
+        }
+      });
+      // Fetch dropdown data from API
+      this.configService.getStates().subscribe(data => this.states = data);
+      this.configService.getTiers().subscribe(data => this.tiers = data);
+      this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
+      this.configService.getLanguages().subscribe(data => this.languagesList = data);
+      this.configService.getCategories().subscribe(data => this.categoriesList = data);
+      this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveInfluencers; });
+
+      this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
+        this.enforceSocialProfileLimit();
+        this.refreshStepCompletion();
+      });
+
+      this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
+      this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+      this.enforceSocialProfileLimit();
+      this.applySocialMediaValidators();
+      this.refreshStepCompletion();
+    }
+  // Only one ngOnInit and one constructor should exist. Remove this duplicate block.
   // MVP rollout switch: update this later when business rules change.
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
   currentStep: 1 | 2 | 3 = 1;
@@ -56,8 +125,6 @@ export class InfluencerRegistrationComponent implements OnInit {
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
 
-
-  // ...existing code...
 
   // Email verification resend state
   resendingEmailVerification: boolean = false;
@@ -90,7 +157,8 @@ export class InfluencerRegistrationComponent implements OnInit {
     private fb: FormBuilder,
     private configService: ConfigService,
     private ngZone: NgZone,
-    private otpService: OtpService
+    private otpService: OtpService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   resendPhoneOtp() {
@@ -148,6 +216,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
   registrationSuccess = false;
   registrationError = '';
+  preApproveActive = false;
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
@@ -177,74 +246,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       .replace(/-+$/, '');
   }
 
-  ngOnInit() {
-    // Initialize the form first
-    this.registrationForm = this.fb.group({
-      name: ['', Validators.required],
-      username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
-      phoneNumber: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
-      confirmPassword: ['', Validators.required],
-      paymentOption: ['free', Validators.required],
-      location: this.fb.group({
-        state: ['', Validators.required]
-      }),
-      promotionalPrice: ['', Validators.required],
-      languages: [[], Validators.required],
-      categories: [[], Validators.required],
-      profileImages: this.fb.array([]),
-      socialMedia: this.fb.array([
-        this.fb.group({
-          platform: ['', Validators.required],
-          handle: ['', Validators.required],
-          tier: ['', Validators.required],
-          followersCount: ['', Validators.required]
-        })
-      ]),
-      contact: this.fb.group({
-        whatsapp: [false],
-        email: [false],
-        call: [false]
-      }, { validators: [atLeastOneContactRequired] }),
-    });
-
-    // Listen for username changes to sanitize and clear error
-    this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
-    this.registrationForm.get('phoneNumber')?.valueChanges.subscribe(() => {
-      this.duplicatePhoneError = '';
-    });
-    this.registrationForm.get('email')?.valueChanges.subscribe(() => {
-      this.duplicateEmailError = '';
-    });
-    // Only reset success/error flags if the form is dirty and success is showing
-    this.registrationForm.valueChanges.subscribe(() => {
-      if (this.registrationSuccess && this.registrationForm.dirty) {
-        this.registrationSuccess = false;
-      }
-      if (this.registrationError && this.registrationForm.dirty) {
-        this.registrationError = '';
-      }
-    });
-    // Fetch dropdown data from API
-    this.configService.getStates().subscribe(data => this.states = data);
-    this.configService.getTiers().subscribe(data => this.tiers = data);
-    this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
-    this.configService.getLanguages().subscribe(data => this.languagesList = data);
-    this.configService.getCategories().subscribe(data => this.categoriesList = data);
-
-    this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
-      this.enforceSocialProfileLimit();
-      this.refreshStepCompletion();
-    });
-
-    this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
-    this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
-
-    this.enforceSocialProfileLimit();
-    this.applySocialMediaValidators();
-    this.refreshStepCompletion();
-  }
+  // Only one ngOnInit should exist. Keep the most complete version and merge logic if needed.
 
   private refreshStepCompletion() {
     this.step1Complete = this.computeStepComplete(1);
@@ -448,17 +450,35 @@ export class InfluencerRegistrationComponent implements OnInit {
       useWebWorker: true
     };
     try {
+      console.log('onProfileImageFileChange called', event);
       const compressedFile = await imageCompression(file, options);
       // Generate local preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.profileImagePreview = e.target.result;
-        this.profileImageFile = compressedFile;
-        this.refreshStepCompletion();
+        this.ngZone.run(() => {
+          this.profileImagePreview = e.target.result;
+          this.profileImageFile = compressedFile;
+          console.log('profileImagePreview set (compressed):', this.profileImagePreview);
+          this.cdr.detectChanges();
+          this.refreshStepCompletion();
+        });
       };
       reader.readAsDataURL(compressedFile);
     } catch (error) {
+      // Fallback: set preview directly from original file if compression fails (for E2E tests)
       console.error('Image compression error:', error);
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.ngZone.run(() => {
+          console.log('E2E fallback FileReader onload called');
+          this.profileImagePreview = e.target.result;
+          this.profileImageFile = file;
+          console.log('E2E fallback preview set:', this.profileImagePreview);
+          this.cdr.detectChanges();
+          this.refreshStepCompletion();
+        });
+      };
+      reader.readAsDataURL(file);
     }
   }
 

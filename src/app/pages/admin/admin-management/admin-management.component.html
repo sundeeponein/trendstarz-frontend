@@ -8,6 +8,7 @@
     <button [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
     <button [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
+    <button [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
   </div>
 
   <div *ngIf="activeTab === 'details'">
@@ -137,5 +138,53 @@
     <button (click)="saveAllVisibility()">Save</button>
   </div>
 
+  <!-- User Management Tab -->
+  <div *ngIf="activeTab === 'userManagement'">
+    <h2 class="text-white">User Management</h2>
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      When pre-approval is <strong>ON</strong>, users who complete registration are
+      immediately activated — no manual admin review needed. Accounts with unsecured
+      or misleading details may still be removed or deleted by an admin at any time.
+    </p>
+
+    <div class="settings-block">
+      <div class="settings-row">
+        <div class="settings-info">
+          <strong class="text-white">Pre-approve Influencers</strong>
+          <p>New influencer registrations are automatically approved upon sign-up.</p>
+        </div>
+        <div class="form-check form-switch settings-toggle">
+          <input class="form-check-input" type="checkbox" role="switch"
+            id="preApproveInfluencers"
+            [(ngModel)]="settings.preApproveInfluencers">
+          <label class="form-check-label" for="preApproveInfluencers">
+            {{ settings.preApproveInfluencers ? 'On' : 'Off' }}
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-info">
+          <strong class="text-white">Pre-approve Brands</strong>
+          <p>New brand registrations are automatically approved upon sign-up.</p>
+        </div>
+        <div class="form-check form-switch settings-toggle">
+          <input class="form-check-input" type="checkbox" role="switch"
+            id="preApproveBrands"
+            [(ngModel)]="settings.preApproveBrands">
+          <label class="form-check-label" for="preApproveBrands">
+            {{ settings.preApproveBrands ? 'On' : 'Off' }}
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-actions">
+        <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+          {{ settingsSaving ? 'Saving…' : 'Save Settings' }}
+        </button>
+        <span *ngIf="settingsSaved" style="color:#22c55e; margin-left:1rem;">✓ Saved</span>
+      </div>
+    </div>
+  </div>
 
 </div>
