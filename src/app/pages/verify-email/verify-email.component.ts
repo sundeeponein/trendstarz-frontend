@@ -1,44 +1,30 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-verify-email',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './verify-email.component.html',
   styleUrls: ['./verify-email.component.scss']
 })
 export class VerifyEmailComponent implements OnInit {
-  status: 'pending' | 'success' | 'error' = 'pending';
-  message = '';
+  status: 'success' | 'failed' | 'pending' = 'pending';
+  autoApproved = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    private http: HttpClient,
-    private router: Router
-  ) {}
+  constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const token = params['token'];
-      if (token) {
-        this.http.post('/api/verification/verify', { token, type: 'email' }).subscribe({
-          next: () => {
-            this.status = 'success';
-            this.message = 'Your email has been verified!';
-          },
-          error: err => {
-            this.status = 'error';
-            this.message = err.error?.error || 'Verification failed.';
-          }
-        });
-      } else {
-        this.status = 'error';
-        this.message = 'No verification token found.';
+      const status = params['status'];
+      if (status === 'success') {
+        this.status = 'success';
+        this.autoApproved = params['approved'] === 'true';
+      } else if (status === 'failed') {
+        this.status = 'failed';
       }
+      // If no ?status param, stay 'pending' — the backend redirect hasn't happened yet
     });
   }
 }

@@ -24,7 +24,11 @@ export class AdminManagementComponent implements OnInit {
 
   settings = {
     preApproveInfluencers: false,
+    influencerRequireEmailVerified: true,
+    influencerRequireMobileVerified: false,
     preApproveBrands: false,
+    brandRequireEmailVerified: true,
+    brandRequireMobileVerified: false,
   };
   settingsSaving = false;
   settingsSaved = false;
@@ -55,7 +59,11 @@ export class AdminManagementComponent implements OnInit {
     this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, headers).subscribe({
       next: (res) => {
         this.settings.preApproveInfluencers = !!res?.preApproveInfluencers;
+        this.settings.influencerRequireEmailVerified = res?.influencerRequireEmailVerified !== false;
+        this.settings.influencerRequireMobileVerified = !!res?.influencerRequireMobileVerified;
         this.settings.preApproveBrands = !!res?.preApproveBrands;
+        this.settings.brandRequireEmailVerified = res?.brandRequireEmailVerified !== false;
+        this.settings.brandRequireMobileVerified = !!res?.brandRequireMobileVerified;
       },
       error: () => {}
     });
