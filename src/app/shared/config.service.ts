@@ -59,6 +59,16 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/register-brand`, data);
   }
 
+  getAppSettings(): Observable<{ preApproveInfluencers: boolean; preApproveBrands: boolean }> {
+    return this.http.get<any>(`${this.apiUrl}/auth/app-settings`).pipe(
+      map(res => ({
+        preApproveInfluencers: !!res?.preApproveInfluencers,
+        preApproveBrands: !!res?.preApproveBrands,
+      })),
+      catchError(() => of({ preApproveInfluencers: false, preApproveBrands: false }))
+    );
+  }
+
   sendEmailVerificationLink(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/send-email-verification`, { email });
   }

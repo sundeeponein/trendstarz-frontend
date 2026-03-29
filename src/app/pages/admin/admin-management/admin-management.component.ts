@@ -1,5 +1,6 @@
 import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
 import { environment } from '../../../../environments/environment';
@@ -7,7 +8,7 @@ import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-admin-management',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-management.component.html',
   styleUrls: ['./admin-management.component.scss']
 })
@@ -21,6 +22,13 @@ export class AdminManagementComponent implements OnInit {
     tiers: []
   };
 
+  settings = {
+    preApproveInfluencers: false,
+    preApproveBrands: false,
+  };
+  settingsSaving = false;
+  settingsSaved = false;
+
   isServer: boolean;
 
   constructor(
@@ -33,11 +41,42 @@ export class AdminManagementComponent implements OnInit {
   ngOnInit() {
     if (!this.isServer) {
       this.loadConfig();
+      this.loadSettings();
     }
   }
 
   setTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  loadSettings() {
+    const token = localStorage.getItem('token');
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, headers).subscribe({
+      next: (res) => {
+        this.settings.preApproveInfluencers = !!res?.preApproveInfluencers;
+        this.settings.preApproveBrands = !!res?.preApproveBrands;
+      },
+      error: () => {}
+    });
+  }
+
+  saveSettings() {
+    this.settingsSaving = true;
+    this.settingsSaved = false;
+    const token = localStorage.getItem('token');
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, this.settings, headers).subscribe({
+      next: () => {
+        this.settingsSaving = false;
+        this.settingsSaved = true;
+        setTimeout(() => this.settingsSaved = false, 3000);
+      },
+      error: () => {
+        this.settingsSaving = false;
+        alert('Error saving settings.');
+      }
+    });
   }
 
   loadConfig() {
