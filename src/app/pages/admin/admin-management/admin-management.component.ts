@@ -59,12 +59,16 @@ export class AdminManagementComponent implements OnInit {
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, headers).subscribe({
       next: (res) => {
-        this.settings.preApproveInfluencers = !!res?.preApproveInfluencers;
-        this.settings.influencerRequireEmailVerified = !!res?.influencerRequireEmailVerified;
-        this.settings.influencerRequireMobileVerified = !!res?.influencerRequireMobileVerified;
-        this.settings.preApproveBrands = !!res?.preApproveBrands;
-        this.settings.brandRequireEmailVerified = !!res?.brandRequireEmailVerified;
-        this.settings.brandRequireMobileVerified = !!res?.brandRequireMobileVerified;
+        // ResponseInterceptor wraps responses as { success: true, data: {...} }
+        // unless they already contain a 'success' field
+        const data = res?.data ?? res;
+        this.settings.preApproveInfluencers = !!data?.preApproveInfluencers;
+        this.settings.influencerRequireEmailVerified = !!data?.influencerRequireEmailVerified;
+        this.settings.influencerRequireMobileVerified = !!data?.influencerRequireMobileVerified;
+        this.settings.preApproveBrands = !!data?.preApproveBrands;
+        this.settings.brandRequireEmailVerified = !!data?.brandRequireEmailVerified;
+        this.settings.brandRequireMobileVerified = !!data?.brandRequireMobileVerified;
+        this.cdr.detectChanges();
       },
       error: () => {}
     });
