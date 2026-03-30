@@ -29,6 +29,9 @@
         <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
         <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
       </div>
+      <div *ngIf="phoneVerified" class="alert alert-success mb-4">
+        <strong>Mobile verified.</strong> Your mobile number has been successfully verified.
+      </div>
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
@@ -48,16 +51,15 @@
               <label>Email</label>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
-                <ng-container *ngIf="emailVerified">
-                  <span title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">
-                    ✔️
-                  </span>
-                </ng-container>
+                <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
               </div>
             </div>
             <div class="field-block">
               <label>Phone Number</label>
-              <input formControlName="phoneNumber" type="text" class="form-control" />
+              <div style="display: flex; align-items: center; gap: 0.5em;">
+                <input formControlName="phoneNumber" type="text" class="form-control" />
+                <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
+              </div>
             </div>
           </div>
 
@@ -124,6 +126,51 @@
             <div class="field-block">
               <label>Google Map Address</label>
               <input formControlName="googleMapAddress" type="text" class="form-control" />
+            </div>
+          </div>
+
+          <!-- Premium Upgrade Section -->
+          <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="mt-3">
+            <!-- Already premium -->
+            <div *ngIf="premiumEnd" class="alert alert-success d-flex align-items-center gap-2">
+              <span style="font-size:1.4em;">🌟</span>
+              <div>
+                <strong>Premium Active</strong>
+                <div><small>Valid until: <strong>{{ premiumEnd | date:'mediumDate' }}</strong></small></div>
+              </div>
+            </div>
+            <!-- Not yet paid -->
+            <div *ngIf="!premiumEnd" class="form-card" style="border: 2px solid #f97316; border-radius: 12px; padding: 1.5em;">
+              <h5 style="color:#f97316;">🌟 Upgrade to Premium</h5>
+              <p class="text-muted mb-3">Select a plan to unlock premium features — contact visibility, analytics, and more.</p>
+              <div style="display: flex; gap: 1em; flex-wrap: wrap; margin-bottom: 1.2em;">
+                <label style="cursor:pointer; border: 2px solid; border-radius: 10px; padding: 1em 1.5em; flex: 1; min-width: 100px; text-align: center; transition: border-color 0.2s;"
+                  [style.border-color]="selectedDuration === '1m' ? '#f97316' : '#e2e8f0'"
+                  [style.background]="selectedDuration === '1m' ? '#fff7ed' : '#fff'">
+                  <input type="radio" name="premiumDuration" value="1m" [(ngModel)]="selectedDuration" style="display:none;" />
+                  <div><strong>1 Month</strong></div>
+                  <div style="color:#f97316; font-size:1.15em; font-weight:700;">₹399</div>
+                </label>
+                <label style="cursor:pointer; border: 2px solid; border-radius: 10px; padding: 1em 1.5em; flex: 1; min-width: 100px; text-align: center; transition: border-color 0.2s;"
+                  [style.border-color]="selectedDuration === '3m' ? '#f97316' : '#e2e8f0'"
+                  [style.background]="selectedDuration === '3m' ? '#fff7ed' : '#fff'">
+                  <input type="radio" name="premiumDuration" value="3m" [(ngModel)]="selectedDuration" style="display:none;" />
+                  <div><strong>3 Months</strong></div>
+                  <div style="color:#f97316; font-size:1.15em; font-weight:700;">₹999</div>
+                  <small class="text-success">Save 16%</small>
+                </label>
+                <label style="cursor:pointer; border: 2px solid; border-radius: 10px; padding: 1em 1.5em; flex: 1; min-width: 100px; text-align: center; transition: border-color 0.2s;"
+                  [style.border-color]="selectedDuration === '1y' ? '#f97316' : '#e2e8f0'"
+                  [style.background]="selectedDuration === '1y' ? '#fff7ed' : '#fff'">
+                  <input type="radio" name="premiumDuration" value="1y" [(ngModel)]="selectedDuration" style="display:none;" />
+                  <div><strong>1 Year</strong></div>
+                  <div style="color:#f97316; font-size:1.15em; font-weight:700;">₹2999</div>
+                  <small class="text-success">Best Value</small>
+                </label>
+              </div>
+              <div *ngIf="paymentError" class="text-danger mb-2">{{ paymentError }}</div>
+              <div *ngIf="paymentSuccess" class="alert alert-success">🎉 Upgraded to Premium successfully!</div>
+              <button type="button" class="btn btn-primary" (click)="payAndUpgrade()" [disabled]="!selectedDuration">Upgrade Now</button>
             </div>
           </div>
 

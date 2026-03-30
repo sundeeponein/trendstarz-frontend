@@ -30,8 +30,14 @@
 
     <!-- Contact details (toggled) -->
     <div *ngIf="showContact" class="contact-bar">
-      <span *ngIf="brand.contact?.email"><i class="bi bi-envelope"></i> {{ brand.email }}</span>
-      <span *ngIf="brand.contact?.call"><i class="bi bi-telephone"></i> {{ brand.phoneNumber }}</span>
+      <span *ngIf="brand.contact?.email">
+        <i class="bi bi-envelope"></i> {{ brand.email }}
+        <span *ngIf="brand.emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+      </span>
+      <span *ngIf="brand.contact?.call">
+        <i class="bi bi-telephone"></i> {{ brand.phoneNumber }}
+        <span *ngIf="brand.phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+      </span>
       <span *ngIf="brand.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp</span>
     </div>
 

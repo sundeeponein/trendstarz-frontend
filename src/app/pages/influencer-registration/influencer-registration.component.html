@@ -1,6 +1,5 @@
 
 <div class="registration-shell">
-  <span style="font-size:10px;color:green;word-break:break-all;position:fixed;top:0;right:0;z-index:9999;background:#fff;pointer-events:none;">[GLOBAL OUTSIDE DEBUG: {{profileImagePreview?.slice(0,40) || ''}}...]</span>
   <div class="registration-wrap">
     <aside class="left-panel">
       <div class="panel-card progress-panel">
@@ -124,18 +123,9 @@
 
         <section class="form-card" *ngIf="currentStep === 2">
           <h2>Social Media & Media</h2>
-          <p class="section-subtitle">Add payment and discovery details with your media profile.</p>
+          <p class="section-subtitle">Add your media profile and discovery details.</p>
 
           <div class="field-grid">
-            <div class="field-block">
-              <label>Payment Option <span class="text-danger">*</span></label>
-              <select formControlName="paymentOption" class="form-control">
-                <option value="free">Free (Contact/Social hidden)</option>
-                <option value="premium">Premium (Contact/Social visible)</option>
-              </select>
-              <div *ngIf="(step2Attempted || registrationForm.get('paymentOption')?.touched) && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-            </div>
-
             <div class="field-block" formGroupName="location">
               <label>State <span class="text-danger">*</span></label>
               <select formControlName="state" class="form-control">
@@ -190,12 +180,10 @@
             </div>
           </div>
 
-          <span style="font-size:10px;color:blue;word-break:break-all;position:fixed;top:0;left:0;z-index:9999;background:#fff;" *ngIf="profileImagePreview">[GLOBAL DEBUG: {{profileImagePreview.slice(0,40)}}...]</span>
           <div class="field-block media-uploader">
             <label>Profile Image <span class="text-danger">*</span></label>
             <div class="upload-box">
               <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="preview-image" />
-              <span style="font-size:10px;color:red;word-break:break-all;" *ngIf="profileImagePreview">[DEBUG: {{profileImagePreview.slice(0,40)}}...]</span>
               <p *ngIf="!profileImagePreview">Upload your profile image</p>
               <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [required]="!profileImagePreview" />
               <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeProfileImage(0)" *ngIf="profileImagePreview">Remove</button>
@@ -253,9 +241,18 @@
 
         <section class="form-card" *ngIf="currentStep === 3">
           <h2>Professional Details</h2>
-          <p class="section-subtitle">Complete your professional setup for brand collaborations.</p>
+          <p class="section-subtitle">Set your plan, pricing and contact preferences before completing registration.</p>
 
           <div class="field-grid">
+            <div class="field-block full-width">
+              <label>Payment Option <span class="text-danger">*</span></label>
+              <select formControlName="paymentOption" class="form-control">
+                <option value="free">Free (Contact/Social hidden)</option>
+                <option value="premium">Premium (Contact/Social visible)</option>
+              </select>
+              <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
+            </div>
+
             <div class="field-block full-width">
               <label>Promotional Price <span class="text-danger">*</span></label>
               <input formControlName="promotionalPrice" type="number" required class="form-control" placeholder="Enter your promotional price" />
@@ -278,10 +275,36 @@
               <button class="reg-success-close" (click)="closeSuccessModal()" aria-label="Close">&times;</button>
               <div class="reg-success-icon">&#10003;</div>
               <h3 class="reg-success-title">Successfully Registered!</h3>
-              <p class="reg-success-msg">Your registration is complete. The admin needs to approve your account &mdash; please login after <strong>48 hours</strong>.</p>
+
+              <!-- Free user message -->
+              <p *ngIf="!isPremiumPlan()" class="reg-success-msg">
+                Your registration is complete. The admin needs to approve your account &mdash; please login after <strong>48 hours</strong>.
+              </p>
+
+              <!-- Premium user message -->
+              <ng-container *ngIf="isPremiumPlan()">
+                <div class="alert alert-warning mb-3" style="border-radius: 10px;">
+                  <strong>🌟 You selected Premium!</strong><br>
+                  To activate your premium plan, you need to complete payment.<br>
+                  <strong>Steps to pay:</strong>
+                  <ol class="mb-0 mt-1" style="text-align:left;">
+                    <li>Verify your email (check your inbox).</li>
+                    <li>Login to your account.</li>
+                    <li>Go to <strong>Profile → Step 2</strong> and complete payment.</li>
+                  </ol>
+                </div>
+                <p class="text-muted" style="font-size:0.9em;">Your account will be activated after email verification and admin approval (up to 48 hours).</p>
+              </ng-container>
+
               <div class="reg-success-actions">
-                <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
-                <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+                <ng-container *ngIf="isPremiumPlan(); else freeActions">
+                  <a class="btn btn-primary" href="/login">Login &amp; Complete Payment</a>
+                  <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+                </ng-container>
+                <ng-template #freeActions>
+                  <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
+                  <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+                </ng-template>
               </div>
             </div>
           </div>

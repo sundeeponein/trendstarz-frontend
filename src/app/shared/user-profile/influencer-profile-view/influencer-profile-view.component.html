@@ -33,8 +33,14 @@
 
       <!-- Contact details (toggled) -->
       <div *ngIf="showContact" class="contact-details">
-        <p *ngIf="influencer.contact?.email"><i class="bi bi-envelope"></i> {{ influencer.email }}</p>
-        <p *ngIf="influencer.contact?.call"><i class="bi bi-telephone"></i> {{ influencer.phoneNumber }}</p>
+        <p *ngIf="influencer.contact?.email">
+          <i class="bi bi-envelope"></i> {{ influencer.email }}
+          <span *ngIf="influencer.emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+        </p>
+        <p *ngIf="influencer.contact?.call">
+          <i class="bi bi-telephone"></i> {{ influencer.phoneNumber }}
+          <span *ngIf="influencer.phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+        </p>
         <p *ngIf="influencer.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp available</p>
       </div>
 
