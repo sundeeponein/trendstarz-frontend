@@ -141,14 +141,7 @@
           <p class="section-subtitle">Set your visibility settings and upload product visuals.</p>
 
           <div class="field-grid">
-            <div class="field-block">
-              <label>Payment Option <span class="text-danger">*</span></label>
-              <select formControlName="paymentOption" class="form-control">
-                <option value="free">Free (Contact/Social hidden)</option>
-                <option value="premium">Premium (Contact/Social visible)</option>
-              </select>
-              <div *ngIf="(step2Attempted || registrationForm.get('paymentOption')?.touched) && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-            </div>
+
 
             <div class="field-block" formGroupName="location">
               <label>State <span class="text-danger">*</span></label>
@@ -281,6 +274,14 @@
           <p class="section-subtitle">Finish pricing and preferred contact channels.</p>
 
           <div class="field-grid">
+            <div class="field-block">
+              <label>Payment Option <span class="text-danger">*</span></label>
+              <select formControlName="paymentOption" class="form-control">
+                <option value="free">Free (Contact/Social hidden)</option>
+                <option value="premium">Premium (Contact/Social visible)</option>
+              </select>
+              <div *ngIf="(submitted || registrationForm.get('paymentOption')?.touched) && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
+            </div>
             <div class="field-block full-width">
               <label>Promotional Price <span class="text-danger">*</span></label>
               <input formControlName="promotionalPrice" type="number" class="form-control" placeholder="Enter promotional price" />
