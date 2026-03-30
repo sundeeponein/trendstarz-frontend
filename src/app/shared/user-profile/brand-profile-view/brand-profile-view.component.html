@@ -32,11 +32,11 @@
     <div *ngIf="showContact" class="contact-bar">
       <span *ngIf="brand.contact?.email">
         <i class="bi bi-envelope"></i> {{ brand.email }}
-        <span *ngIf="brand.emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+        <span *ngIf="brand.isEmailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
       </span>
       <span *ngIf="brand.contact?.call">
         <i class="bi bi-telephone"></i> {{ brand.phoneNumber }}
-        <span *ngIf="brand.phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+        <span *ngIf="brand.isMobileVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
       </span>
       <span *ngIf="brand.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp</span>
     </div>
@@ -101,6 +101,13 @@
         <div class="content-section" *ngIf="brand.socialMedia?.length || brand.languages?.length || brand.googleMapAddress">
           <h3 class="section-title">Details</h3>
           <div class="details-list">
+            <div class="detail-row" *ngIf="brand.paymentOption">
+              <span class="detail-label">Payment Option</span>
+              <span class="detail-value">
+                <span *ngIf="brand.paymentOption === 'free'">Free (Contact/Social hidden)</span>
+                <span *ngIf="brand.paymentOption === 'premium'">Premium (Contact/Social visible)</span>
+              </span>
+            </div>
             <div class="detail-row" *ngIf="brand.website">
               <span class="detail-label">Website</span>
               <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="detail-value link-val">{{ stripProtocol(brand.website) }}</a>

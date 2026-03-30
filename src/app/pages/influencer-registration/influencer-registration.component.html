@@ -244,14 +244,15 @@
           <p class="section-subtitle">Set your plan, pricing and contact preferences before completing registration.</p>
 
           <div class="field-grid">
-            <div class="field-block full-width">
-              <label>Payment Option <span class="text-danger">*</span></label>
-              <select formControlName="paymentOption" class="form-control">
-                <option value="free">Free (Contact/Social hidden)</option>
-                <option value="premium">Premium (Contact/Social visible)</option>
-              </select>
-              <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-            </div>
+              <!-- Payment Option moved from Step 2 -->
+              <div class="field-block full-width">
+                <label>Payment Option <span class="text-danger">*</span></label>
+                <select formControlName="paymentOption" class="form-control">
+                  <option value="free">Free (Contact/Social hidden)</option>
+                  <option value="premium">Premium (Contact/Social visible)</option>
+                </select>
+                <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
+              </div>
 
             <div class="field-block full-width">
               <label>Promotional Price <span class="text-danger">*</span></label>

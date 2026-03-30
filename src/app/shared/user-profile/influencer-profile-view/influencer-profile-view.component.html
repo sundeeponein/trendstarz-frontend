@@ -35,11 +35,11 @@
       <div *ngIf="showContact" class="contact-details">
         <p *ngIf="influencer.contact?.email">
           <i class="bi bi-envelope"></i> {{ influencer.email }}
-          <span *ngIf="influencer.emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+          <span *ngIf="influencer.isEmailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
         </p>
         <p *ngIf="influencer.contact?.call">
           <i class="bi bi-telephone"></i> {{ influencer.phoneNumber }}
-          <span *ngIf="influencer.phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+          <span *ngIf="influencer.isMobileVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
         </p>
         <p *ngIf="influencer.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp available</p>
       </div>
@@ -87,6 +87,13 @@
       <div class="info-card">
         <h5 class="section-label">DETAILS</h5>
         <div class="detail-grid">
+                    <div class="detail-item" *ngIf="influencer.paymentOption">
+                      <span class="detail-key">Payment Option</span>
+                      <span class="detail-val">
+                        <span *ngIf="influencer.paymentOption === 'free'">Free (Contact/Social hidden)</span>
+                        <span *ngIf="influencer.paymentOption === 'premium'">Premium (Contact/Social visible)</span>
+                      </span>
+                    </div>
           <div class="detail-item" *ngIf="influencer.username">
             <span class="detail-key">Username</span>
             <span class="detail-val">&#64;{{ influencer.username }}</span>
