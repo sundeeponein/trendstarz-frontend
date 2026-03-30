@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -37,7 +37,8 @@ export class AdminManagementComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private cdr: ChangeDetectorRef
   ) {
     this.isServer = isPlatformServer(this.platformId);
   }
@@ -59,10 +60,10 @@ export class AdminManagementComponent implements OnInit {
     this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, headers).subscribe({
       next: (res) => {
         this.settings.preApproveInfluencers = !!res?.preApproveInfluencers;
-        this.settings.influencerRequireEmailVerified = res?.influencerRequireEmailVerified !== false;
+        this.settings.influencerRequireEmailVerified = !!res?.influencerRequireEmailVerified;
         this.settings.influencerRequireMobileVerified = !!res?.influencerRequireMobileVerified;
         this.settings.preApproveBrands = !!res?.preApproveBrands;
-        this.settings.brandRequireEmailVerified = res?.brandRequireEmailVerified !== false;
+        this.settings.brandRequireEmailVerified = !!res?.brandRequireEmailVerified;
         this.settings.brandRequireMobileVerified = !!res?.brandRequireMobileVerified;
       },
       error: () => {}
@@ -79,12 +80,18 @@ export class AdminManagementComponent implements OnInit {
         console.log('Settings save response:', res);
         this.settingsSaving = false;
         this.settingsSaved = true;
-        setTimeout(() => this.settingsSaved = false, 3000);
+        this.loadSettings(); // Ensure UI is in sync with backend
+        this.cdr.detectChanges(); // Force change detection
+        setTimeout(() => {
+          this.settingsSaved = false;
+          this.cdr.detectChanges();
+        }, 3000);
       },
       error: (err) => {
         console.error('Settings save error:', err);
         this.settingsSaving = false;
         alert('Error saving settings.');
+        this.cdr.detectChanges();
       }
     });
   }
