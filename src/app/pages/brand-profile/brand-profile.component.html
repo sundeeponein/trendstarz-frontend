@@ -29,6 +29,9 @@
         <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
         <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
       </div>
+      <div *ngIf="phoneVerified" class="alert alert-success mb-4">
+        <strong>Mobile verified.</strong> Your mobile number has been successfully verified.
+      </div>
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
@@ -48,16 +51,15 @@
               <label>Email</label>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
-                <ng-container *ngIf="emailVerified">
-                  <span title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">
-                    ✔️
-                  </span>
-                </ng-container>
+                <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
               </div>
             </div>
             <div class="field-block">
               <label>Phone Number</label>
-              <input formControlName="phoneNumber" type="text" class="form-control" />
+              <div style="display: flex; align-items: center; gap: 0.5em;">
+                <input formControlName="phoneNumber" type="text" class="form-control" />
+                <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
+              </div>
             </div>
           </div>
 
