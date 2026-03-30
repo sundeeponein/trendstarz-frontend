@@ -85,13 +85,7 @@
           <p class="section-subtitle">Manage channel visibility and supporting media.</p>
 
           <div class="field-grid">
-            <div class="field-block">
-              <label>Payment Option</label>
-              <select formControlName="paymentOption" class="form-control">
-                <option value="free">Free</option>
-                <option value="premium">Premium</option>
-              </select>
-            </div>
+            
 
             <div class="field-block" formGroupName="location">
               <label>State</label>
@@ -229,6 +223,16 @@
           <h2>Professional</h2>
           <p class="section-subtitle">Update pricing and contact preferences.</p>
 
+
+          <!-- Payment Option moved to Step 3 -->
+            <div class="field-block full-width">
+              <label>Payment Option</label>
+              <select formControlName="paymentOption" class="form-control">
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+            
           <div class="field-grid">
             <div class="field-block full-width">
               <label>Promotional Price</label>
