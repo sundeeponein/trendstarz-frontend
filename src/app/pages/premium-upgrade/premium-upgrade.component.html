@@ -1,0 +1,55 @@
+<div class="upgrade-shell">
+  <!-- Success State -->
+  <div *ngIf="upgradeSuccess" class="upgrade-success-card">
+    <div class="success-icon">🎉</div>
+    <h2>Welcome to Premium!</h2>
+    <p>Your account has been upgraded. Enjoy full contact visibility, analytics, and priority listing.</p>
+    <button class="btn-go-profile" (click)="goToProfile()">Go to My Profile</button>
+  </div>
+
+  <!-- Plan Selection State -->
+  <div *ngIf="!upgradeSuccess" class="upgrade-card">
+    <div class="upgrade-header">
+      <span class="premium-badge">🌟 Premium</span>
+      <h1>Choose Your Plan</h1>
+      <p class="upgrade-sub">Unlock contact visibility, analytics, priority search ranking, and unlimited social profiles.</p>
+    </div>
+
+    <div class="plans-grid">
+      <div
+        *ngFor="let plan of plans"
+        class="plan-card"
+        [class.selected]="selectedDuration === plan.duration"
+        (click)="selectPlan(plan.duration)"
+      >
+        <div *ngIf="plan.badge" class="plan-badge">{{ plan.badge }}</div>
+        <div class="plan-label">{{ plan.label }}</div>
+        <div class="plan-price">{{ plan.price }}</div>
+        <div class="plan-price-per">{{ plan.pricePer }}</div>
+        <div class="plan-check" *ngIf="selectedDuration === plan.duration">✓ Selected</div>
+      </div>
+    </div>
+
+    <div class="features-list">
+      <div class="feature-item"><span class="feat-icon">✔</span> Contact details visible to brands/influencers</div>
+      <div class="feature-item"><span class="feat-icon">✔</span> Unlimited social media profiles</div>
+      <div class="feature-item"><span class="feat-icon">✔</span> Priority listing in search results</div>
+      <div class="feature-item"><span class="feat-icon">✔</span> Unlimited product images (brands)</div>
+    </div>
+
+    <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
+
+    <div class="upgrade-actions">
+      <button class="btn-back" (click)="goToProfile()">← Back to Profile</button>
+      <button
+        class="btn-upgrade"
+        [disabled]="!selectedDuration || upgrading"
+        (click)="proceed()"
+      >
+        <span *ngIf="upgrading" class="spinner"></span>
+        <span *ngIf="!upgrading">Pay & Upgrade</span>
+        <span *ngIf="upgrading">Processing...</span>
+      </button>
+    </div>
+  </div>
+</div>

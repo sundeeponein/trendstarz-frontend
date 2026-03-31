@@ -12,11 +12,12 @@ import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
