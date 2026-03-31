@@ -200,34 +200,37 @@
           <p class="section-subtitle">Update pricing and contact preferences.</p>
 
 
-          <!-- Payment Option moved to Step 3 -->
-            <div class="field-block full-width">
-              <label>Payment Option</label>
+          <div class="field-block full-width">
+            <label>Payment Option</label>
+            <!-- Locked while premium is active -->
+            <ng-container *ngIf="premiumEnd && premiumEnd > currentDate; else paymentSelectBrandStep3">
+              <div class="form-control premium-locked-field">
+                🔒 Premium (Contact/Social visible)
+              </div>
+              <div class="alert alert-success d-flex align-items-center gap-2 mt-2">
+                <span style="font-size:1.3em;">🌟</span>
+                <div>
+                  <strong>Premium Active</strong>
+                  <div><small>Your plan is active until <strong>{{ premiumEnd | date:'mediumDate' }}</strong>. It will revert to Free after expiry.</small></div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #paymentSelectBrandStep3>
               <select formControlName="paymentOption" class="form-control">
                 <option value="free">Free</option>
                 <option value="premium">Premium</option>
               </select>
-            </div>
-
-          <!-- Premium status / upgrade CTA -->
-          <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="mt-3 mb-3">
-            <div *ngIf="premiumEnd" class="alert alert-success d-flex align-items-center gap-2">
-              <span style="font-size:1.4em;">🌟</span>
-              <div>
-                <strong>Premium Active</strong>
-                <div><small>Valid until: <strong>{{ premiumEnd | date:'mediumDate' }}</strong></small></div>
-              </div>
-            </div>
-            <div *ngIf="!premiumEnd" class="premium-upgrade-cta">
-              <div class="premium-cta-content">
-                <span class="premium-cta-icon">🌟</span>
-                <div>
-                  <strong>Upgrade to Premium</strong>
-                  <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
+              <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
+                <div class="premium-cta-content">
+                  <span class="premium-cta-icon">🌟</span>
+                  <div>
+                    <strong>Upgrade to Premium</strong>
+                    <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
+                  </div>
                 </div>
+                <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
               </div>
-              <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
-            </div>
+            </ng-template>
           </div>
           <div class="field-grid">
             <div class="field-block full-width">
