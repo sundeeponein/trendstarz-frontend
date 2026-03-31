@@ -246,7 +246,7 @@ export class InfluencerProfileComponent implements OnInit {
             username: profile.username || '',
             phoneNumber: profile.phoneNumber || '',
             email: profile.email || '',
-            paymentOption: profile.paymentOption || 'free',
+            paymentOption: profile.isPremium ? 'premium' : 'free',
             location: { state: stateId },
             promotionalPrice: profile.promotionalPrice || '',
             languages: languageIds,
@@ -627,6 +627,12 @@ export class InfluencerProfileComponent implements OnInit {
       profileImages,
       contact: raw.contact
     };
+    // Never allow profile save to set isPremium or paymentOption — those are payment-gated
+    delete payload.paymentOption;
+    delete payload.isPremium;
+    delete payload.premiumEnd;
+    delete payload.premiumStart;
+    delete payload.premiumDuration;
     // Debug log: print PATCH payload
     console.log('[PATCH payload]', JSON.stringify(payload, null, 2));
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
@@ -690,7 +696,7 @@ export class InfluencerProfileComponent implements OnInit {
               username: profile.username || '',
               phoneNumber: profile.phoneNumber || '',
               email: profile.email || '',
-              paymentOption: profile.paymentOption || 'free',
+              paymentOption: profile.isPremium ? 'premium' : 'free',
               location: { state: stateId },
               languages: languageIds,
               categories: categoryIds,

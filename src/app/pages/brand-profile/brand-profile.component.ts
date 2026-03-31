@@ -370,7 +370,7 @@ export class BrandProfileComponent implements OnInit {
             email: profile.email || '',
             phoneNumber: profile.phoneNumber || '',
             isPremium: !!profile.isPremium,
-            paymentOption: profile.paymentOption || 'free',
+            paymentOption: profile.isPremium ? 'premium' : 'free',
             location: {
               state: stateId,
               googleMapLink: profile.location?.googleMapLink || ''
@@ -737,10 +737,14 @@ export class BrandProfileComponent implements OnInit {
   products: products.length > 0 ? products : (raw.products || []),
   contact: raw.contact
     };
-    // Remove fields not in DTO
+    // Remove fields not in DTO; never allow profile save to set isPremium — payment-gated
     delete payload.password;
     delete payload.confirmPassword;
     delete payload.paymentOption;
+    delete payload.isPremium;
+    delete payload.premiumEnd;
+    delete payload.premiumStart;
+    delete payload.premiumDuration;
     delete payload.productImages;
     delete payload.googleMapAddress;
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
