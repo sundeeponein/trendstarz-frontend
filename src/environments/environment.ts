@@ -3,7 +3,7 @@ export const environment = {
   // apiBaseUrl: 'http://localhost:3000',
   production: true,
   apiBaseUrl: 'https://trendstarz-backend-production.up.railway.app/api',
-  stripePublicKey: 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXX', // <-- Replace with your real Stripe public key
-  cloudinaryUploadPreset: 'trendstarz_dev', // <-- Replace with your unsigned upload preset
-  cloudinaryCloudName: 'ddnsoypf8' // <-- Replace with your cloud name
+  razorpayKeyId: 'rzp_test_XXXXXXXXXXXXXXXX', // ← Replace with your Razorpay Key ID (test: rzp_test_..., live: rzp_live_...)
+  cloudinaryUploadPreset: 'trendstarz_dev',
+  cloudinaryCloudName: 'ddnsoypf8'
 };
