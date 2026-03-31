@@ -3,8 +3,14 @@ footer {
   text-align: center;
 }
 
-
 a {
   color: #2a0855;
   text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #f97316;
+    text-decoration: underline;
+  }
 }
