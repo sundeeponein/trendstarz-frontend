@@ -17,8 +17,7 @@ export const routes: Routes = [
 			{ path: 'welcome', component: WelcomeComponent },
 			{ path: 'auth/login', component: LoginComponent },
 			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
-			// static pages legal/payment
-			{ path: 'payment', loadComponent: () => import('./pages/payment/payment.component').then(m => m.PaymentComponent) },
+			// static pages legal
 			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
 			{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },
 			{ path: 'refund-policy', loadComponent: () => import('./legal/refund-policy/refund-policy.component').then(m => m.RefundPolicyComponent) },
