@@ -317,10 +317,36 @@
       <button class="reg-success-close" (click)="closeSuccessModal()" aria-label="Close">&times;</button>
       <div class="reg-success-icon">&#10003;</div>
       <h3 class="reg-success-title">Successfully Registered!</h3>
-      <p class="reg-success-msg">Your registration is complete. The admin needs to approve your account &mdash; please login after <strong>48 hours</strong>.</p>
+
+      <!-- Free user message -->
+      <p *ngIf="!isPremiumPlan()" class="reg-success-msg">
+        Your registration is complete. The admin needs to approve your account &mdash; please login after <strong>48 hours</strong>.
+      </p>
+
+      <!-- Premium user message -->
+      <ng-container *ngIf="isPremiumPlan()">
+        <div class="alert alert-warning mb-3" style="border-radius: 10px;">
+          <strong>🌟 You selected Premium!</strong><br>
+          To activate your premium plan, you need to complete payment.<br>
+          <strong>Steps to pay:</strong>
+          <ol class="mb-0 mt-1" style="text-align:left;">
+            <li>Verify your email (check your inbox).</li>
+            <li>Login to your account.</li>
+            <li>Go to <strong>Profile → Step 3 (Professional)</strong> and click <em>Choose Plan &amp; Pay</em>.</li>
+          </ol>
+        </div>
+        <p class="text-muted" style="font-size:0.9em;">Your account will be activated after email verification and admin approval (up to 48 hours).</p>
+      </ng-container>
+
       <div class="reg-success-actions">
-        <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
-        <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+        <ng-container *ngIf="isPremiumPlan(); else freeActions">
+          <a class="btn btn-primary" href="/login">Login &amp; Complete Payment</a>
+          <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+        </ng-container>
+        <ng-template #freeActions>
+          <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
+          <a class="btn btn-outline-secondary" href="/">Back to Home</a>
+        </ng-template>
       </div>
     </div>
   </div>
