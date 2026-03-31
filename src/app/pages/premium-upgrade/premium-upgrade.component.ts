@@ -46,7 +46,7 @@ export class PremiumUpgradeComponent {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
       .patch(
-        `${environment.apiBaseUrl}/users/me/premium`,
+        `${environment.apiBaseUrl}/users/self/upgrade-premium`,
         { premiumDuration: this.selectedDuration },
         { headers },
       )
