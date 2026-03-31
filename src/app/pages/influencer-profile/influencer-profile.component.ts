@@ -129,6 +129,7 @@ export class InfluencerProfileComponent implements OnInit {
   }
   premiumStart: Date | null = null;
   premiumEnd: Date | null = null;
+  readonly currentDate = new Date();
   showPayment = false;
   selectedDuration: '1m' | '3m' | '1y' | '' = '';
   paymentSuccess = false;

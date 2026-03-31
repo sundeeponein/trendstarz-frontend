@@ -20,3 +20,16 @@ body {
 }
 
 .premium-icon {color: gold; font-size: 1rem;}
+
+/* Premium locked plan display — used in profile pages */
+.premium-locked-field {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}

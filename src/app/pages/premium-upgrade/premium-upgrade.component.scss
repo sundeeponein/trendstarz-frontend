@@ -7,6 +7,252 @@
   padding: 2rem 1rem;
 }
 
+/* ── Step indicator ───────────────────────────── */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #e2e8f0;
+      background: #fff;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .step-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    &.active {
+      .step-num {
+        border-color: #f97316;
+        background: #f97316;
+        color: #fff;
+      }
+      .step-label { color: #f97316; font-weight: 700; }
+    }
+
+    &.done {
+      .step-num {
+        border-color: #22c55e;
+        background: #22c55e;
+        color: #fff;
+      }
+      .step-label { color: #22c55e; }
+    }
+  }
+
+  .step-line {
+    flex: 0 0 48px;
+    height: 2px;
+    background: #e2e8f0;
+    margin: 0 0.5rem;
+    transition: background 0.2s;
+
+    &.done { background: #22c55e; }
+  }
+}
+
+/* ── Payment step card ────────────────────────── */
+.payment-step { max-width: 560px; }
+
+/* Order bar */
+.order-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 0.7rem 1.25rem;
+  margin-bottom: 1.5rem;
+
+  .order-bar-label { font-size: 0.95rem; font-weight: 600; color: #166534; }
+  .order-bar-amount { font-size: 1.1rem; font-weight: 800; color: #15803d; }
+}
+
+/* Payment tabs */
+.pay-tabs {
+  display: flex;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+
+.pay-tab {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  border-right: 1.5px solid #e2e8f0;
+
+  &:last-child { border-right: none; }
+  &.active { background: #fff7ed; color: #f97316; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.tab-content { animation: fadeIn 0.18s ease; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Form fields */
+.form-group {
+  margin-bottom: 1.1rem;
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.4rem;
+  }
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  background: #fff;
+  &::placeholder { color: #cbd5e1; }
+  &:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.12); }
+  &:disabled { background: #f8fafc; }
+}
+
+/* Stripe card element container */
+.stripe-card-element {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  background: #fff;
+  transition: border-color 0.2s;
+  &:focus-within { border-color: #f97316; }
+}
+
+.stripe-note {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+/* Stripe / tab loading */
+.stripe-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  padding: 1.5rem 0;
+  justify-content: center;
+}
+
+/* UPI styles */
+.upi-instructions { margin-bottom: 1.25rem; }
+
+.upi-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.92rem;
+  color: #334155;
+}
+
+.upi-step-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  background: #f97316;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.upi-id-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  margin: 0.4rem 0 0.75rem;
+
+  .upi-id-value {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fbbf24;
+    letter-spacing: 0.04em;
+  }
+}
+
+.btn-copy {
+  background: #f97316;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.87; }
+}
+
+/* QR styles */
+.qr-section { text-align: center; margin-bottom: 1.25rem; }
+
+.qr-label { font-size: 0.95rem; color: #475569; margin-bottom: 0.75rem; }
+
+.qr-frame {
+  display: inline-block;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.qr-image { display: block; width: 220px; height: 220px; }
+
+.qr-upi-row { display: inline-flex; margin-bottom: 0.75rem; }
+
+.qr-note { font-size: 0.85rem; color: #64748b; }
+
 /* ── Success card ─────────────────────────────── */
 .upgrade-success-card {
   background: #fff;
@@ -222,10 +468,21 @@
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: #94a3b8;
     color: #334155;
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.redirecting-msg {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
 }
 
 .btn-upgrade {
@@ -262,6 +519,11 @@
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
+
+  &.dark {
+    border-color: rgba(100, 116, 139, 0.3);
+    border-top-color: #f97316;
+  }
 }
 
 @keyframes spin {
