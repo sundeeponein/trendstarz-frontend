@@ -5,7 +5,7 @@
     <h3 class="recent-title">Recent Payments</h3>
     <div *ngFor="let pay of myPayments" class="recent-row" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
       <div class="recent-main">
-        <span class="recent-amt">₹{{ pay.amount/100 }}</span>
+        <span class="recent-amt">₹{{ pay.amount }}</span>
         <span class="recent-plan">{{ pay.premiumDuration | uppercase }}</span>
         <span class="recent-status" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
           {{ pay.status | titlecase }}
@@ -160,6 +160,11 @@
     <div class="success-icon">⏳</div>
     <h2>Payment Recorded!</h2>
     <p><strong>Status: Pending Admin Approval</strong></p>
+    <div *ngIf="selectedPlan" class="success-plan-details">
+      <p><strong>Plan:</strong> {{ selectedPlan.label }} Premium</p>
+      <p><strong>Amount:</strong> {{ selectedPlan.price }}</p>
+      <p><strong>Transaction ID:</strong> {{ upiRef }}</p>
+    </div>
     <p>Your UPI payment has been recorded. The admin will verify the transaction and activate your Premium membership shortly. You'll be notified via email once approved.</p>
     <p class="redirecting-msg">Redirecting to your profile in a moment…</p>
     <button class="btn-go-profile" (click)="goToProfile()">Go to My Profile</button>
