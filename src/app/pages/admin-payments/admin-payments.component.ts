@@ -98,7 +98,7 @@ export class AdminPaymentsComponent implements OnInit {
     if (!token) return;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
-      .get<Payment[]>(`${environment.apiBaseUrl}/payment?status=approved`, { headers })
+      .get<Payment[]>(`${environment.apiBaseUrl}/payment/by-status?status=approved`, { headers })
       .subscribe({
         next: (data) => {
           this.approvedPayments = data;
@@ -114,7 +114,7 @@ export class AdminPaymentsComponent implements OnInit {
     if (!token) return;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
-      .get<Payment[]>(`${environment.apiBaseUrl}/payment?status=rejected`, { headers })
+      .get<Payment[]>(`${environment.apiBaseUrl}/payment/by-status?status=rejected`, { headers })
       .subscribe({
         next: (data) => {
           this.rejectedPayments = data;
