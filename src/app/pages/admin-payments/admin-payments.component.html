@@ -1,0 +1,134 @@
+<div class="admin-payments-container">
+  <div class="admin-header">
+    <h1>💳 Pending Premium Payments</h1>
+    <p>Review and approve/reject UPI payments from users requesting premium upgrades.</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="alert-close" (click)="error = ''">×</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="alert-close" (click)="successMessage = ''">×</button>
+  </div>
+
+  <!-- Payment Tabs -->
+  <div class="payment-tabs">
+    <button
+      class="payment-tab"
+      [class.active]="currentTab === 'pending'"
+      (click)="currentTab = 'pending'"
+    >
+      ⏳ Pending ({{ pendingPayments.length }})
+    </button>
+    <button
+      class="payment-tab"
+      [class.active]="currentTab === 'approved'"
+      (click)="currentTab = 'approved'"
+    >
+      ✓ Approved
+    </button>
+    <button
+      class="payment-tab"
+      [class.active]="currentTab === 'rejected'"
+      (click)="currentTab = 'rejected'"
+    >
+      ✗ Rejected
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">Loading payments...</div>
+
+  <!-- Pending Payments Table -->
+  <div *ngIf="currentTab === 'pending' && !loading" class="payments-section">
+    <div *ngIf="pendingPayments.length === 0" class="no-payments">
+      <p>No pending payments at this time.</p>
+    </div>
+
+    <div *ngIf="pendingPayments.length > 0" class="payments-table">
+      <div class="table-header">
+        <div class="col-user">User</div>
+        <div class="col-type">Type</div>
+        <div class="col-amount">Amount</div>
+        <div class="col-duration">Duration</div>
+        <div class="col-txn">Transaction ID</div>
+        <div class="col-date">Date</div>
+        <div class="col-actions">Actions</div>
+      </div>
+
+      <div *ngFor="let payment of pendingPayments" class="table-row payment-row-pending">
+        <div class="col-user">
+          <div class="user-name">{{ payment.userId?.username || 'Unknown' }}</div>
+          <div class="user-email">{{ payment.userId?.email || '-' }}</div>
+        </div>
+        <div class="col-type">
+          <span class="badge" [class.brand]="payment.userType === 'Brand'">
+            {{ payment.userType }}
+          </span>
+        </div>
+        <div class="col-amount">₹{{ payment.amount }}</div>
+        <div class="col-duration">{{ payment.premiumDuration }}</div>
+        <div class="col-txn">
+          <code>{{ payment.transactionId }}</code>
+        </div>
+        <div class="col-date">{{ formatDate(payment.createdAt) }}</div>
+        <div class="col-actions">
+          <button class="btn-approve" (click)="approvePayment(payment)">✓ Approve</button>
+          <button class="btn-reject" (click)="openRejectModal(payment)">✗ Reject</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="pagination">
+      <button [disabled]="currentPage === 1" (click)="previousPage()">
+        ← Previous
+      </button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button [disabled]="currentPage === totalPages" (click)="nextPage()">
+        Next →
+      </button>
+    </div>
+  </div>
+
+  <!-- Approved Payments Section (Placeholder) -->
+  <div *ngIf="currentTab === 'approved'" class="payments-section">
+    <p class="section-placeholder">Approved payments will appear here.</p>
+  </div>
+
+  <!-- Rejected Payments Section (Placeholder) -->
+  <div *ngIf="currentTab === 'rejected'" class="payments-section">
+    <p class="section-placeholder">Rejected payments will appear here.</p>
+  </div>
+
+  <!-- Rejection Modal -->
+  <div *ngIf="showRejectModal" class="modal-overlay" (click)="closeRejectModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2>Reject Payment</h2>
+      <p *ngIf="selectedPaymentForReject" class="modal-info">
+        Rejecting payment of <strong>₹{{ selectedPaymentForReject.amount }}</strong> from
+        <strong>{{ selectedPaymentForReject.userId?.username }}</strong>
+      </p>
+
+      <div class="form-group">
+        <label>Reason for Rejection:</label>
+        <textarea
+          class="form-textarea"
+          [(ngModel)]="rejectionReason"
+          placeholder="e.g., Transaction ID not found, amount mismatch, duplicate payment..."
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeRejectModal()">Cancel</button>
+        <button class="btn-reject-confirm" (click)="rejectPayment()">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+</div>

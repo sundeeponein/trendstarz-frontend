@@ -55,64 +55,39 @@
 
     <!-- Payment method tabs -->
     <div class="pay-tabs">
-      <button class="pay-tab" [class.active]="paymentTab === 'card'" (click)="setTab('card')" [disabled]="upgrading || loadingOrder">
-        💳 Card / Netbanking / Wallet
-      </button>
-      <button class="pay-tab" [class.active]="paymentTab === 'upi'" (click)="setTab('upi')" [disabled]="upgrading || loadingOrder">
+      <button class="pay-tab" [class.active]="paymentTab === 'upi'" (click)="setTab('upi')" [disabled]="upgrading">
         📲 UPI
       </button>
-      <button class="pay-tab" [class.active]="paymentTab === 'qr'" (click)="setTab('qr')" [disabled]="upgrading || loadingOrder">
+      <button class="pay-tab" [class.active]="paymentTab === 'qr'" (click)="setTab('qr')" [disabled]="upgrading">
         ⬛ QR Code
       </button>
     </div>
 
-    <!-- ── Card / Razorpay popup tab ─────────── -->
-    <div *ngIf="paymentTab === 'card'" class="tab-content">
-      <div class="razorpay-info">
-        <img src="https://razorpay.com/assets/razorpay-logo.svg" alt="Razorpay" class="rzp-logo" />
-        <p>Click the button below to open the secure Razorpay payment window.</p>
-        <ul class="rzp-methods">
-          <li>💳 Credit / Debit Card (Visa, Mastercard, RuPay, Amex)</li>
-          <li>🏦 Net Banking (all major banks)</li>
-          <li>📱 UPI (inside Razorpay popup)</li>
-          <li>👛 Wallets (Paytm, PhonePe, Mobikwik…)</li>
-          <li>📦 EMI options available</li>
-        </ul>
-        <div class="rzp-test-note" *ngIf="!isProduction">
-          <strong>Test mode:</strong> Use card <code>4111 1111 1111 1111</code>, any future expiry, CVV <code>123</code>
-        </div>
-      </div>
-
-      <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
-
-      <div class="upgrade-actions">
-        <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading || loadingOrder">← Change Plan</button>
-        <button class="btn-upgrade" [disabled]="upgrading || loadingOrder" (click)="openRazorpay()">
-          <span *ngIf="loadingOrder" class="spinner"></span>
-          <span *ngIf="upgrading" class="spinner"></span>
-          <span *ngIf="loadingOrder">Creating order…</span>
-          <span *ngIf="upgrading && !loadingOrder">Verifying…</span>
-          <span *ngIf="!upgrading && !loadingOrder && selectedPlan">Pay {{ selectedPlan.price }} via Razorpay</span>
-        </button>
-      </div>
-      <div class="secure-note">🔒 Payments secured by Razorpay — PCI DSS compliant</div>
-    </div>
-
-    <!-- ── Manual UPI tab ────────────────────── -->
+    <!-- ── UPI tab (Direct Payment) ────────────── -->
     <div *ngIf="paymentTab === 'upi'" class="tab-content">
       <div class="upi-instructions">
         <p class="upi-step"><span class="upi-step-num">1</span> Open PhonePe, GPay, Paytm, BHIM or any UPI app</p>
         <p class="upi-step"><span class="upi-step-num">2</span> Send <strong>{{ selectedPlan?.price }}</strong> to:</p>
+
         <div class="upi-id-box">
           <span class="upi-id-value">{{ upiId }}</span>
-          <button class="btn-copy" (click)="copyUpiId()">{{ upiCopied ? '✓ Copied!' : 'Copy' }}</button>
+          <button class="btn-copy" (click)="copyUpiId()">
+            {{ upiCopied ? '✓ Copied!' : 'Copy' }}
+          </button>
         </div>
-        <p class="upi-step"><span class="upi-step-num">3</span> Enter the Transaction Reference / UTR below:</p>
+
+        <p class="upi-step"><span class="upi-step-num">3</span> Enter the Transaction Reference / UTR below to confirm:</p>
       </div>
 
       <div class="form-group">
         <label>UPI Transaction ID / UTR Number</label>
-        <input type="text" class="form-input" placeholder="e.g. 416221039385" [(ngModel)]="upiRef" [disabled]="upgrading" />
+        <input
+          type="text"
+          class="form-input"
+          placeholder="e.g. 416221039385"
+          [(ngModel)]="upiRef"
+          [disabled]="upgrading"
+        />
       </div>
 
       <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
@@ -121,8 +96,8 @@
         <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading">← Change Plan</button>
         <button class="btn-upgrade" [disabled]="upgrading" (click)="payByUpi()">
           <span *ngIf="upgrading" class="spinner"></span>
-          <span *ngIf="!upgrading">Confirm UPI Payment</span>
-          <span *ngIf="upgrading">Verifying…</span>
+          <span *ngIf="!upgrading">Confirm Payment</span>
+          <span *ngIf="upgrading">Confirming…</span>
         </button>
       </div>
     </div>
@@ -163,9 +138,10 @@
        STEP 3 — Success
   ══════════════════════════════════════════ -->
   <div *ngIf="step === 'success'" class="upgrade-success-card">
-    <div class="success-icon">🎉</div>
-    <h2>Payment Successful!</h2>
-    <p>Your account has been upgraded to Premium. Enjoy contact visibility, analytics, and priority listing.</p>
+    <div class="success-icon">⏳</div>
+    <h2>Payment Recorded!</h2>
+    <p><strong>Status: Pending Admin Approval</strong></p>
+    <p>Your UPI payment has been recorded. The admin will verify the transaction and activate your Premium membership shortly. You'll be notified via email once approved.</p>
     <p class="redirecting-msg">Redirecting to your profile in a moment…</p>
     <button class="btn-go-profile" (click)="goToProfile()">Go to My Profile</button>
   </div>
