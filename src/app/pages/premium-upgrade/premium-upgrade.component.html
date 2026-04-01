@@ -1,3 +1,22 @@
+  <!-- ══════════════════════════════════════════
+       RECENT PAYMENTS (pending/approved/rejected)
+  ══════════════════════════════════════════ -->
+  <div *ngIf="step === 'payment' && myPayments.length" class="recent-payments">
+    <h3 class="recent-title">Recent Payments</h3>
+    <div *ngFor="let pay of myPayments" class="recent-row" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
+      <div class="recent-main">
+        <span class="recent-amt">₹{{ pay.amount/100 }}</span>
+        <span class="recent-plan">{{ pay.premiumDuration | uppercase }}</span>
+        <span class="recent-status" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
+          {{ pay.status | titlecase }}
+        </span>
+      </div>
+      <div class="recent-meta">
+        <span class="recent-date">{{ pay.createdAt | date:'short' }}</span>
+        <span class="recent-txn">Txn: {{ pay.transactionId }}</span>
+      </div>
+    </div>
+  </div>
 <div class="upgrade-shell">
 
   <!-- ══════════════════════════════════════════

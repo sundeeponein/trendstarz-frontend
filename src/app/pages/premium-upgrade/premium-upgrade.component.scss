@@ -1,3 +1,60 @@
+/* Recent payments section */
+.recent-payments {
+  margin: 2rem 0 1.5rem 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1.25rem 1.5rem 1rem 1.5rem;
+  max-width: 520px;
+}
+.recent-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #f59e42;
+  margin-bottom: 0.7rem;
+}
+.recent-row {
+  display: flex;
+  flex-direction: column;
+  border-left: 4px solid #e2e8f0;
+  padding: 0.7rem 0.5rem 0.7rem 1.1rem;
+  margin-bottom: 0.5rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  transition: border-color 0.2s;
+}
+.recent-row.pending { border-left-color: #fbbf24; }
+.recent-row.approved { border-left-color: #22c55e; }
+.recent-row.rejected { border-left-color: #ef4444; }
+.recent-main {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  font-size: 1.01rem;
+  font-weight: 600;
+}
+.recent-amt { color: #0e7490; font-weight: 700; }
+.recent-plan { color: #64748b; font-size: 0.98rem; }
+.recent-status {
+  font-size: 0.97rem;
+  font-weight: 700;
+  margin-left: auto;
+  padding: 0.1rem 0.7rem;
+  border-radius: 12px;
+  background: #f3f4f6;
+  &.pending { color: #f59e42; background: #fef3c7; }
+  &.approved { color: #22c55e; background: #dcfce7; }
+  &.rejected { color: #ef4444; background: #fee2e2; }
+}
+.recent-meta {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.89rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+.recent-date { }
+.recent-txn { font-family: monospace; }
 .upgrade-shell {
   min-height: 100vh;
   display: flex;
