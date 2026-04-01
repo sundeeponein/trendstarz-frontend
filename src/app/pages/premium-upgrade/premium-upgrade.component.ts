@@ -12,9 +12,6 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-// Razorpay is loaded via CDN script — declare for TypeScript
-declare const Razorpay: any;
-
 @Component({
   selector: 'app-premium-upgrade',
   standalone: true,
@@ -24,14 +21,13 @@ declare const Razorpay: any;
 })
 export class PremiumUpgradeComponent implements OnDestroy {
   step: 'plan' | 'payment' | 'success' = 'plan';
-  paymentTab: 'card' | 'upi' | 'qr' = 'card';
+  paymentTab: 'upi' | 'qr' = 'upi'; // ← Primary: direct UPI only (no Razorpay)
 
   selectedDuration: '1m' | '3m' | '1y' | '' = '';
   upgrading = false;
   upgradeError = '';
-  loadingOrder = false;
 
-  // UPI / QR manual fallback
+  // UPI / QR direct payment
   upiRef = '';
   upiCopied = false;
 
@@ -41,11 +37,13 @@ export class PremiumUpgradeComponent implements OnDestroy {
     { duration: '1y' as const, label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo'  },
   ];
 
-  readonly upiId = 'trendstarz@ybl'; // ← replace with your UPI merchant VPA
+  // ⬇️ REPLACE WITH YOUR UPI ID ⬇️
+  // Format: 'yourname@bank' (e.g., 'sundeep@okhdfcbank' or 'sundeep@ybl')
+  readonly upiId = 'your_upi_id@bank'; // ← CHANGE THIS TO YOUR UPI ID
   readonly isProduction = environment.production;
 
-  private rzpInstance: any = null;
-  private rzpScriptLoaded = false;
+  // Optional: Use a static QR image URL instead of generating dynamically
+  // readonly staticQrImageUrl = 'https://your-domain.com/qr-code.png'; // Uncomment if you have a pre-generated QR image
 
   constructor(
     private http: HttpClient,
@@ -55,7 +53,7 @@ export class PremiumUpgradeComponent implements OnDestroy {
   ) {}
 
   ngOnDestroy() {
-    this.rzpInstance?.close?.();
+    // Cleanup if needed
   }
 
   get selectedPlan() {
@@ -82,109 +80,12 @@ export class PremiumUpgradeComponent implements OnDestroy {
     this.upgradeError = '';
     this.upiRef = '';
     this.step = 'payment';
-    this.paymentTab = 'card';
+    this.paymentTab = 'upi'; // ← Start with UPI tab
   }
 
-  setTab(tab: 'card' | 'upi' | 'qr') {
+  setTab(tab: 'upi' | 'qr') {
     this.paymentTab = tab;
     this.upgradeError = '';
-  }
-
-  // ─── Razorpay Checkout (Card / Netbanking / Wallet / UPI via popup) ───────
-  async openRazorpay() {
-    if (!isPlatformBrowser(this.platformId)) return;
-    const token = this.getToken();
-    if (!token) { this.upgradeError = 'Not logged in. Please refresh the page.'; return; }
-
-    this.loadingOrder = true;
-    this.upgradeError = '';
-
-    try {
-      await this.loadRazorpayScript();
-      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-      const order: any = await firstValueFrom(
-        this.http.post(
-          `${environment.apiBaseUrl}/payment/create-order`,
-          { premiumDuration: this.selectedDuration },
-          { headers },
-        ),
-      );
-      this.loadingOrder = false;
-      this.cdr.detectChanges();
-
-      const user = this.getCurrentUser();
-      const options = {
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'TrendstarZ',
-        description: `${this.selectedPlan?.label} Premium`,
-        order_id: order.orderId,
-        prefill: {
-          name: user?.name || '',
-          email: user?.email || '',
-          contact: user?.phoneNumber || '',
-        },
-        theme: { color: '#f97316' },
-        modal: {
-          ondismiss: () => {
-            this.upgradeError = 'Payment was cancelled. You can try again.';
-            this.cdr.detectChanges();
-          },
-        },
-        handler: (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          this.verifyAndActivate(
-            response.razorpay_order_id,
-            response.razorpay_payment_id,
-            response.razorpay_signature,
-          );
-        },
-      };
-      this.rzpInstance = new Razorpay(options);
-      this.rzpInstance.on('payment.failed', (resp: any) => {
-        this.upgradeError =
-          resp?.error?.description || 'Payment failed. Please try again.';
-        this.upgrading = false;
-        this.cdr.detectChanges();
-      });
-      this.rzpInstance.open();
-    } catch (err: any) {
-      this.loadingOrder = false;
-      this.upgradeError = err?.error?.message || 'Could not initiate payment. Please try again.';
-    }
-  }
-
-  private verifyAndActivate(orderId: string, paymentId: string, signature: string) {
-    this.upgrading = true;
-    this.upgradeError = '';
-    const token = this.getToken();
-    if (!token) { this.upgradeError = 'Not logged in.'; this.upgrading = false; return; }
-
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    this.http
-      .post(
-        `${environment.apiBaseUrl}/payment/verify-payment`,
-        {
-          razorpay_order_id: orderId,
-          razorpay_payment_id: paymentId,
-          razorpay_signature: signature,
-          premiumDuration: this.selectedDuration,
-        },
-        { headers },
-      )
-      .subscribe({
-        next: () => this.onSuccess(),
-        error: (err) => {
-          this.upgrading = false;
-          this.upgradeError =
-            err?.error?.message || 'Payment verification failed. Please contact support.';
-          this.cdr.detectChanges();
-        },
-      });
   }
 
   // ─── UPI / QR manual fallback ─────────────────────────────────────────────
@@ -195,7 +96,7 @@ export class PremiumUpgradeComponent implements OnDestroy {
     }
     this.upgrading = true;
     this.upgradeError = '';
-    this.directUpgrade();
+    this.recordUpiPayment();
   }
 
   copyUpiId() {
@@ -207,21 +108,28 @@ export class PremiumUpgradeComponent implements OnDestroy {
     }
   }
 
-  private directUpgrade() {
+  private recordUpiPayment() {
     const token = this.getToken();
     if (!token) { this.upgradeError = 'Not logged in.'; this.upgrading = false; return; }
+    const user = this.getCurrentUser();
+    const userType = user?.role === 'brand' ? 'Brand' : 'Influencer';
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
-      .patch(
-        `${environment.apiBaseUrl}/users/self/upgrade-premium`,
-        { premiumDuration: this.selectedDuration },
+      .post(
+        `${environment.apiBaseUrl}/payment`,
+        {
+          transactionId: this.upiRef.trim(),
+          premiumDuration: this.selectedDuration,
+          userType,
+          paymentMethod: this.paymentTab,
+        },
         { headers },
       )
       .subscribe({
         next: () => this.onSuccess(),
         error: (err) => {
           this.upgrading = false;
-          this.upgradeError = err?.error?.message || 'Upgrade failed. Please try again.';
+          this.upgradeError = err?.error?.message || 'Failed to record payment. Please try again.';
         },
       });
   }
@@ -241,20 +149,6 @@ export class PremiumUpgradeComponent implements OnDestroy {
     try {
       return JSON.parse(localStorage.getItem('user') || '{}');
     } catch { return {}; }
-  }
-
-  private loadRazorpayScript(): Promise<void> {
-    if (this.rzpScriptLoaded || typeof Razorpay !== 'undefined') {
-      this.rzpScriptLoaded = true;
-      return Promise.resolve();
-    }
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => { this.rzpScriptLoaded = true; resolve(); };
-      script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
-      document.body.appendChild(script);
-    });
   }
 
   goToProfile() {
