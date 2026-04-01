@@ -210,6 +210,17 @@ export class ConfigService {
     });
   }
 
+  /** Fetch current user's recent payments (for profile status display) */
+  getMyPayments(limit = 5): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/payment/my?limit=${limit}`).pipe(
+      map(res => {
+        const d = this.extractData<any>(res);
+        return Array.isArray(d?.payments) ? d.payments : Array.isArray(d) ? d : [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   // Place this inside ConfigService class
   getInfluencerByUsername(username: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/users/influencers/username/${encodeURIComponent(username)}`).pipe(

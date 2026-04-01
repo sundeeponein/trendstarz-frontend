@@ -38,7 +38,8 @@ export class AdminPaymentsComponent implements OnInit {
   approvedPayments: Payment[] = [];
   rejectedPayments: Payment[] = [];
 
-  currentTab: 'pending' | 'approved' | 'rejected' = 'pending';
+  activeTab: 'influencer' | 'brand' = 'influencer';
+  statusTab: 'pending' | 'approved' | 'rejected' = 'pending';
   loading = false;
   error = '';
   successMessage = '';
@@ -226,5 +227,52 @@ export class AdminPaymentsComponent implements OnInit {
     const u = payment.userId;
     if (!u) return 'Unknown';
     return u.username || u.brandUsername || u.brandName || u.name || 'Unknown';
+  }
+
+  getProfileImage(payment: Payment): string {
+    const u = payment.userId;
+    if (!u) return 'assets/default-profile.png';
+    if (payment.userType === 'Brand') {
+      if (Array.isArray(u.brandLogo) && u.brandLogo.length > 0) {
+        const img = u.brandLogo[0];
+        if (img && typeof img === 'object' && img.url) return img.url;
+        if (typeof img === 'string' && img) return img;
+      }
+      return 'assets/default-logo.png';
+    }
+    if (Array.isArray(u.profileImages) && u.profileImages.length > 0) {
+      const img = u.profileImages[0];
+      if (img && typeof img === 'object' && img.url) return img.url;
+      if (typeof img === 'string' && img) return img;
+    }
+    return 'assets/default-profile.png';
+  }
+
+  setTab(tab: 'influencer' | 'brand') {
+    this.activeTab = tab;
+    this.statusTab = 'pending';
+  }
+
+  private get currentUserType(): 'Influencer' | 'Brand' {
+    return this.activeTab === 'influencer' ? 'Influencer' : 'Brand';
+  }
+
+  get filteredPayments(): Payment[] {
+    const type = this.currentUserType;
+    if (this.statusTab === 'pending') return this.pendingPayments.filter(p => p.userType === type);
+    if (this.statusTab === 'approved') return this.approvedPayments.filter(p => p.userType === type);
+    return this.rejectedPayments.filter(p => p.userType === type);
+  }
+
+  get pendingCount(): number {
+    return this.pendingPayments.filter(p => p.userType === this.currentUserType).length;
+  }
+
+  get approvedCount(): number {
+    return this.approvedPayments.filter(p => p.userType === this.currentUserType).length;
+  }
+
+  get rejectedCount(): number {
+    return this.rejectedPayments.filter(p => p.userType === this.currentUserType).length;
   }
 }

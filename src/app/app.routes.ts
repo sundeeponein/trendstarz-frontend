@@ -31,6 +31,7 @@ export const routes: Routes = [
 			{ path: 'campaigns', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-management/campaign-management.component').then(m => m.CampaignManagementComponent) },
 			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 			{ path: 'upgrade-premium', canActivate: [authGuard], loadComponent: () => import('./pages/premium-upgrade/premium-upgrade.component').then(m => m.PremiumUpgradeComponent) },
+			{ path: 'payment-history', canActivate: [authGuard], loadComponent: () => import('./pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) },
 		],
 	},
 	{

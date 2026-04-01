@@ -143,6 +143,8 @@ export class BrandProfileComponent implements OnInit {
   selectedDuration: '1m' | '3m' | '1y' | '' = '';
   paymentSuccess = false;
   paymentError = '';
+  myPayments: any[] = [];
+  latestPendingPayment: any = null;
   registrationSuccess = false;
   registrationError = '';
   submitted = false;
@@ -421,6 +423,11 @@ export class BrandProfileComponent implements OnInit {
           this.originalFormValue = this.registrationForm.getRawValue();
           this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
           this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+          // Load payment status
+          this.configService.getMyPayments(5).subscribe(payments => {
+            this.myPayments = payments;
+            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending') || null;
+          });
           this.registrationForm.disable();
           this.refreshStepCompletion();
         },
