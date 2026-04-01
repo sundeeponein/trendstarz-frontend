@@ -26,6 +26,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/admin-dashboard', renderMode: RenderMode.Server },
   { path: 'admin/admin-user-table', renderMode: RenderMode.Server },
   { path: 'admin/admin-management', renderMode: RenderMode.Server },
+  { path: 'admin/payments', renderMode: RenderMode.Server },
   { path: 'admin/deleted-users', renderMode: RenderMode.Server },
   { path: 'logout', renderMode: RenderMode.Server },
   { path: 'admin/logout', renderMode: RenderMode.Server },

@@ -42,6 +42,7 @@ export const routes: Routes = [
 			{ path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
 			{ path: 'admin-user-table', component: AdminUserTableComponent },
 			{ path: 'admin-management', component: AdminManagementComponent },
+			{ path: 'payments', loadComponent: () => import('./pages/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },
 			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 		],
