@@ -39,7 +39,7 @@ export class PremiumUpgradeComponent implements OnDestroy {
 
   // ⬇️ REPLACE WITH YOUR UPI ID ⬇️
   // Format: 'yourname@bank' (e.g., 'sundeep@okhdfcbank' or 'sundeep@ybl')
-  readonly upiId = 'your_upi_id@bank'; // ← CHANGE THIS TO YOUR UPI ID
+  readonly upiId = 'trendstarzin@kotak'; // ← CHANGE THIS TO YOUR UPI ID
   readonly isProduction = environment.production;
 
   // Optional: Use a static QR image URL instead of generating dynamically

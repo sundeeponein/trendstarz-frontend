@@ -88,7 +88,7 @@
                 <p class="campaign-desc">Explore {{ brand.categories?.[0] || 'our' }} collections and featured products.</p>
                 <div class="campaign-footer">
                   <span class="campaign-price" *ngIf="brand.promotionalPrice">
-                    ${{ brand.promotionalPrice }}
+                    ₹{{ brand.promotionalPrice }}
                   </span>
                   <button class="btn btn-apply">Apply Now</button>
                 </div>
@@ -118,7 +118,7 @@
             </div>
             <div class="detail-row" *ngIf="brand.promotionalPrice">
               <span class="detail-label">Advertising Price</span>
-              <span class="detail-value price-val">${{ brand.promotionalPrice }}</span>
+              <span class="detail-value price-val">₹{{ brand.promotionalPrice }}</span>
             </div>
             <div class="detail-row" *ngIf="brand.googleMapAddress">
               <span class="detail-label">Address</span>

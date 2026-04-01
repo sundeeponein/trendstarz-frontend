@@ -56,7 +56,7 @@
         </div>
         <div class="stat-card" *ngIf="influencer.promotionalPrice">
           <span class="stat-label">AD PRICE</span>
-          <span class="stat-value">${{ influencer.promotionalPrice }}</span>
+          <span class="stat-value">₹{{ influencer.promotionalPrice }}</span>
         </div>
       </div>
     </div>
@@ -104,7 +104,7 @@
           </div>
           <div class="detail-item" *ngIf="influencer.promotionalPrice">
             <span class="detail-key">Advertising Price</span>
-            <span class="detail-val price-tag">${{ influencer.promotionalPrice }}</span>
+            <span class="detail-val price-tag">₹{{ influencer.promotionalPrice }}</span>
           </div>
           <div class="detail-item" *ngIf="influencer.categories?.length">
             <span class="detail-key">Categories</span>
@@ -129,7 +129,7 @@
           <div class="ph-row"></div>
           <div class="ph-row short"></div>
         </div>
-        <button class="btn btn-upgrade">Upgrade to Pro $9.99/mo</button>
+        <button class="btn btn-upgrade">Upgrade to Pro ₹999/mo</button>
         <span class="powered-by">POWERED BY TRENDSTARZ ENGINE</span>
       </div>
 
@@ -154,7 +154,7 @@
         <div class="analytics-stat-row" *ngIf="influencer.promotionalPrice">
           <div class="mini-stat">
             <span class="mini-label">AD PRICE</span>
-            <span class="mini-value">${{ influencer.promotionalPrice }}</span>
+            <span class="mini-value">₹{{ influencer.promotionalPrice }}</span>
           </div>
           <div class="mini-stat">
             <span class="mini-label">PLATFORMS</span>
