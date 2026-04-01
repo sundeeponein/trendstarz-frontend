@@ -1,15 +1,16 @@
+
 import {
   Component,
+  OnInit,
   OnDestroy,
-  PLATFORM_ID,
   Inject,
+  PLATFORM_ID,
   ChangeDetectorRef,
 } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -19,31 +20,23 @@ import { environment } from '../../../environments/environment';
   templateUrl: './premium-upgrade.component.html',
   styleUrls: ['./premium-upgrade.component.scss'],
 })
-export class PremiumUpgradeComponent implements OnDestroy {
-  step: 'plan' | 'payment' | 'success' = 'plan';
-  paymentTab: 'upi' | 'qr' = 'upi'; // ← Primary: direct UPI only (no Razorpay)
+export class PremiumUpgradeComponent implements OnInit, OnDestroy {
 
+  step: 'plan' | 'payment' | 'success' = 'plan';
+  paymentTab: 'upi' | 'qr' = 'upi';
   selectedDuration: '1m' | '3m' | '1y' | '' = '';
   upgrading = false;
   upgradeError = '';
-
-  // UPI / QR direct payment
-  upiRef = '';
   upiCopied = false;
-
+  upiRef: string = '';
   plans = [
     { duration: '1m' as const, label: '1 Month',  price: '₹399',   amount: 39900,  badge: '',           pricePer: '₹399/mo'  },
     { duration: '3m' as const, label: '3 Months', price: '₹999',   amount: 99900,  badge: 'Save 16%',   pricePer: '₹333/mo'  },
     { duration: '1y' as const, label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo'  },
   ];
-
-  // ⬇️ REPLACE WITH YOUR UPI ID ⬇️
-  // Format: 'yourname@bank' (e.g., 'sundeep@okhdfcbank' or 'sundeep@ybl')
-  readonly upiId = 'trendstarzin@kotak'; // ← CHANGE THIS TO YOUR UPI ID
+  readonly upiId = 'trendstarzin@kotak';
   readonly isProduction = environment.production;
-
-  // Optional: Use a static QR image URL instead of generating dynamically
-  // readonly staticQrImageUrl = 'https://your-domain.com/qr-code.png'; // Uncomment if you have a pre-generated QR image
+  myPayments: any[] = [];
 
   constructor(
     private http: HttpClient,
@@ -51,6 +44,25 @@ export class PremiumUpgradeComponent implements OnDestroy {
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
+
+  ngOnInit(): void {
+    this.loadMyPayments();
+  }
+
+  loadMyPayments() {
+    const token = this.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get(`${environment.apiBaseUrl}/payment/my`, { headers }).subscribe({
+      next: (res: any) => {
+        this.myPayments = Array.isArray(res) ? res : [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.myPayments = [];
+      },
+    });
+  }
 
   ngOnDestroy() {
     // Cleanup if needed
@@ -138,7 +150,26 @@ export class PremiumUpgradeComponent implements OnDestroy {
   private onSuccess() {
     this.upgrading = false;
     this.step = 'success';
-    setTimeout(() => this.goToProfile(), 3000);
+    // Show a toast/snackbar for instant feedback
+    if (isPlatformBrowser(this.platformId)) {
+      const toast = document.createElement('div');
+      toast.innerText = 'Payment recorded! Pending admin approval.';
+      toast.style.position = 'fixed';
+      toast.style.bottom = '32px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = '#323232';
+      toast.style.color = '#fff';
+      toast.style.padding = '16px 32px';
+      toast.style.borderRadius = '8px';
+      toast.style.fontSize = '1.1rem';
+      toast.style.zIndex = '9999';
+      toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+    // Delay redirect to profile for 7 seconds
+    setTimeout(() => this.goToProfile(), 7000);
   }
 
   private getToken(): string | null {

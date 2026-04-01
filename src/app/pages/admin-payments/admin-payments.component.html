@@ -96,14 +96,71 @@
     </div>
   </div>
 
-  <!-- Approved Payments Section (Placeholder) -->
+
+  <!-- Approved Payments Section -->
   <div *ngIf="currentTab === 'approved'" class="payments-section">
-    <p class="section-placeholder">Approved payments will appear here.</p>
+    <div *ngIf="approvedPayments.length === 0" class="no-payments">
+      <p>No approved payments yet.</p>
+    </div>
+    <div *ngIf="approvedPayments.length > 0" class="payments-table">
+      <div class="table-header">
+        <div class="col-user">User</div>
+        <div class="col-type">Type</div>
+        <div class="col-amount">Amount</div>
+        <div class="col-duration">Duration</div>
+        <div class="col-txn">Transaction ID</div>
+        <div class="col-date">Approved At</div>
+      </div>
+      <div *ngFor="let payment of approvedPayments" class="table-row payment-row-approved">
+        <div class="col-user">
+          <div class="user-name">{{ payment.userId?.username || 'Unknown' }}</div>
+          <div class="user-email">{{ payment.userId?.email || '-' }}</div>
+        </div>
+        <div class="col-type">
+          <span class="badge" [class.brand]="payment.userType === 'Brand'">
+            {{ payment.userType }}
+          </span>
+        </div>
+        <div class="col-amount">₹{{ payment.amount }}</div>
+        <div class="col-duration">{{ payment.premiumDuration }}</div>
+        <div class="col-txn"><code>{{ payment.transactionId }}</code></div>
+        <div class="col-date">{{ formatDate(payment.approvedAt || payment.createdAt) }}</div>
+      </div>
+    </div>
   </div>
 
-  <!-- Rejected Payments Section (Placeholder) -->
+  <!-- Rejected Payments Section -->
   <div *ngIf="currentTab === 'rejected'" class="payments-section">
-    <p class="section-placeholder">Rejected payments will appear here.</p>
+    <div *ngIf="rejectedPayments.length === 0" class="no-payments">
+      <p>No rejected payments yet.</p>
+    </div>
+    <div *ngIf="rejectedPayments.length > 0" class="payments-table">
+      <div class="table-header">
+        <div class="col-user">User</div>
+        <div class="col-type">Type</div>
+        <div class="col-amount">Amount</div>
+        <div class="col-duration">Duration</div>
+        <div class="col-txn">Transaction ID</div>
+        <div class="col-date">Rejected At</div>
+        <div class="col-notes">Reason</div>
+      </div>
+      <div *ngFor="let payment of rejectedPayments" class="table-row payment-row-rejected">
+        <div class="col-user">
+          <div class="user-name">{{ payment.userId?.username || 'Unknown' }}</div>
+          <div class="user-email">{{ payment.userId?.email || '-' }}</div>
+        </div>
+        <div class="col-type">
+          <span class="badge" [class.brand]="payment.userType === 'Brand'">
+            {{ payment.userType }}
+          </span>
+        </div>
+        <div class="col-amount">₹{{ payment.amount }}</div>
+        <div class="col-duration">{{ payment.premiumDuration }}</div>
+        <div class="col-txn"><code>{{ payment.transactionId }}</code></div>
+        <div class="col-date">{{ formatDate(payment.approvedAt || payment.createdAt) }}</div>
+        <div class="col-notes">{{ payment.approvalNotes || '-' }}</div>
+      </div>
+    </div>
   </div>
 
   <!-- Rejection Modal -->

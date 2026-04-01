@@ -56,7 +56,13 @@ export class AdminPaymentsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.loadAllPayments();
+  }
+
+  loadAllPayments() {
     this.loadPendingPayments();
+    this.loadApprovedPayments();
+    this.loadRejectedPayments();
   }
 
   loadPendingPayments() {
@@ -87,6 +93,38 @@ export class AdminPaymentsComponent implements OnInit {
       });
   }
 
+  loadApprovedPayments() {
+    const token = this.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http
+      .get<Payment[]>(`${environment.apiBaseUrl}/payment?status=approved`, { headers })
+      .subscribe({
+        next: (data) => {
+          this.approvedPayments = data;
+        },
+        error: () => {
+          this.approvedPayments = [];
+        },
+      });
+  }
+
+  loadRejectedPayments() {
+    const token = this.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http
+      .get<Payment[]>(`${environment.apiBaseUrl}/payment?status=rejected`, { headers })
+      .subscribe({
+        next: (data) => {
+          this.rejectedPayments = data;
+        },
+        error: () => {
+          this.rejectedPayments = [];
+        },
+      });
+  }
+
   approvePayment(payment: Payment) {
     if (!confirm(`Approve payment of ₹${payment.amount} from ${payment.userId?.username}?`)) return;
 
@@ -103,7 +141,7 @@ export class AdminPaymentsComponent implements OnInit {
       .subscribe({
         next: (res: any) => {
           this.successMessage = res.message || 'Payment approved successfully';
-          this.loadPendingPayments();
+          this.loadAllPayments();
           setTimeout(() => (this.successMessage = ''), 3000);
         },
         error: (err) => {
@@ -145,7 +183,7 @@ export class AdminPaymentsComponent implements OnInit {
         next: (res: any) => {
           this.successMessage = res.message || 'Payment rejected';
           this.closeRejectModal();
-          this.loadPendingPayments();
+          this.loadAllPayments();
           setTimeout(() => (this.successMessage = ''), 3000);
         },
         error: (err) => {
