@@ -1,0 +1,155 @@
+.payment-history-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #666;
+    font-size: 0.95rem;
+  }
+}
+
+/* ─── Empty State ────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #888;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* ─── Payment Cards ──────────────────────── */
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &.status-pending {
+    border-left: 4px solid #f39c12;
+  }
+
+  &.status-approved {
+    border-left: 4px solid #27ae60;
+  }
+
+  &.status-rejected {
+    border-left: 4px solid #e74c3c;
+  }
+}
+
+.payment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+
+.payment-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.payment-status-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  &.status-pending {
+    background: #fef3cd;
+    color: #856404;
+  }
+
+  &.status-approved {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  &.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+  }
+}
+
+.payment-card-body {
+  padding: 1rem 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.payment-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  .detail-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .detail-value {
+    font-size: 0.92rem;
+    color: #333;
+
+    code {
+      background: #f0f0f0;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #d63031;
+    }
+  }
+
+  .rejection-note {
+    color: #c0392b;
+    font-style: italic;
+  }
+}

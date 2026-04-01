@@ -132,7 +132,14 @@
                 <div><small>Valid until: <strong>{{ premiumEnd | date:'mediumDate' }}</strong></small></div>
               </div>
             </div>
-            <div *ngIf="!premiumEnd" class="premium-upgrade-cta">
+            <div *ngIf="!premiumEnd && latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2">
+              <span style="font-size:1.3em;">⏳</span>
+              <div>
+                <strong>Payment Pending</strong>
+                <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
+              </div>
+            </div>
+            <div *ngIf="!premiumEnd && !latestPendingPayment" class="premium-upgrade-cta">
               <div class="premium-cta-content">
                 <span class="premium-cta-icon">🌟</span>
                 <div>
@@ -220,7 +227,15 @@
                 <option value="free">Free</option>
                 <option value="premium">Premium</option>
               </select>
-              <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
+              <!-- Payment status banners -->
+              <div *ngIf="latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2 mt-2">
+                <span style="font-size:1.3em;">⏳</span>
+                <div>
+                  <strong>Payment Pending</strong>
+                  <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
+                </div>
+              </div>
+              <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
                 <div class="premium-cta-content">
                   <span class="premium-cta-icon">🌟</span>
                   <div>

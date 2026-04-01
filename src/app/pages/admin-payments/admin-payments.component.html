@@ -1,165 +1,89 @@
 <div class="admin-payments-container">
-  <div class="admin-header">
-    <h1>💳 Pending Premium Payments</h1>
-    <p>Review and approve/reject UPI payments from users requesting premium upgrades.</p>
-  </div>
+  <h2 class="page-title">💳 Premium Payments</h2>
 
-  <!-- Error Message -->
+  <!-- Error / Success alerts -->
   <div *ngIf="error" class="alert alert-error">
     {{ error }}
     <button class="alert-close" (click)="error = ''">×</button>
   </div>
-
-  <!-- Success Message -->
   <div *ngIf="successMessage" class="alert alert-success">
     {{ successMessage }}
     <button class="alert-close" (click)="successMessage = ''">×</button>
   </div>
 
-  <!-- Payment Tabs -->
-  <div class="payment-tabs">
-    <button
-      class="payment-tab"
-      [class.active]="currentTab === 'pending'"
-      (click)="currentTab = 'pending'"
-    >
-      ⏳ Pending ({{ pendingPayments.length }})
+  <!-- ═══ Primary Tabs: Influencers / Brands (matches User Management) ═══ -->
+  <div class="admin-tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+    <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+  </div>
+
+  <!-- ═══ Status Sub-Tabs: Pending / Approved / Rejected ═══ -->
+  <div class="status-tabs">
+    <button class="status-tab" [class.active]="statusTab === 'pending'" (click)="statusTab = 'pending'">
+      ⏳ Pending ({{ pendingCount }})
     </button>
-    <button
-      class="payment-tab"
-      [class.active]="currentTab === 'approved'"
-      (click)="currentTab = 'approved'"
-    >
-      ✓ Approved
+    <button class="status-tab" [class.active]="statusTab === 'approved'" (click)="statusTab = 'approved'">
+      ✓ Approved ({{ approvedCount }})
     </button>
-    <button
-      class="payment-tab"
-      [class.active]="currentTab === 'rejected'"
-      (click)="currentTab = 'rejected'"
-    >
-      ✗ Rejected
+    <button class="status-tab" [class.active]="statusTab === 'rejected'" (click)="statusTab = 'rejected'">
+      ✗ Rejected ({{ rejectedCount }})
     </button>
   </div>
 
-  <!-- Loading State -->
+  <!-- Loading -->
   <div *ngIf="loading" class="loading">Loading payments...</div>
 
-  <!-- Pending Payments Table -->
-  <div *ngIf="currentTab === 'pending' && !loading" class="payments-section">
-    <div *ngIf="pendingPayments.length === 0" class="no-payments">
-      <p>No pending payments at this time.</p>
+  <!-- ═══ Payment Table ═══ -->
+  <div *ngIf="!loading" class="payments-section">
+    <div *ngIf="filteredPayments.length === 0" class="no-payments">
+      <p>No {{ statusTab }} payments for {{ activeTab === 'influencer' ? 'influencers' : 'brands' }}.</p>
     </div>
 
-    <div *ngIf="pendingPayments.length > 0" class="payments-table">
-      <div class="table-header">
-        <div class="col-user">User</div>
-        <div class="col-type">Type</div>
-        <div class="col-amount">Amount</div>
-        <div class="col-duration">Duration</div>
-        <div class="col-txn">Transaction ID</div>
-        <div class="col-date">Date</div>
-        <div class="col-actions">Actions</div>
-      </div>
+    <table *ngIf="filteredPayments.length > 0" class="table table-hover payments-table-grid">
+      <thead>
+        <tr>
+          <th>Profile</th>
+          <th>User</th>
+          <th>Amount</th>
+          <th>Duration</th>
+          <th>Transaction ID</th>
+          <th>Date</th>
+          <th *ngIf="statusTab === 'rejected'">Reason</th>
+          <th *ngIf="statusTab === 'pending'">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let payment of filteredPayments">
+          <td>
+            <img [src]="getProfileImage(payment)" alt="Profile" width="40" height="40" class="rounded-circle user-avatar">
+          </td>
+          <td>
+            <div class="user-name">{{ getUserDisplayName(payment) }}</div>
+            <div class="user-email">{{ payment.userId?.email || '-' }}</div>
+            <div class="user-phone" *ngIf="payment.userId?.phoneNumber">{{ payment.userId.phoneNumber }}</div>
+          </td>
+          <td class="col-amount">₹{{ payment.amount }}</td>
+          <td>{{ payment.premiumDuration }}</td>
+          <td><code>{{ payment.transactionId }}</code></td>
+          <td class="col-date">{{ formatDate(statusTab === 'pending' ? payment.createdAt : (payment.approvedAt || payment.createdAt)) }}</td>
+          <td *ngIf="statusTab === 'rejected'">{{ payment.approvalNotes || '-' }}</td>
+          <td *ngIf="statusTab === 'pending'" class="col-actions">
+            <button class="btn btn-success btn-sm me-1" (click)="approvePayment(payment)" title="Approve">
+              <i class="bi bi-check-circle-fill"></i> Approve
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="openRejectModal(payment)" title="Reject">
+              <i class="bi bi-x-circle-fill"></i> Reject
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-      <div *ngFor="let payment of pendingPayments" class="table-row payment-row-pending">
-        <div class="col-user">
-          <div class="user-name">{{ getUserDisplayName(payment) }}</div>
-          <div class="user-email">{{ payment.userId?.email || '-' }}</div>
-        </div>
-        <div class="col-type">
-          <span class="badge" [class.brand]="payment.userType === 'Brand'">
-            {{ payment.userType }}
-          </span>
-        </div>
-        <div class="col-amount">₹{{ payment.amount }}</div>
-        <div class="col-duration">{{ payment.premiumDuration }}</div>
-        <div class="col-txn">
-          <code>{{ payment.transactionId }}</code>
-        </div>
-        <div class="col-date">{{ formatDate(payment.createdAt) }}</div>
-        <div class="col-actions">
-          <button class="btn-approve" (click)="approvePayment(payment)">✓ Approve</button>
-          <button class="btn-reject" (click)="openRejectModal(payment)">✗ Reject</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <div *ngIf="totalPages > 1" class="pagination">
-      <button [disabled]="currentPage === 1" (click)="previousPage()">
-        ← Previous
-      </button>
+    <!-- Pagination (pending tab only) -->
+    <div *ngIf="statusTab === 'pending' && totalPages > 1" class="pagination">
+      <button [disabled]="currentPage === 1" (click)="previousPage()">← Previous</button>
       <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-      <button [disabled]="currentPage === totalPages" (click)="nextPage()">
-        Next →
-      </button>
-    </div>
-  </div>
-
-
-  <!-- Approved Payments Section -->
-  <div *ngIf="currentTab === 'approved'" class="payments-section">
-    <div *ngIf="approvedPayments.length === 0" class="no-payments">
-      <p>No approved payments yet.</p>
-    </div>
-    <div *ngIf="approvedPayments.length > 0" class="payments-table">
-      <div class="table-header">
-        <div class="col-user">User</div>
-        <div class="col-type">Type</div>
-        <div class="col-amount">Amount</div>
-        <div class="col-duration">Duration</div>
-        <div class="col-txn">Transaction ID</div>
-        <div class="col-date">Approved At</div>
-      </div>
-      <div *ngFor="let payment of approvedPayments" class="table-row payment-row-approved">
-        <div class="col-user">
-          <div class="user-name">{{ getUserDisplayName(payment) }}</div>
-          <div class="user-email">{{ payment.userId?.email || '-' }}</div>
-        </div>
-        <div class="col-type">
-          <span class="badge" [class.brand]="payment.userType === 'Brand'">
-            {{ payment.userType }}
-          </span>
-        </div>
-        <div class="col-amount">₹{{ payment.amount }}</div>
-        <div class="col-duration">{{ payment.premiumDuration }}</div>
-        <div class="col-txn"><code>{{ payment.transactionId }}</code></div>
-        <div class="col-date">{{ formatDate(payment.approvedAt || payment.createdAt) }}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Rejected Payments Section -->
-  <div *ngIf="currentTab === 'rejected'" class="payments-section">
-    <div *ngIf="rejectedPayments.length === 0" class="no-payments">
-      <p>No rejected payments yet.</p>
-    </div>
-    <div *ngIf="rejectedPayments.length > 0" class="payments-table">
-      <div class="table-header">
-        <div class="col-user">User</div>
-        <div class="col-type">Type</div>
-        <div class="col-amount">Amount</div>
-        <div class="col-duration">Duration</div>
-        <div class="col-txn">Transaction ID</div>
-        <div class="col-date">Rejected At</div>
-        <div class="col-notes">Reason</div>
-      </div>
-      <div *ngFor="let payment of rejectedPayments" class="table-row payment-row-rejected">
-        <div class="col-user">
-          <div class="user-name">{{ getUserDisplayName(payment) }}</div>
-          <div class="user-email">{{ payment.userId?.email || '-' }}</div>
-        </div>
-        <div class="col-type">
-          <span class="badge" [class.brand]="payment.userType === 'Brand'">
-            {{ payment.userType }}
-          </span>
-        </div>
-        <div class="col-amount">₹{{ payment.amount }}</div>
-        <div class="col-duration">{{ payment.premiumDuration }}</div>
-        <div class="col-txn"><code>{{ payment.transactionId }}</code></div>
-        <div class="col-date">{{ formatDate(payment.approvedAt || payment.createdAt) }}</div>
-        <div class="col-notes">{{ payment.approvalNotes || '-' }}</div>
-      </div>
+      <button [disabled]="currentPage === totalPages" (click)="nextPage()">Next →</button>
     </div>
   </div>
 
@@ -169,7 +93,7 @@
       <h2>Reject Payment</h2>
       <p *ngIf="selectedPaymentForReject" class="modal-info">
         Rejecting payment of <strong>₹{{ selectedPaymentForReject.amount }}</strong> from
-        <strong>{{ selectedPaymentForReject.userId?.username || selectedPaymentForReject.userId?.brandUsername || 'User' }}</strong>
+        <strong>{{ getUserDisplayName(selectedPaymentForReject) }}</strong>
       </p>
 
       <div class="form-group">

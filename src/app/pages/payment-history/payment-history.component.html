@@ -1,0 +1,69 @@
+<div class="payment-history-container">
+  <div class="page-header">
+    <h2>Payment History</h2>
+    <p>View all your premium payment transactions and their status.</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading your payments...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && payments.length === 0" class="empty-state">
+    <div class="empty-icon">💳</div>
+    <h4>No Payments Yet</h4>
+    <p>You haven't made any premium payments yet.</p>
+    <a routerLink="/upgrade-premium" class="btn btn-primary">Upgrade to Premium</a>
+  </div>
+
+  <!-- Payment Cards -->
+  <div *ngIf="!loading && payments.length > 0" class="payments-list">
+    <div *ngFor="let payment of payments" class="payment-card" [ngClass]="getStatusClass(payment.status)">
+      <div class="payment-card-header">
+        <div class="payment-amount">₹{{ payment.amount }}</div>
+        <span class="payment-status-badge" [ngClass]="getStatusClass(payment.status)">
+          <ng-container [ngSwitch]="payment.status">
+            <span *ngSwitchCase="'pending'">⏳ Pending</span>
+            <span *ngSwitchCase="'approved'">✅ Approved</span>
+            <span *ngSwitchCase="'rejected'">❌ Rejected</span>
+            <span *ngSwitchDefault>{{ payment.status }}</span>
+          </ng-container>
+        </span>
+      </div>
+
+      <div class="payment-card-body">
+        <div class="payment-detail">
+          <span class="detail-label">Plan</span>
+          <span class="detail-value">{{ getDurationLabel(payment.premiumDuration) }}</span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">Transaction ID</span>
+          <span class="detail-value"><code>{{ payment.transactionId }}</code></span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">Method</span>
+          <span class="detail-value">{{ payment.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}</span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">Submitted</span>
+          <span class="detail-value">{{ formatDate(payment.createdAt) }}</span>
+        </div>
+        <div class="payment-detail" *ngIf="payment.approvedAt">
+          <span class="detail-label">{{ payment.status === 'approved' ? 'Approved' : 'Reviewed' }} At</span>
+          <span class="detail-value">{{ formatDate(payment.approvedAt) }}</span>
+        </div>
+        <div class="payment-detail" *ngIf="payment.approvalNotes">
+          <span class="detail-label">Notes</span>
+          <span class="detail-value rejection-note">{{ payment.approvalNotes }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
