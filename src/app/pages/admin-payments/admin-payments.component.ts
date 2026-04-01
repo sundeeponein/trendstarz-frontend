@@ -19,6 +19,7 @@ interface Payment {
 }
 
 interface PendingPaymentsResponse {
+  success: boolean;
   payments: Payment[];
   total: number;
   page: number;
@@ -98,10 +99,10 @@ export class AdminPaymentsComponent implements OnInit {
     if (!token) return;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
-      .get<Payment[]>(`${environment.apiBaseUrl}/payment/by-status?status=approved`, { headers })
+      .get<any>(`${environment.apiBaseUrl}/payment/by-status?status=approved`, { headers })
       .subscribe({
         next: (data) => {
-          this.approvedPayments = data;
+          this.approvedPayments = Array.isArray(data?.payments) ? data.payments : [];
         },
         error: () => {
           this.approvedPayments = [];
@@ -114,10 +115,10 @@ export class AdminPaymentsComponent implements OnInit {
     if (!token) return;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
-      .get<Payment[]>(`${environment.apiBaseUrl}/payment/by-status?status=rejected`, { headers })
+      .get<any>(`${environment.apiBaseUrl}/payment/by-status?status=rejected`, { headers })
       .subscribe({
         next: (data) => {
-          this.rejectedPayments = data;
+          this.rejectedPayments = Array.isArray(data?.payments) ? data.payments : [];
         },
         error: () => {
           this.rejectedPayments = [];
@@ -126,7 +127,7 @@ export class AdminPaymentsComponent implements OnInit {
   }
 
   approvePayment(payment: Payment) {
-    if (!confirm(`Approve payment of ₹${payment.amount} from ${payment.userId?.username}?`)) return;
+    if (!confirm(`Approve payment of ₹${payment.amount} from ${this.getUserDisplayName(payment)}?`)) return;
 
     const token = this.getToken();
     if (!token) { this.error = 'Not authenticated'; return; }
@@ -219,5 +220,11 @@ export class AdminPaymentsComponent implements OnInit {
 
   private getToken(): string | null {
     return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') : null;
+  }
+
+  getUserDisplayName(payment: Payment): string {
+    const u = payment.userId;
+    if (!u) return 'Unknown';
+    return u.username || u.brandUsername || u.brandName || u.name || 'Unknown';
   }
 }
