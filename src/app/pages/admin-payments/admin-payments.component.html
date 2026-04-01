@@ -63,7 +63,7 @@
 
       <div *ngFor="let payment of pendingPayments" class="table-row payment-row-pending">
         <div class="col-user">
-          <div class="user-name">{{ payment.userId?.username || 'Unknown' }}</div>
+          <div class="user-name">{{ getUserDisplayName(payment) }}</div>
           <div class="user-email">{{ payment.userId?.email || '-' }}</div>
         </div>
         <div class="col-type">
@@ -113,7 +113,7 @@
       </div>
       <div *ngFor="let payment of approvedPayments" class="table-row payment-row-approved">
         <div class="col-user">
-          <div class="user-name">{{ payment.userId?.username || 'Unknown' }}</div>
+          <div class="user-name">{{ getUserDisplayName(payment) }}</div>
           <div class="user-email">{{ payment.userId?.email || '-' }}</div>
         </div>
         <div class="col-type">
@@ -146,7 +146,7 @@
       </div>
       <div *ngFor="let payment of rejectedPayments" class="table-row payment-row-rejected">
         <div class="col-user">
-          <div class="user-name">{{ payment.userId?.username || 'Unknown' }}</div>
+          <div class="user-name">{{ getUserDisplayName(payment) }}</div>
           <div class="user-email">{{ payment.userId?.email || '-' }}</div>
         </div>
         <div class="col-type">
@@ -169,7 +169,7 @@
       <h2>Reject Payment</h2>
       <p *ngIf="selectedPaymentForReject" class="modal-info">
         Rejecting payment of <strong>₹{{ selectedPaymentForReject.amount }}</strong> from
-        <strong>{{ selectedPaymentForReject.userId?.username }}</strong>
+        <strong>{{ selectedPaymentForReject.userId?.username || selectedPaymentForReject.userId?.brandUsername || 'User' }}</strong>
       </p>
 
       <div class="form-group">

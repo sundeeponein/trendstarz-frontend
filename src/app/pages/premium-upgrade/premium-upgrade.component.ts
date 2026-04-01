@@ -55,7 +55,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http.get(`${environment.apiBaseUrl}/payment/my`, { headers }).subscribe({
       next: (res: any) => {
-        this.myPayments = Array.isArray(res) ? res : [];
+        this.myPayments = Array.isArray(res?.payments) ? res.payments : [];
         this.cdr.markForCheck();
       },
       error: () => {
