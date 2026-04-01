@@ -337,6 +337,20 @@
     margin-bottom: 2rem;
     line-height: 1.6;
   }
+
+  .success-plan-details {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
+
+    p {
+      margin-bottom: 0.5rem;
+      color: #334155;
+      font-size: 0.95rem;
+    }
+  }
 }
 
 .btn-go-profile {
