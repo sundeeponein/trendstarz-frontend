@@ -1,3 +1,11 @@
+
+// Helper for template to cast string to DurationType
+// Helper for template to cast string to DurationType
+type DurationType = '1m' | '3m' | '1y' | '';
+export function toDurationType(val: string): DurationType {
+  if (val === '1m' || val === '3m' || val === '1y' || val === '') return val as DurationType;
+  return '';
+}
 import {
   Component,
   OnInit,
@@ -11,7 +19,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
+import { PlansService, Plan } from '../../shared/plans.service';
+
+
+
 
 @Component({
   selector: 'app-premium-upgrade',
@@ -21,81 +32,58 @@ import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../s
   styleUrls: ['./premium-upgrade.component.scss'],
 })
 export class PremiumUpgradeComponent implements OnInit, OnDestroy {
+    selectedDuration: any = null;
+    selectedRole: string = 'influencer';
+    upgrading = false;
+    upgradeError = '';
+    upiCopied = false;
+    upiRef: string = '';
+    myPayments: any[] = [];
+    readonly upiId = 'trendstarzin@kotak';
+    readonly isProduction = environment.production;
 
+    constructor(
+      private http: HttpClient,
+      private router: Router,
+      private cdr: ChangeDetectorRef,
+      private plansService: PlansService,
+      @Inject(PLATFORM_ID) private platformId: object,
+    ) {}
+
+    ngOnInit(): void {
+      this.loadMyPayments();
+      // Set selectedRole based on logged-in user
+      const user = this.getCurrentUser();
+      if (user?.role === 'brand') {
+        this.selectedRole = 'brand';
+      } else {
+        this.selectedRole = 'influencer';
+      }
+      // Fetch plans from API
+      this.plansService.getActivePlans(this.selectedRole).subscribe((plans: Plan[]) => {
+        this.plans = plans;
+        if (plans.length) {
+          this.selectedPlan = plans[0];
+          // Default to monthly price as duration
+          this.selectedDuration = { label: 'Monthly', price: plans[0].price.monthly };
+        }
+      });
+    }
   step: 'plan' | 'payment' | 'success' = 'plan';
   paymentTab: 'upi' | 'qr' = 'upi';
-  selectedDuration: '1m' | '3m' | '1y' | '' = '';
-  upgrading = false;
-  upgradeError = '';
-  upiCopied = false;
-  upiRef: string = '';
-  plans = [
-    { duration: '', label: 'Free', price: '₹0', amount: 0, badge: 'Free', pricePer: 'Free', isFree: true },
-    { duration: '1m' as const, label: '1 Month',  price: '₹399',   amount: 39900,  badge: '',           pricePer: '₹399/mo', isFree: false },
-    { duration: '3m' as const, label: '3 Months', price: '₹999',   amount: 99900,  badge: 'Save 16%',   pricePer: '₹333/mo', isFree: false },
-    { duration: '1y' as const, label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo', isFree: false },
-  ];
-  readonly upiId = 'trendstarzin@kotak';
-  readonly isProduction = environment.production;
-  myPayments: any[] = [];
+  plans: Plan[] = [];
+  selectedPlan: Plan | null = null;
+  // ...existing code...
 
-  // Dynamic plan features from backend
-  activePlan: Plan | null = null;
-  myCapabilities: PlanCapabilities = FREE_CAPABILITIES;
-  freePlan: PlanCapabilities = FREE_CAPABILITIES;
 
-  constructor(
-    private http: HttpClient,
-    private router: Router,
-    private cdr: ChangeDetectorRef,
-    private plansService: PlansService,
-    @Inject(PLATFORM_ID) private platformId: object,
-  ) {}
 
-  ngOnInit(): void {
-    this.loadMyPayments();
-    this.loadPlanInfo();
+
+  // Select a plan and duration
+  selectPlan(plan: Plan, duration: any) {
+    this.selectedPlan = plan;
+    this.selectedDuration = duration;
   }
 
-  loadPlanInfo() {
-    const user = this.getCurrentUser();
-    const userType = user?.role === 'brand' ? 'BRAND' : 'INFLUENCER';
-    this.plansService.getActivePlans(userType).subscribe(plans => {
-      this.activePlan = plans[0] ?? null;
-      this.cdr.markForCheck();
-    });
-    this.plansService.getMyCapabilities().subscribe(caps => {
-      this.myCapabilities = caps;
-      this.cdr.markForCheck();
-    });
-    // Always show free plan from constant
-    this.freePlan = { ...FREE_CAPABILITIES };
-    if (userType === 'BRAND') {
-      // Patch brand-specific free plan limits
-      this.freePlan.limits = [
-        { key: 'maxProductImages', label: 'Max Product Images', value: 3 },
-        { key: 'maxCampaigns', label: 'Max Campaigns', value: 1 },
-        { key: 'maxInvitesPerCampaign', label: 'Max Invites Per Campaign', value: 2 },
-        { key: 'maxInvitesPerMonth', label: 'Max Campaigns Per Month', value: 1 },
-        { key: 'maxInviteSelectOptions', label: 'Max Invite Select Options', value: 5 },
-      ];
-    } else {
-      // Influencer free plan
-      this.freePlan.limits = [
-        { key: 'maxImages', label: 'Max Images Upload', value: 2 },
-        { key: 'maxCampaigns', label: 'Max Campaigns', value: 1 },
-        { key: 'maxCampaignApplications', label: 'Max Campaigns Apply', value: 2 },
-      ];
-    }
-  }
-
-  public get planFeatures() { return this.activePlan?.features ?? []; }
-  public get planLimits() { return this.activePlan?.limits ?? []; }
-  public get freePlanFeatures() { return this.freePlan.features; }
-  public get freePlanLimits() { return this.freePlan.limits; }
-  public get retentionDays() { return this.activePlan?.policies?.imageRetentionDaysAfterExpiry ?? 45; }
-  public get freeRetentionDays() { return this.freePlan.policies?.imageRetentionDaysAfterExpiry ?? 45; }
-  public get maxImages() { return this.plansService.getLimitValue(this.myCapabilities, 'maxImages'); }
 
   loadMyPayments() {
     const token = this.getToken();
@@ -116,20 +104,24 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     // Cleanup if needed
   }
 
-  public get selectedPlan() {
-    return this.plans.find(p => p.duration === this.selectedDuration) || null;
-  }
+
 
   public get upiQrUrl(): string {
     const plan = this.selectedPlan;
-    if (!plan) return '';
-    const upiString = `upi://pay?pa=${this.upiId}&pn=TrendstarZ&am=${plan.amount / 100}&cu=INR&tn=${encodeURIComponent(plan.label + ' Premium')}`;
+    const duration = this.selectedDuration;
+    if (!plan || !duration) return '';
+    // Use duration.price and plan.name for QR
+    const upiString = `upi://pay?pa=${this.upiId}&pn=TrendstarZ&am=${duration.price}&cu=INR&tn=${encodeURIComponent(plan.name + ' Premium')}`;
     return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiString)}`;
   }
 
-  public selectPlan(duration: '1m' | '3m' | '1y' | '') {
-    this.selectedDuration = duration;
-    this.upgradeError = '';
+
+
+
+  // Returns the CTA label for the upgrade button
+  public getCtaLabel(): string {
+    if (!this.selectedPlan || !this.selectedDuration) return 'Proceed to Payment →';
+    return `Upgrade — ${this.selectedDuration.price} for ${this.selectedDuration.label.toLowerCase()} →`;
   }
 
   public goToPayment() {
@@ -236,9 +228,6 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.router.navigate([user?.role === 'brand' ? '/brand-profile' : '/influencer-profile']);
   }
 
-  public asDurationType(val: string): '' | '1m' | '3m' | '1y' {
-    if (val === '1m' || val === '3m' || val === '1y' || val === '') return val as '' | '1m' | '3m' | '1y';
-    return '';
-  }
+
 }
 
