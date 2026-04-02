@@ -13,6 +13,8 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
+type DurationType = '' | '1m' | '3m' | '1y';
+
 @Component({
   selector: 'app-premium-upgrade',
   standalone: true,
@@ -24,16 +26,16 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
 
   step: 'plan' | 'payment' | 'success' = 'plan';
   paymentTab: 'upi' | 'qr' = 'upi';
-  selectedDuration: '1m' | '3m' | '1y' | '' = '';
+  selectedDuration: DurationType = '';
   upgrading = false;
   upgradeError = '';
   upiCopied = false;
   upiRef: string = '';
-  plans = [
+  plans: { duration: DurationType; label: string; price: string; amount: number; badge: string; pricePer: string; isFree: boolean }[] = [
     { duration: '', label: 'Free', price: '₹0', amount: 0, badge: 'Free', pricePer: 'Free', isFree: true },
-    { duration: '1m' as const, label: '1 Month',  price: '₹399',   amount: 39900,  badge: '',           pricePer: '₹399/mo', isFree: false },
-    { duration: '3m' as const, label: '3 Months', price: '₹999',   amount: 99900,  badge: 'Save 16%',   pricePer: '₹333/mo', isFree: false },
-    { duration: '1y' as const, label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo', isFree: false },
+    { duration: '1m', label: '1 Month',  price: '₹399',   amount: 39900,  badge: '',           pricePer: '₹399/mo', isFree: false },
+    { duration: '3m', label: '3 Months', price: '₹999',   amount: 99900,  badge: 'Save 16%',   pricePer: '₹333/mo', isFree: false },
+    { duration: '1y', label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo', isFree: false },
   ];
   readonly upiId = 'trendstarzin@kotak';
   readonly isProduction = environment.production;
@@ -127,9 +129,24 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiString)}`;
   }
 
-  public selectPlan(duration: '1m' | '3m' | '1y' | '') {
+  public selectPlan(duration: DurationType) {
     this.selectedDuration = duration;
     this.upgradeError = '';
+  }
+
+  // Returns the selected Pro plan object
+  public get selectedProPlan() {
+    return this.plans.find(p => p.duration === this.selectedDuration && !p.isFree) || null;
+  }
+
+  // Returns the CTA label for the upgrade button
+  public getCtaLabel(): string {
+    if (!this.selectedProPlan) return 'Proceed to Payment →';
+    const plan = this.selectedProPlan;
+    if (plan.duration === '1m') {
+      return `Upgrade — ${plan.price} →`;
+    }
+    return `Upgrade — ${plan.price} for ${plan.label.toLowerCase()} →`;
   }
 
   public goToPayment() {

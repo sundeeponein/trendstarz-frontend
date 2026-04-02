@@ -1,3 +1,54 @@
+.plan-card.pro {
+  border: 2px solid #f59e42;
+  background: #fff7ed;
+  box-shadow: 0 2px 16px 0 #f59e4222;
+  position: relative;
+}
+.plan-badge.pro {
+  background: #f59e42;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 0.2em 0.8em;
+  font-size: 1.1em;
+  margin-bottom: 0.5em;
+  display: inline-block;
+}
+.duration-toggle {
+  display: flex;
+  gap: 0.5em;
+  margin: 0.7em 0 1.1em 0;
+  justify-content: center;
+}
+.duration-toggle button {
+  background: #fff;
+  border: 1.5px solid #f59e42;
+  color: #f59e42;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.4em 1.2em;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.duration-toggle button.active, .duration-toggle button:hover {
+  background: #f59e42;
+  color: #fff;
+}
+.duration-badge {
+  background: #fde68a;
+  color: #b45309;
+  font-size: 0.85em;
+  border-radius: 6px;
+  padding: 0.1em 0.5em;
+  margin-left: 0.5em;
+}
+.plan-total {
+  font-size: 1.08em;
+  color: #b45309;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
 /* Recent payments section */
 .recent-payments {
   margin: 1.5rem 0 0 0;
@@ -376,7 +427,7 @@
   border-radius: 20px;
   box-shadow: 0 8px 40px rgba(249, 115, 22, 0.12);
   padding: 2.5rem 2rem;
-  max-width: 760px;
+  max-width: 960px;
   width: 100%;
 }
 
@@ -429,10 +480,11 @@
   border: 2px solid #e2e8f0;
   border-radius: 14px;
   padding: 1.5rem 1rem;
-  text-align: center;
+  // text-align: center;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
   background: #fff;
+  color: #1e293b;
 
   &:hover {
     border-color: #f97316;
@@ -483,6 +535,12 @@
     font-size: 0.85rem;
     font-weight: 700;
     color: #f97316;
+  }
+
+  .section-label{font-weight: 500;}
+
+  ul {
+    padding-left: 15px;
   }
 }
 

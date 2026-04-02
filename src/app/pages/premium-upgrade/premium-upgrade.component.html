@@ -36,18 +36,26 @@
           <p class="policy">Images removed after <strong>{{ freeRetentionDays }} days</strong> post-expiry</p>
         </div>
       </div>
-      <!-- Pro plan cards -->
-      <div
-        *ngFor="let plan of plans.slice(1)"
-        class="plan-card"
-        [class.selected]="selectedDuration === plan.duration"
-        (click)="selectPlan(asDurationType(plan.duration))"
-      >
-        <div *ngIf="plan.badge" class="plan-badge">{{ plan.badge }}</div>
-        <div class="plan-label">{{ plan.label }}</div>
-        <div class="plan-price">{{ plan.price }}</div>
-        <div class="plan-price-per">{{ plan.pricePer }}</div>
-        <div class="plan-check" *ngIf="selectedDuration === plan.duration">✓ Selected</div>
+      <!-- Pro plan card with duration toggle -->
+      <div class="plan-card pro" [class.selected]="selectedDuration !== ''">
+        <div class="plan-badge pro">Pro</div>
+        <div class="plan-label">Pro</div>
+        <!-- Duration toggle group -->
+        <div class="duration-toggle">
+            <button *ngFor="let plan of plans.slice(1)"
+              [class.active]="selectedDuration === plan.duration"
+              (click)="selectPlan(plan.duration); $event.stopPropagation();">
+            {{ plan.label }}
+            <span *ngIf="plan.badge" class="duration-badge">{{ plan.badge }}</span>
+          </button>
+        </div>
+        <!-- Dynamic price per month -->
+        <div class="plan-price">{{ selectedProPlan?.pricePer || '₹399/mo' }}</div>
+        <!-- Show total for multi-month -->
+        <div *ngIf="selectedProPlan && selectedProPlan.duration !== '1m'" class="plan-total">
+          {{ selectedProPlan.price }} for {{ selectedProPlan.label.toLowerCase() }}
+        </div>
+        <div class="plan-check" *ngIf="selectedDuration !== ''">✓ Selected</div>
         <div class="plan-features">
           <div class="section-label">Features</div>
           <ul class="feature-list">
@@ -95,7 +103,7 @@
     <div class="upgrade-actions">
       <button class="btn-back" (click)="goToProfile()">← Back to Profile</button>
       <button class="btn-upgrade" [disabled]="!selectedDuration" (click)="goToPayment()">
-        Proceed to Payment →
+        {{ getCtaLabel() }}
       </button>
     </div>
   </div>
