@@ -106,11 +106,21 @@
 
           <div class="field-block media-uploader mt-3">
             <label>Profile Image</label>
+            <!-- Plan image limit indicator -->
+            <div class="plan-image-limit" *ngIf="isEditMode">
+              <span [class.limit-reached]="!imageUploadAllowed">
+                {{ currentImageCount }} / {{ maxImages }} images used
+              </span>
+              <span *ngIf="!imageUploadAllowed" class="limit-warning">
+                Limit reached — <a routerLink="/upgrade-premium">Upgrade to upload more</a>
+              </span>
+            </div>
             <div class="upload-box">
               <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="preview-image" />
               <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url" [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="preview-image" />
               <p *ngIf="!profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)">No profile image uploaded.</p>
-              <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" *ngIf="isEditMode" />
+              <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" *ngIf="isEditMode && imageUploadAllowed" />
+              <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted" style="font-size:0.82rem">Remove an image to upload a new one, or upgrade your plan.</p>
               <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && profileImagesFormArray.length > 0" (click)="removeProfileImage(0)">Remove</button>
             </div>
           </div>
