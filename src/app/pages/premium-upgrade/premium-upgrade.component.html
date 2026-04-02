@@ -10,92 +10,27 @@
       <p class="upgrade-sub">Unlock contact visibility, analytics, priority search ranking, and unlimited social profiles.</p>
     </div>
 
-    <div class="plans-grid">
-      <!-- Free plan card -->
-      <div class="plan-card free" [class.selected]="selectedDuration === ''">
-        <div class="plan-badge">Free</div>
-        <div class="plan-label">Free</div>
-        <div class="plan-price">₹0</div>
-        <div class="plan-price-per">Free</div>
-        <div class="plan-check" *ngIf="selectedDuration === ''">✓ Selected</div>
-        <div class="plan-features">
-          <div class="section-label">Features</div>
-          <ul class="feature-list">
-            <li *ngFor="let f of freePlanFeatures" [class.disabled]="!f.value">
-              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
-            </li>
-          </ul>
-          <div class="section-label">Limits</div>
-          <ul class="limit-list">
-            <li *ngFor="let l of freePlanLimits">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
-            </li>
-          </ul>
-          <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ freeRetentionDays }} days</strong> post-expiry</p>
-        </div>
-      </div>
-      <!-- Pro plan card with duration toggle -->
-      <div class="plan-card pro" [class.selected]="selectedDuration !== ''">
-        <div class="plan-badge pro">Pro</div>
-        <div class="plan-label">Pro</div>
-        <!-- Duration toggle group -->
-        <div class="duration-toggle">
-            <button *ngFor="let plan of plans.slice(1)"
-              [class.active]="selectedDuration === plan.duration"
-              (click)="selectPlan(plan.duration); $event.stopPropagation();">
-            {{ plan.label }}
-            <span *ngIf="plan.badge" class="duration-badge">{{ plan.badge }}</span>
-          </button>
-        </div>
-        <!-- Dynamic price per month -->
-        <div class="plan-price">{{ selectedProPlan?.pricePer || '₹399/mo' }}</div>
-        <!-- Show total for multi-month -->
-        <div *ngIf="selectedProPlan && selectedProPlan.duration !== '1m'" class="plan-total">
-          {{ selectedProPlan.price }} for {{ selectedProPlan.label.toLowerCase() }}
-        </div>
-        <div class="plan-check" *ngIf="selectedDuration !== ''">✓ Selected</div>
-        <div class="plan-features">
-          <div class="section-label">Features</div>
-          <ul class="feature-list">
-            <li *ngFor="let f of planFeatures" [class.disabled]="!f.value">
-              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
-            </li>
-          </ul>
-          <div class="section-label">Limits</div>
-          <ul class="limit-list">
-            <li *ngFor="let l of planLimits">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
-            </li>
-          </ul>
-          <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ retentionDays }} days</strong> post-expiry</p>
-        </div>
-      </div>
-    </div>
+    <!-- Role toggle removed: Only show relevant plan for user's role -->
 
-    <div class="features-list">
-      <!-- Dynamic features from backend plan -->
-      <ng-container *ngIf="planFeatures.length > 0; else staticFeatures">
-        <div class="feature-item" *ngFor="let f of planFeatures">
-          <span class="feat-icon" [style.color]="f.value ? '#22c55e' : '#ef4444'">{{ f.value ? '✔' : '✕' }}</span>
-          {{ f.label }}
+    <div class="plans-grid">
+      <div *ngFor="let plan of plans" class="plan-card" [class.selected]="selectedPlan === plan">
+        <div class="plan-badge">{{ plan.name }}</div>
+        <!-- No duration-toggle: only one price/duration per plan -->
+        <div class="plan-price">{{ selectedPlan === plan && selectedDuration ? (selectedDuration.price | currency:'INR') : '' }}</div>
+        <div class="plan-check" *ngIf="selectedPlan === plan">✓ Selected</div>
+        <div class="features-list unified">
+          <div *ngFor="let f of plan.features">
+            <span class="feat-icon" [style.color]="f.value ? '#22c55e' : '#ef4444'">{{ f.value ? '✔' : '✕' }}</span>
+            {{ f.label }}
+          </div>
+          <div *ngFor="let l of plan.limits">
+            <span class="feat-icon">📦</span> {{ l.label }}: <strong>{{ l.value }}</strong>
+          </div>
+          <div class="feature-item note" *ngIf="plan.policies.imageRetentionDaysAfterExpiry">
+            <span class="feat-icon">⚠</span> Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> if not renewed
+          </div>
         </div>
-        <div class="feature-item" *ngFor="let l of planLimits">
-          <span class="feat-icon">📦</span> {{ l.label }}: <strong>{{ l.value }}</strong>
-        </div>
-        <div class="feature-item note">
-          <span class="feat-icon">⚠</span> Images removed after <strong>{{ retentionDays }} days</strong> if not renewed
-        </div>
-      </ng-container>
-      <ng-template #staticFeatures>
-        <div class="feature-item"><span class="feat-icon">✔</span> Contact details visible to brands/influencers</div>
-        <div class="feature-item"><span class="feat-icon">✔</span> Unlimited social media profiles</div>
-        <div class="feature-item"><span class="feat-icon">✔</span> Priority listing in search results</div>
-        <div class="feature-item"><span class="feat-icon">✔</span> Unlimited product images (brands)</div>
-      </ng-template>
+      </div>
     </div>
 
     <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
@@ -115,8 +50,8 @@
 
     <!-- Order summary bar -->
     <div class="order-bar" *ngIf="selectedPlan">
-      <span class="order-bar-label">{{ selectedPlan.label }} Premium</span>
-      <span class="order-bar-amount">{{ selectedPlan.price }}</span>
+      <span class="order-bar-label">{{ selectedPlan.name }} Premium</span>
+      <span class="order-bar-amount">{{ selectedDuration?.price }}</span>
     </div>
 
     <!-- Payment method tabs -->
@@ -133,7 +68,7 @@
     <div *ngIf="paymentTab === 'upi'" class="tab-content">
       <div class="upi-instructions">
         <p class="upi-step"><span class="upi-step-num">1</span> Open PhonePe, GPay, Paytm, BHIM or any UPI app</p>
-        <p class="upi-step"><span class="upi-step-num">2</span> Send <strong>{{ selectedPlan?.price }}</strong> to:</p>
+        <p class="upi-step"><span class="upi-step-num">2</span> Send <strong>{{ selectedDuration?.price }}</strong> to:</p>
 
         <div class="upi-id-box">
           <span class="upi-id-value">{{ upiId }}</span>
@@ -171,7 +106,7 @@
     <!-- ── QR Code tab ────────────────────────── -->
     <div *ngIf="paymentTab === 'qr'" class="tab-content">
       <div class="qr-section">
-        <p class="qr-label">Scan with any UPI app to pay <strong>{{ selectedPlan?.price }}</strong></p>
+        <p class="qr-label">Scan with any UPI app to pay <strong>{{ selectedDuration?.price }}</strong></p>
         <div class="qr-frame">
           <img [src]="upiQrUrl" alt="UPI QR Code" class="qr-image" />
         </div>
@@ -226,8 +161,8 @@
     <h2>Payment Recorded!</h2>
     <p><strong>Status: Pending Admin Approval</strong></p>
     <div *ngIf="selectedPlan" class="success-plan-details">
-      <p><strong>Plan:</strong> {{ selectedPlan.label }} Premium</p>
-      <p><strong>Amount:</strong> {{ selectedPlan.price }}</p>
+      <p><strong>Plan:</strong> {{ selectedPlan.name }} Premium</p>
+      <p><strong>Amount:</strong> {{ selectedDuration?.price }}</p>
       <p><strong>Transaction ID:</strong> {{ upiRef }}</p>
     </div>
     <p>Your UPI payment has been recorded. The admin will verify the transaction and activate your Premium membership shortly. You'll be notified via email once approved.</p>
