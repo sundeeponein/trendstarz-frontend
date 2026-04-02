@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +11,36 @@ import { PlansService, Plan, PlanFeature, PlanLimit } from '../../../shared/plan
   templateUrl: './admin-plans.component.html',
   styleUrls: ['./admin-plans.component.scss'],
 })
+
 export class AdminPlansComponent implements OnInit {
+
+
+  loadFromConfig() {
+    this.loading = true;
+    this.error = '';
+    this.successMsg = '';
+    fetch(`${(window as any).environment?.apiBaseUrl || '/api'}/plans/admin/load-config`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token') || ''}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          this.successMsg = res.message || 'Plans loaded from config';
+          this.loadPlans();
+        } else {
+          this.error = res.message || 'Failed to load from config';
+        }
+        this.loading = false;
+      })
+      .catch(() => {
+        this.error = 'Failed to load from config';
+        this.loading = false;
+      });
+  }
   plans: Plan[] = [];
   loading = false;
   error = '';
