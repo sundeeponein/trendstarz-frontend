@@ -11,17 +11,60 @@
     </div>
 
     <div class="plans-grid">
+      <!-- Free plan card -->
+      <div class="plan-card free" [class.selected]="selectedDuration === ''">
+        <div class="plan-badge">Free</div>
+        <div class="plan-label">Free</div>
+        <div class="plan-price">₹0</div>
+        <div class="plan-price-per">Free</div>
+        <div class="plan-check" *ngIf="selectedDuration === ''">✓ Selected</div>
+        <div class="plan-features">
+          <div class="section-label">Features</div>
+          <ul class="feature-list">
+            <li *ngFor="let f of freePlanFeatures" [class.disabled]="!f.value">
+              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
+              {{ f.label }}
+            </li>
+          </ul>
+          <div class="section-label">Limits</div>
+          <ul class="limit-list">
+            <li *ngFor="let l of freePlanLimits">
+              {{ l.label }}: <strong>{{ l.value }}</strong>
+            </li>
+          </ul>
+          <div class="section-label">Policies</div>
+          <p class="policy">Images removed after <strong>{{ freeRetentionDays }} days</strong> post-expiry</p>
+        </div>
+      </div>
+      <!-- Pro plan cards -->
       <div
-        *ngFor="let plan of plans"
+        *ngFor="let plan of plans.slice(1)"
         class="plan-card"
         [class.selected]="selectedDuration === plan.duration"
-        (click)="selectPlan(plan.duration)"
+        (click)="selectPlan(asDurationType(plan.duration))"
       >
         <div *ngIf="plan.badge" class="plan-badge">{{ plan.badge }}</div>
         <div class="plan-label">{{ plan.label }}</div>
         <div class="plan-price">{{ plan.price }}</div>
         <div class="plan-price-per">{{ plan.pricePer }}</div>
         <div class="plan-check" *ngIf="selectedDuration === plan.duration">✓ Selected</div>
+        <div class="plan-features">
+          <div class="section-label">Features</div>
+          <ul class="feature-list">
+            <li *ngFor="let f of planFeatures" [class.disabled]="!f.value">
+              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
+              {{ f.label }}
+            </li>
+          </ul>
+          <div class="section-label">Limits</div>
+          <ul class="limit-list">
+            <li *ngFor="let l of planLimits">
+              {{ l.label }}: <strong>{{ l.value }}</strong>
+            </li>
+          </ul>
+          <div class="section-label">Policies</div>
+          <p class="policy">Images removed after <strong>{{ retentionDays }} days</strong> post-expiry</p>
+        </div>
       </div>
     </div>
 
