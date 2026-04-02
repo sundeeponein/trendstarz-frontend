@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -56,10 +57,16 @@ export const FREE_CAPABILITIES: PlanCapabilities = {
 
 @Injectable({ providedIn: 'root' })
 export class PlansService {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token') ?? sessionStorage.getItem('token') ?? '';
+    let token = '';
+    if (isPlatformBrowser(this.platformId)) {
+      token = localStorage.getItem('token') ?? sessionStorage.getItem('token') ?? '';
+    }
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
 
