@@ -195,6 +195,19 @@ $radius: 16px;
   flex-wrap: wrap;
 }
 
+.locked-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  i { color: #9ca3af; }
+}
+
 .social-link-item {
   display: flex;
   align-items: center;

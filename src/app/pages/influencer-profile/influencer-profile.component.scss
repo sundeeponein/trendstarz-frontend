@@ -271,6 +271,18 @@ input {
   margin-top: 1rem;
 }
 
+.plan-image-limit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin-bottom: 6px;
+
+  .limit-reached { color: #dc2626; font-weight: 600; }
+  .limit-warning { color: #dc2626; a { color: #6366f1; text-decoration: underline; } }
+}
+
 .upload-box {
   border: 2px dashed #d6dfeb;
   border-radius: 12px;

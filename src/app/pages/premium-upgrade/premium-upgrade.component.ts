@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-premium-upgrade',
@@ -38,16 +39,40 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   readonly isProduction = environment.production;
   myPayments: any[] = [];
 
+  // Dynamic plan features from backend
+  activePlan: Plan | null = null;
+  myCapabilities: PlanCapabilities = FREE_CAPABILITIES;
+
   constructor(
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private plansService: PlansService,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
   ngOnInit(): void {
     this.loadMyPayments();
+    this.loadPlanInfo();
   }
+
+  loadPlanInfo() {
+    const user = this.getCurrentUser();
+    const userType = user?.role === 'brand' ? 'BRAND' : 'INFLUENCER';
+    this.plansService.getActivePlans(userType).subscribe(plans => {
+      this.activePlan = plans[0] ?? null;
+      this.cdr.markForCheck();
+    });
+    this.plansService.getMyCapabilities().subscribe(caps => {
+      this.myCapabilities = caps;
+      this.cdr.markForCheck();
+    });
+  }
+
+  get planFeatures() { return this.activePlan?.features ?? []; }
+  get planLimits() { return this.activePlan?.limits ?? []; }
+  get retentionDays() { return this.activePlan?.policies?.imageRetentionDaysAfterExpiry ?? 45; }
+  get maxImages() { return this.plansService.getLimitValue(this.myCapabilities, 'maxImages'); }
 
   loadMyPayments() {
     const token = this.getToken();

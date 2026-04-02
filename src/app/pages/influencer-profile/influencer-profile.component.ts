@@ -12,6 +12,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import imageCompression from 'browser-image-compression';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -71,7 +72,8 @@ export class InfluencerProfileComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
-    private otpService: OtpService
+    private otpService: OtpService,
+    private plansService: PlansService,
   ) {}
 
   resendPhoneOtp() {
@@ -136,6 +138,12 @@ export class InfluencerProfileComponent implements OnInit {
   paymentError = '';
   myPayments: any[] = [];
   latestPendingPayment: any = null;
+
+  // Plan capabilities
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
+  get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxImages'); }
+  get currentImageCount(): number { return this.profileImagesFormArray?.length ?? 0; }
+  get imageUploadAllowed(): boolean { return this.currentImageCount < this.maxImages; }
   registrationSuccess = false;
   registrationError = '';
   registrationForm!: FormGroup;
@@ -165,6 +173,10 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Load plan capabilities
+    this.plansService.getMyCapabilities().subscribe(caps => {
+      this.planCaps = caps;
+    });
     // Initialize form first
     this.registrationForm = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
