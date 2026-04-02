@@ -1,4 +1,3 @@
-
 import {
   Component,
   OnInit,
@@ -31,9 +30,10 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   upiCopied = false;
   upiRef: string = '';
   plans = [
-    { duration: '1m' as const, label: '1 Month',  price: '₹399',   amount: 39900,  badge: '',           pricePer: '₹399/mo'  },
-    { duration: '3m' as const, label: '3 Months', price: '₹999',   amount: 99900,  badge: 'Save 16%',   pricePer: '₹333/mo'  },
-    { duration: '1y' as const, label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo'  },
+    { duration: '', label: 'Free', price: '₹0', amount: 0, badge: 'Free', pricePer: 'Free', isFree: true },
+    { duration: '1m' as const, label: '1 Month',  price: '₹399',   amount: 39900,  badge: '',           pricePer: '₹399/mo', isFree: false },
+    { duration: '3m' as const, label: '3 Months', price: '₹999',   amount: 99900,  badge: 'Save 16%',   pricePer: '₹333/mo', isFree: false },
+    { duration: '1y' as const, label: '1 Year',   price: '₹2,999', amount: 299900, badge: 'Best Value',  pricePer: '₹250/mo', isFree: false },
   ];
   readonly upiId = 'trendstarzin@kotak';
   readonly isProduction = environment.production;
@@ -42,6 +42,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   // Dynamic plan features from backend
   activePlan: Plan | null = null;
   myCapabilities: PlanCapabilities = FREE_CAPABILITIES;
+  freePlan: PlanCapabilities = FREE_CAPABILITIES;
 
   constructor(
     private http: HttpClient,
@@ -67,12 +68,34 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       this.myCapabilities = caps;
       this.cdr.markForCheck();
     });
+    // Always show free plan from constant
+    this.freePlan = { ...FREE_CAPABILITIES };
+    if (userType === 'BRAND') {
+      // Patch brand-specific free plan limits
+      this.freePlan.limits = [
+        { key: 'maxProductImages', label: 'Max Product Images', value: 3 },
+        { key: 'maxCampaigns', label: 'Max Campaigns', value: 1 },
+        { key: 'maxInvitesPerCampaign', label: 'Max Invites Per Campaign', value: 2 },
+        { key: 'maxInvitesPerMonth', label: 'Max Campaigns Per Month', value: 1 },
+        { key: 'maxInviteSelectOptions', label: 'Max Invite Select Options', value: 5 },
+      ];
+    } else {
+      // Influencer free plan
+      this.freePlan.limits = [
+        { key: 'maxImages', label: 'Max Images Upload', value: 2 },
+        { key: 'maxCampaigns', label: 'Max Campaigns', value: 1 },
+        { key: 'maxCampaignApplications', label: 'Max Campaigns Apply', value: 2 },
+      ];
+    }
   }
 
-  get planFeatures() { return this.activePlan?.features ?? []; }
-  get planLimits() { return this.activePlan?.limits ?? []; }
-  get retentionDays() { return this.activePlan?.policies?.imageRetentionDaysAfterExpiry ?? 45; }
-  get maxImages() { return this.plansService.getLimitValue(this.myCapabilities, 'maxImages'); }
+  public get planFeatures() { return this.activePlan?.features ?? []; }
+  public get planLimits() { return this.activePlan?.limits ?? []; }
+  public get freePlanFeatures() { return this.freePlan.features; }
+  public get freePlanLimits() { return this.freePlan.limits; }
+  public get retentionDays() { return this.activePlan?.policies?.imageRetentionDaysAfterExpiry ?? 45; }
+  public get freeRetentionDays() { return this.freePlan.policies?.imageRetentionDaysAfterExpiry ?? 45; }
+  public get maxImages() { return this.plansService.getLimitValue(this.myCapabilities, 'maxImages'); }
 
   loadMyPayments() {
     const token = this.getToken();
@@ -93,23 +116,23 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     // Cleanup if needed
   }
 
-  get selectedPlan() {
+  public get selectedPlan() {
     return this.plans.find(p => p.duration === this.selectedDuration) || null;
   }
 
-  get upiQrUrl(): string {
+  public get upiQrUrl(): string {
     const plan = this.selectedPlan;
     if (!plan) return '';
     const upiString = `upi://pay?pa=${this.upiId}&pn=TrendstarZ&am=${plan.amount / 100}&cu=INR&tn=${encodeURIComponent(plan.label + ' Premium')}`;
     return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiString)}`;
   }
 
-  selectPlan(duration: '1m' | '3m' | '1y') {
+  public selectPlan(duration: '1m' | '3m' | '1y' | '') {
     this.selectedDuration = duration;
     this.upgradeError = '';
   }
 
-  goToPayment() {
+  public goToPayment() {
     if (!this.selectedDuration) {
       this.upgradeError = 'Please select a plan to continue.';
       return;
@@ -120,13 +143,13 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.paymentTab = 'upi'; // ← Start with UPI tab
   }
 
-  setTab(tab: 'upi' | 'qr') {
+  public setTab(tab: 'upi' | 'qr') {
     this.paymentTab = tab;
     this.upgradeError = '';
   }
 
   // ─── UPI / QR manual fallback ─────────────────────────────────────────────
-  payByUpi() {
+  public payByUpi() {
     if (!this.upiRef.trim()) {
       this.upgradeError = 'Please enter the UPI Transaction ID after completing payment.';
       return;
@@ -136,7 +159,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.recordUpiPayment();
   }
 
-  copyUpiId() {
+  public copyUpiId() {
     if (isPlatformBrowser(this.platformId)) {
       navigator.clipboard.writeText(this.upiId).then(() => {
         this.upiCopied = true;
@@ -207,10 +230,15 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     } catch { return {}; }
   }
 
-  goToProfile() {
+  public goToProfile() {
     if (!isPlatformBrowser(this.platformId)) return;
     const user = this.getCurrentUser();
     this.router.navigate([user?.role === 'brand' ? '/brand-profile' : '/influencer-profile']);
+  }
+
+  public asDurationType(val: string): '' | '1m' | '3m' | '1y' {
+    if (val === '1m' || val === '3m' || val === '1y' || val === '') return val as '' | '1m' | '3m' | '1y';
+    return '';
   }
 }
 
