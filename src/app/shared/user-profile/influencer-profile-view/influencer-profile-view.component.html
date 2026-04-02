@@ -81,6 +81,11 @@
             </a>
           </ng-container>
         </div>
+        <!-- Social media hidden (not on premium plan) -->
+        <div *ngIf="!influencer.socialMedia?.length" class="locked-feature">
+          <i class="bi bi-lock-fill"></i>
+          <span>Social media links visible to premium members only.</span>
+        </div>
       </div>
 
       <!-- Details -->

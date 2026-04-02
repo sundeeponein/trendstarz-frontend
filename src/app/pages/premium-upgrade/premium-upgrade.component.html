@@ -26,10 +26,25 @@
     </div>
 
     <div class="features-list">
-      <div class="feature-item"><span class="feat-icon">✔</span> Contact details visible to brands/influencers</div>
-      <div class="feature-item"><span class="feat-icon">✔</span> Unlimited social media profiles</div>
-      <div class="feature-item"><span class="feat-icon">✔</span> Priority listing in search results</div>
-      <div class="feature-item"><span class="feat-icon">✔</span> Unlimited product images (brands)</div>
+      <!-- Dynamic features from backend plan -->
+      <ng-container *ngIf="planFeatures.length > 0; else staticFeatures">
+        <div class="feature-item" *ngFor="let f of planFeatures">
+          <span class="feat-icon" [style.color]="f.value ? '#22c55e' : '#ef4444'">{{ f.value ? '✔' : '✕' }}</span>
+          {{ f.label }}
+        </div>
+        <div class="feature-item" *ngFor="let l of planLimits">
+          <span class="feat-icon">📦</span> {{ l.label }}: <strong>{{ l.value }}</strong>
+        </div>
+        <div class="feature-item note">
+          <span class="feat-icon">⚠</span> Images removed after <strong>{{ retentionDays }} days</strong> if not renewed
+        </div>
+      </ng-container>
+      <ng-template #staticFeatures>
+        <div class="feature-item"><span class="feat-icon">✔</span> Contact details visible to brands/influencers</div>
+        <div class="feature-item"><span class="feat-icon">✔</span> Unlimited social media profiles</div>
+        <div class="feature-item"><span class="feat-icon">✔</span> Priority listing in search results</div>
+        <div class="feature-item"><span class="feat-icon">✔</span> Unlimited product images (brands)</div>
+      </ng-template>
     </div>
 
     <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
