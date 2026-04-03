@@ -192,11 +192,66 @@
   border: 1px solid #bbf7d0;
   border-radius: 10px;
   padding: 0.7rem 1.25rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 
   .order-bar-label { font-size: 0.95rem; font-weight: 600; color: #166534; }
   .order-bar-amount { font-size: 1.1rem; font-weight: 800; color: #15803d; }
+  .amount-original { text-decoration: line-through; color: #94a3b8; font-size: 0.9rem; margin-right: 0.4rem; font-weight: 400; }
 }
+
+/* Coupon row */
+.coupon-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  .coupon-input { flex: 1; }
+  .btn-coupon {
+    padding: 0.6rem 1.1rem;
+    background: #f97316;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+    &:hover:not(:disabled) { background: #ea6c0a; }
+  }
+}
+.coupon-success { color: #15803d; font-size: 0.88rem; margin-bottom: 1rem; }
+.coupon-error   { color: #dc2626; font-size: 0.88rem; margin-bottom: 1rem; }
+
+/* Duration tabs on plan card */
+.duration-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0.75rem;
+  flex-wrap: wrap;
+  .dur-btn {
+    flex: 1;
+    padding: 0.4rem 0.5rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    transition: all 0.15s;
+    .dur-save { font-size: 0.65rem; color: #22c55e; font-weight: 700; }
+    &.active {
+      border-color: #f97316;
+      background: #fff7ed;
+      color: #f97316;
+    }
+    &:hover:not(.active) { border-color: #94a3b8; }
+  }
+}
+.price-monthly-hint { font-size: 0.8rem; color: #94a3b8; margin-top: -0.4rem; margin-bottom: 0.5rem; }
 
 /* Payment tabs */
 .pay-tabs {

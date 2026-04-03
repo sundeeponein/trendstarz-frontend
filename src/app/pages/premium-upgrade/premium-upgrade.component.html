@@ -13,10 +13,38 @@
     <!-- Role toggle removed: Only show relevant plan for user's role -->
 
     <div class="plans-grid">
-      <div *ngFor="let plan of plans" class="plan-card" [class.selected]="selectedPlan === plan">
+      <div *ngFor="let plan of plans" class="plan-card" [class.selected]="selectedPlan === plan" (click)="selectPlanCard(plan)">
         <div class="plan-badge">{{ plan.name }}</div>
-        <!-- No duration-toggle: only one price/duration per plan -->
-        <div class="plan-price">{{ selectedPlan === plan && selectedDuration ? (selectedDuration.price | currency:'INR') : '' }}</div>
+
+        <!-- Duration selector for paid plans -->
+        <ng-container *ngIf="plan.price.monthly > 0 && selectedPlan === plan">
+          <div class="duration-tabs">
+            <button class="dur-btn" [class.active]="selectedDurationKey === '1m'" (click)="$event.stopPropagation(); selectDuration('1m')">1 Month</button>
+            <button class="dur-btn" [class.active]="selectedDurationKey === '3m'" (click)="$event.stopPropagation(); selectDuration('3m')">
+              3 Months<span class="dur-save">Save 10%</span>
+            </button>
+            <button class="dur-btn" [class.active]="selectedDurationKey === '1y'" (click)="$event.stopPropagation(); selectDuration('1y')">
+              1 Year<span class="dur-save">Best value</span>
+            </button>
+          </div>
+          <div class="plan-price">
+            <span>₹{{ selectedDuration?.price }}</span>
+            <span class="price-period"> /{{ selectedDurationKey === '1m' ? 'mo' : selectedDurationKey === '3m' ? '3mo' : 'yr' }}</span>
+          </div>
+          <div class="price-monthly-hint" *ngIf="selectedDurationKey !== '1m'">₹{{ plan.price.monthly }}/mo</div>
+        </ng-container>
+
+        <!-- Free plan price -->
+        <div class="plan-price" *ngIf="plan.price.monthly === 0">
+          <span>₹0</span>
+          <div class="price-period">Always free</div>
+        </div>
+
+        <!-- Unselected paid plan — just show monthly price -->
+        <div class="plan-price" *ngIf="plan.price.monthly > 0 && selectedPlan !== plan">
+          <span>₹{{ plan.price.monthly }}<span class="price-period">/mo</span></span>
+        </div>
+
         <div class="plan-check" *ngIf="selectedPlan === plan">✓ Selected</div>
         <div class="features-list unified">
           <div *ngFor="let f of plan.features">
@@ -50,9 +78,29 @@
 
     <!-- Order summary bar -->
     <div class="order-bar" *ngIf="selectedPlan">
-      <span class="order-bar-label">{{ selectedPlan.name }} Premium</span>
-      <span class="order-bar-amount">{{ selectedDuration?.price }}</span>
+      <span class="order-bar-label">{{ selectedPlan.name }} · {{ selectedDuration?.label }}</span>
+      <span class="order-bar-amount">
+        <span *ngIf="discountAmount > 0" class="amount-original">₹{{ selectedDuration?.price }}</span>
+        ₹{{ finalPrice }}
+      </span>
     </div>
+
+    <!-- Coupon code -->
+    <div class="coupon-row">
+      <input
+        class="form-input coupon-input"
+        type="text"
+        placeholder="Coupon code (optional)"
+        [(ngModel)]="couponCode"
+        [disabled]="couponApplied || upgrading"
+        (keyup.enter)="applyCoupon()"
+      />
+      <button class="btn-coupon" (click)="applyCoupon()" [disabled]="couponApplied || upgrading || !couponCode.trim()">
+        {{ couponApplied ? '✓ Applied' : 'Apply' }}
+      </button>
+    </div>
+    <div *ngIf="couponApplied" class="coupon-success">🎉 Coupon applied! You save ₹{{ discountAmount }}</div>
+    <div *ngIf="couponError" class="coupon-error">{{ couponError }}</div>
 
     <!-- Payment method tabs -->
     <div class="pay-tabs">
@@ -68,7 +116,7 @@
     <div *ngIf="paymentTab === 'upi'" class="tab-content">
       <div class="upi-instructions">
         <p class="upi-step"><span class="upi-step-num">1</span> Open PhonePe, GPay, Paytm, BHIM or any UPI app</p>
-        <p class="upi-step"><span class="upi-step-num">2</span> Send <strong>{{ selectedDuration?.price }}</strong> to:</p>
+        <p class="upi-step"><span class="upi-step-num">2</span> Send <strong>₹{{ finalPrice }}</strong> to:</p>
 
         <div class="upi-id-box">
           <span class="upi-id-value">{{ upiId }}</span>

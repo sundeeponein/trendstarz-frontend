@@ -38,9 +38,20 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     upgradeError = '';
     upiCopied = false;
     upiRef: string = '';
+    couponCode: string = '';
+    couponApplied = false;
+    couponError = '';
+    discountAmount = 0;
     myPayments: any[] = [];
     readonly upiId = 'trendstarzin@kotak';
     readonly isProduction = environment.production;
+
+    readonly durations = [
+      { key: '1m', label: '1 Month', sublabel: '', priceKey: 'monthly' },
+      { key: '3m', label: '3 Months', sublabel: 'Save 10%', priceKey: 'monthly3' },
+      { key: '1y', label: '1 Year', sublabel: 'Best value', priceKey: 'yearly' },
+    ];
+    selectedDurationKey: string = '1m';
 
     constructor(
       private http: HttpClient,
@@ -62,10 +73,11 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       // Fetch plans from API
       this.plansService.getActivePlans(this.selectedRole).subscribe((plans: Plan[]) => {
         this.plans = plans;
-        if (plans.length) {
-          this.selectedPlan = plans[0];
-          // Default to monthly price as duration
-          this.selectedDuration = { label: 'Monthly', price: plans[0].price.monthly };
+        const paidPlan = plans.find(p => p.price.monthly > 0) ?? plans[0];
+        if (paidPlan) {
+          this.selectedPlan = paidPlan;
+          this.selectedDurationKey = '1m';
+          this.updateDuration();
         }
       });
     }
@@ -82,6 +94,66 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   selectPlan(plan: Plan, duration: any) {
     this.selectedPlan = plan;
     this.selectedDuration = duration;
+  }
+
+  // Select a plan card (called from template click)
+  selectPlanCard(plan: Plan) {
+    this.selectedPlan = plan;
+    this.selectedDurationKey = '1m';
+    this.updateDuration();
+    this.resetCoupon();
+  }
+
+  // Select a duration key (1m, 3m, 1y)
+  selectDuration(key: string) {
+    this.selectedDurationKey = key;
+    this.updateDuration();
+    this.resetCoupon();
+  }
+
+  updateDuration() {
+    const plan = this.selectedPlan;
+    if (!plan) return;
+    if (plan.price.monthly === 0) {
+      this.selectedDuration = { key: '1m', label: 'Monthly', price: 0 };
+      return;
+    }
+    if (this.selectedDurationKey === '1y') {
+      this.selectedDuration = { key: '1y', label: 'Yearly', price: plan.price.yearly };
+    } else if (this.selectedDurationKey === '3m') {
+      const price3m = Math.round(plan.price.monthly * 3 * 0.9);
+      this.selectedDuration = { key: '3m', label: '3 Months', price: price3m };
+    } else {
+      this.selectedDuration = { key: '1m', label: 'Monthly', price: plan.price.monthly };
+    }
+  }
+
+  get finalPrice(): number {
+    return Math.max(0, (this.selectedDuration?.price ?? 0) - this.discountAmount);
+  }
+
+  applyCoupon() {
+    this.couponError = '';
+    // Simple coupon: TRENDSTARZ10 = 10% off
+    const code = this.couponCode.trim().toUpperCase();
+    if (code === 'TRENDSTARZ10') {
+      this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * 0.1);
+      this.couponApplied = true;
+    } else if (code === 'TRENDSTARZ20') {
+      this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * 0.2);
+      this.couponApplied = true;
+    } else {
+      this.couponError = 'Invalid or expired coupon code.';
+      this.couponApplied = false;
+      this.discountAmount = 0;
+    }
+  }
+
+  resetCoupon() {
+    this.couponCode = '';
+    this.couponApplied = false;
+    this.couponError = '';
+    this.discountAmount = 0;
   }
 
 
@@ -121,7 +193,8 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   // Returns the CTA label for the upgrade button
   public getCtaLabel(): string {
     if (!this.selectedPlan || !this.selectedDuration) return 'Proceed to Payment →';
-    return `Upgrade — ${this.selectedDuration.price} for ${this.selectedDuration.label.toLowerCase()} →`;
+    if (this.selectedDuration.price === 0) return 'Continue with Free Plan →';
+    return `Proceed to Payment →`;
   }
 
   public goToPayment() {
@@ -171,9 +244,11 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
         `${environment.apiBaseUrl}/payment`,
         {
           transactionId: this.upiRef.trim(),
-          premiumDuration: this.selectedDuration,
+          premiumDuration: this.selectedDuration?.key ?? this.selectedDuration,
           userType,
           paymentMethod: this.paymentTab,
+          couponCode: this.couponApplied ? this.couponCode.trim().toUpperCase() : undefined,
+          finalAmount: this.finalPrice,
         },
         { headers },
       )

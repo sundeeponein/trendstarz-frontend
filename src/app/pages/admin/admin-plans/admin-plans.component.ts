@@ -60,17 +60,16 @@ export class AdminPlansComponent implements OnInit {
 
   loadPlans() {
     this.loading = true;
+    this.error = '';
     this.plansService.adminListAll().subscribe({
       next: plans => {
         this.plans = plans;
+        this.loading = false;
       },
       error: (err) => {
-        this.error = 'Failed to load plans';
-        // Optionally log error: console.error(err);
-      },
-      complete: () => {
+        this.error = err?.error?.message || 'Failed to load plans. Check your connection or login.';
         this.loading = false;
-      }
+      },
     });
   }
 
