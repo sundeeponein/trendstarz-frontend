@@ -614,7 +614,30 @@ $text-muted: #7a7a8e;
   align-items: center;
   gap: 4px;
   transition: background 0.15s;
-  &:hover { background: $accent-dark; }
+  &:hover:not(:disabled) { background: $accent-dark; }
+  &:disabled { opacity: 0.65; cursor: not-allowed; }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.invite-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #dc2626;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
 }
 
 /* Drawer search */

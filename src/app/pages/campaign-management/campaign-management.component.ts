@@ -40,8 +40,8 @@ export class CampaignManagementComponent implements OnInit {
   inviteTab: 'invited' | 'search' = 'invited';
   influencerSearch = '';
   allInfluencersForInvite: any[] = [];
-  influencersForInviteLoading = false;
-
+  influencersForInviteLoading = false;  sendingInviteIds = new Set<string>();
+  inviteError = '';
   get invitedIds(): Set<string> {
     return new Set(this.invites.map(i => String(i.influencerId?._id || i.influencerId)));
   }
@@ -222,7 +222,7 @@ export class CampaignManagementComponent implements OnInit {
 
   formatBudget(c: Campaign): string {
     if (!c.budgetMin && !c.budgetMax) return '—';
-    const fmt = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt = (n: number) => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)} - ${fmt(c.budgetMax)}`;
     return c.budgetMin ? fmt(c.budgetMin) : fmt(c.budgetMax!);
   }
@@ -286,20 +286,29 @@ export class CampaignManagementComponent implements OnInit {
     this.invitePanelOpen = false;
     this.invitePanelCampaign = null;
     this.influencerSearch = '';
+    this.inviteError = '';
   }
 
   sendInvite(influencer: any) {
     if (!this.invitePanelCampaign?._id) return;
+    this.inviteError = '';
+    this.sendingInviteIds.add(influencer._id);
+    this.cd.detectChanges();
     this.config.createCampaignInvite({
       campaignId: this.invitePanelCampaign._id,
       influencerId: influencer._id
     }).subscribe({
       next: () => {
+        this.sendingInviteIds.delete(influencer._id);
         this.config.getInvitesByCampaign(this.invitePanelCampaign!._id!).subscribe({
           next: (invites: any[]) => { this.invites = invites; this.cd.detectChanges(); }
         });
       },
-      error: (err: any) => console.error('Failed to send invite', err)
+      error: (err: any) => {
+        this.sendingInviteIds.delete(influencer._id);
+        this.inviteError = err?.error?.message || 'Failed to send invite. Please try again.';
+        this.cd.detectChanges();
+      }
     });
   }
 
@@ -331,7 +340,7 @@ export class CampaignManagementComponent implements OnInit {
   formatInviteBudget(inv: any): string {
     const c = inv.campaignId;
     if (!c) return '—';
-    const fmt = (n: number) => '$' + n.toLocaleString('en-US');
+    const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
     if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)} – ${fmt(c.budgetMax)}`;
     if (c.budgetMin) return `From ${fmt(c.budgetMin)}`;
     if (c.budgetMax) return `Up to ${fmt(c.budgetMax)}`;

@@ -255,6 +255,8 @@
           [(ngModel)]="influencerSearch" />
       </div>
 
+      <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
+
       <div class="text-center py-4" *ngIf="influencersForInviteLoading">
         <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
       </div>
@@ -273,8 +275,11 @@
             </span>
             <button class="btn-send-invite"
               *ngIf="!invitedIds.has(inf._id)"
+              [disabled]="sendingInviteIds.has(inf._id)"
               (click)="sendInvite(inf)">
-              <i class="bi bi-send-fill"></i> Invite
+              <span *ngIf="sendingInviteIds.has(inf._id)" class="btn-spinner"></span>
+              <i class="bi bi-send-fill" *ngIf="!sendingInviteIds.has(inf._id)"></i>
+              {{ sendingInviteIds.has(inf._id) ? 'Sending…' : 'Invite' }}
             </button>
           </div>
         </div>
