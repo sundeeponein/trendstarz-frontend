@@ -114,7 +114,10 @@ export class PlansService {
   adminListAll(): Observable<Plan[]> {
     return this.http
       .get<any>(`${environment.apiBaseUrl}/plans/admin/all`, { headers: this.getHeaders() })
-      .pipe(map(r => r.plans ?? []));
+      .pipe(
+        map(r => r.plans ?? []),
+        catchError(err => { throw err; }),
+      );
   }
 
   adminCreate(dto: Partial<Plan>): Observable<Plan> {
