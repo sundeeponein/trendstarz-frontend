@@ -21,8 +21,8 @@ export class CampaignCardComponent {
 
   get budgetDisplay(): string {
     if (!this.campaign?.budgetMin && !this.campaign?.budgetMax) return '';
-    const min = this.campaign.budgetMin ? `$${this.campaign.budgetMin.toLocaleString()}` : '';
-    const max = this.campaign.budgetMax ? `$${this.campaign.budgetMax.toLocaleString()}` : '';
+    const min = this.campaign.budgetMin ? `₹${this.campaign.budgetMin.toLocaleString('en-IN')}` : '';
+    const max = this.campaign.budgetMax ? `₹${this.campaign.budgetMax.toLocaleString('en-IN')}` : '';
     if (min && max) return `${min} - ${max}`;
     return min || max;
   }
