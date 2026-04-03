@@ -63,26 +63,20 @@ export class AdminPlansComponent implements OnInit {
     this.plansService.adminListAll().subscribe({
       next: plans => {
         this.plans = plans;
-        this.loading = false;
       },
-      error: () => {
+      error: (err) => {
         this.error = 'Failed to load plans';
-        this.loading = false;
+        // Optionally log error: console.error(err);
       },
+      complete: () => {
+        this.loading = false;
+      }
     });
   }
 
-  seedDefaults() {
-    this.plansService.adminSeedDefaults().subscribe({
-      next: res => {
-        this.successMsg = res.message ?? 'Done';
-        this.loadPlans();
-      },
-      error: () => (this.error = 'Seed failed'),
-    });
-  }
 
   startCreate() {
+    this.loading = false;
     this.isCreating = true;
     this.editingPlan = {
       name: 'Pro',
@@ -105,6 +99,7 @@ export class AdminPlansComponent implements OnInit {
   }
 
   startEdit(plan: Plan) {
+    this.loading = false;
     this.isCreating = false;
     // Deep clone to avoid mutating the list
     this.editingPlan = JSON.parse(JSON.stringify(plan));

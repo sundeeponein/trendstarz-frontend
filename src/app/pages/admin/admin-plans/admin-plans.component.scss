@@ -49,6 +49,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  color: #374151;
 }
 
 .plan-card-header {
@@ -56,7 +57,7 @@
   justify-content: space-between;
   align-items: flex-start;
 
-  .plan-name { font-weight: 700; font-size: 1.1rem; margin-right: 6px; }
+  .plan-name {color: #374151; font-weight: 700; font-size: 1.1rem; margin-right: 6px; }
 
   .plan-status {
     font-size: 0.75rem;

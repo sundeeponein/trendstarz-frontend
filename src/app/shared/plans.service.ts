@@ -72,8 +72,9 @@ export class PlansService {
 
   /** Public: fetch active plans for a given user type */
   getActivePlans(userType?: string): Observable<Plan[]> {
-    const url = userType
-      ? `${environment.apiBaseUrl}/plans?userType=${userType}`
+    const normalizedType = userType ? userType.toUpperCase() : undefined;
+    const url = normalizedType
+      ? `${environment.apiBaseUrl}/plans?userType=${normalizedType}`
       : `${environment.apiBaseUrl}/plans`;
     return this.http.get<any>(url).pipe(
       map(r => r.plans ?? []),
