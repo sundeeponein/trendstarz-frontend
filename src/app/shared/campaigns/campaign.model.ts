@@ -17,6 +17,12 @@ export interface Campaign {
   timelineStart?: string;
   timelineEnd?: string;
   targetInfluencers?: CampaignInfluencer[];
+  // Step-2 requirement fields
+  categories?: string[];
+  deliverables?: string[];
+  minFollowerCount?: number;
+  platformPreference?: string;
+  specialInstructions?: string;
   createdAt?: string;
   updatedAt?: string;
 }

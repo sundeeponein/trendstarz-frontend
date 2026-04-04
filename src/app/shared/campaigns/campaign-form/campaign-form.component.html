@@ -1,37 +1,68 @@
 <div class="form-overlay" (click)="onCancel()">
   <div class="form-modal" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
+    <!-- ── Header ── -->
     <div class="form-header">
-      <h3>{{ isEdit ? 'Edit Campaign' : 'Create New Campaign' }}</h3>
-      <button class="btn-close-modal" (click)="onCancel()"><i class="bi bi-x-lg"></i></button>
+      <div>
+        <h3>{{ isEdit ? 'Edit Campaign' : 'Create new campaign' }}</h3>
+        <p class="form-subtitle">Fill in details, then invite influencers</p>
+      </div>
+      <button class="btn-close-modal" (click)="onCancel()" type="button"><i class="bi bi-x-lg"></i></button>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- ── Stepper ── -->
+    <div class="wizard-stepper">
+      <div class="wizard-step" [class.active]="currentStep === 1" [class.done]="currentStep > 1"
+           (click)="currentStep > 1 ? goToStep(1) : null" [style.cursor]="currentStep > 1 ? 'pointer' : 'default'">
+        <div class="step-circle">
+          <i class="bi bi-check-lg" *ngIf="currentStep > 1"></i>
+          <span *ngIf="currentStep <= 1">1</span>
+        </div>
+        <span class="step-label">Campaign details</span>
+      </div>
+      <div class="step-line" [class.done]="currentStep > 1"></div>
+      <div class="wizard-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2"
+           (click)="currentStep > 2 ? goToStep(2) : null" [style.cursor]="currentStep > 2 ? 'pointer' : 'default'">
+        <div class="step-circle">
+          <i class="bi bi-check-lg" *ngIf="currentStep > 2"></i>
+          <span *ngIf="currentStep <= 2">2</span>
+        </div>
+        <span class="step-label">Requirements</span>
+      </div>
+      <div class="step-line" [class.done]="currentStep > 2"></div>
+      <div class="wizard-step" [class.active]="currentStep === 3">
+        <div class="step-circle"><span>3</span></div>
+        <span class="step-label">Invite influencers</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 1 — Campaign Details
+    ══════════════════════════════════════════ -->
+    <form [formGroup]="form" *ngIf="currentStep === 1">
       <div class="form-body">
 
-        <!-- Title -->
         <div class="field-group">
-          <label class="field-label">Campaign Title <span class="required">*</span></label>
+          <label class="field-label">Campaign title <span class="required">*</span></label>
           <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['minlength']">Minimum 3 characters</span>
         </div>
 
-        <!-- Description -->
         <div class="field-group">
-          <label class="field-label">Description</label>
-          <textarea formControlName="description" class="field-textarea" rows="3" placeholder="Describe the campaign objectives, deliverables, and expectations..."></textarea>
+          <label class="field-label">Campaign description</label>
+          <textarea formControlName="description" class="field-textarea" rows="3"
+                    placeholder="Describe campaign objectives and expectations..."></textarea>
         </div>
 
-        <!-- Image -->
         <div class="field-group">
-          <label class="field-label">Campaign Image</label>
+          <label class="field-label">Campaign image</label>
           <div class="image-upload-area" *ngIf="!imagePreview">
             <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
             <label for="campaign-img-input" class="upload-label">
               <i class="bi bi-cloud-arrow-up"></i>
-              <span>Click to upload an image</span>
+              <span>Click to upload image</span>
+              <small>PNG, JPG up to 5 MB</small>
             </label>
           </div>
           <div class="image-preview" *ngIf="imagePreview">
@@ -40,66 +71,226 @@
           </div>
         </div>
 
-        <!-- Status -->
-        <div class="field-group">
-          <label class="field-label">Status</label>
-          <select formControlName="status" class="field-select">
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-
-        <!-- Budget row -->
         <div class="field-row">
           <div class="field-group half">
-            <label class="field-label">Budget Min (₹)</label>
+            <label class="field-label">Start date <span class="required">*</span></label>
+            <input type="date" formControlName="timelineStart" class="field-input" />
+            <span class="field-error" *ngIf="f['timelineStart'].touched && !f['timelineStart'].value">Required</span>
+          </div>
+          <div class="field-group half">
+            <label class="field-label">End date <span class="required">*</span></label>
+            <input type="date" formControlName="timelineEnd" class="field-input" />
+            <span class="field-error" *ngIf="f['timelineEnd'].touched && !f['timelineEnd'].value">Required</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Budget min (₹)</label>
             <input type="number" formControlName="budgetMin" class="field-input" placeholder="0" min="0" />
           </div>
           <div class="field-group half">
-            <label class="field-label">Budget Max (₹)</label>
+            <label class="field-label">Budget max (₹)</label>
             <input type="number" formControlName="budgetMax" class="field-input" placeholder="0" min="0" />
           </div>
         </div>
 
-        <!-- Timeline row -->
-        <div class="field-row">
-          <div class="field-group half">
-            <label class="field-label">Start Date</label>
-            <input type="date" formControlName="timelineStart" class="field-input" />
-          </div>
-          <div class="field-group half">
-            <label class="field-label">End Date</label>
-            <input type="date" formControlName="timelineEnd" class="field-input" />
-          </div>
+        <div class="budget-preview" *ngIf="f['budgetMin'].value || f['budgetMax'].value">
+          <span>Budget range:</span>
+          <strong class="budget-preview__value">
+            <ng-container *ngIf="f['budgetMin'].value">₹{{ f['budgetMin'].value | number }}</ng-container>
+            <ng-container *ngIf="f['budgetMin'].value && f['budgetMax'].value"> – </ng-container>
+            <ng-container *ngIf="f['budgetMax'].value">₹{{ f['budgetMax'].value | number }}</ng-container>
+          </strong>
         </div>
 
-        <!-- Pre-selected Influencers (brand flow) -->
-        <div class="field-group" *ngIf="preSelectedInfluencers.length > 0">
-          <label class="field-label">
-            <i class="bi bi-people-fill" style="color:#ff6b35; margin-right:0.3rem"></i>
-            Sending to ({{ preSelectedInfluencers.length }} influencer{{ preSelectedInfluencers.length > 1 ? 's' : '' }})
-          </label>
-          <div class="influencer-pills">
-            <span class="influencer-pill" *ngFor="let inf of preSelectedInfluencers">
-              <i class="bi bi-person-circle"></i>
-              {{ inf.name }}<ng-container *ngIf="inf.username"> · @{{ inf.username }}</ng-container>
-            </span>
-          </div>
-        </div>
-
+        <p class="step-indicator">Step 1 of 3</p>
       </div>
 
-      <!-- Footer -->
       <div class="form-footer">
-        <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="uploading">Cancel</button>
-        <button type="submit" class="btn btn-save" [disabled]="form.invalid || uploading">
-          <span *ngIf="uploading">Saving...</span>
-          <span *ngIf="!uploading">{{ isEdit ? 'Save Changes' : (preSelectedInfluencers.length > 0 ? 'Create & Send Invites' : 'Create Campaign') }}</span>
+        <button type="button" class="btn btn-cancel" (click)="onCancel()">Cancel</button>
+        <button type="button" class="btn btn-next" [disabled]="!step1Valid()" (click)="nextStep()">
+          Next — Requirements <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </form>
+
+    <!-- ══════════════════════════════════════════
+         STEP 2 — Requirements
+    ══════════════════════════════════════════ -->
+    <div *ngIf="currentStep === 2">
+      <div class="form-body">
+
+        <div class="field-group">
+          <label class="field-label">Content categories</label>
+          <div class="chip-list">
+            <button type="button" class="chip"
+                    [class.chip--selected]="isCategorySelected(cat.name)"
+                    *ngFor="let cat of categoriesList"
+                    (click)="toggleCategory(cat.name)">
+              {{ cat.name }}
+            </button>
+            <span class="chip-placeholder" *ngIf="categoriesList.length === 0">Loading categories…</span>
+          </div>
+          <p class="chip-hint" *ngIf="selectedCategories.length > 0">
+            <i class="bi bi-check-circle-fill"></i> {{ selectedCategories.join(', ') }}
+          </p>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Deliverables expected</label>
+          <div class="chip-list">
+            <button type="button" class="chip"
+                    [class.chip--selected]="isDeliverableSelected(d)"
+                    *ngFor="let d of deliverablesList"
+                    (click)="toggleDeliverable(d)">
+              {{ d }}
+            </button>
+          </div>
+          <p class="chip-hint" *ngIf="selectedDeliverables.length > 0">
+            <i class="bi bi-check-circle-fill"></i> {{ selectedDeliverables.join(', ') }}
+          </p>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Min follower count</label>
+            <input type="number" [formControl]="$any(form.get('minFollowerCount'))"
+                   class="field-input" placeholder="e.g. 10000" min="0" />
+          </div>
+          <div class="field-group half">
+            <label class="field-label">Platform preference</label>
+            <select [formControl]="$any(form.get('platformPreference'))" class="field-select">
+              <option value="">Any platform</option>
+              <option *ngFor="let p of platformOptions" [value]="p.value">{{ p.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Special instructions / brief</label>
+          <textarea [formControl]="$any(form.get('specialInstructions'))" class="field-textarea" rows="4"
+                    placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
+        </div>
+
+        <p class="step-indicator">Step 2 of 3</p>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-back" (click)="prevStep()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-next" (click)="nextStep()">
+          Next — Invite influencers <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 3 — Invite Influencers
+    ══════════════════════════════════════════ -->
+    <div *ngIf="currentStep === 3">
+      <div class="form-body form-body--step3">
+
+        <div class="inf-search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" [(ngModel)]="influencerSearch" class="inf-search-input"
+                 placeholder="Search by name, category, or location…" />
+        </div>
+
+        <div class="chip-list chip-list--sm">
+          <button type="button" class="chip chip--sm"
+                  [class.chip--selected]="!filterCategory && !filterFollowers && !filterPlatform"
+                  (click)="filterCategory=''; filterFollowers=''; filterPlatform=''">All</button>
+          <button type="button" class="chip chip--sm"
+                  *ngFor="let cat of getUniqueCategoryFilters()"
+                  [class.chip--selected]="filterCategory === cat"
+                  (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
+          <button type="button" class="chip chip--sm"
+                  [class.chip--selected]="filterFollowers === '10k'"
+                  (click)="filterFollowers = filterFollowers === '10k' ? '' : '10k'">10k+</button>
+          <button type="button" class="chip chip--sm"
+                  [class.chip--selected]="filterFollowers === '100k'"
+                  (click)="filterFollowers = filterFollowers === '100k' ? '' : '100k'">100k+</button>
+          <button type="button" class="chip chip--sm"
+                  [class.chip--selected]="filterPlatform === 'instagram'"
+                  (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
+          <button type="button" class="chip chip--sm"
+                  [class.chip--selected]="filterPlatform === 'youtube'"
+                  (click)="filterPlatform = filterPlatform === 'youtube' ? '' : 'youtube'">YouTube</button>
+        </div>
+
+        <div class="inf-sel-bar" *ngIf="selectedInfluencerIds.size > 0">
+          <span class="inf-sel-count">
+            {{ selectedInfluencerIds.size }} influencer{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
+          </span>
+          <button type="button" class="btn btn-send" [disabled]="uploading" (click)="onSubmit()">
+            <span *ngIf="uploading">Saving…</span>
+            <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
+          </button>
+        </div>
+
+        <div class="text-center py-4" *ngIf="influencersLoading">
+          <div class="spinner-border spinner-border-sm text-warning"></div>
+          <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading influencers…</p>
+        </div>
+
+        <div class="inf-list" *ngIf="!influencersLoading">
+          <div class="inf-row"
+               *ngFor="let inf of filteredInfluencers"
+               [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
+               (click)="toggleInfluencerSelect(inf._id)">
+            <div class="inf-avatar">
+              <img *ngIf="getInfluencerAvatar(inf)"
+                   [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" alt="" />
+              <span class="inf-initials" *ngIf="!getInfluencerAvatar(inf)">{{ getInfluencerInitials(inf) }}</span>
+            </div>
+            <div class="inf-info">
+              <p class="inf-name">{{ inf.fullName || inf.name || 'Influencer' }}</p>
+              <p class="inf-meta">
+                <ng-container *ngIf="inf.location?.state">{{ inf.location.state }}</ng-container>
+                <ng-container *ngIf="inf.location?.state && (inf.contentNiche || (inf.categories || []).length > 0)"> · </ng-container>
+                <ng-container *ngIf="inf.contentNiche">{{ inf.contentNiche }}</ng-container>
+                <ng-container *ngIf="!inf.contentNiche && (inf.categories || []).length > 0">{{ inf.categories[0] }}</ng-container>
+              </p>
+              <div class="inf-tags">
+                <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
+                <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
+              </div>
+            </div>
+            <div class="inf-right">
+              <span class="inf-engagement" *ngIf="inf.avgEngagement">
+                Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
+              </span>
+              <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">
+                <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(inf._id)"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
+            <i class="bi bi-search"></i>
+            <p>No influencers match your filters.</p>
+          </div>
+        </div>
+
+        <p class="step-indicator">Step 3 of 3</p>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-back" (click)="prevStep()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading">
+          {{ isEdit ? 'Save changes' : 'Skip &amp; create' }}
+        </button>
+        <button type="button" class="btn btn-send"
+                [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
+          <span *ngIf="uploading">Saving…</span>
+          <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
+        </button>
+      </div>
+    </div>
 
   </div>
 </div>
