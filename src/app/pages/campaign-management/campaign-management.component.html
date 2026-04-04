@@ -42,6 +42,11 @@
             <div class="inv-card__right">
               <span class="inv-status" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
 
+              <!-- View Details -->
+              <button class="btn-view-details" (click)="openInvitePreview(inv)">
+                <i class="bi bi-eye"></i> View Details
+              </button>
+
               <!-- Pending: accept / decline -->
               <div class="inv-actions" *ngIf="inv.status === 'pending'">
                 <button class="btn-accept" (click)="respondToMyInvite(inv._id, 'accepted')">
@@ -245,22 +250,46 @@
     </div>
 
     <!-- Find & Invite tab -->
-    <div class="drawer-body" *ngIf="inviteTab === 'search'">
-      <div class="drawer-search-wrap">
-        <i class="bi bi-search drawer-search-icon"></i>
-        <input
-          type="text"
-          class="drawer-search-input"
-          placeholder="Search influencers by name…"
-          [(ngModel)]="influencerSearch" />
+    <div class="drawer-body find-invite-body" *ngIf="inviteTab === 'search'">
+
+      <!-- Search + select-all row -->
+      <div class="search-select-row">
+        <label class="select-all-check" [class.indeterminate]="selectedInfluencerIds.size > 0 && !allSelectableSelected" title="Select all">
+          <input type="checkbox"
+            [checked]="allSelectableSelected"
+            [disabled]="selectableInfluencers.length === 0 || bulkSending"
+            (change)="toggleSelectAll()" />
+        </label>
+        <div class="drawer-search-wrap">
+          <i class="bi bi-search drawer-search-icon"></i>
+          <input
+            type="text"
+            class="drawer-search-input"
+            placeholder="Search influencers by name…"
+            [(ngModel)]="influencerSearch" />
+        </div>
       </div>
+
+      <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
       <div class="text-center py-4" *ngIf="influencersForInviteLoading">
         <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
       </div>
 
       <div class="search-influencer-list" *ngIf="!influencersForInviteLoading">
-        <div class="search-inf-row" *ngFor="let inf of filteredInfluencersForInvite">
+        <label class="search-inf-row"
+          *ngFor="let inf of filteredInfluencersForInvite"
+          [class.is-selected]="selectedInfluencerIds.has(inf._id)"
+          [class.is-already-invited]="invitedIds.has(inf._id)">
+
+          <!-- Checkbox (hidden for already-invited) -->
+          <input type="checkbox" class="inf-checkbox"
+            *ngIf="!invitedIds.has(inf._id)"
+            [checked]="selectedInfluencerIds.has(inf._id)"
+            [disabled]="bulkSending"
+            (change)="toggleInfluencerSelect(inf._id)" />
+          <span class="inf-checkbox-spacer" *ngIf="invitedIds.has(inf._id)"></span>
+
           <img class="invited-avatar" [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" />
           <div class="invited-info">
             <p class="invited-name">{{ inf.name || inf.fullname }}</p>
@@ -271,18 +300,117 @@
             <span class="already-invited" *ngIf="invitedIds.has(inf._id)">
               <i class="bi bi-check-circle-fill"></i> Invited
             </span>
-            <button class="btn-send-invite"
-              *ngIf="!invitedIds.has(inf._id)"
-              (click)="sendInvite(inf)">
-              <i class="bi bi-send-fill"></i> Invite
-            </button>
           </div>
-        </div>
+        </label>
+
         <div class="drawer-empty" *ngIf="filteredInfluencersForInvite.length === 0">
           <i class="bi bi-person-x"></i>
           <p>No influencers found.</p>
         </div>
       </div>
+    </div>
+
+    <!-- Sticky send footer (visible when selection exists) -->
+    <div class="invite-send-footer" *ngIf="inviteTab === 'search' && selectedInfluencerIds.size > 0">
+      <span class="footer-count">{{ selectedInfluencerIds.size }} selected</span>
+      <button class="btn-send-selected" [disabled]="bulkSending" (click)="sendSelectedInvites()">
+        <span *ngIf="bulkSending" class="btn-spinner"></span>
+        <i class="bi bi-send-fill" *ngIf="!bulkSending"></i>
+        {{ bulkSending ? 'Sending…' : 'Send Invite' + (selectedInfluencerIds.size > 1 ? 's' : '') }}
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ─── Campaign Invite Preview Modal ─── -->
+  <div class="inv-preview-overlay" *ngIf="invitePreview" (click)="closeInvitePreview()"></div>
+  <div class="inv-preview-modal" *ngIf="invitePreview" role="dialog" aria-modal="true">
+
+    <!-- Header -->
+    <div class="inv-preview-header">
+      <h3 class="inv-preview-title">Campaign Details</h3>
+      <button class="inv-preview-close" (click)="closeInvitePreview()" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="inv-preview-body">
+
+      <!-- Campaign section -->
+      <div class="inv-preview-section">
+        <div class="inv-preview-campaign-hero">
+          <img class="inv-preview-campaign-img"
+               [src]="getCampaignAvatar(invitePreview)"
+               (error)="onImgError($event)" alt="" />
+          <div class="inv-preview-campaign-info">
+            <h4 class="inv-preview-campaign-name">{{ invitePreview.campaignId?.title || 'Campaign' }}</h4>
+            <span class="inv-preview-chip" [ngClass]="invitePreview.campaignId?.status">
+              {{ invitePreview.campaignId?.status | uppercase }}
+            </span>
+          </div>
+        </div>
+
+        <p class="inv-preview-desc" *ngIf="invitePreview.campaignId?.description">
+          {{ invitePreview.campaignId.description }}
+        </p>
+
+        <div class="inv-preview-meta-row">
+          <div class="inv-preview-meta-item" *ngIf="invitePreview.campaignId?.budgetMin || invitePreview.campaignId?.budgetMax">
+            <span class="inv-preview-meta-label"><i class="bi bi-cash"></i> Budget</span>
+            <span class="inv-preview-meta-value accent">{{ formatInviteBudget(invitePreview) }}</span>
+          </div>
+          <div class="inv-preview-meta-item">
+            <span class="inv-preview-meta-label"><i class="bi bi-calendar3"></i> Timeline</span>
+            <span class="inv-preview-meta-value">{{ formatPreviewTimeline(invitePreview) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-preview-divider"></div>
+
+      <!-- Brand section -->
+      <div class="inv-preview-section">
+        <p class="inv-preview-section-label">About the Brand</p>
+        <div class="inv-preview-brand-row">
+          <img class="inv-preview-brand-logo"
+               [src]="getBrandAvatar(invitePreview)"
+               (error)="onImgError($event)" alt="" />
+          <div>
+            <p class="inv-preview-brand-name">{{ invitePreview.brandId?.brandName || 'Brand' }}</p>
+            <p class="inv-preview-brand-location" *ngIf="invitePreview.brandId?.location?.state">
+              <i class="bi bi-geo-alt"></i> {{ invitePreview.brandId.location.state }}
+            </p>
+          </div>
+        </div>
+
+        <div class="inv-preview-tags" *ngIf="invitePreview.brandId?.categories?.length">
+          <span class="inv-preview-tag" *ngFor="let cat of invitePreview.brandId.categories">{{ cat }}</span>
+        </div>
+
+        <a class="inv-preview-website" *ngIf="invitePreview.brandId?.website"
+           [href]="invitePreview.brandId.website" target="_blank" rel="noopener noreferrer">
+          <i class="bi bi-globe"></i> {{ invitePreview.brandId.website }}
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Footer actions -->
+    <div class="inv-preview-footer">
+      <span class="inv-status" [ngClass]="invitePreview.status" style="margin-right:auto">
+        {{ invitePreview.status | uppercase }}
+      </span>
+      <ng-container *ngIf="invitePreview.status === 'pending'">
+        <button class="btn-decline" (click)="respondToMyInvite(invitePreview._id, 'declined'); closeInvitePreview()">
+          <i class="bi bi-x-lg"></i> Decline
+        </button>
+        <button class="btn-accept" (click)="respondToMyInvite(invitePreview._id, 'accepted'); closeInvitePreview()">
+          <i class="bi bi-check-lg"></i> Accept
+        </button>
+      </ng-container>
+      <button class="btn-view-details" *ngIf="invitePreview.status !== 'pending'" (click)="closeInvitePreview()">
+        Close
+      </button>
     </div>
 
   </div>

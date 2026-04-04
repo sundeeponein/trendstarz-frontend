@@ -41,9 +41,69 @@ export class CampaignManagementComponent implements OnInit {
   influencerSearch = '';
   allInfluencersForInvite: any[] = [];
   influencersForInviteLoading = false;
-
+  sendingInviteIds = new Set<string>();
+  selectedInfluencerIds = new Set<string>();
+  bulkSending = false;
+  inviteError = '';
   get invitedIds(): Set<string> {
     return new Set(this.invites.map(i => String(i.influencerId?._id || i.influencerId)));
+  }
+
+  get selectableInfluencers(): any[] {
+    return this.filteredInfluencersForInvite.filter(inf => !this.invitedIds.has(inf._id));
+  }
+
+  get allSelectableSelected(): boolean {
+    const sel = this.selectableInfluencers;
+    return sel.length > 0 && sel.every(inf => this.selectedInfluencerIds.has(inf._id));
+  }
+
+  toggleInfluencerSelect(id: string) {
+    if (this.selectedInfluencerIds.has(id)) {
+      this.selectedInfluencerIds.delete(id);
+    } else {
+      this.selectedInfluencerIds.add(id);
+    }
+  }
+
+  toggleSelectAll() {
+    if (this.allSelectableSelected) {
+      this.selectableInfluencers.forEach(inf => this.selectedInfluencerIds.delete(inf._id));
+    } else {
+      this.selectableInfluencers.forEach(inf => this.selectedInfluencerIds.add(inf._id));
+    }
+  }
+
+  sendSelectedInvites() {
+    if (!this.invitePanelCampaign?._id || this.selectedInfluencerIds.size === 0) return;
+    this.inviteError = '';
+    this.bulkSending = true;
+    this.cd.detectChanges();
+    const ids = Array.from(this.selectedInfluencerIds);
+    const influencers = this.allInfluencersForInvite.filter(inf => ids.includes(inf._id));
+    let completed = 0;
+    let failed = 0;
+    const finish = () => {
+      completed++;
+      if (completed === influencers.length) {
+        this.bulkSending = false;
+        this.selectedInfluencerIds.clear();
+        if (failed > 0) this.inviteError = `${failed} invite(s) failed. The rest were sent.`;
+        this.config.getInvitesByCampaign(this.invitePanelCampaign!._id!).subscribe({
+          next: (invites: any[]) => { this.invites = invites; this.cd.detectChanges(); }
+        });
+        this.cd.detectChanges();
+      }
+    };
+    influencers.forEach(inf => {
+      this.config.createCampaignInvite({
+        campaignId: this.invitePanelCampaign!._id!,
+        influencerId: inf._id
+      }).subscribe({
+        next: () => finish(),
+        error: () => { failed++; finish(); }
+      });
+    });
   }
 
   get filteredInfluencersForInvite(): any[] {
@@ -222,7 +282,7 @@ export class CampaignManagementComponent implements OnInit {
 
   formatBudget(c: Campaign): string {
     if (!c.budgetMin && !c.budgetMax) return '—';
-    const fmt = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt = (n: number) => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)} - ${fmt(c.budgetMax)}`;
     return c.budgetMin ? fmt(c.budgetMin) : fmt(c.budgetMax!);
   }
@@ -271,9 +331,8 @@ export class CampaignManagementComponent implements OnInit {
     if (this.allInfluencersForInvite.length === 0) {
       this.influencersForInviteLoading = true;
       this.config.getInfluencers().subscribe({
-        next: (data: any) => {
-          const arr = Array.isArray(data) ? data : (data?.data ?? []);
-          this.allInfluencersForInvite = arr;
+        next: (arr: any[]) => {
+          this.allInfluencersForInvite = Array.isArray(arr) ? arr : [];
           this.influencersForInviteLoading = false;
           this.cd.detectChanges();
         },
@@ -286,20 +345,30 @@ export class CampaignManagementComponent implements OnInit {
     this.invitePanelOpen = false;
     this.invitePanelCampaign = null;
     this.influencerSearch = '';
+    this.inviteError = '';
+    this.selectedInfluencerIds.clear();
   }
 
   sendInvite(influencer: any) {
     if (!this.invitePanelCampaign?._id) return;
+    this.inviteError = '';
+    this.sendingInviteIds.add(influencer._id);
+    this.cd.detectChanges();
     this.config.createCampaignInvite({
       campaignId: this.invitePanelCampaign._id,
       influencerId: influencer._id
     }).subscribe({
       next: () => {
+        this.sendingInviteIds.delete(influencer._id);
         this.config.getInvitesByCampaign(this.invitePanelCampaign!._id!).subscribe({
           next: (invites: any[]) => { this.invites = invites; this.cd.detectChanges(); }
         });
       },
-      error: (err: any) => console.error('Failed to send invite', err)
+      error: (err: any) => {
+        this.sendingInviteIds.delete(influencer._id);
+        this.inviteError = err?.error?.message || 'Failed to send invite. Please try again.';
+        this.cd.detectChanges();
+      }
     });
   }
 
@@ -331,7 +400,7 @@ export class CampaignManagementComponent implements OnInit {
   formatInviteBudget(inv: any): string {
     const c = inv.campaignId;
     if (!c) return '—';
-    const fmt = (n: number) => '$' + n.toLocaleString('en-US');
+    const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
     if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)} – ${fmt(c.budgetMax)}`;
     if (c.budgetMin) return `From ${fmt(c.budgetMin)}`;
     if (c.budgetMax) return `Up to ${fmt(c.budgetMax)}`;
@@ -340,15 +409,37 @@ export class CampaignManagementComponent implements OnInit {
 
   // ── My Invites (influencer) ───────────────────────────────────
 
+  // Preview modal — shows campaign + brand details before accept/decline
+  invitePreview: any | null = null;
+
+  openInvitePreview(inv: any) {
+    this.invitePreview = inv;
+  }
+
+  closeInvitePreview() {
+    this.invitePreview = null;
+  }
+
   respondToMyInvite(inviteId: string, status: 'accepted' | 'declined') {
     this.config.respondToInvite(inviteId, status).subscribe({
       next: () => {
         this.myInvites = this.myInvites.map(i =>
           i._id === inviteId ? { ...i, status } : i
         );
+        // Update preview object too so status badge refreshes
+        if (this.invitePreview?._id === inviteId) {
+          this.invitePreview = { ...this.invitePreview, status };
+        }
         this.cd.detectChanges();
       },
       error: (err: any) => console.error('Failed to respond to invite', err)
     });
+  }
+
+  formatPreviewTimeline(inv: any): string {
+    const c = inv.campaignId;
+    if (!c?.timelineStart) return '—';
+    const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return c.timelineEnd ? `${fmt(c.timelineStart)} – ${fmt(c.timelineEnd)}` : `From ${fmt(c.timelineStart)}`;
   }
 }

@@ -280,11 +280,17 @@ export class ConfigService {
   }
 
   getInvitesByCampaign(campaignId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}`);
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}`).pipe(
+      map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
+      catchError(() => of([]))
+    );
   }
 
   getMyInvites(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/campaign-invites/influencer`);
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/influencer`).pipe(
+      map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
+      catchError(() => of([]))
+    );
   }
 
   respondToInvite(inviteId: string, status: 'accepted' | 'declined'): Observable<any> {
