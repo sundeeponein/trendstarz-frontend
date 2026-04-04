@@ -5,16 +5,15 @@ import { Campaign, CampaignInfluencer } from '../campaign.model';
 import { ConfigService } from '../../config.service';
 import { environment } from '../../../../environments/environment';
 
-const DELIVERABLES = [
-  'Instagram post', 'Instagram reel', 'YouTube video', 'YouTube Shorts',
-  'Story mention', 'Blog post', 'Twitter/X post', 'LinkedIn post',
-];
-
-const PLATFORM_OPTIONS = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'both', label: 'Both' },
-];
+// Deliverables keyed by platform name (lowercase). 'all' = shown for any/no platform.
+const DELIVERABLES_BY_PLATFORM: Record<string, string[]> = {
+  instagram: ['Instagram post', 'Instagram reel', 'Instagram story', 'Instagram live'],
+  youtube:   ['YouTube video', 'YouTube Shorts', 'YouTube live'],
+  twitter:   ['Twitter/X post', 'Twitter/X thread'],
+  facebook:  ['Facebook post', 'Facebook reel', 'Facebook story', 'Facebook live'],
+  linkedin:  ['LinkedIn post', 'LinkedIn article'],
+  all:       ['Blog post', 'Podcast mention', 'Website feature'],
+};
 
 @Component({
   selector: 'app-campaign-form',
@@ -41,9 +40,18 @@ export class CampaignFormComponent implements OnInit {
   // ── Step 2 data ──────────────────────────────────────────────
   categoriesList: any[] = [];
   selectedCategories: string[] = [];
-  deliverablesList = DELIVERABLES;
   selectedDeliverables: string[] = [];
-  platformOptions = PLATFORM_OPTIONS;
+  platformsList: any[] = [];   // loaded from API
+
+  get deliverablesList(): string[] {
+    const platform = (this.form?.get('platformPreference')?.value || '').toLowerCase().trim();
+    const specific = platform && DELIVERABLES_BY_PLATFORM[platform]
+      ? DELIVERABLES_BY_PLATFORM[platform]
+      : Object.entries(DELIVERABLES_BY_PLATFORM)
+          .filter(([k]) => k !== 'all')
+          .flatMap(([, v]) => v);
+    return [...new Set([...specific, ...DELIVERABLES_BY_PLATFORM['all']])];
+  }
 
   // ── Step 3 influencers ───────────────────────────────────────
   allInfluencers: any[] = [];
@@ -82,6 +90,16 @@ export class CampaignFormComponent implements OnInit {
 
     this.config.getCategories().subscribe(data => {
       this.categoriesList = data;
+    });
+
+    this.config.getSocialMedia().subscribe(data => {
+      this.platformsList = Array.isArray(data) ? data : [];
+    });
+
+    // When platform changes, clear any deliverables no longer in the new list
+    this.form.get('platformPreference')?.valueChanges.subscribe(() => {
+      const available = this.deliverablesList;
+      this.selectedDeliverables = this.selectedDeliverables.filter(d => available.includes(d));
     });
   }
 
