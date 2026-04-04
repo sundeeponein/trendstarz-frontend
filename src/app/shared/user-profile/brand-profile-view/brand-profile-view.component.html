@@ -29,16 +29,25 @@
     </div>
 
     <!-- Contact details (toggled) -->
-    <div *ngIf="showContact" class="contact-bar">
-      <span *ngIf="brand.contact?.email">
-        <i class="bi bi-envelope"></i> {{ brand.email }}
+    <div *ngIf="showContact" class="contact-cards">
+      <div class="contact-card" *ngIf="brand.contact?.whatsapp">
+        <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
+        <span class="contact-card-label">WhatsApp</span>
+      </div>
+      <div class="contact-card" *ngIf="brand.contact?.email">
+        <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
+        <span class="contact-card-label">{{ brand.email }}</span>
         <span *ngIf="brand.isEmailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
-      </span>
-      <span *ngIf="brand.contact?.call">
-        <i class="bi bi-telephone"></i> {{ brand.phoneNumber }}
+      </div>
+      <div class="contact-card" *ngIf="brand.contact?.call">
+        <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
+        <span class="contact-card-label">{{ brand.phoneNumber }}</span>
         <span *ngIf="brand.isMobileVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
-      </span>
-      <span *ngIf="brand.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp</span>
+      </div>
+      <div class="contact-card" *ngIf="brand.website">
+        <span class="contact-card-icon website"><i class="bi bi-globe2"></i></span>
+        <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="contact-card-label">{{ stripProtocol(brand.website) }}</a>
+      </div>
     </div>
 
     <!-- ══════ TAB BAR ══════ -->

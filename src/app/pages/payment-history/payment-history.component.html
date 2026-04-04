@@ -5,7 +5,10 @@
   </div>
 
   <!-- Error -->
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+    <button *ngIf="error.includes('log in')" class="btn btn-link" (click)="loadPayments()">Retry</button>
+  </div>
 
   <!-- Loading -->
   <div *ngIf="loading" class="text-center py-5">

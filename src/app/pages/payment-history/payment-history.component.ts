@@ -1,7 +1,9 @@
-import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, OnDestroy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { timeout } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -11,15 +13,25 @@ import { environment } from '../../../environments/environment';
   templateUrl: './payment-history.component.html',
   styleUrls: ['./payment-history.component.scss'],
 })
-export class PaymentHistoryComponent implements OnInit {
+export class PaymentHistoryComponent implements OnInit, OnDestroy {
+    private paymentSub?: Subscription;
   payments: any[] = [];
   loading = false;
   error = '';
 
+
   constructor(
     private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: object,
-  ) {}
+    private router: Router
+  ) {
+    // Reload payments on every navigation to this route
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.loadPayments();
+      }
+    });
+  }
 
   ngOnInit() {
     this.loadPayments();
@@ -35,19 +47,34 @@ export class PaymentHistoryComponent implements OnInit {
 
     this.loading = true;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    this.http
+    // Cancel any previous request
+    if (this.paymentSub) {
+      this.paymentSub.unsubscribe();
+    }
+    this.paymentSub = this.http
       .get<any>(`${environment.apiBaseUrl}/payment/my?limit=50`, { headers })
+      .pipe(timeout(10000)) // 10 seconds timeout
       .subscribe({
         next: (res) => {
           const d = res?.data || res;
           this.payments = Array.isArray(d?.payments) ? d.payments : Array.isArray(d) ? d : [];
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Failed to load payment history.';
+        error: (err) => {
+          if (err.name === 'TimeoutError') {
+            this.error = 'Request timed out. Please try again.';
+          } else {
+            this.error = 'Failed to load payment history.';
+          }
           this.loading = false;
         },
       });
+  }
+
+  ngOnDestroy() {
+    if (this.paymentSub) {
+      this.paymentSub.unsubscribe();
+    }
   }
 
   formatDate(dateStr: string): string {

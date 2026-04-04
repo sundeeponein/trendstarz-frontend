@@ -22,6 +22,56 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  // --- New Social Media Platform UI ---
+  platformForms: { [platformId: string]: any } = {};
+  originalPlatformForms: { [platformId: string]: any } = {};
+
+  isPlatformSelected(platform: any): boolean {
+    return !!this.platformForms[platform._id];
+  }
+
+  togglePlatform(platform: any) {
+    if (!this.isEditMode) return;
+    if (this.isPlatformSelected(platform)) {
+      this.removePlatformCard(platform);
+    } else {
+      this.platformForms[platform._id] = {
+        handle: '',
+        followersCount: '',
+        tier: '',
+        contentTypes: Object.fromEntries(
+          (platform.contentTypes || []).map((ct: any) => [ct.name, { selected: false, price: '' }])
+        )
+      };
+    }
+    this.refreshStepCompletion();
+  }
+
+  removePlatformCard(platform: any) {
+    if (!this.isEditMode) return;
+    delete this.platformForms[platform._id];
+    this.refreshStepCompletion();
+  }
+
+  selectedPlatforms(): any[] {
+    return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
+  }
+
+  getPlatformTotal(platform: any): number {
+    const pf = this.platformForms[platform._id];
+    if (!pf) return 0;
+    let total = 0;
+    for (const ctName in pf.contentTypes) {
+      const ct = pf.contentTypes[ctName];
+      if (ct.selected && ct.price) total += Number(ct.price) || 0;
+    }
+    return total;
+  }
+
+  getGrandTotal(): number {
+    return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
+  }
+
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
   step1Complete: boolean = false;
@@ -195,12 +245,12 @@ export class InfluencerProfileComponent implements OnInit {
       languages: [{ value: [], disabled: true }, Validators.required],
       categories: [{ value: [], disabled: true }, Validators.required],
       profileImages: this.fb.array([]),
-      socialMedia: this.fb.array([]),
       contact: this.fb.group({
         whatsapp: [{ value: false, disabled: true }],
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }]
-      })
+      }),
+      website: [{ value: '', disabled: true }],
     });
     // Auto-replace spaces with hyphens in username input
     this.registrationForm.get('username')?.valueChanges.subscribe(value => {
@@ -251,11 +301,6 @@ export class InfluencerProfileComponent implements OnInit {
           const categoryIds = (profile.categories || []).map((name: string) =>
             this.categoriesList.find(c => c.name === name)?._id
           ).filter(Boolean);
-          // Map social media platform name to ID
-          const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
-            ...sm,
-            platform: this.socialMediaList.find(s => s.name === sm.platform)?._id || sm.platform
-          }));
           this.registrationForm.patchValue({
             name: profile.name || '',
             username: profile.username || '',
@@ -266,7 +311,8 @@ export class InfluencerProfileComponent implements OnInit {
             promotionalPrice: profile.promotionalPrice || '',
             languages: languageIds,
             categories: categoryIds,
-            contact: profile.contact || { whatsapp: false, email: false, call: false }
+            contact: profile.contact || { whatsapp: false, email: false, call: false },
+            website: profile.website || ''
           });
           // Patch profileImages
           const arr = this.registrationForm.get('profileImages') as FormArray;
@@ -275,17 +321,25 @@ export class InfluencerProfileComponent implements OnInit {
             url: img.url,
             public_id: img.public_id
           })));
-          // Patch socialMedia
-          const smArr = this.registrationForm.get('socialMedia') as FormArray;
-          smArr.clear();
-          socialMedia.forEach((sm: any) => {
-            smArr.push(this.fb.group({
-              platform: sm.platform || '',
-              handle: sm.handle || '',
-              tier: sm.tier || '',
-              followersCount: sm.followersCount || ''
-            }));
+          // Patch socialMedia into platformForms
+          this.platformForms = {};
+          (profile.socialMedia || []).forEach((sm: any) => {
+            const platformObj = this.socialMediaList.find(s => s.name === sm.platform);
+            if (platformObj) {
+              this.platformForms[platformObj._id] = {
+                handle: sm.handle || '',
+                followersCount: sm.followersCount || '',
+                tier: sm.tier || '',
+                contentTypes: Object.fromEntries(
+                  (platformObj.contentTypes || []).map((ct: any) => {
+                    const saved = (sm.contentTypes || []).find((c: any) => c.name === ct.name);
+                    return [ct.name, { selected: saved?.enabled || false, price: saved?.price || '' }];
+                  })
+                )
+              };
+            }
           });
+          this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
           this.originalFormValue = this.registrationForm.getRawValue();
           // Set premium period if available
           this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
@@ -338,7 +392,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        (this.socialMediaFormArray?.valid ?? true) &&
+        this.selectedPlatforms().length > 0 &&
         this.hasExistingProfileImage()
       );
     }
@@ -387,8 +441,7 @@ export class InfluencerProfileComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      this.socialMediaFormArray?.controls?.forEach((ctrl) => ctrl.markAllAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && (this.socialMediaFormArray?.valid ?? true) && this.hasExistingProfileImage();
+      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0 && this.hasExistingProfileImage();
     }
 
     if (this.currentStep === 3) {
@@ -475,6 +528,7 @@ export class InfluencerProfileComponent implements OnInit {
     if (this.originalFormValue) {
       this.registrationForm.reset(this.originalFormValue);
     }
+    this.platformForms = JSON.parse(JSON.stringify(this.originalPlatformForms));
     this.registrationForm.disable();
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
@@ -543,32 +597,6 @@ export class InfluencerProfileComponent implements OnInit {
 
 
 
-  get socialMediaFormArray() {
-    return this.registrationForm?.get('socialMedia') as FormArray;
-  }
-
-  addSocialMedia() {
-    if (!this.isEditMode) return;
-    this.socialMediaFormArray?.push(this.fb.group({
-      platform: ['', Validators.required],
-      handle: ['', Validators.required],
-      tier: ['', Validators.required],
-      followersCount: ['', Validators.required]
-    }));
-    this.refreshStepCompletion();
-  }
-
-  removeSocialMedia(index: number) {
-    if (!this.isEditMode) return;
-    if ((this.socialMediaFormArray?.length || 0) > 1) {
-      this.socialMediaFormArray?.removeAt(index);
-    }
-      this.submitted = true; // Set submitted to true on form submission
-      this.refreshStepCompletion();
-  }
-
-
-
   async onSubmit() {
     if (!this.isEditMode || this.registrationForm.invalid || (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url))) {
       if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
@@ -595,13 +623,17 @@ export class InfluencerProfileComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
-    // Map social media platform ID to name
-    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
-      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+    // Build social media from platformForms
+    const socialMedia = this.selectedPlatforms().map(platform => {
+      const pf = this.platformForms[platform._id];
       return {
-        ...sm,
-        platform: platformObj ? platformObj.name : sm.platform,
-        followersCount: Number(sm.followersCount)
+        platform: platform.name,
+        handle: pf.handle,
+        followersCount: Number(pf.followersCount) || 0,
+        tier: pf.tier,
+        contentTypes: Object.entries(pf.contentTypes)
+          .filter(([_, v]: any) => v.selected)
+          .map(([name, v]: any) => ({ name, enabled: true, price: Number(v.price) || 0 }))
       };
     });
     // Handle Cloudinary upload for profile image if file selected
@@ -707,10 +739,6 @@ export class InfluencerProfileComponent implements OnInit {
             const categoryIds = (profile.categories || []).map((name: string) =>
               (this.categoriesList || []).find((c: any) => c.name === name)?._id
             ).filter(Boolean);
-            const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
-              ...sm,
-              platform: (this.socialMediaList || []).find((s: any) => s.name === sm.platform)?._id || sm.platform
-            }));
             this.registrationForm.patchValue({
               name: profile.name || '',
               username: profile.username || '',
@@ -720,7 +748,8 @@ export class InfluencerProfileComponent implements OnInit {
               location: { state: stateId },
               languages: languageIds,
               categories: categoryIds,
-              contact: profile.contact || { whatsapp: false, email: false, call: false }
+              contact: profile.contact || { whatsapp: false, email: false, call: false },
+              website: profile.website || ''
             });
             const arr = this.registrationForm.get('profileImages') as FormArray;
             if (arr) {
@@ -730,18 +759,25 @@ export class InfluencerProfileComponent implements OnInit {
                 public_id: img.public_id
               })));
             }
-            const smArr = this.registrationForm.get('socialMedia') as FormArray;
-            if (smArr) {
-              smArr.clear();
-              socialMedia.forEach((sm: any) => {
-                smArr.push(this.fb.group({
-                  platform: sm.platform || '',
+            // Patch socialMedia into platformForms
+            this.platformForms = {};
+            (profile.socialMedia || []).forEach((sm: any) => {
+              const platformObj = (this.socialMediaList || []).find((s: any) => s.name === sm.platform);
+              if (platformObj) {
+                this.platformForms[platformObj._id] = {
                   handle: sm.handle || '',
+                  followersCount: sm.followersCount || '',
                   tier: sm.tier || '',
-                  followersCount: sm.followersCount || ''
-                }));
-              });
-            }
+                  contentTypes: Object.fromEntries(
+                    (platformObj.contentTypes || []).map((ct: any) => {
+                      const saved = (sm.contentTypes || []).find((c: any) => c.name === ct.name);
+                      return [ct.name, { selected: saved?.enabled || false, price: saved?.price || '' }];
+                    })
+                  )
+                };
+              }
+            });
+            this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
             this.originalFormValue = this.registrationForm.getRawValue();
             this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
             this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
