@@ -85,6 +85,30 @@
       </div>
     </div>
 
+    <!-- Summary stats (brand only) -->
+    <div class="cm-summary-cards" *ngIf="!isInfluencerView">
+      <div class="cm-stat-card">
+        <span class="stat-value">{{ summaryTotalCampaigns }}</span>
+        <span class="stat-label">Total Campaigns</span>
+        <span class="stat-sub">{{ summaryActiveCampaigns }} active now</span>
+      </div>
+      <div class="cm-stat-card">
+        <span class="stat-value">{{ summaryInvitesSent }}</span>
+        <span class="stat-label">Invites Sent</span>
+        <span class="stat-sub">{{ summaryAccepted }} accepted</span>
+      </div>
+      <div class="cm-stat-card">
+        <span class="stat-value">{{ summaryTotalBudget }}</span>
+        <span class="stat-label">Total Budget</span>
+        <span class="stat-sub">across all campaigns</span>
+      </div>
+      <div class="cm-stat-card">
+        <span class="stat-value stat-value--rate">{{ summaryResponseRate }}</span>
+        <span class="stat-label">Avg Response Rate</span>
+        <span class="stat-sub">from influencers</span>
+      </div>
+    </div>
+
     <!-- Tabs (brand only) -->
     <div class="cm-tabs" *ngIf="!isInfluencerView">
       <button
@@ -98,62 +122,202 @@
       </button>
     </div>
 
-    <!-- Table -->
-    <div class="cm-table-wrap" *ngIf="pagedCampaigns.length; else emptyState">
-      <table class="cm-table">
-        <thead>
-          <tr>
-            <th class="col-details">CAMPAIGN DETAILS</th>
-            <th class="col-budget">BUDGET</th>
-            <th class="col-applicants">APPLICANTS</th>
-            <th class="col-timeline">TIMELINE</th>
-            <th class="col-status">STATUS</th>
-            <th class="col-action">ACTION</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of pagedCampaigns">
-            <td class="cell-details">
-              <div class="campaign-detail-row">
-                <img
-                  class="campaign-thumb"
-                  [src]="c.image?.url || 'assets/default-profile.png'"
-                  (error)="onImgError($event)"
-                  alt=""
-                />
-                <div>
-                  <span class="campaign-name">{{ c.title }}</span>
-                  <span class="campaign-desc" *ngIf="c.description">{{ c.description | slice:0:50 }}{{ c.description.length > 50 ? '...' : '' }}</span>
+    <!-- Campaign cards -->
+    <div class="campaign-cards" *ngIf="pagedCampaigns.length; else emptyState">
+      <div class="campaign-card"
+           *ngFor="let c of pagedCampaigns"
+           [class.is-expanded]="expandedCampaignId === c._id"
+           [class.is-expired]="isExpired(c)">
+
+        <!-- Main row -->
+        <div class="ccard-main">
+
+          <!-- LEFT: thumbnail + title + category tags -->
+          <div class="ccard-left">
+            <div class="ccard-thumb-wrap" [style.background]="getInitialsColor(c.title)">
+              <img class="ccard-thumb" *ngIf="c.image?.url" [src]="c.image!.url" (error)="onImgError($event)" alt="" />
+              <div class="ccard-thumb-initials" *ngIf="!c.image?.url">{{ getInfluencerInitials(c.title) }}</div>
+            </div>
+            <div class="ccard-title-wrap">
+              <span class="ccard-title">{{ c.title }}</span>
+              <span class="ccard-subtitle" *ngIf="getCampaignSubtitle(c)">{{ getCampaignSubtitle(c) }}</span>
+              <div class="ccard-tags" *ngIf="c.categories?.length">
+                <span class="ccard-tag" *ngFor="let cat of c.categories!.slice(0, 3)">{{ cat }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CENTER: budget, applicants, timeline -->
+          <div class="ccard-center">
+            <div class="ccard-stat">
+              <span class="ccard-stat-label">Budget</span>
+              <span class="ccard-stat-value accent">{{ formatBudgetCompact(c) }}</span>
+              <span class="ccard-stat-sub">per influencer</span>
+            </div>
+            <div class="ccard-stat">
+              <span class="ccard-stat-label">Applicants</span>
+              <span class="ccard-stat-value">
+                {{ getCardAcceptedCount(c) }} / {{ getCardInvitedCount(c) }} invited
+              </span>
+              <!-- Avatar stack -->
+              <div class="avatar-stack" *ngIf="getCardInvitePreview(c).length > 0">
+                <span class="avatar-pip"
+                  *ngFor="let inv of getCardInvitePreview(c)"
+                  [style.background]="getInitialsColor(inv.influencerId?.name || '')"
+                  [title]="inv.influencerId?.name || ''">
+                  {{ getInfluencerInitials(inv.influencerId?.name || '') }}
+                </span>
+              </div>
+              <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
+            </div>
+            <div class="ccard-timeline">
+              <span class="ccard-stat-label">Timeline</span>
+              <span class="ccard-timeline-text">{{ formatTimeline(c) }}</span>
+              <div class="ccard-progress-track" *ngIf="c.timelineStart && c.timelineEnd">
+                <div class="ccard-progress-fill"
+                     [class.is-expired]="isExpired(c)"
+                     [class.is-completed]="c.status === 'completed'"
+                     [style.width.%]="timelineProgress(c)">
                 </div>
               </div>
-            </td>
-            <td class="cell-budget">
-              <span class="budget-amount">{{ formatBudget(c) }}</span>
-            </td>
-            <td class="cell-applicants">
-              <span class="applicant-count">{{ c.applicants || 0 }}</span>
-            </td>
-            <td class="cell-timeline">
-              <span class="timeline-text">{{ formatTimeline(c) }}</span>
-              <div class="timeline-bar" *ngIf="c.timelineStart && c.timelineEnd">
-                <div class="timeline-fill" [style.width.%]="timelineProgress(c)"></div>
+              <span class="ccard-days-left" [class.expired-text]="isExpired(c)">{{ timelineProgressText(c) }}</span>
+            </div>
+          </div>
+
+          <!-- RIGHT: status badge + action buttons -->
+          <div class="ccard-right">
+            <span class="status-badge" [ngClass]="isExpired(c) && c.status === 'active' ? 'expired' : c.status">
+              {{ isExpired(c) && c.status === 'active' ? 'EXPIRED' : (c.status | uppercase) }}
+            </span>
+            <div class="ccard-actions" *ngIf="!isInfluencerView">
+              <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)">
+                Manage <i class="bi bi-chevron-down"></i>
+              </button>
+              <button class="btn-invite" (click)="openInvitePanel(c)" title="Invite Influencers">
+                <i class="bi bi-person-plus-fill"></i> Invite
+              </button>
+            </div>
+            <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
+          </div>
+        </div>
+
+        <!-- Expand panel (brand only) -->
+        <div class="ccard-expand" *ngIf="!isInfluencerView && expandedCampaignId === c._id">
+
+          <!-- Loading spinner -->
+          <div class="expand-loading" *ngIf="isExpandLoading(c)">
+            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+          </div>
+
+          <ng-container *ngIf="!isExpandLoading(c)">
+
+            <!-- Expired warning banner -->
+            <div class="expired-warning" *ngIf="isExpired(c) && c.status !== 'completed'">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              Campaign timeline has expired. Extend the dates or end this campaign.
+            </div>
+
+            <!-- Mini stat chips -->
+            <div class="expand-stats">
+              <div class="expand-stat">
+                <span class="expand-stat-val">{{ getExpandInvites(c).length }}</span>
+                <span class="expand-stat-lbl">Invites Sent</span>
               </div>
-            </td>
-            <td class="cell-status">
-              <span class="status-badge" [ngClass]="c.status">{{ c.status | uppercase }}</span>
-            </td>
-            <td class="cell-action">
-              <div class="action-btns">
-                <button class="btn-manage" (click)="onManage(c)" *ngIf="!isInfluencerView">Manage</button>
-                <button class="btn-invite" (click)="openInvitePanel(c)" *ngIf="!isInfluencerView" title="Invite Influencers">
-                  <i class="bi bi-person-plus-fill"></i> Invite
+              <div class="expand-stat">
+                <span class="expand-stat-val">{{ getExpandInvitesByStatus(c, 'accepted') }}</span>
+                <span class="expand-stat-lbl">Accepted</span>
+              </div>
+              <div class="expand-stat">
+                <span class="expand-stat-val">{{ getExpandInvitesByStatus(c, 'pending') }}</span>
+                <span class="expand-stat-lbl">Pending</span>
+              </div>
+              <div class="expand-stat">
+                <span class="expand-stat-val" [class.expired-text]="isExpired(c)">{{ daysRemainingText(c) }}</span>
+                <span class="expand-stat-lbl">Timeline</span>
+              </div>
+            </div>
+
+            <!-- Invited influencers list -->
+            <div class="expand-inf-list" *ngIf="getExpandInvites(c).length > 0">
+              <p class="expand-inf-heading">Invited Influencers</p>
+              <div class="expand-inf-row" *ngFor="let inv of getExpandInvites(c)">
+                <span class="expand-inf-initials"
+                  [style.background]="getInitialsColor(inv.influencerId?.name || '')">
+                  {{ getInfluencerInitials(inv.influencerId?.name || '') }}
+                </span>
+                <div class="expand-inf-info">
+                  <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
+                  <span class="expand-inf-user" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</span>
+                </div>
+                <span class="expand-inf-social" *ngIf="getTopSocialMedia(inv.influencerId || {})">
+                  {{ getTopSocialMedia(inv.influencerId || {}) }}
+                </span>
+                <span class="inv-status" [ngClass]="inv.status">{{ inv.status | titlecase }}</span>
+                <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
+                  <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
+                    <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="expand-empty-inf" *ngIf="getExpandInvites(c).length === 0">
+              No influencers invited yet. Use the <strong>Invite</strong> button to get started.
+            </div>
+
+            <!-- Contextual action buttons -->
+            <div class="expand-actions">
+
+              <!-- Expired + still active: extend or end -->
+              <ng-container *ngIf="isExpired(c) && c.status === 'active'">
+                <button class="btn-expand-extend" (click)="extendTimeline(c)">
+                  <i class="bi bi-calendar-plus"></i> Extend Timeline
                 </button>
-                <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                <button class="btn-expand-end" (click)="endCampaign(c)">
+                  <i class="bi bi-stop-circle"></i> End Campaign
+                </button>
+              </ng-container>
+
+              <!-- Active (not expired) -->
+              <ng-container *ngIf="!isExpired(c) && c.status === 'active'">
+                <button class="btn-expand-primary" (click)="extendTimeline(c)">
+                  <i class="bi bi-pencil"></i> Edit Campaign
+                </button>
+                <button class="btn-expand-pause" (click)="pauseCampaign(c)">
+                  <i class="bi bi-pause-circle"></i> Pause campaign
+                </button>
+                <button class="btn-expand-end" (click)="endCampaign(c)">
+                  <i class="bi bi-stop-circle"></i> End campaign
+                </button>
+              </ng-container>
+
+              <!-- Pending -->
+              <ng-container *ngIf="c.status === 'pending'">
+                <button class="btn-expand-primary" (click)="activateCampaign(c)">
+                  <i class="bi bi-play-circle"></i> Activate campaign
+                </button>
+                <button class="btn-expand-edit" (click)="extendTimeline(c)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+              </ng-container>
+
+              <!-- Draft -->
+              <ng-container *ngIf="c.status === 'draft'">
+                <button class="btn-expand-primary" (click)="activateCampaign(c)">
+                  <i class="bi bi-send"></i> Publish Campaign
+                </button>
+                <button class="btn-expand-edit" (click)="extendTimeline(c)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+              </ng-container>
+
+              <!-- Completed: show nothing, only influencer list above is enough -->
+
+            </div>
+
+          </ng-container>
+        </div>
+
+      </div>
     </div>
 
     <ng-template #emptyState>

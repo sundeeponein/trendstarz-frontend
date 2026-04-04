@@ -45,6 +45,12 @@ export class CampaignManagementComponent implements OnInit {
   selectedInfluencerIds = new Set<string>();
   bulkSending = false;
   inviteError = '';
+
+  // ── Expand panel (brand view) ──────────────────────────────────
+  expandedCampaignId: string | null = null;
+  campaignInvitesMap = new Map<string, any[]>();
+  expandInvitesLoading = new Set<string>();
+
   get invitedIds(): Set<string> {
     return new Set(this.invites.map(i => String(i.influencerId?._id || i.influencerId)));
   }
@@ -174,6 +180,7 @@ export class CampaignManagementComponent implements OnInit {
                 next: (campaigns: any[]) => {
                   this.campaigns = campaigns;
                   this.loading = false;
+                  this.loadAllInvites();
                   this.cd.detectChanges();
                 }
               });
@@ -385,7 +392,68 @@ export class CampaignManagementComponent implements OnInit {
       if (inf.profileImages[0]?.url) return inf.profileImages[0].url;
       if (typeof inf.profileImages[0] === 'string') return inf.profileImages[0];
     }
-    return 'assets/default-profile.png';
+    return '';
+  }
+
+  getInfluencerInitials(name: string): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  getInitialsColor(name: string): string {
+    const colors = ['#e8612d','#2b6cb0','#22b37a','#805ad5','#d69e2e','#c53030','#2c7a7b','#b7791f'];
+    if (!name) return colors[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  getTopSocialMedia(inf: any): string {
+    if (!Array.isArray(inf.socialMedia) || inf.socialMedia.length === 0) return '';
+    const top = inf.socialMedia.reduce((best: any, cur: any) =>
+      (cur.followersCount || 0) > (best.followersCount || 0) ? cur : best
+    , inf.socialMedia[0]);
+    const platform = (top.platform || '').toLowerCase();
+    const label = platform === 'instagram' ? 'IG'
+      : platform === 'youtube' ? 'YT'
+      : platform === 'twitter' || platform === 'x' ? 'X'
+      : platform.slice(0, 2).toUpperCase();
+    const count = this.formatFollowers(top.followersCount || 0);
+    return count ? `${label} ${count}` : label;
+  }
+
+  formatFollowers(n: number): string {
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(0) + 'k';
+    return n > 0 ? String(n) : '';
+  }
+
+  timelineProgressText(c: Campaign): string {
+    const pct = this.timelineProgress(c);
+    if (pct === 0) return 'Not started';
+    if (pct >= 100) return 'Completed';
+    return `${pct}% complete`;
+  }
+
+  getCampaignSubtitle(c: Campaign): string {
+    const cat = c.categories?.length ? c.categories[0] : '';
+    const desc = c.description ? c.description.slice(0, 28) + (c.description.length > 28 ? '…' : '') : '';
+    if (cat && desc) return `${cat} · ${desc}`;
+    return cat || desc;
+  }
+
+  getCardInvitedCount(c: Campaign): number {
+    return this.campaignInvitesMap.get(c._id!) ? this.campaignInvitesMap.get(c._id!)!.length : 0;
+  }
+
+  getCardAcceptedCount(c: Campaign): number {
+    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => i.status === 'accepted').length;
+  }
+
+  getCardInvitePreview(c: Campaign): any[] {
+    return (this.campaignInvitesMap.get(c._id!) || []).slice(0, 3);
   }
 
   getBrandAvatar(invite: any): string {
@@ -449,5 +517,150 @@ export class CampaignManagementComponent implements OnInit {
     if (!c?.timelineStart) return '—';
     const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     return c.timelineEnd ? `${fmt(c.timelineStart)} – ${fmt(c.timelineEnd)}` : `From ${fmt(c.timelineStart)}`;
+  }
+
+  // ── Expandable row panel ──────────────────────────────────────
+
+  loadAllInvites() {
+    this.campaigns.forEach(c => {
+      if (c._id && !this.campaignInvitesMap.has(c._id)) {
+        this.config.getInvitesByCampaign(c._id).subscribe({
+          next: (invites: any[]) => {
+            this.campaignInvitesMap.set(c._id!, invites);
+            this.cd.detectChanges();
+          },
+          error: () => {}
+        });
+      }
+    });
+  }
+
+  toggleExpand(c: Campaign) {
+    if (this.expandedCampaignId === c._id) {
+      this.expandedCampaignId = null;
+      return;
+    }
+    this.expandedCampaignId = c._id!;
+    if (!this.campaignInvitesMap.has(c._id!)) {
+      this.expandInvitesLoading.add(c._id!);
+      this.cd.detectChanges();
+      this.config.getInvitesByCampaign(c._id!).subscribe({
+        next: (invites: any[]) => {
+          this.campaignInvitesMap.set(c._id!, invites);
+          this.expandInvitesLoading.delete(c._id!);
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.expandInvitesLoading.delete(c._id!);
+          this.cd.detectChanges();
+        }
+      });
+    }
+  }
+
+  getExpandInvites(c: Campaign): any[] {
+    return this.campaignInvitesMap.get(c._id!) || [];
+  }
+
+  getExpandInvitesByStatus(c: Campaign, status: string): number {
+    return this.getExpandInvites(c).filter((i: any) => i.status === status).length;
+  }
+
+  isExpandLoading(c: Campaign): boolean {
+    return this.expandInvitesLoading.has(c._id!);
+  }
+
+  isExpired(c: Campaign): boolean {
+    if (!c.timelineEnd) return false;
+    return new Date(c.timelineEnd).getTime() < Date.now();
+  }
+
+  daysRemainingText(c: Campaign): string {
+    if (!c.timelineEnd) return '—';
+    const diff = new Date(c.timelineEnd).getTime() - Date.now();
+    if (diff <= 0) return 'Expired';
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days === 1 ? '1 day left' : `${days} days left`;
+  }
+
+  formatBudgetCompact(c: Campaign): string {
+    if (!c.budgetMin && !c.budgetMax) return '—';
+    const fmt = (n: number): string => {
+      if (n >= 100000) return '₹' + (n / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+      if (n >= 1000) return '₹' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return '₹' + n;
+    };
+    if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)}–${fmt(c.budgetMax)}`;
+    return c.budgetMin ? fmt(c.budgetMin) : fmt(c.budgetMax!);
+  }
+
+  activateCampaign(c: Campaign) {
+    if (!c._id) return;
+    this.config.updateCampaign(c._id, { status: 'active' as any }).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.map(x => x._id === c._id ? { ...x, status: 'active' } : x);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  pauseCampaign(c: Campaign) {
+    if (!c._id) return;
+    this.config.updateCampaign(c._id, { status: 'pending' as any }).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.map(x => x._id === c._id ? { ...x, status: 'pending' } : x);
+        this.expandedCampaignId = null;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  endCampaign(c: Campaign) {
+    if (!c._id) return;
+    this.config.updateCampaign(c._id, { status: 'completed' as any }).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.map(x => x._id === c._id ? { ...x, status: 'completed' } : x);
+        this.expandedCampaignId = null;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  extendTimeline(c: Campaign) {
+    this.editingCampaign = c;
+    this.formMode = 'edit';
+    this.showForm = true;
+  }
+
+  // ── Summary stats ─────────────────────────────────────────────
+
+  get summaryTotalCampaigns(): number { return this.campaigns.length; }
+  get summaryActiveCampaigns(): number { return this.getCount('active'); }
+
+  get summaryTotalBudget(): string {
+    const total = this.campaigns.reduce((sum, c) => sum + (c.budgetMax || c.budgetMin || 0), 0);
+    if (total >= 100000) return '₹' + (total / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+    if (total >= 1000) return '₹' + (total / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return total > 0 ? '₹' + total : '—';
+  }
+
+  get summaryInvitesSent(): number {
+    let total = 0;
+    this.campaignInvitesMap.forEach(v => total += v.length);
+    return total;
+  }
+
+  get summaryAccepted(): number {
+    let total = 0;
+    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => i.status === 'accepted').length);
+    return total;
+  }
+
+  get summaryResponseRate(): string {
+    const sent = this.summaryInvitesSent;
+    if (sent === 0) return '—';
+    let responded = 0;
+    this.campaignInvitesMap.forEach(v => { responded += v.filter((i: any) => i.status !== 'pending').length; });
+    return Math.round((responded / sent) * 100) + '%';
   }
 }

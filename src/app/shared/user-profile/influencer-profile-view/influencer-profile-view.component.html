@@ -31,18 +31,28 @@
         <button class="btn btn-contact" (click)="showContact = !showContact">Contact</button>
       </div>
 
-      <!-- Contact details (toggled) -->
-      <div *ngIf="showContact" class="contact-details">
-        <p *ngIf="influencer.contact?.email">
-          <i class="bi bi-envelope"></i> {{ influencer.email }}
-          <span *ngIf="influencer.isEmailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
-        </p>
-        <p *ngIf="influencer.contact?.call">
-          <i class="bi bi-telephone"></i> {{ influencer.phoneNumber }}
-          <span *ngIf="influencer.isMobileVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
-        </p>
-        <p *ngIf="influencer.contact?.whatsapp"><i class="bi bi-whatsapp"></i> WhatsApp available</p>
-      </div>
+
+        <!-- Contact details (card-based, toggled) -->
+        <div *ngIf="showContact" class="contact-cards">
+          <div class="contact-card" *ngIf="influencer.contact?.email">
+            <i class="bi bi-envelope"></i>
+            <span>{{ influencer.email }}</span>
+            <span *ngIf="influencer.isEmailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+          </div>
+          <div class="contact-card" *ngIf="influencer.contact?.call">
+            <i class="bi bi-telephone"></i>
+            <span>{{ influencer.phoneNumber }}</span>
+            <span *ngIf="influencer.isMobileVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
+          </div>
+          <div class="contact-card" *ngIf="influencer.contact?.whatsapp">
+            <i class="bi bi-whatsapp"></i>
+            <span>WhatsApp available</span>
+          </div>
+          <div class="contact-card" *ngIf="influencer.website">
+            <i class="bi bi-globe2"></i>
+            <a [href]="influencer.website" target="_blank" rel="noopener noreferrer">{{ stripProtocol(influencer.website) }}</a>
+          </div>
+        </div>
 
       <!-- Stats -->
       <div class="stat-cards">
@@ -81,6 +91,28 @@
             </a>
           </ng-container>
         </div>
+
+        <!-- Content Types & Rates per platform -->
+        <div *ngIf="influencer.socialMedia?.length" class="platform-rates-section">
+          <div *ngFor="let sm of influencer.socialMedia" class="platform-rate-card">
+            <div class="platform-rate-header">
+              <i [class]="getSocialIcon(sm)" class="platform-rate-icon"></i>
+              <span class="platform-rate-name">{{ getSocialLabel(sm) }}</span>
+              <span class="platform-rate-followers" *ngIf="sm.followersCount">{{ formatFollowers(sm.followersCount) }}</span>
+            </div>
+            <div class="platform-rate-body" *ngIf="sm.contentTypes?.length">
+              <div *ngFor="let ct of sm.contentTypes" class="rate-row">
+                <span class="rate-name">{{ ct.name }}</span>
+                <span class="rate-price" *ngIf="ct.price">₹{{ ct.price }}</span>
+              </div>
+              <div class="rate-total" *ngIf="getSmTotal(sm) > 0">
+                <span>Total</span>
+                <strong>₹{{ getSmTotal(sm) }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Social media hidden (not on premium plan) -->
         <div *ngIf="!influencer.socialMedia?.length" class="locked-feature">
           <i class="bi bi-lock-fill"></i>

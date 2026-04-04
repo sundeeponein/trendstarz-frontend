@@ -288,13 +288,29 @@
             </div>
 
             <div class="field-block full-width" formGroupName="contact">
-              <label>Contact Options <span class="text-danger">*</span></label>
-              <div class="contact-grid">
-                <label class="contact-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
-                <label class="contact-item"><input type="checkbox" formControlName="email" /> Email</label>
-                <label class="contact-item"><input type="checkbox" formControlName="call" /> Call</label>
+              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU? <span class="text-danger">*</span></label>
+              <div class="contact-cards">
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
+                  <input type="checkbox" formControlName="whatsapp" hidden />
+                  <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
+                  <span class="contact-card-label">WhatsApp</span>
+                </label>
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.email')?.value">
+                  <input type="checkbox" formControlName="email" hidden />
+                  <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
+                  <span class="contact-card-label">Email</span>
+                </label>
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.call')?.value">
+                  <input type="checkbox" formControlName="call" hidden />
+                  <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
+                  <span class="contact-card-label">Call</span>
+                </label>
               </div>
               <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" class="text-danger mt-1">Please select at least one contact option.</div>
+              <div class="website-field">
+                <label>Website / portfolio (optional)</label>
+                <input formControlName="website" type="url" class="form-control" placeholder="https://yourwebsite.com" />
+              </div>
             </div>
           </div>
 

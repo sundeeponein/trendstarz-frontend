@@ -137,8 +137,37 @@
           </p>
         </div>
 
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Platform preference</label>
+            <select [formControl]="$any(form.get('platformPreference'))" class="field-select">
+              <option value="">Any platform</option>
+              <ng-container *ngIf="platformsList.length > 0">
+                <option *ngFor="let p of platformsList" [value]="p.name.toLowerCase()">{{ p.name }}</option>
+              </ng-container>
+              <ng-container *ngIf="platformsList.length === 0">
+                <option value="instagram">Instagram</option>
+                <option value="youtube">YouTube</option>
+                <option value="twitter">Twitter / X</option>
+                <option value="facebook">Facebook</option>
+              </ng-container>
+            </select>
+            <p class="field-hint" *ngIf="form.get('platformPreference')?.value">
+              <i class="bi bi-info-circle"></i> Deliverables below are filtered for this platform.
+            </p>
+          </div>
+          <div class="field-group half">
+            <label class="field-label">Min follower count</label>
+            <input type="number" [formControl]="$any(form.get('minFollowerCount'))"
+                   class="field-input" placeholder="e.g. 10000" min="0" />
+          </div>
+        </div>
+
         <div class="field-group">
           <label class="field-label">Deliverables expected</label>
+          <p class="field-sublabel" *ngIf="!form.get('platformPreference')?.value">
+            Select a platform above to see platform-specific deliverables, or pick from all below.
+          </p>
           <div class="chip-list">
             <button type="button" class="chip"
                     [class.chip--selected]="isDeliverableSelected(d)"
@@ -150,21 +179,6 @@
           <p class="chip-hint" *ngIf="selectedDeliverables.length > 0">
             <i class="bi bi-check-circle-fill"></i> {{ selectedDeliverables.join(', ') }}
           </p>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group half">
-            <label class="field-label">Min follower count</label>
-            <input type="number" [formControl]="$any(form.get('minFollowerCount'))"
-                   class="field-input" placeholder="e.g. 10000" min="0" />
-          </div>
-          <div class="field-group half">
-            <label class="field-label">Platform preference</label>
-            <select [formControl]="$any(form.get('platformPreference'))" class="field-select">
-              <option value="">Any platform</option>
-              <option *ngFor="let p of platformOptions" [value]="p.value">{{ p.label }}</option>
-            </select>
-          </div>
         </div>
 
         <div class="field-group">

@@ -252,12 +252,32 @@
               <label>Promotional Price</label>
               <input formControlName="promotionalPrice" type="number" class="form-control" />
             </div>
-            <div class="field-block full-width" formGroupName="contact">
+            <!-- <div class="field-block full-width" formGroupName="contact">
               <label>Contact Options</label>
               <div class="contact-grid">
                 <label class="contact-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
                 <label class="contact-item"><input type="checkbox" formControlName="email" /> Email</label>
                 <label class="contact-item"><input type="checkbox" formControlName="call" /> Call</label>
+              </div>
+            </div> -->
+            <div class="field-block full-width" formGroupName="contact" *ngIf="emailVerified">
+              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU?</label>
+              <div class="contact-cards">
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
+                  <input type="checkbox" formControlName="whatsapp" hidden />
+                  <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
+                  <span class="contact-card-label">WhatsApp</span>
+                </label>
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.email')?.value">
+                  <input type="checkbox" formControlName="email" hidden />
+                  <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
+                  <span class="contact-card-label">Email</span>
+                </label>
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.call')?.value">
+                  <input type="checkbox" formControlName="call" hidden />
+                  <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
+                  <span class="contact-card-label">Call</span>
+                </label>
               </div>
             </div>
           </div>

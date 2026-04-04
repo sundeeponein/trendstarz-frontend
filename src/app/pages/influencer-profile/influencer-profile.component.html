@@ -125,34 +125,56 @@
             </div>
           </div>
 
-          <div class="social-media-section mt-3" formArrayName="socialMedia">
-            <h3>Social Media</h3>
-            <div *ngFor="let sm of socialMediaFormArray.controls || []; let i = index" [formGroupName]="i" class="social-media-card">
-              <div class="social-media-row">
-                <div class="social-media-col">
-                  <div class="social-media-label">Platform</div>
-                  <select formControlName="platform" class="social-media-select">
-                    <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-                  </select>
+          <div class="social-media-section mt-3">
+            <h3>Social Media Platforms</h3>
+            <div class="subtitle">Select your platforms and set your rates for each content type.</div>
+            <div class="platform-cards">
+              <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
+                <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                <span class="platform-name">{{ platform.name }}</span>
+                <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span>
+              </div>
+            </div>
+
+            <div *ngFor="let platform of selectedPlatforms()" class="platform-details-card">
+              <div class="platform-details-header">
+                <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                <span class="platform-name">{{ platform.name }}</span>
+                <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
+                <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
+              </div>
+              <div class="platform-details-body">
+                <div class="row">
+                  <div class="col">
+                    <label>{{ platform.handleLabel || 'Handle' }}</label>
+                    <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" />
+                  </div>
+                  <div class="col">
+                    <label>{{ platform.followersLabel || 'Followers' }}</label>
+                    <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" [readonly]="!isEditMode" />
+                  </div>
+                  <div class="col">
+                    <label>Tier</label>
+                    <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
+                      <option value="" disabled>Select tier</option>
+                      <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="social-media-col">
-                  <div class="social-media-label">Handle</div>
-                  <input formControlName="handle" type="text" class="social-media-input" />
-                </div>
-                <div class="social-media-col">
-                  <div class="social-media-label">Tier</div>
-                  <select formControlName="tier" class="social-media-select">
-                    <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-                  </select>
-                </div>
-                <div class="social-media-col">
-                  <div class="social-media-label">Followers</div>
-                  <input formControlName="followersCount" type="number" class="social-media-input" />
+                <div class="content-types-section">
+                  <label>Content Types & Pricing</label>
+                  <div class="content-types-list">
+                    <ng-container *ngFor="let ct of platform.contentTypes">
+                      <div class="content-type-item" *ngIf="ct.visible">
+                        <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
+                        <span>{{ ct.name }}</span>
+                        <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" />
+                      </div>
+                    </ng-container>
+                  </div>
                 </div>
               </div>
-              <button *ngIf="isEditMode && (socialMediaFormArray.length || 0) > 1" type="button" class="close-btn" (click)="removeSocialMedia(i)">&times;</button>
             </div>
-            <button *ngIf="isEditMode" type="button" class="add-social-btn" (click)="addSocialMedia()">Add Social Media</button>
           </div>
 
           <div class="actions-row dual">
@@ -216,11 +238,23 @@
               <input formControlName="promotionalPrice" type="number" class="form-control" />
             </div>
             <div class="field-block full-width" formGroupName="contact" *ngIf="emailVerified">
-              <label>Contact Options</label>
-              <div class="contact-grid">
-                <label class="contact-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
-                <label class="contact-item"><input type="checkbox" formControlName="email" /> Email</label>
-                <label class="contact-item"><input type="checkbox" formControlName="call" /> Call</label>
+              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU?</label>
+              <div class="contact-cards">
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
+                  <input type="checkbox" formControlName="whatsapp" hidden />
+                  <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
+                  <span class="contact-card-label">WhatsApp</span>
+                </label>
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.email')?.value">
+                  <input type="checkbox" formControlName="email" hidden />
+                  <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
+                  <span class="contact-card-label">Email</span>
+                </label>
+                <label class="contact-card" [class.selected]="registrationForm.get('contact.call')?.value">
+                  <input type="checkbox" formControlName="call" hidden />
+                  <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
+                  <span class="contact-card-label">Call</span>
+                </label>
               </div>
             </div>
           </div>
