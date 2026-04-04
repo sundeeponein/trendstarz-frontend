@@ -245,19 +245,27 @@ export class CampaignManagementComponent implements OnInit {
     this.showForm = true;
   }
 
-  onFormSave(data: Partial<Campaign>) {
+  onFormSave(data: Partial<Campaign> & { inviteInfluencerIds?: string[] }) {
+    const { inviteInfluencerIds, ...campaignData } = data;
+
     if (this.formMode === 'edit' && this.editingCampaign?._id) {
-      this.config.updateCampaign(this.editingCampaign._id, data).subscribe({
+      this.config.updateCampaign(this.editingCampaign._id, campaignData).subscribe({
         next: (updated: Campaign) => {
           this.campaigns = this.campaigns.map(c => c._id === this.editingCampaign!._id ? { ...c, ...updated } : c);
           this.cd.detectChanges();
         }
       });
     } else {
-      const payload: any = { ...data, brandId: this.brandId };
+      const payload: any = { ...campaignData, brandId: this.brandId };
       this.config.createCampaign(payload).subscribe({
         next: (created: Campaign) => {
           this.campaigns = [...this.campaigns, created];
+          // Send invites to selected influencers if any
+          if (inviteInfluencerIds?.length && created._id) {
+            inviteInfluencerIds.forEach(influencerId => {
+              this.config.createCampaignInvite({ campaignId: created._id!, influencerId }).subscribe();
+            });
+          }
           this.cd.detectChanges();
         }
       });
