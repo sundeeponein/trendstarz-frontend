@@ -276,3 +276,414 @@ form {
   .form-body { padding: 16px; }
   .field-row { flex-direction: column; gap: 0; }
 }
+
+/* ── Wizard header subtitle ──────────── */
+.form-subtitle {
+  font-size: 0.78rem;
+  color: $text-muted;
+  margin: 2px 0 0;
+}
+
+/* ── Stepper ─────────────────────────── */
+.wizard-stepper {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid $border;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: $text-muted;
+  background: #fff;
+  transition: all 0.2s;
+
+  .wizard-step.active & {
+    border-color: $accent;
+    background: $accent;
+    color: #fff;
+  }
+
+  .wizard-step.done & {
+    border-color: #28a745;
+    background: #28a745;
+    color: #fff;
+    font-size: 0.85rem;
+  }
+}
+
+.step-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $text-muted;
+  white-space: nowrap;
+
+  .wizard-step.active & { color: $accent; }
+  .wizard-step.done & { color: #28a745; }
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: $border;
+  margin: 0 10px;
+  transition: background 0.2s;
+
+  &.done { background: #28a745; }
+}
+
+/* ── Budget preview row ──────────────── */
+.budget-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: $text-muted;
+  padding: 8px 12px;
+  background: #fafafa;
+  border: 1px solid $border;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.budget-preview__value {
+  color: $accent;
+  font-size: 0.9rem;
+}
+
+/* ── Step indicator ──────────────────── */
+.step-indicator {
+  font-size: 0.75rem;
+  color: $text-muted;
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+/* ── Chip multi-select ───────────────── */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.chip-list--sm {
+  margin-bottom: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  border: 1.5px solid $border;
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $text-dark;
+  cursor: pointer;
+  transition: all 0.15s;
+  outline: none;
+
+  &:hover {
+    border-color: $accent;
+    color: $accent;
+  }
+
+  &--selected {
+    background: $text-dark;
+    border-color: $text-dark;
+    color: #fff;
+
+    &:hover {
+      background: $accent;
+      border-color: $accent;
+      color: #fff;
+    }
+  }
+
+  &--sm {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+  }
+}
+
+.chip-placeholder {
+  font-size: 0.82rem;
+  color: $text-muted;
+  font-style: italic;
+}
+
+.chip-hint {
+  font-size: 0.76rem;
+  color: #28a745;
+  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  i { font-size: 0.75rem; }
+}
+
+/* ── Step 3 Influencer List ──────────── */
+.form-body--step3 {
+  padding-top: 16px;
+}
+
+.inf-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1.5px solid $border;
+  border-radius: 10px;
+  padding: 9px 14px;
+  background: #fafafa;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+
+  &:focus-within { border-color: $accent; background: #fff; }
+
+  i { color: $text-muted; font-size: 0.9rem; }
+}
+
+.inf-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: $text-dark;
+  flex: 1;
+
+  &::placeholder { color: #b0b0b8; }
+}
+
+.inf-sel-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(232, 97, 45, 0.07);
+  border: 1px solid rgba(232, 97, 45, 0.25);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.inf-sel-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: $accent;
+  flex: 1;
+}
+
+.inf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.inf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid $border;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+
+  &:hover { border-color: $accent; background: rgba(232,97,45,0.03); }
+  &--selected { border-color: $accent; background: rgba(232,97,45,0.05); }
+}
+
+.inf-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e8e2ff;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.inf-initials {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6b3fa0;
+}
+
+.inf-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.inf-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: $text-dark;
+  margin: 0 0 2px;
+}
+
+.inf-meta {
+  font-size: 0.76rem;
+  color: $text-muted;
+  margin: 0 0 4px;
+}
+
+.inf-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.inf-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #f0f0f8;
+  color: $text-dark;
+
+  &--cat {
+    background: #fff5e5;
+    color: #c05a00;
+  }
+}
+
+.inf-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.inf-engagement {
+  font-size: 0.7rem;
+  color: $text-muted;
+  text-align: center;
+  line-height: 1.4;
+
+  strong { color: $text-dark; font-size: 0.84rem; }
+}
+
+.inf-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  transition: all 0.15s;
+
+  &--on {
+    background: $accent;
+    border-color: $accent;
+    color: #fff;
+  }
+}
+
+/* ── Wizard footer buttons ───────────── */
+.btn-next {
+  background: $accent;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: $accent-dark; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.btn-back {
+  background: #fff;
+  border: 1.5px solid $border;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $text-dark;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+
+  &:hover { border-color: $text-dark; }
+}
+
+.btn-skip {
+  background: #fff;
+  border: 1.5px solid $border;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $text-muted;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { border-color: $text-dark; color: $text-dark; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.btn-send {
+  background: $accent;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: $accent-dark; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  color: $text-muted;
+
+  i { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+  p { font-size: 0.85rem; margin: 0; }
+}
