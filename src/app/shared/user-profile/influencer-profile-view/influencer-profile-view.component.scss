@@ -1,3 +1,4 @@
+
 @use 'sass:color';
 $accent: #e8612d;
 $accent-light: #fff5f0;
@@ -5,6 +6,31 @@ $border: #eee;
 $text-dark: #1a1a2e;
 $text-muted: #7a7a8e;
 $radius: 16px;
+/* Contact cards (card-based contact UI) */
+.contact-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.contact-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff5f0;
+  border: 1.5px solid #e8612d33;
+  border-radius: 16px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  color: #1a1a2e;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(232,97,45,0.04);
+  transition: box-shadow 0.2s, border 0.2s;
+  i { font-size: 1.3em; color: #e8612d; }
+  a { color: #e8612d; text-decoration: underline; font-weight: 500; }
+  &:hover { box-shadow: 0 2px 8px rgba(232,97,45,0.10); border-color: #e8612d; }
+}
 
 .profile-page-wrapper {
   max-width: 1100px;
@@ -426,4 +452,60 @@ $radius: 16px;
   font-size: 1.1rem;
   font-weight: 700;
   color: $accent;
+}
+
+/* ===== Platform Rates in Profile View ===== */
+.platform-rates-section {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.platform-rate-card {
+  border: 1px solid $border;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fafbfd;
+}
+
+.platform-rate-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #f3f5f9;
+  border-bottom: 1px solid $border;
+
+  .platform-rate-icon { font-size: 1.2rem; color: $accent; }
+  .platform-rate-name { font-weight: 700; font-size: 0.95rem; color: $text-dark; flex: 1; }
+  .platform-rate-followers { font-size: 0.82rem; font-weight: 600; color: $text-muted; }
+}
+
+.platform-rate-body {
+  padding: 0.75rem 1rem;
+}
+
+.rate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+
+  .rate-name { font-size: 0.88rem; color: $text-dark; }
+  .rate-price { font-size: 0.88rem; font-weight: 700; color: $accent; }
+}
+
+.rate-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid $border;
+  font-size: 0.92rem;
+  color: $text-dark;
+
+  strong { color: $accent; }
 }

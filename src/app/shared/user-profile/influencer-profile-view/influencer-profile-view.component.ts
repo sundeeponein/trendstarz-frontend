@@ -12,6 +12,9 @@ import { CommonModule } from '@angular/common';
 })
 
 export class InfluencerProfileViewComponent implements OnInit {
+    stripProtocol(url: string): string {
+      return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+    }
   influencer: any;
   loading = true;
   error = '';
@@ -42,6 +45,10 @@ export class InfluencerProfileViewComponent implements OnInit {
     const total = this.getTotalFollowers();
     if (!total) return 0;
     return Math.round(((sm.followersCount || 0) / total) * 100);
+  }
+
+  getSmTotal(sm: any): number {
+    return (sm.contentTypes || []).reduce((sum: number, ct: any) => sum + (ct.price || 0), 0);
   }
 
   getSocialIcon(sm: any): string {
