@@ -84,7 +84,7 @@ export class AdminPlansComponent implements OnInit {
     this.editingPlan = {
       name: 'Pro',
       userType: 'INFLUENCER',
-      price: { monthly: 399, yearly: 2999 },
+      price: { monthly: 399, quarterly: 999, yearly: 2999 },
       features: [
         { key: 'socialMediaVisibility', label: 'Show Social Media Links', value: true },
         { key: 'contactVisibility', label: 'Show Contact Details', value: true },

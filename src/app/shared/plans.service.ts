@@ -21,7 +21,7 @@ export interface Plan {
   _id?: string;
   name: string;
   userType: 'INFLUENCER' | 'BRAND' | 'ALL';
-  price: { monthly: number; yearly: number };
+  price: { monthly: number; quarterly?: number; yearly: number };
   features: PlanFeature[];
   limits: PlanLimit[];
   policies: { imageRetentionDaysAfterExpiry: number };

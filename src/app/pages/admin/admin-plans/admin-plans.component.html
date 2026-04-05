@@ -36,6 +36,8 @@
           <div class="plan-pricing">
             <span>₹{{ plan.price.monthly }}/mo</span>
             <span class="sep">·</span>
+            <span *ngIf="plan.price.quarterly">₹{{ plan.price.quarterly }}/3mo</span>
+            <span *ngIf="plan.price.quarterly" class="sep">·</span>
             <span>₹{{ plan.price.yearly }}/yr</span>
           </div>
 
@@ -136,10 +138,14 @@
       </select>
     </div>
 
-    <div class="form-row two-col">
+    <div class="form-row three-col">
       <div>
         <label>Monthly Price (₹)</label>
         <input type="number" [(ngModel)]="editingPlan.price.monthly" min="0" />
+      </div>
+      <div>
+        <label>Quarterly Price (₹)</label>
+        <input type="number" [(ngModel)]="editingPlan.price.quarterly" min="0" />
       </div>
       <div>
         <label>Yearly Price (₹)</label>
