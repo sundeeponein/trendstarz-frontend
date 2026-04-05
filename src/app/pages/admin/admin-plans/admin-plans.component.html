@@ -10,56 +10,112 @@
   <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
   <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
 
-  <!-- Plans list -->
-  <div class="plans-grid" *ngIf="!editingPlan">
+  <!-- Plans list: Influencers -->
+  <div *ngIf="!editingPlan">
     <div *ngIf="loading" class="loading-state">Loading plans…</div>
     <div *ngIf="!loading && plans.length === 0" class="empty-state">
       No plans found. Click <strong>Seed Default Plans</strong> to get started.
     </div>
 
-    <div class="plan-card" *ngFor="let plan of plans; trackBy: trackById">
-      <div class="plan-card-header">
-        <div>
-          <span class="plan-name">{{ plan.name }}</span>
-          <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                [class.badge-brand]="plan.userType === 'BRAND'"
-                [class.badge-all]="plan.userType === 'ALL'">{{ plan.userType }}</span>
-        </div>
-        <div class="plan-status" [class.active]="plan.isActive">
-          {{ plan.isActive ? 'Active' : 'Inactive' }}
+    <div class="plans-section">
+      <h3>Influencer Plans</h3>
+      <div class="plans-grid">
+        <div class="plan-card" *ngFor="let plan of influencerPlans; trackBy: trackById">
+          <div class="plan-card-header">
+            <div>
+              <span class="plan-name">{{ plan.name }}</span>
+              <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
+                    [class.badge-brand]="plan.userType === 'BRAND'"
+                    [class.badge-all]="plan.userType === 'ALL'">{{ plan.userType }}</span>
+            </div>
+            <div class="plan-status" [class.active]="plan.isActive">
+              {{ plan.isActive ? 'Active' : 'Inactive' }}
+            </div>
+          </div>
+
+          <div class="plan-pricing">
+            <span>₹{{ plan.price.monthly }}/mo</span>
+            <span class="sep">·</span>
+            <span>₹{{ plan.price.yearly }}/yr</span>
+          </div>
+
+          <!-- Features -->
+          <div class="section-label">Features</div>
+          <ul class="feature-list">
+            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
+              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
+              {{ f.label }}
+            </li>
+          </ul>
+
+          <!-- Limits -->
+          <div class="section-label">Limits</div>
+          <ul class="limit-list">
+            <li *ngFor="let l of plan.limits">
+              {{ l.label }}: <strong>{{ l.value }}</strong>
+            </li>
+          </ul>
+
+          <!-- Policies -->
+          <div class="section-label">Policies</div>
+          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
+
+          <div class="card-actions">
+            <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
+            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="plan-pricing">
-        <span>₹{{ plan.price.monthly }}/mo</span>
-        <span class="sep">·</span>
-        <span>₹{{ plan.price.yearly }}/yr</span>
-      </div>
+    <div class="plans-section mt-5 border-top pt-4">
+      <h3>Brand Plans</h3>
+      <div class="plans-grid">
+        <div class="plan-card" *ngFor="let plan of brandPlans; trackBy: trackById">
+          <div class="plan-card-header">
+            <div>
+              <span class="plan-name">{{ plan.name }}</span>
+              <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
+                    [class.badge-brand]="plan.userType === 'BRAND'"
+                    [class.badge-all]="plan.userType === 'ALL'">{{ plan.userType }}</span>
+            </div>
+            <div class="plan-status" [class.active]="plan.isActive">
+              {{ plan.isActive ? 'Active' : 'Inactive' }}
+            </div>
+          </div>
 
-      <!-- Features -->
-      <div class="section-label">Features</div>
-      <ul class="feature-list">
-        <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
-          <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-          {{ f.label }}
-        </li>
-      </ul>
+          <div class="plan-pricing">
+            <span>₹{{ plan.price.monthly }}/mo</span>
+            <span class="sep">·</span>
+            <span>₹{{ plan.price.yearly }}/yr</span>
+          </div>
 
-      <!-- Limits -->
-      <div class="section-label">Limits</div>
-      <ul class="limit-list">
-        <li *ngFor="let l of plan.limits">
-          {{ l.label }}: <strong>{{ l.value }}</strong>
-        </li>
-      </ul>
+          <!-- Features -->
+          <div class="section-label">Features</div>
+          <ul class="feature-list">
+            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
+              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
+              {{ f.label }}
+            </li>
+          </ul>
 
-      <!-- Policies -->
-      <div class="section-label">Policies</div>
-      <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
+          <!-- Limits -->
+          <div class="section-label">Limits</div>
+          <ul class="limit-list">
+            <li *ngFor="let l of plan.limits">
+              {{ l.label }}: <strong>{{ l.value }}</strong>
+            </li>
+          </ul>
 
-      <div class="card-actions">
-        <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
-        <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
+          <!-- Policies -->
+          <div class="section-label">Policies</div>
+          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
+
+          <div class="card-actions">
+            <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
+            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
