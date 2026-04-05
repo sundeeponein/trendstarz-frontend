@@ -123,20 +123,23 @@ export class AdminUserTableComponent implements OnInit {
       token = localStorage.getItem('token') || '';
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers`, headers)
-      .pipe(timeout(5000), catchError(err => { return of({ data: [] }); }))
+    const influencerUrl = `${environment.apiBaseUrl}/admin/influencers${this.isDeletedTab() ? '?status=deleted' : ''}`;
+    this.http.get<any>(influencerUrl, headers)
+      .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
-        const users = res?.data || [];
-        this.influencers = users.filter((u: any) => !u.isDeleted);
+        const users = Array.isArray(res) ? res : (res?.data || []);
+        console.log('Fetched influencers:', users);
+        this.influencers = users;
         this.applyFilters('influencer');
         this.updateAllFilterOptions();
         this.isLoading = false;
       });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands`, headers)
-      .pipe(timeout(5000), catchError(err => { return of({ data: [] }); }))
+    const brandUrl = `${environment.apiBaseUrl}/admin/brands${this.isDeletedTab() ? '?status=deleted' : ''}`;
+    this.http.get<any>(brandUrl, headers)
+      .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
-        const users = res?.data || [];
-        this.brands = users.filter((u: any) => !u.isDeleted);
+        const users = Array.isArray(res) ? res : (res?.data || []);
+        this.brands = users;
         this.applyFilters('brand');
         this.updateAllFilterOptions();
         this.isLoading = false;
@@ -182,14 +185,32 @@ export class AdminUserTableComponent implements OnInit {
   applyFilters(userType: 'influencer' | 'brand') {
     const filters = userType === 'influencer' ? this.influencerFilters : this.brandFilters;
     const source = userType === 'influencer' ? this.influencers : this.brands;
-    
-    this.filteredInfluencers = userType === 'influencer' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredInfluencers;
-    this.filteredBrands = userType === 'brand' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredBrands;
+    // If on User Management tab, show only non-deleted users. If on Deleted Users tab, show only deleted users.
+    let filtered = source;
+    if (this.isDeletedTab()) {
+      filtered = filtered.filter(user => user.isDeleted === true || user.isDeleted === 'true');
+    } else {
+      filtered = filtered.filter(user => !user.isDeleted || user.isDeleted === false || user.isDeleted === 'false');
+    }
+    if (userType === 'influencer') {
+      this.filteredInfluencers = filtered.filter(user => this.matchesFilters(user, filters));
+      console.log('Filtered influencers:', this.filteredInfluencers);
+    } else {
+      this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters));
+      console.log('Filtered brands:', this.filteredBrands);
+    }
+  }
+
+  // Returns true if the Deleted Users tab is active (adjust as needed for your routing)
+  isDeletedTab(): boolean {
+    const isDeleted = window.location.pathname.includes('deleted-users');
+    console.log('Is Deleted Users tab active?', isDeleted);
+    return isDeleted;
   }
 
   matchesFilters(user: any, filters: any): boolean {
-    // Status filter
-    if (filters.status && user.status !== filters.status) {
+    // Status filter: Only filter if a specific status is selected (not empty or 'All'), otherwise show all statuses
+    if (filters.status && filters.status !== '' && filters.status !== 'All' && user.status !== filters.status) {
       return false;
     }
     
