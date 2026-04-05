@@ -13,6 +13,8 @@ import { PlansService, Plan, PlanFeature, PlanLimit } from '../../../shared/plan
 })
 
 export class AdminPlansComponent implements OnInit {
+  influencerPlans: Plan[] = [];
+  brandPlans: Plan[] = [];
 
 
   loadFromConfig() {
@@ -64,6 +66,8 @@ export class AdminPlansComponent implements OnInit {
     this.plansService.adminListAll().subscribe({
       next: plans => {
         this.plans = plans;
+        this.influencerPlans = plans.filter(p => p.userType === 'INFLUENCER' || p.userType === 'ALL');
+        this.brandPlans = plans.filter(p => p.userType === 'BRAND' || p.userType === 'ALL');
         this.loading = false;
       },
       error: (err) => {

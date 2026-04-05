@@ -2,13 +2,13 @@
   <h2 class="text-white">Admin Management</h2>
 
   <div class="admin-tabs">
-    <button [class.active]="activeTab === 'details'" (click)="setTab('details')">Details</button>
-    <button [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social Media</button>
-    <button [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
-    <button [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
-    <button [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
-    <button [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
-    <button [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
+    <button class="tab-btn active" [class.active]="activeTab === 'details'" (click)="setTab('details')">Details</button>
+    <button class="tab-btn" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social Media</button>
+    <button class="tab-btn" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
+    <button class="tab-btn" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
+    <button class="tab-btn" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
+    <button class="tab-btn" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
+    <button class="tab-btn" [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
   </div>
 
   <div *ngIf="activeTab === 'details'">
