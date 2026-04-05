@@ -127,7 +127,7 @@ export class AdminUserTableComponent implements OnInit {
       .pipe(timeout(5000), catchError(err => { return of({ data: [] }); }))
       .subscribe((res: any) => {
         const users = res?.data || [];
-        this.influencers = users.filter((u: any) => u.status !== 'deleted');
+        this.influencers = users.filter((u: any) => !u.isDeleted);
         this.applyFilters('influencer');
         this.updateAllFilterOptions();
         this.isLoading = false;
@@ -136,7 +136,7 @@ export class AdminUserTableComponent implements OnInit {
       .pipe(timeout(5000), catchError(err => { return of({ data: [] }); }))
       .subscribe((res: any) => {
         const users = res?.data || [];
-        this.brands = users.filter((u: any) => u.status !== 'deleted');
+        this.brands = users.filter((u: any) => !u.isDeleted);
         this.applyFilters('brand');
         this.updateAllFilterOptions();
         this.isLoading = false;
