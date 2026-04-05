@@ -59,7 +59,9 @@
           </td>
           <td>
             <div class="user-name">{{ getUserDisplayName(payment) }}</div>
-            <div class="user-email">{{ payment.userId?.email || '-' }}</div>
+            <div class="user-email">
+              {{ payment.userId?.email || payment.userSnapshot?.email || '-' }}
+            </div>
             <div class="user-phone" *ngIf="payment.userId?.phoneNumber">{{ payment.userId.phoneNumber }}</div>
           </td>
           <td class="col-amount">₹{{ payment.amount }}</td>

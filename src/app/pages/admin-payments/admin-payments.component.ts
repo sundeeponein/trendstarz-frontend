@@ -8,6 +8,10 @@ interface Payment {
   _id: string;
   userId: any;
   userType: 'Influencer' | 'Brand';
+  userSnapshot?: {
+    name?: string;
+    email?: string;
+  };
   transactionId: string;
   amount: number;
   premiumDuration: '1m' | '3m' | '1y';
@@ -225,8 +229,21 @@ export class AdminPaymentsComponent implements OnInit {
 
   getUserDisplayName(payment: Payment): string {
     const u = payment.userId;
-    if (!u) return 'Unknown';
-    return u.username || u.brandUsername || u.brandName || u.name || 'Unknown';
+    // If user object exists and is not deleted
+    if (u && !u.isDeleted) {
+      return (
+        u.username ||
+        u.brandUsername ||
+        u.brandName ||
+        u.name ||
+        (payment.userSnapshot?.name ? payment.userSnapshot.name + ' (Deleted)' : 'Deleted User')
+      );
+    }
+    // If user is deleted or missing, use snapshot
+    if (payment.userSnapshot?.name) {
+      return payment.userSnapshot.name + ' (Deleted)';
+    }
+    return 'Deleted User';
   }
 
   getProfileImage(payment: Payment): string {
