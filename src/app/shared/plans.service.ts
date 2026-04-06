@@ -22,7 +22,7 @@ export interface Plan {
   code?: string;
   name: string;
   userType: 'INFLUENCER' | 'BRAND';
-  price: { monthly: number; quarterly?: number; yearly: number };
+  price: { monthly: number; quarterly: number; yearly: number };
   features: PlanFeature[];
   limits: PlanLimit[];
   policies: { imageRetentionDaysAfterExpiry: number };
@@ -71,6 +71,20 @@ export class PlansService {
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
 
+  private normalizePlan(plan: any): Plan {
+    return {
+      ...plan,
+      price: {
+        monthly: plan?.price?.monthly ?? 0,
+        quarterly: plan?.price?.quarterly ?? 0,
+        yearly: plan?.price?.yearly ?? 0,
+      },
+      features: plan?.features ?? [],
+      limits: plan?.limits ?? [],
+      policies: plan?.policies ?? { imageRetentionDaysAfterExpiry: 45 },
+    } as Plan;
+  }
+
   /** Public: fetch active plans for a given user type */
   getActivePlans(userType?: string): Observable<Plan[]> {
     const normalizedType = userType ? userType.toUpperCase() : undefined;
@@ -78,7 +92,7 @@ export class PlansService {
       ? `${environment.apiBaseUrl}/plans?userType=${normalizedType}`
       : `${environment.apiBaseUrl}/plans`;
     return this.http.get<any>(url).pipe(
-      map(r => r.plans ?? []),
+      map(r => (r.plans ?? []).map((plan: any) => this.normalizePlan(plan))),
       catchError(() => of([])),
     );
   }
@@ -116,7 +130,7 @@ export class PlansService {
     return this.http
       .get<any>(`${environment.apiBaseUrl}/plans/admin/all`, { headers: this.getHeaders() })
       .pipe(
-        map(r => r.plans ?? []),
+        map(r => (r.plans ?? []).map((plan: any) => this.normalizePlan(plan))),
         catchError(err => { throw err; }),
       );
   }
@@ -124,13 +138,13 @@ export class PlansService {
   adminCreate(dto: Partial<Plan>): Observable<Plan> {
     return this.http
       .post<any>(`${environment.apiBaseUrl}/plans/admin`, dto, { headers: this.getHeaders() })
-      .pipe(map(r => r.plan));
+      .pipe(map(r => this.normalizePlan(r.plan)));
   }
 
   adminUpdate(id: string, dto: Partial<Plan>): Observable<Plan> {
     return this.http
       .patch<any>(`${environment.apiBaseUrl}/plans/admin/${id}`, dto, { headers: this.getHeaders() })
-      .pipe(map(r => r.plan));
+      .pipe(map(r => this.normalizePlan(r.plan)));
   }
 
   adminDelete(id: string): Observable<void> {

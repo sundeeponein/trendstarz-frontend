@@ -100,6 +100,8 @@
           <div class="plan-pricing">
             <span>₹{{ plan.price.monthly }}/mo</span>
             <span class="sep">·</span>
+            <span>₹{{ plan.price.quarterly || 0 }}/3mo</span>
+            <span class="sep">·</span>
             <span>₹{{ plan.price.yearly }}/yr</span>
           </div>
 
