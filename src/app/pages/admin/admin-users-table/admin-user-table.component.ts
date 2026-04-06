@@ -216,6 +216,9 @@ export class AdminUserTableComponent implements OnInit {
 
   // Returns true if the Deleted Users tab is active (adjust as needed for your routing)
   isDeletedTab(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
     const isDeleted = window.location.pathname.includes('deleted-users');
     console.log('Is Deleted Users tab active?', isDeleted);
     return isDeleted;
