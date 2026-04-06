@@ -109,7 +109,7 @@ export class AdminPlansComponent implements OnInit {
   showTypeSelector = false;
   newPlanType: 'INFLUENCER' | 'BRAND' | null = null;
 
-  readonly userTypes = ['INFLUENCER', 'BRAND', 'ALL'];
+  readonly userTypes = ['INFLUENCER', 'BRAND'];
 
   constructor(private plansService: PlansService) {}
 
@@ -123,8 +123,8 @@ export class AdminPlansComponent implements OnInit {
     this.plansService.adminListAll().subscribe({
       next: plans => {
         this.plans = plans;
-        this.influencerPlans = plans.filter(p => p.userType === 'INFLUENCER' || p.userType === 'ALL');
-        this.brandPlans = plans.filter(p => p.userType === 'BRAND' || p.userType === 'ALL');
+        this.influencerPlans = plans.filter(p => p.userType === 'INFLUENCER');
+        this.brandPlans = plans.filter(p => p.userType === 'BRAND');
         this.loading = false;
       },
       error: (err) => {
