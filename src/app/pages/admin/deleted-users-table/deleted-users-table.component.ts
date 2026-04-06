@@ -38,6 +38,20 @@ export class DeletedUsersTableComponent implements OnInit {
 
   ngOnInit() {
     this.fetchDeletedUsers();
+    // Listen for user-deleted-refresh event to auto-refresh deleted users (only in browser)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('user-deleted-refresh', this.handleUserDeletedRefresh);
+    }
+  }
+
+  ngOnDestroy() {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('user-deleted-refresh', this.handleUserDeletedRefresh);
+    }
+  }
+
+  handleUserDeletedRefresh = () => {
+    this.fetchDeletedUsers();
   }
 
   fetchDeletedUsers() {
@@ -159,6 +173,7 @@ export class DeletedUsersTableComponent implements OnInit {
 
   setTab(tab: 'influencer' | 'brand') {
     this.activeTab = tab;
+    this.applyFilters(tab);
   }
 
   restoreUser(userId: string) {
