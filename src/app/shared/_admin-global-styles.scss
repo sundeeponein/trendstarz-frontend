@@ -1,3 +1,6 @@
+// Global admin styles for buttons, tables, tabs, etc.
+// (migrated to partial for @use)
+
 // --- Admin Tabs Switcher ---
 .admin-tabs {
   display: flex;
@@ -126,7 +129,7 @@
 .btn-danger, .admin-btn-danger    { background: #ef4444; color: #fff; }
 .btn-sm, .admin-btn-sm        { padding: 5px 10px; font-size: 0.8rem; }
 .btn-xs, .admin-btn-xs        { padding: 3px 8px; font-size: 0.78rem; }
-// Global admin styles for buttons, tables, tabs, etc.
+
 .admin-btn {
   display: inline-block;
   font-weight: 600;
@@ -147,22 +150,6 @@
   &.admin-btn-primary {
     background: #6366f1;
     color: #fff;
-  }
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #181c23;
-  color: #fff;
-  th, td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #23293a;
-  }
-  th {
-    background: #23293a;
-    font-weight: 700;
-    text-align: left;
   }
 }
 
