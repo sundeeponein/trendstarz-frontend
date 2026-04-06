@@ -1,4 +1,4 @@
-<div class="admin-plans">
+<div class="container-fluid p-4">
   <admin-confirm-dialog
     [open]="confirmDialogOpen"
     [message]="confirmDialogMessage"
@@ -11,7 +11,7 @@
   <div class="page-header">
     <h2>Plan Management</h2>
     <div class="header-actions">
-      <button class="admin-btn admin-btn-secondary" (click)="loadFromConfig()">Load from Config</button>
+      <!-- <button class="admin-btn admin-btn-secondary" (click)="loadFromConfig()">Load from Config</button> -->
       <button class="admin-btn admin-btn-primary" (click)="startCreate()">+ New Plan</button>
     </div>
   </div>
