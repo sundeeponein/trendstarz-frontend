@@ -5,15 +5,37 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ConfigService } from '../../../shared/config.service';
 import { environment } from '../../../../environments/environment';
+import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 @Component({
   selector: 'app-deleted-users-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminConfirmDialogComponent],
   templateUrl: './deleted-users-table.component.html',
   styleUrls: ['./deleted-users-table.component.scss']
 })
 export class DeletedUsersTableComponent implements OnInit {
+  // Confirmation dialog state
+  confirmDialogOpen = false;
+  confirmDialogMessage = '';
+  confirmDialogAction: (() => void) | null = null;
+
+  showConfirm(message: string, action: () => void) {
+    this.confirmDialogMessage = message;
+    this.confirmDialogAction = action;
+    this.confirmDialogOpen = true;
+  }
+
+  onConfirmDialogConfirm() {
+    if (this.confirmDialogAction) this.confirmDialogAction();
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
+
+  onConfirmDialogCancel() {
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
   influencers: any[] = [];
   brands: any[] = [];
   filteredInfluencers: any[] = [];
@@ -196,18 +218,20 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   restoreUser(userId: string) {
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/restore`, {}, this.getAuthHeaders())
-      .subscribe({
-        next: () => {
-          this.errorMessage = null;
-          this.removeUserFromDeletedLists(userId);
-          this.dispatchAdminRefresh('user-restored-refresh');
-          this.router.navigate(['/admin/admin-user-table']);
-        },
-        error: (err) => {
-          this.errorMessage = err?.error?.message || 'Failed to restore user.';
-        }
-      });
+    this.showConfirm('Restore this user?', () => {
+      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/restore`, {}, this.getAuthHeaders())
+        .subscribe({
+          next: () => {
+            this.errorMessage = null;
+            this.removeUserFromDeletedLists(userId);
+            this.dispatchAdminRefresh('user-restored-refresh');
+            this.router.navigate(['/admin/admin-user-table']);
+          },
+          error: (err) => {
+            this.errorMessage = err?.error?.message || 'Failed to restore user.';
+          }
+        });
+    });
   }
 
   deletePermanently(userId: string) {

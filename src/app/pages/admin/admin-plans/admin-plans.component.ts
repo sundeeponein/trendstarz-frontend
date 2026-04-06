@@ -5,16 +5,38 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PlansService, Plan, PlanFeature, PlanLimit } from '../../../shared/plans.service';
+import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 @Component({
   selector: 'app-admin-plans',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminConfirmDialogComponent],
   templateUrl: './admin-plans.component.html',
   styleUrls: ['./admin-plans.component.scss'],
 })
 
 export class AdminPlansComponent implements OnInit {
+  // Confirmation dialog state
+  confirmDialogOpen = false;
+  confirmDialogMessage = '';
+  confirmDialogAction: (() => void) | null = null;
+
+  showConfirm(message: string, action: () => void) {
+    this.confirmDialogMessage = message;
+    this.confirmDialogAction = action;
+    this.confirmDialogOpen = true;
+  }
+
+  onConfirmDialogConfirm() {
+    if (this.confirmDialogAction) this.confirmDialogAction();
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
+
+  onConfirmDialogCancel() {
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
   influencerPlans: Plan[] = [];
   brandPlans: Plan[] = [];
 
@@ -241,14 +263,18 @@ export class AdminPlansComponent implements OnInit {
   }
 
   deletePlan(plan: Plan) {
-    if (!confirm(`Delete plan "${plan.name}" (${plan.userType})? This cannot be undone.`)) return;
-    this.plansService.adminDelete(plan._id!).subscribe({
-      next: () => {
-        this.successMsg = 'Plan deleted';
-        this.loadPlans();
-      },
-      error: () => (this.error = 'Failed to delete plan'),
-    });
+    this.showConfirm(
+      `Are you sure you want to delete "${plan.name}" (${plan.userType})? This cannot be undone.`,
+      () => {
+        this.plansService.adminDelete(plan._id!).subscribe({
+          next: () => {
+            this.successMsg = 'Plan deleted';
+            this.loadPlans();
+          },
+          error: () => (this.error = 'Failed to delete plan'),
+        });
+      }
+    );
   }
 
   toggleFeature(key: string) {

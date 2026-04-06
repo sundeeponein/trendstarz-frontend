@@ -1,0 +1,10 @@
+<div class="admin-confirm-dialog" *ngIf="open">
+  <div class="dialog-backdrop"></div>
+  <div class="dialog-content">
+    <div class="dialog-message">{{ message }}</div>
+    <div class="dialog-actions">
+      <button class="admin-btn admin-btn-secondary" (click)="onCancel()">{{ cancelText }}</button>
+      <button class="admin-btn admin-btn-danger" (click)="onConfirm()">{{ confirmText }}</button>
+    </div>
+  </div>
+</div>
