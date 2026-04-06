@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { ConfigService } from '../../../shared/config.service';
 import { environment } from '../../../../environments/environment';
 
@@ -34,7 +35,11 @@ export class DeletedUsersTableComponent implements OnInit {
   categoriesArray: string[] = [];
   statesArray: string[] = [];
 
-  constructor(private http: HttpClient, private configService: ConfigService) {}
+  constructor(
+    private http: HttpClient,
+    private configService: ConfigService,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.fetchDeletedUsers();
@@ -54,6 +59,20 @@ export class DeletedUsersTableComponent implements OnInit {
     this.fetchDeletedUsers();
   }
 
+  private dispatchAdminRefresh(eventName: string) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(eventName));
+    }
+  }
+
+  private removeUserFromDeletedLists(userId: string) {
+    this.influencers = this.influencers.filter(user => user._id !== userId);
+    this.brands = this.brands.filter(user => user._id !== userId);
+    this.applyFilters('influencer');
+    this.applyFilters('brand');
+    this.updateAllFilterOptions();
+  }
+
   fetchDeletedUsers() {
     let token = '';
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -70,7 +89,7 @@ export class DeletedUsersTableComponent implements OnInit {
     this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted`, headers)
       .subscribe({
         next: (res: any) => {
-          const users = res?.data || [];
+          const users = Array.isArray(res) ? res : (res?.data || []);
           console.log('[DeletedUsers] Influencers received:', users);
           this.influencers = users;
           this.applyFilters('influencer');
@@ -90,7 +109,7 @@ export class DeletedUsersTableComponent implements OnInit {
     this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted`, headers)
       .subscribe({
         next: (res: any) => {
-          const users = res?.data || [];
+          const users = Array.isArray(res) ? res : (res?.data || []);
           this.brands = users;
           this.applyFilters('brand');
           this.updateAllFilterOptions();
@@ -178,12 +197,21 @@ export class DeletedUsersTableComponent implements OnInit {
 
   restoreUser(userId: string) {
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/restore`, {}, this.getAuthHeaders())
-      .subscribe(() => this.fetchDeletedUsers());
+      .subscribe({
+        next: () => {
+          this.errorMessage = null;
+          this.removeUserFromDeletedLists(userId);
+          this.dispatchAdminRefresh('user-restored-refresh');
+          this.router.navigate(['/admin/admin-user-table']);
+        },
+        error: (err) => {
+          this.errorMessage = err?.error?.message || 'Failed to restore user.';
+        }
+      });
   }
 
   deletePermanently(userId: string) {
-    this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders())
-      .subscribe(() => this.fetchDeletedUsers());
+    this.errorMessage = 'Permanent delete is disabled. Use restore or soft delete only.';
   }
 
   getAuthHeaders() {
