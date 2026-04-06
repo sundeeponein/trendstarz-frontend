@@ -7,6 +7,19 @@
     </div>
   </div>
 
+  <!-- New Plan Type Selector -->
+  <div *ngIf="showTypeSelector" class="plan-type-selector-modal">
+    <div class="modal-content">
+      <h3>Create New Plan</h3>
+      <p>Select the type of plan you want to create:</p>
+      <div class="type-buttons">
+        <button class="btn btn-lg btn-influencer" (click)="selectNewPlanType('INFLUENCER')">New Plan for Influencer</button>
+        <button class="btn btn-lg btn-brand" (click)="selectNewPlanType('BRAND')">New Plan for Brand</button>
+      </div>
+      <button class="btn btn-secondary mt-3" (click)="cancelEdit()">Cancel</button>
+    </div>
+  </div>
+
   <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
   <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
 
@@ -34,19 +47,19 @@
           </div>
 
           <div class="plan-pricing">
-            <span>₹{{ plan.price.monthly }}/mo</span>
+            <span>₹{{ plan.price.monthly || 0 }}/mo</span>
             <span class="sep">·</span>
-            <span *ngIf="plan.price.quarterly">₹{{ plan.price.quarterly }}/3mo</span>
-            <span *ngIf="plan.price.quarterly" class="sep">·</span>
-            <span>₹{{ plan.price.yearly }}/yr</span>
+            <span>₹{{ plan.price.quarterly || 0 }}/3mo</span>
+            <span class="sep">·</span>
+            <span>₹{{ plan.price.yearly || 0 }}/yr</span>
           </div>
 
           <!-- Features -->
           <div class="section-label">Features</div>
           <ul class="feature-list">
-            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
+            <li *ngFor="let f of plan.features">
               <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
+              {{ f.label }} <span *ngIf="!f.value" class="text-muted">(off)</span>
             </li>
           </ul>
 
@@ -60,7 +73,7 @@
 
           <!-- Policies -->
           <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
+          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }}</strong> days post-expiry</p>
 
           <div class="card-actions">
             <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
@@ -133,7 +146,7 @@
 
     <div class="form-row">
       <label>User Type</label>
-      <select [(ngModel)]="editingPlan.userType">
+      <select [(ngModel)]="editingPlan.userType" (change)="onUserTypeChange()">
         <option *ngFor="let t of userTypes" [value]="t">{{ t }}</option>
       </select>
     </div>
@@ -153,36 +166,32 @@
       </div>
     </div>
 
-    <!-- Features section -->
+    <!-- Features section: always show all for type -->
     <div class="form-section">
       <div class="section-header">
         <span>Features (Toggles)</span>
-        <button class="btn btn-xs" (click)="addFeature()">+ Add</button>
       </div>
-      <div class="feature-row" *ngFor="let f of editingPlan.features; let i = index">
+      <div class="feature-row" *ngFor="let f of getMergedFeatures()">
         <div class="toggle-wrap">
           <label class="toggle">
-            <input type="checkbox" [checked]="f.value" (change)="toggleFeature(f)" />
+            <input type="checkbox" [checked]="f.value" (change)="toggleFeature(f.key)" />
             <span class="slider"></span>
           </label>
         </div>
-        <input type="text" [(ngModel)]="f.key" placeholder="key (e.g. socialMediaVisibility)" class="input-key" />
-        <input type="text" [(ngModel)]="f.label" placeholder="Label shown to user" class="input-label" />
-        <button class="btn btn-xs btn-danger" (click)="removeFeature(i)">✕</button>
+        <input type="text" [value]="f.key" class="input-key" readonly />
+        <input type="text" [value]="f.label" class="input-label" readonly />
       </div>
     </div>
 
-    <!-- Limits section -->
+    <!-- Limits section: always show all for type -->
     <div class="form-section">
       <div class="section-header">
         <span>Limits (Numbers)</span>
-        <button class="btn btn-xs" (click)="addLimit()">+ Add</button>
       </div>
-      <div class="limit-row" *ngFor="let l of editingPlan.limits; let i = index">
-        <input type="text" [(ngModel)]="l.key" placeholder="key (e.g. maxImages)" class="input-key" />
-        <input type="text" [(ngModel)]="l.label" placeholder="Label" class="input-label" />
-        <input type="number" [(ngModel)]="l.value" min="0" class="input-value" />
-        <button class="btn btn-xs btn-danger" (click)="removeLimit(i)">✕</button>
+      <div class="limit-row" *ngFor="let l of getMergedLimits()">
+        <input type="text" [value]="l.key" class="input-key" readonly />
+        <input type="text" [value]="l.label" class="input-label" readonly />
+        <input type="number" [value]="l.value" min="0" class="input-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
       </div>
     </div>
 
