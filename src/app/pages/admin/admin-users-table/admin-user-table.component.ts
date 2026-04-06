@@ -16,6 +16,10 @@ import { ResolvePlatformPipe } from '../../../shared/pipes/resolve-platform.pipe
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  private readonly handleUserRestoredRefresh = () => {
+    this.fetchUsers();
+  };
+
   getProfileImage(user: any): string {
     if (!user.profileImages || !user.profileImages.length) return 'assets/default-profile.png';
     const img = user.profileImages[0];
@@ -99,6 +103,9 @@ export class AdminUserTableComponent implements OnInit {
 
   ngOnInit() {
     this.fetchUsers();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
+    }
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     console.log('Profile token:', token);
     if (token) {
@@ -112,6 +119,12 @@ export class AdminUserTableComponent implements OnInit {
           this.registrationError = 'Error fetching profile.';
         }
       });
+    }
+  }
+
+  ngOnDestroy() {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
     }
   }
 

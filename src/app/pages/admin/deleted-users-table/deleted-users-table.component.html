@@ -72,7 +72,7 @@
           <td>{{ user.location?.state || '-' }}</td>
           <td class="actions">
             <button class="btn btn-success btn-sm me-1" (click)="restoreUser(user._id)">Restore</button>
-            <button class="btn btn-danger btn-sm" (click)="deletePermanently(user._id)">Delete Permanently</button>
+            <button class="btn btn-danger btn-sm" disabled title="Permanent delete is disabled">Delete Permanently</button>
           </td>
         </tr>
       </tbody>
@@ -123,7 +123,7 @@
           </td>
           <td class="actions">
             <button class="btn btn-success btn-sm me-1" (click)="restoreUser(user._id)">Restore</button>
-            <button class="btn btn-danger btn-sm" (click)="deletePermanently(user._id)">Delete Permanently</button>
+            <button class="btn btn-danger btn-sm" disabled title="Permanent delete is disabled">Delete Permanently</button>
           </td>
         </tr>
       </tbody>
