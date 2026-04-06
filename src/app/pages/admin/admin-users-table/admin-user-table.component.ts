@@ -249,12 +249,14 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   setTab(tab: 'influencer' | 'brand') {
-  this.activeTab = tab;
-  // Reset modal state when switching tabs to avoid blank screen
-  this.showPremiumModal = false;
-  this.premiumUserId = null;
-  this.premiumDuration = '';
-  this.premiumType = null;
+    this.activeTab = tab;
+    // Reset modal state when switching tabs to avoid blank screen
+    this.showPremiumModal = false;
+    this.premiumUserId = null;
+    this.premiumDuration = '';
+    this.premiumType = null;
+    // Always refetch users when switching tabs (especially for Deleted Users view)
+    this.fetchUsers();
   }
 
   getAuthHeaders() {
@@ -272,6 +274,8 @@ export class AdminUserTableComponent implements OnInit {
     this.isLoading = true;
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
       this.fetchUsers();
+      // Broadcast event to notify deleted-users-table to refresh
+      window.dispatchEvent(new CustomEvent('user-deleted-refresh'));
       setTimeout(() => { this.isLoading = false; }, 500);
     });
   }
