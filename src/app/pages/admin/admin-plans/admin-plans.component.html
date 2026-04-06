@@ -38,8 +38,7 @@
             <div>
               <span class="plan-name">{{ plan.name }}</span>
               <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                    [class.badge-brand]="plan.userType === 'BRAND'"
-                    [class.badge-all]="plan.userType === 'ALL'">{{ plan.userType }}</span>
+                  [class.badge-brand]="plan.userType === 'BRAND'">{{ plan.userType }}</span>
             </div>
             <div class="plan-status" [class.active]="plan.isActive">
               {{ plan.isActive ? 'Active' : 'Inactive' }}
@@ -91,8 +90,7 @@
             <div>
               <span class="plan-name">{{ plan.name }}</span>
               <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                    [class.badge-brand]="plan.userType === 'BRAND'"
-                    [class.badge-all]="plan.userType === 'ALL'">{{ plan.userType }}</span>
+                  [class.badge-brand]="plan.userType === 'BRAND'">{{ plan.userType }}</span>
             </div>
             <div class="plan-status" [class.active]="plan.isActive">
               {{ plan.isActive ? 'Active' : 'Inactive' }}

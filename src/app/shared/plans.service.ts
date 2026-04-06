@@ -19,8 +19,9 @@ export interface PlanLimit {
 
 export interface Plan {
   _id?: string;
+  code?: string;
   name: string;
-  userType: 'INFLUENCER' | 'BRAND' | 'ALL';
+  userType: 'INFLUENCER' | 'BRAND';
   price: { monthly: number; quarterly?: number; yearly: number };
   features: PlanFeature[];
   limits: PlanLimit[];
