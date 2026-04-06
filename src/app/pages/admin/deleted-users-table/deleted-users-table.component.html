@@ -1,3 +1,11 @@
+<admin-confirm-dialog
+  [open]="confirmDialogOpen"
+  [message]="confirmDialogMessage"
+  confirmText="Confirm"
+  cancelText="Cancel"
+  (confirm)="onConfirmDialogConfirm()"
+  (cancel)="onConfirmDialogCancel()"
+></admin-confirm-dialog>
 <div class="container-fluid p-4">
   <h2 class="text-white">Deleted Users</h2>
 

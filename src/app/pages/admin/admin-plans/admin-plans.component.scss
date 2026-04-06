@@ -1,3 +1,51 @@
+/* ── Plan Tabs Switcher ─────────────────────────────────────── */
+.plan-tabs-switcher {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  background: transparent;
+  border-radius: 18px;
+  box-shadow: none;
+  width: fit-content;
+
+  button {
+    border: none;
+    outline: none;
+    background: #23293a;
+    color: #b0b6c3;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 12px 32px;
+    border-radius: 18px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-shadow: none;
+    margin: 0;
+  }
+
+  button.active {
+    background: #ff6a2b;
+    color: #fff;
+    box-shadow: 0 2px 12px 0 #ff6a2b33;
+    z-index: 1;
+  }
+
+  button:not(.active) {
+    background: #23293a;
+    color: #b0b6c3;
+    opacity: 0.6;
+    z-index: 0;
+  }
+
+  button:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  button:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
 .admin-plans {
   padding: 16px;
   max-width: 1100px;

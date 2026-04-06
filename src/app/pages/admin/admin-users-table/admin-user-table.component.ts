@@ -7,15 +7,37 @@ import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { ResolvePlatformPipe } from '../../../shared/pipes/resolve-platform.pipe';
+import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, ResolvePlatformPipe],
+  imports: [CommonModule, FormsModule, ResolvePlatformPipe, AdminConfirmDialogComponent],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  // Confirmation dialog state
+  confirmDialogOpen = false;
+  confirmDialogMessage = '';
+  confirmDialogAction: (() => void) | null = null;
+
+  showConfirm(message: string, action: () => void) {
+    this.confirmDialogMessage = message;
+    this.confirmDialogAction = action;
+    this.confirmDialogOpen = true;
+  }
+
+  onConfirmDialogConfirm() {
+    if (this.confirmDialogAction) this.confirmDialogAction();
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
+
+  onConfirmDialogCancel() {
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
   private readonly handleUserRestoredRefresh = () => {
     this.fetchUsers();
   };
@@ -281,18 +303,23 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   acceptUser(userId: string) {
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/accept`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+    this.showConfirm('Accept this user?', () => {
+      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/accept`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+    });
   }
   declineUser(userId: string) {
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/decline`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+    this.showConfirm('Decline this user?', () => {
+      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/decline`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+    });
   }
   deleteUser(userId: string) {
-    this.isLoading = true;
-    this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
-      this.fetchUsers();
-      // Broadcast event to notify deleted-users-table to refresh
-      window.dispatchEvent(new CustomEvent('user-deleted-refresh'));
-      setTimeout(() => { this.isLoading = false; }, 500);
+    this.showConfirm('Delete this user? This cannot be undone.', () => {
+      this.isLoading = true;
+      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
+        this.fetchUsers();
+        window.dispatchEvent(new CustomEvent('user-deleted-refresh'));
+        setTimeout(() => { this.isLoading = false; }, 500);
+      });
     });
   }
   restoreUser(userId: string) {
