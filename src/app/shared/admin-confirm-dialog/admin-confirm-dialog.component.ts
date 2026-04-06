@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './admin-confirm-dialog.component.html',
-  styleUrls: ['../admin-global-styles.scss', './admin-confirm-dialog.component.scss']
+  styleUrls: ['./admin-confirm-dialog.component.scss']
 })
 export class AdminConfirmDialogComponent {
   @Input() message = 'Are you sure?';
