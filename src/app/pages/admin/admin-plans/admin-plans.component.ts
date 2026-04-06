@@ -76,27 +76,23 @@ export class AdminPlansComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.successMsg = '';
-    fetch(`${(window as any).environment?.apiBaseUrl || '/api'}/plans/admin/load-config`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token') || ''}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(r => r.json())
-      .then(res => {
+    this.plansService.adminLoadFromConfig().subscribe({
+      next: (res) => {
         if (res.success) {
           this.successMsg = res.message || 'Plans loaded from config';
-          this.loadPlans();
+          this.plans = res.plans;
+          this.influencerPlans = res.plans.filter(p => p.userType === 'INFLUENCER');
+          this.brandPlans = res.plans.filter(p => p.userType === 'BRAND');
         } else {
           this.error = res.message || 'Failed to load from config';
         }
         this.loading = false;
-      })
-      .catch(() => {
-        this.error = 'Failed to load from config';
+      },
+      error: (err) => {
+        this.error = err?.error?.message || 'Failed to load from config';
         this.loading = false;
-      });
+      },
+    });
   }
   plans: Plan[] = [];
   loading = false;

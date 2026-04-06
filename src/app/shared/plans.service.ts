@@ -141,6 +141,18 @@ export class PlansService {
       .pipe(map(r => this.normalizePlan(r.plan)));
   }
 
+  adminLoadFromConfig(): Observable<{ success: boolean; message: string; plans: Plan[] }> {
+    return this.http
+      .post<any>(`${environment.apiBaseUrl}/plans/admin/load-config`, {}, { headers: this.getHeaders() })
+      .pipe(
+        map(r => ({
+          success: r.success === true,
+          message: r.message ?? 'Plans loaded from config',
+          plans: (r.plans ?? []).map((plan: any) => this.normalizePlan(plan)),
+        })),
+      );
+  }
+
   adminUpdate(id: string, dto: Partial<Plan>): Observable<Plan> {
     return this.http
       .patch<any>(`${environment.apiBaseUrl}/plans/admin/${id}`, dto, { headers: this.getHeaders() })
