@@ -7,9 +7,13 @@
           <span class="pill-label">Next-Gen Influencer Platform</span>
           <h1 class="hero-title mt-3">Connect with the World&apos;s <span>Top Creators</span></h1>
           <p class="hero-copy mt-3">Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling.</p>
-          <div class="d-flex flex-wrap gap-3 mt-4">
-            <button class="btn btn-primary" (click)="router.navigate(['/register-brand'])" type="button">Start a Campaign</button>
-            <button class="btn btn-dark" (click)="router.navigate(['/register-influencer'])" type="button">Find Creators</button>
+          <div class="d-flex flex-wrap gap-3 mt-4" *ngIf="!isLoggedIn()">
+            <button class="btn btn-primary" (click)="router.navigate(['/register-brand'])" type="button">Register as Brand</button>
+            <button class="btn btn-dark" (click)="router.navigate(['/register-influencer'])" type="button">Register as Influencer</button>
+          </div>
+          <div class="d-flex flex-wrap gap-3 mt-4" *ngIf="isLoggedIn()">
+            <button class="btn btn-primary" (click)="handleStartCampaign()" type="button">Start a Campaign</button>
+            <button class="btn btn-dark" (click)="handleFindCreators()" type="button">Find Creators</button>
           </div>
         </div>
         <div class="col-12 col-lg-6">
