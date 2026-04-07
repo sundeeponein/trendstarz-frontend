@@ -25,6 +25,16 @@
       </div>
     </div>
 
+    <!-- Contact / Pricing row -->
+    <div class="brand-card__contact" *ngIf="isProViewer">
+      <i class="bi bi-check-circle-fill brand-card__contact-icon"></i>
+      <span>Contact details visible</span>
+    </div>
+    <div class="brand-card__locked" *ngIf="!isProViewer" (click)="$event.stopPropagation()" routerLink="/brand-profile">
+      <i class="bi bi-lock-fill brand-card__locked-icon"></i>
+      <span>Pricing hidden — upgrade to Pro</span>
+    </div>
+
     <!-- Buttons -->
     <div class="brand-card__actions">
       <button class="brand-card__btn brand-card__btn--outline" (click)="viewProfileClick.emit()">

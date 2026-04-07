@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { SessionService } from '../../core/session.service';
+import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
@@ -18,23 +19,20 @@ export class NavbarLayoutComponent {
     return this.user.name || this.user.fullname || this.user.brandName || this.user.email || 'User';
   }
   ngOnInit() {
-    // Debug log to trace user object
-    setTimeout(() => {
-      console.log('Navbar user:', this.user);
-      // Extra debug: show raw token payload
-      let token: string | null | undefined = null;
-      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        token = localStorage.getItem('token');
-      }
-      if (token != null && token !== undefined && token !== 'undefined' && token !== '') {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          console.log('Raw JWT payload:', payload);
-        } catch (e) {
-          console.log('Failed to parse JWT payload:', e);
+    // Sync isPremium from the live profile API into the session
+    // so the navbar always reflects the correct plan status without requiring re-login
+    const user = this.session.getUser();
+    if (user) {
+      const profileCall = user.role === 'brand'
+        ? this.config.getBrandProfileById()
+        : this.config.getInfluencerProfileById();
+      profileCall.subscribe((profile: any) => {
+        if (profile) {
+          const updated = { ...this.session.getUser(), isPremium: !!profile.isPremium, premiumEnd: profile.premiumEnd || null };
+          this.session.setUser(updated);
         }
-      }
-    }, 500);
+      });
+    }
   }
   get validProfileImage(): string {
     if (this.user) {
@@ -52,7 +50,7 @@ export class NavbarLayoutComponent {
     }
     return 'assets/default-profile.png';
   }
-  constructor(private router: Router, private session: SessionService) {
+  constructor(private router: Router, private session: SessionService, private config: ConfigService) {
     // Subscribe to user changes
     this.session.user$.subscribe(user => {
       this.user = user;
