@@ -1,35 +1,64 @@
-<div class="brand-card">
+<div class="brand-card" (click)="isProViewer && viewProfileClick.emit()">
   <!-- Image + heart overlay -->
   <div class="brand-card__img-wrap">
     <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" />
     <button class="brand-card__heart" (click)="$event.stopPropagation()" title="Save">
       <i class="bi bi-heart"></i>
     </button>
-    <span class="brand-card__premium" *ngIf="isPremium">★ Premium</span>
+    <!-- PRO badge top-left -->
+    <span class="brand-card__pro-badge" *ngIf="isPremium">PRO</span>
+    <!-- Priority badge top-right (premium) -->
+    <span class="brand-card__priority-badge" *ngIf="isPremium">⭐ Priority</span>
   </div>
 
   <!-- Body -->
   <div class="brand-card__body">
-    <div class="brand-card__name">{{ brandName }}</div>
-    <div class="brand-card__category">{{ categories[0] || '—' }}</div>
+    <!-- Name -->
+    <div class="brand-card__name">
+      {{ brandName }}
+      <i class="bi bi-patch-check-fill brand-card__verified" *ngIf="isPremium" title="Verified"></i>
+    </div>
+
+    <!-- Categories -->
+    <div class="brand-card__category">{{ categories.join(' · ') || '—' }}</div>
+
+    <!-- Location -->
+    <div class="brand-card__location" *ngIf="location?.state">
+      <i class="bi bi-geo-alt"></i> {{ location.state }}
+    </div>
 
     <!-- Stats row -->
     <div class="brand-card__stats">
       <div class="brand-card__stat">
-        <span class="brand-card__stat-label">FOLLOWERS</span>
-        <span class="brand-card__stat-value">{{ formatFollowers(socialMedia[0]?.followersCount) }}</span>
+        <span class="brand-card__stat-value">{{ formatFollowers(totalFollowers) || formatFollowers(socialMedia[0]?.followersCount) }}</span>
+        <span class="brand-card__stat-label">Followers</span>
       </div>
-      <div class="brand-card__stat" *ngIf="location?.state">
-        <span class="brand-card__stat-label">LOCATION</span>
-        <span class="brand-card__stat-value">{{ location.state }}</span>
+      <div class="brand-card__stat">
+        <span class="brand-card__stat-value">{{ socialMedia.length }}</span>
+        <span class="brand-card__stat-label">Platforms</span>
       </div>
     </div>
 
-    <!-- Contact / Pricing row -->
-    <div class="brand-card__contact" *ngIf="isProViewer">
-      <i class="bi bi-check-circle-fill brand-card__contact-icon"></i>
-      <span>Contact details visible</span>
+    <!-- Platform icons -->
+    <div class="brand-card__platforms" *ngIf="socialMedia.length > 0">
+      <span class="brand-card__platform-icon" *ngFor="let sm of socialMedia" [title]="sm.platform">
+        <i class="bi {{ platformIcon(sm.platform) }}"></i>
+      </span>
     </div>
+
+    <!-- PRO VIEW: Contact visible + pricing -->
+    <ng-container *ngIf="isProViewer">
+      <div class="brand-card__contact">
+        <i class="bi bi-check-circle-fill brand-card__contact-icon"></i>
+        <span>Contact details visible</span>
+      </div>
+      <div class="brand-card__pricing-row" *ngIf="promotionalPrice">
+        <span class="brand-card__pricing-label">Starting from</span>
+        <span class="brand-card__price">₹{{ promotionalPrice | number }}</span>
+      </div>
+    </ng-container>
+
+    <!-- FREE VIEW: Locked row -->
     <div class="brand-card__locked" *ngIf="!isProViewer" (click)="$event.stopPropagation()" routerLink="/brand-profile">
       <i class="bi bi-lock-fill brand-card__locked-icon"></i>
       <span>Pricing hidden — upgrade to Pro</span>
@@ -37,7 +66,7 @@
 
     <!-- Buttons -->
     <div class="brand-card__actions">
-      <button class="brand-card__btn brand-card__btn--outline" (click)="viewProfileClick.emit()">
+      <button class="brand-card__btn brand-card__btn--outline" (click)="viewProfileClick.emit(); $event.stopPropagation()">
         View Profile
       </button>
       <button class="brand-card__btn brand-card__btn--primary" *ngIf="showCampaignBtn" (click)="createCampaignClick.emit(); $event.stopPropagation()">

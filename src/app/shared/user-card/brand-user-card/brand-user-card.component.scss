@@ -64,17 +64,30 @@
     }
   }
 
-  &__premium {
+  &__pro-badge {
     position: absolute;
     bottom: 0.6rem;
     left: 0.6rem;
-    background: linear-gradient(135deg, #ff6b35, #ff9a35);
+    background: #ff6b35;
     color: #fff;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.18rem 0.5rem;
+    border-radius: 0.35rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__priority-badge {
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.6rem;
+    background: #1a2741;
+    color: #fff;
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 0.2rem 0.55rem;
-    border-radius: 0.4rem;
-    letter-spacing: 0.04em;
+    padding: 0.18rem 0.5rem;
+    border-radius: 0.35rem;
   }
 
   // --- Body ---
@@ -94,30 +107,71 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  &__verified {
+    color: #ff6b35;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  &__location {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin: 0.1rem 0 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    i { font-size: 0.75rem; }
   }
 
   &__category {
     font-size: 0.82rem;
     font-weight: 600;
     color: #ff6b35;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  // --- Platform icons ---
+  &__platforms {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+  }
+
+  &__platform-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: #f0f2f5;
+    color: #444;
+    font-size: 0.9rem;
+    cursor: default;
+    user-select: none;
   }
 
   // --- Stats ---
   &__stats {
     display: flex;
     gap: 1.25rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.5rem;
     flex-wrap: wrap;
   }
 
   &__stat {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.05rem;
     min-width: 0;
   }
 
@@ -136,6 +190,28 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  // --- Pricing row (Pro view) ---
+  &__pricing-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  &__pricing-label {
+    font-size: 0.62rem;
+    color: #a0a8b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__price {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a2e;
   }
 
   // --- Contact visible (Pro) ---

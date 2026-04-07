@@ -3,8 +3,10 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { timeout } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { SessionService } from '../../core/session.service';
+import { WarmupService } from '../../core/warmup.service';
 
 @Component({
   selector: 'app-payment-history',
@@ -14,27 +16,28 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./payment-history.component.scss'],
 })
 export class PaymentHistoryComponent implements OnInit, OnDestroy {
-    private paymentSub?: Subscription;
+  /** Class-level cache — survives component re-creation across navigations */
+  private static cache: any[] | null = null;
+
+  private paymentSub?: Subscription;
   payments: any[] = [];
   loading = false;
   error = '';
 
-
   constructor(
     private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: object,
-    private router: Router
-  ) {
-    // Reload payments on every navigation to this route
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        this.loadPayments();
-      }
-    });
-  }
+    public session: SessionService,
+    private warmup: WarmupService
+  ) {}
 
   ngOnInit() {
-    this.loadPayments();
+    // Show cached data immediately so returning users see results at once
+    if (PaymentHistoryComponent.cache) {
+      this.payments = PaymentHistoryComponent.cache;
+    }
+    // Wait for backend to be warm before firing the payment request
+    this.warmup.ready.then(() => this.loadPayments());
   }
 
   loadPayments() {
@@ -47,17 +50,17 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    // Cancel any previous request
     if (this.paymentSub) {
       this.paymentSub.unsubscribe();
     }
     this.paymentSub = this.http
       .get<any>(`${environment.apiBaseUrl}/payment/my?limit=50`, { headers })
-      .pipe(timeout(10000)) // 10 seconds timeout
+      .pipe(timeout(45000)) // 45s to accommodate Railway cold starts
       .subscribe({
         next: (res) => {
           const d = res?.data || res;
           this.payments = Array.isArray(d?.payments) ? d.payments : Array.isArray(d) ? d : [];
+          PaymentHistoryComponent.cache = this.payments;
           this.loading = false;
         },
         error: (err) => {
