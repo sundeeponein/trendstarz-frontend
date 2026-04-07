@@ -6,12 +6,579 @@ $border: #eee;
 $text-dark: #1a1a2e;
 $text-muted: #7a7a8e;
 $radius: 16px;
-/* Contact cards (card-based contact UI) */
-.contact-cards {
+$green: #22c55e;
+
+/* ── Wrapper ───────────────────────────────── */
+.profile-page-wrapper {
+  max-width: 1100px;
+  margin: 32px auto;
+  padding: 0 16px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: $text-muted;
+  text-decoration: none;
+  margin-bottom: 20px;
+  &:hover { color: $accent; }
+}
+
+/* ── 3-column grid ─────────────────────────── */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Shared card base ──────────────────────── */
+.profile-card,
+.details-card,
+.info-card,
+.contact-info-card,
+.insights-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 24px 20px;
+}
+
+/* ── LEFT COLUMN ───────────────────────────── */
+.left-col {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.profile-card {
+  text-align: center;
+}
+
+.profile-photo-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 14px;
+}
+
+.profile-photo {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid $border;
+}
+
+.pro-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: $accent;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 2px solid #fff;
+}
+
+.profile-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0 0 4px;
+}
+
+.profile-categories {
+  font-size: 0.83rem;
+  color: $accent;
+  font-weight: 500;
+  margin: 0 0 6px;
+  .cat-sep { color: $text-muted; }
+}
+
+.profile-location {
+  font-size: 0.82rem;
+  color: $text-muted;
+  margin: 0 0 16px;
+  i { margin-right: 4px; color: $accent; }
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.btn-follow {
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 8px 22px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: background 0.2s;
+  &:hover { background: color.adjust($accent, $lightness: -8%); color: #fff; }
+}
+
+.btn-contact {
+  background: #fff;
+  color: $accent;
+  border: 2px solid $accent;
+  border-radius: 24px;
+  padding: 8px 22px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  &:hover { background: $accent-light; }
+}
+
+/* Stats row (3-column horizontal) */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid $border;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  padding: 12px 4px;
+  border-right: 1px solid $border;
+  &:last-child { border-right: none; }
+}
+
+.stat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $text-dark;
+  &--price { color: $accent; }
+}
+
+.stat-lbl {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: $text-muted;
+  margin-bottom: 2px;
+}
+
+/* Details card */
+.details-card {
+  .section-label { margin-bottom: 14px; }
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-key {
+  font-size: 0.82rem;
+  color: $text-muted;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.detail-val {
+  font-size: 0.88rem;
+  color: $text-dark;
+  font-weight: 600;
+  text-align: right;
+  &--price { color: $accent; font-size: 0.95rem; }
+}
+
+.detail-locked {
+  font-size: 0.78rem;
+  color: $text-muted;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  i { font-size: 0.7rem; }
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.chip {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  &--gray  { background: #f3f4f6; color: $text-dark; }
+  &--accent { background: $accent-light; color: $accent; }
+}
+
+/* ── CENTER COLUMN ─────────────────────────── */
+.center-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: $accent;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+}
+
+.about-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #444;
+  margin: 0;
+}
+
+/* Pricing card header row */
+.pricing-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.per-type-label {
+  font-size: 0.68rem;
+  color: $text-muted;
+  line-height: 1.3;
+  text-align: right;
+}
+
+/* Platform section */
+.platform-section {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid $border;
+  &--last {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.platform-header-row {
+  display: flex;
+  align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.platform-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  i { font-size: 1.2rem; color: $accent; }
+}
+
+.eng-badge {
+  background: #fff;
+  border: 1.5px solid $green;
+  color: $green;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  small { font-size: 0.65rem; font-weight: 500; }
+}
+
+.platform-followers-block {
+  display: flex;
+  flex-direction: column;
+  strong { font-size: 1rem; font-weight: 800; color: $text-dark; }
+  span { font-size: 0.72rem; color: $text-muted; }
+}
+
+/* Content type rows */
+.ct-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #f6f6f6;
+
+  &--total {
+    border-bottom: none;
+    border-top: 1px solid $border;
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+}
+
+.ct-name {
+  font-size: 0.88rem;
+  color: $text-dark;
+}
+
+.ct-price {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $text-dark;
+  &--total { color: $accent; font-size: 0.95rem; }
+}
+
+.ct-locked {
+  font-size: 0.78rem;
+  color: $text-muted;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  i { font-size: 0.72rem; }
+}
+
+/* ── RIGHT COLUMN ──────────────────────────── */
+.right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 24px;
+}
+
+/* Plan status card */
+.plan-status-card {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: $radius;
+  padding: 14px 16px;
+
+  &--free {
+    background: #fff5f0;
+    border-color: #fca786;
+  }
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    div { flex: 1; }
+    strong { font-size: 0.9rem; color: $text-dark; }
+    small { color: $text-muted; font-size: 0.78rem; }
+  }
+
+  &__btn {
+    display: block;
+    margin-top: 10px;
+    background: $accent;
+    color: #fff;
+    text-align: center;
+    border-radius: 24px;
+    padding: 7px 16px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.2s;
+    &:hover { background: color.adjust($accent, $lightness: -8%); color: #fff; }
+  }
+}
+
+/* Contact Info card */
+.contact-info-card {
+  .section-label { margin-bottom: 12px; }
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f4f4f4;
+  &:last-child { border-bottom: none; }
+}
+
+.contact-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  i { font-size: 1.05rem; color: #fff; }
+
+  &.ci--whatsapp { background: #25d366; }
+  &.ci--email    { background: #3b82f6; }
+  &.ci--phone    { background: #6366f1; }
+  &.ci--website  { background: #94a3b8; }
+}
+
+.contact-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contact-field-lbl {
+  font-size: 0.72rem;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.contact-field-val {
+  font-size: 0.85rem;
+  color: $text-dark;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &:hover { color: $accent; }
+}
+
+.contact-field-blur {
+  font-size: 0.85rem;
+  color: #bbb;
+  letter-spacing: 2px;
+}
+
+.contact-field-upgrade {
+  font-size: 0.75rem;
+  color: $text-muted;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  i { font-size: 0.7rem; }
+}
+
+/* Premium Insights card */
+.insights-card {
+  border: 1px solid $border;
+}
+
+.insights-badge-wrap {
+  margin-bottom: 12px;
+}
+
+.insights-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: $accent;
+  color: #fff;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  i { font-size: 0.75rem; }
+}
+
+.insights-tease {
+  font-size: 0.82rem;
+  color: $text-muted;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.insights-blur-row {
+  height: 10px;
+  background: linear-gradient(90deg, #f5f5f5, #fde8dc);
+  border-radius: 5px;
+  margin-bottom: 9px;
+  &.short { width: 65%; }
+}
+
+.insights-stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.insight-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.insight-stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: $text-dark;
+}
+
+.insight-stat-lbl {
+  font-size: 0.68rem;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.insight-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.insight-key {
+  font-size: 0.72rem;
+  color: $text-muted;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.insight-val {
+  font-size: 0.85rem;
+  color: $text-dark;
+  font-weight: 600;
+}
+
+.kw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.kw-chip {
+  background: $accent-light;
+  color: $accent;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.powered-by {
+  display: block;
+  margin-top: 14px;
+  font-size: 0.6rem;
+  letter-spacing: 0.8px;
+  color: #ccc;
+  text-transform: uppercase;
 }
 
 .contact-card {

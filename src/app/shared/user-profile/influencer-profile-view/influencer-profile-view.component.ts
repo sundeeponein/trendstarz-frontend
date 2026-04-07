@@ -2,23 +2,29 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../config.service';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { SessionService } from '../../../core/session.service';
 
 @Component({
   selector: 'app-influencer-profile-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: ['./influencer-profile-view.component.scss']
 })
-
 export class InfluencerProfileViewComponent implements OnInit {
-    stripProtocol(url: string): string {
-      return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
-    }
   influencer: any;
   loading = true;
   error = '';
-  showContact = false;
+
+  /** Whether the logged-in viewer has a Pro subscription */
+  get isProViewer(): boolean {
+    return !!this.session.getUser()?.isPremium;
+  }
+
+  stripProtocol(url: string): string {
+    return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  }
 
   onImgError(event: Event) {
     const img = event.target as HTMLImageElement;
@@ -32,23 +38,18 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   getTotalFollowers(): number {
-    return (this.influencer?.socialMedia || []).reduce((sum: number, sm: any) => sum + (sm.followersCount || 0), 0);
+    return (this.influencer?.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
   formatFollowers(count: number): string {
+    if (!count) return '—';
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
     return count.toString();
   }
 
-  getFollowerPercent(sm: any): number {
-    const total = this.getTotalFollowers();
-    if (!total) return 0;
-    return Math.round(((sm.followersCount || 0) / total) * 100);
-  }
-
   getSmTotal(sm: any): number {
-    return (sm.contentTypes || []).reduce((sum: number, ct: any) => sum + (ct.price || 0), 0);
+    return (sm.contentTypes || []).reduce((sum: number, ct: any) => sum + (Number(ct.price) || 0), 0);
   }
 
   getSocialIcon(sm: any): string {
@@ -62,15 +63,9 @@ export class InfluencerProfileViewComponent implements OnInit {
     return 'bi bi-globe';
   }
 
-  getSocialLabel(sm: any): string {
+  getFollowerLabel(sm: any): string {
     const p = (sm?.platform || '').toLowerCase();
-    if (p.includes('insta')) return 'Instagram';
-    if (p.includes('youtube')) return 'YouTube';
-    if (p.includes('face')) return 'Facebook';
-    if (p.includes('twitter') || p.includes('x')) return 'Twitter';
-    if (p.includes('tiktok')) return 'TikTok';
-    if (p.includes('linkedin')) return 'LinkedIn';
-    return sm?.platform || 'Website';
+    return p.includes('youtube') ? 'subscribers' : 'followers';
   }
 
   getSocialUrl(sm: any): string {
@@ -92,7 +87,22 @@ export class InfluencerProfileViewComponent implements OnInit {
     return '#';
   }
 
-  constructor(private route: ActivatedRoute, private config: ConfigService, private cd: ChangeDetectorRef) {}
+  getAvgEngagement(): string {
+    const sms = this.influencer?.socialMedia || [];
+    const rates = sms
+      .filter((sm: any) => sm.engagementRate)
+      .map((sm: any) => Number(sm.engagementRate));
+    if (!rates.length) return '—';
+    const avg = rates.reduce((a: number, b: number) => a + b, 0) / rates.length;
+    return avg.toFixed(1) + '%';
+  }
+
+  constructor(
+    private route: ActivatedRoute,
+    private config: ConfigService,
+    private cd: ChangeDetectorRef,
+    private session: SessionService
+  ) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -103,17 +113,12 @@ export class InfluencerProfileViewComponent implements OnInit {
       if (username) {
         this.config.getInfluencerByUsername(username).subscribe({
           next: (data) => {
-            if (!data) {
-              this.error = 'Influencer not found.';
-              this.influencer = null;
-            } else {
-              this.influencer = data;
-            }
+            this.influencer = data || null;
+            if (!data) this.error = 'Influencer not found.';
             this.loading = false;
             this.cd.detectChanges();
           },
-          error: (err) => {
-            console.error('Influencer API error:', err);
+          error: () => {
             this.error = 'Could not load influencer profile.';
             this.loading = false;
             this.cd.detectChanges();
@@ -127,3 +132,4 @@ export class InfluencerProfileViewComponent implements OnInit {
     });
   }
 }
+
