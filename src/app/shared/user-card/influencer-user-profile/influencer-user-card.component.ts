@@ -45,6 +45,36 @@ export class InfluencerUserCardComponent {
     return this.profileImage || this.profileImages?.[0]?.url || 'assets/default-profile.png';
   }
 
+  get platforms(): string[] {
+    return (this.socialMedia || []).map((sm: any) => (sm.platform || '').toLowerCase());
+  }
+
+  get totalFollowers(): number {
+    return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
+  }
+
+  platformIcon(platform: string): string {
+    const p = (platform || '').toLowerCase();
+    if (p === 'youtube') return 'bi-youtube';
+    if (p === 'instagram') return 'bi-instagram';
+    if (p === 'linkedin') return 'bi-linkedin';
+    if (p === 'facebook') return 'bi-facebook';
+    if (p === 'twitter' || p === 'x' || p === 'x / twitter') return 'bi-twitter-x';
+    if (p === 'tiktok') return 'bi-tiktok';
+    return 'bi-globe';
+  }
+
+  platformLabel(platform: string): string {
+    const p = (platform || '').toLowerCase();
+    if (p === 'youtube') return 'YT';
+    if (p === 'instagram') return 'IG';
+    if (p === 'linkedin') return 'LI';
+    if (p === 'facebook') return 'FB';
+    if (p === 'twitter' || p === 'x' || p === 'x / twitter') return 'X';
+    if (p === 'tiktok') return 'TT';
+    return platform.slice(0, 2).toUpperCase();
+  }
+
   formatFollowers(count: number | undefined): string {
     if (!count) return '—';
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';

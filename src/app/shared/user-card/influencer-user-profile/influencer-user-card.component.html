@@ -1,4 +1,4 @@
-<div class="inf-card" [class.inf-card--selected]="selected">
+<div class="inf-card" [class.inf-card--selected]="selected" (click)="isProViewer && viewProfileClick.emit()">
   <!-- Image + overlays -->
   <div class="inf-card__img-wrap">
     <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" />
@@ -17,31 +17,64 @@
     <button class="inf-card__heart" (click)="$event.stopPropagation()" title="Save">
       <i class="bi bi-heart"></i>
     </button>
-    <span class="inf-card__premium" *ngIf="isPremium">★ Premium</span>
+
+    <!-- PRO badge top-left -->
+    <span class="inf-card__pro-badge" *ngIf="isPremium">PRO</span>
+    <!-- Priority badge top-right (premium) -->
+    <span class="inf-card__priority-badge" *ngIf="isPremium">⭐ Priority</span>
   </div>
 
   <!-- Body -->
   <div class="inf-card__body">
-    <div class="inf-card__name">{{ name }}</div>
-    <div class="inf-card__category">{{ categories[0] || '—' }}</div>
+    <!-- Name + verified -->
+    <div class="inf-card__name">
+      {{ name }}
+      <i class="bi bi-patch-check-fill inf-card__verified" *ngIf="isPremium" title="Verified"></i>
+    </div>
+
+    <!-- Categories -->
+    <div class="inf-card__category">{{ categories.join(' · ') || '—' }}</div>
+
+    <!-- Location -->
+    <div class="inf-card__location" *ngIf="location?.state">
+      <i class="bi bi-geo-alt"></i> {{ location.state }}
+    </div>
 
     <!-- Stats row -->
     <div class="inf-card__stats">
       <div class="inf-card__stat">
-        <span class="inf-card__stat-label">FOLLOWERS</span>
-        <span class="inf-card__stat-value">{{ formatFollowers(socialMedia[0]?.followersCount) }}</span>
+        <span class="inf-card__stat-value">{{ formatFollowers(totalFollowers) || formatFollowers(socialMedia[0]?.followersCount) }}</span>
+        <span class="inf-card__stat-label">Followers</span>
       </div>
-      <div class="inf-card__stat" *ngIf="engagementRate && isProViewer">
-        <span class="inf-card__stat-label">ENGAGEMENT</span>
-        <span class="inf-card__stat-value inf-card__stat-value--orange">{{ engagementRate }}%</span>
+      <div class="inf-card__stat">
+        <span class="inf-card__stat-value">{{ socialMedia.length }}</span>
+        <span class="inf-card__stat-label">Platforms</span>
       </div>
     </div>
 
-    <!-- Contact / Pricing row -->
-    <div class="inf-card__contact" *ngIf="isProViewer">
-      <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
-      <span>Contact details visible</span>
+    <!-- Platform icons -->
+    <div class="inf-card__platforms" *ngIf="socialMedia.length > 0">
+      <span class="inf-card__platform-icon" *ngFor="let sm of socialMedia" [title]="sm.platform">
+        <i class="bi {{ platformIcon(sm.platform) }}"></i>
+      </span>
     </div>
+
+    <!-- PRO VIEW: Contact visible + pricing + engagement -->
+    <ng-container *ngIf="isProViewer">
+      <div class="inf-card__contact">
+        <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
+        <span>Contact details visible</span>
+      </div>
+      <div class="inf-card__pricing-row" *ngIf="promotionalPrice">
+        <span class="inf-card__pricing-label">Starting from</span>
+        <div class="inf-card__pricing-bottom">
+          <span class="inf-card__price">₹{{ promotionalPrice | number }}</span>
+          <span class="inf-card__engagement" *ngIf="engagementRate">{{ engagementRate }}%<br><small>engagement</small></span>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- FREE VIEW: Locked row -->
     <div class="inf-card__locked" *ngIf="!isProViewer" (click)="$event.stopPropagation()" routerLink="/brand-profile">
       <i class="bi bi-lock-fill inf-card__locked-icon"></i>
       <span>Pricing hidden — upgrade to Pro</span>
@@ -49,7 +82,7 @@
 
     <!-- Buttons -->
     <div class="inf-card__actions">
-      <button class="inf-card__btn inf-card__btn--outline" (click)="viewProfileClick.emit()">
+      <button class="inf-card__btn inf-card__btn--outline" (click)="viewProfileClick.emit(); $event.stopPropagation()">
         View Profile
       </button>
       <button class="inf-card__btn inf-card__btn--primary" *ngIf="showCampaignBtn" (click)="createCampaignClick.emit(); $event.stopPropagation()">

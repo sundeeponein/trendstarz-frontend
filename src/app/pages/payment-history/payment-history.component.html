@@ -7,23 +7,35 @@
   <!-- Error -->
   <div *ngIf="error" class="alert alert-danger">
     {{ error }}
-    <button *ngIf="error.includes('log in')" class="btn btn-link" (click)="loadPayments()">Retry</button>
+    <button class="btn btn-link" (click)="loadPayments()">Retry</button>
   </div>
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="text-center py-5">
+  <!-- Full-page loading (only when no cached data yet) -->
+  <div *ngIf="loading && payments.length === 0" class="text-center py-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
     <p class="mt-2 text-muted">Loading your payments...</p>
+    <p class="mt-1 text-muted" style="font-size:0.8rem">Server may be warming up — this can take up to 45 seconds.</p>
+  </div>
+
+  <!-- Inline refresh indicator (cached data visible, silently refreshing) -->
+  <div *ngIf="loading && payments.length > 0" class="text-end mb-2" style="font-size:0.8rem; color:#888;">
+    <span class="spinner-border spinner-border-sm text-secondary me-1" role="status"></span> Refreshing...
   </div>
 
   <!-- Empty State -->
   <div *ngIf="!loading && !error && payments.length === 0" class="empty-state">
     <div class="empty-icon">💳</div>
-    <h4>No Payments Yet</h4>
-    <p>You haven't made any premium payments yet.</p>
-    <a routerLink="/upgrade-premium" class="btn btn-primary">Upgrade to Premium</a>
+    <ng-container *ngIf="session.getUser()?.isPremium; else notPremium">
+      <h4>No Payment Records</h4>
+      <p>Your premium plan is active. No payment transactions found yet.</p>
+    </ng-container>
+    <ng-template #notPremium>
+      <h4>No Payments Yet</h4>
+      <p>You haven't made any premium payments yet.</p>
+      <a routerLink="/upgrade-premium" class="btn btn-primary">Upgrade to Premium</a>
+    </ng-template>
   </div>
 
   <!-- Payment Cards -->
