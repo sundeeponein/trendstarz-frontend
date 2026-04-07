@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-brand-user-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './brand-user-card.component.html',
   styleUrls: ['./brand-user-card.component.scss']
 })
@@ -24,6 +25,8 @@ export class BrandUserCardComponent {
   @Input() socialMedia: any[] = [];
   /** Show the "+ Campaign" button — pass true for brand users */
   @Input() showCampaignBtn = false;
+  /** Whether the viewer has a Pro subscription (controls visible details) */
+  @Input() isProViewer = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();

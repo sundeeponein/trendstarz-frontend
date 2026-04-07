@@ -3,8 +3,6 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
-// import { NavbarLayoutComponent } from '../../layout/navbar-layout/navbar-layout.component';
-// import { FooterComponent } from '../../shared/footer/footer.component';
 
 @Component({
   selector: 'app-welcome',
@@ -38,6 +36,40 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
+  isLoggedIn(): boolean {
+    // Check for token or user in session/localStorage (adjust as per your auth/session logic)
+    return !!localStorage.getItem('token');
+  }
+
+  getUserType(): string | null {
+    // Adjust as per your session/user storage logic
+    const user = localStorage.getItem('user');
+    if (!user) return null;
+    try {
+      return JSON.parse(user).userType || null;
+    } catch {
+      return null;
+    }
+  }
+
+  handleStartCampaign(): void {
+    if (!this.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    // Redirect all logged-in users to the Campaigns page
+    this.router.navigate(['/campaigns']);
+  }
+
+  handleFindCreators(): void {
+    if (!this.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    // Redirect all logged-in users to the search page
+    this.router.navigate(['/search']);
+  }
+  
 
   ngOnInit(): void {
     this.title.setTitle('Welcome to TrendStarz Marketplace | Connect Influencers & Brands');

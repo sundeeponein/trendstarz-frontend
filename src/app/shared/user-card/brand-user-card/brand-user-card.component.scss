@@ -138,6 +138,46 @@
     text-overflow: ellipsis;
   }
 
+  // --- Contact visible (Pro) ---
+  &__contact {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.4rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #15803d;
+    margin-bottom: 0.6rem;
+  }
+
+  &__contact-icon {
+    color: #22c55e;
+    font-size: 0.85rem;
+  }
+
+  // --- Pricing locked (Free) ---
+  &__locked {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.4rem;
+    background: #fff7f3;
+    border: 1px solid #fdd5c0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #c2410c;
+    margin-bottom: 0.6rem;
+  }
+
+  &__locked-icon {
+    color: #f0641c;
+    font-size: 0.85rem;
+  }
+
   // --- Buttons ---
   &__actions {
     display: flex;

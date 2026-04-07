@@ -31,10 +31,20 @@
         <span class="inf-card__stat-label">FOLLOWERS</span>
         <span class="inf-card__stat-value">{{ formatFollowers(socialMedia[0]?.followersCount) }}</span>
       </div>
-      <div class="inf-card__stat" *ngIf="engagementRate">
+      <div class="inf-card__stat" *ngIf="engagementRate && isProViewer">
         <span class="inf-card__stat-label">ENGAGEMENT</span>
         <span class="inf-card__stat-value inf-card__stat-value--orange">{{ engagementRate }}%</span>
       </div>
+    </div>
+
+    <!-- Contact / Pricing row -->
+    <div class="inf-card__contact" *ngIf="isProViewer">
+      <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
+      <span>Contact details visible</span>
+    </div>
+    <div class="inf-card__locked" *ngIf="!isProViewer" (click)="$event.stopPropagation()" routerLink="/brand-profile">
+      <i class="bi bi-lock-fill inf-card__locked-icon"></i>
+      <span>Pricing hidden — upgrade to Pro</span>
     </div>
 
     <!-- Buttons -->

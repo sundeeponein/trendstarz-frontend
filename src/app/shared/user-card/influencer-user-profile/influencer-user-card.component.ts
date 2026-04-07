@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-influencer-user-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './influencer-user-card.component.html',
   styleUrls: ['./influencer-user-card.component.scss']
 })
@@ -27,6 +28,9 @@ export class InfluencerUserCardComponent {
   @Input() selectable = false;
   /** Whether this card is currently selected */
   @Input() selected = false;
+
+  /** Whether the viewer has a Pro subscription (controls visible details) */
+  @Input() isProViewer = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();

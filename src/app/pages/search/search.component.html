@@ -17,13 +17,22 @@
           Showing {{ filteredBrands.length }} brands matching your criteria
         </p>
       </div>
-      <!-- Right actions: Create Campaign for brand users only -->
+      <!-- Right actions -->
       <div class="header-actions">
         <button class="btn-create-campaign" *ngIf="isBrandUser" (click)="router.navigate(['/campaigns'])">
           <i class="bi bi-plus-lg"></i> Create Campaign
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- Upgrade Banner (shown in free view) -->
+  <div class="upgrade-banner" *ngIf="!isProView">
+    <div class="upgrade-banner__content">
+      <strong>Upgrade to Pro — unlock contact details &amp; advanced filters</strong>
+      <p>Free users see limited info. Pro brands see WhatsApp, email, phone, pricing &amp; engagement rates.</p>
+    </div>
+    <a routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
   </div>
 
   <!-- ───── INFLUENCER FILTERS ───── -->
@@ -134,6 +143,11 @@
 
   <!-- ───── INFLUENCER RESULTS ───── -->
   <div class="results-area" *ngIf="activeTab === 'influencers'">
+    <!-- Pro users appear first hint -->
+    <div class="pro-first-hint" *ngIf="!isProView">
+      <i class="bi bi-star-fill"></i> Pro users appear first
+    </div>
+
     <!-- Loading -->
     <div class="loading-state" *ngIf="influencersLoading">
       <div class="spinner-border text-primary" role="status"></div>
@@ -170,6 +184,7 @@
         [showCampaignBtn]="isBrandUser"
         [selectable]="isBrandUser"
         [selected]="isInfluencerSelected(influencer)"
+        [isProViewer]="isProView"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
         (createCampaignClick)="createCampaignForOne(influencer)"
         (toggleSelect)="toggleInfluencerSelection(influencer)">
@@ -213,6 +228,7 @@
         [products]="brand.products || []"
         [website]="brand.website || ''"
         [showCampaignBtn]="isBrandUser"
+        [isProViewer]="isProView"
         (viewProfileClick)="viewBrandProfile(brand)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-brand-user-card>
