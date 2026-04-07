@@ -41,6 +41,91 @@
   flex-wrap: wrap;
 }
 
+// ── Viewing As Toggle ──────────────────────────────────────────
+.viewing-as-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f4f5f7;
+  border: 1px solid #e0e5ef;
+  border-radius: 0.6rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.viewing-as-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.viewing-as-btn {
+  padding: 0.3rem 0.85rem;
+  border-radius: 0.45rem;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &.active {
+    background: #fff;
+    color: #1a1a2e;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
+}
+
+// ── Upgrade Banner ─────────────────────────────────────────────
+.upgrade-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #1a2741;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  margin: 0 0 1.25rem;
+
+  &__content {
+    strong {
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    p {
+      color: #8892b0;
+      font-size: 0.82rem;
+      margin: 0.2rem 0 0;
+    }
+  }
+
+  &__cta {
+    white-space: nowrap;
+    padding: 0.5rem 1.1rem;
+    background: #ff6b35;
+    color: #fff;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.18s;
+
+    &:hover { background: #e55a25; }
+  }
+}
+
+// ── Pro users appear first hint ────────────────────────────────
+.pro-first-hint {
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ff6b35;
+  margin-bottom: 0.5rem;
+
+  i { margin-right: 0.25rem; }
+}
+
 .btn-create-campaign {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
@@ -11,7 +11,7 @@ import { CampaignInfluencer } from '../../shared/campaigns/campaign.model';
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, InfluencerUserCardComponent, BrandUserCardComponent],
+  imports: [CommonModule, FormsModule, RouterModule, InfluencerUserCardComponent, BrandUserCardComponent],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss']
 })
@@ -59,6 +59,8 @@ export class SearchComponent implements OnInit {
   };
 
   private isBrowser: boolean;
+
+  get isProView(): boolean { return !!this.session.getUser()?.isPremium; }
 
   get currentUser(): any { return this.session.getUser(); }
   get isBrandUser(): boolean { return this.currentUser?.role === 'brand'; }
