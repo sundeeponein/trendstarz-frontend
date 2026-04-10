@@ -56,9 +56,9 @@ export class LoginComponent {
         if (res.userType === 'admin') {
           this.router.navigate(['/admin']);
         } else if (res.userType === 'brand') {
-          this.router.navigate(['/brand-profile']);
+          this.router.navigate(['/brand-dashboard']);
         } else if (res.userType === 'influencer') {
-          this.router.navigate(['/influencer-profile']);
+          this.router.navigate(['/influencer-dashboard']);
         } else {
           this.router.navigate(['/']);
         }

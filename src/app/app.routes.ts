@@ -12,7 +12,7 @@ export const routes: Routes = [
   	{
     path: '',
     component: NavbarLayoutComponent,
-    children: [
+		children: [
 			{ path: '', component: WelcomeComponent },
 			{ path: 'welcome', component: WelcomeComponent },
 			{ path: 'auth/login', component: LoginComponent },
@@ -32,6 +32,9 @@ export const routes: Routes = [
 			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 			{ path: 'upgrade-premium', canActivate: [authGuard], loadComponent: () => import('./pages/premium-upgrade/premium-upgrade.component').then(m => m.PremiumUpgradeComponent) },
 			{ path: 'payment-history', canActivate: [authGuard], loadComponent: () => import('./pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) },
+			// DASHBOARDS
+			{ path: 'influencer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-dashboard/influencer-dashboard.component').then(m => m.InfluencerDashboardComponent) },
+			{ path: 'brand-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/brand-dashboard/brand-dashboard.component').then(m => m.BrandDashboardComponent) },
 		],
 	},
 	{

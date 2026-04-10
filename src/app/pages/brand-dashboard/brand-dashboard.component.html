@@ -1,0 +1,71 @@
+<div class="container py-4">
+  <h2>Brand Dashboard</h2>
+  <div *ngIf="loading" class="text-center">Loading...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+  <div *ngIf="!loading && !error">
+    <div class="row mb-4">
+      <div class="col-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Total Campaigns</h5>
+            <p class="display-6">{{ dashboard?.totalCampaigns || 0 }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Active</h5>
+            <p class="display-6">{{ dashboard?.active || 0 }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Completed</h5>
+            <p class="display-6">{{ dashboard?.completed || 0 }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h4>Recent Campaigns</h4>
+    <div *ngIf="recentCampaigns.length === 0" class="text-muted">No recent campaigns.</div>
+    <ul class="list-group mb-4" *ngIf="recentCampaigns.length">
+      <li class="list-group-item" *ngFor="let c of recentCampaigns">
+        <strong>{{ c.title }}</strong><br>
+        Invites Sent: {{ c.invitesSent }} | Accepted: {{ c.accepted }} | Completed: {{ c.completed }}
+      </li>
+    </ul>
+    <h4>Search Influencers</h4>
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <select class="form-select" [(ngModel)]="filters.category">
+          <option value="">All Categories</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select class="form-select" [(ngModel)]="filters.state">
+          <option value="">All States</option>
+          <option *ngFor="let st of states" [value]="st">{{ st }}</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary w-100" (click)="searchInfluencers()">Search</button>
+      </div>
+    </div>
+    <h4>Recommended Influencers</h4>
+    <div class="row">
+      <div class="col-12 col-md-4 mb-3" *ngFor="let inf of recommendedInfluencers">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5>{{ inf.name }}</h5>
+            <p>{{ inf.categories?.[0] }}</p>
+            <p>{{ inf.location?.state }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
