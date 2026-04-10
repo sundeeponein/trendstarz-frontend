@@ -3,6 +3,19 @@
   <div *ngIf="loading" class="text-center">Loading...</div>
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
   <div *ngIf="!loading && !error">
+    <app-dashboard-alert-banner
+      [isEmailVerified]="dashboard?.brand?.isEmailVerified"
+      [isPremium]="dashboard?.brand?.isPremium"
+      [premiumDuration]="dashboard?.brand?.premiumDuration"
+      [premiumStart]="dashboard?.brand?.premiumStart"
+      [premiumEnd]="dashboard?.brand?.premiumEnd"
+      [profileIncomplete]="profileIncomplete"
+      userType="brand"
+      [userName]="dashboard?.brand?.brandName"
+      (verifyEmail)="onVerifyEmail()"
+      (upgrade)="onUpgrade()"
+      (completeProfile)="onCompleteProfile()"
+    ></app-dashboard-alert-banner>
     <div class="row mb-4">
       <div class="col-4">
         <div class="card text-center">
