@@ -1,0 +1,26 @@
+<div class="dashboard-alert-stack mb-3">
+  <div *ngIf="!isEmailVerified" class="alert alert-warning d-flex align-items-center justify-content-between mb-2">
+    <span>⚠ Verify your email to unlock full platform access.</span>
+    <button class="btn btn-sm btn-outline-primary ms-2" (click)="verifyEmail.emit()">Verify Email Now</button>
+  </div>
+  <div *ngIf="isEmailVerified && !isPremium" class="alert alert-info d-flex align-items-center justify-content-between mb-2">
+    <span>🚀 Upgrade to Premium to get better visibility and more campaign opportunities.</span>
+    <button class="btn btn-sm btn-primary ms-2" (click)="upgrade.emit()">Upgrade Now</button>
+  </div>
+  <div *ngIf="isPremium" class="card border-success mb-2">
+    <div class="card-body p-2 d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+      <div>
+        <span class="fw-bold text-success">⭐ Premium Active</span>
+        <span class="ms-2">Plan: {{ premiumDuration }}</span>
+      </div>
+      <div>
+        <span class="me-2">Valid From: {{ premiumStart | date:'mediumDate' }}</span>
+        <span>Valid Until: {{ premiumEnd | date:'mediumDate' }}</span>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="profileIncomplete" class="alert alert-danger d-flex align-items-center justify-content-between mb-2">
+    <span>Complete your profile to receive campaign opportunities.</span>
+    <button class="btn btn-sm btn-danger ms-2" (click)="completeProfile.emit()">Complete Profile</button>
+  </div>
+</div>

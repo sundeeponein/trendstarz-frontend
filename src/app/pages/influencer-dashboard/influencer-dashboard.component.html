@@ -1,5 +1,18 @@
 <div class="container py-4">
   <h2>Welcome {{ dashboard?.user?.name || 'Influencer' }}</h2>
+  <app-dashboard-alert-banner
+    [isEmailVerified]="dashboard?.user?.isEmailVerified"
+    [isPremium]="dashboard?.user?.isPremium"
+    [premiumDuration]="dashboard?.user?.premiumDuration"
+    [premiumStart]="dashboard?.user?.premiumStart"
+    [premiumEnd]="dashboard?.user?.premiumEnd"
+    [profileIncomplete]="profileIncomplete"
+    userType="influencer"
+    [userName]="dashboard?.user?.name"
+    (verifyEmail)="onVerifyEmail()"
+    (upgrade)="onUpgrade()"
+    (completeProfile)="onCompleteProfile()"
+  ></app-dashboard-alert-banner>
   <div *ngIf="loading" class="text-center">Loading...</div>
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
   <div *ngIf="!loading && !error">
