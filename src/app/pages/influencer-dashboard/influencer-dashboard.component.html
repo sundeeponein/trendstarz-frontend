@@ -1,0 +1,69 @@
+<div class="container py-4">
+  <h2>Welcome {{ dashboard?.user?.name || 'Influencer' }}</h2>
+  <div *ngIf="loading" class="text-center">Loading...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+  <div *ngIf="!loading && !error">
+    <div class="row mb-4">
+      <div class="col-6 col-md-3" *ngFor="let stat of ['invited','accepted','submitted','completed']">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-capitalize">{{ stat }}</h5>
+            <p class="display-6">{{ dashboard?.invites?.[stat] || 0 }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h4>New Campaign Invites</h4>
+    <div *ngIf="invites.length === 0" class="text-muted">No new invites.</div>
+    <table class="table table-bordered" *ngIf="invites.length">
+      <thead>
+        <tr>
+          <th>Brand Name</th>
+          <th>Campaign Title</th>
+          <th>Accept</th>
+          <th>Decline</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let invite of invites">
+          <td>{{ invite.brand?.brandName }}</td>
+          <td>{{ invite.campaign?.title }}</td>
+          <td><button class="btn btn-success btn-sm" (click)="respondToInvite(invite._id, 'accepted')">Accept</button></td>
+          <td><button class="btn btn-danger btn-sm" (click)="respondToInvite(invite._id, 'declined')">Decline</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <h4>Active Campaigns</h4>
+    <div *ngIf="activeCampaigns.length === 0" class="text-muted">No active campaigns.</div>
+    <table class="table table-bordered" *ngIf="activeCampaigns.length">
+      <thead>
+        <tr>
+          <th>Campaign Title</th>
+          <th>Submit Content</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let campaign of activeCampaigns">
+          <td>{{ campaign.title }}</td>
+          <td><button class="btn btn-primary btn-sm" (click)="submitContent(campaign.inviteId)">Submit</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <h4>Completed Campaigns</h4>
+    <div *ngIf="completedCampaigns.length === 0" class="text-muted">No completed campaigns.</div>
+    <table class="table table-bordered" *ngIf="completedCampaigns.length">
+      <thead>
+        <tr>
+          <th>Campaign Title</th>
+          <th>Performance Metrics</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let campaign of completedCampaigns">
+          <td>{{ campaign.title }}</td>
+          <td>{{ campaign.metrics | json }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
