@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../services/dashboard.service';
+import { DashboardAlertBannerComponent } from '../../shared/dashboard-alert-banner/dashboard-alert-banner.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -9,7 +10,7 @@ import { DashboardService } from '../../services/dashboard.service';
   styleUrls: ['./brand-dashboard.component.css'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, DashboardAlertBannerComponent]
 })
 export class BrandDashboardComponent implements OnInit {
   dashboard: any;
@@ -20,6 +21,7 @@ export class BrandDashboardComponent implements OnInit {
   filters: { category: string; state: string } = { category: '', state: '' };
   categories: string[] = [];
   states: string[] = [];
+  profileIncomplete = false;
 
   constructor(private dashboardService: DashboardService) {}
 
@@ -28,6 +30,9 @@ export class BrandDashboardComponent implements OnInit {
       next: (data: any) => {
         this.dashboard = data;
         this.recentCampaigns = data.campaigns || [];
+        // Profile completeness logic: check for missing required fields
+        const brand = data.brand || {};
+        this.profileIncomplete = !brand.brandName || !brand.categories?.length || !brand.location?.state;
         this.loading = false;
       },
       error: (err: any) => {
@@ -36,6 +41,17 @@ export class BrandDashboardComponent implements OnInit {
       }
     });
     // Load categories/states for filters (implement as needed)
+  }
+  onVerifyEmail() {
+    window.location.href = '/verify-email';
+  }
+
+  onUpgrade() {
+    window.location.href = '/upgrade-premium';
+  }
+
+  onCompleteProfile() {
+    window.location.href = '/brand-profile';
   }
 
   searchInfluencers(): void {
