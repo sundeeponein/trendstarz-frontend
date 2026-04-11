@@ -137,48 +137,70 @@
           </p>
         </div>
 
-        <div class="field-row">
-          <div class="field-group half">
-            <label class="field-label">Platform preference</label>
-            <select [formControl]="$any(form.get('platformPreference'))" class="field-select">
-              <option value="">Any platform</option>
-              <ng-container *ngIf="platformsList.length > 0">
-                <option *ngFor="let p of platformsList" [value]="p.name.toLowerCase()">{{ p.name }}</option>
-              </ng-container>
-              <ng-container *ngIf="platformsList.length === 0">
-                <option value="instagram">Instagram</option>
-                <option value="youtube">YouTube</option>
-                <option value="twitter">Twitter / X</option>
-                <option value="facebook">Facebook</option>
-              </ng-container>
-            </select>
-            <p class="field-hint" *ngIf="form.get('platformPreference')?.value">
-              <i class="bi bi-info-circle"></i> Deliverables below are filtered for this platform.
-            </p>
-          </div>
-          <div class="field-group half">
-            <label class="field-label">Min follower count</label>
-            <input type="number" [formControl]="$any(form.get('minFollowerCount'))"
-                   class="field-input" placeholder="e.g. 10000" min="0" />
+        <!-- ── Platform multi-select ── -->
+        <div class="field-group">
+          <label class="field-label">Platforms <span class="required">*</span></label>
+          <p class="field-sublabel">Select one or more platforms. Then toggle deliverables and set a price for each.</p>
+          <div class="chip-list">
+            <button type="button" class="chip chip--platform"
+                    [class.chip--selected]="isPlatformSelected(p.name)"
+                    *ngFor="let p of getPlatformOptions()"
+                    (click)="togglePlatform(p)">
+              <i [class]="getPlatformIcon(p.name)"></i> {{ p.name }}
+            </button>
           </div>
         </div>
 
-        <div class="field-group">
-          <label class="field-label">Deliverables expected</label>
-          <p class="field-sublabel" *ngIf="!form.get('platformPreference')?.value">
-            Select a platform above to see platform-specific deliverables, or pick from all below.
-          </p>
-          <div class="chip-list">
-            <button type="button" class="chip"
-                    [class.chip--selected]="isDeliverableSelected(d)"
-                    *ngFor="let d of deliverablesList"
-                    (click)="toggleDeliverable(d)">
-              {{ d }}
+        <!-- ── Per-platform tabs ── -->
+        <div *ngIf="platformDeliverables.length > 0" class="platform-tabs-wrap">
+
+          <!-- Tab strip -->
+          <div class="platform-tab-strip">
+            <button type="button"
+                    *ngFor="let pd of platformDeliverables"
+                    class="platform-tab"
+                    [class.platform-tab--active]="activePlatformTab === pd.platform"
+                    (click)="activePlatformTab = pd.platform">
+              <i [class]="getPlatformIcon(pd.platform)"></i>
+              {{ pd.platform }}
+              <span class="tab-enabled-count" *ngIf="getEnabledCount(pd) > 0">{{ getEnabledCount(pd) }}</span>
+            </button>
+            <div class="platform-tab-spacer"></div>
+            <button type="button" class="pdc-remove tab-remove"
+                    (click)="togglePlatform({name: activePlatformTab})" title="Remove platform">
+              <i class="bi bi-x-lg"></i> Remove
             </button>
           </div>
-          <p class="chip-hint" *ngIf="selectedDeliverables.length > 0">
-            <i class="bi bi-check-circle-fill"></i> {{ selectedDeliverables.join(', ') }}
-          </p>
+
+          <!-- Active tab panel -->
+          <ng-container *ngFor="let pd of platformDeliverables">
+            <div *ngIf="activePlatformTab === pd.platform" class="platform-tab-panel">
+              <div *ngFor="let ct of pd.contentTypes" class="platform-ct-row" [class.ct-row--on]="ct.enabled">
+                <label class="ct-toggle">
+                  <input type="checkbox" [(ngModel)]="ct.enabled" [ngModelOptions]="{standalone: true}" />
+                  <span class="ct-name">{{ ct.name }}</span>
+                </label>
+                <div class="ct-price-wrap" [class.ct-price-wrap--disabled]="!ct.enabled">
+                  <span class="ct-rupee">₹</span>
+                  <input type="number"
+                         [(ngModel)]="ct.price"
+                         [ngModelOptions]="{standalone: true}"
+                         class="ct-price-input"
+                         placeholder="0"
+                         min="0"
+                         [attr.disabled]="ct.enabled ? null : ''" />
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+        </div>
+
+        <!-- ── Min follower count ── -->
+        <div class="field-group">
+          <label class="field-label">Min follower count</label>
+          <input type="number" [formControl]="$any(form.get('minFollowerCount'))"
+                 class="field-input" placeholder="e.g. 10000" min="0" />
         </div>
 
         <div class="field-group">

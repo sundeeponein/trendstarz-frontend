@@ -76,7 +76,6 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         this.dashboard = data;
         this.recentCampaigns = data.campaigns || [];
-        // Profile completeness logic: check for missing required fields
         const brand = data.brand || {};
         this.profileIncomplete = !brand.brandName || !brand.categories?.length || !brand.location?.state;
         this.loading = false;
