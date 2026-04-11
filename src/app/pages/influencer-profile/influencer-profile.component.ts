@@ -1,7 +1,7 @@
 import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
@@ -23,6 +23,13 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
 })
 export class InfluencerProfileComponent implements OnInit {
   // --- New Social Media Platform UI ---
+  constructor(
+    public fb: FormBuilder,
+    private configService: ConfigService,
+    private otpService: OtpService,
+    private plansService: PlansService,
+    private cd: ChangeDetectorRef
+  ) {}
   platformForms: { [platformId: string]: any } = {};
   originalPlatformForms: { [platformId: string]: any } = {};
 
@@ -119,12 +126,7 @@ export class InfluencerProfileComponent implements OnInit {
       }
     });
   }
-  constructor(
-    private fb: FormBuilder,
-    private configService: ConfigService,
-    private otpService: OtpService,
-    private plansService: PlansService,
-  ) {}
+  // (Removed duplicate constructor)
 
   resendPhoneOtp() {
     if (!this.canResendPhoneOtp) return;
@@ -291,6 +293,7 @@ export class InfluencerProfileComponent implements OnInit {
           }
           this.emailVerified = !!profile.isEmailVerified;
           this.showEmailVerificationPrompt = !this.emailVerified;
+          this.cd.detectChanges();
           // Map state name to ID
           const stateId = this.states.find(s => s.name === profile.location?.state)?.['_id'] || '';
           // Map language names to IDs

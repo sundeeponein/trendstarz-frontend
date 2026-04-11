@@ -26,8 +26,8 @@
     </div>
   </div>
 
-  <!-- Upgrade Banner (shown in free view) -->
-  <div class="upgrade-banner" *ngIf="!isProView">
+  <!-- Upgrade Banner (shown only for logged-in free users) -->
+  <div class="upgrade-banner" *ngIf="isFreeUser">
     <div class="upgrade-banner__content">
       <strong>Upgrade to Pro — unlock contact details &amp; advanced filters</strong>
       <p>Free users see limited info. Pro brands see WhatsApp, email, phone, pricing &amp; engagement rates.</p>

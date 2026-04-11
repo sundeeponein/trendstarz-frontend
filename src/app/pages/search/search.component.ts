@@ -60,7 +60,21 @@ export class SearchComponent implements OnInit {
 
   private isBrowser: boolean;
 
-  get isProView(): boolean { return !!this.session.getUser()?.isPremium; }
+  /**
+   * Returns true if the logged-in user is premium. If not logged in, always false (treat as free user).
+   */
+  get isProView(): boolean {
+    const user = this.session.getUser();
+    return !!(user && user.isPremium);
+  }
+
+  /**
+   * Returns true if the user is logged in and is a free (not premium) user.
+   */
+  get isFreeUser(): boolean {
+    const user = this.session.getUser();
+    return !!user && !user.isPremium;
+  }
 
   get currentUser(): any { return this.session.getUser(); }
   get isBrandUser(): boolean { return this.currentUser?.role === 'brand'; }

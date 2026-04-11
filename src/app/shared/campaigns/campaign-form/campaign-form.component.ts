@@ -23,6 +23,7 @@ const DELIVERABLES_BY_PLATFORM: Record<string, string[]> = {
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit {
+  campaignInvites: any[] = [];
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
@@ -82,6 +83,11 @@ export class CampaignFormComponent implements OnInit {
       this.imagePreview = this.campaign.image.url;
     }
 
+    // If editing, fetch current invites for this campaign
+    if (this.isEdit && this.campaign?._id) {
+      this.fetchCampaignInvites();
+    }
+
     // Pre-populate multi-selects when editing
     if (this.campaign) {
       this.selectedCategories = [...(this.campaign.categories || [])];
@@ -117,8 +123,14 @@ export class CampaignFormComponent implements OnInit {
       return;
     }
     this.currentStep = step;
-    if (step === 3 && this.allInfluencers.length === 0) {
-      this.loadInfluencers();
+    if (step === 3) {
+      if (this.allInfluencers.length === 0) {
+        this.loadInfluencers();
+      }
+      // Always fetch invites when entering step 3 in edit mode
+      if (this.isEdit && this.campaign?._id) {
+        this.fetchCampaignInvites();
+      }
     }
   }
 
@@ -180,6 +192,12 @@ export class CampaignFormComponent implements OnInit {
       );
     }
     return list;
+  }
+  fetchCampaignInvites() {
+    if (!this.campaign?._id) return;
+    this.config.getInvitesByCampaign(this.campaign._id).subscribe(invites => {
+      this.campaignInvites = Array.isArray(invites) ? invites : [];
+    });
   }
 
   totalFollowers(inf: any): number {
@@ -296,6 +314,10 @@ export class CampaignFormComponent implements OnInit {
         ? Array.from(this.selectedInfluencerIds)
         : undefined,
     });
+    // After inviting, refresh the invites list so UI updates
+    if (this.isEdit && this.campaign?._id) {
+      this.fetchCampaignInvites();
+    }
   }
 
   private async uploadToCloudinary(file: File): Promise<{ url: string; public_id: string }> {
@@ -314,5 +336,9 @@ export class CampaignFormComponent implements OnInit {
   }
 
   onCancel() { this.cancel.emit(); }
+
+  isInfluencerInvited(inf: any): boolean {
+    return this.campaignInvites.some(i => String(i.influencerId?._id || i.influencerId) === inf._id);
+  }
 }
 

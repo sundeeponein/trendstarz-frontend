@@ -47,8 +47,9 @@
                 <i class="bi bi-eye"></i> View Details
               </button>
 
-              <!-- Pending: accept / decline -->
-              <div class="inv-actions" *ngIf="inv.status === 'pending'">
+
+              <!-- Pending/Invited: accept / decline -->
+              <div class="inv-actions" *ngIf="inv.status === 'pending' || inv.status === 'invited'">
                 <button class="btn-accept" (click)="respondToMyInvite(inv._id, 'accepted')">
                   <i class="bi bi-check-lg"></i> Accept
                 </button>
@@ -79,7 +80,7 @@
         <p class="cm-subtitle">{{ isInfluencerView ? 'Browse active campaigns from brands looking for creators like you.' : 'Monitor performance and manage your brand partnerships.' }}</p>
       </div>
       <div class="cm-header-actions" *ngIf="!isInfluencerView">
-        <button class="btn btn-create" (click)="openCreateForm()">
+        <button class="btn btn-create" (click)="openCreateForm()" [disabled]="!brandId">
           <i class="bi bi-plus-circle-fill"></i> New Campaign
         </button>
       </div>
@@ -190,10 +191,12 @@
               {{ isExpired(c) && c.status === 'active' ? 'EXPIRED' : (c.status | uppercase) }}
             </span>
             <div class="ccard-actions" *ngIf="!isInfluencerView">
-              <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)">
+              <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)"
+                [disabled]="c.status === 'completed'">
                 Manage <i class="bi bi-chevron-down"></i>
               </button>
-              <button class="btn-invite" (click)="openInvitePanel(c)" title="Invite Influencers">
+              <button class="btn-invite" (click)="openInvitePanel(c)" title="Invite Influencers"
+                [disabled]="c.status === 'completed'">
                 <i class="bi bi-person-plus-fill"></i> Invite
               </button>
             </div>
@@ -325,7 +328,7 @@
         <i class="bi bi-megaphone"></i>
         <p *ngIf="!isInfluencerView">No {{ activeTab }} campaigns yet.</p>
         <p *ngIf="isInfluencerView">No open campaigns available right now. Check back soon!</p>
-        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView">Create your first campaign</button>
+        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView" [disabled]="!brandId">Create your first campaign</button>
       </div>
     </ng-template>
 
@@ -395,7 +398,7 @@
               <p class="invited-username" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</p>
             </div>
             <div class="invited-right">
-              <span class="inv-status" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
+              <span class="inv-status already-invited" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
               <!-- Contact reveal for accepted invites -->
               <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
                 <a class="contact-chip" *ngIf="inv.influencerId?.email"
