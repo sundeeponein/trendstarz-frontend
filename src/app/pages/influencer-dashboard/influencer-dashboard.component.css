@@ -18,21 +18,161 @@
 .performance-title { font-size: 1.2rem; font-weight: 700; color: #222; }
 .performance-range { font-size: 0.9rem; color: #888; background: #f3f3f3; border-radius: 1rem; padding: 0.2rem 0.8rem; }
 .perf-card { background: #f8f9fb; border-radius: 0.8rem; padding: 1.2rem 0.5rem; box-shadow: 0 1px 4px #0001; }
-.perf-value { font-size: 2rem; font-weight: 700; color: #222; }
+.perf-value { font-size: 2rem; font-weight: 700; }
 .perf-label { font-size: 1rem; color: #555; font-weight: 500; }
 .perf-sub { font-size: 0.9rem; color: #aaa; }
 
 /* Section Cards */
-.section-card { background: #fff; border-radius: 1rem; box-shadow: 0 1px 6px #0001; padding: 1.2rem 1rem 1.5rem 1rem; min-height: 220px; display: flex; flex-direction: column; }
+.section-card { background: #fff; border-radius: 1rem; box-shadow: 0 1px 6px #0001; padding: 1.4rem 1.2rem 1.6rem 1.2rem; }
 .section-title { font-size: 1.08rem; font-weight: 600; color: #222; }
-.section-count { font-size: 0.95rem; color: #888; background: #f3f3f3; border-radius: 1rem; padding: 0.1rem 0.7rem; margin-left: 0.5rem; }
-.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-.dot--orange { background: #f5c29e; }
-.dot--blue { background: #a3d3f5; }
-.dot--purple { background: #bba3f5; }
+.section-count { font-size: 0.93rem; color: #888; background: #f3f3f3; border-radius: 1rem; padding: 0.1rem 0.7rem; }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot--orange { background: #e8612d; }
+.dot--blue { background: #2b6cb0; }
+.dot--purple { background: #805ad5; }
 
 /* Section Empty States */
-.section-empty { text-align: center; color: #aaa; margin-top: 2.5rem; }
+.section-empty { text-align: center; color: #aaa; }
 .section-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; color: #e0e0e0; }
 .section-empty-title { font-weight: 600; color: #888; font-size: 1.08rem; }
 .section-empty-desc { color: #bbb; font-size: 0.97rem; }
+
+/* ── Chips ──────────────────────────────── */
+.chip { display: inline-block; padding: 0.18rem 0.65rem; border-radius: 2rem; font-size: 0.82rem; font-weight: 500; background: #f0f0f0; color: #555; }
+.chip--xs { font-size: 0.75rem; padding: 0.1rem 0.5rem; }
+.chip--deliv { background: #eef2ff; color: #3730a3; }
+
+/* ── Brand logo ─────────────────────────── */
+.invite-brand-logo { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #f3f3f3; display: flex; align-items: center; justify-content: center; border: 2px solid #eee; }
+.invite-brand-logo--lg { width: 60px; height: 60px; }
+.brand-logo-img { width: 100%; height: 100%; object-fit: cover; }
+.brand-logo-placeholder { font-size: 1.3rem; font-weight: 700; color: #e8612d; background: #fff3ee; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.brand-logo-placeholder--lg { font-size: 1.7rem; }
+
+/* ── Invite Cards ────────────────────────── */
+.invite-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.invite-card {
+  background: #fff;
+  border: 1.5px solid #f0ece8;
+  border-radius: 0.9rem;
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.invite-card:hover { box-shadow: 0 4px 18px #e8612d20; border-color: #e8612d80; }
+
+.invite-card__header { display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 0.75rem; }
+.invite-card__meta { flex: 1; min-width: 0; }
+.invite-brand-name { font-size: 0.85rem; color: #888; font-weight: 500; }
+.invite-campaign-title { font-size: 1.05rem; font-weight: 700; color: #1a1a1a; margin: 0.15rem 0 0.3rem; line-height: 1.3; }
+.invite-categories { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.invite-card__details { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; margin-bottom: 0.7rem; }
+.invite-detail-item { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; color: #555; }
+.invite-detail-item i { color: #e8612d; font-size: 0.95rem; }
+.invite-detail-label { color: #999; font-size: 0.8rem; }
+.invite-detail-val { color: #333; }
+
+.invite-card__deliverables { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 0.8rem; }
+.deliverables-label { font-size: 0.82rem; color: #999; font-weight: 500; }
+
+.invite-card__actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── Status badges ──────────────────────── */
+.invite-status-badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 2rem; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.invite-status-badge--pending { background: #fff3e0; color: #c05621; border: 1px solid #f5c29e; }
+.invite-status-badge--accepted { background: #e6fff3; color: #1a6640; border: 1px solid #a3d9be; }
+.invite-status-badge--declined { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+.invite-status-badge--completed { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+
+/* ── Invite Action buttons ──────────────── */
+.btn-invite-action { display: inline-flex; align-items: center; gap: 5px; padding: 0.38rem 1rem; border-radius: 2rem; font-size: 0.88rem; font-weight: 600; border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+.btn-invite-action:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-accept { background: #22b37a; color: #fff; }
+.btn-accept:hover:not(:disabled) { background: #1a8f61; }
+.btn-decline { background: #ef4444; color: #fff; }
+.btn-decline:hover:not(:disabled) { background: #c0392b; }
+.btn-view { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+.btn-view:hover:not(:disabled) { background: #e5e7eb; }
+.btn-lg-action { padding: 0.55rem 1.5rem; font-size: 0.97rem; border-radius: 2rem; }
+
+/* ── Active / Completed campaign cards ──── */
+.active-camp-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.7rem; padding: 0.85rem 1rem; margin-bottom: 0.7rem; cursor: pointer; transition: box-shadow 0.12s; }
+.active-camp-card:hover { box-shadow: 0 3px 12px #2b6cb020; }
+.active-camp-card.completed { border-color: #ede9fe; background: #faf5ff; }
+.active-camp-dot { width: 10px; height: 10px; border-radius: 50%; background: #2b6cb0; flex-shrink: 0; margin-top: 5px; }
+.completed-dot { background: #805ad5; }
+.active-camp-title { font-weight: 600; color: #1a1a1a; font-size: 0.97rem; }
+.active-camp-desc { color: #888; font-size: 0.87rem; margin-top: 3px; }
+.active-camp-meta { display: flex; gap: 1rem; font-size: 0.83rem; color: #999; flex-wrap: wrap; }
+.active-camp-meta i { color: #2b6cb0; margin-right: 3px; }
+.active-camp-metrics { display: flex; gap: 1rem; font-size: 0.83rem; color: #805ad5; flex-wrap: wrap; margin-top: 0.5rem; }
+
+/* ── Detail Modal Overlay ─────────────────── */
+.detail-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.48); z-index: 1050;
+  display: flex; align-items: flex-start; justify-content: flex-end;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.detail-modal {
+  background: #fff; width: min(560px, 98vw); height: 100vh;
+  overflow-y: auto; box-shadow: -4px 0 32px #0002;
+  display: flex; flex-direction: column;
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+/* Header */
+.detail-modal__header {
+  position: sticky; top: 0; z-index: 10;
+  background: linear-gradient(135deg, #fff8f4, #fff);
+  border-bottom: 1px solid #f0ece8;
+  padding: 1.2rem 1.4rem;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+}
+.detail-brand-name { font-size: 0.85rem; color: #e8612d; font-weight: 600; letter-spacing: 0.03em; }
+.detail-campaign-title { font-size: 1.2rem; font-weight: 700; color: #1a1a1a; margin: 0.2rem 0; }
+.btn-close-modal { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #999; padding: 0.3rem; border-radius: 50%; transition: background 0.12s; flex-shrink: 0; }
+.btn-close-modal:hover { background: #f3f3f3; color: #333; }
+
+/* Body */
+.detail-modal__body { flex: 1; padding: 1.4rem; overflow-y: auto; }
+
+.detail-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+.detail-stat { background: #f9fafb; border-radius: 0.75rem; padding: 0.85rem 1rem; text-align: center; border: 1px solid #f0f0f0; }
+.detail-stat-label { font-size: 0.78rem; color: #999; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+.detail-stat-val { font-size: 1.1rem; font-weight: 700; color: #1a1a1a; }
+.detail-stat-sub { font-size: 0.75rem; color: #bbb; margin-top: 0.15rem; }
+
+.detail-section { margin-bottom: 1.4rem; }
+.detail-section-title { font-size: 0.9rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem; display: flex; align-items: center; }
+.detail-section-body { font-size: 0.97rem; color: #374151; line-height: 1.6; }
+
+/* Deliverables grid */
+.deliverables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1rem; }
+.deliverable-item { font-size: 0.93rem; color: #374151; display: flex; align-items: center; }
+
+/* Social price table */
+.social-price-table { border: 1px solid #e5e7eb; border-radius: 0.7rem; overflow: hidden; font-size: 0.9rem; }
+.social-price-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 0.55rem 1rem; border-bottom: 1px solid #f0f0f0; align-items: center; }
+.social-price-row:last-child { border-bottom: none; }
+.social-price-row--header { background: #f9fafb; font-weight: 700; font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+.social-price-group { border-bottom: 2px solid #f0f0f0; }
+.social-price-group:last-child { border-bottom: none; }
+.social-platform-name { padding: 0.4rem 1rem 0.2rem; font-weight: 600; color: #333; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; background: #fafafa; }
+.social-platform-name i { color: #e8612d; }
+.social-handle { color: #777; font-size: 0.85rem; }
+.social-content-type { color: #374151; }
+.social-price { font-weight: 700; color: #22b37a; }
+
+/* Footer */
+.detail-modal__footer {
+  position: sticky; bottom: 0;
+  background: #fff;
+  border-top: 1px solid #f0ece8;
+  padding: 1rem 1.4rem;
+  display: flex; gap: 0.7rem; justify-content: flex-end;
+}

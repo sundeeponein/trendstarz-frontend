@@ -1,5 +1,5 @@
 <div class="cm-page influencer-dashboard p-4">
-  <h1 class="welcome-title mb-1">Welcome Influencer</h1>
+  <h1 class="welcome-title mb-1">Welcome, {{ dashboard?.user?.name || 'Influencer' }}</h1>
   <div class="welcome-subtitle mb-4">Here is what is happening with your editorial portfolio today.</div>
 
   <!-- Alert Cards Row -->
@@ -41,12 +41,12 @@
     </div>
     <div class="row gx-3">
       <div class="col-6 col-md-3 mb-3 mb-md-0" *ngFor="let stat of [
-        {label: 'Invited', value: dashboard?.invites?.invited || 0, sub: 'Campaigns'},
-        {label: 'Accepted', value: dashboard?.invites?.accepted || 0, sub: 'Active'},
-        {label: 'Submitted', value: dashboard?.invites?.submitted || 0, sub: 'In Review'},
-        {label: 'Completed', value: dashboard?.invites?.completed || 0, sub: 'Total'}]">
+        {label: 'Invited', value: dashboard?.invites?.invited || 0, sub: 'Campaigns', color: '#e8612d'},
+        {label: 'Accepted', value: dashboard?.invites?.accepted || 0, sub: 'Active', color: '#22b37a'},
+        {label: 'Submitted', value: dashboard?.invites?.submitted || 0, sub: 'In Review', color: '#2b6cb0'},
+        {label: 'Completed', value: dashboard?.invites?.completed || 0, sub: 'Total', color: '#805ad5'}]">
         <div class="perf-card text-center">
-          <div class="perf-value">{{ stat.value }}</div>
+          <div class="perf-value" [style.color]="stat.color">{{ stat.value }}</div>
           <div class="perf-label">{{ stat.label }}</div>
           <div class="perf-sub">{{ stat.sub }}</div>
         </div>
@@ -54,49 +54,281 @@
     </div>
   </div>
 
-  <!-- Campaign Sections -->
-  <div class="row mb-4 gx-3">
-    <div class="col-md-4 mb-3 mb-md-0">
-      <div class="section-card h-100">
-        <div class="section-title d-flex align-items-center mb-2">
-          <span class="dot dot--orange me-2"></span> New Campaign Invites
-          <span class="section-count ms-auto">{{ invites.length }}</span>
+  <!-- Loading / Error -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status"></div>
+    <div class="mt-2 text-muted">Loading dashboard…</div>
+  </div>
+  <div *ngIf="!loading && error" class="alert alert-danger">{{ error }}</div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       NEW CAMPAIGN INVITES
+  ═══════════════════════════════════════════════════════ -->
+  <div *ngIf="!loading" class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--orange me-2"></span>
+      New Campaign Invites
+      <span class="section-count ms-2">{{ invites.length }}</span>
+    </div>
+
+    <div *ngIf="invites.length === 0" class="section-empty py-4">
+      <div class="section-empty-icon"><i class="bi bi-inbox"></i></div>
+      <div class="section-empty-title">No new invites</div>
+      <div class="section-empty-desc">When brands invite you to collaborate, they will appear here.</div>
+    </div>
+
+    <div class="invite-list">
+      <div *ngFor="let inv of invites" class="invite-card" (click)="openDetail(inv)">
+        <!-- Brand + campaign header -->
+        <div class="invite-card__header">
+          <div class="invite-brand-logo">
+            <img *ngIf="getBrandLogo(inv)" [src]="getBrandLogo(inv)" alt="brand logo" class="brand-logo-img" (error)="onImgError($event)">
+            <div *ngIf="!getBrandLogo(inv)" class="brand-logo-placeholder">{{ getBrandInitial(inv) }}</div>
+          </div>
+          <div class="invite-card__meta">
+            <div class="invite-brand-name">{{ getBrandName(inv) }}</div>
+            <div class="invite-campaign-title">{{ getCampaignTitle(inv) }}</div>
+            <div class="invite-categories">
+              <span *ngFor="let cat of getCampaignCategories(inv)" class="chip chip--xs">{{ cat }}</span>
+            </div>
+          </div>
+          <span class="invite-status-badge invite-status-badge--pending ms-auto">Pending</span>
         </div>
-        <div *ngIf="invites.length === 0" class="section-empty">
-          <div class="section-empty-icon"><i class="bi bi-inbox"></i></div>
-          <div class="section-empty-title">No new invites</div>
-          <div class="section-empty-desc">When brands invite you to collaborate, they will appear here.</div>
+
+        <!-- Budget + timeline row -->
+        <div class="invite-card__details">
+          <div class="invite-detail-item">
+            <i class="bi bi-currency-rupee"></i>
+            <span class="invite-detail-label">Budget</span>
+            <span class="invite-detail-val fw-semibold">{{ formatCampaignBudget(inv) }}</span>
+          </div>
+          <div class="invite-detail-item">
+            <i class="bi bi-calendar3"></i>
+            <span class="invite-detail-label">Timeline</span>
+            <span class="invite-detail-val">{{ formatCampaignTimeline(inv) }}</span>
+          </div>
+          <div class="invite-detail-item" *ngIf="getCampaignPlatform(inv)">
+            <i class="bi bi-display"></i>
+            <span class="invite-detail-label">Platform</span>
+            <span class="invite-detail-val">{{ getCampaignPlatform(inv) }}</span>
+          </div>
         </div>
-        <!-- ...existing code for invite cards if any... -->
+
+        <!-- Deliverables row -->
+        <div class="invite-card__deliverables" *ngIf="getCampaignDeliverables(inv).length">
+          <div class="deliverables-label">Deliverables:</div>
+          <span *ngFor="let d of getCampaignDeliverables(inv)" class="chip chip--deliv">{{ d }}</span>
+        </div>
+
+        <!-- CTA buttons -->
+        <div class="invite-card__actions" (click)="$event.stopPropagation()">
+          <button class="btn-invite-action btn-accept" (click)="respond(inv._id, 'accepted')" [disabled]="responding === inv._id">
+            <i class="bi bi-check-lg"></i> Accept
+          </button>
+          <button class="btn-invite-action btn-decline" (click)="respond(inv._id, 'declined')" [disabled]="responding === inv._id">
+            <i class="bi bi-x-lg"></i> Decline
+          </button>
+          <button class="btn-invite-action btn-view ms-auto" (click)="openDetail(inv)">
+            <i class="bi bi-eye"></i> View Details
+          </button>
+        </div>
       </div>
     </div>
-    <div class="col-md-4 mb-3 mb-md-0">
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       ACTIVE CAMPAIGNS
+  ═══════════════════════════════════════════════════════ -->
+  <div *ngIf="!loading" class="row mb-4 gx-3">
+    <div class="col-md-6 mb-3 mb-md-0">
       <div class="section-card h-100">
-        <div class="section-title d-flex align-items-center mb-2">
+        <div class="section-title d-flex align-items-center mb-3">
           <span class="dot dot--blue me-2"></span> Active Campaigns
-          <span class="section-count ms-auto">{{ activeCampaigns.length }}</span>
+          <span class="section-count ms-2">{{ activeCampaigns.length }}</span>
         </div>
-        <div *ngIf="activeCampaigns.length === 0" class="section-empty">
+        <div *ngIf="activeCampaigns.length === 0" class="section-empty py-3">
           <div class="section-empty-icon"><i class="bi bi-rocket"></i></div>
           <div class="section-empty-title">No active work</div>
-          <div class="section-empty-desc">Projects you've accepted and are currently working on will be tracked here.</div>
+          <div class="section-empty-desc">Projects you've accepted will appear here.</div>
         </div>
-        <!-- ...existing code for active campaign cards if any... -->
+        <div *ngFor="let c of activeCampaigns" class="active-camp-card" (click)="openDetail({campaignId: c, inviteStatus: c.inviteStatus})">
+          <div class="d-flex align-items-start gap-2">
+            <div class="active-camp-dot"></div>
+            <div class="flex-1">
+              <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
+              <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
+              <div class="d-flex gap-2 mt-1 flex-wrap">
+                <span class="chip chip--xs" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
+              </div>
+            </div>
+            <span class="invite-status-badge invite-status-badge--accepted">{{ c.inviteStatus || 'accepted' }}</span>
+          </div>
+          <div class="active-camp-meta mt-2">
+            <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
+            <span *ngIf="c.budgetMin || c.budgetMax"><i class="bi bi-currency-rupee"></i> {{ formatBudget(c.budgetMin, c.budgetMax) }}</span>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-md-4">
+
+    <!-- ═══════════════════════════════
+         COMPLETED CAMPAIGNS
+    ═══════════════════════════════ -->
+    <div class="col-md-6">
       <div class="section-card h-100">
-        <div class="section-title d-flex align-items-center mb-2">
+        <div class="section-title d-flex align-items-center mb-3">
           <span class="dot dot--purple me-2"></span> Completed Campaigns
-          <span class="section-count ms-auto">{{ completedCampaigns.length }}</span>
+          <span class="section-count ms-2">{{ completedCampaigns.length }}</span>
         </div>
-        <div *ngIf="completedCampaigns.length === 0" class="section-empty">
+        <div *ngIf="completedCampaigns.length === 0" class="section-empty py-3">
           <div class="section-empty-icon"><i class="bi bi-check-circle"></i></div>
-          <div class="section-empty-title">Clean slate</div>
-          <div class="section-empty-desc">Your history of successful collaborations will build up over time.</div>
+          <div class="section-empty-title">No completed work yet</div>
+          <div class="section-empty-desc">Your history of successful collaborations will build up here.</div>
         </div>
-        <!-- ...existing code for completed campaign cards if any... -->
+        <div *ngFor="let c of completedCampaigns" class="active-camp-card completed">
+          <div class="d-flex align-items-start gap-2">
+            <div class="active-camp-dot completed-dot"></div>
+            <div class="flex-1">
+              <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
+              <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
+            </div>
+            <span class="invite-status-badge invite-status-badge--completed">Completed</span>
+          </div>
+          <div class="active-camp-metrics" *ngIf="c.metrics">
+            <span *ngIf="c.metrics?.reach"><i class="bi bi-people"></i> {{ c.metrics.reach | number }} reach</span>
+            <span *ngIf="c.metrics?.engagement"><i class="bi bi-hand-thumbs-up"></i> {{ c.metrics.engagement | number }} eng.</span>
+            <span *ngIf="c.metrics?.clicks"><i class="bi bi-cursor"></i> {{ c.metrics.clicks | number }} clicks</span>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CAMPAIGN DETAIL MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="detail-overlay" *ngIf="selectedInvite" (click)="closeDetail()">
+  <div class="detail-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="detail-modal__header">
+      <div class="d-flex align-items-center gap-3">
+        <div class="invite-brand-logo invite-brand-logo--lg">
+          <img *ngIf="getBrandLogo(selectedInvite)" [src]="getBrandLogo(selectedInvite)" alt="brand" class="brand-logo-img" (error)="onImgError($event)">
+          <div *ngIf="!getBrandLogo(selectedInvite)" class="brand-logo-placeholder brand-logo-placeholder--lg">{{ getBrandInitial(selectedInvite) }}</div>
+        </div>
+        <div>
+          <div class="detail-brand-name">{{ getBrandName(selectedInvite) }}</div>
+          <div class="detail-campaign-title">{{ getCampaignTitle(selectedInvite) }}</div>
+          <div class="d-flex gap-1 flex-wrap mt-1">
+            <span *ngFor="let cat of getCampaignCategories(selectedInvite)" class="chip chip--xs">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn-close-modal" (click)="closeDetail()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Body -->
+    <div class="detail-modal__body">
+
+      <!-- Status badge -->
+      <div class="mb-3" *ngIf="selectedInvite._id">
+        <span class="invite-status-badge"
+          [class.invite-status-badge--pending]="selectedInvite.status === 'pending'"
+          [class.invite-status-badge--accepted]="selectedInvite.status === 'accepted'"
+          [class.invite-status-badge--declined]="selectedInvite.status === 'declined'"
+          [class.invite-status-badge--completed]="selectedInvite.status === 'completed'">
+          {{ selectedInvite.status | titlecase }}
+        </span>
+      </div>
+
+      <!-- Key stats row -->
+      <div class="detail-stats-row">
+        <div class="detail-stat">
+          <div class="detail-stat-label">Budget</div>
+          <div class="detail-stat-val">{{ formatCampaignBudget(selectedInvite) }}</div>
+          <div class="detail-stat-sub">per influencer</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Timeline</div>
+          <div class="detail-stat-val">{{ formatCampaignTimeline(selectedInvite) }}</div>
+          <div class="detail-stat-sub">{{ getDaysLeft(selectedInvite) }}</div>
+        </div>
+        <div class="detail-stat" *ngIf="getCampaignPlatform(selectedInvite)">
+          <div class="detail-stat-label">Platform</div>
+          <div class="detail-stat-val">{{ getCampaignPlatform(selectedInvite) }}</div>
+          <div class="detail-stat-sub">Primary channel</div>
+        </div>
+        <div class="detail-stat" *ngIf="getMinFollowers(selectedInvite)">
+          <div class="detail-stat-label">Min. Followers</div>
+          <div class="detail-stat-val">{{ getMinFollowers(selectedInvite) }}</div>
+          <div class="detail-stat-sub">Required</div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="detail-section" *ngIf="getCampaignDesc(selectedInvite)">
+        <div class="detail-section-title"><i class="bi bi-file-text me-1"></i> Campaign Brief</div>
+        <div class="detail-section-body">{{ getCampaignDesc(selectedInvite) }}</div>
+      </div>
+
+      <!-- Deliverables -->
+      <div class="detail-section" *ngIf="getCampaignDeliverables(selectedInvite).length">
+        <div class="detail-section-title"><i class="bi bi-list-check me-1"></i> Deliverables</div>
+        <div class="detail-section-body">
+          <div class="deliverables-grid">
+            <div *ngFor="let d of getCampaignDeliverables(selectedInvite)" class="deliverable-item">
+              <i class="bi bi-check2-circle text-success me-1"></i> {{ d }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social media to cover with price -->
+      <div class="detail-section" *ngIf="getDetailSocialMedia(selectedInvite).length">
+        <div class="detail-section-title"><i class="bi bi-share me-1"></i> Social Media Coverage &amp; Pricing</div>
+        <div class="detail-section-body">
+          <div class="social-price-table">
+            <div class="social-price-row social-price-row--header">
+              <span>Platform</span><span>Content Type</span><span>Price</span>
+            </div>
+            <div *ngFor="let sm of getDetailSocialMedia(selectedInvite)" class="social-price-group">
+              <div class="social-platform-name"><i [class]="getPlatformIcon(sm.platform)"></i> {{ sm.platform }}</div>
+              <ng-container *ngFor="let ct of (sm.contentTypes || [])">
+                <div *ngIf="ct.enabled" class="social-price-row">
+                  <span class="social-handle">@{{ sm.handle || '—' }}</span>
+                  <span class="social-content-type">{{ ct.name }}</span>
+                  <span class="social-price">₹{{ ct.price | number }}</span>
+                </div>
+              </ng-container>
+              <div *ngIf="!(sm.contentTypes?.length)" class="social-price-row">
+                <span class="social-handle">@{{ sm.handle || '—' }}</span>
+                <span class="social-content-type">—</span>
+                <span class="social-price">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Special Instructions -->
+      <div class="detail-section" *ngIf="getSpecialInstructions(selectedInvite)">
+        <div class="detail-section-title"><i class="bi bi-info-circle me-1"></i> Special Instructions</div>
+        <div class="detail-section-body">{{ getSpecialInstructions(selectedInvite) }}</div>
+      </div>
+
+    </div>
+
+    <!-- Footer actions (only for pending invites) -->
+    <div class="detail-modal__footer" *ngIf="selectedInvite._id && selectedInvite.status === 'pending'">
+      <button class="btn-invite-action btn-decline btn-lg-action" (click)="respond(selectedInvite._id, 'declined')" [disabled]="responding === selectedInvite._id">
+        <i class="bi bi-x-circle"></i> Decline
+      </button>
+      <button class="btn-invite-action btn-accept btn-lg-action" (click)="respond(selectedInvite._id, 'accepted')" [disabled]="responding === selectedInvite._id">
+        <i class="bi bi-check-circle"></i> Accept Campaign
+      </button>
+    </div>
+
   </div>
 </div>

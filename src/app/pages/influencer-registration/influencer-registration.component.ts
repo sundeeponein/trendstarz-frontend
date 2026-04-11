@@ -30,6 +30,13 @@ export class InfluencerRegistrationComponent implements OnInit {
   // --- New Social Media Platform UI ---
   platformForms: { [platformId: string]: any } = {};
 
+  // Platform Tabs UI
+  activePlatformTab: string | null = null;
+
+  getPlatformById(id: string) {
+    return this.socialMediaList.find(p => p._id === id);
+  }
+
   isPlatformSelected(platform: any): boolean {
     return !!this.platformForms[platform._id];
   }
@@ -37,6 +44,11 @@ export class InfluencerRegistrationComponent implements OnInit {
   togglePlatform(platform: any) {
     if (this.isPlatformSelected(platform)) {
       this.removePlatformCard(platform);
+      // If the removed platform was active, clear or switch tab
+      if (this.activePlatformTab === platform._id) {
+        const remaining = this.selectedPlatforms();
+        this.activePlatformTab = remaining.length ? remaining[0]._id : null;
+      }
     } else {
       if (!this.isPremiumPlan() && this.selectedPlatforms().length >= this.FREE_SOCIAL_PROFILE_LIMIT) return;
       this.platformForms[platform._id] = {
@@ -47,6 +59,7 @@ export class InfluencerRegistrationComponent implements OnInit {
           (platform.contentTypes || []).map((ct: any) => [ct.name, { selected: false, price: '' }])
         )
       };
+      this.activePlatformTab = platform._id;
     }
     this.refreshStepCompletion();
   }
@@ -78,7 +91,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   // --- Core properties ---
-  readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
+  readonly FREE_SOCIAL_PROFILE_LIMIT = 10;
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
   step1Complete = false;

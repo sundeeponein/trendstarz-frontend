@@ -1,45 +1,25 @@
 
 <div class="registration-shell">
   <div class="registration-wrap">
-    <aside class="left-panel">
-      <div class="panel-card progress-panel">
-        <h4>Registration Progress</h4>
-        <p class="step-count">Step {{ currentStep }} of 3</p>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
-          <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
-          <span class="step-label">Basic Information</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 2" [class.complete]="step2Complete" (click)="goToStep(2)">
-          <span class="step-icon">{{ step2Complete ? '✓' : '2' }}</span>
-          <span class="step-label">Social Media & Media</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
-          <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
-          <span class="step-label">Professional Details</span>
-        </button>
-      </div>
-
-      <div class="panel-card tip-card" *ngIf="currentStep === 1">
-        <h5>Setup Tip</h5>
-        <p>Your username will be your public URL. Choose a clean, memorable handle.</p>
-      </div>
-
-      <div class="panel-card tip-card" *ngIf="currentStep === 2">
-        <h5>Growth Tip</h5>
-        <p>Add your strongest platform and a profile image to increase trust and visibility.</p>
-      </div>
-
-      <div class="panel-card tip-card" *ngIf="currentStep === 3">
-        <h5>Professional Tip</h5>
-        <p>Detailed pricing and contact options help brands shortlist you faster.</p>
-      </div>
-    </aside>
-
     <main class="content-panel">
-      <!-- Email Verification Prompt -->
+
+      <!-- Horizontal step tabs -->
+      <div class="reg-tab-strip">
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
+          <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
+          <span class="reg-tab-label">Basic Information</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
+          <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
+          <span class="reg-tab-label">Social Media & Media</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
+          <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
+          <span class="reg-tab-label">Professional Details</span>
+        </button>
+      </div>
       <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mb-4">
         <div>
           <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
@@ -196,6 +176,7 @@
             <h3>Social Media Platforms</h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
             <div class="platform-cards">
+
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
@@ -203,45 +184,76 @@
               </div>
             </div>
 
-            <div *ngFor="let platform of selectedPlatforms(); let idx = index" class="platform-details-card">
-              <div class="platform-details-header">
-                <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
-                <span class="platform-name">{{ platform.name }}</span>
-                <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
-                <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
+            <!-- Platform Tabs UI -->
+            <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
+              <div class="platform-tab-strip">
+                <button
+                  type="button"
+                  *ngFor="let platform of selectedPlatforms()"
+                  class="platform-tab"
+                  [class.platform-tab--active]="activePlatformTab === platform._id"
+                  (click)="activePlatformTab = platform._id"
+                >
+                  <i [class]="platform.icon"></i>
+                  {{ platform.name }}
+                  <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span>
+                </button>
+                <div class="platform-tab-spacer"></div>
+                <button
+                  type="button"
+                  class="tab-remove"
+                  *ngIf="activePlatformTab"
+                  (click)="removePlatformCard(getPlatformById(activePlatformTab))"
+                  title="Remove platform"
+                >
+                  <i class="bi bi-x-lg"></i> Remove
+                </button>
               </div>
-              <div class="platform-details-body">
-                <div class="row">
-                  <div class="col">
-                    <label>{{ platform.handleLabel || 'Handle' }}</label>
-                    <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" />
+
+              <!-- Only show the active platform's details -->
+              <ng-container *ngIf="activePlatformTab">
+                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card">
+                  <div class="platform-details-header">
+                    <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                    <span class="platform-name">{{ platform.name }}</span>
+                    <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
+                    <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
                   </div>
-                  <div class="col">
-                    <label>{{ platform.followersLabel || 'Followers' }}</label>
-                    <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" />
-                  </div>
-                  <div class="col">
-                    <label>Tier</label>
-                    <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
-                      <option value="" disabled>Select tier</option>
-                      <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="content-types-section">
-                  <label>Content Types & Pricing</label>
-                  <div class="content-types-list">
-                    <ng-container *ngFor="let ct of platform.contentTypes">
-                      <div class="content-type-item" *ngIf="ct.visible">
-                        <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" />
-                        <span>{{ ct.name }}</span>
-                        <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" />
+                  <div class="platform-details-body">
+                    <div class="row">
+                      <div class="col">
+                        <label>{{ platform.handleLabel || 'Handle' }}</label>
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" />
                       </div>
-                    </ng-container>
+                      <div class="col">
+                        <label>{{ platform.followersLabel || 'Followers' }}</label>
+                        <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" />
+                      </div>
+                      <div class="col">
+                        <label>Tier</label>
+                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
+                          <option value="" disabled>Select tier</option>
+                          <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="content-types-section">
+                      <label>Content Types & Pricing</label>
+                      <div class="content-types-list">
+                        <ng-container *ngFor="let ct of platform.contentTypes">
+                          <div class="content-type-item" *ngIf="ct.visible">
+                            <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" />
+                            <span>{{ ct.name }}</span>
+                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" />
+                          </div>
+                        </ng-container>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ng-container>
             </div>
+
             <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one social profile. Upgrade to premium to add multiple profiles.</div>
           </div>
 

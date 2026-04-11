@@ -206,17 +206,79 @@
 }
 
 .registration-wrap {
-  max-width: 1220px;
+  max-width: 860px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1.25rem;
 }
 
-.left-panel {
+.left-panel { display: none; }
+
+/* ── Horizontal step tabs ────────────── */
+.reg-tab-strip {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d8deea;
+  border-radius: 14px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.25rem;
+  gap: 0;
+}
+
+.reg-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  transition: background 0.12s;
+  outline: none;
+  white-space: nowrap;
+
+  &:hover { background: #f5f5f7; }
+
+  .reg-tab-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: #e6ebf3;
+    color: #5f6f8b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.88rem;
+    flex-shrink: 0;
+  }
+
+  .reg-tab-label {
+    color: #5d6a83;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  &--active {
+    .reg-tab-icon { background: #f55b0a; color: #fff; }
+    .reg-tab-label { color: #f55b0a; }
+  }
+
+  &--done {
+    .reg-tab-icon { background: #27c16b; color: #fff; }
+    .reg-tab-label { color: #223046; }
+  }
+}
+
+.reg-tab-line {
+  flex: 1;
+  height: 2px;
+  background: #e6ebf3;
+  border-radius: 2px;
+  margin: 0 0.5rem;
+  transition: background 0.2s;
+
+  &--done { background: #27c16b; }
 }
 
 .panel-card {
@@ -513,23 +575,18 @@ input {
   font-weight: 700;
 }
 
-@media (max-width: 992px) {
-  .registration-wrap {
-    grid-template-columns: 1fr;
-  }
-
-  .left-panel {
-    order: 2;
-  }
-
-  .content-panel {
-    order: 1;
-  }
-}
-
 @media (max-width: 768px) {
   .registration-shell {
     padding: 1rem 0.7rem;
+  }
+
+  .reg-tab-strip {
+    padding: 0.75rem 0.75rem;
+    gap: 0;
+  }
+
+  .reg-tab-label {
+    display: none;
   }
 
   .form-card {

@@ -5,15 +5,7 @@ import { Campaign, CampaignInfluencer } from '../campaign.model';
 import { ConfigService } from '../../config.service';
 import { environment } from '../../../../environments/environment';
 
-// Deliverables keyed by platform name (lowercase). 'all' = shown for any/no platform.
-const DELIVERABLES_BY_PLATFORM: Record<string, string[]> = {
-  instagram: ['Instagram post', 'Instagram reel', 'Instagram story', 'Instagram live'],
-  youtube:   ['YouTube video', 'YouTube Shorts', 'YouTube live'],
-  twitter:   ['Twitter/X post', 'Twitter/X thread'],
-  facebook:  ['Facebook post', 'Facebook reel', 'Facebook story', 'Facebook live'],
-  linkedin:  ['LinkedIn post', 'LinkedIn article'],
-  all:       ['Blog post', 'Podcast mention', 'Website feature'],
-};
+
 
 @Component({
   selector: 'app-campaign-form',
@@ -23,15 +15,6 @@ const DELIVERABLES_BY_PLATFORM: Record<string, string[]> = {
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit {
-    get deliverablesList(): string[] {
-      const platform = (this.form?.get('platformPreference')?.value || '').toLowerCase().trim();
-      const specific = platform && DELIVERABLES_BY_PLATFORM[platform]
-        ? DELIVERABLES_BY_PLATFORM[platform]
-        : Object.entries(DELIVERABLES_BY_PLATFORM)
-            .filter(([k]) => k !== 'all')
-            .flatMap(([, v]) => v);
-      return [...new Set([...specific, ...DELIVERABLES_BY_PLATFORM['all']])];
-    }
   campaignInvites: any[] = [];
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
@@ -54,7 +37,9 @@ export class CampaignFormComponent implements OnInit {
   currentStep = 1;
   categoriesList: any[] = [];
   selectedCategories: string[] = [];
-  selectedDeliverables: string[] = [];
+  selectedPlatforms: string[] = [];
+  activePlatformTab = '';
+  platformDeliverables: { platform: string; contentTypes: { name: string; enabled: boolean; price: number | null }[] }[] = [];
   platformsList: any[] = [];
   // Add ChangeDetectorRef
   constructor(private fb: FormBuilder, private config: ConfigService, private cd: ChangeDetectorRef) {}
@@ -85,7 +70,17 @@ export class CampaignFormComponent implements OnInit {
     // Pre-populate multi-selects when editing
     if (this.campaign) {
       this.selectedCategories = [...(this.campaign.categories || [])];
-      this.selectedDeliverables = [...(this.campaign.deliverables || [])];
+      const existingSocialMedia = (this.campaign as any).socialMedia;
+      if (Array.isArray(existingSocialMedia) && existingSocialMedia.length) {
+        this.platformDeliverables = existingSocialMedia.map((sm: any) => ({
+          platform: sm.platform,
+          contentTypes: (sm.contentTypes || []).map((ct: any) => ({
+            name: ct.name, enabled: ct.enabled ?? false, price: ct.price ?? null
+          }))
+        }));
+        this.selectedPlatforms = this.platformDeliverables.map(pd => pd.platform);
+        this.activePlatformTab = this.selectedPlatforms[0] || '';
+      }
     }
 
     this.config.getCategories().subscribe(data => {
@@ -98,11 +93,7 @@ export class CampaignFormComponent implements OnInit {
       this.cd.detectChanges();
     });
 
-    // When platform changes, clear any deliverables no longer in the new list
-    this.form.get('platformPreference')?.valueChanges.subscribe(() => {
-      const available = this.deliverablesList;
-      this.selectedDeliverables = this.selectedDeliverables.filter(d => available.includes(d));
-    });
+
   }
 
   get isEdit(): boolean { return this.mode === 'edit'; }
@@ -141,13 +132,7 @@ export class CampaignFormComponent implements OnInit {
   }
   isCategorySelected(name: string): boolean { return this.selectedCategories.includes(name); }
 
-  // ── Deliverables ─────────────────────────────────────────────
-  toggleDeliverable(name: string) {
-    const idx = this.selectedDeliverables.indexOf(name);
-    if (idx >= 0) this.selectedDeliverables.splice(idx, 1);
-    else this.selectedDeliverables.push(name);
-  }
-  isDeliverableSelected(name: string): boolean { return this.selectedDeliverables.includes(name); }
+
 
   // ── Influencers (step 3) ─────────────────────────────────────
   loadInfluencers() {
@@ -244,6 +229,57 @@ export class CampaignFormComponent implements OnInit {
     (event.target as HTMLImageElement).style.display = 'none';
   }
 
+  // ── Platform multi-select ─────────────────────────────────────
+  getPlatformOptions(): any[] {
+    if (this.platformsList.length) return this.platformsList;
+    return [
+      { name: 'Instagram',   contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
+      { name: 'YouTube',     contentTypes: [{ name: 'Video', visible: true }, { name: 'Shorts', visible: true }, { name: 'Live', visible: true }] },
+      { name: 'X / Twitter', contentTypes: [{ name: 'Post', visible: true }, { name: 'Thread', visible: true }] },
+      { name: 'Facebook',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
+      { name: 'LinkedIn',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Article', visible: true }] },
+    ];
+  }
+
+  isPlatformSelected(name: string): boolean {
+    return this.selectedPlatforms.includes(name);
+  }
+
+  togglePlatform(p: { name: string; contentTypes?: any[] }) {
+    const idx = this.selectedPlatforms.indexOf(p.name);
+    if (idx >= 0) {
+      this.selectedPlatforms.splice(idx, 1);
+      this.platformDeliverables = this.platformDeliverables.filter(pd => pd.platform !== p.name);
+      // switch active tab to the first remaining platform
+      this.activePlatformTab = this.selectedPlatforms[0] || '';
+    } else {
+      this.selectedPlatforms.push(p.name);
+      const found = this.getPlatformOptions().find(pl => pl.name === p.name) || p;
+      const cts = (found.contentTypes || [])
+        .filter((ct: any) => ct.visible !== false)
+        .map((ct: any) => ({ name: ct.name, enabled: false, price: null as number | null }));
+      this.platformDeliverables.push({ platform: p.name, contentTypes: cts });
+      // auto-activate newly added platform tab
+      this.activePlatformTab = p.name;
+    }
+    this.cd.markForCheck();
+  }
+
+  getEnabledCount(pd: { contentTypes: { enabled: boolean }[] }): number {
+    return pd.contentTypes.filter(ct => ct.enabled).length;
+  }
+
+  getPlatformIcon(name: string): string {
+    const n = (name || '').toLowerCase();
+    if (n.includes('instagram')) return 'bi bi-instagram';
+    if (n.includes('youtube')) return 'bi bi-youtube';
+    if (n.includes('twitter') || n.includes('x')) return 'bi bi-twitter-x';
+    if (n.includes('facebook')) return 'bi bi-facebook';
+    if (n.includes('linkedin')) return 'bi bi-linkedin';
+    if (n.includes('tiktok')) return 'bi bi-tiktok';
+    return 'bi bi-share';
+  }
+
   // ── Image upload ─────────────────────────────────────────────
   private formatDate(dateStr?: string): string {
     if (!dateStr) return '';
@@ -287,9 +323,12 @@ export class CampaignFormComponent implements OnInit {
       timelineStart: v.timelineStart || undefined,
       timelineEnd: v.timelineEnd || undefined,
       categories: this.selectedCategories,
-      deliverables: this.selectedDeliverables,
+      deliverables: this.platformDeliverables.flatMap(pd =>
+        pd.contentTypes.filter(ct => ct.enabled).map(ct => ct.name)
+      ),
+      socialMedia: this.platformDeliverables.length > 0 ? this.platformDeliverables : undefined,
       minFollowerCount: v.minFollowerCount ? +v.minFollowerCount : undefined,
-      platformPreference: v.platformPreference || undefined,
+      platformPreference: this.selectedPlatforms.length > 0 ? this.selectedPlatforms[0].toLowerCase() : undefined,
       specialInstructions: v.specialInstructions || undefined,
       ...(this.preSelectedInfluencers.length > 0 ? { targetInfluencers: this.preSelectedInfluencers } : {}),
     };
