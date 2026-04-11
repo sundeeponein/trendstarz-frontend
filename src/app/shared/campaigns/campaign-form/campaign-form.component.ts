@@ -235,7 +235,7 @@ export class CampaignFormComponent implements OnInit {
     return [
       { name: 'Instagram',   contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
       { name: 'YouTube',     contentTypes: [{ name: 'Video', visible: true }, { name: 'Shorts', visible: true }, { name: 'Live', visible: true }] },
-      { name: 'Twitter / X', contentTypes: [{ name: 'Post', visible: true }, { name: 'Thread', visible: true }] },
+      { name: 'X / Twitter', contentTypes: [{ name: 'Post', visible: true }, { name: 'Thread', visible: true }] },
       { name: 'Facebook',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
       { name: 'LinkedIn',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Article', visible: true }] },
     ];
