@@ -1,43 +1,24 @@
 <div class="registration-shell">
   <div class="registration-wrap">
-    <aside class="left-panel">
-      <div class="panel-card progress-panel">
-        <h4>Registration Progress</h4>
-        <p class="step-count">Step {{ currentStep }} of 3</p>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
-          <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
-          <span class="step-label">Brand Basics</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 2" [class.complete]="step2Complete" (click)="goToStep(2)">
-          <span class="step-icon">{{ step2Complete ? '✓' : '2' }}</span>
-          <span class="step-label">Media & Discovery</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
-          <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
-          <span class="step-label">Professional Setup</span>
-        </button>
-      </div>
-
-      <div class="panel-card tip-card" *ngIf="currentStep === 1">
-        <h5>Identity Tip</h5>
-        <p>Keep your brand username consistent with your social handles for better recognition.</p>
-      </div>
-
-      <div class="panel-card tip-card" *ngIf="currentStep === 2">
-        <h5>Discovery Tip</h5>
-        <p>Add your strongest channels and product visuals to improve campaign matching.</p>
-      </div>
-
-      <div class="panel-card tip-card" *ngIf="currentStep === 3">
-        <h5>Conversion Tip</h5>
-        <p>Clear pricing and contact preferences speed up brand-collaboration approvals.</p>
-      </div>
-    </aside>
-
     <main class="content-panel">
+
+      <!-- Horizontal step tabs -->
+      <div class="reg-tab-strip">
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
+          <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
+          <span class="reg-tab-label">Brand Basics</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
+          <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
+          <span class="reg-tab-label">Media & Discovery</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
+          <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
+          <span class="reg-tab-label">Professional Setup</span>
+        </button>
+      </div>
       <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mb-4">
         <div>
           <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>

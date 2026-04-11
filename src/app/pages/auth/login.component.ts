@@ -61,23 +61,15 @@ export class LoginComponent {
         } else if (res.userType === 'brand') {
           this.configService.getBrandProfileById().subscribe({
             next: (profile: any) => {
-              if (!profile || !profile._id) {
-                // If backend just created a minimal profile, allow login and redirect to profile completion
-                this.router.navigate(['/brand-profile']);
-                return;
-              }
               // Merge profile into session user
-              const user = { ...res.user, ...profile, brandId: profile._id };
+              const user = { ...res.user, ...(profile || {}), brandId: profile?._id || res.user?._id };
               this.session.setUser(user);
-              // If profile is minimal (missing required fields), redirect to profile completion
-              if (!profile.brandName || !profile.email) {
-                this.router.navigate(['/brand-profile']);
-              } else {
-                this.router.navigate(['/brand-dashboard']);
-              }
+              // Always redirect to brand-dashboard; user can complete profile from there
+              this.router.navigate(['/brand-dashboard']);
             },
             error: () => {
-              this.errorMsg = 'Failed to load brand profile. Please try again.';
+              // Even on error, go to dashboard (dashboard will show profile incomplete banner)
+              this.router.navigate(['/brand-dashboard']);
             }
           });
         } else if (res.userType === 'influencer') {
