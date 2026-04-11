@@ -28,6 +28,7 @@ $radius: 12px;
   margin: auto 0;
   display: flex;
   flex-direction: column;
+  height: 90vh;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
   animation: slideUp 0.25s ease-out;
 }
@@ -45,7 +46,10 @@ $radius: 12px;
   padding: 20px 24px;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
-
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
   h3 {
     font-size: 1.15rem;
     font-weight: 700;
@@ -80,6 +84,16 @@ form {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+}
+
+.form-footer {
+  padding: 16px 24px;
+  border-top: 1px solid $border;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: #fff;
 }
 
 .field-group {

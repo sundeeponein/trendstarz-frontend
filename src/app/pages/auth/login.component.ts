@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SessionService } from '../../core/session.service';
+import { ConfigService } from '../../shared/config.service';
 
 @Component({
   selector: 'app-login',
@@ -22,7 +23,13 @@ export class LoginComponent {
   submitted = false;
   showPassword = false;
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router, private session: SessionService) {
+  constructor(
+    private fb: FormBuilder,
+    private http: HttpClient,
+    private router: Router,
+    private session: SessionService,
+    private configService: ConfigService
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
@@ -50,13 +57,26 @@ export class LoginComponent {
         // Save user info for reactive use
         if (res.user) {
           this.session.setUser(res.user);
-        } else {
-          // fallback: try to decode from token if needed
         }
         if (res.userType === 'admin') {
           this.router.navigate(['/admin']);
         } else if (res.userType === 'brand') {
-          this.router.navigate(['/brand-dashboard']);
+          // Always fetch brand profile after login to ensure valid brandId
+          this.configService.getBrandProfileById().subscribe({
+            next: (profile: any) => {
+              if (!profile || !profile._id) {
+                this.errorMsg = 'Brand profile not found. Please complete your profile before proceeding.';
+                return;
+              }
+              // Merge profile into session user
+              const user = { ...res.user, ...profile, brandId: profile._id };
+              this.session.setUser(user);
+              this.router.navigate(['/brand-dashboard']);
+            },
+            error: () => {
+              this.errorMsg = 'Failed to load brand profile. Please try again.';
+            }
+          });
         } else if (res.userType === 'influencer') {
           this.router.navigate(['/influencer-dashboard']);
         } else {

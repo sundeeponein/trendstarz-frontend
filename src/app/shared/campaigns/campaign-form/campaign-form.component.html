@@ -251,9 +251,10 @@
 
         <div class="inf-list" *ngIf="!influencersLoading">
           <div class="inf-row"
-               *ngFor="let inf of filteredInfluencers"
-               [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
-               (click)="toggleInfluencerSelect(inf._id)">
+            *ngFor="let inf of filteredInfluencers"
+            [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
+            [class.inf-row--invited]="isInfluencerInvited(inf)"
+            (click)="!isInfluencerInvited(inf) && toggleInfluencerSelect(inf._id)">
             <div class="inf-avatar">
               <img *ngIf="getInfluencerAvatar(inf)"
                    [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" alt="" />
@@ -276,9 +277,14 @@
               <span class="inf-engagement" *ngIf="inf.avgEngagement">
                 Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
               </span>
-              <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">
-                <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(inf._id)"></i>
-              </div>
+              <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
+                <span class="inf-invited-badge"><i class="bi bi-check-circle-fill"></i> Invited</span>
+              </ng-container>
+              <ng-template #selectable>
+                <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">
+                  <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(inf._id)"></i>
+                </div>
+              </ng-template>
             </div>
           </div>
 

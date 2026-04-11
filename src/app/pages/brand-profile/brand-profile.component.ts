@@ -3,9 +3,10 @@ import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { PlansService } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
 import { of, forkJoin } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
@@ -21,8 +22,15 @@ import { RouterModule } from '@angular/router';
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
-
 export class BrandProfileComponent implements OnInit {
+  constructor(
+    public fb: FormBuilder,
+    private configService: ConfigService,
+    private otpService: OtpService,
+    private plansService: PlansService,
+    private cd: ChangeDetectorRef
+  ) {}
+
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
   step1Complete: boolean = false;
@@ -42,7 +50,6 @@ export class BrandProfileComponent implements OnInit {
   showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
-
 
   // Email verification resend state
   resendingEmailVerification: boolean = false;
@@ -65,23 +72,13 @@ export class BrandProfileComponent implements OnInit {
       }
     });
   }
-  constructor(
-    public fb: FormBuilder,
-    private configService: ConfigService,
-    private otpService: OtpService
-  ) {}
+
 
   phoneOtpTimer: number = 300;
   canResendPhoneOtp: boolean = false;
   verifyingPhoneOtp: boolean = false;
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
-
-  resendPhoneOtp() {
-    if (!this.canResendPhoneOtp) return;
-    this.sendPhoneOtp();
-    this.startPhoneOtpTimer();
-  }
 
   startPhoneOtpTimer() {
     this.phoneOtpTimer = 300;
@@ -343,6 +340,7 @@ export class BrandProfileComponent implements OnInit {
 
           this.emailVerified = !!profile?.isEmailVerified;
           this.showEmailVerificationPrompt = !this.emailVerified;
+          this.cd.detectChanges();
 
           const stateId = this.states.find(s => s.name === profile.location?.state)?.['_id'] || '';
           const languageIds = (profile.languages || []).map((name: string) =>
