@@ -1,83 +1,112 @@
-<div class="container py-4">
-  <h2>Brand Dashboard</h2>
-  <div *ngIf="loading" class="text-center">Loading...</div>
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
-  <div *ngIf="!loading && !error">
-    <app-dashboard-alert-banner
-      [isEmailVerified]="dashboard?.brand?.isEmailVerified"
-      [isPremium]="dashboard?.brand?.isPremium"
-      [premiumDuration]="dashboard?.brand?.premiumDuration"
-      [premiumStart]="dashboard?.brand?.premiumStart"
-      [premiumEnd]="dashboard?.brand?.premiumEnd"
-      [profileIncomplete]="profileIncomplete"
-      userType="brand"
-      [userName]="dashboard?.brand?.brandName"
-      (verifyEmail)="onVerifyEmail()"
-      (upgrade)="onUpgrade()"
-      (completeProfile)="onCompleteProfile()"
-    ></app-dashboard-alert-banner>
-    <div class="row mb-4">
-      <div class="col-4">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Total Campaigns</h5>
-            <p class="display-6">{{ dashboard?.totalCampaigns || 0 }}</p>
+<div class="cm-page brand-dashboard p-4">
+  <h1 class="welcome-title mb-1">Welcome Brand</h1>
+  <div class="welcome-subtitle mb-4">Here is what is happening with your brand campaigns today.</div>
+
+  <!-- Alert Cards Row -->
+  <div class="row mb-4 gx-3">
+    <div class="col-md-6 mb-3 mb-md-0">
+      <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
+        <div class="d-flex align-items-start">
+          <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
+          <div>
+            <div class="alert-card-title fw-bold">Verify your email</div>
+            <div class="alert-card-desc">Verify your email to unlock full platform access and start collaborating with influencers.</div>
+            <div *ngIf="emailVerificationError" class="text-danger mt-2">{{ emailVerificationError }}</div>
           </div>
         </div>
+        <a *ngIf="dashboard?.brand && dashboard?.brand.isEmailVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onVerifyEmail()">Resend verification</a>
+        <span *ngIf="dashboard?.brand && dashboard?.brand.isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
       </div>
-      <div class="col-4">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Active</h5>
-            <p class="display-6">{{ dashboard?.active || 0 }}</p>
+    </div>
+    <div class="col-md-6">
+      <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
+        <div class="d-flex align-items-start">
+          <span class="alert-card-icon me-3"><i class="bi bi-person-fill"></i></span>
+          <div>
+            <div class="alert-card-title fw-bold">Complete your profile</div>
+            <div class="alert-card-desc">Complete your profile to receive better campaign recommendations and platform features.</div>
           </div>
         </div>
+        <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Go to profile</a>
+        <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
       </div>
-      <div class="col-4">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Completed</h5>
-            <p class="display-6">{{ dashboard?.completed || 0 }}</p>
-          </div>
+    </div>
+  </div>
+
+  <!-- Performance Overview -->
+  <div class="performance-overview mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div class="performance-title">Performance Overview</div>
+      <span class="performance-range">LAST 30 DAYS</span>
+    </div>
+    <div class="row gx-3">
+      <div class="col-6 col-md-3 mb-3 mb-md-0" *ngFor="let stat of [
+        {label: 'Total Campaigns', value: dashboard?.totalCampaigns || 0, sub: 'Campaigns'},
+        {label: 'Invites Sent', value: dashboard?.totalInvites || 0, sub: 'Invites'},
+        {label: 'Accepted', value: dashboard?.accepted || 0, sub: 'Accepted'},
+        {label: 'Completed', value: dashboard?.completed || 0, sub: 'Completed'}]">
+        <div class="perf-card text-center">
+          <div class="perf-value">{{ stat.value }}</div>
+          <div class="perf-label">{{ stat.label }}</div>
+          <div class="perf-sub">{{ stat.sub }}</div>
         </div>
       </div>
     </div>
-    <h4>Recent Campaigns</h4>
-    <div *ngIf="recentCampaigns.length === 0" class="text-muted">No recent campaigns.</div>
-    <ul class="list-group mb-4" *ngIf="recentCampaigns.length">
-      <li class="list-group-item" *ngFor="let c of recentCampaigns">
-        <strong>{{ c.title }}</strong><br>
-        Invites Sent: {{ c.invitesSent }} | Accepted: {{ c.accepted }} | Completed: {{ c.completed }}
-      </li>
-    </ul>
-    <h4>Search Influencers</h4>
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <select class="form-select" [(ngModel)]="filters.category">
-          <option value="">All Categories</option>
-          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <select class="form-select" [(ngModel)]="filters.state">
-          <option value="">All States</option>
-          <option *ngFor="let st of states" [value]="st">{{ st }}</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <button class="btn btn-primary w-100" (click)="searchInfluencers()">Search</button>
+  </div>
+
+  <!-- Campaign Sections -->
+  <div class="row mb-4 gx-3">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="section-card h-100">
+        <div class="section-title d-flex align-items-center mb-2">
+          <span class="dot dot--orange me-2"></span> Recent Campaigns
+          <span class="section-count ms-auto">{{ recentCampaigns.length }}</span>
+        </div>
+        <div *ngIf="recentCampaigns.length === 0" class="section-empty">
+          <div class="section-empty-icon"><i class="bi bi-megaphone"></i></div>
+          <div class="section-empty-title">No recent campaigns</div>
+          <div class="section-empty-desc">When you launch campaigns, they will appear here.</div>
+        </div>
+        <!-- ...existing code for recent campaign cards if any... -->
       </div>
     </div>
-    <h4>Recommended Influencers</h4>
-    <div class="row">
-      <div class="col-12 col-md-4 mb-3" *ngFor="let inf of recommendedInfluencers">
-        <div class="card h-100">
-          <div class="card-body">
-            <h5>{{ inf.name }}</h5>
-            <p>{{ inf.categories?.[0] }}</p>
-            <p>{{ inf.location?.state }}</p>
-          </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="section-card h-100">
+        <div class="section-title d-flex align-items-center mb-2">
+          <span class="dot dot--blue me-2"></span> Recommended Influencers
+          <span class="section-count ms-auto">{{ recommendedInfluencers.length }}</span>
         </div>
+        <div *ngIf="recommendedInfluencers.length === 0" class="section-empty">
+          <div class="section-empty-icon"><i class="bi bi-person"></i></div>
+          <div class="section-empty-title">No recommendations</div>
+          <div class="section-empty-desc">Recommended influencers will appear here as you use the platform.</div>
+        </div>
+        <!-- ...existing code for recommended influencer cards if any... -->
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="section-card h-100">
+        <div class="section-title d-flex align-items-center mb-2">
+          <span class="dot dot--purple me-2"></span> Search Influencers
+          <span class="section-count ms-auto">{{ filters.category || filters.state ? 'Filtered' : 'All' }}</span>
+        </div>
+        <div class="mb-2">
+          <select class="form-select mb-2" [(ngModel)]="filters.category">
+            <option value="">All Categories</option>
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          </select>
+          <select class="form-select mb-2" [(ngModel)]="filters.state">
+            <option value="">All States</option>
+            <option *ngFor="let st of states" [value]="st">{{ st }}</option>
+          </select>
+          <button class="btn btn-primary w-100" (click)="searchInfluencers()">Search</button>
+        </div>
+        <div *ngIf="recommendedInfluencers.length === 0" class="section-empty">
+          <div class="section-empty-icon"><i class="bi bi-search"></i></div>
+          <div class="section-empty-title">No search results</div>
+          <div class="section-empty-desc">Use the filters above to find influencers for your campaigns.</div>
+        </div>
+        <!-- ...existing code for search results if any... -->
       </div>
     </div>
   </div>

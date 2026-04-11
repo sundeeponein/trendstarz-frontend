@@ -1,16 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, JsonPipe } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { SessionService } from '../../core/session.service';
+import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboard.service';
-import { DashboardAlertBannerComponent } from '../../shared/dashboard-alert-banner/dashboard-alert-banner.component';
+import { ConfigService } from '../../shared/config.service';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.css'],
   standalone: true,
-  imports: [CommonModule, JsonPipe, DashboardAlertBannerComponent]
+  imports: [CommonModule]
 })
-export class InfluencerDashboardComponent implements OnInit {
+export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
   invites: any[] = [];
   activeCampaigns: any[] = [];
@@ -18,10 +21,50 @@ export class InfluencerDashboardComponent implements OnInit {
   loading = true;
   error = '';
   profileIncomplete = false;
+  emailVerificationError: string | null = null;
 
-  constructor(private dashboardService: DashboardService) {}
+  private routerSub: Subscription | undefined;
+  private userSub: Subscription | undefined;
+  constructor(
+    private dashboardService: DashboardService,
+    private router: Router,
+    private session: SessionService,
+    private config: ConfigService
+  ) {}
 
   ngOnInit() {
+    // Check for email verification error in query params (if redirected from verification)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('emailVerificationError')) {
+      this.emailVerificationError = params.get('emailVerificationError');
+    }
+    // Always fetch latest profile before loading dashboard
+    this.userSub = this.session.user$.subscribe(user => {
+      if (user) {
+        this.config.getInfluencerProfileById().subscribe((profile: any) => {
+          if (profile) {
+            this.session.setUser({ ...user, ...profile });
+          }
+          this.loadDashboard();
+        });
+      }
+    });
+    // Listen for route re-activation (e.g., clicking Dashboard again)
+    this.routerSub = this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd && event.urlAfterRedirects.includes('influencer-dashboard')) {
+        this.loadDashboard();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSub) this.routerSub.unsubscribe();
+    if (this.userSub) this.userSub.unsubscribe();
+  }
+
+  loadDashboard() {
+    this.loading = true;
+    this.error = '';
     this.dashboardService.getInfluencerDashboard().subscribe({
       next: (data) => {
         this.dashboard = data;
