@@ -37,11 +37,10 @@ export class LoginComponent {
   }
 
   onSubmit() {
-  this.errorMsg = '';
-  this.submitted = true;
-  // Mark all controls as touched to show validation errors immediately
-  Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
-  if (this.loginForm.invalid) return;
+    this.errorMsg = '';
+    this.submitted = true;
+    Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
+    if (this.loginForm.invalid) return;
     this.http.post(`${environment.apiBaseUrl}/auth/login`, this.loginForm.value)
       .pipe(timeout(5000), catchError(err => {
         if (err?.error?.message?.includes('pending')) {
@@ -54,24 +53,28 @@ export class LoginComponent {
       .subscribe((res: any) => {
         if (!res) return;
         this.session.setToken(res.token);
-        // Save user info for reactive use
         if (res.user) {
           this.session.setUser(res.user);
         }
         if (res.userType === 'admin') {
           this.router.navigate(['/admin']);
         } else if (res.userType === 'brand') {
-          // Always fetch brand profile after login to ensure valid brandId
           this.configService.getBrandProfileById().subscribe({
             next: (profile: any) => {
               if (!profile || !profile._id) {
-                this.errorMsg = 'Brand profile not found. Please complete your profile before proceeding.';
+                // If backend just created a minimal profile, allow login and redirect to profile completion
+                this.router.navigate(['/brand-profile']);
                 return;
               }
               // Merge profile into session user
               const user = { ...res.user, ...profile, brandId: profile._id };
               this.session.setUser(user);
-              this.router.navigate(['/brand-dashboard']);
+              // If profile is minimal (missing required fields), redirect to profile completion
+              if (!profile.brandName || !profile.email) {
+                this.router.navigate(['/brand-profile']);
+              } else {
+                this.router.navigate(['/brand-dashboard']);
+              }
             },
             error: () => {
               this.errorMsg = 'Failed to load brand profile. Please try again.';

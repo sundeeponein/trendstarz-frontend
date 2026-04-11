@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Campaign, CampaignInfluencer } from '../campaign.model';
@@ -23,36 +23,22 @@ const DELIVERABLES_BY_PLATFORM: Record<string, string[]> = {
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit {
+    get deliverablesList(): string[] {
+      const platform = (this.form?.get('platformPreference')?.value || '').toLowerCase().trim();
+      const specific = platform && DELIVERABLES_BY_PLATFORM[platform]
+        ? DELIVERABLES_BY_PLATFORM[platform]
+        : Object.entries(DELIVERABLES_BY_PLATFORM)
+            .filter(([k]) => k !== 'all')
+            .flatMap(([, v]) => v);
+      return [...new Set([...specific, ...DELIVERABLES_BY_PLATFORM['all']])];
+    }
   campaignInvites: any[] = [];
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
   @Output() save = new EventEmitter<Partial<Campaign> & { inviteInfluencerIds?: string[] }>();
   @Output() cancel = new EventEmitter<void>();
-
   form!: FormGroup;
-  imagePreview: string | null = null;
-  selectedFile: File | null = null;
-  uploading = false;
-
-  // ── Stepper ──────────────────────────────────────────────────
-  currentStep = 1;
-
-  // ── Step 2 data ──────────────────────────────────────────────
-  categoriesList: any[] = [];
-  selectedCategories: string[] = [];
-  selectedDeliverables: string[] = [];
-  platformsList: any[] = [];   // loaded from API
-
-  get deliverablesList(): string[] {
-    const platform = (this.form?.get('platformPreference')?.value || '').toLowerCase().trim();
-    const specific = platform && DELIVERABLES_BY_PLATFORM[platform]
-      ? DELIVERABLES_BY_PLATFORM[platform]
-      : Object.entries(DELIVERABLES_BY_PLATFORM)
-          .filter(([k]) => k !== 'all')
-          .flatMap(([, v]) => v);
-    return [...new Set([...specific, ...DELIVERABLES_BY_PLATFORM['all']])];
-  }
 
   // ── Step 3 influencers ───────────────────────────────────────
   allInfluencers: any[] = [];
@@ -62,8 +48,16 @@ export class CampaignFormComponent implements OnInit {
   filterCategory = '';
   filterFollowers = '';
   filterPlatform = '';
-
-  constructor(private fb: FormBuilder, private config: ConfigService) {}
+  imagePreview: string | null = null;
+  selectedFile: File | null = null;
+  uploading = false;
+  currentStep = 1;
+  categoriesList: any[] = [];
+  selectedCategories: string[] = [];
+  selectedDeliverables: string[] = [];
+  platformsList: any[] = [];
+  // Add ChangeDetectorRef
+  constructor(private fb: FormBuilder, private config: ConfigService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.form = this.fb.group({
@@ -96,10 +90,12 @@ export class CampaignFormComponent implements OnInit {
 
     this.config.getCategories().subscribe(data => {
       this.categoriesList = data;
+      this.cd.detectChanges();
     });
 
     this.config.getSocialMedia().subscribe(data => {
       this.platformsList = Array.isArray(data) ? data : [];
+      this.cd.detectChanges();
     });
 
     // When platform changes, clear any deliverables no longer in the new list
@@ -160,8 +156,9 @@ export class CampaignFormComponent implements OnInit {
       next: (data: any[]) => {
         this.allInfluencers = Array.isArray(data) ? data : [];
         this.influencersLoading = false;
+        this.cd.detectChanges();
       },
-      error: () => { this.influencersLoading = false; }
+      error: () => { this.influencersLoading = false; this.cd.detectChanges(); }
     });
   }
 
@@ -197,6 +194,7 @@ export class CampaignFormComponent implements OnInit {
     if (!this.campaign?._id) return;
     this.config.getInvitesByCampaign(this.campaign._id).subscribe(invites => {
       this.campaignInvites = Array.isArray(invites) ? invites : [];
+      this.cd.detectChanges();
     });
   }
 

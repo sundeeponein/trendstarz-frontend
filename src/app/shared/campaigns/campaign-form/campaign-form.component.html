@@ -118,7 +118,7 @@
     <!-- ══════════════════════════════════════════
          STEP 2 — Requirements
     ══════════════════════════════════════════ -->
-    <div *ngIf="currentStep === 2">
+    <form [formGroup]="form" *ngIf="currentStep === 2">
       <div class="form-body">
 
         <div class="field-group">
@@ -198,17 +198,17 @@
           Next — Invite influencers <i class="bi bi-arrow-right"></i>
         </button>
       </div>
-    </div>
+    </form>
 
     <!-- ══════════════════════════════════════════
          STEP 3 — Invite Influencers
     ══════════════════════════════════════════ -->
-    <div *ngIf="currentStep === 3">
+    <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
 
         <div class="inf-search-box">
           <i class="bi bi-search"></i>
-          <input type="text" [(ngModel)]="influencerSearch" class="inf-search-input"
+          <input type="text" [(ngModel)]="influencerSearch" [ngModelOptions]="{standalone: true}" class="inf-search-input"
                  placeholder="Search by name, category, or location…" />
         </div>
 
@@ -310,7 +310,7 @@
           <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
         </button>
       </div>
-    </div>
+    </form>
 
   </div>
 </div>
