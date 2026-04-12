@@ -88,6 +88,11 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
   }
 
+  // Reset password using token
+  resetPassword(token: string, newPassword: string) {
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
+  }
+
   getCategories(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
       map((res) => this.extractData<any[]>(res) || [])

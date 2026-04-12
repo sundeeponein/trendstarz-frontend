@@ -42,6 +42,9 @@ export const serverRoutes: ServerRoute[] = [
   // Forgot password SSR route
   { path: 'forgot-password', renderMode: RenderMode.Server },
 
+  // Reset password SSR route
+  { path: 'reset-password', renderMode: RenderMode.Server },
+
   // Dynamic profiles
   { path: 'influencer/:username', renderMode: RenderMode.Server },
   { path: 'brand/:brandName', renderMode: RenderMode.Server },

@@ -134,6 +134,18 @@ app.get('/forgot-password/reset', (req, res, next) => {
 });
 
 /**
+ * Add explicit SSR route handler for /reset-password in Express server.
+ */
+app.get('/reset-password', (req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
+});
+
+/**
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {

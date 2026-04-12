@@ -65,4 +65,5 @@ export const routes: Routes = [
 	{ path: 'auth', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
 	{ path: 'verify-email', loadComponent: () => import('./pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent) },
 	{ path: 'forgot-password', loadChildren: () => import('./pages/auth/forgot-password.module').then(m => m.ForgotPasswordModule) },
+	{ path: 'reset-password', loadComponent: () => import('./pages/auth/reset-password.component').then(m => m.ResetPasswordComponent) },
 ];

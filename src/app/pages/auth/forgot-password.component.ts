@@ -28,17 +28,25 @@ export class ForgotPasswordComponent {
     this.submitted = true;
     this.successMsg = '';
     this.errorMsg = '';
-    if (this.forgotForm.invalid) return;
+    if (this.forgotForm.invalid) {
+      this.errorMsg = 'Please enter a valid email address.';
+      return;
+    }
     this.loading = true;
     const email = this.forgotForm.get('email')?.value;
     this.configService.sendForgotPasswordLink(email).subscribe({
-      next: (res: any) => {
+      next: () => {
         this.successMsg = 'If your email is registered and verified, a reset link has been sent.';
         this.loading = false;
+        this.forgotForm.reset();
+        this.forgotForm.disable();
       },
-      error: (err: any) => {
-        this.errorMsg = err?.error?.message || 'Failed to send reset link. Please try again.';
+      error: () => {
+        // For security, always show the same message even if backend returns error
+        this.successMsg = 'If your email is registered and verified, a reset link has been sent.';
         this.loading = false;
+        this.forgotForm.reset();
+        this.forgotForm.disable();
       }
     });
   }
