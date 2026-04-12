@@ -39,7 +39,33 @@
   </div>
 
   <!-- Payment Cards -->
-  <div *ngIf="!loading && payments.length > 0" class="payments-list">
+  <div *ngIf="!loading && (payments.length > 0 || adminSubscriptions.length > 0)" class="payments-list">
+    <!-- Admin-given premium cards -->
+    <div *ngFor="let sub of adminSubscriptions" class="payment-card status-approved">
+      <div class="payment-card-header">
+        <div class="payment-amount">Premium</div>
+        <span class="payment-status-badge status-approved">🎁 Granted by Admin</span>
+      </div>
+      <div class="payment-card-body">
+        <div class="payment-detail">
+          <span class="detail-label">Plan</span>
+          <span class="detail-value">{{ sub.planName }} ({{ getDurationLabel(sub.billingCycle) }})</span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">Start Date</span>
+          <span class="detail-value">{{ formatDate(sub.startDate) }}</span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">End Date</span>
+          <span class="detail-value">{{ formatDate(sub.endDate) }}</span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">Source</span>
+          <span class="detail-value">Admin Manual Grant</span>
+        </div>
+      </div>
+    </div>
+    <!-- Payment records -->
     <div *ngFor="let payment of payments" class="payment-card" [ngClass]="getStatusClass(payment.status)">
       <div class="payment-card-header">
         <div class="payment-amount">₹{{ payment.amount }}</div>
@@ -52,7 +78,6 @@
           </ng-container>
         </span>
       </div>
-
       <div class="payment-card-body">
         <div class="payment-detail">
           <span class="detail-label">Plan</span>
