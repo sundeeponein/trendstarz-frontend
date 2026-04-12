@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
-import { CommonModule, DecimalPipe, TitleCasePipe, SlicePipe } from '@angular/common';
+import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
+import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 
@@ -11,7 +12,7 @@ import { ConfigService } from '../../shared/config.service';
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.css'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, TitleCasePipe, SlicePipe]
+  imports: [CommonModule, DecimalPipe, SlicePipe, CampaignDetailModalComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -39,28 +40,37 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Check for email verification error in query params (if redirected from verification)
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('emailVerificationError')) {
-      this.emailVerificationError = params.get('emailVerificationError');
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('emailVerificationError')) {
+        this.emailVerificationError = params.get('emailVerificationError');
+      }
     }
-    // Always fetch latest profile before loading dashboard
+
+    // Only fetch profile and load dashboard once per user
     this.userSub = this.session.user$.subscribe(user => {
       if (user) {
         this.config.getInfluencerProfileById().subscribe((profile: any) => {
           if (profile) {
-            this.session.setUser({ ...user, ...profile });
+            // Only call setUser if profile data is different
+            const merged = { ...user, ...profile };
+            const isSame = JSON.stringify(user) === JSON.stringify(merged);
+            if (!isSame) {
+              this.session.setUser(merged);
+            } else {
+              this.loadDashboard();
+            }
+          } else {
+            this.loadDashboard();
           }
-          this.loadDashboard();
         });
+        // Unsubscribe after first load to prevent repeated calls
+        if (this.userSub) {
+          this.userSub.unsubscribe();
+        }
       }
     });
-    // Listen for route re-activation (e.g., clicking Dashboard again)
-    this.routerSub = this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd && event.urlAfterRedirects.includes('influencer-dashboard')) {
-        this.loadDashboard();
-      }
-    });
+    // Removed router event subscription to prevent infinite reloads
   }
 
   ngOnDestroy(): void {
@@ -72,19 +82,26 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = '';
     this.dashboardService.getInfluencerDashboard().subscribe({
-      next: (data) => {
-        this.dashboard = data;
-        this.invites = data.invites?.newInvites || [];
-        this.activeCampaigns = data.activeCampaigns || [];
-        this.completedCampaigns = data.completedCampaigns || [];
-        // Profile completeness logic: check for missing required fields
-        const user = data.user || {};
-        this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
-        this.loading = false;
+      next: (res) => {
+        setTimeout(() => {
+          const data = res.data || {};
+          this.dashboard = data;
+          console.log('Dashboard.invites:', this.dashboard.invites);
+          this.invites = data.invites?.newInvites || [];
+          this.activeCampaigns = data.activeCampaigns || [];
+          this.completedCampaigns = data.completedCampaigns || [];
+          const user = data.user || {};
+          this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
+          this.loading = false;
+          this.cdr.detectChanges();
+        }, 0);
       },
       error: (err) => {
-        this.error = err?.error?.message || 'Failed to load dashboard.';
-        this.loading = false;
+        setTimeout(() => {
+          this.error = err?.error?.message || 'Failed to load dashboard.';
+          this.loading = false;
+          this.cdr.detectChanges();
+        }, 0);
       }
     });
   }

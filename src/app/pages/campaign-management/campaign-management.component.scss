@@ -1,3 +1,38 @@
+// ── Toast messages ─────────────────────────────
+.cm-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  min-width: 340px;
+  max-width: 90vw;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  animation: fadeIn 0.2s, fadeOut 0.4s 3.6s;
+}
+.cm-toast-success {
+  background: #e8f7ee;
+  color: #1a7f4f;
+  border: 1.5px solid #b6e2c6;
+}
+.cm-toast-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fca5a5;
+}
+.cm-toast i {
+  font-size: 1.3rem;
+}
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
 $accent: #e8612d;
 $accent-dark: #d4551f;
 $border: #e8e8e8;

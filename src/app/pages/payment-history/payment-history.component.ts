@@ -1,7 +1,7 @@
 import { Component, OnInit, PLATFORM_ID, Inject, OnDestroy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { timeout } from 'rxjs/operators';
+import { timeout, forkJoin } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
@@ -21,6 +21,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
 
   private paymentSub?: Subscription;
   payments: any[] = [];
+  adminSubscriptions: any[] = [];
   loading = false;
   error = '';
 
@@ -53,25 +54,29 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     if (this.paymentSub) {
       this.paymentSub.unsubscribe();
     }
-    this.paymentSub = this.http
-      .get<any>(`${environment.apiBaseUrl}/payment/my?limit=50`, { headers })
-      .pipe(timeout(45000)) // 45s to accommodate Railway cold starts
-      .subscribe({
-        next: (res) => {
-          const d = res?.data || res;
-          this.payments = Array.isArray(d?.payments) ? d.payments : Array.isArray(d) ? d : [];
-          PaymentHistoryComponent.cache = this.payments;
-          this.loading = false;
-        },
-        error: (err) => {
-          if (err.name === 'TimeoutError') {
-            this.error = 'Request timed out. Please try again.';
-          } else {
-            this.error = 'Failed to load payment history.';
-          }
-          this.loading = false;
-        },
-      });
+    // Fetch both payment records and admin subscriptions
+    this.paymentSub = forkJoin({
+      payments: this.http.get<any>(`${environment.apiBaseUrl}/payment/my?limit=50`, { headers }).pipe(timeout(45000)),
+      subscriptions: this.http.get<any>(`${environment.apiBaseUrl}/plans/my/subscriptions`, { headers }).pipe(timeout(45000)),
+    }).subscribe({
+      next: ({ payments, subscriptions }) => {
+        const d = payments?.data || payments;
+        this.payments = Array.isArray(d?.payments) ? d.payments : Array.isArray(d) ? d : [];
+        // Filter admin-given subscriptions
+        const subs = Array.isArray(subscriptions?.subscriptions) ? subscriptions.subscriptions : [];
+        this.adminSubscriptions = subs.filter((s: any) => s.source === 'admin');
+        PaymentHistoryComponent.cache = this.payments;
+        this.loading = false;
+      },
+      error: (err) => {
+        if (err.name === 'TimeoutError') {
+          this.error = 'Request timed out. Please try again.';
+        } else {
+          this.error = 'Failed to load payment history.';
+        }
+        this.loading = false;
+      },
+    });
   }
 
   ngOnDestroy() {
