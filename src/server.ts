@@ -90,6 +90,48 @@ app.get('/contact', (req, res, next) => {
     )
     .catch(next);
 });
+app.get('/forgot-password', (req, res, next) => {
+  if (process.env['NODE_ENV'] === 'production') {
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Forgot Password</title>
+      </head>
+      <body>
+        <div id="app-root"></div>
+        <script src="/main.js"></script>
+      </body>
+      </html>
+    `);
+  } else {
+    // Allow SSR during build/extraction
+    angularApp
+      .handle(req)
+      .then((response) =>
+        response ? writeResponseToNodeResponse(response, res) : next(),
+      )
+      .catch(next);
+  }
+});
+app.get(/^\/forgot-password(\/.*)?$/, (req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
+});
+app.get('/forgot-password/reset', (req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
+});
 
 /**
  * Handle all other requests by rendering the Angular application.

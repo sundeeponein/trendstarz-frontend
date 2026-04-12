@@ -64,4 +64,5 @@ export const routes: Routes = [
 	{ path: 'admin/logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 	{ path: 'auth', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
 	{ path: 'verify-email', loadComponent: () => import('./pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent) },
+	{ path: 'forgot-password', loadChildren: () => import('./pages/auth/forgot-password.module').then(m => m.ForgotPasswordModule) },
 ];
