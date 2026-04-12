@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
 import { SessionService } from '../../core/session.service';
 import { Campaign } from '../../shared/campaigns/campaign.model';
 import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/campaign-form.component';
@@ -11,11 +12,15 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, CampaignFormComponent],
+  imports: [CommonModule, FormsModule, CampaignFormComponent, UpgradeBannerComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
 export class CampaignManagementComponent implements OnInit {
+  // ── Toast messages ─────────────────────────────────────────────
+  showSuccessToast = false;
+  showErrorToast = false;
+  toastMessage = '';
   campaigns: Campaign[] = [];
   brandId = '';
   brandName = '';
@@ -50,6 +55,8 @@ export class CampaignManagementComponent implements OnInit {
   expandedCampaignId: string | null = null;
   campaignInvitesMap = new Map<string, any[]>();
   expandInvitesLoading = new Set<string>();
+  showUpgradeBanner: boolean = false;
+  planLimitError: string = '';
 
   get invitedIds(): Set<string> {
     return new Set(this.invites.map(i => String(i.influencerId?._id || i.influencerId)));
@@ -369,10 +376,35 @@ export class CampaignManagementComponent implements OnInit {
             this.loadAllInvitesForce();
             this.cd.detectChanges();
           }
+          // Show success toast
+          this.toastMessage = 'Campaign created successfully!';
+          this.showSuccessToast = true;
+          setTimeout(() => { this.showSuccessToast = false; }, 4000);
         },
         error: (err) => {
           console.error('Failed to create campaign:', err);
-          alert('Failed to create campaign. Please check your input and try again.');
+          let toastMsg = '';
+          if (err?.error?.message && typeof err.error.message === 'string') {
+            toastMsg = err.error.message;
+          } else if (err?.message && typeof err.message === 'string') {
+            toastMsg = err.message;
+          } else if (typeof err === 'string') {
+            toastMsg = err;
+          } else {
+            toastMsg = 'Failed to create campaign. Please check your input and try again.';
+          }
+          if (err?.error?.message && err.error.message.includes('Plan limit')) {
+            this.planLimitError = err.error.message;
+            this.showUpgradeBanner = true;
+          } else {
+            this.planLimitError = '';
+            this.showUpgradeBanner = false;
+          }
+          this.toastMessage = toastMsg;
+          this.showErrorToast = true;
+          console.log('Showing error toast:', toastMsg);
+          this.cd.detectChanges();
+          setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
         }
       });
     }
@@ -808,5 +840,20 @@ export class CampaignManagementComponent implements OnInit {
     let responded = 0;
     this.campaignInvitesMap.forEach(v => { responded += v.filter((i: any) => i.status !== 'pending').length; });
     return Math.round((responded / sent) * 100) + '%';
+  }
+
+  // Example: Show banner if plan limit error occurs
+  handleCreateCampaignError(error: any) {
+    if (
+      error?.error?.message &&
+      error.error.message.includes('Plan limit')
+    ) {
+      this.planLimitError = error.error.message;
+      this.showUpgradeBanner = true;
+    } else {
+      // handle other errors
+      this.planLimitError = 'Failed to create campaign. Please check your input and try again.';
+      this.showUpgradeBanner = false;
+    }
   }
 }

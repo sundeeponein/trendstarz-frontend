@@ -1,0 +1,34 @@
+<div class="detail-overlay" *ngIf="visible" (click)="onClose()">
+  <div class="detail-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="detail-modal__header">
+      <div class="d-flex align-items-center gap-3">
+        <div class="invite-brand-logo invite-brand-logo--lg">
+          <img *ngIf="invite?.brandLogo" [src]="invite.brandLogo" alt="brand" class="brand-logo-img">
+          <div *ngIf="!invite?.brandLogo" class="brand-logo-placeholder brand-logo-placeholder--lg">{{ invite?.brandInitial }}</div>
+        </div>
+        <div>
+          <div class="detail-brand-name">{{ invite?.brandName }}</div>
+          <div class="detail-campaign-title">{{ invite?.campaignTitle }}</div>
+          <div class="d-flex gap-1 flex-wrap mt-1">
+            <span *ngFor="let cat of invite?.categories" class="chip chip--xs">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn-close-modal" (click)="onClose()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <!-- Body (add more fields as needed) -->
+    <div class="detail-modal__body">
+      <div class="mb-3" *ngIf="invite?.status">
+        <span class="invite-status-badge" [class.invite-status-badge--pending]="invite.status === 'pending'" [class.invite-status-badge--accepted]="invite.status === 'accepted'" [class.invite-status-badge--declined]="invite.status === 'declined'" [class.invite-status-badge--completed]="invite.status === 'completed'">
+          {{ invite.status | titlecase }}
+        </span>
+      </div>
+      <!-- Add more detail fields as needed -->
+      <div class="detail-section" *ngIf="invite?.description">
+        <div class="detail-section-title"><i class="bi bi-file-text me-1"></i> Campaign Brief</div>
+        <div class="detail-section-body">{{ invite.description }}</div>
+      </div>
+    </div>
+  </div>
+</div>

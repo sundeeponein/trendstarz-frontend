@@ -1,3 +1,10 @@
+  <!-- Toast messages -->
+  <div *ngIf="showSuccessToast" class="cm-toast cm-toast-success">
+    <i class="bi bi-check-circle-fill"></i> {{ toastMessage }}
+  </div>
+  <div *ngIf="showErrorToast" class="cm-toast cm-toast-error">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ toastMessage }}
+  </div>
 <div class="cm-page">
 
   <!-- Loading -->
@@ -581,5 +588,13 @@
     </div>
 
   </div>
+
+  <!-- Upgrade Banner for Plan Limit -->
+  <ng-container *ngIf="showUpgradeBanner || planLimitError">
+    <app-upgrade-banner *ngIf="showUpgradeBanner" />
+    <div class="plan-limit-error" *ngIf="planLimitError">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ planLimitError }}
+    </div>
+  </ng-container>
 
 </div>
