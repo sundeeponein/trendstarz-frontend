@@ -91,6 +91,7 @@
           <th>Promotional Price</th>
           <th>Social Media</th>
           <th>Premium</th>
+          <th>Payment Method</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -153,6 +154,17 @@
             </ng-container>
             <ng-template #freeTpl>Free</ng-template>
           </td>
+          <td>
+            <ng-container *ngIf="user.paymentMethod === 'upi' || user.paymentMethod === 'qr'; else adminGrantedTpl">
+              {{ user.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
+            </ng-container>
+            <ng-template #adminGrantedTpl>
+              <ng-container *ngIf="user.isPremium && (!user.paymentMethod || user.paymentMethod === 'admin')">
+                Admin Granted ({{ getPremiumDurationLabel(user.premiumDuration) }})
+              </ng-container>
+              <ng-container *ngIf="!user.isPremium">-</ng-container>
+            </ng-template>
+          </td>
           <td>{{ user.status || '-' }}</td>
           <td class="actions">
             <button class="btn btn-success btn-sm me-1" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept" tooltip="Accept">
@@ -188,6 +200,7 @@
           <th>Products</th>
           <th>Social Media</th>
           <th>Premium</th>
+          <th>Payment Method</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -264,6 +277,17 @@
             </ng-container>
             <ng-template #freeTplBrand>Free</ng-template>
           </td>
+          <td>
+            <ng-container *ngIf="user.paymentMethod === 'upi' || user.paymentMethod === 'qr'; else adminGrantedTplBrand">
+              {{ user.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
+            </ng-container>
+            <ng-template #adminGrantedTplBrand>
+              <ng-container *ngIf="user.isPremium && (!user.paymentMethod || user.paymentMethod === 'admin')">
+                Admin Granted ({{ getPremiumDurationLabel(user.premiumDuration) }})
+              </ng-container>
+              <ng-container *ngIf="!user.isPremium">-</ng-container>
+            </ng-template>
+          </td>
           <td>{{ user.status === 'accepted' ? 'Accepted' : (user.status || '-') }}</td>
           <td class="actions">
             <button class="btn btn-success btn-sm me-1" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">
@@ -298,6 +322,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4>Select Premium Duration</h4>
+          
         </div>
         <div class="modal-body">
           <label><input type="radio" name="premiumDurationGroup" [value]="'1m'" [(ngModel)]="premiumDuration"> 1 Month</label><br>
@@ -307,17 +332,7 @@
             <button (click)="confirmPremium()" [disabled]="!premiumDuration">Confirm</button>
             <button (click)="closePremiumModal()">Cancel</button>
           </div>
-          <div class="modal-features">
-            <strong>Premium Features:</strong>
-            <ul>
-              <li>Everything in Pro</li>
-              <li>Post unlimited campaigns per month</li>
-              <li>Track live analytics for 15 posts at a time</li>
-              <li>5% marketplace fee</li>
-              <li>Priority customer support</li>
-              <li>25 Influencer engagement & audience reports</li>
-            </ul>
-          </div>
+          <!-- Premium features and plans are shown dynamically above -->
         </div>
       </div>
     </div>

@@ -17,6 +17,18 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+    public getPremiumDurationLabel(duration: string | undefined): string {
+      switch (duration) {
+        case '1m':
+          return '1 Month';
+        case '3m':
+          return '3 Months';
+        case '1y':
+          return '1 Year';
+        default:
+          return '';
+      }
+    }
   // Confirmation dialog state
   confirmDialogOpen = false;
   confirmDialogMessage = '';
