@@ -46,6 +46,7 @@
           <th>User</th>
           <th>Amount</th>
           <th>Duration</th>
+          <th>Payment Method</th>
           <th>Transaction ID</th>
           <th>Date</th>
           <th *ngIf="statusTab === 'rejected'">Reason</th>
@@ -66,6 +67,14 @@
           </td>
           <td class="col-amount">₹{{ payment.amount }}</td>
           <td>{{ payment.premiumDuration }}</td>
+          <td>
+            <ng-container [ngSwitch]="payment.paymentMethod">
+              <span *ngSwitchCase="'admin'">Admin</span>
+              <span *ngSwitchCase="'qr'">QR Code</span>
+              <span *ngSwitchCase="'upi'">UPI</span>
+              <span *ngSwitchDefault>-</span>
+            </ng-container>
+          </td>
           <td><code>{{ payment.transactionId }}</code></td>
           <td class="col-date">{{ formatDate(statusTab === 'pending' ? payment.createdAt : (payment.approvedAt || payment.createdAt)) }}</td>
           <td *ngIf="statusTab === 'rejected'">{{ payment.approvalNotes || '-' }}</td>
