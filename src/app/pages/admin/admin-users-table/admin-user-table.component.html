@@ -155,11 +155,11 @@
             <ng-template #freeTpl>Free</ng-template>
           </td>
           <td>
-            <ng-container *ngIf="user.paymentMethod === 'upi' || user.paymentMethod === 'qr'; else adminGrantedTpl">
-              {{ user.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
+            <ng-container *ngIf="user.latestPayment && (user.latestPayment.paymentMethod === 'upi' || user.latestPayment.paymentMethod === 'qr'); else adminGrantedTpl">
+              {{ user.latestPayment.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
             </ng-container>
             <ng-template #adminGrantedTpl>
-              <ng-container *ngIf="user.isPremium && (!user.paymentMethod || user.paymentMethod === 'admin')">
+              <ng-container *ngIf="user.isPremium && (!user.latestPayment || !user.latestPayment.paymentMethod || user.latestPayment.paymentMethod === 'admin')">
                 Admin Granted ({{ getPremiumDurationLabel(user.premiumDuration) }})
               </ng-container>
               <ng-container *ngIf="!user.isPremium">-</ng-container>
@@ -278,11 +278,11 @@
             <ng-template #freeTplBrand>Free</ng-template>
           </td>
           <td>
-            <ng-container *ngIf="user.paymentMethod === 'upi' || user.paymentMethod === 'qr'; else adminGrantedTplBrand">
-              {{ user.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
+            <ng-container *ngIf="user.latestPayment && (user.latestPayment.paymentMethod === 'upi' || user.latestPayment.paymentMethod === 'qr'); else adminGrantedTplBrand">
+              {{ user.latestPayment.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
             </ng-container>
             <ng-template #adminGrantedTplBrand>
-              <ng-container *ngIf="user.isPremium && (!user.paymentMethod || user.paymentMethod === 'admin')">
+              <ng-container *ngIf="user.isPremium && (!user.latestPayment || !user.latestPayment.paymentMethod || user.latestPayment.paymentMethod === 'admin')">
                 Admin Granted ({{ getPremiumDurationLabel(user.premiumDuration) }})
               </ng-container>
               <ng-container *ngIf="!user.isPremium">-</ng-container>
