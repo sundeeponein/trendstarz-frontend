@@ -151,17 +151,16 @@ export class InfluencerProfileViewComponent implements OnInit {
 
   loadCompletedInvite(influencerId: string) {
     this.completedInviteLoading = true;
-    // Check for completed invites to determine if brand can write a review
-    // A brand views an influencer profile — find any completed invite with this influencer
-    this.config.getInvitesByCampaign(influencerId).subscribe({
-      next: (invites: any[]) => {
-        const done = (invites || []).find(
-          (inv: any) => inv.status === 'completed'
-        );
-        this.completedInviteId = done?._id || null;
+    // Ask the backend: does this brand have a completed invite with this influencer?
+    this.config.getCompletedInviteWithInfluencer(influencerId).subscribe({
+      next: (invite: any) => {
+        this.completedInviteId = invite?._id ?? null;
+        this.completedInviteLoading = false;
         this.cd.detectChanges();
       },
-      error: () => {}
+      error: () => {
+        this.completedInviteLoading = false;
+      },
     });
   }
 }

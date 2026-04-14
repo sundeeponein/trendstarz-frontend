@@ -296,6 +296,14 @@ export class ConfigService {
     );
   }
 
+  /** Brand: find a completed invite with a specific influencer (for review eligibility) */
+  getCompletedInviteWithInfluencer(influencerId: string): Observable<any | null> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/brand/completed-with/${influencerId}`).pipe(
+      map(res => res?.invite ?? null),
+      catchError(() => of(null))
+    );
+  }
+
   getMyInvites(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/influencer`).pipe(
       map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),

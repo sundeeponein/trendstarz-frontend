@@ -59,6 +59,7 @@ export class AdminPlansComponent implements OnInit {
       { key: 'campaignAnalyticsDashboard', label: 'Campaign analytics dashboard' },
       { key: 'bulkOutreachTools', label: 'Bulk outreach tools' },
       { key: 'canWriteReview', label: 'Write reviews for influencers' },
+      { key: 'canReadReviews', label: 'View influencer & brand reviews' },
     ],
   };
 
