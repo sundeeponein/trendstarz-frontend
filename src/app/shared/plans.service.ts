@@ -17,6 +17,12 @@ export interface PlanLimit {
   value: number;
 }
 
+export interface PlanOffer {
+  key: string;
+  label: string;
+  value: number;
+}
+
 export interface Plan {
   _id?: string;
   code?: string;
@@ -25,6 +31,7 @@ export interface Plan {
   price: { monthly: number; quarterly: number; yearly: number };
   features: PlanFeature[];
   limits: PlanLimit[];
+  offers?: PlanOffer[];
   policies: { imageRetentionDaysAfterExpiry: number };
   highlight?: boolean;
   isActive?: boolean;
@@ -81,6 +88,7 @@ export class PlansService {
       },
       features: plan?.features ?? [],
       limits: plan?.limits ?? [],
+      offers: plan?.offers ?? [],
       policies: plan?.policies ?? { imageRetentionDaysAfterExpiry: 45 },
     } as Plan;
   }

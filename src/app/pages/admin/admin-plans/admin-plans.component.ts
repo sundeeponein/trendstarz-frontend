@@ -4,7 +4,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PlansService, Plan, PlanFeature, PlanLimit } from '../../../shared/plans.service';
+import { PlansService, Plan, PlanFeature, PlanLimit, PlanOffer } from '../../../shared/plans.service';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 @Component({
@@ -55,13 +55,47 @@ export class AdminPlansComponent implements OnInit {
       { key: 'browseInfluencerProfiles', label: 'Browse influencer profiles' },
       { key: 'viewSocialLinks', label: 'View public social links' },
       { key: 'viewContactDetails', label: 'View contact details' },
-      { key: 'advancedSearchFilters', label: 'Advanced search filters' },
-      { key: 'campaignAnalytics', label: 'Campaign analytics' },
-      { key: 'bulkOutreachTools', label: 'Bulk outreach tools' },
+      { key: 'advancedSearchFilters', label: 'Advanced search & filters' },
       { key: 'campaignAnalyticsDashboard', label: 'Campaign analytics dashboard' },
+      { key: 'bulkOutreachTools', label: 'Bulk outreach tools' },
       { key: 'canWriteReview', label: 'Write reviews for influencers' },
     ],
   };
+
+  readonly masterOffers: { [k: string]: { key: string; label: string }[] } = {
+    INFLUENCER: [
+      { key: 'trialPeriodDays', label: 'Trial period (days)' },
+      { key: 'discountOnBrandPro', label: 'Discount on Brand Pro plan (%)' },
+    ],
+    BRAND: [
+      { key: 'trialPeriodDays', label: 'Trial period (days)' },
+      { key: 'discountOnInfluencerPro', label: 'Discount on Influencer Pro plan (%)' },
+    ],
+  };
+
+  getMergedOffers(): { key: string; label: string; value: number }[] {
+    if (!this.editingPlan) return [];
+    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND';
+    const master = this.masterOffers[type] || [];
+    return master.map(m => {
+      const found = (this.editingPlan!.offers ?? []).find((o: any) => o.key === m.key);
+      return { ...m, value: found ? found.value : 0 };
+    });
+  }
+
+  setOfferValue(key: string, value: number) {
+    if (!this.editingPlan) return;
+    if (!this.editingPlan.offers) this.editingPlan.offers = [];
+    const idx = this.editingPlan.offers.findIndex(o => o.key === key);
+    if (idx >= 0) {
+      this.editingPlan.offers[idx].value = value;
+    } else {
+      const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND'] || [];
+      const m = master.find(o => o.key === key);
+      if (m) this.editingPlan.offers.push({ ...m, value });
+    }
+  }
+
   readonly masterLimits: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'maxProductImages', label: 'Product images' },
@@ -242,6 +276,12 @@ export class AdminPlansComponent implements OnInit {
     this.error = '';
     this.successMsg = '';
 
+    // Sync ALL master features/limits/offers so the full set is persisted to DB,
+    // not just the subset that was previously stored.
+    this.editingPlan.features = this.getMergedFeatures();
+    this.editingPlan.limits = this.getMergedLimits();
+    this.editingPlan.offers = this.getMergedOffers();
+
     if (this.isCreating) {
       this.plansService.adminCreate(this.editingPlan).subscribe({
         next: () => {
@@ -250,7 +290,7 @@ export class AdminPlansComponent implements OnInit {
           this.isCreating = false;
           this.loadPlans();
         },
-        error: () => (this.error = 'Failed to save plan'),
+        error: (err) => (this.error = err?.error?.message || 'Failed to save plan'),
       });
     } else {
       const id = this.editingPlan._id!;
@@ -260,7 +300,7 @@ export class AdminPlansComponent implements OnInit {
           this.editingPlan = null;
           this.loadPlans();
         },
-        error: () => (this.error = 'Failed to update plan'),
+        error: (err) => (this.error = err?.error?.message || 'Failed to update plan'),
       });
     }
   }
