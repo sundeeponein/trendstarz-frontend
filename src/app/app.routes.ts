@@ -34,6 +34,7 @@ export const routes: Routes = [
 			{ path: 'payment-history', canActivate: [authGuard], loadComponent: () => import('./pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) },
 			// DASHBOARDS
 			{ path: 'influencer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-dashboard/influencer-dashboard.component').then(m => m.InfluencerDashboardComponent) },
+			{ path: 'campaign-submission/:inviteId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-submission/campaign-submission.component').then(m => m.CampaignSubmissionComponent) },
 			{ path: 'brand-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/brand-dashboard/brand-dashboard.component').then(m => m.BrandDashboardComponent) },
 		],
 	},
@@ -47,6 +48,7 @@ export const routes: Routes = [
 			{ path: 'admin-user-table', component: AdminUserTableComponent },
 			{ path: 'admin-management', component: AdminManagementComponent },
 			{ path: 'payments', loadComponent: () => import('./pages/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },			{ path: 'plans', loadComponent: () => import('./pages/admin/admin-plans/admin-plans.component').then(m => m.AdminPlansComponent) },			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
+			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 		],
 	},

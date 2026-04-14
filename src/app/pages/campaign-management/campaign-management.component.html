@@ -274,6 +274,74 @@
               No influencers invited yet. Use the <strong>Invite</strong> button to get started.
             </div>
 
+            <!-- Submissions Review Section -->
+            <div class="submissions-section" *ngIf="getSubmissions(c).length > 0">
+              <p class="expand-inf-heading">
+                <i class="bi bi-send-check"></i> Submitted Posts
+                <span class="sub-count-badge">{{ getSubmissions(c).length }}</span>
+              </p>
+              <div class="submission-card" *ngFor="let sub of getSubmissions(c)">
+                <div class="sub-header">
+                  <span class="sub-initials" [style.background]="getInitialsColor(sub.influencerId?.name || '')">
+                    {{ getInfluencerInitials(sub.influencerId?.name || '') }}
+                  </span>
+                  <div class="sub-inf-info">
+                    <span class="sub-inf-name">{{ sub.influencerId?.name || 'Influencer' }}</span>
+                    <span class="sub-platform-badge">{{ sub.postPlatform }}</span>
+                    <span class="sub-type-badge">{{ sub.postType }}</span>
+                  </div>
+                  <span class="sub-status-chip" [ngClass]="'sub-status-' + sub.status">{{ sub.status }}</span>
+                </div>
+
+                <div class="sub-post-link">
+                  <i class="bi bi-link-45deg"></i>
+                  <a [href]="sub.postUrl" target="_blank" rel="noopener">{{ sub.postUrl }}</a>
+                </div>
+
+                <div class="sub-screenshots" *ngIf="sub.postScreenshotUrl">
+                  <img [src]="sub.postScreenshotUrl" alt="Post screenshot" class="sub-screenshot-thumb"
+                       (click)="openScreenshot(sub.postScreenshotUrl)" title="Click to enlarge" />
+                  <img *ngIf="sub.insightsScreenshotUrl" [src]="sub.insightsScreenshotUrl" alt="Insights screenshot" class="sub-screenshot-thumb"
+                       (click)="openScreenshot(sub.insightsScreenshotUrl)" title="Insights – click to enlarge" />
+                </div>
+
+                <div class="sub-metrics" *ngIf="sub.viewsCount || sub.likesCount || sub.commentsCount">
+                  <span class="sub-metric" *ngIf="sub.viewsCount"><i class="bi bi-eye"></i> {{ sub.viewsCount | number }}</span>
+                  <span class="sub-metric" *ngIf="sub.likesCount"><i class="bi bi-heart"></i> {{ sub.likesCount | number }}</span>
+                  <span class="sub-metric" *ngIf="sub.commentsCount"><i class="bi bi-chat"></i> {{ sub.commentsCount | number }}</span>
+                  <span class="sub-metric" *ngIf="sub.sharesCount"><i class="bi bi-share"></i> {{ sub.sharesCount | number }}</span>
+                  <span class="sub-metric" *ngIf="sub.engagementRate"><i class="bi bi-graph-up"></i> {{ sub.engagementRate | number:'1.1-1' }}% ER</span>
+                </div>
+                <div class="sub-metrics-empty" *ngIf="!sub.viewsCount && !sub.likesCount && sub.status === 'submitted'">
+                  <i class="bi bi-info-circle"></i> Influencer hasn't added performance stats yet.
+                </div>
+
+                <div class="sub-review-area" *ngIf="sub.status === 'submitted'">
+                  <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for influencer..."
+                    [(ngModel)]="submissionFeedback[sub.inviteId]"></textarea>
+                  <input class="sub-feedback-input sub-dispute-input" *ngIf="false" placeholder="Reason for dispute..."
+                    [(ngModel)]="submissionDisputeReason[sub.inviteId]" />
+                  <div class="sub-review-actions">
+                    <button class="btn-sub-approve" [disabled]="reviewLoading.has(sub.inviteId)"
+                      (click)="reviewSubmission(sub.inviteId, c._id, 'approve')">
+                      <i class="bi bi-check-circle"></i> Mark Completed
+                    </button>
+                    <button class="btn-sub-dispute" [disabled]="reviewLoading.has(sub.inviteId)"
+                      (click)="submissionDisputeReason[sub.inviteId] = submissionDisputeReason[sub.inviteId] || ''; reviewSubmission(sub.inviteId, c._id, 'dispute')">
+                      <i class="bi bi-flag"></i> Raise Issue
+                    </button>
+                  </div>
+                </div>
+
+                <div class="sub-completed-feedback" *ngIf="sub.status === 'approved' && sub.brandFeedback">
+                  <i class="bi bi-chat-left-quote"></i> {{ sub.brandFeedback }}
+                </div>
+                <div class="sub-disputed-reason" *ngIf="sub.status === 'disputed'">
+                  <i class="bi bi-exclamation-triangle"></i> Disputed: {{ sub.disputeReason || 'Quality issue' }}
+                </div>
+              </div>
+            </div>
+
             <!-- Contextual action buttons -->
             <div class="expand-actions">
 

@@ -30,9 +30,11 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/payments', renderMode: RenderMode.Server },
   { path: 'admin/plans', renderMode: RenderMode.Server },
   { path: 'admin/deleted-users', renderMode: RenderMode.Server },
+  { path: 'admin/reviews', renderMode: RenderMode.Server },
 
   // Dashboard SSR routes
   { path: 'influencer-dashboard', renderMode: RenderMode.Server },
+  { path: 'campaign-submission/:inviteId', renderMode: RenderMode.Server },
   { path: 'brand-dashboard', renderMode: RenderMode.Server },
   { path: 'logout', renderMode: RenderMode.Server },
   { path: 'admin/logout', renderMode: RenderMode.Server },

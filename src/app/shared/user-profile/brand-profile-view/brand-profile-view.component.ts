@@ -6,11 +6,13 @@ import { SessionService } from '../../../core/session.service';
 import { switchMap } from 'rxjs/operators';
 import { Campaign } from '../../campaigns/campaign.model';
 import { CampaignListComponent } from '../../campaigns/campaign-list/campaign-list.component';
+import { WriteReviewComponent } from '../../write-review/write-review.component';
+import { ReviewListComponent } from '../../review-list/review-list.component';
 
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule, CampaignListComponent],
+  imports: [CommonModule, CampaignListComponent, WriteReviewComponent, ReviewListComponent],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: ['./brand-profile-view.component.scss']
 })
@@ -22,6 +24,19 @@ export class BrandProfileViewComponent implements OnInit {
   activeTab: 'overview' | 'campaigns' | 'analytics' = 'overview';
   campaigns: Campaign[] = [];
   isOwner = false;
+
+  // Review state
+  showWriteReview = false;
+  completedInviteId: string | null = null;
+
+  get isInfluencerViewer(): boolean {
+    const user = this.session.getUser();
+    return user?.role === 'INFLUENCER' || user?.role === 'influencer';
+  }
+
+  get isProViewer(): boolean {
+    return !!this.session.getUser()?.isPremium;
+  }
 
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -130,6 +145,21 @@ export class BrandProfileViewComponent implements OnInit {
                   this.campaigns = campaigns;
                   this.cd.detectChanges();
                 }
+              });
+            }
+            // Influencer premium: find their completed invite with this brand
+            if (this.isInfluencerViewer && this.isProViewer) {
+              this.config.getMyInvites().subscribe({
+                next: (invites: any[]) => {
+                  const done = invites.find(
+                    (inv: any) => inv.status === 'completed'
+                      && (String(inv.brandId?._id || inv.brandId) === String(data._id)
+                        || String(inv.brandId?._id || inv.brandId) === (data.brandUsername || ''))
+                  );
+                  this.completedInviteId = done?._id || null;
+                  this.cd.detectChanges();
+                },
+                error: () => {}
               });
             }
           }

@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
@@ -12,7 +12,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, CampaignFormComponent, UpgradeBannerComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, CampaignFormComponent, UpgradeBannerComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -55,6 +55,10 @@ export class CampaignManagementComponent implements OnInit {
   expandedCampaignId: string | null = null;
   campaignInvitesMap = new Map<string, any[]>();
   expandInvitesLoading = new Set<string>();
+  campaignSubmissionsMap = new Map<string, any[]>();
+  submissionFeedback: { [inviteId: string]: string } = {};
+  submissionDisputeReason: { [inviteId: string]: string } = {};
+  reviewLoading = new Set<string>();
   showUpgradeBanner: boolean = false;
   planLimitError: string = '';
 
@@ -723,6 +727,46 @@ export class CampaignManagementComponent implements OnInit {
         }
       });
     }
+    if (!this.campaignSubmissionsMap.has(c._id!)) {
+      this.config.getCampaignSubmissions(c._id!).subscribe({
+        next: (submissions: any[]) => {
+          this.campaignSubmissionsMap.set(c._id!, submissions);
+          this.cd.detectChanges();
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  getSubmissions(c: Campaign): any[] {
+    return this.campaignSubmissionsMap.get(c._id!) || [];
+  }
+
+  reviewSubmission(inviteId: string, campaignId: string, action: 'approve' | 'dispute') {
+    if (this.reviewLoading.has(inviteId)) return;
+    this.reviewLoading.add(inviteId);
+    const payload: any = { action };
+    if (action === 'approve' && this.submissionFeedback[inviteId]) {
+      payload.feedback = this.submissionFeedback[inviteId];
+    }
+    if (action === 'dispute') {
+      payload.disputeReason = this.submissionDisputeReason[inviteId] || 'Quality does not meet requirements';
+      payload.feedback = this.submissionFeedback[inviteId] || '';
+    }
+    this.config.reviewCampaignSubmission(inviteId, payload).subscribe({
+      next: () => {
+        this.reviewLoading.delete(inviteId);
+        this.campaignSubmissionsMap.delete(campaignId);
+        this.config.getCampaignSubmissions(campaignId).subscribe({
+          next: (submissions: any[]) => {
+            this.campaignSubmissionsMap.set(campaignId, submissions);
+            this.cd.detectChanges();
+          },
+          error: () => {}
+        });
+      },
+      error: () => { this.reviewLoading.delete(inviteId); }
+    });
   }
 
   getExpandInvites(c: Campaign): any[] {
@@ -855,5 +899,9 @@ export class CampaignManagementComponent implements OnInit {
       this.planLimitError = 'Failed to create campaign. Please check your input and try again.';
       this.showUpgradeBanner = false;
     }
+  }
+
+  openScreenshot(url: string) {
+    window.open(url, '_blank', 'noopener');
   }
 }
