@@ -121,8 +121,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     if (this.selectedDurationKey === '1y') {
       this.selectedDuration = { key: '1y', label: 'Yearly', price: plan.price.yearly };
     } else if (this.selectedDurationKey === '3m') {
-      const price3m = Math.round(plan.price.monthly * 3 * 0.9);
-      this.selectedDuration = { key: '3m', label: '3 Months', price: price3m };
+      this.selectedDuration = { key: '3m', label: '3 Months', price: plan.price.quarterly };
     } else {
       this.selectedDuration = { key: '1m', label: 'Monthly', price: plan.price.monthly };
     }

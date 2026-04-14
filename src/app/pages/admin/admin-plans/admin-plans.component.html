@@ -11,7 +11,7 @@
   <div class="page-header">
     <h2>Plan Management</h2>
     <div class="header-actions">
-      <!-- <button class="admin-btn admin-btn-secondary" (click)="loadFromConfig()">Load from Config</button> -->
+      <button class="admin-btn admin-btn-secondary" (click)="loadFromConfig()">Load from Config</button>
       <button class="admin-btn admin-btn-primary" (click)="startCreate()">+ New Plan</button>
     </div>
   </div>
@@ -201,6 +201,18 @@
         <input type="text" [value]="l.key" class="input-key" readonly />
         <input type="text" [value]="l.label" class="input-label" readonly />
         <input type="number" [value]="l.value" min="0" class="input-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
+      </div>
+    </div>
+
+    <!-- Offers section: trial periods, cross-plan discounts -->
+    <div class="form-section">
+      <div class="section-header">
+        <span>Offers (Trial / Discounts)</span>
+      </div>
+      <div class="limit-row" *ngFor="let o of getMergedOffers()">
+        <input type="text" [value]="o.key" class="input-key" readonly />
+        <input type="text" [value]="o.label" class="input-label" readonly />
+        <input type="number" [value]="o.value" min="0" class="input-value" (input)="setOfferValue(o.key, $event.target.valueAsNumber)" />
       </div>
     </div>
 
