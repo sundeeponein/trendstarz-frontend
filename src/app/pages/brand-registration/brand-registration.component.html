@@ -101,13 +101,29 @@
 
             <div class="field-block">
               <label>Password <span class="text-danger">*</span></label>
-              <input formControlName="password" type="password" class="form-control" required />
-              <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Password is required.</div>
+              <div class="password-wrap">
+                <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" required />
+                <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
+              <ul class="pw-checklist text-black" *ngIf="registrationForm.get('password')?.value || registrationForm.get('password')?.touched">
+                <li *ngFor="let c of passwordChecks" [class.passed]="c.passed">
+                  <i class="bi" [class.bi-check-circle-fill]="c.passed" [class.bi-circle]="!c.passed"></i>
+                  {{ c.label }}
+                </li>
+              </ul>
+              <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Please enter a valid password.</div>
             </div>
 
             <div class="field-block">
               <label>Confirm Password <span class="text-danger">*</span></label>
-              <input formControlName="confirmPassword" type="password" class="form-control" required />
+              <div class="password-wrap">
+                <input formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" required />
+                <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
               <div *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger mt-1">Confirm password is required.</div>
               <div *ngIf="registrationForm.get('confirmPassword')?.value && registrationForm.errors?.['passwordMismatch']" class="text-danger mt-1">Passwords do not match.</div>
             </div>
@@ -203,46 +219,92 @@
             <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one product image. Upgrade to premium for multiple images.</div>
           </div>
 
-          <div class="social-media-section" formArrayName="socialMedia">
-            <h3>Social Media</h3>
-            <div class="subtitle">Add social profiles to boost brand discoverability.</div>
-
-            <div *ngFor="let sm of socialMediaFormArray.controls; let i = index" [formGroupName]="i" class="social-media-card">
-              <div class="social-media-row">
-                <div class="social-media-col">
-                  <div class="social-media-label">Platform</div>
-                  <select formControlName="platform" class="social-media-select">
-                    <option value="" disabled selected>Select platform</option>
-                    <option *ngFor="let s of socialMediaList" [value]="s._id">{{ s.name }}</option>
-                  </select>
-                </div>
-
-                <div class="social-media-col">
-                  <div class="social-media-label">Handle</div>
-                  <input formControlName="handle" type="text" class="social-media-input" placeholder="@yourbrand" />
-                </div>
-
-                <div class="social-media-col">
-                  <div class="social-media-label">Tier</div>
-                  <select formControlName="tier" class="social-media-select">
-                    <option value="" disabled selected>Select tier</option>
-                    <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-                  </select>
-                </div>
-
-                <div class="social-media-col">
-                  <div class="social-media-label">Followers/Subscribers</div>
-                  <input formControlName="followersCount" type="number" class="social-media-input" placeholder="e.g. 25000" />
-                </div>
+          <div class="social-media-section">
+            <h3>Social Media Platforms</h3>
+            <div class="subtitle">Select your platforms and set your rates for each content type.</div>
+            <div class="platform-cards">
+              <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
+                <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                <span class="platform-name">{{ platform.name }}</span>
+                <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span>
               </div>
-
-              <button *ngIf="socialMediaFormArray.length > 1" type="button" class="close-btn" (click)="removeSocialMedia(i)" title="Remove">
-                <span aria-hidden="true">&times;</span>
-              </button>
             </div>
 
-            <button type="button" class="add-social-btn" (click)="addSocialMedia()" [disabled]="!canAddSocialMedia()">Add Social Profile</button>
-            <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one social profile. Upgrade to premium to add more.</div>
+            <!-- Platform Tabs UI -->
+            <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
+              <div class="platform-tab-strip">
+                <button
+                  type="button"
+                  *ngFor="let platform of selectedPlatforms()"
+                  class="platform-tab"
+                  [class.platform-tab--active]="activePlatformTab === platform._id"
+                  (click)="activePlatformTab = platform._id"
+                >
+                  <i [class]="platform.icon"></i>
+                  {{ platform.name }}
+                  <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span>
+                </button>
+                <div class="platform-tab-spacer"></div>
+                <button
+                  type="button"
+                  class="tab-remove"
+                  *ngIf="activePlatformTab"
+                  (click)="removePlatformCard(getPlatformById(activePlatformTab))"
+                  title="Remove platform"
+                >
+                  <i class="bi bi-x-lg"></i> Remove
+                </button>
+              </div>
+
+              <ng-container *ngIf="activePlatformTab">
+                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card">
+                  <div class="platform-details-header">
+                    <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                    <span class="platform-name">{{ platform.name }}</span>
+                    <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
+                    <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
+                  </div>
+                  <div class="platform-details-body">
+                    <div class="row">
+                      <div class="col">
+                        <label>{{ platform.handleLabel || 'Handle' }}</label>
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
+                        <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                           [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                          <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                        </a>
+                      </div>
+                      <div class="col">
+                        <label>{{ platform.followersLabel || 'Followers' }}</label>
+                        <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" />
+                      </div>
+                      <div class="col">
+                        <label>Tier</label>
+                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
+                          <option value="" disabled>Select tier</option>
+                          <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="content-types-section">
+                      <label>Content Types & Pricing</label>
+                      <div class="content-types-list">
+                        <ng-container *ngFor="let ct of platform.contentTypes">
+                          <div class="content-type-item" *ngIf="ct.visible">
+                            <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" />
+                            <span>{{ ct.name }}</span>
+                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" />
+                          </div>
+                        </ng-container>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+
+            <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one social profile. Upgrade to premium to add multiple profiles.</div>
           </div>
 
           <div class="actions-row dual">

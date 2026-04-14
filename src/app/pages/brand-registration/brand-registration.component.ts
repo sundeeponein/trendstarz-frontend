@@ -3,8 +3,9 @@ const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { map, first } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -33,6 +34,15 @@ export class BrandRegistrationComponent implements OnInit {
   readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
 
+  // --- Password strength live checks ---
+  get passwordChecks() {
+    return getPasswordChecks(this.registrationForm?.get('password')?.value || '');
+  }
+
+  // --- Social Media Platform UI ---
+  platformForms: { [platformId: string]: any } = {};
+  activePlatformTab: string | null = null;
+
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
   step1Complete: boolean = false;
@@ -45,6 +55,10 @@ export class BrandRegistrationComponent implements OnInit {
   registrationSuccess = false;
   registrationError = '';
   preApproveActive = false;
+  showPassword = false;
+  showConfirmPassword = false;
+  togglePasswordVisibility() { this.showPassword = !this.showPassword; }
+  toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
 
   emailVerificationSent: boolean = false;
   emailVerificationError: string | null = null;
@@ -84,7 +98,7 @@ export class BrandRegistrationComponent implements OnInit {
       brandName: ['', Validators.required],
       brandUsername: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)], [this.brandUsernameUniqueValidator()]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       paymentOption: ['free', Validators.required],
@@ -97,14 +111,7 @@ export class BrandRegistrationComponent implements OnInit {
       languages: [[], Validators.required],
       website: [''],
       googleMapAddress: [''],
-      socialMedia: this.fb.array([
-        this.fb.group({
-          platform: ['', Validators.required],
-          handle: ['', Validators.required],
-          tier: ['', Validators.required],
-          followersCount: ['', Validators.required]
-        })
-      ]),
+
       contact: this.fb.group({
         whatsapp: [false],
         email: [false],
@@ -147,7 +154,6 @@ export class BrandRegistrationComponent implements OnInit {
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforceProductImageLimit();
-      this.enforceSocialProfileLimit();
       this.refreshStepCompletion();
     });
 
@@ -177,29 +183,12 @@ export class BrandRegistrationComponent implements OnInit {
     });
   }
 
-  get socialMediaFormArray(): FormArray {
-    return this.registrationForm.get('socialMedia') as FormArray;
-  }
-
   isPremiumPlan(): boolean {
     return this.registrationForm.get('paymentOption')?.value === 'premium';
   }
 
-  canAddSocialMedia(): boolean {
-    return this.isPremiumPlan() || this.socialMediaFormArray.length < this.FREE_SOCIAL_PROFILE_LIMIT;
-  }
-
   canAddProductImage(): boolean {
     return this.isPremiumPlan() || this.productImagesFiles.length < this.FREE_PRODUCT_IMAGE_LIMIT;
-  }
-
-  private enforceSocialProfileLimit() {
-    if (this.isPremiumPlan()) {
-      return;
-    }
-    while (this.socialMediaFormArray.length > this.FREE_SOCIAL_PROFILE_LIMIT) {
-      this.socialMediaFormArray.removeAt(this.socialMediaFormArray.length - 1);
-    }
   }
 
   private enforceProductImageLimit() {
@@ -237,22 +226,79 @@ export class BrandRegistrationComponent implements OnInit {
     };
   }
 
-  addSocialMedia() {
-    if (!this.canAddSocialMedia()) {
-      return;
-    }
-    this.socialMediaFormArray.push(this.fb.group({
-      platform: ['', Validators.required],
-      handle: ['', Validators.required],
-      tier: ['', Validators.required],
-      followersCount: ['', Validators.required]
-    }));
+  // --- Social Media Platform UI Methods ---
+  getPlatformById(id: string | null) {
+    if (!id) return null;
+    return this.socialMediaList.find(p => p._id === id) || null;
   }
 
-  removeSocialMedia(index: number) {
-    if (this.socialMediaFormArray.length > 1) {
-      this.socialMediaFormArray.removeAt(index);
+  isPlatformSelected(platform: any): boolean {
+    return !!this.platformForms[platform._id];
+  }
+
+  togglePlatform(platform: any) {
+    if (this.isPlatformSelected(platform)) {
+      this.removePlatformCard(platform);
+      if (this.activePlatformTab === platform._id) {
+        const remaining = this.selectedPlatforms();
+        this.activePlatformTab = remaining.length ? remaining[0]._id : null;
+      }
+    } else {
+      if (!this.isPremiumPlan() && this.selectedPlatforms().length >= this.FREE_SOCIAL_PROFILE_LIMIT) return;
+      this.platformForms[platform._id] = {
+        handle: '',
+        followersCount: '',
+        tier: '',
+        contentTypes: Object.fromEntries(
+          (platform.contentTypes || []).map((ct: any) => [ct.name, { selected: false, price: '' }])
+        )
+      };
+      this.activePlatformTab = platform._id;
     }
+    this.refreshStepCompletion();
+  }
+
+  removePlatformCard(platform: any) {
+    delete this.platformForms[platform._id];
+    this.refreshStepCompletion();
+  }
+
+  selectedPlatforms(): any[] {
+    return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
+  }
+
+  getPlatformTotal(platform: any): number {
+    const pf = this.platformForms[platform._id];
+    if (!pf) return 0;
+    let total = 0;
+    for (const ctName in pf.contentTypes) {
+      const ct = pf.contentTypes[ctName];
+      if (ct.selected && ct.price) total += Number(ct.price) || 0;
+    }
+    return total;
+  }
+
+  getGrandTotal(): number {
+    return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
+  }
+
+  getProfileUrl(platformName: string, handle: string): string {
+    const h = (handle || '').replace(/^@+/, '').trim();
+    if (!h) return '';
+    const n = (platformName || '').toLowerCase();
+    if (n.includes('instagram')) return 'https://instagram.com/' + h;
+    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
+    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
+    if (n.includes('facebook')) return 'https://facebook.com/' + h;
+    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
+    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
+    return '';
+  }
+
+  stripAtSign(platformId: string) {
+    const pf = this.platformForms[platformId];
+    if (!pf) return;
+    pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
   }
 
   addProductImage() {
@@ -352,7 +398,7 @@ export class BrandRegistrationComponent implements OnInit {
       if (!detailsValid) {
         return false;
       }
-      const socialValid = this.socialMediaFormArray.valid;
+      const socialValid = this.selectedPlatforms().length > 0;
       const productReady = this.productImagesFiles.every((f) => !f || !!f);
       return socialValid && productReady;
     }
@@ -410,8 +456,7 @@ export class BrandRegistrationComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      this.socialMediaFormArray.controls.forEach((ctrl) => ctrl.markAllAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.socialMediaFormArray.valid;
+      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
     }
 
     if (this.currentStep === 3) {
@@ -522,18 +567,18 @@ export class BrandRegistrationComponent implements OnInit {
       return cat ? cat.name : id;
     });
 
-    const socialLimit = this.isPremiumPlan() ? Number.MAX_SAFE_INTEGER : this.FREE_SOCIAL_PROFILE_LIMIT;
-    const socialMedia = (raw.socialMedia || [])
-      .filter((sm: any) => sm?.platform && sm?.handle && sm?.tier && sm?.followersCount !== '' && sm?.followersCount !== null)
-      .slice(0, socialLimit)
-      .map((sm: any) => {
-        const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
-        return {
-          ...sm,
-          platform: platformObj ? platformObj.name : sm.platform,
-          followersCount: Number(sm.followersCount)
-        };
-      });
+    const socialMedia = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id];
+      return {
+        platform: platform.name,
+        handle: pf.handle,
+        followersCount: Number(pf.followersCount) || 0,
+        tier: pf.tier,
+        contentTypes: Object.keys(pf.contentTypes)
+          .filter(ctName => pf.contentTypes[ctName].selected)
+          .map(ctName => ({ name: ctName, price: Number(pf.contentTypes[ctName].price) || 0 }))
+      };
+    });
 
     const uploadedBrandLogo = await this.uploadImage(this.brandLogoFile);
     if (!uploadedBrandLogo) {
@@ -579,16 +624,10 @@ export class BrandRegistrationComponent implements OnInit {
         this.emailVerificationError = null;
         this.registrationForm.reset({
           paymentOption: 'free',
-          socialMedia: [{ platform: '', handle: '', tier: '', followersCount: '' }],
           contact: { whatsapp: false, email: false, call: false }
         });
-        this.socialMediaFormArray.clear();
-        this.socialMediaFormArray.push(this.fb.group({
-          platform: ['', Validators.required],
-          handle: ['', Validators.required],
-          tier: ['', Validators.required],
-          followersCount: ['', Validators.required]
-        }));
+        this.platformForms = {};
+        this.activePlatformTab = null;
         this.brandLogoPreview = null;
         this.brandLogoFile = null;
         this.productImagesPreview = [];
