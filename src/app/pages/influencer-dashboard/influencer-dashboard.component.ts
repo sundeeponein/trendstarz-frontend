@@ -297,4 +297,23 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   submitContent(inviteId: string) {
     // Implement navigation to submission page or modal
   }
+
+  goToSubmit(campaign: any) {
+    this.router.navigate(['/campaign-submission', campaign.inviteId], {
+      queryParams: {
+        campaignTitle: campaign.title || '',
+        inviteStatus: campaign.inviteStatus || 'working'
+      }
+    });
+  }
+
+  goToStats(campaign: any) {
+    this.router.navigate(['/campaign-submission', campaign.inviteId], {
+      queryParams: {
+        campaignTitle: campaign.title || '',
+        inviteStatus: campaign.inviteStatus || 'completed',
+        statsOnly: 'true'
+      }
+    });
+  }
 }

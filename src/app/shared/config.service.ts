@@ -310,4 +310,65 @@ export class ConfigService {
   submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/analytics`, analytics);
   }
+
+  // ── Campaign Submission endpoints ───────────────
+  submitCampaignPost(inviteId: string, data: {
+    postUrl: string;
+    postType?: string;
+    captionUsed?: string;
+    postScreenshotUrl: string;
+    insightsScreenshotUrl?: string;
+    viewsCount?: number;
+    likesCount?: number;
+    commentsCount?: number;
+    sharesCount?: number;
+    reachCount?: number;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/submit`, data);
+  }
+
+  getSubmissionByInvite(inviteId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}/submission`);
+  }
+
+  getCampaignSubmissions(campaignId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/submissions`);
+  }
+
+  reviewCampaignSubmission(inviteId: string, data: { action: 'approve' | 'dispute'; feedback?: string; disputeReason?: string }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/review`, data);
+  }
+
+  updateSubmissionStats(inviteId: string, stats: {
+    viewsCount?: number;
+    likesCount?: number;
+    commentsCount?: number;
+    sharesCount?: number;
+    reachCount?: number;
+    insightsScreenshotUrl?: string;
+  }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/stats`, stats);
+  }
+
+  /* ── Reviews ── */
+
+  writeReview(data: { inviteId: string; rating: number; comment?: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reviews`, data);
+  }
+
+  getReviewsForTarget(targetId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reviews/target/${targetId}`);
+  }
+
+  getMyWrittenReviews(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reviews/my`);
+  }
+
+  adminGetPendingReviews(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reviews/admin/pending`);
+  }
+
+  adminDecideReview(reviewId: string, action: 'approved' | 'rejected', adminNote?: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/reviews/admin/${reviewId}`, { action, adminNote });
+  }
 }

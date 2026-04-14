@@ -1,0 +1,95 @@
+<div class="ar-page">
+  <div class="ar-header">
+    <h2 class="ar-title"><i class="bi bi-star-half"></i> Pending Reviews</h2>
+    <button class="ar-refresh" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+  </div>
+
+  <div class="ar-toast" *ngIf="toast">{{ toast }}</div>
+  <div class="ar-error" *ngIf="error">{{ error }}</div>
+
+  <div class="ar-loading" *ngIf="loading">
+    <div class="spinner-border text-warning" role="status"></div>
+  </div>
+
+  <div class="ar-empty" *ngIf="!loading && reviews.length === 0 && !error">
+    <i class="bi bi-check-circle"></i>
+    No pending reviews. All caught up!
+  </div>
+
+  <div class="ar-list" *ngIf="!loading && reviews.length > 0">
+    <div class="ar-card" *ngFor="let r of reviews">
+      <!-- Card header -->
+      <div class="arc-header">
+        <span class="arc-type-badge" [ngClass]="r.reviewerType">
+          <i [class]="r.reviewerType === 'brand' ? 'bi bi-building' : 'bi bi-person'"></i>
+          {{ r.reviewerType | titlecase }} → {{ r.targetType | titlecase }}
+        </span>
+        <span class="arc-stars">
+          <i class="bi bi-star-fill" *ngFor="let _ of getStarsArray(r.rating)"></i>
+          <i class="bi bi-star" *ngFor="let _ of getEmptyStarsArray(r.rating)"></i>
+        </span>
+        <span class="arc-date">{{ r.createdAt | date:'mediumDate' }}</span>
+      </div>
+
+      <!-- IDs -->
+      <div class="arc-ids">
+        <div class="arc-id-row">
+          <span class="arc-id-label">Reviewer ID</span>
+          <code class="arc-id-val">{{ r.reviewerId }}</code>
+        </div>
+        <div class="arc-id-row">
+          <span class="arc-id-label">Target ID</span>
+          <code class="arc-id-val">{{ r.targetId }}</code>
+        </div>
+        <div class="arc-id-row">
+          <span class="arc-id-label">Campaign ID</span>
+          <code class="arc-id-val">{{ r.campaignId }}</code>
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="arc-rating-row">
+        Rating: <strong>{{ r.rating }}/5</strong>
+      </div>
+
+      <!-- Comment -->
+      <div class="arc-comment" *ngIf="r.comment">
+        <i class="bi bi-quote"></i>
+        {{ r.comment }}
+      </div>
+      <div class="arc-no-comment" *ngIf="!r.comment">
+        <em>No written comment provided.</em>
+      </div>
+
+      <!-- Admin note -->
+      <div class="arc-note-area">
+        <input
+          class="arc-note-input"
+          type="text"
+          placeholder="Optional admin note (visible internally only)"
+          [(ngModel)]="adminNotes[r._id]"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="arc-actions">
+        <button
+          class="arc-btn-approve"
+          [disabled]="actionLoading.has(r._id)"
+          (click)="decide(r, 'approved')"
+        >
+          <i class="bi bi-check-circle"></i>
+          {{ actionLoading.has(r._id) ? 'Processing...' : 'Approve & Publish' }}
+        </button>
+        <button
+          class="arc-btn-reject"
+          [disabled]="actionLoading.has(r._id)"
+          (click)="decide(r, 'rejected')"
+        >
+          <i class="bi bi-x-circle"></i>
+          {{ actionLoading.has(r._id) ? 'Processing...' : 'Reject' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

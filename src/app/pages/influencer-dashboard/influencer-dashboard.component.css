@@ -176,3 +176,49 @@
   padding: 1rem 1.4rem;
   display: flex; gap: 0.7rem; justify-content: flex-end;
 }
+
+/* Campaign Submission CTAs */
+.submit-post-cta {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(232,88,12,0.15);
+}
+
+.btn-submit-post {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  background: #E8580C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-submit-post:hover { background: #c94a08; }
+
+.submitted-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: #888;
+  padding: 0.3rem 0.6rem;
+  background: rgba(0,0,0,0.04);
+  border-radius: 20px;
+}
+
+.btn-add-stats {
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  color: #E8580C;
+  border: 1.5px solid #E8580C;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  margin-top: 0.5rem;
+}
+.btn-add-stats:hover { background: #E8580C; color: #fff; }

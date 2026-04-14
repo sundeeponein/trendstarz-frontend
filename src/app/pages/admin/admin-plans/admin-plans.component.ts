@@ -48,6 +48,8 @@ export class AdminPlansComponent implements OnInit {
       { key: 'contactVisibility', label: 'Contact details visible to brands' },
       { key: 'priorityListing', label: 'Priority search ranking' },
       { key: 'analyticsDashboard', label: 'Analytics dashboard' },
+      { key: 'canWriteReview', label: 'Write reviews for brands' },
+      { key: 'canReadReviews', label: 'View influencer & brand reviews' },
     ],
     BRAND: [
       { key: 'browseInfluencerProfiles', label: 'Browse influencer profiles' },
@@ -57,6 +59,7 @@ export class AdminPlansComponent implements OnInit {
       { key: 'campaignAnalytics', label: 'Campaign analytics' },
       { key: 'bulkOutreachTools', label: 'Bulk outreach tools' },
       { key: 'campaignAnalyticsDashboard', label: 'Campaign analytics dashboard' },
+      { key: 'canWriteReview', label: 'Write reviews for influencers' },
     ],
   };
   readonly masterLimits: { [k: string]: { key: string; label: string }[] } = {

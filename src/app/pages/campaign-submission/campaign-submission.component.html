@@ -1,0 +1,171 @@
+<div class="submission-page">
+
+  <!-- ── Success Screen ───────────────────────────────── -->
+  <div *ngIf="submitted" class="success-screen">
+    <div class="success-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <h2>Report Submitted!</h2>
+    <p>The brand will review your post within 48 hours.</p>
+    <button class="btn-orange" (click)="goBack()">Back to Dashboard</button>
+  </div>
+
+  <!-- ── Form ──────────────────────────────────────────── -->
+  <div *ngIf="!submitted">
+    <!-- Back -->
+    <button class="btn-back" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i> My Campaigns
+    </button>
+
+    <div class="form-header">
+      <div class="form-title">Submit your completed post</div>
+      <div class="form-subtitle">Share the link and proof of your post for <strong>{{ campaignTitle }}</strong></div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar-wrap mb-4">
+      <app-campaign-status-bar [status]="inviteStatus"></app-campaign-status-bar>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="alert-error">{{ error }}</div>
+
+    <!-- ─── SECTION 1: Post Details ─────────────────── -->
+    <div class="form-section">
+      <div class="section-heading">Post details</div>
+
+      <!-- Post URL -->
+      <div class="field-group">
+        <label class="field-label">Post URL <span class="req">*</span></label>
+        <div class="url-input-wrap">
+          <input
+            type="url"
+            class="field-input"
+            [(ngModel)]="postUrl"
+            (ngModelChange)="onPostUrlChange()"
+            placeholder="https://www.instagram.com/p/..."
+          />
+          <span *ngIf="detectedPlatform" class="platform-badge">
+            <i class="bi {{ platformIcon() }}"></i> {{ detectedPlatform }}
+          </span>
+        </div>
+        <div class="field-hint">Paste your Instagram, YouTube, or any platform link</div>
+      </div>
+
+      <!-- Post Type -->
+      <div class="field-group">
+        <label class="field-label">Post type <span class="req">*</span></label>
+        <div class="pill-group">
+          <button
+            *ngFor="let pt of postTypes"
+            class="pill"
+            [class.selected]="postType === pt.key"
+            (click)="postType = pt.key"
+          >{{ pt.label }}</button>
+        </div>
+      </div>
+
+      <!-- Caption -->
+      <div class="field-group">
+        <label class="field-label">Caption used <span class="opt">(optional)</span></label>
+        <textarea
+          class="field-input"
+          rows="3"
+          [(ngModel)]="captionUsed"
+          placeholder="What caption did you write for this post?"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- ─── SECTION 2: Proof ─────────────────────────── -->
+    <div class="form-section">
+      <div class="section-heading">Proof <span class="req">*</span></div>
+
+      <div class="field-group">
+        <label class="field-label">Post screenshot <span class="req">*</span></label>
+        <label class="upload-box" [class.has-image]="postScreenshotUrl" [class.uploading]="screenshotUploading">
+          <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onScreenshotChange($event)">
+          <ng-container *ngIf="!postScreenshotUrl && !screenshotUploading">
+            <i class="bi bi-cloud-upload-fill upload-icon"></i>
+            <div class="upload-label">Upload a screenshot of your published post</div>
+            <div class="upload-hint">PNG or JPG, up to 5MB</div>
+          </ng-container>
+          <div *ngIf="screenshotUploading" class="upload-loading">
+            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+            <span>Uploading…</span>
+          </div>
+          <img *ngIf="postScreenshotUrl && !screenshotUploading" [src]="postScreenshotUrl" class="upload-preview" alt="Screenshot">
+          <button *ngIf="postScreenshotUrl" type="button" class="upload-change" (click)="$event.preventDefault(); postScreenshotUrl=''">
+            <i class="bi bi-pencil"></i> Change
+          </button>
+        </label>
+      </div>
+    </div>
+
+    <!-- ─── SECTION 3: Stats ─────────────────────────── -->
+    <div class="form-section">
+      <button class="stats-toggle" (click)="showStats = !showStats">
+        <i class="bi" [class.bi-chevron-down]="!showStats" [class.bi-chevron-up]="showStats"></i>
+        Add performance stats <span class="opt">(optional — you can add these later)</span>
+      </button>
+
+      <div *ngIf="showStats" class="stats-grid">
+        <div class="stat-field">
+          <label>Views / Plays</label>
+          <input type="number" min="0" class="field-input" [(ngModel)]="viewsCount" placeholder="0">
+        </div>
+        <div class="stat-field">
+          <label>Likes</label>
+          <input type="number" min="0" class="field-input" [(ngModel)]="likesCount" placeholder="0">
+        </div>
+        <div class="stat-field">
+          <label>Comments</label>
+          <input type="number" min="0" class="field-input" [(ngModel)]="commentsCount" placeholder="0">
+        </div>
+        <div class="stat-field">
+          <label>Shares</label>
+          <input type="number" min="0" class="field-input" [(ngModel)]="sharesCount" placeholder="0">
+        </div>
+        <div class="stat-field">
+          <label>Reach (unique)</label>
+          <input type="number" min="0" class="field-input" [(ngModel)]="reachCount" placeholder="0">
+        </div>
+
+        <div class="field-group full-width mt-3">
+          <label class="field-label">Insights screenshot <span class="opt">(optional)</span></label>
+          <label class="upload-box upload-box--sm" [class.has-image]="insightsScreenshotUrl" [class.uploading]="insightsUploading">
+            <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onInsightsChange($event)">
+            <ng-container *ngIf="!insightsScreenshotUrl && !insightsUploading">
+              <i class="bi bi-bar-chart-fill upload-icon"></i>
+              <div class="upload-label">Upload screenshot from app analytics/insights</div>
+              <div class="upload-hint">PNG or JPG, up to 5MB</div>
+            </ng-container>
+            <div *ngIf="insightsUploading" class="upload-loading">
+              <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+              <span>Uploading…</span>
+            </div>
+            <img *ngIf="insightsScreenshotUrl && !insightsUploading" [src]="insightsScreenshotUrl" class="upload-preview" alt="Insights">
+            <button *ngIf="insightsScreenshotUrl" type="button" class="upload-change" (click)="$event.preventDefault(); insightsScreenshotUrl=''">
+              <i class="bi bi-pencil"></i> Change
+            </button>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="form-actions">
+      <button
+        class="btn-submit"
+        [disabled]="!canSubmit() || submitting || screenshotUploading"
+        (click)="submit()"
+      >
+        <span *ngIf="!submitting">
+          <i class="bi bi-send-fill"></i>
+          {{ existingSubmission ? 'Update Report' : 'Submit Report' }}
+        </span>
+        <span *ngIf="submitting">
+          <span class="spinner-border spinner-border-sm"></span> Submitting…
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

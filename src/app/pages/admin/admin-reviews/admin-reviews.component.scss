@@ -1,0 +1,226 @@
+.ar-page {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+
+.ar-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  i { color: #E8580C; }
+}
+
+.ar-refresh {
+  padding: 0.4rem 0.9rem;
+  border: 1.5px solid #E8580C;
+  color: #E8580C;
+  background: none;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  &:hover { background: rgba(232,88,12,0.06); }
+}
+
+.ar-toast {
+  background: #e6f9f1;
+  color: #22b37a;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+}
+
+.ar-error {
+  background: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+}
+
+.ar-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.ar-empty {
+  text-align: center;
+  color: #888;
+  padding: 2.5rem 1rem;
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  i { font-size: 2rem; color: #22b37a; }
+}
+
+.ar-card {
+  background: #fff;
+  border: 1px solid #e8e0d8;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.arc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.arc-type-badge {
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  &.brand { background: #e0f0ff; color: #2271b1; }
+  &.influencer { background: #e6f9f1; color: #22b37a; }
+}
+
+.arc-stars {
+  display: flex;
+  gap: 2px;
+  i { color: #f59e0b; font-size: 0.9rem; }
+}
+
+.arc-date {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-left: auto;
+}
+
+.arc-ids {
+  background: #f9f9f9;
+  border-radius: 7px;
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.arc-id-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.arc-id-label {
+  color: #888;
+  min-width: 90px;
+}
+
+.arc-id-val {
+  background: #ede8e3;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.75rem;
+  color: #444;
+  word-break: break-all;
+}
+
+.arc-rating-row {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+  strong { color: #E8580C; }
+}
+
+.arc-comment {
+  font-size: 0.9rem;
+  color: #333;
+  background: #fafaf9;
+  border-left: 3px solid #E8580C;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0 7px 7px 0;
+  margin-bottom: 0.8rem;
+  i { color: #E8580C; margin-right: 0.3rem; }
+}
+
+.arc-no-comment {
+  font-size: 0.83rem;
+  color: #aaa;
+  margin-bottom: 0.8rem;
+}
+
+.arc-note-area {
+  margin-bottom: 0.8rem;
+}
+
+.arc-note-input {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.83rem;
+  box-sizing: border-box;
+  &:focus { outline: none; border-color: #E8580C; }
+}
+
+.arc-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.arc-btn-approve {
+  flex: 1;
+  padding: 0.45rem 0.9rem;
+  background: #22b37a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  &:hover { background: #1a9067; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.arc-btn-reject {
+  flex: 1;
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  color: #c53030;
+  border: 1.5px solid #c53030;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  &:hover { background: #fff5f5; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
