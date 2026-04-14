@@ -193,7 +193,7 @@ export class InfluencerProfileComponent implements OnInit {
 
   // Plan capabilities
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
-  get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxImages'); }
+  get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxProductImages'); }
   get currentImageCount(): number { return this.profileImagesFormArray?.length ?? 0; }
   get imageUploadAllowed(): boolean { return this.currentImageCount < this.maxImages; }
   registrationSuccess = false;
