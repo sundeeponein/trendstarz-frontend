@@ -109,6 +109,7 @@
               <label>Confirm Password <span class="text-danger">*</span></label>
               <input formControlName="confirmPassword" type="password" class="form-control" required />
               <div *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger mt-1">Confirm password is required.</div>
+              <div *ngIf="registrationForm.get('confirmPassword')?.value && registrationForm.errors?.['passwordMismatch']" class="text-danger mt-1">Passwords do not match.</div>
             </div>
           </div>
 

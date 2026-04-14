@@ -16,6 +16,12 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   return whatsapp || email || call ? null : { required: true };
 };
 
+export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
+  const pw = group.get('password')?.value;
+  const cpw = group.get('confirmPassword')?.value;
+  return pw && cpw && pw !== cpw ? { passwordMismatch: true } : null;
+};
+
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
@@ -78,7 +84,7 @@ export class BrandRegistrationComponent implements OnInit {
       brandName: ['', Validators.required],
       brandUsername: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)], [this.brandUsernameUniqueValidator()]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       paymentOption: ['free', Validators.required],
@@ -104,7 +110,7 @@ export class BrandRegistrationComponent implements OnInit {
         email: [false],
         call: [false]
       }, { validators: [atLeastOneContactRequired] })
-    });
+    }, { validators: [passwordMatchValidator] });
 
     this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => {
       this.onBrandUsernameInput();
@@ -329,6 +335,7 @@ export class BrandRegistrationComponent implements OnInit {
         f.get('email')?.valid &&
         f.get('password')?.valid &&
         f.get('confirmPassword')?.valid &&
+        !f.errors?.['passwordMismatch'] &&
         f.get('phoneNumber')?.valid &&
         this.brandLogoPreview
       );

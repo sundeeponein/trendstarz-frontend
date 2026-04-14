@@ -18,6 +18,12 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   return whatsapp || email || call ? null : { required: true };
 };
 
+export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
+  const pw = group.get('password')?.value;
+  const cpw = group.get('confirmPassword')?.value;
+  return pw && cpw && pw !== cpw ? { passwordMismatch: true } : null;
+};
+
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
@@ -150,7 +156,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
       location: this.fb.group({ state: ['', Validators.required] }),
@@ -162,7 +168,7 @@ export class InfluencerRegistrationComponent implements OnInit {
         whatsapp: [false], email: [false], call: [false]
       }, { validators: [atLeastOneContactRequired] }),
       website: [''],
-    });
+    }, { validators: [passwordMatchValidator] });
 
     this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
     this.registrationForm.get('phoneNumber')?.valueChanges.subscribe(() => { this.duplicatePhoneError = ''; });
@@ -210,7 +216,8 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 1) {
       const f = this.registrationForm;
       return !!(f.get('name')?.valid && f.get('username')?.valid && f.get('phoneNumber')?.valid &&
-        f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid);
+        f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid &&
+        !f.errors?.['passwordMismatch']);
     }
     if (step === 2) {
       const f = this.registrationForm;
