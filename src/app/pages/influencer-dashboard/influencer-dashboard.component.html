@@ -151,8 +151,8 @@
           <div class="section-empty-title">No active work</div>
           <div class="section-empty-desc">Projects you've accepted will appear here.</div>
         </div>
-        <div *ngFor="let c of activeCampaigns" class="active-camp-card" (click)="openDetail({campaignId: c, inviteStatus: c.inviteStatus})">
-          <div class="d-flex align-items-start gap-2">
+        <div *ngFor="let c of activeCampaigns" class="active-camp-card">
+          <div class="d-flex align-items-start gap-2" (click)="openDetail({campaignId: c, inviteStatus: c.inviteStatus})">
             <div class="active-camp-dot"></div>
             <div class="flex-1">
               <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
@@ -166,6 +166,15 @@
           <div class="active-camp-meta mt-2">
             <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
             <span *ngIf="c.budgetMin || c.budgetMax"><i class="bi bi-currency-rupee"></i> {{ formatBudget(c.budgetMin, c.budgetMax) }}</span>
+          </div>
+          <!-- Submit post CTA for working/accepted campaigns -->
+          <div class="submit-post-cta mt-2" *ngIf="c.inviteStatus !== 'submitted'">
+            <button class="btn-submit-post" (click)="goToSubmit(c); $event.stopPropagation()">
+              <i class="bi bi-send-fill"></i> Submit your post
+            </button>
+          </div>
+          <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">
+            <i class="bi bi-hourglass-split"></i> Post submitted — awaiting brand review
           </div>
         </div>
       </div>
@@ -192,12 +201,19 @@
               <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
               <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
             </div>
-            <span class="invite-status-badge invite-status-badge--completed">Completed</span>
+            <span class="invite-status-badge invite-status-badge--completed">{{ c.inviteStatus === 'disputed' ? 'Disputed' : 'Completed' }}</span>
           </div>
           <div class="active-camp-metrics" *ngIf="c.metrics">
             <span *ngIf="c.metrics?.reach"><i class="bi bi-people"></i> {{ c.metrics.reach | number }} reach</span>
             <span *ngIf="c.metrics?.engagement"><i class="bi bi-hand-thumbs-up"></i> {{ c.metrics.engagement | number }} eng.</span>
             <span *ngIf="c.metrics?.clicks"><i class="bi bi-cursor"></i> {{ c.metrics.clicks | number }} clicks</span>
+          </div>
+          <!-- Stats CTA for completed campaigns -->
+          <div class="mt-2" *ngIf="c.inviteId">
+            <button class="btn-add-stats" (click)="goToStats(c)">
+              <i class="bi bi-bar-chart-fill"></i>
+              {{ c.metrics?.reach ? 'Edit stats' : '+ Add performance stats' }}
+            </button>
           </div>
         </div>
       </div>

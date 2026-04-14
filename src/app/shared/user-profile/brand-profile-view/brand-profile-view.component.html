@@ -217,5 +217,31 @@
       <button class="btn btn-gopro-lg">Get Trendstarz Pro</button>
     </div>
 
+    <!-- Reviews Section (influencer premium users) -->
+    <div class="reviews-wrapper" *ngIf="brand">
+      <div class="write-review-cta" *ngIf="isInfluencerViewer && isProViewer && completedInviteId">
+        <button class="btn-write-review" (click)="showWriteReview = true">
+          <i class="bi bi-pencil-square"></i> Write a Review
+        </button>
+      </div>
+      <div class="write-review-upgrade" *ngIf="isInfluencerViewer && !isProViewer">
+        <i class="bi bi-lock-fill"></i>
+        Upgrade to <strong>Pro</strong> to write reviews for brands.
+      </div>
+
+      <app-review-list
+        [targetId]="brand._id"
+        [canRead]="isProViewer"
+      ></app-review-list>
+    </div>
+
+    <app-write-review
+      *ngIf="showWriteReview && completedInviteId"
+      [inviteId]="completedInviteId"
+      [targetName]="brand?.brandName || ''"
+      (close)="showWriteReview = false"
+      (submitted)="showWriteReview = false"
+    ></app-write-review>
+
   </div>
 </div>

@@ -283,5 +283,34 @@
 
     </div>
 
+    <!-- Reviews Section -->
+    <div class="reviews-wrapper" *ngIf="influencer">
+      <!-- Brand (premium) write review button -->
+      <div class="write-review-cta" *ngIf="isBrandViewer && isProViewer && completedInviteId">
+        <button class="btn-write-review" (click)="showWriteReview = true">
+          <i class="bi bi-pencil-square"></i> Write a Review
+        </button>
+      </div>
+      <div class="write-review-upgrade" *ngIf="isBrandViewer && !isProViewer">
+        <i class="bi bi-lock-fill"></i>
+        Upgrade to <strong>Pro</strong> to write reviews for influencers.
+      </div>
+
+      <!-- Review list (shown to premium influencers and premium brands) -->
+      <app-review-list
+        [targetId]="influencer._id"
+        [canRead]="isProViewer"
+      ></app-review-list>
+    </div>
+
+    <!-- Write review modal -->
+    <app-write-review
+      *ngIf="showWriteReview && completedInviteId"
+      [inviteId]="completedInviteId"
+      [targetName]="influencer?.name || ''"
+      (close)="showWriteReview = false"
+      (submitted)="showWriteReview = false"
+    ></app-write-review>
+
   </div>
 </div>

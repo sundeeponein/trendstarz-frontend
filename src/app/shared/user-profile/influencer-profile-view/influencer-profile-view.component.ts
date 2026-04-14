@@ -4,11 +4,13 @@ import { ConfigService } from '../../config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SessionService } from '../../../core/session.service';
+import { WriteReviewComponent } from '../../write-review/write-review.component';
+import { ReviewListComponent } from '../../review-list/review-list.component';
 
 @Component({
   selector: 'app-influencer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: ['./influencer-profile-view.component.scss']
 })
@@ -17,9 +19,20 @@ export class InfluencerProfileViewComponent implements OnInit {
   loading = true;
   error = '';
 
+  // Review state
+  showWriteReview = false;
+  /** Completed invite ID for this influencer—brand needs one to write a review */
+  completedInviteId: string | null = null;
+  completedInviteLoading = false;
+
   /** Whether the logged-in viewer has a Pro subscription */
   get isProViewer(): boolean {
     return !!this.session.getUser()?.isPremium;
+  }
+
+  get isBrandViewer(): boolean {
+    const user = this.session.getUser();
+    return user?.role === 'BRAND' || user?.role === 'brand';
   }
 
   stripProtocol(url: string): string {
@@ -117,6 +130,10 @@ export class InfluencerProfileViewComponent implements OnInit {
             if (!data) this.error = 'Influencer not found.';
             this.loading = false;
             this.cd.detectChanges();
+            // Brand: try to find a completed invite to enable review button
+            if (data && this.isBrandViewer && this.isProViewer) {
+              this.loadCompletedInvite(data._id);
+            }
           },
           error: () => {
             this.error = 'Could not load influencer profile.';
@@ -129,6 +146,22 @@ export class InfluencerProfileViewComponent implements OnInit {
         this.loading = false;
         this.cd.detectChanges();
       }
+    });
+  }
+
+  loadCompletedInvite(influencerId: string) {
+    this.completedInviteLoading = true;
+    // Check for completed invites to determine if brand can write a review
+    // A brand views an influencer profile — find any completed invite with this influencer
+    this.config.getInvitesByCampaign(influencerId).subscribe({
+      next: (invites: any[]) => {
+        const done = (invites || []).find(
+          (inv: any) => inv.status === 'completed'
+        );
+        this.completedInviteId = done?._id || null;
+        this.cd.detectChanges();
+      },
+      error: () => {}
     });
   }
 }
