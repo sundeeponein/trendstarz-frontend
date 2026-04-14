@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
@@ -30,6 +30,7 @@ export class NavbarLayoutComponent {
         if (profile) {
           const updated = { ...this.session.getUser(), isPremium: !!profile.isPremium, premiumEnd: profile.premiumEnd || null };
           this.session.setUser(updated);
+          this.cdr.detectChanges();
         }
       });
     }
@@ -50,7 +51,7 @@ export class NavbarLayoutComponent {
     }
     return 'assets/default-profile.png';
   }
-  constructor(private router: Router, private session: SessionService, private config: ConfigService) {
+  constructor(private router: Router, private session: SessionService, private config: ConfigService, private cdr: ChangeDetectorRef) {
     // Subscribe to user changes
     this.session.user$.subscribe(user => {
       this.user = user;
