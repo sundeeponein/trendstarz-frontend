@@ -8,6 +8,7 @@ import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, Validat
 import { map, debounceTime, first } from 'rxjs/operators';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
+import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -18,6 +19,12 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   return whatsapp || email || call ? null : { required: true };
 };
 
+export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
+  const pw = group.get('password')?.value;
+  const cpw = group.get('confirmPassword')?.value;
+  return pw && cpw && pw !== cpw ? { passwordMismatch: true } : null;
+};
+
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
@@ -26,6 +33,11 @@ export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl)
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+
+  // --- Password strength live checks ---
+  get passwordChecks() {
+    return getPasswordChecks(this.registrationForm?.get('password')?.value || '');
+  }
 
   // --- New Social Media Platform UI ---
   platformForms: { [platformId: string]: any } = {};
@@ -67,6 +79,25 @@ export class InfluencerRegistrationComponent implements OnInit {
   removePlatformCard(platform: any) {
     delete this.platformForms[platform._id];
     this.refreshStepCompletion();
+  }
+
+  getProfileUrl(platformName: string, handle: string): string {
+    const h = (handle || '').replace(/^@+/, '').trim();
+    if (!h) return '';
+    const n = (platformName || '').toLowerCase();
+    if (n.includes('instagram')) return 'https://instagram.com/' + h;
+    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
+    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
+    if (n.includes('facebook')) return 'https://facebook.com/' + h;
+    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
+    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
+    return '';
+  }
+
+  stripAtSign(platformId: string) {
+    const pf = this.platformForms[platformId];
+    if (!pf) return;
+    pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
   }
 
   selectedPlatforms(): any[] {
@@ -121,6 +152,10 @@ export class InfluencerRegistrationComponent implements OnInit {
   registrationSuccess = false;
   registrationError = '';
   preApproveActive = false;
+  showPassword = false;
+  showConfirmPassword = false;
+  togglePasswordVisibility() { this.showPassword = !this.showPassword; }
+  toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
@@ -150,7 +185,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
+      password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
       location: this.fb.group({ state: ['', Validators.required] }),
@@ -162,7 +197,7 @@ export class InfluencerRegistrationComponent implements OnInit {
         whatsapp: [false], email: [false], call: [false]
       }, { validators: [atLeastOneContactRequired] }),
       website: [''],
-    });
+    }, { validators: [passwordMatchValidator] });
 
     this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
     this.registrationForm.get('phoneNumber')?.valueChanges.subscribe(() => { this.duplicatePhoneError = ''; });
@@ -210,7 +245,8 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 1) {
       const f = this.registrationForm;
       return !!(f.get('name')?.valid && f.get('username')?.valid && f.get('phoneNumber')?.valid &&
-        f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid);
+        f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid &&
+        !f.errors?.['passwordMismatch']);
     }
     if (step === 2) {
       const f = this.registrationForm;

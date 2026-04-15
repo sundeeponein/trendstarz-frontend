@@ -164,6 +164,7 @@
               <i [class]="getPlatformIcon(pd.platform)"></i>
               {{ pd.platform }}
               <span class="tab-enabled-count" *ngIf="getEnabledCount(pd) > 0">{{ getEnabledCount(pd) }}</span>
+              <span class="tab-total" *ngIf="getPlatformTotal(pd) > 0">₹{{ getPlatformTotal(pd) | number }}</span>
             </button>
             <div class="platform-tab-spacer"></div>
             <button type="button" class="pdc-remove tab-remove"

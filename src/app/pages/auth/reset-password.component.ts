@@ -4,6 +4,7 @@ import { ConfigService } from '../../shared/config.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 
 @Component({
   selector: 'app-reset-password',
@@ -29,10 +30,14 @@ export class ResetPasswordComponent {
     private router: Router
   ) {
     this.resetForm = this.fb.group({
-      password: ['', [Validators.required, Validators.minLength(8)]],
+      password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordsMatchValidator });
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
+  }
+
+  get passwordChecks() {
+    return getPasswordChecks(this.resetForm?.get('password')?.value || '');
   }
 
   passwordsMatchValidator(form: FormGroup) {

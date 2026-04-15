@@ -152,6 +152,12 @@ export class BrandProfileComponent implements OnInit {
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isPremium = false;
+
+  // --- Social Media Platform UI ---
+  platformForms: { [platformId: string]: any } = {};
+  activePlatformTab: string | null = null;
+  private originalPlatformForms: { [platformId: string]: any } = {};
+
   brandLogoPreview: string | null = null;
   brandLogoFile: { url: string, public_id: string } | null = null;
   productImagesPreview: (string | null)[] = [];
@@ -294,14 +300,6 @@ export class BrandProfileComponent implements OnInit {
       brandLogo: this.fb.array([]),
       products: this.fb.array([]),
       productImages: this.fb.array([]),
-      socialMedia: this.fb.array([
-        this.fb.group({
-          platform: ['', Validators.required],
-          handle: ['', Validators.required],
-          tier: ['', Validators.required],
-          followersCount: ['', Validators.required]
-        })
-      ]),
       contact: this.fb.group({
         whatsapp: [false],
         email: [false],
@@ -349,10 +347,6 @@ export class BrandProfileComponent implements OnInit {
           const categoryIds = (profile.categories || []).map((name: string) =>
             this.categoriesList.find((c: any) => c.name === name)?._id
           ).filter(Boolean);
-          const socialMedia = (profile.socialMedia || []).map((sm: any) => ({
-            ...sm,
-            platform: this.socialMediaList.find((s: any) => s.name === sm.platform)?._id || sm.platform
-          }));
           const resolvedBrandUsername =
             profile.brandUsername ||
             profile.username ||
@@ -407,16 +401,25 @@ export class BrandProfileComponent implements OnInit {
             (img?.url && img?.public_id ? { url: img.url, public_id: img.public_id } : null)
           );
 
-          const smArr = this.registrationForm.get('socialMedia') as FormArray;
-          smArr.clear();
-          socialMedia.forEach((sm: any) => {
-            smArr.push(this.fb.group({
-              platform: sm.platform || '',
+          this.platformForms = {};
+          (profile.socialMedia || []).forEach((sm: any) => {
+            const platformObj = this.socialMediaList.find((s: any) => s.name === sm.platform);
+            if (!platformObj) return;
+            this.platformForms[platformObj._id] = {
               handle: sm.handle || '',
+              followersCount: sm.followersCount || '',
               tier: sm.tier || '',
-              followersCount: sm.followersCount || ''
-            }));
+              contentTypes: Object.fromEntries(
+                (platformObj.contentTypes || []).map((ct: any) => {
+                  const existing = (sm.contentTypes || []).find((c: any) => c.name === ct.name);
+                  return [ct.name, { selected: !!existing, price: existing?.price || '' }];
+                })
+              )
+            };
           });
+          const pfKeys = Object.keys(this.platformForms);
+          this.activePlatformTab = pfKeys.length ? pfKeys[0] : null;
+          this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
 
           this.originalFormValue = this.registrationForm.getRawValue();
           this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
@@ -486,6 +489,9 @@ export class BrandProfileComponent implements OnInit {
     if (this.originalFormValue) {
       this.registrationForm.reset(this.originalFormValue);
     }
+    this.platformForms = JSON.parse(JSON.stringify(this.originalPlatformForms));
+    const pfKeys = Object.keys(this.platformForms);
+    this.activePlatformTab = pfKeys.length ? pfKeys[0] : null;
     this.registrationForm.disable();
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
@@ -538,25 +544,78 @@ export class BrandProfileComponent implements OnInit {
     });
   }
 
-  get socialMediaFormArray(): FormArray {
-    return this.registrationForm.get('socialMedia') as FormArray;
+  // --- Social Media Platform UI Methods ---
+  getPlatformById(id: string | null) {
+    if (!id) return null;
+    return this.socialMediaList.find(p => p._id === id) || null;
   }
 
-  addSocialMedia() {
-    this.socialMediaFormArray.push(this.fb.group({
-      platform: ['', Validators.required],
-      handle: ['', Validators.required],
-      tier: ['', Validators.required],
-      followersCount: ['', Validators.required]
-    }));
-    this.refreshStepCompletion();
+  isPlatformSelected(platform: any): boolean {
+    return !!this.platformForms[platform._id];
   }
 
-  removeSocialMedia(index: number) {
-    if (this.socialMediaFormArray.length > 1) {
-      this.socialMediaFormArray.removeAt(index);
+  togglePlatform(platform: any) {
+    if (this.isPlatformSelected(platform)) {
+      this.removePlatformCard(platform);
+      if (this.activePlatformTab === platform._id) {
+        const remaining = this.selectedPlatforms();
+        this.activePlatformTab = remaining.length ? remaining[0]._id : null;
+      }
+    } else {
+      this.platformForms[platform._id] = {
+        handle: '',
+        followersCount: '',
+        tier: '',
+        contentTypes: Object.fromEntries(
+          (platform.contentTypes || []).map((ct: any) => [ct.name, { selected: false, price: '' }])
+        )
+      };
+      this.activePlatformTab = platform._id;
     }
     this.refreshStepCompletion();
+  }
+
+  removePlatformCard(platform: any) {
+    delete this.platformForms[platform._id];
+    this.refreshStepCompletion();
+  }
+
+  selectedPlatforms(): any[] {
+    return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
+  }
+
+  getPlatformTotal(platform: any): number {
+    const pf = this.platformForms[platform._id];
+    if (!pf) return 0;
+    let total = 0;
+    for (const ctName in pf.contentTypes) {
+      const ct = pf.contentTypes[ctName];
+      if (ct.selected && ct.price) total += Number(ct.price) || 0;
+    }
+    return total;
+  }
+
+  getGrandTotal(): number {
+    return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
+  }
+
+  getProfileUrl(platformName: string, handle: string): string {
+    const h = (handle || '').replace(/^@+/, '').trim();
+    if (!h) return '';
+    const n = (platformName || '').toLowerCase();
+    if (n.includes('instagram')) return 'https://instagram.com/' + h;
+    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
+    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
+    if (n.includes('facebook')) return 'https://facebook.com/' + h;
+    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
+    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
+    return '';
+  }
+
+  stripAtSign(platformId: string) {
+    const pf = this.platformForms[platformId];
+    if (!pf) return;
+    pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
   }
 
   get productImagesFormArray(): FormArray {
@@ -600,7 +659,7 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        (this.socialMediaFormArray.valid ?? true)
+        true /* social media optional */
       );
     }
 
@@ -655,8 +714,7 @@ export class BrandProfileComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      this.socialMediaFormArray.controls.forEach((ctrl) => ctrl.markAllAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && (this.socialMediaFormArray.valid ?? true);
+      return required.every((path) => this.registrationForm.get(path)?.valid);
     }
 
     if (this.currentStep === 3) {
@@ -715,13 +773,16 @@ export class BrandProfileComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
-    // Map social media platform ID to name (for backend compatibility)
-    const socialMedia = (raw.socialMedia || []).map((sm: any) => {
-      const platformObj = this.socialMediaList.find((s: any) => s._id === sm.platform);
+    const socialMedia = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id];
       return {
-        ...sm,
-        platform: platformObj ? platformObj.name : sm.platform,
-        followersCount: Number(sm.followersCount)
+        platform: platform.name,
+        handle: pf.handle,
+        followersCount: Number(pf.followersCount) || 0,
+        tier: pf.tier,
+        contentTypes: Object.keys(pf.contentTypes)
+          .filter(ctName => pf.contentTypes[ctName].selected)
+          .map(ctName => ({ name: ctName, price: Number(pf.contentTypes[ctName].price) || 0 }))
       };
     });
     // Handle Cloudinary upload for brand logo if file selected
@@ -762,6 +823,7 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
+        this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.submitted = false;
       },
       error: err => {

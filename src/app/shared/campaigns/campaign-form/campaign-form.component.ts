@@ -269,6 +269,12 @@ export class CampaignFormComponent implements OnInit {
     return pd.contentTypes.filter(ct => ct.enabled).length;
   }
 
+  getPlatformTotal(pd: { contentTypes: { enabled: boolean; price: number | null }[] }): number {
+    return pd.contentTypes
+      .filter(ct => ct.enabled && ct.price)
+      .reduce((sum, ct) => sum + (ct.price || 0), 0);
+  }
+
   getPlatformIcon(name: string): string {
     const n = (name || '').toLowerCase();
     if (n.includes('instagram')) return 'bi bi-instagram';
