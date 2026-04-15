@@ -85,14 +85,31 @@
 
             <div class="field-block">
               <label>Password <span class="text-danger">*</span></label>
-              <input formControlName="password" type="password" class="form-control" required />
-              <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Please enter your password.</div>
+              <div class="password-wrap">
+                <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" required />
+                <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
+              <ul class="pw-checklist text-black" *ngIf="registrationForm.get('password')?.value || registrationForm.get('password')?.touched">
+                <li *ngFor="let c of passwordChecks" [class.passed]="c.passed">
+                  <i class="bi" [class.bi-check-circle-fill]="c.passed" [class.bi-circle]="!c.passed"></i>
+                  {{ c.label }}
+                </li>
+              </ul>
+              <div *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger mt-1">Please enter a valid password.</div>
             </div>
 
             <div class="field-block">
               <label>Confirm Password <span class="text-danger">*</span></label>
-              <input formControlName="confirmPassword" type="password" class="form-control" required />
+              <div class="password-wrap">
+                <input formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" required />
+                <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+                  <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
               <div *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger mt-1">Please confirm your password.</div>
+              <div *ngIf="registrationForm.get('confirmPassword')?.value && registrationForm.errors?.['passwordMismatch']" class="text-danger mt-1">Passwords do not match.</div>
             </div>
           </div>
 
@@ -223,7 +240,12 @@
                     <div class="row">
                       <div class="col">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" />
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
+                        <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                           [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                          <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                        </a>
                       </div>
                       <div class="col">
                         <label>{{ platform.followersLabel || 'Followers' }}</label>
