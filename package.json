@@ -58,7 +58,7 @@
     "@types/browser-image-compression": "^1.0.1",
     "@types/express": "^5.0.1",
     "@types/jasmine": "^6.0.0",
-    "@types/node": "^20.19.37",
+    "@types/node": "^20.19.39",
     "jasmine-core": "^6.0.1",
     "jsdom": "^27.1.0",
     "karma": "^6.4.4",
