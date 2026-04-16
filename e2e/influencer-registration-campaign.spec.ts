@@ -141,7 +141,7 @@ test('Influencer registration and campaign discovery', async ({ page }) => {
     }
   } else {
     // Log all input elements for debugging
-    const allInputs = await page.$$eval('input', els => els.map(e => els.outerHTML));
+    const allInputs = await page.$$eval('input', els => els.map(e => (e as HTMLInputElement).outerHTML));
     console.log('File input not found. All input elements:', allInputs);
     throw new Error('File input for image upload not found. See console log for available inputs.');
   }
