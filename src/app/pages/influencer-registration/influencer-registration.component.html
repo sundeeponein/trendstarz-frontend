@@ -55,7 +55,7 @@
 
             <div class="field-block">
               <label>Username <span class="text-danger">*</span></label>
-              <input formControlName="username" type="text" class="form-control" required pattern="^[a-zA-Z0-9_-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
+              <input formControlName="username" type="text" class="form-control" required pattern="^[a-zA-Z0-9_\-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
               <div *ngIf="submitted && registrationForm.get('username')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Username is required and can only contain letters, numbers, hyphens (-), and underscores (_).</div>
               <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
               <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">Username cannot contain spaces.</div>

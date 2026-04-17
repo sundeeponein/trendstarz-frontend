@@ -73,7 +73,7 @@
                 type="text"
                 class="form-control"
                 required
-                pattern="^[a-zA-Z0-9_-]+$"
+                pattern="^[a-zA-Z0-9_\-]+$"
               />
               <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Brand username is required and supports only letters, numbers, hyphens and underscores.</div>
               <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>

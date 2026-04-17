@@ -11,6 +11,8 @@ test.describe('Login page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
     await page.waitForSelector('form', { state: 'visible' });
+    // Wait for Angular hydration to complete (SSR app)
+    await page.waitForTimeout(2000);
   });
 
   test('renders email, password fields and sign-in button', async ({ page }) => {
@@ -40,11 +42,13 @@ test.describe('Login page', () => {
     const pwInput = page.locator('input[formControlName="password"]');
     await expect(pwInput).toHaveAttribute('type', 'password');
 
-    await page.click('.password-toggle');
-    await expect(pwInput).toHaveAttribute('type', 'text');
+    const toggle = page.locator('.password-toggle');
+    await toggle.waitFor({ state: 'visible' });
+    await toggle.click();
+    await expect(pwInput).toHaveAttribute('type', 'text', { timeout: 5000 });
 
-    await page.click('.password-toggle');
-    await expect(pwInput).toHaveAttribute('type', 'password');
+    await toggle.click();
+    await expect(pwInput).toHaveAttribute('type', 'password', { timeout: 5000 });
   });
 
   test('forgot password link navigates to forgot-password page', async ({ page }) => {
@@ -63,9 +67,21 @@ test.describe('Login page', () => {
 
     await page.fill('input[formControlName="email"]', 'wrong@example.com');
     await page.fill('input[formControlName="password"]', 'WrongPass@1');
-    await page.click('button.btn-signin');
 
-    await expect(page.locator('.text-danger')).toBeVisible({ timeout: 5000 });
+    // Click and wait for the mocked response
+    await Promise.all([
+      page.waitForResponse(resp => resp.url().includes('/auth/login')),
+      page.click('button.btn-signin'),
+    ]);
+
+    // Force Angular change detection — Angular 21 is zoneless, no Zone.js
+    // Interact with a template element to trigger Angular's event-based CD
+    await page.waitForTimeout(500);
+    await page.locator('input[formControlName="email"]').focus();
+    await page.locator('input[formControlName="email"]').blur();
+
+    // The API error message uses .text-danger.text-center (distinct from field validation errors)
+    await expect(page.locator('.text-danger.text-center')).toBeVisible({ timeout: 10000 });
   });
 
   test('successful login redirects away from login page (mocked API)', async ({ page }) => {

@@ -79,6 +79,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
           this.selectedDurationKey = '1m';
           this.updateDuration();
         }
+        this.cdr.detectChanges();
       });
     }
   step: 'plan' | 'payment' | 'success' = 'plan';
@@ -163,7 +164,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.http.get(`${environment.apiBaseUrl}/payment/my`, { headers }).subscribe({
       next: (res: any) => {
         this.myPayments = Array.isArray(res?.payments) ? res.payments : [];
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.myPayments = [];
@@ -256,6 +257,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.upgrading = false;
           this.upgradeError = err?.error?.message || 'Failed to record payment. Please try again.';
+          this.cdr.detectChanges();
         },
       });
   }
@@ -264,6 +266,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   private onSuccess() {
     this.upgrading = false;
     this.step = 'success';
+    this.cdr.detectChanges();
     // Show a toast/snackbar for instant feedback
     if (isPlatformBrowser(this.platformId)) {
       const toast = document.createElement('div');

@@ -2,7 +2,7 @@ import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
@@ -91,6 +91,7 @@ export class BrandRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private cd: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -331,6 +332,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.brandLogoPreview = e.target.result;
         this.brandLogoFile = compressedFile;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
       };
       reader.readAsDataURL(compressedFile);
     } catch {
@@ -359,6 +361,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.productImagesPreview[index] = e.target.result;
         this.productImagesFiles[index] = compressedFile;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
       };
       reader.readAsDataURL(compressedFile);
     } catch {
@@ -636,6 +639,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.submitted = false;
         this.isSubmitting = false;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
       },
       error: (err: any) => {
         const duplicateFields: string[] = Array.isArray(err?.error?.duplicateFields)
@@ -668,6 +672,7 @@ export class BrandRegistrationComponent implements OnInit {
 
         this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
         this.isSubmitting = false;
+        this.cd.detectChanges();
       }
     });
   }

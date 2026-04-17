@@ -431,6 +431,7 @@ export class BrandProfileComponent implements OnInit {
           });
           this.registrationForm.disable();
           this.refreshStepCompletion();
+          this.cd.detectChanges();
         },
         error: () => {
           this.registrationError = 'Error fetching profile.';
