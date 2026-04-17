@@ -66,12 +66,12 @@
 
         <!-- Profile Dropdown -->
         <div class="profile-dropdown" *ngIf="adminUser">
-          <button class="profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
+          <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
             <img [src]="adminUser.profileImage || 'assets/default-profile.png'" 
                  [alt]="adminUser.name" 
                  class="profile-avatar" />
           </button>
-          <ul class="dropdown-menu dropdown-menu-end">
+          <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
             <li><span class="dropdown-header">{{ adminUser.name }}</span></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#">Profile Settings</a></li>

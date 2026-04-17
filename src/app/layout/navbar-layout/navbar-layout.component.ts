@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, HostListener, ElementRef } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';

@@ -160,6 +160,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   states: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
+  showTierInfoModal = false;
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
   languagesList: any[] = [];

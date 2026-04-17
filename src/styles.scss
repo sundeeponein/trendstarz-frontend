@@ -1,7 +1,9 @@
 @use 'app/shared/_admin-global-styles' as *;
 
+@import 'bootstrap-custom';
+
 /* You can add global styles to this file, and also import other style files */
-@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'bootstrap-icons-custom.css';
 
 body {
   background-color: #2a0855;
