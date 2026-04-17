@@ -1,3 +1,4 @@
+// ...existing code...
 import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
@@ -12,6 +13,7 @@ import { passwordStrengthValidator, getPasswordChecks } from '../../shared/passw
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -28,11 +30,23 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, TierInfoModalComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+  // Toggle chip selection for languages/categories
+  toggleChip(field: 'languages' | 'categories', id: string): void {
+    const arr = this.registrationForm.get(field)?.value || [];
+    const idx = arr.indexOf(id);
+    if (idx > -1) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(id);
+    }
+    this.registrationForm.get(field)?.setValue([...arr]);
+    this.registrationForm.get(field)?.markAsTouched();
+  }
 
   // --- Password strength live checks ---
   get passwordChecks() {
@@ -165,6 +179,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   profileImageFile: File | null = null;
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  districts: any[] = [];
   submitted = false;
   usernameError = '';
   duplicateUsernameError = '';
@@ -189,7 +204,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
-      location: this.fb.group({ state: ['', Validators.required] }),
+      location: this.fb.group({ state: ['', Validators.required], district: ['', Validators.required] }),
       promotionalPrice: ['', Validators.required],
       languages: [[], Validators.required],
       categories: [[], Validators.required],
@@ -214,6 +229,19 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
     this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveInfluencers; });
+
+    // Load districts when state changes
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+      this.registrationForm.get('location.district')?.setValue('');
+      this.districts = [];
+      if (stateId) {
+        const stateObj = this.states.find(s => s._id === stateId);
+        const stateName = stateObj ? stateObj.name : '';
+        if (stateName) {
+          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
+        }
+      }
+    });
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforcePlatformLimit();
@@ -251,7 +279,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
     if (step === 2) {
       const f = this.registrationForm;
-      const detailsValid = !!(f.get('location.state')?.valid && f.get('languages')?.valid && f.get('categories')?.valid);
+      const detailsValid = !!(f.get('location.state')?.valid && f.get('location.district')?.valid && f.get('languages')?.valid && f.get('categories')?.valid);
       return detailsValid && this.selectedPlatforms().length > 0 && !!this.profileImagePreview;
     }
     if (step === 3) {
@@ -314,6 +342,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.currentStep === 2) {
       this.step2Attempted = true;
       this.registrationForm.get('location.state')?.markAsTouched();
+      this.registrationForm.get('location.district')?.markAsTouched();
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
       if (!this.profileImagePreview) { this.registrationError = 'Profile image is required.'; }
@@ -441,6 +470,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (raw.username) raw.username = this.slugifyUsername(raw.username);
 
     const stateObj = this.states.find(s => s._id === raw.location.state);
+    const districtObj = this.districts.find(d => d._id === raw.location.district);
     const languageNames = (raw.languages || []).map((id: string) => { const l = this.languagesList.find((x: any) => x._id === id); return l ? l.name : id; });
     const categoryNames = (raw.categories || []).map((id: string) => { const c = this.categoriesList.find((x: any) => x._id === id); return c ? c.name : id; });
 
@@ -472,7 +502,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     const payload: any = {
       ...raw,
-      location: { state: stateObj ? stateObj.name : raw.location.state },
+      location: { state: stateObj ? stateObj.name : raw.location.state, district: districtObj ? districtObj.name : raw.location.district },
       languages: languageNames, categories: categoryNames,
       socialMedia, profileImages: imageUploadResult ? [imageUploadResult] : [], contact: raw.contact
     };

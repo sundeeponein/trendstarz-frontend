@@ -18,9 +18,18 @@ export class AdminManagementComponent implements OnInit {
     socialMediaPlatforms: [],
     categories: [],
     locations: [],
+    districts: [],
     languages: [],
     tiers: []
   };
+
+  districtFilterState: string = '';
+
+  get filteredDistricts(): any[] {
+    const all = (this.config.districts || []).map((d: any, i: number) => ({ ...d, _origIndex: i }));
+    if (!this.districtFilterState) return all;
+    return all.filter((d: any) => d.state === this.districtFilterState);
+  }
 
   settings = {
     preApproveInfluencers: false,
@@ -122,6 +131,10 @@ export class AdminManagementComponent implements OnInit {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
+    this.http.get(baseUrl + '/districts').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+    });
   }
 
   toggleVisible(type: string, idx: number, subIdx?: number) {
@@ -141,6 +154,9 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'state') {
       const state = this.config.locations[idx];
       state.visible = !state.visible;
+    } else if (type === 'district') {
+      const district = this.config.districts[idx];
+      district.visible = !district.visible;
     }
   }
 
@@ -156,7 +172,8 @@ export class AdminManagementComponent implements OnInit {
       socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
       categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
       languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
-      states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible }))
+      states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
+      districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
     };
   // console.log('[BatchUpdate] Payload:', payload);
     const token = localStorage.getItem('token');

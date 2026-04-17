@@ -118,26 +118,55 @@
             <div class="field-block" formGroupName="location">
               <label>State</label>
               <select formControlName="state" class="form-control">
+                <option value="" disabled>Select your state</option>
                 <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
+              </select>
+            </div>
+
+            <div class="field-block" formGroupName="location">
+              <label>District</label>
+              <select formControlName="district" class="form-control">
+                <option value="" disabled>Select your district</option>
+                <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
               </select>
             </div>
 
             <div class="field-block">
               <label>Languages</label>
-              <ng-select [items]="languagesList" bindLabel="name" bindValue="_id" [multiple]="true" [appendTo]="'body'" formControlName="languages" class="multi-select">
-                <ng-template ng-option-tmp let-item="item" let-selected="selected">
-                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
-                </ng-template>
-              </ng-select>
+              <div class="chip-list">
+                <div
+                  *ngFor="let lang of languagesList"
+                  class="chip"
+                  [class.chip--selected]="registrationForm.value.languages?.includes(lang._id)"
+                  (click)="isEditMode && toggleChip('languages', lang._id)"
+                  tabindex="0"
+                  (keydown.enter)="isEditMode && toggleChip('languages', lang._id)"
+                  (keydown.space)="isEditMode && toggleChip('languages', lang._id)"
+                  [attr.aria-pressed]="registrationForm.value.languages?.includes(lang._id)"
+                  role="button"
+                >
+                  {{ lang.name }}
+                </div>
+              </div>
             </div>
 
             <div class="field-block">
               <label>Categories</label>
-              <ng-select [items]="categoriesList" bindLabel="name" bindValue="_id" [multiple]="true" [appendTo]="'body'" formControlName="categories" class="multi-select">
-                <ng-template ng-option-tmp let-item="item" let-selected="selected">
-                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
-                </ng-template>
-              </ng-select>
+              <div class="chip-list">
+                <div
+                  *ngFor="let cat of categoriesList"
+                  class="chip"
+                  [class.chip--selected]="registrationForm.value.categories?.includes(cat._id)"
+                  (click)="isEditMode && toggleChip('categories', cat._id)"
+                  tabindex="0"
+                  (keydown.enter)="isEditMode && toggleChip('categories', cat._id)"
+                  (keydown.space)="isEditMode && toggleChip('categories', cat._id)"
+                  [attr.aria-pressed]="registrationForm.value.categories?.includes(cat._id)"
+                  role="button"
+                >
+                  {{ cat.name }}
+                </div>
+              </div>
             </div>
 
             <div class="field-block">
@@ -225,7 +254,7 @@
                         <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" [disabled]="!isEditMode" />
                       </div>
                       <div class="col">
-                        <label>Tier</label>
+                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
@@ -351,4 +380,6 @@
       </form>
     </main>
   </div>
+
+<app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
 </div>
