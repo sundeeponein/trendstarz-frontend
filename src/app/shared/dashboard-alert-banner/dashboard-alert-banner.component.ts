@@ -4,7 +4,7 @@ import { DatePipe, CommonModule } from '@angular/common';
 @Component({
   selector: 'app-dashboard-alert-banner',
   templateUrl: './dashboard-alert-banner.component.html',
-  styleUrls: ['./dashboard-alert-banner.component.css'],
+  styleUrls: ['./dashboard-alert-banner.component.scss'],
   standalone: true,
   imports: [CommonModule, DatePipe]
 })

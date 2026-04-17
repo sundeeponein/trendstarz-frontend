@@ -1,0 +1,19 @@
+@use '../../shared/styles/dashboard-layout' as *;
+
+// Brand-dashboard overrides
+.section-card {
+  padding: 1.2rem 1rem 1.5rem 1rem;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-count { margin-left: 0.5rem; }
+
+.dot {
+  &--orange { background: #f5c29e; }
+  &--blue { background: #a3d3f5; }
+  &--purple { background: #bba3f5; }
+}
+
+.section-empty { margin-top: 2.5rem; }

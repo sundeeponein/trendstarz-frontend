@@ -1,0 +1,65 @@
+.panel-card {
+  background: #ffffff;
+  border: 1px solid #d8deea;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.form-card {
+  background: #ffffff;
+  border: 1px solid #d8deea;
+  border-radius: 14px;
+  padding: 1.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 2.3rem;
+    line-height: 1.05;
+    color: #121b2d;
+  }
+}
+
+.section-subtitle {
+  margin: 0.5rem 0 1.25rem;
+  font-size: 1.05rem;
+  color: #5d6f8a;
+}
+
+.media-uploader {
+  margin-top: 1rem;
+}
+
+.upload-box {
+  border: 2px dashed #d6dfeb;
+  border-radius: 12px;
+  background: #fafcff;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preview-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #d6dfeb;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.image-card {
+  border: 1px solid #d8e0ec;
+  background: #f8fbff;
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}

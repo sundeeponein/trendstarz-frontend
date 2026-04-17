@@ -1,0 +1,80 @@
+@use 'campaign-variables' as *;
+
+// Campaign shared button styles
+.btn-create {
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background 0.2s;
+
+  i { font-size: 1rem; }
+  &:hover { background: $accent-dark; }
+}
+
+.btn-cancel {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $text-dark;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover { border-color: $text-dark; }
+}
+
+.btn-save {
+  background: $accent;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: $accent-dark; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-manage {
+  flex: 1;
+  background: $accent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: $accent-dark; }
+}
+
+.btn-details {
+  flex: 1;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 8px 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $text-dark;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover { border-color: $text-dark; }
+}

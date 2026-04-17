@@ -6,7 +6,7 @@ import { TitleCasePipe, CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule, TitleCasePipe],
   templateUrl: './campaign-detail-modal.component.html',
-  styleUrls: ['./campaign-detail-modal.component.css']
+  styleUrls: ['./campaign-detail-modal.component.scss']
 })
 export class CampaignDetailModalComponent {
   @Input() invite: any;

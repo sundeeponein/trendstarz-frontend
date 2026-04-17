@@ -50,54 +50,7 @@ import { ConfigService } from '../config.service';
       </div>
     </div>
   `,
-  styles: [`
-    .reviews-section { margin-top: 1.2rem; }
-    .reviews-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 0.8rem;
-    }
-    .reviews-title {
-      font-size: 1rem; font-weight: 700; color: #333;
-      display: flex; align-items: center; gap: 0.4rem;
-      i { color: #E8580C; }
-    }
-    .reviews-count { font-size: 0.85rem; color: #888; font-weight: 400; }
-    .avg-rating {
-      display: flex; align-items: center; gap: 0.4rem;
-      font-weight: 700; font-size: 0.95rem; color: #333;
-    }
-    .stars-inline { color: #f59e0b; display: flex; gap: 2px; font-size: 0.85rem; }
-    .reviews-locked {
-      display: flex; align-items: center; gap: 0.5rem;
-      background: #fff8f0; border: 1px solid #f5d8c0;
-      border-radius: 8px; padding: 0.8rem 1rem;
-      font-size: 0.88rem; color: #888;
-      i { color: #E8580C; }
-      strong { color: #E8580C; }
-    }
-    .reviews-loading { display: flex; justify-content: center; padding: 1rem; }
-    .reviews-empty { font-size: 0.88rem; color: #aaa; font-style: italic; }
-    .review-item {
-      border: 1px solid #f0ece8; border-radius: 9px;
-      padding: 0.75rem 0.9rem; margin-bottom: 0.6rem;
-    }
-    .review-top {
-      display: flex; align-items: center; gap: 0.5rem;
-      margin-bottom: 0.4rem; flex-wrap: wrap;
-    }
-    .reviewer-type-badge {
-      font-size: 0.72rem; padding: 2px 8px; border-radius: 20px;
-      font-weight: 600; text-transform: capitalize;
-      &.brand { background: #e0f0ff; color: #2271b1; }
-      &.influencer { background: #e6f9f1; color: #22b37a; }
-    }
-    .review-stars {
-      display: flex; gap: 2px;
-      i { color: #f59e0b; font-size: 0.85rem; }
-    }
-    .review-date { font-size: 0.75rem; color: #aaa; margin-left: auto; }
-    .review-comment { font-size: 0.88rem; color: #555; margin: 0; line-height: 1.5; }
-  `]
+  styleUrl: './review-list.component.scss'
 })
 export class ReviewListComponent implements OnInit {
   @Input() targetId!: string;

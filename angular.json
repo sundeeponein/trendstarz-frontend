@@ -32,6 +32,11 @@
             ],
             "scripts": [],
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": ["import"]
+              }
+            },
             "outputMode": "server",
             "ssr": {
               "entry": "src/server.ts"
