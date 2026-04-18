@@ -2,7 +2,7 @@ import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
@@ -10,6 +10,7 @@ import { map, first } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -26,13 +27,25 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, TierInfoModalComponent],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })
 export class BrandRegistrationComponent implements OnInit {
   readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
+
+  toggleChip(field: 'languages' | 'categories', id: string): void {
+    const arr = this.registrationForm.get(field)?.value || [];
+    const idx = arr.indexOf(id);
+    if (idx > -1) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(id);
+    }
+    this.registrationForm.get(field)?.setValue([...arr]);
+    this.registrationForm.get(field)?.markAsTouched();
+  }
 
   // --- Password strength live checks ---
   get passwordChecks() {
@@ -78,8 +91,10 @@ export class BrandRegistrationComponent implements OnInit {
   registrationForm!: FormGroup;
 
   states: any[] = [];
+  districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
+  showTierInfoModal = false;
   languagesList: any[] = [];
   categoriesList: any[] = [];
 
@@ -91,6 +106,7 @@ export class BrandRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private cd: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -104,6 +120,7 @@ export class BrandRegistrationComponent implements OnInit {
       paymentOption: ['free', Validators.required],
       location: this.fb.group({
         state: ['', Validators.required],
+        district: ['', Validators.required],
         googleMapLink: ['']
       }),
       promotionalPrice: ['', Validators.required],
@@ -151,6 +168,19 @@ export class BrandRegistrationComponent implements OnInit {
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
     this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveBrands; });
+
+    // Load districts when state changes
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+      this.registrationForm.get('location.district')?.setValue('');
+      this.districts = [];
+      if (stateId) {
+        const stateObj = this.states.find(s => s._id === stateId);
+        const stateName = stateObj ? stateObj.name : '';
+        if (stateName) {
+          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
+        }
+      }
+    });
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforceProductImageLimit();
@@ -331,6 +361,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.brandLogoPreview = e.target.result;
         this.brandLogoFile = compressedFile;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
       };
       reader.readAsDataURL(compressedFile);
     } catch {
@@ -359,6 +390,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.productImagesPreview[index] = e.target.result;
         this.productImagesFiles[index] = compressedFile;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
       };
       reader.readAsDataURL(compressedFile);
     } catch {
@@ -392,6 +424,7 @@ export class BrandRegistrationComponent implements OnInit {
       const detailsValid = !!(
         f.get('paymentOption')?.valid &&
         f.get('location.state')?.valid &&
+        f.get('location.district')?.valid &&
         f.get('languages')?.valid &&
         f.get('categories')?.valid
       );
@@ -454,7 +487,7 @@ export class BrandRegistrationComponent implements OnInit {
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'languages', 'categories'];
+      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
     }
@@ -558,6 +591,7 @@ export class BrandRegistrationComponent implements OnInit {
     raw.brandUsername = this.slugifyUsername(raw.brandUsername || '');
 
     const stateObj = this.states.find(s => s._id === raw.location.state);
+    const districtObj = this.districts.find(d => d._id === raw.location.district);
     const languageNames = (raw.languages || []).map((id: string) => {
       const lang = this.languagesList.find((l: any) => l._id === id);
       return lang ? lang.name : id;
@@ -603,6 +637,7 @@ export class BrandRegistrationComponent implements OnInit {
       ...raw,
       location: {
         state: stateObj ? stateObj.name : raw.location.state,
+        district: districtObj ? districtObj.name : raw.location.district,
         googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || ''
       },
       promotionalPrice: raw.promotionalPrice,
@@ -636,6 +671,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.submitted = false;
         this.isSubmitting = false;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
       },
       error: (err: any) => {
         const duplicateFields: string[] = Array.isArray(err?.error?.duplicateFields)
@@ -668,6 +704,7 @@ export class BrandRegistrationComponent implements OnInit {
 
         this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
         this.isSubmitting = false;
+        this.cd.detectChanges();
       }
     });
   }

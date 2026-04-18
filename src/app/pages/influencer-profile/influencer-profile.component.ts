@@ -11,17 +11,30 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
+import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  toggleChip(field: 'languages' | 'categories', id: string): void {
+    const arr = this.registrationForm.get(field)?.value || [];
+    const idx = arr.indexOf(id);
+    if (idx > -1) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(id);
+    }
+    this.registrationForm.get(field)?.setValue([...arr]);
+    this.registrationForm.get(field)?.markAsTouched();
+  }
+
   // --- New Social Media Platform UI ---
   constructor(
     public fb: FormBuilder,
@@ -200,8 +213,10 @@ export class InfluencerProfileComponent implements OnInit {
   registrationError = '';
   registrationForm!: FormGroup;
   states: any[] = [];
+  districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
+  showTierInfoModal = false;
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
   languagesList: any[] = [];
@@ -241,7 +256,8 @@ export class InfluencerProfileComponent implements OnInit {
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       paymentOption: [{ value: 'free', disabled: true }, Validators.required],
       location: this.fb.group({
-        state: [{ value: '', disabled: true }, Validators.required]
+        state: [{ value: '', disabled: true }, Validators.required],
+        district: [{ value: '', disabled: true }, Validators.required]
       }),
       promotionalPrice: [{ value: '', disabled: true }, Validators.required],
       languages: [{ value: [], disabled: true }, Validators.required],
@@ -266,6 +282,19 @@ export class InfluencerProfileComponent implements OnInit {
 
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+    // Load districts when state changes
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+      this.registrationForm.get('location.district')?.setValue('');
+      this.districts = [];
+      if (stateId) {
+        const stateObj = this.states.find(s => s._id === stateId);
+        const stateName = stateObj ? stateObj.name : '';
+        if (stateName) {
+          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
+        }
+      }
+    });
 
     // Fetch dropdown data first, then profile
     forkJoin({
@@ -304,15 +333,17 @@ export class InfluencerProfileComponent implements OnInit {
           const categoryIds = (profile.categories || []).map((name: string) =>
             this.categoriesList.find(c => c.name === name)?._id
           ).filter(Boolean);
-          this.registrationForm.patchValue({
-            name: profile.name || '',
-            username: profile.username || '',
-            phoneNumber: profile.phoneNumber || '',
-            email: profile.email || '',
-            paymentOption: profile.isPremium ? 'premium' : 'free',
-            location: { state: stateId },
-            promotionalPrice: profile.promotionalPrice || '',
-            languages: languageIds,
+          // Load districts for the state, then patch form
+          const patchForm = (districtId: string) => {
+            this.registrationForm.patchValue({
+              name: profile.name || '',
+              username: profile.username || '',
+              phoneNumber: profile.phoneNumber || '',
+              email: profile.email || '',
+              paymentOption: profile.isPremium ? 'premium' : 'free',
+              location: { state: stateId, district: districtId },
+              promotionalPrice: profile.promotionalPrice || '',
+              languages: languageIds,
             categories: categoryIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false },
             website: profile.website || ''
@@ -344,6 +375,20 @@ export class InfluencerProfileComponent implements OnInit {
           });
           this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
           this.originalFormValue = this.registrationForm.getRawValue();
+          };
+          // Load districts for the saved state, then patch form
+          if (profile.location?.state) {
+            this.configService.getDistricts(profile.location.state).subscribe({
+              next: (dists) => {
+                this.districts = dists;
+                const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                patchForm(districtId);
+              },
+              error: () => patchForm('')
+            });
+          } else {
+            patchForm('');
+          }
           // Set premium period if available
           this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
           this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
@@ -393,6 +438,7 @@ export class InfluencerProfileComponent implements OnInit {
       return !!(
         this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('location.state')?.valid &&
+        this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
         this.selectedPlatforms().length > 0 &&
@@ -442,7 +488,7 @@ export class InfluencerProfileComponent implements OnInit {
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'languages', 'categories'];
+      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0 && this.hasExistingProfileImage();
     }
@@ -616,6 +662,7 @@ export class InfluencerProfileComponent implements OnInit {
     }
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
+    const districtObj = this.districts.find(d => d._id === raw.location.district);
     // Map language IDs to names
     const languageNames = (raw.languages || []).map((id: string) => {
       const lang = this.languagesList.find((l: any) => l._id === id);
@@ -673,7 +720,8 @@ export class InfluencerProfileComponent implements OnInit {
       ...raw,
       username: raw.username, // ensure slugified username is sent
       location: {
-        state: stateObj ? stateObj.name : raw.location.state
+        state: stateObj ? stateObj.name : raw.location.state,
+        district: districtObj ? districtObj.name : raw.location.district
       },
       promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
@@ -742,50 +790,64 @@ export class InfluencerProfileComponent implements OnInit {
             const categoryIds = (profile.categories || []).map((name: string) =>
               (this.categoriesList || []).find((c: any) => c.name === name)?._id
             ).filter(Boolean);
-            this.registrationForm.patchValue({
-              name: profile.name || '',
-              username: profile.username || '',
-              phoneNumber: profile.phoneNumber || '',
-              email: profile.email || '',
-              paymentOption: profile.isPremium ? 'premium' : 'free',
-              location: { state: stateId },
-              languages: languageIds,
-              categories: categoryIds,
-              contact: profile.contact || { whatsapp: false, email: false, call: false },
-              website: profile.website || ''
-            });
-            const arr = this.registrationForm.get('profileImages') as FormArray;
-            if (arr) {
-              arr.clear();
-              (profile.profileImages || []).forEach((img: any) => arr.push(this.fb.group({
-                url: img.url,
-                public_id: img.public_id
-              })));
-            }
-            // Patch socialMedia into platformForms
-            this.platformForms = {};
-            (profile.socialMedia || []).forEach((sm: any) => {
-              const platformObj = (this.socialMediaList || []).find((s: any) => s.name === sm.platform);
-              if (platformObj) {
-                this.platformForms[platformObj._id] = {
-                  handle: sm.handle || '',
-                  followersCount: sm.followersCount || '',
-                  tier: sm.tier || '',
-                  contentTypes: Object.fromEntries(
-                    (platformObj.contentTypes || []).map((ct: any) => {
-                      const saved = (sm.contentTypes || []).find((c: any) => c.name === ct.name);
-                      return [ct.name, { selected: saved?.enabled || false, price: saved?.price || '' }];
-                    })
-                  )
-                };
+            const doPatch = (districtId: string) => {
+              this.registrationForm.patchValue({
+                name: profile.name || '',
+                username: profile.username || '',
+                phoneNumber: profile.phoneNumber || '',
+                email: profile.email || '',
+                paymentOption: profile.isPremium ? 'premium' : 'free',
+                location: { state: stateId, district: districtId },
+                languages: languageIds,
+                categories: categoryIds,
+                contact: profile.contact || { whatsapp: false, email: false, call: false },
+                website: profile.website || ''
+              });
+              const arr = this.registrationForm.get('profileImages') as FormArray;
+              if (arr) {
+                arr.clear();
+                (profile.profileImages || []).forEach((img: any) => arr.push(this.fb.group({
+                  url: img.url,
+                  public_id: img.public_id
+                })));
               }
-            });
-            this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
-            this.originalFormValue = this.registrationForm.getRawValue();
-            this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
-            this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
-            this.refreshStepCompletion();
-            resolve();
+              // Patch socialMedia into platformForms
+              this.platformForms = {};
+              (profile.socialMedia || []).forEach((sm: any) => {
+                const platformObj = (this.socialMediaList || []).find((s: any) => s.name === sm.platform);
+                if (platformObj) {
+                  this.platformForms[platformObj._id] = {
+                    handle: sm.handle || '',
+                    followersCount: sm.followersCount || '',
+                    tier: sm.tier || '',
+                    contentTypes: Object.fromEntries(
+                      (platformObj.contentTypes || []).map((ct: any) => {
+                        const saved = (sm.contentTypes || []).find((c: any) => c.name === ct.name);
+                        return [ct.name, { selected: saved?.enabled || false, price: saved?.price || '' }];
+                      })
+                    )
+                  };
+                }
+              });
+              this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+              this.originalFormValue = this.registrationForm.getRawValue();
+              this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
+              this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
+              this.refreshStepCompletion();
+              resolve();
+            };
+            if (profile.location?.state) {
+              this.configService.getDistricts(profile.location.state).subscribe({
+                next: (dists) => {
+                  this.districts = dists;
+                  const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                  doPatch(districtId);
+                },
+                error: () => doPatch('')
+              });
+            } else {
+              doPatch('');
+            }
           },
           error: () => {
             this.registrationError = 'Error fetching profile.';

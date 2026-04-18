@@ -1,11 +1,7 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/auth/login.component';
-import { AdminUserTableComponent } from './pages/admin/admin-users-table/admin-user-table.component';
 import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.component';
 import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.component';
-import { AdminManagementComponent } from './pages/admin/admin-management/admin-management.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
-import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
@@ -13,9 +9,9 @@ export const routes: Routes = [
     path: '',
     component: NavbarLayoutComponent,
 		children: [
-			{ path: '', component: WelcomeComponent },
-			{ path: 'welcome', component: WelcomeComponent },
-			{ path: 'auth/login', component: LoginComponent },
+			{ path: '', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
+			{ path: 'welcome', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
+			{ path: 'auth/login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
 			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
 			// static pages legal
 			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
@@ -45,8 +41,8 @@ export const routes: Routes = [
 		children: [
 			{ path: '', redirectTo: 'admin-dashboard', pathMatch: 'full' },
 			{ path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
-			{ path: 'admin-user-table', component: AdminUserTableComponent },
-			{ path: 'admin-management', component: AdminManagementComponent },
+			{ path: 'admin-user-table', loadComponent: () => import('./pages/admin/admin-users-table/admin-user-table.component').then(m => m.AdminUserTableComponent) },
+			{ path: 'admin-management', loadComponent: () => import('./pages/admin/admin-management/admin-management.component').then(m => m.AdminManagementComponent) },
 			{ path: 'payments', loadComponent: () => import('./pages/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },			{ path: 'plans', loadComponent: () => import('./pages/admin/admin-plans/admin-plans.component').then(m => m.AdminPlansComponent) },			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
 			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
@@ -56,7 +52,7 @@ export const routes: Routes = [
 		path: '',
 		component: NoNavbarLayoutComponent,
 		children: [
-			{ path: 'login', component: LoginComponent },
+			{ path: 'login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
 			{ path: '', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
 		],
 	},

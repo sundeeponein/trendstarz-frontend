@@ -1,0 +1,117 @@
+/*!
+ * Bootstrap Icons v1.13.1 (https://icons.getbootstrap.com/)
+ * Copyright 2019-2024 The Bootstrap Authors
+ * Licensed under MIT (https://github.com/twbs/icons/blob/main/LICENSE)
+ */
+
+@font-face {
+  font-display: block;
+  font-family: "bootstrap-icons";
+  src: url("../node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2?e34853135f9e39acf64315236852cd5a") format("woff2"),
+url("../node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff?e34853135f9e39acf64315236852cd5a") format("woff");
+}
+
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
+  display: inline-block;
+  font-family: bootstrap-icons !important;
+  font-style: normal;
+  font-weight: normal !important;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: -.125em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+.bi-arrow-clockwise::before { content: "\f116"; }
+.bi-arrow-left::before { content: "\f12f"; }
+.bi-arrow-right::before { content: "\f138"; }
+.bi-bar-chart-fill::before { content: "\f17a"; }
+.bi-bell::before { content: "\f18a"; }
+.bi-box-arrow-up-right::before { content: "\f1c5"; }
+.bi-building::before { content: "\f1dd"; }
+.bi-calendar-plus::before { content: "\f1ef"; }
+.bi-calendar3::before { content: "\f214"; }
+.bi-cash::before { content: "\f247"; }
+.bi-chat-left-quote::before { content: "\f250"; }
+.bi-chat::before { content: "\f268"; }
+.bi-check-circle-fill::before { content: "\f26a"; }
+.bi-check-circle::before { content: "\f26b"; }
+.bi-check2::before { content: "\f272"; }
+.bi-chevron-down::before { content: "\f282"; }
+.bi-chevron-left::before { content: "\f284"; }
+.bi-chevron-right::before { content: "\f285"; }
+.bi-chevron-up::before { content: "\f286"; }
+.bi-circle::before { content: "\f28a"; }
+.bi-cloud-arrow-up::before { content: "\f297"; }
+.bi-cloud-upload-fill::before { content: "\f2bf"; }
+.bi-cursor::before { content: "\f2e3"; }
+.bi-display::before { content: "\f302"; }
+.bi-envelope-fill::before { content: "\f32c"; }
+.bi-envelope::before { content: "\f32f"; }
+.bi-exclamation-circle::before { content: "\f333"; }
+.bi-exclamation-triangle-fill::before { content: "\f33a"; }
+.bi-exclamation-triangle::before { content: "\f33b"; }
+.bi-eye-slash::before { content: "\f340"; }
+.bi-eye::before { content: "\f341"; }
+.bi-facebook::before { content: "\f344"; }
+.bi-file-text::before { content: "\f3b9"; }
+.bi-flag::before { content: "\f3cc"; }
+.bi-gear::before { content: "\f3e5"; }
+.bi-geo-alt::before { content: "\f3e8"; }
+.bi-globe::before { content: "\f3ee"; }
+.bi-globe2::before { content: "\f3ef"; }
+.bi-graph-up::before { content: "\f3f2"; }
+.bi-hand-thumbs-up::before { content: "\f407"; }
+.bi-heart::before { content: "\f417"; }
+.bi-hourglass-split::before { content: "\f41f"; }
+.bi-inbox::before { content: "\f42d"; }
+.bi-info-circle::before { content: "\f431"; }
+.bi-instagram::before { content: "\f437"; }
+.bi-link-45deg::before { content: "\f470"; }
+.bi-linkedin::before { content: "\f472"; }
+.bi-lock-fill::before { content: "\f47a"; }
+.bi-megaphone::before { content: "\f484"; }
+.bi-patch-check-fill::before { content: "\f4b5"; }
+.bi-pause-circle::before { content: "\f4c2"; }
+.bi-pencil-square::before { content: "\f4ca"; }
+.bi-pencil::before { content: "\f4cb"; }
+.bi-people-fill::before { content: "\f4cf"; }
+.bi-people::before { content: "\f4d0"; }
+.bi-person-fill::before { content: "\f4da"; }
+.bi-person-plus-fill::before { content: "\f4dc"; }
+.bi-person-plus::before { content: "\f4dd"; }
+.bi-person-x::before { content: "\f4e0"; }
+.bi-person::before { content: "\f4e1"; }
+.bi-play-circle::before { content: "\f4f3"; }
+.bi-plus-circle-fill::before { content: "\f4f9"; }
+.bi-search::before { content: "\f52a"; }
+.bi-share::before { content: "\f52e"; }
+.bi-shield-lock::before { content: "\f538"; }
+.bi-star-fill::before { content: "\f586"; }
+.bi-star-half::before { content: "\f587"; }
+.bi-star::before { content: "\f588"; }
+.bi-stop-circle::before { content: "\f591"; }
+.bi-telephone::before { content: "\f5c1"; }
+.bi-trash-fill::before { content: "\f5dd"; }
+.bi-trash::before { content: "\f5de"; }
+.bi-whatsapp::before { content: "\f618"; }
+.bi-x-circle-fill::before { content: "\f622"; }
+.bi-x-circle::before { content: "\f623"; }
+.bi-youtube::before { content: "\f62b"; }
+.bi-check-lg::before { content: "\f633"; }
+.bi-plus-lg::before { content: "\f64d"; }
+.bi-translate::before { content: "\f658"; }
+.bi-x-lg::before { content: "\f659"; }
+.bi-quote::before { content: "\f6b0"; }
+.bi-send-check::before { content: "\f6b3"; }
+.bi-send-fill::before { content: "\f6b9"; }
+.bi-send::before { content: "\f6c0"; }
+.bi-tiktok::before { content: "\f6cc"; }
+.bi-currency-rupee::before { content: "\f7ec"; }
+.bi-rocket::before { content: "\f846"; }
+.bi-twitter-x::before { content: "\f8db"; }

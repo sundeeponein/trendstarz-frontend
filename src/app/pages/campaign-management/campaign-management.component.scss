@@ -1,3 +1,8 @@
+@use '../../shared/styles/campaign-variables' as *;
+@use '../../shared/styles/campaign-badges' as *;
+@use '../../shared/styles/campaign-buttons' as *;
+@use '../../shared/styles/campaign-animations' as *;
+
 // ── Toast messages ─────────────────────────────
 .cm-toast {
   position: fixed;
@@ -33,11 +38,6 @@
 @keyframes fadeOut {
   to { opacity: 0; }
 }
-$accent: #e8612d;
-$accent-dark: #d4551f;
-$border: #e8e8e8;
-$text-dark: #1a1a2e;
-$text-muted: #7a7a8e;
 
 .cm-page {
   max-width: 1100px;
@@ -75,21 +75,8 @@ $text-muted: #7a7a8e;
 }
 
 .btn-create {
-  background: $accent;
-  color: #fff;
-  border: none;
   border-radius: 22px;
-  padding: 10px 24px;
-  font-weight: 700;
-  font-size: 0.88rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
   gap: 7px;
-  white-space: nowrap;
-  transition: background 0.2s;
-  i { font-size: 1rem; }
-  &:hover { background: $accent-dark; }
 }
 
 /* ── Tabs ────────────────────────────── */
@@ -250,21 +237,6 @@ $text-muted: #7a7a8e;
   background: $accent;
   border-radius: 2px;
   transition: width 0.4s ease;
-}
-
-/* Status badge */
-.status-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 14px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-
-  &.active     { background: #d4edda; color: #155724; }
-  &.pending    { background: #fff3cd; color: #856404; }
-  &.completed  { background: #d1ecf1; color: #0c5460; }
-  &.draft      { background: #e2e3e5; color: #383d41; }
 }
 
 /* Action */
@@ -434,11 +406,6 @@ $text-muted: #7a7a8e;
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);   opacity: 1; }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 .drawer-header {
@@ -717,19 +684,6 @@ $text-muted: #7a7a8e;
   i { font-size: 0.75rem; }
 }
 
-/* Invite status badge used in both drawer and influencer cards */
-.inv-status {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  &.pending  { background: #fff3cd; color: #856404; }
-  &.accepted { background: #d4edda; color: #155724; }
-  &.declined { background: #f8d7da; color: #721c24; }
-}
-
 .already-invited {
   display: inline-flex;
   align-items: center;
@@ -765,8 +719,6 @@ $text-muted: #7a7a8e;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
 }
-
-@keyframes spin { to { transform: rotate(360deg); } }
 
 .invite-error {
   background: #fef2f2;
@@ -1010,17 +962,12 @@ $text-muted: #7a7a8e;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.18s ease;
+  animation: modalSlideUp 0.18s ease;
 }
 
-@keyframes slideUp {
+@keyframes modalSlideUp {
   from { opacity: 0; transform: translate(-50%, -45%); }
   to   { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 .inv-preview-header {

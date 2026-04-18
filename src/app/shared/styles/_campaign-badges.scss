@@ -1,0 +1,28 @@
+// Campaign status badges & invite status pills
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+
+  &.active { background: #d4edda; color: #155724; }
+  &.pending { background: #fff3cd; color: #856404; }
+  &.completed { background: #d1ecf1; color: #0c5460; }
+  &.draft { background: #e2e3e5; color: #383d41; }
+  &.expired { background: #fff0f0; color: #e53e3e; border: 1px solid #ffd5cc; }
+}
+
+.inv-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+
+  &.pending { background: #fff3cd; color: #856404; }
+  &.accepted { background: #d4edda; color: #155724; }
+  &.declined { background: #f8d7da; color: #721c24; }
+}

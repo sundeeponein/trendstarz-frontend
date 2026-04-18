@@ -1,0 +1,19 @@
+@use 'campaign-variables' as *;
+
+// Campaign shared empty state
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  color: $text-muted;
+
+  i {
+    font-size: 1.8rem;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 0.85rem;
+    margin: 0;
+  }
+}

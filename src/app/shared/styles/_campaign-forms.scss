@@ -1,0 +1,78 @@
+@use 'campaign-variables' as *;
+
+// Campaign shared form field styles
+.field-group {
+  margin-bottom: 18px;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.field-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $text-dark;
+  margin-bottom: 6px;
+}
+
+.required {
+  color: $accent;
+}
+
+.field-input,
+.field-textarea,
+.field-select {
+  width: 100%;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: $text-dark;
+  background: #fafafa;
+  transition: border-color 0.2s;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: $accent;
+    background: #fff;
+  }
+
+  &::placeholder { color: #b0b0b8; }
+}
+
+.field-textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.field-select {
+  appearance: auto;
+}
+
+.field-error {
+  display: block;
+  font-size: 0.76rem;
+  color: #dc3545;
+  margin-top: 4px;
+}
+
+.field-hint {
+  font-size: 0.74rem;
+  color: $text-muted;
+  margin: 5px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  i { font-size: 0.72rem; }
+}
+
+.field-row {
+  display: flex;
+  gap: 16px;
+}
+
+.half {
+  flex: 1;
+}

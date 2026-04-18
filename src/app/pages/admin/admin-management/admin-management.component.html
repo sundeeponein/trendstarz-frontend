@@ -6,6 +6,7 @@
     <button class="tab-btn" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social Media</button>
     <button class="tab-btn" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
     <button class="tab-btn" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
+    <button class="tab-btn" [class.active]="activeTab === 'districts'" (click)="setTab('districts')">Districts</button>
     <button class="tab-btn" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-btn" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
     <button class="tab-btn" [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
@@ -25,6 +26,10 @@
       <li class="list-group-item d-flex justify-content-between align-items-center">
         Locations
         <span class="badge bg-primary rounded-pill">{{ config.locations?.length || 0 }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Districts
+        <span class="badge bg-primary rounded-pill">{{ config.districts?.length || 0 }}</span>
       </li>
       <li class="list-group-item d-flex justify-content-between align-items-center">
         Languages
@@ -91,6 +96,33 @@
           >
           <label class="form-check-label" for="switchState{{i}}">
             {{ state.visible ? 'Show' : 'Hide' }}
+          </label>
+        </div>
+      </li>
+    </ul>
+    <button (click)="saveAllVisibility()">Save</button>
+  </div>
+
+  <div *ngIf="activeTab === 'districts'">
+    <h2 class="text-white">Manage Districts</h2>
+    <div class="mb-3">
+      <label class="text-white me-2">Filter by State:</label>
+      <select [(ngModel)]="districtFilterState" class="form-select d-inline-block w-auto">
+        <option value="">All States</option>
+        <option *ngFor="let state of config.locations" [value]="state.name">{{ state.name }}</option>
+      </select>
+    </div>
+    <ul class="list-group mb-3">
+      <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let dist of filteredDistricts; let i = index">
+        <div><strong>{{ dist.name }}</strong> <small class="text-muted">({{ dist.state }})</small></div>
+        <div class="form-check form-switch d-inline-block ms-2">
+          <input class="form-check-input" type="checkbox" role="switch"
+            [id]="'switchDist' + i"
+            [checked]="dist.visible"
+            (change)="toggleVisible('district', dist._origIndex)"
+          >
+          <label class="form-check-label" [for]="'switchDist' + i">
+            {{ dist.visible ? 'Show' : 'Hide' }}
           </label>
         </div>
       </li>

@@ -1,0 +1,46 @@
+// Custom Bootstrap 5 — only modules actually used in the app
+// Full bootstrap.min.css is 227 kB; this selective import saves ~80-100 kB
+
+// 1. Required Bootstrap infrastructure
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/root";
+
+// 2. Base reset
+@import "bootstrap/scss/reboot";
+
+// 3. Layout
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+
+// 4. Content
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/images";
+@import "bootstrap/scss/tables";
+
+// 5. Components used in this app
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/transitions"; // needed by modal & dropdown animations
+@import "bootstrap/scss/dropdown";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/alert";
+@import "bootstrap/scss/badge";
+@import "bootstrap/scss/card";
+@import "bootstrap/scss/close";
+@import "bootstrap/scss/modal";
+@import "bootstrap/scss/list-group";
+@import "bootstrap/scss/spinners";
+
+// 6. Helpers (visually-hidden, etc.)
+@import "bootstrap/scss/helpers";
+
+// 7. Utilities API (generates d-flex, text-center, mt-3, etc.)
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/utilities/api";
+
+// NOT imported (unused):
+// _accordion, _breadcrumb, _button-group, _carousel, _nav, _navbar,
+// _offcanvas, _pagination, _placeholders, _popover, _progress, _toasts, _tooltip

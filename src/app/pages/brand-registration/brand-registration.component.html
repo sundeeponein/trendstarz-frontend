@@ -73,7 +73,7 @@
                 type="text"
                 class="form-control"
                 required
-                pattern="^[a-zA-Z0-9_-]+$"
+                pattern="^[a-zA-Z0-9_\-]+$"
               />
               <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Brand username is required and supports only letters, numbers, hyphens and underscores.</div>
               <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
@@ -150,47 +150,52 @@
               <div *ngIf="(step2Attempted || registrationForm.get('location.state')?.touched) && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
             </div>
 
+            <div class="field-block" formGroupName="location">
+              <label>District <span class="text-danger">*</span></label>
+              <select formControlName="district" class="form-control">
+                <option value="" disabled selected>Select your district</option>
+                <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
+              </select>
+              <div *ngIf="(step2Attempted || registrationForm.get('location.district')?.touched) && registrationForm.get('location.district')?.invalid" class="text-danger mt-1">Please select your district.</div>
+            </div>
+
             <div class="field-block">
               <label>Languages <span class="text-danger">*</span></label>
-              <ng-select
-                [items]="languagesList"
-                bindLabel="name"
-                bindValue="_id"
-                [multiple]="true"
-                [searchable]="true"
-                [closeOnSelect]="false"
-                [clearable]="true"
-                [appendTo]="'body'"
-                placeholder="Select languages"
-                formControlName="languages"
-                class="multi-select"
-              >
-                <ng-template ng-option-tmp let-item="item" let-selected="selected">
-                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
-                </ng-template>
-              </ng-select>
+              <div class="chip-list">
+                <div
+                  *ngFor="let lang of languagesList"
+                  class="chip"
+                  [class.chip--selected]="registrationForm.value.languages.includes(lang._id)"
+                  (click)="toggleChip('languages', lang._id)"
+                  tabindex="0"
+                  (keydown.enter)="toggleChip('languages', lang._id)"
+                  (keydown.space)="toggleChip('languages', lang._id)"
+                  [attr.aria-pressed]="registrationForm.value.languages.includes(lang._id)"
+                  role="button"
+                >
+                  {{ lang.name }}
+                </div>
+              </div>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
 
             <div class="field-block">
               <label>Categories <span class="text-danger">*</span></label>
-              <ng-select
-                [items]="categoriesList"
-                bindLabel="name"
-                bindValue="_id"
-                [multiple]="true"
-                [searchable]="true"
-                [closeOnSelect]="false"
-                [clearable]="true"
-                [appendTo]="'body'"
-                placeholder="Select categories"
-                formControlName="categories"
-                class="multi-select"
-              >
-                <ng-template ng-option-tmp let-item="item" let-selected="selected">
-                  <input type="checkbox" [checked]="selected" /> {{ item.name }}
-                </ng-template>
-              </ng-select>
+              <div class="chip-list">
+                <div
+                  *ngFor="let cat of categoriesList"
+                  class="chip"
+                  [class.chip--selected]="registrationForm.value.categories.includes(cat._id)"
+                  (click)="toggleChip('categories', cat._id)"
+                  tabindex="0"
+                  (keydown.enter)="toggleChip('categories', cat._id)"
+                  (keydown.space)="toggleChip('categories', cat._id)"
+                  [attr.aria-pressed]="registrationForm.value.categories.includes(cat._id)"
+                  role="button"
+                >
+                  {{ cat.name }}
+                </div>
+              </div>
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
@@ -280,7 +285,7 @@
                         <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" />
                       </div>
                       <div class="col">
-                        <label>Tier</label>
+                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
@@ -410,4 +415,6 @@
       </div>
     </div>
   </div>
+
+<app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
 </div>
