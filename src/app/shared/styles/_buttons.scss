@@ -1,0 +1,23 @@
+.btn-primary {
+  border: 0;
+  border-radius: 10px;
+  background: #f55b0a;
+  padding: 0.72rem 1.25rem;
+  font-weight: 700;
+}
+
+.btn-outline-secondary {
+  border-radius: 10px;
+  padding: 0.72rem 1.2rem;
+  font-weight: 700;
+}
+
+.actions-row {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+
+  &.dual {
+    justify-content: space-between;
+  }
+}

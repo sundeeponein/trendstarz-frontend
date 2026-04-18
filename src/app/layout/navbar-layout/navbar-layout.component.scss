@@ -242,6 +242,7 @@ $hover-bg: rgba(255, 255, 255, 0.08);
         }
 
         .dropdown-menu {
+          display: block;
           background-color: $secondary-dark;
           border: 1px solid $border-color;
           border-radius: 0.5rem;

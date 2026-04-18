@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-upgrade-banner',
   standalone: true,
   templateUrl: './upgrade-banner.component.html',
-  styleUrls: ['./upgrade-banner.component.css']
+  styleUrls: ['./upgrade-banner.component.scss']
 })
 export class UpgradeBannerComponent {
   onUpgrade() {

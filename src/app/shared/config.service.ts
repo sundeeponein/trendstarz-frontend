@@ -117,6 +117,14 @@ export class ConfigService {
     );
   }
 
+  getDistricts(stateName?: string): Observable<any[]> {
+    let url = `${this.apiUrl}/districts`;
+    if (stateName) url += `?state=${encodeURIComponent(stateName)}`;
+    return this.http.get<any>(url).pipe(
+      map((res) => this.extractData<any[]>(res) || [])
+    );
+  }
+
   getLanguages(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/languages`).pipe(
       map((res) => this.extractData<any[]>(res) || [])

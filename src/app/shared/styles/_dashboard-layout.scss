@@ -1,0 +1,159 @@
+// Shared dashboard layout, cards, performance overview, alert cards, empty states
+
+// ── Dashboard page wrapper ──
+.cm-page {
+  background: #f8f9fb;
+  color: #222;
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 12px #0001;
+}
+
+.welcome-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.welcome-subtitle {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+// ── Alert cards ──
+.alert-card {
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 6px #0001;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  border-left: 6px solid #f5c29e;
+  min-height: 120px;
+
+  &--email {
+    border-color: #f5c29e;
+    background: #fff7f2;
+  }
+
+  &--profile {
+    border-color: #a3d3f5;
+    background: #f2f8ff;
+
+    .alert-card-link { color: #2563eb; }
+  }
+}
+
+.alert-card-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.alert-card-desc {
+  color: #555;
+  font-size: 0.98rem;
+}
+
+.alert-card-link {
+  color: #d97706;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.97rem;
+}
+
+// ── Performance overview ──
+.performance-overview {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 1px 6px #0001;
+  padding: 1.5rem;
+}
+
+.performance-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.performance-range {
+  font-size: 0.9rem;
+  color: #888;
+  background: #f3f3f3;
+  border-radius: 1rem;
+  padding: 0.2rem 0.8rem;
+}
+
+.perf-card {
+  background: #f8f9fb;
+  border-radius: 0.8rem;
+  padding: 1.2rem 0.5rem;
+  box-shadow: 0 1px 4px #0001;
+}
+
+.perf-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.perf-label {
+  font-size: 1rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.perf-sub {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+// ── Section cards ──
+.section-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 1px 6px #0001;
+  padding: 1.4rem 1.2rem 1.6rem 1.2rem;
+}
+
+.section-title {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.section-count {
+  font-size: 0.93rem;
+  color: #888;
+  background: #f3f3f3;
+  border-radius: 1rem;
+  padding: 0.1rem 0.7rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+// ── Empty states ──
+.section-empty {
+  text-align: center;
+  color: #aaa;
+}
+
+.section-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #e0e0e0;
+}
+
+.section-empty-title {
+  font-weight: 600;
+  color: #888;
+  font-size: 1.08rem;
+}
+
+.section-empty-desc {
+  color: #bbb;
+  font-size: 0.97rem;
+}

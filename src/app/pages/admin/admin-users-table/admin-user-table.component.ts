@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -133,7 +133,7 @@ export class AdminUserTableComponent implements OnInit {
 
   isLoading: boolean = false;
 
-  constructor(private http: HttpClient, private configService: ConfigService) {}
+  constructor(private http: HttpClient, private configService: ConfigService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.fetchUsers();
@@ -180,6 +180,7 @@ export class AdminUserTableComponent implements OnInit {
         this.applyFilters('influencer');
         this.updateAllFilterOptions();
         this.isLoading = false;
+        this.cd.detectChanges();
       });
     const brandUrl = `${environment.apiBaseUrl}/admin/brands${this.isDeletedTab() ? '?status=deleted' : ''}`;
     this.http.get<any>(brandUrl, headers)
@@ -190,6 +191,7 @@ export class AdminUserTableComponent implements OnInit {
         this.applyFilters('brand');
         this.updateAllFilterOptions();
         this.isLoading = false;
+        this.cd.detectChanges();
       });
   }
 

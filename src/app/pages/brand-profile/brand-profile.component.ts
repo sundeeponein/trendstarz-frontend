@@ -14,15 +14,28 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
+import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
 export class BrandProfileComponent implements OnInit {
+  toggleChip(field: 'languages' | 'categories', id: string): void {
+    const arr = this.registrationForm.get(field)?.value || [];
+    const idx = arr.indexOf(id);
+    if (idx > -1) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(id);
+    }
+    this.registrationForm.get(field)?.setValue([...arr]);
+    this.registrationForm.get(field)?.markAsTouched();
+  }
+
   constructor(
     public fb: FormBuilder,
     private configService: ConfigService,
@@ -147,8 +160,10 @@ export class BrandProfileComponent implements OnInit {
   submitted = false;
   registrationForm!: FormGroup;
   states: any[] = [];
+  districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
+  showTierInfoModal = false;
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isPremium = false;
@@ -290,6 +305,7 @@ export class BrandProfileComponent implements OnInit {
       paymentOption: ['', Validators.required],
       location: this.fb.group({
         state: ['', Validators.required],
+        district: ['', Validators.required],
         googleMapLink: ['']
       }),
       promotionalPrice: ['', Validators.required],
@@ -311,6 +327,19 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => this.onBrandUsernameInput());
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+    // Load districts when state changes
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+      this.registrationForm.get('location.district')?.setValue('');
+      this.districts = [];
+      if (stateId) {
+        const stateObj = this.states.find(s => s._id === stateId);
+        const stateName = stateObj ? stateObj.name : '';
+        if (stateName) {
+          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
+        }
+      }
+    });
 
     // Fetch dropdown data first, then profile
     forkJoin({
@@ -359,15 +388,17 @@ export class BrandProfileComponent implements OnInit {
           const resolvedPromotionalPrice =
             profile.promotionalPrice ?? profile.price ?? '';
 
-          this.registrationForm.patchValue({
-            brandName: profile.brandName || '',
-            brandUsername: resolvedBrandUsername,
-            email: profile.email || '',
+          const doPatchBrandForm = (districtId: string) => {
+            this.registrationForm.patchValue({
+              brandName: profile.brandName || '',
+              brandUsername: resolvedBrandUsername,
+              email: profile.email || '',
             phoneNumber: profile.phoneNumber || '',
             isPremium: !!profile.isPremium,
             paymentOption: profile.isPremium ? 'premium' : 'free',
             location: {
               state: stateId,
+              district: districtId,
               googleMapLink: profile.location?.googleMapLink || ''
             },
             promotionalPrice: resolvedPromotionalPrice,
@@ -431,6 +462,21 @@ export class BrandProfileComponent implements OnInit {
           });
           this.registrationForm.disable();
           this.refreshStepCompletion();
+          this.cd.detectChanges();
+          };
+          // Load districts for the saved state, then patch form
+          if (profile.location?.state) {
+            this.configService.getDistricts(profile.location.state).subscribe({
+              next: (dists) => {
+                this.districts = dists;
+                const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                doPatchBrandForm(districtId);
+              },
+              error: () => doPatchBrandForm('')
+            });
+          } else {
+            doPatchBrandForm('');
+          }
         },
         error: () => {
           this.registrationError = 'Error fetching profile.';
@@ -657,6 +703,7 @@ export class BrandProfileComponent implements OnInit {
       return !!(
         this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('location.state')?.valid &&
+        this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
         true /* social media optional */
@@ -712,7 +759,7 @@ export class BrandProfileComponent implements OnInit {
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'languages', 'categories'];
+      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return required.every((path) => this.registrationForm.get(path)?.valid);
     }
@@ -763,6 +810,7 @@ export class BrandProfileComponent implements OnInit {
     const raw = this.registrationForm.getRawValue();
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
+    const districtObj = this.districts.find(d => d._id === raw.location.district);
     // Map language IDs to names
     const languageNames = (raw.languages || []).map((id: string) => {
       const lang = this.languagesList.find((l: any) => l._id === id);
@@ -791,6 +839,7 @@ export class BrandProfileComponent implements OnInit {
     const brandLogoObjs = this.brandLogoFile ? [this.brandLogoFile] : [];
     const location = {
       state: stateObj ? stateObj.name : raw.location.state,
+      district: districtObj ? districtObj.name : raw.location.district,
       googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || undefined
     };
     const payload: any = {

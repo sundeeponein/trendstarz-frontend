@@ -10,7 +10,7 @@ import { ConfigService } from '../../shared/config.service';
 @Component({
   selector: 'app-brand-dashboard',
   templateUrl: './brand-dashboard.component.html',
-  styleUrls: ['./brand-dashboard.component.css'],
+  styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
   imports: [CommonModule, FormsModule]

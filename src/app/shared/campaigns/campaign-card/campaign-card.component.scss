@@ -1,9 +1,6 @@
-$accent: #e8612d;
-$accent-dark: #d4551f;
-$border: #e8e8e8;
-$text-dark: #1a1a2e;
-$text-muted: #7a7a8e;
-$radius: 12px;
+@use '../../styles/campaign-variables' as *;
+@use '../../styles/campaign-badges' as *;
+@use '../../styles/campaign-buttons' as *;
 
 .campaign-card {
   border: 1px solid $border;
@@ -13,148 +10,87 @@ $radius: 12px;
   transition: box-shadow 0.2s;
   display: flex;
   flex-direction: column;
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  }
+
+  &:hover { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
 }
 
-/* Image */
 .card-image-wrap {
   position: relative;
   width: 100%;
   height: 170px;
   overflow: hidden;
   background: #f5f5f5;
-}
 
-.card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-.status-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 12px;
-  border-radius: 14px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-
-  &.active {
-    background: #d4edda;
-    color: #155724;
-  }
-  &.pending {
-    background: #fff3cd;
-    color: #856404;
-  }
-  &.completed {
-    background: #d1ecf1;
-    color: #0c5460;
-  }
-  &.draft {
-    background: #e2e3e5;
-    color: #383d41;
+  .status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
   }
 }
 
-/* Body */
 .card-body {
   padding: 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0 0 14px;
+    line-height: 1.3;
+  }
 }
 
-.card-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: $text-dark;
-  margin: 0 0 14px;
-  line-height: 1.3;
-}
-
-/* Meta row */
 .card-meta {
   display: flex;
   gap: 24px;
   margin-bottom: 12px;
-}
 
-.meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 
-.meta-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  color: $text-muted;
-  text-transform: uppercase;
-}
+    .meta-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: $text-muted;
+      text-transform: uppercase;
+    }
 
-.meta-value {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: $text-dark;
-  &.budget {
-    color: $accent;
+    .meta-value {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: $text-dark;
+
+      &.budget { color: $accent; }
+    }
   }
 }
 
-/* Timeline */
 .card-timeline {
   display: flex;
   flex-direction: column;
   gap: 2px;
   margin-bottom: 16px;
+
+  .timeline-value {
+    font-size: 0.85rem;
+    color: $text-dark;
+  }
 }
 
-.timeline-value {
-  font-size: 0.85rem;
-  color: $text-dark;
-}
-
-/* Actions */
 .card-actions {
   display: flex;
   gap: 10px;
   margin-top: auto;
-}
-
-.btn-details {
-  flex: 1;
-  background: #fff;
-  border: 1px solid $border;
-  border-radius: 8px;
-  padding: 8px 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: $text-dark;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    border-color: $text-dark;
-  }
-}
-
-.btn-manage {
-  flex: 1;
-  background: $accent;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.2s;
-  &:hover {
-    background: $accent-dark;
-  }
 }

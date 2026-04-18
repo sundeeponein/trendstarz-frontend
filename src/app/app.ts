@@ -1,12 +1,11 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgSelectModule],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

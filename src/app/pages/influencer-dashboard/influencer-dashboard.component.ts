@@ -10,7 +10,7 @@ import { ConfigService } from '../../shared/config.service';
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
-  styleUrls: ['./influencer-dashboard.component.css'],
+  styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
   imports: [CommonModule, DecimalPipe, SlicePipe, CampaignDetailModalComponent]
 })

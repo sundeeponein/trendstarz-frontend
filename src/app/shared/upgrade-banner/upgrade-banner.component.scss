@@ -1,0 +1,29 @@
+.upgrade-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a2540;
+  color: #fff;
+  border-radius: 18px;
+  padding: 1.5rem 2rem;
+  margin: 2rem 0;
+
+  &-text {
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+
+  &-btn {
+    background: #ff6a2b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover { background: #e8612d; }
+  }
+}
