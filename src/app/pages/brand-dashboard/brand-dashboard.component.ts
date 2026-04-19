@@ -26,6 +26,12 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   states: string[] = [];
   profileIncomplete = false;
   emailVerificationError: string | null = null;
+  paymentHistory: any[] = [];
+  paymentSummary = {
+    spentThisMonth: 0,
+    platformFeesPaid: 0,
+    pendingPayouts: 0,
+  };
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -79,11 +85,62 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         const brand = data.brand || {};
         this.profileIncomplete = !brand.brandName || !brand.categories?.length || !brand.location?.state;
         this.loading = false;
+        this.loadPaymentHistory();
       },
       error: (err: any) => {
         this.error = err?.error?.message || 'Failed to load dashboard.';
         this.loading = false;
       }
+    });
+  }
+
+  loadPaymentHistory() {
+    this.config.getMyCampaignTransactions().subscribe({
+      next: (rows: any[]) => {
+        this.paymentHistory = rows;
+        this.recomputePaymentSummary(rows);
+      },
+      error: () => {
+        this.paymentHistory = [];
+        this.recomputePaymentSummary([]);
+      },
+    });
+  }
+
+  private recomputePaymentSummary(rows: any[]) {
+    const month = new Date().getMonth();
+    const year = new Date().getFullYear();
+    const isThisMonth = (d?: string) => {
+      if (!d) return false;
+      const dt = new Date(d);
+      return dt.getMonth() === month && dt.getFullYear() === year;
+    };
+
+    const spentThisMonth = rows
+      .filter((r: any) => r.payerRole === 'brand' && isThisMonth(r.updatedAt || r.createdAt))
+      .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
+
+    const platformFeesPaid = rows
+      .filter((r: any) => r.payerRole === 'brand')
+      .reduce((sum: number, r: any) => sum + Number(r.platformFee || 0), 0);
+
+    const pendingPayouts = rows
+      .filter((r: any) => r.recipientRole === 'brand' && (r.payoutStatus === 'pending' || r.payoutStatus === 'processing'))
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    this.paymentSummary = { spentThisMonth, platformFeesPaid, pendingPayouts };
+  }
+
+  formatPaise(amount: number): string {
+    return `₹${((amount || 0) / 100).toLocaleString('en-IN')}`;
+  }
+
+  formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     });
   }
   onVerifyEmail() {

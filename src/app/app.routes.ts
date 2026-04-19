@@ -43,7 +43,7 @@ export const routes: Routes = [
 			{ path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
 			{ path: 'admin-user-table', loadComponent: () => import('./pages/admin/admin-users-table/admin-user-table.component').then(m => m.AdminUserTableComponent) },
 			{ path: 'admin-management', loadComponent: () => import('./pages/admin/admin-management/admin-management.component').then(m => m.AdminManagementComponent) },
-			{ path: 'payments', loadComponent: () => import('./pages/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },			{ path: 'plans', loadComponent: () => import('./pages/admin/admin-plans/admin-plans.component').then(m => m.AdminPlansComponent) },			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
+			{ path: 'payments', loadComponent: () => import('./features/payments-payouts/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },			{ path: 'plans', loadComponent: () => import('./pages/admin/admin-plans/admin-plans.component').then(m => m.AdminPlansComponent) },			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
 			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 		],

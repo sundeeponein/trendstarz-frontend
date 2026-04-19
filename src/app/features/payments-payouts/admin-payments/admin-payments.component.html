@@ -1,0 +1,30 @@
+<div class="container-fluid p-4">
+  <h2 class="page-title">💳 Premium Payments</h2>
+
+  <!-- Error / Success alerts -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="alert-close" (click)="error = ''">×</button>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="alert-close" (click)="successMessage = ''">×</button>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab" [class.active]="viewMode === 'premium'" (click)="setViewMode('premium')">Premium</button>
+    <button class="mode-tab" [class.active]="viewMode === 'transactions'" (click)="setViewMode('transactions')">Transactions</button>
+  </div>
+
+  <app-premium-payments-panel
+    [hidden]="viewMode !== 'premium'"
+    (errorMessage)="onError($event)"
+    (successMessage)="onSuccess($event)">
+  </app-premium-payments-panel>
+
+  <app-campaign-transactions-panel
+    [hidden]="viewMode !== 'transactions'"
+    (errorMessage)="onError($event)"
+    (successMessage)="onSuccess($event)">
+  </app-campaign-transactions-panel>
+</div>

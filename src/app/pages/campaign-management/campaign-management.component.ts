@@ -97,19 +97,10 @@ export class CampaignManagementComponent implements OnInit {
     this.bulkSending = true;
     this.cd.detectChanges();
     const ids = Array.from(this.selectedInfluencerIds);
-    // Filter out null/undefined influencers and those without _id
-    const influencers = this.allInfluencersForInvite.filter(
-      inf => inf && inf._id && ids.includes(inf._id)
-    );
-    let completed = 0;
-    let failed = 0;
-    const finish = () => {
-      completed++;
-      if (completed === influencers.length) {
+    this.config.inviteInfluencers(this.invitePanelCampaign._id, ids).subscribe({
+      next: () => {
         this.bulkSending = false;
         this.selectedInfluencerIds.clear();
-        if (failed > 0) this.inviteError = `${failed} invite(s) failed. The rest were sent.`;
-        // Refresh invite panel list
         this.config.getInvitesByCampaign(this.invitePanelCampaign!._id!).subscribe({
           next: (invites: any[]) => {
             this.invites = invites;
@@ -117,20 +108,13 @@ export class CampaignManagementComponent implements OnInit {
             this.cd.detectChanges();
           }
         });
-        // Force refresh all campaign invite stats
         this.loadAllInvitesForce();
+      },
+      error: (err: any) => {
+        this.bulkSending = false;
+        this.inviteError = err?.error?.message || 'Failed to send selected invites.';
         this.cd.detectChanges();
-      }
-    };
-    influencers.forEach(inf => {
-      if (!inf || !inf._id) return; // Guard
-      this.config.createCampaignInvite({
-        campaignId: this.invitePanelCampaign!._id!,
-        influencerId: inf._id
-      }).subscribe({
-        next: () => finish(),
-        error: () => { failed++; finish(); this.loadAllInvites(); }
-      });
+      },
     });
   }
 
@@ -364,16 +348,19 @@ export class CampaignManagementComponent implements OnInit {
           // Send invites to selected influencers if any
           if (inviteInfluencerIds?.length && created._id) {
             const validIds = inviteInfluencerIds.filter(id => !!id);
-            let done = 0;
             if (validIds.length === 0) {
               this.loadAllInvitesForce();
               this.cd.detectChanges();
             } else {
-              validIds.forEach(influencerId => {
-                this.config.createCampaignInvite({ campaignId: created._id!, influencerId }).subscribe({
-                  next: () => { done++; if (done === validIds.length) { this.loadAllInvitesForce(); this.cd.detectChanges(); } },
-                  error: () => { done++; if (done === validIds.length) { this.loadAllInvitesForce(); this.cd.detectChanges(); } }
-                });
+              this.config.inviteInfluencers(created._id, validIds).subscribe({
+                next: () => {
+                  this.loadAllInvitesForce();
+                  this.cd.detectChanges();
+                },
+                error: () => {
+                  this.loadAllInvitesForce();
+                  this.cd.detectChanges();
+                }
               });
             }
           } else {
@@ -643,6 +630,7 @@ export class CampaignManagementComponent implements OnInit {
 
   // Preview modal — shows campaign + brand details before accept/decline
   invitePreview: any | null = null;
+  selectedInvitePostDates: Record<string, string> = {};
 
   openInvitePreview(inv: any) {
     this.invitePreview = inv;
@@ -652,8 +640,28 @@ export class CampaignManagementComponent implements OnInit {
     this.invitePreview = null;
   }
 
+  private showError(message: string) {
+    this.toastMessage = message;
+    this.showErrorToast = true;
+    this.cd.detectChanges();
+    setTimeout(() => {
+      this.showErrorToast = false;
+      this.cd.detectChanges();
+    }, 5000);
+  }
+
   respondToMyInvite(inviteId: string, status: 'accepted' | 'declined') {
-    this.config.respondToInvite(inviteId, status).subscribe({
+    const selectedPostDate = status === 'accepted' ? this.selectedInvitePostDates[inviteId] : undefined;
+    if (status === 'accepted' && !selectedPostDate) {
+      this.showError('Please select a post date before accepting this invite.');
+      return;
+    }
+    const invite = this.myInvites.find(i => i._id === inviteId) || this.invitePreview;
+    if (status === 'accepted' && invite && !this.isSelectedDateValid(invite, selectedPostDate!)) {
+      this.showError('Selected post date must be between campaign start and end dates.');
+      return;
+    }
+    this.config.respondToInvite(inviteId, status, selectedPostDate).subscribe({
       next: () => {
         this.myInvites = this.myInvites.map(i =>
           i._id === inviteId ? { ...i, status } : i
@@ -666,6 +674,16 @@ export class CampaignManagementComponent implements OnInit {
       },
       error: (err: any) => console.error('Failed to respond to invite', err)
     });
+  }
+
+  private isSelectedDateValid(inv: any, selectedPostDate: string): boolean {
+    const c = inv?.campaignId;
+    const start = c?.startDate || c?.timelineStart;
+    const end = c?.endDate || c?.timelineEnd;
+    if (!start || !end) return true;
+    const s = new Date(selectedPostDate);
+    if (Number.isNaN(s.getTime())) return false;
+    return s >= new Date(start) && s <= new Date(end);
   }
 
   formatPreviewTimeline(inv: any): string {

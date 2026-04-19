@@ -235,11 +235,13 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
       if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+        const selectedState = this.states.find((s: any) => s._id === stateId || s.id === stateId || s.name === stateId);
+        const stateName = selectedState?.name || (typeof stateId === 'string' ? stateId : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateId === 'string' ? stateId : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cdr.detectChanges(); },
+          error: () => { this.districts = []; this.cdr.detectChanges(); }
+        });
       }
     });
 
@@ -517,16 +519,45 @@ export class InfluencerRegistrationComponent implements OnInit {
         });
       },
       error: err => {
-        const msg = String(err?.error?.message || err?.message || '').toLowerCase();
+        const rawMessage = err?.error?.message;
+        const parsedMessage = Array.isArray(rawMessage)
+          ? rawMessage.join(', ')
+          : typeof rawMessage === 'object' && rawMessage !== null
+            ? String((rawMessage as any).message || JSON.stringify(rawMessage))
+            : String(rawMessage || err?.message || '');
+        const msg = parsedMessage.toLowerCase();
         const dups: string[] = Array.isArray(err?.error?.duplicateFields) ? err.error.duplicateFields.map((f: any) => String(f).toLowerCase()) : [];
-        if (dups.includes('username')) { this.duplicateUsernameError = 'Username already exists.'; this.registrationForm.get('username')?.setErrors({ duplicate: true }); }
-        if (dups.includes('email')) { this.duplicateEmailError = 'Email already exists.'; this.registrationForm.get('email')?.setErrors({ duplicate: true }); }
-        if (dups.includes('phonenumber') || dups.includes('phone') || dups.includes('mobile')) { this.duplicatePhoneError = 'Mobile number already exists.'; this.registrationForm.get('phoneNumber')?.setErrors({ duplicate: true }); }
-        if (dups.length) { this.currentStep = 1; this.refreshStepCompletion(); this.isSubmitting = false; return; }
+        const duplicateLabels: string[] = [];
+        if (dups.includes('username')) {
+          this.duplicateUsernameError = 'Username already exists.';
+          this.registrationForm.get('username')?.setErrors({ duplicate: true });
+          duplicateLabels.push('Username');
+        }
+        if (dups.includes('email')) {
+          this.duplicateEmailError = 'Email already exists.';
+          this.registrationForm.get('email')?.setErrors({ duplicate: true });
+          duplicateLabels.push('Email');
+        }
+        if (dups.includes('phonenumber') || dups.includes('phone') || dups.includes('mobile')) {
+          this.duplicatePhoneError = 'Mobile number already exists.';
+          this.registrationForm.get('phoneNumber')?.setErrors({ duplicate: true });
+          duplicateLabels.push('Mobile number');
+        }
+        if (dups.length) {
+          this.registrationError = duplicateLabels.length === 1
+            ? `${duplicateLabels[0]} already exists. Please use a different value.`
+            : duplicateLabels.length > 1
+              ? `${duplicateLabels.join(' and ')} already exist. Please use different values.`
+              : 'Some fields already exist. Please update and try again.';
+          this.currentStep = 1;
+          this.refreshStepCompletion();
+          this.isSubmitting = false;
+          return;
+        }
         if (msg.includes('username') && msg.includes('already exists')) { this.duplicateUsernameError = 'Username already exists.'; this.currentStep = 1; this.isSubmitting = false; return; }
         if (msg.includes('email') && msg.includes('already exists')) { this.duplicateEmailError = 'Email already exists.'; this.currentStep = 1; this.isSubmitting = false; return; }
         if ((msg.includes('phone') || msg.includes('mobile')) && msg.includes('already exists')) { this.duplicatePhoneError = 'Mobile number already exists.'; this.currentStep = 1; this.isSubmitting = false; return; }
-        this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
+        this.registrationError = parsedMessage || 'Registration failed. Please try again.';
         this.refreshStepCompletion(); this.isSubmitting = false;
       }
     });

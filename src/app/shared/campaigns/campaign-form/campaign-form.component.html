@@ -56,6 +56,16 @@
         </div>
 
         <div class="field-group">
+          <label class="field-label">Campaign type <span class="required">*</span></label>
+          <select formControlName="campaignType" class="field-input">
+            <option value="paid_collab">Paid collaboration</option>
+            <option value="product">Product collaboration</option>
+            <option value="invite_location">Invite to location</option>
+            <option value="pay_to_join">Pay to join</option>
+          </select>
+        </div>
+
+        <div class="field-group">
           <label class="field-label">Campaign image</label>
           <div class="image-upload-area" *ngIf="!imagePreview">
             <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
@@ -84,25 +94,9 @@
           </div>
         </div>
 
-        <div class="field-row">
-          <div class="field-group half">
-            <label class="field-label">Budget min (₹)</label>
-            <input type="number" formControlName="budgetMin" class="field-input" placeholder="0" min="0" />
-          </div>
-          <div class="field-group half">
-            <label class="field-label">Budget max (₹)</label>
-            <input type="number" formControlName="budgetMax" class="field-input" placeholder="0" min="0" />
-          </div>
-        </div>
-
-        <div class="budget-preview" *ngIf="f['budgetMin'].value || f['budgetMax'].value">
-          <span>Budget range:</span>
-          <strong class="budget-preview__value">
-            <ng-container *ngIf="f['budgetMin'].value">₹{{ f['budgetMin'].value | number }}</ng-container>
-            <ng-container *ngIf="f['budgetMin'].value && f['budgetMax'].value"> – </ng-container>
-            <ng-container *ngIf="f['budgetMax'].value">₹{{ f['budgetMax'].value | number }}</ng-container>
-          </strong>
-        </div>
+        <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDateRange']">
+          End date must be on or after start date.
+        </span>
 
         <p class="step-indicator">Step 1 of 3</p>
       </div>
@@ -120,6 +114,26 @@
     ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 2">
       <div class="form-body">
+
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Price per influencer (₹) <span class="required">*</span></label>
+            <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 1200" min="1" />
+            <span class="field-error" *ngIf="f['pricePerInfluencer'].touched && f['pricePerInfluencer'].invalid">Enter a value greater than 0</span>
+          </div>
+          <div class="field-group half">
+            <label class="field-label">Max influencers <span class="required">*</span></label>
+            <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
+            <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+          </div>
+        </div>
+
+        <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
+          <span>Estimated budget:</span>
+          <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
+        </div>
+
+        <p class="trust-note"><i class="bi bi-shield-check"></i> Brand pays only for accepted influencers</p>
 
         <div class="field-group">
           <label class="field-label">Content categories</label>
@@ -210,6 +224,10 @@
                     placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
         </div>
 
+        <div class="trust-note-list">
+          <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
+        </div>
+
         <p class="step-indicator">Step 2 of 3</p>
       </div>
 
@@ -228,6 +246,16 @@
     ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
+
+        <div class="invite-summary" *ngIf="f['pricePerInfluencer'].value && f['maxInfluencers'].value">
+          <div>Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
+          <div>Selected: <strong>{{ selectedInfluencerIds.size }} / {{ f['maxInfluencers'].value }}</strong></div>
+          <div>Estimated total: <strong>₹{{ (selectedInfluencerIds.size * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
+        </div>
+
+        <p class="field-error" *ngIf="selectedInfluencerIds.size >= (f['maxInfluencers'].value || 0) && (f['maxInfluencers'].value || 0) > 0">
+          You reached max influencer selection for this campaign.
+        </p>
 
         <div class="inf-search-box">
           <i class="bi bi-search"></i>
@@ -265,6 +293,10 @@
             <span *ngIf="uploading">Saving…</span>
             <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
           </button>
+        </div>
+
+        <div class="trust-note-list">
+          <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
         </div>
 
         <div class="text-center py-4" *ngIf="influencersLoading">

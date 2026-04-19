@@ -174,11 +174,13 @@ export class BrandRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
       if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+        const selectedState = this.states.find((s: any) => s._id === stateId || s.id === stateId || s.name === stateId);
+        const stateName = selectedState?.name || (typeof stateId === 'string' ? stateId : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateId === 'string' ? stateId : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+          error: () => { this.districts = []; this.cd.detectChanges(); }
+        });
       }
     });
 
@@ -674,27 +676,45 @@ export class BrandRegistrationComponent implements OnInit {
         this.cd.detectChanges();
       },
       error: (err: any) => {
+        const rawMessage = err?.error?.message;
+        const parsedMessage = Array.isArray(rawMessage)
+          ? rawMessage.join(', ')
+          : typeof rawMessage === 'object' && rawMessage !== null
+            ? String((rawMessage as any).message || JSON.stringify(rawMessage))
+            : String(rawMessage || err?.message || '');
+
         const duplicateFields: string[] = Array.isArray(err?.error?.duplicateFields)
           ? err.error.duplicateFields.map((f: any) => String(f).toLowerCase())
           : [];
 
         if (duplicateFields.length) {
+          const duplicateLabels: string[] = [];
           if (duplicateFields.includes('brandname')) {
             this.duplicateBrandNameError = 'Brand name already exists. Please choose another.';
             this.registrationForm.get('brandName')?.setErrors({ ...(this.registrationForm.get('brandName')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Brand name');
           }
           if (duplicateFields.includes('brandusername') || duplicateFields.includes('username')) {
             this.duplicateUsernameError = 'Brand username already exists. Please choose another.';
             this.registrationForm.get('brandUsername')?.setErrors({ ...(this.registrationForm.get('brandUsername')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Brand username');
           }
           if (duplicateFields.includes('email')) {
             this.duplicateEmailError = 'Email already exists. Please use another email or login.';
             this.registrationForm.get('email')?.setErrors({ ...(this.registrationForm.get('email')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Email');
           }
           if (duplicateFields.includes('phonenumber') || duplicateFields.includes('phone') || duplicateFields.includes('mobile')) {
             this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
             this.registrationForm.get('phoneNumber')?.setErrors({ ...(this.registrationForm.get('phoneNumber')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Mobile number');
           }
+
+          this.registrationError = duplicateLabels.length === 1
+            ? `${duplicateLabels[0]} already exists. Please use a different value.`
+            : duplicateLabels.length > 1
+              ? `${duplicateLabels.join(' and ')} already exist. Please use different values.`
+              : 'Some fields already exist. Please update and try again.';
 
           this.currentStep = 1;
           this.refreshStepCompletion();
@@ -702,7 +722,25 @@ export class BrandRegistrationComponent implements OnInit {
           return;
         }
 
-        this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
+        const lower = parsedMessage.toLowerCase();
+        if (lower.includes('brand name') && lower.includes('already exists')) {
+          this.duplicateBrandNameError = 'Brand name already exists. Please choose another.';
+          this.registrationForm.get('brandName')?.setErrors({ ...(this.registrationForm.get('brandName')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.isSubmitting = false;
+          this.refreshStepCompletion();
+          return;
+        }
+        if ((lower.includes('brandusername') || lower.includes('brand username') || lower.includes('username')) && lower.includes('already exists')) {
+          this.duplicateUsernameError = 'Brand username already exists. Please choose another.';
+          this.registrationForm.get('brandUsername')?.setErrors({ ...(this.registrationForm.get('brandUsername')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.isSubmitting = false;
+          this.refreshStepCompletion();
+          return;
+        }
+
+        this.registrationError = parsedMessage || 'Registration failed. Please try again.';
         this.isSubmitting = false;
         this.cd.detectChanges();
       }

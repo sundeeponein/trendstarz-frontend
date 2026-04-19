@@ -57,6 +57,13 @@
 
               <!-- Pending/Invited: accept / decline -->
               <div class="inv-actions" *ngIf="inv.status === 'pending' || inv.status === 'invited'">
+                <input
+                  type="date"
+                  class="inv-date-input"
+                  [(ngModel)]="selectedInvitePostDates[inv._id]"
+                  [min]="(inv.campaignId?.startDate || inv.campaignId?.timelineStart || '').substring(0,10)"
+                  [max]="(inv.campaignId?.endDate || inv.campaignId?.timelineEnd || '').substring(0,10)"
+                />
                 <button class="btn-accept" (click)="respondToMyInvite(inv._id, 'accepted')">
                   <i class="bi bi-check-lg"></i> Accept
                 </button>
@@ -643,6 +650,13 @@
         {{ invitePreview.status | uppercase }}
       </span>
       <ng-container *ngIf="invitePreview.status === 'pending'">
+        <input
+          type="date"
+          class="inv-date-input"
+          [(ngModel)]="selectedInvitePostDates[invitePreview._id]"
+          [min]="(invitePreview.campaignId?.startDate || invitePreview.campaignId?.timelineStart || '').substring(0,10)"
+          [max]="(invitePreview.campaignId?.endDate || invitePreview.campaignId?.timelineEnd || '').substring(0,10)"
+        />
         <button class="btn-decline" (click)="respondToMyInvite(invitePreview._id, 'declined'); closeInvitePreview()">
           <i class="bi bi-x-lg"></i> Decline
         </button>

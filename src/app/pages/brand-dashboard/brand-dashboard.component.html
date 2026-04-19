@@ -110,4 +110,46 @@
       </div>
     </div>
   </div>
+
+  <div class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-2">
+      <span class="dot dot--orange me-2"></span> Payments / Transactions
+      <span class="section-count ms-auto">{{ paymentHistory.length }}</span>
+    </div>
+
+    <div class="payments-summary" *ngIf="paymentHistory.length">
+      <div>Total spent this month: <strong>{{ formatPaise(paymentSummary.spentThisMonth) }}</strong></div>
+      <div>Platform fees paid: <strong>{{ formatPaise(paymentSummary.platformFeesPaid) }}</strong></div>
+      <div>Pending payouts to brand: <strong>{{ formatPaise(paymentSummary.pendingPayouts) }}</strong></div>
+    </div>
+
+    <div class="table-responsive" *ngIf="paymentHistory.length">
+      <table class="table table-sm payments-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Amount Paid</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tx of paymentHistory | slice:0:8">
+            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join' }}</td>
+            <td>{{ formatPaise(tx.payerTotal) }}</td>
+            <td>{{ formatPaise(tx.platformFee) }}</td>
+            <td>{{ tx.payoutStatus || tx.collectionStatus }}</td>
+            <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!paymentHistory.length" class="section-empty">
+      <div class="section-empty-icon"><i class="bi bi-wallet2"></i></div>
+      <div class="section-empty-title">No campaign transactions yet</div>
+      <div class="section-empty-desc">Campaign payment history will appear here.</div>
+    </div>
+  </div>
 </div>

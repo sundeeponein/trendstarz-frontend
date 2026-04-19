@@ -35,6 +35,11 @@ export class CampaignFormComponent implements OnInit {
   selectedFile: File | null = null;
   uploading = false;
   currentStep = 1;
+  trustLabels = [
+    'You pay only for accepted influencers',
+    'Payment secured by TrendStarz',
+    'Released after campaign approval',
+  ];
   categoriesList: any[] = [];
   selectedCategories: string[] = [];
   selectedPlatforms: string[] = [];
@@ -48,15 +53,16 @@ export class CampaignFormComponent implements OnInit {
     this.form = this.fb.group({
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
       description: [this.campaign?.description || ''],
+      campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
       status: [this.campaign?.status || 'draft'],
-      budgetMin: [this.campaign?.budgetMin || null, [Validators.min(0)]],
-      budgetMax: [this.campaign?.budgetMax || null, [Validators.min(0)]],
+      pricePerInfluencer: [this.getInitialPricePerInfluencer(), [Validators.required, Validators.min(1)]],
+      maxInfluencers: [(this.campaign as any)?.maxInfluencers || null, [Validators.required, Validators.min(1)]],
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
       minFollowerCount: [this.campaign?.minFollowerCount || null, [Validators.min(0)]],
       platformPreference: [this.campaign?.platformPreference || ''],
       specialInstructions: [this.campaign?.specialInstructions || ''],
-    });
+    }, { validators: [this.dateRangeValidator] });
 
     if (this.campaign?.image?.url) {
       this.imagePreview = this.campaign.image.url;
@@ -99,9 +105,35 @@ export class CampaignFormComponent implements OnInit {
   get isEdit(): boolean { return this.mode === 'edit'; }
   get f() { return this.form.controls; }
 
+  get estimatedBudgetRupees(): number {
+    const price = Number(this.f['pricePerInfluencer']?.value || 0);
+    const maxInf = Number(this.f['maxInfluencers']?.value || 0);
+    return price * maxInf;
+  }
+
+  private getInitialPricePerInfluencer(): number | null {
+    const existingPaise = Number((this.campaign as any)?.pricePerInfluencer || 0);
+    if (existingPaise > 0) return Math.floor(existingPaise / 100);
+    const budgetMin = Number(this.campaign?.budgetMin || 0);
+    return budgetMin > 0 ? budgetMin : null;
+  }
+
+  private dateRangeValidator = (group: FormGroup) => {
+    const start = group.get('timelineStart')?.value;
+    const end = group.get('timelineEnd')?.value;
+    if (!start || !end) return null;
+    return new Date(end) >= new Date(start) ? null : { invalidDateRange: true };
+  };
+
   // ── Stepper helpers ──────────────────────────────────────────
   step1Valid(): boolean {
-    return !!(this.f['title'].valid && this.f['timelineStart'].value && this.f['timelineEnd'].value);
+    return !!(
+      this.f['title'].valid &&
+      this.f['campaignType'].valid &&
+      this.f['timelineStart'].value &&
+      this.f['timelineEnd'].value &&
+      !this.form.errors?.['invalidDateRange']
+    );
   }
 
   goToStep(step: number) {
@@ -221,8 +253,15 @@ export class CampaignFormComponent implements OnInit {
   }
 
   toggleInfluencerSelect(id: string) {
-    if (this.selectedInfluencerIds.has(id)) this.selectedInfluencerIds.delete(id);
-    else this.selectedInfluencerIds.add(id);
+    const max = Number(this.f['maxInfluencers']?.value || 0);
+    if (this.selectedInfluencerIds.has(id)) {
+      this.selectedInfluencerIds.delete(id);
+      return;
+    }
+    if (max > 0 && this.selectedInfluencerIds.size >= max) {
+      return;
+    }
+    this.selectedInfluencerIds.add(id);
   }
 
   onImgError(event: Event) {
@@ -323,11 +362,18 @@ export class CampaignFormComponent implements OnInit {
     const payload: any = {
       title: v.title,
       description: v.description,
+      campaignType: v.campaignType,
       status: v.status,
-      budgetMin: v.budgetMin ? +v.budgetMin : undefined,
-      budgetMax: v.budgetMax ? +v.budgetMax : undefined,
+      pricePerInfluencer: v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : undefined,
+      maxInfluencers: v.maxInfluencers ? +v.maxInfluencers : undefined,
+      estimatedBudget: this.estimatedBudgetRupees > 0 ? Math.round(this.estimatedBudgetRupees * 100) : undefined,
+      budgetMin: this.estimatedBudgetRupees > 0 ? Math.round(this.estimatedBudgetRupees) : undefined,
+      budgetMax: this.estimatedBudgetRupees > 0 ? Math.round(this.estimatedBudgetRupees) : undefined,
       timelineStart: v.timelineStart || undefined,
       timelineEnd: v.timelineEnd || undefined,
+      startDate: v.timelineStart || undefined,
+      endDate: v.timelineEnd || undefined,
+      platforms: this.selectedPlatforms,
       categories: this.selectedCategories,
       deliverables: this.platformDeliverables.flatMap(pd =>
         pd.contentTypes.filter(ct => ct.enabled).map(ct => ct.name)
@@ -354,7 +400,7 @@ export class CampaignFormComponent implements OnInit {
     this.save.emit({
       ...payload,
       inviteInfluencerIds: this.selectedInfluencerIds.size > 0
-        ? Array.from(this.selectedInfluencerIds)
+        ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
         : undefined,
     });
     // After inviting, refresh the invites list so UI updates

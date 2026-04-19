@@ -122,6 +122,14 @@
 
         <!-- CTA buttons -->
         <div class="invite-card__actions" (click)="$event.stopPropagation()">
+          <input
+            class="invite-post-date"
+            type="date"
+            [(ngModel)]="selectedPostDates[inv._id]"
+            [min]="(getCampaignTimeline(inv)?.start || '').substring(0, 10)"
+            [max]="(getCampaignTimeline(inv)?.end || '').substring(0, 10)"
+            title="Select posting date within campaign timeline"
+          />
           <button class="btn-invite-action btn-accept" (click)="respond(inv._id, 'accepted')" [disabled]="responding === inv._id">
             <i class="bi bi-check-lg"></i> Accept
           </button>
@@ -133,6 +141,50 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading" class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--blue me-2"></span>
+      Earnings / Payments
+      <span class="section-count ms-2">{{ paymentHistory.length }}</span>
+    </div>
+
+    <div class="invite-summary" *ngIf="paymentHistory.length">
+      <div>Total earned this month: <strong>{{ formatPaise(paymentSummary.earnedThisMonth) }}</strong></div>
+      <div>Pending payout: <strong>{{ formatPaise(paymentSummary.pending) }}</strong></div>
+      <div>Total paid in (pay-to-join): <strong>{{ formatPaise(paymentSummary.paidInPayToJoin) }}</strong></div>
+    </div>
+
+    <div class="table-responsive" *ngIf="paymentHistory.length">
+      <table class="table table-sm payments-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tx of paymentHistory | slice:0:8">
+            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join' }}</td>
+            <td>
+              <span *ngIf="tx.recipientRole === 'influencer'">+{{ formatPaise(tx.recipientPayout) }}</span>
+              <span *ngIf="tx.payerRole === 'influencer'">-{{ formatPaise(tx.payerTotal) }}</span>
+            </td>
+            <td>{{ tx.payoutStatus || tx.collectionStatus }}</td>
+            <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-empty" *ngIf="!paymentHistory.length">
+      <div class="section-empty-icon"><i class="bi bi-wallet2"></i></div>
+      <div class="section-empty-title">No payment transactions yet</div>
+      <div class="section-empty-desc">Your campaign earnings and payments will appear here.</div>
     </div>
   </div>
 

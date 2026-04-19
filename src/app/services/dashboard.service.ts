@@ -24,8 +24,8 @@ export class DashboardService {
     return this.http.get<any[]>(`${this.api}/users/influencers/search`, { params });
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined'): Observable<any> {
-    return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, { status });
+  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string): Observable<any> {
+    return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, { status, selectedPostDate });
   }
 
   getMyInvites(): Observable<any[]> {

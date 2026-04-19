@@ -117,9 +117,12 @@ export class ConfigService {
     );
   }
 
-  getDistricts(stateName?: string): Observable<any[]> {
+  getDistricts(stateName?: string, stateId?: string): Observable<any[]> {
     let url = `${this.apiUrl}/districts`;
-    if (stateName) url += `?state=${encodeURIComponent(stateName)}`;
+    const params: string[] = [];
+    if (stateName) params.push(`state=${encodeURIComponent(stateName)}`);
+    if (stateId) params.push(`stateId=${encodeURIComponent(stateId)}`);
+    if (params.length) url += `?${params.join('&')}`;
     return this.http.get<any>(url).pipe(
       map((res) => this.extractData<any[]>(res) || [])
     );
@@ -288,6 +291,28 @@ export class ConfigService {
     return this.http.patch(`${this.apiUrl}/campaigns/${id}`, data);
   }
 
+  inviteInfluencers(campaignId: string, influencerIds: string[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaigns/${campaignId}/invite-influencers`, { influencerIds });
+  }
+
+  calculateCampaignPayment(campaignId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/calculate`, {});
+  }
+
+  getMyCampaignTransactions(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-transactions/my/history`).pipe(
+      map(res => {
+        const d = this.extractData<any>(res);
+        return Array.isArray(d) ? d : (Array.isArray(res?.data) ? res.data : []);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
+  }
+
   deleteCampaign(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/campaigns/${id}`);
   }
@@ -319,8 +344,8 @@ export class ConfigService {
     );
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined'): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, { status });
+  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, { status, selectedPostDate });
   }
 
   submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {

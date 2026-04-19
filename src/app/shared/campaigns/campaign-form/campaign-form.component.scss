@@ -257,6 +257,39 @@ form {
   font-size: 0.9rem;
 }
 
+.trust-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: #4a4a62;
+  font-size: 0.82rem;
+
+  i {
+    color: $accent;
+  }
+}
+
+.trust-note-list {
+  margin-top: 10px;
+}
+
+.invite-summary {
+  border: 1px solid $border;
+  background: #fff7f2;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: grid;
+  gap: 6px;
+  color: #4a4a62;
+  font-size: 0.85rem;
+
+  strong {
+    color: $text-dark;
+  }
+}
+
 /* ── Step indicator ──────────────────── */
 .step-indicator {
   font-size: 0.75rem;
