@@ -1,3 +1,4 @@
+
 import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +14,9 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./admin-management.component.scss']
 })
 export class AdminManagementComponent implements OnInit {
+  getDistrictIndex(dist: any): number {
+    return this.config.districts.findIndex((d: any) => d._id === dist._id);
+  }
   activeTab: string = 'influencer';
   config: any = {
     socialMediaPlatforms: [],
@@ -163,30 +167,87 @@ export class AdminManagementComponent implements OnInit {
   saveAllVisibility() {
     const baseUrl = environment.apiBaseUrl;
     if (!baseUrl) {
-  // console.error('API base URL is not set in environment.');
       return;
     }
-
-    const payload = {
-      tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })),
-      socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
-      categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
-      languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
-      states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
-      districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
-    };
-  // console.log('[BatchUpdate] Payload:', payload);
+    let payload: any = {};
+    let reloadFn: () => void = () => {};
+    switch (this.activeTab) {
+      case 'tiers':
+        payload = { tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })) };
+        reloadFn = () => {
+          this.http.get(baseUrl + '/tiers').subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+          });
+        };
+        break;
+      case 'socialMedia':
+        payload = { socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })) };
+        reloadFn = () => {
+          this.http.get(baseUrl + '/social-media').subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+          });
+        };
+        break;
+      case 'categories':
+        payload = { categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })) };
+        reloadFn = () => {
+          this.http.get(baseUrl + '/categories').subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+          });
+        };
+        break;
+      case 'languages':
+        payload = { languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })) };
+        reloadFn = () => {
+          this.http.get(baseUrl + '/languages').subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.languages = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+          });
+        };
+        break;
+      case 'location':
+        payload = {
+          states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
+          districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
+        };
+        reloadFn = () => {
+          this.http.get(baseUrl + '/states').subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
+          });
+          this.http.get(baseUrl + '/districts').subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+          });
+        };
+        break;
+      default:
+        // fallback to all
+        payload = {
+          tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })),
+          socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
+          categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
+          languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
+          states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
+          districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
+        };
+        reloadFn = () => this.loadConfig();
+    }
+    console.log('[BatchUpdate] Payload:', JSON.stringify(payload, null, 2));
     const token = localStorage.getItem('token');
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.post(baseUrl + '/admin/batch-update-visibility', payload, headers)
       .subscribe({
         next: () => {
           alert('Visibility updated successfully!');
-          this.loadConfig();
+          reloadFn();
         },
         error: (err) => {
           alert('Error saving visibility.');
-          // console.error('Batch update error:', err);
+          console.error('Batch update error:', err);
         }
       });
   }
