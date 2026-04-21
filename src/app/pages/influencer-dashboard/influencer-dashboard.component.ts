@@ -398,6 +398,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  get stats() {
+    return [
+      { label: 'Invited', value: this.dashboard?.invites?.invited || 0 },
+      { label: 'Accepted', value: this.dashboard?.invites?.accepted || 0 },
+      { label: 'Submitted', value: this.dashboard?.invites?.submitted || 0 },
+      { label: 'Completed', value: this.dashboard?.invites?.completed || 0 },
+    ];
+  }
+
   goToStats(campaign: any) {
     this.router.navigate(['/campaign-submission', campaign.inviteId], {
       queryParams: {

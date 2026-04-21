@@ -200,7 +200,7 @@
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="isEditMode && togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
-                <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span>
+                <!-- <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span> -->
               </div>
             </div>
 
@@ -216,7 +216,7 @@
                 >
                   <i [class]="platform.icon"></i>
                   {{ platform.name }}
-                  <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span>
+                  <!-- <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span> -->
                 </button>
                 <div class="platform-tab-spacer"></div>
                 <button
@@ -235,7 +235,7 @@
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                     <span class="platform-name">{{ platform.name }}</span>
-                    <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
+                    <!-- <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span> -->
                     <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
                   </div>
                   <div class="platform-details-body">
@@ -262,13 +262,12 @@
                       </div>
                     </div>
                     <div class="content-types-section">
-                      <label>Content Types & Pricing</label>
+                      <label>Content Types</label>
                       <div class="content-types-list">
                         <ng-container *ngFor="let ct of platform.contentTypes">
                           <div class="content-type-item" *ngIf="ct.visible">
                             <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
                             <span>{{ ct.name }}</span>
-                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
                           </div>
                         </ng-container>
                       </div>
@@ -289,7 +288,7 @@
 
         <section class="form-card" *ngIf="currentStep === 3">
           <h2>Professional</h2>
-          <p class="section-subtitle">Update pricing and contact preferences.</p>
+          <p class="section-subtitle">Update contact preferences.</p>
 
 
           <div class="field-block full-width">
@@ -333,10 +332,6 @@
             </ng-template>
           </div>
           <div class="field-grid">
-            <div class="field-block full-width">
-              <label>Promotional Price</label>
-              <input formControlName="promotionalPrice" type="number" class="form-control" />
-            </div>
             <!-- <div class="field-block full-width" formGroupName="contact">
               <label>Contact Options</label>
               <div class="contact-grid">

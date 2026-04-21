@@ -5,6 +5,9 @@ import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
+  constructor() {
+    this.loadUserFromStorage();
+  }
   private static readonly TOKEN_KEY = 'token';
   private static readonly LOGIN_TIME_KEY = 'loginTimestamp';
   private static readonly SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms

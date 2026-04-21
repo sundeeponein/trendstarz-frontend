@@ -1,8 +1,13 @@
 <div class="upgrade-banner">
   <span class="upgrade-banner-text">
-    <strong>Upgrade to Pro — unlock contact details & advanced filters</strong>
-    <br />
-    Free users see limited info. Pro brands see WhatsApp, email, phone, pricing & engagement rates.
+    <ng-container *ngIf="message && message.length > 0; else defaultText">
+      {{ message }}
+    </ng-container>
+    <ng-template #defaultText>
+      <strong>Upgrade to Pro — unlock contact details & advanced filters</strong>
+      <br />
+      Free users see limited info. Pro brands see WhatsApp, email, phone, pricing & engagement rates.
+    </ng-template>
   </span>
   <button class="upgrade-banner-btn" (click)="onUpgrade()">Upgrade to Pro ₹9999/mo →</button>
 </div>

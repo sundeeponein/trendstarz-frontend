@@ -40,15 +40,21 @@
       <span class="performance-range">LAST 30 DAYS</span>
     </div>
     <div class="row gx-3">
-      <div class="col-6 col-md-3 mb-3 mb-md-0" *ngFor="let stat of [
-        {label: 'Invited', value: dashboard?.invites?.invited || 0, sub: 'Campaigns', color: '#e8612d'},
-        {label: 'Accepted', value: dashboard?.invites?.accepted || 0, sub: 'Active', color: '#22b37a'},
-        {label: 'Submitted', value: dashboard?.invites?.submitted || 0, sub: 'In Review', color: '#2b6cb0'},
-        {label: 'Completed', value: dashboard?.invites?.completed || 0, sub: 'Total', color: '#805ad5'}]">
-        <div class="perf-card text-center">
-          <div class="perf-value" [style.color]="stat.color">{{ stat.value }}</div>
-          <div class="perf-label">{{ stat.label }}</div>
-          <div class="perf-sub">{{ stat.sub }}</div>
+      <div class="col-6 col-md-3 mb-3 mb-md-0" *ngFor="let stat of stats">
+        <div class="card text-center shadow-sm border-0">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1" [ngClass]="{
+              'text-warning': stat.label === 'Invited',
+              'text-success': stat.label === 'Accepted',
+              'text-primary': stat.label === 'Submitted',
+              'text-dark': stat.label === 'Completed'
+            }">{{ stat.value }}</div>
+            <div class="text-muted">{{ stat.label }}</div>
+            <span *ngIf="stat.label === 'Invited'" class="badge rounded-pill bg-warning text-dark">Invited</span>
+            <span *ngIf="stat.label === 'Accepted'" class="badge rounded-pill bg-success">Accepted</span>
+            <span *ngIf="stat.label === 'Submitted'" class="badge rounded-pill bg-info text-dark">Submitted</span>
+            <span *ngIf="stat.label === 'Completed'" class="badge rounded-pill bg-dark">Completed</span>
+          </div>
         </div>
       </div>
     </div>
@@ -80,19 +86,19 @@
     <div class="invite-list">
       <div *ngFor="let inv of invites" class="invite-card" (click)="openDetail(inv)">
         <!-- Brand + campaign header -->
-        <div class="invite-card__header">
-          <div class="invite-brand-logo">
+        <div class="invite-card__header d-flex align-items-center">
+          <div class="invite-brand-logo me-2">
             <img *ngIf="getBrandLogo(inv)" [src]="getBrandLogo(inv)" alt="brand logo" class="brand-logo-img" (error)="onImgError($event)">
             <div *ngIf="!getBrandLogo(inv)" class="brand-logo-placeholder">{{ getBrandInitial(inv) }}</div>
           </div>
-          <div class="invite-card__meta">
+          <div class="invite-card__meta flex-1">
             <div class="invite-brand-name">{{ getBrandName(inv) }}</div>
             <div class="invite-campaign-title">{{ getCampaignTitle(inv) }}</div>
             <div class="invite-categories">
-              <span *ngFor="let cat of getCampaignCategories(inv)" class="chip chip--xs">{{ cat }}</span>
+              <span *ngFor="let cat of getCampaignCategories(inv)" class="badge rounded-pill bg-light text-dark me-1">{{ cat }}</span>
             </div>
           </div>
-          <span class="invite-status-badge invite-status-badge--pending ms-auto">Pending</span>
+          <span class="badge rounded-pill bg-info text-dark ms-auto">Pending</span>
         </div>
 
         <!-- Budget + timeline row -->
@@ -210,10 +216,12 @@
               <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
               <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
               <div class="d-flex gap-2 mt-1 flex-wrap">
-                <span class="chip chip--xs" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
+                <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
               </div>
             </div>
-            <span class="invite-status-badge invite-status-badge--accepted">{{ c.inviteStatus || 'accepted' }}</span>
+            <span *ngIf="c.inviteStatus === 'accepted'" class="badge rounded-pill bg-success ms-2">Accepted</span>
+            <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Submitted</span>
+            <span *ngIf="c.inviteStatus === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
           </div>
           <div class="active-camp-meta mt-2">
             <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
@@ -253,7 +261,8 @@
               <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
               <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
             </div>
-            <span class="invite-status-badge invite-status-badge--completed">{{ c.inviteStatus === 'disputed' ? 'Disputed' : 'Completed' }}</span>
+            <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-danger ms-2">Disputed</span>
+            <span *ngIf="c.inviteStatus !== 'disputed'" class="badge rounded-pill bg-dark ms-2">Completed</span>
           </div>
           <div class="active-camp-metrics" *ngIf="c.metrics">
             <span *ngIf="c.metrics?.reach"><i class="bi bi-people"></i> {{ c.metrics.reach | number }} reach</span>

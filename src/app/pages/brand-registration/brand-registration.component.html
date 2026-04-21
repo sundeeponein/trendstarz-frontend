@@ -47,7 +47,9 @@
 
           <div class="field-grid">
             <div class="field-block full-width media-uploader">
-              <label>Brand Logo <span class="text-danger">*</span></label>
+              <label>Brand Logo <span class="text-danger">*</span>
+                <span *ngIf="submitted && !brandLogoPreview" class="text-danger ms-2">Required</span>
+              </label>
               <div class="upload-box">
                 <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand Logo Preview" class="preview-image" />
                 <p *ngIf="!brandLogoPreview">Upload your brand logo</p>
@@ -58,14 +60,18 @@
             </div>
 
             <div class="field-block">
-              <label>Brand Name <span class="text-danger">*</span></label>
+              <label>Brand Name <span class="text-danger">*</span>
+                <span *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <input formControlName="brandName" type="text" class="form-control" required />
               <div *ngIf="submitted && registrationForm.get('brandName')?.invalid && !duplicateBrandNameError" class="text-danger mt-1">Brand name is required.</div>
               <div *ngIf="duplicateBrandNameError" class="text-danger mt-1">{{ duplicateBrandNameError }}</div>
             </div>
 
             <div class="field-block">
-              <label>Brand Username <span class="text-danger">*</span></label>
+              <label>Brand Username <span class="text-danger">*</span>
+                <span *ngIf="submitted && registrationForm.get('brandUsername')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <input
                 formControlName="brandUsername"
                 (input)="onBrandUsernameInput()"
@@ -76,13 +82,14 @@
                 pattern="^[a-zA-Z0-9_\-]+$"
               />
               <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Brand username is required and supports only letters, numbers, hyphens and underscores.</div>
-              <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
+                      <label>Content Types</label>
             </div>
 
             <div class="field-block">
-              <label>Mobile Number <span class="text-danger">*</span></label>
+              <label>Mobile Number <span class="text-danger">*</span>
+                <span *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                 <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
               </div>
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</div>
@@ -90,7 +97,9 @@
             </div>
 
             <div class="field-block">
-              <label>Email Address <span class="text-danger">*</span></label>
+              <label>Email Address <span class="text-danger">*</span>
+                <span *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                 <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
@@ -100,7 +109,9 @@
             </div>
 
             <div class="field-block">
-              <label>Password <span class="text-danger">*</span></label>
+              <label>Password <span class="text-danger">*</span>
+                <span *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <div class="password-wrap">
                 <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" required />
                 <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
@@ -117,7 +128,9 @@
             </div>
 
             <div class="field-block">
-              <label>Confirm Password <span class="text-danger">*</span></label>
+              <label>Confirm Password <span class="text-danger">*</span>
+                <span *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <div class="password-wrap">
                 <input formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" required />
                 <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
@@ -130,7 +143,7 @@
           </div>
 
           <div class="actions-row">
-            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.invalid">Next Step</button>
           </div>
         </section>
 
@@ -142,7 +155,9 @@
 
 
             <div class="field-block" formGroupName="location">
-              <label>State <span class="text-danger">*</span></label>
+              <label>State <span class="text-danger">*</span>
+                <span *ngIf="(step2Attempted || registrationForm.get('location.state')?.touched) && registrationForm.get('location.state')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <select formControlName="state" class="form-control">
                 <option value="" disabled selected>Select your state</option>
                 <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
@@ -151,7 +166,9 @@
             </div>
 
             <div class="field-block" formGroupName="location">
-              <label>District <span class="text-danger">*</span></label>
+              <label>District <span class="text-danger">*</span>
+                <span *ngIf="(step2Attempted || registrationForm.get('location.district')?.touched) && registrationForm.get('location.district')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <select formControlName="district" class="form-control">
                 <option value="" disabled selected>Select your district</option>
                 <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
@@ -160,7 +177,9 @@
             </div>
 
             <div class="field-block">
-              <label>Languages <span class="text-danger">*</span></label>
+              <label>Languages <span class="text-danger">*</span>
+                <span *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <div class="chip-list">
                 <div
                   *ngFor="let lang of languagesList"
@@ -180,7 +199,9 @@
             </div>
 
             <div class="field-block">
-              <label>Categories <span class="text-danger">*</span></label>
+              <label>Categories <span class="text-danger">*</span>
+                <span *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger ms-2">Required</span>
+              </label>
               <div class="chip-list">
                 <div
                   *ngFor="let cat of categoriesList"
@@ -231,7 +252,7 @@
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
-                <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span>
+                <!-- <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span> -->
               </div>
             </div>
 
@@ -247,7 +268,7 @@
                 >
                   <i [class]="platform.icon"></i>
                   {{ platform.name }}
-                  <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span>
+                  <!-- <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span> -->
                 </button>
                 <div class="platform-tab-spacer"></div>
                 <button
@@ -266,7 +287,7 @@
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                     <span class="platform-name">{{ platform.name }}</span>
-                    <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
+                    <!-- <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span> -->
                     <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
                   </div>
                   <div class="platform-details-body">
@@ -293,7 +314,7 @@
                       </div>
                     </div>
                     <div class="content-types-section">
-                      <label>Content Types & Pricing</label>
+                      <label>Content & Starting Rates</label>
                       <div class="content-types-list">
                         <ng-container *ngFor="let ct of platform.contentTypes">
                           <div class="content-type-item" *ngIf="ct.visible">
@@ -314,7 +335,7 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.get('location.state')?.invalid || registrationForm.get('location.district')?.invalid || registrationForm.get('languages')?.invalid || registrationForm.get('categories')?.invalid">Next Step</button>
           </div>
         </section>
 
@@ -325,15 +346,14 @@
           <div class="field-grid">
             <div class="field-block">
               <label>Payment Option <span class="text-danger">*</span></label>
+                <label>Payment Option <span class="text-danger">*</span>
+                  <span *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger ms-2">Required</span>
+                </label>
               <select formControlName="paymentOption" class="form-control">
                 <option value="free">Free (Contact/Social hidden)</option>
                 <option value="premium">Premium (Contact/Social visible)</option>
               </select>
               <div *ngIf="(submitted || registrationForm.get('paymentOption')?.touched) && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-            </div>
-            <div class="field-block full-width">
-              <label>Promotional Price <span class="text-danger">*</span></label>
-              <input formControlName="promotionalPrice" type="number" class="form-control" placeholder="Enter promotional price" />
             </div>
 
             <div class="field-block full-width" formGroupName="contact">
@@ -369,7 +389,7 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !brandLogoPreview || isSubmitting">{{ isSubmitting ? 'Registering...' : 'Complete Registration' }}</button>
+              <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !brandLogoPreview || isSubmitting || registrationForm.get('paymentOption')?.invalid">{{ isSubmitting ? 'Registering...' : 'Complete Registration' }}</button>
           </div>
         </section>
       </form>

@@ -205,7 +205,7 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   await page.waitForSelector('h2:has-text("Professional Setup")', { timeout: 10000 });
 
   // ════════════════════════ STEP 3 ════════════════════════
-  // Fill promotional price (required)
+  // Fill starting price (required)
   await page.fill('input[formControlName="promotionalPrice"]', '500');
 
   // Select at least one contact method (required)

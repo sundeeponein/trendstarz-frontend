@@ -123,7 +123,6 @@ export class BrandRegistrationComponent implements OnInit {
         district: ['', Validators.required],
         googleMapLink: ['']
       }),
-      promotionalPrice: ['', Validators.required],
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
@@ -440,7 +439,6 @@ export class BrandRegistrationComponent implements OnInit {
 
     if (step === 3) {
       return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
         this.registrationForm.get('contact')?.valid
       );
     }
@@ -495,10 +493,8 @@ export class BrandRegistrationComponent implements OnInit {
     }
 
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
       return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
         this.registrationForm.get('contact')?.valid
       );
     }
@@ -612,7 +608,7 @@ export class BrandRegistrationComponent implements OnInit {
         tier: pf.tier,
         contentTypes: Object.keys(pf.contentTypes)
           .filter(ctName => pf.contentTypes[ctName].selected)
-          .map(ctName => ({ name: ctName, price: Number(pf.contentTypes[ctName].price) || 0 }))
+          .map(ctName => ({ name: ctName }))
       };
     });
 
@@ -642,7 +638,6 @@ export class BrandRegistrationComponent implements OnInit {
         district: districtObj ? districtObj.name : raw.location.district,
         googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || ''
       },
-      promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
       socialMedia,

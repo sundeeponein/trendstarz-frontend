@@ -322,6 +322,12 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/campaign-invites`, data);
   }
 
+  getInviteWithCampaign(inviteId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}`).pipe(
+      catchError(() => of(null))
+    );
+  }
+
   getInvitesByCampaign(campaignId: string): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}`).pipe(
       map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
@@ -372,8 +378,14 @@ export class ConfigService {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}/submission`);
   }
 
-  getCampaignSubmissions(campaignId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/submissions`);
+  getCampaignSubmissions(campaignId: string): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/submissions`).pipe(
+      map(res => {
+        const d = res?.data ?? res;
+        return Array.isArray(d) ? d : (d?.submissions ?? []);
+      }),
+      catchError(() => of([]))
+    );
   }
 
   reviewCampaignSubmission(inviteId: string, data: { action: 'approve' | 'dispute'; feedback?: string; disputeReason?: string }): Observable<any> {

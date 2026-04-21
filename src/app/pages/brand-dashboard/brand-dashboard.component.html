@@ -1,5 +1,8 @@
+  <div *ngIf="error" class="alert alert-danger my-3">
+    {{ error }}
+  </div>
 <div class="cm-page brand-dashboard p-4">
-  <h1 class="welcome-title mb-1">Welcome Brand</h1>
+  <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Influencer' }}</h1>
   <div class="welcome-subtitle mb-4">Here is what is happening with your brand campaigns today.</div>
 
   <!-- Alert Cards Row -->
@@ -40,15 +43,40 @@
       <span class="performance-range">LAST 30 DAYS</span>
     </div>
     <div class="row gx-3">
-      <div class="col-6 col-md-3 mb-3 mb-md-0" *ngFor="let stat of [
-        {label: 'Total Campaigns', value: dashboard?.totalCampaigns || 0, sub: 'Campaigns'},
-        {label: 'Invites Sent', value: dashboard?.totalInvites || 0, sub: 'Invites'},
-        {label: 'Accepted', value: dashboard?.accepted || 0, sub: 'Accepted'},
-        {label: 'Completed', value: dashboard?.completed || 0, sub: 'Completed'}]">
-        <div class="perf-card text-center">
-          <div class="perf-value">{{ stat.value }}</div>
-          <div class="perf-label">{{ stat.label }}</div>
-          <div class="perf-sub">{{ stat.sub }}</div>
+      <div class="col-6 col-md-3 mb-3 mb-md-0">
+        <div class="card text-center shadow-sm border-0">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1">{{ stats.totalCampaigns }}</div>
+            <div class="text-muted">Total Campaigns</div>
+            <span class="badge rounded-pill bg-primary">Campaigns</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3 mb-md-0">
+        <div class="card text-center shadow-sm border-0">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1">{{ stats.invitesSent }}</div>
+            <div class="text-muted">Invites Sent</div>
+            <span class="badge rounded-pill bg-info text-dark">Invited</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3 mb-md-0">
+        <div class="card text-center shadow-sm border-0">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1">{{ stats.accepted }}</div>
+            <div class="text-muted">Accepted</div>
+            <span class="badge rounded-pill bg-success">Accepted</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3 mb-md-0">
+        <div class="card text-center shadow-sm border-0">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1">{{ stats.completed }}</div>
+            <div class="text-muted">Completed</div>
+            <span class="badge rounded-pill bg-dark">Completed</span>
+          </div>
         </div>
       </div>
     </div>
@@ -67,7 +95,23 @@
           <div class="section-empty-title">No recent campaigns</div>
           <div class="section-empty-desc">When you launch campaigns, they will appear here.</div>
         </div>
-        <!-- ...existing code for recent campaign cards if any... -->
+        <ul *ngIf="recentCampaigns.length > 0" class="list-group mb-2">
+          <li *ngFor="let c of recentCampaigns" class="list-group-item py-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <strong>{{ c.title || c._id }}</strong>
+                <span *ngIf="c.status === 'draft'" class="badge rounded-pill bg-secondary ms-2">Draft</span>
+                <span *ngIf="c.status === 'completed'" class="badge rounded-pill bg-dark ms-2">Completed</span>
+                <span *ngIf="c.status === 'active'" class="badge rounded-pill bg-success ms-2">Active</span>
+                <span *ngIf="c.status === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
+                <span *ngIf="c.status === 'invited'" class="badge rounded-pill bg-info text-dark ms-2">Invited</span>
+              </div>
+            </div>
+            <div *ngIf="c.timelineStart || c.timelineEnd" class="small text-muted mt-1">
+              {{ c.timelineStart | date:'mediumDate' }} - {{ c.timelineEnd | date:'mediumDate' }}
+            </div>
+          </li>
+        </ul>
       </div>
     </div>
     <div class="col-md-4 mb-3 mb-md-0">

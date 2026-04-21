@@ -15,6 +15,12 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit {
+    selectionLimitError = '';
+
+    canSelectMoreInfluencers(): boolean {
+      const max = Number(this.f['maxInfluencers']?.value || 0);
+      return max === 0 || this.selectedInfluencerIds.size < max;
+    }
   campaignInvites: any[] = [];
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
@@ -252,17 +258,24 @@ export class CampaignFormComponent implements OnInit {
     return Array.from(cats).slice(0, 5);
   }
 
+
   toggleInfluencerSelect(id: string) {
     const max = Number(this.f['maxInfluencers']?.value || 0);
+    this.selectionLimitError = '';
     if (this.selectedInfluencerIds.has(id)) {
       this.selectedInfluencerIds.delete(id);
       return;
     }
     if (max > 0 && this.selectedInfluencerIds.size >= max) {
+      this.selectionLimitError = `You can select up to ${max} influencers only.`;
+      if ((window as any).showToast) {
+        (window as any).showToast(this.selectionLimitError, 'error');
+      }
       return;
     }
     this.selectedInfluencerIds.add(id);
   }
+
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).style.display = 'none';
@@ -348,11 +361,7 @@ export class CampaignFormComponent implements OnInit {
 
   // ── Submit ───────────────────────────────────────────────────
   skipAndSave() {
-    this.selectedInfluencerIds.clear();
-    this.onSubmit();
-  }
-
-  async onSubmit() {
+    // Always save as draft, do not send invites
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -360,31 +369,38 @@ export class CampaignFormComponent implements OnInit {
     this.uploading = true;
     const v = this.form.value;
     const payload: any = {
-      title: v.title,
-      description: v.description,
-      campaignType: v.campaignType,
-      status: v.status,
-      pricePerInfluencer: v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : undefined,
-      maxInfluencers: v.maxInfluencers ? +v.maxInfluencers : undefined,
-      estimatedBudget: this.estimatedBudgetRupees > 0 ? Math.round(this.estimatedBudgetRupees * 100) : undefined,
-      budgetMin: this.estimatedBudgetRupees > 0 ? Math.round(this.estimatedBudgetRupees) : undefined,
-      budgetMax: this.estimatedBudgetRupees > 0 ? Math.round(this.estimatedBudgetRupees) : undefined,
-      timelineStart: v.timelineStart || undefined,
-      timelineEnd: v.timelineEnd || undefined,
-      startDate: v.timelineStart || undefined,
-      endDate: v.timelineEnd || undefined,
-      platforms: this.selectedPlatforms,
-      categories: this.selectedCategories,
-      deliverables: this.platformDeliverables.flatMap(pd =>
-        pd.contentTypes.filter(ct => ct.enabled).map(ct => ct.name)
-      ),
-      socialMedia: this.platformDeliverables.length > 0 ? this.platformDeliverables : undefined,
-      minFollowerCount: v.minFollowerCount ? +v.minFollowerCount : undefined,
-      platformPreference: this.selectedPlatforms.length > 0 ? this.selectedPlatforms[0].toLowerCase() : undefined,
-      specialInstructions: v.specialInstructions || undefined,
-      ...(this.preSelectedInfluencers.length > 0 ? { targetInfluencers: this.preSelectedInfluencers } : {}),
+      ...v,
+      status: 'draft',
     };
+    this.uploading = false;
+    this.save.emit(payload);
+    this.selectedInfluencerIds.clear();
+  }
 
+  async onSubmit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    if (this.selectedInfluencerIds.size === 0) {
+      // Show toast or alert if no influencers selected
+      if ((window as any).showToast) {
+        (window as any).showToast('Please select at least one influencer to invite.', 'error');
+      } else {
+        alert('Please select at least one influencer to invite.');
+      }
+      this.uploading = false;
+      return;
+    }
+    this.uploading = true;
+    const v = this.form.value;
+    // Convert pricePerInfluencer (entered in rupees) to paise for backend
+    const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
+    const payload: any = {
+      ...v,
+      pricePerInfluencer: pricePerInfluencerPaise,
+      status: 'active',
+    };
     if (this.selectedFile) {
       try {
         payload.image = await this.uploadToCloudinary(this.selectedFile);
@@ -395,15 +411,23 @@ export class CampaignFormComponent implements OnInit {
     } else if (this.isEdit && this.campaign?.image) {
       payload.image = this.campaign.image;
     }
-
     this.uploading = false;
     this.save.emit({
       ...payload,
+      categories: this.selectedCategories,
+      platforms: this.platformDeliverables.map(pd => pd.platform),
+      socialMedia: this.platformDeliverables.map(pd => ({
+        platform: pd.platform,
+        contentTypes: pd.contentTypes.map(ct => ({
+          name: ct.name,
+          enabled: ct.enabled,
+          price: ct.price
+        }))
+      })),
       inviteInfluencerIds: this.selectedInfluencerIds.size > 0
         ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
         : undefined,
     });
-    // After inviting, refresh the invites list so UI updates
     if (this.isEdit && this.campaign?._id) {
       this.fetchCampaignInvites();
     }

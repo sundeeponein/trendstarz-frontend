@@ -1,4 +1,4 @@
-<div class="form-overlay" (click)="onCancel()">
+<div class="form-overlay">
   <div class="form-modal" (click)="$event.stopPropagation()">
 
     <!-- ── Header ── -->
@@ -178,7 +178,7 @@
               <i [class]="getPlatformIcon(pd.platform)"></i>
               {{ pd.platform }}
               <span class="tab-enabled-count" *ngIf="getEnabledCount(pd) > 0">{{ getEnabledCount(pd) }}</span>
-              <span class="tab-total" *ngIf="getPlatformTotal(pd) > 0">₹{{ getPlatformTotal(pd) | number }}</span>
+              <!-- <span class="tab-total" *ngIf="getPlatformTotal(pd) > 0">₹{{ getPlatformTotal(pd) | number }}</span> -->
             </button>
             <div class="platform-tab-spacer"></div>
             <button type="button" class="pdc-remove tab-remove"
@@ -253,8 +253,8 @@
           <div>Estimated total: <strong>₹{{ (selectedInfluencerIds.size * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
         </div>
 
-        <p class="field-error" *ngIf="selectedInfluencerIds.size >= (f['maxInfluencers'].value || 0) && (f['maxInfluencers'].value || 0) > 0">
-          You reached max influencer selection for this campaign.
+        <p class="field-error" *ngIf="selectionLimitError">
+          {{ selectionLimitError }}
         </p>
 
         <div class="inf-search-box">
@@ -309,7 +309,8 @@
             *ngFor="let inf of filteredInfluencers"
             [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
             [class.inf-row--invited]="isInfluencerInvited(inf)"
-            (click)="!isInfluencerInvited(inf) && toggleInfluencerSelect(inf._id)">
+            [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
+            (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
             <div class="inf-avatar">
               <img *ngIf="getInfluencerAvatar(inf)"
                    [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" alt="" />
@@ -357,10 +358,10 @@
           <i class="bi bi-arrow-left"></i> Back
         </button>
         <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading">
-          {{ isEdit ? 'Save changes' : 'Skip &amp; create' }}
+          {{ isEdit ? 'Save changes' : 'Save as draft' }}
         </button>
         <button type="button" class="btn btn-send"
-                [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
+          [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
           <span *ngIf="uploading">Saving…</span>
           <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
         </button>

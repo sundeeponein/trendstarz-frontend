@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 // Covers the 3-step influencer registration flow:
 //   Step 1 — Basic Information (name, username, phone, email, passwords)
 //   Step 2 — Social Media & Media (image, state, languages, categories, platform)
-//   Step 3 — Professional Details (contact method, promotional price)
+//   Step 3 — Professional Details (contact method, starting price)
 // API calls are mocked so no backend is required.
 // ─────────────────────────────────────────────────────────────
 
@@ -205,7 +205,7 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await contactCard.waitFor({ state: 'visible', timeout: 5000 });
   await contactCard.click();
 
-  // Fill promotional price
+  // Fill starting price
   await page.fill('input[formControlName="promotionalPrice"]', '5000');
 
   // ── Submit ────────────────────────────────────────────────

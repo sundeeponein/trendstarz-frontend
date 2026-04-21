@@ -185,11 +185,13 @@
           <div class="social-media-section mt-3">
             <h3>Social Media Platforms</h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
+            <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns.</div>
+            <div class="text-muted" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
-                <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span>
+                <!-- <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span> -->
               </div>
             </div>
 
@@ -197,7 +199,7 @@
               <div class="platform-details-header">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
-                <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
+                <!-- <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span> -->
                 <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
               </div>
               <div class="platform-details-body">
@@ -219,7 +221,7 @@
                   </div>
                 </div>
                 <div class="content-types-section">
-                  <label>Content Types & Pricing</label>
+                  <label>Content & Starting Rates</label>
                   <div class="content-types-list">
                     <ng-container *ngFor="let ct of platform.contentTypes">
                       <div class="content-type-item" *ngIf="ct.visible">
@@ -291,8 +293,10 @@
 
           <div class="field-grid">
             <div class="field-block full-width">
-              <label>Promotional Price</label>
+              <label>Starting Price</label>
               <input formControlName="promotionalPrice" type="number" class="form-control" />
+              <div class="form-text mt-1" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
+              <div class="form-text" style="font-size:0.92em;">Flexible pricing increases chances of getting deals.</div>
             </div>
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU?</label>
