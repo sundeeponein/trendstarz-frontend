@@ -350,8 +350,12 @@ export class ConfigService {
     );
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, { status, selectedPostDate });
+  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string, selectedPlatform?: string, selectedContentType?: string): Observable<any> {
+    const body: any = { status };
+    if (selectedPostDate) body.selectedPostDate = selectedPostDate;
+    if (selectedPlatform) body.selectedPlatform = selectedPlatform;
+    if (selectedContentType) body.selectedContentType = selectedContentType;
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, body);
   }
 
   submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {

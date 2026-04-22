@@ -24,8 +24,12 @@ export class DashboardService {
     return this.http.get<any[]>(`${this.api}/users/influencers/search`, { params });
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string): Observable<any> {
-    return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, { status, selectedPostDate });
+  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string, selectedPlatform?: string, selectedContentType?: string): Observable<any> {
+    const body: any = { status };
+    if (selectedPostDate) body.selectedPostDate = selectedPostDate;
+    if (selectedPlatform) body.selectedPlatform = selectedPlatform;
+    if (selectedContentType) body.selectedContentType = selectedContentType;
+    return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, body);
   }
 
   getMyInvites(): Observable<any[]> {

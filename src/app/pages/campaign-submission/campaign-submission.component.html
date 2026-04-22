@@ -105,7 +105,7 @@
           <ng-container *ngIf="!postScreenshotUrl && !screenshotUploading">
             <i class="bi bi-cloud-upload-fill upload-icon"></i>
             <div class="upload-label">Upload a screenshot of your published post</div>
-            <div class="upload-hint">PNG or JPG, up to 5MB</div>
+            <div class="upload-hint">PNG or JPG, up to Max 1 MB</div>
           </ng-container>
           <div *ngIf="screenshotUploading" class="upload-loading">
             <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
@@ -155,7 +155,7 @@
             <ng-container *ngIf="!insightsScreenshotUrl && !insightsUploading">
               <i class="bi bi-bar-chart-fill upload-icon"></i>
               <div class="upload-label">Upload screenshot from app analytics/insights</div>
-              <div class="upload-hint">PNG or JPG, up to 5MB</div>
+              <div class="upload-hint">PNG or JPG, up to Max 1 MB</div>
             </ng-container>
             <div *ngIf="insightsUploading" class="upload-loading">
               <div class="spinner-border spinner-border-sm text-warning" role="status"></div>

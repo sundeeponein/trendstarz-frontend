@@ -63,21 +63,40 @@
               </button>
 
 
-              <!-- Pending/Invited: accept / decline -->
-              <div class="inv-actions" *ngIf="inv.status === 'pending' || inv.status === 'invited'">
-                <input
-                  type="date"
-                  class="inv-date-input"
-                  [(ngModel)]="selectedInvitePostDates[inv._id]"
-                  [min]="(inv.campaignId?.startDate || inv.campaignId?.timelineStart || '').substring(0,10)"
-                  [max]="(inv.campaignId?.endDate || inv.campaignId?.timelineEnd || '').substring(0,10)"
-                />
-                <button class="btn-accept" (click)="respondToMyInvite(inv._id, 'accepted')">
-                  <i class="bi bi-check-lg"></i> Accept
-                </button>
-                <button class="btn-decline" (click)="respondToMyInvite(inv._id, 'declined')">
-                  <i class="bi bi-x-lg"></i> Decline
-                </button>
+              <!-- Pending/Invited: content type picker + accept/decline -->
+              <div class="inv-accept-area" *ngIf="inv.status === 'pending' || inv.status === 'invited'">
+
+                <!-- Content type options (if campaign has them) -->
+                <ng-container *ngIf="getInviteContentTypeOptions(inv).length > 0">
+                  <p class="inv-ct-label">Choose what you'll create:</p>
+                  <div class="inv-ct-pills">
+                    <button *ngFor="let opt of getInviteContentTypeOptions(inv)"
+                      class="inv-ct-pill"
+                      [class.selected]="selectedInviteContentType[inv._id] === opt.key"
+                      (click)="selectedInviteContentType[inv._id] = opt.key">
+                      <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+                      {{ opt.label }}
+                      <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+                    </button>
+                  </div>
+                </ng-container>
+
+                <!-- Post date + action buttons -->
+                <div class="inv-actions">
+                  <input
+                    type="date"
+                    class="inv-date-input"
+                    [(ngModel)]="selectedInvitePostDates[inv._id]"
+                    [min]="(inv.campaignId?.startDate || inv.campaignId?.timelineStart || '').substring(0,10)"
+                    [max]="(inv.campaignId?.endDate || inv.campaignId?.timelineEnd || '').substring(0,10)"
+                  />
+                  <button class="btn-accept" (click)="respondToMyInvite(inv._id, 'accepted')">
+                    <i class="bi bi-check-lg"></i> Accept
+                  </button>
+                  <button class="btn-decline" (click)="respondToMyInvite(inv._id, 'declined')">
+                    <i class="bi bi-x-lg"></i> Decline
+                  </button>
+                </div>
               </div>
 
               <!-- Accepted: nothing extra needed; brand was notified -->
@@ -692,6 +711,22 @@
         {{ invitePreview.status | uppercase }}
       </span>
       <ng-container *ngIf="invitePreview.status === 'pending'">
+        <!-- Content type picker in modal -->
+        <ng-container *ngIf="getInviteContentTypeOptions(invitePreview).length > 0">
+          <div class="inv-ct-modal-section">
+            <p class="inv-ct-label">Choose what you'll create:</p>
+            <div class="inv-ct-pills">
+              <button *ngFor="let opt of getInviteContentTypeOptions(invitePreview)"
+                class="inv-ct-pill"
+                [class.selected]="selectedInviteContentType[invitePreview._id] === opt.key"
+                (click)="selectedInviteContentType[invitePreview._id] = opt.key">
+                <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+                {{ opt.label }}
+                <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+              </button>
+            </div>
+          </div>
+        </ng-container>
         <input
           type="date"
           class="inv-date-input"

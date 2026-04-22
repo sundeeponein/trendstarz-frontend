@@ -805,6 +805,8 @@ export class CampaignManagementComponent implements OnInit {
   // Preview modal — shows campaign + brand details before accept/decline
   invitePreview: any | null = null;
   selectedInvitePostDates: Record<string, string> = {};
+  // Content type selection: key = inviteId, value = "platform::contentType"
+  selectedInviteContentType: Record<string, string> = {};
 
   openInvitePreview(inv: any) {
     this.invitePreview = inv;
@@ -835,12 +837,19 @@ export class CampaignManagementComponent implements OnInit {
       this.showError('Selected post date must be between campaign start and end dates.');
       return;
     }
-    this.config.respondToInvite(inviteId, status, selectedPostDate).subscribe({
+    // Require content type selection if campaign has options
+    const options = this.getInviteContentTypeOptions(invite);
+    const chosen = this.selectedInviteContentType[inviteId];
+    if (status === 'accepted' && options.length > 0 && !chosen) {
+      this.showError('Please select what you will create for this campaign.');
+      return;
+    }
+    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
+    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe({
       next: () => {
         this.myInvites = this.myInvites.map(i =>
           i._id === inviteId ? { ...i, status } : i
         );
-        // Update preview object too so status badge refreshes
         if (this.invitePreview?._id === inviteId) {
           this.invitePreview = { ...this.invitePreview, status };
         }
@@ -848,6 +857,38 @@ export class CampaignManagementComponent implements OnInit {
       },
       error: (err: any) => console.error('Failed to respond to invite', err)
     });
+  }
+
+  /** Returns flat list of enabled content type options for an invite's campaign */
+  getInviteContentTypeOptions(inv: any): { key: string; label: string; platform: string; contentType: string; price: number }[] {
+    const socialMedia = inv?.campaignId?.socialMedia;
+    if (!Array.isArray(socialMedia) || !socialMedia.length) return [];
+    const options: { key: string; label: string; platform: string; contentType: string; price: number }[] = [];
+    for (const sm of socialMedia) {
+      const platform = sm.platform || '';
+      for (const ct of (sm.contentTypes || [])) {
+        if (ct.enabled) {
+          options.push({
+            key: `${platform}::${ct.name}`,
+            platform,
+            contentType: ct.name,
+            price: Number(ct.price) || 0,
+            label: `${this.platformShortLabel(platform)} · ${ct.name}`
+          });
+        }
+      }
+    }
+    return options;
+  }
+
+  platformShortLabel(p: string): string {
+    const m: Record<string, string> = { instagram: 'Instagram', youtube: 'YouTube', twitter: 'X/Twitter', tiktok: 'TikTok', facebook: 'Facebook', linkedin: 'LinkedIn' };
+    return m[(p || '').toLowerCase()] || p;
+  }
+
+  platformIcon(p: string): string {
+    const m: Record<string, string> = { instagram: 'bi-instagram', youtube: 'bi-youtube', twitter: 'bi-twitter-x', tiktok: 'bi-tiktok', facebook: 'bi-facebook', linkedin: 'bi-linkedin' };
+    return m[(p || '').toLowerCase()] || 'bi-camera-video';
   }
 
   private isSelectedDateValid(inv: any, selectedPostDate: string): boolean {

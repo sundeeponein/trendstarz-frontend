@@ -6,17 +6,17 @@
       <div class="reg-tab-strip">
         <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
           <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
-          <span class="reg-tab-label">Brand Basics</span>
+          <span class="reg-tab-label">Brand Info</span>
         </button>
         <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
         <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
           <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
-          <span class="reg-tab-label">Media & Discovery</span>
+          <span class="reg-tab-label">Location &amp; Media</span>
         </button>
         <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
         <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
           <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
-          <span class="reg-tab-label">Professional Setup</span>
+          <span class="reg-tab-label">Plan</span>
         </button>
       </div>
       <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mb-4">
@@ -41,79 +41,101 @@
         </div>
       </div>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+        <!-- ═══ STEP 1: BRAND INFO ═══ -->
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Brand Basics</h2>
-          <p class="section-subtitle">Create your brand identity and account credentials.</p>
+          <h2>Brand Info</h2>
+          <p class="section-subtitle">Create your brand identity.</p>
+
+          <!-- Logo upload -->
+          <div class="field-block full-width media-uploader">
+            <label>Brand Logo <span class="text-danger">*</span></label>
+            <div class="upload-box" (click)="logoFileInput.click()" style="cursor:pointer;">
+              <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand Logo Preview" class="preview-image" />
+              <ng-container *ngIf="!brandLogoPreview">
+                <span style="font-size:2rem;">🏢</span>
+                <p style="margin:0.25rem 0 0;">Upload brand logo</p>
+                <small class="text-muted">PNG, JPG up to 5MB</small>
+              </ng-container>
+              <input #logoFileInput type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" hidden />
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-1" (click)="removeBrandLogo()" *ngIf="brandLogoPreview">Remove</button>
+            <div *ngIf="submitted && !brandLogoPreview" class="text-danger mt-1">Brand logo is required.</div>
+          </div>
 
           <div class="field-grid">
-            <div class="field-block full-width media-uploader">
-              <label>Brand Logo <span class="text-danger">*</span>
-                <span *ngIf="submitted && !brandLogoPreview" class="text-danger ms-2">Required</span>
-              </label>
-              <div class="upload-box">
-                <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand Logo Preview" class="preview-image" />
-                <p *ngIf="!brandLogoPreview">Upload your brand logo</p>
-                <input type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" [required]="!brandLogoPreview" />
-                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeBrandLogo()" *ngIf="brandLogoPreview">Remove</button>
-              </div>
-              <div *ngIf="submitted && !brandLogoPreview" class="text-danger mt-1">Brand logo is required.</div>
-            </div>
-
             <div class="field-block">
-              <label>Brand Name <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
-              <input formControlName="brandName" type="text" class="form-control" required />
+              <label>Brand Name <span class="text-danger">*</span></label>
+              <input formControlName="brandName" type="text" class="form-control" placeholder="Your brand name" />
               <div *ngIf="submitted && registrationForm.get('brandName')?.invalid && !duplicateBrandNameError" class="text-danger mt-1">Brand name is required.</div>
               <div *ngIf="duplicateBrandNameError" class="text-danger mt-1">{{ duplicateBrandNameError }}</div>
             </div>
 
             <div class="field-block">
               <label>Brand Username <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('brandUsername')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
-              <input
-                formControlName="brandUsername"
-                (input)="onBrandUsernameInput()"
-                (blur)="onBrandUsernameBlur()"
-                type="text"
-                class="form-control"
-                required
-                pattern="^[a-zA-Z0-9_\-]+$"
-              />
-              <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Brand username is required and supports only letters, numbers, hyphens and underscores.</div>
-                      <label>Content Types</label>
-            </div>
-
-            <div class="field-block">
-              <label>Mobile Number <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger ms-2">Required</span>
+                <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> — used in your profile link</span>
               </label>
               <div class="input-group">
-                <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
+                <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/brand/</span>
+                <input formControlName="brandUsername" type="text" class="form-control" placeholder="yourbrand"
+                  (blur)="onBrandUsernameBlur()" />
               </div>
-              <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</div>
-              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
+              <div *ngIf="submitted && registrationForm.get('brandUsername')?.errors?.['required']" class="text-danger mt-1">Username is required.</div>
+              <div *ngIf="registrationForm.get('brandUsername')?.errors?.['pattern']" class="text-danger mt-1">Only letters, numbers, hyphens and underscores allowed.</div>
+              <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
             </div>
 
             <div class="field-block">
-              <label>Email Address <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
+              <label>Email <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
+                <input formControlName="email" type="email" class="form-control" placeholder="brand@email.com" />
               </div>
               <div *ngIf="submitted && registrationForm.get('email')?.invalid && !duplicateEmailError" class="text-danger mt-1">Valid email is required.</div>
               <div *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</div>
             </div>
 
             <div class="field-block">
-              <label>Password <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('password')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
+              <label>Phone <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">+91</span>
+                <input formControlName="phoneNumber" type="text" class="form-control" placeholder="xxxxxxxxxx" />
+              </div>
+              <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</div>
+              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
+            </div>
+
+            <div class="field-block">
+              <label>Website</label>
+              <input formControlName="website" type="url" class="form-control" placeholder="https://yourbrand.com" />
+            </div>
+
+            <div class="field-block full-width">
+              <label>Category / Industry <span class="text-danger">*</span></label>
+              <div class="chip-list">
+                <div
+                  *ngFor="let cat of categoriesList"
+                  class="chip"
+                  [class.chip--selected]="registrationForm.value.categories.includes(cat._id)"
+                  (click)="toggleChip('categories', cat._id)"
+                  tabindex="0"
+                  (keydown.enter)="toggleChip('categories', cat._id)"
+                  (keydown.space)="toggleChip('categories', cat._id)"
+                  [attr.aria-pressed]="registrationForm.value.categories.includes(cat._id)"
+                  role="button"
+                >{{ cat.name }}</div>
+              </div>
+              <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
+            </div>
+
+            <div class="field-block full-width">
+              <label>Brand Description</label>
+              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell influencers about your brand..."></textarea>
+            </div>
+
+            <div class="field-block">
+              <label>Password <span class="text-danger">*</span></label>
               <div class="password-wrap">
-                <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" required />
+                <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" />
                 <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
                   <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
                 </button>
@@ -128,11 +150,9 @@
             </div>
 
             <div class="field-block">
-              <label>Confirm Password <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('confirmPassword')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
+              <label>Confirm Password <span class="text-danger">*</span></label>
               <div class="password-wrap">
-                <input formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" required />
+                <input formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" />
                 <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
                   <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
                 </button>
@@ -142,44 +162,44 @@
             </div>
           </div>
 
+          <div *ngIf="registrationError && currentStep === 1" class="text-danger fw-bold mt-2">{{ registrationError }}</div>
+
           <div class="actions-row">
-            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.invalid">Next Step</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Continue →</button>
           </div>
         </section>
 
+        <!-- ═══ STEP 2: LOCATION & MEDIA ═══ -->
         <section class="form-card" *ngIf="currentStep === 2">
-          <h2>Media & Discovery</h2>
-          <p class="section-subtitle">Set your visibility settings and upload product visuals.</p>
+          <h2>Location &amp; Media</h2>
+          <p class="section-subtitle">Set your location and upload product visuals.</p>
 
           <div class="field-grid">
-
-
             <div class="field-block" formGroupName="location">
-              <label>State <span class="text-danger">*</span>
-                <span *ngIf="(step2Attempted || registrationForm.get('location.state')?.touched) && registrationForm.get('location.state')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
+              <label>State <span class="text-danger">*</span></label>
               <select formControlName="state" class="form-control">
-                <option value="" disabled selected>Select your state</option>
+                <option value="" disabled selected>Select state</option>
                 <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
               </select>
               <div *ngIf="(step2Attempted || registrationForm.get('location.state')?.touched) && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">Please select your state.</div>
             </div>
 
             <div class="field-block" formGroupName="location">
-              <label>District <span class="text-danger">*</span>
-                <span *ngIf="(step2Attempted || registrationForm.get('location.district')?.touched) && registrationForm.get('location.district')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
+              <label>City <span class="text-danger">*</span></label>
               <select formControlName="district" class="form-control">
-                <option value="" disabled selected>Select your district</option>
+                <option value="" disabled selected>City</option>
                 <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
               </select>
-              <div *ngIf="(step2Attempted || registrationForm.get('location.district')?.touched) && registrationForm.get('location.district')?.invalid" class="text-danger mt-1">Please select your district.</div>
+              <div *ngIf="(step2Attempted || registrationForm.get('location.district')?.touched) && registrationForm.get('location.district')?.invalid" class="text-danger mt-1">Please select your city.</div>
             </div>
 
-            <div class="field-block">
-              <label>Languages <span class="text-danger">*</span>
-                <span *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
+            <div class="field-block full-width">
+              <label>Google Maps Location <span class="text-muted" style="font-size:0.82rem;">(optional)</span></label>
+              <input formControlName="googleMapAddress" type="text" class="form-control" placeholder="Paste Google Maps link or address" />
+            </div>
+
+            <div class="field-block full-width">
+              <label>Languages <span class="text-danger">*</span></label>
               <div class="chip-list">
                 <div
                   *ngFor="let lang of languagesList"
@@ -191,93 +211,47 @@
                   (keydown.space)="toggleChip('languages', lang._id)"
                   [attr.aria-pressed]="registrationForm.value.languages.includes(lang._id)"
                   role="button"
-                >
-                  {{ lang.name }}
-                </div>
+                >{{ lang.name }}</div>
               </div>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
-
-            <div class="field-block">
-              <label>Categories <span class="text-danger">*</span>
-                <span *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger ms-2">Required</span>
-              </label>
-              <div class="chip-list">
-                <div
-                  *ngFor="let cat of categoriesList"
-                  class="chip"
-                  [class.chip--selected]="registrationForm.value.categories.includes(cat._id)"
-                  (click)="toggleChip('categories', cat._id)"
-                  tabindex="0"
-                  (keydown.enter)="toggleChip('categories', cat._id)"
-                  (keydown.space)="toggleChip('categories', cat._id)"
-                  [attr.aria-pressed]="registrationForm.value.categories.includes(cat._id)"
-                  role="button"
-                >
-                  {{ cat.name }}
-                </div>
-              </div>
-              <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
-            </div>
-
-            <div class="field-block">
-              <label>Website</label>
-              <input formControlName="website" type="url" class="form-control" />
-            </div>
-
-            <div class="field-block">
-              <label>Google Map Address (optional)</label>
-              <input formControlName="googleMapAddress" type="text" class="form-control" />
-            </div>
           </div>
 
+          <!-- Product Images -->
           <div class="social-media-section">
             <h3>Product Images</h3>
             <div class="subtitle">Upload product visuals for collaborations.</div>
             <div class="image-grid" *ngIf="productImagesPreview.length">
               <div class="image-card" *ngFor="let img of productImagesPreview; let i = index">
                 <img *ngIf="img" [src]="img" alt="Product image preview" class="preview-image" />
-                <input type="file" accept="image/*" (change)="onProductImageFileChange($event, i)" class="form-control" />
-                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeProductImage(i)">Remove</button>
+                <input type="file" accept="image/*" (change)="onProductImageFileChange($event, i)" class="form-control mt-1" />
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-1" (click)="removeProductImage(i)">Remove</button>
               </div>
             </div>
-            <button type="button" class="add-social-btn" (click)="addProductImage()" [disabled]="!canAddProductImage()">Add Product Image</button>
-            <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one product image. Upgrade to premium for multiple images.</div>
+            <button type="button" class="add-social-btn mt-2" (click)="addProductImage()" [disabled]="!canAddProductImage()">+ Add Product Image</button>
+            <div *ngIf="!isPremiumPlan()" class="text-muted mt-1" style="font-size:0.82rem">Free users can add one product image. Upgrade to premium for multiple.</div>
           </div>
 
-          <div class="social-media-section">
-            <h3>Social Media Platforms</h3>
-            <div class="subtitle">Select your platforms and set your rates for each content type.</div>
+          <!-- Social Media — optional, for brand trust -->
+          <div class="social-media-section mt-3">
+            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — helps build trust with influencers)</span></h3>
+            <div class="subtitle">Add your social handles so influencers can verify your brand.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
-                <!-- <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span> -->
               </div>
             </div>
 
-            <!-- Platform Tabs UI -->
             <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
               <div class="platform-tab-strip">
-                <button
-                  type="button"
-                  *ngFor="let platform of selectedPlatforms()"
-                  class="platform-tab"
-                  [class.platform-tab--active]="activePlatformTab === platform._id"
-                  (click)="activePlatformTab = platform._id"
-                >
-                  <i [class]="platform.icon"></i>
-                  {{ platform.name }}
-                  <!-- <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span> -->
+                <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
+                  [class.platform-tab--active]="activePlatformTab === platform._id" (click)="activePlatformTab = platform._id">
+                  <i [class]="platform.icon"></i> {{ platform.name }}
                 </button>
                 <div class="platform-tab-spacer"></div>
-                <button
-                  type="button"
-                  class="tab-remove"
-                  *ngIf="activePlatformTab"
-                  (click)="removePlatformCard(getPlatformById(activePlatformTab))"
-                  title="Remove platform"
-                >
+                <button type="button" class="tab-remove" *ngIf="activePlatformTab"
+                  (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
                   <i class="bi bi-x-lg"></i> Remove
                 </button>
               </div>
@@ -287,25 +261,21 @@
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                     <span class="platform-name">{{ platform.name }}</span>
-                    <!-- <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span> -->
                     <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
                   </div>
                   <div class="platform-details-body">
-                    <div class="row">
-                      <div class="col">
+                    <div class="row g-2">
+                      <div class="col-12 col-md-6">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}"
+                          type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                           [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                          [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                          target="_blank" rel="noopener noreferrer" class="verify-profile-link">
                           <i class="bi bi-box-arrow-up-right"></i> Verify profile
                         </a>
                       </div>
-                      <div class="col">
-                        <label>{{ platform.followersLabel || 'Followers' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" />
-                      </div>
-                      <div class="col">
+                      <div class="col-12 col-md-6">
                         <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
                           <option value="" disabled>Select tier</option>
@@ -313,51 +283,65 @@
                         </select>
                       </div>
                     </div>
-                    <div class="content-types-section">
-                      <label>Content & Starting Rates</label>
-                      <div class="content-types-list">
-                        <ng-container *ngFor="let ct of platform.contentTypes">
-                          <div class="content-type-item" *ngIf="ct.visible">
-                            <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" />
-                            <span>{{ ct.name }}</span>
-                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" />
-                          </div>
-                        </ng-container>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </ng-container>
             </div>
-
-            <div *ngIf="!isPremiumPlan()" class="text-muted mt-2">Free users can add only one social profile. Upgrade to premium to add multiple profiles.</div>
           </div>
 
           <div class="actions-row dual">
-            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.get('location.state')?.invalid || registrationForm.get('location.district')?.invalid || registrationForm.get('languages')?.invalid || registrationForm.get('categories')?.invalid">Next Step</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">← Back</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()">Continue →</button>
           </div>
         </section>
 
+        <!-- ═══ STEP 3: PLAN ═══ -->
         <section class="form-card" *ngIf="currentStep === 3">
-          <h2>Professional Setup</h2>
-          <p class="section-subtitle">Finish pricing and preferred contact channels.</p>
+          <h2>Plan</h2>
+          <p class="section-subtitle">Choose your plan and complete your registration.</p>
+
+          <!-- Plan info banner -->
+          <div class="plan-info-banner">
+            <i class="bi bi-info-circle"></i>
+            Choose a plan to unlock more features and visibility to influencers.
+          </div>
+
+          <!-- Plan selection cards -->
+          <div class="plan-cards">
+            <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
+              (click)="registrationForm.get('paymentOption')?.setValue('free')">
+              <div class="plan-card-top">
+                <span class="plan-card-name">Default</span>
+                <span class="plan-card-price free">Free</span>
+              </div>
+              <div class="plan-card-desc">Basic visibility, post campaigns, find influencers</div>
+            </div>
+            <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
+              (click)="registrationForm.get('paymentOption')?.setValue('premium')">
+              <div class="plan-card-top">
+                <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                <span class="plan-card-price premium">₹499/mo</span>
+              </div>
+              <div class="plan-card-desc">Priority campaigns, analytics, advanced filters</div>
+            </div>
+          </div>
+
+          <!-- Premium upgrade CTA -->
+          <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-3">
+            <div class="premium-cta-content">
+              <span class="premium-cta-icon">🌟</span>
+              <div>
+                <strong>Upgrade to Premium</strong>
+                <p class="text-muted mb-0" style="font-size:0.9em;">Unlock advanced campaign tools, priority placement and analytics.</p>
+                <p class="mb-0 mt-1" style="font-size:0.82em;color:#f97316;">After registering, log in to complete your payment.</p>
+              </div>
+            </div>
+            <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
+          </div>
 
           <div class="field-grid">
-            <div class="field-block">
-              <label>Payment Option <span class="text-danger">*</span></label>
-                <label>Payment Option <span class="text-danger">*</span>
-                  <span *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger ms-2">Required</span>
-                </label>
-              <select formControlName="paymentOption" class="form-control">
-                <option value="free">Free (Contact/Social hidden)</option>
-                <option value="premium">Premium (Contact/Social visible)</option>
-              </select>
-              <div *ngIf="(submitted || registrationForm.get('paymentOption')?.touched) && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-            </div>
-
             <div class="field-block full-width" formGroupName="contact">
-              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU? <span class="text-danger">*</span></label>
+              <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
                   <input type="checkbox" formControlName="whatsapp" hidden />
@@ -376,20 +360,21 @@
                 </label>
               </div>
               <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" class="text-danger mt-1">Please select at least one contact option.</div>
-              <div class="website-field">
-                <label>Website / portfolio (optional)</label>
-                <input formControlName="website" type="url" class="form-control" placeholder="https://yourwebsite.com" />
-              </div>
             </div>
           </div>
 
-          <div *ngIf="registrationError" class="text-danger fw-bold my-3">
-            {{ registrationError }}
+          <!-- Terms text -->
+          <div class="brand-terms-notice">
+            🔒 By registering, you agree to our Terms of Service. Payments are secured by TrendStarz escrow.
           </div>
 
+          <div *ngIf="registrationError" class="text-danger fw-bold my-3">{{ registrationError }}</div>
+
           <div class="actions-row dual">
-            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-              <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !brandLogoPreview || isSubmitting || registrationForm.get('paymentOption')?.invalid">{{ isSubmitting ? 'Registering...' : 'Complete Registration' }}</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">← Back</button>
+            <button type="submit" class="btn btn-success fw-bold" [disabled]="isSubmitting">
+              {{ isSubmitting ? 'Registering...' : '🚀 Launch Your Brand' }}
+            </button>
           </div>
         </section>
       </form>

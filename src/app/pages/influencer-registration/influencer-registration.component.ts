@@ -227,7 +227,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.getTiers().subscribe(data => this.tiers = data);
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
-    this.configService.getCategories().subscribe(data => this.categoriesList = data);
+    this.configService.getCategories().subscribe(data => {
+      this.categoriesList = data;
+      this.cdr.detectChanges();
+    });
     this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveInfluencers; });
 
     // Load districts when state changes
@@ -277,12 +280,12 @@ export class InfluencerRegistrationComponent implements OnInit {
       const f = this.registrationForm;
       return !!(f.get('name')?.valid && f.get('username')?.valid && f.get('phoneNumber')?.valid &&
         f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid &&
-        !f.errors?.['passwordMismatch']);
+        !f.errors?.['passwordMismatch'] && !!this.profileImagePreview);
     }
     if (step === 2) {
       const f = this.registrationForm;
       const detailsValid = !!(f.get('location.state')?.valid && f.get('location.district')?.valid && f.get('languages')?.valid && f.get('categories')?.valid);
-      return detailsValid && this.selectedPlatforms().length > 0 && !!this.profileImagePreview;
+      return detailsValid && this.selectedPlatforms().length > 0;
     }
     if (step === 3) {
       return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
@@ -339,6 +342,8 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.currentStep === 1) {
       ['name', 'username', 'phoneNumber', 'email', 'password', 'confirmPassword'].forEach(f =>
         this.registrationForm.get(f)?.markAsTouched());
+      if (!this.profileImagePreview) { this.registrationError = 'Profile photo is required.'; }
+      else { this.registrationError = ''; }
       return this.isStepComplete(1);
     }
     if (this.currentStep === 2) {
@@ -347,8 +352,6 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.markAsTouched();
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
-      if (!this.profileImagePreview) { this.registrationError = 'Profile image is required.'; }
-      else { this.registrationError = ''; }
       return this.isStepComplete(2);
     }
     if (this.currentStep === 3) {
@@ -564,9 +567,13 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   closeSuccessModal() {
-    this.registrationSuccess = false; this.registrationForm.reset();
-    this.profileImagePreview = null; this.profileImageFile = null;
-    this.platformForms = {}; this.submitted = false; this.pendingVerificationEmail = '';
-    window.location.href = '/login';
+    this.registrationSuccess = false;
+    this.registrationForm.reset();
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.platformForms = {};
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/';
   }
 }

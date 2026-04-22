@@ -7,17 +7,17 @@
       <div class="reg-tab-strip">
         <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
           <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
-          <span class="reg-tab-label">Basic Information</span>
+          <span class="reg-tab-label">Profile</span>
         </button>
         <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
         <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
           <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
-          <span class="reg-tab-label">Social Media & Media</span>
+          <span class="reg-tab-label">Social Media</span>
         </button>
         <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
         <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
           <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
-          <span class="reg-tab-label">Professional Details</span>
+          <span class="reg-tab-label">Plan</span>
         </button>
       </div>
       <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mb-4">
@@ -43,8 +43,23 @@
       </div>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Basic Information</h2>
+          <h2>Profile</h2>
           <p class="section-subtitle">Set up your account basics to start your creator journey.</p>
+
+          <!-- Profile Image Upload -->
+          <div class="field-block profile-upload-block">
+            <div class="profile-upload-box" [class.has-image]="profileImagePreview" (click)="profileFileInput.click()">
+              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="profile-upload-preview" />
+              <ng-container *ngIf="!profileImagePreview">
+                <span class="profile-upload-icon">📷</span>
+                <span class="profile-upload-label">Upload profile photo</span>
+                <span class="profile-upload-hint">JPG, PNG up to 5MB</span>
+              </ng-container>
+              <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview" (click)="removeProfileImage(0)">Remove</button>
+            <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile photo is required.</div>
+          </div>
 
             <div class="field-block">
               <label>Full Name <span class="text-danger">*</span>
@@ -56,9 +71,12 @@
 
             <div class="field-block">
               <label>Username <span class="text-danger">*</span>
-                <span *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger ms-2">Required</span>
+                <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> — used in your profile link</span>
               </label>
-              <input formControlName="username" type="text" class="form-control" required pattern="^[a-zA-Z0-9_\-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed. No spaces or special characters." />
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/influencer/</span>
+                <input formControlName="username" type="text" class="form-control" placeholder="yourhandle" pattern="^[a-zA-Z0-9_\-]+$" title="Only letters, numbers, hyphens (-), and underscores (_) are allowed." />
+              </div>
               <div *ngIf="submitted && registrationForm.get('username')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Username is required and can only contain letters, numbers, hyphens (-), and underscores (_).</div>
               <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
               <div *ngIf="usernameError === 'spaces'" class="text-danger mt-1">Username cannot contain spaces.</div>
@@ -125,7 +143,7 @@
           
 
             <div class="actions-row">
-              <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.invalid">Next Step</button>
+              <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
             </div>
         </section>
 
@@ -205,16 +223,6 @@
             </div>
           </div>
 
-          <div class="field-block media-uploader">
-            <label>Profile Image <span class="text-danger">*</span></label>
-            <div class="upload-box">
-              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="preview-image" />
-              <p *ngIf="!profileImagePreview">Upload your profile image</p>
-              <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" [required]="!profileImagePreview" />
-              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="removeProfileImage(0)" *ngIf="profileImagePreview">Remove</button>
-            </div>
-            <div *ngIf="!profileImagePreview && step2Attempted" class="text-danger mt-1">Profile image is required.</div>
-          </div>
           
 
           <div class="social-media-section">
@@ -278,10 +286,6 @@
                         </a>
                       </div>
                       <div class="col">
-                        <label>{{ platform.followersLabel || 'Followers' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" />
-                      </div>
-                      <div class="col">
                         <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
                           <option value="" disabled>Select tier</option>
@@ -316,20 +320,49 @@
         </section>
 
         <section class="form-card" *ngIf="currentStep === 3">
-          <h2>Professional Details</h2>
-          <p class="section-subtitle">Set your plan, pricing and contact preferences before completing registration.</p>
+          <h2>Plan</h2>
+          <p class="section-subtitle">Choose your plan and complete your registration.</p>
+
+          <!-- Plan info banner -->
+          <div class="plan-info-banner">
+            <i class="bi bi-info-circle"></i>
+            Choose a plan to unlock more features and visibility to brands.
+          </div>
+
+          <!-- Plan selection cards -->
+          <div class="plan-cards">
+            <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
+              (click)="registrationForm.get('paymentOption')?.setValue('free')">
+              <div class="plan-card-top">
+                <span class="plan-card-name">Default</span>
+                <span class="plan-card-price free">Free</span>
+              </div>
+              <div class="plan-card-desc">Basic visibility, apply to campaigns</div>
+            </div>
+            <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
+              (click)="registrationForm.get('paymentOption')?.setValue('premium')">
+              <div class="plan-card-top">
+                <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                <span class="plan-card-price premium">₹499/mo</span>
+              </div>
+              <div class="plan-card-desc">Top placement, analytics, priority invites</div>
+            </div>
+          </div>
+
+          <!-- Premium upgrade CTA — shown when premium plan is selected -->
+          <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-3">
+            <div class="premium-cta-content">
+              <span class="premium-cta-icon">🌟</span>
+              <div>
+                <strong>Upgrade to Premium</strong>
+                <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
+                <p class="mb-0 mt-1" style="font-size:0.82em;color:#f97316;">After registering, log in to complete your payment.</p>
+              </div>
+            </div>
+            <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
+          </div>
 
           <div class="field-grid">
-              <!-- Payment Option moved from Step 2 -->
-              <div class="field-block full-width">
-                <label>Payment Option <span class="text-danger">*</span></label>
-                <select formControlName="paymentOption" class="form-control">
-                  <option value="free">Free (Contact/Social hidden)</option>
-                  <option value="premium">Premium (Contact/Social visible)</option>
-                </select>
-                <div *ngIf="submitted && registrationForm.get('paymentOption')?.invalid" class="text-danger mt-1">Please select a payment option.</div>
-              </div>
-
             <div class="field-block full-width">
               <label>Starting Price <span class="text-danger">*</span></label>
               <input formControlName="promotionalPrice" type="number" required class="form-control" placeholder="Enter your starting price" />
@@ -342,7 +375,7 @@
             </div>
 
             <div class="field-block full-width" formGroupName="contact">
-              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU? <span class="text-danger">*</span></label>
+              <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
                   <input type="checkbox" formControlName="whatsapp" hidden />
@@ -362,6 +395,12 @@
               </div>
               <div *ngIf="registrationForm.get('contact')?.invalid && registrationForm.get('contact')?.touched" class="text-danger mt-1">Please select at least one contact option.</div>
             </div>
+          </div>
+
+          <!-- All set banner -->
+          <div class="plan-all-set-banner" *ngIf="step3Complete">
+            <i class="bi bi-check-circle-fill"></i>
+            You're all set! Complete registration to start collaborating.
           </div>
 
           <!-- Registration Success Modal -->

@@ -430,7 +430,8 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('name')?.valid &&
         this.registrationForm.get('username')?.valid &&
         this.registrationForm.get('phoneNumber')?.valid &&
-        this.registrationForm.get('email')?.valid
+        this.registrationForm.get('email')?.valid &&
+        this.hasExistingProfileImage()
       );
     }
 
@@ -441,8 +442,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        this.selectedPlatforms().length > 0 &&
-        this.hasExistingProfileImage()
+        this.selectedPlatforms().length > 0
       );
     }
 
@@ -483,14 +483,15 @@ export class InfluencerProfileComponent implements OnInit {
     if (this.currentStep === 1) {
       const fields = ['name', 'username', 'phoneNumber', 'email'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      return fields.every((path) => this.registrationForm.get(path)?.valid);
+      const fieldsValid = fields.every((path) => this.registrationForm.get(path)?.valid);
+      return fieldsValid && this.hasExistingProfileImage();
     }
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0 && this.hasExistingProfileImage();
+      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
     }
 
     if (this.currentStep === 3) {

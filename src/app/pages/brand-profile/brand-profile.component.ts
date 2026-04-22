@@ -312,6 +312,7 @@ export class BrandProfileComponent implements OnInit {
       languages: [[], Validators.required],
       website: [''],
       googleMapAddress: [''],
+      description: [''],
       brandLogo: this.fb.array([]),
       products: this.fb.array([]),
       productImages: this.fb.array([]),
@@ -401,6 +402,7 @@ export class BrandProfileComponent implements OnInit {
             languages: languageIds,
             website: profile.website || '',
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
+            description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false }
           });
 

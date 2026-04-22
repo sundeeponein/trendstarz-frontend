@@ -29,6 +29,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   selectedInvite: any = null;
   responding: string | null = null;
   selectedPostDates: Record<string, string> = {};
+  // Content type selection: key = inviteId, value = "platform::contentType"
+  selectedContentTypes: Record<string, string> = {};
   paymentHistory: any[] = [];
   paymentSummary = {
     earnedThisMonth: 0,
@@ -178,7 +180,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       this.error = 'Posting date must be within campaign start and end dates.';
       return;
     }
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate).subscribe(() => {
+    const options = this.getInviteContentTypeOptions(invite);
+    const chosen = this.selectedContentTypes[inviteId];
+    if (status === 'accepted' && options.length > 0 && !chosen) {
+      this.error = 'Please select what you will create for this campaign.';
+      return;
+    }
+    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
+    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe(() => {
       this.ngOnInit();
     });
   }
@@ -190,13 +199,20 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       this.error = 'Please choose a posting date before accepting invite.';
       return;
     }
-    const invite = this.invites.find(i => i._id === inviteId);
+    const invite = this.invites.find(i => i._id === inviteId) || this.selectedInvite;
     if (status === 'accepted' && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
       this.error = 'Posting date must be within campaign start and end dates.';
       return;
     }
+    const options = this.getInviteContentTypeOptions(invite);
+    const chosen = this.selectedContentTypes[inviteId];
+    if (status === 'accepted' && options.length > 0 && !chosen) {
+      this.error = 'Please select what you will create for this campaign.';
+      return;
+    }
+    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
     this.responding = inviteId;
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate).subscribe({
+    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe({
       next: () => {
         // update in-place — no full reload
         this.invites = this.invites.filter(i => i._id !== inviteId);
@@ -208,6 +224,38 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       },
       error: () => { this.responding = null; }
     });
+  }
+
+  /** Returns enabled content type options for an invite's campaign */
+  getInviteContentTypeOptions(inv: any): { key: string; label: string; platform: string; contentType: string; price: number }[] {
+    const socialMedia = inv?.campaignId?.socialMedia;
+    if (!Array.isArray(socialMedia) || !socialMedia.length) return [];
+    const options: { key: string; label: string; platform: string; contentType: string; price: number }[] = [];
+    for (const sm of socialMedia) {
+      const platform = sm.platform || '';
+      for (const ct of (sm.contentTypes || [])) {
+        if (ct.enabled) {
+          options.push({
+            key: `${platform}::${ct.name}`,
+            platform,
+            contentType: ct.name,
+            price: Number(ct.price) || 0,
+            label: `${this.platformShortLabel(platform)} · ${ct.name}`
+          });
+        }
+      }
+    }
+    return options;
+  }
+
+  platformShortLabel(p: string): string {
+    const m: Record<string, string> = { instagram: 'Instagram', youtube: 'YouTube', twitter: 'X/Twitter', tiktok: 'TikTok', facebook: 'Facebook', linkedin: 'LinkedIn' };
+    return m[(p || '').toLowerCase()] || p;
+  }
+
+  platformIcon(p: string): string {
+    const m: Record<string, string> = { instagram: 'bi-instagram', youtube: 'bi-youtube', twitter: 'bi-twitter-x', tiktok: 'bi-tiktok', facebook: 'bi-facebook', linkedin: 'bi-linkedin' };
+    return m[(p || '').toLowerCase()] || 'bi-camera-video';
   }
 
   private isPostDateWithinCampaign(inv: any, selectedPostDate: string): boolean {

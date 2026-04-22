@@ -128,6 +128,20 @@
 
         <!-- CTA buttons -->
         <div class="invite-card__actions" (click)="$event.stopPropagation()">
+          <!-- Content type picker (if campaign has options) -->
+          <ng-container *ngIf="getInviteContentTypeOptions(inv).length > 0">
+            <div class="inv-ct-row">
+              <span class="inv-ct-row-label">Create:</span>
+              <button *ngFor="let opt of getInviteContentTypeOptions(inv)"
+                class="inv-ct-pill"
+                [class.selected]="selectedContentTypes[inv._id] === opt.key"
+                (click)="selectedContentTypes[inv._id] = opt.key">
+                <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+                {{ opt.label }}
+                <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+              </button>
+            </div>
+          </ng-container>
           <input
             class="invite-post-date"
             type="date"

@@ -127,6 +127,7 @@ export class BrandRegistrationComponent implements OnInit {
       languages: [[], Validators.required],
       website: [''],
       googleMapAddress: [''],
+      description: [''],
 
       contact: this.fb.group({
         whatsapp: [false],
@@ -140,8 +141,15 @@ export class BrandRegistrationComponent implements OnInit {
       this.duplicateUsernameError = '';
       this.duplicateBrandNameError = '';
     });
-    this.registrationForm.get('brandName')?.valueChanges.subscribe(() => {
+    this.registrationForm.get('brandName')?.valueChanges.subscribe((name: string) => {
       this.duplicateBrandNameError = '';
+      // Auto-generate username from brand name
+      const usernameCtrl = this.registrationForm.get('brandUsername');
+      if (usernameCtrl && !usernameCtrl.dirty) {
+        const slug = this.slugifyUsername(name || '');
+        usernameCtrl.setValue(slug, { emitEvent: false });
+        usernameCtrl.markAsTouched();
+      }
     });
     this.registrationForm.get('email')?.valueChanges.subscribe(() => {
       this.duplicateEmailError = '';
@@ -412,34 +420,29 @@ export class BrandRegistrationComponent implements OnInit {
         f.get('brandName')?.valid &&
         f.get('brandUsername')?.valid &&
         f.get('email')?.valid &&
+        f.get('phoneNumber')?.valid &&
+        f.get('categories')?.valid &&
         f.get('password')?.valid &&
         f.get('confirmPassword')?.valid &&
         !f.errors?.['passwordMismatch'] &&
-        f.get('phoneNumber')?.valid &&
         this.brandLogoPreview
       );
     }
 
     if (step === 2) {
       const f = this.registrationForm;
-      const detailsValid = !!(
-        f.get('paymentOption')?.valid &&
+      return !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
-        f.get('languages')?.valid &&
-        f.get('categories')?.valid
+        f.get('languages')?.valid
       );
-      if (!detailsValid) {
-        return false;
-      }
-      const socialValid = this.selectedPlatforms().length > 0;
-      const productReady = this.productImagesFiles.every((f) => !f || !!f);
-      return socialValid && productReady;
     }
 
     if (step === 3) {
+      const f = this.registrationForm;
       return !!(
-        this.registrationForm.get('contact')?.valid
+        f.get('paymentOption')?.valid &&
+        f.get('contact')?.valid
       );
     }
 
@@ -474,7 +477,7 @@ export class BrandRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'brandUsername', 'email', 'password', 'confirmPassword', 'phoneNumber'];
+      const fields = ['brandName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'password', 'confirmPassword'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       this.submitted = true;
 
@@ -482,19 +485,22 @@ export class BrandRegistrationComponent implements OnInit {
         this.registrationError = 'Brand logo is required.';
       }
 
-      return fields.every((path) => this.registrationForm.get(path)?.valid) && !!this.brandLogoPreview;
+      return fields.every((path) => this.registrationForm.get(path)?.valid) &&
+        !this.registrationForm.errors?.['passwordMismatch'] &&
+        !!this.brandLogoPreview;
     }
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
+      return required.every((path) => this.registrationForm.get(path)?.valid);
     }
 
     if (this.currentStep === 3) {
       this.registrationForm.get('contact')?.markAsTouched();
       return !!(
+        this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('contact')?.valid
       );
     }
@@ -586,7 +592,12 @@ export class BrandRegistrationComponent implements OnInit {
     this.isSubmitting = true;
 
     const raw = this.registrationForm.value;
-    raw.brandUsername = this.slugifyUsername(raw.brandUsername || '');
+    // Auto-generate username from brandName if not set
+    if (!raw.brandUsername) {
+      raw.brandUsername = this.slugifyUsername(raw.brandName || '');
+    } else {
+      raw.brandUsername = this.slugifyUsername(raw.brandUsername || '');
+    }
 
     const stateObj = this.states.find(s => s._id === raw.location.state);
     const districtObj = this.districts.find(d => d._id === raw.location.district);
@@ -748,6 +759,6 @@ export class BrandRegistrationComponent implements OnInit {
     this.brandLogoFile = null;
     this.submitted = false;
     this.pendingVerificationEmail = '';
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 }

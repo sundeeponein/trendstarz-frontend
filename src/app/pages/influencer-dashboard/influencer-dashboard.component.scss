@@ -141,6 +141,55 @@
   &--completed { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
 }
 
+// ── Content type picker row ──
+.inv-ct-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.inv-ct-row-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.inv-ct-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  .inv-ct-price {
+    font-weight: 700;
+    color: #f97316;
+  }
+
+  &.selected {
+    border-color: #f97316;
+    background: #fff7ed;
+    color: #c2410c;
+    .inv-ct-price { color: #c2410c; }
+  }
+
+  &:hover:not(.selected) {
+    border-color: #9ca3af;
+    background: #f9fafb;
+  }
+}
+
 // ── Invite action buttons ──
 .btn-invite-action {
   display: inline-flex;

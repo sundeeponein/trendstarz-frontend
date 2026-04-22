@@ -1,56 +1,25 @@
 <div class="registration-shell">
   <div class="registration-wrap">
-    <aside class="left-panel">
-      <div class="panel-card progress-panel">
-        <h4>Profile Progress</h4>
-        <p class="step-count">Step {{ currentStep }} of 3</p>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
-          <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
-          <span class="step-label">Basic Details</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 2" [class.complete]="step2Complete" (click)="goToStep(2)">
-          <span class="step-icon">{{ step2Complete ? '✓' : '2' }}</span>
-          <span class="step-label">Media & Platforms</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
-          <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
-          <span class="step-label">Professional</span>
-        </button>
-      </div>
-
-      <!-- Premium status / upgrade CTA -->
-      <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="mt-3 mb-3">
-        <div *ngIf="premiumEnd" class="alert alert-success d-flex align-items-center gap-2">
-          <span style="font-size:1.4em;">🌟</span>
-          <div>
-            <strong>Premium Active</strong>
-            <div><small>Valid until: <strong>{{ premiumEnd | date:'mediumDate' }}</strong></small></div>
-          </div>
-        </div>
-        <div *ngIf="!premiumEnd && latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2">
-          <span style="font-size:1.3em;">⏳</span>
-          <div>
-            <strong>Payment Pending</strong>
-            <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
-          </div>
-        </div>
-        <div *ngIf="!premiumEnd && !latestPendingPayment" class="premium-upgrade-cta">
-          <div class="premium-cta-content">
-            <span class="premium-cta-icon">🌟</span>
-            <div>
-              <strong>Upgrade to Premium</strong>
-              <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
-            </div>
-          </div>
-          <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
-        </div>
-      </div>
-    </aside>
 
     <main class="content-panel">
+
+      <!-- Horizontal step tabs -->
+      <div class="reg-tab-strip">
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
+          <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
+          <span class="reg-tab-label">Profile</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
+          <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
+          <span class="reg-tab-label">Social Media</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
+          <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
+          <span class="reg-tab-label">Plan</span>
+        </button>
+      </div>
       <div *ngIf="showEmailVerificationPrompt && !emailVerified" class="alert alert-warning mb-4">
         <strong>Email not verified.</strong> Please check your inbox and click the verification link.
         <button class="btn btn-link p-0 ms-2" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">Resend Verification Email</button>
@@ -66,8 +35,37 @@
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Basic Details</h2>
+          <h2>Profile</h2>
           <p class="section-subtitle">Update your core account and contact details.</p>
+
+          <!-- Profile Image Upload -->
+          <div class="field-block profile-upload-block">
+            <label>Profile Photo</label>
+            <div class="plan-image-limit" *ngIf="isEditMode">
+              <span [class.limit-reached]="!imageUploadAllowed">
+                {{ currentImageCount }} / {{ maxImages }} images used
+              </span>
+              <span *ngIf="!imageUploadAllowed" class="limit-warning">
+                Limit reached — <a routerLink="/upgrade-premium">Upgrade to upload more</a>
+              </span>
+            </div>
+            <div class="profile-upload-box" [class.has-image]="profileImagePreview || (profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url)"
+              [class.clickable]="isEditMode && imageUploadAllowed"
+              (click)="isEditMode && imageUploadAllowed && profileFileInput.click()">
+              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="profile-upload-preview" />
+              <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url"
+                [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="profile-upload-preview" />
+              <ng-container *ngIf="!profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)">
+                <span class="profile-upload-icon">📷</span>
+                <span class="profile-upload-label">Upload profile photo</span>
+                <span class="profile-upload-hint">JPG, PNG up to Max 1 MB</span>
+              </ng-container>
+              <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
+              *ngIf="isEditMode && profileImagesFormArray.length > 0" (click)="removeProfileImage(0)">Remove</button>
+            <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted mt-1" style="font-size:0.82rem">Remove an image to upload a new one, or upgrade your plan.</p>
+          </div>
 
           <div class="field-grid">
             <div class="field-block">
@@ -75,8 +73,13 @@
               <input formControlName="name" type="text" class="form-control" />
             </div>
             <div class="field-block">
-              <label>Username</label>
-              <input formControlName="username" type="text" class="form-control" />
+              <label>Username
+                <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> — used in your profile link</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/influencer/</span>
+                <input formControlName="username" type="text" class="form-control" [readonly]="!isEditMode" />
+              </div>
             </div>
             <div class="field-block">
               <label>Phone Number</label>
@@ -102,8 +105,8 @@
         </section>
 
         <section class="form-card" *ngIf="currentStep === 2">
-          <h2>Media & Platforms</h2>
-          <p class="section-subtitle">Manage profile image, channels, and discovery filters.</p>
+          <h2>Social Media</h2>
+          <p class="section-subtitle">Manage your social channels and discovery filters.</p>
 
           <div class="field-grid">
             <div class="field-block" formGroupName="location">
@@ -161,27 +164,6 @@
             </div>
           </div>
 
-          <div class="field-block media-uploader mt-3">
-            <label>Profile Image</label>
-            <!-- Plan image limit indicator -->
-            <div class="plan-image-limit" *ngIf="isEditMode">
-              <span [class.limit-reached]="!imageUploadAllowed">
-                {{ currentImageCount }} / {{ maxImages }} images used
-              </span>
-              <span *ngIf="!imageUploadAllowed" class="limit-warning">
-                Limit reached — <a routerLink="/upgrade-premium">Upgrade to upload more</a>
-              </span>
-            </div>
-            <div class="upload-box">
-              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="preview-image" />
-              <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url" [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="preview-image" />
-              <p *ngIf="!profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)">No profile image uploaded.</p>
-              <input type="file" accept="image/*" (change)="onProfileImageFileChange($event)" *ngIf="isEditMode && imageUploadAllowed" />
-              <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted" style="font-size:0.82rem">Remove an image to upload a new one, or upgrade your plan.</p>
-              <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="isEditMode && profileImagesFormArray.length > 0" (click)="removeProfileImage(0)">Remove</button>
-            </div>
-          </div>
-
           <div class="social-media-section mt-3">
             <h3>Social Media Platforms</h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
@@ -207,10 +189,6 @@
                   <div class="col">
                     <label>{{ platform.handleLabel || 'Handle' }}</label>
                     <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" />
-                  </div>
-                  <div class="col">
-                    <label>{{ platform.followersLabel || 'Followers' }}</label>
-                    <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" [readonly]="!isEditMode" />
                   </div>
                   <div class="col">
                     <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
@@ -245,74 +223,90 @@
         </section>
 
         <section class="form-card" *ngIf="currentStep === 3">
-          <h2>Professional</h2>
-          <p class="section-subtitle">Set your plan, pricing and preferred contact channels.</p>
+          <h2>Plan</h2>
+          <p class="section-subtitle">Manage your plan, pricing and contact channels.</p>
 
-          <div class="field-grid">
-            <div class="field-block full-width">
-              <label>Payment Option</label>
-              <!-- Locked while premium is active -->
-              <ng-container *ngIf="premiumEnd && premiumEnd > currentDate; else paymentSelectInfluencer">
-                <div class="form-control premium-locked-field">
-                  🔒 Premium (Contact/Social visible)
-                </div>
-                <div class="alert alert-success d-flex align-items-center gap-2 mt-2">
-                  <span style="font-size:1.3em;">🌟</span>
-                  <div>
-                    <strong>Premium Active</strong>
-                    <div><small>Your plan is active until <strong>{{ premiumEnd | date:'mediumDate' }}</strong>. It will revert to Free after expiry.</small></div>
-                  </div>
-                </div>
-              </ng-container>
-              <ng-template #paymentSelectInfluencer>
-                <select formControlName="paymentOption" class="form-control">
-                  <option value="free">Free (Contact/Social hidden)</option>
-                  <option value="premium">Premium (Contact/Social visible)</option>
-                </select>
-                <!-- Payment status banners -->
-                <div *ngIf="latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2 mt-2">
-                  <span style="font-size:1.3em;">⏳</span>
-                  <div>
-                    <strong>Payment Pending</strong>
-                    <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
-                  </div>
-                </div>
-                <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
-                  <div class="premium-cta-content">
-                    <span class="premium-cta-icon">🌟</span>
-                    <div>
-                      <strong>Upgrade to Premium</strong>
-                      <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, and priority listing.</p>
-                    </div>
-                  </div>
-                  <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
-                </div>
-              </ng-template>
-            </div>
+          <!-- Plan info banner -->
+          <div class="plan-info-banner">
+            <i class="bi bi-info-circle"></i>
+            Choose a plan to unlock more features and visibility to brands.
           </div>
 
-          <div class="field-grid">
+          <!-- Plan selection cards -->
+          <ng-container *ngIf="premiumEnd && premiumEnd > currentDate; else planSelectCards">
+            <div class="plan-cards">
+              <div class="plan-card selected">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-price premium">Active</span>
+                </div>
+                <div class="plan-card-desc">Valid until <strong>{{ premiumEnd | date:'mediumDate' }}</strong></div>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #planSelectCards>
+            <div class="plan-cards">
+              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
+                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('free')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Default</span>
+                  <span class="plan-card-price free">Free</span>
+                </div>
+                <div class="plan-card-desc">Basic visibility, apply to campaigns</div>
+              </div>
+              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
+                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('premium')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-price premium">₹499/mo</span>
+                </div>
+                <div class="plan-card-desc">Top placement, analytics, priority invites</div>
+              </div>
+            </div>
+
+            <!-- Payment pending banner -->
+            <div *ngIf="latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2 mt-2">
+              <span style="font-size:1.3em;">⏳</span>
+              <div>
+                <strong>Payment Pending</strong>
+                <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
+              </div>
+            </div>
+
+            <!-- Premium upgrade CTA -->
+            <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
+              <div class="premium-cta-content">
+                <span class="premium-cta-icon">🌟</span>
+                <div>
+                  <strong>Upgrade to Premium</strong>
+                  <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, and priority listing.</p>
+                </div>
+              </div>
+              <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
+            </div>
+          </ng-template>
+
+          <div class="field-grid mt-3">
             <div class="field-block full-width">
               <label>Starting Price</label>
-              <input formControlName="promotionalPrice" type="number" class="form-control" />
+              <input formControlName="promotionalPrice" type="number" class="form-control" [readonly]="!isEditMode" />
               <div class="form-text mt-1" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
-              <div class="form-text" style="font-size:0.92em;">Flexible pricing increases chances of getting deals.</div>
             </div>
             <div class="field-block full-width" formGroupName="contact">
-              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU?</label>
+              <label class="contact-section-label">How to Contact you?</label>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
-                  <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!planCaps.hasPremium" />
+                  <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!planCaps.hasPremium || !isEditMode" />
                   <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
                   <span class="contact-card-label">WhatsApp</span>
                 </label>
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.email')?.value">
-                  <input type="checkbox" formControlName="email" hidden [disabled]="!planCaps.hasPremium" />
+                  <input type="checkbox" formControlName="email" hidden [disabled]="!planCaps.hasPremium || !isEditMode" />
                   <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
                   <span class="contact-card-label">Email</span>
                 </label>
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.call')?.value">
-                  <input type="checkbox" formControlName="call" hidden [disabled]="!planCaps.hasPremium" />
+                  <input type="checkbox" formControlName="call" hidden [disabled]="!planCaps.hasPremium || !isEditMode" />
                   <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
                   <span class="contact-card-label">Call</span>
                 </label>
