@@ -24,6 +24,7 @@ import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/
   styleUrls: ['./brand-profile.component.scss']
 })
 export class BrandProfileComponent implements OnInit {
+      
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
     const idx = arr.indexOf(id);
@@ -373,9 +374,15 @@ export class BrandProfileComponent implements OnInit {
           const languageIds = (profile.languages || []).map((name: string) =>
             this.languagesList.find((l: any) => l.name === name)?._id
           ).filter(Boolean);
-          const categoryIds = (profile.categories || []).map((name: string) =>
-            this.categoriesList.find((c: any) => c.name === name)?._id
-          ).filter(Boolean);
+          // Robust category mapping with fallback and warning
+          const categoryIds = (profile.categories || []).map((name: string) => {
+            const found = this.categoriesList.find((c: any) => c.name === name);
+            if (!found) {
+              console.warn('[Profile] Category not found in list:', name);
+              return null;
+            }
+            return found._id;
+          }).filter(Boolean);
           const resolvedBrandUsername =
             profile.brandUsername ||
             profile.username ||
@@ -466,7 +473,11 @@ export class BrandProfileComponent implements OnInit {
             this.configService.getDistricts(profile.location.state).subscribe({
               next: (dists) => {
                 this.districts = dists;
-                const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                const resolvedDistrict = dists.find((d: any) => d.name === profile.location?.district);
+                const districtId = resolvedDistrict ? resolvedDistrict._id : '';
+                if (!districtId && profile.location?.district) {
+                  console.warn('[Profile] District not found in list:', profile.location.district);
+                }
                 doPatchBrandForm(districtId);
               },
               error: () => doPatchBrandForm('')
@@ -519,6 +530,26 @@ export class BrandProfileComponent implements OnInit {
       );
     };
   }
+
+  // Helper to map category ID to name safely for template
+      getCategoryName(catId: string): string {
+        if (!this.categoriesList) return catId;
+        const found = this.categoriesList.find((c: any) => c._id === catId);
+        return found ? found.name : catId;
+      }
+
+      // Helper to map district ID to name safely for template
+      getDistrictName(districtId: string): string {
+        if (!this.districts) return districtId;
+        const found = this.districts.find((d: any) => d._id === districtId);
+        return found ? found.name : districtId;
+      }
+    // Helper to map language ID to name safely for template
+    getLanguageName(langId: string): string {
+      if (!this.languagesList) return langId;
+      const found = this.languagesList.find((l: any) => l._id === langId);
+      return found ? found.name : langId;
+    }
 
   enableEdit(): void {
     this.isEditMode = true;

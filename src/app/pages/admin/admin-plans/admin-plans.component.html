@@ -83,6 +83,16 @@
           <div class="section-label">Policies</div>
           <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }}</strong> days post-expiry</p>
 
+            <!-- Discount (Offers) -->
+            <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
+            <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
+              <li *ngFor="let o of plan.offers">
+                <span *ngIf="o.key === 'discountOnBrandPro' || o.key === 'discountOnInfluencerPro'">
+                  {{ o.label }}: <strong>{{ o.value }}%</strong>
+                </span>
+              </li>
+            </ul>
+
           <div class="card-actions">
             <button class="admin-btn admin-btn-secondary admin-btn-sm" (click)="startEdit(plan)">Edit</button>
             <button class="admin-btn admin-btn-danger admin-btn-sm" (click)="deletePlan(plan)">Delete</button>
@@ -107,11 +117,14 @@
           </div>
 
           <div class="plan-pricing">
-            <span>₹{{ plan.price.monthly }}/mo</span>
+            <span>₹{{ plan.price.monthly || 0 }}/mo
+            </span>
             <span class="sep">·</span>
-            <span>₹{{ plan.price.quarterly || 0 }}/3mo</span>
+            <span>₹{{ plan.price.quarterly || 0 }}/3mo
+            </span>
             <span class="sep">·</span>
-            <span>₹{{ plan.price.yearly }}/yr</span>
+            <span>₹{{ plan.price.yearly || 0 }}/yr
+            </span>
           </div>
 
           <!-- Features -->
@@ -134,6 +147,16 @@
           <!-- Policies -->
           <div class="section-label">Policies</div>
           <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
+
+            <!-- Discount (Offers) -->
+            <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
+            <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
+              <li *ngFor="let o of plan.offers">
+                <span *ngIf="o.key === 'discountOnBrandPro' || o.key === 'discountOnInfluencerPro'">
+                  {{ o.label }}: <strong>{{ o.value }}%</strong>
+                </span>
+              </li>
+            </ul>
 
           <div class="card-actions">
             <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>

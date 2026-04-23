@@ -607,6 +607,27 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
 
+  // Helper to map category ID to name safely for template
+    getCategoryName(catId: string): string {
+      if (!this.categoriesList) return catId;
+      const found = this.categoriesList.find((c: any) => c._id === catId);
+      return found ? found.name : catId;
+    }
+
+    // Helper to map language ID to name safely for template
+    getLanguageName(langId: string): string {
+      if (!this.languagesList) return langId;
+      const found = this.languagesList.find((l: any) => l._id === langId);
+      return found ? found.name : langId;
+    }
+      // Helper to map district ID to name safely for template
+      getDistrictName(districtId: string): string {
+        if (!this.districts) return districtId;
+        const found = this.districts.find((d: any) => d._id === districtId);
+        return found ? found.name : districtId;
+      }
+
+
   // Only allow 1 image for now (can extend for premium)
   async onProfileImageFileChange(event: any) {
     if (!this.isEditMode) return;

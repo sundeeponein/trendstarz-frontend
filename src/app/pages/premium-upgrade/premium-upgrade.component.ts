@@ -1,4 +1,3 @@
-
 // Helper for template to cast string to DurationType
 // Helper for template to cast string to DurationType
 type DurationType = '1m' | '3m' | '1y' | '';
@@ -32,6 +31,7 @@ import { PlansService, Plan } from '../../shared/plans.service';
   styleUrls: ['./premium-upgrade.component.scss'],
 })
 export class PremiumUpgradeComponent implements OnInit, OnDestroy {
+      // --- ₹ Savings for UI ---
     selectedDuration: any = null;
     selectedRole: string = 'influencer';
     upgrading = false;
@@ -42,7 +42,9 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     couponApplied = false;
     couponError = '';
     discountAmount = 0;
+    planDiscountPercent = 0;
     myPayments: any[] = [];
+    discountLabel?: string;
     readonly upiId = 'trendstarzin@kotak';
     readonly isProduction = environment.production;
 
@@ -52,6 +54,14 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       { key: '1y', label: '1 Year', sublabel: 'Best value', priceKey: 'yearly' },
     ];
     selectedDurationKey: string = '1m';
+
+
+    get quarterlySavings(): number {
+      return (this.selectedPlan?.price.monthly ?? 0) * 3 - (this.selectedPlan?.price.quarterly ?? 0);
+    }
+    get yearlySavings(): number {
+      return (this.selectedPlan?.price.monthly ?? 0) * 12 - (this.selectedPlan?.price.yearly ?? 0);
+    }
 
     constructor(
       private http: HttpClient,
@@ -78,6 +88,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
           this.selectedPlan = paidPlan;
           this.selectedDurationKey = '1m';
           this.updateDuration();
+          this.applyPlanDiscount();
         }
         this.cdr.detectChanges();
       });
@@ -86,10 +97,6 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   paymentTab: 'upi' | 'qr' = 'upi';
   plans: Plan[] = [];
   selectedPlan: Plan | null = null;
-  // ...existing code...
-
-
-
 
   // Select a plan and duration
   selectPlan(plan: Plan, duration: any) {
@@ -103,6 +110,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.selectedDurationKey = '1m';
     this.updateDuration();
     this.resetCoupon();
+    this.applyPlanDiscount();
   }
 
   // Select a duration key (1m, 3m, 1y)
@@ -110,26 +118,73 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.selectedDurationKey = key;
     this.updateDuration();
     this.resetCoupon();
+    this.applyPlanDiscount();
   }
 
   updateDuration() {
     const plan = this.selectedPlan;
     if (!plan) return;
-    if (plan.price.monthly === 0) {
-      this.selectedDuration = { key: '1m', label: 'Monthly', price: 0 };
-      return;
-    }
+    // Map duration key to price and offer
+    let price = 0;
+    let label = '';
+    let offerKey = '';
     if (this.selectedDurationKey === '1y') {
-      this.selectedDuration = { key: '1y', label: 'Yearly', price: plan.price.yearly };
+      price = plan.price.yearly;
+      label = 'Yearly';
+      offerKey = 'discountYearly';
     } else if (this.selectedDurationKey === '3m') {
-      this.selectedDuration = { key: '3m', label: '3 Months', price: plan.price.quarterly };
+      price = plan.price.quarterly;
+      label = '3 Months';
+      offerKey = 'discountQuarterly';
     } else {
-      this.selectedDuration = { key: '1m', label: 'Monthly', price: plan.price.monthly };
+      price = plan.price.monthly;
+      label = 'Monthly';
+      offerKey = 'discountMonthly';
+    }
+    this.selectedDuration = { key: this.selectedDurationKey, label, price };
+
+    // Find admin-configured discount for this duration
+    let discountPercent = 0;
+    if (plan.offers && Array.isArray(plan.offers)) {
+      // Look for a matching offer key (e.g., discountMonthly, discountQuarterly, discountYearly)
+      const offer = plan.offers.find((o: any) => o.key === offerKey);
+      if (offer && offer.value > 0) {
+        discountPercent = offer.value;
+      }
+    }
+    // Set discount label for UI
+    if (discountPercent > 0) {
+      plan.discountLabel = `Save ${discountPercent}%`;
+    } else if (this.selectedDurationKey === '1y') {
+      plan.discountLabel = 'Best value';
+    } else {
+      plan.discountLabel = '';
+    }
+    // Store the discount percent for use in calculation
+    this.planDiscountPercent = discountPercent;
+    this.applyPlanDiscount();
+  }
+
+  applyPlanDiscount() {
+    // Reset discount
+    this.planDiscountPercent = 0;
+    if (!this.selectedPlan || !this.selectedPlan.offers) return;
+    // Robust: check both discount keys for both roles
+    let discountKeys = ["discountOnBrandPro", "discountOnInfluencerPro"];
+    let offer = this.selectedPlan.offers.find((o: any) => discountKeys.includes(o.key) && o.value > 0);
+    if (offer) {
+      this.planDiscountPercent = offer.value;
+      // Only apply if no coupon is applied
+      if (!this.couponApplied) {
+        this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * (offer.value / 100));
+      }
+    } else if (!this.couponApplied) {
+      this.discountAmount = 0;
     }
   }
 
   get finalPrice(): number {
-    return Math.max(0, (this.selectedDuration?.price ?? 0) - this.discountAmount);
+    return Math.max(0, (this.selectedDuration?.price ?? 0));
   }
 
   applyCoupon() {
@@ -145,7 +200,8 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     } else {
       this.couponError = 'Invalid or expired coupon code.';
       this.couponApplied = false;
-      this.discountAmount = 0;
+      // Re-apply plan discount if coupon is removed
+      this.applyPlanDiscount();
     }
   }
 
@@ -153,7 +209,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.couponCode = '';
     this.couponApplied = false;
     this.couponError = '';
-    this.discountAmount = 0;
+    this.applyPlanDiscount();
   }
 
 
@@ -180,10 +236,9 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
 
   public get upiQrUrl(): string {
     const plan = this.selectedPlan;
-    const duration = this.selectedDuration;
-    if (!plan || !duration) return '';
-    // Use duration.price and plan.name for QR
-    const upiString = `upi://pay?pa=${this.upiId}&pn=TrendstarZ&am=${duration.price}&cu=INR&tn=${encodeURIComponent(plan.name + ' Premium')}`;
+    if (!plan || !this.selectedDuration) return '';
+    // Use finalPrice for QR
+    const upiString = `upi://pay?pa=${this.upiId}&pn=TrendstarZ&am=${this.finalPrice}&cu=INR&tn=${encodeURIComponent(plan.name + ' Premium')}`;
     return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiString)}`;
   }
 
@@ -304,7 +359,5 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     const user = this.getCurrentUser();
     this.router.navigate([user?.role === 'brand' ? '/brand-profile' : '/influencer-profile']);
   }
-
-
 }
 

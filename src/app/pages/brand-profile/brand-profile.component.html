@@ -70,17 +70,24 @@
             <div class="field-block full-width">
               <label>Category / Industry</label>
               <div class="chip-list">
-                <div
-                  *ngFor="let cat of categoriesList"
-                  class="chip"
-                  [class.chip--selected]="registrationForm.value.categories?.includes(cat._id)"
-                  (click)="isEditMode && toggleChip('categories', cat._id)"
-                  tabindex="0"
-                  (keydown.enter)="isEditMode && toggleChip('categories', cat._id)"
-                  (keydown.space)="isEditMode && toggleChip('categories', cat._id)"
-                  [attr.aria-pressed]="registrationForm.value.categories?.includes(cat._id)"
-                  role="button"
-                >{{ cat.name }}</div>
+                <ng-container *ngIf="isEditMode; else viewCategories">
+                  <div
+                    *ngFor="let cat of categoriesList"
+                    class="chip"
+                    [class.chip--selected]="registrationForm.value.categories?.includes(cat._id)"
+                    (click)="toggleChip('categories', cat._id)"
+                    tabindex="0"
+                    (keydown.enter)="toggleChip('categories', cat._id)"
+                    (keydown.space)="toggleChip('categories', cat._id)"
+                    [attr.aria-pressed]="registrationForm.value.categories?.includes(cat._id)"
+                    role="button"
+                  >{{ cat.name }}</div>
+                </ng-container>
+                <ng-template #viewCategories>
+                  <div *ngFor="let catId of registrationForm.value.categories">
+                    <span class="chip chip--selected">{{ getCategoryName(catId) }}</span>
+                  </div>
+                </ng-template>
               </div>
             </div>
             <div class="field-block full-width">
@@ -121,28 +128,42 @@
 
             <div class="field-block" formGroupName="location">
               <label>District</label>
-              <select formControlName="district" class="form-control">
-                <option value="" disabled>Select your district</option>
-                <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
-              </select>
+              <ng-container *ngIf="isEditMode; else viewDistrict">
+                <select formControlName="district" class="form-control">
+                  <option value="" disabled>Select your district</option>
+                  <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
+                </select>
+              </ng-container>
+              <ng-template #viewDistrict>
+                <span class="chip chip--selected">
+                  {{ getDistrictName(registrationForm.value.location?.district) }}
+                </span>
+              </ng-template>
             </div>
 
             <div class="field-block">
               <label>Languages</label>
               <div class="chip-list">
-                <div
-                  *ngFor="let lang of languagesList"
-                  class="chip"
-                  [class.chip--selected]="registrationForm.value.languages?.includes(lang._id)"
-                  (click)="isEditMode && toggleChip('languages', lang._id)"
-                  tabindex="0"
-                  (keydown.enter)="isEditMode && toggleChip('languages', lang._id)"
-                  (keydown.space)="isEditMode && toggleChip('languages', lang._id)"
-                  [attr.aria-pressed]="registrationForm.value.languages?.includes(lang._id)"
-                  role="button"
-                >
-                  {{ lang.name }}
-                </div>
+                <ng-container *ngIf="isEditMode; else viewLanguages">
+                  <div
+                    *ngFor="let lang of languagesList"
+                    class="chip"
+                    [class.chip--selected]="registrationForm.value.languages?.includes(lang._id)"
+                    (click)="toggleChip('languages', lang._id)"
+                    tabindex="0"
+                    (keydown.enter)="toggleChip('languages', lang._id)"
+                    (keydown.space)="toggleChip('languages', lang._id)"
+                    [attr.aria-pressed]="registrationForm.value.languages?.includes(lang._id)"
+                    role="button"
+                  >
+                    {{ lang.name }}
+                  </div>
+                </ng-container>
+                <ng-template #viewLanguages>
+                  <div *ngFor="let langId of registrationForm.value.languages">
+                    <span class="chip chip--selected">{{ getLanguageName(langId) }}</span>
+                  </div>
+                </ng-template>
               </div>
             </div>
 

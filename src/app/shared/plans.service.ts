@@ -36,6 +36,7 @@ export interface Plan {
   highlight?: boolean;
   isActive?: boolean;
   sortOrder?: number;
+  discountLabel?: string;
 }
 
 export interface PlanCapabilities {
