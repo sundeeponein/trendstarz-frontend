@@ -692,3 +692,26 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+
+.discount-info-pills {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 0 0;
+}
+.pill {
+  display: inline-block;
+  padding: 4px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.pill-save {
+  background: #7a3a00;
+  color: #fff;
+}
+.pill-discount {
+  background: #18b0ff;
+  color: #003366;
+}

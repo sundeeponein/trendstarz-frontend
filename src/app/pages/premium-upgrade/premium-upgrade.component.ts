@@ -55,7 +55,9 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     ];
     selectedDurationKey: string = '1m';
 
-
+    get monthSavings(): number {
+      return (this.selectedPlan?.price.monthly ?? 0) * 1 - (this.selectedPlan?.price.monthly ?? 0);
+    }
     get quarterlySavings(): number {
       return (this.selectedPlan?.price.monthly ?? 0) * 3 - (this.selectedPlan?.price.quarterly ?? 0);
     }
@@ -184,7 +186,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   get finalPrice(): number {
-    return Math.max(0, (this.selectedDuration?.price ?? 0));
+    return Math.max(0, (this.selectedDuration?.price ?? 0)  - this.discountAmount);
   }
 
   applyCoupon() {

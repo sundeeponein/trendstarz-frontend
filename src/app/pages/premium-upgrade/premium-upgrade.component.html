@@ -21,6 +21,7 @@
           <div class="duration-tabs">
             <button class="dur-btn" [class.active]="selectedDurationKey === '1m'" (click)="$event.stopPropagation(); selectDuration('1m')">
               1 Month
+              <span class="dur-save" *ngIf="selectedPlan">{{ monthSavings > 0 ? 'Save ₹' + monthSavings : '' }}</span>
             </button>
             <button class="dur-btn" [class.active]="selectedDurationKey === '3m'" (click)="$event.stopPropagation(); selectDuration('3m')">
               3 Months
@@ -34,18 +35,23 @@
             </button>
           </div>
           <div class="plan-price">
-            <span *ngIf="selectedDuration?.discountPercent && selectedDuration?.discountPercent > 0" class="amount-original">₹{{ selectedDuration?.price }}</span>
-            <span>
-              ₹{{ finalPrice }}
-            </span>
+            <span>₹{{ selectedDuration?.price }}</span>
             <span class="price-period"> /{{ selectedDurationKey === '1m' ? 'mo' : selectedDurationKey === '3m' ? '3mo' : 'yr' }}</span>
-            <span *ngIf="selectedDuration?.discountPercent && selectedDuration?.discountPercent > 0" class="discount-label">-{{ selectedDuration?.discountPercent }}% discount</span>
-            <!-- Always show per month after discount for 3m and 1y -->
-            
+          </div>
+          <div class="discount-info-pills" *ngIf="planDiscountPercent > 0">
+            <span class="pill pill-save">
+              ✨ Save ₹{{ (selectedPlan.price[selectedDurationKey === '1m' ? 'monthly' : selectedDurationKey === '3m' ? 'quarterly' : 'yearly'] * (planDiscountPercent / 100)).toFixed(0) }}
+              <ng-container *ngIf="selectedDurationKey === '1m'">/mo</ng-container>
+              <ng-container *ngIf="selectedDurationKey === '3m'">/3mo</ng-container>
+              <ng-container *ngIf="selectedDurationKey === '1y'">/yr</ng-container>
+            </span>
+            <span class="pill pill-discount">
+              {{ planDiscountPercent }}% Discount
+            </span>
           </div>
           <div class="price-monthly-hint">
             <span *ngIf="selectedDurationKey === '3m' || selectedDurationKey === '1y'" class="per-month-after-discount">
-              ₹{{ (finalPrice / (selectedDurationKey === '3m' ? 3 : selectedDurationKey === '1y' ? 12 : 1)).toFixed(0) }}/mo
+              ₹{{ (selectedDuration?.price / (selectedDurationKey === '3m' ? 3 : selectedDurationKey === '1y' ? 12 : 1)).toFixed(0) }}/mo
             </span>
           </div>
         </ng-container>
@@ -73,8 +79,8 @@
           <div class="feature-item note" *ngIf="plan.policies.imageRetentionDaysAfterExpiry">
             <span class="feat-icon">⚠</span> Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> if not renewed
           </div>
-          <div class="offers" *ngIf="plan.discountLabel">
-            <span class="bi bi-percent">%</span>  {{ plan.discountLabel }}
+          <div class="offers">
+            <span *ngIf="plan.discountLabel">{{ plan.discountLabel }}</span>
           </div>
         </div>
       </div>
