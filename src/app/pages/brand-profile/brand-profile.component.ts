@@ -1,7 +1,5 @@
 
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
@@ -202,20 +200,25 @@ export class BrandProfileComponent implements OnInit {
     };
     try {
       const compressedFile = await imageCompression(file, options);
-      // Upload to Cloudinary
+      // Upload via backend so local/prod handling stays centralized
       this.brandLogoPreview = null;
       this.brandLogoFile = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      formData.append('folder', 'brand_logos');
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
       });
+      if (!response.ok) {
+        this.registrationError = 'Brand logo upload failed.';
+        return;
+      }
       const data = await response.json();
-      if (data.secure_url && data.public_id) {
-  this.brandLogoPreview = data.secure_url;
-  this.brandLogoFile = { url: data.secure_url, public_id: data.public_id };
+      const uploaded = data?.data || data;
+      if (uploaded?.url && uploaded?.public_id) {
+  this.brandLogoPreview = uploaded.url;
+  this.brandLogoFile = { url: uploaded.url, public_id: uploaded.public_id };
   // Sync with form array for validation
   const logoArray = this.registrationForm.get('brandLogo') as FormArray;
   logoArray.clear();
@@ -250,20 +253,25 @@ export class BrandProfileComponent implements OnInit {
     };
     try {
       const compressedFile = await imageCompression(file, options);
-      // Upload to Cloudinary
+      // Upload via backend so local/prod handling stays centralized
       this.productImagesPreview[index] = null;
       this.productImagesFiles[index] = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      formData.append('folder', 'brand_product_images');
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
       });
+      if (!response.ok) {
+        this.registrationError = 'Product image upload failed.';
+        return;
+      }
       const data = await response.json();
-      if (data.secure_url && data.public_id) {
-        this.productImagesPreview[index] = data.secure_url;
-        this.productImagesFiles[index] = { url: data.secure_url, public_id: data.public_id };
+      const uploaded = data?.data || data;
+      if (uploaded?.url && uploaded?.public_id) {
+        this.productImagesPreview[index] = uploaded.url;
+        this.productImagesFiles[index] = { url: uploaded.url, public_id: uploaded.public_id };
         // Sync with form array for validation
         const prodArray = this.registrationForm.get('productImages') as FormArray;
         // Ensure enough controls

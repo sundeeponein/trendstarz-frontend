@@ -494,6 +494,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.profileImageFile) {
       const fd = new FormData();
       fd.append('file', this.profileImageFile);
+      fd.append('folder', 'influencer_profile_images');
       try {
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
         if (!resp.ok) {
@@ -502,7 +503,8 @@ export class InfluencerRegistrationComponent implements OnInit {
           return;
         }
         const data = await resp.json();
-        if (data.url && data.public_id) { imageUploadResult = { url: data.url, public_id: data.public_id }; }
+        const uploaded = data?.data || data;
+        if (uploaded?.url && uploaded?.public_id) { imageUploadResult = { url: uploaded.url, public_id: uploaded.public_id }; }
         else { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
       } catch { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
     }
