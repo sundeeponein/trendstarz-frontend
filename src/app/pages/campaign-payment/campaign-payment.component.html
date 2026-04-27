@@ -1,0 +1,30 @@
+<div class="campaign-payment" *ngIf="visible">
+  <div class="cp-panel">
+    <h3>Pay for Campaign</h3>
+    <p *ngIf="!calculated">Click <button (click)="calculate()" type="button" class="btn-link">Calculate</button> to get the expected amount.</p>
+
+    <div *ngIf="calculated" class="calc">
+      <div><strong>Agreed amount:</strong> ₹{{ calculated.agreedAmount || '0' }}</div>
+      <div><strong>Platform fee ({{calculated.platformFeePercent}}%):</strong> ₹{{ calculated.platformFee | number:'1.0-2' }}</div>
+      <div><strong>GST ({{calculated.gstPercent}}%):</strong> ₹{{ calculated.gst | number:'1.0-2' }}</div>
+      <div><strong>Total to pay:</strong> ₹{{ calculated.payerTotal | number:'1.0-2' }}</div>
+    </div>
+
+    <div class="form-row">
+      <label>UPI Transaction / UTR number</label>
+      <input [(ngModel)]="utrNumber" placeholder="Enter UTR / txn id" />
+    </div>
+
+    <div class="form-row">
+      <label>Payment proof (screenshot)</label>
+      <input type="file" (change)="onFileSelected($event)" />
+    </div>
+
+    <div class="actions">
+      <button (click)="submitProof()" [disabled]="loading" class="btn-primary">Submit proof</button>
+      <button (click)="close()" class="btn-secondary">Cancel</button>
+    </div>
+
+    <div *ngIf="error" class="error">{{ error }}</div>
+  </div>
+</div>

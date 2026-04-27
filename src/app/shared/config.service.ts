@@ -17,6 +17,48 @@ export class ConfigService {
 
   constructor(private http: HttpClient) {}
 
+  getApiUrl(): string {
+    return this.apiUrl;
+  }
+
+  /**
+   * Fetch the admin-managed support contact (email / phone / whatsapp / message / enabled).
+   * Public endpoint — safe to call from any page. Used by the campaign-management
+   * "Need help?" / "Contact support" banner. Falls back to a sensible default
+   * if the request fails so the UI never breaks.
+   */
+  getSupportContact(): Observable<{
+    enabled: boolean;
+    email: string;
+    phone: string;
+    whatsapp: string;
+    message: string;
+  }> {
+    return this.http
+      .get<any>(`${this.apiUrl}/public/support-contact`)
+      .pipe(
+        map((res) => {
+          const d = res?.data ?? res ?? {};
+          return {
+            enabled: d.enabled !== false,
+            email: d.email || 'support@trendstarz.in',
+            phone: d.phone || '',
+            whatsapp: d.whatsapp || '',
+            message: d.message || '',
+          };
+        }),
+        catchError(() =>
+          of({
+            enabled: true,
+            email: 'support@trendstarz.in',
+            phone: '',
+            whatsapp: '',
+            message: '',
+          }),
+        ),
+      );
+  }
+
   // Check if username exists (for async validation)
   checkUsernameExists(username: string) {
     return this.http.get<{ exists: boolean }>(`${this.apiUrl}/users/check-username/${encodeURIComponent(username)}`)
@@ -71,10 +113,14 @@ export class ConfigService {
         preApproveBrands: !!res?.preApproveBrands,
         brandRequireEmailVerified: res?.brandRequireEmailVerified !== false,
         brandRequireMobileVerified: !!res?.brandRequireMobileVerified,
+        platformFeeEnabled: !!res?.platformFeeEnabled,
+        platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : 10,
+        gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : 18,
       })),
       catchError(() => of({
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
+        platformFeeEnabled: false, platformFeePercent: 10, gstPercent: 18
       }))
     );
   }
@@ -208,6 +254,10 @@ export class ConfigService {
 
   updateBrandProfile(data: any): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/brand-profile`, data);
+  }
+
+  setPremiumForUser(userId: string, isPremium: boolean, premiumDuration: '1m' | '3m' | '1y'): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${userId}/premium`, { isPremium, premiumDuration });
   }
 
 

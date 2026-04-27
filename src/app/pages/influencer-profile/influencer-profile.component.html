@@ -119,17 +119,10 @@
 
             <div class="field-block" formGroupName="location">
               <label>District</label>
-              <ng-container *ngIf="isEditMode; else viewDistrict">
-                <select formControlName="district" class="form-control">
-                  <option value="" disabled>Select your district</option>
-                  <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
-                </select>
-              </ng-container>
-              <ng-template #viewDistrict>
-                <span class="chip chip--selected">
-                  {{ getDistrictName(registrationForm.value.location?.district) }}
-                </span>
-              </ng-template>
+              <select formControlName="district" class="form-control">
+                <option value="" disabled>Select your district</option>
+                <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
+              </select>
             </div>
 
             <div class="field-block">
@@ -139,19 +132,19 @@
                   <div
                     *ngFor="let lang of languagesList"
                     class="chip"
-                    [class.chip--selected]="registrationForm.value.languages?.includes(lang._id)"
+                    [class.chip--selected]="registrationForm.get('languages')?.value?.includes(lang._id)"
                     (click)="toggleChip('languages', lang._id)"
                     tabindex="0"
                     (keydown.enter)="toggleChip('languages', lang._id)"
                     (keydown.space)="toggleChip('languages', lang._id)"
-                    [attr.aria-pressed]="registrationForm.value.languages?.includes(lang._id)"
+                    [attr.aria-pressed]="registrationForm.get('languages')?.value?.includes(lang._id)"
                     role="button"
                   >
                     {{ lang.name }}
                   </div>
                 </ng-container>
                 <ng-template #viewLanguages>
-                  <div *ngFor="let langId of registrationForm.value.languages">
+                  <div *ngFor="let langId of registrationForm.get('languages')?.value">
                     <span class="chip chip--selected">{{ getLanguageName(langId) }}</span>
                   </div>
                 </ng-template>
@@ -165,19 +158,19 @@
                   <div
                     *ngFor="let cat of categoriesList"
                     class="chip"
-                    [class.chip--selected]="registrationForm.value.categories?.includes(cat._id)"
+                    [class.chip--selected]="registrationForm.get('categories')?.value?.includes(cat._id)"
                     (click)="toggleChip('categories', cat._id)"
                     tabindex="0"
                     (keydown.enter)="toggleChip('categories', cat._id)"
                     (keydown.space)="toggleChip('categories', cat._id)"
-                    [attr.aria-pressed]="registrationForm.value.categories?.includes(cat._id)"
+                    [attr.aria-pressed]="registrationForm.get('categories')?.value?.includes(cat._id)"
                     role="button"
                   >
                     {{ cat.name }}
                   </div>
                 </ng-container>
                 <ng-template #viewCategories>
-                  <div *ngFor="let catId of registrationForm.value.categories">
+                  <div *ngFor="let catId of registrationForm.get('categories')?.value">
                     <span class="chip chip--selected">{{ getCategoryName(catId) }}</span>
                   </div>
                 </ng-template>
@@ -189,7 +182,6 @@
             <h3>Social Media Platforms</h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
             <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns.</div>
-            <div class="text-muted" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
@@ -210,6 +202,11 @@
                   <div class="col">
                     <label>{{ platform.handleLabel || 'Handle' }}</label>
                     <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" />
+                    <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                        [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                        target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                      <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                    </a>
                   </div>
                   <div class="col">
                     <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
@@ -233,6 +230,8 @@
                 </div>
               </div>
             </div>
+            <div class="text-muted" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
+            
           </div>
 
           <div class="actions-row dual">

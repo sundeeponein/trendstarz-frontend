@@ -115,12 +115,12 @@
                 <div
                   *ngFor="let cat of categoriesList"
                   class="chip"
-                  [class.chip--selected]="registrationForm.value.categories.includes(cat._id)"
+                  [class.chip--selected]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
                   (click)="toggleChip('categories', cat._id)"
                   tabindex="0"
                   (keydown.enter)="toggleChip('categories', cat._id)"
                   (keydown.space)="toggleChip('categories', cat._id)"
-                  [attr.aria-pressed]="registrationForm.value.categories.includes(cat._id)"
+                  [attr.aria-pressed]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
                   role="button"
                 >{{ cat.name }}</div>
               </div>
@@ -204,12 +204,12 @@
                 <div
                   *ngFor="let lang of languagesList"
                   class="chip"
-                  [class.chip--selected]="registrationForm.value.languages.includes(lang._id)"
+                  [class.chip--selected]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
                   (click)="toggleChip('languages', lang._id)"
                   tabindex="0"
                   (keydown.enter)="toggleChip('languages', lang._id)"
                   (keydown.space)="toggleChip('languages', lang._id)"
-                  [attr.aria-pressed]="registrationForm.value.languages.includes(lang._id)"
+                  [attr.aria-pressed]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
                   role="button"
                 >{{ lang.name }}</div>
               </div>

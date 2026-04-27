@@ -42,6 +42,18 @@ export class AdminManagementComponent implements OnInit {
     preApproveBrands: false,
     brandRequireEmailVerified: true,
     brandRequireMobileVerified: false,
+    // Admin-managed support contact (shown on campaign-management page banner).
+    // Can be toggled off entirely via supportContactEnabled. Stays useful even
+    // after Razorpay automation lands — repurposed as "Need help?" channel.
+    supportContactEnabled: true,
+    supportContactEmail: 'support@trendstarz.in',
+    supportContactPhone: '',
+    supportContactWhatsapp: '',
+    supportContactMessage: '',
+    // Platform commission and tax (admin-managed)
+    platformFeeEnabled: false,
+    platformFeePercent: 10,
+    gstPercent: 18,
   };
   settingsSaving = false;
   settingsSaved = false;
@@ -81,6 +93,14 @@ export class AdminManagementComponent implements OnInit {
         this.settings.preApproveBrands = !!data?.preApproveBrands;
         this.settings.brandRequireEmailVerified = !!data?.brandRequireEmailVerified;
         this.settings.brandRequireMobileVerified = !!data?.brandRequireMobileVerified;
+        this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
+        this.settings.supportContactEmail = data?.supportContactEmail || 'support@trendstarz.in';
+        this.settings.supportContactPhone = data?.supportContactPhone || '';
+        this.settings.supportContactWhatsapp = data?.supportContactWhatsapp || '';
+        this.settings.supportContactMessage = data?.supportContactMessage || '';
+          this.settings.platformFeeEnabled = !!data?.platformFeeEnabled;
+          this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
+          this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -90,24 +110,52 @@ export class AdminManagementComponent implements OnInit {
   saveSettings() {
     this.settingsSaving = true;
     this.settingsSaved = false;
+    this.cdr.detectChanges();
     const token = localStorage.getItem('token');
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+    // Safety: if the request hangs (backend down / network), unstick the button after 15s.
+    const safetyTimer = setTimeout(() => {
+      if (this.settingsSaving) {
+        this.settingsSaving = false;
+        alert('Save is taking too long. Check that the backend is running, then try again.');
+        this.cdr.detectChanges();
+      }
+    }, 15000);
+
     this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, this.settings, headers).subscribe({
       next: (res) => {
-        console.log('Settings save response:', res);
+        clearTimeout(safetyTimer);
+        // Confirm the saved doc actually contains our support fields. If the
+        // backend hadn't picked up the schema change, those fields would be
+        // missing from the returned `settings` and we'd warn the admin instead
+        // of silently letting them think the save worked.
+        const saved = (res && (res.settings ?? res.data?.settings)) || {};
+        const persistedSupport =
+          'supportContactEmail' in saved ||
+          'supportContactPhone' in saved ||
+          'supportContactWhatsapp' in saved ||
+          'supportContactMessage' in saved ||
+          'supportContactEnabled' in saved;
         this.settingsSaving = false;
         this.settingsSaved = true;
-        this.loadSettings(); // Ensure UI is in sync with backend
-        this.cdr.detectChanges(); // Force change detection
+        this.cdr.detectChanges();
+        this.loadSettings();
+        if (!persistedSupport) {
+          alert(
+            'Saved, but support contact fields were not persisted. Please restart the backend so the new schema is loaded.',
+          );
+        }
         setTimeout(() => {
           this.settingsSaved = false;
           this.cdr.detectChanges();
         }, 3000);
       },
       error: (err) => {
+        clearTimeout(safetyTimer);
         console.error('Settings save error:', err);
         this.settingsSaving = false;
-        alert('Error saving settings.');
+        alert(`Error saving settings: ${err?.error?.message || err?.message || 'Unknown error'}`);
         this.cdr.detectChanges();
       }
     });
@@ -236,7 +284,7 @@ export class AdminManagementComponent implements OnInit {
         };
         reloadFn = () => this.loadConfig();
     }
-    console.log('[BatchUpdate] Payload:', JSON.stringify(payload, null, 2));
+    // debug: batch update payload
     const token = localStorage.getItem('token');
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.post(baseUrl + '/admin/batch-update-visibility', payload, headers)

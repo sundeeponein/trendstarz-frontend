@@ -8,7 +8,7 @@ import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, Abstra
 import { ConfigService } from '../../shared/config.service';
 import { PlansService } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
-import { of, forkJoin } from 'rxjs';
+import { of, forkJoin, firstValueFrom } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -291,7 +291,7 @@ export class BrandProfileComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('BrandProfileComponent ngOnInit called');
+    // ngOnInit called
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
@@ -329,16 +329,18 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
-    // Load districts when state changes
-    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+    // Load districts when state changes (robust: accept id or name, request by name+id)
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateIdOrName => {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
-      if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+      if (stateIdOrName) {
+        const selectedState = this.states.find((s: any) => s._id === stateIdOrName || s.id === stateIdOrName || s.name === stateIdOrName);
+        const stateName = selectedState?.name || (typeof stateIdOrName === 'string' ? stateIdOrName : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateIdOrName === 'string' ? stateIdOrName : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+          error: () => { this.districts = []; this.cd.detectChanges(); }
+        });
       }
     });
 
@@ -400,18 +402,18 @@ export class BrandProfileComponent implements OnInit {
             phoneNumber: profile.phoneNumber || '',
             isPremium: !!profile.isPremium,
             paymentOption: profile.isPremium ? 'premium' : 'free',
-            location: {
-              state: stateId,
-              district: districtId,
-              googleMapLink: profile.location?.googleMapLink || ''
-            },
+              location: {
+                state: stateId,
+                district: districtId,
+                googleMapLink: profile.location?.googleMapLink || ''
+              },
             categories: categoryIds,
             languages: languageIds,
             website: profile.website || '',
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
             description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false }
-          });
+            }, { emitEvent: false });
 
           const logoArr = this.registrationForm.get('brandLogo') as FormArray;
           logoArr.clear();
@@ -420,7 +422,8 @@ export class BrandProfileComponent implements OnInit {
             public_id: img.public_id
           })));
           this.brandLogoPreview = (profile.brandLogo && profile.brandLogo[0]?.url) || null;
-          this.brandLogoFile = (profile.brandLogo && profile.brandLogo[0]) || null;
+          // Do not set brandLogoFile to the remote image object — only File objects should be used for upload
+          this.brandLogoFile = null;
 
           const productSource = Array.isArray(profile.products)
             ? profile.products
@@ -464,16 +467,17 @@ export class BrandProfileComponent implements OnInit {
             this.myPayments = payments;
             this.latestPendingPayment = payments.find((p: any) => p.status === 'pending') || null;
           });
-          this.registrationForm.disable();
+          this.registrationForm.disable({ emitEvent: false });
           this.refreshStepCompletion();
           this.cd.detectChanges();
           };
           // Load districts for the saved state, then patch form
           if (profile.location?.state) {
-            this.configService.getDistricts(profile.location.state).subscribe({
+            // prefer the resolved stateId when available
+            this.configService.getDistricts(profile.location.state, stateId).subscribe({
               next: (dists) => {
-                this.districts = dists;
-                const resolvedDistrict = dists.find((d: any) => d.name === profile.location?.district);
+                this.districts = Array.isArray(dists) ? dists : [];
+                const resolvedDistrict = this.districts.find((d: any) => d.name === profile.location?.district);
                 const districtId = resolvedDistrict ? resolvedDistrict._id : '';
                 if (!districtId && profile.location?.district) {
                   console.warn('[Profile] District not found in list:', profile.location.district);
@@ -553,29 +557,50 @@ export class BrandProfileComponent implements OnInit {
 
   enableEdit(): void {
     this.isEditMode = true;
-    this.registrationForm.enable();
+    this.registrationForm.enable({ emitEvent: false });
     this.refreshStepCompletion();
+    this.ensureDistrictsForCurrentState();
   // Password fields are disabled and removed from the form
+  }
+
+  // Ensure districts are loaded when entering edit mode so dropdown shows correct options
+  private ensureDistrictsForCurrentState(): void {
+    const stateVal = this.registrationForm.get('location.state')?.value;
+    if (stateVal && (!this.districts || this.districts.length === 0)) {
+      const selectedState = this.states.find((s: any) => s._id === stateVal || s.id === stateVal || s.name === stateVal);
+      const stateName = selectedState?.name || (typeof stateVal === 'string' ? stateVal : '');
+      const stateId = selectedState?._id || selectedState?.id || (typeof stateVal === 'string' ? stateVal : '');
+      this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
+    }
   }
 
   cancelEdit(): void {
     this.isEditMode = false;
     if (this.originalFormValue) {
-      this.registrationForm.reset(this.originalFormValue);
+      this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
     this.platformForms = JSON.parse(JSON.stringify(this.originalPlatformForms));
     const pfKeys = Object.keys(this.platformForms);
     this.activePlatformTab = pfKeys.length ? pfKeys[0] : null;
-    this.registrationForm.disable();
+    this.registrationForm.disable({ emitEvent: false });
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
     this.refreshStepCompletion();
+    // restore districts for the original state so view mode shows names
+    const origState = this.originalFormValue?.location?.state;
+    if (origState) {
+      const selectedState = this.states.find((s: any) => s._id === origState || s.id === origState || s.name === origState);
+      const stateName = selectedState?.name || (typeof origState === 'string' ? origState : '');
+      const stateId = selectedState?._id || selectedState?.id || (typeof origState === 'string' ? origState : '');
+      this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
+    }
   }
 
   payAndUpgrade() {
     this.paymentError = '';
     this.paymentSuccess = false;
-    if (!this.selectedDuration) {
+    const duration = this.selectedDuration;
+    if (!duration) {
       this.paymentError = 'Please select a premium duration.';
       setTimeout(() => {
         this.showPayment = false;
@@ -595,12 +620,7 @@ export class BrandProfileComponent implements OnInit {
           this.paymentError = 'User ID not found';
           return;
         }
-        const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        this.configService['http'].patch(
-          `${this.configService['apiUrl']}/users/${profile._id}/premium`,
-          { isPremium: true, premiumDuration: this.selectedDuration },
-          headers
-        ).subscribe({
+        this.configService.setPremiumForUser(profile._id, true, duration).subscribe({
           next: (res: any) => {
             this.paymentSuccess = true;
             this.showPayment = false;
@@ -836,7 +856,20 @@ export class BrandProfileComponent implements OnInit {
     const raw = this.registrationForm.getRawValue();
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
-    const districtObj = this.districts.find(d => d._id === raw.location.district);
+    let districtObj = this.districts.find(d => d._id === raw.location.district);
+    // If districts not loaded or districtObj not found, try fetching districts for the state and resolve by id
+    if (!districtObj && raw.location?.district) {
+      try {
+        const selectedState = this.states.find((s: any) => s._id === raw.location.state || s.id === raw.location.state || s.name === raw.location.state);
+        const stateNameForLookup = selectedState?.name || (typeof raw.location.state === 'string' ? raw.location.state : '');
+        const stateIdForLookup = selectedState?._id || selectedState?.id || (typeof raw.location.state === 'string' ? raw.location.state : '');
+        const dists = await firstValueFrom(this.configService.getDistricts(stateNameForLookup, stateIdForLookup).pipe(catchError(() => of([]))));
+        this.districts = Array.isArray(dists) ? dists : [];
+        districtObj = this.districts.find((d: any) => d._id === raw.location.district) || undefined;
+      } catch (err) {
+        // ignore and proceed — we'll send raw value if we can't resolve
+      }
+    }
     // Map language IDs to names
     const languageNames = (raw.languages || []).map((id: string) => {
       const lang = this.languagesList.find((l: any) => l._id === id);
@@ -893,12 +926,20 @@ export class BrandProfileComponent implements OnInit {
       next: () => {
         this.registrationSuccess = true;
         this.isEditMode = false;
-        this.registrationForm.disable();
+        this.registrationForm.disable({ emitEvent: false });
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.submitted = false;
+        // Ensure districts loaded for the saved state so the view shows district name
+        const stateVal = this.registrationForm.get('location.state')?.value;
+        if (stateVal) {
+          const selectedState = this.states.find((s: any) => s._id === stateVal || s.id === stateVal || s.name === stateVal);
+          const stateName = selectedState?.name || (typeof stateVal === 'string' ? stateVal : '');
+          const stateId = selectedState?._id || selectedState?.id || (typeof stateVal === 'string' ? stateVal : '');
+          this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
+        }
       },
       error: err => {
         this.registrationError = 'Update failed. Please try again.';

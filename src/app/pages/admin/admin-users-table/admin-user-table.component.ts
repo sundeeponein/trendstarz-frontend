@@ -88,13 +88,12 @@ export class AdminUserTableComponent implements OnInit {
     return null;
   }
   openPremiumModal(userId: string, userType: 'influencer' | 'brand') {
-      console.log('[ADMIN] Set Premium clicked for user:', userId, 'userType:', userType);
       this.premiumUserId = userId;
       this.premiumDuration = '';
       this.premiumIsPremium = true;
       this.premiumType = userType;
       this.showPremiumModal = true;
-      console.log('[ADMIN] showPremiumModal:', this.showPremiumModal);
+      // debug: open premium modal
     }
   activeTab: 'influencer' | 'brand' = 'influencer'; // Default to influencer tab
   influencers: any[] = [];
@@ -141,11 +140,11 @@ export class AdminUserTableComponent implements OnInit {
       window.addEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
     }
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    console.log('Profile token:', token);
+    // debug: profile token
     if (token) {
       this.configService.getInfluencerProfileById().subscribe({
         next: (profile) => {
-          console.log('Fetched profile:', profile);
+          // debug: fetched profile
           // ...existing code...
         },
         error: (err) => {
@@ -175,7 +174,7 @@ export class AdminUserTableComponent implements OnInit {
       .pipe(timeout(5000), catchError(err => { return of([]); }))
       .subscribe((res: any) => {
         const users = Array.isArray(res) ? res : (res?.data || []);
-        console.log('Fetched influencers:', users);
+        // debug: fetched influencers
         this.influencers = users;
         this.applyFilters('influencer');
         this.updateAllFilterOptions();
@@ -243,10 +242,10 @@ export class AdminUserTableComponent implements OnInit {
     }
     if (userType === 'influencer') {
       this.filteredInfluencers = filtered.filter(user => this.matchesFilters(user, filters));
-      console.log('Filtered influencers:', this.filteredInfluencers);
+      // debug: filtered influencers updated
     } else {
       this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters));
-      console.log('Filtered brands:', this.filteredBrands);
+      // debug: filtered brands updated
     }
   }
 
@@ -256,7 +255,7 @@ export class AdminUserTableComponent implements OnInit {
       return false;
     }
     const isDeleted = window.location.pathname.includes('deleted-users');
-    console.log('Is Deleted Users tab active?', isDeleted);
+    // debug: deleted users tab active = isDeleted
     return isDeleted;
   }
 

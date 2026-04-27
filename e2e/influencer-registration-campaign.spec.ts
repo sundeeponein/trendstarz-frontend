@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 const TEST_IMAGE = path.resolve(__dirname, 'test-profile.png');
 
 test('Influencer registration — full 3-step flow (mocked API)', async ({ page }) => {
-  page.on('console', msg => console.log('BROWSER:', msg.type(), msg.text()));
+  // page console forwarding removed for cleaner CI output
 
   const unique = Date.now();
   const email = `testinfluencer${unique}@example.com`;
@@ -40,6 +40,14 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
     await route.fulfill({
       status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'state_mh', name: 'Maharashtra' }] }),
+    });
+  });
+
+  // ── Mock districts ───────────────────────────────────────
+  await page.route('**/districts**', async (route) => {
+    await route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [{ _id: 'dist_mumbai', name: 'Mumbai' }] }),
     });
   });
 
@@ -122,23 +130,22 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await page.fill('input[formControlName="password"]', 'Test@1234');
   await page.fill('input[formControlName="confirmPassword"]', 'Test@1234');
 
-  await page.click('button:has-text("Next Step")');
-  await page.waitForTimeout(500);
-  await page.locator('body').click(); // trigger CD
-
-  // Confirm step 2 is visible
-  await page.waitForSelector('h2:has-text("Social Media & Media")', { timeout: 10000 });
-
-  // ════════════════════════ STEP 2 ════════════════════════
-  // Upload profile image
+  // Upload profile image (required for step 1 completion)
   const fileInput = page.locator('input[type="file"][accept="image/*"]').first();
   await fileInput.setInputFiles(TEST_IMAGE);
   // Wait for imageCompression + FileReader.onload (uses ngZone.run + cdr.detectChanges)
   await page.waitForTimeout(2000);
-  // Trigger CD by clicking body (name input is in step 1, not visible here)
   await page.locator('body').click();
-  // Wait for preview image
-  await expect(page.locator('img.preview-image').first()).toBeVisible({ timeout: 8000 });
+  await expect(page.locator('img.profile-upload-preview').first()).toBeVisible({ timeout: 8000 });
+
+  await page.click('button:has-text("Next Step")');
+  await page.waitForTimeout(500);
+  await page.locator('body').click(); // trigger CD
+
+  // Confirm step 2 is visible — state select is specific to step 2
+  await page.waitForSelector('select[formcontrolname="state"]', { state: 'visible', timeout: 10000 });
+
+  // ════════════════════════ STEP 2 ════════════════════════
 
   // Select state
   const stateSelect = page.locator('[formgroupname="location"] select[formcontrolname="state"], select[formcontrolname="state"]').first();
@@ -152,26 +159,29 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
     }
   }
 
-  // Select language via ng-select (keyboard interaction for [appendTo]="'body'")
-  const langSelect = page.locator('ng-select[formControlName="languages"]').first();
-  await langSelect.scrollIntoViewIfNeeded();
-  await langSelect.click();
+  // Wait for districts to load after state change, then select district
   await page.waitForTimeout(500);
-  await page.keyboard.type('English');
-  await page.waitForTimeout(300);
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Escape');
+  const districtSelect = page.locator('[formgroupname="location"] select[formcontrolname="district"], select[formcontrolname="district"]').first();
+  await districtSelect.waitFor({ state: 'visible' });
+  const districtOptions = await districtSelect.locator('option').all();
+  for (const opt of districtOptions) {
+    const val = await opt.getAttribute('value');
+    if (val && val !== '') {
+      await districtSelect.selectOption(val);
+      break;
+    }
+  }
+
+  // Select language via chip click
+  const langChip = page.locator('.chip:has-text("English")').first();
+  await langChip.scrollIntoViewIfNeeded();
+  await langChip.click();
   await page.waitForTimeout(200);
 
-  // Select category via ng-select
-  const catSelect = page.locator('ng-select[formControlName="categories"]').first();
-  await catSelect.scrollIntoViewIfNeeded();
-  await catSelect.click();
-  await page.waitForTimeout(500);
-  await page.keyboard.type('Fashion');
-  await page.waitForTimeout(300);
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Escape');
+  // Select category via chip click
+  const catChip = page.locator('.chip:has-text("Fashion")').first();
+  await catChip.scrollIntoViewIfNeeded();
+  await catChip.click();
   await page.waitForTimeout(200);
 
   // Select social media platform (platform card)
@@ -185,9 +195,6 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await handleInput.waitFor({ state: 'visible', timeout: 5000 });
   await handleInput.fill('testinfluencer');
 
-  const followersInput = page.locator('input[placeholder="e.g. 12000"]').first();
-  await followersInput.fill('5000');
-
   // Select tier from dropdown
   const tierSelect = page.locator('select').filter({ has: page.locator('option:has-text("Nano")') }).first();
   await tierSelect.selectOption('Nano');
@@ -197,27 +204,43 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await page.locator('body').click(); // trigger CD
 
   // Confirm step 3 is visible
-  await page.waitForSelector('h2:has-text("Professional Details")', { timeout: 10000 });
+  await page.waitForSelector('h2:has-text("Plan")', { timeout: 10000 });
 
   // ════════════════════════ STEP 3 ════════════════════════
-  // Select at least one contact method (hidden checkbox, click the card label)
-  const contactCard = page.locator('.contact-card').first();
-  await contactCard.waitFor({ state: 'visible', timeout: 5000 });
-  await contactCard.click();
+  // Give Angular time to hydrate step 3 fully before interacting
+  await page.waitForTimeout(2000);
+
+  // Select WhatsApp contact method — click first contact-card
+  const waCard = page.locator('.contact-card').nth(0);
+  await waCard.scrollIntoViewIfNeeded();
+  await waCard.click();
+  await page.waitForTimeout(500);
 
   // Fill starting price
-  await page.fill('input[formControlName="promotionalPrice"]', '5000');
+  const priceInput = page.locator('input[placeholder="Enter your starting price"]');
+  await priceInput.scrollIntoViewIfNeeded();
+  await priceInput.click();
+  await priceInput.pressSequentially('5000', { delay: 50 });
+  await page.waitForTimeout(500);
+
+  // Verify form values in the browser context before submit
+  await page.waitForTimeout(200);
 
   // ── Submit ────────────────────────────────────────────────
   await page.click('button[type="submit"]');
 
-  // Wait for Cloudinary upload mock + registration API mock + success modal
-  await page.waitForTimeout(3000);
-  await page.locator('body').click(); // trigger CD
+  // Success response arrived — poll for modal DOM, nudging zoneless CD
+  const successModal = page.locator('.reg-success-modal, .reg-success-modal-overlay');
+  let modalVisible = false;
+  for (let i = 0; i < 30 && !modalVisible; i++) {
+    await page.waitForTimeout(500);
+    await page.mouse.move(5 + i, 5 + i);
+    try { modalVisible = await successModal.first().isVisible(); } catch { modalVisible = false; }
+  }
 
   // Expect success modal
-  await expect(page.locator('text=Successfully Registered'))
-    .toBeVisible({ timeout: 15000 });
+  await expect(successModal.first()).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('text=Successfully Registered')).toBeVisible();
 });
 
 // ── Validation tests ──────────────────────────────────────────
@@ -240,7 +263,7 @@ test.describe('Influencer registration — step 1 validation', () => {
   test('Next Step is blocked when required fields are empty', async ({ page }) => {
     await page.click('button:has-text("Next Step")');
     // Should still be on step 1
-    await expect(page.locator('h2:has-text("Basic Information")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Profile")')).toBeVisible();
   });
 
   test('password mismatch shows error', async ({ page }) => {

@@ -368,9 +368,21 @@ export class CampaignFormComponent implements OnInit {
     }
     this.uploading = true;
     const v = this.form.value;
+    const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
     const payload: any = {
       ...v,
+      pricePerInfluencer: pricePerInfluencerPaise,
       status: 'draft',
+      categories: this.selectedCategories,
+      platforms: this.platformDeliverables.map(pd => pd.platform),
+      socialMedia: this.platformDeliverables.map(pd => ({
+        platform: pd.platform,
+        contentTypes: pd.contentTypes.map(ct => ({
+          name: ct.name,
+          enabled: ct.enabled,
+          price: ct.price
+        }))
+      })),
     };
     this.uploading = false;
     this.save.emit(payload);

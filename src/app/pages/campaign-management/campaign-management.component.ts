@@ -3,6 +3,8 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
+import { SupportBannerComponent } from '../../shared/support-banner/support-banner.component';
+import { CampaignPaymentComponent } from '../campaign-payment/campaign-payment.component';
 import { SessionService } from '../../core/session.service';
 import { Campaign } from '../../shared/campaigns/campaign.model';
 import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/campaign-form.component';
@@ -13,7 +15,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, CampaignFormComponent, UpgradeBannerComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, CampaignFormComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -25,7 +27,7 @@ export class CampaignManagementComponent implements OnInit {
       this.loading = true;
       this.config.getAllCampaigns().subscribe({
         next: (campaigns: Campaign[]) => {
-          console.log('[DEBUG] getAllCampaigns response:', campaigns);
+          // debug: getAllCampaigns response
           this.campaigns = campaigns;
           this.loading = false;
           this.cd.detectChanges();
@@ -85,6 +87,22 @@ export class CampaignManagementComponent implements OnInit {
   planLimitError: string = '';
   upgradeBannerMessage: string = '';
     invitePanelSuccessMessage: string = '';
+
+    // Payment modal state
+    paymentModalVisible = false;
+    paymentCampaignId: string | null = null;
+
+    openPayment(campaignId?: string | null) {
+      if (!campaignId) return;
+      this.paymentCampaignId = campaignId;
+      this.paymentModalVisible = true;
+      this.cd.detectChanges();
+    }
+
+    onPaymentVisibleChange(v: boolean) {
+      this.paymentModalVisible = v;
+      if (!v) this.paymentCampaignId = null;
+    }
 
 
   get invitedIds(): Set<string> {
@@ -217,9 +235,8 @@ export class CampaignManagementComponent implements OnInit {
       this.loading = true;
       this.config.getBrandProfileById().subscribe({
         next: (profile: any) => {
-          console.log('[DEBUG] Raw brand profile response:', profile);
+          // debug: raw brand profile response
           const brand = profile?.data?.brand || profile?.brand || profile;
-          console.log('[DEBUG] brand profile:', brand);
           this.brandId = brand?._id || brand?.id || '';
           this.brandName = brand?.brandName || brand?.name || '';
           // Set plan capabilities and maxActiveCampaigns here
@@ -229,7 +246,7 @@ export class CampaignManagementComponent implements OnInit {
           }
           this.cd.detectChanges();
           // Now load campaigns for this brand
-          console.log('[DEBUG] Using brandId:', this.brandId, typeof this.brandId);
+          // debug: using brandId
           if (!this.brandId) {
             console.error('[ERROR] No brandId found after fetching brand profile. Campaigns API will not be called.');
             this.campaignLoadError = 'No brand profile found or you are not logged in as a brand. Please check your account.';
@@ -239,7 +256,7 @@ export class CampaignManagementComponent implements OnInit {
           }
           this.config.getCampaignsByBrandId(this.brandId).subscribe({
             next: (campaigns: Campaign[]) => {
-              console.log('[DEBUG] getCampaignsByBrandId response:', campaigns);
+              // debug: getCampaignsByBrandId response
               this.campaigns = campaigns || [];
               if (!campaigns || campaigns.length === 0) {
                 this.campaignLoadError = 'No campaigns found.';
@@ -325,9 +342,8 @@ export class CampaignManagementComponent implements OnInit {
   onManage(campaign: Campaign) {
     // Always refresh brand profile before editing
     this.config.getBrandProfileById().subscribe({
-      next: (profile: any) => {
+        next: (profile: any) => {
         const brand = profile?.data?.brand || profile?.brand || profile;
-        console.log('[DEBUG] brand profile:', brand);
         this.brandId = brand?._id || brand?.id || brand?.brandUsername || '';
         this.brandName = brand?.brandName || brand?.name || '';
         this.editingCampaign = campaign;
@@ -437,7 +453,7 @@ export class CampaignManagementComponent implements OnInit {
       });
     } else {
       const payload: any = { ...campaignData, brandId: validBrandId };
-      console.log('Creating campaign with payload:', payload);
+      // debug: creating campaign payload
       // Basic required fields check (customize as needed)
       if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId || !payload.categories || payload.categories.length === 0) {
         alert('Please fill all required fields (title, timeline, categories, brand).');
@@ -459,7 +475,7 @@ export class CampaignManagementComponent implements OnInit {
           // Send invites to selected influencers if any
           if (inviteInfluencerIds?.length && created._id) {
             const validIds = inviteInfluencerIds.filter(id => !!id);
-            console.log('[DEBUG] Inviting influencers after campaign creation:', validIds, 'for campaign', created._id);
+            // debug: inviting influencers after campaign creation
             if (validIds.length === 0) {
               this.loadAllInvitesForce();
               this.cd.detectChanges();
@@ -470,7 +486,7 @@ export class CampaignManagementComponent implements OnInit {
             } else {
               this.config.inviteInfluencers(created._id, validIds).subscribe({
                 next: (resp) => {
-                  console.log('[DEBUG] Invite API response:', resp);
+                  // debug: invite API response
                   // Fetch invites for the new campaign and update state
                   if (!created._id) {
                     console.error('Campaign _id is undefined after creation.');
@@ -503,7 +519,7 @@ export class CampaignManagementComponent implements OnInit {
                   });
                 },
                 error: (err) => {
-                  console.error('[DEBUG] Invite API error:', err);
+                  console.error('[Invite API error]', err);
                   this.loadAllInvitesForce();
                   this.cd.detectChanges();
                   this.toastMessage = 'Campaign created, but failed to send invites.';
@@ -551,7 +567,7 @@ export class CampaignManagementComponent implements OnInit {
           }
           this.toastMessage = toastMsg;
           this.showErrorToast = true;
-          console.log('Showing error toast:', toastMsg);
+          // debug: showing error toast message (hidden for CI cleanliness)
           this.cd.detectChanges();
           setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
         }
@@ -573,6 +589,7 @@ export class CampaignManagementComponent implements OnInit {
   closeForm() {
     this.showForm = false;
     this.editingCampaign = null;
+    this.cd.detectChanges();
   }
 
   formatBudget(c: Campaign): string {

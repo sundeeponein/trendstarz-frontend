@@ -1,7 +1,5 @@
 // ...existing code...
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
@@ -496,11 +494,15 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.profileImageFile) {
       const fd = new FormData();
       fd.append('file', this.profileImageFile);
-      fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
       try {
-        const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
+        if (!resp.ok) {
+          this.registrationError = 'Profile image upload failed.';
+          this.isSubmitting = false;
+          return;
+        }
         const data = await resp.json();
-        if (data.secure_url && data.public_id) { imageUploadResult = { url: data.secure_url, public_id: data.public_id }; }
+        if (data.url && data.public_id) { imageUploadResult = { url: data.url, public_id: data.public_id }; }
         else { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
       } catch { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
     }
@@ -515,10 +517,17 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.registerInfluencer(payload).subscribe({
       next: () => {
         this.ngZone.run(() => {
-          this.registrationSuccess = true; this.pendingVerificationEmail = raw.email;
+          this.pendingVerificationEmail = raw.email;
           this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;
-          this.registrationForm.reset(); this.profileImagePreview = null; this.profileImageFile = null;
+          this.profileImagePreview = null; this.profileImageFile = null;
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;
+          // Reset the form first (fires valueChanges which may clear registrationSuccess if set),
+          // then on next microtask mark success and run CD — ensures the success modal renders.
+          this.registrationForm.reset();
+          queueMicrotask(() => {
+            this.registrationSuccess = true;
+            this.cdr.detectChanges();
+          });
         });
       },
       error: err => {

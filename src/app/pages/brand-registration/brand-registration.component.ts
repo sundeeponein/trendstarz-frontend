@@ -1,6 +1,4 @@
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
@@ -34,6 +32,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 export class BrandRegistrationComponent implements OnInit {
   readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
+  readonly MAX_IMAGE_SIZE_MB = 5; // reject images larger than this before attempting compression/upload
 
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -135,6 +134,30 @@ export class BrandRegistrationComponent implements OnInit {
         call: [false]
       }, { validators: [atLeastOneContactRequired] })
     }, { validators: [passwordMatchValidator] });
+
+    // Defensive defaults: ensure arrays/objects exist to avoid runtime nulls
+    try {
+      if (!Array.isArray(this.registrationForm.get('categories')?.value)) {
+        this.registrationForm.get('categories')?.setValue([]);
+      }
+      if (!Array.isArray(this.registrationForm.get('languages')?.value)) {
+        this.registrationForm.get('languages')?.setValue([]);
+      }
+      const contactVal = this.registrationForm.get('contact')?.value;
+      if (!contactVal || typeof contactVal !== 'object') {
+        this.registrationForm.get('contact')?.setValue({ whatsapp: false, email: false, call: false });
+      } else {
+        // ensure missing keys exist
+        const fixed = {
+          whatsapp: !!contactVal.whatsapp,
+          email: !!contactVal.email,
+          call: !!contactVal.call
+        };
+        this.registrationForm.get('contact')?.setValue(fixed, { emitEvent: false });
+      }
+    } catch (e) {
+      // swallow — defensive only
+    }
 
     this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => {
       this.onBrandUsernameInput();
@@ -358,6 +381,11 @@ export class BrandRegistrationComponent implements OnInit {
   async onBrandLogoFileChange(event: any) {
     const file: File = event?.target?.files?.[0];
     if (!file) return;
+    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    if (!validation.valid) {
+      this.registrationError = validation.reason || 'Invalid image file.';
+      return;
+    }
 
     try {
       const compressedFile = await imageCompression(file, {
@@ -387,6 +415,11 @@ export class BrandRegistrationComponent implements OnInit {
   async onProductImageFileChange(event: any, index: number) {
     const file: File = event?.target?.files?.[0];
     if (!file) return;
+    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    if (!validation.valid) {
+      this.registrationError = validation.reason || 'Invalid product image.';
+      return;
+    }
 
     try {
       const compressedFile = await imageCompression(file, {
@@ -405,6 +438,15 @@ export class BrandRegistrationComponent implements OnInit {
     } catch {
       this.registrationError = 'Product image preview failed.';
     }
+  }
+
+  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
+    if (!file) return { valid: false, reason: 'No file selected.' };
+    if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
+    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
+    return { valid: true };
   }
 
   private refreshStepCompletion() {
@@ -546,18 +588,19 @@ export class BrandRegistrationComponent implements OnInit {
   }
 
   private async uploadImage(file: File): Promise<{ url: string; public_id: string } | null> {
+    if (!(file instanceof File)) return null;
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData,
       });
+      if (!response.ok) return null;
       const data = await response.json();
-      if (data?.secure_url && data?.public_id) {
-        return { url: data.secure_url, public_id: data.public_id };
+      if (data?.url && data?.public_id) {
+        return { url: data.url, public_id: data.public_id };
       }
       return null;
     } catch {

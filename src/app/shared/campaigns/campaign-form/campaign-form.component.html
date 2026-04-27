@@ -334,7 +334,7 @@
                 Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
               </span>
               <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
-                <span class="inf-invited-badge"><i class="bi bi-check-circle-fill"></i> Invited</span>
+                <span class="inf-invited-badge badge rounded-pill bg-success"><i class="bi bi-check-circle-fill"></i> Invited</span>
               </ng-container>
               <ng-template #selectable>
                 <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">

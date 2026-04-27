@@ -96,7 +96,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           const data = res.data || {};
           this.dashboard = data;
-          console.log('Dashboard.invites:', this.dashboard.invites);
+          // debug: dashboard invites
           this.invites = data.invites?.newInvites || [];
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];

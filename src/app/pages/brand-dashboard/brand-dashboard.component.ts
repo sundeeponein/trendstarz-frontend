@@ -105,7 +105,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         // Handle both direct and wrapped responses
         const dashboardData = data?.data || data;
         this.dashboard = dashboardData;
-        console.log('[BrandDashboard] Received campaigns:', dashboardData.campaigns);
+        // debug: received dashboard campaigns
         this.recentCampaigns = Array.isArray(dashboardData.campaigns) ? dashboardData.campaigns : [];
         this.recommendedInfluencers = dashboardData.recommendedInfluencers || [];
         // Calculate stats from campaigns

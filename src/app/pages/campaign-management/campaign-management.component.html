@@ -18,6 +18,13 @@
     <p class="mt-2 text-muted">Loading campaigns...</p>
   </div>
 
+  <!-- Campaign payment modal (brand-facing) -->
+  <app-campaign-payment
+    [campaignId]="paymentCampaignId"
+    [visible]="paymentModalVisible"
+    (visibleChange)="onPaymentVisibleChange($event)">
+  </app-campaign-payment>
+
   <div *ngIf="!loading">
     <div *ngIf="campaignLoadError" class="text-center py-5 text-danger">
       <i class="bi bi-exclamation-triangle"></i> {{ campaignLoadError }}
@@ -137,6 +144,11 @@
       </div>
     </ng-container>
 
+    <!-- Admin-managed support banner. Shown only to brands. -->
+    <!-- Pre-Razorpay: invites brands to contact support to complete campaign payments. -->
+    <!-- Post-Razorpay: keeps acting as a "Need help? Contact us" channel for queries. -->
+    <app-support-banner *ngIf="!isInfluencerView"></app-support-banner>
+
     <!-- Summary stats (brand only) -->
     <div class="cm-summary-cards" *ngIf="!isInfluencerView">
       <div class="cm-stat-card">
@@ -249,6 +261,9 @@
               <button class="btn-invite" (click)="openInvitePanel(c)" title="Invite Influencers"
                 [disabled]="c.status === 'completed'">
                 <i class="bi bi-person-plus-fill"></i> Invite
+              </button>
+              <button class="btn-pay" (click)="openPayment(c._id)" title="Record Payment" *ngIf="c.status !== 'completed'">
+                <i class="bi bi-wallet2"></i> Record Payment
               </button>
             </div>
             <span class="status-badge active" *ngIf="isInfluencerView">Open</span>

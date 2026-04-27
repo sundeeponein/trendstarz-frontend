@@ -5,8 +5,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
-import { map, first, catchError } from 'rxjs/operators';
-import { of, forkJoin } from 'rxjs';
+import { map, first, catchError, debounceTime } from 'rxjs/operators';
+import { firstValueFrom, of, forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -91,6 +91,20 @@ export class InfluencerProfileComponent implements OnInit {
   getGrandTotal(): number {
     return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
   }
+
+  getProfileUrl(platformName: string, handle: string): string {
+    const h = (handle || '').replace(/^@+/, '').trim();
+    if (!h) return '';
+    const n = (platformName || '').toLowerCase();
+    if (n.includes('instagram')) return 'https://instagram.com/' + h;
+    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
+    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
+    if (n.includes('facebook')) return 'https://facebook.com/' + h;
+    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
+    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
+    return '';
+  }
+
 
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
@@ -219,6 +233,7 @@ export class InfluencerProfileComponent implements OnInit {
   showTierInfoModal = false;
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
+  readonly MAX_IMAGE_SIZE_MB = 5; // allow up to 5 MB before rejecting
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isEditMode = false;
@@ -283,16 +298,18 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
-    // Load districts when state changes
-    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+    // Load districts when state changes (robust: accept id or name, request by name+id)
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateIdOrName => {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
-      if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+      if (stateIdOrName) {
+        const selectedState = this.states.find((s: any) => s._id === stateIdOrName || s.id === stateIdOrName || s.name === stateIdOrName);
+        const stateName = selectedState?.name || (typeof stateIdOrName === 'string' ? stateIdOrName : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateIdOrName === 'string' ? stateIdOrName : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+          error: () => { this.districts = []; this.cd.detectChanges(); }
+        });
       }
     });
 
@@ -334,7 +351,7 @@ export class InfluencerProfileComponent implements OnInit {
             this.categoriesList.find(c => c.name === name)?._id
           ).filter(Boolean);
           // Load districts for the state, then patch form
-          const patchForm = (districtId: string) => {
+            const patchForm = (districtId: string) => {
             this.registrationForm.patchValue({
               name: profile.name || '',
               username: profile.username || '',
@@ -347,14 +364,18 @@ export class InfluencerProfileComponent implements OnInit {
             categories: categoryIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false },
             website: profile.website || ''
-          });
+          }, { emitEvent: false });
           // Patch profileImages
           const arr = this.registrationForm.get('profileImages') as FormArray;
           arr.clear();
           (profile.profileImages || []).forEach((img: any) => arr.push(this.fb.group({
-            url: img.url,
+            url: this.normalizeImageUrl(img.url),
             public_id: img.public_id
           })));
+          // Show first image as preview on load (normalize backend-local asset paths)
+          this.profileImagePreview = (profile.profileImages && profile.profileImages[0]?.url) ? this.normalizeImageUrl(profile.profileImages[0].url) : null;
+          // Do not set profileImageFile to the remote image object — only File objects should be used for upload
+          this.profileImageFile = null;
           // Patch socialMedia into platformForms
           this.platformForms = {};
           (profile.socialMedia || []).forEach((sm: any) => {
@@ -378,10 +399,10 @@ export class InfluencerProfileComponent implements OnInit {
           };
           // Load districts for the saved state, then patch form
           if (profile.location?.state) {
-            this.configService.getDistricts(profile.location.state).subscribe({
+            this.configService.getDistricts(profile.location.state, stateId).subscribe({
               next: (dists) => {
-                this.districts = dists;
-                const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                this.districts = Array.isArray(dists) ? dists : [];
+                const districtId = this.districts.find((d: any) => d.name === profile.location?.district)?._id || '';
                 patchForm(districtId);
               },
               error: () => patchForm('')
@@ -564,9 +585,9 @@ export class InfluencerProfileComponent implements OnInit {
     // Always fetch and patch the latest profile before edit
     await this.fetchAndPatchProfile();
   this.isEditMode = true;
-  this.registrationForm.enable();
+  this.registrationForm.enable({ emitEvent: false });
   // Enable username for editing
-  this.registrationForm.get('username')?.enable();
+  this.registrationForm.get('username')?.enable({ emitEvent: false });
   // Keep password fields disabled for security
   this.registrationForm.get('password')?.disable();
   this.registrationForm.get('confirmPassword')?.disable();
@@ -576,10 +597,10 @@ export class InfluencerProfileComponent implements OnInit {
   cancelEdit(): void {
     this.isEditMode = false;
     if (this.originalFormValue) {
-      this.registrationForm.reset(this.originalFormValue);
+      this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
     this.platformForms = JSON.parse(JSON.stringify(this.originalPlatformForms));
-    this.registrationForm.disable();
+    this.registrationForm.disable({ emitEvent: false });
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
     this.registrationForm.get('username')?.disable();
@@ -627,6 +648,30 @@ export class InfluencerProfileComponent implements OnInit {
         return found ? found.name : districtId;
       }
 
+  // Normalize image URLs coming from backend. If the URL is a backend-local path
+  // (e.g. `/assets/local-images/...`) prefix it with the backend origin derived
+  // from `environment.apiBaseUrl` so the browser can fetch it during dev.
+  private normalizeImageUrl(url?: string | null): string | null {
+    if (!url) return null;
+    if (url.startsWith('/assets/') || url.startsWith('/assets')) {
+      const api = environment.apiBaseUrl || '';
+      const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
+      // If api doesn't include origin (rare), just return the original url
+      if (!backend) return url;
+      return backend + url;
+    }
+    return url;
+  }
+
+  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
+    if (!file) return { valid: false, reason: 'No file selected.' };
+    if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
+    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
+    return { valid: true };
+  }
+
 
   // Only allow 1 image for now (can extend for premium)
   async onProfileImageFileChange(event: any) {
@@ -635,8 +680,9 @@ export class InfluencerProfileComponent implements OnInit {
     this.profileImageFile = null;
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
+    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    if (!validation.valid) {
+      alert(validation.reason || 'Please select a valid image file.');
       return;
     }
     // Compress and resize before upload
@@ -684,7 +730,20 @@ export class InfluencerProfileComponent implements OnInit {
     }
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
-    const districtObj = this.districts.find(d => d._id === raw.location.district);
+    let districtObj = this.districts.find(d => d._id === raw.location.district);
+    // If district not resolved locally, fetch districts for the state and try to resolve by id
+    if (!districtObj && raw.location?.district) {
+      try {
+        const selectedState = this.states.find((s: any) => s._id === raw.location.state || s.id === raw.location.state || s.name === raw.location.state);
+        const stateNameForLookup = selectedState?.name || (typeof raw.location.state === 'string' ? raw.location.state : '');
+        const stateIdForLookup = selectedState?._id || selectedState?.id || (typeof raw.location.state === 'string' ? raw.location.state : '');
+        const dists = await firstValueFrom(this.configService.getDistricts(stateNameForLookup, stateIdForLookup).pipe(catchError(() => of([]))));
+        this.districts = Array.isArray(dists) ? dists : [];
+        districtObj = this.districts.find((d: any) => d._id === raw.location.district) || undefined;
+      } catch (err) {
+        // ignore and proceed
+      }
+    }
     // Map language IDs to names
     const languageNames = (raw.languages || []).map((id: string) => {
       const lang = this.languagesList.find((l: any) => l._id === id);
@@ -711,6 +770,10 @@ export class InfluencerProfileComponent implements OnInit {
     // Handle Cloudinary upload for profile image if file selected
     let profileImages: { url: string, public_id: string }[] = [];
     if (this.profileImageFile) {
+      if (!(this.profileImageFile instanceof File)) {
+        this.registrationError = 'Invalid profile image file.';
+        return;
+      }
       try {
         const formData = new FormData();
         formData.append('file', this.profileImageFile);
@@ -758,29 +821,35 @@ export class InfluencerProfileComponent implements OnInit {
     delete payload.premiumEnd;
     delete payload.premiumStart;
     delete payload.premiumDuration;
-    // Debug log: print PATCH payload
-    console.log('[PATCH payload]', JSON.stringify(payload, null, 2));
+    // debug: payload prepared for PATCH
     let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
     this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
-        console.log('[PATCH response]', res);
+        // debug: PATCH response received
         this.registrationSuccess = true;
         this.isEditMode = false;
-        this.registrationForm.disable();
+        this.registrationForm.disable({ emitEvent: false });
         this.profileImagePreview = null;
         this.profileImageFile = null;
-        // After PATCH, clear FormArray and keep only the latest image
+
+        // Prefer server-returned user object to update saved images
+        const serverUser = res && (res.user || res.user === null) ? res.user : (res && res.user) || res?.user || res;
+        const savedImages = (serverUser && Array.isArray(serverUser.profileImages)) ? serverUser.profileImages : [];
+
         const arr = this.profileImagesFormArray;
-        if (arr && arr.length > 0) {
-          const lastImage = arr.at(arr.length - 1)?.value;
-          arr.clear();
-          if (lastImage) {
-            arr.push(this.fb.group({
-              url: lastImage.url,
-              public_id: lastImage.public_id
-            }));
-          }
+        if (arr) arr.clear();
+
+        if (savedImages.length) {
+          savedImages.forEach((img: any) => {
+            arr.push(this.fb.group({ url: this.normalizeImageUrl(img.url), public_id: img.public_id }));
+          });
+          this.profileImagePreview = this.normalizeImageUrl(savedImages[0]?.url) || null;
+          this.profileImageFile = null;
+        } else {
+          // If server didn't return images, fetch the latest profile to ensure frontend matches backend
+          this.fetchAndPatchProfile().catch(() => {});
         }
+
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
@@ -824,14 +893,17 @@ export class InfluencerProfileComponent implements OnInit {
                 categories: categoryIds,
                 contact: profile.contact || { whatsapp: false, email: false, call: false },
                 website: profile.website || ''
-              });
+              }, { emitEvent: false });
               const arr = this.registrationForm.get('profileImages') as FormArray;
               if (arr) {
                 arr.clear();
                 (profile.profileImages || []).forEach((img: any) => arr.push(this.fb.group({
-                  url: img.url,
+                  url: this.normalizeImageUrl(img.url),
                   public_id: img.public_id
                 })));
+                // set preview for fetched profile; keep file null to avoid attempting to upload a non-File object
+                this.profileImagePreview = (profile.profileImages && profile.profileImages[0]?.url) ? this.normalizeImageUrl(profile.profileImages[0].url) : null;
+                this.profileImageFile = null;
               }
               // Patch socialMedia into platformForms
               this.platformForms = {};
@@ -859,10 +931,10 @@ export class InfluencerProfileComponent implements OnInit {
               resolve();
             };
             if (profile.location?.state) {
-              this.configService.getDistricts(profile.location.state).subscribe({
+              this.configService.getDistricts(profile.location.state, stateId).subscribe({
                 next: (dists) => {
-                  this.districts = dists;
-                  const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                  this.districts = Array.isArray(dists) ? dists : [];
+                  const districtId = this.districts.find((d: any) => d.name === profile.location?.district)?._id || '';
                   doPatch(districtId);
                 },
                 error: () => doPatch('')

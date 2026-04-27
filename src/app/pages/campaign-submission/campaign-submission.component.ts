@@ -161,26 +161,12 @@ export class CampaignSubmissionComponent implements OnInit {
 
     try {
       let imageUrl = '';
-      if (!environment.production) {
-        // Local/dev: upload to backend
-        const fd = new FormData();
-        fd.append('file', file);
-        const res: any = await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/campaign-invites/${this.inviteId}/upload-image`, fd));
-        imageUrl = res.data?.url || res.url;
-        // Keep as relative path so Angular proxy serves it (avoids helmet CORP blocking)
-        // Do NOT prepend http://localhost:3000 — the proxy handles /assets/local-images
-      } else {
-        // Prod: upload to Cloudinary with folder
-        const preset = environment.cloudinaryUploadPreset;
-        const cloud = environment.cloudinaryCloudName;
-        const url = `https://api.cloudinary.com/v1_1/${cloud}/image/upload`;
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('upload_preset', preset);
-        fd.append('folder', 'campaign_proofs');
-        const res: any = await firstValueFrom(this.http.post(url, fd));
-        imageUrl = res.secure_url;
-      }
+      const fd = new FormData();
+      fd.append('file', file);
+      const res: any = await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/campaign-invites/${this.inviteId}/upload-image`, fd));
+      imageUrl = res.data?.url || res.url;
+      // Keep as relative path so Angular proxy serves it (avoids helmet CORP blocking)
+      // Do NOT prepend http://localhost:3000 — the proxy handles /assets/local-images
       if (type === 'screenshot') {
         this.postScreenshotUrl = imageUrl;
       } else {
