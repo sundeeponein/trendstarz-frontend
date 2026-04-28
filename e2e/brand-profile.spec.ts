@@ -19,7 +19,7 @@ const MOCK_BRAND_PROFILE = {
   phoneNumber: '9876543220',
   categories: ['Fashion'],
   languages: ['English'],
-  location: { state: 'Maharashtra' },
+  location: { state: 'Maharashtra', district: 'Mumbai' },
   brandLogo: [{ url: 'https://res.cloudinary.com/test/image/upload/logo.png', public_id: 'l1' }],
   website: 'https://testbrand.com',
   googleMapAddress: 'Mumbai, Maharashtra',
@@ -71,6 +71,10 @@ async function mockBrandProfileRoutes(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'cat1', name: 'Fashion' }] }) });
   });
+  await page.route('**/districts**', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [{ _id: 'dist_mumbai', name: 'Mumbai' }, { _id: 'dist_pune', name: 'Pune' }] }) });
+  });
   await page.route('**/plans/my/capabilities', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ hasPremium: false, planName: 'Free', features: [], limits: [{ key: 'maxProfileImages', value: 1 }], policies: { imageRetentionDaysAfterExpiry: 45 }, endDate: null }) });
@@ -100,7 +104,7 @@ test.describe('Brand Profile', () => {
   });
 
   test('renders step 1 — Brand Basics with profile data', async ({ page }) => {
-    await expect(page.locator('h2')).toContainText('Brand Basics');
+    await expect(page.locator('h2').first()).toContainText('Brand Info');
     await expect(page.locator('input[formControlName="brandName"]')).toHaveValue('Test Brand');
     await expect(page.locator('input[formControlName="brandUsername"]')).toHaveValue('testbrand');
     await expect(page.locator('input[formControlName="email"]')).toHaveValue('brand@e2e.com');
@@ -108,8 +112,8 @@ test.describe('Brand Profile', () => {
   });
 
   test('shows step progress sidebar with 3 steps', async ({ page }) => {
-    await expect(page.locator('.step-item')).toHaveCount(3);
-    await expect(page.locator('.step-item.active')).toContainText('Brand Basics');
+    await expect(page.locator('.reg-tab')).toHaveCount(3);
+    await expect(page.locator('.reg-tab.reg-tab--active')).toContainText('Brand Info');
   });
 
   test('Edit Profile button enables form fields', async ({ page }) => {
@@ -122,25 +126,24 @@ test.describe('Brand Profile', () => {
     // Step 1 → 2
     await page.click('button:has-text("Next Step")');
     await page.waitForTimeout(500);
-    await expect(page.locator('h2')).toContainText('Media & Discovery');
+    await expect(page.locator('h2').first()).toContainText('Location & Media');
 
     // Step 2 → 3
     await page.click('button:has-text("Next Step")');
     await page.waitForTimeout(500);
-    await expect(page.locator('h2')).toContainText('Professional');
+    await expect(page.locator('h2').first()).toContainText('Plan');
 
     // Step 3 → 2 (back)
     await page.click('button:has-text("Back")');
     await page.waitForTimeout(500);
-    await expect(page.locator('h2')).toContainText('Media & Discovery');
+    await expect(page.locator('h2').first()).toContainText('Location & Media');
   });
 
   test('step 2 shows Media & Discovery fields', async ({ page }) => {
     await page.click('button:has-text("Next Step")');
     await page.waitForTimeout(500);
-    await expect(page.locator('h2')).toContainText('Media & Discovery');
+    await expect(page.locator('h2').first()).toContainText('Location & Media');
     await expect(page.locator('select[formControlName="state"]')).toBeVisible();
-    await expect(page.locator('input[formControlName="website"]')).toHaveValue('https://testbrand.com');
   });
 
   test('step 3 shows Professional fields and Save button in edit mode', async ({ page }) => {
@@ -151,25 +154,23 @@ test.describe('Brand Profile', () => {
     await nextBtn.scrollIntoViewIfNeeded();
     await nextBtn.click();
     await page.waitForTimeout(1000);
-    // Wait for step 2 to render, then click Next Step again
-    await expect(page.locator('h2').first()).toContainText('Media & Discovery', { timeout: 5000 });
+    await expect(page.locator('h2').first()).toContainText('Location & Media', { timeout: 5000 });
     const nextBtn2 = page.locator('button:has-text("Next Step")');
     await nextBtn2.scrollIntoViewIfNeeded();
     await nextBtn2.click();
     await page.waitForTimeout(1000);
-    await expect(page.locator('h2').first()).toContainText('Professional', { timeout: 10000 });
+    await expect(page.locator('h2').first()).toContainText('Plan', { timeout: 10000 });
     await expect(page.locator('button[type="submit"]:has-text("Save Profile")')).toBeVisible();
   });
 
   test('save profile sends PATCH request', async ({ page }) => {
     await page.click('button:has-text("Edit Profile")');
     await page.waitForTimeout(1000);
-    // Navigate step by step with explicit waits
     const nextBtn = page.locator('button:has-text("Next Step")');
     await nextBtn.scrollIntoViewIfNeeded();
     await nextBtn.click();
     await page.waitForTimeout(1000);
-    await expect(page.locator('h2').first()).toContainText('Media & Discovery', { timeout: 5000 });
+    await expect(page.locator('h2').first()).toContainText('Location & Media', { timeout: 5000 });
     const nextBtn2 = page.locator('button:has-text("Next Step")');
     await nextBtn2.scrollIntoViewIfNeeded();
     await nextBtn2.click();
@@ -183,11 +184,11 @@ test.describe('Brand Profile', () => {
   });
 
   test('sidebar step clicks navigate directly', async ({ page }) => {
-    await page.locator('.step-item:has-text("Professional")').click();
+    await page.locator('.reg-tab:has-text("Plan")').click();
     await page.waitForTimeout(500);
-    await expect(page.locator('h2')).toContainText('Professional');
-    await page.locator('.step-item:has-text("Brand Basics")').click();
+    await expect(page.locator('h2').first()).toContainText('Plan');
+    await page.locator('.reg-tab:has-text("Brand Info")').click();
     await page.waitForTimeout(500);
-    await expect(page.locator('h2')).toContainText('Brand Basics');
+    await expect(page.locator('h2').first()).toContainText('Brand Info');
   });
 });

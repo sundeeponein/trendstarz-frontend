@@ -83,7 +83,7 @@ export class CampaignListComponent implements OnChanges {
 
   onViewDetails(campaign: Campaign) {
     // placeholder — wire to routing or modal later
-    console.log('View details:', campaign);
+    // debug: view details
   }
 
   onManage(campaign: Campaign) {

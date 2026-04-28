@@ -1,7 +1,5 @@
 // ...existing code...
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
@@ -227,7 +225,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.getTiers().subscribe(data => this.tiers = data);
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
-    this.configService.getCategories().subscribe(data => this.categoriesList = data);
+    this.configService.getCategories().subscribe(data => {
+      this.categoriesList = data;
+      this.cdr.detectChanges();
+    });
     this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveInfluencers; });
 
     // Load districts when state changes
@@ -235,11 +236,13 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
       if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+        const selectedState = this.states.find((s: any) => s._id === stateId || s.id === stateId || s.name === stateId);
+        const stateName = selectedState?.name || (typeof stateId === 'string' ? stateId : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateId === 'string' ? stateId : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cdr.detectChanges(); },
+          error: () => { this.districts = []; this.cdr.detectChanges(); }
+        });
       }
     });
 
@@ -275,12 +278,12 @@ export class InfluencerRegistrationComponent implements OnInit {
       const f = this.registrationForm;
       return !!(f.get('name')?.valid && f.get('username')?.valid && f.get('phoneNumber')?.valid &&
         f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid &&
-        !f.errors?.['passwordMismatch']);
+        !f.errors?.['passwordMismatch'] && !!this.profileImagePreview);
     }
     if (step === 2) {
       const f = this.registrationForm;
       const detailsValid = !!(f.get('location.state')?.valid && f.get('location.district')?.valid && f.get('languages')?.valid && f.get('categories')?.valid);
-      return detailsValid && this.selectedPlatforms().length > 0 && !!this.profileImagePreview;
+      return detailsValid && this.selectedPlatforms().length > 0;
     }
     if (step === 3) {
       return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
@@ -337,6 +340,8 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.currentStep === 1) {
       ['name', 'username', 'phoneNumber', 'email', 'password', 'confirmPassword'].forEach(f =>
         this.registrationForm.get(f)?.markAsTouched());
+      if (!this.profileImagePreview) { this.registrationError = 'Profile photo is required.'; }
+      else { this.registrationError = ''; }
       return this.isStepComplete(1);
     }
     if (this.currentStep === 2) {
@@ -345,8 +350,6 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.markAsTouched();
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
-      if (!this.profileImagePreview) { this.registrationError = 'Profile image is required.'; }
-      else { this.registrationError = ''; }
       return this.isStepComplete(2);
     }
     if (this.currentStep === 3) {
@@ -491,11 +494,17 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (this.profileImageFile) {
       const fd = new FormData();
       fd.append('file', this.profileImageFile);
-      fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      fd.append('folder', 'influencer_profile_images');
       try {
-        const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
+        if (!resp.ok) {
+          this.registrationError = 'Profile image upload failed.';
+          this.isSubmitting = false;
+          return;
+        }
         const data = await resp.json();
-        if (data.secure_url && data.public_id) { imageUploadResult = { url: data.secure_url, public_id: data.public_id }; }
+        const uploaded = data?.data || data;
+        if (uploaded?.url && uploaded?.public_id) { imageUploadResult = { url: uploaded.url, public_id: uploaded.public_id }; }
         else { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
       } catch { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
     }
@@ -510,32 +519,72 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.registerInfluencer(payload).subscribe({
       next: () => {
         this.ngZone.run(() => {
-          this.registrationSuccess = true; this.pendingVerificationEmail = raw.email;
+          this.pendingVerificationEmail = raw.email;
           this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;
-          this.registrationForm.reset(); this.profileImagePreview = null; this.profileImageFile = null;
+          this.profileImagePreview = null; this.profileImageFile = null;
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;
+          // Reset the form first (fires valueChanges which may clear registrationSuccess if set),
+          // then on next microtask mark success and run CD — ensures the success modal renders.
+          this.registrationForm.reset();
+          queueMicrotask(() => {
+            this.registrationSuccess = true;
+            this.cdr.detectChanges();
+          });
         });
       },
       error: err => {
-        const msg = String(err?.error?.message || err?.message || '').toLowerCase();
+        const rawMessage = err?.error?.message;
+        const parsedMessage = Array.isArray(rawMessage)
+          ? rawMessage.join(', ')
+          : typeof rawMessage === 'object' && rawMessage !== null
+            ? String((rawMessage as any).message || JSON.stringify(rawMessage))
+            : String(rawMessage || err?.message || '');
+        const msg = parsedMessage.toLowerCase();
         const dups: string[] = Array.isArray(err?.error?.duplicateFields) ? err.error.duplicateFields.map((f: any) => String(f).toLowerCase()) : [];
-        if (dups.includes('username')) { this.duplicateUsernameError = 'Username already exists.'; this.registrationForm.get('username')?.setErrors({ duplicate: true }); }
-        if (dups.includes('email')) { this.duplicateEmailError = 'Email already exists.'; this.registrationForm.get('email')?.setErrors({ duplicate: true }); }
-        if (dups.includes('phonenumber') || dups.includes('phone') || dups.includes('mobile')) { this.duplicatePhoneError = 'Mobile number already exists.'; this.registrationForm.get('phoneNumber')?.setErrors({ duplicate: true }); }
-        if (dups.length) { this.currentStep = 1; this.refreshStepCompletion(); this.isSubmitting = false; return; }
+        const duplicateLabels: string[] = [];
+        if (dups.includes('username')) {
+          this.duplicateUsernameError = 'Username already exists.';
+          this.registrationForm.get('username')?.setErrors({ duplicate: true });
+          duplicateLabels.push('Username');
+        }
+        if (dups.includes('email')) {
+          this.duplicateEmailError = 'Email already exists.';
+          this.registrationForm.get('email')?.setErrors({ duplicate: true });
+          duplicateLabels.push('Email');
+        }
+        if (dups.includes('phonenumber') || dups.includes('phone') || dups.includes('mobile')) {
+          this.duplicatePhoneError = 'Mobile number already exists.';
+          this.registrationForm.get('phoneNumber')?.setErrors({ duplicate: true });
+          duplicateLabels.push('Mobile number');
+        }
+        if (dups.length) {
+          this.registrationError = duplicateLabels.length === 1
+            ? `${duplicateLabels[0]} already exists. Please use a different value.`
+            : duplicateLabels.length > 1
+              ? `${duplicateLabels.join(' and ')} already exist. Please use different values.`
+              : 'Some fields already exist. Please update and try again.';
+          this.currentStep = 1;
+          this.refreshStepCompletion();
+          this.isSubmitting = false;
+          return;
+        }
         if (msg.includes('username') && msg.includes('already exists')) { this.duplicateUsernameError = 'Username already exists.'; this.currentStep = 1; this.isSubmitting = false; return; }
         if (msg.includes('email') && msg.includes('already exists')) { this.duplicateEmailError = 'Email already exists.'; this.currentStep = 1; this.isSubmitting = false; return; }
         if ((msg.includes('phone') || msg.includes('mobile')) && msg.includes('already exists')) { this.duplicatePhoneError = 'Mobile number already exists.'; this.currentStep = 1; this.isSubmitting = false; return; }
-        this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
+        this.registrationError = parsedMessage || 'Registration failed. Please try again.';
         this.refreshStepCompletion(); this.isSubmitting = false;
       }
     });
   }
 
   closeSuccessModal() {
-    this.registrationSuccess = false; this.registrationForm.reset();
-    this.profileImagePreview = null; this.profileImageFile = null;
-    this.platformForms = {}; this.submitted = false; this.pendingVerificationEmail = '';
-    window.location.href = '/login';
+    this.registrationSuccess = false;
+    this.registrationForm.reset();
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.platformForms = {};
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/';
   }
 }

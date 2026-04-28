@@ -1,0 +1,14 @@
+.campaign-payment { 
+  position: relative;
+  .cp-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    padding: 1rem;
+    border-radius: 8px;
+    max-width: 680px;
+  }
+  .calc { margin-bottom: 0.6rem; }
+  .form-row { margin: 0.5rem 0; label { display:block; font-weight:600; margin-bottom:0.25rem } }
+  .actions { display:flex; gap:0.5rem; margin-top:0.75rem }
+  .error { color: #b91c1c; margin-top:0.5rem }
+}

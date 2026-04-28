@@ -3,6 +3,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
@@ -12,7 +13,7 @@ import { ConfigService } from '../../shared/config.service';
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, CampaignDetailModalComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -27,6 +28,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   // detail modal state
   selectedInvite: any = null;
   responding: string | null = null;
+  selectedPostDates: Record<string, string> = {};
+  // Content type selection: key = inviteId, value = "platform::contentType"
+  selectedContentTypes: Record<string, string> = {};
+  paymentHistory: any[] = [];
+  paymentSummary = {
+    earnedThisMonth: 0,
+    pending: 0,
+    paidInPayToJoin: 0,
+  };
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -86,13 +96,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           const data = res.data || {};
           this.dashboard = data;
-          console.log('Dashboard.invites:', this.dashboard.invites);
+          // debug: dashboard invites
           this.invites = data.invites?.newInvites || [];
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];
           const user = data.user || {};
           this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
           this.loading = false;
+          this.loadPaymentHistory();
           this.cdr.detectChanges();
         }, 0);
       },
@@ -106,16 +117,102 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadPaymentHistory() {
+    this.config.getMyCampaignTransactions().subscribe({
+      next: (rows: any[]) => {
+        this.paymentHistory = rows;
+        this.recomputePaymentSummary(rows);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.paymentHistory = [];
+        this.recomputePaymentSummary([]);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private recomputePaymentSummary(rows: any[]) {
+    const month = new Date().getMonth();
+    const year = new Date().getFullYear();
+    const isThisMonth = (d?: string) => {
+      if (!d) return false;
+      const dt = new Date(d);
+      return dt.getMonth() === month && dt.getFullYear() === year;
+    };
+
+    const earnedThisMonth = rows
+      .filter((r: any) => r.recipientRole === 'influencer' && r.payoutStatus === 'paid' && isThisMonth(r.paidOutAt || r.updatedAt || r.createdAt))
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    const pending = rows
+      .filter((r: any) => r.recipientRole === 'influencer' && (r.payoutStatus === 'pending' || r.payoutStatus === 'processing'))
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    const paidInPayToJoin = rows
+      .filter((r: any) => r.payerRole === 'influencer')
+      .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
+
+    this.paymentSummary = { earnedThisMonth, pending, paidInPayToJoin };
+  }
+
+  formatPaise(amount: number): string {
+    return `₹${((amount || 0) / 100).toLocaleString('en-IN')}`;
+  }
+
+  formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
   respondToInvite(inviteId: string, status: 'accepted' | 'declined') {
-    this.dashboardService.respondToInvite(inviteId, status).subscribe(() => {
+    const selectedPostDate = status === 'accepted' ? this.selectedPostDates[inviteId] : undefined;
+    if (status === 'accepted' && !selectedPostDate) {
+      this.error = 'Please choose a posting date before accepting invite.';
+      return;
+    }
+    const invite = this.invites.find(i => i._id === inviteId);
+    if (status === 'accepted' && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
+      this.error = 'Posting date must be within campaign start and end dates.';
+      return;
+    }
+    const options = this.getInviteContentTypeOptions(invite);
+    const chosen = this.selectedContentTypes[inviteId];
+    if (status === 'accepted' && options.length > 0 && !chosen) {
+      this.error = 'Please select what you will create for this campaign.';
+      return;
+    }
+    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
+    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe(() => {
       this.ngOnInit();
     });
   }
 
   respond(inviteId: string, status: 'accepted' | 'declined') {
     if (this.responding) return;
+    const selectedPostDate = status === 'accepted' ? this.selectedPostDates[inviteId] : undefined;
+    if (status === 'accepted' && !selectedPostDate) {
+      this.error = 'Please choose a posting date before accepting invite.';
+      return;
+    }
+    const invite = this.invites.find(i => i._id === inviteId) || this.selectedInvite;
+    if (status === 'accepted' && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
+      this.error = 'Posting date must be within campaign start and end dates.';
+      return;
+    }
+    const options = this.getInviteContentTypeOptions(invite);
+    const chosen = this.selectedContentTypes[inviteId];
+    if (status === 'accepted' && options.length > 0 && !chosen) {
+      this.error = 'Please select what you will create for this campaign.';
+      return;
+    }
+    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
     this.responding = inviteId;
-    this.dashboardService.respondToInvite(inviteId, status).subscribe({
+    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe({
       next: () => {
         // update in-place — no full reload
         this.invites = this.invites.filter(i => i._id !== inviteId);
@@ -127,6 +224,48 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       },
       error: () => { this.responding = null; }
     });
+  }
+
+  /** Returns enabled content type options for an invite's campaign */
+  getInviteContentTypeOptions(inv: any): { key: string; label: string; platform: string; contentType: string; price: number }[] {
+    const socialMedia = inv?.campaignId?.socialMedia;
+    if (!Array.isArray(socialMedia) || !socialMedia.length) return [];
+    const options: { key: string; label: string; platform: string; contentType: string; price: number }[] = [];
+    for (const sm of socialMedia) {
+      const platform = sm.platform || '';
+      for (const ct of (sm.contentTypes || [])) {
+        if (ct.enabled) {
+          options.push({
+            key: `${platform}::${ct.name}`,
+            platform,
+            contentType: ct.name,
+            price: Number(ct.price) || 0,
+            label: `${this.platformShortLabel(platform)} · ${ct.name}`
+          });
+        }
+      }
+    }
+    return options;
+  }
+
+  platformShortLabel(p: string): string {
+    const m: Record<string, string> = { instagram: 'Instagram', youtube: 'YouTube', twitter: 'X/Twitter', tiktok: 'TikTok', facebook: 'Facebook', linkedin: 'LinkedIn' };
+    return m[(p || '').toLowerCase()] || p;
+  }
+
+  platformIcon(p: string): string {
+    const m: Record<string, string> = { instagram: 'bi-instagram', youtube: 'bi-youtube', twitter: 'bi-twitter-x', tiktok: 'bi-tiktok', facebook: 'bi-facebook', linkedin: 'bi-linkedin' };
+    return m[(p || '').toLowerCase()] || 'bi-camera-video';
+  }
+
+  private isPostDateWithinCampaign(inv: any, selectedPostDate: string): boolean {
+    const t = this.getCampaignTimeline(inv);
+    if (!t?.start || !t?.end) return true;
+    const selected = new Date(selectedPostDate);
+    if (Number.isNaN(selected.getTime())) return false;
+    const start = new Date(t.start);
+    const end = new Date(t.end);
+    return selected >= start && selected <= end;
   }
 
   openDetail(invite: any) {
@@ -305,6 +444,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         inviteStatus: campaign.inviteStatus || 'working'
       }
     });
+  }
+
+  get stats() {
+    return [
+      { label: 'Invited', value: this.dashboard?.invites?.invited || 0 },
+      { label: 'Accepted', value: this.dashboard?.invites?.accepted || 0 },
+      { label: 'Submitted', value: this.dashboard?.invites?.submitted || 0 },
+      { label: 'Completed', value: this.dashboard?.invites?.completed || 0 },
+    ];
   }
 
   goToStats(campaign: any) {

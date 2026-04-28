@@ -17,6 +17,48 @@ export class ConfigService {
 
   constructor(private http: HttpClient) {}
 
+  getApiUrl(): string {
+    return this.apiUrl;
+  }
+
+  /**
+   * Fetch the admin-managed support contact (email / phone / whatsapp / message / enabled).
+   * Public endpoint — safe to call from any page. Used by the campaign-management
+   * "Need help?" / "Contact support" banner. Falls back to a sensible default
+   * if the request fails so the UI never breaks.
+   */
+  getSupportContact(): Observable<{
+    enabled: boolean;
+    email: string;
+    phone: string;
+    whatsapp: string;
+    message: string;
+  }> {
+    return this.http
+      .get<any>(`${this.apiUrl}/public/support-contact`)
+      .pipe(
+        map((res) => {
+          const d = res?.data ?? res ?? {};
+          return {
+            enabled: d.enabled !== false,
+            email: d.email || 'support@trendstarz.in',
+            phone: d.phone || '',
+            whatsapp: d.whatsapp || '',
+            message: d.message || '',
+          };
+        }),
+        catchError(() =>
+          of({
+            enabled: true,
+            email: 'support@trendstarz.in',
+            phone: '',
+            whatsapp: '',
+            message: '',
+          }),
+        ),
+      );
+  }
+
   // Check if username exists (for async validation)
   checkUsernameExists(username: string) {
     return this.http.get<{ exists: boolean }>(`${this.apiUrl}/users/check-username/${encodeURIComponent(username)}`)
@@ -71,10 +113,14 @@ export class ConfigService {
         preApproveBrands: !!res?.preApproveBrands,
         brandRequireEmailVerified: res?.brandRequireEmailVerified !== false,
         brandRequireMobileVerified: !!res?.brandRequireMobileVerified,
+        platformFeeEnabled: !!res?.platformFeeEnabled,
+        platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : 10,
+        gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : 18,
       })),
       catchError(() => of({
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
+        platformFeeEnabled: false, platformFeePercent: 10, gstPercent: 18
       }))
     );
   }
@@ -117,9 +163,12 @@ export class ConfigService {
     );
   }
 
-  getDistricts(stateName?: string): Observable<any[]> {
+  getDistricts(stateName?: string, stateId?: string): Observable<any[]> {
     let url = `${this.apiUrl}/districts`;
-    if (stateName) url += `?state=${encodeURIComponent(stateName)}`;
+    const params: string[] = [];
+    if (stateName) params.push(`state=${encodeURIComponent(stateName)}`);
+    if (stateId) params.push(`stateId=${encodeURIComponent(stateId)}`);
+    if (params.length) url += `?${params.join('&')}`;
     return this.http.get<any>(url).pipe(
       map((res) => this.extractData<any[]>(res) || [])
     );
@@ -207,6 +256,10 @@ export class ConfigService {
     return this.http.patch(`${this.apiUrl}/users/brand-profile`, data);
   }
 
+  setPremiumForUser(userId: string, isPremium: boolean, premiumDuration: '1m' | '3m' | '1y'): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${userId}/premium`, { isPremium, premiumDuration });
+  }
+
 
   setPremiumForCurrentUser(isPremium: boolean, premiumDuration: '1m' | '3m' | '1y'): Observable<any> {
     return new Observable((observer) => {
@@ -288,6 +341,28 @@ export class ConfigService {
     return this.http.patch(`${this.apiUrl}/campaigns/${id}`, data);
   }
 
+  inviteInfluencers(campaignId: string, influencerIds: string[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaigns/${campaignId}/invite-influencers`, { influencerIds });
+  }
+
+  calculateCampaignPayment(campaignId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/calculate`, {});
+  }
+
+  getMyCampaignTransactions(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-transactions/my/history`).pipe(
+      map(res => {
+        const d = this.extractData<any>(res);
+        return Array.isArray(d) ? d : (Array.isArray(res?.data) ? res.data : []);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
+  }
+
   deleteCampaign(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/campaigns/${id}`);
   }
@@ -295,6 +370,12 @@ export class ConfigService {
   // ── Campaign Invite endpoints ───────────────
   createCampaignInvite(data: { campaignId: string; influencerId: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-invites`, data);
+  }
+
+  getInviteWithCampaign(inviteId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}`).pipe(
+      catchError(() => of(null))
+    );
   }
 
   getInvitesByCampaign(campaignId: string): Observable<any[]> {
@@ -319,8 +400,12 @@ export class ConfigService {
     );
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined'): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, { status });
+  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string, selectedPlatform?: string, selectedContentType?: string): Observable<any> {
+    const body: any = { status };
+    if (selectedPostDate) body.selectedPostDate = selectedPostDate;
+    if (selectedPlatform) body.selectedPlatform = selectedPlatform;
+    if (selectedContentType) body.selectedContentType = selectedContentType;
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, body);
   }
 
   submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {
@@ -347,8 +432,14 @@ export class ConfigService {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}/submission`);
   }
 
-  getCampaignSubmissions(campaignId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/submissions`);
+  getCampaignSubmissions(campaignId: string): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/submissions`).pipe(
+      map(res => {
+        const d = res?.data ?? res;
+        return Array.isArray(d) ? d : (d?.submissions ?? []);
+      }),
+      catchError(() => of([]))
+    );
   }
 
   reviewCampaignSubmission(inviteId: string, data: { action: 'approve' | 'dispute'; feedback?: string; disputeReason?: string }): Observable<any> {

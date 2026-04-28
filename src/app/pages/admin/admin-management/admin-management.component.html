@@ -8,6 +8,7 @@
     <button class="tab-btn" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
     <button class="tab-btn" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-btn" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
+    <button class="tab-btn" [class.active]="activeTab === 'support'" (click)="setTab('support')">Support</button>
     <button class="tab-btn" [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
   </div>
 
@@ -159,6 +160,83 @@
       </li>
     </ul>
     <button (click)="saveAllVisibility()">Save</button>
+  </div>
+
+  <!-- Support Contact Tab (admin-managed banner shown on Campaign Management page) -->
+  <div *ngIf="activeTab === 'support'">
+    <h2 class="text-white">Support Contact</h2>
+    <p style="color:#aaa; margin-bottom:1.25rem;">
+      These details power the help banner shown to brands on the Campaign Management page.
+      Use it now to capture campaign payments manually; once Razorpay automation goes live,
+      the same banner will continue to act as a <em>"Need help? Contact us"</em> channel for queries.
+    </p>
+
+    <div style="background:#1c1f24; border:1px solid #333; border-radius:8px; padding:1.25rem; max-width:680px;">
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="supportEnabled"
+          [(ngModel)]="settings.supportContactEnabled" />
+        <label class="form-check-label text-white" for="supportEnabled">
+          Show support banner on Campaign Management page
+        </label>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-white" for="supportEmail">Support email</label>
+        <input id="supportEmail" type="email" class="form-control"
+          placeholder="support@trendstarz.in"
+          [(ngModel)]="settings.supportContactEmail" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-white" for="supportPhone">Support phone</label>
+        <input id="supportPhone" type="tel" class="form-control"
+          placeholder="+91 98765 43210"
+          [(ngModel)]="settings.supportContactPhone" />
+        <small class="text-muted">Shown as a tap-to-call link on mobile.</small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-white" for="supportWhatsapp">WhatsApp number</label>
+        <input id="supportWhatsapp" type="tel" class="form-control"
+          placeholder="919876543210 (digits only, with country code)"
+          [(ngModel)]="settings.supportContactWhatsapp" />
+        <small class="text-muted">Used to build a wa.me link. Digits only, with country code, no +.</small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label text-white" for="supportMessage">Banner message</label>
+        <textarea id="supportMessage" class="form-control" rows="3"
+          [(ngModel)]="settings.supportContactMessage"
+          placeholder="For now, please contact our team to complete campaign payments. Our admin will update the payment status once received."></textarea>
+        <small class="text-muted">
+          Tip: after Razorpay launch, change this to something like
+          <em>"Have a question about your campaign? Reach out to us anytime."</em>
+        </small>
+      </div>
+
+      <hr />
+      <h4 class="text-white">Platform commission & GST</h4>
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="platformFeeEnabled"
+          [(ngModel)]="settings.platformFeeEnabled" />
+        <label class="form-check-label text-white" for="platformFeeEnabled">Enable platform commission on campaigns</label>
+      </div>
+      <div class="row mb-3">
+        <div class="col">
+          <label class="form-label text-white">Commission (%)</label>
+          <input type="number" class="form-control" [(ngModel)]="settings.platformFeePercent" min="0" max="100" />
+        </div>
+        <div class="col">
+          <label class="form-label text-white">GST (%)</label>
+          <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+        {{ settingsSaving ? 'Saving…' : 'Save support settings' }}
+      </button>
+      <span *ngIf="settingsSaved" class="text-success ms-3">Saved.</span>
+    </div>
   </div>
 
   <!-- User Management Tab -->
