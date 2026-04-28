@@ -3,6 +3,7 @@ import { environment } from '../../../environments/environment';
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
 import { map, debounceTime, first } from 'rxjs/operators';
 import { ConfigService } from '../../shared/config.service';
@@ -184,16 +185,26 @@ export class InfluencerRegistrationComponent implements OnInit {
   duplicateEmailError = '';
   duplicatePhoneError = '';
   isSubmitting = false;
+  signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
 
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
     private ngZone: NgZone,
     private otpService: OtpService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    const source = this.route.snapshot.queryParamMap.get('source') || '';
+    const audience = this.route.snapshot.queryParamMap.get('audience') || '';
+    this.signupAttribution = {
+      source: source || undefined,
+      audience: audience || undefined,
+      referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    };
+
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
       username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
@@ -515,6 +526,9 @@ export class InfluencerRegistrationComponent implements OnInit {
       languages: languageNames, categories: categoryNames,
       socialMedia, profileImages: imageUploadResult ? [imageUploadResult] : [], contact: raw.contact
     };
+    if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
+      payload.signupAttribution = this.signupAttribution;
+    }
 
     this.configService.registerInfluencer(payload).subscribe({
       next: () => {

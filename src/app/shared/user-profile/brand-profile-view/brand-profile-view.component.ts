@@ -136,6 +136,13 @@ export class BrandProfileViewComponent implements OnInit {
             this.brand = null;
           } else {
             this.brand = data;
+            const routeBrandName = this.route.snapshot.paramMap.get('brandName');
+            if (routeBrandName) {
+              this.config.trackBrandProfileImpression(routeBrandName).subscribe({
+                next: () => {},
+                error: () => {}
+              });
+            }
             this.checkOwnership(data);
             // Fetch campaigns for this brand
             const brandName = data.brandName || data.brandUsername || data.name;

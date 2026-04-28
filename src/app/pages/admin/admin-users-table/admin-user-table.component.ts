@@ -69,6 +69,18 @@ export class AdminUserTableComponent implements OnInit {
     if (typeof img === 'string' && img) return img;
     return 'assets/default-logo.png';
   }
+
+  getSignupSource(user: any): string {
+    const source = user?.signupAttribution?.source;
+    const audience = user?.signupAttribution?.audience;
+    if (!source && !audience) return '-';
+    if (source && audience) return `${source} (${audience})`;
+    return source || audience || '-';
+  }
+
+  private getSignupSourceFilterValue(user: any): string {
+    return user?.signupAttribution?.source || user?.signupAttribution?.audience || '';
+  }
   // Helper to calculate premium end date for display if backend does not provide
   getPremiumPeriod(user: any): { start: Date, end: Date } | null {
     if (!user.isPremium) return null;
@@ -106,19 +118,22 @@ export class AdminUserTableComponent implements OnInit {
     status: '',
     premium: '',
     category: '',
-    state: ''
+    state: '',
+    signupSource: ''
   };
   brandFilters = {
     status: '',
     premium: '',
     category: '',
-    state: ''
+    state: '',
+    signupSource: ''
   };
 
   // Available filter options
   categoriesArray: string[] = [];
   statesArray: string[] = [];
   statusArray: string[] = [];
+  signupSourcesArray: string[] = [];
 
   // Premium modal state
   showPremiumModal = false;
@@ -198,6 +213,7 @@ export class AdminUserTableComponent implements OnInit {
     const categoriesSet = new Set<string>();
     const statesSet = new Set<string>();
     const statusSet = new Set<string>();
+    const signupSourceSet = new Set<string>();
     
     // Collect from all influencers
     this.influencers.forEach(user => {
@@ -209,6 +225,10 @@ export class AdminUserTableComponent implements OnInit {
       }
       if (user.status) {
         statusSet.add(user.status);
+      }
+      const signupSource = this.getSignupSourceFilterValue(user);
+      if (signupSource) {
+        signupSourceSet.add(signupSource);
       }
     });
     
@@ -223,11 +243,16 @@ export class AdminUserTableComponent implements OnInit {
       if (user.status) {
         statusSet.add(user.status);
       }
+      const signupSource = this.getSignupSourceFilterValue(user);
+      if (signupSource) {
+        signupSourceSet.add(signupSource);
+      }
     });
     
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
     this.statusArray = Array.from(statusSet).sort();
+    this.signupSourcesArray = Array.from(signupSourceSet).sort();
   }
 
   applyFilters(userType: 'influencer' | 'brand') {
@@ -282,6 +307,14 @@ export class AdminUserTableComponent implements OnInit {
     if (filters.state && user.location?.state !== filters.state) {
       return false;
     }
+
+    // Signup source filter
+    if (
+      filters.signupSource &&
+      this.getSignupSourceFilterValue(user) !== filters.signupSource
+    ) {
+      return false;
+    }
     
     return true;
   }
@@ -292,9 +325,9 @@ export class AdminUserTableComponent implements OnInit {
 
   resetFilters(userType: 'influencer' | 'brand') {
     if (userType === 'influencer') {
-      this.influencerFilters = { status: '', premium: '', category: '', state: '' };
+      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '' };
     } else {
-      this.brandFilters = { status: '', premium: '', category: '', state: '' };
+      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '' };
     }
     this.applyFilters(userType);
   }

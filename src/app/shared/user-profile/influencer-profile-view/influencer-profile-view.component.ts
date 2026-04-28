@@ -128,6 +128,12 @@ export class InfluencerProfileViewComponent implements OnInit {
           next: (data) => {
             this.influencer = data || null;
             if (!data) this.error = 'Influencer not found.';
+            if (data) {
+              this.config.trackInfluencerProfileImpression(username).subscribe({
+                next: () => {},
+                error: () => {}
+              });
+            }
             this.loading = false;
             this.cd.detectChanges();
             // Brand: try to find a completed invite to enable review button

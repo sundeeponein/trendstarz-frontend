@@ -1,6 +1,7 @@
 import { environment } from '../../../environments/environment';
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
@@ -101,14 +102,24 @@ export class BrandRegistrationComponent implements OnInit {
   brandLogoFile: File | null = null;
   productImagesPreview: (string | null)[] = [];
   productImagesFiles: (File | null)[] = [];
+  signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
 
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
     private cd: ChangeDetectorRef,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
+    const source = this.route.snapshot.queryParamMap.get('source') || '';
+    const audience = this.route.snapshot.queryParamMap.get('audience') || '';
+    this.signupAttribution = {
+      source: source || undefined,
+      audience: audience || undefined,
+      referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    };
+
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
       brandUsername: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)], [this.brandUsernameUniqueValidator()]],
@@ -699,6 +710,9 @@ export class BrandRegistrationComponent implements OnInit {
       products: uploadedProducts,
       contact: raw.contact
     };
+    if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
+      payload.signupAttribution = this.signupAttribution;
+    }
     delete payload.googleMapAddress;
 
     this.configService.registerBrand(payload).subscribe({

@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -37,6 +38,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     pending: 0,
     paidInPayToJoin: 0,
   };
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -46,10 +48,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private session: SessionService,
     private config: ConfigService,
+    private plansService: PlansService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    this.plansService.getMyCapabilities().subscribe((caps) => {
+      this.planCaps = caps;
+    });
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('emailVerificationError')) {
@@ -463,5 +470,23 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         statsOnly: 'true'
       }
     });
+  }
+
+  get profileTraffic() {
+    const traffic = this.dashboard?.user?.profileTraffic || {};
+    return {
+      impressions: Number(traffic.impressions || 0),
+      clicks: Number(traffic.clicks || 0),
+      lastImpressionAt: traffic.lastImpressionAt || null,
+      lastClickAt: traffic.lastClickAt || null,
+    };
+  }
+
+  get isPremiumUser(): boolean {
+    return !!this.dashboard?.user?.isPremium;
+  }
+
+  get canViewProfileTraffic(): boolean {
+    return this.plansService.getFeatureValue(this.planCaps, 'analyticsDashboard');
   }
 }

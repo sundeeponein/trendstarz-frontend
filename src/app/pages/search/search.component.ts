@@ -210,11 +210,23 @@ export class SearchComponent implements OnInit {
 
   viewInfluencerProfile(influencer: any) {
     const username = influencer.username || influencer._id;
+    if (username) {
+      this.config.trackInfluencerProfileClick(username).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+    }
     this.router.navigate(['/influencer', username]);
   }
 
   viewBrandProfile(brand: any) {
     const name = brand.brandName || brand._id;
+    if (name) {
+      this.config.trackBrandProfileClick(name).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+    }
     this.router.navigate(['/brand', name]);
   }
 

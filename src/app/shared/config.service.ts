@@ -300,6 +300,22 @@ export class ConfigService {
     );
   }
 
+  trackInfluencerProfileImpression(username: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/influencers/username/${encodeURIComponent(username)}/track-impression`, {});
+  }
+
+  trackInfluencerProfileClick(username: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/influencers/username/${encodeURIComponent(username)}/track-click`, {});
+  }
+
+  trackBrandProfileImpression(brandName: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}/track-impression`, {});
+  }
+
+  trackBrandProfileClick(brandName: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}/track-click`, {});
+  }
+
   // ── Campaign endpoints ──────────────────────
   /** Fetch all campaigns (optionally filter by status) — used for influencer browse view */
   getAllCampaigns(status?: string): Observable<any[]> {

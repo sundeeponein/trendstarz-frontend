@@ -12,6 +12,9 @@ export const serverRoutes: ServerRoute[] = [
   // User-facing pages
   { path: 'welcome', renderMode: RenderMode.Client },
   { path: 'search', renderMode: RenderMode.Client },
+  { path: 'how-it-works', renderMode: RenderMode.Prerender },
+  { path: 'how-it-works/influencers', renderMode: RenderMode.Prerender },
+  { path: 'how-it-works/brands', renderMode: RenderMode.Prerender },
   { path: 'login', renderMode: RenderMode.Prerender },
   { path: 'auth/login', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Prerender },
