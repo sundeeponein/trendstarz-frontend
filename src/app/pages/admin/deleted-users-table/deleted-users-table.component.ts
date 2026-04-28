@@ -112,7 +112,7 @@ export class DeletedUsersTableComponent implements OnInit {
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
-          console.log('[DeletedUsers] Influencers received:', users);
+          // debug: deleted influencers received
           this.influencers = users;
           this.applyFilters('influencer');
           this.updateAllFilterOptions();

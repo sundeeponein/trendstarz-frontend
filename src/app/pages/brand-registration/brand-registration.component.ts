@@ -1,6 +1,4 @@
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
@@ -34,6 +32,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 export class BrandRegistrationComponent implements OnInit {
   readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
+  readonly MAX_IMAGE_SIZE_MB = 5; // reject images larger than this before attempting compression/upload
 
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -123,11 +122,11 @@ export class BrandRegistrationComponent implements OnInit {
         district: ['', Validators.required],
         googleMapLink: ['']
       }),
-      promotionalPrice: ['', Validators.required],
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
       googleMapAddress: [''],
+      description: [''],
 
       contact: this.fb.group({
         whatsapp: [false],
@@ -136,13 +135,44 @@ export class BrandRegistrationComponent implements OnInit {
       }, { validators: [atLeastOneContactRequired] })
     }, { validators: [passwordMatchValidator] });
 
+    // Defensive defaults: ensure arrays/objects exist to avoid runtime nulls
+    try {
+      if (!Array.isArray(this.registrationForm.get('categories')?.value)) {
+        this.registrationForm.get('categories')?.setValue([]);
+      }
+      if (!Array.isArray(this.registrationForm.get('languages')?.value)) {
+        this.registrationForm.get('languages')?.setValue([]);
+      }
+      const contactVal = this.registrationForm.get('contact')?.value;
+      if (!contactVal || typeof contactVal !== 'object') {
+        this.registrationForm.get('contact')?.setValue({ whatsapp: false, email: false, call: false });
+      } else {
+        // ensure missing keys exist
+        const fixed = {
+          whatsapp: !!contactVal.whatsapp,
+          email: !!contactVal.email,
+          call: !!contactVal.call
+        };
+        this.registrationForm.get('contact')?.setValue(fixed, { emitEvent: false });
+      }
+    } catch (e) {
+      // swallow — defensive only
+    }
+
     this.registrationForm.get('brandUsername')?.valueChanges.subscribe(() => {
       this.onBrandUsernameInput();
       this.duplicateUsernameError = '';
       this.duplicateBrandNameError = '';
     });
-    this.registrationForm.get('brandName')?.valueChanges.subscribe(() => {
+    this.registrationForm.get('brandName')?.valueChanges.subscribe((name: string) => {
       this.duplicateBrandNameError = '';
+      // Auto-generate username from brand name
+      const usernameCtrl = this.registrationForm.get('brandUsername');
+      if (usernameCtrl && !usernameCtrl.dirty) {
+        const slug = this.slugifyUsername(name || '');
+        usernameCtrl.setValue(slug, { emitEvent: false });
+        usernameCtrl.markAsTouched();
+      }
     });
     this.registrationForm.get('email')?.valueChanges.subscribe(() => {
       this.duplicateEmailError = '';
@@ -174,11 +204,13 @@ export class BrandRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
       if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+        const selectedState = this.states.find((s: any) => s._id === stateId || s.id === stateId || s.name === stateId);
+        const stateName = selectedState?.name || (typeof stateId === 'string' ? stateId : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateId === 'string' ? stateId : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+          error: () => { this.districts = []; this.cd.detectChanges(); }
+        });
       }
     });
 
@@ -349,6 +381,11 @@ export class BrandRegistrationComponent implements OnInit {
   async onBrandLogoFileChange(event: any) {
     const file: File = event?.target?.files?.[0];
     if (!file) return;
+    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    if (!validation.valid) {
+      this.registrationError = validation.reason || 'Invalid image file.';
+      return;
+    }
 
     try {
       const compressedFile = await imageCompression(file, {
@@ -378,6 +415,11 @@ export class BrandRegistrationComponent implements OnInit {
   async onProductImageFileChange(event: any, index: number) {
     const file: File = event?.target?.files?.[0];
     if (!file) return;
+    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    if (!validation.valid) {
+      this.registrationError = validation.reason || 'Invalid product image.';
+      return;
+    }
 
     try {
       const compressedFile = await imageCompression(file, {
@@ -398,6 +440,15 @@ export class BrandRegistrationComponent implements OnInit {
     }
   }
 
+  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
+    if (!file) return { valid: false, reason: 'No file selected.' };
+    if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
+    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
+    return { valid: true };
+  }
+
   private refreshStepCompletion() {
     this.step1Complete = this.computeStepComplete(1);
     this.step2Complete = this.computeStepComplete(2);
@@ -411,35 +462,29 @@ export class BrandRegistrationComponent implements OnInit {
         f.get('brandName')?.valid &&
         f.get('brandUsername')?.valid &&
         f.get('email')?.valid &&
+        f.get('phoneNumber')?.valid &&
+        f.get('categories')?.valid &&
         f.get('password')?.valid &&
         f.get('confirmPassword')?.valid &&
         !f.errors?.['passwordMismatch'] &&
-        f.get('phoneNumber')?.valid &&
         this.brandLogoPreview
       );
     }
 
     if (step === 2) {
       const f = this.registrationForm;
-      const detailsValid = !!(
-        f.get('paymentOption')?.valid &&
+      return !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
-        f.get('languages')?.valid &&
-        f.get('categories')?.valid
+        f.get('languages')?.valid
       );
-      if (!detailsValid) {
-        return false;
-      }
-      const socialValid = this.selectedPlatforms().length > 0;
-      const productReady = this.productImagesFiles.every((f) => !f || !!f);
-      return socialValid && productReady;
     }
 
     if (step === 3) {
+      const f = this.registrationForm;
       return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
-        this.registrationForm.get('contact')?.valid
+        f.get('paymentOption')?.valid &&
+        f.get('contact')?.valid
       );
     }
 
@@ -474,7 +519,7 @@ export class BrandRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'brandUsername', 'email', 'password', 'confirmPassword', 'phoneNumber'];
+      const fields = ['brandName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'password', 'confirmPassword'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       this.submitted = true;
 
@@ -482,21 +527,22 @@ export class BrandRegistrationComponent implements OnInit {
         this.registrationError = 'Brand logo is required.';
       }
 
-      return fields.every((path) => this.registrationForm.get(path)?.valid) && !!this.brandLogoPreview;
+      return fields.every((path) => this.registrationForm.get(path)?.valid) &&
+        !this.registrationForm.errors?.['passwordMismatch'] &&
+        !!this.brandLogoPreview;
     }
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
+      return required.every((path) => this.registrationForm.get(path)?.valid);
     }
 
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
       return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
+        this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('contact')?.valid
       );
     }
@@ -542,18 +588,19 @@ export class BrandRegistrationComponent implements OnInit {
   }
 
   private async uploadImage(file: File): Promise<{ url: string; public_id: string } | null> {
+    if (!(file instanceof File)) return null;
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData,
       });
+      if (!response.ok) return null;
       const data = await response.json();
-      if (data?.secure_url && data?.public_id) {
-        return { url: data.secure_url, public_id: data.public_id };
+      if (data?.url && data?.public_id) {
+        return { url: data.url, public_id: data.public_id };
       }
       return null;
     } catch {
@@ -588,7 +635,12 @@ export class BrandRegistrationComponent implements OnInit {
     this.isSubmitting = true;
 
     const raw = this.registrationForm.value;
-    raw.brandUsername = this.slugifyUsername(raw.brandUsername || '');
+    // Auto-generate username from brandName if not set
+    if (!raw.brandUsername) {
+      raw.brandUsername = this.slugifyUsername(raw.brandName || '');
+    } else {
+      raw.brandUsername = this.slugifyUsername(raw.brandUsername || '');
+    }
 
     const stateObj = this.states.find(s => s._id === raw.location.state);
     const districtObj = this.districts.find(d => d._id === raw.location.district);
@@ -610,7 +662,7 @@ export class BrandRegistrationComponent implements OnInit {
         tier: pf.tier,
         contentTypes: Object.keys(pf.contentTypes)
           .filter(ctName => pf.contentTypes[ctName].selected)
-          .map(ctName => ({ name: ctName, price: Number(pf.contentTypes[ctName].price) || 0 }))
+          .map(ctName => ({ name: ctName }))
       };
     });
 
@@ -640,7 +692,6 @@ export class BrandRegistrationComponent implements OnInit {
         district: districtObj ? districtObj.name : raw.location.district,
         googleMapLink: raw.googleMapAddress || raw.location.googleMapLink || ''
       },
-      promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
       socialMedia,
@@ -674,27 +725,45 @@ export class BrandRegistrationComponent implements OnInit {
         this.cd.detectChanges();
       },
       error: (err: any) => {
+        const rawMessage = err?.error?.message;
+        const parsedMessage = Array.isArray(rawMessage)
+          ? rawMessage.join(', ')
+          : typeof rawMessage === 'object' && rawMessage !== null
+            ? String((rawMessage as any).message || JSON.stringify(rawMessage))
+            : String(rawMessage || err?.message || '');
+
         const duplicateFields: string[] = Array.isArray(err?.error?.duplicateFields)
           ? err.error.duplicateFields.map((f: any) => String(f).toLowerCase())
           : [];
 
         if (duplicateFields.length) {
+          const duplicateLabels: string[] = [];
           if (duplicateFields.includes('brandname')) {
             this.duplicateBrandNameError = 'Brand name already exists. Please choose another.';
             this.registrationForm.get('brandName')?.setErrors({ ...(this.registrationForm.get('brandName')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Brand name');
           }
           if (duplicateFields.includes('brandusername') || duplicateFields.includes('username')) {
             this.duplicateUsernameError = 'Brand username already exists. Please choose another.';
             this.registrationForm.get('brandUsername')?.setErrors({ ...(this.registrationForm.get('brandUsername')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Brand username');
           }
           if (duplicateFields.includes('email')) {
             this.duplicateEmailError = 'Email already exists. Please use another email or login.';
             this.registrationForm.get('email')?.setErrors({ ...(this.registrationForm.get('email')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Email');
           }
           if (duplicateFields.includes('phonenumber') || duplicateFields.includes('phone') || duplicateFields.includes('mobile')) {
             this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
             this.registrationForm.get('phoneNumber')?.setErrors({ ...(this.registrationForm.get('phoneNumber')?.errors || {}), duplicate: true });
+            duplicateLabels.push('Mobile number');
           }
+
+          this.registrationError = duplicateLabels.length === 1
+            ? `${duplicateLabels[0]} already exists. Please use a different value.`
+            : duplicateLabels.length > 1
+              ? `${duplicateLabels.join(' and ')} already exist. Please use different values.`
+              : 'Some fields already exist. Please update and try again.';
 
           this.currentStep = 1;
           this.refreshStepCompletion();
@@ -702,7 +771,25 @@ export class BrandRegistrationComponent implements OnInit {
           return;
         }
 
-        this.registrationError = err?.error?.message || 'Registration failed. Please try again.';
+        const lower = parsedMessage.toLowerCase();
+        if (lower.includes('brand name') && lower.includes('already exists')) {
+          this.duplicateBrandNameError = 'Brand name already exists. Please choose another.';
+          this.registrationForm.get('brandName')?.setErrors({ ...(this.registrationForm.get('brandName')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.isSubmitting = false;
+          this.refreshStepCompletion();
+          return;
+        }
+        if ((lower.includes('brandusername') || lower.includes('brand username') || lower.includes('username')) && lower.includes('already exists')) {
+          this.duplicateUsernameError = 'Brand username already exists. Please choose another.';
+          this.registrationForm.get('brandUsername')?.setErrors({ ...(this.registrationForm.get('brandUsername')?.errors || {}), duplicate: true });
+          this.currentStep = 1;
+          this.isSubmitting = false;
+          this.refreshStepCompletion();
+          return;
+        }
+
+        this.registrationError = parsedMessage || 'Registration failed. Please try again.';
         this.isSubmitting = false;
         this.cd.detectChanges();
       }
@@ -715,6 +802,6 @@ export class BrandRegistrationComponent implements OnInit {
     this.brandLogoFile = null;
     this.submitted = false;
     this.pendingVerificationEmail = '';
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 }

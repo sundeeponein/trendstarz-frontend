@@ -1,56 +1,25 @@
 <div class="registration-shell">
   <div class="registration-wrap">
-    <aside class="left-panel">
-      <div class="panel-card progress-panel">
-        <h4>Profile Progress</h4>
-        <p class="step-count">Step {{ currentStep }} of 3</p>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 1" [class.complete]="step1Complete" (click)="goToStep(1)">
-          <span class="step-icon">{{ step1Complete ? '✓' : '1' }}</span>
-          <span class="step-label">Brand Basics</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 2" [class.complete]="step2Complete" (click)="goToStep(2)">
-          <span class="step-icon">{{ step2Complete ? '✓' : '2' }}</span>
-          <span class="step-label">Media & Discovery</span>
-        </button>
-
-        <button type="button" class="step-item" [class.active]="currentStep === 3" [class.complete]="step3Complete" (click)="goToStep(3)">
-          <span class="step-icon">{{ step3Complete ? '✓' : '3' }}</span>
-          <span class="step-label">Professional</span>
-        </button>
-      </div>
-
-      <!-- Premium status / upgrade CTA -->
-      <div *ngIf="registrationForm.get('paymentOption')?.value === 'premium'" class="mt-3 mb-3">
-        <div *ngIf="premiumEnd" class="alert alert-success d-flex align-items-center gap-2">
-          <span style="font-size:1.4em;">🌟</span>
-          <div>
-            <strong>Premium Active</strong>
-            <div><small>Valid until: <strong>{{ premiumEnd | date:'mediumDate' }}</strong></small></div>
-          </div>
-        </div>
-      </div>
-      <div *ngIf="!premiumEnd && !latestPendingPayment" class="premium-upgrade-cta">
-        <div class="premium-cta-content">
-          <span class="premium-cta-icon">🌟</span>
-          <div>
-            <strong>Upgrade to Premium</strong>
-            <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
-          </div>
-        </div>
-        <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
-      </div>
-      <div *ngIf="!premiumEnd && latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2">
-        <span style="font-size:1.3em;">⏳</span>
-        <div>
-          <strong>Payment Pending</strong>
-          <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
-        </div>
-      </div>
-    </aside>
 
     <main class="content-panel">
+
+      <!-- Horizontal step tabs -->
+      <div class="reg-tab-strip">
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
+          <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
+          <span class="reg-tab-label">Brand Info</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
+          <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
+          <span class="reg-tab-label">Location &amp; Media</span>
+        </button>
+        <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
+        <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
+          <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
+          <span class="reg-tab-label">Plan</span>
+        </button>
+      </div>
       <div *ngIf="showEmailVerificationPrompt && !emailVerified" class="alert alert-warning mb-4">
         <strong>Email not verified.</strong> Please check your inbox and click the verification link.
         <button class="btn btn-link p-0 ms-2" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">Resend Verification Email</button>
@@ -63,8 +32,8 @@
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Brand Basics</h2>
-          <p class="section-subtitle">Update core brand identity and account details.</p>
+          <h2>Brand Info</h2>
+          <p class="section-subtitle">Update core brand identity and contact details.</p>
 
           <div class="field-grid">
             <div class="field-block">
@@ -72,22 +41,58 @@
               <input formControlName="brandName" type="text" class="form-control" />
             </div>
             <div class="field-block">
-              <label>Brand Username</label>
-              <input formControlName="brandUsername" type="text" class="form-control" />
+              <label>Brand Username
+                <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> — used in your profile link</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/brand/</span>
+                <input formControlName="brandUsername" type="text" class="form-control" [readonly]="!isEditMode" />
+              </div>
             </div>
             <div class="field-block">
               <label>Email</label>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
-                <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
+                <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
               </div>
             </div>
             <div class="field-block">
               <label>Phone Number</label>
               <div style="display: flex; align-items: center; gap: 0.5em;">
                 <input formControlName="phoneNumber" type="text" class="form-control" />
-                <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
+                <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
               </div>
+            </div>
+            <div class="field-block">
+              <label>Website</label>
+              <input formControlName="website" type="url" class="form-control" />
+            </div>
+            <div class="field-block full-width">
+              <label>Category / Industry</label>
+              <div class="chip-list">
+                <ng-container *ngIf="isEditMode; else viewCategories">
+                  <div
+                    *ngFor="let cat of categoriesList"
+                    class="chip"
+                    [class.chip--selected]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
+                    (click)="toggleChip('categories', cat._id)"
+                    tabindex="0"
+                    (keydown.enter)="toggleChip('categories', cat._id)"
+                    (keydown.space)="toggleChip('categories', cat._id)"
+                    [attr.aria-pressed]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
+                    role="button"
+                  >{{ cat.name }}</div>
+                </ng-container>
+                <ng-template #viewCategories>
+                  <div *ngFor="let catId of registrationForm.get('categories')?.value">
+                    <span class="chip chip--selected">{{ getCategoryName(catId) }}</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+            <div class="field-block full-width">
+              <label>Brand Description</label>
+              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell influencers about your brand..."></textarea>
             </div>
           </div>
 
@@ -109,12 +114,10 @@
         </section>
 
         <section class="form-card" *ngIf="currentStep === 2">
-          <h2>Media & Discovery</h2>
-          <p class="section-subtitle">Manage channel visibility and supporting media.</p>
+          <h2>Location &amp; Media</h2>
+          <p class="section-subtitle">Manage location and supporting media.</p>
 
           <div class="field-grid">
-            
-
             <div class="field-block" formGroupName="location">
               <label>State</label>
               <select formControlName="state" class="form-control">
@@ -134,44 +137,27 @@
             <div class="field-block">
               <label>Languages</label>
               <div class="chip-list">
-                <div
-                  *ngFor="let lang of languagesList"
-                  class="chip"
-                  [class.chip--selected]="registrationForm.value.languages?.includes(lang._id)"
-                  (click)="isEditMode && toggleChip('languages', lang._id)"
-                  tabindex="0"
-                  (keydown.enter)="isEditMode && toggleChip('languages', lang._id)"
-                  (keydown.space)="isEditMode && toggleChip('languages', lang._id)"
-                  [attr.aria-pressed]="registrationForm.value.languages?.includes(lang._id)"
-                  role="button"
-                >
-                  {{ lang.name }}
-                </div>
+                <ng-container *ngIf="isEditMode; else viewLanguages">
+                  <div
+                    *ngFor="let lang of languagesList"
+                    class="chip"
+                    [class.chip--selected]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
+                    (click)="toggleChip('languages', lang._id)"
+                    tabindex="0"
+                    (keydown.enter)="toggleChip('languages', lang._id)"
+                    (keydown.space)="toggleChip('languages', lang._id)"
+                    [attr.aria-pressed]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
+                    role="button"
+                  >
+                    {{ lang.name }}
+                  </div>
+                </ng-container>
+                <ng-template #viewLanguages>
+                  <div *ngFor="let langId of registrationForm.get('languages')?.value">
+                    <span class="chip chip--selected">{{ getLanguageName(langId) }}</span>
+                  </div>
+                </ng-template>
               </div>
-            </div>
-
-            <div class="field-block">
-              <label>Categories</label>
-              <div class="chip-list">
-                <div
-                  *ngFor="let cat of categoriesList"
-                  class="chip"
-                  [class.chip--selected]="registrationForm.value.categories?.includes(cat._id)"
-                  (click)="isEditMode && toggleChip('categories', cat._id)"
-                  tabindex="0"
-                  (keydown.enter)="isEditMode && toggleChip('categories', cat._id)"
-                  (keydown.space)="isEditMode && toggleChip('categories', cat._id)"
-                  [attr.aria-pressed]="registrationForm.value.categories?.includes(cat._id)"
-                  role="button"
-                >
-                  {{ cat.name }}
-                </div>
-              </div>
-            </div>
-
-            <div class="field-block">
-              <label>Website</label>
-              <input formControlName="website" type="url" class="form-control" />
             </div>
 
             <div class="field-block">
@@ -193,39 +179,26 @@
             <button *ngIf="isEditMode" type="button" class="add-social-btn" (click)="addProductImage()">Add Product Image</button>
           </div>
 
+          <!-- Social Media — optional, for brand trust -->
           <div class="social-media-section mt-3">
-            <h3>Social Media Platforms</h3>
-            <div class="subtitle">Select your platforms and set your rates for each content type.</div>
+            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — helps build trust with influencers)</span></h3>
+            <div class="subtitle">Add your social handles so influencers can verify your brand.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="isEditMode && togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
-                <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span>
               </div>
             </div>
 
-            <!-- Platform Tabs UI -->
             <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
               <div class="platform-tab-strip">
-                <button
-                  type="button"
-                  *ngFor="let platform of selectedPlatforms()"
-                  class="platform-tab"
-                  [class.platform-tab--active]="activePlatformTab === platform._id"
-                  (click)="activePlatformTab = platform._id"
-                >
-                  <i [class]="platform.icon"></i>
-                  {{ platform.name }}
-                  <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span>
+                <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
+                  [class.platform-tab--active]="activePlatformTab === platform._id" (click)="activePlatformTab = platform._id">
+                  <i [class]="platform.icon"></i> {{ platform.name }}
                 </button>
                 <div class="platform-tab-spacer"></div>
-                <button
-                  type="button"
-                  class="tab-remove"
-                  *ngIf="activePlatformTab && isEditMode"
-                  (click)="removePlatformCard(getPlatformById(activePlatformTab))"
-                  title="Remove platform"
-                >
+                <button type="button" class="tab-remove" *ngIf="activePlatformTab && isEditMode"
+                  (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
                   <i class="bi bi-x-lg"></i> Remove
                 </button>
               </div>
@@ -235,42 +208,26 @@
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                     <span class="platform-name">{{ platform.name }}</span>
-                    <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span>
                     <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
                   </div>
                   <div class="platform-details-body">
-                    <div class="row">
-                      <div class="col">
+                    <div class="row g-2">
+                      <div class="col-12 col-md-6">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" [disabled]="!isEditMode" (blur)="stripAtSign(platform._id)" />
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}"
+                          type="text" class="form-control" placeholder="yourhandle" [disabled]="!isEditMode" (blur)="stripAtSign(platform._id)" />
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                           [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                          [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                          target="_blank" rel="noopener noreferrer" class="verify-profile-link">
                           <i class="bi bi-box-arrow-up-right"></i> Verify profile
                         </a>
                       </div>
-                      <div class="col">
-                        <label>{{ platform.followersLabel || 'Followers' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].followersCount" [ngModelOptions]="{standalone: true}" type="number" class="form-control" placeholder="e.g. 12000" [disabled]="!isEditMode" />
-                      </div>
-                      <div class="col">
-                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
+                      <div class="col-12 col-md-6">
+                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
                         </select>
-                      </div>
-                    </div>
-                    <div class="content-types-section">
-                      <label>Content Types & Pricing</label>
-                      <div class="content-types-list">
-                        <ng-container *ngFor="let ct of platform.contentTypes">
-                          <div class="content-type-item" *ngIf="ct.visible">
-                            <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
-                            <span>{{ ct.name }}</span>
-                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
-                          </div>
-                        </ng-container>
                       </div>
                     </div>
                   </div>
@@ -288,83 +245,89 @@
         </section>
 
         <section class="form-card" *ngIf="currentStep === 3">
-          <h2>Professional</h2>
-          <p class="section-subtitle">Update pricing and contact preferences.</p>
+          <h2>Plan</h2>
+          <p class="section-subtitle">Manage your plan and contact preferences.</p>
 
-
-          <div class="field-block full-width">
-            <label>Payment Option</label>
-            <!-- Locked while premium is active -->
-            <ng-container *ngIf="premiumEnd && premiumEnd > currentDate; else paymentSelectBrandStep3">
-              <div class="form-control premium-locked-field">
-                🔒 Premium (Contact/Social visible)
-              </div>
-              <div class="alert alert-success d-flex align-items-center gap-2 mt-2">
-                <span style="font-size:1.3em;">🌟</span>
-                <div>
-                  <strong>Premium Active</strong>
-                  <div><small>Your plan is active until <strong>{{ premiumEnd | date:'mediumDate' }}</strong>. It will revert to Free after expiry.</small></div>
-                </div>
-              </div>
-            </ng-container>
-            <ng-template #paymentSelectBrandStep3>
-              <select formControlName="paymentOption" class="form-control">
-                <option value="free">Free</option>
-                <option value="premium">Premium</option>
-              </select>
-              <!-- Payment status banners -->
-              <div *ngIf="latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2 mt-2">
-                <span style="font-size:1.3em;">⏳</span>
-                <div>
-                  <strong>Payment Pending</strong>
-                  <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
-                </div>
-              </div>
-              <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
-                <div class="premium-cta-content">
-                  <span class="premium-cta-icon">🌟</span>
-                  <div>
-                    <strong>Upgrade to Premium</strong>
-                    <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
-                  </div>
-                </div>
-                <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
-              </div>
-            </ng-template>
+          <!-- Plan info banner -->
+          <div class="plan-info-banner">
+            <i class="bi bi-info-circle"></i>
+            Choose a plan to unlock more features and visibility to influencers.
           </div>
-          <div class="field-grid">
-            <div class="field-block full-width">
-              <label>Promotional Price</label>
-              <input formControlName="promotionalPrice" type="number" class="form-control" />
-            </div>
-            <!-- <div class="field-block full-width" formGroupName="contact">
-              <label>Contact Options</label>
-              <div class="contact-grid">
-                <label class="contact-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
-                <label class="contact-item"><input type="checkbox" formControlName="email" /> Email</label>
-                <label class="contact-item"><input type="checkbox" formControlName="call" /> Call</label>
+
+          <!-- Plan selection cards (locked when premium active) -->
+          <ng-container *ngIf="premiumEnd && premiumEnd > currentDate; else planSelectCards">
+            <div class="plan-cards">
+              <div class="plan-card selected">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-price premium">Active</span>
+                </div>
+                <div class="plan-card-desc">Valid until <strong>{{ premiumEnd | date:'mediumDate' }}</strong></div>
               </div>
-            </div> -->
+            </div>
+          </ng-container>
+          <ng-template #planSelectCards>
+            <div class="plan-cards">
+              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
+                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('free')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Default</span>
+                  <span class="plan-card-price free">Free</span>
+                </div>
+                <div class="plan-card-desc">Basic visibility, post campaigns, find influencers</div>
+              </div>
+              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
+                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('premium')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-price premium">₹499/mo</span>
+                </div>
+                <div class="plan-card-desc">Priority campaigns, analytics, advanced filters</div>
+              </div>
+            </div>
+
+            <!-- Payment pending banner -->
+            <div *ngIf="latestPendingPayment" class="alert alert-warning d-flex align-items-center gap-2 mt-2">
+              <span style="font-size:1.3em;">⏳</span>
+              <div>
+                <strong>Payment Pending</strong>
+                <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
+              </div>
+            </div>
+
+            <!-- Premium upgrade CTA -->
+            <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
+              <div class="premium-cta-content">
+                <span class="premium-cta-icon">🌟</span>
+                <div>
+                  <strong>Upgrade to Premium</strong>
+                  <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, priority listing, and more.</p>
+                </div>
+              </div>
+              <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
+            </div>
+          </ng-template>
+
+          <div class="field-grid mt-3">
             <div class="field-block full-width" formGroupName="contact">
-              <label class="contact-section-label">HOW CAN BRANDS CONTACT YOU?</label>
+              <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
-                  <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!registrationForm.get('isPremium')?.value" />
+                  <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!isEditMode" />
                   <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
                   <span class="contact-card-label">WhatsApp</span>
                 </label>
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.email')?.value">
-                  <input type="checkbox" formControlName="email" hidden [disabled]="!registrationForm.get('isPremium')?.value" />
+                  <input type="checkbox" formControlName="email" hidden [disabled]="!isEditMode" />
                   <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
                   <span class="contact-card-label">Email</span>
                 </label>
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.call')?.value">
-                  <input type="checkbox" formControlName="call" hidden [disabled]="!registrationForm.get('isPremium')?.value" />
+                  <input type="checkbox" formControlName="call" hidden [disabled]="!isEditMode" />
                   <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
                   <span class="contact-card-label">Call</span>
                 </label>
               </div>
-              <div *ngIf="!registrationForm.get('isPremium')?.value" class="text-muted mt-1">Contact options are only available for Premium users.</div>
             </div>
           </div>
 

@@ -874,11 +874,80 @@
   flex-shrink: 0;
 }
 
+.inv-accept-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.inv-ct-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0;
+  text-align: right;
+}
+
+.inv-ct-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.inv-ct-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  .inv-ct-price {
+    font-weight: 700;
+    color: #f97316;
+  }
+
+  &.selected {
+    border-color: #f97316;
+    background: #fff7ed;
+    color: #c2410c;
+
+    .inv-ct-price { color: #c2410c; }
+  }
+
+  &:hover:not(.selected) {
+    border-color: #9ca3af;
+    background: #f9fafb;
+  }
+}
+
+.inv-ct-modal-section {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
 .inv-actions {
   display: flex;
   gap: 6px;
 }
 
+
+.inv-date-input {
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: #374151;
+  background: #fff;
+}
 .btn-accept {
   background: #28a745;
   border: none;
@@ -1760,6 +1829,114 @@
   margin-bottom: 0.75rem;
 }
 
+// Inline submission panel (replaces .submission-card.submission-inline)
+.submission-inline {
+  margin: 0 0 0.75rem 0;
+  border: 1px solid #e8e0d8;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  border-left: 3px solid #f97316;
+  background: #fffdf9;
+  padding: 0;
+  overflow: hidden;
+}
+
+// Tab bar at top of submission panel
+.sub-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f5f0ea;
+  border-bottom: 1px solid #e8e0d8;
+  padding: 0.5rem 1rem;
+}
+
+.sub-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1.5px solid #e8e0d8;
+  color: #555;
+
+  &.active {
+    background: #f97316;
+    border-color: #f97316;
+    color: #fff;
+  }
+}
+
+// "View Post" button on influencer row
+.btn-view-submission {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1.5px solid #f97316;
+  background: transparent;
+  color: #f97316;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+  margin-left: auto;
+
+  &:hover {
+    background: #f97316;
+    color: #fff;
+  }
+}
+
+.expand-inf-row.has-submission {
+  margin-bottom: 0;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.expand-inf-row.submission-open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+// Screenshot label
+.sub-screenshots {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem 0;
+}
+
+.sub-screenshot-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sub-screenshot-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+// Pad the rest of the inline panel content
+.submission-inline .sub-post-link,
+.submission-inline .sub-metrics,
+.submission-inline .sub-metrics-empty,
+.submission-inline .sub-review-area,
+.submission-inline .sub-completed-feedback,
+.submission-inline .sub-disputed-reason {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 .sub-header {
   display: flex;
   align-items: center;
@@ -1819,16 +1996,11 @@
   align-items: center;
   gap: 0.3rem;
   margin-bottom: 0.55rem;
+  padding-top: 0.6rem;
   a { color: #E8580C; word-break: break-all; }
 }
 
-.sub-screenshots {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.55rem;
-  flex-wrap: wrap;
-}
-
+// The old .sub-screenshots is now overridden by the new one above; keep thumb style
 .sub-screenshot-thumb {
   width: 80px;
   height: 60px;
@@ -1924,3 +2096,4 @@
 }
 
 .sub-disputed-reason { color: #c53030; }
+

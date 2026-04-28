@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { environment } from '../../../environments/environment';
 import { CampaignStatusBarComponent } from '../../shared/campaign-status-bar/campaign-status-bar.component';
@@ -35,14 +36,22 @@ export class CampaignSubmissionComponent implements OnInit {
   reachCount: number | null = null;
 
   detectedPlatform = '';
-  postTypes: { key: PostType; label: string }[] = [
-    { key: 'reel', label: 'Reel' },
-    { key: 'video', label: 'Video' },
-    { key: 'photo', label: 'Post/Photo' },
-    { key: 'short', label: 'Short' },
-    { key: 'story', label: 'Story' },
-    { key: 'thread', label: 'Thread' },
+
+  // All supported post types
+  readonly allPostTypes: { key: PostType; label: string; platforms: string[] }[] = [
+    { key: 'reel',   label: 'Reel',       platforms: ['instagram'] },
+    { key: 'video',  label: 'Video',      platforms: ['youtube', 'facebook'] },
+    { key: 'photo',  label: 'Post/Photo', platforms: ['instagram', 'facebook', 'twitter'] },
+    { key: 'short',  label: 'Short',      platforms: ['youtube'] },
+    { key: 'story',  label: 'Story',      platforms: ['instagram', 'facebook'] },
+    { key: 'thread', label: 'Thread',     platforms: ['twitter'] },
   ];
+  postTypes: { key: PostType; label: string; platforms: string[] }[] = [...this.allPostTypes];
+
+  // Campaign platform info loaded from backend
+  campaignPlatforms: string[] = [];
+  campaignSocialMedia: any[] = [];
+  specialInstructions = '';
 
   screenshotUploading = false;
   insightsUploading = false;
@@ -56,6 +65,7 @@ export class CampaignSubmissionComponent implements OnInit {
     private router: Router,
     private config: ConfigService,
     private http: HttpClient,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -65,8 +75,39 @@ export class CampaignSubmissionComponent implements OnInit {
     this.brandName = nav.get('brandName') || '';
     this.inviteStatus = nav.get('inviteStatus') || 'working';
 
-    // Load existing submission if any
+    // Load invite + campaign info, then existing submission
     if (this.inviteId) {
+      this.config.getInviteWithCampaign(this.inviteId).subscribe({
+        next: (res: any) => {
+          // Sync real invite status from backend (overrides query param)
+          if (res?.invite?.status) {
+            this.inviteStatus = res.invite.status;
+          }
+          const campaign = res?.campaign;
+          if (campaign) {
+            // Collect platforms from socialMedia (enabled content types)
+            this.campaignSocialMedia = campaign.socialMedia || [];
+            this.campaignPlatforms = this.campaignSocialMedia
+              .map((sm: any) => (sm.platform || '').toLowerCase())
+              .filter(Boolean);
+            if (!this.campaignPlatforms.length && campaign.platforms?.length) {
+              this.campaignPlatforms = campaign.platforms.map((p: string) => p.toLowerCase());
+            }
+            this.specialInstructions = campaign.specialInstructions || '';
+            // Filter post types to only those relevant to the campaign platforms
+            if (this.campaignPlatforms.length) {
+              this.postTypes = this.allPostTypes.filter(pt =>
+                pt.platforms.some(p => this.campaignPlatforms.includes(p))
+              );
+              // If no match, show all
+              if (!this.postTypes.length) this.postTypes = [...this.allPostTypes];
+            }
+            this.cdr.markForCheck();
+          }
+        },
+        error: () => {}
+      });
+
       this.config.getSubmissionByInvite(this.inviteId).subscribe({
         next: (res: any) => {
           if (res?.submission) {
@@ -115,30 +156,28 @@ export class CampaignSubmissionComponent implements OnInit {
   }
 
   async uploadImage(file: File, type: 'screenshot' | 'insights') {
-    const preset = environment.cloudinaryUploadPreset;
-    const cloud = environment.cloudinaryCloudName;
-    const url = `https://api.cloudinary.com/v1_1/${cloud}/image/upload`;
-
     if (type === 'screenshot') this.screenshotUploading = true;
     else this.insightsUploading = true;
 
     try {
+      let imageUrl = '';
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('upload_preset', preset);
-      fd.append('folder', 'campaign_submissions');
-
-      const res: any = await this.http.post(url, fd).toPromise();
+      const res: any = await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/campaign-invites/${this.inviteId}/upload-image`, fd));
+      imageUrl = res.data?.url || res.url;
+      // Keep as relative path so Angular proxy serves it (avoids helmet CORP blocking)
+      // Do NOT prepend http://localhost:3000 — the proxy handles /assets/local-images
       if (type === 'screenshot') {
-        this.postScreenshotUrl = res.secure_url;
+        this.postScreenshotUrl = imageUrl;
       } else {
-        this.insightsScreenshotUrl = res.secure_url;
+        this.insightsScreenshotUrl = imageUrl;
       }
     } catch (e) {
       this.error = 'Image upload failed. Please try again.';
     } finally {
       if (type === 'screenshot') this.screenshotUploading = false;
       else this.insightsUploading = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -152,7 +191,12 @@ export class CampaignSubmissionComponent implements OnInit {
     if (input.files?.[0]) this.uploadImage(input.files[0], 'insights');
   }
 
+  get isReadOnly(): boolean {
+    return ['completed', 'approved', 'disputed'].includes(this.inviteStatus);
+  }
+
   canSubmit(): boolean {
+    if (this.isReadOnly) return false;
     return !!this.postUrl.trim() && !!this.postScreenshotUrl;
   }
 
@@ -181,10 +225,12 @@ export class CampaignSubmissionComponent implements OnInit {
       next: () => {
         this.submitted = true;
         this.submitting = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.error = err?.error?.message || 'Submission failed. Please try again.';
         this.submitting = false;
+        this.cdr.markForCheck();
       }
     });
   }

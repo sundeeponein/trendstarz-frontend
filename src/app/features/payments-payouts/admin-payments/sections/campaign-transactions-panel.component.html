@@ -1,0 +1,145 @@
+<div class="tx-toolbar">
+  <button class="btn btn-warning btn-sm" (click)="runAutoApproveStaleSubmissions()">
+    Auto-approve stale (48h)
+  </button>
+</div>
+
+<div class="tx-summary-grid">
+  <div class="tx-card">
+    <div class="tx-label">Collected</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.collected) }}</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Platform Fees</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.fees) }}</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Pending Payouts</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.pendingPayouts) }}</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Paid Out</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.paidOut) }}</div>
+  </div>
+  <div class="tx-card tx-card--accent">
+    <div class="tx-label">Net TrendStarz Balance</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.netBalance) }}</div>
+  </div>
+</div>
+
+<div class="status-tabs">
+  <button class="status-tab" [class.active]="transactionStatus === 'all'" (click)="setTransactionStatus('all')">All</button>
+  <button class="status-tab" [class.active]="transactionStatus === 'awaiting'" (click)="setTransactionStatus('awaiting')">Awaiting Proof</button>
+  <button class="status-tab" [class.active]="transactionStatus === 'verified'" (click)="setTransactionStatus('verified')">Verified</button>
+  <button class="status-tab" [class.active]="transactionStatus === 'payout_pending'" (click)="setTransactionStatus('payout_pending')">Pending Payout</button>
+  <button class="status-tab" [class.active]="transactionStatus === 'paid'" (click)="setTransactionStatus('paid')">Paid Out</button>
+</div>
+
+<div *ngIf="transactionLoading" class="loading">Loading transactions...</div>
+
+<div class="payments-section" *ngIf="!transactionLoading">
+  <div *ngIf="visibleTransactions.length === 0" class="no-payments">
+    <p>No transactions in this filter.</p>
+  </div>
+
+  <table *ngIf="visibleTransactions.length > 0" class="table table-hover payments-table-grid">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Campaign</th>
+        <th>Payer → Recipient</th>
+        <th>They Paid</th>
+        <th>Platform Fee</th>
+        <th>Recipient Gets</th>
+        <th>UTR</th>
+        <th>Collection</th>
+        <th>Payout</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let tx of visibleTransactions">
+        <td>{{ ui.getTransactionLabel(tx.transactionType) }}</td>
+        <td><code>{{ tx.campaignId }}</code></td>
+        <td>{{ tx.payerRole }} → {{ tx.recipientRole }}</td>
+        <td class="col-amount">{{ ui.formatPaise(tx.payerTotal) }}</td>
+        <td>{{ ui.formatPaise(tx.platformFee) }}</td>
+        <td>{{ ui.formatPaise(tx.recipientPayout) }}</td>
+        <td>
+          <code>{{ tx.utrNumber || '-' }}</code>
+          <button class="btn btn-link btn-sm" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">View proof</button>
+        </td>
+        <td>{{ tx.collectionStatus }}</td>
+        <td>{{ tx.payoutStatus }}</td>
+        <td class="col-actions">
+          <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)">
+            Verify
+          </button>
+          <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)">
+            Reject
+          </button>
+          <button class="btn btn-warning btn-sm" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" (click)="openPayoutModal(tx)">
+            Mark Paid
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div *ngIf="showTxRejectModal" class="modal-overlay" (click)="closeRejectTxModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h2>Reject Transaction Proof</h2>
+    <p class="modal-info" *ngIf="selectedTx">
+      Rejecting <strong>{{ ui.getTransactionLabel(selectedTx.transactionType) }}</strong> with amount
+      <strong>{{ ui.formatPaise(selectedTx.payerTotal) }}</strong>
+    </p>
+    <div class="form-group">
+      <label>Reason:</label>
+      <textarea class="form-textarea" rows="4" [(ngModel)]="txRejectReason" placeholder="Enter rejection reason"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeRejectTxModal()">Cancel</button>
+      <button class="btn-reject-confirm" [disabled]="!txRejectReason.trim()" (click)="rejectTransaction()">Confirm Reject</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showTxPayoutModal" class="modal-overlay" (click)="closePayoutModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h2>Mark Payout Paid</h2>
+    <p class="modal-info" *ngIf="selectedTx">
+      Payout amount: <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }}</strong>
+    </p>
+    <div class="form-group">
+      <label>Payout UTR *</label>
+      <input class="form-textarea" [(ngModel)]="payoutForm.payoutUtr" placeholder="Enter payout UTR" />
+    </div>
+    <div class="form-group">
+      <label>Recipient UPI ID</label>
+      <input class="form-textarea" [(ngModel)]="payoutForm.payoutUpiId" placeholder="upi@bank" />
+    </div>
+    <div class="form-group">
+      <label>Payout proof URL</label>
+      <input class="form-textarea" [(ngModel)]="payoutForm.payoutProofUrl" placeholder="https://..." />
+    </div>
+    <div class="form-group">
+      <label>Admin notes</label>
+      <textarea class="form-textarea" rows="3" [(ngModel)]="payoutForm.notes" placeholder="Optional notes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closePayoutModal()">Cancel</button>
+      <button class="btn-reject-confirm" [disabled]="!payoutForm.payoutUtr.trim()" (click)="markTransactionPaid()">Confirm Paid</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showProofModal" class="modal-overlay" (click)="closeProofPreview()">
+  <div class="modal-content modal-content--proof" (click)="$event.stopPropagation()">
+    <h2>Payment Proof</h2>
+    <img [src]="proofPreviewUrl" alt="Payment proof" class="proof-image" />
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeProofPreview()">Close</button>
+    </div>
+  </div>
+</div>

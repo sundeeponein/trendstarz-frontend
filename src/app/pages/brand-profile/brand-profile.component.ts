@@ -1,14 +1,12 @@
 
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
-import { of, forkJoin } from 'rxjs';
+import { of, forkJoin, firstValueFrom } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -24,6 +22,7 @@ import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/
   styleUrls: ['./brand-profile.component.scss']
 })
 export class BrandProfileComponent implements OnInit {
+      
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
     const idx = arr.indexOf(id);
@@ -201,20 +200,25 @@ export class BrandProfileComponent implements OnInit {
     };
     try {
       const compressedFile = await imageCompression(file, options);
-      // Upload to Cloudinary
+      // Upload via backend so local/prod handling stays centralized
       this.brandLogoPreview = null;
       this.brandLogoFile = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      formData.append('folder', 'brand_logos');
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
       });
+      if (!response.ok) {
+        this.registrationError = 'Brand logo upload failed.';
+        return;
+      }
       const data = await response.json();
-      if (data.secure_url && data.public_id) {
-  this.brandLogoPreview = data.secure_url;
-  this.brandLogoFile = { url: data.secure_url, public_id: data.public_id };
+      const uploaded = data?.data || data;
+      if (uploaded?.url && uploaded?.public_id) {
+  this.brandLogoPreview = uploaded.url;
+  this.brandLogoFile = { url: uploaded.url, public_id: uploaded.public_id };
   // Sync with form array for validation
   const logoArray = this.registrationForm.get('brandLogo') as FormArray;
   logoArray.clear();
@@ -249,20 +253,25 @@ export class BrandProfileComponent implements OnInit {
     };
     try {
       const compressedFile = await imageCompression(file, options);
-      // Upload to Cloudinary
+      // Upload via backend so local/prod handling stays centralized
       this.productImagesPreview[index] = null;
       this.productImagesFiles[index] = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      formData.append('folder', 'brand_product_images');
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
       });
+      if (!response.ok) {
+        this.registrationError = 'Product image upload failed.';
+        return;
+      }
       const data = await response.json();
-      if (data.secure_url && data.public_id) {
-        this.productImagesPreview[index] = data.secure_url;
-        this.productImagesFiles[index] = { url: data.secure_url, public_id: data.public_id };
+      const uploaded = data?.data || data;
+      if (uploaded?.url && uploaded?.public_id) {
+        this.productImagesPreview[index] = uploaded.url;
+        this.productImagesFiles[index] = { url: uploaded.url, public_id: uploaded.public_id };
         // Sync with form array for validation
         const prodArray = this.registrationForm.get('productImages') as FormArray;
         // Ensure enough controls
@@ -290,7 +299,7 @@ export class BrandProfileComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('BrandProfileComponent ngOnInit called');
+    // ngOnInit called
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
@@ -308,11 +317,11 @@ export class BrandProfileComponent implements OnInit {
         district: ['', Validators.required],
         googleMapLink: ['']
       }),
-      promotionalPrice: ['', Validators.required],
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
       googleMapAddress: [''],
+      description: [''],
       brandLogo: this.fb.array([]),
       products: this.fb.array([]),
       productImages: this.fb.array([]),
@@ -328,16 +337,18 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
-    // Load districts when state changes
-    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
+    // Load districts when state changes (robust: accept id or name, request by name+id)
+    this.registrationForm.get('location.state')?.valueChanges.subscribe(stateIdOrName => {
       this.registrationForm.get('location.district')?.setValue('');
       this.districts = [];
-      if (stateId) {
-        const stateObj = this.states.find(s => s._id === stateId);
-        const stateName = stateObj ? stateObj.name : '';
-        if (stateName) {
-          this.configService.getDistricts(stateName).subscribe(data => this.districts = data);
-        }
+      if (stateIdOrName) {
+        const selectedState = this.states.find((s: any) => s._id === stateIdOrName || s.id === stateIdOrName || s.name === stateIdOrName);
+        const stateName = selectedState?.name || (typeof stateIdOrName === 'string' ? stateIdOrName : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateIdOrName === 'string' ? stateIdOrName : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: data => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+          error: () => { this.districts = []; this.cd.detectChanges(); }
+        });
       }
     });
 
@@ -373,9 +384,15 @@ export class BrandProfileComponent implements OnInit {
           const languageIds = (profile.languages || []).map((name: string) =>
             this.languagesList.find((l: any) => l.name === name)?._id
           ).filter(Boolean);
-          const categoryIds = (profile.categories || []).map((name: string) =>
-            this.categoriesList.find((c: any) => c.name === name)?._id
-          ).filter(Boolean);
+          // Robust category mapping with fallback and warning
+          const categoryIds = (profile.categories || []).map((name: string) => {
+            const found = this.categoriesList.find((c: any) => c.name === name);
+            if (!found) {
+              console.warn('[Profile] Category not found in list:', name);
+              return null;
+            }
+            return found._id;
+          }).filter(Boolean);
           const resolvedBrandUsername =
             profile.brandUsername ||
             profile.username ||
@@ -385,9 +402,6 @@ export class BrandProfileComponent implements OnInit {
                   .replace(/\s+/g, '-')
                   .replace(/[^a-zA-Z0-9_-]/g, '')
               : '');
-          const resolvedPromotionalPrice =
-            profile.promotionalPrice ?? profile.price ?? '';
-
           const doPatchBrandForm = (districtId: string) => {
             this.registrationForm.patchValue({
               brandName: profile.brandName || '',
@@ -396,18 +410,18 @@ export class BrandProfileComponent implements OnInit {
             phoneNumber: profile.phoneNumber || '',
             isPremium: !!profile.isPremium,
             paymentOption: profile.isPremium ? 'premium' : 'free',
-            location: {
-              state: stateId,
-              district: districtId,
-              googleMapLink: profile.location?.googleMapLink || ''
-            },
-            promotionalPrice: resolvedPromotionalPrice,
+              location: {
+                state: stateId,
+                district: districtId,
+                googleMapLink: profile.location?.googleMapLink || ''
+              },
             categories: categoryIds,
             languages: languageIds,
             website: profile.website || '',
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
+            description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false }
-          });
+            }, { emitEvent: false });
 
           const logoArr = this.registrationForm.get('brandLogo') as FormArray;
           logoArr.clear();
@@ -416,7 +430,8 @@ export class BrandProfileComponent implements OnInit {
             public_id: img.public_id
           })));
           this.brandLogoPreview = (profile.brandLogo && profile.brandLogo[0]?.url) || null;
-          this.brandLogoFile = (profile.brandLogo && profile.brandLogo[0]) || null;
+          // Do not set brandLogoFile to the remote image object — only File objects should be used for upload
+          this.brandLogoFile = null;
 
           const productSource = Array.isArray(profile.products)
             ? profile.products
@@ -460,16 +475,21 @@ export class BrandProfileComponent implements OnInit {
             this.myPayments = payments;
             this.latestPendingPayment = payments.find((p: any) => p.status === 'pending') || null;
           });
-          this.registrationForm.disable();
+          this.registrationForm.disable({ emitEvent: false });
           this.refreshStepCompletion();
           this.cd.detectChanges();
           };
           // Load districts for the saved state, then patch form
           if (profile.location?.state) {
-            this.configService.getDistricts(profile.location.state).subscribe({
+            // prefer the resolved stateId when available
+            this.configService.getDistricts(profile.location.state, stateId).subscribe({
               next: (dists) => {
-                this.districts = dists;
-                const districtId = dists.find((d: any) => d.name === profile.location?.district)?._id || '';
+                this.districts = Array.isArray(dists) ? dists : [];
+                const resolvedDistrict = this.districts.find((d: any) => d.name === profile.location?.district);
+                const districtId = resolvedDistrict ? resolvedDistrict._id : '';
+                if (!districtId && profile.location?.district) {
+                  console.warn('[Profile] District not found in list:', profile.location.district);
+                }
                 doPatchBrandForm(districtId);
               },
               error: () => doPatchBrandForm('')
@@ -523,31 +543,72 @@ export class BrandProfileComponent implements OnInit {
     };
   }
 
+  // Helper to map category ID to name safely for template
+      getCategoryName(catId: string): string {
+        if (!this.categoriesList) return catId;
+        const found = this.categoriesList.find((c: any) => c._id === catId);
+        return found ? found.name : catId;
+      }
+
+      // Helper to map district ID to name safely for template
+      getDistrictName(districtId: string): string {
+        if (!this.districts) return districtId;
+        const found = this.districts.find((d: any) => d._id === districtId);
+        return found ? found.name : districtId;
+      }
+    // Helper to map language ID to name safely for template
+    getLanguageName(langId: string): string {
+      if (!this.languagesList) return langId;
+      const found = this.languagesList.find((l: any) => l._id === langId);
+      return found ? found.name : langId;
+    }
+
   enableEdit(): void {
     this.isEditMode = true;
-    this.registrationForm.enable();
+    this.registrationForm.enable({ emitEvent: false });
     this.refreshStepCompletion();
+    this.ensureDistrictsForCurrentState();
   // Password fields are disabled and removed from the form
+  }
+
+  // Ensure districts are loaded when entering edit mode so dropdown shows correct options
+  private ensureDistrictsForCurrentState(): void {
+    const stateVal = this.registrationForm.get('location.state')?.value;
+    if (stateVal && (!this.districts || this.districts.length === 0)) {
+      const selectedState = this.states.find((s: any) => s._id === stateVal || s.id === stateVal || s.name === stateVal);
+      const stateName = selectedState?.name || (typeof stateVal === 'string' ? stateVal : '');
+      const stateId = selectedState?._id || selectedState?.id || (typeof stateVal === 'string' ? stateVal : '');
+      this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
+    }
   }
 
   cancelEdit(): void {
     this.isEditMode = false;
     if (this.originalFormValue) {
-      this.registrationForm.reset(this.originalFormValue);
+      this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
     this.platformForms = JSON.parse(JSON.stringify(this.originalPlatformForms));
     const pfKeys = Object.keys(this.platformForms);
     this.activePlatformTab = pfKeys.length ? pfKeys[0] : null;
-    this.registrationForm.disable();
+    this.registrationForm.disable({ emitEvent: false });
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
     this.refreshStepCompletion();
+    // restore districts for the original state so view mode shows names
+    const origState = this.originalFormValue?.location?.state;
+    if (origState) {
+      const selectedState = this.states.find((s: any) => s._id === origState || s.id === origState || s.name === origState);
+      const stateName = selectedState?.name || (typeof origState === 'string' ? origState : '');
+      const stateId = selectedState?._id || selectedState?.id || (typeof origState === 'string' ? origState : '');
+      this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
+    }
   }
 
   payAndUpgrade() {
     this.paymentError = '';
     this.paymentSuccess = false;
-    if (!this.selectedDuration) {
+    const duration = this.selectedDuration;
+    if (!duration) {
       this.paymentError = 'Please select a premium duration.';
       setTimeout(() => {
         this.showPayment = false;
@@ -567,12 +628,7 @@ export class BrandProfileComponent implements OnInit {
           this.paymentError = 'User ID not found';
           return;
         }
-        const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        this.configService['http'].patch(
-          `${this.configService['apiUrl']}/users/${profile._id}/premium`,
-          { isPremium: true, premiumDuration: this.selectedDuration },
-          headers
-        ).subscribe({
+        this.configService.setPremiumForUser(profile._id, true, duration).subscribe({
           next: (res: any) => {
             this.paymentSuccess = true;
             this.showPayment = false;
@@ -712,7 +768,6 @@ export class BrandProfileComponent implements OnInit {
 
     if (step === 3) {
       return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
         this.registrationForm.get('contact')?.valid
       );
     }
@@ -765,9 +820,8 @@ export class BrandProfileComponent implements OnInit {
     }
 
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
-      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+      return !!this.registrationForm.get('contact')?.valid;
     }
 
     return false;
@@ -810,7 +864,20 @@ export class BrandProfileComponent implements OnInit {
     const raw = this.registrationForm.getRawValue();
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
-    const districtObj = this.districts.find(d => d._id === raw.location.district);
+    let districtObj = this.districts.find(d => d._id === raw.location.district);
+    // If districts not loaded or districtObj not found, try fetching districts for the state and resolve by id
+    if (!districtObj && raw.location?.district) {
+      try {
+        const selectedState = this.states.find((s: any) => s._id === raw.location.state || s.id === raw.location.state || s.name === raw.location.state);
+        const stateNameForLookup = selectedState?.name || (typeof raw.location.state === 'string' ? raw.location.state : '');
+        const stateIdForLookup = selectedState?._id || selectedState?.id || (typeof raw.location.state === 'string' ? raw.location.state : '');
+        const dists = await firstValueFrom(this.configService.getDistricts(stateNameForLookup, stateIdForLookup).pipe(catchError(() => of([]))));
+        this.districts = Array.isArray(dists) ? dists : [];
+        districtObj = this.districts.find((d: any) => d._id === raw.location.district) || undefined;
+      } catch (err) {
+        // ignore and proceed — we'll send raw value if we can't resolve
+      }
+    }
     // Map language IDs to names
     const languageNames = (raw.languages || []).map((id: string) => {
       const lang = this.languagesList.find((l: any) => l._id === id);
@@ -830,7 +897,7 @@ export class BrandProfileComponent implements OnInit {
         tier: pf.tier,
         contentTypes: Object.keys(pf.contentTypes)
           .filter(ctName => pf.contentTypes[ctName].selected)
-          .map(ctName => ({ name: ctName, price: Number(pf.contentTypes[ctName].price) || 0 }))
+          .map(ctName => ({ name: ctName }))
       };
     });
     // Handle Cloudinary upload for brand logo if file selected
@@ -845,7 +912,6 @@ export class BrandProfileComponent implements OnInit {
     const payload: any = {
   ...raw,
   location,
-  promotionalPrice: raw.promotionalPrice,
   languages: languageNames,
   categories: categoryNames,
   socialMedia,
@@ -868,12 +934,20 @@ export class BrandProfileComponent implements OnInit {
       next: () => {
         this.registrationSuccess = true;
         this.isEditMode = false;
-        this.registrationForm.disable();
+        this.registrationForm.disable({ emitEvent: false });
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.submitted = false;
+        // Ensure districts loaded for the saved state so the view shows district name
+        const stateVal = this.registrationForm.get('location.state')?.value;
+        if (stateVal) {
+          const selectedState = this.states.find((s: any) => s._id === stateVal || s.id === stateVal || s.name === stateVal);
+          const stateName = selectedState?.name || (typeof stateVal === 'string' ? stateVal : '');
+          const stateId = selectedState?._id || selectedState?.id || (typeof stateVal === 'string' ? stateVal : '');
+          this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
+        }
       },
       error: err => {
         this.registrationError = 'Update failed. Please try again.';

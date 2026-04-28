@@ -48,8 +48,8 @@
         </a>
 
         <!-- Plan Badge (when logged in) -->
-        <span class="plan-badge plan-badge--pro" *ngIf="user && user.isPremium">Pro plan</span>
-        <span class="plan-badge plan-badge--free" *ngIf="user && !user.isPremium">Free plan</span>
+        <span class="badge rounded-pill bg-success" *ngIf="user && user.isPremium">Pro plan</span>
+        <span class="badge rounded-pill bg-secondary" *ngIf="user && !user.isPremium">Free plan</span>
 
         <!-- Profile Dropdown (when logged in) -->
         <div class="profile-dropdown" *ngIf="user">

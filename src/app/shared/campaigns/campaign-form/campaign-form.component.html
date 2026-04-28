@@ -1,4 +1,4 @@
-<div class="form-overlay" (click)="onCancel()">
+<div class="form-overlay">
   <div class="form-modal" (click)="$event.stopPropagation()">
 
     <!-- ── Header ── -->
@@ -56,13 +56,23 @@
         </div>
 
         <div class="field-group">
+          <label class="field-label">Campaign type <span class="required">*</span></label>
+          <select formControlName="campaignType" class="field-input">
+            <option value="paid_collab">Paid collaboration</option>
+            <option value="product">Product collaboration</option>
+            <option value="invite_location">Invite to location</option>
+            <option value="pay_to_join">Pay to join</option>
+          </select>
+        </div>
+
+        <div class="field-group">
           <label class="field-label">Campaign image</label>
           <div class="image-upload-area" *ngIf="!imagePreview">
             <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
             <label for="campaign-img-input" class="upload-label">
               <i class="bi bi-cloud-arrow-up"></i>
               <span>Click to upload image</span>
-              <small>PNG, JPG up to 5 MB</small>
+              <small>PNG, JPG up to Max 1 MB</small>
             </label>
           </div>
           <div class="image-preview" *ngIf="imagePreview">
@@ -84,25 +94,9 @@
           </div>
         </div>
 
-        <div class="field-row">
-          <div class="field-group half">
-            <label class="field-label">Budget min (₹)</label>
-            <input type="number" formControlName="budgetMin" class="field-input" placeholder="0" min="0" />
-          </div>
-          <div class="field-group half">
-            <label class="field-label">Budget max (₹)</label>
-            <input type="number" formControlName="budgetMax" class="field-input" placeholder="0" min="0" />
-          </div>
-        </div>
-
-        <div class="budget-preview" *ngIf="f['budgetMin'].value || f['budgetMax'].value">
-          <span>Budget range:</span>
-          <strong class="budget-preview__value">
-            <ng-container *ngIf="f['budgetMin'].value">₹{{ f['budgetMin'].value | number }}</ng-container>
-            <ng-container *ngIf="f['budgetMin'].value && f['budgetMax'].value"> – </ng-container>
-            <ng-container *ngIf="f['budgetMax'].value">₹{{ f['budgetMax'].value | number }}</ng-container>
-          </strong>
-        </div>
+        <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDateRange']">
+          End date must be on or after start date.
+        </span>
 
         <p class="step-indicator">Step 1 of 3</p>
       </div>
@@ -120,6 +114,26 @@
     ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 2">
       <div class="form-body">
+
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Price per influencer (₹) <span class="required">*</span></label>
+            <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 1200" min="1" />
+            <span class="field-error" *ngIf="f['pricePerInfluencer'].touched && f['pricePerInfluencer'].invalid">Enter a value greater than 0</span>
+          </div>
+          <div class="field-group half">
+            <label class="field-label">Max influencers <span class="required">*</span></label>
+            <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
+            <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+          </div>
+        </div>
+
+        <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
+          <span>Estimated budget:</span>
+          <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
+        </div>
+
+        <p class="trust-note"><i class="bi bi-shield-check"></i> Brand pays only for accepted influencers</p>
 
         <div class="field-group">
           <label class="field-label">Content categories</label>
@@ -164,7 +178,7 @@
               <i [class]="getPlatformIcon(pd.platform)"></i>
               {{ pd.platform }}
               <span class="tab-enabled-count" *ngIf="getEnabledCount(pd) > 0">{{ getEnabledCount(pd) }}</span>
-              <span class="tab-total" *ngIf="getPlatformTotal(pd) > 0">₹{{ getPlatformTotal(pd) | number }}</span>
+              <!-- <span class="tab-total" *ngIf="getPlatformTotal(pd) > 0">₹{{ getPlatformTotal(pd) | number }}</span> -->
             </button>
             <div class="platform-tab-spacer"></div>
             <button type="button" class="pdc-remove tab-remove"
@@ -210,6 +224,10 @@
                     placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
         </div>
 
+        <div class="trust-note-list">
+          <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
+        </div>
+
         <p class="step-indicator">Step 2 of 3</p>
       </div>
 
@@ -228,6 +246,16 @@
     ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
+
+        <div class="invite-summary" *ngIf="f['pricePerInfluencer'].value && f['maxInfluencers'].value">
+          <div>Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
+          <div>Selected: <strong>{{ selectedInfluencerIds.size }} / {{ f['maxInfluencers'].value }}</strong></div>
+          <div>Estimated total: <strong>₹{{ (selectedInfluencerIds.size * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
+        </div>
+
+        <p class="field-error" *ngIf="selectionLimitError">
+          {{ selectionLimitError }}
+        </p>
 
         <div class="inf-search-box">
           <i class="bi bi-search"></i>
@@ -267,6 +295,10 @@
           </button>
         </div>
 
+        <div class="trust-note-list">
+          <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
+        </div>
+
         <div class="text-center py-4" *ngIf="influencersLoading">
           <div class="spinner-border spinner-border-sm text-warning"></div>
           <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading influencers…</p>
@@ -277,7 +309,8 @@
             *ngFor="let inf of filteredInfluencers"
             [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
             [class.inf-row--invited]="isInfluencerInvited(inf)"
-            (click)="!isInfluencerInvited(inf) && toggleInfluencerSelect(inf._id)">
+            [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
+            (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
             <div class="inf-avatar">
               <img *ngIf="getInfluencerAvatar(inf)"
                    [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" alt="" />
@@ -301,7 +334,7 @@
                 Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
               </span>
               <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
-                <span class="inf-invited-badge"><i class="bi bi-check-circle-fill"></i> Invited</span>
+                <span class="inf-invited-badge badge rounded-pill bg-success"><i class="bi bi-check-circle-fill"></i> Invited</span>
               </ng-container>
               <ng-template #selectable>
                 <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">
@@ -325,10 +358,10 @@
           <i class="bi bi-arrow-left"></i> Back
         </button>
         <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading">
-          {{ isEdit ? 'Save changes' : 'Skip &amp; create' }}
+          {{ isEdit ? 'Save changes' : 'Save as draft' }}
         </button>
         <button type="button" class="btn btn-send"
-                [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
+          [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
           <span *ngIf="uploading">Saving…</span>
           <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
         </button>

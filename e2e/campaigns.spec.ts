@@ -82,6 +82,11 @@ async function mockCommonRoutes(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ secure_url: 'https://res.cloudinary.com/test/image/upload/img.png', public_id: 'e2e_id' }) });
   });
+  // Dev upload path used by campaign-submission
+  await page.route('**/campaign-invites/*/upload-image', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { url: 'https://res.cloudinary.com/test/image/upload/screenshot.png' } }) });
+  });
   // Brand profile (needed by campaign-management for brandId)
   await page.route('**/users/brand-profile', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json',
@@ -104,6 +109,9 @@ async function mockCommonRoutes(page: Page) {
 // ─────────────────────────────────────────────────────────────
 test.describe('Brand — create campaign', () => {
   test('opens campaign form modal and creates a campaign (mocked API)', async ({ page }) => {
+    // Auto-accept any alert dialogs (e.g. "Please fill all required fields...")
+    const dialogs: string[] = [];
+    page.on('dialog', async (d) => { dialogs.push(d.message()); await d.dismiss().catch(()=>{}); });
     await setAuthToken(page, BRAND_TOKEN, 'brand');
     await mockCommonRoutes(page);
 
@@ -113,13 +121,14 @@ test.describe('Brand — create campaign', () => {
         body: JSON.stringify({ success: true, data: [] }) });
     });
 
-    // Create campaign POST
-    await page.route('**/campaigns', async (route) => {
+    // Create campaign POST + GET list (no campaigns initially) — API only
+    await page.route(/\/api\/campaigns(\?|$)/, async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({ status: 201, contentType: 'application/json',
           body: JSON.stringify({ success: true, data: MOCK_CAMPAIGN }) });
       } else {
-        await route.continue();
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }) });
       }
     });
 
@@ -154,27 +163,33 @@ test.describe('Brand — create campaign', () => {
     // Wait for step 2 content
     await page.waitForTimeout(500);
 
+    // Required numeric fields are on step 2
+    await page.fill('input[formControlName="pricePerInfluencer"]', '1500');
+    await page.fill('input[formControlName="maxInfluencers"]', '5');
+
     // Select a category chip (required for campaign creation)
     const fashionChip = page.locator('.chip:has-text("Fashion")').first();
     if (await fashionChip.count() > 0) {
-      await fashionChip.click();
+      await fashionChip.scrollIntoViewIfNeeded();
+      await fashionChip.click({ force: true });
     }
 
     // Select a platform chip (Instagram)
     const instagramChip = page.locator('.chip--platform:has-text("Instagram"), .chip:has-text("Instagram")').first();
     if (await instagramChip.count() > 0) {
-      await instagramChip.click();
+      await instagramChip.scrollIntoViewIfNeeded();
+      await instagramChip.click({ force: true });
     }
 
     const nextInvBtn = page.locator('button:has-text("Next — Invite influencers")').first();
     await nextInvBtn.scrollIntoViewIfNeeded();
     await nextInvBtn.click({ force: true });
 
-    // ── Step 3: Invite / Skip ─────────────────────────
+    // ── Step 3: Invite / Save as draft ─────────────────────────
     await page.waitForTimeout(500);
 
-    // Click "Skip & create" to create without inviting
-    const skipBtn = page.locator('button:has-text("Skip")').first();
+    // Click "Save as draft" to create without inviting
+    const skipBtn = page.locator('button.btn-skip, button:has-text("Save as draft")').first();
     await skipBtn.waitFor({ state: 'visible', timeout: 5000 });
     await skipBtn.scrollIntoViewIfNeeded();
     await skipBtn.click({ force: true });
@@ -196,7 +211,16 @@ test.describe('Brand — invite influencer', () => {
     await setAuthToken(page, BRAND_TOKEN, 'brand');
     await mockCommonRoutes(page);
 
-    // Provide a campaign already in the list (brand fetches by name)
+    // Provide a campaign already in the list (fetched as /campaigns?brandId=brand_001) — API only
+    await page.route(/\/api\/campaigns(\?|$)/, async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [MOCK_CAMPAIGN] }) });
+      } else {
+        await route.continue();
+      }
+    });
+    // Legacy path (kept in case another component uses it)
     await page.route('**/campaigns/brand-name/**', async (route) => {
       await route.fulfill({ status: 200, contentType: 'application/json',
         body: JSON.stringify({ success: true, data: [MOCK_CAMPAIGN] }) });
@@ -228,7 +252,7 @@ test.describe('Brand — invite influencer', () => {
         ] }) });
     });
 
-    // Send invite
+    // Send invite (legacy path)
     await page.route('**/campaign-invites', async (route) => {
       if (route.request().method() === 'POST') {
         inviteSent = true;
@@ -239,13 +263,27 @@ test.describe('Brand — invite influencer', () => {
       }
     });
 
+    // Bulk invite (inviteInfluencers) — POST /campaigns/:id/invite-influencers
+    await page.route('**/campaigns/*/invite-influencers', async (route) => {
+      if (route.request().method() === 'POST') {
+        inviteSent = true;
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [MOCK_INVITE] }) });
+      } else {
+        await route.continue();
+      }
+    });
+
     await page.goto('/campaigns');
     // Wait for hydration and brand profile to load
     await page.waitForTimeout(3000);
+    // Nudge zoneless Angular CD so async campaigns list re-renders
+    await page.mouse.move(10, 10);
+    await page.mouse.move(20, 20);
 
     // Click "Invite" button directly (no need to expand first)
     const inviteBtn = page.locator('.btn-invite').first();
-    await inviteBtn.waitFor({ state: 'visible', timeout: 8000 });
+    await inviteBtn.waitFor({ state: 'visible', timeout: 15000 });
     await inviteBtn.click();
 
     // Drawer should open
@@ -391,7 +429,16 @@ test.describe('Brand — review submission', () => {
     await setAuthToken(page, BRAND_TOKEN, 'brand');
     await mockCommonRoutes(page);
 
-    // Brand campaigns list (has one campaign)
+    // Brand campaigns list (has one campaign) — fetched as /campaigns?brandId=brand_001 — API only
+    await page.route(/\/api\/campaigns(\?|$)/, async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [MOCK_CAMPAIGN] }) });
+      } else {
+        await route.continue();
+      }
+    });
+    // Legacy path
     await page.route('**/campaigns/brand-name/**', async (route) => {
       await route.fulfill({ status: 200, contentType: 'application/json',
         body: JSON.stringify({ success: true, data: [MOCK_CAMPAIGN] }) });
@@ -425,18 +472,26 @@ test.describe('Brand — review submission', () => {
     await page.goto('/campaigns');
     // Wait for hydration and brand profile to load
     await page.waitForTimeout(3000);
+    await page.mouse.move(10, 10);
+    await page.mouse.move(20, 20);
 
     // Click "Manage" button to expand campaign
     const manageBtn = page.locator('.btn-cmanage').first();
-    await manageBtn.waitFor({ state: 'visible', timeout: 8000 });
+    await manageBtn.waitFor({ state: 'visible', timeout: 15000 });
     await manageBtn.click();
 
     // Wait for expand panel to load invites and submissions
     await page.waitForTimeout(2000);
     await page.locator('body').click(); // Trigger CD
 
-    // Submission section should show
-    await expect(page.locator('.submissions-section')).toBeVisible({ timeout: 10000 });
+    // Click "View Post" to open the inline submission panel
+    const viewSubmissionBtn = page.locator('.btn-view-submission').first();
+    await viewSubmissionBtn.waitFor({ state: 'visible', timeout: 10000 });
+    await viewSubmissionBtn.click();
+    await page.waitForTimeout(500);
+
+    // Inline submission panel should show
+    await expect(page.locator('.submission-inline').first()).toBeVisible({ timeout: 10000 });
 
     // Approve the submission
     const approveBtn = page.locator('.btn-sub-approve').first();

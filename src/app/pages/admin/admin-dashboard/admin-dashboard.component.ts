@@ -44,12 +44,7 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
-          // console.log('[AdminDashboard] Influencer API response:', data);
-          // if (Array.isArray(data) && data.length > 0) {
-          //   console.log('[AdminDashboard] First influencer object keys:', Object.keys(data[0]));
-          //   console.log('[AdminDashboard] First influencer object:', data[0]);
-          //   console.log('[AdminDashboard] All influencer status values:', data.map(u => u.status));
-          // }
+          // debug: influencer API response processed for summary counts
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
           this.influencerCount = filtered.length;
@@ -70,12 +65,7 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
-          // console.log('[AdminDashboard] Brand API response:', data);
-          // if (Array.isArray(data) && data.length > 0) {
-          //   console.log('[AdminDashboard] First brand object keys:', Object.keys(data[0]));
-          //   console.log('[AdminDashboard] First brand object:', data[0]);
-          //   console.log('[AdminDashboard] All brand status values:', data.map(u => u.status));
-          // }
+          // debug: brand API response processed for summary counts
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
           this.brandCount = filtered.length;

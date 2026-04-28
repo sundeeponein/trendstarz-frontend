@@ -1,0 +1,47 @@
+.support-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.9rem 1rem;
+  background: #fff8e1;
+  border: 1px solid #ffd666;
+  border-left: 4px solid #faad14;
+  border-radius: 8px;
+  color: #663c00;
+  font-size: 0.9rem;
+  line-height: 1.4;
+
+  > .bi {
+    font-size: 1.1rem;
+    color: #d48806;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .sb-text { flex: 1; }
+
+  .sb-contacts {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-left: 0.25rem;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #8a5a00;
+      text-decoration: none;
+      font-weight: 600;
+      white-space: nowrap;
+
+      &:hover { text-decoration: underline; color: #663c00; }
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    .sb-contacts { margin-left: 0; margin-top: 0.4rem; }
+  }
+}

@@ -1,0 +1,18 @@
+<div class="support-banner" *ngIf="contact.enabled" role="note">
+  <i class="bi bi-info-circle-fill"></i>
+  <div class="sb-text">
+    <strong>{{ title }}</strong>
+    {{ contact.message || fallbackMessage }}
+    <span class="sb-contacts">
+      <a *ngIf="contact.email" [attr.href]="'mailto:' + contact.email">
+        <i class="bi bi-envelope"></i> {{ contact.email }}
+      </a>
+      <a *ngIf="contact.phone" [attr.href]="phoneHref">
+        <i class="bi bi-telephone"></i> {{ contact.phone }}
+      </a>
+      <a *ngIf="contact.whatsapp" [attr.href]="whatsappHref" target="_blank" rel="noopener">
+        <i class="bi bi-whatsapp"></i> {{ contact.whatsapp }}
+      </a>
+    </span>
+  </div>
+</div>
