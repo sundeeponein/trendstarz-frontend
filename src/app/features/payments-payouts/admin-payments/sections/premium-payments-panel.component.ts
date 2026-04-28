@@ -1,6 +1,6 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpHeaders } from '@angular/common/http';
-import { Component, EventEmitter, Inject, OnInit, Output, PLATFORM_ID } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, PLATFORM_ID, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PremiumPaymentsAdminApiService } from '../../premium-payments-admin-api.service';
 import { PremiumPayment } from '../../payments-payouts.models';
@@ -32,11 +32,11 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   currentPage = 1;
   pageSize = 10;
   totalPages = 1;
+  private platformId = inject(PLATFORM_ID);
 
   constructor(
     private premiumPaymentsApi: PremiumPaymentsAdminApiService,
     public ui: AdminPaymentsUiUtilsService,
-    @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
   ngOnInit(): void {

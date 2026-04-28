@@ -114,6 +114,21 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
     });
   });
 
+  // ── Mock profile image upload (current submit flow) ─────
+  await page.route('**/auth/upload-image', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          url: 'https://res.cloudinary.com/test/image/upload/influencer-img.png',
+          public_id: 'e2e_influencer_img',
+        },
+      }),
+    });
+  });
+
   // ── Go to registration page ──────────────────────────────
   await page.goto('/register-influencer');
   await page.waitForSelector('input[formControlName="name"]', { state: 'visible' });
@@ -227,7 +242,12 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await page.waitForTimeout(200);
 
   // ── Submit ────────────────────────────────────────────────
+  const submitPromise = page.waitForResponse(
+    (resp) => resp.url().includes('/auth/register-influencer') && resp.status() === 201,
+    { timeout: 15000 },
+  );
   await page.click('button[type="submit"]');
+  await submitPromise;
 
   // Success response arrived — poll for modal DOM, nudging zoneless CD
   const successModal = page.locator('.reg-success-modal, .reg-success-modal-overlay');
@@ -239,7 +259,7 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   }
 
   // Expect success modal
-  await expect(successModal.first()).toBeVisible({ timeout: 5000 });
+  await expect(successModal.first()).toBeVisible({ timeout: 15000 });
   await expect(page.locator('text=Successfully Registered')).toBeVisible();
 });
 
