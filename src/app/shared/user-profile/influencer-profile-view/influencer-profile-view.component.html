@@ -31,12 +31,13 @@
           </ng-container>
         </p>
         <p class="profile-location" *ngIf="influencer.location?.state">
-          <i class="bi bi-geo-alt"></i> {{ influencer.location.state }}, India
+          <i class="bi bi-geo-alt"></i>
+          <ng-container *ngIf="influencer.location.district">{{ influencer.location.district }}, </ng-container>{{ influencer.location.state }}, India
         </p>
 
         <div class="profile-actions">
-          <a class="btn-follow" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
-          <a class="btn-contact" routerLink="/brand-profile">Contact</a>
+          <a class="btn-follow" *ngIf="isLoggedIn" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+          <a class="btn-contact" *ngIf="isLoggedIn" routerLink="/brand-profile">Contact</a>
         </div>
 
         <!-- Stats row -->
@@ -132,17 +133,32 @@
             <span class="platform-icon-circle">
               <i [class]="getSocialIcon(sm)"></i>
             </span>
-            <span class="eng-badge" *ngIf="sm.engagementRate">
+            <span class="eng-badge" *ngIf="sm.engagementRate && isProViewer">
               {{ sm.engagementRate }}%<br><small>eng.</small>
             </span>
             <div class="platform-followers-block">
-              <strong>{{ formatFollowers(sm.followersCount || 0) }}</strong>
-              <span>{{ getFollowerLabel(sm) }}</span>
+              <strong>{{ sm.tier || '—' }}</strong>
+              <span>tier</span>
             </div>
+          </div>
+
+          <!-- Handle (clickable) -->
+          <div class="platform-handle-row" *ngIf="sm.handle">
+            <a *ngIf="getSocialUrl(sm); else handleText"
+               [href]="getSocialUrl(sm)"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="platform-handle-link">
+              <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
+            </a>
+            <ng-template #handleText>
+              <span class="platform-handle-text">&#64;{{ sm.handle }}</span>
+            </ng-template>
           </div>
 
           <!-- Content type rows -->
           <ng-container *ngIf="sm.contentTypes?.length">
+            <div class="content-rates-label">Content &amp; Starting Rates</div>
             <div *ngFor="let ct of sm.contentTypes" class="ct-row">
               <span class="ct-name">{{ ct.name }}</span>
               <span class="ct-price" *ngIf="isProViewer">₹{{ ct.price }}</span>
@@ -189,8 +205,8 @@
         <a routerLink="/brand-profile" class="plan-status-card__btn">Upgrade to Pro</a>
       </div>
 
-      <!-- Contact Info -->
-      <div class="contact-info-card">
+      <!-- Contact Info (logged-in users only) -->
+      <div class="contact-info-card" *ngIf="isLoggedIn">
         <h6 class="section-label">Contact Info</h6>
 
         <!-- WhatsApp -->

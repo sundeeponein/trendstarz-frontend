@@ -100,8 +100,13 @@ export class BrandRegistrationComponent implements OnInit {
 
   brandLogoPreview: string | null = null;
   brandLogoFile: File | null = null;
+  // Cached upload result so we don't re-upload (and orphan the previous upload)
+  // when the user retries onSubmit after a backend error (e.g., duplicate email).
+  uploadedBrandLogo: { url: string; public_id: string } | null = null;
   productImagesPreview: (string | null)[] = [];
   productImagesFiles: (File | null)[] = [];
+  // Per-index cached upload result for product images.
+  uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
 
   constructor(
@@ -203,7 +208,22 @@ export class BrandRegistrationComponent implements OnInit {
     });
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
-    this.configService.getStates().subscribe(data => this.states = data);
+    this.configService.getStates().subscribe(data => {
+      this.states = data;
+      // If a state was already selected (e.g. resuming a partial registration),
+      // make sure the districts list gets fetched too.
+      const currentStateId = this.registrationForm.get('location.state')?.value;
+      if (currentStateId && (!this.districts || this.districts.length === 0)) {
+        const selectedState = this.states.find((s: any) => s._id === currentStateId || s.id === currentStateId || s.name === currentStateId);
+        const stateName = selectedState?.name || (typeof currentStateId === 'string' ? currentStateId : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof currentStateId === 'string' ? currentStateId : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); },
+          error: () => { this.districts = []; this.cd.detectChanges(); }
+        });
+      }
+      this.cd.detectChanges();
+    });
     this.configService.getTiers().subscribe(data => this.tiers = data);
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
@@ -317,7 +337,8 @@ export class BrandRegistrationComponent implements OnInit {
         this.activePlatformTab = remaining.length ? remaining[0]._id : null;
       }
     } else {
-      if (!this.isPremiumPlan() && this.selectedPlatforms().length >= this.FREE_SOCIAL_PROFILE_LIMIT) return;
+      // Allow free + premium brands to add all social handles. Visibility to influencers
+      // is gated separately by the backend (`canViewBrandSocialMedia`).
       this.platformForms[platform._id] = {
         handle: '',
         followersCount: '',
@@ -338,6 +359,19 @@ export class BrandRegistrationComponent implements OnInit {
 
   selectedPlatforms(): any[] {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
+  }
+
+  /** Returns the list of selected platforms whose handle or tier is missing. */
+  invalidPlatforms(): any[] {
+    return this.selectedPlatforms().filter(p => {
+      const pf = this.platformForms[p._id];
+      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+    });
+  }
+
+  /** True when every selected social platform has both handle and tier filled. */
+  arePlatformsValid(): boolean {
+    return this.invalidPlatforms().length === 0;
   }
 
   getPlatformTotal(platform: any): number {
@@ -386,6 +420,7 @@ export class BrandRegistrationComponent implements OnInit {
   removeProductImage(index: number) {
     this.productImagesPreview.splice(index, 1);
     this.productImagesFiles.splice(index, 1);
+    this.uploadedProductImages.splice(index, 1);
     this.refreshStepCompletion();
   }
 
@@ -407,7 +442,9 @@ export class BrandRegistrationComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.brandLogoPreview = e.target.result;
-        this.brandLogoFile = compressedFile;
+        this.brandLogoFile = compressedFile as File;
+        // New file selected — invalidate any previously uploaded result so onSubmit re-uploads.
+        this.uploadedBrandLogo = null;
         this.refreshStepCompletion();
         this.cd.detectChanges();
       };
@@ -420,6 +457,7 @@ export class BrandRegistrationComponent implements OnInit {
   removeBrandLogo() {
     this.brandLogoPreview = null;
     this.brandLogoFile = null;
+    this.uploadedBrandLogo = null;
     this.refreshStepCompletion();
   }
 
@@ -441,7 +479,9 @@ export class BrandRegistrationComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.productImagesPreview[index] = e.target.result;
-        this.productImagesFiles[index] = compressedFile;
+        this.productImagesFiles[index] = compressedFile as File;
+        // New file at this slot — invalidate any previously uploaded result.
+        this.uploadedProductImages[index] = null;
         this.refreshStepCompletion();
         this.cd.detectChanges();
       };
@@ -488,7 +528,7 @@ export class BrandRegistrationComponent implements OnInit {
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
         f.get('languages')?.valid
-      );
+      ) && this.arePlatformsValid();
     }
 
     if (step === 3) {
@@ -547,7 +587,16 @@ export class BrandRegistrationComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['location.state', 'location.district', 'languages'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
-      return required.every((path) => this.registrationForm.get(path)?.valid);
+      const baseValid = required.every((path) => this.registrationForm.get(path)?.valid);
+      if (!baseValid) return false;
+      if (!this.arePlatformsValid()) {
+        // Inline platform error is already rendered in the template; do not set
+        // registrationError to avoid duplicate messages.
+        this.registrationError = '';
+        return false;
+      }
+      this.registrationError = '';
+      return true;
     }
 
     if (this.currentStep === 3) {
@@ -598,23 +647,39 @@ export class BrandRegistrationComponent implements OnInit {
       .replace(/-+$/, '');
   }
 
-  private async uploadImage(file: File): Promise<{ url: string; public_id: string } | null> {
-    if (!(file instanceof File)) return null;
+  private async uploadImage(file: File | Blob, folder?: string): Promise<{ url: string; public_id: string } | null> {
+    // Accept both File and Blob (browser-image-compression may return Blob in some envs)
+    if (!file || !(file instanceof Blob)) {
+      console.warn('[brand-registration] uploadImage skipped: invalid file type', file);
+      return null;
+    }
     const formData = new FormData();
-    formData.append('file', file);
+    // FormData.append accepts a Blob; provide a filename so multer treats it as a file upload
+    const filename = (file as File)?.name || `${folder || 'upload'}.jpg`;
+    formData.append('file', file, filename);
+    if (folder) {
+      formData.append('folder', folder);
+    }
 
     try {
       const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData,
       });
-      if (!response.ok) return null;
-      const data = await response.json();
-      if (data?.url && data?.public_id) {
-        return { url: data.url, public_id: data.public_id };
+      if (!response.ok) {
+        console.warn('[brand-registration] upload failed', response.status, await response.text().catch(() => ''));
+        return null;
       }
+      const json = await response.json();
+      // Backend wraps responses via ResponseInterceptor: { success: true, data: { url, public_id } }
+      const uploaded = json?.data || json;
+      if (uploaded?.url && uploaded?.public_id) {
+        return { url: uploaded.url, public_id: uploaded.public_id };
+      }
+      console.warn('[brand-registration] upload response missing url/public_id', json);
       return null;
-    } catch {
+    } catch (err) {
+      console.error('[brand-registration] upload error', err);
       return null;
     }
   }
@@ -677,17 +742,33 @@ export class BrandRegistrationComponent implements OnInit {
       };
     });
 
-    const uploadedBrandLogo = await this.uploadImage(this.brandLogoFile);
+    // Reuse a previously uploaded brand logo if available (avoids orphaned uploads on retry).
+    let uploadedBrandLogo = this.uploadedBrandLogo;
+    if (!uploadedBrandLogo) {
+      uploadedBrandLogo = await this.uploadImage(this.brandLogoFile, 'brand_logo');
+      if (uploadedBrandLogo) {
+        this.uploadedBrandLogo = uploadedBrandLogo;
+      }
+    }
     if (!uploadedBrandLogo) {
       this.registrationError = 'Brand logo upload failed.';
       this.isSubmitting = false;
       return;
     }
 
-    const productUploadTargets = this.productImagesFiles.filter((f): f is File => !!f);
-    const uploadedProducts = [] as Array<{ url: string; public_id: string }>;
-    for (const productFile of productUploadTargets) {
-      const uploaded = await this.uploadImage(productFile);
+    // Upload product images per slot, reusing any cached upload result so a retry after a
+    // backend error doesn't orphan previously uploaded files.
+    const uploadedProducts: Array<{ url: string; public_id: string }> = [];
+    for (let i = 0; i < this.productImagesFiles.length; i++) {
+      const productFile = this.productImagesFiles[i];
+      if (!productFile) continue;
+      let uploaded = this.uploadedProductImages[i];
+      if (!uploaded) {
+        uploaded = await this.uploadImage(productFile, 'brand_products');
+        if (uploaded) {
+          this.uploadedProductImages[i] = uploaded;
+        }
+      }
       if (!uploaded) {
         this.registrationError = 'One of the product image uploads failed.';
         this.isSubmitting = false;
@@ -717,26 +798,33 @@ export class BrandRegistrationComponent implements OnInit {
 
     this.configService.registerBrand(payload).subscribe({
       next: () => {
-        this.registrationSuccess = true;
         this.pendingVerificationEmail = raw.email;
         this.showEmailVerificationPrompt = true;
         this.emailVerificationSent = true;
         this.emailVerificationError = null;
-        this.registrationForm.reset({
-          paymentOption: 'free',
-          contact: { whatsapp: false, email: false, call: false }
-        });
         this.platformForms = {};
         this.activePlatformTab = null;
         this.brandLogoPreview = null;
         this.brandLogoFile = null;
+        this.uploadedBrandLogo = null;
         this.productImagesPreview = [];
         this.productImagesFiles = [];
+        this.uploadedProductImages = [];
         this.currentStep = 1;
         this.submitted = false;
         this.isSubmitting = false;
+        // Reset the form first (fires valueChanges which would clear registrationSuccess if set),
+        // then on next microtask mark success and run CD — ensures the success modal renders
+        // under zoneless change detection.
+        this.registrationForm.reset({
+          paymentOption: 'free',
+          contact: { whatsapp: false, email: false, call: false }
+        });
         this.refreshStepCompletion();
-        this.cd.detectChanges();
+        queueMicrotask(() => {
+          this.registrationSuccess = true;
+          this.cd.detectChanges();
+        });
       },
       error: (err: any) => {
         const rawMessage = err?.error?.message;

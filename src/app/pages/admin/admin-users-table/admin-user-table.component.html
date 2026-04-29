@@ -110,7 +110,7 @@
         </tr>
       </thead>
       <tbody>
-  <tr *ngFor="let user of filteredInfluencers">
+        <tr *ngFor="let user of filteredInfluencers">
           <td>
             <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle">
           </td>
@@ -123,7 +123,7 @@
           <td>{{ getSignupSource(user) }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.languages && user.languages.length ? user.languages.join(', ') : '-' }}</td>
-          <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.location?.district || '-' }} | {{ user.location?.state || '-' }}</td>
           <td>{{ user.promotionalPrice !== undefined ? ('Starting Price:' + user.promotionalPrice) : '-' }}</td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocial">
@@ -244,7 +244,7 @@
           </td>
           <td>{{ getSignupSource(user) }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
-          <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.location?.district || '-' }} {{ user.location?.state || '-' }}</td>
           <td>{{ (user.promotionalPrice ?? user.price) !== undefined ? ('Starting Price:' + (user.promotionalPrice ?? user.price)) : '-' }}</td>
           <td>
             <ng-container *ngIf="user.products && user.products.length; else noProducts">

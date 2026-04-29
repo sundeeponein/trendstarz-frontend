@@ -19,6 +19,9 @@ export class InfluencerProfileViewComponent implements OnInit {
   loading = true;
   error = '';
 
+  /** Active social media platform tab index. */
+  activePlatformIdx = 0;
+
   // Review state
   showWriteReview = false;
   /** Completed invite ID for this influencer—brand needs one to write a review */
@@ -28,6 +31,11 @@ export class InfluencerProfileViewComponent implements OnInit {
   /** Whether the logged-in viewer has a Pro subscription */
   get isProViewer(): boolean {
     return !!this.session.getUser()?.isPremium;
+  }
+
+  /** Whether any user is logged in (used to gate contact details for guests) */
+  get isLoggedIn(): boolean {
+    return !!this.session.getUser();
   }
 
   get isBrandViewer(): boolean {

@@ -23,13 +23,13 @@
         </div>
       </div>
       <div class="brand-header-actions">
-        <button class="btn btn-follow">Follow</button>
-        <button class="btn btn-contact" (click)="showContact = !showContact">Contact</button>
+        <button class="btn btn-follow" *ngIf="isLoggedIn">Follow</button>
+        <button class="btn btn-contact" *ngIf="isLoggedIn" (click)="showContact = !showContact">Contact</button>
       </div>
     </div>
 
-    <!-- Contact details (toggled) -->
-    <div *ngIf="showContact" class="contact-cards">
+    <!-- Contact details (toggled, logged-in only) -->
+    <div *ngIf="showContact && isLoggedIn" class="contact-cards">
       <div class="contact-card" *ngIf="brand.contact?.whatsapp">
         <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
         <span class="contact-card-label">WhatsApp</span>

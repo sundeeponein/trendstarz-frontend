@@ -265,7 +265,7 @@
                   </div>
                   <div class="platform-details-body">
                     <div class="row g-2">
-                      <div class="col-12 col-md-6">
+                      <div class="col">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
                         <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}"
                           type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
@@ -275,7 +275,7 @@
                           <i class="bi bi-box-arrow-up-right"></i> Verify profile
                         </a>
                       </div>
-                      <div class="col-12 col-md-6">
+                      <div class="col">
                         <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
                           <option value="" disabled>Select tier</option>
@@ -288,6 +288,11 @@
               </ng-container>
             </div>
           </div>
+
+          <div *ngIf="selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold mt-2">
+            Please enter both Handle and Tier for every selected platform, or remove it.
+          </div>
+          <div *ngIf="registrationError && currentStep === 2" class="text-danger fw-bold mt-2">{{ registrationError }}</div>
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">← Back</button>

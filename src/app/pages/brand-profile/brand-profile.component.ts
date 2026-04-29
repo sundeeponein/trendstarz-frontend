@@ -485,10 +485,18 @@ export class BrandProfileComponent implements OnInit {
             this.configService.getDistricts(profile.location.state, stateId).subscribe({
               next: (dists) => {
                 this.districts = Array.isArray(dists) ? dists : [];
-                const resolvedDistrict = this.districts.find((d: any) => d.name === profile.location?.district);
+                const savedDistrict = (profile.location?.district || '').toString().trim();
+                let resolvedDistrict: any = null;
+                if (savedDistrict) {
+                  const lower = savedDistrict.toLowerCase();
+                  resolvedDistrict =
+                    this.districts.find((d: any) => d._id === savedDistrict) ||
+                    this.districts.find((d: any) => (d.name || '').toString().trim().toLowerCase() === lower) ||
+                    null;
+                }
                 const districtId = resolvedDistrict ? resolvedDistrict._id : '';
-                if (!districtId && profile.location?.district) {
-                  console.warn('[Profile] District not found in list:', profile.location.district);
+                if (!districtId && savedDistrict) {
+                  console.warn('[Profile] District not found in list:', savedDistrict, 'available:', this.districts.map((d: any) => d.name));
                 }
                 doPatchBrandForm(districtId);
               },
@@ -574,12 +582,14 @@ export class BrandProfileComponent implements OnInit {
   // Ensure districts are loaded when entering edit mode so dropdown shows correct options
   private ensureDistrictsForCurrentState(): void {
     const stateVal = this.registrationForm.get('location.state')?.value;
-    if (stateVal && (!this.districts || this.districts.length === 0)) {
-      const selectedState = this.states.find((s: any) => s._id === stateVal || s.id === stateVal || s.name === stateVal);
-      const stateName = selectedState?.name || (typeof stateVal === 'string' ? stateVal : '');
-      const stateId = selectedState?._id || selectedState?.id || (typeof stateVal === 'string' ? stateVal : '');
-      this.configService.getDistricts(stateName, stateId).subscribe({ next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); }, error: () => { this.districts = []; } });
-    }
+    if (!stateVal) return;
+    const selectedState = this.states.find((s: any) => s._id === stateVal || s.id === stateVal || s.name === stateVal);
+    const stateName = selectedState?.name || (typeof stateVal === 'string' ? stateVal : '');
+    const stateId = selectedState?._id || selectedState?.id || (typeof stateVal === 'string' ? stateVal : '');
+    this.configService.getDistricts(stateName, stateId).subscribe({
+      next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); },
+      error: () => { this.districts = []; this.cd.detectChanges(); }
+    });
   }
 
   cancelEdit(): void {
@@ -684,6 +694,18 @@ export class BrandProfileComponent implements OnInit {
 
   selectedPlatforms(): any[] {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
+  }
+
+  /** Selected platforms missing handle or tier. */
+  invalidPlatforms(): any[] {
+    return this.selectedPlatforms().filter(p => {
+      const pf = this.platformForms[p._id];
+      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+    });
+  }
+
+  arePlatformsValid(): boolean {
+    return this.invalidPlatforms().length === 0;
   }
 
   getPlatformTotal(platform: any): number {
@@ -857,6 +879,11 @@ export class BrandProfileComponent implements OnInit {
       if (!this.hasBrandLogo()) {
         this.registrationError = 'Brand logo is required.';
       }
+      return;
+    }
+    if (!this.arePlatformsValid()) {
+      // Inline error already rendered in template.
+      this.registrationError = '';
       return;
     }
     this.registrationError = '';

@@ -37,14 +37,14 @@
 
     <!-- Location -->
     <div class="inf-card__location" *ngIf="location?.state">
-      <i class="bi bi-geo-alt"></i> {{ location.state }}
+      <i class="bi bi-geo-alt"></i> {{ location.district }}, {{ location.state }}
     </div>
 
     <!-- Stats row -->
     <div class="inf-card__stats">
       <div class="inf-card__stat">
-        <span class="inf-card__stat-value">{{ formatFollowers(totalFollowers) || formatFollowers(socialMedia[0]?.followersCount) }}</span>
-        <span class="inf-card__stat-label">Followers</span>
+        <span class="inf-card__stat-value">{{ primaryTier || '—' }}</span>
+        <span class="inf-card__stat-label">Tier</span>
       </div>
       <div class="inf-card__stat">
         <span class="inf-card__stat-value">{{ socialMedia.length }}</span>
@@ -59,25 +59,19 @@
       </span>
     </div>
 
-    <!-- PRO VIEW: Contact visible + pricing + engagement -->
-    <ng-container *ngIf="isProViewer">
-      <div class="inf-card__contact">
-        <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
-        <span>Contact details visible</span>
+    <!-- Pricing (visible to everyone) -->
+    <div class="inf-card__pricing-row" *ngIf="promotionalPrice">
+      <span class="inf-card__pricing-label">Starting from</span>
+      <div class="inf-card__pricing-bottom">
+        <span class="inf-card__price">₹{{ promotionalPrice | number }}</span>
+        <span class="inf-card__engagement" *ngIf="isProViewer && engagementRate">{{ engagementRate }}%<br><small>engagement</small></span>
       </div>
-      <div class="inf-card__pricing-row" *ngIf="promotionalPrice">
-        <span class="inf-card__pricing-label">Starting from</span>
-        <div class="inf-card__pricing-bottom">
-          <span class="inf-card__price">₹{{ promotionalPrice | number }}</span>
-          <span class="inf-card__engagement" *ngIf="engagementRate">{{ engagementRate }}%<br><small>engagement</small></span>
-        </div>
-      </div>
-    </ng-container>
+    </div>
 
-    <!-- FREE VIEW: Locked row -->
-    <div class="inf-card__locked" *ngIf="!isProViewer" (click)="$event.stopPropagation()" routerLink="/brand-profile">
-      <i class="bi bi-lock-fill inf-card__locked-icon"></i>
-      <span>Pricing hidden — upgrade to Pro</span>
+    <!-- PRO VIEW: Contact-visible badge -->
+    <div class="inf-card__contact" *ngIf="isProViewer">
+      <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
+      <span>Contact details visible</span>
     </div>
 
     <!-- Buttons -->

@@ -49,6 +49,12 @@ export class BrandUserCardComponent {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
+  /** Tier of the first social handle the user added (entry order). */
+  get primaryTier(): string {
+    const list = this.socialMedia || [];
+    return list[0]?.tier || list.find((sm: any) => sm?.tier)?.tier || '';
+  }
+
   platformIcon(platform: string): string {
     const p = (platform || '').toLowerCase();
     if (p === 'youtube') return 'bi-youtube';

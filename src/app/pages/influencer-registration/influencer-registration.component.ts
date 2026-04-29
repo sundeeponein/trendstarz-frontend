@@ -117,6 +117,18 @@ export class InfluencerRegistrationComponent implements OnInit {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
+  /** Selected platforms missing handle or tier. */
+  invalidPlatforms(): any[] {
+    return this.selectedPlatforms().filter(p => {
+      const pf = this.platformForms[p._id];
+      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+    });
+  }
+
+  arePlatformsValid(): boolean {
+    return this.invalidPlatforms().length === 0;
+  }
+
   getPlatformTotal(platform: any): number {
     const pf = this.platformForms[platform._id];
     if (!pf) return 0;
@@ -176,6 +188,8 @@ export class InfluencerRegistrationComponent implements OnInit {
   showTierInfoModal = false;
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
+  // Cached upload result so we don't re-upload (and orphan the previous upload) on retry.
+  uploadedProfileImage: { url: string; public_id: string } | null = null;
   languagesList: any[] = [];
   categoriesList: any[] = [];
   districts: any[] = [];
@@ -232,7 +246,22 @@ export class InfluencerRegistrationComponent implements OnInit {
       if (this.registrationError && this.registrationForm.dirty) this.registrationError = '';
     });
 
-    this.configService.getStates().subscribe(data => this.states = data);
+    this.configService.getStates().subscribe(data => {
+      this.states = data;
+      // If a state was already selected (e.g. resuming a partial registration),
+      // make sure the districts list gets fetched too.
+      const currentStateId = this.registrationForm.get('location.state')?.value;
+      if (currentStateId && (!this.districts || this.districts.length === 0)) {
+        const selectedState = this.states.find((s: any) => s._id === currentStateId || s.id === currentStateId || s.name === currentStateId);
+        const stateName = selectedState?.name || (typeof currentStateId === 'string' ? currentStateId : '');
+        const selectedStateId = selectedState?._id || selectedState?.id || (typeof currentStateId === 'string' ? currentStateId : '');
+        this.configService.getDistricts(stateName, selectedStateId).subscribe({
+          next: d => { this.districts = Array.isArray(d) ? d : []; this.cdr.detectChanges(); },
+          error: () => { this.districts = []; this.cdr.detectChanges(); }
+        });
+      }
+      this.cdr.detectChanges();
+    });
     this.configService.getTiers().subscribe(data => this.tiers = data);
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
@@ -294,7 +323,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 2) {
       const f = this.registrationForm;
       const detailsValid = !!(f.get('location.state')?.valid && f.get('location.district')?.valid && f.get('languages')?.valid && f.get('categories')?.valid);
-      return detailsValid && this.selectedPlatforms().length > 0;
+      return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
     if (step === 3) {
       return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
@@ -361,6 +390,12 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.markAsTouched();
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
+      if (this.selectedPlatforms().length > 0 && !this.arePlatformsValid()) {
+        // Inline message is already rendered; clear registrationError to avoid dup.
+        this.registrationError = '';
+        return false;
+      }
+      this.registrationError = '';
       return this.isStepComplete(2);
     }
     if (this.currentStep === 3) {
@@ -453,18 +488,18 @@ export class InfluencerRegistrationComponent implements OnInit {
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 1024, useWebWorker: true });
       const reader = new FileReader();
-      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
+      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile as File; this.uploadedProfileImage = null; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(compressedFile);
     } catch {
       const reader = new FileReader();
-      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = file; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
+      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = file; this.uploadedProfileImage = null; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(file);
     }
   }
 
   removeProfileImage(index: number) {
     if (this.profileImagesFormArray.length > index) this.profileImagesFormArray.removeAt(index);
-    this.profileImagePreview = null; this.profileImageFile = null; this.refreshStepCompletion();
+    this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null; this.refreshStepCompletion();
   }
 
   async onSubmit() {
@@ -501,10 +536,12 @@ export class InfluencerRegistrationComponent implements OnInit {
       };
     });
 
-    let imageUploadResult: { url: string; public_id: string } | null = null;
-    if (this.profileImageFile) {
+    let imageUploadResult: { url: string; public_id: string } | null = this.uploadedProfileImage;
+    if (!imageUploadResult && this.profileImageFile) {
       const fd = new FormData();
-      fd.append('file', this.profileImageFile);
+      // Provide a filename so multer treats Blob output from imageCompression as a file upload.
+      const filename = (this.profileImageFile as File)?.name || 'profile.jpg';
+      fd.append('file', this.profileImageFile, filename);
       fd.append('folder', 'influencer_profile_images');
       try {
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
@@ -515,7 +552,11 @@ export class InfluencerRegistrationComponent implements OnInit {
         }
         const data = await resp.json();
         const uploaded = data?.data || data;
-        if (uploaded?.url && uploaded?.public_id) { imageUploadResult = { url: uploaded.url, public_id: uploaded.public_id }; }
+        if (uploaded?.url && uploaded?.public_id) {
+          imageUploadResult = { url: uploaded.url, public_id: uploaded.public_id };
+          // Cache so retries (e.g., after duplicate-email error) reuse the same upload.
+          this.uploadedProfileImage = imageUploadResult;
+        }
         else { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
       } catch { this.registrationError = 'Profile image upload failed.'; this.isSubmitting = false; return; }
     }
@@ -535,7 +576,7 @@ export class InfluencerRegistrationComponent implements OnInit {
         this.ngZone.run(() => {
           this.pendingVerificationEmail = raw.email;
           this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;
-          this.profileImagePreview = null; this.profileImageFile = null;
+          this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null;
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;
           // Reset the form first (fires valueChanges which may clear registrationSuccess if set),
           // then on next microtask mark success and run CD — ensures the success modal renders.

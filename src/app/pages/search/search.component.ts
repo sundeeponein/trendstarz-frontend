@@ -91,8 +91,17 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
-    // Lock tab based on role: brands discover influencers; influencers discover brands
-    this.activeTab = this.isBrandUser ? 'influencers' : 'brands';
+    // Default tab:
+    //  - Brand users discover influencers
+    //  - Influencer users discover brands
+    //  - Anonymous (not logged in) users see influencers by default
+    if (this.isBrandUser) {
+      this.activeTab = 'influencers';
+    } else if (this.currentUser) {
+      this.activeTab = 'brands';
+    } else {
+      this.activeTab = 'influencers';
+    }
     this.fetchInfluencers();
     this.fetchBrands();
   }

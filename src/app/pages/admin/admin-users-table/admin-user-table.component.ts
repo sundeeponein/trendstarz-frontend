@@ -266,10 +266,16 @@ export class AdminUserTableComponent implements OnInit {
       filtered = filtered.filter(user => !user.isDeleted || user.isDeleted === false || user.isDeleted === 'false');
     }
     if (userType === 'influencer') {
-      this.filteredInfluencers = filtered.filter(user => this.matchesFilters(user, filters));
+      this.filteredInfluencers = filtered.filter(user => this.matchesFilters(user, filters))
+      .sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
       // debug: filtered influencers updated
     } else {
-      this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters));
+      this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters))
+      .sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
       // debug: filtered brands updated
     }
   }

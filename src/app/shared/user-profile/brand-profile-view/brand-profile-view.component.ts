@@ -38,6 +38,11 @@ export class BrandProfileViewComponent implements OnInit {
     return !!this.session.getUser()?.isPremium;
   }
 
+  /** Whether any user is logged in (used to gate contact details for guests) */
+  get isLoggedIn(): boolean {
+    return !!this.session.getUser();
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }
