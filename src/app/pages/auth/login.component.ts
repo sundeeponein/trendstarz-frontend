@@ -9,6 +9,7 @@ import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +20,6 @@ import { ConfigService } from '../../shared/config.service';
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  errorMsg = '';
   submitted = false;
   showPassword = false;
 
@@ -28,25 +28,34 @@ export class LoginComponent {
     private http: HttpClient,
     private router: Router,
     private session: SessionService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private toast: ToastService,
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
     });
+
+    // Reset “submitted” flag when the user starts editing again so any
+    // field-level hints disappear until they press Sign In once more.
+    this.loginForm.valueChanges.subscribe(() => {
+      if (this.submitted) this.submitted = false;
+    });
   }
 
   onSubmit() {
-    this.errorMsg = '';
     this.submitted = true;
     Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
     if (this.loginForm.invalid) return;
     this.http.post(`${environment.apiBaseUrl}/auth/login`, this.loginForm.value)
       .pipe(timeout(5000), catchError(err => {
         if (err?.error?.message?.includes('pending')) {
-          this.errorMsg = 'Your account is pending approval. Please wait for admin to activate your account.';
+          this.toast.warning(
+            'Your account is awaiting admin verification. We’ll notify you once it’s approved.',
+            6000,
+          );
         } else {
-          this.errorMsg = err?.error?.message || 'Login failed';
+          this.toast.error(err?.error?.message || 'Login failed. Please check your details and try again.');
         }
         return of(null);
       }))

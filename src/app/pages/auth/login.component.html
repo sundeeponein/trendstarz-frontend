@@ -22,8 +22,13 @@
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
           <div class="mb-3">
             <label class="form-label">Email Address</label>
-            <input formControlName="email" type="email" class="form-control" placeholder="name@company.com" />
-            <div *ngIf="loginForm.get('email')?.invalid && (loginForm.get('email')?.touched || submitted)" class="text-danger small mt-1">Valid email is required</div>
+            <input formControlName="email" type="email" class="form-control"
+                   [class.is-invalid]="submitted && loginForm.get('email')?.invalid"
+                   placeholder="name@company.com" />
+            <div *ngIf="submitted && loginForm.get('email')?.invalid" class="field-hint">
+              <i class="bi bi-exclamation-circle"></i>
+              Please enter a valid email address.
+            </div>
           </div>
 
           <div class="mb-2">
@@ -32,7 +37,10 @@
               <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
             </div>
             <div class="password-wrap">
-              <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" placeholder="Enter password" />
+              <input formControlName="password" [type]="showPassword ? 'text' : 'password'"
+                     class="form-control"
+                     [class.is-invalid]="submitted && loginForm.get('password')?.invalid"
+                     placeholder="Enter password" />
               <button
                 type="button"
                 class="password-toggle"
@@ -42,7 +50,10 @@
                 <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
               </button>
             </div>
-            <div *ngIf="loginForm.get('password')?.invalid && (loginForm.get('password')?.touched || submitted)" class="text-danger small mt-1">Password is required</div>
+            <div *ngIf="submitted && loginForm.get('password')?.invalid" class="field-hint">
+              <i class="bi bi-exclamation-circle"></i>
+              Please enter your password.
+            </div>
           </div>
 
           <div class="form-check my-3 text-black-50">
@@ -50,11 +61,7 @@
             <label for="remember" class="form-check-label"><small>Remember me for 30 days</small></label>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100 btn-signin" [disabled]="loginForm.invalid">Sign In</button>
-
-          <div *ngIf="errorMsg" class="text-danger text-center mt-3">
-            {{ errorMsg === 'Your account is pending approval. Please wait for admin to activate your account.' ? 'Admin needs to verify your ID. Your account is in pending/verification status.' : errorMsg }}
-          </div>
+          <button type="submit" class="btn btn-primary w-100 btn-signin">Sign In</button>
         </form>
 
         <div class="divider my-4"><span>Don&apos;t have an account?</span></div>

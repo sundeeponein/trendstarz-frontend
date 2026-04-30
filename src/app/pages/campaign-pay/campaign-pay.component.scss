@@ -1,0 +1,59 @@
+.cpay-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fff7ed 0%, #f8fafc 100%);
+  padding: 1.5rem 1rem 3rem;
+  font-family: inherit;
+  color: #0f172a;
+}
+
+.cpay-header {
+  max-width: 720px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cpay-brand {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  strong { font-size: 1.15rem; color: #ea580c; }
+  span { font-size: 0.78rem; color: #64748b; }
+}
+.cpay-secure {
+  font-size: 0.8rem;
+  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cpay-loading,
+.cpay-error {
+  max-width: 480px;
+  margin: 4rem auto;
+  text-align: center;
+  color: #64748b;
+  i { font-size: 2rem; color: #dc2626; display: block; margin-bottom: 0.5rem; }
+}
+
+.cpay-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  padding: 1.6rem 1.6rem 1.4rem;
+}
+
+.cpay-footer {
+  max-width: 720px;
+  margin: 1.5rem auto 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  a { color: #ea580c; text-decoration: none; &:hover { text-decoration: underline; } }
+}

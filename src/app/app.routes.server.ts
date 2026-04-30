@@ -20,6 +20,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'register-influencer', renderMode: RenderMode.Prerender },
   { path: 'register-brand', renderMode: RenderMode.Prerender },
   { path: 'upgrade-premium', renderMode: RenderMode.Client },
+  { path: 'campaign-pay/:campaignId', renderMode: RenderMode.Client },
   { path: 'payment-history', renderMode: RenderMode.Client },
   { path: 'influencer-profile', renderMode: RenderMode.Prerender },
   { path: 'brand-profile', renderMode: RenderMode.Prerender },

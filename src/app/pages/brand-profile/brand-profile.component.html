@@ -106,6 +106,36 @@
             </div>
           </div>
 
+          <!-- Payout details: where the brand receives money for pay_to_join campaigns -->
+          <div class="field-block full-width payout-block" formGroupName="payout">
+            <h3 class="payout-heading">
+              <i class="bi bi-bank2"></i>
+              Payout details
+              <small>Where you receive money from pay-to-join campaigns</small>
+            </h3>
+            <div class="form-grid two-col">
+              <div class="field-block">
+                <label>UPI ID</label>
+                <input formControlName="upiId" type="text" class="form-control"
+                       placeholder="e.g. brand@upi" />
+              </div>
+              <div class="field-block">
+                <label>Mobile (GPay / PhonePe)</label>
+                <input formControlName="mobile" type="tel" class="form-control"
+                       placeholder="10-digit mobile number"
+                       inputmode="tel" maxlength="15" />
+              </div>
+              <div class="field-block full-width">
+                <label>Account holder name</label>
+                <input formControlName="accountHolderName" type="text" class="form-control"
+                       placeholder="Name on UPI / bank account" />
+              </div>
+            </div>
+            <p class="payout-hint">
+              Admin will use these details to send your share from pay-to-join campaigns.
+            </p>
+          </div>
+
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>

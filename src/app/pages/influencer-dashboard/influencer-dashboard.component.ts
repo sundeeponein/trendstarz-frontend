@@ -5,6 +5,7 @@ import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignInviteCardComponent, InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
@@ -14,7 +15,7 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, CampaignInviteCardComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -32,6 +33,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   selectedPostDates: Record<string, string> = {};
   // Content type selection: key = inviteId, value = "platform::contentType"
   selectedContentTypes: Record<string, string> = {};
+  // Per-invite payout details (UPI, mobile, name) confirmed at accept time
+  selectedPayouts: Record<string, { upiId: string; mobile: string; accountHolderName: string }> = {};
+  // Default payout details from current influencer profile
+  defaultPayout: { upiId: string; mobile: string; accountHolderName: string } = {
+    upiId: '',
+    mobile: '',
+    accountHolderName: '',
+  };
   paymentHistory: any[] = [];
   paymentSummary = {
     earnedThisMonth: 0,
@@ -69,6 +78,13 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       if (user) {
         this.config.getInfluencerProfileById().subscribe((profile: any) => {
           if (profile) {
+            // Seed default payout details from the influencer profile so the
+            // accept card can prefill UPI / mobile / account holder name.
+            this.defaultPayout = {
+              upiId: profile?.payout?.upiId || '',
+              mobile: profile?.payout?.mobile || profile?.phoneNumber || '',
+              accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
+            };
             // Only call setUser if profile data is different
             const merged = { ...user, ...profile };
             const isSame = JSON.stringify(user) === JSON.stringify(merged);
@@ -218,13 +234,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       return;
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
+    const payout = status === 'accepted' ? this.selectedPayouts[inviteId] : undefined;
     this.responding = inviteId;
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe({
+    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).subscribe({
       next: () => {
         // update in-place — no full reload
         this.invites = this.invites.filter(i => i._id !== inviteId);
         if (this.selectedInvite?._id === inviteId) {
-          this.selectedInvite = { ...this.selectedInvite, status };
+          this.selectedInvite = null;
         }
         this.responding = null;
         this.cdr.markForCheck();
@@ -283,6 +300,49 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   closeDetail() {
     this.selectedInvite = null;
     this.cdr.markForCheck();
+  }
+
+  onModalAccept(payload: { inviteId: string; postDate?: string; platform?: string; contentType?: string }) {
+    if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
+    if (payload.platform && payload.contentType) {
+      this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
+    }
+    this.respond(payload.inviteId, 'accepted');
+  }
+
+  onModalDecline(payload: { inviteId: string }) {
+    this.respond(payload.inviteId, 'declined');
+  }
+
+  onModalValidationError(message: string) {
+    this.error = message;
+    this.cdr.markForCheck();
+  }
+
+  // ── Reusable invite-card events ─────────────────────────────
+  onCardAccept(payload: InviteAcceptPayload) {
+    if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
+    if (payload.platform && payload.contentType) {
+      this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
+    }    if (payload.payout) {
+      this.selectedPayouts[payload.inviteId] = {
+        upiId: payload.payout.upiId || '',
+        mobile: payload.payout.mobile || '',
+        accountHolderName: payload.payout.accountHolderName || '',
+      };
+    }    this.respond(payload.inviteId, 'accepted');
+  }
+
+  onCardDecline(payload: InviteDeclinePayload) {
+    this.respond(payload.inviteId, 'declined');
+  }
+
+  onCardPostDateChange(inviteId: string, value: string) {
+    this.selectedPostDates[inviteId] = value;
+  }
+
+  onCardContentTypeChange(inviteId: string, key: string) {
+    this.selectedContentTypes[inviteId] = key;
   }
 
   // ─── helper: extract the campaign object wherever it lives ───────────────

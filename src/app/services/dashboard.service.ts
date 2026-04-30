@@ -24,11 +24,21 @@ export class DashboardService {
     return this.http.get<any[]>(`${this.api}/users/influencers/search`, { params });
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string, selectedPlatform?: string, selectedContentType?: string): Observable<any> {
+  respondToInvite(
+    inviteId: string,
+    status: 'accepted' | 'declined',
+    selectedPostDate?: string,
+    selectedPlatform?: string,
+    selectedContentType?: string,
+    payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
+  ): Observable<any> {
     const body: any = { status };
     if (selectedPostDate) body.selectedPostDate = selectedPostDate;
     if (selectedPlatform) body.selectedPlatform = selectedPlatform;
     if (selectedContentType) body.selectedContentType = selectedContentType;
+    if (payout && (payout.upiId || payout.mobile || payout.accountHolderName)) {
+      body.payout = payout;
+    }
     return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, body);
   }
 

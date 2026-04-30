@@ -115,83 +115,20 @@
     </div>
 
     <div class="invite-list">
-      <div *ngFor="let inv of invites" class="invite-card" (click)="openDetail(inv)">
-        <!-- Brand + campaign header -->
-        <div class="invite-card__header d-flex align-items-center">
-          <div class="invite-brand-logo me-2">
-            <img *ngIf="getBrandLogo(inv)" [src]="getBrandLogo(inv)" alt="brand logo" class="brand-logo-img" (error)="onImgError($event)">
-            <div *ngIf="!getBrandLogo(inv)" class="brand-logo-placeholder">{{ getBrandInitial(inv) }}</div>
-          </div>
-          <div class="invite-card__meta flex-1">
-            <div class="invite-brand-name">{{ getBrandName(inv) }}</div>
-            <div class="invite-campaign-title">{{ getCampaignTitle(inv) }}</div>
-            <div class="invite-categories">
-              <span *ngFor="let cat of getCampaignCategories(inv)" class="badge rounded-pill bg-light text-dark me-1">{{ cat }}</span>
-            </div>
-          </div>
-          <span class="badge rounded-pill bg-info text-dark ms-auto">Pending</span>
-        </div>
-
-        <!-- Budget + timeline row -->
-        <div class="invite-card__details">
-          <div class="invite-detail-item">
-            <i class="bi bi-currency-rupee"></i>
-            <span class="invite-detail-label">Budget</span>
-            <span class="invite-detail-val fw-semibold">{{ formatCampaignBudget(inv) }}</span>
-          </div>
-          <div class="invite-detail-item">
-            <i class="bi bi-calendar3"></i>
-            <span class="invite-detail-label">Timeline</span>
-            <span class="invite-detail-val">{{ formatCampaignTimeline(inv) }}</span>
-          </div>
-          <div class="invite-detail-item" *ngIf="getCampaignPlatform(inv)">
-            <i class="bi bi-display"></i>
-            <span class="invite-detail-label">Platform</span>
-            <span class="invite-detail-val">{{ getCampaignPlatform(inv) }}</span>
-          </div>
-        </div>
-
-        <!-- Deliverables row -->
-        <div class="invite-card__deliverables" *ngIf="getCampaignDeliverables(inv).length">
-          <div class="deliverables-label">Deliverables:</div>
-          <span *ngFor="let d of getCampaignDeliverables(inv)" class="chip chip--deliv">{{ d }}</span>
-        </div>
-
-        <!-- CTA buttons -->
-        <div class="invite-card__actions" (click)="$event.stopPropagation()">
-          <!-- Content type picker (if campaign has options) -->
-          <ng-container *ngIf="getInviteContentTypeOptions(inv).length > 0">
-            <div class="inv-ct-row">
-              <span class="inv-ct-row-label">Create:</span>
-              <button *ngFor="let opt of getInviteContentTypeOptions(inv)"
-                class="inv-ct-pill"
-                [class.selected]="selectedContentTypes[inv._id] === opt.key"
-                (click)="selectedContentTypes[inv._id] = opt.key">
-                <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-                {{ opt.label }}
-                <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-              </button>
-            </div>
-          </ng-container>
-          <input
-            class="invite-post-date"
-            type="date"
-            [(ngModel)]="selectedPostDates[inv._id]"
-            [min]="(getCampaignTimeline(inv)?.start || '').substring(0, 10)"
-            [max]="(getCampaignTimeline(inv)?.end || '').substring(0, 10)"
-            title="Select posting date within campaign timeline"
-          />
-          <button class="btn-invite-action btn-accept" (click)="respond(inv._id, 'accepted')" [disabled]="responding === inv._id">
-            <i class="bi bi-check-lg"></i> Accept
-          </button>
-          <button class="btn-invite-action btn-decline" (click)="respond(inv._id, 'declined')" [disabled]="responding === inv._id">
-            <i class="bi bi-x-lg"></i> Decline
-          </button>
-          <button class="btn-invite-action btn-view ms-auto" (click)="openDetail(inv)">
-            <i class="bi bi-eye"></i> View Details
-          </button>
-        </div>
-      </div>
+      <app-campaign-invite-card
+        *ngFor="let inv of invites"
+        [invite]="inv"
+        [busy]="responding === inv._id"
+        [initialPostDate]="selectedPostDates[inv._id]"
+        [initialContentTypeKey]="selectedContentTypes[inv._id]"
+        [initialPayout]="defaultPayout"
+        (postDateChange)="onCardPostDateChange(inv._id, $event)"
+        (contentTypeChange)="onCardContentTypeChange(inv._id, $event)"
+        (accept)="onCardAccept($event)"
+        (decline)="onCardDecline($event)"
+        (view)="openDetail(inv)"
+        (validationError)="onModalValidationError($event)">
+      </app-campaign-invite-card>
     </div>
   </div>
 
@@ -332,5 +269,11 @@
   *ngIf="selectedInvite"
   [invite]="selectedInvite"
   [visible]="!!selectedInvite"
+  [busy]="responding === selectedInvite._id"
+  [initialPostDate]="selectedPostDates[selectedInvite._id]"
+  [initialContentTypeKey]="selectedContentTypes[selectedInvite._id]"
   (close)="closeDetail()"
+  (accept)="onModalAccept($event)"
+  (decline)="onModalDecline($event)"
+  (validationError)="onModalValidationError($event)"
 ></app-campaign-detail-modal>

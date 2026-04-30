@@ -312,6 +312,11 @@ export class InfluencerProfileComponent implements OnInit {
         call: [{ value: false, disabled: true }]
       }),
       website: [{ value: '', disabled: true }],
+      payout: this.fb.group({
+        upiId: [{ value: '', disabled: true }],
+        mobile: [{ value: '', disabled: true }],
+        accountHolderName: [{ value: '', disabled: true }],
+      }),
     });
     // Auto-replace spaces with hyphens in username input
     this.registrationForm.get('username')?.valueChanges.subscribe(value => {
@@ -391,7 +396,12 @@ export class InfluencerProfileComponent implements OnInit {
               languages: languageIds,
             categories: categoryIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false },
-            website: profile.website || ''
+            website: profile.website || '',
+            payout: {
+              upiId: profile.payout?.upiId || '',
+              mobile: profile.payout?.mobile || profile.phoneNumber || '',
+              accountHolderName: profile.payout?.accountHolderName || profile.name || '',
+            }
           }, { emitEvent: false });
           // Patch profileImages
           const arr = this.registrationForm.get('profileImages') as FormArray;
@@ -948,7 +958,12 @@ export class InfluencerProfileComponent implements OnInit {
                 languages: languageIds,
                 categories: categoryIds,
                 contact: profile.contact || { whatsapp: false, email: false, call: false },
-                website: profile.website || ''
+                website: profile.website || '',
+                payout: {
+                  upiId: profile.payout?.upiId || '',
+                  mobile: profile.payout?.mobile || profile.phoneNumber || '',
+                  accountHolderName: profile.payout?.accountHolderName || profile.name || '',
+                }
               }, { emitEvent: false });
               const arr = this.registrationForm.get('profileImages') as FormArray;
               if (arr) {

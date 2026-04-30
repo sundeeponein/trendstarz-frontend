@@ -1,0 +1,114 @@
+<div class="invite-card" (click)="onCardClick()">
+  <!-- Brand + campaign header -->
+  <div class="invite-card__header d-flex align-items-center">
+    <div class="invite-brand-logo me-2">
+      <img *ngIf="brandLogo" [src]="brandLogo" alt="brand logo" class="brand-logo-img" (error)="onLogoError($event)">
+      <div *ngIf="!brandLogo" class="brand-logo-placeholder">{{ brandInitial }}</div>
+    </div>
+    <div class="invite-card__meta flex-1">
+      <div class="invite-brand-name">{{ brandName }}</div>
+      <div class="invite-campaign-title">{{ campaignTitle }}</div>
+      <div class="invite-categories" *ngIf="categories.length">
+        <span *ngFor="let cat of categories" class="badge rounded-pill bg-light text-dark me-1">{{ cat }}</span>
+      </div>
+    </div>
+    <span class="badge rounded-pill ms-auto" [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
+  </div>
+
+  <!-- Budget + timeline + platform row -->
+  <div class="invite-card__details">
+    <div class="invite-detail-item" *ngIf="hasBudget">
+      <i class="bi bi-currency-rupee"></i>
+      <span class="invite-detail-label">Budget</span>
+      <span class="invite-detail-val fw-semibold">{{ budgetText }}</span>
+    </div>
+    <div class="invite-detail-item" *ngIf="hasTimeline">
+      <i class="bi bi-calendar3"></i>
+      <span class="invite-detail-label">Timeline</span>
+      <span class="invite-detail-val">{{ timelineText }}</span>
+    </div>
+    <div class="invite-detail-item" *ngIf="platformText">
+      <i class="bi bi-display"></i>
+      <span class="invite-detail-label">Platform</span>
+      <span class="invite-detail-val">{{ platformText }}</span>
+    </div>
+  </div>
+
+  <!-- Deliverables row -->
+  <div class="invite-card__deliverables" *ngIf="deliverables.length">
+    <div class="deliverables-label">Deliverables:</div>
+    <span *ngFor="let d of deliverables" class="chip chip--deliv">{{ d }}</span>
+  </div>
+
+  <!-- CTA buttons -->
+  <div class="invite-card__actions" (click)="onActionsClick($event)" *ngIf="isActionable">
+    <ng-container *ngIf="contentTypeOptions.length > 0">
+      <div class="inv-ct-row">
+        <span class="inv-ct-row-label">Create:</span>
+        <button *ngFor="let opt of contentTypeOptions"
+                type="button"
+                class="inv-ct-pill"
+                [class.selected]="selectedContentTypeKey === opt.key"
+                (click)="selectContentType(opt.key)">
+          <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+          {{ opt.label }}
+          <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+        </button>
+      </div>
+    </ng-container>
+    <input
+      class="invite-post-date"
+      type="date"
+      [ngModel]="postDate"
+      (ngModelChange)="onPostDateChange($event)"
+      [min]="minPostDate"
+      [max]="maxPostDate"
+      title="Select posting date within campaign timeline" />
+
+    <!-- Payout details (where to receive money) -->
+    <div class="inv-payout" *ngIf="needsPayoutDetails">
+      <div class="inv-payout-head">
+        <i class="bi bi-bank"></i>
+        <span class="inv-payout-title">Receive payment to</span>
+        <button type="button" class="inv-payout-edit" (click)="togglePayoutEdit($event)">
+          <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
+          {{ payoutEditing ? 'Done' : (payoutSummary ? 'Edit' : 'Add') }}
+        </button>
+      </div>
+      <div class="inv-payout-summary" *ngIf="!payoutEditing">
+        <span *ngIf="payoutSummary">{{ payoutSummary }}</span>
+        <span class="text-muted" *ngIf="!payoutSummary">
+          Add UPI / mobile (GPay/PhonePe) before accepting
+        </span>
+      </div>
+      <div class="inv-payout-form" *ngIf="payoutEditing" (click)="onActionsClick($event)">
+        <input type="text" class="inv-payout-input" placeholder="UPI ID (e.g. name@upi)"
+               [(ngModel)]="payoutUpiId" autocomplete="off" />
+        <input type="tel" class="inv-payout-input" placeholder="Mobile (GPay / PhonePe)"
+               [(ngModel)]="payoutMobile" autocomplete="off" inputmode="tel" maxlength="15" />
+        <input type="text" class="inv-payout-input" placeholder="Account holder name"
+               [(ngModel)]="payoutName" autocomplete="off" />
+        <small class="inv-payout-hint">Saved to your profile and used by admin to send your earnings.</small>
+      </div>
+    </div>
+
+    <button type="button" class="btn-invite-action btn-accept" (click)="onAccept($event)" [disabled]="busy">
+      <i class="bi bi-check-lg"></i> Accept
+    </button>
+    <button type="button" class="btn-invite-action btn-decline" (click)="onDecline($event)" [disabled]="busy">
+      <i class="bi bi-x-lg"></i> Decline
+    </button>
+    <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
+      <i class="bi bi-eye"></i> View Details
+    </button>
+  </div>
+
+  <div class="invite-card__actions" *ngIf="!isActionable" (click)="onActionsClick($event)">
+    <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted'">
+      <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
+    </p>
+    <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
+      <i class="bi bi-eye"></i> View Details
+    </button>
+  </div>
+</div>

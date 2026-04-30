@@ -131,84 +131,39 @@
     <div *ngIf="couponApplied" class="coupon-success">🎉 Coupon applied! You save ₹{{ discountAmount }}</div>
     <div *ngIf="couponError" class="coupon-error">{{ couponError }}</div>
 
-    <!-- Payment method tabs -->
-    <div class="pay-tabs">
-      <button class="pay-tab" [class.active]="paymentTab === 'upi'" (click)="setTab('upi')" [disabled]="upgrading">
-        📲 UPI
-      </button>
-      <button class="pay-tab" [class.active]="paymentTab === 'qr'" (click)="setTab('qr')" [disabled]="upgrading">
-        ⬛ QR Code
-      </button>
+    <!-- ── Unified payment block (UPI ID + QR + Pay button) ─── -->
+    <app-payment-checkout
+      *ngIf="selectedDuration"
+      title=""
+      [chip]="(selectedPlan?.name || '') + ' Premium'"
+      [amountRupees]="finalPrice"
+      [breakdown]="paymentBreakdown"
+      [transactionNote]="paymentTransactionNote"
+      [trustLabels]="['Secured by TrendstarZ', 'Premium activated within 24 hours of UTR verification']">
+    </app-payment-checkout>
+
+    <!-- ── UTR confirmation (manual verification) ───────────── -->
+    <div class="form-group">
+      <label>UPI Transaction ID / UTR Number <span style="color:#dc2626">*</span></label>
+      <input
+        type="text"
+        class="form-input"
+        placeholder="e.g. 416221039385"
+        [(ngModel)]="upiRef"
+        [disabled]="upgrading"
+      />
+      <small class="text-muted">Enter the UTR shown by your UPI app after paying. We verify within 24 hours.</small>
     </div>
 
-    <!-- ── UPI tab (Direct Payment) ────────────── -->
-    <div *ngIf="paymentTab === 'upi'" class="tab-content">
-      <div class="upi-instructions">
-        <p class="upi-step"><span class="upi-step-num">1</span> Open PhonePe, GPay, Paytm, BHIM or any UPI app</p>
-        <p class="upi-step"><span class="upi-step-num">2</span> Send <strong>₹{{ finalPrice }}</strong> to:</p>
+    <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
 
-        <div class="upi-id-box">
-          <span class="upi-id-value">{{ upiId }}</span>
-          <button class="btn-copy" (click)="copyUpiId()">
-            {{ upiCopied ? '✓ Copied!' : 'Copy' }}
-          </button>
-        </div>
-
-        <p class="upi-step"><span class="upi-step-num">3</span> Enter the Transaction Reference / UTR below to confirm:</p>
-      </div>
-
-      <div class="form-group">
-        <label>UPI Transaction ID / UTR Number</label>
-        <input
-          type="text"
-          class="form-input"
-          placeholder="e.g. 416221039385"
-          [(ngModel)]="upiRef"
-          [disabled]="upgrading"
-        />
-      </div>
-
-      <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
-
-      <div class="upgrade-actions">
-        <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading">← Change Plan</button>
-        <button class="btn-upgrade" [disabled]="upgrading" (click)="payByUpi()">
-          <span *ngIf="upgrading" class="spinner"></span>
-          <span *ngIf="!upgrading">Confirm Payment</span>
-          <span *ngIf="upgrading">Confirming…</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ── QR Code tab ────────────────────────── -->
-    <div *ngIf="paymentTab === 'qr'" class="tab-content">
-      <div class="qr-section">
-        <p class="qr-label">Scan with any UPI app to pay <strong>{{ finalPrice }}</strong></p>
-        <div class="qr-frame">
-          <img [src]="upiQrUrl" alt="UPI QR Code" class="qr-image" />
-        </div>
-        <div class="upi-id-box qr-upi-row">
-          <span class="upi-id-value">{{ upiId }}</span>
-          <button class="btn-copy" (click)="copyUpiId()">{{ upiCopied ? '✓ Copied!' : 'Copy UPI ID' }}</button>
-        </div>
-        <p class="qr-note">After payment, enter the UTR / Transaction Reference below to activate Premium.</p>
-      </div>
-
-      <div class="form-group">
-        <label>UPI Transaction ID / UTR Number</label>
-        <input type="text" class="form-input" placeholder="e.g. 416221039385" [(ngModel)]="upiRef" [disabled]="upgrading" />
-      </div>
-
-      <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
-
-      <div class="upgrade-actions">
-        <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading">← Change Plan</button>
-        <button class="btn-upgrade" [disabled]="upgrading" (click)="payByUpi()">
-          <span *ngIf="upgrading" class="spinner"></span>
-          <span *ngIf="!upgrading">Confirm Payment</span>
-          <span *ngIf="upgrading">Verifying…</span>
-        </button>
-      </div>
+    <div class="upgrade-actions">
+      <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading">← Change Plan</button>
+      <button class="btn-upgrade" [disabled]="upgrading || !upiRef.trim()" (click)="payByUpi()">
+        <span *ngIf="upgrading" class="spinner"></span>
+        <span *ngIf="!upgrading">Confirm Payment</span>
+        <span *ngIf="upgrading">Confirming…</span>
+      </button>
     </div>
 
     <!-- ── Recent Payments ────────────────────── -->
