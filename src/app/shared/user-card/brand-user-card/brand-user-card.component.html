@@ -27,17 +27,7 @@
       <i class="bi bi-geo-alt"></i> {{ location.district }}, {{ location.state }}
     </div>
 
-    <!-- Stats row -->
-    <div class="brand-card__stats">
-      <div class="brand-card__stat">
-        <span class="brand-card__stat-value">{{ primaryTier || '—' }}</span>
-        <span class="brand-card__stat-label">Tier</span>
-      </div>
-      <div class="brand-card__stat">
-        <span class="brand-card__stat-value">{{ socialMedia.length }}</span>
-        <span class="brand-card__stat-label">Platforms</span>
-      </div>
-    </div>
+
 
     <!-- Platform icons -->
     <div class="brand-card__platforms" *ngIf="socialMedia.length > 0">
@@ -53,7 +43,7 @@
     </div>
 
     <!-- PRO VIEW: Contact-visible badge -->
-    <div class="brand-card__contact" *ngIf="isProViewer">
+    <div class="brand-card__contact" *ngIf="isProViewer && !contactRestricted">
       <i class="bi bi-check-circle-fill brand-card__contact-icon"></i>
       <span>Contact details visible</span>
     </div>

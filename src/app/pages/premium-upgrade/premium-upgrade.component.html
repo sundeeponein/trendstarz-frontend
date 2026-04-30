@@ -79,6 +79,9 @@
           <div class="feature-item note" *ngIf="plan.policies.imageRetentionDaysAfterExpiry">
             <span class="feat-icon">⚠</span> Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> if not renewed
           </div>
+          <div class="feature-item note">
+            <span class="feat-icon">🔓</span> <strong>{{ getContactVisibilityLabel(plan) }}</strong>
+          </div>
           <div class="offers">
             <span *ngIf="plan.discountLabel">{{ plan.discountLabel }}</span>
           </div>

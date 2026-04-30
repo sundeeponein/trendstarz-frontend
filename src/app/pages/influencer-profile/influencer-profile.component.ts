@@ -12,13 +12,14 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent, ResetPasswordModalComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -268,6 +269,11 @@ export class InfluencerProfileComponent implements OnInit {
   originalFormValue: any = null;
   submitted = false;
   usernameError: string = '';
+  showChangePasswordModal = false;
+
+  openChangePasswordModal() {
+    this.showChangePasswordModal = true;
+  }
 
   // Utility to slugify username
   slugifyUsername(username: string): string {

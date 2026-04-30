@@ -462,6 +462,26 @@ $bg-light: #fafafa;
   transition: all 0.2s;
   i { color: $accent; font-size: 1rem; }
   &:hover { border-color: $accent; background: $accent-light; }
+  &--locked {
+    cursor: default;
+    opacity: 0.65;
+    &:hover { border-color: $border; background: transparent; }
+  }
+}
+.social-tier-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: $accent;
+  background: $accent-light;
+  border-radius: 8px;
+  padding: 1px 7px;
+  margin-left: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.social-lock-icon {
+  font-size: 0.75rem;
+  color: #aaa;
 }
 
 /* ══════ RIGHT: Brand Insights Sidebar ══════ */

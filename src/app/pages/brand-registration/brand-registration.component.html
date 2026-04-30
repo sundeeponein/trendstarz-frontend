@@ -194,11 +194,6 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Google Maps Location <span class="text-muted" style="font-size:0.82rem;">(optional)</span></label>
-              <input formControlName="googleMapAddress" type="text" class="form-control" placeholder="Paste Google Maps link or address" />
-            </div>
-
-            <div class="field-block full-width">
               <label>Languages <span class="text-danger">*</span></label>
               <div class="chip-list">
                 <div
@@ -215,6 +210,13 @@
               </div>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
+
+            <div class="field-block full-width">
+              <label>Google Maps Location <span class="text-muted" style="font-size:0.82rem;">(optional)</span></label>
+              <input formControlName="googleMapAddress" type="text" class="form-control" placeholder="Paste Google Maps link or address" />
+            </div>
+
+            
           </div>
 
           <!-- Product Images -->

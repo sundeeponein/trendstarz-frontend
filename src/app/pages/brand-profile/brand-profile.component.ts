@@ -13,11 +13,12 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent, ResetPasswordModalComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -166,6 +167,7 @@ export class BrandProfileComponent implements OnInit {
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isPremium = false;
+  showChangePasswordModal = false;
 
   // --- Social Media Platform UI ---
   platformForms: { [platformId: string]: any } = {};
@@ -177,6 +179,10 @@ export class BrandProfileComponent implements OnInit {
   productImagesPreview: (string | null)[] = [];
   productImagesFiles: ({ url: string, public_id: string } | null)[] = [];
   // ...existing code...
+
+  openChangePasswordModal() {
+    this.showChangePasswordModal = true;
+  }
 
   // Getter for brandLogo FormArray
   // Handle brand logo file selection, compress, upload, and preview

@@ -139,6 +139,15 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 
+  // Change password for logged-in user
+  changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
+    return this.http.post(`${this.apiUrl}/auth/change-password`, {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+  }
+
   getCategories(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
       map((res) => this.extractData<any[]>(res) || [])

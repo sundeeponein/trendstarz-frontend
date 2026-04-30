@@ -132,6 +132,15 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
+  private syncContactVisibilityFeature(plan: Plan) {
+    const contactEnabled = plan.policies?.contactVisibility !== 'NONE';
+    const featureKey = plan.userType === 'BRAND' ? 'viewContactDetails' : 'contactVisibility';
+    const feature = plan.features.find(item => item.key === featureKey);
+    if (feature) {
+      feature.value = contactEnabled;
+    }
+  }
+
   loadFromConfig() {
     this.loading = true;
     this.error = '';
@@ -166,6 +175,7 @@ export class AdminPlansComponent implements OnInit {
   newPlanType: 'INFLUENCER' | 'BRAND' | null = null;
 
   readonly userTypes = ['INFLUENCER', 'BRAND'];
+  readonly contactVisibilityModes = ['PROFILE', 'AFTER_ACCEPT', 'AFTER_PAYMENT', 'NONE'];
 
   constructor(private plansService: PlansService) {}
 
@@ -223,7 +233,7 @@ export class AdminPlansComponent implements OnInit {
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'maxInviteOptions', label: 'Invite options', value: 20 },
         ],
-        policies: { imageRetentionDaysAfterExpiry: 45 },
+        policies: { imageRetentionDaysAfterExpiry: 45, contactVisibility: 'AFTER_ACCEPT' },
         highlight: true,
         isActive: true,
         sortOrder: 1,
@@ -249,11 +259,14 @@ export class AdminPlansComponent implements OnInit {
           { key: 'maxTeamSeats', label: 'Team seats', value: 5 },
           { key: 'analytics', label: 'Analytics', value: 1 },
         ],
-        policies: { imageRetentionDaysAfterExpiry: 45 },
+        policies: { imageRetentionDaysAfterExpiry: 45, contactVisibility: 'AFTER_ACCEPT' },
         highlight: true,
         isActive: true,
         sortOrder: 1,
       };
+    }
+    if (this.editingPlan) {
+      this.syncContactVisibilityFeature(this.editingPlan);
     }
   }
 
@@ -262,6 +275,14 @@ export class AdminPlansComponent implements OnInit {
     this.isCreating = false;
     // Deep clone to avoid mutating the list
     this.editingPlan = JSON.parse(JSON.stringify(plan));
+    if (this.editingPlan) {
+      this.syncContactVisibilityFeature(this.editingPlan);
+    }
+  }
+
+  onContactVisibilityPolicyChange() {
+    if (!this.editingPlan) return;
+    this.syncContactVisibilityFeature(this.editingPlan);
   }
 
   onUserTypeChange() {
@@ -294,6 +315,13 @@ export class AdminPlansComponent implements OnInit {
     this.editingPlan.features = this.getMergedFeatures();
     this.editingPlan.limits = this.getMergedLimits();
     this.editingPlan.offers = this.getMergedOffers();
+    if (!this.editingPlan.policies) {
+      this.editingPlan.policies = { imageRetentionDaysAfterExpiry: 45, contactVisibility: 'AFTER_ACCEPT' };
+    }
+    if (!this.editingPlan.policies.contactVisibility) {
+      this.editingPlan.policies.contactVisibility = 'AFTER_ACCEPT';
+    }
+    this.syncContactVisibilityFeature(this.editingPlan);
 
     if (this.isCreating) {
       this.plansService.adminCreate(this.editingPlan).subscribe({

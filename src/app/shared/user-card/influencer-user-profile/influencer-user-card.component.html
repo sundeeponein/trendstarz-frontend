@@ -69,7 +69,7 @@
     </div>
 
     <!-- PRO VIEW: Contact-visible badge -->
-    <div class="inf-card__contact" *ngIf="isProViewer">
+    <div class="inf-card__contact" *ngIf="isProViewer && !contactRestricted">
       <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
       <span>Contact details visible</span>
     </div>

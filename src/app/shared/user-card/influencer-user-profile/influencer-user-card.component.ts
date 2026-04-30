@@ -31,6 +31,8 @@ export class InfluencerUserCardComponent {
 
   /** Whether the viewer has a Pro subscription (controls visible details) */
   @Input() isProViewer = false;
+  /** Backend-driven visibility guard for contact details */
+  @Input() contactRestricted = true;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();

@@ -139,6 +139,7 @@
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="openChangePasswordModal()">Reset Password</button>
             <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
           </div>
         </section>
@@ -164,7 +165,7 @@
               </select>
             </div>
 
-            <div class="field-block">
+            <div class="field-block full-width">
               <label>Languages</label>
               <div class="chip-list">
                 <ng-container *ngIf="isEditMode; else viewLanguages">
@@ -190,7 +191,7 @@
               </div>
             </div>
 
-            <div class="field-block">
+            <div class="field-block full-width">
               <label>Google Map Address</label>
               <input formControlName="googleMapAddress" type="text" class="form-control" />
             </div>
@@ -378,4 +379,5 @@
   </div>
 
 <app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
+<app-reset-password-modal [(visible)]="showChangePasswordModal"></app-reset-password-modal>
 </div>

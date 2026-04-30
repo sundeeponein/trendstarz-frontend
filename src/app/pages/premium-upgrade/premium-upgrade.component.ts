@@ -211,6 +211,20 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     return (this.selectedPlan?.name || 'TrendstarZ') + ' Premium';
   }
 
+  getContactVisibilityLabel(plan: Plan): string {
+    switch (plan.policies?.contactVisibility) {
+      case 'PROFILE':
+        return 'Contact details visible on profile';
+      case 'AFTER_ACCEPT':
+        return 'Contact details unlock after invite acceptance';
+      case 'AFTER_PAYMENT':
+        return 'Contact details unlock after payment';
+      case 'NONE':
+      default:
+        return 'Contact details hidden';
+    }
+  }
+
   applyCoupon() {
     this.couponError = '';
     // Simple coupon: TRENDSTARZ10 = 10% off

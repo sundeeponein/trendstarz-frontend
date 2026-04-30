@@ -18,6 +18,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   influencer: any;
   loading = true;
   error = '';
+  showContactInfo = false;
 
   /** Active social media platform tab index. */
   activePlatformIdx = 0;
@@ -43,6 +44,10 @@ export class InfluencerProfileViewComponent implements OnInit {
     return user?.role === 'BRAND' || user?.role === 'brand';
   }
 
+  get canViewContactDetails(): boolean {
+    return !!this.influencer && this.influencer.contactRestricted !== true;
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }
@@ -60,6 +65,11 @@ export class InfluencerProfileViewComponent implements OnInit {
 
   getTotalFollowers(): number {
     return (this.influencer?.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
+  }
+
+  getPrimaryTier(): string {
+    const list: any[] = this.influencer?.socialMedia || [];
+    return list[0]?.tier || list.find((sm: any) => sm?.tier)?.tier || '';
   }
 
   formatFollowers(count: number): string {
@@ -116,6 +126,16 @@ export class InfluencerProfileViewComponent implements OnInit {
     if (!rates.length) return '—';
     const avg = rates.reduce((a: number, b: number) => a + b, 0) / rates.length;
     return avg.toFixed(1) + '%';
+  }
+
+  onContactClick(): void {
+    this.showContactInfo = true;
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('influencer-contact-info');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   }
 
   constructor(

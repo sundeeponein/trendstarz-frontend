@@ -43,6 +43,14 @@ export class BrandProfileViewComponent implements OnInit {
     return !!this.session.getUser();
   }
 
+  get canViewContactDetails(): boolean {
+    return !!this.brand && this.brand.contactRestricted !== true;
+  }
+
+  onContactClick(): void {
+    this.showContact = !this.showContact;
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }
