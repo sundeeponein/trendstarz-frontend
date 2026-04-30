@@ -1,34 +1,30 @@
-<!-- Tier Info Modal -->
-<div class="modal-backdrop" *ngIf="show" (click)="close()"></div>
-<div class="modal d-block" *ngIf="show" tabindex="-1" role="dialog">
+<!-- Tier Info Modal (single app-wide instance) -->
+<div class="modal-backdrop" *ngIf="svc.isOpen" (click)="svc.close()"></div>
+<div class="modal d-block" *ngIf="svc.isOpen" tabindex="-1" role="dialog">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Tier Information</h5>
-        <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+        <button type="button" class="btn-close" (click)="svc.close()" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <table class="table table-bordered table-striped">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Icon</th>
+              <th>Tier</th>
+              <th>Followers / Subscribers</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let tier of tiers">
+            <tr *ngFor="let tier of svc.tiers">
               <td>{{ tier.name }}</td>
               <td>{{ tier.desc }}</td>
-              <td>
-                <i *ngIf="tier.icon" [class]="tier.icon" style="font-size: 1.5rem;"></i>
-              </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="close()">Close</button>
+        <button type="button" class="btn btn-secondary" (click)="svc.close()">Close</button>
       </div>
     </div>
   </div>

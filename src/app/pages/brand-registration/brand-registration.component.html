@@ -109,6 +109,15 @@
               <input formControlName="website" type="url" class="form-control" placeholder="https://yourbrand.com" />
             </div>
 
+            <div class="field-block">
+              <label>Starting Price</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input formControlName="promotionalPrice" type="number" min="0" class="form-control" placeholder="500" />
+              </div>
+              <small class="text-muted">Prices are negotiable. Brands can send offers.</small>
+            </div>
+
             <div class="field-block full-width">
               <label>Category / Industry <span class="text-danger">*</span></label>
               <div class="chip-list">
@@ -278,7 +287,7 @@
                         </a>
                       </div>
                       <div class="col">
-                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
+                        <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
@@ -428,5 +437,4 @@
     </div>
   </div>
 
-<app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
 </div>

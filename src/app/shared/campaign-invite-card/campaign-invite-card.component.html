@@ -17,10 +17,10 @@
 
   <!-- Budget + timeline + platform row -->
   <div class="invite-card__details">
-    <div class="invite-detail-item" *ngIf="hasBudget">
+    <div class="invite-detail-item" *ngIf="yourPayoutText">
       <i class="bi bi-currency-rupee"></i>
-      <span class="invite-detail-label">Budget</span>
-      <span class="invite-detail-val fw-semibold">{{ budgetText }}</span>
+      <span class="invite-detail-label">Your payout</span>
+      <span class="invite-detail-val fw-semibold">{{ yourPayoutText }}</span>
     </div>
     <div class="invite-detail-item" *ngIf="hasTimeline">
       <i class="bi bi-calendar3"></i>
@@ -34,17 +34,63 @@
     </div>
   </div>
 
+  <!-- Campaign type chip + headline compensation -->
+  <div class="invite-type-row" *ngIf="campaignTypeLabel || compensationText">
+    <span class="chip chip--type" *ngIf="campaignTypeLabel">
+      <i class="bi" [ngClass]="campaignTypeIcon"></i>
+      {{ campaignTypeLabel }}
+    </span>
+    <span class="chip chip--comp" *ngIf="compensationText">
+      <i class="bi" [ngClass]="compensationIcon"></i>
+      {{ compensationText }}
+    </span>
+  </div>
+
+  <!-- Venue summary (Invite to Location) -->
+  <div class="invite-venue" *ngIf="isInviteLocation && hasVenueDetails">
+    <div class="invite-brief__label"><i class="bi bi-geo-alt"></i> Venue</div>
+    <div class="invite-brief__text">
+      <div *ngIf="venueShortText"><strong>{{ venueShortText }}</strong></div>
+      <div *ngIf="venueFullAddress">{{ venueFullAddress }}</div>
+      <div *ngIf="inviteBenefits" class="mt-1"><i class="bi bi-stars"></i> {{ inviteBenefits }}</div>
+      <a *ngIf="venueMapUrl"
+         class="d-inline-flex align-items-center gap-1 mt-1"
+         [href]="venueMapUrl" target="_blank" rel="noopener noreferrer"
+         (click)="$event.stopPropagation()">
+        <i class="bi bi-map"></i> Open in Maps
+      </a>
+    </div>
+  </div>
+
+  <!-- Product collaboration summary -->
+  <div class="invite-venue" *ngIf="isProduct">
+    <div class="invite-brief__label"><i class="bi bi-box-seam"></i> Product Collaboration</div>
+    <div class="invite-brief__text">
+      <div *ngIf="productDescription" style="white-space:pre-wrap;" class="mb-1">{{ productDescription }}</div>
+      <div *ngIf="productValueText"><strong>Product worth {{ productValueText }}</strong></div>
+      <div *ngIf="!productValueText && !productDescription"><strong>Barter (product gift)</strong></div>
+      <div *ngIf="productPaymentMode === 'product_plus_payment' && productPaymentAmountText" class="mt-1">
+        Plus cash component: <strong>{{ productPaymentAmountText }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="invite-brief" *ngIf="briefPreview">
+    <div class="invite-brief__label">Campaign brief</div>
+    <div class="invite-brief__text">{{ briefPreview }}</div>
+  </div>
+
   <!-- Deliverables row -->
-  <div class="invite-card__deliverables" *ngIf="deliverables.length">
-    <div class="deliverables-label">Deliverables:</div>
-    <span *ngFor="let d of deliverables" class="chip chip--deliv">{{ d }}</span>
+  <div class="invite-card__deliverables" *ngIf="selectedOutputs.length">
+    <div class="deliverables-label">Selected outputs:</div>
+    <span *ngFor="let d of selectedOutputs" class="chip chip--deliv">{{ d }}</span>
   </div>
 
   <!-- CTA buttons -->
   <div class="invite-card__actions" (click)="onActionsClick($event)" *ngIf="isActionable">
     <ng-container *ngIf="contentTypeOptions.length > 0">
       <div class="inv-ct-row">
-        <span class="inv-ct-row-label">Create:</span>
+        <span class="inv-ct-row-label">Create (choose one):</span>
         <button *ngFor="let opt of contentTypeOptions"
                 type="button"
                 class="inv-ct-pill"
@@ -64,6 +110,10 @@
       [min]="minPostDate"
       [max]="maxPostDate"
       title="Select posting date within campaign timeline" />
+
+    <div class="inv-payout-hint-chip" *ngIf="selectedPayoutHint">
+      <i class="bi bi-cash-coin"></i> {{ selectedPayoutHint }}
+    </div>
 
     <!-- Payout details (where to receive money) -->
     <div class="inv-payout" *ngIf="needsPayoutDetails">

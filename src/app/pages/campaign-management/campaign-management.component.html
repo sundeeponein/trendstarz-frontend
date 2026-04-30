@@ -36,6 +36,14 @@
         <h2 class="my-invites-title">
           <i class="bi bi-envelope-fill"></i> My Campaign Invites
         </h2>
+        <button
+          type="button"
+          class="flow-info-trigger"
+          title="Before and after accepting campaign flow"
+          (click)="flowHelp.openInfluencerFlowGuide()"
+        >
+          <i class="bi bi-info-circle"></i> Campaign Flow
+        </button>
         <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
           {{ getPendingInviteCount() }} pending
         </span>
@@ -47,6 +55,12 @@
 
       <div *ngIf="!myInvitesLoading">
         <div class="invite-list" *ngIf="myInvites.length > 0">
+          <div class="invite-flow-hint">
+            <span>Need help before accepting?</span>
+            <button type="button" class="invite-flow-link" (click)="flowHelp.openInfluencerFlowGuide()">
+              <i class="bi bi-info-circle"></i> Open accept-to-complete guide
+            </button>
+          </div>
           <app-campaign-invite-card
             *ngFor="let inv of myInvites"
             [invite]="inv"
@@ -76,6 +90,14 @@
         <p class="cm-subtitle">{{ isInfluencerView ? 'Browse active campaigns from brands looking for creators like you.' : 'Monitor performance and manage your brand partnerships.' }}</p>
       </div>
       <div class="cm-header-actions" *ngIf="!isInfluencerView">
+        <button
+          class="btn-flow-guide"
+          type="button"
+          (click)="flowHelp.openCampaignBuilderGuide()"
+          title="Show brand campaign creation flow"
+        >
+          <i class="bi bi-info-circle"></i> Campaign Flow
+        </button>
         <button class="btn btn-create" (click)="openCreateForm()" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">
           <i class="bi bi-plus-circle-fill"></i> New Campaign
         </button>
@@ -142,7 +164,7 @@
            [class.is-expired]="isExpired(c)">
 
         <!-- Main row -->
-        <div class="ccard-main">
+        <div class="ccard-main" [class.ccard-main--clickable]="isInfluencerView" (click)="isInfluencerView ? openOpenCampaign(c) : null">
 
           <!-- LEFT: thumbnail + title + category tags -->
           <div class="ccard-left">
@@ -152,6 +174,16 @@
             </div>
             <div class="ccard-title-wrap">
               <span class="ccard-title">{{ c.title }}</span>
+              <!-- Brand chip for influencer browse view -->
+              <div class="ccard-brand-chip" *ngIf="isInfluencerView && getCampaignBrand(c).name">
+                <img class="ccard-brand-logo" *ngIf="getCampaignBrand(c).logo"
+                  [src]="getCampaignBrand(c).logo!" alt="" (error)="onImgError($event)" />
+                <span class="ccard-brand-initials" *ngIf="!getCampaignBrand(c).logo"
+                  [style.background]="getInitialsColor(getCampaignBrand(c).name)">
+                  {{ getInfluencerInitials(getCampaignBrand(c).name) }}
+                </span>
+                <span class="ccard-brand-name">{{ getCampaignBrand(c).name }}</span>
+              </div>
               <span class="ccard-subtitle" *ngIf="getCampaignSubtitle(c)">{{ getCampaignSubtitle(c) }}</span>
               <div class="ccard-tags" *ngIf="c.categories?.length">
                 <span class="ccard-tag" *ngFor="let cat of c.categories!.slice(0, 3)">{{ cat }}</span>
@@ -164,7 +196,7 @@
             <div class="ccard-stat">
               <span class="ccard-stat-label">Budget</span>
               <span class="ccard-stat-value accent">{{ formatBudgetCompact(c) }}</span>
-              <span class="ccard-stat-sub">per influencer</span>
+              <span class="ccard-stat-sub">overall budget</span>
             </div>
             <div class="ccard-stat">
               <span class="ccard-stat-label">Applicants</span>
@@ -173,12 +205,14 @@
               </span>
               <!-- Avatar stack -->
               <div class="avatar-stack" *ngIf="getCardInvitePreview(c).length > 0">
-                <span class="avatar-pip"
+                <app-user-avatar
                   *ngFor="let inv of getCardInvitePreview(c)"
-                  [style.background]="getInitialsColor(inv.influencerId?.name || '')"
-                  [title]="inv.influencerId?.name || ''">
-                  {{ getInfluencerInitials(inv.influencerId?.name || '') }}
-                </span>
+                  class="avatar-pip"
+                  [name]="inv.influencerId?.name || ''"
+                  [src]="getInfluencerAvatar(inv.influencerId)"
+                  [size]="24"
+                  [title]="inv.influencerId?.name || ''"
+                ></app-user-avatar>
               </div>
               <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
             </div>
@@ -206,15 +240,20 @@
                 [disabled]="c.status === 'completed'">
                 Manage <i class="bi bi-chevron-down"></i>
               </button>
-              <button class="btn-invite" (click)="openInvitePanel(c)" title="Invite Influencers"
-                [disabled]="c.status === 'completed'">
-                <i class="bi bi-person-plus-fill"></i> Invite
+              <button class="btn-invite" (click)="openInvitePanel(c)"
+                [title]="isInviteQuotaFull(c) ? 'Invite quota full (' + getCardInvitedCount(c) + '/' + (c.maxInfluencers || 0) + ')' : 'Invite Influencers'"
+                [disabled]="c.status === 'completed' || isInviteQuotaFull(c)">
+                <i class="bi bi-person-plus-fill"></i>
+                {{ isInviteQuotaFull(c) ? 'Quota full' : 'Invite' }}
               </button>
               <button class="btn-pay btn btn-outline-success" (click)="openPayment(c._id)" title="Record Payment" *ngIf="c.status !== 'completed'">
                 <i class="bi bi-wallet2"></i> Record Payment
               </button>
             </div>
             <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
+            <button class="btn-open-campaign" *ngIf="isInfluencerView" (click)="openOpenCampaign(c, $event)" [disabled]="isOpeningCampaign(c)">
+              {{ isOpeningCampaign(c) ? 'Opening...' : 'View details' }}
+            </button>
           </div>
         </div>
 
@@ -256,22 +295,36 @@
 
             <!-- Invited influencers list -->
             <div class="expand-inf-list" *ngIf="getExpandInvites(c).length > 0">
-              <p class="expand-inf-heading">Invited Influencers</p>
+              <div class="expand-inf-heading-row">
+                <p class="expand-inf-heading">Invited Influencers</p>
+                <button class="tier-info-trigger" type="button" (click)="tierInfo.open(); $event.stopPropagation()">
+                  <i class="bi bi-info-circle"></i> Tier info
+                </button>
+              </div>
               <ng-container *ngFor="let inv of getExpandInvites(c)">
                 <!-- Influencer row -->
                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
                      [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
-                  <span class="expand-inf-initials"
-                    [style.background]="getInitialsColor(inv.influencerId?.name || '')">
-                    {{ getInfluencerInitials(inv.influencerId?.name || '') }}
-                  </span>
+                  <app-user-avatar
+                    [name]="inv.influencerId?.name || ''"
+                    [src]="getInfluencerAvatar(inv.influencerId)"
+                    [size]="36"
+                  ></app-user-avatar>
                   <div class="expand-inf-info">
-                    <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
+                    <div class="expand-inf-name-row">
+                      <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
+                      <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
+                      <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">
+                        {{ getInfluencerTier(inv.influencerId) }}
+                      </span>
+                    </div>
                     <span class="expand-inf-user" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</span>
+                    <div class="expand-inf-socials" *ngIf="getInfluencerSocialTags(inv.influencerId || {}).length">
+                      <span class="expand-inf-social-chip" *ngFor="let sm of getInfluencerSocialTags(inv.influencerId || {}, 3)">
+                        {{ sm.platform }} · {{ sm.tier }}
+                      </span>
+                    </div>
                   </div>
-                  <span class="expand-inf-social" *ngIf="getTopSocialMedia(inv.influencerId || {})">
-                    {{ getTopSocialMedia(inv.influencerId || {}) }}
-                  </span>
                   <span class="inv-status" [ngClass]="inv.status">{{ inv.status | titlecase }}</span>
                   <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
                     <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
@@ -461,6 +514,7 @@
     *ngIf="showForm && !isInfluencerView"
     [mode]="formMode"
     [campaign]="editingCampaign"
+    [hasPremium]="!!planCapabilities?.hasPremium"
     (save)="onFormSave($event)"
     (cancel)="closeForm()"
   ></app-campaign-form>
@@ -476,6 +530,19 @@
         <p class="drawer-subtitle">{{ invitePanelCampaign?.title }}</p>
       </div>
       <button class="drawer-close" (click)="closeInvitePanel()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Quota banner -->
+    <div class="invite-quota-banner"
+         *ngIf="invitePanelCampaign"
+         [class.is-full]="isInviteQuotaFull(invitePanelCampaign)">
+      <i class="bi" [ngClass]="isInviteQuotaFull(invitePanelCampaign) ? 'bi-lock-fill' : 'bi-people-fill'"></i>
+      <span>
+        <strong>{{ getCardInvitedCount(invitePanelCampaign) }}</strong> /
+        <strong>{{ invitePanelCampaign.maxInfluencers || 0 }}</strong>
+        invites used
+        <em *ngIf="isInviteQuotaFull(invitePanelCampaign)">— quota full, cannot invite more</em>
+      </span>
     </div>
 
     <!-- Drawer tabs -->
@@ -496,21 +563,120 @@
       </div>
 
       <div *ngIf="!invitesLoading">
+        <!-- Bucket summary chips -->
+        <div class="invite-buckets" *ngIf="invites.length > 0">
+          <span class="bucket-chip bucket-accepted" *ngIf="getBucketCount('accepted_unlocked') > 0">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ getBucketCount('accepted_unlocked') }} Accepted &amp; Unlocked
+          </span>
+          <span class="bucket-chip bucket-waiting" *ngIf="getBucketCount('waiting_unlock') > 0">
+            <i class="bi bi-hourglass-split"></i>
+            {{ getBucketCount('waiting_unlock') }} Waiting Unlock
+          </span>
+          <span class="bucket-chip bucket-pending" *ngIf="getBucketCount('pending') > 0">
+            <i class="bi bi-envelope"></i>
+            {{ getBucketCount('pending') }} No Response
+          </span>
+          <span class="bucket-chip bucket-declined" *ngIf="getBucketCount('declined') > 0">
+            <i class="bi bi-x-circle"></i>
+            {{ getBucketCount('declined') }} Declined / Withdrawn
+          </span>
+          <span class="bucket-chip bucket-disputed" *ngIf="getBucketCount('disputed') > 0">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {{ getBucketCount('disputed') }} No-show / Disputed
+          </span>
+        </div>
+
         <div class="invited-list" *ngIf="invites.length > 0">
           <div class="invited-row" *ngFor="let inv of invites">
-            <img class="invited-avatar" [src]="getInfluencerAvatar(inv.influencerId)" (error)="onImgError($event)" />
+            <app-user-avatar
+              [name]="inv.influencerId?.name || inv.influencerId?.username || 'Influencer'"
+              [src]="getInfluencerAvatar(inv.influencerId)"
+              [size]="44"
+            ></app-user-avatar>
             <div class="invited-info">
-              <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}</p>
+              <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}
+                <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
+              </p>
               <p class="invited-username" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</p>
+              <div class="invited-badges">
+                <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">{{ getInfluencerTier(inv.influencerId) }}</span>
+              </div>
+              <div class="invited-socials" *ngIf="getInfluencerSocialTags(inv.influencerId).length">
+                <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inv.influencerId, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
+              </div>
+              <!-- Reminder count + due-date hint -->
+              <div class="invite-meta-line" *ngIf="inv.remindersSent > 0 || inv.dueDate">
+                <small *ngIf="inv.remindersSent > 0">
+                  <i class="bi bi-bell-fill"></i> Reminded {{ inv.remindersSent }}×
+                </small>
+                <small *ngIf="inv.dueDate" [class.overdue]="isOverdue(inv)">
+                  <i class="bi bi-calendar-event"></i>
+                  {{ isOverdue(inv) ? 'Overdue' : 'Due' }}: {{ inv.dueDate | date:'MMM d' }}
+                </small>
+              </div>
             </div>
             <div class="invited-right">
               <span class="inv-status already-invited" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
-              <!-- Contact reveal for accepted invites -->
-              <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
+              <!-- Contact reveal for unlocked invites -->
+              <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && inv.unlocked">
                 <a class="contact-chip" *ngIf="inv.influencerId?.email"
                    [href]="'mailto:' + inv.influencerId.email">
                   <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
                 </a>
+                <a class="contact-chip" *ngIf="inv.influencerId?.phoneNumber"
+                   [href]="'tel:' + inv.influencerId.phoneNumber">
+                  <i class="bi bi-telephone-fill"></i> {{ inv.influencerId.phoneNumber }}
+                </a>
+              </div>
+              <!-- Locked: prompt unlock -->
+              <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !inv.unlocked">
+                <button class="btn-unlock-contact"
+                        type="button"
+                        [disabled]="unlockingInviteIds.has(inv._id)"
+                        (click)="unlockInviteContact(inv)">
+                  <i class="bi bi-unlock-fill"></i>
+                  {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock contact' }}
+                </button>
+                <small class="locked-hint">
+                  <i class="bi bi-lock-fill"></i> Contact hidden until you unlock
+                </small>
+              </div>
+              <!-- Brand actions row -->
+              <div class="invite-actions">
+                <button class="btn-action btn-remind"
+                        type="button"
+                        *ngIf="canRemind(inv)"
+                        [disabled]="actioningInviteIds.has(inv._id)"
+                        (click)="remindInvite(inv)"
+                        title="Send a reminder (max 1 / 24h)">
+                  <i class="bi bi-bell"></i> Remind
+                </button>
+                <button class="btn-action btn-withdraw"
+                        type="button"
+                        *ngIf="canWithdraw(inv)"
+                        [disabled]="actioningInviteIds.has(inv._id)"
+                        (click)="withdrawInvite(inv)"
+                        title="Withdraw this pending invite">
+                  <i class="bi bi-x-circle"></i> Withdraw
+                </button>
+                <button class="btn-action btn-report"
+                        type="button"
+                        *ngIf="canReport(inv)"
+                        [disabled]="actioningInviteIds.has(inv._id)"
+                        (click)="reportInvite(inv)"
+                        title="Report no-show / non-delivery / dispute">
+                  <i class="bi bi-flag-fill"></i> Report
+                </button>
+                <button class="btn-action btn-fulfill"
+                        type="button"
+                        *ngIf="canManageFulfillment(inv, invitePanelCampaign)"
+                        (click)="openFulfillment(inv)"
+                        [title]="getFulfillmentLabel(invitePanelCampaign)">
+                  <i class="bi bi-truck" *ngIf="invitePanelCampaign?.campaignType === 'product'"></i>
+                  <i class="bi bi-geo-alt-fill" *ngIf="invitePanelCampaign?.campaignType === 'invite_location'"></i>
+                  {{ getFulfillmentLabel(invitePanelCampaign) }}
+                </button>
               </div>
             </div>
           </div>
@@ -545,6 +711,14 @@
 
       <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
+      <div class="invite-limit-note" *ngIf="inviteSlotsLimit">
+        Invited {{ invites.length }} / {{ inviteSlotsLimit }} influencers
+        <span *ngIf="inviteSlotsRemaining <= 0">. Limit reached for this campaign.</span>
+        <button class="tier-info-trigger" type="button" (click)="tierInfo.open()">
+          <i class="bi bi-info-circle"></i> Tier info
+        </button>
+      </div>
+
       <div class="text-center py-4" *ngIf="influencersForInviteLoading">
         <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
       </div>
@@ -553,21 +727,34 @@
         <label class="search-inf-row"
           *ngFor="let inf of filteredInfluencersForInvite"
           [class.is-selected]="selectedInfluencerIds.has(inf._id)"
-          [class.is-already-invited]="invitedIds.has(inf._id)">
+          [class.is-already-invited]="invitedIds.has(inf._id)"
+          [class.is-disabled]="!invitedIds.has(inf._id) && !canSelectInfluencerForInvite(inf._id)">
 
           <!-- Checkbox (hidden for already-invited) -->
           <input type="checkbox" class="inf-checkbox"
             *ngIf="!invitedIds.has(inf._id)"
             [checked]="selectedInfluencerIds.has(inf._id)"
-            [disabled]="bulkSending"
+            [disabled]="bulkSending || !canSelectInfluencerForInvite(inf._id)"
             (change)="toggleInfluencerSelect(inf._id)" />
           <span class="inf-checkbox-spacer" *ngIf="invitedIds.has(inf._id)"></span>
 
-          <img class="invited-avatar" [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" />
+          <app-user-avatar
+            [name]="inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer'"
+            [src]="getInfluencerAvatar(inf)"
+            [size]="44"
+          ></app-user-avatar>
           <div class="invited-info">
-            <p class="invited-name">{{ inf.name || inf.fullname }}</p>
+            <p class="invited-name">{{ inf.name || inf.fullname }}
+              <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inf)" title="Verified Premium"></i>
+            </p>
             <p class="invited-username" *ngIf="inf.username">@{{ inf.username }}</p>
-            <p class="invited-meta" *ngIf="inf.categories?.length">{{ inf.categories[0] }}</p>
+            <div class="invited-badges">
+              <span class="tier-badge-mini" *ngIf="getInfluencerTier(inf)">{{ getInfluencerTier(inf) }}</span>
+              <span class="invited-meta" *ngIf="inf.categories?.length">{{ inf.categories[0] }}</span>
+            </div>
+            <div class="invited-socials" *ngIf="getInfluencerSocialTags(inf).length">
+              <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inf, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
+            </div>
           </div>
           <div class="invited-right">
             <span class="already-invited" *ngIf="invitedIds.has(inf._id)">
@@ -586,10 +773,12 @@
     <!-- Sticky send footer (visible when selection exists) -->
     <div class="invite-send-footer" *ngIf="inviteTab === 'search' && selectedInfluencerIds.size > 0">
       <span class="footer-count">{{ selectedInfluencerIds.size }} selected</span>
-      <button class="btn-send-selected" [disabled]="bulkSending" (click)="sendSelectedInvites()">
+      <button class="btn-send-selected"
+              [disabled]="bulkSending || isInviteQuotaFull(invitePanelCampaign)"
+              (click)="sendSelectedInvites()">
         <span *ngIf="bulkSending" class="btn-spinner"></span>
         <i class="bi bi-send-fill" *ngIf="!bulkSending"></i>
-        {{ bulkSending ? 'Sending…' : 'Send Invite' + (selectedInfluencerIds.size > 1 ? 's' : '') }}
+        {{ bulkSending ? 'Sending…' : (isInviteQuotaFull(invitePanelCampaign) ? 'Quota full' : 'Send Invite' + (selectedInfluencerIds.size > 1 ? 's' : '')) }}
       </button>
     </div>
 
@@ -607,5 +796,86 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
+
+  <!-- ─── Fulfillment Modal (Slice D) ─── -->
+  <div class="fulfill-overlay" *ngIf="fulfillModalOpen" (click)="closeFulfillment()"></div>
+  <div class="fulfill-modal" *ngIf="fulfillModalOpen && fulfillInvite">
+    <div class="fulfill-header">
+      <h4>
+        <i class="bi" [ngClass]="invitePanelCampaign?.campaignType === 'product' ? 'bi-truck' : 'bi-geo-alt-fill'"></i>
+        {{ getFulfillmentLabel(invitePanelCampaign) }}
+      </h4>
+      <button class="drawer-close" (click)="closeFulfillment()" type="button"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="fulfill-body">
+      <p class="fulfill-target">
+        For <strong>{{ fulfillInvite.influencerId?.name || 'Influencer' }}</strong>
+        <span *ngIf="fulfillInvite.influencerId?.username"> · @{{ fulfillInvite.influencerId.username }}</span>
+      </p>
+
+      <!-- Product fulfillment -->
+      <ng-container *ngIf="invitePanelCampaign?.campaignType === 'product'">
+        <label class="fulfill-label">Courier
+          <input type="text" class="fulfill-input" [(ngModel)]="fulfillForm.courier" placeholder="e.g. BlueDart, DTDC"/>
+        </label>
+        <label class="fulfill-label">Tracking ID
+          <input type="text" class="fulfill-input" [(ngModel)]="fulfillForm.trackingId" placeholder="AWB / consignment no."/>
+        </label>
+        <label class="fulfill-label">Tracking URL (optional)
+          <input type="url" class="fulfill-input" [(ngModel)]="fulfillForm.trackingUrl" placeholder="https://…"/>
+        </label>
+        <div class="fulfill-row">
+          <label class="fulfill-label">Shipped on
+            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.shippedAt"/>
+          </label>
+          <label class="fulfill-label">Delivered on
+            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.deliveredAt"/>
+          </label>
+        </div>
+        <label class="fulfill-label">Status
+          <select class="fulfill-input" [(ngModel)]="fulfillForm.status">
+            <option value="pending">Pending</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="returned">Returned</option>
+          </select>
+        </label>
+      </ng-container>
+
+      <!-- Location check-in -->
+      <ng-container *ngIf="invitePanelCampaign?.campaignType === 'invite_location'">
+        <label class="fulfill-label">Scheduled visit
+          <input type="datetime-local" class="fulfill-input" [(ngModel)]="fulfillForm.scheduledAt"/>
+        </label>
+        <label class="fulfill-label">Status
+          <select class="fulfill-input" [(ngModel)]="fulfillForm.status">
+            <option value="pending">Pending</option>
+            <option value="checked_in">Checked-in</option>
+            <option value="no_show">No-show</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <label class="fulfill-label" *ngIf="fulfillForm.status === 'checked_in'">Checked in at
+          <input type="datetime-local" class="fulfill-input" [(ngModel)]="fulfillForm.checkedInAt"/>
+        </label>
+      </ng-container>
+
+      <label class="fulfill-label">Note (optional)
+        <textarea class="fulfill-input" rows="2" [(ngModel)]="fulfillForm.note"></textarea>
+      </label>
+    </div>
+
+    <div class="fulfill-footer">
+      <button class="btn btn-outline-secondary" type="button" (click)="closeFulfillment()">Cancel</button>
+      <button class="btn btn-primary"
+              type="button"
+              [disabled]="savingFulfillment"
+              (click)="saveFulfillment()">
+        <span *ngIf="savingFulfillment" class="btn-spinner"></span>
+        {{ savingFulfillment ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </div>
 
 </div>

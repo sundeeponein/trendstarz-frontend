@@ -109,32 +109,6 @@
     }
   }
 
-  &__pro-badge {
-    position: absolute;
-    bottom: 0.6rem;
-    left: 0.6rem;
-    background: #ff6b35;
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 800;
-    padding: 0.18rem 0.5rem;
-    border-radius: 0.35rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  &__priority-badge {
-    position: absolute;
-    bottom: 0.6rem;
-    right: 0.6rem;
-    background: #1a2741;
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 0.18rem 0.5rem;
-    border-radius: 0.35rem;
-  }
-
   // --- Body ---
   &__body {
     padding: 0.9rem 1rem 1rem;

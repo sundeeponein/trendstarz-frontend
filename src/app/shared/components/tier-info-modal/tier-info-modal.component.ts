@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TierInfoService } from './tier-info.service';
 
 @Component({
   selector: 'app-tier-info-modal',
@@ -9,12 +10,5 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./tier-info-modal.component.scss']
 })
 export class TierInfoModalComponent {
-  @Input() tiers: any[] = [];
-  @Input() show = false;
-  @Output() showChange = new EventEmitter<boolean>();
-
-  close(): void {
-    this.show = false;
-    this.showChange.emit(false);
-  }
+  constructor(protected svc: TierInfoService) {}
 }

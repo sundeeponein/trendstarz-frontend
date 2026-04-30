@@ -3,10 +3,12 @@ import { RouterOutlet, Router } from '@angular/router';
 import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
+import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
+import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastHostComponent],
+  imports: [RouterOutlet, ToastHostComponent, TierInfoModalComponent, FlowHelpModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

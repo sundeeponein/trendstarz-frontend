@@ -255,7 +255,7 @@
                         </a>
                       </div>
                       <div class="col">
-                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
+                        <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
@@ -399,6 +399,5 @@
     </main>
   </div>
 
-<app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
 <app-reset-password-modal [(visible)]="showChangePasswordModal"></app-reset-password-modal>
 </div>

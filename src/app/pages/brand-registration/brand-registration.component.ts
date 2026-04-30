@@ -1,6 +1,6 @@
 import { environment } from '../../../environments/environment';
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
@@ -9,7 +9,7 @@ import { map, first } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -26,7 +26,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, TierInfoModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })
@@ -94,7 +94,7 @@ export class BrandRegistrationComponent implements OnInit {
   districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
-  showTierInfoModal = false;
+  protected tierInfo = inject(TierInfoService);
   languagesList: any[] = [];
   categoriesList: any[] = [];
 
@@ -141,6 +141,7 @@ export class BrandRegistrationComponent implements OnInit {
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
+      promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
       description: [''],
 
@@ -224,7 +225,9 @@ export class BrandRegistrationComponent implements OnInit {
       }
       this.cd.detectChanges();
     });
-    this.configService.getTiers().subscribe(data => this.tiers = data);
+    this.configService.getTiers().subscribe(data => {
+      this.tiers = Array.isArray(data) ? data : [];
+    });
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => this.categoriesList = data);
@@ -779,6 +782,7 @@ export class BrandRegistrationComponent implements OnInit {
 
     const payload: any = {
       ...raw,
+      promotionalPrice: Number(raw.promotionalPrice) || 0,
       location: {
         state: stateObj ? stateObj.name : raw.location.state,
         district: districtObj ? districtObj.name : raw.location.district,
@@ -818,6 +822,7 @@ export class BrandRegistrationComponent implements OnInit {
         // under zoneless change detection.
         this.registrationForm.reset({
           paymentOption: 'free',
+          promotionalPrice: 500,
           contact: { whatsapp: false, email: false, call: false }
         });
         this.refreshStepCompletion();
