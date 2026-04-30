@@ -49,6 +49,8 @@ export class CampaignDetailModalComponent {
 
   postDate = '';
   selectedContentTypeKey = '';
+  toastError = '';
+  private toastTimer: any;
 
   private get campaign(): any {
     return this.invite?.campaign || this.invite?.campaignId || {};
@@ -74,6 +76,10 @@ export class CampaignDetailModalComponent {
   get campaignDescription(): string { return this.campaign?.description || ''; }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
 
+  get campaignTypeKey(): string {
+    return (this.campaign?.campaignType || '').toLowerCase();
+  }
+
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
       paid_collab: 'Paid Collab',
@@ -81,19 +87,80 @@ export class CampaignDetailModalComponent {
       invite_location: 'Invite to Location',
       pay_to_join: 'Pay to Join',
     };
-    const t = (this.campaign?.campaignType || '').toLowerCase();
-    return m[t] || '';
+    return m[this.campaignTypeKey] || '';
   }
 
-  get hasBudget(): boolean {
-    const c = this.campaign;
-    return !!(c?.budgetMin || c?.budgetMax || c?.budget);
+  get isInviteLocation(): boolean { return this.campaignTypeKey === 'invite_location'; }
+  get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
+  get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
+  get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
+
+  get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
+
+  get productDescription(): string { return (this.campaign?.productDescription || '').trim(); }
+
+  get productValueText(): string {
+    const paise = Number(this.campaign?.productValue || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
   }
-  get budgetText(): string {
+  get productPaymentMode(): string { return String(this.campaign?.productPaymentMode || 'product_only'); }
+  get productPaymentAmountText(): string {
+    const paise = Number(this.campaign?.productPaymentAmount || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
+  }
+  get productSummary(): string {
+    const parts: string[] = [];
+    if (this.productValueText) parts.push(`Worth ${this.productValueText}`);
+    if (this.productPaymentMode === 'product_plus_payment' && this.productPaymentAmountText) {
+      parts.push(`+ ${this.productPaymentAmountText} cash`);
+    } else if (this.productPaymentMode === 'product_only' && this.productValueText) {
+      parts.push('(Product only)');
+    }
+    return parts.join(' ');
+  }
+
+  get venueName(): string { return (this.campaign?.venueName || '').trim(); }
+  get venueAddress(): string { return (this.campaign?.venueAddress || '').trim(); }
+  get venueCity(): string { return (this.campaign?.venueCity || '').trim(); }
+  get venueDistrict(): string { return (this.campaign?.venueDistrict || '').trim(); }
+  get venueState(): string { return (this.campaign?.venueState || '').trim(); }
+  get venueMapUrl(): string { return (this.campaign?.venueGoogleMapUrl || this.campaign?.venueMapUrl || '').trim(); }
+  get venueCityState(): string {
+    const parts = [this.venueCity, this.venueDistrict, this.venueState].filter(Boolean);
+    return parts.join(', ');
+  }
+  get hasVenueDetails(): boolean {
+    return !!(this.venueName || this.venueAddress || this.venueCity || this.venueDistrict || this.venueState || this.venueMapUrl);
+  }
+
+  get payToJoinBenefits(): string { return (this.campaign?.payToJoinBenefits || '').trim(); }
+  get payToJoinInstructions(): string { return (this.campaign?.payToJoinInstructions || '').trim(); }
+  get hasPayToJoinDetails(): boolean { return !!(this.payToJoinBenefits || this.payToJoinInstructions); }
+
+  get hasBudget(): boolean {
+    return !!this.yourPayoutText || !!this.campaignBudgetText;
+  }
+
+  get yourPayoutText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) {
+      return `₹${selected.price.toLocaleString('en-IN')}`;
+    }
+    const paise = Number(this.campaign?.pricePerInfluencer || 0);
+    if (paise > 0) {
+      const rupees = Math.floor(paise / 100);
+      return `₹${rupees.toLocaleString('en-IN')}`;
+    }
+    return '';
+  }
+
+  get campaignBudgetText(): string {
     const c = this.campaign;
     const min = Number(c?.budgetMin ?? c?.budget ?? 0);
     const max = Number(c?.budgetMax ?? c?.budget ?? min);
-    if (!min && !max) return '—';
+    if (!min && !max) return '';
     if (min === max) return `₹${min.toLocaleString('en-IN')}`;
     return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
   }
@@ -125,9 +192,20 @@ export class CampaignDetailModalComponent {
     return Number(this.campaign?.maxInfluencers || 0) || 0;
   }
 
-  get deliverables(): string[] {
-    const d = this.campaign?.deliverables;
-    return Array.isArray(d) ? d : [];
+  get selectedOutputs(): string[] {
+    const sm = this.campaign?.socialMedia;
+    if (Array.isArray(sm) && sm.length) {
+      const outputs: string[] = [];
+      for (const row of sm) {
+        const platform = this.platformLabel(row?.platform || '');
+        for (const ct of row?.contentTypes || []) {
+          if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
+        }
+      }
+      if (outputs.length) return outputs;
+    }
+    const legacy = this.campaign?.deliverables;
+    return Array.isArray(legacy) ? legacy : [];
   }
 
   get platforms(): { platform: string }[] {
@@ -160,6 +238,50 @@ export class CampaignDetailModalComponent {
       }
     }
     return out;
+  }
+
+  get selectedContentTypeOption(): ContentTypeOption | undefined {
+    if (!this.selectedContentTypeKey) return undefined;
+    return this.contentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
+  }
+
+  get selectedPayoutHint(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) {
+      return `Selected payout: ₹${selected.price.toLocaleString('en-IN')}`;
+    }
+    return this.yourPayoutText ? `Payout: ${this.yourPayoutText}` : '';
+  }
+
+  get specialInstructions(): string {
+    return (this.campaign?.specialInstructions || '').trim();
+  }
+
+  get minInfluencerTier(): string {
+    return (this.campaign?.minInfluencerTier || '').trim();
+  }
+
+  get checklistPlatformText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.platform) return this.platformLabel(selected.platform);
+    if (this.platforms.length > 0) return this.platformLabel(this.platforms[0].platform);
+    return 'Not specified';
+  }
+
+  get checklistContentTypeText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.contentType) return selected.contentType;
+    if (this.contentTypeOptions.length > 0) return 'Select one before accepting';
+    return 'As discussed with brand';
+  }
+
+  get checklistSubmissionDeadlineText(): string {
+    if (!this.maxPostDate) return 'Campaign timeline end';
+    return new Date(this.maxPostDate).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
   get brandName(): string {
@@ -242,16 +364,23 @@ export class CampaignDetailModalComponent {
 
   onClose() { this.close.emit(); }
 
+  private showToastError(msg: string) {
+    this.toastError = msg;
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => { this.toastError = ''; }, 4000);
+  }
+
   onAccept() {
     if (!this.inviteId) return;
     if (this.showDateInput && !this.postDate) {
-      this.validationError.emit('Please select a posting date before accepting.');
+      this.showToastError('Please select a posting date before accepting.');
       return;
     }
     if (this.contentTypeOptions.length && !this.selectedContentTypeKey) {
-      this.validationError.emit('Please select what you will create.');
+      this.showToastError('Please select a content type before accepting.');
       return;
     }
+    this.toastError = '';
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];

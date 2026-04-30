@@ -28,8 +28,26 @@ export interface Campaign {
   categories?: string[];
   deliverables?: string[];
   minFollowerCount?: number;
+  minInfluencerTier?: string;
   platformPreference?: string;
   specialInstructions?: string;
+  // Invite-to-location specific fields
+  venueName?: string;
+  venueAddress?: string;
+  venueCity?: string;
+  venueDistrict?: string;
+  venueState?: string;
+  venueGoogleMapUrl?: string;
+  // Product collaboration specific fields
+  productDescription?: string;
+  productValue?: number; // paise
+  productPaymentMode?: 'product_only' | 'product_plus_payment';
+  productPaymentAmount?: number; // paise (when mode = product_plus_payment)
+  // Invite to location specific benefits text (e.g. "Stay + food included")
+  inviteBenefits?: string;
+  // Pay-to-join specific fields
+  payToJoinBenefits?: string;
+  payToJoinInstructions?: string;
   createdAt?: string;
   updatedAt?: string;
 }

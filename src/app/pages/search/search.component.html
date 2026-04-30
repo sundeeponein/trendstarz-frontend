@@ -69,26 +69,13 @@
       </select>
     </div>
 
-    <!-- Min Followers -->
-    <div class="filter-item followers-item">
-      <label class="filter-label">Reach (Followers)</label>
-      <div class="followers-range">
-        <input
-          type="number"
-          class="filter-input range-input"
-          placeholder="Min"
-          [(ngModel)]="infFilters.minFollowers"
-          (ngModelChange)="applyInfluencerFilters()"
-          min="0" />
-        <span class="range-sep">–</span>
-        <input
-          type="number"
-          class="filter-input range-input"
-          placeholder="Max"
-          [(ngModel)]="infFilters.maxFollowers"
-          (ngModelChange)="applyInfluencerFilters()"
-          min="0" />
-      </div>
+    <!-- Tier -->
+    <div class="filter-item">
+      <label class="filter-label">Tier</label>
+      <select class="filter-select" [(ngModel)]="infFilters.tier" (ngModelChange)="applyInfluencerFilters()">
+        <option value="">All Tiers</option>
+        <option *ngFor="let tier of tierOptions" [value]="tier">{{ tier }}</option>
+      </select>
     </div>
 
     <!-- Actions -->

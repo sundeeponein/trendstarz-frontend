@@ -1,7 +1,7 @@
 // ...existing code...
 import { environment } from '../../../environments/environment';
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, NgZone, inject } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
@@ -12,7 +12,7 @@ import { passwordStrengthValidator, getPasswordChecks } from '../../shared/passw
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -29,7 +29,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, TierInfoModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
@@ -185,7 +185,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   states: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
-  showTierInfoModal = false;
+  protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
   // Cached upload result so we don't re-upload (and orphan the previous upload) on retry.
@@ -262,7 +262,9 @@ export class InfluencerRegistrationComponent implements OnInit {
       }
       this.cdr.detectChanges();
     });
-    this.configService.getTiers().subscribe(data => this.tiers = data);
+    this.configService.getTiers().subscribe(data => {
+      this.tiers = Array.isArray(data) ? data : [];
+    });
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories().subscribe(data => {

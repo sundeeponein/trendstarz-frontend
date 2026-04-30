@@ -1,7 +1,7 @@
 import { environment } from '../../../environments/environment';
 const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
 const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
-import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
@@ -19,7 +19,7 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -259,7 +259,7 @@ export class InfluencerProfileComponent implements OnInit {
   districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
-  showTierInfoModal = false;
+  protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
   readonly MAX_IMAGE_SIZE_MB = 5; // allow up to 5 MB before rejecting
@@ -362,7 +362,8 @@ export class InfluencerProfileComponent implements OnInit {
     }).subscribe({
       next: (dropdownData) => {
         this.states = dropdownData.states || [];
-        this.tiers = dropdownData.tiers || [];
+        const tierRows = Array.isArray(dropdownData.tiers) ? dropdownData.tiers : [];
+        this.tiers = tierRows;
         this.socialMediaList = dropdownData.socialMedia || [];
         this.languagesList = dropdownData.languages || [];
         this.categoriesList = dropdownData.categories || [];

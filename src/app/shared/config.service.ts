@@ -425,6 +425,12 @@ export class ConfigService {
     );
   }
 
+  applyToOpenCampaign(campaignId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/apply`, {}).pipe(
+      map(res => this.extractData<any>(res) || res)
+    );
+  }
+
   respondToInvite(
     inviteId: string,
     status: 'accepted' | 'declined',
@@ -441,6 +447,59 @@ export class ConfigService {
       body.payout = payout;
     }
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, body);
+  }
+
+  /** Brand-initiated contact unlock for an accepted invite. */
+  unlockInviteContact(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/unlock`, {});
+  }
+
+  // ── Slice D: fulfillment ─────────────────────────────────────
+  /** Brand updates product-shipping fulfillment for a `product` campaign invite. */
+  updateInviteProductFulfillment(
+    inviteId: string,
+    body: {
+      courier?: string;
+      trackingId?: string;
+      trackingUrl?: string;
+      shippedAt?: string;
+      deliveredAt?: string;
+      status?: 'pending' | 'shipped' | 'delivered' | 'returned';
+      note?: string;
+    },
+  ): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/fulfillment/product`, body);
+  }
+
+  /** Brand updates check-in / no-show for an `invite_location` campaign invite. */
+  updateInviteCheckIn(
+    inviteId: string,
+    body: {
+      status?: 'pending' | 'checked_in' | 'no_show' | 'cancelled';
+      scheduledAt?: string;
+      checkedInAt?: string;
+      note?: string;
+    },
+  ): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/fulfillment/check-in`, body);
+  }
+
+  /** Brand sets the deliverable due-date for an invite. */
+  setInviteDueDate(inviteId: string, dueDate: string | null): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/due-date`, { dueDate });
+  }
+
+  // ── Slice E: brand actions ───────────────────────────────────
+  remindInvite(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/remind`, {});
+  }
+
+  withdrawInvite(inviteId: string, reason?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/withdraw`, { reason });
+  }
+
+  reportInviteIssue(inviteId: string, reason: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/report`, { reason });
   }
 
   submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {

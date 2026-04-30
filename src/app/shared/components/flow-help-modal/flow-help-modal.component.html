@@ -1,0 +1,58 @@
+<div class="flow-help-backdrop" *ngIf="flowHelp.isOpen" (click)="flowHelp.close()"></div>
+
+<div class="flow-help-modal" *ngIf="flowHelp.isOpen" role="dialog" aria-modal="true">
+  <div class="flow-help-card" (click)="$event.stopPropagation()">
+    <div class="flow-help-header">
+      <div>
+        <h5>{{ flowHelp.content?.title }}</h5>
+        <p *ngIf="flowHelp.content?.subtitle">{{ flowHelp.content?.subtitle }}</p>
+      </div>
+      <button type="button" class="flow-help-close" aria-label="Close" (click)="flowHelp.close()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="flow-help-body">
+      <div class="flow-help-steps" *ngIf="flowHelp.content?.steps?.length">
+        <div class="flow-help-step" *ngFor="let step of flowHelp.content?.steps; let i = index">
+          <span class="flow-help-step-num">{{ i + 1 }}</span>
+          <div class="flow-help-step-copy">
+            <strong>{{ step.label }}</strong>
+            <span>{{ step.detail }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-help-section" *ngFor="let section of flowHelp.content?.sections">
+        <h6>{{ section.title }}</h6>
+        <ul>
+          <li *ngFor="let point of section.points">{{ point }}</li>
+        </ul>
+      </div>
+
+      <div class="flow-help-post-accept" *ngIf="flowHelp.content?.postAcceptByType?.length && flowHelp.content as content">
+        <h6>After Influencer Accepts (Based on Campaign Type)</h6>
+        <div class="flow-help-type-card" *ngFor="let item of content.postAcceptByType">
+          <p class="flow-help-type-title">{{ item.label }}</p>
+          <ul>
+            <li *ngFor="let step of item.nextSteps">{{ step }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flow-help-example" *ngIf="flowHelp.content?.example as example">
+        <h6>{{ example.title }}</h6>
+        <div class="flow-help-example-grid">
+          <div class="flow-help-example-row" *ngFor="let row of example.fields">
+            <span class="flow-help-label">{{ row.label }}</span>
+            <span class="flow-help-value">{{ row.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-help-footer">
+      <button type="button" class="btn btn-secondary" (click)="flowHelp.close()">Close</button>
+    </div>
+  </div>
+</div>

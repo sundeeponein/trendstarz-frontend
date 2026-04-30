@@ -81,6 +81,29 @@
 .invite-detail-val { color: #333; }
 .deliverables-label { font-size: 0.82rem; color: #999; font-weight: 500; }
 
+.invite-brief {
+  margin: 0.2rem 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #f1e5d9;
+  border-radius: 10px;
+  background: #fffaf5;
+}
+
+.invite-brief__label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #9a5a2b;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.invite-brief__text {
+  margin-top: 0.2rem;
+  color: #5c402b;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 .chip {
   display: inline-block;
   padding: 0.18rem 0.6rem;
@@ -139,6 +162,19 @@
   font-size: 0.82rem;
   color: #374151;
   background: #fff;
+}
+
+.inv-payout-hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #f3d9bf;
+  background: #fff6eb;
+  color: #9a4a16;
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 // Payout details inline panel
@@ -223,4 +259,60 @@
   font-size: 0.88rem;
   font-weight: 600;
   i { margin-right: 4px; }
+}
+
+.invite-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
+}
+
+.chip--type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fff4ec;
+  color: #c84a16;
+  border: 1px solid #f3c8b0;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.invite-venue {
+  background: #fafaf7;
+  border: 1px solid #efece6;
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  margin: 0 0 0.7rem;
+
+  .invite-brief__label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6d6a64;
+    margin-bottom: 0.25rem;
+  }
+  .invite-brief__text { font-size: 0.86rem; color: #2c2c2c; }
+  a { color: #c84a16; text-decoration: none; font-weight: 600; }
+  a:hover { text-decoration: underline; }
+}
+
+.chip--comp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #ecfdf3;
+  color: #117a3a;
+  border: 1px solid #b7e4c7;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
 }

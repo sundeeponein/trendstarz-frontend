@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
+import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { CampaignInfluencer } from '../../shared/campaigns/campaign.model';
@@ -16,6 +17,8 @@ import { CampaignInfluencer } from '../../shared/campaigns/campaign.model';
   styleUrls: ['./search.component.scss']
 })
 export class SearchComponent implements OnInit {
+  private readonly tierOrder = TIER_ORDER;
+
   activeTab: 'influencers' | 'brands' = 'influencers';
 
   // Raw data
@@ -40,14 +43,14 @@ export class SearchComponent implements OnInit {
   brandCategoryOptions: string[] = [];
   locationOptions: string[] = [];
   brandLocationOptions: string[] = [];
+  tierOptions: string[] = [];
 
   // Influencer filters
   infFilters = {
     keyword: '',
     category: '',
     location: '',
-    minFollowers: null as number | null,
-    maxFollowers: null as number | null,
+    tier: '',
     minEngagement: 0,
   };
 
@@ -153,14 +156,26 @@ export class SearchComponent implements OnInit {
   buildInfluencerOptions(data: any[]) {
     const cats = new Set<string>();
     const locs = new Set<string>();
+    const tiers = new Set<string>();
     data.forEach(u => {
       (u.categories || []).forEach((c: string) => cats.add(c));
       const state = u.location?.state;
       if (state) locs.add(state);
+      const tier = this.normalizeTierLabel(this.getInfluencerPrimaryTier(u));
+      if (tier) tiers.add(tier);
     });
     this.categoryOptions = Array.from(cats).sort();
     this.locationOptions = Array.from(locs).sort();
+    const known = this.tierOrder.filter(t => tiers.has(t));
+    const unknown = Array.from(tiers)
+      .filter(t => !this.tierOrder.includes(t))
+      .sort((a, b) => a.localeCompare(b));
+    this.tierOptions = [...known, ...unknown];
   }
+
+  private normalizeTierLabel(tier: string): string { return normalizeTierLabel(tier); }
+
+  private getInfluencerPrimaryTier(u: any): string { return getInfluencerPrimaryTier(u); }
 
   buildBrandOptions(data: any[]) {
     const cats = new Set<string>();
@@ -185,9 +200,10 @@ export class SearchComponent implements OnInit {
       }
       if (f.category && !(u.categories || []).includes(f.category)) return false;
       if (f.location && u.location?.state !== f.location) return false;
-      const followers = u.socialMedia?.[0]?.followersCount ?? 0;
-      if (f.minFollowers !== null && followers < f.minFollowers) return false;
-      if (f.maxFollowers !== null && followers > f.maxFollowers) return false;
+      if (f.tier) {
+        const tier = this.normalizeTierLabel(this.getInfluencerPrimaryTier(u));
+        if (!tier || tier !== this.normalizeTierLabel(f.tier)) return false;
+      }
       return true;
     });
   }
@@ -208,7 +224,7 @@ export class SearchComponent implements OnInit {
   }
 
   clearInfluencerFilters() {
-    this.infFilters = { keyword: '', category: '', location: '', minFollowers: null, maxFollowers: null, minEngagement: 0 };
+    this.infFilters = { keyword: '', category: '', location: '', tier: '', minEngagement: 0 };
     this.applyInfluencerFilters();
   }
 
