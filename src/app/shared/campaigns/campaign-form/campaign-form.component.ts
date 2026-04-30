@@ -22,14 +22,26 @@ export class CampaignFormComponent implements OnInit {
   readonly tierOrder: readonly string[] = TIER_ORDER;
     selectionLimitError = '';
 
+    /** Count of non-declined invites already sent for this campaign. */
+    get invitedCount(): number {
+      return (this.campaignInvites || [])
+        .filter(i => String(i?.status || '').toLowerCase() !== 'declined')
+        .length;
+    }
+    /** Total slots taken = invited + currently-selected. */
+    get takenSlotsCount(): number {
+      return this.invitedCount + this.selectedInfluencerIds.size;
+    }
+
     canSelectMoreInfluencers(): boolean {
       const max = Number(this.f['maxInfluencers']?.value || 0);
-      return max === 0 || this.selectedInfluencerIds.size < max;
+      return max === 0 || this.takenSlotsCount < max;
     }
   campaignInvites: any[] = [];
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
+  @Input() hasPremium: boolean = false;
   @Output() save = new EventEmitter<Partial<Campaign> & { inviteInfluencerIds?: string[] }>();
   @Output() cancel = new EventEmitter<void>();
   form!: FormGroup;
@@ -52,6 +64,8 @@ export class CampaignFormComponent implements OnInit {
     'Released after campaign approval',
   ];
   categoriesList: any[] = [];
+  states: any[] = [];
+  districts: any[] = [];
   selectedCategories: string[] = [];
   selectedPlatforms: string[] = [];
   activePlatformTab = '';
@@ -75,7 +89,66 @@ export class CampaignFormComponent implements OnInit {
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
       platformPreference: [this.campaign?.platformPreference || ''],
       specialInstructions: [this.campaign?.specialInstructions || ''],
+      venueName: [(this.campaign as any)?.venueName || ''],
+      venueAddress: [(this.campaign as any)?.venueAddress || ''],
+      venueCity: [(this.campaign as any)?.venueCity || ''],
+      venueDistrict: [(this.campaign as any)?.venueDistrict || ''],
+      venueState: [(this.campaign as any)?.venueState || ''],
+      venueGoogleMapUrl: [(this.campaign as any)?.venueGoogleMapUrl || ''],
+      payToJoinBenefits: [(this.campaign as any)?.payToJoinBenefits || ''],
+      payToJoinInstructions: [(this.campaign as any)?.payToJoinInstructions || ''],
+      productValue: [this.getInitialProductValue()],
+      productDescription: [(this.campaign as any)?.productDescription || ''],
+      productPaymentMode: [(this.campaign as any)?.productPaymentMode || 'product_only'],
+      productPaymentAmount: [this.getInitialProductPaymentAmount()],
+      inviteBenefits: [(this.campaign as any)?.inviteBenefits || ''],
     }, { validators: [this.dateRangeValidator] });
+
+    this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
+    // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
+    if (!this.hasPremium && this.isPremiumOnlyType(String(this.f['campaignType']?.value || ''))) {
+      this.form.patchValue({ campaignType: 'paid_collab' }, { emitEvent: false });
+      this.applyCampaignTypeValidators('paid_collab');
+    }
+    this.form.get('campaignType')?.valueChanges.subscribe((type: string) => {
+      const t = String(type || '');
+      if (!this.hasPremium && this.isPremiumOnlyType(t)) {
+        // Block selection at the form level (UI also disables the option, but be defensive)
+        this.form.patchValue({ campaignType: 'paid_collab' }, { emitEvent: false });
+        this.applyCampaignTypeValidators('paid_collab');
+        return;
+      }
+      this.applyCampaignTypeValidators(t);
+    });
+    this.form.get('productPaymentMode')?.valueChanges.subscribe(() => {
+      this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
+    });
+
+    // Load states and (when state selected) districts
+    this.config.getStates().subscribe({
+      next: (data: any[]) => {
+        this.states = Array.isArray(data) ? data : [];
+        // If editing with an existing state, fetch its districts
+        const currentState = this.form.get('venueState')?.value;
+        if (currentState) this.loadDistrictsFor(currentState);
+        this.cd.detectChanges();
+      },
+      error: () => { this.states = []; }
+    });
+
+    this.form.get('venueState')?.valueChanges.subscribe((stateName: string) => {
+      // Reset district when state changes (but only if user changed it after init)
+      const existingDistrict = (this.campaign as any)?.venueDistrict || '';
+      const isEditingSameState = this.isEdit && stateName === ((this.campaign as any)?.venueState || '');
+      if (!isEditingSameState) {
+        this.form.get('venueDistrict')?.setValue('', { emitEvent: false });
+      }
+      this.loadDistrictsFor(stateName);
+      // Re-apply edit-mode preset once districts load
+      if (isEditingSameState && existingDistrict) {
+        setTimeout(() => this.form.get('venueDistrict')?.setValue(existingDistrict, { emitEvent: false }), 0);
+      }
+    });
 
     if (this.campaign?.image?.url) {
       this.imagePreview = this.campaign.image.url;
@@ -116,6 +189,9 @@ export class CampaignFormComponent implements OnInit {
 
   get isEdit(): boolean { return this.mode === 'edit'; }
   get f() { return this.form.controls; }
+  get selectedCampaignType(): string {
+    return String(this.f['campaignType']?.value || 'paid_collab');
+  }
 
   get estimatedBudgetRupees(): number {
     const price = Number(this.f['pricePerInfluencer']?.value || 0);
@@ -130,6 +206,16 @@ export class CampaignFormComponent implements OnInit {
     return budgetMin > 0 ? budgetMin : null;
   }
 
+  private getInitialProductValue(): number | null {
+    const paise = Number((this.campaign as any)?.productValue || 0);
+    return paise > 0 ? Math.floor(paise / 100) : null;
+  }
+
+  private getInitialProductPaymentAmount(): number | null {
+    const paise = Number((this.campaign as any)?.productPaymentAmount || 0);
+    return paise > 0 ? Math.floor(paise / 100) : null;
+  }
+
   private dateRangeValidator = (group: FormGroup) => {
     const start = group.get('timelineStart')?.value;
     const end = group.get('timelineEnd')?.value;
@@ -139,13 +225,114 @@ export class CampaignFormComponent implements OnInit {
 
   // ── Stepper helpers ──────────────────────────────────────────
   step1Valid(): boolean {
+    const isLocation = this.selectedCampaignType === 'invite_location';
     return !!(
       this.f['title'].valid &&
       this.f['campaignType'].valid &&
       this.f['timelineStart'].value &&
       this.f['timelineEnd'].value &&
+      (!isLocation || (this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid && this.f['inviteBenefits'].valid)) &&
       !this.form.errors?.['invalidDateRange']
     );
+  }
+
+  isPremiumOnlyType(type: string): boolean {
+    return type === 'product' || type === 'invite_location';
+  }
+
+  private applyCampaignTypeValidators(type: string): void {
+    const isLocation = type === 'invite_location';
+    const isPayToJoin = type === 'pay_to_join';
+    const isPaid = type === 'paid_collab';
+    const isProduct = type === 'product';
+
+    // Price per influencer: required only for paid_collab and pay_to_join
+    const priceValidators = (isPaid || isPayToJoin) ? [Validators.required, Validators.min(1)] : [];
+    this.form.get('pricePerInfluencer')?.setValidators(priceValidators);
+
+    this.form.get('venueAddress')?.setValidators(isLocation ? [Validators.required, Validators.minLength(5)] : []);
+    this.form.get('venueState')?.setValidators(isLocation ? [Validators.required] : []);
+    this.form.get('venueDistrict')?.setValidators(isLocation ? [Validators.required] : []);
+    this.form.get('venueCity')?.setValidators(isLocation ? [Validators.required] : []);
+    this.form.get('inviteBenefits')?.setValidators(isLocation ? [Validators.required, Validators.minLength(3)] : []);
+    this.form.get('payToJoinBenefits')?.setValidators(isPayToJoin ? [Validators.required, Validators.minLength(5)] : []);
+
+    // Product: description required; productValue optional
+    this.form.get('productDescription')?.setValidators(isProduct ? [Validators.required, Validators.minLength(3)] : []);
+
+    // Product cash amount required only when product + product_plus_payment
+    const mode = String(this.form.get('productPaymentMode')?.value || 'product_only');
+    const needsProductCash = isProduct && mode === 'product_plus_payment';
+    this.form.get('productPaymentAmount')?.setValidators(needsProductCash ? [Validators.required, Validators.min(1)] : []);
+
+    [
+      'pricePerInfluencer', 'venueAddress', 'venueState', 'venueDistrict', 'venueCity', 'inviteBenefits',
+      'payToJoinBenefits', 'productDescription', 'productPaymentAmount'
+    ].forEach(name => this.form.get(name)?.updateValueAndValidity({ emitEvent: false }));
+    this.cd.markForCheck();
+  }
+
+  private loadDistrictsFor(stateValue: string) {
+    if (!stateValue) {
+      this.districts = [];
+      this.cd.detectChanges();
+      return;
+    }
+    const sel = (this.states || []).find((s: any) => s?.name === stateValue || s?._id === stateValue || s?.id === stateValue);
+    const stateName = sel?.name || stateValue;
+    const stateId = sel?._id || sel?.id || '';
+    this.config.getDistricts(stateName, stateId).subscribe({
+      next: (data: any[]) => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+      error: () => { this.districts = []; this.cd.detectChanges(); }
+    });
+  }
+
+  private sanitizeCampaignTypeFields(payload: any): any {
+    const t = String(payload?.campaignType || '');
+    if (t !== 'invite_location') {
+      payload.venueName = undefined;
+      payload.venueAddress = undefined;
+      payload.venueCity = undefined;
+      payload.venueDistrict = undefined;
+      payload.venueState = undefined;
+      payload.venueGoogleMapUrl = undefined;
+      payload.inviteBenefits = undefined;
+    }
+    if (t !== 'pay_to_join') {
+      payload.payToJoinBenefits = undefined;
+      payload.payToJoinInstructions = undefined;
+    }
+    if (t !== 'product') {
+      payload.productValue = undefined;
+      payload.productDescription = undefined;
+      payload.productPaymentMode = undefined;
+      payload.productPaymentAmount = undefined;
+    } else {
+      // Convert rupees → paise for product money fields
+      if (payload.productValue !== undefined && payload.productValue !== null && payload.productValue !== '') {
+        payload.productValue = Math.round(Number(payload.productValue) * 100);
+      } else {
+        payload.productValue = undefined;
+      }
+      if (payload.productPaymentMode === 'product_plus_payment'
+        && payload.productPaymentAmount !== undefined
+        && payload.productPaymentAmount !== null
+        && payload.productPaymentAmount !== '') {
+        payload.productPaymentAmount = Math.round(Number(payload.productPaymentAmount) * 100);
+      } else {
+        payload.productPaymentAmount = undefined;
+        if (payload.productPaymentMode !== 'product_plus_payment') {
+          payload.productPaymentMode = 'product_only';
+        }
+      }
+    }
+    // For non-paid types, do not send a 0 / null pricePerInfluencer (backend rejects 0)
+    if (t !== 'paid_collab' && t !== 'pay_to_join') {
+      if (!payload.pricePerInfluencer || Number(payload.pricePerInfluencer) <= 0) {
+        payload.pricePerInfluencer = undefined;
+      }
+    }
+    return payload;
   }
 
   goToStep(step: number) {
@@ -193,6 +380,10 @@ export class CampaignFormComponent implements OnInit {
 
   get filteredInfluencers(): any[] {
     let list = this.allInfluencers;
+    // Hide influencers who are already invited (non-declined) for this campaign
+    if (this.campaignInvites?.length) {
+      list = list.filter(inf => !this.isInfluencerInvited(inf));
+    }
     const q = this.influencerSearch.toLowerCase().trim();
     if (q) {
       list = list.filter(inf =>
@@ -333,8 +524,8 @@ export class CampaignFormComponent implements OnInit {
       this.selectedInfluencerIds.delete(id);
       return;
     }
-    if (max > 0 && this.selectedInfluencerIds.size >= max) {
-      this.selectionLimitError = `You can select up to ${max} influencers only.`;
+    if (max > 0 && this.takenSlotsCount >= max) {
+      this.selectionLimitError = `You can select up to ${max} influencers only (already invited: ${this.invitedCount}).`;
       if ((window as any).showToast) {
         (window as any).showToast(this.selectionLimitError, 'error');
       }
@@ -451,6 +642,7 @@ export class CampaignFormComponent implements OnInit {
         }))
       })),
     };
+    this.sanitizeCampaignTypeFields(payload);
     this.uploading = false;
     this.save.emit(payload);
     this.selectedInfluencerIds.clear();
@@ -480,6 +672,7 @@ export class CampaignFormComponent implements OnInit {
       pricePerInfluencer: pricePerInfluencerPaise,
       status: 'active',
     };
+    this.sanitizeCampaignTypeFields(payload);
     if (this.selectedFile) {
       try {
         payload.image = await this.uploadToCloudinary(this.selectedFile);
@@ -530,7 +723,12 @@ export class CampaignFormComponent implements OnInit {
   onCancel() { this.cancel.emit(); }
 
   isInfluencerInvited(inf: any): boolean {
-    return this.campaignInvites.some(i => String(i.influencerId?._id || i.influencerId) === inf._id);
+    return this.campaignInvites.some(i => {
+      const status = String(i?.status || '').toLowerCase();
+      if (status === 'declined') return false;
+      const inviteInfId = String(i.influencerId?._id || i.influencerId || '');
+      return inviteInfId === String(inf?._id || '');
+    });
   }
 }
 

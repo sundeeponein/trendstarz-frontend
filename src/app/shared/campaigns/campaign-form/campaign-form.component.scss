@@ -366,6 +366,25 @@ form {
   margin: 0 0 8px;
 }
 
+.premium-lock-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: linear-gradient(90deg, rgba(255, 193, 7, 0.10), rgba(255, 193, 7, 0.04));
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  border-radius: 6px;
+  color: #8a6d00;
+  font-size: 0.78rem;
+  i {
+    color: #b58900;
+  }
+  strong {
+    font-weight: 600;
+  }
+}
+
 /* ── Step 3 Influencer List ──────────── */
 .form-body--step3 {
   padding-top: 16px;

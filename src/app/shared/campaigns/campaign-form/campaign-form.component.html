@@ -72,13 +72,10 @@
           <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
             Example: Visit our location, capture ambience highlights, and share one experience reel.
           </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'pay_to_join'">
-            Example: Creator pays to join this opportunity and receives guaranteed feature placement.
-          </p>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Campaign type <span class="required">*</span></label>
+          <label class="field-label">Collaboration Type <span class="required">*</span></label>
           <button
             type="button"
             class="field-guide-link"
@@ -87,11 +84,52 @@
             <i class="bi bi-info-circle"></i> Open guide for Step 1
           </button>
           <select formControlName="campaignType" class="field-input">
-            <option value="paid_collab">Paid collaboration</option>
-            <option value="product">Product collaboration</option>
-            <option value="invite_location">Invite to location</option>
-            <option value="pay_to_join">Pay to join</option>
+            <option value="paid_collab">💰 Paid Collab</option>
+            <option value="product" [disabled]="!hasPremium">🎁 Product Collab{{ !hasPremium ? ' 🔒 Premium' : '' }}</option>
+            <option value="invite_location" [disabled]="!hasPremium">📍 Invite to Location{{ !hasPremium ? ' 🔒 Premium' : '' }}</option>
           </select>
+          <p class="field-sublabel premium-lock-hint" *ngIf="!hasPremium">
+            <i class="bi bi-lock-fill"></i>
+            Upgrade to <strong>Premium</strong> to create Product &amp; Invite campaigns.
+          </p>
+        </div>
+
+        <div class="field-group" *ngIf="selectedCampaignType === 'invite_location'">
+          <label class="field-label">Venue details <span class="required">*</span></label>
+          <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
+          <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Venue address" />
+          <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Venue address is required</span>
+          <div class="field-row mt-2">
+            <div class="field-group half">
+              <select formControlName="venueState" class="field-input">
+                <option value="">Select state</option>
+                <option *ngFor="let s of states" [value]="s.name">{{ s.name }}</option>
+              </select>
+              <span class="field-error" *ngIf="f['venueState'].touched && f['venueState'].invalid">State is required</span>
+            </div>
+            <div class="field-group half">
+              <select formControlName="venueDistrict" class="field-input" [disabled]="!f['venueState'].value || !districts.length">
+                <option value="">{{ f['venueState'].value ? (districts.length ? 'Select district' : 'Loading districts...') : 'Select state first' }}</option>
+                <option *ngFor="let d of districts" [value]="d.name">{{ d.name }}</option>
+              </select>
+              <span class="field-error" *ngIf="f['venueDistrict'].touched && f['venueDistrict'].invalid">District is required</span>
+            </div>
+          </div>
+          <div class="field-row mt-2">
+            <div class="field-group half">
+              <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
+              <span class="field-error" *ngIf="f['venueCity'].touched && f['venueCity'].invalid">City is required</span>
+            </div>
+          </div>
+          <input type="url" formControlName="venueGoogleMapUrl" class="field-input mt-2" placeholder="Google Maps link (optional)" />
+        </div>
+
+        <div class="field-group" *ngIf="selectedCampaignType === 'invite_location'">
+          <label class="field-label">Location &amp; Benefits <span class="required">*</span></label>
+          <p class="field-sublabel">Mention stay, food, travel, etc.</p>
+          <textarea formControlName="inviteBenefits" class="field-textarea" rows="3"
+            placeholder="Example: Stay + food included, complimentary spa, brand gift hamper"></textarea>
+          <span class="field-error" *ngIf="f['inviteBenefits'].touched && f['inviteBenefits'].invalid">Benefits are required</span>
         </div>
 
         <div class="field-group">
@@ -147,10 +185,13 @@
     <form [formGroup]="form" *ngIf="currentStep === 2">
       <div class="form-body">
 
-        <div class="field-row">
+        <div class="field-row" *ngIf="selectedCampaignType === 'paid_collab' || selectedCampaignType === 'pay_to_join'">
           <div class="field-group half">
-            <label class="field-label">Price per influencer (₹) <span class="required">*</span></label>
-            <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 1200" min="1" />
+            <label class="field-label">
+              {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per influencer (₹)' : 'Campaign Budget (₹)' }}
+              <span class="required">*</span>
+            </label>
+            <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 3000" min="1" />
             <span class="field-error" *ngIf="f['pricePerInfluencer'].touched && f['pricePerInfluencer'].invalid">Enter a value greater than 0</span>
           </div>
           <div class="field-group half">
@@ -160,9 +201,60 @@
           </div>
         </div>
 
+        <p class="field-sublabel" *ngIf="selectedCampaignType === 'paid_collab'">
+          <i class="bi bi-info-circle"></i>
+          Prices are negotiable. Influencers can accept or send counter offers.
+        </p>
+
+        <div class="field-row" *ngIf="selectedCampaignType === 'product' || selectedCampaignType === 'invite_location'">
+          <div class="field-group half">
+            <label class="field-label">Max influencers <span class="required">*</span></label>
+            <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
+            <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+          </div>
+        </div>
+
+        <!-- Product collaboration fields -->
+        <div class="field-group" *ngIf="selectedCampaignType === 'product'">
+          <label class="field-label">Product Details <span class="required">*</span></label>
+          <p class="field-sublabel">You can optionally add product value.</p>
+          <textarea formControlName="productDescription" class="field-textarea" rows="3"
+            placeholder="Example: Skincare hamper — cleanser, serum & moisturizer (full-size). Honest review post + 1 reel expected."></textarea>
+          <span class="field-error" *ngIf="f['productDescription'].touched && f['productDescription'].invalid">Product description is required</span>
+
+          <label class="field-label mt-3">Product value (₹) <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <input type="number" formControlName="productValue" class="field-input" placeholder="e.g. 2000" min="0" />
+
+          <label class="field-label mt-3">Payment mode</label>
+          <div class="chip-list">
+            <label class="chip" [class.chip--selected]="f['productPaymentMode'].value === 'product_only'">
+              <input type="radio" formControlName="productPaymentMode" value="product_only" hidden /> Product only
+            </label>
+            <label class="chip" [class.chip--selected]="f['productPaymentMode'].value === 'product_plus_payment'">
+              <input type="radio" formControlName="productPaymentMode" value="product_plus_payment" hidden /> Product + small payment
+            </label>
+          </div>
+          <div class="field-group mt-2" *ngIf="f['productPaymentMode'].value === 'product_plus_payment'">
+            <label class="field-label">Cash component per influencer (₹) <span class="required">*</span></label>
+            <input type="number" formControlName="productPaymentAmount" class="field-input" placeholder="e.g. 500" min="1" />
+            <span class="field-error" *ngIf="f['productPaymentAmount'].touched && f['productPaymentAmount'].invalid">Enter a value greater than 0</span>
+          </div>
+        </div>
+
         <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
-          <span>Estimated budget:</span>
+          <span>{{ selectedCampaignType === 'pay_to_join' ? 'Estimated join amount:' : 'Estimated budget:' }}</span>
           <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
+        </div>
+
+        <div class="field-group" *ngIf="selectedCampaignType === 'pay_to_join'">
+          <label class="field-label">What influencer gets (benefits) <span class="required">*</span></label>
+          <textarea formControlName="payToJoinBenefits" class="field-textarea" rows="3"
+            placeholder="Example: Homepage feature, priority listing, paid badge, community access..."></textarea>
+          <span class="field-error" *ngIf="f['payToJoinBenefits'].touched && f['payToJoinBenefits'].invalid">Benefits are required</span>
+
+          <label class="field-label mt-2">Pay-to-join instructions</label>
+          <textarea formControlName="payToJoinInstructions" class="field-textarea" rows="3"
+            placeholder="Any joining terms, quality checks, timeline, and acceptance rules..."></textarea>
         </div>
 
         <p class="trust-note"><i class="bi bi-shield-check"></i> Brand pays only for accepted influencers</p>
@@ -285,10 +377,14 @@
     <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
 
-        <div class="invite-summary" *ngIf="f['pricePerInfluencer'].value && f['maxInfluencers'].value">
-          <div>Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
-          <div>Selected: <strong>{{ selectedInfluencerIds.size }} / {{ f['maxInfluencers'].value }}</strong></div>
-          <div>Estimated total: <strong>₹{{ (selectedInfluencerIds.size * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
+        <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
+          <div *ngIf="f['pricePerInfluencer'].value">Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
+          <div>
+            Invited: <strong>{{ invitedCount }}</strong>
+            <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
+            &nbsp;/ <strong>{{ f['maxInfluencers'].value }}</strong>
+          </div>
+          <div *ngIf="f['pricePerInfluencer'].value">Estimated total: <strong>₹{{ (takenSlotsCount * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
         </div>
 
         <p class="field-error" *ngIf="selectionLimitError">

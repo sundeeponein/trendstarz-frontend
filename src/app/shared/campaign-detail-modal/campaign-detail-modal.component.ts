@@ -76,6 +76,10 @@ export class CampaignDetailModalComponent {
   get campaignDescription(): string { return this.campaign?.description || ''; }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
 
+  get campaignTypeKey(): string {
+    return (this.campaign?.campaignType || '').toLowerCase();
+  }
+
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
       paid_collab: 'Paid Collab',
@@ -83,9 +87,57 @@ export class CampaignDetailModalComponent {
       invite_location: 'Invite to Location',
       pay_to_join: 'Pay to Join',
     };
-    const t = (this.campaign?.campaignType || '').toLowerCase();
-    return m[t] || '';
+    return m[this.campaignTypeKey] || '';
   }
+
+  get isInviteLocation(): boolean { return this.campaignTypeKey === 'invite_location'; }
+  get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
+  get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
+  get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
+
+  get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
+
+  get productDescription(): string { return (this.campaign?.productDescription || '').trim(); }
+
+  get productValueText(): string {
+    const paise = Number(this.campaign?.productValue || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
+  }
+  get productPaymentMode(): string { return String(this.campaign?.productPaymentMode || 'product_only'); }
+  get productPaymentAmountText(): string {
+    const paise = Number(this.campaign?.productPaymentAmount || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
+  }
+  get productSummary(): string {
+    const parts: string[] = [];
+    if (this.productValueText) parts.push(`Worth ${this.productValueText}`);
+    if (this.productPaymentMode === 'product_plus_payment' && this.productPaymentAmountText) {
+      parts.push(`+ ${this.productPaymentAmountText} cash`);
+    } else if (this.productPaymentMode === 'product_only' && this.productValueText) {
+      parts.push('(Product only)');
+    }
+    return parts.join(' ');
+  }
+
+  get venueName(): string { return (this.campaign?.venueName || '').trim(); }
+  get venueAddress(): string { return (this.campaign?.venueAddress || '').trim(); }
+  get venueCity(): string { return (this.campaign?.venueCity || '').trim(); }
+  get venueDistrict(): string { return (this.campaign?.venueDistrict || '').trim(); }
+  get venueState(): string { return (this.campaign?.venueState || '').trim(); }
+  get venueMapUrl(): string { return (this.campaign?.venueGoogleMapUrl || this.campaign?.venueMapUrl || '').trim(); }
+  get venueCityState(): string {
+    const parts = [this.venueCity, this.venueDistrict, this.venueState].filter(Boolean);
+    return parts.join(', ');
+  }
+  get hasVenueDetails(): boolean {
+    return !!(this.venueName || this.venueAddress || this.venueCity || this.venueDistrict || this.venueState || this.venueMapUrl);
+  }
+
+  get payToJoinBenefits(): string { return (this.campaign?.payToJoinBenefits || '').trim(); }
+  get payToJoinInstructions(): string { return (this.campaign?.payToJoinInstructions || '').trim(); }
+  get hasPayToJoinDetails(): boolean { return !!(this.payToJoinBenefits || this.payToJoinInstructions); }
 
   get hasBudget(): boolean {
     return !!this.yourPayoutText || !!this.campaignBudgetText;

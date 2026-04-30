@@ -119,6 +119,92 @@ export class CampaignInviteCardComponent {
     return Array.isArray(c) ? c : [];
   }
 
+  get campaignTypeKey(): string { return (this.campaign?.campaignType || '').toLowerCase(); }
+  get campaignTypeLabel(): string {
+    const m: Record<string, string> = {
+      paid_collab: 'Paid Collab',
+      product: 'Product / Barter',
+      invite_location: 'Invite to Location',
+      pay_to_join: 'Pay to Join',
+    };
+    return m[this.campaignTypeKey] || '';
+  }
+  get campaignTypeIcon(): string {
+    const m: Record<string, string> = {
+      paid_collab: 'bi-cash-coin',
+      product: 'bi-box-seam',
+      invite_location: 'bi-geo-alt-fill',
+      pay_to_join: 'bi-ticket-perforated',
+    };
+    return m[this.campaignTypeKey] || 'bi-tag-fill';
+  }
+  get isInviteLocation(): boolean { return this.campaignTypeKey === 'invite_location'; }
+  get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
+  get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
+  get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
+
+  get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
+
+  get productDescription(): string { return (this.campaign?.productDescription || '').trim(); }
+
+  get productValueText(): string {
+    const paise = Number(this.campaign?.productValue || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
+  }
+  get productPaymentMode(): string { return String(this.campaign?.productPaymentMode || 'product_only'); }
+  get productPaymentAmountText(): string {
+    const paise = Number(this.campaign?.productPaymentAmount || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
+  }
+
+  /** Headline compensation line: "Paid: ₹3000", "Product: Worth ₹2000 (+ ₹500 cash)", "Invite: Stay + food included". */
+  get compensationText(): string {
+    if (this.isPaidCollab) {
+      return this.yourPayoutText ? `Paid: ${this.yourPayoutText}` : '';
+    }
+    if (this.isProduct) {
+      const parts: string[] = [];
+      if (this.productValueText) parts.push(`Worth ${this.productValueText}`);
+      else parts.push('Barter');
+      if (this.productPaymentMode === 'product_plus_payment' && this.productPaymentAmountText) {
+        parts.push(`+ ${this.productPaymentAmountText} cash`);
+      }
+      return `Product: ${parts.join(' ')}`;
+    }
+    if (this.isInviteLocation) {
+      return this.inviteBenefits ? `Invite: ${this.inviteBenefits}` : 'Invite to location';
+    }
+    return '';
+  }
+  get compensationIcon(): string {
+    if (this.isPaidCollab) return 'bi-cash-coin';
+    if (this.isProduct) return 'bi-box-seam';
+    if (this.isInviteLocation) return 'bi-geo-alt-fill';
+    return 'bi-tag-fill';
+  }
+
+  get venueShortText(): string {
+    const c = this.campaign || {};
+    const parts = [c.venueName, c.venueCity, c.venueDistrict, c.venueState].filter((p: string) => !!p);
+    return parts.join(', ');
+  }
+  get venueFullAddress(): string {
+    return (this.campaign?.venueAddress || '').trim();
+  }
+  get venueMapUrl(): string {
+    return (this.campaign?.venueGoogleMapUrl || this.campaign?.venueMapUrl || '').trim();
+  }
+  get hasVenueDetails(): boolean { return !!(this.venueShortText || this.venueFullAddress || this.venueMapUrl || this.inviteBenefits); }
+
+  get payToJoinFeeText(): string {
+    const paise = Number(this.campaign?.pricePerInfluencer || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    return '';
+  }
+  get payToJoinBenefits(): string { return (this.campaign?.payToJoinBenefits || '').trim(); }
+
   get hasBudget(): boolean {
     const c = this.campaign;
     return !!this.yourPayoutText || !!this.campaignBudgetText;

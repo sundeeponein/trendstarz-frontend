@@ -55,6 +55,59 @@
         </div>
       </div>
 
+      <!-- Venue details (Invite to Location) -->
+      <div class="cdm-section" *ngIf="isInviteLocation && hasVenueDetails">
+        <div class="cdm-section-label">VENUE DETAILS</div>
+        <div class="cdm-brief-box">
+          <div *ngIf="venueName" class="mb-1"><strong>{{ venueName }}</strong></div>
+          <div *ngIf="venueAddress" class="mb-1">
+            <i class="bi bi-geo-alt"></i> {{ venueAddress }}
+          </div>
+          <div *ngIf="venueCityState" class="mb-1">{{ venueCityState }}</div>
+          <a *ngIf="venueMapUrl"
+             class="d-inline-flex align-items-center gap-1 mt-2"
+             [href]="venueMapUrl"
+             target="_blank"
+             rel="noopener noreferrer">
+            <i class="bi bi-map"></i> Open in Maps
+          </a>
+        </div>
+      </div>
+
+      <!-- Invite benefits (what's included) -->
+      <div class="cdm-section" *ngIf="isInviteLocation && inviteBenefits">
+        <div class="cdm-section-label">WHAT'S INCLUDED</div>
+        <div class="cdm-brief-box" style="white-space:pre-wrap;">
+          <i class="bi bi-stars"></i> {{ inviteBenefits }}
+        </div>
+      </div>
+
+      <!-- Product collaboration details -->
+      <div class="cdm-section" *ngIf="isProduct">
+        <div class="cdm-section-label">PRODUCT COLLABORATION</div>
+        <div class="cdm-brief-box">
+          <div *ngIf="productDescription" style="white-space:pre-wrap;" class="mb-2">{{ productDescription }}</div>
+          <div *ngIf="productValueText"><i class="bi bi-box-seam"></i> <strong>Product worth {{ productValueText }}</strong></div>
+          <div *ngIf="!productValueText && !productDescription"><i class="bi bi-box-seam"></i> Product collaboration (barter)</div>
+          <div *ngIf="productPaymentMode === 'product_plus_payment' && productPaymentAmountText" class="mt-1">
+            <i class="bi bi-cash-coin"></i> Plus cash component: <strong>{{ productPaymentAmountText }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pay to Join details -->
+      <div class="cdm-section" *ngIf="isPayToJoin && hasPayToJoinDetails">
+        <div class="cdm-section-label">PAY TO JOIN DETAILS</div>
+        <div class="cdm-brief-box" *ngIf="payToJoinBenefits">
+          <div class="cdm-section-label" style="margin-bottom:6px;">WHAT YOU GET</div>
+          <div style="white-space:pre-wrap;">{{ payToJoinBenefits }}</div>
+        </div>
+        <div class="cdm-brief-box mt-2" *ngIf="payToJoinInstructions">
+          <div class="cdm-section-label" style="margin-bottom:6px;">HOW TO JOIN</div>
+          <div style="white-space:pre-wrap;">{{ payToJoinInstructions }}</div>
+        </div>
+      </div>
+
       <!-- Selected outputs -->
       <div class="cdm-section" *ngIf="selectedOutputs.length">
         <div class="cdm-section-label">SELECTED CONTENT OUTPUTS</div>
