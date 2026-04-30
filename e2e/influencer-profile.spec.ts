@@ -51,7 +51,7 @@ async function mockProfileRoutes(page: Page) {
     }
   });
   // Config endpoints
-  await page.route('**/config/states', async (route) => {
+  await page.route('**/states', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'state_mh', name: 'Maharashtra' }] }) });
   });
@@ -102,6 +102,9 @@ test.describe('Influencer Profile', () => {
     await page.goto('/influencer-profile');
     await page.waitForSelector('form', { state: 'visible' });
     await page.waitForTimeout(2000);
+    // Trigger CD so mock data is rendered in zoneless Angular
+    await page.locator('body').click();
+    await page.waitForTimeout(500);
   });
 
   test('renders step 1 — Basic Details with profile data', async ({ page }) => {

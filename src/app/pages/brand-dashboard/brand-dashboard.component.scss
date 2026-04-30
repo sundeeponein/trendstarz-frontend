@@ -42,3 +42,46 @@
     color: #111827;
   }
 }
+
+.profile-traffic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.traffic-stat-box {
+  border: 1px solid #eceff4;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  background: #f9fafb;
+}
+
+.traffic-stat-label {
+  font-size: 0.82rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.traffic-stat-value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.traffic-stat-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.traffic-locked-state {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+}

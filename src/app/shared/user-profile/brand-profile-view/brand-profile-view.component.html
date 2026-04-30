@@ -23,13 +23,13 @@
         </div>
       </div>
       <div class="brand-header-actions">
-        <button class="btn btn-follow">Follow</button>
-        <button class="btn btn-contact" (click)="showContact = !showContact">Contact</button>
+        <button class="btn btn-follow" *ngIf="isLoggedIn">Follow</button>
+        <button class="btn btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button>
       </div>
     </div>
 
-    <!-- Contact details (toggled) -->
-    <div *ngIf="showContact" class="contact-cards">
+    <!-- Contact details (toggled, logged-in only) -->
+    <div *ngIf="showContact && isLoggedIn && canViewContactDetails" class="contact-cards">
       <div class="contact-card" *ngIf="brand.contact?.whatsapp">
         <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
         <span class="contact-card-label">WhatsApp</span>
@@ -47,6 +47,13 @@
       <div class="contact-card" *ngIf="brand.website">
         <span class="contact-card-icon website"><i class="bi bi-globe2"></i></span>
         <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="contact-card-label">{{ stripProtocol(brand.website) }}</a>
+      </div>
+    </div>
+
+    <div *ngIf="showContact && isLoggedIn && !canViewContactDetails" class="contact-cards">
+      <div class="contact-card">
+        <span class="contact-card-icon website"><i class="bi bi-lock-fill"></i></span>
+        <span class="contact-card-label">Contact unlocks automatically when campaign reaches required stage. For issues, contact admin at support@trendstarz.in.</span>
       </div>
     </div>
 
@@ -141,11 +148,20 @@
             </div>
           </div>
 
-          <!-- Social links -->
+          <!-- Social links (clickable only for premium viewers) -->
           <div *ngIf="brand.socialMedia?.length" class="social-links">
-            <a *ngFor="let sm of brand.socialMedia" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill">
-              <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
-            </a>
+            <ng-container *ngFor="let sm of brand.socialMedia">
+              <!-- Premium: clickable link with tier -->
+              <a *ngIf="isProViewer" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill">
+                <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
+                <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
+              </a>
+              <!-- Non-premium: click disabled, no href -->
+              <span *ngIf="!isProViewer" class="social-pill social-pill--locked" title="Upgrade to Pro to view social platforms">
+                <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
+                <i class="bi bi-lock-fill social-lock-icon"></i>
+              </span>
+            </ng-container>
           </div>
         </div>
       </div>

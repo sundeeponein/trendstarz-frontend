@@ -1,0 +1,205 @@
+.pchk {
+  display: block;
+  color: #0f172a;
+}
+
+.pchk-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+  }
+}
+.pchk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  background: #fff3ee;
+  color: #b3461e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pchk-subtitle { color: #64748b; font-size: 0.88rem; margin: 0.2rem 0 1.2rem; }
+
+// ── Amount banner ──
+.pchk-amount-banner {
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.1rem 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.3rem;
+}
+.pchk-amount-label { font-size: 0.85rem; opacity: 0.9; }
+.pchk-amount-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; flex: 1; text-align: center; }
+
+.pchk-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.35rem 0.8rem;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover { background: rgba(255, 255, 255, 0.3); }
+  &--solid {
+    background: #ea580c;
+    color: #fff;
+    border-color: transparent;
+    &:hover { background: #c2410c; }
+  }
+}
+
+// ── Breakdown ──
+.pchk-breakdown {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.4rem;
+}
+.pchk-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.92rem;
+  color: #475569;
+  span:last-child { color: #0f172a; font-weight: 500; }
+  &--strong { font-weight: 700; span { color: #0f172a; } }
+  &--free span:last-child { color: #16a34a; font-weight: 600; font-size: 0.85rem; }
+}
+
+// ── Pay grid ──
+.pchk-pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  align-items: start;
+  margin-bottom: 1.4rem;
+}
+@media (max-width: 600px) {
+  .pchk-pay-grid { grid-template-columns: 1fr; }
+}
+
+.pchk-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0 0 0.6rem;
+}
+
+.pchk-qr-block {
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+.pchk-qr-img {
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  border-radius: 8px;
+  background: #fff;
+}
+.pchk-qr-hint { margin: 0.6rem 0 0; font-size: 0.78rem; color: #94a3b8; }
+
+.pchk-upi-block {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+.pchk-upi-id-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  margin-bottom: 1rem;
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background: transparent;
+  }
+}
+.pchk-pay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover { background: #15803d; color: #fff; }
+}
+.pchk-mobile-hint { margin: 0.5rem 0 0; font-size: 0.78rem; color: #94a3b8; text-align: center; }
+
+// ── Trust labels ──
+.pchk-trust {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.2rem;
+  display: grid;
+  gap: 6px;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #16a34a;
+  }
+}
+
+// ── Next steps ──
+.pchk-next {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin: 0 0 0.5rem;
+  }
+  ol {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: #1e3a8a;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+}

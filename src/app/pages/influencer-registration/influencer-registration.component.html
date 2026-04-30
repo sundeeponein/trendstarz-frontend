@@ -61,6 +61,7 @@
             <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile photo is required.</div>
           </div>
 
+          <div class="field-grid">
             <div class="field-block">
               <label>Full Name <span class="text-danger">*</span>
                 <span *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger ms-2">Required</span>
@@ -101,7 +102,7 @@
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                 <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
               </div>
-              <div class="text-muted mt-1">A verification link will be sent after successful registration.</div>
+              <small class="text-muted mt-1">A verification link will be sent after successful registration.</small>
               <div *ngIf="emailVerificationSent && !emailVerified" class="text-success mt-1">Verification link sent to your email.</div>
               <div *ngIf="emailVerified" class="text-success mt-1">Email verified.</div>
               <div *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</div>
@@ -141,7 +142,7 @@
               <div *ngIf="registrationForm.get('confirmPassword')?.value && registrationForm.errors?.['passwordMismatch']" class="text-danger mt-1">Passwords do not match.</div>
             </div>
           
-
+          </div>
             <div class="actions-row">
               <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
             </div>
@@ -311,6 +312,11 @@
             <div class="text-muted" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
             
           </div>
+
+          <div *ngIf="selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold mt-2">
+            Please enter both Handle and Tier for every selected platform, or remove it.
+          </div>
+          <div *ngIf="registrationError && currentStep === 2" class="text-danger fw-bold mt-2">{{ registrationError }}</div>
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>

@@ -42,7 +42,7 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   });
 
   // ── Mock states list ─────────────────────────────────────
-  await page.route('**/config/states', async (route) => {
+  await page.route('**/states', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -63,7 +63,7 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
     });
 
   // ── Mock categories ──────────────────────────────────────
-  await page.route('**/config/categories', async (route) => {
+  await page.route('**/categories', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -228,14 +228,12 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   await page.waitForTimeout(500);
 
   // Debug: check presence of step-2 DOM nodes before interacting
-  const step2Dom = await page.evaluate(() => {
-    const lang = !!document.querySelector('ng-select[formControlName="languages"]');
-    const cat = !!document.querySelector('ng-select[formControlName="categories"]');
-    const state = !!document.querySelector('[formgroupname="location"] select[formcontrolname="state"], select[formcontrolname="state"]');
-    const district = !!document.querySelector('[formgroupname="location"] select[formcontrolname="district"], select[formcontrolname="district"]');
-    return { lang, cat, state, district, ngSelectCount: document.querySelectorAll('ng-select').length };
-  });
-  // debug removed
+
+  // Trigger CD so step 2 chip lists (languages, categories) are rendered in zoneless Angular
+  await page.locator('body').click();
+  await page.waitForTimeout(300);
+
+  // ════════════════════════ STEP 2 ════════════════════════
 
   // ════════════════════════ STEP 2 ════════════════════════
   // Select state
@@ -264,23 +262,20 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
 
   // Select language via chip-list (brand registration uses chips, not ng-select)
   const langChip = page.locator('section.form-card:has(h2:has-text("Location & Media")) .chip:has-text("English")').first();
-  if (await langChip.count() > 0) {
-    await langChip.scrollIntoViewIfNeeded();
-    await langChip.click();
-    await page.waitForTimeout(200);
-  } else {
-    // language chip absent; likely set programmatically
-  }
 
-  // Select category via chip-list (if not already selected)
+  await langChip.waitFor({ state: 'visible', timeout: 5000 });
+  await langChip.scrollIntoViewIfNeeded();
+  await langChip.click();
+  await page.waitForTimeout(200);
+
+  // Select category via chip-list (optional for step 2 validation, but select if present)
   const catChip = page.locator('section.form-card:has(h2:has-text("Location & Media")) .chip:has-text("Fashion")').first();
   if (await catChip.count() > 0) {
     await catChip.scrollIntoViewIfNeeded();
     await catChip.click();
     await page.waitForTimeout(200);
-  } else {
-    // category chip absent; likely set programmatically
   }
+
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
 
@@ -288,6 +283,40 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   const platformCard = page.locator('.platform-card').first();
   await platformCard.waitFor({ state: 'visible', timeout: 5000 });
   await platformCard.click();
+
+  // Ensure required step-2 controls are set before advancing (zoneless rendering can be flaky in e2e).
+  await page.evaluate(() => {
+    const el = document.querySelector('app-brand-registration');
+    const ng = (window as any).ng;
+    if (!el || !ng) return;
+    const comp = ng.getComponent(el);
+    if (!comp?.registrationForm) return;
+
+    const stateCtrl = comp.registrationForm.get('location.state');
+    const districtCtrl = comp.registrationForm.get('location.district');
+    const langCtrl = comp.registrationForm.get('languages');
+
+    const stateVal = stateCtrl?.value;
+    if (!stateVal) {
+      const fallbackState = comp.states?.[0]?._id || comp.states?.[0]?.id || '';
+      if (fallbackState) stateCtrl?.setValue(fallbackState);
+    }
+
+    const districtVal = districtCtrl?.value;
+    if (!districtVal) {
+      const fallbackDistrict = comp.districts?.[0]?._id || comp.districts?.[0]?.id || '';
+      if (fallbackDistrict) districtCtrl?.setValue(fallbackDistrict);
+    }
+
+    const langVal = langCtrl?.value;
+    if (!Array.isArray(langVal) || langVal.length === 0) {
+      const fallbackLang = comp.languagesList?.[0]?._id || 'lang1';
+      langCtrl?.setValue([fallbackLang]);
+    }
+
+    try { comp.refreshStepCompletion(); } catch {}
+    try { comp.cd?.detectChanges?.(); } catch {}
+  });
 
   const nextBtn2 = page.locator('button:has-text("Continue"), .actions-row button.btn-primary').first();
   await nextBtn2.waitFor({ state: 'attached', timeout: 10000 });

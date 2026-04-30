@@ -106,9 +106,40 @@
             </div>
           </div>
 
+          <!-- Payout details: where the brand receives money for pay_to_join campaigns -->
+          <div class="field-block full-width payout-block" formGroupName="payout">
+            <h3 class="payout-heading">
+              <i class="bi bi-bank2"></i>
+              Payout details
+              <small>Where you receive money from pay-to-join campaigns</small>
+            </h3>
+            <div class="form-grid two-col">
+              <div class="field-block">
+                <label>UPI ID</label>
+                <input formControlName="upiId" type="text" class="form-control"
+                       placeholder="e.g. brand@upi" />
+              </div>
+              <div class="field-block">
+                <label>Mobile (GPay / PhonePe)</label>
+                <input formControlName="mobile" type="tel" class="form-control"
+                       placeholder="10-digit mobile number"
+                       inputmode="tel" maxlength="15" />
+              </div>
+              <div class="field-block full-width">
+                <label>Account holder name</label>
+                <input formControlName="accountHolderName" type="text" class="form-control"
+                       placeholder="Name on UPI / bank account" />
+              </div>
+            </div>
+            <p class="payout-hint">
+              Admin will use these details to send your share from pay-to-join campaigns.
+            </p>
+          </div>
+
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="openChangePasswordModal()">Reset Password</button>
             <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
           </div>
         </section>
@@ -134,7 +165,7 @@
               </select>
             </div>
 
-            <div class="field-block">
+            <div class="field-block full-width">
               <label>Languages</label>
               <div class="chip-list">
                 <ng-container *ngIf="isEditMode; else viewLanguages">
@@ -160,7 +191,7 @@
               </div>
             </div>
 
-            <div class="field-block">
+            <div class="field-block full-width">
               <label>Google Map Address</label>
               <input formControlName="googleMapAddress" type="text" class="form-control" />
             </div>
@@ -212,7 +243,7 @@
                   </div>
                   <div class="platform-details-body">
                     <div class="row g-2">
-                      <div class="col-12 col-md-6">
+                      <div class="col">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
                         <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}"
                           type="text" class="form-control" placeholder="yourhandle" [disabled]="!isEditMode" (blur)="stripAtSign(platform._id)" />
@@ -222,7 +253,7 @@
                           <i class="bi bi-box-arrow-up-right"></i> Verify profile
                         </a>
                       </div>
-                      <div class="col-12 col-md-6">
+                      <div class="col">
                         <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
                           <option value="" disabled>Select tier</option>
@@ -332,6 +363,9 @@
           </div>
 
           <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">Profile updated successfully.</div>
+          <div *ngIf="isEditMode && selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold my-3">
+            Please enter both Handle and Tier for every selected platform, or remove it.
+          </div>
           <div *ngIf="registrationError" class="text-danger fw-bold my-3">{{ registrationError }}</div>
 
           <div class="actions-row dual">
@@ -345,4 +379,5 @@
   </div>
 
 <app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
+<app-reset-password-modal [(visible)]="showChangePasswordModal"></app-reset-password-modal>
 </div>

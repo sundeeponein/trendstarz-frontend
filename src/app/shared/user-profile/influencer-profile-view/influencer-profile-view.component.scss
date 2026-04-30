@@ -1,5 +1,6 @@
 
 @use 'sass:color';
+@use '../../styles/social-platform' as *;
 $accent: #e8612d;
 $accent-light: #fff5f0;
 $border: #eee;
@@ -290,6 +291,37 @@ $green: #22c55e;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.platform-handle-row {
+  margin: -4px 0 12px 50px;
+  font-size: 0.92rem;
+}
+
+.platform-handle-link {
+  color: $accent;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  word-break: break-all;
+  &:hover { text-decoration: underline; }
+  i { font-size: 0.85em; }
+}
+
+.platform-handle-text {
+  color: $text-muted;
+  word-break: break-all;
+}
+
+.content-rates-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: $text-dark;
+  text-transform: uppercase;
+  margin: 6px 0 8px;
 }
 
 .platform-icon-circle {

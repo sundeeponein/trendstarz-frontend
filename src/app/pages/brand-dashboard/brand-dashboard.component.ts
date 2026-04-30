@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -44,6 +45,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     platformFeesPaid: 0,
     pendingPayouts: 0,
   };
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -52,10 +54,15 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private session: SessionService,
     private config: ConfigService,
+    private plansService: PlansService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+        this.plansService.getMyCapabilities().subscribe((caps) => {
+          this.planCaps = caps;
+        });
+
         // Ensure user is loaded from storage on direct load/refresh
         if (!this.session.getUser()) {
           this.session.loadUserFromStorage();
@@ -198,5 +205,23 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     this.dashboardService.searchInfluencers(this.filters).subscribe((res: any[]) => {
       this.recommendedInfluencers = res;
     });
+  }
+
+  get profileTraffic() {
+    const traffic = this.dashboard?.brand?.profileTraffic || {};
+    return {
+      impressions: Number(traffic.impressions || 0),
+      clicks: Number(traffic.clicks || 0),
+      lastImpressionAt: traffic.lastImpressionAt || null,
+      lastClickAt: traffic.lastClickAt || null,
+    };
+  }
+
+  get isPremiumUser(): boolean {
+    return !!this.dashboard?.brand?.isPremium;
+  }
+
+  get canViewProfileTraffic(): boolean {
+    return this.plansService.getFeatureValue(this.planCaps, 'campaignAnalyticsDashboard');
   }
 }

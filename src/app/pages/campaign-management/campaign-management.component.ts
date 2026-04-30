@@ -1,13 +1,17 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
+import { ToastService } from '../../shared/toast/toast.service';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
 import { SupportBannerComponent } from '../../shared/support-banner/support-banner.component';
 import { CampaignPaymentComponent } from '../campaign-payment/campaign-payment.component';
 import { SessionService } from '../../core/session.service';
 import { Campaign } from '../../shared/campaigns/campaign.model';
 import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/campaign-form.component';
+import { CampaignDetailModalComponent, CampaignAcceptPayload, CampaignDeclinePayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignInviteCardComponent, InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { environment } from '../../../environments/environment';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
@@ -15,7 +19,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, CampaignFormComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -159,6 +163,7 @@ export class CampaignManagementComponent implements OnInit {
               }
               this.selectedInfluencerIds.clear();
               this.invitePanelSuccessMessage = 'Invites sent successfully!';
+              this.toast.success('Invites sent successfully!');
               setTimeout(() => this.invitePanelSuccessMessage = '', 4000);
             } else {
               this.inviteError = 'No invites were created. Please try again.';
@@ -204,7 +209,8 @@ export class CampaignManagementComponent implements OnInit {
   constructor(
     private config: ConfigService,
     private session: SessionService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -215,6 +221,19 @@ export class CampaignManagementComponent implements OnInit {
     if (this.isInfluencerView) {
       // Influencer: only load invites and open campaigns
       this.myInvitesLoading = true;
+      // Seed default payout details from the influencer's profile so the
+      // accept card can prefill UPI / mobile / account holder name.
+      this.config.getInfluencerProfileById().subscribe({
+        next: (profile: any) => {
+          this.defaultPayout = {
+            upiId: profile?.payout?.upiId || '',
+            mobile: profile?.payout?.mobile || profile?.phoneNumber || '',
+            accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
+          };
+          this.cd.detectChanges();
+        },
+        error: () => { /* non-fatal */ },
+      });
       this.config.getMyInvites().subscribe({
         next: (invites: any[]) => {
           this.myInvites = invites;
@@ -258,11 +277,7 @@ export class CampaignManagementComponent implements OnInit {
             next: (campaigns: Campaign[]) => {
               // debug: getCampaignsByBrandId response
               this.campaigns = campaigns || [];
-              if (!campaigns || campaigns.length === 0) {
-                this.campaignLoadError = 'No campaigns found.';
-              } else {
-                this.campaignLoadError = '';
-              }
+              this.campaignLoadError = '';
               this.loading = false;
               this.cd.detectChanges();
               // Load invites for all campaigns after campaigns are loaded
@@ -413,6 +428,7 @@ export class CampaignManagementComponent implements OnInit {
                       this.invites = invites;
                       this.cd.detectChanges();
                       this.toastMessage = 'Invites sent successfully!';
+                      this.toast.success('Invites sent successfully!');
                       this.showSuccessToast = true;
                       setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
                       this.closeForm();
@@ -480,6 +496,7 @@ export class CampaignManagementComponent implements OnInit {
               this.loadAllInvitesForce();
               this.cd.detectChanges();
               this.toastMessage = 'Campaign created successfully!';
+              this.toast.success('Campaign created successfully!');
               this.showSuccessToast = true;
               setTimeout(() => { this.showSuccessToast = false; }, 4000);
               this.closeForm();
@@ -504,6 +521,7 @@ export class CampaignManagementComponent implements OnInit {
                       }
                       this.cd.detectChanges();
                       this.toastMessage = 'Campaign created and invites sent!';
+                      this.toast.success('Campaign created and invites sent!');
                       this.showSuccessToast = true;
                       setTimeout(() => { this.showSuccessToast = false; }, 4000);
                       this.closeForm();
@@ -533,6 +551,7 @@ export class CampaignManagementComponent implements OnInit {
             this.loadAllInvitesForce();
             this.cd.detectChanges();
             this.toastMessage = 'Campaign created successfully!';
+            this.toast.success('Campaign created successfully!');
             this.showSuccessToast = true;
             setTimeout(() => { this.showSuccessToast = false; }, 4000);
             this.closeForm();
@@ -566,6 +585,7 @@ export class CampaignManagementComponent implements OnInit {
             this.showUpgradeBanner = false;
           }
           this.toastMessage = toastMsg;
+          this.toast.error(toastMsg);
           this.showErrorToast = true;
           // debug: showing error toast message (hidden for CI cleanliness)
           this.cd.detectChanges();
@@ -683,6 +703,7 @@ export class CampaignManagementComponent implements OnInit {
               }
               this.selectedInfluencerIds.clear();
               this.invitePanelSuccessMessage = 'Invites sent successfully!';
+              this.toast.success('Invite sent successfully!');
               setTimeout(() => this.invitePanelSuccessMessage = '', 4000);
             } else {
               this.inviteError = 'No invites were created. Please try again.';
@@ -824,6 +845,14 @@ export class CampaignManagementComponent implements OnInit {
   selectedInvitePostDates: Record<string, string> = {};
   // Content type selection: key = inviteId, value = "platform::contentType"
   selectedInviteContentType: Record<string, string> = {};
+  // Per-invite payout details captured at accept time
+  selectedInvitePayouts: Record<string, { upiId: string; mobile: string; accountHolderName: string }> = {};
+  // Default payout details from the current influencer profile (if any)
+  defaultPayout: { upiId: string; mobile: string; accountHolderName: string } = {
+    upiId: '',
+    mobile: '',
+    accountHolderName: '',
+  };
 
   openInvitePreview(inv: any) {
     this.invitePreview = inv;
@@ -833,7 +862,49 @@ export class CampaignManagementComponent implements OnInit {
     this.invitePreview = null;
   }
 
-  private showError(message: string) {
+  onModalAccept(payload: CampaignAcceptPayload) {
+    if (payload.postDate) this.selectedInvitePostDates[payload.inviteId] = payload.postDate;
+    if (payload.platform && payload.contentType) {
+      this.selectedInviteContentType[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
+    }
+    this.respondToMyInvite(payload.inviteId, 'accepted');
+    this.closeInvitePreview();
+  }
+
+  onModalDecline(payload: CampaignDeclinePayload) {
+    this.respondToMyInvite(payload.inviteId, 'declined');
+    this.closeInvitePreview();
+  }
+
+  // ── Reusable invite-card events ───────────────────────────────
+  onCardAccept(payload: InviteAcceptPayload) {
+    if (payload.postDate) this.selectedInvitePostDates[payload.inviteId] = payload.postDate;
+    if (payload.platform && payload.contentType) {
+      this.selectedInviteContentType[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
+    }
+    if (payload.payout) {
+      this.selectedInvitePayouts[payload.inviteId] = {
+        upiId: payload.payout.upiId || '',
+        mobile: payload.payout.mobile || '',
+        accountHolderName: payload.payout.accountHolderName || '',
+      };
+    }
+    this.respondToMyInvite(payload.inviteId, 'accepted');
+  }
+
+  onCardDecline(payload: InviteDeclinePayload) {
+    this.respondToMyInvite(payload.inviteId, 'declined');
+  }
+
+  onCardPostDateChange(inviteId: string, value: string) {
+    this.selectedInvitePostDates[inviteId] = value;
+  }
+
+  onCardContentTypeChange(inviteId: string, key: string) {
+    this.selectedInviteContentType[inviteId] = key;
+  }
+
+  showError(message: string) {
     this.toastMessage = message;
     this.showErrorToast = true;
     this.cd.detectChanges();
@@ -862,7 +933,8 @@ export class CampaignManagementComponent implements OnInit {
       return;
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
-    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe({
+    const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
+    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).subscribe({
       next: () => {
         this.myInvites = this.myInvites.map(i =>
           i._id === inviteId ? { ...i, status } : i
@@ -923,6 +995,24 @@ export class CampaignManagementComponent implements OnInit {
     if (!c?.timelineStart) return '—';
     const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     return c.timelineEnd ? `${fmt(c.timelineStart)} – ${fmt(c.timelineEnd)}` : `From ${fmt(c.timelineStart)}`;
+  }
+
+  campaignTypeLabel(type: string): string {
+    const m: Record<string, string> = {
+      paid_collab: 'Paid Collab',
+      product: 'Product / Barter',
+      invite_location: 'Invite to Location',
+      pay_to_join: 'Pay to Join',
+    };
+    return m[(type || '').toLowerCase()] || type;
+  }
+
+  getBrandProfileLink(inv: any): any[] | null {
+    const b = inv?.brandId;
+    if (!b) return null;
+    const slug = b.brandUsername || b.brandName;
+    if (!slug) return null;
+    return ['/brand', slug];
   }
 
   // ── Expandable row panel ──────────────────────────────────────

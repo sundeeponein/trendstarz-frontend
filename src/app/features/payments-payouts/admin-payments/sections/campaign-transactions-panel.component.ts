@@ -195,9 +195,12 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   openPayoutModal(tx: CampaignTransaction) {
     this.selectedTx = tx;
+    // Prefill UPI from the recipient's saved payout details (set by the
+    // influencer either in profile or at the time of accepting the campaign).
+    const recipient: any = (tx as any).recipient || {};
     this.payoutForm = {
       payoutUtr: '',
-      payoutUpiId: '',
+      payoutUpiId: recipient.payoutUpiId || '',
       payoutProofUrl: '',
       notes: '',
     };

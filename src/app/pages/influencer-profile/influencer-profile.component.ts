@@ -12,13 +12,14 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent, ResetPasswordModalComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -45,6 +46,8 @@ export class InfluencerProfileComponent implements OnInit {
   ) {}
   platformForms: { [platformId: string]: any } = {};
   originalPlatformForms: { [platformId: string]: any } = {};
+  /** Currently visible platform tab in the social media section. */
+  activePlatformTab: string | null = null;
 
   isPlatformSelected(platform: any): boolean {
     return !!this.platformForms[platform._id];
@@ -54,6 +57,10 @@ export class InfluencerProfileComponent implements OnInit {
     if (!this.isEditMode) return;
     if (this.isPlatformSelected(platform)) {
       this.removePlatformCard(platform);
+      if (this.activePlatformTab === platform._id) {
+        const remaining = this.selectedPlatforms();
+        this.activePlatformTab = remaining.length ? remaining[0]._id : null;
+      }
     } else {
       this.platformForms[platform._id] = {
         handle: '',
@@ -63,6 +70,7 @@ export class InfluencerProfileComponent implements OnInit {
           (platform.contentTypes || []).map((ct: any) => [ct.name, { selected: false, price: '' }])
         )
       };
+      this.activePlatformTab = platform._id;
     }
     this.refreshStepCompletion();
   }
@@ -70,11 +78,32 @@ export class InfluencerProfileComponent implements OnInit {
   removePlatformCard(platform: any) {
     if (!this.isEditMode) return;
     delete this.platformForms[platform._id];
+    if (this.activePlatformTab === platform._id) {
+      const remaining = this.selectedPlatforms();
+      this.activePlatformTab = remaining.length ? remaining[0]._id : null;
+    }
     this.refreshStepCompletion();
+  }
+
+  getPlatformById(id: string | null): any {
+    if (!id) return null;
+    return (this.socialMediaList || []).find((p: any) => p._id === id) || null;
   }
 
   selectedPlatforms(): any[] {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
+  }
+
+  /** Selected platforms missing handle or tier. */
+  invalidPlatforms(): any[] {
+    return this.selectedPlatforms().filter(p => {
+      const pf = this.platformForms[p._id];
+      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+    });
+  }
+
+  arePlatformsValid(): boolean {
+    return this.invalidPlatforms().length === 0;
   }
 
   getPlatformTotal(platform: any): number {
@@ -240,6 +269,11 @@ export class InfluencerProfileComponent implements OnInit {
   originalFormValue: any = null;
   submitted = false;
   usernameError: string = '';
+  showChangePasswordModal = false;
+
+  openChangePasswordModal() {
+    this.showChangePasswordModal = true;
+  }
 
   // Utility to slugify username
   slugifyUsername(username: string): string {
@@ -284,6 +318,11 @@ export class InfluencerProfileComponent implements OnInit {
         call: [{ value: false, disabled: true }]
       }),
       website: [{ value: '', disabled: true }],
+      payout: this.fb.group({
+        upiId: [{ value: '', disabled: true }],
+        mobile: [{ value: '', disabled: true }],
+        accountHolderName: [{ value: '', disabled: true }],
+      }),
     });
     // Auto-replace spaces with hyphens in username input
     this.registrationForm.get('username')?.valueChanges.subscribe(value => {
@@ -363,7 +402,12 @@ export class InfluencerProfileComponent implements OnInit {
               languages: languageIds,
             categories: categoryIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false },
-            website: profile.website || ''
+            website: profile.website || '',
+            payout: {
+              upiId: profile.payout?.upiId || '',
+              mobile: profile.payout?.mobile || profile.phoneNumber || '',
+              accountHolderName: profile.payout?.accountHolderName || profile.name || '',
+            }
           }, { emitEvent: false });
           // Patch profileImages
           const arr = this.registrationForm.get('profileImages') as FormArray;
@@ -394,15 +438,26 @@ export class InfluencerProfileComponent implements OnInit {
               };
             }
           });
+          const _pfKeys = Object.keys(this.platformForms);
+          this.activePlatformTab = _pfKeys.length ? _pfKeys[0] : null;
           this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
           this.originalFormValue = this.registrationForm.getRawValue();
+          // Trigger change detection so profile image, fields and platform cards render
+          // under Angular zoneless change detection (no microtask/zone tick fires this).
+          this.cd.detectChanges();
           };
           // Load districts for the saved state, then patch form
           if (profile.location?.state) {
             this.configService.getDistricts(profile.location.state, stateId).subscribe({
               next: (dists) => {
                 this.districts = Array.isArray(dists) ? dists : [];
-                const districtId = this.districts.find((d: any) => d.name === profile.location?.district)?._id || '';
+                const savedDistrict = (profile.location?.district || '').toString().trim();
+                const lower = savedDistrict.toLowerCase();
+                const resolved = savedDistrict
+                  ? (this.districts.find((d: any) => d._id === savedDistrict) ||
+                     this.districts.find((d: any) => (d.name || '').toString().trim().toLowerCase() === lower))
+                  : null;
+                const districtId = resolved ? resolved._id : '';
                 patchForm(districtId);
               },
               error: () => patchForm('')
@@ -605,6 +660,17 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.get('confirmPassword')?.disable();
     this.registrationForm.get('username')?.disable();
     this.refreshStepCompletion();
+    // Restore districts for the original state so view mode shows the district name
+    const origState = this.originalFormValue?.location?.state;
+    if (origState) {
+      const selectedState = this.states.find((s: any) => s._id === origState || s.id === origState || s.name === origState);
+      const stateName = selectedState?.name || (typeof origState === 'string' ? origState : '');
+      const stateId = selectedState?._id || selectedState?.id || (typeof origState === 'string' ? origState : '');
+      this.configService.getDistricts(stateName, stateId).subscribe({
+        next: d => { this.districts = Array.isArray(d) ? d : []; this.cd.detectChanges(); },
+        error: () => { this.districts = []; this.cd.detectChanges(); }
+      });
+    }
   }
 
   // Async validator to check username uniqueness (for edit profile)
@@ -719,6 +785,12 @@ export class InfluencerProfileComponent implements OnInit {
       if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
         this.registrationError = 'Profile image is required.';
       }
+      return;
+    }
+    if (!this.arePlatformsValid()) {
+      // Inline error is rendered in template; clear registrationError to avoid duplicate.
+      this.registrationError = '';
+      this.registrationSuccess = false;
       return;
     }
     this.registrationError = '';
@@ -892,7 +964,12 @@ export class InfluencerProfileComponent implements OnInit {
                 languages: languageIds,
                 categories: categoryIds,
                 contact: profile.contact || { whatsapp: false, email: false, call: false },
-                website: profile.website || ''
+                website: profile.website || '',
+                payout: {
+                  upiId: profile.payout?.upiId || '',
+                  mobile: profile.payout?.mobile || profile.phoneNumber || '',
+                  accountHolderName: profile.payout?.accountHolderName || profile.name || '',
+                }
               }, { emitEvent: false });
               const arr = this.registrationForm.get('profileImages') as FormArray;
               if (arr) {
@@ -923,6 +1000,8 @@ export class InfluencerProfileComponent implements OnInit {
                   };
                 }
               });
+              const _pfKeys2 = Object.keys(this.platformForms);
+              this.activePlatformTab = _pfKeys2.length ? _pfKeys2[0] : null;
               this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
               this.originalFormValue = this.registrationForm.getRawValue();
               this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
@@ -934,7 +1013,13 @@ export class InfluencerProfileComponent implements OnInit {
               this.configService.getDistricts(profile.location.state, stateId).subscribe({
                 next: (dists) => {
                   this.districts = Array.isArray(dists) ? dists : [];
-                  const districtId = this.districts.find((d: any) => d.name === profile.location?.district)?._id || '';
+                  const savedDistrict = (profile.location?.district || '').toString().trim();
+                  const lower = savedDistrict.toLowerCase();
+                  const resolved = savedDistrict
+                    ? (this.districts.find((d: any) => d._id === savedDistrict) ||
+                       this.districts.find((d: any) => (d.name || '').toString().trim().toLowerCase() === lower))
+                    : null;
+                  const districtId = resolved ? resolved._id : '';
                   doPatch(districtId);
                 },
                 error: () => doPatch('')

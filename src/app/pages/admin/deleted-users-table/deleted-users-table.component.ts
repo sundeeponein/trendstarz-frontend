@@ -235,7 +235,22 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   deletePermanently(userId: string) {
-    this.errorMessage = 'Permanent delete is disabled. Use restore or soft delete only.';
+    this.showConfirm(
+      'Permanently delete this user? This action cannot be undone. All profile data and uploaded images will be removed.',
+      () => {
+        this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders())
+          .subscribe({
+            next: () => {
+              this.errorMessage = null;
+              this.removeUserFromDeletedLists(userId);
+              this.dispatchAdminRefresh('user-deleted-refresh');
+            },
+            error: (err) => {
+              this.errorMessage = err?.error?.message || 'Failed to permanently delete user.';
+            }
+          });
+      }
+    );
   }
 
   getAuthHeaders() {

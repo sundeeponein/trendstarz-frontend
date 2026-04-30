@@ -1,30 +1,177 @@
-<div class="campaign-payment" *ngIf="visible">
-  <div class="cp-panel">
-    <h3>Pay for Campaign</h3>
-    <p *ngIf="!calculated">Click <button (click)="calculate()" type="button" class="btn-link">Calculate</button> to get the expected amount.</p>
+<div class="cp-overlay" *ngIf="visible" (click)="close()"></div>
 
-    <div *ngIf="calculated" class="calc">
-      <div><strong>Agreed amount:</strong> ₹{{ calculated.agreedAmount || '0' }}</div>
-      <div><strong>Platform fee ({{calculated.platformFeePercent}}%):</strong> ₹{{ calculated.platformFee | number:'1.0-2' }}</div>
-      <div><strong>GST ({{calculated.gstPercent}}%):</strong> ₹{{ calculated.gst | number:'1.0-2' }}</div>
-      <div><strong>Total to pay:</strong> ₹{{ calculated.payerTotal | number:'1.0-2' }}</div>
+<div class="cp-modal" *ngIf="visible" role="dialog" aria-modal="true">
+  <!-- Header -->
+  <div class="cp-header">
+    <div>
+      <h3 class="cp-title">Pay for Campaign</h3>
+      <p class="cp-sub" *ngIf="calculated">
+        <span class="cp-type-chip">{{ campaignTypeLabel }}</span>
+        <span class="cp-accepted">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
+      </p>
+    </div>
+    <button type="button" class="cp-close" (click)="close()" aria-label="Close">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="cp-tabs">
+    <button type="button" class="cp-tab" [class.active]="activeTab === 'summary'" (click)="setTab('summary')">
+      <i class="bi bi-receipt"></i> Summary
+    </button>
+    <button type="button" class="cp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')">
+      <i class="bi bi-credit-card"></i> Submit Payment
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="cp-loading" *ngIf="loading">
+    <div class="spinner-border spinner-border-sm text-warning"></div>
+    <span>Calculating payment…</span>
+  </div>
+
+  <!-- ── SUMMARY TAB ── -->
+  <div class="cp-body" *ngIf="!loading && activeTab === 'summary'">
+    <div class="cp-error" *ngIf="error">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
     </div>
 
-    <div class="form-row">
-      <label>UPI Transaction / UTR number</label>
-      <input [(ngModel)]="utrNumber" placeholder="Enter UTR / txn id" />
-    </div>
+    <ng-container *ngIf="calculated; else noData">
+      <!-- Breakdown card -->
+      <div class="cp-card">
+        <div class="cp-row">
+          <span class="cp-row-label">Price per influencer</span>
+          <span class="cp-row-val">{{ formatINR(calculated.pricePerInfluencer) }}</span>
+        </div>
+        <div class="cp-row">
+          <span class="cp-row-label">Accepted influencers</span>
+          <span class="cp-row-val">× {{ calculated.acceptedCount }}</span>
+        </div>
+        <div class="cp-row cp-row--strong">
+          <span class="cp-row-label">Agreed amount</span>
+          <span class="cp-row-val">{{ formatINR(calculated.agreedAmount) }}</span>
+        </div>
 
-    <div class="form-row">
-      <label>Payment proof (screenshot)</label>
-      <input type="file" (change)="onFileSelected($event)" />
-    </div>
+        <hr />
 
-    <div class="actions">
-      <button (click)="submitProof()" [disabled]="loading" class="btn-primary">Submit proof</button>
-      <button (click)="close()" class="btn-secondary">Cancel</button>
-    </div>
+        <div class="cp-row" *ngIf="calculated.platformFeeEnabled">
+          <span class="cp-row-label">Platform fee ({{ calculated.platformFeePercent }}%)</span>
+          <span class="cp-row-val">{{ formatINR(calculated.platformFee) }}</span>
+        </div>
+        <div class="cp-row cp-row--muted" *ngIf="!calculated.platformFeeEnabled">
+          <span class="cp-row-label">Platform fee</span>
+          <span class="cp-row-val">Free during launch</span>
+        </div>
+        <div class="cp-row" *ngIf="gstAmount > 0">
+          <span class="cp-row-label">GST ({{ gstPercent }}%)</span>
+          <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
+        </div>
 
-    <div *ngIf="error" class="error">{{ error }}</div>
+        <div class="cp-total">
+          <span>Total to pay</span>
+          <span class="cp-total-val">{{ formatINR(totalToPay) }}</span>
+        </div>
+      </div>
+
+      <!-- What influencers receive -->
+      <div class="cp-card cp-card--soft">
+        <div class="cp-card-title"><i class="bi bi-people"></i> Influencer payout</div>
+        <div class="cp-row">
+          <span class="cp-row-label">Total released to influencers</span>
+          <span class="cp-row-val">{{ formatINR(calculated.recipientPayoutTotal) }}</span>
+        </div>
+        <p class="cp-note">Released after each post is approved.</p>
+      </div>
+
+      <!-- Trust labels -->
+      <ul class="cp-trust" *ngIf="calculated.trustLabels?.length">
+        <li *ngFor="let label of calculated.trustLabels">
+          <i class="bi bi-shield-check"></i> {{ label }}
+        </li>
+      </ul>
+
+      <div class="cp-actions">
+        <button type="button" class="cp-btn cp-btn--secondary" (click)="close()">Cancel</button>
+        <button type="button" class="cp-btn cp-btn--primary" (click)="openPayInNewTab()">
+          <i class="bi bi-box-arrow-up-right"></i> Pay Now
+        </button>
+      </div>
+    </ng-container>
+
+    <ng-template #noData>
+      <div class="cp-empty">
+        <i class="bi bi-info-circle"></i>
+        <p>No accepted influencers yet. Once invitees accept, you'll be able to record the payment here.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- ── PAY TAB ── -->
+  <div class="cp-body" *ngIf="!loading && activeTab === 'pay'">
+    <ng-container *ngIf="!successMessage; else successBlock">
+      <!-- Quick total reminder -->
+      <div class="cp-quick-total" *ngIf="calculated">
+        <span>Total to pay</span>
+        <strong>{{ formatINR(totalToPay) }}</strong>
+      </div>
+
+      <button type="button" class="cp-paynow-link" (click)="openPayInNewTab()">
+        <i class="bi bi-box-arrow-up-right"></i> Open Pay Now page (UPI / QR)
+      </button>
+
+      <!-- Pay instructions -->
+      <div class="cp-instructions">
+        <p><i class="bi bi-info-circle"></i> Transfer the total amount via UPI / bank transfer, then enter the UTR and upload the proof below. Our team verifies within 24 hours.</p>
+      </div>
+
+      <!-- UTR -->
+      <div class="cp-field">
+        <label for="cp-utr">UPI Transaction / UTR number <span class="req">*</span></label>
+        <input id="cp-utr" type="text" [(ngModel)]="utrNumber" placeholder="e.g. 412345678912" autocomplete="off" />
+      </div>
+
+      <!-- Proof -->
+      <div class="cp-field">
+        <label>Payment proof (screenshot) <span class="req">*</span></label>
+        <div class="cp-file-row" *ngIf="!paymentProofPreview">
+          <label class="cp-file-btn">
+            <i class="bi bi-cloud-upload"></i> Choose screenshot
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+          </label>
+          <span class="cp-file-hint">PNG / JPG up to 5 MB</span>
+        </div>
+        <div class="cp-preview" *ngIf="paymentProofPreview">
+          <img [src]="paymentProofPreview" alt="Payment proof preview" />
+          <button type="button" class="cp-preview-clear" (click)="clearFile()">
+            <i class="bi bi-x-lg"></i> Replace
+          </button>
+        </div>
+      </div>
+
+      <div class="cp-error" *ngIf="error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+      </div>
+
+      <div class="cp-actions">
+        <button type="button" class="cp-btn cp-btn--secondary" (click)="setTab('summary')" [disabled]="submitting">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="cp-btn cp-btn--primary" (click)="submitProof()" [disabled]="!canSubmit">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm"></span>
+          <i class="bi bi-check-lg" *ngIf="!submitting"></i>
+          {{ submitting ? 'Submitting…' : 'Submit Proof' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <ng-template #successBlock>
+      <div class="cp-success">
+        <div class="cp-success-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <h4>Payment proof submitted</h4>
+        <p>{{ successMessage }}</p>
+        <button type="button" class="cp-btn cp-btn--primary" (click)="close()">Done</button>
+      </div>
+    </ng-template>
   </div>
 </div>

@@ -1,0 +1,68 @@
+<div class="pchk" [class.pchk--embedded]="embedded">
+  <!-- Title row -->
+  <div class="pchk-title-row" *ngIf="title">
+    <h2>{{ title }}</h2>
+    <span class="pchk-chip" *ngIf="chip">{{ chip }}</span>
+  </div>
+  <p class="pchk-subtitle" *ngIf="subtitle">{{ subtitle }}</p>
+
+  <!-- Amount banner -->
+  <div class="pchk-amount-banner">
+    <span class="pchk-amount-label">Amount payable</span>
+    <span class="pchk-amount-value">{{ amountFormatted }}</span>
+    <button type="button" class="pchk-copy-btn" (click)="copyAmount()" title="Copy amount">
+      <i class="bi" [ngClass]="amountCopied ? 'bi-check-lg' : 'bi-clipboard'"></i>
+      {{ amountCopied ? 'Copied' : 'Copy' }}
+    </button>
+  </div>
+
+  <!-- Breakdown -->
+  <div class="pchk-breakdown" *ngIf="showBreakdown && breakdown.length">
+    <ng-container *ngFor="let row of breakdown">
+      <div class="pchk-row" [class.pchk-row--strong]="row.strong" [class.pchk-row--free]="row.free">
+        <span>{{ row.label }}</span>
+        <span>{{ row.value }}</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- QR + UPI -->
+  <div class="pchk-pay-grid">
+    <div class="pchk-qr-block">
+      <p class="pchk-section-title">Scan QR with any UPI app</p>
+      <img class="pchk-qr-img" [src]="upiQrUrl" alt="UPI QR code" />
+      <p class="pchk-qr-hint">GPay · PhonePe · Paytm · BHIM</p>
+    </div>
+
+    <div class="pchk-upi-block">
+      <p class="pchk-section-title">Or pay to UPI ID</p>
+      <div class="pchk-upi-id-row">
+        <code>{{ upiId }}</code>
+        <button type="button" class="pchk-copy-btn pchk-copy-btn--solid" (click)="copyUpi()" title="Copy UPI ID">
+          <i class="bi" [ngClass]="upiCopied ? 'bi-check-lg' : 'bi-clipboard'"></i>
+          {{ upiCopied ? 'Copied' : 'Copy' }}
+        </button>
+      </div>
+
+      <a class="pchk-pay-btn" [href]="upiPayLink">
+        <i class="bi bi-phone"></i> Pay via UPI app
+      </a>
+      <p class="pchk-mobile-hint">Opens GPay / PhonePe / Paytm on your phone.</p>
+    </div>
+  </div>
+
+  <!-- Trust labels -->
+  <ul class="pchk-trust" *ngIf="trustLabels.length">
+    <li *ngFor="let label of trustLabels">
+      <i class="bi bi-shield-check"></i> {{ label }}
+    </li>
+  </ul>
+
+  <!-- Next steps -->
+  <div class="pchk-next" *ngIf="nextSteps.length">
+    <h3>After paying:</h3>
+    <ol>
+      <li *ngFor="let step of nextSteps" [innerHTML]="step"></li>
+    </ol>
+  </div>
+</div>

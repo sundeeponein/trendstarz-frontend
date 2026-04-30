@@ -185,6 +185,7 @@
         [selectable]="isBrandUser"
         [selected]="isInfluencerSelected(influencer)"
         [isProViewer]="isProView"
+        [contactRestricted]="influencer.contactRestricted !== false"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
         (createCampaignClick)="createCampaignForOne(influencer)"
         (toggleSelect)="toggleInfluencerSelection(influencer)">
@@ -229,6 +230,7 @@
         [website]="brand.website || ''"
         [showCampaignBtn]="isBrandUser"
         [isProViewer]="isProView"
+        [contactRestricted]="brand.contactRestricted !== false"
         (viewProfileClick)="viewBrandProfile(brand)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-brand-user-card>

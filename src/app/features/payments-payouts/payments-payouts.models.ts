@@ -17,6 +17,26 @@ export interface CampaignTransaction {
   updatedAt?: string;
   collectedAt?: string;
   paidOutAt?: string;
+  /** Recipient profile snapshot enriched by listForAdmin (admin view only). */
+  recipient?: {
+    id?: string;
+    role?: 'brand' | 'influencer';
+    name?: string;
+    email?: string;
+    mobile?: string;
+    payoutUpiId?: string;
+    payoutMobile?: string;
+    payoutName?: string;
+    lastConfirmedAt?: string;
+  };
+  /** Payer profile snapshot enriched by listForAdmin (admin view only). */
+  payer?: {
+    id?: string;
+    role?: 'brand' | 'influencer';
+    name?: string;
+    email?: string;
+    mobile?: string;
+  };
 }
 
 export interface TransactionSummary {
