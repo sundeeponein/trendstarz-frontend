@@ -13,6 +13,9 @@ export const routes: Routes = [
 			{ path: 'welcome', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'auth/login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
 			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
+			{ path: 'how-it-works', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
+			{ path: 'how-it-works/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
+			{ path: 'how-it-works/brands', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'brand' } },
 			// static pages legal
 			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
 			{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },
@@ -27,6 +30,7 @@ export const routes: Routes = [
 			{ path: 'campaigns', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-management/campaign-management.component').then(m => m.CampaignManagementComponent) },
 			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 			{ path: 'upgrade-premium', canActivate: [authGuard], loadComponent: () => import('./pages/premium-upgrade/premium-upgrade.component').then(m => m.PremiumUpgradeComponent) },
+			{ path: 'campaign-pay/:campaignId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-pay/campaign-pay.component').then(m => m.CampaignPayComponent) },
 			{ path: 'payment-history', canActivate: [authGuard], loadComponent: () => import('./pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) },
 			// DASHBOARDS
 			{ path: 'influencer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-dashboard/influencer-dashboard.component').then(m => m.InfluencerDashboardComponent) },

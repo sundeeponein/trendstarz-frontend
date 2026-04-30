@@ -111,6 +111,24 @@
     <p class="modal-info" *ngIf="selectedTx">
       Payout amount: <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }}</strong>
     </p>
+    <div class="recipient-info" *ngIf="selectedTx?.recipient as r">
+      <div class="ri-row"><i class="bi bi-person-circle"></i>
+        <strong>{{ r.name || '—' }}</strong>
+        <span class="ri-role" *ngIf="r.role">({{ r.role }})</span>
+      </div>
+      <div class="ri-row" *ngIf="r.email"><i class="bi bi-envelope"></i> {{ r.email }}</div>
+      <div class="ri-row" *ngIf="r.payoutMobile || r.mobile">
+        <i class="bi bi-phone"></i>
+        {{ r.payoutMobile || r.mobile }}
+        <span class="ri-tag" *ngIf="r.payoutMobile">GPay/PhonePe</span>
+      </div>
+      <div class="ri-row" *ngIf="r.payoutUpiId">
+        <i class="bi bi-bank"></i> UPI: <code>{{ r.payoutUpiId }}</code>
+      </div>
+      <div class="ri-row" *ngIf="r.payoutName">
+        <i class="bi bi-card-text"></i> Name on UPI: {{ r.payoutName }}
+      </div>
+    </div>
     <div class="form-group">
       <label>Payout UTR *</label>
       <input class="form-textarea" [(ngModel)]="payoutForm.payoutUtr" placeholder="Enter payout UTR" />

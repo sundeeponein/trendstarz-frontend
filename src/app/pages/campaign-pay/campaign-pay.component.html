@@ -1,0 +1,36 @@
+<div class="cpay-page">
+  <header class="cpay-header">
+    <a class="cpay-brand" routerLink="/">
+      <strong>TrendstarZ</strong>
+      <span>Campaign Payment</span>
+    </a>
+    <span class="cpay-secure"><i class="bi bi-shield-lock"></i> Secure manual UPI</span>
+  </header>
+
+  <div class="cpay-loading" *ngIf="loading">
+    <div class="spinner-border text-warning"></div>
+    <p>Loading payment details…</p>
+  </div>
+
+  <div class="cpay-error" *ngIf="!loading && error">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <p>{{ error }}</p>
+  </div>
+
+  <main class="cpay-card" *ngIf="!loading && !error && calculated">
+    <app-payment-checkout
+      title="Pay for Campaign"
+      [chip]="chip"
+      [subtitle]="subtitle"
+      [amountRupees]="totalRupees"
+      [breakdown]="breakdown"
+      [transactionNote]="transactionNote"
+      [trustLabels]="trustLabels"
+      [nextSteps]="nextSteps">
+    </app-payment-checkout>
+  </main>
+
+  <footer class="cpay-footer">
+    Need help? Contact <a href="mailto:support@trendstarz.in">support&#64;trendstarz.in</a>
+  </footer>
+</div>

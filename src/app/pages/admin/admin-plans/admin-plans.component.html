@@ -82,6 +82,7 @@
           <!-- Policies -->
           <div class="section-label">Policies</div>
           <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }}</strong> days post-expiry</p>
+          <p class="policy">Contact visibility: <strong>{{ plan.policies.contactVisibility || 'NONE' }}</strong></p>
 
             <!-- Discount (Offers) -->
             <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
@@ -147,6 +148,7 @@
           <!-- Policies -->
           <div class="section-label">Policies</div>
           <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
+          <p class="policy">Contact visibility: <strong>{{ plan.policies.contactVisibility || 'NONE' }}</strong></p>
 
             <!-- Discount (Offers) -->
             <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
@@ -245,6 +247,15 @@
       <div class="form-row">
         <label>Image Retention After Expiry (days)</label>
         <input type="number" [(ngModel)]="editingPlan.policies.imageRetentionDaysAfterExpiry" min="0" />
+      </div>
+      <div class="form-row">
+        <label>Contact Visibility Rule</label>
+        <select [(ngModel)]="editingPlan.policies.contactVisibility" (ngModelChange)="onContactVisibilityPolicyChange()">
+          <option value="PROFILE">PROFILE</option>
+          <option value="AFTER_ACCEPT">AFTER_ACCEPT</option>
+          <option value="AFTER_PAYMENT">AFTER_PAYMENT</option>
+          <option value="NONE">NONE</option>
+        </select>
       </div>
     </div>
 

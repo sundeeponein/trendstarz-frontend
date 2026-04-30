@@ -97,9 +97,41 @@
             </div>
           </div>
 
+          <!-- Payout details: where the influencer receives campaign earnings -->
+          <div class="field-block full-width payout-block" formGroupName="payout">
+            <h3 class="payout-heading">
+              <i class="bi bi-bank2"></i>
+              Payout details
+              <small>Where you receive your campaign earnings</small>
+            </h3>
+            <div class="form-grid two-col">
+              <div class="field-block">
+                <label>UPI ID</label>
+                <input formControlName="upiId" type="text" class="form-control"
+                       placeholder="e.g. yourname@upi" />
+              </div>
+              <div class="field-block">
+                <label>Mobile (GPay / PhonePe)</label>
+                <input formControlName="mobile" type="tel" class="form-control"
+                       placeholder="10-digit mobile number"
+                       inputmode="tel" maxlength="15" />
+              </div>
+              <div class="field-block full-width">
+                <label>Account holder name</label>
+                <input formControlName="accountHolderName" type="text" class="form-control"
+                       placeholder="Name on UPI / bank account" />
+              </div>
+            </div>
+            <p class="payout-hint">
+              Admin will use these details to send your earnings. You can also confirm or update
+              this information when accepting a campaign.
+            </p>
+          </div>
+
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="openChangePasswordModal()">Reset Password</button>
             <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
           </div>
         </section>
@@ -183,52 +215,68 @@
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
             <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns.</div>
             <div class="platform-cards">
-              <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
+              <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="isEditMode && togglePlatform(platform)">
                 <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                 <span class="platform-name">{{ platform.name }}</span>
                 <!-- <span *ngIf="getPlatformTotal(platform) > 0" class="platform-total">₹{{ getPlatformTotal(platform) }}</span> -->
               </div>
             </div>
 
-            <div *ngFor="let platform of selectedPlatforms()" class="platform-details-card">
-              <div class="platform-details-header">
-                <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
-                <span class="platform-name">{{ platform.name }}</span>
-                <!-- <span class="platform-total-row">Total: <strong>₹{{ getPlatformTotal(platform) }}</strong></span> -->
-                <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
+            <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
+              <div class="platform-tab-strip">
+                <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
+                  [class.platform-tab--active]="activePlatformTab === platform._id"
+                  (click)="activePlatformTab = platform._id">
+                  <i [class]="platform.icon"></i> {{ platform.name }}
+                </button>
+                <div class="platform-tab-spacer"></div>
+                <button type="button" class="tab-remove" *ngIf="activePlatformTab && isEditMode"
+                  (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
+                  <i class="bi bi-x-lg"></i> Remove
+                </button>
               </div>
-              <div class="platform-details-body">
-                <div class="row">
-                  <div class="col">
-                    <label>{{ platform.handleLabel || 'Handle' }}</label>
-                    <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" />
-                    <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                        [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                        target="_blank" rel="noopener noreferrer" class="verify-profile-link">
-                      <i class="bi bi-box-arrow-up-right"></i> Verify profile
-                    </a>
+
+              <ng-container *ngIf="activePlatformTab">
+                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card">
+                  <div class="platform-details-header">
+                    <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                    <span class="platform-name">{{ platform.name }}</span>
+                    <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
                   </div>
-                  <div class="col">
-                    <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
-                    <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
-                      <option value="" disabled>Select tier</option>
-                      <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="content-types-section">
-                  <label>Content & Starting Rates</label>
-                  <div class="content-types-list">
-                    <ng-container *ngFor="let ct of platform.contentTypes">
-                      <div class="content-type-item" *ngIf="ct.visible">
-                        <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
-                        <span>{{ ct.name }}</span>
-                        <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" />
+                  <div class="platform-details-body">
+                    <div class="row">
+                      <div class="col">
+                        <label>{{ platform.handleLabel || 'Handle' }}</label>
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" />
+                        <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                            [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                            target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                          <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                        </a>
                       </div>
-                    </ng-container>
+                      <div class="col">
+                        <label>Tier <i (click)="showTierInfoModal = true" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
+                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
+                          <option value="" disabled>Select tier</option>
+                          <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="content-types-section">
+                      <label>Content & Starting Rates</label>
+                      <div class="content-types-list">
+                        <ng-container *ngFor="let ct of platform.contentTypes">
+                          <div class="content-type-item" *ngIf="ct.visible">
+                            <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
+                            <span>{{ ct.name }}</span>
+                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" />
+                          </div>
+                        </ng-container>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ng-container>
             </div>
             <div class="text-muted" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
             
@@ -336,6 +384,9 @@
           </div>
 
           <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">Profile updated successfully.</div>
+          <div *ngIf="isEditMode && selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold my-3">
+            Please enter both Handle and Tier for every selected platform, or remove it.
+          </div>
           <div *ngIf="registrationError" class="text-danger fw-bold my-3">{{ registrationError }}</div>
 
           <div class="actions-row dual">
@@ -349,4 +400,5 @@
   </div>
 
 <app-tier-info-modal [(show)]="showTierInfoModal" [tiers]="tiers"></app-tier-info-modal>
+<app-reset-password-modal [(visible)]="showChangePasswordModal"></app-reset-password-modal>
 </div>

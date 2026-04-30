@@ -139,6 +139,15 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 
+  // Change password for logged-in user
+  changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
+    return this.http.post(`${this.apiUrl}/auth/change-password`, {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+  }
+
   getCategories(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
       map((res) => this.extractData<any[]>(res) || [])
@@ -300,6 +309,22 @@ export class ConfigService {
     );
   }
 
+  trackInfluencerProfileImpression(username: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/influencers/username/${encodeURIComponent(username)}/track-impression`, {});
+  }
+
+  trackInfluencerProfileClick(username: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/influencers/username/${encodeURIComponent(username)}/track-click`, {});
+  }
+
+  trackBrandProfileImpression(brandName: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}/track-impression`, {});
+  }
+
+  trackBrandProfileClick(brandName: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}/track-click`, {});
+  }
+
   // ── Campaign endpoints ──────────────────────
   /** Fetch all campaigns (optionally filter by status) — used for influencer browse view */
   getAllCampaigns(status?: string): Observable<any[]> {
@@ -400,11 +425,21 @@ export class ConfigService {
     );
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined', selectedPostDate?: string, selectedPlatform?: string, selectedContentType?: string): Observable<any> {
+  respondToInvite(
+    inviteId: string,
+    status: 'accepted' | 'declined',
+    selectedPostDate?: string,
+    selectedPlatform?: string,
+    selectedContentType?: string,
+    payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
+  ): Observable<any> {
     const body: any = { status };
     if (selectedPostDate) body.selectedPostDate = selectedPostDate;
     if (selectedPlatform) body.selectedPlatform = selectedPlatform;
     if (selectedContentType) body.selectedContentType = selectedContentType;
+    if (payout && (payout.upiId || payout.mobile || payout.accountHolderName)) {
+      body.payout = payout;
+    }
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, body);
   }
 

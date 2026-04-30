@@ -16,3 +16,33 @@
   .limit-reached { color: #dc2626; font-weight: 600; }
   .limit-warning { color: #dc2626; a { color: #6366f1; text-decoration: underline; } }
 }
+
+.payout-block {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed #fcd34d;
+  background: #fffbeb;
+  border-radius: 10px;
+}
+.payout-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 0.75rem;
+  i { color: #ea580c; }
+  small {
+    font-weight: 400;
+    color: #6b7280;
+    font-size: 0.78rem;
+    margin-left: 4px;
+  }
+}
+.payout-hint {
+  margin: 0.5rem 0 0;
+  color: #78716c;
+  font-size: 0.8rem;
+}
+

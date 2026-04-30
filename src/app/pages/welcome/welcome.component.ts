@@ -160,6 +160,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       }
       // Always slugify for URL safety
       const urlUsername = this.slugify(username);
+      if (urlUsername) {
+        this.config.trackInfluencerProfileClick(urlUsername).subscribe({
+          next: () => {},
+          error: () => {}
+        });
+      }
       this.router.navigate(['/influencer', urlUsername]);
     }
   }
@@ -188,7 +194,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   viewBrandProfile(brand: any) {
     if (brand && brand.brandName) {
-      this.router.navigate(['/brand', this.slugify(brand.brandName)]);
+      const slug = this.slugify(brand.brandName);
+      this.config.trackBrandProfileClick(slug).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+      this.router.navigate(['/brand', slug]);
     }
   }
 

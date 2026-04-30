@@ -19,6 +19,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PlansService, Plan } from '../../shared/plans.service';
+import { PaymentCheckoutComponent, BreakdownRow } from '../../shared/payment-checkout/payment-checkout.component';
 
 
 
@@ -26,7 +27,7 @@ import { PlansService, Plan } from '../../shared/plans.service';
 @Component({
   selector: 'app-premium-upgrade',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaymentCheckoutComponent],
   templateUrl: './premium-upgrade.component.html',
   styleUrls: ['./premium-upgrade.component.scss'],
 })
@@ -187,6 +188,41 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
 
   get finalPrice(): number {
     return Math.max(0, (this.selectedDuration?.price ?? 0)  - this.discountAmount);
+  }
+
+  // Breakdown rows for shared <app-payment-checkout>
+  get paymentBreakdown(): BreakdownRow[] {
+    const dur = this.selectedDuration;
+    if (!dur) return [];
+    const rows: BreakdownRow[] = [
+      { label: this.selectedPlan?.name + ' · ' + (dur.label || ''), value: '₹' + dur.price },
+    ];
+    if (this.discountAmount > 0) {
+      const label = this.couponApplied
+        ? 'Coupon discount'
+        : (this.discountLabel || `Discount (${this.planDiscountPercent}%)`);
+      rows.push({ label, value: '− ₹' + this.discountAmount, free: true });
+    }
+    rows.push({ label: 'Total', value: '₹' + this.finalPrice, strong: true });
+    return rows;
+  }
+
+  get paymentTransactionNote(): string {
+    return (this.selectedPlan?.name || 'TrendstarZ') + ' Premium';
+  }
+
+  getContactVisibilityLabel(plan: Plan): string {
+    switch (plan.policies?.contactVisibility) {
+      case 'PROFILE':
+        return 'Contact details visible on profile';
+      case 'AFTER_ACCEPT':
+        return 'Contact details unlock after invite acceptance';
+      case 'AFTER_PAYMENT':
+        return 'Contact details unlock after payment';
+      case 'NONE':
+      default:
+        return 'Contact details hidden';
+    }
   }
 
   applyCoupon() {

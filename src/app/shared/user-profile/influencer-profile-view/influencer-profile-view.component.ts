@@ -18,6 +18,10 @@ export class InfluencerProfileViewComponent implements OnInit {
   influencer: any;
   loading = true;
   error = '';
+  showContactInfo = false;
+
+  /** Active social media platform tab index. */
+  activePlatformIdx = 0;
 
   // Review state
   showWriteReview = false;
@@ -30,9 +34,18 @@ export class InfluencerProfileViewComponent implements OnInit {
     return !!this.session.getUser()?.isPremium;
   }
 
+  /** Whether any user is logged in (used to gate contact details for guests) */
+  get isLoggedIn(): boolean {
+    return !!this.session.getUser();
+  }
+
   get isBrandViewer(): boolean {
     const user = this.session.getUser();
     return user?.role === 'BRAND' || user?.role === 'brand';
+  }
+
+  get canViewContactDetails(): boolean {
+    return !!this.influencer && this.influencer.contactRestricted !== true;
   }
 
   stripProtocol(url: string): string {
@@ -52,6 +65,11 @@ export class InfluencerProfileViewComponent implements OnInit {
 
   getTotalFollowers(): number {
     return (this.influencer?.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
+  }
+
+  getPrimaryTier(): string {
+    const list: any[] = this.influencer?.socialMedia || [];
+    return list[0]?.tier || list.find((sm: any) => sm?.tier)?.tier || '';
   }
 
   formatFollowers(count: number): string {
@@ -110,6 +128,16 @@ export class InfluencerProfileViewComponent implements OnInit {
     return avg.toFixed(1) + '%';
   }
 
+  onContactClick(): void {
+    this.showContactInfo = true;
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('influencer-contact-info');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
+
   constructor(
     private route: ActivatedRoute,
     private config: ConfigService,
@@ -128,6 +156,12 @@ export class InfluencerProfileViewComponent implements OnInit {
           next: (data) => {
             this.influencer = data || null;
             if (!data) this.error = 'Influencer not found.';
+            if (data) {
+              this.config.trackInfluencerProfileImpression(username).subscribe({
+                next: () => {},
+                error: () => {}
+              });
+            }
             this.loading = false;
             this.cd.detectChanges();
             // Brand: try to find a completed invite to enable review button

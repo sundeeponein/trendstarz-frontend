@@ -171,3 +171,66 @@
     font-size: 2rem;
   }
 }
+
+/* Friendly inline field hint (only shown after Sign In click) */
+.field-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: #b45309;
+  i { font-size: 0.95rem; }
+}
+
+/* Soft alert banner for server-side login errors */
+.login-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #ea580c;
+  border-radius: 8px;
+  color: #7c2d12;
+  font-size: 0.88rem;
+  line-height: 1.4;
+
+  i {
+    color: #ea580c;
+    font-size: 1.05rem;
+    margin-top: 1px;
+  }
+}
+
+/* Tame the bootstrap is-invalid red glare */
+.form-control.is-invalid {
+  border-color: #fb923c;
+  background-image: none;
+  &:focus {
+    border-color: #ea580c;
+    box-shadow: 0 0 0 0.2rem rgba(234, 88, 12, 0.18);
+  }
+}
+
+.login-alert {
+  position: relative;
+  padding-right: 2.25rem;
+
+  .login-alert-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: transparent;
+    border: none;
+    color: #b45309;
+    padding: 4px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 6px;
+    &:hover { background: rgba(234, 88, 12, 0.12); }
+    i { font-size: 0.85rem; }
+  }
+}

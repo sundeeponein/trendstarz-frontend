@@ -38,6 +38,19 @@ export class BrandProfileViewComponent implements OnInit {
     return !!this.session.getUser()?.isPremium;
   }
 
+  /** Whether any user is logged in (used to gate contact details for guests) */
+  get isLoggedIn(): boolean {
+    return !!this.session.getUser();
+  }
+
+  get canViewContactDetails(): boolean {
+    return !!this.brand && this.brand.contactRestricted !== true;
+  }
+
+  onContactClick(): void {
+    this.showContact = !this.showContact;
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }
@@ -136,6 +149,13 @@ export class BrandProfileViewComponent implements OnInit {
             this.brand = null;
           } else {
             this.brand = data;
+            const routeBrandName = this.route.snapshot.paramMap.get('brandName');
+            if (routeBrandName) {
+              this.config.trackBrandProfileImpression(routeBrandName).subscribe({
+                next: () => {},
+                error: () => {}
+              });
+            }
             this.checkOwnership(data);
             // Fetch campaigns for this brand
             const brandName = data.brandName || data.brandUsername || data.name;

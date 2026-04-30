@@ -69,7 +69,6 @@
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/payment-history">Payment History</a></li>
             <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Admin Panel</a></li>
-            <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>

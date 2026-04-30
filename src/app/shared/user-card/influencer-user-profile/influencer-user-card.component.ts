@@ -31,6 +31,8 @@ export class InfluencerUserCardComponent {
 
   /** Whether the viewer has a Pro subscription (controls visible details) */
   @Input() isProViewer = false;
+  /** Backend-driven visibility guard for contact details */
+  @Input() contactRestricted = true;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
@@ -51,6 +53,12 @@ export class InfluencerUserCardComponent {
 
   get totalFollowers(): number {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
+  }
+
+  /** Tier of the first social handle the user added (entry order). */
+  get primaryTier(): string {
+    const list = this.socialMedia || [];
+    return list[0]?.tier || list.find((sm: any) => sm?.tier)?.tier || '';
   }
 
   platformIcon(platform: string): string {

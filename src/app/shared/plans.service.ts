@@ -32,7 +32,10 @@ export interface Plan {
   features: PlanFeature[];
   limits: PlanLimit[];
   offers?: PlanOffer[];
-  policies: { imageRetentionDaysAfterExpiry: number };
+  policies: {
+    imageRetentionDaysAfterExpiry: number;
+    contactVisibility?: 'PROFILE' | 'AFTER_ACCEPT' | 'AFTER_PAYMENT' | 'NONE';
+  };
   highlight?: boolean;
   isActive?: boolean;
   sortOrder?: number;
@@ -44,7 +47,10 @@ export interface PlanCapabilities {
   planName: string;
   features: PlanFeature[];
   limits: PlanLimit[];
-  policies: { imageRetentionDaysAfterExpiry: number };
+  policies: {
+    imageRetentionDaysAfterExpiry: number;
+    contactVisibility?: 'PROFILE' | 'AFTER_ACCEPT' | 'AFTER_PAYMENT' | 'NONE';
+  };
   endDate: string | null;
 }
 
@@ -90,7 +96,12 @@ export class PlansService {
       features: plan?.features ?? [],
       limits: plan?.limits ?? [],
       offers: plan?.offers ?? [],
-      policies: plan?.policies ?? { imageRetentionDaysAfterExpiry: 45 },
+      policies: {
+        imageRetentionDaysAfterExpiry:
+          plan?.policies?.imageRetentionDaysAfterExpiry ?? 45,
+        contactVisibility:
+          plan?.policies?.contactVisibility ?? 'NONE',
+      },
     } as Plan;
   }
 

@@ -2,10 +2,11 @@ import { Component, signal, OnInit } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
+import { ToastHostComponent } from './shared/toast/toast-host.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

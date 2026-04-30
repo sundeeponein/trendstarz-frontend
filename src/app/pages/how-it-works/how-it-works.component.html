@@ -1,0 +1,126 @@
+<section class="how-wrap">
+  <header class="hero">
+    <p class="eyebrow">How It Works</p>
+    <h1 *ngIf="role === 'guest'">Get collaborations moving in 3 simple steps</h1>
+    <h1 *ngIf="role === 'influencer'">You are live. Turn visibility into offers.</h1>
+    <h1 *ngIf="role === 'brand'">You are ready. Launch your first campaign.</h1>
+    <p class="sub" *ngIf="role === 'guest'">
+      Two clear paths. One platform. Pick your side and start today.
+    </p>
+    <p class="sub" *ngIf="role === 'influencer'">
+      Brands can now discover your profile. Take one action now to get offers faster.
+    </p>
+    <p class="sub" *ngIf="role === 'brand'">
+      Start reaching relevant influencers in minutes with a focused campaign.
+    </p>
+
+    <div class="audience-switch" *ngIf="role === 'guest' || role === 'admin'">
+      <a routerLink="/how-it-works" class="audience-pill" [class.active]="audienceMode === 'all'">All</a>
+      <a routerLink="/how-it-works/influencers" class="audience-pill" [class.active]="audienceMode === 'influencer'">Influencers</a>
+      <a routerLink="/how-it-works/brands" class="audience-pill" [class.active]="audienceMode === 'brand'">Brands</a>
+    </div>
+  </header>
+
+  <div class="journey-grid" *ngIf="role === 'guest' || role === 'admin'">
+    <article class="journey influencer-journey" *ngIf="audienceMode !== 'brand'">
+      <p class="journey-tag">Influencers</p>
+      <h2>Get Brand Deals Without Chasing DMs</h2>
+      <p class="journey-sub">Join TrendStarz and start receiving paid collaboration offers.</p>
+
+      <ol class="steps">
+        <li>
+          <h3>Create Your Profile</h3>
+          <p>Add your Instagram or YouTube and set your starting price.</p>
+        </li>
+        <li>
+          <h3>Get Matched with Brands</h3>
+          <p>Brands find you based on budget and category fit.</p>
+        </li>
+        <li>
+          <h3>Receive and Accept Offers</h3>
+          <p>Accept, reject, or negotiate deals on your terms.</p>
+        </li>
+      </ol>
+
+      <div class="benefit-box">
+        <h4>Why Influencers Join TrendStarz</h4>
+        <ul>
+          <li>Paid collaborations that fit your niche</li>
+          <li>No need to pitch brands manually</li>
+          <li>Relevant campaigns only</li>
+          <li>Flexible pricing and deal control</li>
+          <li>Contact privacy stays protected</li>
+        </ul>
+      </div>
+
+      <p class="trust">Profiles with pricing and active status get more offers.</p>
+      <a routerLink="/register-influencer" [queryParams]="influencerSignupParams" class="cta influencer-cta">Start Getting Brand Deals</a>
+    </article>
+
+    <article class="journey brand-journey" *ngIf="audienceMode !== 'influencer'">
+      <p class="journey-tag">Brands</p>
+      <h2>Find the Right Influencers for Your Brand</h2>
+      <p class="journey-sub">Launch campaigns and collaborate with verified creators.</p>
+
+      <ol class="steps">
+        <li>
+          <h3>Create Campaign</h3>
+          <p>Define budget, content type, and campaign goal.</p>
+        </li>
+        <li>
+          <h3>Discover Influencers</h3>
+          <p>Get matched profiles instantly from your target category.</p>
+        </li>
+        <li>
+          <h3>Send Offers</h3>
+          <p>Send offers, negotiate quickly, and finalize deals.</p>
+        </li>
+      </ol>
+
+      <div class="benefit-box">
+        <h4>Why Brands Use TrendStarz</h4>
+        <ul>
+          <li>Find relevant influencers fast</li>
+          <li>Work within your budget</li>
+          <li>Get faster responses</li>
+          <li>Transparent pricing up front</li>
+          <li>Direct and simple collaboration</li>
+        </ul>
+      </div>
+
+      <a routerLink="/register-brand" [queryParams]="brandSignupParams" class="cta brand-cta">Start Your First Campaign</a>
+    </article>
+  </div>
+
+  <section class="example" *ngIf="role === 'guest' || role === 'admin'">
+    <p class="example-label">Real flow example</p>
+    <p class="example-text">Brand offered Rs 3000 -> Influencer accepted -> Deal done.</p>
+  </section>
+
+  <section class="activation influencer-activation" *ngIf="role === 'influencer'">
+    <h2>You are Live</h2>
+    <p>Brands can now discover your profile.</p>
+
+    <ul>
+      <li>Complete your profile details</li>
+      <li>View available campaigns</li>
+      <li>Watch for incoming offers</li>
+    </ul>
+
+    <p class="tip">Tip: Add pricing to get more offers.</p>
+    <a routerLink="/campaigns" [queryParams]="influencerCampaignParams" class="cta influencer-cta">Explore Campaigns</a>
+  </section>
+
+  <section class="activation brand-activation" *ngIf="role === 'brand'">
+    <h2>Let's Launch Your First Campaign</h2>
+    <p>Start reaching influencers in minutes.</p>
+
+    <ul>
+      <li>Create campaign</li>
+      <li>Browse influencers</li>
+    </ul>
+
+    <p class="tip">Tip: Campaigns with clear budgets get faster responses.</p>
+    <a routerLink="/campaigns" [queryParams]="brandCampaignParams" class="cta brand-cta">Create Campaign</a>
+  </section>
+</section>

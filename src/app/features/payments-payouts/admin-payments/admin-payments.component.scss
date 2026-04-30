@@ -332,6 +332,41 @@ code {
     border-radius: 4px;
     color: #333;
   }
+
+  .recipient-info {
+    margin: -0.75rem 0 1.25rem;
+    padding: 0.75rem 1rem;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    color: #1f2937;
+    font-size: 0.9rem;
+
+    .ri-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+      word-break: break-all;
+      i { color: #ea580c; }
+      code {
+        background: #fff;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid #fed7aa;
+        font-size: 0.85rem;
+      }
+    }
+    .ri-role { color: #6b7280; font-weight: 500; }
+    .ri-tag {
+      margin-left: 6px;
+      font-size: 0.7rem;
+      background: #16a34a;
+      color: #fff;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+  }
 }
 
 /* ─── Form ───────────────────────────────── */

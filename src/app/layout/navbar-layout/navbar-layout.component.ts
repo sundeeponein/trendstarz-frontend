@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-navbar-layout',
@@ -28,7 +29,15 @@ export class NavbarLayoutComponent {
         : this.config.getInfluencerProfileById();
       profileCall.subscribe((profile: any) => {
         if (profile) {
-          const updated = { ...this.session.getUser(), isPremium: !!profile.isPremium, premiumEnd: profile.premiumEnd || null };
+          const updated = {
+            ...this.session.getUser(),
+            isPremium: !!profile.isPremium,
+            premiumEnd: profile.premiumEnd || null,
+            profileImages: profile.profileImages || this.session.getUser()?.profileImages,
+            brandLogo: profile.brandLogo || this.session.getUser()?.brandLogo,
+            name: profile.name || this.session.getUser()?.name,
+            brandName: profile.brandName || this.session.getUser()?.brandName,
+          };
           this.session.setUser(updated);
           this.cdr.detectChanges();
         }
@@ -40,16 +49,30 @@ export class NavbarLayoutComponent {
       // For brands, check brandLogo array
       if (this.user.role === 'brand') {
         if (Array.isArray(this.user.brandLogo) && this.user.brandLogo.length > 0 && this.user.brandLogo[0]?.url) {
-          return this.user.brandLogo[0].url;
+          return this.normalizeImageUrl(this.user.brandLogo[0].url);
         }
-      } else if (this.user.profileImage && typeof this.user.profileImage === 'string') {
-        // For others, use profileImage
-        if (/^https?:\/\//.test(this.user.profileImage)) {
-          return this.user.profileImage;
+      } else {
+        // Influencers: profileImages[0].url is the canonical field; fall back to legacy profileImage string.
+        if (Array.isArray(this.user.profileImages) && this.user.profileImages.length > 0 && this.user.profileImages[0]?.url) {
+          return this.normalizeImageUrl(this.user.profileImages[0].url);
+        }
+        if (this.user.profileImage && typeof this.user.profileImage === 'string') {
+          return this.normalizeImageUrl(this.user.profileImage);
         }
       }
     }
     return 'assets/default-profile.png';
+  }
+
+  private normalizeImageUrl(url: string): string {
+    if (!url) return 'assets/default-profile.png';
+    if (/^https?:\/\//.test(url)) return url;
+    if (url.startsWith('/assets/')) {
+      const api = environment.apiBaseUrl || '';
+      const backend = api.replace(/\/api\/?$/, '');
+      return backend ? backend + url : url;
+    }
+    return url;
   }
   constructor(private router: Router, private session: SessionService, private config: ConfigService, private cdr: ChangeDetectorRef) {
     // Subscribe to user changes

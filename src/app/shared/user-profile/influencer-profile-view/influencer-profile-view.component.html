@@ -31,12 +31,13 @@
           </ng-container>
         </p>
         <p class="profile-location" *ngIf="influencer.location?.state">
-          <i class="bi bi-geo-alt"></i> {{ influencer.location.state }}, India
+          <i class="bi bi-geo-alt"></i>
+          <ng-container *ngIf="influencer.location.district">{{ influencer.location.district }}, </ng-container>{{ influencer.location.state }}, India
         </p>
 
         <div class="profile-actions">
-          <a class="btn-follow" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
-          <a class="btn-contact" routerLink="/brand-profile">Contact</a>
+          <a class="btn-follow" *ngIf="isLoggedIn" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+          <button type="button" class="btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button>
         </div>
 
         <!-- Stats row -->
@@ -44,6 +45,10 @@
           <div class="stat-item">
             <span class="stat-val">{{ formatFollowers(getTotalFollowers()) }}</span>
             <span class="stat-lbl">FOLLOWERS</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val">{{ getPrimaryTier() || '—' }}</span>
+            <span class="stat-lbl">TIER</span>
           </div>
           <div class="stat-item">
             <span class="stat-val">{{ influencer.socialMedia?.length || 0 }}</span>
@@ -132,17 +137,32 @@
             <span class="platform-icon-circle">
               <i [class]="getSocialIcon(sm)"></i>
             </span>
-            <span class="eng-badge" *ngIf="sm.engagementRate">
+            <span class="eng-badge" *ngIf="sm.engagementRate && isProViewer">
               {{ sm.engagementRate }}%<br><small>eng.</small>
             </span>
             <div class="platform-followers-block">
-              <strong>{{ formatFollowers(sm.followersCount || 0) }}</strong>
-              <span>{{ getFollowerLabel(sm) }}</span>
+              <strong>{{ sm.tier || '—' }}</strong>
+              <span>tier</span>
             </div>
+          </div>
+
+          <!-- Handle (clickable) -->
+          <div class="platform-handle-row" *ngIf="sm.handle">
+            <a *ngIf="getSocialUrl(sm); else handleText"
+               [href]="getSocialUrl(sm)"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="platform-handle-link">
+              <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
+            </a>
+            <ng-template #handleText>
+              <span class="platform-handle-text">&#64;{{ sm.handle }}</span>
+            </ng-template>
           </div>
 
           <!-- Content type rows -->
           <ng-container *ngIf="sm.contentTypes?.length">
+            <div class="content-rates-label">Content &amp; Starting Rates</div>
             <div *ngFor="let ct of sm.contentTypes" class="ct-row">
               <span class="ct-name">{{ ct.name }}</span>
               <span class="ct-price" *ngIf="isProViewer">₹{{ ct.price }}</span>
@@ -174,7 +194,7 @@
           <span style="font-size:1.3em;">🌟</span>
           <div>
             <strong>Pro Plan Active</strong>
-            <div><small>Contact details &amp; pricing are visible to you.</small></div>
+            <div><small>Contact details are visible when you have campaign connection with this influencer.</small></div>
           </div>
         </div>
       </div>
@@ -183,14 +203,14 @@
           <span style="font-size:1.3em;">🔒</span>
           <div>
             <strong>Free Plan</strong>
-            <div><small>Upgrade to Pro to unlock contact info &amp; pricing.</small></div>
+            <div><small>Contact details are shown when you have campaign connection with this influencer.</small></div>
           </div>
         </div>
-        <a routerLink="/brand-profile" class="plan-status-card__btn">Upgrade to Pro</a>
+        <a routerLink="/campaigns" class="plan-status-card__btn">Start Campaign</a>
       </div>
 
-      <!-- Contact Info -->
-      <div class="contact-info-card">
+      <!-- Contact Info (logged-in users only) -->
+      <div id="influencer-contact-info" class="contact-info-card" *ngIf="isLoggedIn && showContactInfo">
         <h6 class="section-label">Contact Info</h6>
 
         <!-- WhatsApp -->
@@ -198,8 +218,8 @@
           <span class="contact-icon-wrap ci--whatsapp"><i class="bi bi-whatsapp"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">WhatsApp</span>
-            <span class="contact-field-val" *ngIf="isProViewer && influencer.phoneNumber">+91 {{ influencer.phoneNumber }}</span>
-            <span class="contact-field-blur" *ngIf="!isProViewer || !influencer.phoneNumber">••••••••••</span>
+            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.phoneNumber">+91 {{ influencer.phoneNumber }}</span>
+            <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.phoneNumber">••••••••••</span>
           </div>
         </div>
 
@@ -208,8 +228,8 @@
           <span class="contact-icon-wrap ci--email"><i class="bi bi-envelope"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Email</span>
-            <span class="contact-field-val" *ngIf="isProViewer && influencer.email">{{ influencer.email }}</span>
-            <span class="contact-field-blur" *ngIf="!isProViewer || !influencer.email">••••••••••</span>
+            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.email">{{ influencer.email }}</span>
+            <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.email">••••••••••</span>
           </div>
         </div>
 
@@ -218,8 +238,8 @@
           <span class="contact-icon-wrap ci--phone"><i class="bi bi-telephone"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Phone / Call</span>
-            <span class="contact-field-val" *ngIf="isProViewer && influencer.phoneNumber">+91 {{ influencer.phoneNumber }}</span>
-            <span class="contact-field-blur" *ngIf="!isProViewer || !influencer.phoneNumber">••••••••••</span>
+            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.phoneNumber">+91 {{ influencer.phoneNumber }}</span>
+            <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.phoneNumber">••••••••••</span>
           </div>
         </div>
 
@@ -228,12 +248,12 @@
           <span class="contact-icon-wrap ci--website"><i class="bi bi-globe2"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Website</span>
-            <a class="contact-field-val" *ngIf="isProViewer && influencer.website"
+            <a class="contact-field-val" *ngIf="canViewContactDetails && influencer.website"
                [href]="influencer.website" target="_blank" rel="noopener">
               {{ stripProtocol(influencer.website) }}
             </a>
-            <span class="contact-field-upgrade" *ngIf="!isProViewer || !influencer.website">
-              <i class="bi bi-lock-fill"></i> Upgrade to view
+            <span class="contact-field-upgrade" *ngIf="!canViewContactDetails || !influencer.website">
+              <i class="bi bi-lock-fill"></i> Campaign required to view. Need help? Contact admin: support@trendstarz.in
             </span>
           </div>
         </div>

@@ -65,6 +65,17 @@
             </select>
           </div>
 
+          <!-- Signup Source Filter -->
+          <div class="filter-item">
+            <label>Signup Source</label>
+            <select id="signup-source-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.signupSource : brandFilters.signupSource"
+                    (change)="activeTab === 'influencer' ? influencerFilters.signupSource = $any($event.target).value : brandFilters.signupSource = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All Sources</option>
+              <option *ngFor="let source of signupSourcesArray" [value]="source">{{ source }}</option>
+            </select>
+          </div>
+
           <!-- Reset Button -->
           <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
         </div>
@@ -85,11 +96,13 @@
           <th>Name</th>
           <th>Username</th>
           <th>Email & Phone</th>
+          <th>Signup Source</th>
           <th>Categories</th>
           <th>Languages</th>
           <th>State</th>
           <th>Starting Price</th>
           <th>Social Media</th>
+          <th>Profile Traffic</th>
           <th>Premium</th>
           <th>Payment Method</th>
           <th>Status</th>
@@ -97,16 +110,20 @@
         </tr>
       </thead>
       <tbody>
-  <tr *ngFor="let user of filteredInfluencers">
+        <tr *ngFor="let user of filteredInfluencers">
           <td>
             <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle">
           </td>
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
-          <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
+          <td>
+            {{ user.email || '-' }} <br>
+            <small>{{ user.phoneNumber || '-' }}</small>
+          </td>
+          <td>{{ getSignupSource(user) }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
           <td>{{ user.languages && user.languages.length ? user.languages.join(', ') : '-' }}</td>
-          <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.location?.district || '-' }} | {{ user.location?.state || '-' }}</td>
           <td>{{ user.promotionalPrice !== undefined ? ('Starting Price:' + user.promotionalPrice) : '-' }}</td>
           <td>
             <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocial">
@@ -131,6 +148,12 @@
               </ng-container>
             </span>
             <ng-template #noSocial>-</ng-template>
+          </td>
+          <td>
+            <small>
+              <span title="Impressions"><i class="bi bi-eye"></i> {{ user.profileTraffic?.impressions ?? 0 }}</span>&nbsp;
+              <span title="Clicks"><i class="bi bi-cursor"></i> {{ user.profileTraffic?.clicks ?? 0 }}</span>
+            </small>
           </td>
           <td>
             <ng-container *ngIf="user.isPremium; else freeTpl">
@@ -194,11 +217,13 @@
           <th>Logo</th>
           <th>Brand Name</th>
           <th>Email & Phone</th>
+          <th>Signup Source</th>
           <th>Categories</th>
           <th>State</th>
           <th>Starting Price</th>
           <th>Products</th>
           <th>Social Media</th>
+          <th>Profile Traffic</th>
           <th>Premium</th>
           <th>Payment Method</th>
           <th>Status</th>
@@ -213,9 +238,13 @@
             <img [src]="getBrandLogo(user)" alt="Logo" width="40" height="40" class="rounded-circle">
           </td>
           <td>{{ user.brandName || '-' }}</td>
-          <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
+          <td>
+            {{ user.email || '-' }} <br>
+            <small>{{ user.phoneNumber || '-' }}</small>
+          </td>
+          <td>{{ getSignupSource(user) }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
-          <td>{{ user.location?.state || '-' }}</td>
+          <td>{{ user.location?.district || '-' }} {{ user.location?.state || '-' }}</td>
           <td>{{ (user.promotionalPrice ?? user.price) !== undefined ? ('Starting Price:' + (user.promotionalPrice ?? user.price)) : '-' }}</td>
           <td>
             <ng-container *ngIf="user.products && user.products.length; else noProducts">
@@ -254,6 +283,12 @@
               </span>
             </span>
             <ng-template #noSocialBrand>-</ng-template>
+          </td>
+          <td>
+            <small>
+              <span title="Impressions"><i class="bi bi-eye"></i> {{ user.profileTraffic?.impressions ?? 0 }}</span>&nbsp;
+              <span title="Clicks"><i class="bi bi-cursor"></i> {{ user.profileTraffic?.clicks ?? 0 }}</span>
+            </small>
           </td>
           <td>
             <ng-container *ngIf="user.isPremium; else freeTplBrand">
