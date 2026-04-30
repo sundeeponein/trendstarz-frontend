@@ -205,6 +205,10 @@ export class CampaignDetailModalComponent {
     return (this.campaign?.specialInstructions || '').trim();
   }
 
+  get minInfluencerTier(): string {
+    return (this.campaign?.minInfluencerTier || '').trim();
+  }
+
   get checklistPlatformText(): string {
     const selected = this.selectedContentTypeOption;
     if (selected?.platform) return this.platformLabel(selected.platform);

@@ -440,10 +440,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return c?.platformPreference || c?.platform || '';
   }
 
-  getMinFollowers(inv: any): string {
+  getMinTier(inv: any): string {
     const c = this.getCampaign(inv);
-    const v = c?.minFollowerCount || c?.minFollowers;
-    return v ? v.toLocaleString('en-IN') : '';
+    return (c?.minInfluencerTier || '').trim();
   }
 
   getCampaignDeliverables(inv: any): string[] {

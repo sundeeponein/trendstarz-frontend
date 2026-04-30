@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -13,13 +13,17 @@ import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/camp
 import { CampaignDetailModalComponent, CampaignAcceptPayload, CampaignDeclinePayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignInviteCardComponent, InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { environment } from '../../../environments/environment';
+import { UserAvatarComponent } from '../../shared/components/user-avatar/user-avatar.component';
+import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { FlowHelpModalService } from '../../shared/components/flow-help-modal/flow-help-modal.service';
+import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -93,9 +97,8 @@ export class CampaignManagementComponent implements OnInit {
   planLimitError: string = '';
   upgradeBannerMessage: string = '';
     invitePanelSuccessMessage: string = '';
-    showTierInfoPopup = false;
-    tierInfoLoading = false;
-    tierInfoItems: string[] = [];
+    protected tierInfo = inject(TierInfoService);
+    protected flowHelp = inject(FlowHelpModalService);
 
     // Payment modal state
     paymentModalVisible = false;
@@ -726,34 +729,6 @@ export class CampaignManagementComponent implements OnInit {
     this.selectedInfluencerIds.clear();
   }
 
-  openTierInfoPopup() {
-    this.showTierInfoPopup = true;
-    if (this.tierInfoItems.length > 0 || this.tierInfoLoading) {
-      this.cd.detectChanges();
-      return;
-    }
-    this.tierInfoLoading = true;
-    this.config.getTiers().subscribe({
-      next: (rows: any[]) => {
-        const tiers = (Array.isArray(rows) ? rows : [])
-          .map((r: any) => String(r?.tier || r?.name || '').trim())
-          .filter((v: string) => !!v);
-        this.tierInfoItems = Array.from(new Set(tiers));
-        this.tierInfoLoading = false;
-        this.cd.detectChanges();
-      },
-      error: () => {
-        this.tierInfoItems = ['Nano', 'Micro', 'Mid', 'Macro', 'Mega'];
-        this.tierInfoLoading = false;
-        this.cd.detectChanges();
-      }
-    });
-  }
-
-  closeTierInfoPopup() {
-    this.showTierInfoPopup = false;
-  }
-
   sendInvite(influencer: any) {
     if (!this.invitePanelCampaign?._id) return;
     this.inviteError = '';
@@ -924,12 +899,7 @@ export class CampaignManagementComponent implements OnInit {
     return !Number.isNaN(end.getTime()) && end >= new Date();
   }
 
-  getInfluencerTier(inf: any): string {
-    if (!Array.isArray(inf?.socialMedia) || !inf.socialMedia.length) return '';
-    const topByFollowers = [...inf.socialMedia]
-      .sort((a: any, b: any) => Number(b?.followersCount || 0) - Number(a?.followersCount || 0))[0];
-    return String(topByFollowers?.tier || '').trim();
-  }
+  getInfluencerTier(inf: any): string { return getInfluencerPrimaryTier(inf); }
 
   formatFollowers(n: number): string {
     if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';

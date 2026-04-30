@@ -79,6 +79,27 @@
   gap: 7px;
 }
 
+.btn-flow-guide {
+  border: 1px solid #d9dded;
+  background: #fff;
+  color: #2f3659;
+  border-radius: 20px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #f7f8ff;
+    border-color: #cfd5eb;
+    color: #181d3a;
+  }
+}
+
 /* ── Tabs ────────────────────────────── */
 .cm-tabs {
   display: flex;
@@ -893,6 +914,59 @@
   align-items: center;
   gap: 8px;
   i { color: $accent; }
+}
+
+.flow-info-trigger {
+  border: 1px solid #e1e3ef;
+  background: #fff;
+  color: #4f5471;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #cfd3ea;
+    color: #1f2342;
+    background: #f7f8ff;
+  }
+}
+
+.invite-flow-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #ebeef9;
+  background: #f9faff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: #555b78;
+}
+
+.invite-flow-link {
+  border: none;
+  background: transparent;
+  color: #2f3659;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 0;
+
+  &:hover {
+    color: #151a36;
+    text-decoration: underline;
+  }
 }
 
 .pending-badge {
@@ -1983,29 +2057,15 @@
 
 .avatar-pip {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: #fff;
   border: 2px solid #fff;
   margin-right: -6px;
   cursor: default;
   flex-shrink: 0;
+  overflow: hidden;
   box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-}
-
-.avatar-pip-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* ── Initials in expand influencer rows ── */

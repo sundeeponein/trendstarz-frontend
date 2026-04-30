@@ -40,6 +40,10 @@
           <div class="cdm-stat-label"><i class="bi bi-people-fill"></i> SLOTS</div>
           <div class="cdm-stat-value">{{ slots }}</div>
         </div>
+        <div class="cdm-stat-card" *ngIf="minInfluencerTier">
+          <div class="cdm-stat-label"><i class="bi bi-bar-chart-steps"></i> MIN. TIER</div>
+          <div class="cdm-stat-value">{{ minInfluencerTier }}</div>
+        </div>
       </div>
 
       <!-- Campaign type -->

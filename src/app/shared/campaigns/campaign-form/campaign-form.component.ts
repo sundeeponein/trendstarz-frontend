@@ -1,20 +1,25 @@
-import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Campaign, CampaignInfluencer } from '../campaign.model';
 import { ConfigService } from '../../config.service';
 import { environment } from '../../../../environments/environment';
+import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
+import { TierInfoService } from '../../components/tier-info-modal/tier-info.service';
+import { FlowHelpModalService } from '../../components/flow-help-modal/flow-help-modal.service';
+import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 
 
 
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit {
+  readonly tierOrder: readonly string[] = TIER_ORDER;
     selectionLimitError = '';
 
     canSelectMoreInfluencers(): boolean {
@@ -35,7 +40,7 @@ export class CampaignFormComponent implements OnInit {
   influencerSearch = '';
   selectedInfluencerIds = new Set<string>();
   filterCategory = '';
-  filterFollowers = '';
+  filterTier = '';
   filterPlatform = '';
   imagePreview: string | null = null;
   selectedFile: File | null = null;
@@ -52,7 +57,8 @@ export class CampaignFormComponent implements OnInit {
   activePlatformTab = '';
   platformDeliverables: { platform: string; contentTypes: { name: string; enabled: boolean; price: number | null }[] }[] = [];
   platformsList: any[] = [];
-  // Add ChangeDetectorRef
+  protected tierInfo = inject(TierInfoService);
+  protected flowHelp = inject(FlowHelpModalService);
   constructor(private fb: FormBuilder, private config: ConfigService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
@@ -66,6 +72,7 @@ export class CampaignFormComponent implements OnInit {
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
       minFollowerCount: [this.campaign?.minFollowerCount || null, [Validators.min(0)]],
+      minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
       platformPreference: [this.campaign?.platformPreference || ''],
       specialInstructions: [this.campaign?.specialInstructions || ''],
     }, { validators: [this.dateRangeValidator] });
@@ -104,7 +111,6 @@ export class CampaignFormComponent implements OnInit {
       this.platformsList = Array.isArray(data) ? data : [];
       this.cd.detectChanges();
     });
-
 
   }
 
@@ -199,10 +205,9 @@ export class CampaignFormComponent implements OnInit {
     if (this.filterCategory) {
       list = list.filter(inf => (inf.categories || []).includes(this.filterCategory));
     }
-    if (this.filterFollowers === '10k') {
-      list = list.filter(inf => this.totalFollowers(inf) >= 10000);
-    } else if (this.filterFollowers === '100k') {
-      list = list.filter(inf => this.totalFollowers(inf) >= 100000);
+    if (this.filterTier) {
+      const activeTier = this.normalizeTierLabel(this.filterTier);
+      list = list.filter(inf => this.getInfluencerTier(inf) === activeTier);
     }
     if (this.filterPlatform) {
       list = list.filter(inf =>
@@ -221,8 +226,17 @@ export class CampaignFormComponent implements OnInit {
     });
   }
 
-  totalFollowers(inf: any): number {
-    return (inf.socialMedia || []).reduce((sum: number, s: any) => sum + (s.followersCount || 0), 0);
+  private normalizeTierLabel(tier: string): string { return normalizeTierLabel(tier); }
+
+  getInfluencerTier(inf: any): string { return getInfluencerPrimaryTier(inf); }
+
+  getAvailableTierFilters(): string[] {
+    const found = new Set<string>();
+    this.allInfluencers.forEach(inf => {
+      const t = this.getInfluencerTier(inf);
+      if (t) found.add(t);
+    });
+    return this.tierOrder.filter(t => found.has(t));
   }
 
   private isDefaultAvatarUrl(url: string): boolean {

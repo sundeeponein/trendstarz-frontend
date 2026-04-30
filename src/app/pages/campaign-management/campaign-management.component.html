@@ -36,6 +36,14 @@
         <h2 class="my-invites-title">
           <i class="bi bi-envelope-fill"></i> My Campaign Invites
         </h2>
+        <button
+          type="button"
+          class="flow-info-trigger"
+          title="Before and after accepting campaign flow"
+          (click)="flowHelp.openInfluencerFlowGuide()"
+        >
+          <i class="bi bi-info-circle"></i> Campaign Flow
+        </button>
         <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
           {{ getPendingInviteCount() }} pending
         </span>
@@ -47,6 +55,12 @@
 
       <div *ngIf="!myInvitesLoading">
         <div class="invite-list" *ngIf="myInvites.length > 0">
+          <div class="invite-flow-hint">
+            <span>Need help before accepting?</span>
+            <button type="button" class="invite-flow-link" (click)="flowHelp.openInfluencerFlowGuide()">
+              <i class="bi bi-info-circle"></i> Open accept-to-complete guide
+            </button>
+          </div>
           <app-campaign-invite-card
             *ngFor="let inv of myInvites"
             [invite]="inv"
@@ -76,6 +90,14 @@
         <p class="cm-subtitle">{{ isInfluencerView ? 'Browse active campaigns from brands looking for creators like you.' : 'Monitor performance and manage your brand partnerships.' }}</p>
       </div>
       <div class="cm-header-actions" *ngIf="!isInfluencerView">
+        <button
+          class="btn-flow-guide"
+          type="button"
+          (click)="flowHelp.openCampaignBuilderGuide()"
+          title="Show brand campaign creation flow"
+        >
+          <i class="bi bi-info-circle"></i> Campaign Flow
+        </button>
         <button class="btn btn-create" (click)="openCreateForm()" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">
           <i class="bi bi-plus-circle-fill"></i> New Campaign
         </button>
@@ -183,18 +205,14 @@
               </span>
               <!-- Avatar stack -->
               <div class="avatar-stack" *ngIf="getCardInvitePreview(c).length > 0">
-                <span class="avatar-pip"
+                <app-user-avatar
                   *ngFor="let inv of getCardInvitePreview(c)"
-                  [style.background]="getInitialsColor(inv.influencerId?.name || '')"
-                  [title]="inv.influencerId?.name || ''">
-                  <img
-                    *ngIf="getInfluencerAvatar(inv.influencerId)"
-                    class="avatar-pip-img"
-                    [src]="getInfluencerAvatar(inv.influencerId)"
-                    (error)="$any($event.target).style.display = 'none'"
-                    alt="" />
-                  {{ getInfluencerInitials(inv.influencerId?.name || '') }}
-                </span>
+                  class="avatar-pip"
+                  [name]="inv.influencerId?.name || ''"
+                  [src]="getInfluencerAvatar(inv.influencerId)"
+                  [size]="24"
+                  [title]="inv.influencerId?.name || ''"
+                ></app-user-avatar>
               </div>
               <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
             </div>
@@ -277,7 +295,7 @@
             <div class="expand-inf-list" *ngIf="getExpandInvites(c).length > 0">
               <div class="expand-inf-heading-row">
                 <p class="expand-inf-heading">Invited Influencers</p>
-                <button class="tier-info-trigger" type="button" (click)="openTierInfoPopup(); $event.stopPropagation()">
+                <button class="tier-info-trigger" type="button" (click)="tierInfo.open(); $event.stopPropagation()">
                   <i class="bi bi-info-circle"></i> Tier info
                 </button>
               </div>
@@ -285,17 +303,11 @@
                 <!-- Influencer row -->
                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
                      [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
-                  <div class="expand-inf-avatar-wrap">
-                    <span class="expand-inf-initials"
-                      [style.background]="getInitialsColor(inv.influencerId?.name || '')">
-                      {{ getInfluencerInitials(inv.influencerId?.name || '') }}
-                    </span>
-                    <img class="expand-inf-avatar"
-                      *ngIf="getInfluencerAvatar(inv.influencerId)"
-                      [src]="getInfluencerAvatar(inv.influencerId)"
-                      (error)="onImgError($event)"
-                      alt="" />
-                  </div>
+                  <app-user-avatar
+                    [name]="inv.influencerId?.name || ''"
+                    [src]="getInfluencerAvatar(inv.influencerId)"
+                    [size]="36"
+                  ></app-user-avatar>
                   <div class="expand-inf-info">
                     <div class="expand-inf-name-row">
                       <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
@@ -537,16 +549,11 @@
       <div *ngIf="!invitesLoading">
         <div class="invited-list" *ngIf="invites.length > 0">
           <div class="invited-row" *ngFor="let inv of invites">
-            <div class="invited-avatar-wrap">
-              <span class="invited-avatar--initials"
-                [style.background]="getInitialsColor(inv.influencerId?.name || inv.influencerId?.username || 'Influencer')">
-                {{ getInfluencerInitials(inv.influencerId?.name || inv.influencerId?.username || 'Influencer') }}
-              </span>
-              <img class="invited-avatar-img"
-                   *ngIf="getInfluencerAvatar(inv.influencerId)"
-                   [src]="getInfluencerAvatar(inv.influencerId)"
-                   (error)="onImgError($event)" />
-            </div>
+            <app-user-avatar
+              [name]="inv.influencerId?.name || inv.influencerId?.username || 'Influencer'"
+              [src]="getInfluencerAvatar(inv.influencerId)"
+              [size]="44"
+            ></app-user-avatar>
             <div class="invited-info">
               <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}
                 <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
@@ -604,7 +611,7 @@
       <div class="invite-limit-note" *ngIf="inviteSlotsLimit">
         Invited {{ invites.length }} / {{ inviteSlotsLimit }} influencers
         <span *ngIf="inviteSlotsRemaining <= 0">. Limit reached for this campaign.</span>
-        <button class="tier-info-trigger" type="button" (click)="openTierInfoPopup()">
+        <button class="tier-info-trigger" type="button" (click)="tierInfo.open()">
           <i class="bi bi-info-circle"></i> Tier info
         </button>
       </div>
@@ -628,16 +635,11 @@
             (change)="toggleInfluencerSelect(inf._id)" />
           <span class="inf-checkbox-spacer" *ngIf="invitedIds.has(inf._id)"></span>
 
-          <div class="invited-avatar-wrap">
-            <span class="invited-avatar--initials"
-                  [style.background]="getInitialsColor(inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer')">
-              {{ getInfluencerInitials(inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer') }}
-            </span>
-            <img class="invited-avatar-img"
-                 *ngIf="getInfluencerAvatar(inf)"
-                 [src]="getInfluencerAvatar(inf)"
-                 (error)="onImgError($event)" />
-          </div>
+          <app-user-avatar
+            [name]="inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer'"
+            [src]="getInfluencerAvatar(inf)"
+            [size]="44"
+          ></app-user-avatar>
           <div class="invited-info">
             <p class="invited-name">{{ inf.name || inf.fullname }}
               <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inf)" title="Verified Premium"></i>
@@ -689,23 +691,5 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
-
-  <div class="tier-info-overlay" *ngIf="showTierInfoPopup" (click)="closeTierInfoPopup()"></div>
-  <div class="tier-info-popup" *ngIf="showTierInfoPopup" (click)="$event.stopPropagation()">
-    <div class="tier-info-header">
-      <h4>Tier Information</h4>
-      <button type="button" class="drawer-close" (click)="closeTierInfoPopup()"><i class="bi bi-x-lg"></i></button>
-    </div>
-    <p class="tier-info-text">
-      Tiers are shown from influencer registration profile per platform, not from follower counts.
-    </p>
-    <div class="tier-info-loading" *ngIf="tierInfoLoading">
-      <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-    </div>
-    <ul class="tier-info-list" *ngIf="!tierInfoLoading">
-      <li *ngFor="let tier of tierInfoItems">{{ tier }}</li>
-      <li *ngIf="tierInfoItems.length === 0">No tier list configured yet.</li>
-    </ul>
-  </div>
 
 </div>

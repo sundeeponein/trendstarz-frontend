@@ -4,7 +4,17 @@
     <!-- ── Header ── -->
     <div class="form-header">
       <div>
-        <h3>{{ isEdit ? 'Edit Campaign' : 'Create new campaign' }}</h3>
+        <h3>
+          {{ isEdit ? 'Edit Campaign' : 'Create new campaign' }}
+          <button
+            type="button"
+            class="form-help-btn"
+            title="Show campaign flow help"
+            (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"
+          >
+            <i class="bi bi-info-circle"></i>
+          </button>
+        </h3>
         <p class="form-subtitle">Fill in details, then invite influencers</p>
       </div>
       <button class="btn-close-modal" (click)="onCancel()" type="button"><i class="bi bi-x-lg"></i></button>
@@ -69,6 +79,13 @@
 
         <div class="field-group">
           <label class="field-label">Campaign type <span class="required">*</span></label>
+          <button
+            type="button"
+            class="field-guide-link"
+            (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"
+          >
+            <i class="bi bi-info-circle"></i> Open guide for Step 1
+          </button>
           <select formControlName="campaignType" class="field-input">
             <option value="paid_collab">Paid collaboration</option>
             <option value="product">Product collaboration</option>
@@ -227,11 +244,16 @@
 
         </div>
 
-        <!-- ── Min follower count ── -->
+        <!-- ── Minimum tier ── -->
         <div class="field-group">
-          <label class="field-label">Min follower count</label>
-          <input type="number" [formControl]="$any(form.get('minFollowerCount'))"
-                 class="field-input" placeholder="e.g. 10000" min="0" />
+          <label class="field-label">
+            Minimum tier
+            <i class="bi bi-info-circle" title="View tier info" style="cursor:pointer;margin-left:6px;" (click)="tierInfo.open()"></i>
+          </label>
+          <select [formControl]="$any(form.get('minInfluencerTier'))" class="field-input">
+            <option value="">Any tier</option>
+            <option *ngFor="let tier of tierOrder" [value]="tier">{{ tier }}</option>
+          </select>
         </div>
 
         <div class="field-group">
@@ -281,18 +303,16 @@
 
         <div class="chip-list chip-list--sm">
           <button type="button" class="chip chip--sm"
-                  [class.chip--selected]="!filterCategory && !filterFollowers && !filterPlatform"
-                  (click)="filterCategory=''; filterFollowers=''; filterPlatform=''">All</button>
+            [class.chip--selected]="!filterCategory && !filterTier && !filterPlatform"
+            (click)="filterCategory=''; filterTier=''; filterPlatform=''">All</button>
           <button type="button" class="chip chip--sm"
                   *ngFor="let cat of getUniqueCategoryFilters()"
                   [class.chip--selected]="filterCategory === cat"
                   (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
           <button type="button" class="chip chip--sm"
-                  [class.chip--selected]="filterFollowers === '10k'"
-                  (click)="filterFollowers = filterFollowers === '10k' ? '' : '10k'">10k+</button>
-          <button type="button" class="chip chip--sm"
-                  [class.chip--selected]="filterFollowers === '100k'"
-                  (click)="filterFollowers = filterFollowers === '100k' ? '' : '100k'">100k+</button>
+            *ngFor="let tier of getAvailableTierFilters()"
+            [class.chip--selected]="filterTier === tier"
+            (click)="filterTier = filterTier === tier ? '' : tier">{{ tier }}</button>
           <button type="button" class="chip chip--sm"
                   [class.chip--selected]="filterPlatform === 'instagram'"
                   (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
@@ -327,14 +347,11 @@
             [class.inf-row--invited]="isInfluencerInvited(inf)"
             [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
             (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
-            <div class="inf-avatar">
-              <span class="inf-initials"
-                    [style.background]="getInitialsColor(inf.fullName || inf.name || inf.username || '')">
-                {{ getInfluencerInitials(inf) }}
-              </span>
-              <img *ngIf="getInfluencerAvatar(inf)"
-                   [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" alt="" />
-            </div>
+            <app-user-avatar
+              [name]="inf.fullName || inf.name || inf.username || ''"
+              [src]="getInfluencerAvatar(inf)"
+              [size]="44"
+            ></app-user-avatar>
             <div class="inf-info">
                 <p class="inf-name">
                  {{ inf.fullName || inf.name || 'Influencer' }}

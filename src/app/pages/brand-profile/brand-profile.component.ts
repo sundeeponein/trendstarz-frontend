@@ -1,7 +1,7 @@
 
 import { environment } from '../../../environments/environment';
 import imageCompression from 'browser-image-compression';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService } from '../../shared/plans.service';
@@ -12,13 +12,13 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
-import { TierInfoModalComponent } from '../../shared/components/tier-info-modal/tier-info-modal.component';
+import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, TierInfoModalComponent, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -163,7 +163,7 @@ export class BrandProfileComponent implements OnInit {
   districts: any[] = [];
   socialMediaList: any[] = [];
   tiers: any[] = [];
-  showTierInfoModal = false;
+  protected tierInfo = inject(TierInfoService);
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isPremium = false;
@@ -374,7 +374,8 @@ export class BrandProfileComponent implements OnInit {
     }).subscribe({
       next: (dropdownData) => {
         this.states = dropdownData.states || [];
-        this.tiers = dropdownData.tiers || [];
+        const tierRows = Array.isArray(dropdownData.tiers) ? dropdownData.tiers : [];
+        this.tiers = tierRows;
         this.socialMediaList = dropdownData.socialMedia || [];
         this.languagesList = dropdownData.languages || [];
         this.categoriesList = dropdownData.categories || [];

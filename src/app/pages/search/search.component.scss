@@ -317,25 +317,6 @@
   }
 }
 
-// Followers range
-.followers-range {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  .range-input {
-    width: 85px;
-    flex-shrink: 0;
-    text-align: center;
-  }
-
-  .range-sep {
-    color: #9ca3af;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-}
-
 // Clear button
 .filter-actions {
   display: flex;

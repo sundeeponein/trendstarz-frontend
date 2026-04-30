@@ -28,6 +28,7 @@ export interface Campaign {
   categories?: string[];
   deliverables?: string[];
   minFollowerCount?: number;
+  minInfluencerTier?: string;
   platformPreference?: string;
   specialInstructions?: string;
   createdAt?: string;
