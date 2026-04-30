@@ -121,13 +121,27 @@ export class CampaignInviteCardComponent {
 
   get hasBudget(): boolean {
     const c = this.campaign;
-    return !!(c?.budgetMin || c?.budgetMax || c?.budget);
+    return !!this.yourPayoutText || !!this.campaignBudgetText;
   }
-  get budgetText(): string {
+
+  get yourPayoutText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) {
+      return `₹${selected.price.toLocaleString('en-IN')}`;
+    }
+    const paise = Number(this.campaign?.pricePerInfluencer || 0);
+    if (paise > 0) {
+      const rupees = Math.floor(paise / 100);
+      return `₹${rupees.toLocaleString('en-IN')}`;
+    }
+    return '';
+  }
+
+  get campaignBudgetText(): string {
     const c = this.campaign;
     const min = Number(c?.budgetMin ?? c?.budget ?? 0);
     const max = Number(c?.budgetMax ?? c?.budget ?? min);
-    if (!min && !max) return '—';
+    if (!min && !max) return '';
     if (min === max) return `₹${min.toLocaleString('en-IN')}`;
     return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
   }
@@ -159,9 +173,20 @@ export class CampaignInviteCardComponent {
     return '';
   }
 
-  get deliverables(): string[] {
-    const d = this.campaign?.deliverables;
-    return Array.isArray(d) ? d : [];
+  get selectedOutputs(): string[] {
+    const sm = this.campaign?.socialMedia;
+    if (Array.isArray(sm) && sm.length) {
+      const outputs: string[] = [];
+      for (const row of sm) {
+        const platform = this.platformLabel(row?.platform || '');
+        for (const ct of row?.contentTypes || []) {
+          if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
+        }
+      }
+      if (outputs.length) return outputs;
+    }
+    const legacy = this.campaign?.deliverables;
+    return Array.isArray(legacy) ? legacy : [];
   }
 
   get contentTypeOptions(): ContentTypeOption[] {
@@ -183,6 +208,29 @@ export class CampaignInviteCardComponent {
       }
     }
     return out;
+  }
+
+  get selectedContentTypeOption(): ContentTypeOption | undefined {
+    if (!this.selectedContentTypeKey) return undefined;
+    return this.contentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
+  }
+
+  get selectedPayoutHint(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) {
+      return `Selected payout: ₹${selected.price.toLocaleString('en-IN')}`;
+    }
+    return this.yourPayoutText ? `Payout: ${this.yourPayoutText}` : '';
+  }
+
+  get specialInstructions(): string {
+    return (this.campaign?.specialInstructions || '').trim();
+  }
+
+  get briefPreview(): string {
+    const text = this.specialInstructions;
+    if (!text) return '';
+    return text.length > 140 ? `${text.slice(0, 140)}...` : text;
   }
 
   get brandName(): string {

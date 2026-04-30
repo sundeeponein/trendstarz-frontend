@@ -5,7 +5,7 @@ import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
-import { CampaignInviteCardComponent, InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
+import { InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
@@ -15,7 +15,7 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, CampaignInviteCardComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -119,14 +119,27 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           const data = res.data || {};
           this.dashboard = data;
-          // debug: dashboard invites
-          this.invites = data.invites?.newInvites || [];
+          // Primary source: dashboard payload. Fallback: direct influencer invites endpoint.
+          this.invites = Array.isArray(data.invites?.newInvites) ? data.invites.newInvites : [];
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];
           const user = data.user || {};
           this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
           this.loading = false;
           this.loadPaymentHistory();
+
+          if (this.invites.length === 0) {
+            this.dashboardService.getMyInvites().subscribe({
+              next: (rows: any[]) => {
+                this.invites = (rows || []).filter((i: any) => i.status === 'pending' || i.status === 'invited');
+                this.cdr.detectChanges();
+              },
+              error: () => {
+                this.cdr.detectChanges();
+              }
+            });
+          }
+
           this.cdr.detectChanges();
         }, 0);
       },
@@ -293,6 +306,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   openDetail(invite: any) {
+    this.error = '';
     this.selectedInvite = invite;
     this.cdr.markForCheck();
   }
@@ -314,9 +328,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.respond(payload.inviteId, 'declined');
   }
 
-  onModalValidationError(message: string) {
-    this.error = message;
-    this.cdr.markForCheck();
+  onModalValidationError(_message: string) {
+    // validation errors are shown inline inside the modal; no global banner needed
   }
 
   // ── Reusable invite-card events ─────────────────────────────

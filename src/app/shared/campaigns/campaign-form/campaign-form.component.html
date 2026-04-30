@@ -53,6 +53,18 @@
           <label class="field-label">Campaign description</label>
           <textarea formControlName="description" class="field-textarea" rows="3"
                     placeholder="Describe campaign objectives and expectations..."></textarea>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
+            Example: Promote our new launch with a clear hook, product benefit, and CTA to shop.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
+            Example: Honest unboxing + first-impression post showing usage and quality.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
+            Example: Visit our location, capture ambience highlights, and share one experience reel.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'pay_to_join'">
+            Example: Creator pays to join this opportunity and receives guaranteed feature placement.
+          </p>
         </div>
 
         <div class="field-group">
@@ -97,6 +109,9 @@
         <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDateRange']">
           End date must be on or after start date.
         </span>
+        <p class="field-sublabel">
+          Note: Influencers can only choose a posting date within your selected start and end dates when accepting invites.
+        </p>
 
         <p class="step-indicator">Step 1 of 3</p>
       </div>
@@ -155,6 +170,7 @@
         <div class="field-group">
           <label class="field-label">Platforms <span class="required">*</span></label>
           <p class="field-sublabel">Select one or more platforms. Then toggle deliverables and set a price for each.</p>
+          <p class="field-sublabel">Example: YT -> Reel 1500, Photo Post 1500. While accepting, influencer selects one enabled content output.</p>
           <div class="chip-list">
             <button type="button" class="chip chip--platform"
                     [class.chip--selected]="isPlatformSelected(p.name)"
@@ -312,12 +328,19 @@
             [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
             (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
             <div class="inf-avatar">
+              <span class="inf-initials"
+                    [style.background]="getInitialsColor(inf.fullName || inf.name || inf.username || '')">
+                {{ getInfluencerInitials(inf) }}
+              </span>
               <img *ngIf="getInfluencerAvatar(inf)"
                    [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" alt="" />
-              <span class="inf-initials" *ngIf="!getInfluencerAvatar(inf)">{{ getInfluencerInitials(inf) }}</span>
             </div>
             <div class="inf-info">
-              <p class="inf-name">{{ inf.fullName || inf.name || 'Influencer' }}</p>
+                <p class="inf-name">
+                 {{ inf.fullName || inf.name || 'Influencer' }}
+                 <i class="bi bi-patch-check-fill" *ngIf="inf.isPremium" title="Verified Premium"
+                   style="color:#22c55e;font-size:0.85rem;vertical-align:middle;margin-left:3px;"></i>
+                </p>
               <p class="inf-meta">
                 <ng-container *ngIf="inf.location?.state">{{ inf.location.state }}</ng-container>
                 <ng-container *ngIf="inf.location?.state && (inf.contentNiche || (inf.categories || []).length > 0)"> · </ng-container>

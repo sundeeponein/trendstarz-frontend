@@ -81,6 +81,29 @@
 .invite-detail-val { color: #333; }
 .deliverables-label { font-size: 0.82rem; color: #999; font-weight: 500; }
 
+.invite-brief {
+  margin: 0.2rem 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #f1e5d9;
+  border-radius: 10px;
+  background: #fffaf5;
+}
+
+.invite-brief__label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #9a5a2b;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.invite-brief__text {
+  margin-top: 0.2rem;
+  color: #5c402b;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 .chip {
   display: inline-block;
   padding: 0.18rem 0.6rem;
@@ -139,6 +162,19 @@
   font-size: 0.82rem;
   color: #374151;
   background: #fff;
+}
+
+.inv-payout-hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #f3d9bf;
+  background: #fff6eb;
+  color: #9a4a16;
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 // Payout details inline panel

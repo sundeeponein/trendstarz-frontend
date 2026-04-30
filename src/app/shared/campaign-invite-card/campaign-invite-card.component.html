@@ -17,10 +17,10 @@
 
   <!-- Budget + timeline + platform row -->
   <div class="invite-card__details">
-    <div class="invite-detail-item" *ngIf="hasBudget">
+    <div class="invite-detail-item" *ngIf="yourPayoutText">
       <i class="bi bi-currency-rupee"></i>
-      <span class="invite-detail-label">Budget</span>
-      <span class="invite-detail-val fw-semibold">{{ budgetText }}</span>
+      <span class="invite-detail-label">Your payout</span>
+      <span class="invite-detail-val fw-semibold">{{ yourPayoutText }}</span>
     </div>
     <div class="invite-detail-item" *ngIf="hasTimeline">
       <i class="bi bi-calendar3"></i>
@@ -34,17 +34,22 @@
     </div>
   </div>
 
+  <div class="invite-brief" *ngIf="briefPreview">
+    <div class="invite-brief__label">Campaign brief</div>
+    <div class="invite-brief__text">{{ briefPreview }}</div>
+  </div>
+
   <!-- Deliverables row -->
-  <div class="invite-card__deliverables" *ngIf="deliverables.length">
-    <div class="deliverables-label">Deliverables:</div>
-    <span *ngFor="let d of deliverables" class="chip chip--deliv">{{ d }}</span>
+  <div class="invite-card__deliverables" *ngIf="selectedOutputs.length">
+    <div class="deliverables-label">Selected outputs:</div>
+    <span *ngFor="let d of selectedOutputs" class="chip chip--deliv">{{ d }}</span>
   </div>
 
   <!-- CTA buttons -->
   <div class="invite-card__actions" (click)="onActionsClick($event)" *ngIf="isActionable">
     <ng-container *ngIf="contentTypeOptions.length > 0">
       <div class="inv-ct-row">
-        <span class="inv-ct-row-label">Create:</span>
+        <span class="inv-ct-row-label">Create (choose one):</span>
         <button *ngFor="let opt of contentTypeOptions"
                 type="button"
                 class="inv-ct-pill"
@@ -64,6 +69,10 @@
       [min]="minPostDate"
       [max]="maxPostDate"
       title="Select posting date within campaign timeline" />
+
+    <div class="inv-payout-hint-chip" *ngIf="selectedPayoutHint">
+      <i class="bi bi-cash-coin"></i> {{ selectedPayoutHint }}
+    </div>
 
     <!-- Payout details (where to receive money) -->
     <div class="inv-payout" *ngIf="needsPayoutDetails">

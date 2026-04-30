@@ -49,6 +49,8 @@ export class CampaignDetailModalComponent {
 
   postDate = '';
   selectedContentTypeKey = '';
+  toastError = '';
+  private toastTimer: any;
 
   private get campaign(): any {
     return this.invite?.campaign || this.invite?.campaignId || {};
@@ -86,14 +88,27 @@ export class CampaignDetailModalComponent {
   }
 
   get hasBudget(): boolean {
-    const c = this.campaign;
-    return !!(c?.budgetMin || c?.budgetMax || c?.budget);
+    return !!this.yourPayoutText || !!this.campaignBudgetText;
   }
-  get budgetText(): string {
+
+  get yourPayoutText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) {
+      return `₹${selected.price.toLocaleString('en-IN')}`;
+    }
+    const paise = Number(this.campaign?.pricePerInfluencer || 0);
+    if (paise > 0) {
+      const rupees = Math.floor(paise / 100);
+      return `₹${rupees.toLocaleString('en-IN')}`;
+    }
+    return '';
+  }
+
+  get campaignBudgetText(): string {
     const c = this.campaign;
     const min = Number(c?.budgetMin ?? c?.budget ?? 0);
     const max = Number(c?.budgetMax ?? c?.budget ?? min);
-    if (!min && !max) return '—';
+    if (!min && !max) return '';
     if (min === max) return `₹${min.toLocaleString('en-IN')}`;
     return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
   }
@@ -125,9 +140,20 @@ export class CampaignDetailModalComponent {
     return Number(this.campaign?.maxInfluencers || 0) || 0;
   }
 
-  get deliverables(): string[] {
-    const d = this.campaign?.deliverables;
-    return Array.isArray(d) ? d : [];
+  get selectedOutputs(): string[] {
+    const sm = this.campaign?.socialMedia;
+    if (Array.isArray(sm) && sm.length) {
+      const outputs: string[] = [];
+      for (const row of sm) {
+        const platform = this.platformLabel(row?.platform || '');
+        for (const ct of row?.contentTypes || []) {
+          if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
+        }
+      }
+      if (outputs.length) return outputs;
+    }
+    const legacy = this.campaign?.deliverables;
+    return Array.isArray(legacy) ? legacy : [];
   }
 
   get platforms(): { platform: string }[] {
@@ -160,6 +186,46 @@ export class CampaignDetailModalComponent {
       }
     }
     return out;
+  }
+
+  get selectedContentTypeOption(): ContentTypeOption | undefined {
+    if (!this.selectedContentTypeKey) return undefined;
+    return this.contentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
+  }
+
+  get selectedPayoutHint(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) {
+      return `Selected payout: ₹${selected.price.toLocaleString('en-IN')}`;
+    }
+    return this.yourPayoutText ? `Payout: ${this.yourPayoutText}` : '';
+  }
+
+  get specialInstructions(): string {
+    return (this.campaign?.specialInstructions || '').trim();
+  }
+
+  get checklistPlatformText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.platform) return this.platformLabel(selected.platform);
+    if (this.platforms.length > 0) return this.platformLabel(this.platforms[0].platform);
+    return 'Not specified';
+  }
+
+  get checklistContentTypeText(): string {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.contentType) return selected.contentType;
+    if (this.contentTypeOptions.length > 0) return 'Select one before accepting';
+    return 'As discussed with brand';
+  }
+
+  get checklistSubmissionDeadlineText(): string {
+    if (!this.maxPostDate) return 'Campaign timeline end';
+    return new Date(this.maxPostDate).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
   get brandName(): string {
@@ -242,16 +308,23 @@ export class CampaignDetailModalComponent {
 
   onClose() { this.close.emit(); }
 
+  private showToastError(msg: string) {
+    this.toastError = msg;
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => { this.toastError = ''; }, 4000);
+  }
+
   onAccept() {
     if (!this.inviteId) return;
     if (this.showDateInput && !this.postDate) {
-      this.validationError.emit('Please select a posting date before accepting.');
+      this.showToastError('Please select a posting date before accepting.');
       return;
     }
     if (this.contentTypeOptions.length && !this.selectedContentTypeKey) {
-      this.validationError.emit('Please select what you will create.');
+      this.showToastError('Please select a content type before accepting.');
       return;
     }
+    this.toastError = '';
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];

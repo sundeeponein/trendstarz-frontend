@@ -29,9 +29,11 @@ export class CampaignManagementComponent implements OnInit {
     // Reload campaigns from backend (used after create/update)
     loadCampaigns() {
       this.loading = true;
-      this.config.getAllCampaigns().subscribe({
+      const request$ = this.isInfluencerView
+        ? this.config.getAllCampaigns('active')
+        : this.config.getCampaignsByBrandId(this.brandId);
+      request$.subscribe({
         next: (campaigns: Campaign[]) => {
-          // debug: getAllCampaigns response
           this.campaigns = campaigns;
           this.loading = false;
           this.cd.detectChanges();
@@ -91,6 +93,9 @@ export class CampaignManagementComponent implements OnInit {
   planLimitError: string = '';
   upgradeBannerMessage: string = '';
     invitePanelSuccessMessage: string = '';
+    showTierInfoPopup = false;
+    tierInfoLoading = false;
+    tierInfoItems: string[] = [];
 
     // Payment modal state
     paymentModalVisible = false;
@@ -117,6 +122,21 @@ export class CampaignManagementComponent implements OnInit {
     return this.filteredInfluencersForInvite.filter(inf => !this.invitedIds.has(inf._id));
   }
 
+  get inviteSlotsLimit(): number {
+    const max = Number(this.invitePanelCampaign?.maxInfluencers || 0);
+    return Number.isFinite(max) && max > 0 ? max : 0;
+  }
+
+  get inviteSlotsRemaining(): number {
+    if (!this.inviteSlotsLimit) return Number.MAX_SAFE_INTEGER;
+    return Math.max(this.inviteSlotsLimit - this.invites.length, 0);
+  }
+
+  canSelectInfluencerForInvite(id: string): boolean {
+    if (this.selectedInfluencerIds.has(id)) return true;
+    return this.inviteSlotsRemaining > this.selectedInfluencerIds.size;
+  }
+
   get allSelectableSelected(): boolean {
     const sel = this.selectableInfluencers;
     return sel.length > 0 && sel.every(inf => this.selectedInfluencerIds.has(inf._id));
@@ -126,6 +146,15 @@ export class CampaignManagementComponent implements OnInit {
     if (this.selectedInfluencerIds.has(id)) {
       this.selectedInfluencerIds.delete(id);
     } else {
+      if (!this.canSelectInfluencerForInvite(id)) {
+        const msg = this.inviteSlotsLimit
+          ? `Invite limit reached (${this.invites.length}/${this.inviteSlotsLimit}).`
+          : 'Invite limit reached for this campaign.';
+        this.inviteError = msg;
+        this.toast.error(msg);
+        this.cd.detectChanges();
+        return;
+      }
       this.selectedInfluencerIds.add(id);
     }
   }
@@ -134,7 +163,10 @@ export class CampaignManagementComponent implements OnInit {
     if (this.allSelectableSelected) {
       this.selectableInfluencers.forEach(inf => this.selectedInfluencerIds.delete(inf._id));
     } else {
-      this.selectableInfluencers.forEach(inf => this.selectedInfluencerIds.add(inf._id));
+      for (const inf of this.selectableInfluencers) {
+        if (!this.canSelectInfluencerForInvite(inf._id)) break;
+        this.selectedInfluencerIds.add(inf._id);
+      }
     }
   }
 
@@ -198,6 +230,7 @@ export class CampaignManagementComponent implements OnInit {
   // ── My Invites (influencer view) ──────────────────────────────
   myInvites: any[] = [];
   myInvitesLoading = false;
+  openingCampaignIds = new Set<string>();
 
   tabs: { key: TabStatus; label: string }[] = [
     { key: 'active', label: 'Active' },
@@ -219,8 +252,9 @@ export class CampaignManagementComponent implements OnInit {
     this.isInfluencerView = user?.role === 'influencer';
 
     if (this.isInfluencerView) {
-      // Influencer: only load invites and open campaigns
+      // Influencer: load invites + open active campaigns
       this.myInvitesLoading = true;
+      this.loading = true;
       // Seed default payout details from the influencer's profile so the
       // accept card can prefill UPI / mobile / account holder name.
       this.config.getInfluencerProfileById().subscribe({
@@ -238,14 +272,25 @@ export class CampaignManagementComponent implements OnInit {
         next: (invites: any[]) => {
           this.myInvites = invites;
           this.myInvitesLoading = false;
-          this.loading = false;
-          //this.campaignLoadError = 'Campaign management is only available for brands.';
           this.cd.detectChanges();
         },
         error: () => {
           this.myInvitesLoading = false;
+          this.cd.detectChanges();
+        }
+      });
+
+      this.config.getAllCampaigns('active').subscribe({
+        next: (campaigns: Campaign[]) => {
+          this.campaigns = campaigns || [];
+          this.campaignLoadError = '';
           this.loading = false;
-          //this.campaignLoadError = 'Campaign management is only available for brands.';
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.campaigns = [];
+          this.campaignLoadError = 'Failed to load open campaigns.';
+          this.loading = false;
           this.cd.detectChanges();
         }
       });
@@ -470,9 +515,9 @@ export class CampaignManagementComponent implements OnInit {
     } else {
       const payload: any = { ...campaignData, brandId: validBrandId };
       // debug: creating campaign payload
-      // Basic required fields check (customize as needed)
-      if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId || !payload.categories || payload.categories.length === 0) {
-        alert('Please fill all required fields (title, timeline, categories, brand).');
+      // Basic required fields check
+      if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId) {
+        alert('Please fill all required fields (title, timeline, brand).');
         return;
       }
       this.config.createCampaign(payload).subscribe({
@@ -641,7 +686,7 @@ export class CampaignManagementComponent implements OnInit {
   }
 
   onImgError(event: Event) {
-    (event.target as HTMLImageElement).src = 'assets/default-profile.png';
+    (event.target as HTMLImageElement).style.display = 'none';
   }
 
   // ── Invite panel ─────────────────────────────────────────────
@@ -679,6 +724,34 @@ export class CampaignManagementComponent implements OnInit {
     this.influencerSearch = '';
     this.inviteError = '';
     this.selectedInfluencerIds.clear();
+  }
+
+  openTierInfoPopup() {
+    this.showTierInfoPopup = true;
+    if (this.tierInfoItems.length > 0 || this.tierInfoLoading) {
+      this.cd.detectChanges();
+      return;
+    }
+    this.tierInfoLoading = true;
+    this.config.getTiers().subscribe({
+      next: (rows: any[]) => {
+        const tiers = (Array.isArray(rows) ? rows : [])
+          .map((r: any) => String(r?.tier || r?.name || '').trim())
+          .filter((v: string) => !!v);
+        this.tierInfoItems = Array.from(new Set(tiers));
+        this.tierInfoLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.tierInfoItems = ['Nano', 'Micro', 'Mid', 'Macro', 'Mega'];
+        this.tierInfoLoading = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  closeTierInfoPopup() {
+    this.showTierInfoPopup = false;
   }
 
   sendInvite(influencer: any) {
@@ -727,19 +800,48 @@ export class CampaignManagementComponent implements OnInit {
     });
   }
 
+  private isDefaultAvatarUrl(url: string): boolean {
+    const u = (url || '').toLowerCase();
+    return u.includes('default-profile')
+      || u.includes('default-avatar')
+      || u.includes('default_profile')
+      || u.includes('defaultprofile')
+      || u.includes('placeholder')
+      || u.includes('profile-brands')
+      || u.includes('trendstarz-logo')
+      || u.includes('/logo')
+      || u.includes('logo.')
+      || u.includes('brand-logo')
+      || u.includes('site-logo')
+      || (u.includes('trendstarz') && u.includes('logo'));
+  }
+
   getInfluencerAvatar(inf: any): string {
-    if (Array.isArray(inf.profileImages) && inf.profileImages.length > 0) {
-      if (inf.profileImages[0]?.url) return inf.profileImages[0].url;
-      if (typeof inf.profileImages[0] === 'string') return inf.profileImages[0];
-    }
-    return '';
+      const candidates: string[] = [];
+      if (Array.isArray(inf?.profileImages) && inf.profileImages.length > 0) {
+        if (typeof inf.profileImages[0]?.url === 'string') candidates.push(inf.profileImages[0].url);
+        if (typeof inf.profileImages[0] === 'string') candidates.push(inf.profileImages[0]);
+      }
+      if (typeof inf?.profileImage === 'string') candidates.push(inf.profileImage);
+      if (typeof inf?.profilePicture === 'string') candidates.push(inf.profilePicture);
+      if (typeof inf?.avatar === 'string') candidates.push(inf.avatar);
+
+      for (const candidate of candidates) {
+        const trimmed = (candidate || '').trim();
+        if (trimmed && !this.isDefaultAvatarUrl(trimmed)) return trimmed;
+      }
+      return '';
   }
 
   getInfluencerInitials(name: string): string {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    const n = String(name || '').trim();
+    if (!n) return '?';
+    const parts = n.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase() || '?';
+    const first = parts[0].charAt(0).toUpperCase() || '';
+    const last = parts[parts.length - 1].charAt(0).toUpperCase() || '';
+    return (first + last) || first || '?';
   }
 
   getInitialsColor(name: string): string {
@@ -764,6 +866,71 @@ export class CampaignManagementComponent implements OnInit {
     return count ? `${label} ${count}` : label;
   }
 
+  getInfluencerSocialTags(inf: any, max: number = 3): Array<{ platform: string; tier: string }> {
+    if (!Array.isArray(inf?.socialMedia) || inf.socialMedia.length === 0) return [];
+    const normalizeKey = (platformRaw: string): string => {
+      const p = platformRaw.toLowerCase();
+      if (p.includes('instagram')) return 'ig';
+      if (p.includes('youtube')) return 'yt';
+      if (p === 'x' || p.includes('twitter')) return 'x';
+      if (p.includes('facebook')) return 'fb';
+      if (p.includes('linkedin')) return 'in';
+      if (p.includes('tiktok')) return 'tt';
+      return p;
+    };
+
+    const labelByKey: Record<string, string> = {
+      ig: 'IG',
+      yt: 'YT',
+      x: 'X',
+      fb: 'FB',
+      in: 'IN',
+      tt: 'TT',
+    };
+
+    const order = ['ig', 'yt', 'x', 'fb', 'in', 'tt'];
+    const tiers = new Map<string, string>();
+
+    for (const sm of inf.socialMedia) {
+      const key = normalizeKey(String(sm?.platform || ''));
+      const tier = String(sm?.tier || '').trim();
+      if (!tiers.has(key) || (!tiers.get(key) && tier)) {
+        tiers.set(key, tier);
+      }
+    }
+
+    const known = order
+      .filter((k) => tiers.has(k))
+      .map((k) => ({
+        platform: labelByKey[k],
+        tier: tiers.get(k) || 'Not set',
+      }));
+
+    const unknown = Array.from(tiers.entries())
+      .filter(([k]) => !order.includes(k))
+      .map(([k, v]) => ({
+        platform: k.slice(0, 2).toUpperCase(),
+        tier: v || 'Not set',
+      }));
+
+    return [...known, ...unknown].slice(0, max);
+  }
+
+  isInfluencerPremium(inf: any): boolean {
+    if (!inf) return false;
+    if (inf.isPremium === true) return true;
+    if (!inf.premiumEnd) return false;
+    const end = new Date(inf.premiumEnd);
+    return !Number.isNaN(end.getTime()) && end >= new Date();
+  }
+
+  getInfluencerTier(inf: any): string {
+    if (!Array.isArray(inf?.socialMedia) || !inf.socialMedia.length) return '';
+    const topByFollowers = [...inf.socialMedia]
+      .sort((a: any, b: any) => Number(b?.followersCount || 0) - Number(a?.followersCount || 0))[0];
+    return String(topByFollowers?.tier || '').trim();
+  }
+
   formatFollowers(n: number): string {
     if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (n >= 1000) return (n / 1000).toFixed(0) + 'k';
@@ -782,6 +949,13 @@ export class CampaignManagementComponent implements OnInit {
     const desc = c.description ? c.description.slice(0, 28) + (c.description.length > 28 ? '…' : '') : '';
     if (cat && desc) return `${cat} · ${desc}`;
     return cat || desc;
+  }
+
+  /** Returns brand info from an open campaign (populated by findPublic on backend) */
+  getCampaignBrand(c: any): { name: string; logo: string | null; username: string } {
+    const b = (c as any).brand;
+    if (!b) return { name: '', logo: null, username: '' };
+    return { name: b.name || '', logo: b.logo || null, username: b.username || '' };
   }
 
   getCardInvitedCount(c: Campaign): number {
@@ -856,6 +1030,50 @@ export class CampaignManagementComponent implements OnInit {
 
   openInvitePreview(inv: any) {
     this.invitePreview = inv;
+  }
+
+  openOpenCampaign(campaign: Campaign, event?: Event) {
+    event?.stopPropagation();
+    if (!this.isInfluencerView || !campaign?._id) return;
+    const campaignId = String(campaign._id);
+    if (this.openingCampaignIds.has(campaignId)) return;
+
+    const existing = this.myInvites.find((inv: any) => {
+      const invCampaignId = String(inv?.campaignId?._id || inv?.campaignId || '');
+      return invCampaignId === campaignId && (inv.status === 'pending' || inv.status === 'invited');
+    });
+    if (existing) {
+      this.openInvitePreview(existing);
+      return;
+    }
+
+    this.openingCampaignIds.add(campaignId);
+    this.cd.detectChanges();
+
+    this.config.applyToOpenCampaign(campaignId).subscribe({
+      next: (invite: any) => {
+        if (invite) {
+          if (!this.myInvites.some((i: any) => String(i?._id || '') === String(invite?._id || ''))) {
+            this.myInvites = [invite, ...this.myInvites];
+          }
+          this.openInvitePreview(invite);
+        } else {
+          this.showError('Unable to open this campaign right now. Please try again.');
+        }
+        this.openingCampaignIds.delete(campaignId);
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || 'Unable to open this campaign right now. Please try again.';
+        this.showError(msg);
+        this.openingCampaignIds.delete(campaignId);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  isOpeningCampaign(campaign: Campaign): boolean {
+    return !!campaign?._id && this.openingCampaignIds.has(String(campaign._id));
   }
 
   closeInvitePreview() {
@@ -1160,7 +1378,7 @@ export class CampaignManagementComponent implements OnInit {
       if (n >= 1000) return '₹' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
       return '₹' + n;
     };
-    if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)}–${fmt(c.budgetMax)}`;
+      if (c.budgetMin && c.budgetMax && c.budgetMin !== c.budgetMax) return `${fmt(c.budgetMin)}–${fmt(c.budgetMax)}`;
     return c.budgetMin ? fmt(c.budgetMin) : fmt(c.budgetMax!);
   }
 

@@ -326,6 +326,7 @@ export class BrandProfileComponent implements OnInit {
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
+      promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
       description: [''],
       brandLogo: this.fb.array([]),
@@ -429,6 +430,7 @@ export class BrandProfileComponent implements OnInit {
             categories: categoryIds,
             languages: languageIds,
             website: profile.website || '',
+            promotionalPrice: Number(profile.promotionalPrice ?? 500),
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
             description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false },
@@ -954,6 +956,7 @@ export class BrandProfileComponent implements OnInit {
     };
     const payload: any = {
   ...raw,
+  promotionalPrice: Number(raw.promotionalPrice) || 0,
   location,
   languages: languageNames,
   categories: categoryNames,

@@ -425,6 +425,12 @@ export class ConfigService {
     );
   }
 
+  applyToOpenCampaign(campaignId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/apply`, {}).pipe(
+      map(res => this.extractData<any>(res) || res)
+    );
+  }
+
   respondToInvite(
     inviteId: string,
     status: 'accepted' | 'declined',

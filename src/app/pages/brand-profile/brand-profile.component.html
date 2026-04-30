@@ -67,6 +67,14 @@
               <label>Website</label>
               <input formControlName="website" type="url" class="form-control" />
             </div>
+            <div class="field-block">
+              <label>Starting Price</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input formControlName="promotionalPrice" type="number" min="0" class="form-control" placeholder="500" />
+              </div>
+              <small class="text-muted">Prices are negotiable. Brands can send offers.</small>
+            </div>
             <div class="field-block full-width">
               <label>Category / Industry</label>
               <div class="chip-list">

@@ -1,4 +1,8 @@
 <div class="cdm-overlay" *ngIf="visible" (click)="onClose()">
+  <!-- Validation toast (fixed, centered top) -->
+  <div class="cdm-toast cdm-toast-error" *ngIf="toastError" (click)="$event.stopPropagation()">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ toastError }}
+  </div>
   <div class="cdm-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
 
     <!-- Header -->
@@ -23,9 +27,9 @@
 
       <!-- Stat cards -->
       <div class="cdm-stats">
-        <div class="cdm-stat-card" *ngIf="hasBudget">
-          <div class="cdm-stat-label"><i class="bi bi-cash-coin"></i> BUDGET</div>
-          <div class="cdm-stat-value">{{ budgetText }}</div>
+        <div class="cdm-stat-card" *ngIf="yourPayoutText">
+          <div class="cdm-stat-label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
+          <div class="cdm-stat-value">{{ yourPayoutText }}</div>
         </div>
         <div class="cdm-stat-card">
           <div class="cdm-stat-label"><i class="bi bi-calendar3"></i> TIMELINE</div>
@@ -38,14 +42,27 @@
         </div>
       </div>
 
-      <!-- Campaign type / deliverables -->
-      <div class="cdm-section" *ngIf="campaignTypeLabel || deliverables.length">
+      <!-- Campaign type -->
+      <div class="cdm-section" *ngIf="campaignTypeLabel">
         <div class="cdm-meta-row">
           <span class="cdm-pill cdm-pill--type" *ngIf="campaignTypeLabel">
             <i class="bi bi-tag-fill"></i> {{ campaignTypeLabel }}
           </span>
-          <span class="cdm-pill" *ngFor="let d of deliverables">{{ d }}</span>
         </div>
+      </div>
+
+      <!-- Selected outputs -->
+      <div class="cdm-section" *ngIf="selectedOutputs.length">
+        <div class="cdm-section-label">SELECTED CONTENT OUTPUTS</div>
+        <div class="cdm-meta-row">
+          <span class="cdm-pill" *ngFor="let d of selectedOutputs">{{ d }}</span>
+        </div>
+      </div>
+
+      <!-- Full brief -->
+      <div class="cdm-section" *ngIf="specialInstructions">
+        <div class="cdm-section-label">CAMPAIGN BRIEF</div>
+        <div class="cdm-brief-box">{{ specialInstructions }}</div>
       </div>
 
       <!-- Social platforms -->
@@ -62,17 +79,45 @@
       <!-- Content type options (when campaign offers choices on accept) -->
       <div class="cdm-section" *ngIf="isPending && contentTypeOptions.length">
         <div class="cdm-section-label">CHOOSE WHAT YOU'LL CREATE</div>
+        <div class="cdm-note">Choose only one option before accepting.</div>
         <div class="cdm-platform-list">
           <button type="button"
                   class="cdm-ct-pill"
                   *ngFor="let opt of contentTypeOptions"
                   [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
-                  (click)="selectedContentTypeKey = opt.key">
+                  (click)="selectedContentTypeKey = opt.key; toastError = ''">
             <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
             <span>{{ opt.label }}</span>
             <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
           </button>
         </div>
+      </div>
+
+      <!-- What to do checklist (before accept) -->
+      <div class="cdm-section" *ngIf="isPending">
+        <div class="cdm-section-label">WHAT YOU MUST DO</div>
+        <ul class="cdm-checklist">
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Platform: {{ checklistPlatformText }}</span>
+          </li>
+          <li>
+            <i class="bi" [ngClass]="selectedContentTypeKey || contentTypeOptions.length === 0 ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            <span>Content type: {{ checklistContentTypeText }}</span>
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Posting window: {{ timelineText }}</span>
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Upload proof screenshots: post screenshot + insights screenshot</span>
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Submission deadline: {{ checklistSubmissionDeadlineText }}</span>
+          </li>
+        </ul>
       </div>
 
       <!-- About the brand -->
@@ -114,13 +159,16 @@
       </span>
 
       <ng-container *ngIf="isPending">
+        <span class="cdm-selected-payout" *ngIf="selectedPayoutHint">{{ selectedPayoutHint }}</span>
         <input *ngIf="showDateInput"
                type="date"
                class="cdm-date-input"
                [(ngModel)]="postDate"
+               (ngModelChange)="toastError = ''"
                [min]="minPostDate"
                [max]="maxPostDate"
                title="Select posting date" />
+        <div class="cdm-inline-error" *ngIf="false"></div>
         <button class="cdm-btn cdm-btn--decline" (click)="onDecline()" [disabled]="busy">
           Decline
         </button>

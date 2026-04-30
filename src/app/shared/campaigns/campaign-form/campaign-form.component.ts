@@ -225,31 +225,84 @@ export class CampaignFormComponent implements OnInit {
     return (inf.socialMedia || []).reduce((sum: number, s: any) => sum + (s.followersCount || 0), 0);
   }
 
+  private isDefaultAvatarUrl(url: string): boolean {
+    const u = (url || '').toLowerCase();
+    return u.includes('default-profile')
+      || u.includes('default-avatar')
+      || u.includes('default_profile')
+      || u.includes('defaultprofile')
+      || u.includes('placeholder')
+      || u.includes('profile-brands')
+      || u.includes('trendstarz-logo')
+      || u.includes('/logo')
+      || u.includes('logo.')
+      || u.includes('brand-logo')
+      || u.includes('site-logo')
+      || (u.includes('trendstarz') && u.includes('logo'));
+  }
+
   getInfluencerAvatar(inf: any): string {
-    if (Array.isArray(inf.profileImages) && inf.profileImages.length > 0) {
-      if (inf.profileImages[0]?.url) return inf.profileImages[0].url;
-      if (typeof inf.profileImages[0] === 'string') return inf.profileImages[0];
+    const candidates: string[] = [];
+    if (Array.isArray(inf?.profileImages) && inf.profileImages.length > 0) {
+      if (typeof inf.profileImages[0]?.url === 'string') candidates.push(inf.profileImages[0].url);
+      if (typeof inf.profileImages[0] === 'string') candidates.push(inf.profileImages[0]);
+    }
+    if (typeof inf?.profileImage === 'string') candidates.push(inf.profileImage);
+    if (typeof inf?.profilePicture === 'string') candidates.push(inf.profilePicture);
+    if (typeof inf?.avatar === 'string') candidates.push(inf.avatar);
+
+    for (const candidate of candidates) {
+      const trimmed = (candidate || '').trim();
+      if (trimmed && !this.isDefaultAvatarUrl(trimmed)) return trimmed;
     }
     return '';
   }
 
   getInfluencerInitials(inf: any): string {
-    const name = inf.fullName || inf.name || '?';
-    return name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
+    const name = String(inf?.fullName || inf?.name || inf?.username || '?').trim();
+    if (!name) return '?';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase() || '?';
+    const first = parts[0].charAt(0).toUpperCase() || '';
+    const last = parts[parts.length - 1].charAt(0).toUpperCase() || '';
+    return (first + last) || first || '?';
   }
 
-  formatFollowers(n: number): string {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return Math.round(n / 1000) + 'k';
-    return String(n);
+  getInitialsColor(name: string): string {
+    const colors = ['#e8612d', '#2b6cb0', '#22b37a', '#805ad5', '#d69e2e', '#c53030', '#2c7a7b', '#b7791f'];
+    const n = String(name || '').trim();
+    if (!n) return colors[0];
+    let hash = 0;
+    for (let i = 0; i < n.length; i++) hash = n.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
   }
 
   getPlatformTags(inf: any): string[] {
-    return (inf.socialMedia || []).map((s: any) => {
-      const lbl = (s.platform || '').toLowerCase().includes('youtube') ? 'YT' :
-                  (s.platform || '').toLowerCase().includes('instagram') ? 'IG' : s.platform;
-      return `${lbl} ${this.formatFollowers(s.followersCount || 0)}`;
-    }).slice(0, 2);
+    const social = Array.isArray(inf?.socialMedia) ? inf.socialMedia : [];
+    const normalized = social.map((s: any) => {
+      const p = String(s?.platform || '').toLowerCase();
+      const lbl = p.includes('youtube') ? 'YT'
+        : p.includes('instagram') ? 'IG'
+        : p === 'x' || p.includes('twitter') ? 'X'
+        : p.includes('facebook') ? 'FB'
+        : p.includes('linkedin') ? 'IN'
+        : p.includes('tiktok') ? 'TT'
+        : String(s?.platform || '').slice(0, 2).toUpperCase();
+      const tier = String(s?.tier || '').trim() || 'Not set';
+      return { lbl, tier };
+    });
+
+    const order = ['IG', 'YT', 'X', 'FB', 'IN', 'TT'];
+    normalized.sort((a: any, b: any) => {
+      const ia = order.indexOf(a.lbl);
+      const ib = order.indexOf(b.lbl);
+      const va = ia === -1 ? 99 : ia;
+      const vb = ib === -1 ? 99 : ib;
+      return va - vb;
+    });
+
+    return normalized.slice(0, 2).map((x: any) => `${x.lbl} · ${x.tier}`);
   }
 
   getUniqueCategoryFilters(): string[] {

@@ -141,6 +141,7 @@ export class BrandRegistrationComponent implements OnInit {
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
+      promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
       description: [''],
 
@@ -779,6 +780,7 @@ export class BrandRegistrationComponent implements OnInit {
 
     const payload: any = {
       ...raw,
+      promotionalPrice: Number(raw.promotionalPrice) || 0,
       location: {
         state: stateObj ? stateObj.name : raw.location.state,
         district: districtObj ? districtObj.name : raw.location.district,
@@ -818,6 +820,7 @@ export class BrandRegistrationComponent implements OnInit {
         // under zoneless change detection.
         this.registrationForm.reset({
           paymentOption: 'free',
+          promotionalPrice: 500,
           contact: { whatsapp: false, email: false, call: false }
         });
         this.refreshStepCompletion();

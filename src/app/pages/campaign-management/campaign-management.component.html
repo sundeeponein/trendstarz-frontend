@@ -142,7 +142,7 @@
            [class.is-expired]="isExpired(c)">
 
         <!-- Main row -->
-        <div class="ccard-main">
+        <div class="ccard-main" [class.ccard-main--clickable]="isInfluencerView" (click)="isInfluencerView ? openOpenCampaign(c) : null">
 
           <!-- LEFT: thumbnail + title + category tags -->
           <div class="ccard-left">
@@ -152,6 +152,16 @@
             </div>
             <div class="ccard-title-wrap">
               <span class="ccard-title">{{ c.title }}</span>
+              <!-- Brand chip for influencer browse view -->
+              <div class="ccard-brand-chip" *ngIf="isInfluencerView && getCampaignBrand(c).name">
+                <img class="ccard-brand-logo" *ngIf="getCampaignBrand(c).logo"
+                  [src]="getCampaignBrand(c).logo!" alt="" (error)="onImgError($event)" />
+                <span class="ccard-brand-initials" *ngIf="!getCampaignBrand(c).logo"
+                  [style.background]="getInitialsColor(getCampaignBrand(c).name)">
+                  {{ getInfluencerInitials(getCampaignBrand(c).name) }}
+                </span>
+                <span class="ccard-brand-name">{{ getCampaignBrand(c).name }}</span>
+              </div>
               <span class="ccard-subtitle" *ngIf="getCampaignSubtitle(c)">{{ getCampaignSubtitle(c) }}</span>
               <div class="ccard-tags" *ngIf="c.categories?.length">
                 <span class="ccard-tag" *ngFor="let cat of c.categories!.slice(0, 3)">{{ cat }}</span>
@@ -164,7 +174,7 @@
             <div class="ccard-stat">
               <span class="ccard-stat-label">Budget</span>
               <span class="ccard-stat-value accent">{{ formatBudgetCompact(c) }}</span>
-              <span class="ccard-stat-sub">per influencer</span>
+              <span class="ccard-stat-sub">overall budget</span>
             </div>
             <div class="ccard-stat">
               <span class="ccard-stat-label">Applicants</span>
@@ -177,6 +187,12 @@
                   *ngFor="let inv of getCardInvitePreview(c)"
                   [style.background]="getInitialsColor(inv.influencerId?.name || '')"
                   [title]="inv.influencerId?.name || ''">
+                  <img
+                    *ngIf="getInfluencerAvatar(inv.influencerId)"
+                    class="avatar-pip-img"
+                    [src]="getInfluencerAvatar(inv.influencerId)"
+                    (error)="$any($event.target).style.display = 'none'"
+                    alt="" />
                   {{ getInfluencerInitials(inv.influencerId?.name || '') }}
                 </span>
               </div>
@@ -215,6 +231,9 @@
               </button>
             </div>
             <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
+            <button class="btn-open-campaign" *ngIf="isInfluencerView" (click)="openOpenCampaign(c, $event)" [disabled]="isOpeningCampaign(c)">
+              {{ isOpeningCampaign(c) ? 'Opening...' : 'View details' }}
+            </button>
           </div>
         </div>
 
@@ -256,22 +275,42 @@
 
             <!-- Invited influencers list -->
             <div class="expand-inf-list" *ngIf="getExpandInvites(c).length > 0">
-              <p class="expand-inf-heading">Invited Influencers</p>
+              <div class="expand-inf-heading-row">
+                <p class="expand-inf-heading">Invited Influencers</p>
+                <button class="tier-info-trigger" type="button" (click)="openTierInfoPopup(); $event.stopPropagation()">
+                  <i class="bi bi-info-circle"></i> Tier info
+                </button>
+              </div>
               <ng-container *ngFor="let inv of getExpandInvites(c)">
                 <!-- Influencer row -->
                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
                      [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
-                  <span class="expand-inf-initials"
-                    [style.background]="getInitialsColor(inv.influencerId?.name || '')">
-                    {{ getInfluencerInitials(inv.influencerId?.name || '') }}
-                  </span>
-                  <div class="expand-inf-info">
-                    <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
-                    <span class="expand-inf-user" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</span>
+                  <div class="expand-inf-avatar-wrap">
+                    <span class="expand-inf-initials"
+                      [style.background]="getInitialsColor(inv.influencerId?.name || '')">
+                      {{ getInfluencerInitials(inv.influencerId?.name || '') }}
+                    </span>
+                    <img class="expand-inf-avatar"
+                      *ngIf="getInfluencerAvatar(inv.influencerId)"
+                      [src]="getInfluencerAvatar(inv.influencerId)"
+                      (error)="onImgError($event)"
+                      alt="" />
                   </div>
-                  <span class="expand-inf-social" *ngIf="getTopSocialMedia(inv.influencerId || {})">
-                    {{ getTopSocialMedia(inv.influencerId || {}) }}
-                  </span>
+                  <div class="expand-inf-info">
+                    <div class="expand-inf-name-row">
+                      <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
+                      <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
+                      <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">
+                        {{ getInfluencerTier(inv.influencerId) }}
+                      </span>
+                    </div>
+                    <span class="expand-inf-user" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</span>
+                    <div class="expand-inf-socials" *ngIf="getInfluencerSocialTags(inv.influencerId || {}).length">
+                      <span class="expand-inf-social-chip" *ngFor="let sm of getInfluencerSocialTags(inv.influencerId || {}, 3)">
+                        {{ sm.platform }} · {{ sm.tier }}
+                      </span>
+                    </div>
+                  </div>
                   <span class="inv-status" [ngClass]="inv.status">{{ inv.status | titlecase }}</span>
                   <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
                     <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
@@ -498,10 +537,27 @@
       <div *ngIf="!invitesLoading">
         <div class="invited-list" *ngIf="invites.length > 0">
           <div class="invited-row" *ngFor="let inv of invites">
-            <img class="invited-avatar" [src]="getInfluencerAvatar(inv.influencerId)" (error)="onImgError($event)" />
+            <div class="invited-avatar-wrap">
+              <span class="invited-avatar--initials"
+                [style.background]="getInitialsColor(inv.influencerId?.name || inv.influencerId?.username || 'Influencer')">
+                {{ getInfluencerInitials(inv.influencerId?.name || inv.influencerId?.username || 'Influencer') }}
+              </span>
+              <img class="invited-avatar-img"
+                   *ngIf="getInfluencerAvatar(inv.influencerId)"
+                   [src]="getInfluencerAvatar(inv.influencerId)"
+                   (error)="onImgError($event)" />
+            </div>
             <div class="invited-info">
-              <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}</p>
+              <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}
+                <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
+              </p>
               <p class="invited-username" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</p>
+              <div class="invited-badges">
+                <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">{{ getInfluencerTier(inv.influencerId) }}</span>
+              </div>
+              <div class="invited-socials" *ngIf="getInfluencerSocialTags(inv.influencerId).length">
+                <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inv.influencerId, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
+              </div>
             </div>
             <div class="invited-right">
               <span class="inv-status already-invited" [ngClass]="inv.status">{{ inv.status | uppercase }}</span>
@@ -545,6 +601,14 @@
 
       <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
+      <div class="invite-limit-note" *ngIf="inviteSlotsLimit">
+        Invited {{ invites.length }} / {{ inviteSlotsLimit }} influencers
+        <span *ngIf="inviteSlotsRemaining <= 0">. Limit reached for this campaign.</span>
+        <button class="tier-info-trigger" type="button" (click)="openTierInfoPopup()">
+          <i class="bi bi-info-circle"></i> Tier info
+        </button>
+      </div>
+
       <div class="text-center py-4" *ngIf="influencersForInviteLoading">
         <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
       </div>
@@ -553,21 +617,39 @@
         <label class="search-inf-row"
           *ngFor="let inf of filteredInfluencersForInvite"
           [class.is-selected]="selectedInfluencerIds.has(inf._id)"
-          [class.is-already-invited]="invitedIds.has(inf._id)">
+          [class.is-already-invited]="invitedIds.has(inf._id)"
+          [class.is-disabled]="!invitedIds.has(inf._id) && !canSelectInfluencerForInvite(inf._id)">
 
           <!-- Checkbox (hidden for already-invited) -->
           <input type="checkbox" class="inf-checkbox"
             *ngIf="!invitedIds.has(inf._id)"
             [checked]="selectedInfluencerIds.has(inf._id)"
-            [disabled]="bulkSending"
+            [disabled]="bulkSending || !canSelectInfluencerForInvite(inf._id)"
             (change)="toggleInfluencerSelect(inf._id)" />
           <span class="inf-checkbox-spacer" *ngIf="invitedIds.has(inf._id)"></span>
 
-          <img class="invited-avatar" [src]="getInfluencerAvatar(inf)" (error)="onImgError($event)" />
+          <div class="invited-avatar-wrap">
+            <span class="invited-avatar--initials"
+                  [style.background]="getInitialsColor(inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer')">
+              {{ getInfluencerInitials(inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer') }}
+            </span>
+            <img class="invited-avatar-img"
+                 *ngIf="getInfluencerAvatar(inf)"
+                 [src]="getInfluencerAvatar(inf)"
+                 (error)="onImgError($event)" />
+          </div>
           <div class="invited-info">
-            <p class="invited-name">{{ inf.name || inf.fullname }}</p>
+            <p class="invited-name">{{ inf.name || inf.fullname }}
+              <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inf)" title="Verified Premium"></i>
+            </p>
             <p class="invited-username" *ngIf="inf.username">@{{ inf.username }}</p>
-            <p class="invited-meta" *ngIf="inf.categories?.length">{{ inf.categories[0] }}</p>
+            <div class="invited-badges">
+              <span class="tier-badge-mini" *ngIf="getInfluencerTier(inf)">{{ getInfluencerTier(inf) }}</span>
+              <span class="invited-meta" *ngIf="inf.categories?.length">{{ inf.categories[0] }}</span>
+            </div>
+            <div class="invited-socials" *ngIf="getInfluencerSocialTags(inf).length">
+              <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inf, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
+            </div>
           </div>
           <div class="invited-right">
             <span class="already-invited" *ngIf="invitedIds.has(inf._id)">
@@ -607,5 +689,23 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
+
+  <div class="tier-info-overlay" *ngIf="showTierInfoPopup" (click)="closeTierInfoPopup()"></div>
+  <div class="tier-info-popup" *ngIf="showTierInfoPopup" (click)="$event.stopPropagation()">
+    <div class="tier-info-header">
+      <h4>Tier Information</h4>
+      <button type="button" class="drawer-close" (click)="closeTierInfoPopup()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <p class="tier-info-text">
+      Tiers are shown from influencer registration profile per platform, not from follower counts.
+    </p>
+    <div class="tier-info-loading" *ngIf="tierInfoLoading">
+      <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+    </div>
+    <ul class="tier-info-list" *ngIf="!tierInfoLoading">
+      <li *ngFor="let tier of tierInfoItems">{{ tier }}</li>
+      <li *ngIf="tierInfoItems.length === 0">No tier list configured yet.</li>
+    </ul>
+  </div>
 
 </div>

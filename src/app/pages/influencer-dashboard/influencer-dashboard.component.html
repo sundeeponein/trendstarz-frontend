@@ -114,21 +114,29 @@
       <div class="section-empty-desc">When brands invite you to collaborate, they will appear here.</div>
     </div>
 
-    <div class="invite-list">
-      <app-campaign-invite-card
-        *ngFor="let inv of invites"
-        [invite]="inv"
-        [busy]="responding === inv._id"
-        [initialPostDate]="selectedPostDates[inv._id]"
-        [initialContentTypeKey]="selectedContentTypes[inv._id]"
-        [initialPayout]="defaultPayout"
-        (postDateChange)="onCardPostDateChange(inv._id, $event)"
-        (contentTypeChange)="onCardContentTypeChange(inv._id, $event)"
-        (accept)="onCardAccept($event)"
-        (decline)="onCardDecline($event)"
-        (view)="openDetail(inv)"
-        (validationError)="onModalValidationError($event)">
-      </app-campaign-invite-card>
+    <div class="invite-list invite-list--compact" *ngIf="invites.length > 0">
+      <div class="invite-compact" *ngFor="let inv of invites" (click)="openDetail(inv)">
+        <div class="invite-compact__left">
+          <div class="invite-brand-logo">
+            <img *ngIf="getBrandLogo(inv)" [src]="getBrandLogo(inv)!" class="brand-logo-img" (error)="onImgError($event)" alt="" />
+            <div *ngIf="!getBrandLogo(inv)" class="brand-logo-placeholder">{{ getBrandInitial(inv) }}</div>
+          </div>
+          <div class="invite-compact__meta">
+            <div class="invite-brand-name">{{ getBrandName(inv) }}</div>
+            <div class="invite-campaign-title">{{ getCampaignTitle(inv) }}</div>
+            <div class="invite-compact__mini">
+              <span class="chip chip--xs" *ngFor="let cat of getCampaignCategories(inv) | slice:0:1">{{ cat }}</span>
+              <span class="invite-detail-item"><i class="bi bi-calendar3"></i>{{ formatCampaignTimeline(inv) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="invite-compact__right">
+          <span class="invite-status-badge invite-status-badge--pending">Pending</span>
+          <button class="btn-invite-action btn-view" type="button" (click)="openDetail(inv); $event.stopPropagation()">
+            <i class="bi bi-eye"></i> View Details
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

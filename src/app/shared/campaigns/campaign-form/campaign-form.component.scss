@@ -409,14 +409,20 @@ form {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 
-  img { width: 100%; height: 100%; object-fit: cover; }
+  img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 }
 
 .inf-initials {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #6b3fa0;
+  color: #fff;
 }
 
 .inf-info {
