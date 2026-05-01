@@ -502,6 +502,59 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/report`, { reason });
   }
 
+  // ── Brand: needs-attention widget ────────────────────────────
+  getBrandAttentionCounts(): Observable<{
+    disputed: number;
+    overdue: number;
+    awaitingFulfillment: number;
+  }> {
+    return this.http.get<{ disputed: number; overdue: number; awaitingFulfillment: number }>(
+      `${this.apiUrl}/campaign-invites/brand/attention-counts`,
+    );
+  }
+
+  getInfluencerAttentionCounts(): Observable<{
+    pendingInvites: number;
+    overdueDeliverables: number;
+    disputedAgainstMe: number;
+  }> {
+    return this.http.get<{ pendingInvites: number; overdueDeliverables: number; disputedAgainstMe: number }>(
+      `${this.apiUrl}/campaign-invites/influencer/attention-counts`,
+    );
+  }
+
+  // ── Admin: dispute oversight queue ───────────────────────────
+  adminListDisputes(status: 'open' | 'resolved' | 'all' = 'open'): Observable<any> {
+    return this.http.get(`${this.apiUrl}/campaign-invites/admin/disputes?status=${status}`);
+  }
+
+  adminCountOpenDisputes(): Observable<{ count: number }> {
+    return this.http.get<{ count: number }>(
+      `${this.apiUrl}/campaign-invites/admin/disputes/count`,
+    );
+  }
+
+  adminBulkResolveDisputes(body: {
+    inviteIds: string[];
+    outcome?: 'completed' | 'withdrawn' | 'disputed';
+    note?: string;
+  }): Observable<{ success: boolean; resolved: number; skipped: number }> {
+    return this.http.post<{ success: boolean; resolved: number; skipped: number }>(
+      `${this.apiUrl}/campaign-invites/admin/disputes/bulk-resolve`,
+      body,
+    );
+  }
+
+  adminResolveDispute(
+    inviteId: string,
+    body: { outcome?: 'completed' | 'withdrawn' | 'disputed'; note?: string },
+  ): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/campaign-invites/admin/${inviteId}/resolve-dispute`,
+      body,
+    );
+  }
+
   submitInviteAnalytics(inviteId: string, analytics: { reach?: number; engagement?: number; clicks?: number }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/analytics`, analytics);
   }
@@ -511,7 +564,7 @@ export class ConfigService {
     postUrl: string;
     postType?: string;
     captionUsed?: string;
-    postScreenshotUrl: string;
+    postScreenshotUrl?: string;
     insightsScreenshotUrl?: string;
     viewsCount?: number;
     likesCount?: number;

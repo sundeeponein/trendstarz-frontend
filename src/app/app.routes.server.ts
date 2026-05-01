@@ -22,6 +22,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'upgrade-premium', renderMode: RenderMode.Client },
   { path: 'campaign-pay/:campaignId', renderMode: RenderMode.Client },
   { path: 'payment-history', renderMode: RenderMode.Client },
+  { path: 'transactions', renderMode: RenderMode.Client },
   { path: 'influencer-profile', renderMode: RenderMode.Prerender },
   { path: 'brand-profile', renderMode: RenderMode.Prerender },
   { path: 'campaigns', renderMode: RenderMode.Client },
@@ -35,6 +36,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/plans', renderMode: RenderMode.Server },
   { path: 'admin/deleted-users', renderMode: RenderMode.Server },
   { path: 'admin/reviews', renderMode: RenderMode.Server },
+  { path: 'admin/disputes', renderMode: RenderMode.Server },
 
   // Dashboard SSR routes
   { path: 'influencer-dashboard', renderMode: RenderMode.Server },

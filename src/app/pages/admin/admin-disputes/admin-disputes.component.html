@@ -1,0 +1,99 @@
+<div class="admin-disputes">
+  <header class="hdr">
+    <h2>Disputes & Reported Issues</h2>
+    <div class="filter-tabs">
+      <button [class.active]="statusFilter === 'open'" (click)="setFilter('open')">Open</button>
+      <button [class.active]="statusFilter === 'resolved'" (click)="setFilter('resolved')">Resolved</button>
+      <button [class.active]="statusFilter === 'all'" (click)="setFilter('all')">All reported</button>
+    </div>
+  </header>
+
+  <div class="toast" *ngIf="toast">{{ toast }}</div>
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <div *ngIf="loading" class="state">Loading…</div>
+
+  <div *ngIf="!loading && !invites.length" class="state empty">
+    No {{ statusFilter === 'open' ? 'open' : statusFilter }} disputes.
+  </div>
+
+  <div *ngIf="!loading && invites.length" class="bulk-bar">
+    <label class="select-all">
+      <input type="checkbox"
+             [checked]="allSelectableSelected()"
+             (change)="toggleSelectAll($any($event.target).checked)" />
+      Select all open
+    </label>
+    <span class="sel-count" *ngIf="selected.size > 0">{{ selected.size }} selected</span>
+    <ng-container *ngIf="selected.size > 0">
+      <select [(ngModel)]="bulkOutcome">
+        <option value="completed">Resolve as completed</option>
+        <option value="withdrawn">Resolve as withdrawn</option>
+        <option value="disputed">Close (keep disputed)</option>
+      </select>
+      <input class="bulk-note" [(ngModel)]="bulkNote" placeholder="Optional bulk note…" />
+      <button class="btn ok" [disabled]="bulkActing" (click)="bulkResolve()">
+        {{ bulkActing ? 'Resolving…' : 'Apply to selected' }}
+      </button>
+    </ng-container>
+  </div>
+
+  <ul class="dispute-list" *ngIf="!loading && invites.length">
+    <li *ngFor="let inv of invites" class="dispute-row" [class.is-resolved]="isResolved(inv)">
+      <div class="row-top">
+        <div class="who">
+          <input *ngIf="!isResolved(inv)"
+                 type="checkbox"
+                 class="row-check"
+                 [checked]="isSelected(inv)"
+                 (change)="toggleSelected(inv, $any($event.target).checked)" />
+          <strong>{{ inv.brand?.name || '—' }}</strong>
+          <span class="arrow">→</span>
+          <strong>{{ inv.influencer?.name || '—' }}</strong>
+        </div>
+        <span class="status-pill" [attr.data-status]="inv.status">{{ inv.status }}</span>
+      </div>
+
+      <div class="meta">
+        <span><b>Campaign:</b> {{ inv.campaign?.title || '—' }}</span>
+        <span class="sep">·</span>
+        <span><b>Type:</b> {{ inv.campaign?.campaignType || '—' }}</span>
+        <span class="sep">·</span>
+        <span><b>Reported:</b> {{ reportedAt(inv) }}</span>
+        <span class="sep" *ngIf="inv.reportedIssue?.resolvedAt">·</span>
+        <span *ngIf="inv.reportedIssue?.resolvedAt" class="resolved-flag">
+          Resolved {{ inv.reportedIssue.resolvedAt | date: 'short' }}
+        </span>
+      </div>
+
+      <div class="reason">
+        <b>Reason:</b>
+        <pre>{{ inv.reportedIssue?.reason || '—' }}</pre>
+      </div>
+
+      <div class="contacts">
+        <span *ngIf="inv.brand?.email">Brand: {{ inv.brand.email }}</span>
+        <span *ngIf="inv.influencer?.email">Influencer: {{ inv.influencer.email }}</span>
+      </div>
+
+      <div class="actions" *ngIf="!isResolved(inv)">
+        <textarea
+          [(ngModel)]="notes[inv._id]"
+          placeholder="Optional admin note (saved with the resolution)…"
+          rows="2"
+        ></textarea>
+        <div class="btn-row">
+          <button class="btn ok" [disabled]="acting.has(inv._id)" (click)="resolve(inv, 'completed')">
+            Resolve as completed
+          </button>
+          <button class="btn warn" [disabled]="acting.has(inv._id)" (click)="resolve(inv, 'withdrawn')">
+            Resolve as withdrawn
+          </button>
+          <button class="btn neutral" [disabled]="acting.has(inv._id)" (click)="resolve(inv, 'disputed')">
+            Close (keep disputed)
+          </button>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>

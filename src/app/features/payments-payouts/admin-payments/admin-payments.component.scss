@@ -366,6 +366,34 @@ code {
       padding: 1px 6px;
       border-radius: 999px;
     }
+    .ri-pay-now {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .btn-pay-upi {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      width: fit-content;
+      transition: background 0.15s;
+      &:hover { background: #1558b0; color: #fff; }
+      i { font-size: 0.85rem; }
+    }
+    .ri-pay-hint {
+      font-size: 0.76rem;
+      color: #6b7280;
+    }
   }
 }
 

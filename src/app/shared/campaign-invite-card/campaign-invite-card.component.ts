@@ -60,6 +60,10 @@ export class CampaignInviteCardComponent {
   @Output() decline = new EventEmitter<InviteDeclinePayload>();
   @Output() view = new EventEmitter<any>();
   @Output() validationError = new EventEmitter<string>();
+  /** Emits when the influencer clicks "Submit your post" */
+  @Output() submitPost = new EventEmitter<void>();
+  /** Emits when the influencer clicks "View / Edit Submission" */
+  @Output() viewSubmission = new EventEmitter<void>();
 
   postDate = '';
   selectedContentTypeKey = '';
@@ -98,6 +102,58 @@ export class CampaignInviteCardComponent {
   get inviteId(): string { return this.invite?._id || ''; }
   get status(): string { return (this.invite?.status || 'pending').toLowerCase(); }
   get isActionable(): boolean { return this.status === 'pending' || this.status === 'invited'; }
+
+  // ── Unlock state (mirrors brand-side unlocked flag) ─────────────
+  get isUnlocked(): boolean { return !!this.invite?.unlocked; }
+  /** Show "Waiting for brand to unlock contact" once accepted but not unlocked. */
+  get showWaitingUnlock(): boolean {
+    const s = this.status;
+    if (this.isUnlocked) return false;
+    return ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(s);
+  }
+
+  // ── Payment-flow CTA logic ──────────────────────────────────────
+  /** Paid collab + accepted = brand hasn't paid yet */
+  get showPaymentAwaited(): boolean {
+    return this.status === 'accepted' && this.campaignTypeKey === 'paid_collab';
+  }
+  /** Payment has been confirmed by TrendStarZ */
+  get showPaymentConfirmed(): boolean {
+    return this.status === 'payment_confirmed';
+  }
+  /** Show the submit-post button */
+  get showSubmitCTA(): boolean {
+    const s = this.status;
+    if (s === 'submitted' || s === 'completed' || s === 'approved' || s === 'disputed') return false;
+    if (s === 'payment_confirmed' || s === 'working') return true;
+    // accepted + non-paid-collab can submit immediately
+    if (s === 'accepted' && this.campaignTypeKey !== 'paid_collab') return true;
+    return false;
+  }
+  /** Show view/edit submission button */
+  get showViewSubmission(): boolean {
+    return ['submitted', 'completed', 'approved', 'disputed'].includes(this.status);
+  }
+  /** Reminder badge — only worth showing while invite still actionable. */
+  get showReminderBadge(): boolean {
+    const count = Number(this.invite?.remindersSent || 0);
+    if (count <= 0) return false;
+    return ['pending', 'invited', 'accepted', 'payment_confirmed', 'working'].includes(this.status);
+  }
+  get reminderCount(): number { return Number(this.invite?.remindersSent || 0); }
+
+  // ── Brand-side fulfillment visibility (read-only on influencer card) ──
+  get productFulfillment(): any { return this.invite?.productFulfillment || null; }
+  get locationVisit(): any { return this.invite?.locationVisit || null; }
+  get hasShippingInfo(): boolean {
+    const pf = this.productFulfillment;
+    if (!pf) return false;
+    return !!(pf.trackingId || pf.courier || pf.shippedAt || pf.deliveredAt);
+  }
+  get hasVisitSchedule(): boolean {
+    return !!(this.locationVisit && (this.locationVisit.scheduledAt || this.locationVisit.status === 'checked_in'));
+  }
+
   get statusLabel(): string {
     const s = this.status;
     return s.charAt(0).toUpperCase() + s.slice(1);
@@ -323,6 +379,10 @@ export class CampaignInviteCardComponent {
     return this.brand?.brandName || this.brand?.businessName || this.brand?.name || 'Brand';
   }
   get brandInitial(): string { return (this.brandName || '?')[0].toUpperCase(); }
+
+  /** Brand contact details — only populated by backend when invite.unlocked === true */
+  get brandEmail(): string { return this.brand?.email || ''; }
+  get brandPhone(): string { return this.brand?.phoneNumber || ''; }
   get brandLogo(): string | null {
     const b = this.brand;
     let url: string | null = null;

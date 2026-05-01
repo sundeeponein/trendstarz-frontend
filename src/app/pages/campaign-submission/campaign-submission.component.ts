@@ -49,9 +49,14 @@ export class CampaignSubmissionComponent implements OnInit {
   postTypes: { key: PostType; label: string; platforms: string[] }[] = [...this.allPostTypes];
 
   // Campaign platform info loaded from backend
+  campaignType = '';
   campaignPlatforms: string[] = [];
   campaignSocialMedia: any[] = [];
   specialInstructions = '';
+
+  get isLocationCampaign(): boolean {
+    return this.campaignType === 'invite_location';
+  }
 
   screenshotUploading = false;
   insightsUploading = false;
@@ -85,6 +90,7 @@ export class CampaignSubmissionComponent implements OnInit {
           }
           const campaign = res?.campaign;
           if (campaign) {
+            this.campaignType = campaign.campaignType || '';
             // Collect platforms from socialMedia (enabled content types)
             this.campaignSocialMedia = campaign.socialMedia || [];
             this.campaignPlatforms = this.campaignSocialMedia
@@ -197,7 +203,10 @@ export class CampaignSubmissionComponent implements OnInit {
 
   canSubmit(): boolean {
     if (this.isReadOnly) return false;
-    return !!this.postUrl.trim() && !!this.postScreenshotUrl;
+    // Location campaigns: postUrl still required, screenshot is optional
+    if (this.isLocationCampaign) return !!this.postUrl.trim();
+    // Paid/product campaigns: postUrl required; screenshot strongly recommended but optional
+    return !!this.postUrl.trim();
   }
 
   submit() {

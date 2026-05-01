@@ -15,6 +15,12 @@
     <span class="badge rounded-pill ms-auto" [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
   </div>
 
+  <!-- Brand sent a reminder -->
+  <div class="inv-reminder-banner" *ngIf="showReminderBadge">
+    <i class="bi bi-bell-fill"></i>
+    <span>Brand reminded you{{ reminderCount > 1 ? ' (' + reminderCount + ')' : '' }} — please respond.</span>
+  </div>
+
   <!-- Budget + timeline + platform row -->
   <div class="invite-card__details">
     <div class="invite-detail-item" *ngIf="yourPayoutText">
@@ -157,8 +163,80 @@
     <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted'">
       <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
     </p>
+    <!-- Influencer-side: contact-unlock state -->
+    <p class="inv-unlock-waiting mb-0" *ngIf="showWaitingUnlock">
+      <i class="bi bi-hourglass-split"></i> Waiting for brand to unlock contact
+    </p>
+    <p class="inv-unlock-done mb-0" *ngIf="isUnlocked">
+      <i class="bi bi-unlock-fill"></i> Brand has unlocked contact — they can reach you now
+    </p>
+    <!-- Brand contact details for invite_location campaigns (shown once unlocked) -->
+    <div class="inv-brand-contact" *ngIf="isUnlocked && campaignTypeKey === 'invite_location'">
+      <span class="inv-brand-contact__label"><i class="bi bi-person-lines-fill"></i> Brand contact</span>
+      <a class="contact-chip" *ngIf="brandEmail" [href]="'mailto:' + brandEmail" (click)="$event.stopPropagation()">
+        <i class="bi bi-envelope-fill"></i> {{ brandEmail }}
+      </a>
+      <a class="contact-chip" *ngIf="brandPhone" [href]="'tel:' + brandPhone" (click)="$event.stopPropagation()">
+        <i class="bi bi-telephone-fill"></i> {{ brandPhone }}
+      </a>
+      <span class="inv-brand-contact__hint" *ngIf="!brandEmail && !brandPhone">
+        Contact details will appear here once available.
+      </span>
+    </div>
+    <!-- Influencer-side: shipping info (product campaigns) -->
+    <div class="inv-shipping" *ngIf="hasShippingInfo">
+      <i class="bi bi-truck"></i>
+      <span *ngIf="productFulfillment?.status === 'delivered'">Delivered</span>
+      <span *ngIf="productFulfillment?.status === 'shipped'">Shipped</span>
+      <span *ngIf="productFulfillment?.status === 'pending'">Awaiting shipment</span>
+      <span *ngIf="productFulfillment?.status === 'returned'">Returned</span>
+      <span *ngIf="productFulfillment?.courier"> · {{ productFulfillment.courier }}</span>
+      <span *ngIf="productFulfillment?.trackingId"> · {{ productFulfillment.trackingId }}</span>
+      <a *ngIf="productFulfillment?.trackingUrl" [href]="productFulfillment.trackingUrl"
+         target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">Track</a>
+    </div>
+    <!-- Influencer-side: scheduled visit (invite_location campaigns) -->
+    <div class="inv-visit" *ngIf="hasVisitSchedule">
+      <i class="bi bi-geo-alt-fill"></i>
+      <span *ngIf="locationVisit?.status === 'checked_in'">Checked-in</span>
+      <span *ngIf="locationVisit?.status !== 'checked_in' && locationVisit?.scheduledAt">
+        Visit scheduled: {{ locationVisit.scheduledAt | date:'MMM d, h:mm a' }}
+      </span>
+    </div>
     <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
       <i class="bi bi-eye"></i> View Details
     </button>
   </div>
+
+  <!-- ── Payment / Submission CTAs (influencer side) ── -->
+  <div class="invite-card__cta-row" (click)="$event.stopPropagation()">
+
+    <!-- Paid collab awaiting brand payment -->
+    <div class="inv-cta-info inv-cta-info--warn" *ngIf="showPaymentAwaited">
+      <i class="bi bi-clock-history"></i>
+      Awaiting brand payment — you'll be notified once confirmed.
+    </div>
+
+    <!-- Payment confirmed -->
+    <div class="inv-cta-info inv-cta-info--success" *ngIf="showPaymentConfirmed">
+      <i class="bi bi-check-circle-fill"></i>
+      Payment confirmed! You can now begin creating your content.
+    </div>
+
+    <!-- Submit post button -->
+    <button class="inv-cta-btn inv-cta-btn--submit" *ngIf="showSubmitCTA"
+            type="button" (click)="submitPost.emit()">
+      <i class="bi bi-send-fill"></i>
+      {{ status === 'payment_confirmed' ? 'Submit proof of work' : 'Submit your post' }}
+    </button>
+
+    <!-- View / Edit submission button -->
+    <button class="inv-cta-btn inv-cta-btn--view" *ngIf="showViewSubmission"
+            type="button" (click)="viewSubmission.emit()">
+      <i class="bi bi-eye-fill"></i>
+      {{ status === 'submitted' ? 'View / Edit Submission' : 'View Submission' }}
+    </button>
+
+  </div>
+
 </div>

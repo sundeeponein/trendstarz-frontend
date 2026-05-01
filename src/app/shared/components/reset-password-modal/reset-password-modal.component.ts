@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../config.service';
 import { getPasswordChecks } from '../../password-strength';
@@ -29,7 +29,7 @@ export class ResetPasswordModalComponent implements OnChanges {
     confirm: false,
   };
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService, private cdr: ChangeDetectorRef) {}
 
   get passwordChecks() {
     return getPasswordChecks(this.passwordForm.newPassword || '');
@@ -86,17 +86,19 @@ export class ResetPasswordModalComponent implements OnChanges {
       this.passwordForm.confirmPassword,
     ).subscribe({
       next: (res: any) => {
-        this.passwordSuccess = res?.message || 'Password changed successfully.';
+        this.passwordSuccess = res?.data?.message || res?.message || 'Password changed successfully.';
         this.passwordSaving = false;
         this.passwordForm = {
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
         };
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.passwordError = err?.error?.message || 'Failed to change password.';
         this.passwordSaving = false;
+        this.cdr.detectChanges();
       },
     });
   }

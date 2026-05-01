@@ -1,6 +1,7 @@
   // ...existing imports and @Component...
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { CommonModule } from '@angular/common';
@@ -15,7 +16,7 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, RouterModule]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {
@@ -46,6 +47,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     pendingPayouts: 0,
   };
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
+  attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -124,6 +126,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         this.profileIncomplete = !brand.brandName || !brand.categories?.length || !brand.location?.state;
         this.loading = false;
         this.loadPaymentHistory();
+        this.loadAttentionCounts();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -143,6 +146,23 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.paymentHistory = [];
         this.recomputePaymentSummary([]);
+      },
+    });
+  }
+
+  loadAttentionCounts() {
+    this.config.getBrandAttentionCounts().subscribe({
+      next: (res: any) => {
+        const data = res?.data || res;
+        this.attentionCounts = {
+          disputed: Number(data?.disputed || 0),
+          overdue: Number(data?.overdue || 0),
+          awaitingFulfillment: Number(data?.awaitingFulfillment || 0),
+        };
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // silent
       },
     });
   }

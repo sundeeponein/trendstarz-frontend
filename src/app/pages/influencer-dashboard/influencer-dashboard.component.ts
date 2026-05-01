@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
@@ -9,13 +9,14 @@ import { InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -48,6 +49,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     paidInPayToJoin: 0,
   };
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
+  attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
+  emailBannerDismissed = false;
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -58,7 +61,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private session: SessionService,
     private config: ConfigService,
     private plansService: PlansService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -70,6 +74,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       const params = new URLSearchParams(window.location.search);
       if (params.get('emailVerificationError')) {
         this.emailVerificationError = params.get('emailVerificationError');
+      }
+      if (sessionStorage.getItem('emailVerifDismissed') === '1') {
+        this.emailBannerDismissed = true;
       }
     }
 
@@ -127,6 +134,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
           this.loading = false;
           this.loadPaymentHistory();
+          this.loadAttentionCounts();
 
           if (this.invites.length === 0) {
             this.dashboardService.getMyInvites().subscribe({
@@ -150,6 +158,21 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }, 0);
       }
+    });
+  }
+
+  loadAttentionCounts() {
+    this.config.getInfluencerAttentionCounts().subscribe({
+      next: (res: any) => {
+        const data = res?.data || res;
+        this.attentionCounts = {
+          pendingInvites: Number(data?.pendingInvites || 0),
+          overdueDeliverables: Number(data?.overdueDeliverables || 0),
+          disputedAgainstMe: Number(data?.disputedAgainstMe || 0),
+        };
+        this.cdr.detectChanges();
+      },
+      error: () => {},
     });
   }
 
@@ -190,6 +213,13 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
 
     this.paymentSummary = { earnedThisMonth, pending, paidInPayToJoin };
+  }
+
+  /** Only non-paid transactions for the dashboard snapshot */
+  get pendingPaymentHistory(): any[] {
+    return this.paymentHistory.filter(tx =>
+      tx.payoutStatus !== 'paid' && tx.payoutStatus !== 'skipped'
+    );
   }
 
   formatPaise(amount: number): string {
@@ -257,9 +287,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.selectedInvite = null;
         }
         this.responding = null;
+        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+        this.loadAttentionCounts();
         this.cdr.markForCheck();
       },
-      error: () => { this.responding = null; }
+      error: (err: any) => {
+        this.responding = null;
+        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -500,6 +536,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   onVerifyEmail() {
     // Navigate to verify email page
     window.location.href = '/verify-email';
+  }
+
+  dismissEmailBanner() {
+    this.emailBannerDismissed = true;
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('emailVerifDismissed', '1');
+    }
+    this.cdr.markForCheck();
   }
 
   onUpgrade() {

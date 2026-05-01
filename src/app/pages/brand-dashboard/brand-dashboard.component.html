@@ -36,6 +36,43 @@
     </div>
   </div>
 
+  <!-- Needs Attention Widget -->
+  <div class="needs-attention mb-4"
+       *ngIf="(attentionCounts.disputed + attentionCounts.overdue + attentionCounts.awaitingFulfillment) > 0">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div class="performance-title">Needs Attention</div>
+    </div>
+    <div class="row gx-3">
+      <div class="col-12 col-md-4 mb-3 mb-md-0" *ngIf="attentionCounts.disputed > 0">
+        <a class="card attention-card disputed shadow-sm border-0 d-block text-decoration-none"
+           routerLink="/brand-dashboard/invites" [queryParams]="{ filter: 'disputed' }">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1 text-danger">{{ attentionCounts.disputed }}</div>
+            <div class="text-muted">Disputed invites</div>
+          </div>
+        </a>
+      </div>
+      <div class="col-12 col-md-4 mb-3 mb-md-0" *ngIf="attentionCounts.overdue > 0">
+        <a class="card attention-card overdue shadow-sm border-0 d-block text-decoration-none"
+           routerLink="/brand-dashboard/invites" [queryParams]="{ filter: 'overdue' }">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1 text-warning">{{ attentionCounts.overdue }}</div>
+            <div class="text-muted">Overdue deliverables</div>
+          </div>
+        </a>
+      </div>
+      <div class="col-12 col-md-4 mb-3 mb-md-0" *ngIf="attentionCounts.awaitingFulfillment > 0">
+        <a class="card attention-card fulfillment shadow-sm border-0 d-block text-decoration-none"
+           routerLink="/brand-dashboard/invites" [queryParams]="{ filter: 'awaiting-fulfillment' }">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1 text-info">{{ attentionCounts.awaitingFulfillment }}</div>
+            <div class="text-muted">Awaiting fulfillment</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- Performance Overview -->
   <div class="performance-overview mb-4">
     <div class="d-flex align-items-center justify-content-between mb-2">

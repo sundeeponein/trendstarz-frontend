@@ -128,6 +128,18 @@
       <div class="ri-row" *ngIf="r.payoutName">
         <i class="bi bi-card-text"></i> Name on UPI: {{ r.payoutName }}
       </div>
+      <!-- Pay Now button -->
+      <div class="ri-pay-now" *ngIf="r.payoutUpiId || r.payoutMobile || r.mobile">
+        <a class="btn-pay-upi"
+           [href]="buildUpiPayLink(r)"
+           target="_blank"
+           rel="noopener"
+           title="Opens your UPI app (GPay / PhonePe / Paytm) to complete the transfer">
+          <i class="bi bi-box-arrow-up-right"></i>
+          Pay ₹{{ (selectedTx!.recipientPayout / 100).toFixed(0) }} via UPI
+        </a>
+        <small class="ri-pay-hint">Opens your UPI app — copy the UTR after paying and enter it below.</small>
+      </div>
     </div>
     <div class="form-group">
       <label>Payout UTR *</label>
@@ -138,8 +150,24 @@
       <input class="form-textarea" [(ngModel)]="payoutForm.payoutUpiId" placeholder="upi@bank" />
     </div>
     <div class="form-group">
-      <label>Payout proof URL</label>
-      <input class="form-textarea" [(ngModel)]="payoutForm.payoutProofUrl" placeholder="https://..." />
+      <label>Payout proof <span style="color:#888;font-size:0.85em">(optional)</span></label>
+      <!-- File picker (shown when no preview) -->
+      <div *ngIf="!payoutProofPreview" style="display:flex;align-items:center;gap:12px;margin-top:4px">
+        <label class="cp-file-btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px dashed #d1d5db;border-radius:8px;font-size:0.85rem;color:#374151;background:#f9fafb">
+          <i class="bi bi-cloud-upload"></i> Choose screenshot
+          <input type="file" accept="image/*" (change)="onPayoutFileSelected($event)" hidden />
+        </label>
+        <span style="font-size:0.8rem;color:#9ca3af">PNG / JPG up to 5 MB</span>
+      </div>
+      <!-- Preview -->
+      <div *ngIf="payoutProofPreview" style="position:relative;display:inline-block;margin-top:6px">
+        <img [src]="payoutProofPreview" alt="Proof preview"
+             style="max-width:220px;max-height:160px;border-radius:8px;border:1px solid #e5e7eb;object-fit:contain" />
+        <button type="button" (click)="clearPayoutFile()"
+                style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
     </div>
     <div class="form-group">
       <label>Admin notes</label>
@@ -147,7 +175,9 @@
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="closePayoutModal()">Cancel</button>
-      <button class="btn-reject-confirm" [disabled]="!payoutForm.payoutUtr.trim()" (click)="markTransactionPaid()">Confirm Paid</button>
+      <button class="btn-reject-confirm" [disabled]="!payoutForm.payoutUtr.trim() || uploadingProof" (click)="markTransactionPaid()">
+        {{ uploadingProof ? 'Uploading…' : 'Confirm Paid' }}
+      </button>
     </div>
   </div>
 </div>

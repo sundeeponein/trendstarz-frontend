@@ -129,11 +129,15 @@
       <div class="cp-field">
         <label for="cp-utr">UPI Transaction / UTR number <span class="req">*</span></label>
         <input id="cp-utr" type="text" [(ngModel)]="utrNumber" placeholder="e.g. 412345678912" autocomplete="off" />
+        <div class="cp-field-note">
+          <i class="bi bi-info-circle"></i>
+          Double-check and enter the <strong>exact transaction ID</strong>
+        </div>
       </div>
 
       <!-- Proof -->
       <div class="cp-field">
-        <label>Payment proof (screenshot) <span class="req">*</span></label>
+        <label>Payment proof (screenshot) <span class="cp-optional">(optional)</span></label>
         <div class="cp-file-row" *ngIf="!paymentProofPreview">
           <label class="cp-file-btn">
             <i class="bi bi-cloud-upload"></i> Choose screenshot
@@ -146,6 +150,10 @@
           <button type="button" class="cp-preview-clear" (click)="clearFile()">
             <i class="bi bi-x-lg"></i> Replace
           </button>
+        </div>
+        <div class="cp-field-note cp-field-note--tip">
+          <i class="bi bi-lightning-charge-fill"></i>
+          Adding a screenshot helps our team verify faster and speeds up your influencer's confirmation.
         </div>
       </div>
 

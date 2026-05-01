@@ -221,6 +221,7 @@
     font-size: 0.88rem;
     margin-bottom: 0.4rem;
     .req { color: #dc2626; }
+    .cp-optional { font-weight: 400; color: #94a3b8; font-size: 0.8rem; margin-left: 4px; }
   }
   input[type="text"] {
     width: 100%;
@@ -230,6 +231,28 @@
     font-size: 0.95rem;
     color: #0f172a;
     &:focus { outline: none; border-color: #ea580c; box-shadow: 0 0 0 3px #ea580c20; }
+  }
+}
+
+// Field helper notes
+.cp-field-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.79rem;
+  color: #64748b;
+  line-height: 1.4;
+  i { flex-shrink: 0; margin-top: 1px; }
+
+  &--tip {
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-top: 8px;
+    i { color: #d97706; }
   }
 }
 

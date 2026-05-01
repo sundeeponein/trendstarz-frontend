@@ -1,0 +1,137 @@
+<div class="txn-page">
+
+  <!-- ── Header ── -->
+  <div class="txn-header">
+    <div class="txn-header__title">
+      <i class="bi bi-wallet2"></i>
+      <span *ngIf="isInfluencer">My Earnings &amp; Transactions</span>
+      <span *ngIf="isBrand">Campaign Payment History</span>
+    </div>
+    <a routerLink="/campaigns" class="txn-header__back">
+      <i class="bi bi-arrow-left"></i> Back to Campaigns
+    </a>
+  </div>
+
+  <!-- ── Summary Cards ── -->
+  <div class="txn-summary" *ngIf="!loading && transactions.length">
+    <ng-container *ngIf="isInfluencer">
+      <div class="txn-card txn-card--green">
+        <div class="txn-card__label">Total Received</div>
+        <div class="txn-card__value">{{ formatPaise(summary.totalEarned) }}</div>
+      </div>
+      <div class="txn-card txn-card--amber">
+        <div class="txn-card__label">Pending Payout</div>
+        <div class="txn-card__value">{{ formatPaise(summary.totalPending) }}</div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="isBrand">
+      <div class="txn-card txn-card--green">
+        <div class="txn-card__label">Total Paid</div>
+        <div class="txn-card__value">{{ formatPaise(summary.totalPaid) }}</div>
+      </div>
+      <div class="txn-card txn-card--amber">
+        <div class="txn-card__label">Awaiting Verification</div>
+        <div class="txn-card__value">{{ formatPaise(summary.totalPending) }}</div>
+      </div>
+    </ng-container>
+    <div class="txn-card txn-card--neutral">
+      <div class="txn-card__label">Total Transactions</div>
+      <div class="txn-card__value">{{ transactions.length }}</div>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div class="txn-loading" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span>Loading transactions…</span>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="txn-error alert alert-danger" *ngIf="error">{{ error }}</div>
+
+  <!-- ── Tabs ── -->
+  <div class="txn-tabs" *ngIf="!loading && !error">
+    <button class="txn-tab" [class.txn-tab--active]="activeTab === 'pending'" (click)="setTab('pending')">
+      {{ pendingLabel }}
+      <span class="txn-tab__badge" *ngIf="pendingTab.length">{{ pendingTab.length }}</span>
+    </button>
+    <button class="txn-tab" [class.txn-tab--active]="activeTab === 'completed'" (click)="setTab('completed')">
+      {{ completedLabel }}
+      <span class="txn-tab__badge txn-tab__badge--green" *ngIf="completedTab.length">{{ completedTab.length }}</span>
+    </button>
+  </div>
+
+  <!-- ── Transaction List ── -->
+  <div class="txn-list" *ngIf="!loading && !error">
+
+    <!-- Empty state -->
+    <div class="txn-empty" *ngIf="activeRows.length === 0">
+      <i class="bi bi-inbox"></i>
+      <p *ngIf="activeTab === 'pending'">No pending transactions.</p>
+      <p *ngIf="activeTab === 'completed'">No completed transactions yet.</p>
+    </div>
+
+    <!-- Transaction rows -->
+    <div class="txn-row" *ngFor="let tx of activeRows">
+      <div class="txn-row__left">
+        <!-- Type icon -->
+        <div class="txn-row__icon" [class.txn-row__icon--green]="tx.payoutStatus === 'paid' || tx.collectionStatus === 'verified'"
+             [class.txn-row__icon--amber]="tx.payoutStatus !== 'paid' && tx.collectionStatus !== 'verified'">
+          <i class="bi bi-cash-stack" *ngIf="tx.transactionType === 'paid_collab'"></i>
+          <i class="bi bi-ticket-perforated" *ngIf="tx.transactionType === 'pay_to_join'"></i>
+        </div>
+
+        <!-- Details -->
+        <div class="txn-row__info">
+          <div class="txn-row__campaign">
+            {{ tx.campaignTitle || 'Campaign' }}
+          </div>
+          <div class="txn-row__meta">
+            <span class="txn-row__type">{{ typeLabel(tx) }}</span>
+            <span class="txn-row__sep">·</span>
+            <span class="txn-row__party" *ngIf="tx.otherPartyName">
+              {{ isInfluencer ? 'Brand' : 'Influencer' }}: {{ tx.otherPartyName }}
+            </span>
+          </div>
+          <div class="txn-row__dates">
+            <span>Created: {{ formatDate(tx.createdAt) }}</span>
+            <span *ngIf="tx.paidOutAt" class="ms-2">· Paid: {{ formatDate(tx.paidOutAt) }}</span>
+            <span *ngIf="tx.collectedAt" class="ms-2">· Collected: {{ formatDate(tx.collectedAt) }}</span>
+          </div>
+          <!-- UTR / proof if available -->
+          <div class="txn-row__utr" *ngIf="tx.utrNumber">
+            <i class="bi bi-hash"></i> UTR: <code>{{ tx.utrNumber }}</code>
+          </div>
+          <div class="txn-row__utr" *ngIf="tx.payoutUtr">
+            <i class="bi bi-hash"></i> Payout UTR: <code>{{ tx.payoutUtr }}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="txn-row__right">
+        <div class="txn-row__amount"
+             [class.txn-row__amount--green]="isInfluencer"
+             [class.txn-row__amount--red]="isBrand">
+          {{ amountDisplay(tx) }}
+        </div>
+        <div class="txn-row__status" [ngClass]="statusClass(tx)">
+          {{ statusLabel(tx) }}
+        </div>
+        <div class="txn-row__fee" *ngIf="isBrand && tx.platformFee">
+          Incl. platform fee: {{ formatPaise(tx.platformFee) }}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /txn-list -->
+
+  <!-- No transactions at all -->
+  <div class="txn-empty txn-empty--full" *ngIf="!loading && !error && transactions.length === 0">
+    <i class="bi bi-wallet2"></i>
+    <h5>No transactions yet</h5>
+    <p *ngIf="isInfluencer">Campaign earnings and pay-to-join payments will appear here once you participate in campaigns.</p>
+    <p *ngIf="isBrand">Your campaign payment records will appear here once you pay for influencer collaborations.</p>
+    <a routerLink="/campaigns" class="btn btn-primary btn-sm mt-2">Go to Campaigns</a>
+  </div>
+
+</div>

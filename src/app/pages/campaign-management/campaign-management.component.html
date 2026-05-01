@@ -54,27 +54,61 @@
       </div>
 
       <div *ngIf="!myInvitesLoading">
-        <div class="invite-list" *ngIf="myInvites.length > 0">
-          <div class="invite-flow-hint">
+        <ng-container *ngIf="myInvites.length > 0">
+          <!-- <div class="invite-flow-hint">
             <span>Need help before accepting?</span>
             <button type="button" class="invite-flow-link" (click)="flowHelp.openInfluencerFlowGuide()">
               <i class="bi bi-info-circle"></i> Open accept-to-complete guide
             </button>
+          </div> -->
+
+          <!-- Invite tabs -->
+          <div class="pill-tabs invite-tabs-row">
+            <button class="pill-tab" [class.active]="myInviteTab === 'pending'" (click)="myInviteTab = 'pending'">
+              Pending
+              <span class="pill-tab-badge badge-pending" *ngIf="myInvitesPending.length > 0">{{ myInvitesPending.length }}</span>
+            </button>
+            <button class="pill-tab" [class.active]="myInviteTab === 'accepted'" (click)="myInviteTab = 'accepted'">
+              Accepted
+              <span class="pill-tab-badge badge-accepted" *ngIf="myInvitesAccepted.length > 0">{{ myInvitesAccepted.length }}</span>
+            </button>
+            <button class="pill-tab" [class.active]="myInviteTab === 'declined'" (click)="myInviteTab = 'declined'">
+              Declined
+              <span class="pill-tab-badge badge-declined" *ngIf="myInvitesDeclined.length > 0">{{ myInvitesDeclined.length }}</span>
+            </button>
+            <button class="pill-tab" [class.active]="myInviteTab === 'completed'" (click)="myInviteTab = 'completed'">
+              Completed
+              <span class="pill-tab-badge badge-completed" *ngIf="myInvitesCompleted.length > 0">{{ myInvitesCompleted.length }}</span>
+            </button>
           </div>
-          <app-campaign-invite-card
-            *ngFor="let inv of myInvites"
-            [invite]="inv"
-            [initialPostDate]="selectedInvitePostDates[inv._id]"
-            [initialContentTypeKey]="selectedInviteContentType[inv._id]"
-            [initialPayout]="defaultPayout"
-            (postDateChange)="onCardPostDateChange(inv._id, $event)"
-            (contentTypeChange)="onCardContentTypeChange(inv._id, $event)"
-            (accept)="onCardAccept($event)"
-            (decline)="onCardDecline($event)"
-            (view)="openInvitePreview(inv)"
-            (validationError)="showError($event)">
-          </app-campaign-invite-card>
-        </div>
+
+          <div class="invite-list" *ngIf="myInvitesFiltered.length > 0">
+            <ng-container *ngFor="let inv of myInvitesFiltered">
+              <app-campaign-invite-card
+                [invite]="inv"
+                [initialPostDate]="selectedInvitePostDates[inv._id]"
+                [initialContentTypeKey]="selectedInviteContentType[inv._id]"
+                [initialPayout]="defaultPayout"
+                (postDateChange)="onCardPostDateChange(inv._id, $event)"
+                (contentTypeChange)="onCardContentTypeChange(inv._id, $event)"
+                (accept)="onCardAccept($event)"
+                (decline)="onCardDecline($event)"
+                (view)="openInvitePreview(inv)"
+                (validationError)="showError($event)"
+                (submitPost)="navigateToSubmit(inv)"
+                (viewSubmission)="navigateToSubmit(inv)">
+              </app-campaign-invite-card>
+            </ng-container>
+          </div>
+
+          <div class="empty-invites" *ngIf="myInvitesFiltered.length === 0">
+            <i class="bi bi-inbox"></i>
+            <p *ngIf="myInviteTab === 'pending'">No pending invites.</p>
+            <p *ngIf="myInviteTab === 'accepted'">No accepted campaigns yet.</p>
+            <p *ngIf="myInviteTab === 'declined'">No declined invites.</p>
+            <p *ngIf="myInviteTab === 'completed'">No completed campaigns yet.</p>
+          </div>
+        </ng-container>
 
         <div class="empty-invites" *ngIf="myInvites.length === 0">
           <i class="bi bi-inbox"></i>
@@ -82,7 +116,6 @@
         </div>
       </div>
 
-      <hr class="section-divider" />
     </div>
     <div class="cm-header">
       <div>
@@ -98,10 +131,20 @@
         >
           <i class="bi bi-info-circle"></i> Campaign Flow
         </button>
-        <button class="btn btn-create" (click)="openCreateForm()" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">
-          <i class="bi bi-plus-circle-fill"></i> New Campaign
+        <button class="btn btn-create" (click)="openCreateForm()"
+                [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns"
+                [title]="summaryActiveCampaigns >= maxActiveCampaigns ? 'Active-campaign quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.' : 'Create a new campaign'">
+          <i class="bi bi-plus-circle-fill"></i>
+          {{ summaryActiveCampaigns >= maxActiveCampaigns ? 'Quota full' : 'New Campaign' }}
         </button>
+        <span class="campaign-quota-chip" *ngIf="!isInfluencerView && maxActiveCampaigns > 0"
+              [class.is-full]="summaryActiveCampaigns >= maxActiveCampaigns"
+              [title]="'Active campaigns used'">
+          <i class="bi bi-folder-fill"></i>
+          {{ summaryActiveCampaigns }} / {{ maxActiveCampaigns }} active
+        </span>
       </div>
+      <hr class="section-divider" />
     </div>
 
     <!-- Upgrade Banner for Plan Limit -->
@@ -200,21 +243,35 @@
             </div>
             <div class="ccard-stat">
               <span class="ccard-stat-label">Applicants</span>
-              <span class="ccard-stat-value">
-                {{ getCardAcceptedCount(c) }} / {{ getCardInvitedCount(c) }} invited
-              </span>
-              <!-- Avatar stack -->
-              <div class="avatar-stack" *ngIf="getCardInvitePreview(c).length > 0">
-                <app-user-avatar
-                  *ngFor="let inv of getCardInvitePreview(c)"
-                  class="avatar-pip"
-                  [name]="inv.influencerId?.name || ''"
-                  [src]="getInfluencerAvatar(inv.influencerId)"
-                  [size]="24"
-                  [title]="inv.influencerId?.name || ''"
-                ></app-user-avatar>
-              </div>
-              <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
+              <!-- Brand view: show invite counts -->
+              <ng-container *ngIf="!isInfluencerView">
+                <span class="ccard-stat-value">
+                  {{ getCardAcceptedCount(c) }} / {{ getCardInvitedCount(c) }} invited
+                </span>
+                <div class="avatar-stack" *ngIf="getCardInvitePreview(c).length > 0">
+                  <app-user-avatar
+                    *ngFor="let inv of getCardInvitePreview(c)"
+                    class="avatar-pip"
+                    [name]="inv.influencerId?.name || ''"
+                    [src]="getInfluencerAvatar(inv.influencerId)"
+                    [size]="24"
+                    [title]="inv.influencerId?.name || ''"
+                  ></app-user-avatar>
+                </div>
+                <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
+              </ng-container>
+              <!-- Influencer view: show own application status -->
+              <ng-container *ngIf="isInfluencerView">
+                <ng-container *ngIf="getMyInviteForCampaign(c) as myInv; else notApplied">
+                  <span class="ccard-stat-value inf-status" [ngClass]="myInviteStatusClass(myInv.status)">
+                    {{ myInviteStatusLabel(myInv.status) }}
+                  </span>
+                </ng-container>
+                <ng-template #notApplied>
+                  <span class="ccard-stat-value">Open</span>
+                  <span class="ccard-stat-sub">Click to apply</span>
+                </ng-template>
+              </ng-container>
             </div>
             <div class="ccard-timeline">
               <span class="ccard-stat-label">Timeline</span>
@@ -246,7 +303,10 @@
                 <i class="bi bi-person-plus-fill"></i>
                 {{ isInviteQuotaFull(c) ? 'Quota full' : 'Invite' }}
               </button>
-              <button class="btn-pay btn btn-outline-success" (click)="openPayment(c._id)" title="Record Payment" *ngIf="c.status !== 'completed'">
+              <button class="btn-pay btn btn-outline-success" (click)="openPayment(c._id)"
+                *ngIf="c.campaignType === 'paid_collab' && c.status !== 'completed'"
+                [disabled]="getExpandInvitesByStatus(c, 'accepted') === 0"
+                [title]="getExpandInvitesByStatus(c, 'accepted') === 0 ? 'All accepted influencers have already been paid' : 'Record Payment'">
                 <i class="bi bi-wallet2"></i> Record Payment
               </button>
             </div>
@@ -273,6 +333,19 @@
               Campaign timeline has expired. Extend the dates or end this campaign.
             </div>
 
+            <!-- Paid collab: payment nudge when accepted influencers are waiting -->
+            <div class="pay-now-nudge" *ngIf="c.campaignType === 'paid_collab' && getExpandInvitesByStatus(c, 'accepted') > 0">
+              <div class="pay-now-nudge-icon"><i class="bi bi-wallet2-fill"></i></div>
+              <div class="pay-now-nudge-text">
+                <strong>{{ getExpandInvitesByStatus(c, 'accepted') }}
+                  influencer{{ getExpandInvitesByStatus(c, 'accepted') === 1 ? ' has' : 's have' }} accepted</strong>
+                — Pay TrendStarZ to confirm the collaboration and let them begin creating content.
+              </div>
+              <button class="btn-pay-now" (click)="openPayment(c._id)">
+                <i class="bi bi-credit-card-fill"></i> Pay Now
+              </button>
+            </div>
+
             <!-- Mini stat chips -->
             <div class="expand-stats">
               <div class="expand-stat">
@@ -280,7 +353,7 @@
                 <span class="expand-stat-lbl">Invites Sent</span>
               </div>
               <div class="expand-stat">
-                <span class="expand-stat-val">{{ getExpandInvitesByStatus(c, 'accepted') }}</span>
+                <span class="expand-stat-val">{{ getExpandAcceptedOrBeyond(c) }}</span>
                 <span class="expand-stat-lbl">Accepted</span>
               </div>
               <div class="expand-stat">
@@ -326,11 +399,31 @@
                     </div>
                   </div>
                   <span class="inv-status" [ngClass]="inv.status">{{ inv.status | titlecase }}</span>
-                  <div class="contact-reveal" *ngIf="inv.status === 'accepted'">
-                    <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
-                      <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
-                    </a>
+                  <!-- Paid badge: payment was confirmed for this influencer -->
+                  <span class="inv-paid-badge"
+                    *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
+                    <i class="bi bi-check-circle-fill"></i> Paid
+                  </span>
+                  <!-- Paid collab: per-invite awaiting payment chip (brand view) -->
+                  <div class="inv-pay-chip" *ngIf="inv.status === 'accepted' && c.campaignType === 'paid_collab'">
+                    <i class="bi bi-lock-fill"></i> Awaiting your payment
                   </div>
+                  <!-- Contact unlock (expand panel) -->
+                  <ng-container *ngIf="isUnlockableStatus(inv.status)">
+                    <div class="contact-reveal" *ngIf="inv.unlocked">
+                      <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
+                        <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
+                      </a>
+                    </div>
+                    <div class="contact-locked" *ngIf="!inv.unlocked">
+                      <button class="btn-unlock-contact" type="button"
+                              [disabled]="unlockingInviteIds.has(inv._id)"
+                              (click)="unlockInviteContact(inv); $event.stopPropagation()">
+                        <i class="bi bi-unlock-fill"></i>
+                        {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock contact' }}
+                      </button>
+                    </div>
+                  </ng-container>
                   <!-- View Post toggle button -->
                   <button *ngIf="getSubmissionForInvite(c, inv)" class="btn-view-submission"
                     (click)="toggleSubmission(inv._id); $event.stopPropagation()">

@@ -386,7 +386,7 @@ test.describe('Influencer — submit campaign post', () => {
     // Submit
     const submitBtn = page.locator('.btn-submit').first();
     await submitBtn.waitFor({ state: 'visible' });
-    // Wait until enabled (canSubmit needs postUrl + postScreenshotUrl)
+    // Wait until enabled (canSubmit needs only postUrl now — screenshot is optional)
     await expect(submitBtn).toBeEnabled({ timeout: 10000 });
     await submitBtn.click();
 

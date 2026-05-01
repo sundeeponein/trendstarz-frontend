@@ -16,13 +16,35 @@
     </button>
 
     <div class="form-header">
-      <div class="form-title">Submit your completed post</div>
-      <div class="form-subtitle">Share the link and proof of your post for <strong>{{ campaignTitle }}</strong></div>
+      <div class="form-title">
+        <ng-container *ngIf="!isLocationCampaign">Submit your completed post</ng-container>
+        <ng-container *ngIf="isLocationCampaign">Submit proof of your location visit</ng-container>
+      </div>
+      <div class="form-subtitle">
+        <ng-container *ngIf="!isLocationCampaign">Share the link and proof of your post for <strong>{{ campaignTitle }}</strong></ng-container>
+        <ng-container *ngIf="isLocationCampaign">Share the content you created during your visit for <strong>{{ campaignTitle }}</strong></ng-container>
+      </div>
     </div>
 
     <!-- Status bar -->
     <div class="status-bar-wrap mb-4">
       <app-campaign-status-bar [status]="inviteStatus"></app-campaign-status-bar>
+    </div>
+
+    <!-- Campaign stage chip -->
+    <div class="stage-chip-row mb-3">
+      <span class="stage-chip"
+            [class.stage-accepted]="inviteStatus === 'accepted' || inviteStatus === 'working'"
+            [class.stage-submitted]="inviteStatus === 'submitted'"
+            [class.stage-completed]="inviteStatus === 'completed' || inviteStatus === 'approved'"
+            [class.stage-disputed]="inviteStatus === 'disputed'">
+        <i class="bi"
+           [class.bi-hourglass-split]="inviteStatus === 'submitted'"
+           [class.bi-check-circle-fill]="inviteStatus === 'completed' || inviteStatus === 'approved'"
+           [class.bi-exclamation-triangle-fill]="inviteStatus === 'disputed'"
+           [class.bi-calendar-check]="inviteStatus === 'accepted' || inviteStatus === 'working'"></i>
+        Campaign stage: <strong>{{ inviteStatus | titlecase }}</strong>
+      </span>
     </div>
 
     <!-- Error -->
@@ -49,29 +71,38 @@
 
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
     <div class="form-section">
-      <div class="section-heading">Post details</div>
+      <div class="section-heading">
+        <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
+        <ng-container *ngIf="isLocationCampaign">Content details</ng-container>
+      </div>
 
       <!-- Post URL -->
       <div class="field-group">
-        <label class="field-label">Post URL <span class="req">*</span></label>
+        <label class="field-label">
+          <ng-container *ngIf="!isLocationCampaign">Post URL <span class="req">*</span></ng-container>
+          <ng-container *ngIf="isLocationCampaign">Content URL <span class="req">*</span></ng-container>
+        </label>
         <div class="url-input-wrap">
           <input
             type="url"
             class="field-input"
             [(ngModel)]="postUrl"
             (ngModelChange)="onPostUrlChange()"
-            placeholder="https://www.instagram.com/p/..."
+            [placeholder]="isLocationCampaign ? 'https://www.instagram.com/p/... (story, reel, or post about your visit)' : 'https://www.instagram.com/p/...'"
           />
           <span *ngIf="detectedPlatform" class="platform-badge">
             <i class="bi {{ platformIcon() }}"></i> {{ detectedPlatform }}
           </span>
         </div>
-        <div class="field-hint">Paste your Instagram, YouTube, or any platform link</div>
+        <div class="field-hint">
+          <ng-container *ngIf="!isLocationCampaign">Paste your Instagram, YouTube, or any platform link</ng-container>
+          <ng-container *ngIf="isLocationCampaign">Share the reel, story, or post you created from your location visit</ng-container>
+        </div>
       </div>
 
       <!-- Post Type -->
       <div class="field-group">
-        <label class="field-label">Post type <span class="req">*</span></label>
+        <label class="field-label">Post type <span class="opt">(optional)</span></label>
         <div class="pill-group">
           <button
             *ngFor="let pt of postTypes"
@@ -89,23 +120,41 @@
           class="field-input"
           rows="3"
           [(ngModel)]="captionUsed"
-          placeholder="What caption did you write for this post?"
+          [placeholder]="isLocationCampaign ? 'What caption did you write about your visit?' : 'What caption did you write for this post?'"
         ></textarea>
       </div>
     </div>
 
     <!-- ─── SECTION 2: Proof ─────────────────────────── -->
     <div class="form-section">
-      <div class="section-heading">Proof <span class="req">*</span></div>
+      <div class="section-heading">
+        Proof
+        <span class="opt" style="font-size:0.82rem; font-weight:400; margin-left:6px;">
+          (recommended — helps verify your post and speeds up payment)
+        </span>
+      </div>
+
+      <!-- Screenshot tip for location campaigns -->
+      <div *ngIf="isLocationCampaign" class="alert-info mb-3">
+        <i class="bi bi-camera-fill"></i>
+        For location campaigns, upload a screenshot of your published content (story, reel, or post) from the venue.
+      </div>
 
       <div class="field-group">
-        <label class="field-label">Post screenshot <span class="req">*</span></label>
+        <label class="field-label">
+          <ng-container *ngIf="!isLocationCampaign">Post screenshot</ng-container>
+          <ng-container *ngIf="isLocationCampaign">Content screenshot</ng-container>
+          <span class="opt" style="margin-left:4px;">(optional — strongly recommended)</span>
+        </label>
         <label class="upload-box" [class.has-image]="postScreenshotUrl" [class.uploading]="screenshotUploading">
           <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onScreenshotChange($event)">
           <ng-container *ngIf="!postScreenshotUrl && !screenshotUploading">
             <i class="bi bi-cloud-upload-fill upload-icon"></i>
-            <div class="upload-label">Upload a screenshot of your published post</div>
-            <div class="upload-hint">PNG or JPG, up to Max 1 MB</div>
+            <div class="upload-label">
+              <ng-container *ngIf="!isLocationCampaign">Upload a screenshot of your published post</ng-container>
+              <ng-container *ngIf="isLocationCampaign">Upload a screenshot of your published story/reel/post</ng-container>
+            </div>
+            <div class="upload-hint">PNG or JPG, up to 1 MB</div>
           </ng-container>
           <div *ngIf="screenshotUploading" class="upload-loading">
             <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
@@ -172,6 +221,10 @@
 
     <!-- Submit -->
     <div class="form-actions" *ngIf="!isReadOnly">
+      <div *ngIf="!postScreenshotUrl && postUrl.trim()" class="screenshot-nudge">
+        <i class="bi bi-info-circle"></i>
+        Adding a screenshot helps the brand verify your post faster — but you can submit without one.
+      </div>
       <button
         class="btn-submit"
         [disabled]="!canSubmit() || submitting || screenshotUploading"
@@ -179,7 +232,7 @@
       >
         <span *ngIf="!submitting">
           <i class="bi bi-send-fill"></i>
-          {{ existingSubmission ? 'Update Report' : 'Submit Report' }}
+          {{ existingSubmission ? 'Update Submission' : 'Submit' }}
         </span>
         <span *ngIf="submitting">
           <span class="spinner-border spinner-border-sm"></span> Submitting…

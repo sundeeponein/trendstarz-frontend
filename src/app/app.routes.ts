@@ -32,6 +32,7 @@ export const routes: Routes = [
 			{ path: 'upgrade-premium', canActivate: [authGuard], loadComponent: () => import('./pages/premium-upgrade/premium-upgrade.component').then(m => m.PremiumUpgradeComponent) },
 			{ path: 'campaign-pay/:campaignId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-pay/campaign-pay.component').then(m => m.CampaignPayComponent) },
 			{ path: 'payment-history', canActivate: [authGuard], loadComponent: () => import('./pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) },
+			{ path: 'transactions', canActivate: [authGuard], loadComponent: () => import('./pages/transactions/transactions.component').then(m => m.TransactionsComponent) },
 			// DASHBOARDS
 			{ path: 'influencer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-dashboard/influencer-dashboard.component').then(m => m.InfluencerDashboardComponent) },
 			{ path: 'campaign-submission/:inviteId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-submission/campaign-submission.component').then(m => m.CampaignSubmissionComponent) },
@@ -49,6 +50,7 @@ export const routes: Routes = [
 			{ path: 'admin-management', loadComponent: () => import('./pages/admin/admin-management/admin-management.component').then(m => m.AdminManagementComponent) },
 			{ path: 'payments', loadComponent: () => import('./features/payments-payouts/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },			{ path: 'plans', loadComponent: () => import('./pages/admin/admin-plans/admin-plans.component').then(m => m.AdminPlansComponent) },			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
 			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
+			{ path: 'disputes', loadComponent: () => import('./pages/admin/admin-disputes/admin-disputes.component').then(m => m.AdminDisputesComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 		],
 	},

@@ -110,7 +110,8 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   get canSubmit(): boolean {
-    return !!this.utrNumber.trim() && !!this.paymentProofFile && !this.submitting;
+    // Screenshot is optional — only UTR is required
+    return !!this.utrNumber.trim() && !this.submitting;
   }
 
   // ── File handling ────────────────────────────────────
@@ -168,17 +169,16 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
       this.error = 'Please enter the UTR / transaction id.';
       return;
     }
-    if (!this.paymentProofFile) {
-      this.error = 'Please attach the payment proof screenshot.';
-      return;
-    }
     this.submitting = true;
     this.error = '';
     try {
-      this.paymentProofUrl = await this.uploadProof();
-      if (!this.paymentProofUrl) {
-        this.error = 'Failed to upload payment proof. Please try again.';
-        return;
+      // Upload screenshot only if one was selected
+      if (this.paymentProofFile) {
+        this.paymentProofUrl = await this.uploadProof();
+        if (!this.paymentProofUrl) {
+          this.error = 'Failed to upload payment proof. Please try again.';
+          return;
+        }
       }
       const payload = { utrNumber: this.utrNumber.trim(), paymentProofUrl: this.paymentProofUrl };
       await firstValueFrom(this.config.submitCampaignPaymentProof(this.campaignId, payload));
