@@ -19,7 +19,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   @Output() errorMessage = new EventEmitter<string>();
   @Output() successMessage = new EventEmitter<string>();
 
-  transactionStatus: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' = 'all';
+  transactionStatus: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes' = 'all';
   campaignTransactions: CampaignTransaction[] = [];
   transactionLoading = false;
 
@@ -34,8 +34,11 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   showTxRejectModal = false;
   showTxPayoutModal = false;
   showProofModal = false;
+  showDisputeModal = false;
   selectedTx: CampaignTransaction | null = null;
   txRejectReason = '';
+  disputeNotes = '';
+  disputeOutcome: 'release_to_influencer' | 'refund_to_brand' = 'release_to_influencer';
   payoutForm = {
     payoutUtr: '',
     payoutUpiId: '',
@@ -59,7 +62,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     this.loadCampaignTransactions();
   }
 
-  setTransactionStatus(status: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid') {
+  setTransactionStatus(status: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes') {
     this.transactionStatus = status;
   }
 
@@ -152,7 +155,14 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     if (this.transactionStatus === 'payout_pending') {
       return this.campaignTransactions.filter((r) => r.payoutStatus === 'pending' || r.payoutStatus === 'processing');
     }
+    if (this.transactionStatus === 'disputes') {
+      return this.campaignTransactions.filter((r) => r.disputeStatus === 'open');
+    }
     return this.campaignTransactions.filter((r) => r.payoutStatus === 'paid');
+  }
+
+  get openDisputeCount(): number {
+    return this.campaignTransactions.filter(r => r.disputeStatus === 'open').length;
   }
 
   verifyTransaction(tx: CampaignTransaction) {
@@ -317,5 +327,40 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   private getToken(): string | null {
     return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') : null;
+  }
+
+  // ── Dispute management ──────────────────────────────────────────────────────
+
+  openDisputeModal(tx: CampaignTransaction) {
+    this.selectedTx = tx;
+    this.disputeNotes = '';
+    this.disputeOutcome = 'release_to_influencer';
+    this.showDisputeModal = true;
+  }
+
+  closeDisputeModal() {
+    this.showDisputeModal = false;
+    this.selectedTx = null;
+    this.disputeNotes = '';
+  }
+
+  resolveDispute() {
+    if (!this.selectedTx) return;
+    const token = this.getToken();
+    if (!token) {
+      this.errorMessage.emit('Not authenticated');
+      return;
+    }
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.paymentsPayoutsApi
+      .resolveDispute(this.selectedTx._id, this.disputeOutcome, this.disputeNotes, headers)
+      .subscribe({
+        next: (res: any) => {
+          this.successMessage.emit(res?.message || 'Dispute resolved');
+          this.closeDisputeModal();
+          this.loadCampaignTransactions();
+        },
+        error: (err: any) => this.errorMessage.emit(err?.error?.message || 'Failed to resolve dispute'),
+      });
   }
 }

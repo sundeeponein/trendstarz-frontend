@@ -1,5 +1,5 @@
-<div class="form-overlay">
-  <div class="form-modal" (click)="$event.stopPropagation()">
+<div class="ts-modal-backdrop ts-modal-backdrop--scroll">
+  <div class="ts-modal ts-modal--wide ts-modal--wizard" (click)="$event.stopPropagation()">
 
     <!-- ── Header ── -->
     <div class="form-header">
@@ -9,13 +9,18 @@
           <button
             type="button"
             class="form-help-btn"
-            title="Show campaign flow help"
+            title="Show step-by-step builder guide"
             (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"
           >
             <i class="bi bi-info-circle"></i>
           </button>
         </h3>
-        <p class="form-subtitle">Fill in details, then invite influencers</p>
+        <p class="form-subtitle">
+          Fill in details, then invite influencers.
+          <button type="button" class="form-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
+            <i class="bi bi-diagram-3"></i> How campaigns work
+          </button>
+        </p>
       </div>
       <button class="btn-close-modal" (click)="onCancel()" type="button"><i class="bi bi-x-lg"></i></button>
     </div>
@@ -53,36 +58,7 @@
       <div class="form-body">
 
         <div class="field-group">
-          <label class="field-label">Campaign title <span class="required">*</span></label>
-          <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
-          <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
-          <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['minlength']">Minimum 3 characters</span>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Campaign description</label>
-          <textarea formControlName="description" class="field-textarea" rows="3"
-                    placeholder="Describe campaign objectives and expectations..."></textarea>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
-            Example: Promote our new launch with a clear hook, product benefit, and CTA to shop.
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
-            Example: Honest unboxing + first-impression post showing usage and quality.
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
-            Example: Visit our location, capture ambience highlights, and share one experience reel.
-          </p>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Collaboration Type <span class="required">*</span></label>
-          <button
-            type="button"
-            class="field-guide-link"
-            (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"
-          >
-            <i class="bi bi-info-circle"></i> Open guide for Step 1
-          </button>
+          <label class="field-label">Collaboration Type <span class="required">*</span> <i class="bi bi-info-circle" tooltip="Open guide" (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
             <option value="paid_collab">💰 Paid Collab</option>
             <option value="product" [disabled]="!hasPremium">🎁 Product Collab{{ !hasPremium ? ' 🔒 Premium' : '' }}</option>
@@ -93,6 +69,40 @@
             Upgrade to <strong>Premium</strong> to create Product &amp; Invite campaigns.
           </p>
         </div>
+
+        <div class="field-group">
+          <label class="field-label">Campaign title <span class="required">*</span></label>
+          <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
+          <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
+          <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['minlength']">Minimum 3 characters</span>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label-row">
+            <label class="field-label">Campaign description</label>
+            <button
+              type="button"
+              class="btn-use-template"
+              *ngIf="DESCRIPTION_TEMPLATES[selectedCampaignType]"
+              (click)="applyDescriptionTemplate()"
+              title="Fill with a recommended template for this campaign type">
+              <i class="bi bi-file-earmark-text"></i> Use template
+            </button>
+          </div>
+          <textarea formControlName="description" class="field-textarea" rows="5"
+                    placeholder="Describe campaign objectives and expectations..."></textarea>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Paid Collab brief, including deliverables, timeline, and payment details. [You can fully edit it based on your campaign.]
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Product Collab brief, including product details and content expectations. [You can customize product details and expectations.]
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Event/Location brief, including venue details, timing, and attendance expectations. [You can edit venue, timing, and requirements.]
+          </p>
+        </div>
+
+        
 
         <div class="field-group" *ngIf="selectedCampaignType === 'invite_location'">
           <label class="field-label">Venue details <span class="required">*</span></label>
@@ -228,12 +238,18 @@
           <label class="field-label mt-3">Payment mode</label>
           <div class="chip-list">
             <label class="chip" [class.chip--selected]="f['productPaymentMode'].value === 'product_only'">
-              <input type="radio" formControlName="productPaymentMode" value="product_only" hidden /> Product only
+              <input type="radio" formControlName="productPaymentMode" value="product_only" hidden /> Product Collaboration (No Payment)
             </label>
             <label class="chip" [class.chip--selected]="f['productPaymentMode'].value === 'product_plus_payment'">
-              <input type="radio" formControlName="productPaymentMode" value="product_plus_payment" hidden /> Product + small payment
+              <input type="radio" formControlName="productPaymentMode" value="product_plus_payment" hidden /> Product + Paid Collaboration
             </label>
           </div>
+          <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_only'">
+            <i class="bi bi-info-circle"></i> Influencer receives the product only — no cash payment involved.
+          </p>
+          <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_plus_payment'">
+            <i class="bi bi-info-circle"></i> In addition to the product, influencer will receive a cash payment.
+          </p>
           <div class="field-group mt-2" *ngIf="f['productPaymentMode'].value === 'product_plus_payment'">
             <label class="field-label">Cash component per influencer (₹) <span class="required">*</span></label>
             <input type="number" formControlName="productPaymentAmount" class="field-input" placeholder="e.g. 500" min="1" />
@@ -320,7 +336,9 @@
                   <input type="checkbox" [(ngModel)]="ct.enabled" [ngModelOptions]="{standalone: true}" />
                   <span class="ct-name">{{ ct.name }}</span>
                 </label>
-                <div class="ct-price-wrap" [class.ct-price-wrap--disabled]="!ct.enabled">
+                <div class="ct-price-wrap"
+                     *ngIf="!(selectedCampaignType === 'product' && f['productPaymentMode'].value === 'product_only')"
+                     [class.ct-price-wrap--disabled]="!ct.enabled">
                   <span class="ct-rupee">₹</span>
                   <input type="number"
                          [(ngModel)]="ct.price"

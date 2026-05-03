@@ -33,6 +33,10 @@
   <button class="status-tab" [class.active]="transactionStatus === 'verified'" (click)="setTransactionStatus('verified')">Verified</button>
   <button class="status-tab" [class.active]="transactionStatus === 'payout_pending'" (click)="setTransactionStatus('payout_pending')">Pending Payout</button>
   <button class="status-tab" [class.active]="transactionStatus === 'paid'" (click)="setTransactionStatus('paid')">Paid Out</button>
+  <button class="status-tab status-tab--dispute" [class.active]="transactionStatus === 'disputes'" (click)="setTransactionStatus('disputes')">
+    <i class="bi bi-exclamation-triangle-fill"></i> Disputes
+    <span class="dispute-badge" *ngIf="openDisputeCount > 0">{{ openDisputeCount }}</span>
+  </button>
 </div>
 
 <div *ngIf="transactionLoading" class="loading">Loading transactions...</div>
@@ -69,8 +73,13 @@
           <code>{{ tx.utrNumber || '-' }}</code>
           <button class="btn btn-link btn-sm" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">View proof</button>
         </td>
-        <td>{{ tx.collectionStatus }}</td>
-        <td>{{ tx.payoutStatus }}</td>
+        <td>{{ ui.collectionStatusLabel(tx.collectionStatus) }}</td>
+        <td>
+          {{ ui.payoutStatusLabel(tx.payoutStatus) }}
+          <span class="dispute-pill" *ngIf="tx.disputeStatus === 'open'">
+            <i class="bi bi-lock-fill"></i> Frozen
+          </span>
+        </td>
         <td class="col-actions">
           <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)">
             Verify
@@ -78,8 +87,12 @@
           <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)">
             Reject
           </button>
-          <button class="btn btn-warning btn-sm" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" (click)="openPayoutModal(tx)">
+          <button class="btn btn-warning btn-sm me-1" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" (click)="openPayoutModal(tx)">
             Mark Paid
+          </button>
+          <!-- Dispute resolve button -->
+          <button class="btn btn-sm btn-dispute-resolve" *ngIf="tx.disputeStatus === 'open'" (click)="openDisputeModal(tx)">
+            <i class="bi bi-shield-exclamation"></i> Resolve Dispute
           </button>
         </td>
       </tr>
@@ -87,8 +100,8 @@
   </table>
 </div>
 
-<div *ngIf="showTxRejectModal" class="modal-overlay" (click)="closeRejectTxModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<div *ngIf="showTxRejectModal" class="ts-modal-backdrop" (click)="closeRejectTxModal()">
+  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
     <h2>Reject Transaction Proof</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Rejecting <strong>{{ ui.getTransactionLabel(selectedTx.transactionType) }}</strong> with amount
@@ -105,8 +118,8 @@
   </div>
 </div>
 
-<div *ngIf="showTxPayoutModal" class="modal-overlay" (click)="closePayoutModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<div *ngIf="showTxPayoutModal" class="ts-modal-backdrop" (click)="closePayoutModal()">
+  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
     <h2>Mark Payout Paid</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Payout amount: <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }}</strong>
@@ -182,12 +195,53 @@
   </div>
 </div>
 
-<div *ngIf="showProofModal" class="modal-overlay" (click)="closeProofPreview()">
+<div *ngIf="showProofModal" class="ts-modal-backdrop" (click)="closeProofPreview()">
   <div class="modal-content modal-content--proof" (click)="$event.stopPropagation()">
     <h2>Payment Proof</h2>
     <img [src]="proofPreviewUrl" alt="Payment proof" class="proof-image" />
     <div class="modal-actions">
       <button class="btn-cancel" (click)="closeProofPreview()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Dispute Resolution Modal ═══ -->
+<div *ngIf="showDisputeModal" class="ts-modal-backdrop" (click)="closeDisputeModal()">
+  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
+    <h2><i class="bi bi-shield-exclamation"></i> Resolve Payment Dispute</h2>
+
+    <div class="dispute-info" *ngIf="selectedTx">
+      <div class="di-row"><span class="di-key">Reason raised:</span>
+        <span class="di-val">{{ selectedTx.disputeReason || '—' }}</span>
+      </div>
+      <div class="di-row"><span class="di-key">Raised by:</span>
+        <span class="di-val">{{ selectedTx.disputedByRole || '—' }}</span>
+      </div>
+      <div class="di-row"><span class="di-key">Amount at stake:</span>
+        <span class="di-val">{{ ui.formatPaise(selectedTx.recipientPayout) }}</span>
+      </div>
+    </div>
+
+    <p class="dispute-guide">
+      <strong>Choose how to release the frozen funds:</strong><br />
+      <em>Release to influencer</em> = work was valid, pay influencer as agreed.<br />
+      <em>Refund to brand</em> = non-delivery or invalid work, refund brand.
+    </p>
+
+    <div class="form-group">
+      <label>Outcome</label>
+      <select class="form-textarea" [(ngModel)]="disputeOutcome">
+        <option value="release_to_influencer">Release to influencer (work approved)</option>
+        <option value="refund_to_brand">Refund to brand (non-delivery)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Admin notes</label>
+      <textarea class="form-textarea" rows="3" [(ngModel)]="disputeNotes" placeholder="Summarise your decision…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeDisputeModal()">Cancel</button>
+      <button class="btn-reject-confirm" (click)="resolveDispute()">Confirm Resolution</button>
     </div>
   </div>
 </div>

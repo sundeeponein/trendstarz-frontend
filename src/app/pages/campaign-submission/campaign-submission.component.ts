@@ -201,6 +201,19 @@ export class CampaignSubmissionComponent implements OnInit {
     return ['completed', 'approved', 'disputed'].includes(this.inviteStatus);
   }
 
+  get inviteStatusLabel(): string {
+    const map: Record<string, string> = {
+      accepted:          'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working:           'In Progress',
+      submitted:         'Work Submitted',
+      approved:          'Approved',
+      completed:         'Completed',
+      disputed:          'Disputed',
+    };
+    return map[this.inviteStatus] || this.inviteStatus;
+  }
+
   canSubmit(): boolean {
     if (this.isReadOnly) return false;
     // Location campaigns: postUrl still required, screenshot is optional

@@ -46,6 +46,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   paymentSummary = {
     earnedThisMonth: 0,
     pending: 0,
+    frozen: 0,
     paidInPayToJoin: 0,
   };
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
@@ -208,17 +209,27 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .filter((r: any) => r.recipientRole === 'influencer' && (r.payoutStatus === 'pending' || r.payoutStatus === 'processing'))
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
+    const frozen = rows
+      .filter((r: any) => r.recipientRole === 'influencer' && r.payoutStatus === 'frozen')
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
     const paidInPayToJoin = rows
       .filter((r: any) => r.payerRole === 'influencer')
       .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
 
-    this.paymentSummary = { earnedThisMonth, pending, paidInPayToJoin };
+    this.paymentSummary = { earnedThisMonth, pending, frozen, paidInPayToJoin };
   }
 
-  /** Only non-paid transactions for the dashboard snapshot */
+  /** Only non-paid / non-skipped transactions for the dashboard snapshot */
   get pendingPaymentHistory(): any[] {
     return this.paymentHistory.filter(tx =>
       tx.payoutStatus !== 'paid' && tx.payoutStatus !== 'skipped'
+    );
+  }
+
+  get frozenPayouts(): any[] {
+    return this.paymentHistory.filter(tx =>
+      tx.recipientRole === 'influencer' && tx.payoutStatus === 'frozen'
     );
   }
 

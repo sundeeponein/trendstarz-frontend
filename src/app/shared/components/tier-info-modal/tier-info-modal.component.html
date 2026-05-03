@@ -1,5 +1,5 @@
 <!-- Tier Info Modal (single app-wide instance) -->
-<div class="modal-backdrop" *ngIf="svc.isOpen" (click)="svc.close()"></div>
+<div class="ts-modal-backdrop" *ngIf="svc.isOpen" (click)="svc.close()" style="z-index:1040"></div>
 <div class="modal d-block" *ngIf="svc.isOpen" tabindex="-1" role="dialog">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">

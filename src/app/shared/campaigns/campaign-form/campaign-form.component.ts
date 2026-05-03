@@ -63,6 +63,45 @@ export class CampaignFormComponent implements OnInit {
     'Payment secured by TrendStarz',
     'Released after campaign approval',
   ];
+
+  readonly DESCRIPTION_TEMPLATES: Record<string, string> = {
+    paid_collab: `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"\n\nDeliverables:\n• 1 Reel + optional Story (if agreed)\n• Share insights (views, reach, engagement) after posting\n\nTimeline:\n• Content to be posted within 5–7 days / on selected date Range days after product delivery / brief approval\n\nPayment:\n• Fixed payment: ₹XXXX (as agreed)\n• Payment will be processed after content submission/approval\n\nImportant Notes:\n• Content should be original and not reused from past posts\n• Brand reserves the right to request minor edits before posting\n• No offensive or misleading content`,
+    product: `We are offering a product-based collaboration where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging\n\nContent Guidelines:\n• Platform: Instagram / YouTube Shorts (as selected)\n• Tag our brand account & use provided hashtags\n• Mention this is a collaboration (#gifted / #collab)\n\nDeliverables:\n• 1 Reel OR Post (based on your selection)\n• Optional Story (if comfortable)\n\nTimeline:\n• Post within 5–7 days / on selected date Range, after receiving the product\n\nImportant Notes:\n• No monetary payment is involved in this collaboration\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
+    invite_location: `We are inviting influencers to attend an exclusive on-location experience at our venue and create engaging content around it.\n\nEvent Details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only collaboration (no product shipping)\n• Influencers must confirm availability before acceptance\n• If unable to attend after accepting, inform in advance\n• Only influencers who attend the location will be eligible for collaboration benefits`,
+  };
+
+  private readonly AUTO_NOTE_SEP = '\n\n---\n';
+  private readonly AUTO_NOTES: Record<string, string> = {
+    product_only: 'Note: This is a product-based collaboration. No monetary payment is included.',
+    product_plus_payment: 'Note: This collaboration includes product + payment.',
+    invite_location: 'Note: Only influencers who attend the location will be eligible for collaboration benefits.',
+  };
+
+  applyDescriptionTemplate(): void {
+    const template = this.DESCRIPTION_TEMPLATES[this.selectedCampaignType];
+    if (template) {
+      this.form.patchValue({ description: template });
+      if (this.selectedCampaignType === 'product') {
+        this.syncDescriptionCollabNote(String(this.f['productPaymentMode'].value || 'product_only'));
+      } else if (this.selectedCampaignType === 'invite_location') {
+        this.syncDescriptionCollabNote('invite_location');
+      }
+    }
+  }
+
+  private syncDescriptionCollabNote(mode: string): void {
+    if (this.selectedCampaignType !== 'product' && this.selectedCampaignType !== 'invite_location') return;
+    const ctrl = this.form.get('description');
+    if (!ctrl) return;
+    let desc: string = ctrl.value || '';
+    // Strip any existing auto-note
+    const sepIdx = desc.indexOf(this.AUTO_NOTE_SEP);
+    if (sepIdx !== -1) desc = desc.substring(0, sepIdx);
+    desc = desc.trimEnd();
+    const note = this.AUTO_NOTES[mode];
+    if (note) desc += this.AUTO_NOTE_SEP + note;
+    ctrl.setValue(desc, { emitEvent: false });
+  }
   categoriesList: any[] = [];
   states: any[] = [];
   districts: any[] = [];
@@ -120,7 +159,8 @@ export class CampaignFormComponent implements OnInit {
       }
       this.applyCampaignTypeValidators(t);
     });
-    this.form.get('productPaymentMode')?.valueChanges.subscribe(() => {
+    this.form.get('productPaymentMode')?.valueChanges.subscribe((mode: string) => {
+      this.syncDescriptionCollabNote(mode);
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     });
 

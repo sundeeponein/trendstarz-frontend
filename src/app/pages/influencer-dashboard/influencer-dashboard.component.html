@@ -187,6 +187,20 @@
 
     <div class="invite-summary" *ngIf="pendingPaymentHistory.length">
       <div>Pending payout: <strong>{{ formatPaise(paymentSummary.pending) }}</strong></div>
+      <div *ngIf="paymentSummary.frozen > 0" class="idb-frozen-note">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        {{ formatPaise(paymentSummary.frozen) }} frozen — dispute under review
+      </div>
+    </div>
+
+    <!-- Frozen payout dispute alert -->
+    <div class="idb-dispute-alert" *ngFor="let tx of frozenPayouts">
+      <i class="bi bi-shield-exclamation"></i>
+      <div>
+        <strong>Payout frozen</strong> for <em>{{ tx.campaignTitle || 'a campaign' }}</em> —
+        a dispute is under review. Our team will resolve it within 48 hrs.
+        {{ tx.disputeReason ? 'Reason: ' + tx.disputeReason : '' }}
+      </div>
     </div>
 
     <div class="table-responsive" *ngIf="pendingPaymentHistory.length">
@@ -208,7 +222,19 @@
               <span *ngIf="tx.recipientRole === 'influencer'">+{{ formatPaise(tx.recipientPayout) }}</span>
               <span *ngIf="tx.payerRole === 'influencer'">-{{ formatPaise(tx.payerTotal) }}</span>
             </td>
-            <td>{{ tx.payoutStatus === 'processing' ? 'Processing' : (tx.collectionStatus === 'verified' ? 'Awaiting Payout' : tx.collectionStatus === 'proof_submitted' ? 'Under Review' : 'Awaiting Payment') }}</td>
+            <td>
+              <span class="idb-status-chip" [ngClass]="{
+                'idb-status--frozen': tx.payoutStatus === 'frozen',
+                'idb-status--processing': tx.payoutStatus === 'processing',
+                'idb-status--pending': tx.payoutStatus === 'pending' || tx.payoutStatus === null
+              }">
+                {{ tx.payoutStatus === 'frozen' ? '🔒 Dispute open' :
+                   tx.payoutStatus === 'processing' ? 'Processing' :
+                   tx.collectionStatus === 'verified' ? 'Awaiting payout' :
+                   tx.collectionStatus === 'proof_submitted' ? 'Payment verifying' :
+                   tx.collectionStatus === 'failed' ? 'Payment rejected' : 'Awaiting payment' }}
+              </span>
+            </td>
             <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>
           </tr>
         </tbody>
@@ -253,7 +279,8 @@
         </div>
         <span *ngIf="c.inviteStatus === 'accepted'" class="badge rounded-pill bg-success ms-2">Accepted</span>
         <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Payment Confirmed</span>
-        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Submitted</span>
+        <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">In Progress</span>
+        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Work Submitted</span>
         <span *ngIf="c.inviteStatus === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
       </div>
       <div class="active-camp-meta mt-2">
@@ -276,7 +303,7 @@
            *ngIf="c.inviteStatus !== 'submitted' && !(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
         <button class="btn-submit-post" (click)="goToSubmit(c); $event.stopPropagation()">
           <i class="bi bi-send-fill"></i>
-          {{ c.inviteStatus === 'payment_confirmed' ? 'Submit your proof of work' : 'Submit your post' }}
+          {{ (c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your proof of work' : 'Submit your post' }}
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">

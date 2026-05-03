@@ -116,11 +116,12 @@ export class ConfigService {
         platformFeeEnabled: !!res?.platformFeeEnabled,
         platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : 10,
         gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : 18,
+        paymentUpiId: res?.paymentUpiId || 'trendstarzin@kotak',
       })),
       catchError(() => of({
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
-        platformFeeEnabled: false, platformFeePercent: 10, gstPercent: 18
+        platformFeeEnabled: false, platformFeePercent: 10, gstPercent: 18, paymentUpiId: 'trendstarzin@kotak'
       }))
     );
   }
@@ -335,6 +336,13 @@ export class ConfigService {
         return (Array.isArray(d) ? d : d?.data ?? []) as any[];
       }),
       catchError(() => of([]))
+    );
+  }
+
+  getCampaignById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/campaigns/${id}`).pipe(
+      map(res => this.extractData<any>(res) || res),
+      catchError(() => of(null))
     );
   }
 

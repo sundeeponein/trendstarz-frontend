@@ -220,11 +220,17 @@
     <!-- Payment confirmed -->
     <div class="inv-cta-info inv-cta-info--success" *ngIf="showPaymentConfirmed">
       <i class="bi bi-check-circle-fill"></i>
-      Payment confirmed! You can now begin creating your content.
+      Payment secured! You can now begin creating your content.
+    </div>
+
+    <!-- Dispute open (payout frozen) -->
+    <div class="inv-cta-info inv-cta-info--dispute" *ngIf="status === 'disputed'">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      A dispute has been raised. Our team is reviewing — your payout is held pending resolution.
     </div>
 
     <!-- Submit post button -->
-    <button class="inv-cta-btn inv-cta-btn--submit" *ngIf="showSubmitCTA"
+    <button class="inv-cta-btn inv-cta-btn--submit btn-submit-post" *ngIf="showSubmitCTA"
             type="button" (click)="submitPost.emit()">
       <i class="bi bi-send-fill"></i>
       {{ status === 'payment_confirmed' ? 'Submit proof of work' : 'Submit your post' }}

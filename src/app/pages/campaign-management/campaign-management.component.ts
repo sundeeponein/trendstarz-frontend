@@ -278,13 +278,17 @@ export class CampaignManagementComponent implements OnInit {
     return this.myInvites.filter(i => i.status === 'pending' || i.status === 'invited');
   }
   get myInvitesAccepted(): any[] {
-    return this.myInvites.filter(i => ['accepted', 'working', 'payment_confirmed'].includes(i.status));
+    return this.myInvites.filter(i =>
+      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(i.status)
+    );
   }
   get myInvitesDeclined(): any[] {
     return this.myInvites.filter(i => i.status === 'declined' || i.status === 'withdrawn');
   }
   get myInvitesCompleted(): any[] {
-    return this.myInvites.filter(i => i.status === 'completed' || i.status === 'submitted' || i.status === 'disputed');
+    return this.myInvites.filter(i =>
+      ['completed', 'approved', 'disputed'].includes(i.status)
+    );
   }
   get myInvitesFiltered(): any[] {
     if (this.myInviteTab === 'accepted') return this.myInvitesAccepted;
@@ -1349,18 +1353,20 @@ export class CampaignManagementComponent implements OnInit {
       pending: 'Applied · Pending',
       invited: 'Invited',
       accepted: 'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working: 'In Progress',
+      submitted: 'Work Submitted',
+      approved: 'Approved',
+      completed: 'Completed',
       declined: 'Declined',
       withdrawn: 'Withdrawn',
-      working: 'In Progress',
-      submitted: 'Submitted',
-      completed: 'Completed',
       disputed: 'Disputed',
     };
     return map[status] || status;
   }
 
   myInviteStatusClass(status: string): string {
-    if (['accepted', 'working', 'completed'].includes(status)) return 'inf-status-accepted';
+    if (['accepted', 'payment_confirmed', 'working', 'approved', 'completed'].includes(status)) return 'inf-status-accepted';
     if (['declined', 'withdrawn', 'disputed'].includes(status)) return 'inf-status-declined';
     if (status === 'submitted') return 'inf-status-submitted';
     return 'inf-status-pending';
@@ -1751,6 +1757,24 @@ export class CampaignManagementComponent implements OnInit {
     return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(status);
   }
 
+  /** Human-readable invite status label for brand's view of an influencer */
+  brandInviteStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      pending:           'Applied',
+      invited:           'Invited',
+      accepted:          'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working:           'In Progress',
+      submitted:         'Work Submitted',
+      approved:          'Approved',
+      completed:         'Completed',
+      declined:          'Declined',
+      withdrawn:         'Withdrawn',
+      disputed:          'Disputed',
+    };
+    return map[status] || status;
+  }
+
   isExpandLoading(c: Campaign): boolean {
     return this.expandInvitesLoading.has(c._id!);
   }
@@ -1842,8 +1866,9 @@ export class CampaignManagementComponent implements OnInit {
   }
 
   get summaryAccepted(): number {
+    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed'];
     let total = 0;
-    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => i.status === 'accepted').length);
+    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => activeStatuses.includes(i.status)).length);
     return total;
   }
 
@@ -1851,7 +1876,7 @@ export class CampaignManagementComponent implements OnInit {
     const sent = this.summaryInvitesSent;
     if (sent === 0) return '—';
     let responded = 0;
-    this.campaignInvitesMap.forEach(v => { responded += v.filter((i: any) => i.status !== 'pending').length; });
+    this.campaignInvitesMap.forEach(v => { responded += v.filter((i: any) => i.status !== 'pending' && i.status !== 'invited').length; });
     return Math.round((responded / sent) * 100) + '%';
   }
 

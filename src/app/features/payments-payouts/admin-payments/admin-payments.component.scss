@@ -298,27 +298,11 @@ code {
   }
 }
 
-/* ─── Modal ──────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
+/* ─── Modal content panel ──────────────── */
+// Backdrop uses global .ts-modal-backdrop — src/app/shared/styles/_modal-overlay.scss
 
 .modal-content {
-  background: white;
-  border-radius: 8px;
   padding: 2rem;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
   h2 {
     margin-bottom: 1rem;
@@ -506,4 +490,72 @@ input.form-textarea {
     width: 95%;
     padding: 1.5rem;
   }
+}
+
+// ── Dispute UI ──
+.status-tab--dispute {
+  color: #b45309;
+  border-color: #fcd34d;
+  &.active { background: #fef3c7; }
+  .dispute-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    margin-left: 4px;
+    line-height: 1.2;
+  }
+}
+
+.dispute-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  margin-left: 4px;
+}
+
+.btn-dispute-resolve {
+  background: #fff7ed;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  &:hover { background: #fef3c7; }
+}
+
+.dispute-info {
+  background: #fef9c3;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.di-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.85rem;
+  .di-key { color: #92400e; min-width: 110px; font-weight: 600; }
+  .di-val { color: #0f172a; }
+}
+.dispute-guide {
+  font-size: 0.83rem;
+  color: #475569;
+  margin-bottom: 0.9rem;
+  line-height: 1.6;
 }

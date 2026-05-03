@@ -76,10 +76,15 @@ export class SessionService {
 
   isSessionExpired(): boolean {
     if (!this.isBrowser()) return false; // Always valid on server
-    const loginTime = localStorage.getItem(SessionService.LOGIN_TIME_KEY);
-    if (!loginTime) return true;
-    const now = Date.now();
-    return now - parseInt(loginTime, 10) > SessionService.SESSION_TIMEOUT;
+    const token = this.getToken();
+    if (!token || token === 'undefined' || token === '') return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return false; // No expiry claim → treat as valid
+      return Date.now() >= payload.exp * 1000; // exp is in seconds
+    } catch {
+      return true;
+    }
   }
 
   clearSession() {

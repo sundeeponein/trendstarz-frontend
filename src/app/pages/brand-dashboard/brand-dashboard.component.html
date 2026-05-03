@@ -154,31 +154,32 @@
     <div class="col-md-4 mb-3 mb-md-0">
       <div class="section-card h-100">
         <div class="section-title d-flex align-items-center mb-2">
-          <span class="dot dot--orange me-2"></span> Recent Campaigns
-          <span class="section-count ms-auto">{{ recentCampaigns.length }}</span>
+          <span class="dot dot--orange me-2"></span> Active Campaigns
+          <span class="section-count ms-auto">{{ activeCampaignList.length }}</span>
         </div>
-        <div *ngIf="recentCampaigns.length === 0" class="section-empty">
+        <div *ngIf="activeCampaignList.length === 0" class="section-empty">
           <div class="section-empty-icon"><i class="bi bi-megaphone"></i></div>
-          <div class="section-empty-title">No recent campaigns</div>
-          <div class="section-empty-desc">When you launch campaigns, they will appear here.</div>
+          <div class="section-empty-title">No active campaigns</div>
+          <div class="section-empty-desc">Active campaigns will appear here.</div>
         </div>
-        <ul *ngIf="recentCampaigns.length > 0" class="list-group mb-2">
-          <li *ngFor="let c of recentCampaigns" class="list-group-item py-3">
+        <ul *ngIf="activeCampaignList.length > 0" class="list-group mb-2">
+          <li *ngFor="let c of activeCampaignList | slice:0:5" class="list-group-item py-3">
             <div class="d-flex align-items-center justify-content-between">
               <div>
                 <strong>{{ c.title || c._id }}</strong>
-                <span *ngIf="c.status === 'draft'" class="badge rounded-pill bg-secondary ms-2">Draft</span>
-                <span *ngIf="c.status === 'completed'" class="badge rounded-pill bg-dark ms-2">Completed</span>
-                <span *ngIf="c.status === 'active'" class="badge rounded-pill bg-success ms-2">Active</span>
-                <span *ngIf="c.status === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
-                <span *ngIf="c.status === 'invited'" class="badge rounded-pill bg-info text-dark ms-2">Invited</span>
+                <span class="badge rounded-pill bg-success ms-2">Active</span>
               </div>
             </div>
             <div *ngIf="c.timelineStart || c.timelineEnd" class="small text-muted mt-1">
-              {{ c.timelineStart | date:'mediumDate' }} - {{ c.timelineEnd | date:'mediumDate' }}
+              {{ c.timelineStart | date:'mediumDate' }} – {{ c.timelineEnd | date:'mediumDate' }}
             </div>
           </li>
         </ul>
+        <div class="txn-see-all" *ngIf="recentCampaigns.length">
+          <a routerLink="/campaigns" class="txn-see-all__link">
+            <i class="bi bi-arrow-right-circle"></i> View all campaigns
+          </a>
+        </div>
       </div>
     </div>
     <div class="col-md-4 mb-3 mb-md-0">
@@ -224,43 +225,47 @@
 
   <div class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-2">
-      <span class="dot dot--orange me-2"></span> Payments / Transactions
-      <span class="section-count ms-auto">{{ paymentHistory.length }}</span>
+      <span class="dot dot--orange me-2"></span> Payments Awaiting Verification
+      <span class="section-count ms-auto">{{ pendingPaymentHistory.length }}</span>
     </div>
 
-    <div class="payments-summary" *ngIf="paymentHistory.length">
-      <div>Total spent this month: <strong>{{ formatPaise(paymentSummary.spentThisMonth) }}</strong></div>
-      <div>Platform fees paid: <strong>{{ formatPaise(paymentSummary.platformFeesPaid) }}</strong></div>
-      <div>Pending payouts to brand: <strong>{{ formatPaise(paymentSummary.pendingPayouts) }}</strong></div>
+    <div class="payments-summary" *ngIf="pendingPaymentHistory.length">
+      <div>Awaiting verification: <strong>{{ formatPaise(paymentSummary.pendingPayouts) }}</strong></div>
     </div>
 
-    <div class="table-responsive" *ngIf="paymentHistory.length">
+    <div class="table-responsive" *ngIf="pendingPaymentHistory.length">
       <table class="table table-sm payments-table">
         <thead>
           <tr>
+            <th>Campaign</th>
             <th>Type</th>
             <th>Amount Paid</th>
-            <th>Fee</th>
             <th>Status</th>
             <th>Date</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let tx of paymentHistory | slice:0:8">
+          <tr *ngFor="let tx of pendingPaymentHistory">
+            <td>{{ tx.campaignTitle || '—' }}</td>
             <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join' }}</td>
             <td>{{ formatPaise(tx.payerTotal) }}</td>
-            <td>{{ formatPaise(tx.platformFee) }}</td>
-            <td>{{ tx.payoutStatus || tx.collectionStatus }}</td>
+            <td>{{ tx.collectionStatus === 'proof_submitted' ? 'Proof Under Review' : 'Awaiting Payment' }}</td>
             <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div *ngIf="!paymentHistory.length" class="section-empty">
+    <div *ngIf="!pendingPaymentHistory.length" class="section-empty">
       <div class="section-empty-icon"><i class="bi bi-wallet2"></i></div>
-      <div class="section-empty-title">No campaign transactions yet</div>
-      <div class="section-empty-desc">Campaign payment history will appear here.</div>
+      <div class="section-empty-title">No pending payments</div>
+      <div class="section-empty-desc">All your campaign payments have been verified.</div>
+    </div>
+
+    <div class="txn-see-all">
+      <a routerLink="/transactions" class="txn-see-all__link">
+        <i class="bi bi-arrow-right-circle"></i> View all payment history
+      </a>
     </div>
   </div>
 </div>

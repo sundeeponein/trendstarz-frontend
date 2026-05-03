@@ -1,9 +1,9 @@
-<div class="cdm-overlay" *ngIf="visible" (click)="onClose()">
+<div class="ts-modal-backdrop ts-modal-backdrop--scroll" *ngIf="visible" (click)="onClose()">
   <!-- Validation toast (fixed, centered top) -->
   <div class="cdm-toast cdm-toast-error" *ngIf="toastError" (click)="$event.stopPropagation()">
     <i class="bi bi-exclamation-triangle-fill"></i> {{ toastError }}
   </div>
-  <div class="cdm-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+  <div class="ts-modal ts-modal--xlarge ts-modal--wizard" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
 
     <!-- Header -->
     <div class="cdm-header">

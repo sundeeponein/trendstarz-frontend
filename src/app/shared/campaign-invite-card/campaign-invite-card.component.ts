@@ -156,16 +156,33 @@ export class CampaignInviteCardComponent {
 
   get statusLabel(): string {
     const s = this.status;
-    return s.charAt(0).toUpperCase() + s.slice(1);
+    const labels: Record<string, string> = {
+      pending:           'Pending',
+      invited:           'Invited',
+      accepted:          this.campaignTypeKey === 'paid_collab' ? 'Awaiting payment' : 'Accepted',
+      payment_confirmed: 'Payment secured — start work',
+      working:           'In progress',
+      submitted:         'Under review',
+      completed:         'Completed',
+      disputed:          'Dispute open',
+      withdrawn:         'Withdrawn',
+      declined:          'Declined',
+    };
+    return labels[s] || (s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '));
   }
   get statusBadgeClass(): string {
     switch (this.status) {
-      case 'accepted': return 'bg-success';
-      case 'declined': return 'bg-secondary';
-      case 'completed': return 'bg-purple text-white';
+      case 'accepted':          return 'bg-warning text-dark';
+      case 'payment_confirmed': return 'bg-success';
+      case 'working':           return 'bg-primary';
+      case 'submitted':         return 'bg-info text-dark';
+      case 'completed':         return 'bg-purple text-white';
+      case 'disputed':          return 'bg-danger';
+      case 'declined':
+      case 'withdrawn':         return 'bg-secondary';
       case 'pending':
       case 'invited':
-      default: return 'bg-info text-dark';
+      default:                  return 'bg-info text-dark';
     }
   }
 

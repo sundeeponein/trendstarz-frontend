@@ -1,12 +1,14 @@
 import { Component, OnInit, OnChanges, SimpleChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ConfigService } from '../../shared/config.service';
+import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
+import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
 
-type Tab = 'summary' | 'pay';
+type Tab = 'summary' | 'pay' | 'status';
 
 @Component({
   selector: 'app-campaign-payment',
@@ -35,14 +37,25 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   // admin-configurable defaults
   commissionPercent = 10;
   gstPercent = 18;
+  paymentUpiId = 'trendstarzin@kotak';
 
-  constructor(private http: HttpClient, private config: ConfigService, private cd: ChangeDetectorRef) {}
+  // current transaction status (polled after modal opens)
+  statusTransactions: CampaignTransaction[] = [];
+  copied = false;
+
+  constructor(
+    private http: HttpClient,
+    private config: ConfigService,
+    private txApi: PaymentsPayoutsApiService,
+    private cd: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     this.config.getAppSettings().subscribe({
       next: (s: any) => {
         if (s?.platformFeePercent !== undefined) this.commissionPercent = s.platformFeePercent;
         if (s?.gstPercent !== undefined) this.gstPercent = s.gstPercent;
+        if (s?.paymentUpiId) this.paymentUpiId = s.paymentUpiId;
         this.cd.markForCheck();
       },
       error: () => {}
@@ -53,6 +66,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     if (c['visible'] && this.visible && this.campaignId) {
       this.resetState();
       this.calculate();
+      this.fetchStatus();
     }
   }
 
@@ -63,17 +77,64 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     this.paymentProofFile = null;
     this.paymentProofUrl = '';
     this.paymentProofPreview = null;
+    this.statusTransactions = [];
     this.activeTab = 'summary';
   }
 
   setTab(t: Tab) { this.activeTab = t; }
 
+  // ── Status helpers ──────────────────────────────────
+  get primaryTx(): CampaignTransaction | null {
+    return this.statusTransactions[0] || null;
+  }
+
+  get hasSubmittedProof(): boolean {
+    return this.statusTransactions.some(
+      tx => tx.collectionStatus !== 'awaiting_payment',
+    );
+  }
+
+  collectionLabel(status: string): string {
+    const m: Record<string, string> = {
+      awaiting_payment:  'Awaiting payment',
+      proof_submitted:   'Verification pending',
+      verified:          'Payment confirmed',
+      failed:            'Rejected — please resubmit',
+    };
+    return m[status] || status;
+  }
+
+  payoutLabel(status: string): string {
+    const m: Record<string, string> = {
+      pending:    'Pending',
+      processing: 'Being processed',
+      paid:       'Released to influencer',
+      skipped:    'Skipped',
+      frozen:     'Frozen — dispute open',
+    };
+    return m[status] || status;
+  }
+
+  collectionStatusClass(status: string): string {
+    if (status === 'verified') return 'cp-status--ok';
+    if (status === 'failed') return 'cp-status--err';
+    if (status === 'proof_submitted') return 'cp-status--warn';
+    return 'cp-status--muted';
+  }
+
   openPayInNewTab() {
     if (!this.campaignId) return;
     const url = `/campaign-pay/${this.campaignId}`;
     window.open(url, '_blank', 'noopener');
-    // Move user to the proof-submission tab so they can enter UTR after paying.
     this.setTab('pay');
+  }
+
+  copyUpi() {
+    navigator.clipboard.writeText(this.paymentUpiId).then(() => {
+      this.copied = true;
+      setTimeout(() => { this.copied = false; this.cd.markForCheck(); }, 2000);
+      this.cd.markForCheck();
+    }).catch(() => {});
   }
 
   close() {
@@ -93,7 +154,6 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   formatINR(v: number | undefined | null): string {
-    // Backend stores money in paise; convert to rupees for display.
     const rupees = Number(v || 0) / 100;
     return '₹' + rupees.toLocaleString('en-IN', { maximumFractionDigits: 2 });
   }
@@ -110,7 +170,6 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   get canSubmit(): boolean {
-    // Screenshot is optional — only UTR is required
     return !!this.utrNumber.trim() && !this.submitting;
   }
 
@@ -163,6 +222,22 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     }
   }
 
+  async fetchStatus() {
+    if (!this.campaignId) return;
+    try {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+      const res = await firstValueFrom(
+        this.txApi.getCampaignTransactionStatus(this.campaignId, headers)
+      );
+      this.statusTransactions = res?.data || [];
+    } catch {
+      this.statusTransactions = [];
+    } finally {
+      this.cd.markForCheck();
+    }
+  }
+
   async submitProof() {
     if (!this.campaignId) return;
     if (!this.utrNumber.trim()) {
@@ -172,7 +247,6 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     this.submitting = true;
     this.error = '';
     try {
-      // Upload screenshot only if one was selected
       if (this.paymentProofFile) {
         this.paymentProofUrl = await this.uploadProof();
         if (!this.paymentProofUrl) {
@@ -182,7 +256,8 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
       }
       const payload = { utrNumber: this.utrNumber.trim(), paymentProofUrl: this.paymentProofUrl };
       await firstValueFrom(this.config.submitCampaignPaymentProof(this.campaignId, payload));
-      this.successMessage = 'Payment proof submitted. Our team will verify and update the status shortly.';
+      this.successMessage = 'Payment proof submitted! Verification usually takes 6–10 hours. We\'ll notify you once confirmed.';
+      await this.fetchStatus();
     } catch (err: any) {
       this.error = err?.error?.message || err?.message || 'Failed to submit proof';
     } finally {
@@ -191,3 +266,4 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     }
   }
 }
+

@@ -437,6 +437,13 @@
     color: #1b5e20;
     border: 1px solid #a5d6a7;
   }
+
+  &--dispute {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+    i { color: #f97316; }
+  }
 }
 
 // ── Action buttons inside card CTA row ───────────────────────────

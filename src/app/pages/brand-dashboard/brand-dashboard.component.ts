@@ -195,6 +195,17 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     return `₹${((amount || 0) / 100).toLocaleString('en-IN')}`;
   }
 
+  get activeCampaignList(): any[] {
+    return this.recentCampaigns.filter(c => c.status === 'active');
+  }
+
+  /** Only unverified brand payments for the dashboard snapshot */
+  get pendingPaymentHistory(): any[] {
+    return this.paymentHistory.filter(tx =>
+      tx.collectionStatus === 'awaiting_payment' || tx.collectionStatus === 'proof_submitted'
+    );
+  }
+
   formatDate(dateStr: string): string {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-IN', {

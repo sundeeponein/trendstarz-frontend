@@ -43,7 +43,7 @@
            [class.bi-check-circle-fill]="inviteStatus === 'completed' || inviteStatus === 'approved'"
            [class.bi-exclamation-triangle-fill]="inviteStatus === 'disputed'"
            [class.bi-calendar-check]="inviteStatus === 'accepted' || inviteStatus === 'working'"></i>
-        Campaign stage: <strong>{{ inviteStatus | titlecase }}</strong>
+        Campaign stage: <strong>{{ inviteStatusLabel }}</strong>
       </span>
     </div>
 

@@ -1,0 +1,175 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { HttpHeaders } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ConfigService } from '../../shared/config.service';
+import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
+import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
+
+type Tab = 'summary' | 'pay' | 'status';
+
+@Component({
+  selector: 'app-campaign-payment-page',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './campaign-payment-page.component.html',
+  styleUrls: ['./campaign-payment-page.component.scss'],
+})
+export class CampaignPaymentPageComponent implements OnInit {
+  campaignId = '';
+  loading = true;
+  error = '';
+  campaign: any = null;
+  activeTab: Tab = 'summary';
+
+  paymentUpiId = 'trendstarzin@kotak';
+  payeeName = 'TrendstarZ';
+  platformFeeEnabled = false;
+  platformFeePercent = 0;
+  gstPercent = 0;
+
+  utrNumber = '';
+  submitting = false;
+  successMessage = '';
+  submitError = '';
+  copied = false;
+
+  statusTransactions: CampaignTransaction[] = [];
+
+  constructor(
+    private route: ActivatedRoute,
+    private config: ConfigService,
+    private txApi: PaymentsPayoutsApiService,
+    private cd: ChangeDetectorRef,
+  ) {}
+
+  async ngOnInit() {
+    this.campaignId = this.route.snapshot.paramMap.get('campaignId') || '';
+    if (!this.campaignId) {
+      this.error = 'Missing campaign id.';
+      this.loading = false;
+      return;
+    }
+
+    try {
+      const [campaignRes, settingsRes] = await Promise.all([
+        firstValueFrom(this.config.getCampaignById(this.campaignId)),
+        firstValueFrom(this.config.getAppSettings() as any).catch(() => null),
+      ]);
+      this.campaign = campaignRes;
+      if (settingsRes) {
+        const s = settingsRes as any;
+        if (s.paymentUpiId) this.paymentUpiId = s.paymentUpiId;
+        if (s.payeeName) this.payeeName = s.payeeName;
+        if (s.platformFeeEnabled !== undefined) this.platformFeeEnabled = s.platformFeeEnabled;
+        if (s.platformFeePercent !== undefined) this.platformFeePercent = s.platformFeePercent;
+        if (s.gstPercent !== undefined) this.gstPercent = s.gstPercent;
+      }
+      if (!this.campaign) this.error = 'Campaign not found.';
+    } catch (e: any) {
+      this.error = e?.error?.message || e?.message || 'Failed to load campaign.';
+    } finally {
+      this.loading = false;
+      this.cd.markForCheck();
+    }
+
+    await this.fetchStatus();
+  }
+
+  async fetchStatus() {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+      const res = await firstValueFrom(this.txApi.getCampaignTransactionStatus(this.campaignId, headers));
+      this.statusTransactions = res?.data || [];
+    } catch {
+      this.statusTransactions = [];
+    } finally {
+      this.cd.markForCheck();
+    }
+  }
+
+  get hasSubmittedProof(): boolean {
+    return this.statusTransactions.some(tx => tx.collectionStatus !== 'awaiting_payment');
+  }
+
+  get primaryTx(): CampaignTransaction | null {
+    return this.statusTransactions[0] || null;
+  }
+
+  setTab(t: Tab) {
+    this.activeTab = t;
+    this.cd.detectChanges();
+  }
+
+  copyUpi() {
+    navigator.clipboard.writeText(this.paymentUpiId).then(() => {
+      this.copied = true;
+      setTimeout(() => { this.copied = false; this.cd.markForCheck(); }, 2000);
+      this.cd.markForCheck();
+    }).catch(() => {});
+  }
+
+  get canSubmit(): boolean {
+    return !!this.utrNumber.trim() && !this.submitting;
+  }
+
+  async submitProof() {
+    if (!this.utrNumber.trim()) {
+      this.submitError = 'Please enter the UTR / transaction reference.';
+      this.cd.markForCheck();
+      return;
+    }
+    this.submitting = true;
+    this.submitError = '';
+    try {
+      const res: any = await firstValueFrom(
+        this.config.submitCampaignPaymentProof(this.campaignId, { utrNumber: this.utrNumber.trim() })
+      );
+      const tx = res?.data || res;
+      if (tx) this.statusTransactions = [tx, ...this.statusTransactions];
+      this.successMessage = 'Payment proof submitted! Our team will verify within 6–10 hours.';
+      this.utrNumber = '';
+      this.setTab('status');
+    } catch (e: any) {
+      this.submitError = e?.error?.message || 'Failed to submit proof. Please try again.';
+    } finally {
+      this.submitting = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  resubmit() {
+    this.successMessage = '';
+    this.submitError = '';
+    this.setTab('pay');
+    this.cd.markForCheck();
+  }
+
+  collectionLabel(status: string): string {
+    const m: Record<string, string> = {
+      awaiting_payment: 'Awaiting payment',
+      'proof_submitted': 'Verification in progress',
+      verified: 'Payment confirmed',
+      failed: 'Rejected — please resubmit',
+    };
+    return m[status] || status;
+  }
+
+  payoutLabel(status: string): string {
+    const m: Record<string, string> = {
+      pending: 'Pending',
+      processing: 'Being processed',
+      paid: 'Released to influencer',
+      skipped: 'Skipped',
+      frozen: 'Payout on hold',
+    };
+    return m[status] || status;
+  }
+
+  formatINR(paise: number | undefined | null): string {
+    return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+}

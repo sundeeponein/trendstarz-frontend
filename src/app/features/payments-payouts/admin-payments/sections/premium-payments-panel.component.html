@@ -80,8 +80,8 @@
   </div>
 </div>
 
-<div *ngIf="showRejectModal" class="modal-overlay" (click)="closeRejectModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<div *ngIf="showRejectModal" class="ts-modal-backdrop" (click)="closeRejectModal()">
+  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
     <h2>Reject Payment</h2>
     <p *ngIf="selectedPaymentForReject" class="modal-info">
       Rejecting payment of <strong>₹{{ selectedPaymentForReject.amount }}</strong> from

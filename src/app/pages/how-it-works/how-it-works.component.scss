@@ -255,3 +255,26 @@ h1 {
     font-size: 1.55rem;
   }
 }
+
+.cta-flow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  background: transparent;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--soft-ink);
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s;
+
+  i { font-size: 1rem; }
+
+  &:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+}

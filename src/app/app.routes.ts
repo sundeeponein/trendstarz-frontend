@@ -31,6 +31,7 @@ export const routes: Routes = [
 			{ path: 'brand/:brandName', loadComponent: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.component').then(m => m.BrandProfileViewComponent) },
 			{ path: 'upgrade-premium', canActivate: [authGuard], loadComponent: () => import('./pages/premium-upgrade/premium-upgrade.component').then(m => m.PremiumUpgradeComponent) },
 			{ path: 'campaign-pay/:campaignId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-pay/campaign-pay.component').then(m => m.CampaignPayComponent) },
+			{ path: 'campaign-payment/:campaignId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-payment-page/campaign-payment-page.component').then(m => m.CampaignPaymentPageComponent) },
 			{ path: 'payment-history', canActivate: [authGuard], loadComponent: () => import('./pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) },
 			{ path: 'transactions', canActivate: [authGuard], loadComponent: () => import('./pages/transactions/transactions.component').then(m => m.TransactionsComponent) },
 			// DASHBOARDS
