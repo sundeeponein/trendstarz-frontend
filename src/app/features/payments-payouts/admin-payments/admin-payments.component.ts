@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CampaignTransactionsPanelComponent } from './sections/campaign-transactions-panel.component';
 import { PremiumPaymentsPanelComponent } from './sections/premium-payments-panel.component';
@@ -16,6 +16,8 @@ export class AdminPaymentsComponent {
 
   viewMode: 'premium' | 'transactions' = 'premium';
 
+  constructor(private cdr: ChangeDetectorRef) {}
+
   setViewMode(mode: 'premium' | 'transactions') {
     this.viewMode = mode;
   }
@@ -23,13 +25,16 @@ export class AdminPaymentsComponent {
   onError(message: string) {
     this.error = message;
     this.successMessage = '';
+    this.cdr.markForCheck();
   }
 
   onSuccess(message: string) {
     this.successMessage = message;
     this.error = '';
+    this.cdr.markForCheck();
     setTimeout(() => {
       if (this.successMessage === message) this.successMessage = '';
+      this.cdr.markForCheck();
     }, 3000);
   }
 }

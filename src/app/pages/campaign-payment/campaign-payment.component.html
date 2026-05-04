@@ -1,6 +1,8 @@
-<div class="cp-overlay" *ngIf="visible" (click)="close()"></div>
+<div class="modal-backdrop show" *ngIf="visible" (click)="close()"></div>
 
-<div class="cp-modal" *ngIf="visible" role="dialog" aria-modal="true">
+<div class="modal d-block" *ngIf="visible" tabindex="-1" (click)="close()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal cp-modal" role="dialog" aria-modal="true">
   <!-- Header -->
   <div class="cp-header">
     <div>
@@ -21,7 +23,10 @@
       <i class="bi bi-receipt"></i> Summary
     </button>
     <button type="button" class="cp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')">
-      <i class="bi bi-credit-card"></i> Submit Payment
+      <i class="bi bi-credit-card"></i> Pay via UPI
+    </button>
+    <button type="button" class="cp-tab" [class.active]="activeTab === 'status'" (click)="setTab('status')" *ngIf="hasSubmittedProof">
+      <i class="bi bi-clock-history"></i> Status
     </button>
   </div>
 
@@ -81,7 +86,7 @@
           <span class="cp-row-label">Total released to influencers</span>
           <span class="cp-row-val">{{ formatINR(calculated.recipientPayoutTotal) }}</span>
         </div>
-        <p class="cp-note">Released after each post is approved.</p>
+        <p class="cp-note">Released after each post is approved by you.</p>
       </div>
 
       <!-- Trust labels -->
@@ -93,8 +98,8 @@
 
       <div class="cp-actions">
         <button type="button" class="cp-btn cp-btn--secondary" (click)="close()">Cancel</button>
-        <button type="button" class="cp-btn cp-btn--primary" (click)="openPayInNewTab()">
-          <i class="bi bi-box-arrow-up-right"></i> Pay Now
+        <button type="button" class="cp-btn cp-btn--primary" (click)="setTab('pay')">
+          <i class="bi bi-credit-card"></i> Pay via UPI
         </button>
       </div>
     </ng-container>
@@ -116,24 +121,47 @@
         <strong>{{ formatINR(totalToPay) }}</strong>
       </div>
 
-      <button type="button" class="cp-paynow-link" (click)="openPayInNewTab()">
-        <i class="bi bi-box-arrow-up-right"></i> Open Pay Now page (UPI / QR)
-      </button>
+      <!-- ═══ UPI Payment block ═══ -->
+      <div class="cp-upi-block">
+        <div class="cp-upi-label">
+          <i class="bi bi-qr-code"></i>
+          Pay to this UPI ID
+        </div>
+        <div class="cp-upi-id-row">
+          <span class="cp-upi-id">{{ paymentUpiId }}</span>
+          <button type="button" class="cp-upi-copy" (click)="copyUpi()" [class.copied]="copied" title="Copy UPI ID">
+            <i class="bi" [class.bi-clipboard]="!copied" [class.bi-clipboard-check-fill]="copied"></i>
+            {{ copied ? 'Copied!' : 'Copy' }}
+          </button>
+        </div>
+        <p class="cp-upi-hint">
+          Open any UPI app (PhonePe, GPay, Paytm, BHIM) and pay to the ID above.
+          Then enter the transaction UTR below to confirm.
+        </p>
+        <button type="button" class="cp-paynow-link" (click)="openPayInNewTab()">
+          <i class="bi bi-box-arrow-up-right"></i> Open full payment page
+        </button>
+      </div>
 
-      <!-- Pay instructions -->
-      <div class="cp-instructions">
-        <p><i class="bi bi-info-circle"></i> Transfer the total amount via UPI / bank transfer, then enter the UTR and upload the proof below. Our team verifies within 24 hours.</p>
+      <!-- Verification time notice -->
+      <div class="cp-verify-notice">
+        <i class="bi bi-clock"></i>
+        <span>Verification usually takes <strong>6–10 hours</strong> on business days. Once confirmed, your influencers can begin work.</span>
       </div>
 
       <!-- UTR -->
       <div class="cp-field">
         <label for="cp-utr">UPI Transaction / UTR number <span class="req">*</span></label>
         <input id="cp-utr" type="text" [(ngModel)]="utrNumber" placeholder="e.g. 412345678912" autocomplete="off" />
+        <div class="cp-field-note">
+          <i class="bi bi-info-circle"></i>
+          Find the 12-digit UTR / transaction reference ID in your UPI app after paying.
+        </div>
       </div>
 
       <!-- Proof -->
       <div class="cp-field">
-        <label>Payment proof (screenshot) <span class="req">*</span></label>
+        <label>Payment screenshot <span class="cp-optional">(optional — speeds up verification)</span></label>
         <div class="cp-file-row" *ngIf="!paymentProofPreview">
           <label class="cp-file-btn">
             <i class="bi bi-cloud-upload"></i> Choose screenshot
@@ -170,8 +198,81 @@
         <div class="cp-success-icon"><i class="bi bi-check-circle-fill"></i></div>
         <h4>Payment proof submitted</h4>
         <p>{{ successMessage }}</p>
-        <button type="button" class="cp-btn cp-btn--primary" (click)="close()">Done</button>
+        <button type="button" class="cp-btn cp-btn--primary" (click)="setTab('status')">
+          <i class="bi bi-clock-history"></i> View Status
+        </button>
       </div>
     </ng-template>
   </div>
-</div>
+
+  <!-- ── STATUS TAB ── -->
+  <div class="cp-body" *ngIf="!loading && activeTab === 'status'">
+    <div class="cp-status-header">
+      <i class="bi bi-journal-check"></i>
+      <span>Payment status for your campaign collaborations</span>
+    </div>
+
+    <div *ngIf="statusTransactions.length === 0" class="cp-empty">
+      <i class="bi bi-info-circle"></i>
+      <p>No payment records yet. Submit a payment proof first.</p>
+    </div>
+
+    <div class="cp-status-list" *ngIf="statusTransactions.length > 0">
+      <div class="cp-status-card" *ngFor="let tx of statusTransactions">
+        <div class="cp-status-row">
+          <span class="cp-status-key">Collection</span>
+          <span class="cp-status-badge" [class]="collectionStatusClass(tx.collectionStatus)">
+            {{ collectionLabel(tx.collectionStatus) }}
+          </span>
+        </div>
+        <div class="cp-status-row" *ngIf="tx.utrNumber">
+          <span class="cp-status-key">UTR submitted</span>
+          <span class="cp-status-val">{{ tx.utrNumber }}</span>
+        </div>
+        <div class="cp-status-row" *ngIf="tx.workStatus">
+          <span class="cp-status-key">Work status</span>
+          <span class="cp-status-val">{{ tx.workStatus }}</span>
+        </div>
+        <div class="cp-status-row">
+          <span class="cp-status-key">Payout</span>
+          <span class="cp-status-val">{{ payoutLabel(tx.payoutStatus) }}</span>
+        </div>
+
+        <!-- Dispute badge -->
+        <div class="cp-dispute-alert" *ngIf="tx.disputeStatus === 'open'">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Dispute open — payout frozen. Our team is reviewing.
+          <span *ngIf="tx.disputeReason" class="cp-dispute-reason">"{{ tx.disputeReason }}"</span>
+        </div>
+        <div class="cp-dispute-resolved" *ngIf="tx.disputeStatus === 'resolved'">
+          <i class="bi bi-check-circle"></i>
+          Dispute resolved:
+          {{ tx.resolveOutcome === 'release_to_influencer' ? 'Payment released to influencer.' : 'Refund issued to brand.' }}
+        </div>
+
+        <!-- Failed: allow resubmit -->
+        <div *ngIf="tx.collectionStatus === 'failed'" class="cp-resubmit">
+          <p><i class="bi bi-exclamation-circle"></i> Verification failed. Please re-submit with the correct UTR.</p>
+          <button type="button" class="cp-btn cp-btn--secondary" (click)="setTab('pay')">
+            <i class="bi bi-arrow-repeat"></i> Resubmit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending verification notice -->
+    <div class="cp-verify-notice" *ngIf="statusTransactions.length > 0 && primaryTx?.collectionStatus === 'proof_submitted'">
+      <i class="bi bi-clock"></i>
+      <span>Verification in progress — usually <strong>6–10 hours</strong> on business days.</span>
+    </div>
+
+    <div class="cp-actions">
+      <button type="button" class="cp-btn cp-btn--secondary" (click)="fetchStatus()">
+        <i class="bi bi-arrow-repeat"></i> Refresh
+      </button>
+      <button type="button" class="cp-btn cp-btn--primary" (click)="close()">Done</button>
+    </div>
+  </div>
+    </div><!-- /.modal-content.ts-modal -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

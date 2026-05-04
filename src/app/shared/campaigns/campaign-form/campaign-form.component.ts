@@ -58,11 +58,65 @@ export class CampaignFormComponent implements OnInit {
   selectedFile: File | null = null;
   uploading = false;
   currentStep = 1;
+  platformsTouched = false;
+  categoriesTouched = false;
   trustLabels = [
     'You pay only for accepted influencers',
     'Payment secured by TrendStarz',
     'Released after campaign approval',
   ];
+
+  readonly DESCRIPTION_TEMPLATES: Record<string, string> = {
+    paid_collab: `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"\n\nDeliverables:\n• 1 Reel + optional Story (if agreed)\n• Share insights (views, reach, engagement) after posting\n\nTimeline:\n• Content to be posted within 5–7 days / on selected date Range days after product delivery / brief approval\n\nPayment:\n• Fixed payment: ₹XXXX (as agreed)\n• Payment will be processed after content submission/approval\n\nImportant Notes:\n• Content should be original and not reused from past posts\n• Brand reserves the right to request minor edits before posting\n• No offensive or misleading content`,
+    product: `We are offering a product-based collaboration where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging\n\nContent Guidelines:\n• Platform: Instagram / YouTube Shorts (as selected)\n• Tag our brand account & use provided hashtags\n• Mention this is a collaboration (#gifted / #collab)\n\nDeliverables:\n• 1 Reel OR Post (based on your selection)\n• Optional Story (if comfortable)\n\nTimeline:\n• Post within 5–7 days / on selected date Range, after receiving the product\n\nImportant Notes:\n• No monetary payment is involved in this collaboration\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
+    invite_location: `We are inviting influencers to attend an exclusive on-location experience at our venue and create engaging content around it.\n\nEvent Details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only collaboration (no product shipping)\n• Influencers must confirm availability before acceptance\n• If unable to attend after accepting, inform in advance\n• Only influencers who attend the location will be eligible for collaboration benefits`,
+  };
+
+  readonly SPECIAL_INSTRUCTIONS_EXAMPLES: Record<string, string> = {
+    paid_collab: `Dos:\n• Mention the brand name at least once in the video/caption\n• Use the hashtags: #[BrandHashtag] #[CampaignHashtag]\n• Keep the tone conversational — no hard selling\n• Post on the agreed date (or within the selected date range)\n\nDon'ts:\n• Do not post competitor brand content in the same week\n• Do not use filters that alter the product's appearance\n• Do not repost content previously used for another brand\n\nMust include:\n• Brand handle tag: @[BrandHandle]\n• CTA: "Check out the link in bio / visit our page"\n• Story reshare of the post (if Instagram)`,
+    product: `Dos:\n• Unbox or showcase the product naturally on camera\n• Highlight your genuine experience / first impression\n• Use hashtags: #[BrandHashtag] #gifted #collab\n• Tag our account: @[BrandHandle]\n\nDon'ts:\n• Do not compare with competitor products\n• Do not make claims about benefits not listed on the product\n• Do not post before the agreed go-live date\n\nMust mention:\n• This is a gifted collaboration (#gifted)\n• At least one key benefit or use-case of the product`,
+    invite_location: `Before the visit:\n• Confirm attendance at least 24 hours in advance\n• Carry your equipment (phone/camera) — lighting will be arranged on-site\n\nDuring the visit:\n• Create at least 1 Instagram Story from the location (tag us live)\n• Capture ambience, product/service, and your experience\n\nDon'ts:\n• Do not visit without a confirmed booking\n• Do not bring external teams without prior approval\n\nAfter the visit:\n• Post Reel/content within 2–3 days\n• Share post insights (reach, views) once live`,
+  };
+
+  applySpecialInstructionsExample(): void {
+    const example = this.SPECIAL_INSTRUCTIONS_EXAMPLES[this.selectedCampaignType];
+    if (example) {
+      this.form.patchValue({ specialInstructions: example });
+    }
+  }
+
+  private readonly AUTO_NOTE_SEP = '\n\n---\n';
+  private readonly AUTO_NOTES: Record<string, string> = {
+    product_only: 'Note: This is a product-based collaboration. No monetary payment is included.',
+    product_plus_payment: 'Note: This collaboration includes product + payment.',
+    invite_location: 'Note: Only influencers who attend the location will be eligible for collaboration benefits.',
+  };
+
+  applyDescriptionTemplate(): void {
+    const template = this.DESCRIPTION_TEMPLATES[this.selectedCampaignType];
+    if (template) {
+      this.form.patchValue({ description: template });
+      if (this.selectedCampaignType === 'product') {
+        this.syncDescriptionCollabNote(String(this.f['productPaymentMode'].value || 'product_only'));
+      } else if (this.selectedCampaignType === 'invite_location') {
+        this.syncDescriptionCollabNote('invite_location');
+      }
+    }
+  }
+
+  private syncDescriptionCollabNote(mode: string): void {
+    if (this.selectedCampaignType !== 'product' && this.selectedCampaignType !== 'invite_location') return;
+    const ctrl = this.form.get('description');
+    if (!ctrl) return;
+    let desc: string = ctrl.value || '';
+    // Strip any existing auto-note
+    const sepIdx = desc.indexOf(this.AUTO_NOTE_SEP);
+    if (sepIdx !== -1) desc = desc.substring(0, sepIdx);
+    desc = desc.trimEnd();
+    const note = this.AUTO_NOTES[mode];
+    if (note) desc += this.AUTO_NOTE_SEP + note;
+    ctrl.setValue(desc, { emitEvent: false });
+  }
   categoriesList: any[] = [];
   states: any[] = [];
   districts: any[] = [];
@@ -120,7 +174,8 @@ export class CampaignFormComponent implements OnInit {
       }
       this.applyCampaignTypeValidators(t);
     });
-    this.form.get('productPaymentMode')?.valueChanges.subscribe(() => {
+    this.form.get('productPaymentMode')?.valueChanges.subscribe((mode: string) => {
+      this.syncDescriptionCollabNote(mode);
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     });
 
@@ -236,6 +291,18 @@ export class CampaignFormComponent implements OnInit {
     );
   }
 
+  step2Valid(): boolean {
+    const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join';
+    const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
+    return !!(
+      priceValid &&
+      this.f['maxInfluencers'].valid &&
+      this.f['maxInfluencers'].value > 0 &&
+      this.selectedCategories.length > 0 &&
+      this.platformDeliverables.length > 0
+    );
+  }
+
   isPremiumOnlyType(type: string): boolean {
     return type === 'product' || type === 'invite_location';
   }
@@ -338,6 +405,14 @@ export class CampaignFormComponent implements OnInit {
   goToStep(step: number) {
     if (step === 2 && !this.step1Valid()) {
       this.form.markAllAsTouched();
+      return;
+    }
+    if (step === 3 && !this.step2Valid()) {
+      this.form.get('pricePerInfluencer')?.markAsTouched();
+      this.form.get('maxInfluencers')?.markAsTouched();
+      this.categoriesTouched = true;
+      this.platformsTouched = true;
+      this.cd.detectChanges();
       return;
     }
     this.currentStep = step;

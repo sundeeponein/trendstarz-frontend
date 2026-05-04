@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
+import { FlowHelpModalService } from '../../shared/components/flow-help-modal/flow-help-modal.service';
 
 type UserRole = 'influencer' | 'brand' | 'admin' | 'guest';
 
@@ -44,6 +45,7 @@ export class HowItWorksComponent implements OnDestroy {
   constructor(
     private readonly session: SessionService,
     private readonly route: ActivatedRoute,
+    readonly flowHelp: FlowHelpModalService,
   ) {
     this.user = this.session.getUser();
     this.role = this.resolveRole(this.user);

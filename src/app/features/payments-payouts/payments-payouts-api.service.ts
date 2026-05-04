@@ -61,4 +61,47 @@ export class PaymentsPayoutsApiService {
       { headers },
     );
   }
+
+  // ── Campaign-level payment status (brand polls after UTR submission) ──────
+
+  /** Get all transaction records for a campaign (brand uses this to check status). */
+  getCampaignTransactionStatus(campaignId: string, headers: HttpHeaders): Observable<{ success: boolean; data: CampaignTransaction[] }> {
+    return this.http.get<{ success: boolean; data: CampaignTransaction[] }>(
+      `${environment.apiBaseUrl}/campaign-transactions/campaign/${campaignId}/status`,
+      { headers },
+    );
+  }
+
+  // ── Dispute endpoints ─────────────────────────────────────────────────────
+
+  /** Brand or influencer raises a payment dispute (freezes payout). */
+  raiseDispute(id: string, reason: string, headers: HttpHeaders): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${id}/raise-dispute`,
+      { reason },
+      { headers },
+    );
+  }
+
+  /** Admin resolves a frozen dispute, releasing payment to the correct party. */
+  resolveDispute(
+    id: string,
+    outcome: 'release_to_influencer' | 'refund_to_brand',
+    notes: string,
+    headers: HttpHeaders,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${id}/resolve-dispute`,
+      { outcome, notes },
+      { headers },
+    );
+  }
+
+  /** Admin — fetch all open (frozen) disputes. */
+  listOpenDisputes(headers: HttpHeaders): Observable<{ success: boolean; data: CampaignTransaction[]; total: number }> {
+    return this.http.get<{ success: boolean; data: CampaignTransaction[]; total: number }>(
+      `${environment.apiBaseUrl}/campaign-transactions/disputes/open`,
+      { headers },
+    );
+  }
 }

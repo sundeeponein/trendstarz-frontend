@@ -212,17 +212,14 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   getContactVisibilityLabel(plan: Plan): string {
-    switch (plan.policies?.contactVisibility) {
-      case 'PROFILE':
-        return 'Contact details visible on profile';
-      case 'AFTER_ACCEPT':
-        return 'Contact details unlock after invite acceptance';
-      case 'AFTER_PAYMENT':
-        return 'Contact details unlock after payment';
-      case 'NONE':
-      default:
-        return 'Contact details hidden';
+    const featureKey = plan.userType === 'BRAND' ? 'viewContactDetails' : 'contactVisibility';
+    const feature = plan.features?.find(f => f.key === featureKey);
+    if (!feature?.value) {
+      return 'Contact details hidden';
     }
+    return plan.userType === 'BRAND'
+      ? 'Unlock influencer contact details (per invite)'
+      : 'Contact details visible to brands';
   }
 
   applyCoupon() {

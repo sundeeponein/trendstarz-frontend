@@ -20,16 +20,19 @@ export class SessionService {
     return typeof window !== 'undefined' && !!window.localStorage;
   }
 
-  setToken(token: string) {
+  setToken(token: string, rememberMe = false) {
     if (!this.isBrowser()) return;
-    localStorage.setItem(SessionService.TOKEN_KEY, token);
-    localStorage.setItem(SessionService.LOGIN_TIME_KEY, Date.now().toString());
-    // Optionally decode user from token here and setUser()
+    if (rememberMe) {
+      localStorage.setItem(SessionService.TOKEN_KEY, token);
+    } else {
+      sessionStorage.setItem(SessionService.TOKEN_KEY, token);
+    }
   }
 
   getToken(): string | null {
     if (!this.isBrowser()) return null;
-    return localStorage.getItem(SessionService.TOKEN_KEY);
+    return localStorage.getItem(SessionService.TOKEN_KEY)
+        || sessionStorage.getItem(SessionService.TOKEN_KEY);
   }
 
   setUser(user: any) {
@@ -76,15 +79,21 @@ export class SessionService {
 
   isSessionExpired(): boolean {
     if (!this.isBrowser()) return false; // Always valid on server
-    const loginTime = localStorage.getItem(SessionService.LOGIN_TIME_KEY);
-    if (!loginTime) return true;
-    const now = Date.now();
-    return now - parseInt(loginTime, 10) > SessionService.SESSION_TIMEOUT;
+    const token = this.getToken();
+    if (!token || token === 'undefined' || token === '') return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return false; // No expiry claim → treat as valid
+      return Date.now() >= payload.exp * 1000; // exp is in seconds
+    } catch {
+      return true;
+    }
   }
 
   clearSession() {
     if (!this.isBrowser()) return;
     localStorage.removeItem(SessionService.TOKEN_KEY);
+    sessionStorage.removeItem(SessionService.TOKEN_KEY);
     localStorage.removeItem(SessionService.LOGIN_TIME_KEY);
     localStorage.removeItem(SessionService.USER_KEY);
     this.userSubject.next(null);

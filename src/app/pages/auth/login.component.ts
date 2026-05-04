@@ -37,6 +37,7 @@ export class LoginComponent {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
+      rememberMe: [false],
     });
 
     // Reset “submitted” flag when the user starts editing again so any
@@ -64,7 +65,8 @@ export class LoginComponent {
       }))
       .subscribe((res: any) => {
         if (!res) return;
-        this.session.setToken(res.token);
+        const rememberMe = !!this.loginForm.get('rememberMe')?.value;
+        this.session.setToken(res.token, rememberMe);
         if (res.user) {
           this.session.setUser(res.user);
         }

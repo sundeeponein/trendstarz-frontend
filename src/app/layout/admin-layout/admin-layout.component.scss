@@ -65,5 +65,19 @@
   @media (max-width: 768px) { padding: 1rem; }
 }
 
+.dispute-badge {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #d62828;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.5;
+}
+
 :host ::ng-deep { @include shared.ng-deep-overrides; }
 

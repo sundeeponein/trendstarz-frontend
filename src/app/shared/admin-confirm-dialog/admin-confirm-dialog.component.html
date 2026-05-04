@@ -1,10 +1,15 @@
-<div class="admin-confirm-dialog" *ngIf="open">
-  <div class="dialog-backdrop"></div>
-  <div class="dialog-content">
-    <div class="dialog-message">{{ message }}</div>
-    <div class="dialog-actions">
-      <button class="admin-btn admin-btn-secondary" (click)="onCancel()">{{ cancelText }}</button>
-      <button class="admin-btn admin-btn-danger" (click)="onConfirm()">{{ confirmText }}</button>
-    </div>
-  </div>
-</div>
+<div class="modal-backdrop show" *ngIf="open" (click)="onCancel()"></div>
+
+<div class="modal d-block" *ngIf="open" tabindex="-1" (click)="onCancel()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
+      <div class="dialog-content">
+        <div class="dialog-message">{{ message }}</div>
+        <div class="dialog-actions">
+          <button class="admin-btn admin-btn-secondary" (click)="onCancel()">{{ cancelText }}</button>
+          <button class="admin-btn admin-btn-danger" (click)="onConfirm()">{{ confirmText }}</button>
+        </div>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

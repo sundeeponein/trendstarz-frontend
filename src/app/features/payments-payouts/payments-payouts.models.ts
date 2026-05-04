@@ -1,18 +1,37 @@
 export interface CampaignTransaction {
   _id: string;
   campaignId: string;
+  inviteId?: string;
   transactionType: 'paid_collab' | 'pay_to_join';
   direction: 'brand_to_influencer' | 'influencer_to_brand';
   payerRole: 'brand' | 'influencer';
+  payerId?: string;
   recipientRole: 'brand' | 'influencer';
+  recipientId?: string;
   agreedAmount: number;
   platformFee: number;
   payerTotal: number;
   recipientPayout: number;
+  /** Payment gateway. MVP = manual_upi. Future: razorpay, stripe. */
+  gateway?: 'manual_upi' | 'razorpay' | 'stripe';
   collectionStatus: 'awaiting_payment' | 'proof_submitted' | 'verified' | 'failed';
-  payoutStatus: 'pending' | 'processing' | 'paid' | 'skipped';
+  /** frozen = disputed, payout on hold until admin resolves. */
+  payoutStatus: 'pending' | 'processing' | 'paid' | 'skipped' | 'frozen';
+  workStatus?: 'pending' | 'submitted' | 'approved' | 'disputed';
+  /** Payment-level dispute (separate from invite-level work dispute). */
+  disputeStatus?: 'none' | 'open' | 'resolved';
+  disputeReason?: string;
+  disputedBy?: string;
+  disputedByRole?: string;
+  disputedAt?: string;
+  resolveOutcome?: 'release_to_influencer' | 'refund_to_brand';
+  resolvedBy?: string;
+  resolvedAt?: string;
+  adminNotes?: string;
   utrNumber?: string;
   paymentProofUrl?: string;
+  payoutUpiId?: string;
+  payoutUtr?: string;
   createdAt: string;
   updatedAt?: string;
   collectedAt?: string;

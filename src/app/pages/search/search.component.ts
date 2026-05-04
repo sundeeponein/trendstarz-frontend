@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
@@ -87,6 +87,7 @@ export class SearchComponent implements OnInit {
     private session: SessionService,
     private cd: ChangeDetectorRef,
     public router: Router,
+    private route: ActivatedRoute,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -94,11 +95,11 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
-    // Default tab:
-    //  - Brand users discover influencers
-    //  - Influencer users discover brands
-    //  - Anonymous (not logged in) users see influencers by default
-    if (this.isBrandUser) {
+    // Honour ?tab= query param, then fall back to role-based default
+    const paramTab = this.route.snapshot.queryParamMap.get('tab');
+    if (paramTab === 'influencers' || paramTab === 'brands') {
+      this.activeTab = paramTab;
+    } else if (this.isBrandUser) {
       this.activeTab = 'influencers';
     } else if (this.currentUser) {
       this.activeTab = 'brands';
@@ -111,6 +112,7 @@ export class SearchComponent implements OnInit {
 
   setTab(tab: 'influencers' | 'brands') {
     this.activeTab = tab;
+    this.router.navigate([], { queryParams: { tab }, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   fetchInfluencers() {

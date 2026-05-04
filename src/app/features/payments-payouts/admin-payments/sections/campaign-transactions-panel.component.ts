@@ -1,7 +1,9 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { HttpHeaders } from '@angular/common/http';
-import { Component, EventEmitter, Inject, OnInit, Output, PLATFORM_ID } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { ChangeDetectorRef, Component, EventEmitter, Inject, OnInit, Output, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../../environments/environment';
 import { PaymentsPayoutsApiService } from '../../payments-payouts-api.service';
 import { CampaignTransaction, TransactionSummary } from '../../payments-payouts.models';
 import { AdminPaymentsUiUtilsService } from '../admin-payments-ui-utils.service';
@@ -17,7 +19,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   @Output() errorMessage = new EventEmitter<string>();
   @Output() successMessage = new EventEmitter<string>();
 
-  transactionStatus: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' = 'all';
+  transactionStatus: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes' = 'all';
   campaignTransactions: CampaignTransaction[] = [];
   transactionLoading = false;
 
@@ -32,19 +34,27 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   showTxRejectModal = false;
   showTxPayoutModal = false;
   showProofModal = false;
+  showDisputeModal = false;
   selectedTx: CampaignTransaction | null = null;
   txRejectReason = '';
+  disputeNotes = '';
+  disputeOutcome: 'release_to_influencer' | 'refund_to_brand' = 'release_to_influencer';
   payoutForm = {
     payoutUtr: '',
     payoutUpiId: '',
     payoutProofUrl: '',
     notes: '',
   };
+  payoutProofFile: File | null = null;
+  payoutProofPreview: string | null = null;
+  uploadingProof = false;
   proofPreviewUrl = '';
 
   constructor(
     private paymentsPayoutsApi: PaymentsPayoutsApiService,
     public ui: AdminPaymentsUiUtilsService,
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
@@ -52,7 +62,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     this.loadCampaignTransactions();
   }
 
-  setTransactionStatus(status: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid') {
+  setTransactionStatus(status: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes') {
     this.transactionStatus = status;
   }
 
@@ -79,7 +89,8 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     this.transactionLoading = true;
     const token = this.getToken();
     if (!token) {
-      this.errorMessage.emit('Not authenticated');
+      // Defer emit to avoid NG0100 when called from ngOnInit
+      Promise.resolve().then(() => this.errorMessage.emit('Not authenticated'));
       this.transactionLoading = false;
       return;
     }
@@ -144,7 +155,14 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     if (this.transactionStatus === 'payout_pending') {
       return this.campaignTransactions.filter((r) => r.payoutStatus === 'pending' || r.payoutStatus === 'processing');
     }
+    if (this.transactionStatus === 'disputes') {
+      return this.campaignTransactions.filter((r) => r.disputeStatus === 'open');
+    }
     return this.campaignTransactions.filter((r) => r.payoutStatus === 'paid');
+  }
+
+  get openDisputeCount(): number {
+    return this.campaignTransactions.filter(r => r.disputeStatus === 'open').length;
   }
 
   verifyTransaction(tx: CampaignTransaction) {
@@ -195,8 +213,6 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   openPayoutModal(tx: CampaignTransaction) {
     this.selectedTx = tx;
-    // Prefill UPI from the recipient's saved payout details (set by the
-    // influencer either in profile or at the time of accepting the campaign).
     const recipient: any = (tx as any).recipient || {};
     this.payoutForm = {
       payoutUtr: '',
@@ -204,15 +220,65 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       payoutProofUrl: '',
       notes: '',
     };
+    this.payoutProofFile = null;
+    this.payoutProofPreview = null;
+    this.uploadingProof = false;
     this.showTxPayoutModal = true;
   }
 
   closePayoutModal() {
     this.showTxPayoutModal = false;
     this.selectedTx = null;
+    this.payoutProofFile = null;
+    this.payoutProofPreview = null;
   }
 
-  markTransactionPaid() {
+  onPayoutFileSelected(ev: Event) {
+    const el = ev.target as HTMLInputElement;
+    if (!el.files?.length) return;
+    const file = el.files[0];
+    this.payoutProofFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      this.payoutProofPreview = (e.target?.result as string) || null;
+      this.cdr.markForCheck();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearPayoutFile() {
+    this.payoutProofFile = null;
+    this.payoutProofPreview = null;
+  }
+
+  /** Build a standard UPI deep-link that opens GPay / PhonePe / Paytm. */
+  buildUpiPayLink(recipient: any): string {
+    // Prefer explicit UPI ID; fall back to mobile number (works for GPay/PhonePe)
+    const pa = recipient?.payoutUpiId || recipient?.payoutMobile || recipient?.mobile || '';
+    if (!pa) return '#';
+    const pn = encodeURIComponent(recipient?.payoutName || recipient?.name || 'Influencer');
+    const am = this.selectedTx ? (this.selectedTx.recipientPayout / 100).toFixed(2) : '0';
+    const tn = encodeURIComponent('TrendStarZ Influencer Payout');
+    return `upi://pay?pa=${encodeURIComponent(pa)}&pn=${pn}&am=${am}&cu=INR&tn=${tn}`;
+  }
+
+  async uploadPayoutProof(): Promise<string> {
+    if (!this.payoutProofFile) return '';
+    try {
+      const fd = new FormData();
+      fd.append('file', this.payoutProofFile);
+      const token = this.getToken();
+      const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+      const res: any = await firstValueFrom(
+        this.http.post(`${environment.apiBaseUrl}/campaign-invites/payout/upload-image`, fd, { headers })
+      );
+      return res?.data?.url || res?.url || '';
+    } catch {
+      return '';
+    }
+  }
+
+  async markTransactionPaid() {
     if (!this.selectedTx || !this.payoutForm.payoutUtr.trim()) return;
     const token = this.getToken();
     if (!token) {
@@ -220,13 +286,20 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       return;
     }
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    // Upload screenshot if selected
+    this.uploadingProof = true;
+    let proofUrl = this.payoutForm.payoutProofUrl || '';
+    if (this.payoutProofFile) {
+      proofUrl = await this.uploadPayoutProof();
+    }
+    this.uploadingProof = false;
     this.paymentsPayoutsApi
       .markPaid(
         this.selectedTx._id,
         {
           payoutUtr: this.payoutForm.payoutUtr.trim(),
           payoutUpiId: this.payoutForm.payoutUpiId || undefined,
-          payoutProofUrl: this.payoutForm.payoutProofUrl || undefined,
+          payoutProofUrl: proofUrl || undefined,
           notes: this.payoutForm.notes || undefined,
         },
         headers,
@@ -254,5 +327,40 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   private getToken(): string | null {
     return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') : null;
+  }
+
+  // ── Dispute management ──────────────────────────────────────────────────────
+
+  openDisputeModal(tx: CampaignTransaction) {
+    this.selectedTx = tx;
+    this.disputeNotes = '';
+    this.disputeOutcome = 'release_to_influencer';
+    this.showDisputeModal = true;
+  }
+
+  closeDisputeModal() {
+    this.showDisputeModal = false;
+    this.selectedTx = null;
+    this.disputeNotes = '';
+  }
+
+  resolveDispute() {
+    if (!this.selectedTx) return;
+    const token = this.getToken();
+    if (!token) {
+      this.errorMessage.emit('Not authenticated');
+      return;
+    }
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.paymentsPayoutsApi
+      .resolveDispute(this.selectedTx._id, this.disputeOutcome, this.disputeNotes, headers)
+      .subscribe({
+        next: (res: any) => {
+          this.successMessage.emit(res?.message || 'Dispute resolved');
+          this.closeDisputeModal();
+          this.loadCampaignTransactions();
+        },
+        error: (err: any) => this.errorMessage.emit(err?.error?.message || 'Failed to resolve dispute'),
+      });
   }
 }
