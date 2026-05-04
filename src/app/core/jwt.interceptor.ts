@@ -10,7 +10,7 @@ export class JwtInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     let token: string | null = null;
     if (isPlatformBrowser(this.platformId)) {
-      token = localStorage.getItem('token');
+      token = localStorage.getItem('token') || sessionStorage.getItem('token');
     }
     if (token) {
       const cloned = req.clone({

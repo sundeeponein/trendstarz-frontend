@@ -132,13 +132,8 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
-  private syncContactVisibilityFeature(plan: Plan) {
-    const contactEnabled = plan.policies?.contactVisibility !== 'NONE';
-    const featureKey = plan.userType === 'BRAND' ? 'viewContactDetails' : 'contactVisibility';
-    const feature = plan.features.find(item => item.key === featureKey);
-    if (feature) {
-      feature.value = contactEnabled;
-    }
+  private syncContactVisibilityFeature(_plan: Plan) {
+    // No-op retained for compatibility; admin now sets the boolean feature flag directly.
   }
 
   loadFromConfig() {
@@ -175,7 +170,6 @@ export class AdminPlansComponent implements OnInit {
   newPlanType: 'INFLUENCER' | 'BRAND' | null = null;
 
   readonly userTypes = ['INFLUENCER', 'BRAND'];
-  readonly contactVisibilityModes = ['PROFILE', 'AFTER_ACCEPT', 'AFTER_PAYMENT', 'NONE'];
 
   constructor(private plansService: PlansService) {}
 
@@ -233,7 +227,7 @@ export class AdminPlansComponent implements OnInit {
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'maxInviteOptions', label: 'Invite options', value: 20 },
         ],
-        policies: { imageRetentionDaysAfterExpiry: 45, contactVisibility: 'AFTER_ACCEPT' },
+        policies: { imageRetentionDaysAfterExpiry: 45 },
         highlight: true,
         isActive: true,
         sortOrder: 1,
@@ -259,7 +253,7 @@ export class AdminPlansComponent implements OnInit {
           { key: 'maxTeamSeats', label: 'Team seats', value: 5 },
           { key: 'analytics', label: 'Analytics', value: 1 },
         ],
-        policies: { imageRetentionDaysAfterExpiry: 45, contactVisibility: 'AFTER_ACCEPT' },
+        policies: { imageRetentionDaysAfterExpiry: 45 },
         highlight: true,
         isActive: true,
         sortOrder: 1,
@@ -281,8 +275,7 @@ export class AdminPlansComponent implements OnInit {
   }
 
   onContactVisibilityPolicyChange() {
-    if (!this.editingPlan) return;
-    this.syncContactVisibilityFeature(this.editingPlan);
+    // Deprecated: contactVisibility policy was removed. Kept as a no-op.
   }
 
   onUserTypeChange() {
@@ -316,10 +309,7 @@ export class AdminPlansComponent implements OnInit {
     this.editingPlan.limits = this.getMergedLimits();
     this.editingPlan.offers = this.getMergedOffers();
     if (!this.editingPlan.policies) {
-      this.editingPlan.policies = { imageRetentionDaysAfterExpiry: 45, contactVisibility: 'AFTER_ACCEPT' };
-    }
-    if (!this.editingPlan.policies.contactVisibility) {
-      this.editingPlan.policies.contactVisibility = 'AFTER_ACCEPT';
+      this.editingPlan.policies = { imageRetentionDaysAfterExpiry: 45 };
     }
     this.syncContactVisibilityFeature(this.editingPlan);
 

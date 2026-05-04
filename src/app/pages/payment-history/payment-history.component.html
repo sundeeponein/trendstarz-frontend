@@ -1,7 +1,7 @@
 <div class="payment-history-container">
   <div class="page-header">
-    <h2>Payment History</h2>
-    <p>View all your premium payment transactions and their status.</p>
+    <h2>Subscription History</h2>
+    <p>View your premium plan payments and admin-granted subscriptions.</p>
   </div>
 
   <!-- Error -->
@@ -28,12 +28,12 @@
   <div *ngIf="!loading && !error && payments.length === 0" class="empty-state">
     <div class="empty-icon">💳</div>
     <ng-container *ngIf="session.getUser()?.isPremium; else notPremium">
-      <h4>No Payment Records</h4>
-      <p>Your premium plan is active. No payment transactions found yet.</p>
+      <h4>No Subscription Records</h4>
+      <p>Your premium plan is active. No subscription payments found yet.</p>
     </ng-container>
     <ng-template #notPremium>
-      <h4>No Payments Yet</h4>
-      <p>You haven't made any premium payments yet.</p>
+      <h4>No Subscription Payments Yet</h4>
+      <p>You haven't made any premium plan payments yet.</p>
       <a routerLink="/upgrade-premium" class="btn btn-primary">Upgrade to Premium</a>
     </ng-template>
   </div>

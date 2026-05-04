@@ -1,7 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
@@ -27,7 +27,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
-export class CampaignManagementComponent implements OnInit {
+export class CampaignManagementComponent implements OnInit, OnDestroy {
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
     // Reload campaigns from backend (used after create/update)
@@ -41,6 +41,7 @@ export class CampaignManagementComponent implements OnInit {
           this.campaigns = campaigns;
           this.loading = false;
           this.cd.detectChanges();
+          this.loadAllInvites();
         },
         error: () => {
           this.campaigns = [];
@@ -262,6 +263,49 @@ export class CampaignManagementComponent implements OnInit {
   // ── My Invites (influencer view) ──────────────────────────────
   myInvites: any[] = [];
   myInvitesLoading = false;
+  /** Active tab in My Campaign Invites: pending | accepted | declined | completed */
+  myInviteTab: 'pending' | 'accepted' | 'declined' | 'completed' = 'pending';
+
+  // ── Submit-post flow (influencer Accepted tab) ────────────────
+  /** Navigate to the shared campaign-submission page — same as dashboard */
+  navigateToSubmit(inv: any) {
+    this.router.navigate(
+      ['/campaign-submission', inv._id],
+      { queryParams: { campaignTitle: inv.campaignId?.title || '', inviteStatus: inv.status } }
+    );
+  }
+
+  get myInvitesPending(): any[] {
+    return this.myInvites.filter(i => i.status === 'pending' || i.status === 'invited');
+  }
+  get myInvitesAccepted(): any[] {
+    return this.myInvites.filter(i =>
+      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(i.status)
+    );
+  }
+  get myInvitesDeclined(): any[] {
+    return this.myInvites.filter(i => i.status === 'declined' || i.status === 'withdrawn');
+  }
+  get myInvitesCompleted(): any[] {
+    return this.myInvites.filter(i =>
+      ['completed', 'approved', 'disputed'].includes(i.status)
+    );
+  }
+  get myInvitesFiltered(): any[] {
+    if (this.myInviteTab === 'accepted') return this.myInvitesAccepted;
+    if (this.myInviteTab === 'declined') return this.myInvitesDeclined;
+    if (this.myInviteTab === 'completed') return this.myInvitesCompleted;
+    return this.myInvitesPending;
+  }
+  /** Campaign IDs where the influencer already has ANY invite — hide from Open Campaigns */
+  get myInvitedCampaignIds(): Set<string> {
+    return new Set(this.myInvites.map((i: any) => String(i?.campaignId?._id || i?.campaignId || '')).filter(Boolean));
+  }
+  /** Open campaigns list filtered to hide ones the influencer already applied to */
+  get openCampaignsForInfluencer(): any[] {
+    const applied = this.myInvitedCampaignIds;
+    return this.campaigns.filter(c => !applied.has(String(c._id || '')));
+  }
   openingCampaignIds = new Set<string>();
 
   tabs: { key: TabStatus; label: string }[] = [
@@ -276,7 +320,10 @@ export class CampaignManagementComponent implements OnInit {
     private session: SessionService,
     private cd: ChangeDetectorRef,
     private toast: ToastService,
+    private router: Router,
   ) {}
+
+  private visibilityChangeHandler: (() => void) | null = null;
 
   ngOnInit() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -284,6 +331,16 @@ export class CampaignManagementComponent implements OnInit {
     this.isInfluencerView = user?.role === 'influencer';
 
     if (this.isInfluencerView) {
+      // Auto-refresh invites when user returns to this tab (browser only)
+      if (typeof document !== 'undefined') {
+        this.visibilityChangeHandler = () => {
+          if (document.visibilityState === 'visible') {
+            this.reloadMyInvites();
+          }
+        };
+        document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+      }
+
       // Influencer: load invites + open active campaigns
       this.myInvitesLoading = true;
       this.loading = true;
@@ -378,7 +435,34 @@ export class CampaignManagementComponent implements OnInit {
     }
   }
 
+  ngOnDestroy() {
+    if (this.visibilityChangeHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
+  }
+
+  reloadMyInvites() {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) return;
+    this.myInvitesLoading = true;
+    this.cd.detectChanges();
+    this.config.getMyInvites().subscribe({
+      next: (invites: any[]) => {
+        this.myInvites = invites;
+        this.myInvitesLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.myInvitesLoading = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
   get filtered(): Campaign[] {
+    if (this.isInfluencerView) return this.openCampaignsForInfluencer;
     return this.campaigns.filter(c => c.status === this.activeTab);
   }
 
@@ -567,9 +651,7 @@ export class CampaignManagementComponent implements OnInit {
       }
       this.config.createCampaign(payload).subscribe({
         next: (created: Campaign) => {
-          // Always reload campaigns from backend after creation
-          this.loadCampaigns();
-          // Always refresh brand profile after creation
+          // Refresh brand profile in background (non-blocking)
           this.config.getBrandProfileById().subscribe({
             next: (profile: any) => {
               const brand = profile?.data?.brand || profile?.brand || profile;
@@ -583,12 +665,12 @@ export class CampaignManagementComponent implements OnInit {
             const validIds = inviteInfluencerIds.filter(id => !!id);
             // debug: inviting influencers after campaign creation
             if (validIds.length === 0) {
-              this.loadAllInvitesForce();
-              this.cd.detectChanges();
+              this.loadCampaigns();
               this.toastMessage = 'Campaign created successfully!';
               this.toast.success('Campaign created successfully!');
               this.showSuccessToast = true;
-              setTimeout(() => { this.showSuccessToast = false; }, 4000);
+              this.cd.detectChanges();
+              setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
               this.closeForm();
             } else {
               this.config.inviteInfluencers(created._id, validIds).subscribe({
@@ -604,17 +686,18 @@ export class CampaignManagementComponent implements OnInit {
                       if (created._id) {
                         this.campaignInvitesMap.set(created._id, invites);
                         this.invites = invites;
-                        // Optionally activate campaign if invites exist
                         if (invites && invites.length > 0) {
                           this.activateCampaign(created);
                         }
                       }
-                      this.cd.detectChanges();
+                      // Reload campaigns AFTER invites are set so loadAllInvites sees them in the map
+                      this.loadCampaigns();
                       if (failures.length === 0) {
                         this.toastMessage = 'Campaign created and invites sent!';
                         this.toast.success('Campaign created and invites sent!');
                         this.showSuccessToast = true;
-                        setTimeout(() => { this.showSuccessToast = false; }, 4000);
+                        this.cd.detectChanges();
+                        setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
                       } else {
                         const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
                         const msg = sentCount > 0
@@ -623,15 +706,16 @@ export class CampaignManagementComponent implements OnInit {
                         this.toastMessage = msg;
                         if (sentCount > 0) this.toast.success(msg); else this.toast.error(msg);
                         this.showErrorToast = true;
+                        this.cd.detectChanges();
                         setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 7000);
                       }
                       this.closeForm();
                     },
                     error: () => {
-                      this.loadAllInvitesForce();
-                      this.cd.detectChanges();
+                      this.loadCampaigns();
                       this.toastMessage = 'Campaign created, but failed to fetch invites.';
                       this.showErrorToast = true;
+                      this.cd.detectChanges();
                       setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
                       this.closeForm();
                     }
@@ -639,22 +723,22 @@ export class CampaignManagementComponent implements OnInit {
                 },
                 error: (err) => {
                   console.error('[Invite API error]', err);
-                  this.loadAllInvitesForce();
-                  this.cd.detectChanges();
+                  this.loadCampaigns();
                   this.toastMessage = 'Campaign created, but failed to send invites.';
                   this.showErrorToast = true;
+                  this.cd.detectChanges();
                   setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
                   this.closeForm();
                 }
               });
             }
           } else {
-            this.loadAllInvitesForce();
-            this.cd.detectChanges();
+            this.loadCampaigns();
             this.toastMessage = 'Campaign created successfully!';
             this.toast.success('Campaign created successfully!');
             this.showSuccessToast = true;
-            setTimeout(() => { this.showSuccessToast = false; }, 4000);
+            this.cd.detectChanges();
+            setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
             this.closeForm();
           }
         },
@@ -756,6 +840,9 @@ export class CampaignManagementComponent implements OnInit {
     this.config.getInvitesByCampaign(campaign._id!).subscribe({
       next: (invites: any[]) => {
         this.invites = invites;
+        if (campaign._id) {
+          this.campaignInvitesMap.set(campaign._id, invites);
+        }
         this.invitesLoading = false;
         this.cd.detectChanges();
       },
@@ -1031,11 +1118,7 @@ export class CampaignManagementComponent implements OnInit {
           this.unlockingInviteIds.delete(inv._id);
           this.cd.detectChanges();
         }
-        this.toast.success(
-          data?.unlockType === 'free_unlock'
-            ? 'Contact unlocked! (Used your free unlock — upgrade to Premium for unlimited unlocks.)'
-            : 'Contact unlocked.'
-        );
+        this.toast.success('Contact unlocked.');
       },
       error: (err: any) => {
         this.unlockingInviteIds.delete(inv._id);
@@ -1269,7 +1352,8 @@ export class CampaignManagementComponent implements OnInit {
   }
 
   getCardAcceptedCount(c: Campaign): number {
-    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => i.status === 'accepted').length;
+    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
+    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => activeStatuses.includes(i.status)).length;
   }
 
   getCardPendingCount(c: Campaign): number {
@@ -1289,6 +1373,41 @@ export class CampaignManagementComponent implements OnInit {
     // Always return the first 3 invites, even if influencerId is not fully populated
     const invites = (this.campaignInvitesMap.get(c._id!) || []);
     return invites.slice(0, 3);
+  }
+
+  /** For influencer view: find this user's own invite for a campaign (from myInvites). */
+  getMyInviteForCampaign(c: Campaign): any | null {
+    if (!c?._id) return null;
+    const cid = String(c._id);
+    return this.myInvites.find((inv: any) => {
+      const invCid = String(inv?.campaignId?._id || inv?.campaignId || '');
+      return invCid === cid;
+    }) || null;
+  }
+
+  /** Label for an influencer's invite status on a campaign card. */
+  myInviteStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      pending: 'Applied · Pending',
+      invited: 'Invited',
+      accepted: 'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working: 'In Progress',
+      submitted: 'Work Submitted',
+      approved: 'Approved',
+      completed: 'Completed',
+      declined: 'Declined',
+      withdrawn: 'Withdrawn',
+      disputed: 'Disputed',
+    };
+    return map[status] || status;
+  }
+
+  myInviteStatusClass(status: string): string {
+    if (['accepted', 'payment_confirmed', 'working', 'approved', 'completed'].includes(status)) return 'inf-status-accepted';
+    if (['declined', 'withdrawn', 'disputed'].includes(status)) return 'inf-status-declined';
+    if (status === 'submitted') return 'inf-status-submitted';
+    return 'inf-status-pending';
   }
 
   getBrandAvatar(invite: any): string {
@@ -1344,9 +1463,10 @@ export class CampaignManagementComponent implements OnInit {
     const campaignId = String(campaign._id);
     if (this.openingCampaignIds.has(campaignId)) return;
 
+    // If any invite already exists for this campaign (any status), open preview instead of re-applying
     const existing = this.myInvites.find((inv: any) => {
       const invCampaignId = String(inv?.campaignId?._id || inv?.campaignId || '');
-      return invCampaignId === campaignId && (inv.status === 'pending' || inv.status === 'invited');
+      return invCampaignId === campaignId;
     });
     if (existing) {
       this.openInvitePreview(existing);
@@ -1466,9 +1586,13 @@ export class CampaignManagementComponent implements OnInit {
         if (this.invitePreview?._id === inviteId) {
           this.invitePreview = { ...this.invitePreview, status };
         }
+        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
         this.cd.detectChanges();
       },
-      error: (err: any) => console.error('Failed to respond to invite', err)
+      error: (err: any) => {
+        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
+        this.cd.detectChanges();
+      }
     });
   }
 
@@ -1660,6 +1784,35 @@ export class CampaignManagementComponent implements OnInit {
     return this.getExpandInvites(c).filter((i: any) => i.status === status).length;
   }
 
+  /** Statuses that count as "accepted or beyond" for the mini stat chip */
+  getExpandAcceptedOrBeyond(c: Campaign): number {
+    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
+    return this.getExpandInvites(c).filter((i: any) => activeStatuses.includes(i.status)).length;
+  }
+
+  /** Returns true when the invite has moved past accepted (payment made) */
+  isPaidStatus(status: string): boolean {
+    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(status);
+  }
+
+  /** Human-readable invite status label for brand's view of an influencer */
+  brandInviteStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      pending:           'Applied',
+      invited:           'Invited',
+      accepted:          'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working:           'In Progress',
+      submitted:         'Work Submitted',
+      approved:          'Approved',
+      completed:         'Completed',
+      declined:          'Declined',
+      withdrawn:         'Withdrawn',
+      disputed:          'Disputed',
+    };
+    return map[status] || status;
+  }
+
   isExpandLoading(c: Campaign): boolean {
     return this.expandInvitesLoading.has(c._id!);
   }
@@ -1751,8 +1904,9 @@ export class CampaignManagementComponent implements OnInit {
   }
 
   get summaryAccepted(): number {
+    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed'];
     let total = 0;
-    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => i.status === 'accepted').length);
+    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => activeStatuses.includes(i.status)).length);
     return total;
   }
 
@@ -1760,7 +1914,7 @@ export class CampaignManagementComponent implements OnInit {
     const sent = this.summaryInvitesSent;
     if (sent === 0) return '—';
     let responded = 0;
-    this.campaignInvitesMap.forEach(v => { responded += v.filter((i: any) => i.status !== 'pending').length; });
+    this.campaignInvitesMap.forEach(v => { responded += v.filter((i: any) => i.status !== 'pending' && i.status !== 'invited').length; });
     return Math.round((responded / sent) * 100) + '%';
   }
 

@@ -173,42 +173,9 @@
   }
 }
 
-// ── Tabs ─────────────────────────────────────────────
-.tab-group {
-  display: flex;
-  gap: 0.5rem;
-  background: #fff;
-  border: 1px solid #e9ecef;
-  border-radius: 0.75rem;
-  padding: 0.25rem;
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  background: transparent;
-  color: #6c757d;
-  transition: all 0.2s ease;
-
-  i { font-size: 1rem; }
-
-  &.active {
-    background: #ff6b35;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
-  }
-
-  &:hover:not(.active) {
-    background: #fff3ee;
-    color: #ff6b35;
-  }
+// ── Tabs (pill-tabs global, layout override only) ────
+.search-tabs-row {
+  margin: 0 0 20px;
 }
 
 // ── Filter Bar ───────────────────────────────────────

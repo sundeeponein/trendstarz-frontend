@@ -1,0 +1,172 @@
+<div class="cmp-page">
+
+  <header class="cmp-header">
+    <a class="cmp-brand" routerLink="/">
+      <strong>TrendstarZ</strong>
+      <span>Campaign Payment</span>
+    </a>
+    <span class="cmp-secure"><i class="bi bi-shield-lock"></i> Secure payment</span>
+  </header>
+
+  <!-- Loading -->
+  <div class="cmp-loading" *ngIf="loading">
+    <div class="spinner-border text-warning"></div>
+    <p>Loading…</p>
+  </div>
+
+  <!-- Error -->
+  <div class="cmp-error" *ngIf="!loading && error">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
+
+  <!-- Main -->
+  <main class="cmp-card" *ngIf="!loading && !error && campaign">
+
+    <!-- Campaign title (hidden on status tab to avoid text-matching conflicts) -->
+    <div class="cmp-campaign-title" *ngIf="activeTab !== 'status'">
+      <h2>{{ campaign.title }}</h2>
+      <span class="cmp-type-chip" *ngIf="campaign.campaignType">{{ campaign.campaignType }}</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="cmp-tabs">
+      <button type="button" class="cmp-tab" [class.active]="activeTab === 'summary'" (click)="setTab('summary')">
+        <i class="bi bi-receipt"></i> Summary
+      </button>
+      <button type="button" class="cmp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')">
+        <i class="bi bi-credit-card"></i> Pay via UPI
+      </button>
+      <button type="button" class="cmp-tab" [class.active]="activeTab === 'status'" (click)="setTab('status')">
+        <i class="bi bi-clock-history"></i> Status
+      </button>
+    </div>
+
+    <!-- ── SUMMARY TAB ── -->
+    <div class="cmp-body" *ngIf="activeTab === 'summary'">
+      <div class="cmp-info-row" *ngIf="campaign.status">
+        <span>Campaign state</span><strong>{{ campaign.status }}</strong>
+      </div>
+      <div class="cmp-info-row" *ngIf="campaign.pricePerInfluencer">
+        <span>Price per influencer</span><strong>{{ formatINR(campaign.pricePerInfluencer) }}</strong>
+      </div>
+      <div class="cmp-summary-note">
+        <i class="bi bi-info-circle"></i>
+        Final amount is calculated based on accepted influencers at the time of payment.
+      </div>
+      <div class="cmp-actions">
+        <button type="button" class="btn btn-primary" (click)="setTab('pay')">
+          <i class="bi bi-credit-card"></i> Proceed to Pay
+        </button>
+      </div>
+    </div>
+
+    <!-- ── PAY TAB ── -->
+    <div class="cmp-body" *ngIf="activeTab === 'pay'">
+      <div class="cmp-success" *ngIf="successMessage">
+        <i class="bi bi-check-circle-fill"></i> {{ successMessage }}
+      </div>
+
+      <ng-container *ngIf="!successMessage">
+        <!-- UPI block -->
+        <div class="cmp-upi-block">
+          <div class="cmp-upi-label">
+            <i class="bi bi-qr-code"></i> Pay to this UPI ID
+          </div>
+          <div class="cmp-upi-id-row">
+            <span class="cmp-upi-id">{{ paymentUpiId }}</span>
+            <button type="button" class="cmp-copy-btn" (click)="copyUpi()" [class.copied]="copied">
+              <i class="bi" [class.bi-clipboard]="!copied" [class.bi-clipboard-check-fill]="copied"></i>
+              {{ copied ? 'Copied!' : 'Copy' }}
+            </button>
+          </div>
+          <p class="cmp-upi-hint">Open any UPI app and pay to the ID above. Then enter the UTR below.</p>
+        </div>
+
+        <div class="cmp-error-msg" *ngIf="submitError">
+          <i class="bi bi-exclamation-triangle-fill"></i> {{ submitError }}
+        </div>
+
+        <!-- UTR input -->
+        <div class="cmp-utr-block">
+          <label class="cmp-utr-label">
+            Enter UTR / Transaction Reference
+            <input
+              type="text"
+              class="cmp-utr-input"
+              [(ngModel)]="utrNumber"
+              placeholder="e.g. UTR1234567890"
+              autocomplete="off" />
+          </label>
+          <button
+            type="button"
+            class="btn btn-primary cmp-submit-btn"
+            [disabled]="!canSubmit"
+            (click)="submitProof()">
+            <span *ngIf="submitting" class="cmp-spinner"></span>
+            {{ submitting ? 'Submitting…' : 'I Have Paid — Submit Proof' }}
+          </button>
+        </div>
+
+        <p class="cmp-verify-note">
+          <i class="bi bi-clock"></i>
+          Verification usually takes <strong>6–10 hours</strong> on business days.
+        </p>
+      </ng-container>
+    </div>
+
+    <!-- ── STATUS TAB ── -->
+    <div class="cmp-body" *ngIf="activeTab === 'status'">
+      <div *ngIf="primaryTx; else noStatus">
+        <!-- Collection status -->
+        <div class="cmp-status-row">
+          <span class="cmp-status-label">Payment check</span>
+          <span class="cmp-status-val" [class.ok]="primaryTx.collectionStatus === 'verified'"
+                [class.err]="primaryTx.collectionStatus === 'failed'"
+                [class.warn]="primaryTx.collectionStatus === 'proof_submitted'">
+            {{ collectionLabel(primaryTx.collectionStatus) }}
+          </span>
+        </div>
+        <div class="cmp-utr-display" *ngIf="primaryTx.utrNumber">
+          UTR submitted: <strong>{{ primaryTx.utrNumber }}</strong>
+        </div>
+
+        <!-- Dispute / frozen alert -->
+        <div class="cmp-alert cmp-alert--warn" *ngIf="primaryTx.payoutStatus === 'frozen'">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <strong>Dispute open</strong> — payout is frozen pending admin review.
+        </div>
+
+        <!-- Payout status -->
+        <div class="cmp-status-row" *ngIf="primaryTx.collectionStatus === 'verified'">
+          <span class="cmp-status-label">Influencer payout</span>
+          <span class="cmp-status-val" [class.ok]="primaryTx.payoutStatus === 'paid'">
+            {{ payoutLabel(primaryTx.payoutStatus) }}
+          </span>
+        </div>
+
+        <!-- Paid success -->
+        <div class="cmp-alert cmp-alert--ok" *ngIf="primaryTx.payoutStatus === 'paid'">
+          <i class="bi bi-check-circle-fill"></i>
+          Payout sent to influencer. Campaign complete!
+        </div>
+
+        <!-- Resubmit if failed -->
+        <div class="cmp-resubmit" *ngIf="primaryTx.collectionStatus === 'failed'">
+          <p>Your payment could not be verified. Please resubmit with the correct UTR.</p>
+          <button type="button" class="btn btn-warning" (click)="resubmit()">
+            Resubmit Payment Proof
+          </button>
+        </div>
+      </div>
+
+      <ng-template #noStatus>
+        <p class="cmp-empty">No payment records yet. Submit payment proof first.</p>
+      </ng-template>
+    </div>
+
+  </main>
+
+  <footer class="cmp-footer">
+    Need help? <a href="mailto:support@trendstarz.in">support&#64;trendstarz.in</a>
+  </footer>
+</div>

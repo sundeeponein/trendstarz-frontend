@@ -79,6 +79,25 @@
   gap: 7px;
 }
 
+.campaign-quota-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba($accent, 0.08);
+  border: 1px solid rgba($accent, 0.25);
+  color: $accent;
+  i { font-size: 0.78rem; }
+  &.is-full {
+    background: rgba(179, 38, 30, 0.08);
+    border-color: rgba(179, 38, 30, 0.3);
+    color: #b3261e;
+  }
+}
+
 .btn-flow-guide {
   border: 1px solid #d9dded;
   background: #fff;
@@ -399,15 +418,7 @@
   &:hover { background: $accent; color: #fff; }
 }
 
-/* ── Invite drawer + overlay ─────────── */
-.invite-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 1050;
-  animation: fadeIn 0.2s ease;
-}
-
+/* ── Invite drawer ───────────────────── */
 .invite-drawer {
   position: fixed;
   top: 0;
@@ -881,8 +892,15 @@
   align-items: center;
   gap: 4px;
   font-size: 0.78rem;
-  color: #28a745;
   font-weight: 600;
+  // colour by status
+  &.pending, &.invited       { color: #dd6b20; }
+  &.accepted,
+  &.payment_confirmed,
+  &.working, &.submitted,
+  &.approved, &.completed    { color: #22b37a; }
+  &.declined, &.withdrawn,
+  &.disputed                 { color: #c53030; }
 }
 
 .btn-send-invite {
@@ -970,6 +988,14 @@
   flex-wrap: wrap;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spin {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
 .my-invites-title {
   font-size: 1.3rem;
   font-weight: 800;
@@ -1000,6 +1026,11 @@
     color: #1f2342;
     background: #f7f8ff;
   }
+}
+
+/* ── My Invites tab row — layout only (visuals from global .pill-tabs) ── */
+.invite-tabs-row {
+  margin-bottom: 16px;
 }
 
 .invite-flow-hint {
@@ -1253,273 +1284,179 @@
   margin: 28px 0 0;
 }
 
-
-// ── Invite Preview Modal ──────────────────────────────────────
-.inv-preview-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 1200;
-  animation: fadeIn 0.15s ease;
+// ── Submit-post CTA (matches dashboard style) ─────────────────
+.submit-post-cta {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(232, 88, 12, 0.15);
 }
 
-.inv-preview-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1201;
-  background: #fff;
-  border-radius: 16px;
-  width: min(520px, calc(100vw - 32px));
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  animation: modalSlideUp 0.18s ease;
-}
-
-@keyframes modalSlideUp {
-  from { opacity: 0; transform: translate(-50%, -45%); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-.inv-preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.inv-preview-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: $text-dark;
-  margin: 0;
-}
-
-.inv-preview-close {
-  background: none;
+.btn-submit-post {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  background: #E8580C;
+  color: #fff;
   border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  color: $text-muted;
-  padding: 4px;
-  border-radius: 6px;
-  transition: color 0.15s;
-  &:hover { color: $text-dark; }
-}
-
-.inv-preview-body {
-  overflow-y: auto;
-  padding: 20px;
-  flex: 1;
-}
-
-.inv-preview-section {
-  margin-bottom: 4px;
-}
-
-.inv-preview-section-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: $text-muted;
-  margin: 0 0 10px;
-}
-
-.inv-preview-campaign-hero {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 12px;
-}
-
-.inv-preview-campaign-img {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: #eee;
-  flex-shrink: 0;
-}
-
-.inv-preview-campaign-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.inv-preview-campaign-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: $text-dark;
-  margin: 0 0 6px;
-  line-height: 1.3;
-}
-
-.inv-preview-chip {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  &.active   { background: #e6f9ee; color: #1b7a40; }
-  &.pending  { background: #fff8e5; color: #946c00; }
-  &.draft    { background: #f0f0f0; color: #666; }
-  &.completed{ background: #e8f0fe; color: #2456c7; }
-  &--type    { background: #fff1e6; color: #b34a00; }
-}
-
-.inv-preview-desc {
-  font-size: 0.88rem;
-  color: $text-muted;
-  line-height: 1.6;
-  margin: 0 0 14px;
-}
-
-.inv-preview-meta-row {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.inv-preview-meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.inv-preview-meta-label {
-  font-size: 0.72rem;
-  color: $text-muted;
+  border-radius: 8px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.inv-preview-meta-value {
   font-size: 0.9rem;
-  color: $text-dark;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  &:hover { background: #c94a08; }
+}
+
+
+.btn-view-submission {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  background: transparent;
+  color: #60a5fa;
+  border: 1.5px solid rgba(96,165,250,0.4);
+  border-radius: 8px;
   font-weight: 600;
-  &.accent { color: $accent; }
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  &:hover {
+    background: rgba(96,165,250,0.08);
+    border-color: rgba(96,165,250,0.7);
+  }
 }
 
-.inv-preview-divider {
-  border-top: 1px solid $border;
-  margin: 16px 0;
-}
+// ── Paid Collab payment flow styles ─────────────────────────
 
-.inv-preview-brand-row {
+// Pay-now nudge banner in brand expand panel
+.pay-now-nudge {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 10px;
+  background: rgba(234,179,8,0.1);
+  border: 1px solid rgba(234,179,8,0.35);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+
+  .pay-now-nudge-icon {
+    font-size: 1.4rem;
+    color: #fbbf24;
+    flex-shrink: 0;
+  }
+  .pay-now-nudge-text {
+    flex: 1;
+    font-size: 0.88rem;
+    color: #d8a217;
+    line-height: 1.4;
+  }
 }
 
-.inv-preview-brand-logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #eee;
+.btn-pay-now {
   flex-shrink: 0;
-  border: 1px solid $border;
-}
-
-.inv-preview-brand-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: $text-dark;
-  margin: 0 0 3px;
-}
-
-.inv-preview-brand-location {
-  font-size: 0.78rem;
-  color: $text-muted;
-  margin: 0;
+  padding: 0.45rem 1rem;
+  background: #E8580C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.inv-preview-tags {
-  display: flex;
-  flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 10px;
+  white-space: nowrap;
+  transition: background 0.2s;
+  &:hover { background: #c94a08; }
+
+  &--secondary {
+    background: transparent;
+    color: #4a7fcb;
+    border: 1.5px solid #4a7fcb;
+    &:hover { background: rgba(74,127,203,0.08); }
+  }
 }
 
-.inv-preview-tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: #f5f0ff;
-  color: #6b3fa0;
-  border: 1px solid #e0d0ff;
+.pay-now-nudge--verify {
+  background: rgba(59,130,246,0.07);
+  border-color: rgba(59,130,246,0.25);
+  .pay-now-nudge-icon { color: #60a5fa; }
+  .pay-now-nudge-text { color: #1e4e9a; }
 }
 
-.inv-preview-website {
-  font-size: 0.82rem;
-  color: $accent;
-  font-weight: 600;
-  text-decoration: none;
+// Per-invite "awaiting payment" chip (brand side)
+.inv-pay-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  word-break: break-all;
-  &:hover { text-decoration: underline; }
-}
-
-.btn-view-brand-profile {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: #fff;
-  border: 1px solid $accent;
-  color: $accent;
-  border-radius: 18px;
   font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.15s;
-  &:hover { background: $accent; color: #fff; }
-}
-
-.inv-preview-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 20px;
-  border-top: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.btn-view-details {
-  background: none;
-  border: 1.5px solid #aaa;
-  color: $text-muted;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 8px;
+  color: #fbbf24;
+  background: rgba(234,179,8,0.12);
+  border: 1px solid rgba(234,179,8,0.3);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-top: 4px;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover {
+    background: rgba(234,179,8,0.22);
+    border-color: rgba(234,179,8,0.55);
+  }
+}
+
+// "Paid" badge shown next to influencer once payment confirmed
+.inv-paid-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  transition: all 0.15s;
-  &:hover { border-color: $accent; color: $accent; }
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #15803d;
+  background: rgba(21,128,61,0.1);
+  border: 1px solid rgba(21,128,61,0.3);
+  border-radius: 20px;
+  padding: 2px 9px;
+  white-space: nowrap;
+  i { font-size: 0.75rem; }
 }
+
+// Influencer accepted tab: awaiting payment row
+.payment-awaited-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(234,179,8,0.08);
+  border: 1px solid rgba(234,179,8,0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fde68a;
+  font-size: 0.83rem;
+  margin-top: 8px;
+  i { color: #fbbf24; flex-shrink: 0; }
+}
+
+// Influencer accepted tab: payment confirmed row
+.payment-confirmed-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #86efac;
+  font-size: 0.83rem;
+  margin-top: 8px;
+  i { color: #4ade80; flex-shrink: 0; }
+}
+
 
 /* ═══════════════════════════════════════════════════
    SUMMARY STAT CARDS
@@ -2112,6 +2049,19 @@
   color: $text-muted;
 }
 
+/* Influencer own-status colours in campaign card */
+.inf-status {
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 10px;
+  display: inline-block;
+  &.inf-status-accepted  { background: #d1fae5; color: #065f46; }
+  &.inf-status-pending   { background: #fef3c7; color: #92400e; }
+  &.inf-status-declined  { background: #fee2e2; color: #991b1b; }
+  &.inf-status-submitted { background: #dbeafe; color: #1e3a8a; }
+}
+
 /* ── Avatar stack in Applicants cell ── */
 .avatar-stack {
   display: flex;
@@ -2179,10 +2129,19 @@
   border-radius: 20px;
   font-weight: 600;
   white-space: nowrap;
-  &.submitted {background-color: #1a7f4f30; color: #1a7f4f;}
-  &.accepted { background: #e6f9f1; color: #22b37a; }
-  &.pending   { background: #fff8f0; color: #dd6b20; }
-  &.declined  { background: #fff5f5; color: #c53030; }
+  background: #f0ece8;
+  color: #666;
+  &.pending            { background: #fff8f0; color: #dd6b20; }
+  &.invited            { background: #fffbe6; color: #b7791f; }
+  &.accepted           { background: #e6f9f1; color: #22b37a; }
+  &.payment_confirmed  { background: #e6f9f1; color: #1a7f4f; }
+  &.working            { background: #e8f0fe; color: #2456c7; }
+  &.submitted          { background: #1a7f4f30; color: #1a7f4f; }
+  &.approved           { background: #e6f9f1; color: #1a7f4f; }
+  &.completed          { background: #e8f0fe; color: #2456c7; }
+  &.declined,
+  &.withdrawn          { background: #fff5f5; color: #c53030; }
+  &.disputed           { background: #fff5f5; color: #c53030; }
 }
 
 /* ── Submissions Review Section ──────────────────────────── */
@@ -2481,64 +2440,6 @@
 
 .sub-disputed-reason { color: #c53030; }
 
-.tier-info-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 1300;
-}
-
-.tier-info-popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(460px, calc(100vw - 32px));
-  background: #fff;
-  border: 1px solid #e8e8ef;
-  border-radius: 14px;
-  box-shadow: 0 14px 46px rgba(16, 24, 40, 0.22);
-  padding: 14px 16px 16px;
-  z-index: 1301;
-}
-
-.tier-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-
-  h4 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 800;
-    color: $text-dark;
-  }
-}
-
-.tier-info-text {
-  font-size: 0.82rem;
-  color: $text-muted;
-  margin: 0 0 10px;
-}
-
-.tier-info-loading {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-.tier-info-list {
-  margin: 0;
-  padding-left: 20px;
-  color: $text-dark;
-  font-size: 0.84rem;
-
-  li {
-    margin: 4px 0;
-  }
-}
-
 
 /* ── Invite-card list (matches Influencer Dashboard) ── */
 .invite-list {
@@ -2747,27 +2648,11 @@
 }
 
 /* Fulfillment modal */
-.fulfill-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 1090;
-}
-
 .fulfill-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   width: min(480px, 92vw);
   max-height: 90vh;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  z-index: 1100;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .fulfill-header {

@@ -39,6 +39,13 @@
          class="nav-tab">
         Reviews
       </a>
+      <a routerLink="/admin/disputes" 
+         routerLinkActive="active" 
+         [routerLinkActiveOptions]="{ exact: false }"
+         class="nav-tab">
+        Disputes
+        <span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span>
+      </a>
       <a routerLink="/admin/admin-management" 
          routerLinkActive="active" 
          [routerLinkActiveOptions]="{ exact: false }"

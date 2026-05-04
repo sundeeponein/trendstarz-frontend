@@ -22,6 +22,26 @@ export class AdminPaymentsUiUtilsService {
     return type === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join';
   }
 
+  collectionStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      awaiting_payment: 'Awaiting Payment',
+      proof_submitted:  'Proof Submitted',
+      verified:         'Verified',
+      failed:           'Rejected',
+    };
+    return map[status] || status;
+  }
+
+  payoutStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      pending:    'Pending',
+      processing: 'Processing',
+      paid:       'Paid Out',
+      skipped:    'Skipped',
+    };
+    return map[status] || status;
+  }
+
   getUserDisplayName(payment: PremiumPayment): string {
     const u = payment.userId;
     if (u && !u.isDeleted) {

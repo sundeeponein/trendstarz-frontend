@@ -38,7 +38,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
   isLoggedIn(): boolean {
     // Check for token or user in session/localStorage (adjust as per your auth/session logic)
-    return !!localStorage.getItem('token');
+    return !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
   }
 
   getUserType(): string | null {

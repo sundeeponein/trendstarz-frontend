@@ -80,8 +80,10 @@
   </div>
 </div>
 
-<div *ngIf="showRejectModal" class="modal-overlay" (click)="closeRejectModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" *ngIf="showRejectModal" (click)="closeRejectModal()"></div>
+<div class="modal d-block" *ngIf="showRejectModal" tabindex="-1" (click)="closeRejectModal()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
     <h2>Reject Payment</h2>
     <p *ngIf="selectedPaymentForReject" class="modal-info">
       Rejecting payment of <strong>₹{{ selectedPaymentForReject.amount }}</strong> from
@@ -102,5 +104,6 @@
       <button class="btn-cancel" (click)="closeRejectModal()">Cancel</button>
       <button class="btn-reject-confirm" (click)="rejectPayment()">Confirm Rejection</button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

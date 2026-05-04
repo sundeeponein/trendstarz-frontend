@@ -19,6 +19,19 @@
 
   &__meta { flex: 1; min-width: 0; }
 
+  // ── CTA row: payment state + submit/view buttons ──────────────
+  &__cta-row {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(232, 88, 12, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    // hide the row entirely when there's nothing to show
+    &:empty { display: none; }
+  }
+
   &__details {
     display: flex;
     flex-wrap: wrap;
@@ -315,4 +328,149 @@
   padding: 0.2rem 0.65rem;
   font-size: 0.78rem;
   font-weight: 600;
+}
+
+/* ── Influencer-side unlock + reminder + fulfillment notes ── */
+.inv-reminder-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 6px 10px;
+  background: rgba(10, 102, 194, 0.08);
+  border: 1px solid rgba(10, 102, 194, 0.25);
+  border-radius: 8px;
+  color: #0a66c2;
+  font-size: 0.78rem;
+  font-weight: 600;
+  i { font-size: 0.85rem; }
+}
+
+.inv-unlock-waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #d97706;
+  font-size: 0.82rem;
+  font-weight: 600;
+  i { font-size: 0.85rem; }
+}
+
+.inv-unlock-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #117a3a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  i { font-size: 0.85rem; }
+}
+
+// Brand contact block (invite_location only, shown after unlock)
+.inv-brand-contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+
+  &__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    margin-bottom: 2px;
+  }
+
+  &__hint {
+    font-size: 0.78rem;
+    color: #6b7280;
+    font-style: italic;
+  }
+}
+
+
+.inv-shipping,
+.inv-visit {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #495057;
+  i { color: #1a8f61; font-size: 0.85rem; }
+  a {
+    color: #0a66c2;
+    text-decoration: underline;
+    margin-left: 4px;
+  }
+}
+
+// ── Payment state info banners (inside card CTA row) ──────────────
+.inv-cta-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+
+  i { font-size: 0.9rem; }
+
+  &--warn {
+    background: #fff8e1;
+    color: #92600a;
+    border: 1px solid #f9e0a2;
+  }
+
+  &--success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+  }
+
+  &--dispute {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+    i { color: #f97316; }
+  }
+}
+
+// ── Action buttons inside card CTA row ───────────────────────────
+.inv-cta-btn {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.88; }
+
+  &--submit {
+    background: #e85810;
+    color: #fff;
+  }
+
+  &--view {
+    background: transparent;
+    color: #1a73e8;
+    border: 1.5px solid #1a73e8;
+  }
 }

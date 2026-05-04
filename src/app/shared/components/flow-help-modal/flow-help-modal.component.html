@@ -1,7 +1,10 @@
-<div class="flow-help-backdrop" *ngIf="flowHelp.isOpen" (click)="flowHelp.close()"></div>
+<div class="modal-backdrop show" *ngIf="flowHelp.isOpen" (click)="flowHelp.close()"></div>
 
-<div class="flow-help-modal" *ngIf="flowHelp.isOpen" role="dialog" aria-modal="true">
-  <div class="flow-help-card" (click)="$event.stopPropagation()">
+<div class="modal d-block" *ngIf="flowHelp.isOpen" tabindex="-1" (click)="flowHelp.close()" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal flow-help-card" [class.flow-help-card--diagram]="!!diagramContent">
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <div class="flow-help-header">
       <div>
         <h5>{{ flowHelp.content?.title }}</h5>
@@ -12,47 +15,140 @@
       </button>
     </div>
 
+    <!-- ── Body ────────────────────────────────────────────────────────────── -->
     <div class="flow-help-body">
-      <div class="flow-help-steps" *ngIf="flowHelp.content?.steps?.length">
-        <div class="flow-help-step" *ngFor="let step of flowHelp.content?.steps; let i = index">
-          <span class="flow-help-step-num">{{ i + 1 }}</span>
-          <div class="flow-help-step-copy">
-            <strong>{{ step.label }}</strong>
-            <span>{{ step.detail }}</span>
+
+      <!-- ══ DIAGRAM MODE ══════════════════════════════════════════════════ -->
+      <ng-container *ngIf="diagramContent as d">
+
+        <!-- State machine pills -->
+        <div class="fh-section-label">State Machine</div>
+        <div class="fh-states">
+          <ng-container *ngFor="let s of d.stateLabels; let last = last">
+            <span class="fh-state-pill">{{ s }}</span>
+            <span *ngIf="!last" class="fh-state-arrow" aria-hidden="true">→</span>
+          </ng-container>
+        </div>
+
+        <!-- Phase breakdown -->
+        <div class="fh-section-label" style="margin-top:20px">Phase Breakdown</div>
+        <div class="fh-phases">
+          <div class="fh-phase" *ngFor="let phase of d.phases">
+            <div class="fh-phase-head">
+              <span class="fh-phase-num">{{ phase.number }}</span>
+              <span class="fh-phase-title">{{ phase.title }}</span>
+              <span class="fh-status fh-status--{{ phase.statusVariant }}">{{ phase.status }}</span>
+            </div>
+            <div class="fh-actors">
+              <div class="fh-actor-row" *ngFor="let actor of phase.actors">
+                <span class="fh-actor-badge fh-actor--{{ actor.role }}">{{ roleLabel(actor.role) }}</span>
+                <ul class="fh-actor-actions">
+                  <li *ngFor="let action of actor.actions">{{ action }}</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="flow-help-section" *ngFor="let section of flowHelp.content?.sections">
-        <h6>{{ section.title }}</h6>
-        <ul>
-          <li *ngFor="let point of section.points">{{ point }}</li>
-        </ul>
-      </div>
+        <!-- UX labels — what each user reads -->
+        <div class="fh-section-label" style="margin-top:20px">UX Labels — What Each User Reads</div>
+        <div class="fh-ux-grid">
+          <div class="fh-ux-col">
+            <div class="fh-ux-heading">Brand</div>
+            <div class="fh-ux-row" *ngFor="let item of d.brandUxLabels">
+              <span class="fh-ux-dot fh-ux-dot--{{ item.color }}"></span>
+              <span>{{ item.label }}</span>
+            </div>
+          </div>
+          <div class="fh-ux-col">
+            <div class="fh-ux-heading">Influencer</div>
+            <div class="fh-ux-row" *ngFor="let item of d.influencerUxLabels">
+              <span class="fh-ux-dot fh-ux-dot--{{ item.color }}"></span>
+              <span>{{ item.label }}</span>
+            </div>
+          </div>
+        </div>
 
-      <div class="flow-help-post-accept" *ngIf="flowHelp.content?.postAcceptByType?.length && flowHelp.content as content">
-        <h6>After Influencer Accepts (Based on Campaign Type)</h6>
-        <div class="flow-help-type-card" *ngFor="let item of content.postAcceptByType">
-          <p class="flow-help-type-title">{{ item.label }}</p>
+        <!-- Safety rules -->
+        <div class="fh-section-label" style="margin-top:20px">Must-Have Safety Rules</div>
+        <div class="fh-safety-rules">
+          <div class="fh-safety-rule" *ngFor="let rule of d.safetyRules">
+            <div class="fh-safety-rule-title">
+              <i class="bi bi-shield-fill-check" aria-hidden="true"></i>
+              {{ rule.title }}
+            </div>
+            <p class="fh-safety-rule-detail">{{ rule.detail }}</p>
+          </div>
+        </div>
+
+        <!-- Dispute note -->
+        <div class="fh-dispute-note" *ngIf="d.disputeNote">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <div>
+            <strong>Dispute Handling</strong>
+            <p>{{ d.disputeNote }}</p>
+          </div>
+        </div>
+
+        <!-- Future upgrade note -->
+        <div class="fh-future-note" *ngIf="d.futureNote">
+          <i class="bi bi-arrow-up-right-circle-fill" aria-hidden="true"></i>
+          <div>
+            <strong>Future Upgrade Path</strong>
+            <p>{{ d.futureNote }}</p>
+          </div>
+        </div>
+
+      </ng-container>
+
+      <!-- ══ GUIDE MODE (existing) ══════════════════════════════════════════ -->
+      <ng-container *ngIf="guideContent as g">
+
+        <div class="flow-help-steps" *ngIf="g.steps?.length">
+          <div class="flow-help-step" *ngFor="let step of g.steps; let i = index">
+            <span class="flow-help-step-num">{{ i + 1 }}</span>
+            <div class="flow-help-step-copy">
+              <strong>{{ step.label }}</strong>
+              <span>{{ step.detail }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-help-section" *ngFor="let section of g.sections">
+          <h6>{{ section.title }}</h6>
           <ul>
-            <li *ngFor="let step of item.nextSteps">{{ step }}</li>
+            <li *ngFor="let point of section.points">{{ point }}</li>
           </ul>
         </div>
-      </div>
 
-      <div class="flow-help-example" *ngIf="flowHelp.content?.example as example">
-        <h6>{{ example.title }}</h6>
-        <div class="flow-help-example-grid">
-          <div class="flow-help-example-row" *ngFor="let row of example.fields">
-            <span class="flow-help-label">{{ row.label }}</span>
-            <span class="flow-help-value">{{ row.value }}</span>
+        <div class="flow-help-post-accept" *ngIf="g.postAcceptByType?.length">
+          <h6>After Influencer Accepts (Based on Campaign Type)</h6>
+          <div class="flow-help-type-card" *ngFor="let item of g.postAcceptByType">
+            <p class="flow-help-type-title">{{ item.label }}</p>
+            <ul>
+              <li *ngFor="let step of item.nextSteps">{{ step }}</li>
+            </ul>
           </div>
         </div>
-      </div>
+
+        <div class="flow-help-example" *ngIf="g.example as example">
+          <h6>{{ example.title }}</h6>
+          <div class="flow-help-example-grid">
+            <div class="flow-help-example-row" *ngFor="let row of example.fields">
+              <span class="flow-help-label">{{ row.label }}</span>
+              <span class="flow-help-value">{{ row.value }}</span>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+
     </div>
 
+    <!-- ── Footer ──────────────────────────────────────────────────────────── -->
     <div class="flow-help-footer">
       <button type="button" class="btn btn-secondary" (click)="flowHelp.close()">Close</button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

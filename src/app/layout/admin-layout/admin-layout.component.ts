@@ -1,7 +1,8 @@
-import { Component, HostListener, ElementRef } from '@angular/core';
+import { Component, HostListener, ElementRef, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ConfigService } from '../../shared/config.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -10,13 +11,50 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.scss']
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   searchQuery = '';
   adminUser: any = null;
   dropdownOpen = false;
+  openDisputesCount = 0;
+  private visibilityHandler = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      this.refreshDisputeCount();
+    }
+  };
 
-  constructor(private router: Router, private elRef: ElementRef) {
+  constructor(
+    private router: Router,
+    private elRef: ElementRef,
+    private config: ConfigService,
+    private cd: ChangeDetectorRef,
+  ) {
     this.loadAdminUser();
+  }
+
+  ngOnInit() {
+    this.refreshDisputeCount();
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', this.visibilityHandler);
+    }
+  }
+
+  ngOnDestroy() {
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+    }
+  }
+
+  private refreshDisputeCount() {
+    this.config.adminCountOpenDisputes().subscribe({
+      next: (res) => {
+        const data = (res as any)?.data || res;
+        this.openDisputesCount = data?.count || 0;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        // silent — badge just stays at last known value
+      },
+    });
   }
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
@@ -26,7 +64,7 @@ export class AdminLayoutComponent {
   }
 
   loadAdminUser() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));

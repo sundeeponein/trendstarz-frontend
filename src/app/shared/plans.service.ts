@@ -34,7 +34,6 @@ export interface Plan {
   offers?: PlanOffer[];
   policies: {
     imageRetentionDaysAfterExpiry: number;
-    contactVisibility?: 'PROFILE' | 'AFTER_ACCEPT' | 'AFTER_PAYMENT' | 'NONE';
   };
   highlight?: boolean;
   isActive?: boolean;
@@ -49,7 +48,6 @@ export interface PlanCapabilities {
   limits: PlanLimit[];
   policies: {
     imageRetentionDaysAfterExpiry: number;
-    contactVisibility?: 'PROFILE' | 'AFTER_ACCEPT' | 'AFTER_PAYMENT' | 'NONE';
   };
   endDate: string | null;
 }
@@ -99,8 +97,6 @@ export class PlansService {
       policies: {
         imageRetentionDaysAfterExpiry:
           plan?.policies?.imageRetentionDaysAfterExpiry ?? 45,
-        contactVisibility:
-          plan?.policies?.contactVisibility ?? 'NONE',
       },
     } as Plan;
   }
