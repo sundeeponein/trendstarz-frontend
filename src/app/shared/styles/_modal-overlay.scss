@@ -16,6 +16,16 @@
 // Override globally in styles.scss to change appearance for all modals at once.
 // ─────────────────────────────────────────────────────────────
 
+// ── Mixin for standalone overlays (e.g. drawers, side panels) ─
+@mixin modal-blur-overlay($z: 1050) {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: $z;
+}
+
 // ── Bootstrap backdrop: blurred dark overlay ──────────────────
 .modal-backdrop.show {
   background-color: rgba(0, 0, 0, 0.5);
