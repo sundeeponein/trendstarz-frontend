@@ -988,6 +988,14 @@
   flex-wrap: wrap;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spin {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
 .my-invites-title {
   font-size: 1.3rem;
   font-weight: 800;
@@ -1395,6 +1403,12 @@
   border-radius: 20px;
   padding: 3px 10px;
   margin-top: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover {
+    background: rgba(234,179,8,0.22);
+    border-color: rgba(234,179,8,0.55);
+  }
 }
 
 // "Paid" badge shown next to influencer once payment confirmed

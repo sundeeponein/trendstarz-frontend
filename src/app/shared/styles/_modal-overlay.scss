@@ -1,78 +1,54 @@
 // ─────────────────────────────────────────────────────────────
 // Shared modal styles — TrendStarz design system
 //
-// BACKDROP VARIANTS
-//   .ts-modal-backdrop              — centered, for simple popups
-//   .ts-modal-backdrop--scroll      — top-aligned + scrollable, for
-//                                     tall wizard / multi-step forms
-//
-// PANEL VARIANTS
-//   .ts-modal                       — default 460px popup panel
-//   .ts-modal--wide                 — 580px (campaign-form wizard)
-//   .ts-modal--xlarge               — 720px (detail / help modals)
-//   .ts-modal--wizard               — 90 vh tall, flex-column layout
-//
-// MIXIN (for overlays that sit behind drawers, not wrapping modals)
-//   .my-overlay { @include modal-blur-overlay($z: 1050); }
-//
-// HTML PATTERN
-//   <div class="ts-modal-backdrop [--scroll]" (click)="close()">
-//     <div class="ts-modal [--wide] [--wizard]" (click)="$event.stopPropagation()">
-//       <div class="ts-modal__header"> … </div>
-//       <div class="ts-modal__body">   … </div>
-//       <div class="ts-modal__footer"> … </div>
+// USES BOOTSTRAP MODAL STRUCTURE
+//   <div class="modal-backdrop show" *ngIf="open" (click)="close()"></div>
+//   <div class="modal d-block" *ngIf="open" tabindex="-1" (click)="close()">
+//     <div class="modal-dialog modal-dialog-centered [ts-dialog-wide|ts-dialog-xlarge]"
+//          (click)="$event.stopPropagation()">
+//       <div class="modal-content ts-modal [--wide] [--xlarge] [--wizard]">
+//         …content…
+//       </div>
 //     </div>
 //   </div>
+//
+// The .modal-backdrop.show gives the blurred dark overlay via Bootstrap override below.
+// Override globally in styles.scss to change appearance for all modals at once.
 // ─────────────────────────────────────────────────────────────
 
-@mixin modal-blur-overlay($z: 1050) {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: $z;
+// ── Bootstrap backdrop: blurred dark overlay ──────────────────
+.modal-backdrop.show {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 1; // override Bootstrap's fade opacity so blur is always active
 }
 
-// ── Backdrops ─────────────────────────────────────────────────
-.ts-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-
-  // Scrollable top-aligned variant — for tall wizards / multi-step forms
-  &--scroll {
-    align-items: flex-start;
-    overflow-y: auto;
-    padding: 24px;
-  }
+// ── Bootstrap modal scroll fix (Angular *ngIf, no BS JS) ─────
+.modal.d-block {
+  overflow-y: auto;
 }
 
-// ── Modal panel ───────────────────────────────────────────────
+// ── Dialog size helpers (on .modal-dialog) ────────────────────
+.modal-dialog {
+  &.ts-dialog-md     { max-width: min(460px, calc(100vw - 2rem)); }
+  &.ts-dialog-wide   { max-width: min(580px, calc(100vw - 2rem)); }
+  &.ts-dialog-xlarge { max-width: min(900px, 96vw); }
+}
+
+// ── Panel: .ts-modal on .modal-content ───────────────────────
 .ts-modal {
-  background: #fff;
+  border: none;        // remove Bootstrap's default modal-content border
   border-radius: 12px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   color: #111827;
-  width: min(460px, 100%);
+  width: 100%;
 
-  // Wider panels
-  &--wide   { width: 100%; width: 580px; }
-  &--xlarge { width: 100%; width: 720px; }
-
-  // Tall wizard panels (use with --wide or --xlarge)
+  // Tall wizard layout
   &--wizard {
     max-height: 90vh;
     height: 90vh;
-    margin: auto 0;
     display: flex;
     flex-direction: column;
     border-radius: 12px;
@@ -164,79 +140,7 @@
 }
 
 
-@mixin modal-blur-overlay($z: 1050) {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: $z;
-}
-
-// ── Backdrop ──────────────────────────────────────────────────
-.ts-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
-}
-
-// ── Modal panel ───────────────────────────────────────────────
-.ts-modal {
-  width: min(460px, 100%);
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  color: #111827;
-}
-
-.ts-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-
-  h5 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #111827;
-  }
-}
-
-.ts-modal__close {
-  border: none;
-  background: transparent;
-  font-size: 1.4rem;
-  line-height: 1;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover { color: #111827; }
-}
-
-.ts-modal__body {
-  padding: 1rem;
-}
-
-.ts-modal__footer {
-  padding: 0.9rem 1rem;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-// ── Password input helpers (used in reset-password-modal) ─────
+// ── Password input helpers ────────────────────────────────────
 .ts-password-wrap {
   position: relative;
 

@@ -367,11 +367,15 @@ export class ConfigService {
   }
 
   createCampaign(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/campaigns`, data);
+    return this.http.post(`${this.apiUrl}/campaigns`, data).pipe(
+      map((res: any) => this.extractData<any>(res))
+    );
   }
 
   updateCampaign(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/campaigns/${id}`, data);
+    return this.http.patch(`${this.apiUrl}/campaigns/${id}`, data).pipe(
+      map((res: any) => this.extractData<any>(res))
+    );
   }
 
   inviteInfluencers(campaignId: string, influencerIds: string[]): Observable<any> {

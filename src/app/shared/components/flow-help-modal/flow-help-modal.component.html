@@ -1,5 +1,8 @@
-<div class="ts-modal-backdrop" *ngIf="flowHelp.isOpen" (click)="flowHelp.close()" role="dialog" aria-modal="true">
-  <div class="flow-help-card" [class.flow-help-card--diagram]="!!diagramContent" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" *ngIf="flowHelp.isOpen" (click)="flowHelp.close()"></div>
+
+<div class="modal d-block" *ngIf="flowHelp.isOpen" tabindex="-1" (click)="flowHelp.close()" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal flow-help-card" [class.flow-help-card--diagram]="!!diagramContent">
 
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <div class="flow-help-header">
@@ -146,5 +149,6 @@
     <div class="flow-help-footer">
       <button type="button" class="btn btn-secondary" (click)="flowHelp.close()">Close</button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

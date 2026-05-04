@@ -100,8 +100,10 @@
   </table>
 </div>
 
-<div *ngIf="showTxRejectModal" class="ts-modal-backdrop" (click)="closeRejectTxModal()">
-  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" *ngIf="showTxRejectModal" (click)="closeRejectTxModal()"></div>
+<div class="modal d-block" *ngIf="showTxRejectModal" tabindex="-1" (click)="closeRejectTxModal()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
     <h2>Reject Transaction Proof</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Rejecting <strong>{{ ui.getTransactionLabel(selectedTx.transactionType) }}</strong> with amount
@@ -115,11 +117,14 @@
       <button class="btn-cancel" (click)="closeRejectTxModal()">Cancel</button>
       <button class="btn-reject-confirm" [disabled]="!txRejectReason.trim()" (click)="rejectTransaction()">Confirm Reject</button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content reject -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
-<div *ngIf="showTxPayoutModal" class="ts-modal-backdrop" (click)="closePayoutModal()">
-  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" *ngIf="showTxPayoutModal" (click)="closePayoutModal()"></div>
+<div class="modal d-block" *ngIf="showTxPayoutModal" tabindex="-1" (click)="closePayoutModal()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
     <h2>Mark Payout Paid</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Payout amount: <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }}</strong>
@@ -192,22 +197,28 @@
         {{ uploadingProof ? 'Uploading…' : 'Confirm Paid' }}
       </button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content payout -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
-<div *ngIf="showProofModal" class="ts-modal-backdrop" (click)="closeProofPreview()">
-  <div class="modal-content modal-content--proof" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" *ngIf="showProofModal" (click)="closeProofPreview()"></div>
+<div class="modal d-block" *ngIf="showProofModal" tabindex="-1" (click)="closeProofPreview()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal modal-content--proof">
     <h2>Payment Proof</h2>
     <img [src]="proofPreviewUrl" alt="Payment proof" class="proof-image" />
     <div class="modal-actions">
       <button class="btn-cancel" (click)="closeProofPreview()">Close</button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content proof -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 <!-- ═══ Dispute Resolution Modal ═══ -->
-<div *ngIf="showDisputeModal" class="ts-modal-backdrop" (click)="closeDisputeModal()">
-  <div class="ts-modal modal-content" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" *ngIf="showDisputeModal" (click)="closeDisputeModal()"></div>
+<div class="modal d-block" *ngIf="showDisputeModal" tabindex="-1" (click)="closeDisputeModal()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
     <h2><i class="bi bi-shield-exclamation"></i> Resolve Payment Dispute</h2>
 
     <div class="dispute-info" *ngIf="selectedTx">
@@ -243,5 +254,6 @@
       <button class="btn-cancel" (click)="closeDisputeModal()">Cancel</button>
       <button class="btn-reject-confirm" (click)="resolveDispute()">Confirm Resolution</button>
     </div>
-  </div>
-</div>
+    </div><!-- /.modal-content dispute -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

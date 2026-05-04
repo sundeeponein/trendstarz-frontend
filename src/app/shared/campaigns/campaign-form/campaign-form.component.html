@@ -1,5 +1,8 @@
-<div class="ts-modal-backdrop ts-modal-backdrop--scroll">
-  <div class="ts-modal ts-modal--wide ts-modal--wizard" (click)="$event.stopPropagation()">
+<div class="modal-backdrop show" (click)="onCancel()"></div>
+
+<div class="modal d-block" tabindex="-1" (click)="onCancel()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-wide" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal ts-modal--wizard">
 
     <!-- ── Header ── -->
     <div class="form-header">
@@ -58,7 +61,7 @@
       <div class="form-body">
 
         <div class="field-group">
-          <label class="field-label">Collaboration Type <span class="required">*</span> <i class="bi bi-info-circle" tooltip="Open guide" (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"></i> </label>
+          <label class="field-label">Collaboration Type <span class="required">*</span> <i class="bi bi-info-circle" title="What is each collaboration type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
             <option value="paid_collab">💰 Paid Collab</option>
             <option value="product" [disabled]="!hasPremium">🎁 Product Collab{{ !hasPremium ? ' 🔒 Premium' : '' }}</option>
@@ -67,6 +70,19 @@
           <p class="field-sublabel premium-lock-hint" *ngIf="!hasPremium">
             <i class="bi bi-lock-fill"></i>
             Upgrade to <strong>Premium</strong> to create Product &amp; Invite campaigns.
+          </p>
+          <!-- Per-type explanation hints -->
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
+            <i class="bi bi-cash-stack"></i>
+            <strong>Paid Collab</strong> — You pay the influencer a fixed fee to create and post content (Reel, Story, etc.). You review the submitted post and admin handles the payout. Best for awareness, launches, and product promotions.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
+            <i class="bi bi-gift"></i>
+            <strong>Product Collab</strong> — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
+            <i class="bi bi-geo-alt"></i>
+            <strong>Invite to Location</strong> — You invite the influencer to visit your store, event, or venue for on-site content creation. Attendance itself completes the collaboration. Best for restaurants, launches, and experience-based brands.
           </p>
         </div>
 
@@ -276,7 +292,7 @@
         <p class="trust-note"><i class="bi bi-shield-check"></i> Brand pays only for accepted influencers</p>
 
         <div class="field-group">
-          <label class="field-label">Content categories</label>
+          <label class="field-label">Content categories <span class="required">*</span></label>
           <div class="chip-list">
             <button type="button" class="chip"
                     [class.chip--selected]="isCategorySelected(cat.name)"
@@ -289,6 +305,7 @@
           <p class="chip-hint" *ngIf="selectedCategories.length > 0">
             <i class="bi bi-check-circle-fill"></i> {{ selectedCategories.join(', ') }}
           </p>
+          <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one category</span>
         </div>
 
         <!-- ── Platform multi-select ── -->
@@ -304,6 +321,7 @@
               <i [class]="getPlatformIcon(p.name)"></i> {{ p.name }}
             </button>
           </div>
+          <span class="field-error" *ngIf="platformsTouched && platformDeliverables.length === 0">Select at least one platform</span>
         </div>
 
         <!-- ── Per-platform tabs ── -->
@@ -367,9 +385,28 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">Special instructions / brief</label>
+          <div class="field-label-row">
+            <label class="field-label">Special instructions / brief</label>
+            <button
+              type="button"
+              class="btn-use-template"
+              *ngIf="SPECIAL_INSTRUCTIONS_EXAMPLES[selectedCampaignType]"
+              (click)="applySpecialInstructionsExample()"
+              title="Fill with example instructions for this campaign type">
+              <i class="bi bi-list-check"></i> Example
+            </button>
+          </div>
           <textarea [formControl]="$any(form.get('specialInstructions'))" class="field-textarea" rows="4"
                     placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load a ready-made set of dos, don'ts, and must-include instructions for Paid Collab. Edit freely to match your brand.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load product collab guidelines — what to show, what to avoid, and mandatory disclosures.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load location visit instructions — pre-visit, on-site, and post-visit guidelines.
+          </p>
         </div>
 
         <div class="trust-note-list">
@@ -522,5 +559,6 @@
       </div>
     </form>
 
-  </div>
-</div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

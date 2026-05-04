@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -27,7 +27,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
-export class CampaignManagementComponent implements OnInit {
+export class CampaignManagementComponent implements OnInit, OnDestroy {
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
     // Reload campaigns from backend (used after create/update)
@@ -41,6 +41,7 @@ export class CampaignManagementComponent implements OnInit {
           this.campaigns = campaigns;
           this.loading = false;
           this.cd.detectChanges();
+          this.loadAllInvites();
         },
         error: () => {
           this.campaigns = [];
@@ -322,12 +323,24 @@ export class CampaignManagementComponent implements OnInit {
     private router: Router,
   ) {}
 
+  private visibilityChangeHandler: (() => void) | null = null;
+
   ngOnInit() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const user = this.session.getUser();
     this.isInfluencerView = user?.role === 'influencer';
 
     if (this.isInfluencerView) {
+      // Auto-refresh invites when user returns to this tab (browser only)
+      if (typeof document !== 'undefined') {
+        this.visibilityChangeHandler = () => {
+          if (document.visibilityState === 'visible') {
+            this.reloadMyInvites();
+          }
+        };
+        document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+      }
+
       // Influencer: load invites + open active campaigns
       this.myInvitesLoading = true;
       this.loading = true;
@@ -420,6 +433,32 @@ export class CampaignManagementComponent implements OnInit {
         }
       });
     }
+  }
+
+  ngOnDestroy() {
+    if (this.visibilityChangeHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
+  }
+
+  reloadMyInvites() {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) return;
+    this.myInvitesLoading = true;
+    this.cd.detectChanges();
+    this.config.getMyInvites().subscribe({
+      next: (invites: any[]) => {
+        this.myInvites = invites;
+        this.myInvitesLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.myInvitesLoading = false;
+        this.cd.detectChanges();
+      }
+    });
   }
 
   get filtered(): Campaign[] {
@@ -612,9 +651,7 @@ export class CampaignManagementComponent implements OnInit {
       }
       this.config.createCampaign(payload).subscribe({
         next: (created: Campaign) => {
-          // Always reload campaigns from backend after creation
-          this.loadCampaigns();
-          // Always refresh brand profile after creation
+          // Refresh brand profile in background (non-blocking)
           this.config.getBrandProfileById().subscribe({
             next: (profile: any) => {
               const brand = profile?.data?.brand || profile?.brand || profile;
@@ -628,12 +665,12 @@ export class CampaignManagementComponent implements OnInit {
             const validIds = inviteInfluencerIds.filter(id => !!id);
             // debug: inviting influencers after campaign creation
             if (validIds.length === 0) {
-              this.loadAllInvitesForce();
-              this.cd.detectChanges();
+              this.loadCampaigns();
               this.toastMessage = 'Campaign created successfully!';
               this.toast.success('Campaign created successfully!');
               this.showSuccessToast = true;
-              setTimeout(() => { this.showSuccessToast = false; }, 4000);
+              this.cd.detectChanges();
+              setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
               this.closeForm();
             } else {
               this.config.inviteInfluencers(created._id, validIds).subscribe({
@@ -649,17 +686,18 @@ export class CampaignManagementComponent implements OnInit {
                       if (created._id) {
                         this.campaignInvitesMap.set(created._id, invites);
                         this.invites = invites;
-                        // Optionally activate campaign if invites exist
                         if (invites && invites.length > 0) {
                           this.activateCampaign(created);
                         }
                       }
-                      this.cd.detectChanges();
+                      // Reload campaigns AFTER invites are set so loadAllInvites sees them in the map
+                      this.loadCampaigns();
                       if (failures.length === 0) {
                         this.toastMessage = 'Campaign created and invites sent!';
                         this.toast.success('Campaign created and invites sent!');
                         this.showSuccessToast = true;
-                        setTimeout(() => { this.showSuccessToast = false; }, 4000);
+                        this.cd.detectChanges();
+                        setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
                       } else {
                         const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
                         const msg = sentCount > 0
@@ -668,15 +706,16 @@ export class CampaignManagementComponent implements OnInit {
                         this.toastMessage = msg;
                         if (sentCount > 0) this.toast.success(msg); else this.toast.error(msg);
                         this.showErrorToast = true;
+                        this.cd.detectChanges();
                         setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 7000);
                       }
                       this.closeForm();
                     },
                     error: () => {
-                      this.loadAllInvitesForce();
-                      this.cd.detectChanges();
+                      this.loadCampaigns();
                       this.toastMessage = 'Campaign created, but failed to fetch invites.';
                       this.showErrorToast = true;
+                      this.cd.detectChanges();
                       setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
                       this.closeForm();
                     }
@@ -684,22 +723,22 @@ export class CampaignManagementComponent implements OnInit {
                 },
                 error: (err) => {
                   console.error('[Invite API error]', err);
-                  this.loadAllInvitesForce();
-                  this.cd.detectChanges();
+                  this.loadCampaigns();
                   this.toastMessage = 'Campaign created, but failed to send invites.';
                   this.showErrorToast = true;
+                  this.cd.detectChanges();
                   setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
                   this.closeForm();
                 }
               });
             }
           } else {
-            this.loadAllInvitesForce();
-            this.cd.detectChanges();
+            this.loadCampaigns();
             this.toastMessage = 'Campaign created successfully!';
             this.toast.success('Campaign created successfully!');
             this.showSuccessToast = true;
-            setTimeout(() => { this.showSuccessToast = false; }, 4000);
+            this.cd.detectChanges();
+            setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
             this.closeForm();
           }
         },
@@ -801,6 +840,9 @@ export class CampaignManagementComponent implements OnInit {
     this.config.getInvitesByCampaign(campaign._id!).subscribe({
       next: (invites: any[]) => {
         this.invites = invites;
+        if (campaign._id) {
+          this.campaignInvitesMap.set(campaign._id, invites);
+        }
         this.invitesLoading = false;
         this.cd.detectChanges();
       },
@@ -1076,11 +1118,7 @@ export class CampaignManagementComponent implements OnInit {
           this.unlockingInviteIds.delete(inv._id);
           this.cd.detectChanges();
         }
-        this.toast.success(
-          data?.unlockType === 'free_unlock'
-            ? 'Contact unlocked! (Used your free unlock — upgrade to Premium for unlimited unlocks.)'
-            : 'Contact unlocked.'
-        );
+        this.toast.success('Contact unlocked.');
       },
       error: (err: any) => {
         this.unlockingInviteIds.delete(inv._id);

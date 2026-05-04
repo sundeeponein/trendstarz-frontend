@@ -200,6 +200,81 @@ export class FlowHelpModalService {
     this.isOpen = false;
   }
 
+  // ── Collaboration Type explainer ──────────────────────────────────────────
+  openCollaborationTypeGuide(selectedType?: string): void {
+    this.content = {
+      title: 'Collaboration Types — What do they mean?',
+      subtitle: 'Choose the type that matches how you want to work with influencers',
+      sections: [
+        {
+          title: '💰 Paid Collab',
+          points: [
+            'You pay the influencer a fixed fee to create and publish content.',
+            'Best for: product launches, brand awareness, seasonal promotions.',
+            'How it works: Invite → Influencer accepts → You pay via UPI → Admin verifies → Influencer posts → You review → Admin pays out.',
+            'You control deliverables: Reel, Story, YouTube video, post, etc.',
+            'Influencer submits a post link for your review before payout is released.',
+          ]
+        },
+        {
+          title: '🎁 Product Collab (Premium)',
+          points: [
+            'You send a free product to the influencer — no cash payment involved.',
+            'The product itself is the compensation for the content created.',
+            'Best for: unboxing reviews, lifestyle integrations, beauty/fashion/food brands.',
+            'How it works: Invite → Influencer accepts → You ship the product → Influencer creates and submits content → You review.',
+            'Ideal when you want authentic product-led reviews without a cash budget.',
+          ]
+        },
+        {
+          title: '📍 Invite to Location (Premium)',
+          points: [
+            'You invite the influencer to visit your physical store, venue, or event.',
+            'The visit and on-site content creation completes the collaboration.',
+            'Best for: restaurants, cafes, retail stores, brand events, launches, showrooms.',
+            'How it works: Invite → Influencer accepts with a visit date → They attend and create on-site content → Submit → You review.',
+            'Great for experience-first brands where being physically present matters.',
+          ]
+        },
+        {
+          title: 'Which type should I choose?',
+          points: [
+            'Cash budget available → use Paid Collab.',
+            'Sending products for review → use Product Collab.',
+            'Running an event or have a physical location → use Invite to Location.',
+            'Product Collab and Invite to Location require a Premium plan.',
+          ]
+        }
+      ],
+      ...(selectedType ? {
+        example: {
+          title: `Currently selected: ${
+            selectedType === 'paid_collab' ? '💰 Paid Collab' :
+            selectedType === 'product' ? '🎁 Product Collab' :
+            selectedType === 'invite_location' ? '📍 Invite to Location' : selectedType
+          }`,
+          fields: selectedType === 'paid_collab' ? [
+            { label: 'Compensation', value: 'Fixed cash fee per influencer' },
+            { label: 'Influencer action', value: 'Create & publish post, submit post link' },
+            { label: 'Brand action', value: 'Pay via UPI, review submission, approve payout' },
+            { label: 'Plan required', value: 'Free or Premium' },
+          ] : selectedType === 'product' ? [
+            { label: 'Compensation', value: 'Free product (no cash)' },
+            { label: 'Influencer action', value: 'Receive product, create review/post, submit link' },
+            { label: 'Brand action', value: 'Ship product, review content submission' },
+            { label: 'Plan required', value: 'Premium only' },
+          ] : [
+            { label: 'Compensation', value: 'Free visit / experience' },
+            { label: 'Influencer action', value: 'Visit venue on agreed date, create on-site content, submit' },
+            { label: 'Brand action', value: 'Confirm visit slot, host influencer, review submission' },
+            { label: 'Plan required', value: 'Premium only' },
+          ]
+        }
+      } : {})
+    };
+    this.isOpen = true;
+  }
+
   // ── Full end-to-end campaign flow with payment phases ─────────────────────
   openCampaignFlowDiagram(): void {
     this.content = {

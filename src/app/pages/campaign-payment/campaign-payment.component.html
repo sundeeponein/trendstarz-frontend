@@ -1,6 +1,8 @@
-<div class="ts-modal-backdrop" *ngIf="visible" (click)="close()" style="z-index:1040"></div>
+<div class="modal-backdrop show" *ngIf="visible" (click)="close()"></div>
 
-<div class="ts-modal cp-modal" *ngIf="visible" role="dialog" aria-modal="true">
+<div class="modal d-block" *ngIf="visible" tabindex="-1" (click)="close()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal cp-modal" role="dialog" aria-modal="true">
   <!-- Header -->
   <div class="cp-header">
     <div>
@@ -271,4 +273,6 @@
       <button type="button" class="cp-btn cp-btn--primary" (click)="close()">Done</button>
     </div>
   </div>
-</div>
+    </div><!-- /.modal-content.ts-modal -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

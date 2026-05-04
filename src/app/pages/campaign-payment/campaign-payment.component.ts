@@ -225,7 +225,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   async fetchStatus() {
     if (!this.campaignId) return;
     try {
-      const token = localStorage.getItem('token') || '';
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
       const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
       const res = await firstValueFrom(
         this.txApi.getCampaignTransactionStatus(this.campaignId, headers)

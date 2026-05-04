@@ -64,7 +64,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   loadAdminUser() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));

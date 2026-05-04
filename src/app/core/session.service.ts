@@ -20,16 +20,19 @@ export class SessionService {
     return typeof window !== 'undefined' && !!window.localStorage;
   }
 
-  setToken(token: string) {
+  setToken(token: string, rememberMe = false) {
     if (!this.isBrowser()) return;
-    localStorage.setItem(SessionService.TOKEN_KEY, token);
-    localStorage.setItem(SessionService.LOGIN_TIME_KEY, Date.now().toString());
-    // Optionally decode user from token here and setUser()
+    if (rememberMe) {
+      localStorage.setItem(SessionService.TOKEN_KEY, token);
+    } else {
+      sessionStorage.setItem(SessionService.TOKEN_KEY, token);
+    }
   }
 
   getToken(): string | null {
     if (!this.isBrowser()) return null;
-    return localStorage.getItem(SessionService.TOKEN_KEY);
+    return localStorage.getItem(SessionService.TOKEN_KEY)
+        || sessionStorage.getItem(SessionService.TOKEN_KEY);
   }
 
   setUser(user: any) {
@@ -90,6 +93,7 @@ export class SessionService {
   clearSession() {
     if (!this.isBrowser()) return;
     localStorage.removeItem(SessionService.TOKEN_KEY);
+    sessionStorage.removeItem(SessionService.TOKEN_KEY);
     localStorage.removeItem(SessionService.LOGIN_TIME_KEY);
     localStorage.removeItem(SessionService.USER_KEY);
     this.userSubject.next(null);

@@ -38,6 +38,15 @@
         </h2>
         <button
           type="button"
+          class="btn btn-sm btn-outline-secondary ms-2"
+          title="Refresh invites"
+          [disabled]="myInvitesLoading"
+          (click)="reloadMyInvites()"
+        >
+          <i class="bi bi-arrow-clockwise" [class.spin]="myInvitesLoading"></i>
+        </button>
+        <button
+          type="button"
           class="flow-info-trigger"
           title="How campaigns work — full flow guide"
           (click)="flowHelp.openCampaignFlowDiagram()"
@@ -423,10 +432,13 @@
                     *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
                     <i class="bi bi-check-circle-fill"></i> Paid
                   </span>
-                  <!-- Paid collab: per-invite awaiting payment chip (brand view) -->
-                  <div class="inv-pay-chip" *ngIf="inv.status === 'accepted' && c.campaignType === 'paid_collab'">
+                  <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
+                  <button class="inv-pay-chip" type="button"
+                    *ngIf="inv.status === 'accepted' && c.campaignType === 'paid_collab' && !inv.unlocked"
+                    (click)="openPayment(c._id); $event.stopPropagation()"
+                    title="Click to pay and unlock contact">
                     <i class="bi bi-lock-fill"></i> Awaiting your payment
-                  </div>
+                  </button>
                   <!-- Contact unlock (expand panel) -->
                   <ng-container *ngIf="isUnlockableStatus(inv.status)">
                     <div class="contact-reveal" *ngIf="inv.unlocked">
@@ -434,7 +446,7 @@
                         <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
                       </a>
                     </div>
-                    <div class="contact-locked" *ngIf="!inv.unlocked">
+                    <div class="contact-locked" *ngIf="!inv.unlocked && !(c.campaignType === 'paid_collab' && inv.status === 'accepted')">
                       <button class="btn-unlock-contact" type="button"
                               [disabled]="unlockingInviteIds.has(inv._id)"
                               (click)="unlockInviteContact(inv); $event.stopPropagation()">
@@ -632,7 +644,7 @@
   ></app-campaign-form>
 
   <!-- ───── INVITE PANEL (brand view) ───── -->
-  <div class="ts-modal-backdrop" *ngIf="invitePanelOpen" (click)="closeInvitePanel()" style="z-index:1050"></div>
+  <div class="modal-backdrop show" *ngIf="invitePanelOpen" (click)="closeInvitePanel()"></div>
   <div class="invite-drawer" *ngIf="invitePanelOpen">
 
     <!-- Drawer header -->
@@ -910,8 +922,10 @@
   ></app-campaign-detail-modal>
 
   <!-- ─── Fulfillment Modal (Slice D) ─── -->
-  <div class="ts-modal-backdrop" *ngIf="fulfillModalOpen && fulfillInvite" (click)="closeFulfillment()" style="z-index:1090">
-  <div class="ts-modal fulfill-modal ts-modal ts-modal--xlarge" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop show" *ngIf="fulfillModalOpen && fulfillInvite" (click)="closeFulfillment()"></div>
+  <div class="modal d-block" *ngIf="fulfillModalOpen && fulfillInvite" tabindex="-1" (click)="closeFulfillment()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-xlarge" (click)="$event.stopPropagation()">
+  <div class="modal-content ts-modal fulfill-modal" style="overflow:hidden">
     <div class="fulfill-header">
       <h4>
         <i class="bi" [ngClass]="invitePanelCampaign?.campaignType === 'product' ? 'bi-truck' : 'bi-geo-alt-fill'"></i>
@@ -988,7 +1002,8 @@
         {{ savingFulfillment ? 'Saving…' : 'Save' }}
       </button>
     </div>
-  </div>
-  </div>
+  </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
 </div>
