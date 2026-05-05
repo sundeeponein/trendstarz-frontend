@@ -2,8 +2,9 @@
   <!-- Brand + campaign header -->
   <div class="invite-card__header d-flex align-items-center">
     <div class="invite-brand-logo me-2">
-      <img *ngIf="brandLogo" [src]="brandLogo" alt="brand logo" class="brand-logo-img" (error)="onLogoError($event)">
-      <div *ngIf="!brandLogo" class="brand-logo-placeholder">{{ brandInitial }}</div>
+      <img *ngIf="brandLogo" [src]="brandLogo" alt="brand logo" class="brand-logo-img"
+           (error)="onLogoError($event)">
+      <div class="brand-logo-placeholder" [class.d-none]="brandLogo && !logoErrored">{{ brandInitial }}</div>
     </div>
     <div class="invite-card__meta flex-1">
       <div class="invite-brand-name">{{ brandName }}</div>

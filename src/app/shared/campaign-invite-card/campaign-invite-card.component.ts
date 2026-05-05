@@ -67,6 +67,7 @@ export class CampaignInviteCardComponent {
 
   postDate = '';
   selectedContentTypeKey = '';
+  logoErrored = false;
 
   // Payout details (where influencer wants to be paid)
   payoutUpiId = '';
@@ -515,5 +516,6 @@ export class CampaignInviteCardComponent {
 
   onLogoError(event: Event) {
     (event.target as HTMLImageElement).style.display = 'none';
+    this.logoErrored = true;
   }
 }

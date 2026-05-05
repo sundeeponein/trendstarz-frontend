@@ -47,11 +47,11 @@
         </button>
         <button
           type="button"
-          class="flow-info-trigger"
+          class="flow-info-trigger border-0"
           title="How campaigns work — full flow guide"
           (click)="flowHelp.openCampaignFlowDiagram()"
         >
-          <i class="bi bi-diagram-3"></i>
+          <i class="bi bi-info-circle"></i>
         </button>
         <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
           {{ getPendingInviteCount() }} pending
@@ -280,8 +280,8 @@
                   </span>
                 </ng-container>
                 <ng-template #notApplied>
-                  <span class="ccard-stat-value">Open</span>
-                  <span class="ccard-stat-sub">Click to apply</span>
+                  <span class="ccard-stat-value">Invite Only</span>
+                  <span class="ccard-stat-sub">Brand must invite you</span>
                 </ng-template>
               </ng-container>
             </div>
@@ -444,6 +444,15 @@
                     <div class="contact-reveal" *ngIf="inv.unlocked">
                       <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
                         <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
+                      </a>
+                      <a class="contact-chip" *ngIf="inv.influencerId?.phoneNumber" [href]="'tel:' + inv.influencerId.phoneNumber">
+                        <i class="bi bi-telephone-fill"></i> {{ inv.influencerId.phoneNumber }}
+                      </a>
+                      <a class="contact-chip" *ngIf="getWhatsappLink(inv.influencerId?.phoneNumber)"
+                         [href]="getWhatsappLink(inv.influencerId?.phoneNumber)!"
+                         target="_blank"
+                         rel="noopener noreferrer">
+                        <i class="bi bi-whatsapp"></i> WhatsApp
                       </a>
                     </div>
                     <div class="contact-locked" *ngIf="!inv.unlocked && !(c.campaignType === 'paid_collab' && inv.status === 'accepted')">
@@ -752,9 +761,21 @@
                    [href]="'tel:' + inv.influencerId.phoneNumber">
                   <i class="bi bi-telephone-fill"></i> {{ inv.influencerId.phoneNumber }}
                 </a>
+                <a class="contact-chip" *ngIf="getWhatsappLink(inv.influencerId?.phoneNumber)"
+                   [href]="getWhatsappLink(inv.influencerId?.phoneNumber)!"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                  <i class="bi bi-whatsapp"></i> WhatsApp
+                </a>
               </div>
               <!-- Locked: prompt unlock -->
-              <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !inv.unlocked">
+              <button class="inv-pay-chip" type="button"
+                      *ngIf="inv.status === 'accepted' && invitePanelCampaign?.campaignType === 'paid_collab' && !inv.unlocked"
+                      (click)="openPayment(invitePanelCampaign?._id)"
+                      title="Click to pay and unlock contact">
+                <i class="bi bi-lock-fill"></i> Awaiting your payment
+              </button>
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !inv.unlocked && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted')">
                 <button class="btn-unlock-contact"
                         type="button"
                         [disabled]="unlockingInviteIds.has(inv._id)"

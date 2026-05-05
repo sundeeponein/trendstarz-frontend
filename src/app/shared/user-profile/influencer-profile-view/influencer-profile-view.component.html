@@ -37,15 +37,15 @@
 
         <div class="profile-actions">
           <a class="btn-follow" *ngIf="isLoggedIn" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
-          <button type="button" class="btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button>
+          <!-- <button type="button" class="btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
         </div>
 
         <!-- Stats row -->
         <div class="stats-row">
-          <div class="stat-item">
+          <!-- <div class="stat-item">
             <span class="stat-val">{{ formatFollowers(getTotalFollowers()) }}</span>
             <span class="stat-lbl">FOLLOWERS / SUBS</span>
-          </div>
+          </div> -->
           <div class="stat-item">
             <span class="stat-val">{{ getPrimaryTier() || '—' }}</span>
             <span class="stat-lbl">TIER</span>
@@ -96,6 +96,13 @@
             <div class="chip-list">
               <span *ngFor="let cat of influencer.categories" class="chip chip--accent">{{ cat }}</span>
             </div>
+          </div>
+
+          <div class="detail-row" *ngIf="influencer.website">
+            <span class="detail-key">Website</span>
+            <a class="detail-val" [href]="influencer.website" target="_blank" rel="noopener">
+              {{ stripProtocol(influencer.website) }}
+            </a>
           </div>
 
         </div>
@@ -194,7 +201,7 @@
           <span style="font-size:1.3em;">🌟</span>
           <div>
             <strong>Pro Plan Active</strong>
-            <div><small>Contact details are visible when you have campaign connection with this influencer.</small></div>
+            <div><small>Contact details are visible after invite acceptance and contact unlock in your campaign flow.</small></div>
           </div>
         </div>
       </div>
@@ -203,7 +210,7 @@
           <span style="font-size:1.3em;">🔒</span>
           <div>
             <strong>Free Plan</strong>
-            <div><small>Contact details are shown when you have campaign connection with this influencer.</small></div>
+            <div><small>Contact details are shown only after invite acceptance and unlock in campaigns.</small></div>
           </div>
         </div>
         <a routerLink="/campaigns" class="plan-status-card__btn">Start Campaign</a>

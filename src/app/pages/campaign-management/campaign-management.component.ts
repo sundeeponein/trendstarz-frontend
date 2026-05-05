@@ -1070,7 +1070,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getCampaignBrand(c: any): { name: string; logo: string | null; username: string } {
     const b = (c as any).brand;
     if (!b) return { name: '', logo: null, username: '' };
-    return { name: b.name || '', logo: b.logo || null, username: b.username || '' };
+    // brand.logo is already resolved by the backend (brandLogo[0].url)
+    // Also handle invite objects where brandId is populated with brandLogo array
+    let logo = b.logo || null;
+    if (!logo && Array.isArray(b.brandLogo) && b.brandLogo.length) {
+      logo = b.brandLogo[0]?.url || null;
+    }
+    return { name: b.name || b.brandName || '', logo, username: b.username || b.brandUsername || '' };
   }
 
   getCardInvitedCount(c: Campaign): number {
@@ -1088,6 +1094,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Statuses where contact unlock is meaningful (i.e., influencer has accepted or beyond). */
   isUnlockableStatus(status: string): boolean {
     return ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed'].includes(String(status));
+  }
+
+  /** Build a WhatsApp deep-link from a phone number. */
+  getWhatsappLink(phone: string | null | undefined): string | null {
+    const digits = String(phone || '').replace(/\D/g, '');
+    if (!digits) return null;
+    const withCountry = digits.startsWith('91') ? digits : `91${digits}`;
+    return `https://wa.me/${withCountry}`;
   }
 
   /** Brand-side: trigger contact unlock for an accepted invite. */
@@ -1466,9 +1480,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     event?.stopPropagation();
     if (!this.isInfluencerView || !campaign?._id) return;
     const campaignId = String(campaign._id);
-    if (this.openingCampaignIds.has(campaignId)) return;
 
-    // If any invite already exists for this campaign (any status), open preview instead of re-applying
+    // If any invite already exists for this campaign (any status), open preview.
     const existing = this.myInvites.find((inv: any) => {
       const invCampaignId = String(inv?.campaignId?._id || inv?.campaignId || '');
       return invCampaignId === campaignId;
@@ -1478,29 +1491,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.openingCampaignIds.add(campaignId);
-    this.cd.detectChanges();
-
-    this.config.applyToOpenCampaign(campaignId).subscribe({
-      next: (invite: any) => {
-        if (invite) {
-          if (!this.myInvites.some((i: any) => String(i?._id || '') === String(invite?._id || ''))) {
-            this.myInvites = [invite, ...this.myInvites];
-          }
-          this.openInvitePreview(invite);
-        } else {
-          this.showError('Unable to open this campaign right now. Please try again.');
-        }
-        this.openingCampaignIds.delete(campaignId);
-        this.cd.detectChanges();
-      },
-      error: (err: any) => {
-        const msg = err?.error?.message || 'Unable to open this campaign right now. Please try again.';
-        this.showError(msg);
-        this.openingCampaignIds.delete(campaignId);
-        this.cd.detectChanges();
-      }
-    });
+    this.showError('Invite only: you can respond after the brand sends you a campaign invite.');
   }
 
   isOpeningCampaign(campaign: Campaign): boolean {

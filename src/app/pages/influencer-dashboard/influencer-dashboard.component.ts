@@ -425,8 +425,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   getBrandLogo(inv: any): string | null {
     const b = this.getBrand(inv);
-    const logo = b?.logoUrl || b?.profileImage || b?.logo;
-    return logo || null;
+    // brandLogo is an array of Cloudinary objects { url, public_id }
+    if (Array.isArray(b?.brandLogo) && b.brandLogo.length) {
+      return b.brandLogo[0]?.url || null;
+    }
+    return b?.logoUrl || b?.profileImage || b?.logo || null;
   }
 
   getCampaignTitle(inv: any): string {
