@@ -41,9 +41,14 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     this.warmup.ready.then(() => this.loadPayments());
   }
 
+  private getToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
   loadPayments() {
     if (!isPlatformBrowser(this.platformId)) return;
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     if (!token) {
       this.error = 'Please log in to view payment history.';
       return;

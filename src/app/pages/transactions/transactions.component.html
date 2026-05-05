@@ -74,11 +74,21 @@
     <!-- Transaction rows -->
     <div class="txn-row" *ngFor="let tx of activeRows">
       <div class="txn-row__left">
-        <!-- Type icon -->
-        <div class="txn-row__icon" [class.txn-row__icon--green]="tx.payoutStatus === 'paid' || tx.collectionStatus === 'verified'"
-             [class.txn-row__icon--amber]="tx.payoutStatus !== 'paid' && tx.collectionStatus !== 'verified'">
-          <i class="bi bi-cash-stack" *ngIf="tx.transactionType === 'paid_collab'"></i>
-          <i class="bi bi-ticket-perforated" *ngIf="tx.transactionType === 'pay_to_join'"></i>
+        <!-- Brand image / TrendstarZ logo fallback -->
+        <div class="txn-row__avatar">
+          <img *ngIf="tx.otherPartyLogo"
+               [src]="tx.otherPartyLogo"
+               [alt]="tx.otherPartyName || 'Brand'"
+               class="txn-row__avatar-img"
+               (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'">
+          <div class="txn-row__avatar-fallback"
+               [style.display]="tx.otherPartyLogo ? 'none' : 'flex'">
+            <img src="/assets/logo-trendstarz-logo-text.png"
+                 alt="TrendstarZ"
+                 class="txn-row__avatar-logo"
+                 onerror="this.style.display='none'; this.parentElement.querySelector('.txn-row__avatar-icon').style.display='flex'">
+            <i class="bi bi-stars txn-row__avatar-icon" style="display:none"></i>
+          </div>
         </div>
 
         <!-- Details -->

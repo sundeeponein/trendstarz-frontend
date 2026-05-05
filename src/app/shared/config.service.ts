@@ -411,6 +411,7 @@ export class ConfigService {
 
   getInviteWithCampaign(inviteId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}`).pipe(
+      map((res) => this.extractData<any>(res) || res),
       catchError(() => of(null))
     );
   }

@@ -138,7 +138,42 @@ export class CampaignSubmissionComponent implements OnInit {
     this.sharesCount = s.sharesCount ?? null;
     this.reachCount = s.reachCount ?? null;
     this.detectedPlatform = s.postPlatform || '';
-    if (this.viewsCount || this.likesCount) this.showStats = true;
+    if (this.hasStatsDetails) this.showStats = true;
+  }
+
+  get hasSubmittedContent(): boolean {
+    return this.hasPostDetails || this.hasProofDetails || this.hasStatsDetails;
+  }
+
+  get hasPostDetails(): boolean {
+    return !!(this.postUrl || this.postType || this.captionUsed);
+  }
+
+  get hasProofDetails(): boolean {
+    return !!(this.postScreenshotUrl || this.insightsScreenshotUrl);
+  }
+
+  get hasStatsDetails(): boolean {
+    return [
+      this.viewsCount,
+      this.likesCount,
+      this.commentsCount,
+      this.sharesCount,
+      this.reachCount,
+    ].some((value) => value != null);
+  }
+
+  get selectedPostTypeLabel(): string {
+    if (!this.postType) return '';
+    return this.allPostTypes.find((item) => item.key === this.postType)?.label || this.postType;
+  }
+
+  resolveImageUrl(url: string): string {
+    if (!url) return '';
+    if (/^(https?:)?\/\//i.test(url) || url.startsWith('data:') || url.startsWith('/')) {
+      return url;
+    }
+    return `/${url.replace(/^\/+/, '')}`;
   }
 
   onPostUrlChange() {

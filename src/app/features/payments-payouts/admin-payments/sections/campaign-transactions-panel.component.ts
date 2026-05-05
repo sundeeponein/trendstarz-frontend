@@ -326,7 +326,8 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   }
 
   private getToken(): string | null {
-    return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') : null;
+    if (!isPlatformBrowser(this.platformId)) return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
 
   // ── Dispute management ──────────────────────────────────────────────────────

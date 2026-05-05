@@ -12,7 +12,10 @@ export class AdminDashboardComponent implements OnInit {
   influencerDeleted = 0;
   brandDeleted = 0;
   getAuthHeaders() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : '';
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
   influencerCount = 0;

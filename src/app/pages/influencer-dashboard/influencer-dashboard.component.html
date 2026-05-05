@@ -298,12 +298,12 @@
         <i class="bi bi-check-circle-fill"></i>
         <span>Payment confirmed! Begin creating your content.</span>
       </div>
-      <!-- Submit post CTA: hide when awaiting payment for paid_collab -->
+      <!-- Submit/view CTA: hide only when awaiting payment for paid_collab -->
       <div class="submit-post-cta mt-2"
-           *ngIf="c.inviteStatus !== 'submitted' && !(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
+           *ngIf="!(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
         <button class="btn-submit-post" (click)="goToSubmit(c); $event.stopPropagation()">
-          <i class="bi bi-send-fill"></i>
-          {{ (c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your proof of work' : 'Submit your post' }}
+          <i class="bi" [class.bi-eye-fill]="c.inviteStatus === 'submitted'" [class.bi-send-fill]="c.inviteStatus !== 'submitted'"></i>
+          {{ c.inviteStatus === 'submitted' ? 'View submitted proof' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your proof of work' : 'Submit your post') }}
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">
@@ -314,6 +314,50 @@
       <a routerLink="/campaigns" class="txn-see-all__link">
         <i class="bi bi-arrow-right-circle"></i> View all campaigns &amp; history
       </a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       COMPLETED CAMPAIGNS
+  ═══════════════════════════════════════════════════════ -->
+  <div *ngIf="!loading" class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--purple me-2"></span> Completed Campaigns
+      <span class="section-count ms-2">{{ completedCampaigns.length }}</span>
+    </div>
+    <div *ngIf="completedCampaigns.length === 0" class="section-empty py-3">
+      <div class="section-empty-icon"><i class="bi bi-check2-circle"></i></div>
+      <div class="section-empty-title">No completed campaigns yet</div>
+      <div class="section-empty-desc">Campaigns approved by the brand will appear here.</div>
+    </div>
+    <div *ngFor="let c of completedCampaigns" class="active-camp-card completed">
+      <div class="d-flex align-items-start gap-2" (click)="goToStats(c)">
+        <div class="active-camp-dot completed-dot"></div>
+        <div class="flex-1">
+          <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
+          <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
+          <div class="d-flex gap-2 mt-1 flex-wrap">
+            <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
+          </div>
+        </div>
+        <span *ngIf="c.inviteStatus === 'completed' || c.inviteStatus === 'approved'" class="badge rounded-pill bg-dark ms-2">Completed</span>
+        <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-danger ms-2">Disputed</span>
+      </div>
+      <div class="active-camp-meta mt-2">
+        <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
+        <span *ngIf="c.budgetMin || c.budgetMax"><i class="bi bi-currency-rupee"></i> {{ formatBudget(c.budgetMin, c.budgetMax) }}</span>
+      </div>
+      <div class="active-camp-metrics" *ngIf="c.metrics">
+        <span *ngIf="c.metrics.viewsCount != null"><i class="bi bi-play-btn"></i> {{ c.metrics.viewsCount }} views</span>
+        <span *ngIf="c.metrics.likesCount != null"><i class="bi bi-heart"></i> {{ c.metrics.likesCount }} likes</span>
+        <span *ngIf="c.metrics.commentsCount != null"><i class="bi bi-chat"></i> {{ c.metrics.commentsCount }} comments</span>
+      </div>
+      <div class="submit-post-cta mt-2">
+        <button class="btn-submit-post" (click)="goToStats(c); $event.stopPropagation()">
+          <i class="bi bi-eye-fill"></i>
+          View completed submission
+        </button>
+      </div>
     </div>
   </div>
 </div>

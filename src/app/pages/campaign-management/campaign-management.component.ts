@@ -325,8 +325,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   private visibilityChangeHandler: (() => void) | null = null;
 
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
   ngOnInit() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = this.getToken();
     const user = this.session.getUser();
     this.isInfluencerView = user?.role === 'influencer';
 
@@ -444,7 +449,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   reloadMyInvites() {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = this.getToken();
     if (!token) return;
     this.myInvitesLoading = true;
     this.cd.detectChanges();
