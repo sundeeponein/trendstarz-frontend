@@ -10,12 +10,15 @@ export interface Campaign {
   title: string;
   description?: string;
   campaignType?: 'paid_collab' | 'product' | 'invite_location' | 'pay_to_join';
+  campaignMode?: 'invite_only' | 'tier_filtered_open';
   image?: { url: string; public_id: string };
   status: 'active' | 'pending' | 'completed' | 'draft';
   budgetMin?: number;
   budgetMax?: number;
   pricePerInfluencer?: number; // paise
   maxInfluencers?: number;
+  minInfluencers?: number;
+  acceptanceDeadline?: string;
   estimatedBudget?: number; // paise
   applicants?: number;
   startDate?: string;
@@ -29,6 +32,8 @@ export interface Campaign {
   deliverables?: string[];
   minFollowerCount?: number;
   minInfluencerTier?: string;
+  targetTiers?: string[];
+  targetCities?: string[];
   platformPreference?: string;
   specialInstructions?: string;
   // Invite-to-location specific fields

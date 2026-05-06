@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,7 +17,7 @@ type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
   templateUrl: './campaign-submission.component.html',
   styleUrls: ['./campaign-submission.component.scss'],
 })
-export class CampaignSubmissionComponent implements OnInit {
+export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   inviteId = '';
   campaignTitle = '';
   brandName = '';
@@ -65,6 +65,12 @@ export class CampaignSubmissionComponent implements OnInit {
   error = '';
   existingSubmission: any = null;
 
+  // Insights timing lock
+  selectedPostDate: Date | null = null;
+  insightsUnlocksAt: Date | null = null;
+  insightsCountdown = '';
+  private countdownInterval: any = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -87,6 +93,13 @@ export class CampaignSubmissionComponent implements OnInit {
           // Sync real invite status from backend (overrides query param)
           if (res?.invite?.status) {
             this.inviteStatus = res.invite.status;
+          }
+          if (res?.invite?.selectedPostDate) {
+            this.selectedPostDate = new Date(res.invite.selectedPostDate);
+          }
+          if (res?.invite?.insightsUnlocksAt) {
+            this.insightsUnlocksAt = new Date(res.invite.insightsUnlocksAt);
+            this.startCountdown();
           }
           const campaign = res?.campaign;
           if (campaign) {
@@ -271,12 +284,15 @@ export class CampaignSubmissionComponent implements OnInit {
     };
     if (this.postType) payload.postType = this.postType;
     if (this.captionUsed) payload.captionUsed = this.captionUsed;
-    if (this.insightsScreenshotUrl) payload.insightsScreenshotUrl = this.insightsScreenshotUrl;
-    if (this.viewsCount != null) payload.viewsCount = this.viewsCount;
-    if (this.likesCount != null) payload.likesCount = this.likesCount;
-    if (this.commentsCount != null) payload.commentsCount = this.commentsCount;
-    if (this.sharesCount != null) payload.sharesCount = this.sharesCount;
-    if (this.reachCount != null) payload.reachCount = this.reachCount;
+    // Only include insights data once the 24h window has passed
+    if (!this.insightsLocked) {
+      if (this.insightsScreenshotUrl) payload.insightsScreenshotUrl = this.insightsScreenshotUrl;
+      if (this.viewsCount != null) payload.viewsCount = this.viewsCount;
+      if (this.likesCount != null) payload.likesCount = this.likesCount;
+      if (this.commentsCount != null) payload.commentsCount = this.commentsCount;
+      if (this.sharesCount != null) payload.sharesCount = this.sharesCount;
+      if (this.reachCount != null) payload.reachCount = this.reachCount;
+    }
 
     this.config.submitCampaignPost(this.inviteId, payload).subscribe({
       next: () => {
@@ -294,5 +310,36 @@ export class CampaignSubmissionComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/influencer-dashboard']);
+  }
+
+  ngOnDestroy() {
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
+  }
+
+  // Returns true when insights (screenshot + metrics) are still locked
+  get insightsLocked(): boolean {
+    if (!this.insightsUnlocksAt) return false;
+    return Date.now() < this.insightsUnlocksAt.getTime();
+  }
+
+  private startCountdown() {
+    this.updateCountdown();
+    this.countdownInterval = setInterval(() => {
+      this.updateCountdown();
+      if (!this.insightsLocked) {
+        clearInterval(this.countdownInterval);
+        this.countdownInterval = null;
+      }
+      this.cdr.markForCheck();
+    }, 60000); // refresh every minute
+  }
+
+  private updateCountdown() {
+    if (!this.insightsUnlocksAt) { this.insightsCountdown = ''; return; }
+    const diffMs = this.insightsUnlocksAt.getTime() - Date.now();
+    if (diffMs <= 0) { this.insightsCountdown = ''; return; }
+    const h = Math.floor(diffMs / 3600000);
+    const m = Math.floor((diffMs % 3600000) / 60000);
+    this.insightsCountdown = h > 0 ? `${h}h ${m}m` : `${m}m`;
   }
 }

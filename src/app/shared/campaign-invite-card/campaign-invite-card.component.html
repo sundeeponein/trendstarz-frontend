@@ -149,11 +149,13 @@
       </div>
     </div>
 
-    <button type="button" class="btn-invite-action btn-accept" (click)="onAccept($event)" [disabled]="busy">
-      <i class="bi bi-check-lg"></i> Accept
+    <button type="button" class="btn-invite-action btn-accept" (click)="onAccept($event)" [disabled]="busy" [attr.aria-busy]="busy">
+      <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Accepting…</span>
+      <span *ngIf="!busy"><i class="bi bi-check-lg"></i> Accept</span>
     </button>
-    <button type="button" class="btn-invite-action btn-decline" (click)="onDecline($event)" [disabled]="busy">
-      <i class="bi bi-x-lg"></i> Decline
+    <button type="button" class="btn-invite-action btn-decline" (click)="onDecline($event)" [disabled]="busy" [attr.aria-busy]="busy">
+      <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing…</span>
+      <span *ngIf="!busy"><i class="bi bi-x-lg"></i> Decline</span>
     </button>
     <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
       <i class="bi bi-eye"></i> View Details

@@ -39,6 +39,302 @@
   to { opacity: 0; }
 }
 
+// ── Platform picker modal ───────────────────────
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-card-custom {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  max-width: 420px;
+  width: 90vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.modal-title-custom {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1a1a2e;
+}
+.modal-subtitle-custom {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+.platform-picker-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+.platform-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.98rem;
+  padding: 10px 20px;
+  border-radius: 10px;
+  min-width: 130px;
+  justify-content: center;
+  i { font-size: 1.2rem; }
+}
+
+// ── Open campaign preview modal ───────────────
+.ocp-modal {
+  background: #fff;
+  border-radius: 18px;
+  width: min(760px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+}
+
+.ocp-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.ocp-thumb-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 56px;
+}
+
+.ocp-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ocp-thumb-initials {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.ocp-header-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ocp-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.ocp-brand-chip {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fb;
+  border: 1px solid #eceff5;
+  border-radius: 999px;
+  padding: 4px 10px 4px 4px;
+}
+
+.ocp-brand-logo,
+.ocp-brand-initials {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ocp-brand-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ocp-brand-name {
+  font-size: 0.84rem;
+  color: #3e4b67;
+  font-weight: 600;
+}
+
+.ocp-close {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: #f3f5fa;
+  color: #334155;
+}
+
+.ocp-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ocp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ocp-pill--type {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.ocp-pill--platform {
+  background: #f5f3ff;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.ocp-pill--tier {
+  background: #ecfeff;
+  color: #155e75;
+  border: 1px solid #a5f3fc;
+}
+
+.ocp-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ocp-stat {
+  background: #fafbff;
+  border: 1px solid #edf1f7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ocp-stat-label {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ocp-stat-value {
+  font-size: 0.92rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.ocp-stat-value.accent {
+  color: #e8620f;
+}
+
+.ocp-description {
+  border: 1px solid #edf1f7;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  p {
+    margin: 0;
+    color: #2f3640;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+}
+
+.ocp-deliverables {
+  margin-bottom: 14px;
+}
+
+.ocp-section-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+.ocp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ocp-tag {
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #374151;
+}
+
+.ocp-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.ocp-btn-apply,
+.ocp-btn-cancel {
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .ocp-modal {
+    width: 96vw;
+    padding: 16px;
+  }
+
+  .ocp-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .ocp-footer {
+    flex-direction: column-reverse;
+  }
+
+  .ocp-btn-apply,
+  .ocp-btn-cancel {
+    width: 100%;
+  }
+}
+
 .cm-page {
   max-width: 1100px;
   margin: 0 auto;
@@ -433,6 +729,30 @@
   box-shadow: -4px 0 30px rgba(0,0,0,0.15);
   animation: slideInRight 0.25s ease;
   overflow: hidden;
+}
+
+.acceptance-closed-banner {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #b7e4c7;
+  background: #eefaf2;
+  color: #1f7a4d;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+
+  i {
+    font-size: 0.95rem;
+    color: #1f7a4d;
+  }
+
+  span {
+    font-weight: 500;
+    color: #256d4b;
+  }
 }
 
 @keyframes slideInRight {
@@ -901,6 +1221,25 @@
   &.approved, &.completed    { color: #22b37a; }
   &.declined, &.withdrawn,
   &.disputed                 { color: #c53030; }
+}
+
+.inv-closed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7c3f00;
+  background: #fff4e5;
+  border: 1px solid #f5c996;
+  border-radius: 999px;
+  padding: 3px 9px;
+  line-height: 1;
+
+  i {
+    font-size: 0.72rem;
+    color: #a35707;
+  }
 }
 
 .btn-send-invite {
@@ -1965,6 +2304,14 @@
   background: #f1f0f8;
   border-radius: 999px;
   padding: 2px 7px;
+}
+
+.expand-post-date {
+  font-size: 0.72rem;
+  color: #8b8fa8;
+  margin-top: 3px;
+  display: block;
+  i { margin-right: 3px; color: #6c6f8a; }
 }
 
 .expand-empty-inf {

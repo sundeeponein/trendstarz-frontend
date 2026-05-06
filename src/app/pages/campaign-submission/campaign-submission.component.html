@@ -245,12 +245,23 @@
 
     <!-- ─── SECTION 3: Stats ─────────────────────────── -->
     <div class="form-section" *ngIf="!isReadOnly">
-      <button class="stats-toggle" type="button" (click)="showStats = !showStats">
+
+      <!-- Insights locked: 24h window hasn't passed yet -->
+      <div class="insights-lock-banner" *ngIf="insightsLocked">
+        <i class="bi bi-clock-history"></i>
+        <div>
+          <strong>Insights unlock in {{ insightsCountdown }}</strong>
+          <p class="mb-0">Screenshot your analytics (likes, views, reach) and come back after 24 hours of posting.</p>
+          <small *ngIf="selectedPostDate">Your posting date: {{ selectedPostDate | date:'mediumDate' }}</small>
+        </div>
+      </div>
+
+      <button class="stats-toggle" type="button" (click)="showStats = !showStats" [disabled]="insightsLocked">
         <i class="bi" [class.bi-chevron-down]="!showStats" [class.bi-chevron-up]="showStats"></i>
-        Add performance stats <span class="opt">(optional — you can add these later)</span>
+        Add performance stats <span class="opt">({{ insightsLocked ? 'unlocks in ' + insightsCountdown : 'optional — you can add these later' }})</span>
       </button>
 
-      <div *ngIf="showStats" class="stats-grid">
+      <div *ngIf="showStats && !insightsLocked" class="stats-grid">
         <div class="stat-field">
           <label>Views / Plays</label>
           <input type="number" min="0" class="field-input" [(ngModel)]="viewsCount" [disabled]="isReadOnly" placeholder="0">

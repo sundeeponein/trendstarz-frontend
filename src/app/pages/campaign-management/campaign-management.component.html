@@ -10,6 +10,120 @@
   <i class="bi bi-exclamation-triangle-fill"></i> {{ toastMessage }}
 </div>
 
+<!-- Platform picker modal — shown when influencer qualifies for multiple platforms -->
+<div *ngIf="platformPickerOpen" class="modal-backdrop-custom" (click)="cancelPlatformPicker()">
+  <div class="modal-card-custom" (click)="$event.stopPropagation()">
+    <h5 class="modal-title-custom">Choose your platform</h5>
+    <p class="modal-subtitle-custom">This campaign accepts posts on multiple platforms. Select the one you'll post on:</p>
+    <div class="platform-picker-options">
+      <button *ngFor="let p of platformPickerOptions"
+              type="button"
+              class="btn btn-outline-warning platform-picker-btn"
+              (click)="confirmPlatformAndApply(p)">
+        <i [class]="'bi bi-' + (p.toLowerCase().includes('instagram') ? 'instagram' : p.toLowerCase().includes('youtube') ? 'youtube' : p.toLowerCase().includes('facebook') ? 'facebook' : p.toLowerCase().includes('tiktok') ? 'tiktok' : p.toLowerCase().includes('twitter') || p.toLowerCase().includes('x /') ? 'twitter-x' : p.toLowerCase().includes('linkedin') ? 'linkedin' : 'camera-video')"></i>
+        {{ p }}
+      </button>
+    </div>
+    <button type="button" class="btn btn-link btn-sm mt-2 text-muted" (click)="cancelPlatformPicker()">Cancel</button>
+  </div>
+</div>
+
+<div class="cm-page">
+<!-- Open Campaign Preview Modal -->
+<div *ngIf="openCampaignPreview" class="modal-backdrop-custom" (click)="closeOpenCampaignPreview()">
+  <div class="ocp-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="ocp-header">
+      <div class="ocp-thumb-wrap" [style.background]="getInitialsColor(openCampaignPreview.title)">
+        <img class="ocp-thumb" *ngIf="openCampaignPreview.image?.url" [src]="openCampaignPreview.image!.url" alt="" />
+        <div class="ocp-thumb-initials" *ngIf="!openCampaignPreview.image?.url">{{ getInfluencerInitials(openCampaignPreview.title) }}</div>
+      </div>
+      <div class="ocp-header-text">
+        <h4 class="ocp-title">{{ openCampaignPreview.title }}</h4>
+        <div class="ocp-brand-chip" *ngIf="getCampaignBrand(openCampaignPreview).name">
+          <img class="ocp-brand-logo" *ngIf="getCampaignBrand(openCampaignPreview).logo"
+            [src]="getCampaignBrand(openCampaignPreview).logo!" alt="" />
+          <span class="ocp-brand-initials" *ngIf="!getCampaignBrand(openCampaignPreview).logo"
+            [style.background]="getInitialsColor(getCampaignBrand(openCampaignPreview).name)">
+            {{ getInfluencerInitials(getCampaignBrand(openCampaignPreview).name) }}
+          </span>
+          <span class="ocp-brand-name">by {{ getCampaignBrand(openCampaignPreview).name }}</span>
+        </div>
+      </div>
+      <button class="ocp-close" type="button" (click)="closeOpenCampaignPreview()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Meta pills -->
+    <div class="ocp-pills">
+      <span class="ocp-pill ocp-pill--type" *ngIf="openCampaignPreview.campaignType">
+        <i class="bi bi-tag-fill"></i>
+        {{ openCampaignPreview.campaignType === 'paid_collab' ? 'Paid Collab' :
+           openCampaignPreview.campaignType === 'product' ? 'Product Collab' :
+           openCampaignPreview.campaignType === 'invite_location' ? 'Invite to Location' :
+           openCampaignPreview.campaignType === 'pay_to_join' ? 'Pay to Join' :
+           openCampaignPreview.campaignType }}
+      </span>
+      <span class="ocp-pill ocp-pill--platform" *ngFor="let p of openCampaignPreview.platforms">
+        <i [class]="'bi bi-' + (p.toLowerCase().includes('instagram') ? 'instagram' : p.toLowerCase().includes('youtube') ? 'youtube' : p.toLowerCase().includes('facebook') ? 'facebook' : p.toLowerCase().includes('tiktok') ? 'tiktok' : p.toLowerCase().includes('twitter') || p.toLowerCase().includes('x /') ? 'twitter-x' : p.toLowerCase().includes('linkedin') ? 'linkedin' : 'camera-video')"></i>
+        {{ p }}
+      </span>
+      <span class="ocp-pill ocp-pill--tier" *ngIf="openCampaignPreview.minInfluencerTier">
+        <i class="bi bi-bar-chart-fill"></i> Min: {{ openCampaignPreview.minInfluencerTier }}
+      </span>
+    </div>
+
+    <!-- Show qualifying platform/tier for current influencer -->
+    <div class="ocp-qualify" *ngIf="openCampaignPreviewQualifyingPlatform || openCampaignPreviewQualifyingTier" style="margin-bottom:12px">
+      <strong>You qualify as:</strong>
+      <span *ngIf="openCampaignPreviewQualifyingPlatform"> {{ platformShortLabel(openCampaignPreviewQualifyingPlatform) }}</span>
+      <span *ngIf="openCampaignPreviewQualifyingPlatform && openCampaignPreviewQualifyingTier"> · </span>
+      <span *ngIf="openCampaignPreviewQualifyingTier"> {{ openCampaignPreviewQualifyingTier }}</span>
+    </div>
+
+    <!-- Stats row -->
+    <div class="ocp-stats">
+      <div class="ocp-stat" *ngIf="openCampaignPreview.pricePerInfluencer">
+        <span class="ocp-stat-label">Payout</span>
+        <span class="ocp-stat-value accent">{{ formatBudgetCompact(openCampaignPreview) }}</span>
+      </div>
+      <div class="ocp-stat" *ngIf="openCampaignPreview.timelineStart || openCampaignPreview.timelineEnd">
+        <span class="ocp-stat-label">Timeline</span>
+        <span class="ocp-stat-value">{{ formatTimeline(openCampaignPreview) }}</span>
+      </div>
+      <div class="ocp-stat" *ngIf="openCampaignPreview.categories?.length">
+        <span class="ocp-stat-label">Categories</span>
+        <span class="ocp-stat-value">{{ openCampaignPreview.categories!.slice(0,3).join(', ') }}</span>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="ocp-description" *ngIf="openCampaignPreview.description">
+      <p>{{ openCampaignPreview.description }}</p>
+    </div>
+
+    <!-- Deliverables -->
+    <div class="ocp-deliverables" *ngIf="openCampaignPreview.deliverables?.length">
+      <span class="ocp-section-label">Deliverables</span>
+      <div class="ocp-tags">
+        <span class="ocp-tag" *ngFor="let d of openCampaignPreview.deliverables">{{ d }}</span>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="ocp-footer">
+      <button type="button" class="btn btn-outline-secondary ocp-btn-cancel" (click)="closeOpenCampaignPreview()">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-warning ocp-btn-apply" (click)="applyFromPreview()" [disabled]="isOpeningCampaign(openCampaignPreview)">
+        <span *ngIf="isOpeningCampaign(openCampaignPreview)"><span class="spinner-border spinner-border-sm me-2"></span>Applying…</span>
+        <span *ngIf="!isOpeningCampaign(openCampaignPreview)"><i class="bi bi-send-fill"></i> Apply Now</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <div class="cm-page">
 
   <!-- Loading -->
@@ -95,6 +209,7 @@
             <ng-container *ngFor="let inv of myInvitesFiltered">
               <app-campaign-invite-card
                 [invite]="inv"
+                [busy]="actioningInviteIds.has(inv._id)"
                 [initialPostDate]="selectedInvitePostDates[inv._id]"
                 [initialContentTypeKey]="selectedInviteContentType[inv._id]"
                 [initialPayout]="defaultPayout"
@@ -271,6 +386,9 @@
                   ></app-user-avatar>
                 </div>
                 <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
+                <span class="ccard-stat-sub" *ngIf="isAcceptanceClosed(c)">
+                  Acceptance closed at {{ getAcceptanceCloseThreshold(c) }} accepted
+                </span>
               </ng-container>
               <!-- Influencer view: show own application status -->
               <ng-container *ngIf="isInfluencerView">
@@ -280,8 +398,14 @@
                   </span>
                 </ng-container>
                 <ng-template #notApplied>
-                  <span class="ccard-stat-value">Invite Only</span>
-                  <span class="ccard-stat-sub">Brand must invite you</span>
+                  <ng-container *ngIf="c.campaignMode === 'tier_filtered_open'; else inviteOnlyLabel">
+                    <span class="ccard-stat-value" style="color:var(--ts-primary,#e8620f);">Apply now</span>
+                    <span class="ccard-stat-sub">Tap "View details" to apply</span>
+                  </ng-container>
+                  <ng-template #inviteOnlyLabel>
+                    <span class="ccard-stat-value">Invite Only</span>
+                    <span class="ccard-stat-sub">Brand must invite you</span>
+                  </ng-template>
                 </ng-template>
               </ng-container>
             </div>
@@ -374,6 +498,14 @@
               </button>
             </div>
 
+            <div class="acceptance-closed-banner" *ngIf="isAcceptanceClosed(c)">
+              <i class="bi bi-check2-circle"></i>
+              Acceptance closed: {{ getAcceptanceCloseThreshold(c) }} accepted reached.
+              <span *ngIf="getAcceptanceBlockedPendingCount(c) > 0">
+                {{ getAcceptanceBlockedPendingCount(c) }} pending invite{{ getAcceptanceBlockedPendingCount(c) === 1 ? '' : 's' }} can no longer accept.
+              </span>
+            </div>
+
             <!-- Mini stat chips -->
             <div class="expand-stats">
               <div class="expand-stat">
@@ -425,8 +557,18 @@
                         {{ sm.platform }} · {{ sm.tier }}
                       </span>
                     </div>
+                    <small class="expand-post-date" *ngIf="inv.selectedPostDate">
+                      <i class="bi bi-calendar-check"></i> Posts {{ inv.selectedPostDate | date:'MMM d' }}
+                    </small>
+                    <small class="expand-post-date" *ngIf="inv.selectedPlatform">
+                      <i class="bi bi-broadcast"></i> Posts on <strong>{{ inv.selectedPlatform }}</strong>
+                    </small>
                   </div>
                   <span class="inv-status" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) }}</span>
+                  <span class="inv-closed-chip"
+                        *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">
+                    <i class="bi bi-slash-circle"></i> Closed
+                  </span>
                   <!-- Paid badge: payment was confirmed for this influencer -->
                   <span class="inv-paid-badge"
                     *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
@@ -678,6 +820,15 @@
       </span>
     </div>
 
+    <div class="acceptance-closed-banner"
+         *ngIf="invitePanelCampaign && isInvitePanelAcceptanceClosed()">
+      <i class="bi bi-check2-circle"></i>
+      Acceptance closed at {{ getAcceptanceCloseThreshold(invitePanelCampaign) }} accepted.
+      <span *ngIf="getInvitePanelBlockedPendingCount() > 0">
+        {{ getInvitePanelBlockedPendingCount() }} pending invite{{ getInvitePanelBlockedPendingCount() === 1 ? '' : 's' }} are now closed.
+      </span>
+    </div>
+
     <!-- Drawer tabs -->
     <div class="drawer-tabs">
       <button class="drawer-tab" [class.active]="inviteTab === 'invited'" (click)="inviteTab = 'invited'">
@@ -739,9 +890,13 @@
                 <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inv.influencerId, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
               </div>
               <!-- Reminder count + due-date hint -->
-              <div class="invite-meta-line" *ngIf="inv.remindersSent > 0 || inv.dueDate">
+              <div class="invite-meta-line" *ngIf="inv.remindersSent > 0 || inv.dueDate || inv.selectedPostDate">
                 <small *ngIf="inv.remindersSent > 0">
                   <i class="bi bi-bell-fill"></i> Reminded {{ inv.remindersSent }}×
+                </small>
+                <small *ngIf="inv.selectedPostDate">
+                  <i class="bi bi-calendar-check"></i>
+                  Posts: {{ inv.selectedPostDate | date:'MMM d' }}
                 </small>
                 <small *ngIf="inv.dueDate" [class.overdue]="isOverdue(inv)">
                   <i class="bi bi-calendar-event"></i>
@@ -751,6 +906,10 @@
             </div>
             <div class="invited-right">
               <span class="inv-status already-invited" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) | uppercase }}</span>
+              <span class="inv-closed-chip"
+                    *ngIf="isInvitePanelAcceptanceClosed() && isPendingInviteStatus(inv.status)">
+                <i class="bi bi-slash-circle"></i> Closed
+              </span>
               <!-- Contact reveal for unlocked invites -->
               <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && inv.unlocked">
                 <a class="contact-chip" *ngIf="inv.influencerId?.email"
@@ -792,9 +951,9 @@
                 <button class="btn-action btn-remind"
                         type="button"
                         *ngIf="canRemind(inv)"
-                        [disabled]="actioningInviteIds.has(inv._id)"
-                        (click)="remindInvite(inv)"
-                        title="Send a reminder (max 1 / 24h)">
+                        [disabled]="actioningInviteIds.has(inv._id) || isRemindBlockedInPanel(inv)"
+                        [title]="isRemindBlockedInPanel(inv) ? 'Campaign closed — minimum accepted reached' : 'Send a reminder (max 1 / 24h)'"
+                        (click)="remindInvite(inv)">
                   <i class="bi bi-bell"></i> Remind
                 </button>
                 <button class="btn-action btn-withdraw"
@@ -936,6 +1095,9 @@
     [visible]="!!invitePreview"
     [initialPostDate]="selectedInvitePostDates[invitePreview._id]"
     [initialContentTypeKey]="selectedInviteContentType[invitePreview._id]"
+    [qualifyingPlatform]="invitePreviewQualifyingPlatform"
+    [qualifyingTier]="invitePreviewQualifyingTier"
+    [busy]="actioningInviteIds.has(invitePreview._id)"
     (close)="closeInvitePreview()"
     (accept)="onModalAccept($event)"
     (decline)="onModalDecline($event)"

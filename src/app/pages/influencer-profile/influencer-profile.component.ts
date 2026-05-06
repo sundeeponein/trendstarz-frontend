@@ -44,6 +44,11 @@ export class InfluencerProfileComponent implements OnInit {
     private plansService: PlansService,
     private cd: ChangeDetectorRef
   ) {}
+
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+  }
   platformForms: { [platformId: string]: any } = {};
   originalPlatformForms: { [platformId: string]: any } = {};
   /** Currently visible platform tab in the social media section. */
@@ -369,7 +374,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.categoriesList = dropdownData.categories || [];
 
         // Now fetch influencer profile after dropdown data is loaded
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const token = this.getToken();
         if (token) {
           this.configService.getInfluencerProfileById().subscribe({
         next: (profile) => {
@@ -618,7 +623,7 @@ export class InfluencerProfileComponent implements OnInit {
     }
     // Simulate payment (replace with real payment integration as needed)
     // On success, call backend to set premium
-    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
+    const token = this.getToken();
     if (!token) {
       this.paymentError = 'Not logged in.';
       return;
@@ -895,7 +900,7 @@ export class InfluencerProfileComponent implements OnInit {
     delete payload.premiumStart;
     delete payload.premiumDuration;
     // debug: payload prepared for PATCH
-    let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
+    const token = this.getToken();
     this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
         // debug: PATCH response received
@@ -935,7 +940,7 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   async fetchAndPatchProfile(): Promise<void> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = this.getToken();
     if (token) {
       await new Promise<void>((resolve) => {
         this.configService.getInfluencerProfileById().subscribe({

@@ -52,6 +52,14 @@
           <div class="cdm-stat-label"><i class="bi bi-bar-chart-steps"></i> MIN. TIER</div>
           <div class="cdm-stat-value">{{ minInfluencerTier }}</div>
         </div>
+          <div class="cdm-stat-card" *ngIf="qualifyingPlatform || qualifyingTier">
+            <div class="cdm-stat-label"><i class="bi bi-person-check-fill"></i> YOU MATCH</div>
+            <div class="cdm-stat-value">
+              <ng-container *ngIf="qualifyingPlatform">{{ platformLabel(qualifyingPlatform) }}</ng-container>
+              <ng-container *ngIf="qualifyingPlatform && qualifyingTier"> · </ng-container>
+              <ng-container *ngIf="qualifyingTier">{{ qualifyingTier }}</ng-container>
+            </div>
+          </div>
       </div>
 
       <!-- Campaign type -->

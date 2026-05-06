@@ -24,35 +24,33 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'campaign-payment/:campaignId', renderMode: RenderMode.Client },
   { path: 'payment-history', renderMode: RenderMode.Client },
   { path: 'transactions', renderMode: RenderMode.Client },
-  { path: 'influencer-profile', renderMode: RenderMode.Prerender },
-  { path: 'brand-profile', renderMode: RenderMode.Prerender },
+  { path: 'influencer-profile', renderMode: RenderMode.Client },
+  { path: 'brand-profile', renderMode: RenderMode.Client },
   { path: 'campaigns', renderMode: RenderMode.Client },
 
   // Admin / dashboard routes
-  { path: 'admin', renderMode: RenderMode.Server },
-  { path: 'admin/admin-dashboard', renderMode: RenderMode.Server },
-  { path: 'admin/admin-user-table', renderMode: RenderMode.Server },
-  { path: 'admin/admin-management', renderMode: RenderMode.Server },
-  { path: 'admin/payments', renderMode: RenderMode.Server },
-  { path: 'admin/plans', renderMode: RenderMode.Server },
-  { path: 'admin/deleted-users', renderMode: RenderMode.Server },
-  { path: 'admin/reviews', renderMode: RenderMode.Server },
-  { path: 'admin/disputes', renderMode: RenderMode.Server },
+  { path: 'admin', renderMode: RenderMode.Client },
+  { path: 'admin/admin-dashboard', renderMode: RenderMode.Client },
+  { path: 'admin/admin-user-table', renderMode: RenderMode.Client },
+  { path: 'admin/admin-management', renderMode: RenderMode.Client },
+  { path: 'admin/payments', renderMode: RenderMode.Client },
+  { path: 'admin/plans', renderMode: RenderMode.Client },
+  { path: 'admin/deleted-users', renderMode: RenderMode.Client },
+  { path: 'admin/reviews', renderMode: RenderMode.Client },
+  { path: 'admin/disputes', renderMode: RenderMode.Client },
 
-  // Dashboard SSR routes
-  { path: 'influencer-dashboard', renderMode: RenderMode.Server },
-  { path: 'campaign-submission/:inviteId', renderMode: RenderMode.Server },
-  { path: 'brand-dashboard', renderMode: RenderMode.Server },
-  { path: 'logout', renderMode: RenderMode.Server },
-  { path: 'admin/logout', renderMode: RenderMode.Server },
-  { path: 'auth', renderMode: RenderMode.Server },
-  { path: 'verify-email', renderMode: RenderMode.Server },
+  // Dashboard routes — must be Client (need localStorage token)
+  { path: 'influencer-dashboard', renderMode: RenderMode.Client },
+  { path: 'campaign-submission/:inviteId', renderMode: RenderMode.Client },
+  { path: 'brand-dashboard', renderMode: RenderMode.Client },
+  { path: 'logout', renderMode: RenderMode.Client },
+  { path: 'admin/logout', renderMode: RenderMode.Client },
+  { path: 'auth', renderMode: RenderMode.Client },
+  { path: 'verify-email', renderMode: RenderMode.Client },
 
-  // Forgot password SSR route
-  { path: 'forgot-password', renderMode: RenderMode.Server },
-
-  // Reset password SSR route
-  { path: 'reset-password', renderMode: RenderMode.Server },
+  // Forgot password / Reset password
+  { path: 'forgot-password', renderMode: RenderMode.Client },
+  { path: 'reset-password', renderMode: RenderMode.Client },
 
   // Dynamic profiles
   { path: 'influencer/:username', renderMode: RenderMode.Server },

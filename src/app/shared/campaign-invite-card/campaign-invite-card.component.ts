@@ -325,6 +325,9 @@ export class CampaignInviteCardComponent {
   get maxPostDate(): string { return (this.timelineRange.end || '').substring(0, 10); }
 
   get platformText(): string {
+    // For tier_filtered_open campaigns, show the specific platform the influencer applied on
+    const selected = this.invite?.selectedPlatform;
+    if (selected) return selected;
     const c = this.campaign;
     if (Array.isArray(c?.platforms) && c.platforms.length) return c.platforms.join(', ');
     if (Array.isArray(c?.socialMedia) && c.socialMedia.length) {

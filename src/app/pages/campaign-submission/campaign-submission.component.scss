@@ -387,6 +387,23 @@
   }
 }
 
+.insights-lock-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(232, 88, 12, 0.08);
+  border: 1px solid rgba(232, 88, 12, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  color: #e8b98c;
+
+  i { font-size: 22px; color: #E8580C; flex-shrink: 0; margin-top: 2px; }
+  p { color: #b0b0b0; font-size: 13px; margin-top: 4px; }
+  small { color: #888; font-size: 12px; }
+  strong { color: #fff; }
+}
+
 .stats-toggle {
   background: none;
   border: none;

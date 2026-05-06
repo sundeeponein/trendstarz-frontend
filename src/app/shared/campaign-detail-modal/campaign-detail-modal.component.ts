@@ -33,6 +33,9 @@ interface ContentTypeOption {
 export class CampaignDetailModalComponent {
   @Input() invite: any;
   @Input() visible = false;
+  // Optional: platform/tier that the current influencer qualifies with for this campaign
+  @Input() qualifyingPlatform?: string | null;
+  @Input() qualifyingTier?: string | null;
   @Input() showDateInput = true;
   @Input() busy = false;
   @Input() set initialPostDate(v: string | undefined) {

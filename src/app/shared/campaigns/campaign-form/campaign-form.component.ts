@@ -120,6 +120,7 @@ export class CampaignFormComponent implements OnInit {
   categoriesList: any[] = [];
   states: any[] = [];
   districts: any[] = [];
+  targetDistricts: any[] = [];
   selectedCategories: string[] = [];
   selectedPlatforms: string[] = [];
   activePlatformTab = '';
@@ -134,13 +135,21 @@ export class CampaignFormComponent implements OnInit {
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
       description: [this.campaign?.description || ''],
       campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
+      campaignMode: [(this.campaign as any)?.campaignMode || 'invite_only', [Validators.required]],
       status: [this.campaign?.status || 'draft'],
       pricePerInfluencer: [this.getInitialPricePerInfluencer(), [Validators.required, Validators.min(1)]],
       maxInfluencers: [(this.campaign as any)?.maxInfluencers || null, [Validators.required, Validators.min(1)]],
+      minInfluencers: [
+        (this.campaign as any)?.minInfluencers || (this.campaign as any)?.maxInfluencers || null,
+        [Validators.required, Validators.min(1)],
+      ],
+      acceptanceDeadline: [this.formatDateTimeLocal((this.campaign as any)?.acceptanceDeadline)],
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
       minFollowerCount: [this.campaign?.minFollowerCount || null, [Validators.min(0)]],
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
+      targetState: [(this.campaign as any)?.targetState || ''],
+      targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
       platformPreference: [this.campaign?.platformPreference || ''],
       specialInstructions: [this.campaign?.specialInstructions || ''],
       venueName: [(this.campaign as any)?.venueName || ''],
@@ -156,7 +165,7 @@ export class CampaignFormComponent implements OnInit {
       productPaymentMode: [(this.campaign as any)?.productPaymentMode || 'product_only'],
       productPaymentAmount: [this.getInitialProductPaymentAmount()],
       inviteBenefits: [(this.campaign as any)?.inviteBenefits || ''],
-    }, { validators: [this.dateRangeValidator] });
+    }, { validators: [this.dateRangeValidator, this.minMaxInfluencerValidator] });
 
     this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
@@ -183,9 +192,12 @@ export class CampaignFormComponent implements OnInit {
     this.config.getStates().subscribe({
       next: (data: any[]) => {
         this.states = Array.isArray(data) ? data : [];
-        // If editing with an existing state, fetch its districts
+        // If editing with an existing venueState, fetch venue districts
         const currentState = this.form.get('venueState')?.value;
         if (currentState) this.loadDistrictsFor(currentState);
+        // If editing with an existing targetState, fetch target districts
+        const currentTargetState = this.form.get('targetState')?.value;
+        if (currentTargetState) this.loadTargetDistrictsFor(currentTargetState);
         this.cd.detectChanges();
       },
       error: () => { this.states = []; }
@@ -203,6 +215,11 @@ export class CampaignFormComponent implements OnInit {
       if (isEditingSameState && existingDistrict) {
         setTimeout(() => this.form.get('venueDistrict')?.setValue(existingDistrict, { emitEvent: false }), 0);
       }
+    });
+
+    this.form.get('targetState')?.valueChanges.subscribe((stateName: string) => {
+      this.form.get('targetDistrict')?.setValue('', { emitEvent: false });
+      this.loadTargetDistrictsFor(stateName);
     });
 
     if (this.campaign?.image?.url) {
@@ -274,8 +291,24 @@ export class CampaignFormComponent implements OnInit {
   private dateRangeValidator = (group: FormGroup) => {
     const start = group.get('timelineStart')?.value;
     const end = group.get('timelineEnd')?.value;
+    const acceptanceDeadline = group.get('acceptanceDeadline')?.value;
     if (!start || !end) return null;
-    return new Date(end) >= new Date(start) ? null : { invalidDateRange: true };
+    if (new Date(end) < new Date(start)) return { invalidDateRange: true };
+    if (acceptanceDeadline) {
+      const acceptance = new Date(acceptanceDeadline);
+      if (Number.isNaN(acceptance.getTime())) return { invalidAcceptanceDeadline: true };
+      if (acceptance < new Date(start) || acceptance > new Date(end)) {
+        return { invalidAcceptanceDeadlineRange: true };
+      }
+    }
+    return null;
+  };
+
+  private minMaxInfluencerValidator = (group: FormGroup) => {
+    const min = Number(group.get('minInfluencers')?.value || 0);
+    const max = Number(group.get('maxInfluencers')?.value || 0);
+    if (!min || !max) return null;
+    return min <= max ? null : { invalidMinMaxInfluencers: true };
   };
 
   // ── Stepper helpers ──────────────────────────────────────────
@@ -298,6 +331,9 @@ export class CampaignFormComponent implements OnInit {
       priceValid &&
       this.f['maxInfluencers'].valid &&
       this.f['maxInfluencers'].value > 0 &&
+      this.f['minInfluencers'].valid &&
+      this.f['minInfluencers'].value > 0 &&
+      !this.form.errors?.['invalidMinMaxInfluencers'] &&
       this.selectedCategories.length > 0 &&
       this.platformDeliverables.length > 0
     );
@@ -351,6 +387,21 @@ export class CampaignFormComponent implements OnInit {
     this.config.getDistricts(stateName, stateId).subscribe({
       next: (data: any[]) => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
       error: () => { this.districts = []; this.cd.detectChanges(); }
+    });
+  }
+
+  private loadTargetDistrictsFor(stateValue: string) {
+    if (!stateValue) {
+      this.targetDistricts = [];
+      this.cd.detectChanges();
+      return;
+    }
+    const sel = (this.states || []).find((s: any) => s?.name === stateValue || s?._id === stateValue || s?.id === stateValue);
+    const stateName = sel?.name || stateValue;
+    const stateId = sel?._id || sel?.id || '';
+    this.config.getDistricts(stateName, stateId).subscribe({
+      next: (data: any[]) => { this.targetDistricts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+      error: () => { this.targetDistricts = []; this.cd.detectChanges(); }
     });
   }
 
@@ -410,6 +461,7 @@ export class CampaignFormComponent implements OnInit {
     if (step === 3 && !this.step2Valid()) {
       this.form.get('pricePerInfluencer')?.markAsTouched();
       this.form.get('maxInfluencers')?.markAsTouched();
+      this.form.get('minInfluencers')?.markAsTouched();
       this.categoriesTouched = true;
       this.platformsTouched = true;
       this.cd.detectChanges();
@@ -677,6 +729,14 @@ export class CampaignFormComponent implements OnInit {
     return new Date(dateStr).toISOString().split('T')[0];
   }
 
+  private formatDateTimeLocal(dateStr?: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return '';
+    const tzOffsetMs = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+  }
+
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
@@ -694,7 +754,7 @@ export class CampaignFormComponent implements OnInit {
 
   // ── Submit ───────────────────────────────────────────────────
   skipAndSave() {
-    // Always save as draft, do not send invites
+    // For tier_filtered_open publish immediately; otherwise save as draft
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -702,10 +762,13 @@ export class CampaignFormComponent implements OnInit {
     this.uploading = true;
     const v = this.form.value;
     const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
+    const isTierOpen = v.campaignMode === 'tier_filtered_open';
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
-      status: 'draft',
+      status: isTierOpen ? 'active' : 'draft',
+      targetCities: v.targetDistrict ? [v.targetDistrict] : [],
+      targetDistrict: undefined,
       categories: this.selectedCategories,
       platforms: this.platformDeliverables.map(pd => pd.platform),
       socialMedia: this.platformDeliverables.map(pd => ({
@@ -717,6 +780,9 @@ export class CampaignFormComponent implements OnInit {
         }))
       })),
     };
+    payload.acceptanceDeadline = payload.acceptanceDeadline
+      ? new Date(payload.acceptanceDeadline).toISOString()
+      : undefined;
     this.sanitizeCampaignTypeFields(payload);
     this.uploading = false;
     this.save.emit(payload);
@@ -747,6 +813,9 @@ export class CampaignFormComponent implements OnInit {
       pricePerInfluencer: pricePerInfluencerPaise,
       status: 'active',
     };
+    payload.acceptanceDeadline = payload.acceptanceDeadline
+      ? new Date(payload.acceptanceDeadline).toISOString()
+      : undefined;
     this.sanitizeCampaignTypeFields(payload);
     if (this.selectedFile) {
       try {
