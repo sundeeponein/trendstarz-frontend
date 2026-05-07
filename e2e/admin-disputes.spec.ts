@@ -44,15 +44,25 @@ const RESOLVED_DISPUTES = {
 };
 
 async function setAdminAuth(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('token', 'fake-admin-jwt');
+  // Create a simple unsigned JWT-like token with payload including exp in the future
+  const fakeJwt = (() => {
+    try {
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload: any = { role: 'admin', name: 'Admin', userId: 'admin_001' };
+      payload.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // +1 day
+      const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${b64(header)}.${b64(payload)}.`;
+    } catch (e) {
+      return 'fake-admin-jwt';
+    }
+  })();
+
+  await page.addInitScript((jwt) => {
+    localStorage.setItem('token', jwt);
     localStorage.setItem('userRole', 'admin');
     localStorage.setItem('loginTimestamp', Date.now().toString());
-    localStorage.setItem(
-      'user',
-      JSON.stringify({ role: 'admin', _id: 'admin_001', name: 'Admin' }),
-    );
-  });
+    localStorage.setItem('user', JSON.stringify({ role: 'admin', _id: 'admin_001', name: 'Admin' }));
+  }, fakeJwt);
 }
 
 async function mockBaseRoutes(page: Page, countOverride?: number) {
@@ -80,6 +90,14 @@ async function mockBaseRoutes(page: Page, countOverride?: number) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ success: true, data: body }),
+    });
+  });
+  // Auth / me - return admin user
+  await page.route('**/auth/me', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { _id: 'admin_001', role: 'admin', name: 'Admin' } }),
     });
   });
   await page.route('**/plans/me/capabilities', (r) =>

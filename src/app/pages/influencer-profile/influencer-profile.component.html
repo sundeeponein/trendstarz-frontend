@@ -383,7 +383,7 @@
             </div>
           </div>
 
-          <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">Profile updated successfully.</div>
+          <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">{{ registrationSuccessMessage || 'Profile updated successfully.' }}</div>
           <div *ngIf="isEditMode && selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold my-3">
             Please enter both Handle and Tier for every selected platform, or remove it.
           </div>

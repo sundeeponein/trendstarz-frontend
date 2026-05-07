@@ -45,6 +45,11 @@ export class CampaignPaymentPageComponent implements OnInit {
     private cd: ChangeDetectorRef,
   ) {}
 
+  private getToken(): string {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+  }
+
   async ngOnInit() {
     this.campaignId = this.route.snapshot.paramMap.get('campaignId') || '';
     if (!this.campaignId) {
@@ -80,7 +85,7 @@ export class CampaignPaymentPageComponent implements OnInit {
 
   async fetchStatus() {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+      const token = this.getToken();
       const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
       const res = await firstValueFrom(this.txApi.getCampaignTransactionStatus(this.campaignId, headers));
       this.statusTransactions = res?.data || [];

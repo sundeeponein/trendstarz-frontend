@@ -32,11 +32,23 @@ const MOCK_BRAND_PROFILE = {
 };
 
 async function setBrandAuth(page: Page) {
-  await page.addInitScript(({ token }) => {
-    localStorage.setItem('token', token);
+  const fakeJwt = (() => {
+    try {
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload: any = { role: 'brand', name: 'Test Brand', userId: 'brand_001' };
+      payload.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+      const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${b64(header)}.${b64(payload)}.`;
+    } catch (e) {
+      return BRAND_TOKEN;
+    }
+  })();
+
+  await page.addInitScript((jwt) => {
+    localStorage.setItem('token', jwt);
     localStorage.setItem('loginTimestamp', Date.now().toString());
     localStorage.setItem('user', JSON.stringify({ role: 'brand', _id: 'brand_001', name: 'Test Brand' }));
-  }, { token: BRAND_TOKEN });
+  }, fakeJwt);
 }
 
 async function mockBrandProfileRoutes(page: Page) {
@@ -87,6 +99,10 @@ async function mockBrandProfileRoutes(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ secure_url: 'https://res.cloudinary.com/test/image/upload/img.png', public_id: 'e2e_id' }) });
   });
+  // Auth / me - return brand user
+  await page.route('**/auth/me', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { _id: 'brand_001', role: 'brand', name: 'Test Brand' } }) });
+  });
   // Username uniqueness check
   await page.route('**/users/check-username/**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json',
@@ -99,11 +115,23 @@ test.describe('Brand Profile', () => {
     await setBrandAuth(page);
     await mockBrandProfileRoutes(page);
     await page.goto('/brand-profile');
-    await page.waitForSelector('form', { state: 'visible' });
-    await page.waitForTimeout(2000);
+    // Wait for the step/sidebar tabs to appear (more robust than fixed timeouts)
+    await page.waitForSelector('.reg-tab', { state: 'visible', timeout: 10000 });
     // Trigger CD so mock data is rendered in zoneless Angular
     await page.locator('body').click();
-    await page.waitForTimeout(500);
+    // Force step 1 for consistent assertions across desktop/mobile layouts.
+    await page.evaluate(() => {
+      const el = document.querySelector('app-brand-registration');
+      const ng = (window as any).ng;
+      if (!el || !ng) return;
+      const comp = ng.getComponent(el);
+      try {
+        comp.currentStep = 1;
+        comp.cd?.detectChanges?.();
+      } catch (e) {}
+    });
+    // Ensure UI has settled after the click
+    await page.waitForSelector('.reg-tab.reg-tab--active', { state: 'visible', timeout: 5000 });
   });
 
   test('renders step 1 — Brand Basics with profile data', async ({ page }) => {
@@ -168,16 +196,15 @@ test.describe('Brand Profile', () => {
 
   test('save profile sends PATCH request', async ({ page }) => {
     await page.click('button:has-text("Edit Profile")');
-    await page.waitForTimeout(1000);
+    await expect(page.locator('button:has-text("Cancel Edit")')).toBeVisible({ timeout: 5000 });
     const nextBtn = page.locator('button:has-text("Next Step")');
     await nextBtn.scrollIntoViewIfNeeded();
     await nextBtn.click();
-    await page.waitForTimeout(1000);
     await expect(page.locator('h2').first()).toContainText('Location & Media', { timeout: 5000 });
     const nextBtn2 = page.locator('button:has-text("Next Step")');
     await nextBtn2.scrollIntoViewIfNeeded();
     await nextBtn2.click();
-    await page.waitForTimeout(1000);
+    await expect(page.locator('h2').first()).toContainText('Plan', { timeout: 10000 });
     const apiCalled = page.waitForResponse(resp =>
       resp.url().includes('/users/brand-profile') && resp.request().method() === 'PATCH'
     );

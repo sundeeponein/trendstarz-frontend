@@ -98,7 +98,7 @@ export class DeletedUsersTableComponent implements OnInit {
   fetchDeletedUsers() {
     let token = '';
     if (typeof window !== 'undefined' && window.localStorage) {
-      token = localStorage.getItem('token') || '';
+      token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     if (!token) {
@@ -254,7 +254,10 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   getAuthHeaders() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : '';
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 

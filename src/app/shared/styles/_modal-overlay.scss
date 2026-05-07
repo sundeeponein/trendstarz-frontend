@@ -46,12 +46,20 @@
   &.ts-dialog-xlarge { max-width: min(900px, 96vw); }
 }
 
+// Bootstrap's .modal-dialog-scrollable forces .modal-content { overflow: hidden }
+// Override so our ts-modal can scroll without needing a nested .modal-body
+.modal-dialog-scrollable .modal-content.ts-modal {
+  overflow-y: auto;
+}
+
 // ── Panel: .ts-modal on .modal-content ───────────────────────
 .ts-modal {
   border: none;        // remove Bootstrap's default modal-content border
   border-radius: 12px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 90vh;
   color: #111827;
   width: 100%;
 

@@ -411,6 +411,7 @@ export class ConfigService {
 
   getInviteWithCampaign(inviteId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/${inviteId}`).pipe(
+      map((res) => this.extractData<any>(res) || res),
       catchError(() => of(null))
     );
   }
@@ -437,8 +438,8 @@ export class ConfigService {
     );
   }
 
-  applyToOpenCampaign(campaignId: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/apply`, {}).pipe(
+  applyToOpenCampaign(campaignId: string, selectedPlatform?: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}/apply`, { selectedPlatform: selectedPlatform ?? null }).pipe(
       map(res => this.extractData<any>(res) || res)
     );
   }

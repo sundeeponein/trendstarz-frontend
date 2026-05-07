@@ -29,6 +29,7 @@ yarn-error.log*
 
 # Misc
 *.tgz
+*.sh
 
 # Optional: ignore generated files
 *.js

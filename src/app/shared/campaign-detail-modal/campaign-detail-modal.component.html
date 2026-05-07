@@ -52,6 +52,14 @@
           <div class="cdm-stat-label"><i class="bi bi-bar-chart-steps"></i> MIN. TIER</div>
           <div class="cdm-stat-value">{{ minInfluencerTier }}</div>
         </div>
+          <div class="cdm-stat-card" *ngIf="qualifyingPlatform || qualifyingTier">
+            <div class="cdm-stat-label"><i class="bi bi-person-check-fill"></i> YOU MATCH</div>
+            <div class="cdm-stat-value">
+              <ng-container *ngIf="qualifyingPlatform">{{ platformLabel(qualifyingPlatform) }}</ng-container>
+              <ng-container *ngIf="qualifyingPlatform && qualifyingTier"> · </ng-container>
+              <ng-container *ngIf="qualifyingTier">{{ qualifyingTier }}</ng-container>
+            </div>
+          </div>
       </div>
 
       <!-- Campaign type -->
@@ -148,8 +156,10 @@
         <div class="cdm-platform-list">
           <button type="button"
                   class="cdm-ct-pill"
-                  *ngFor="let opt of contentTypeOptions"
+                  *ngFor="let opt of displayContentTypeOptions"
                   [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
+                  [class.disabled]="!isOptionSelectable(opt)"
+                  [disabled]="!isOptionSelectable(opt)"
                   (click)="selectedContentTypeKey = opt.key; toastError = ''">
             <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
             <span>{{ opt.label }}</span>
@@ -209,7 +219,7 @@
         </div>
 
         <a class="cdm-brand-website" *ngIf="brandWebsite"
-           [href]="brandWebsite" target="_blank" rel="noopener noreferrer">
+           [href]="brandWebsiteHref" target="_blank" rel="noopener noreferrer">
           <i class="bi bi-globe"></i> {{ brandWebsite }}
         </a>
       </div>

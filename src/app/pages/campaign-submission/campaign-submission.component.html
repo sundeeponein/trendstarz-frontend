@@ -47,8 +47,6 @@
       </span>
     </div>
 
-    <!-- Error -->
-    <div *ngIf="error" class="alert-error">{{ error }}</div>
 
     <!-- Read-only notice when campaign is completed/approved -->
     <div *ngIf="isReadOnly" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
@@ -56,21 +54,98 @@
       This campaign has been <strong>{{ inviteStatus }}</strong>. Your submission is locked and cannot be edited.
     </div>
 
+    <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
+      <div class="summary-header">
+        <div class="summary-title">Submitted details</div>
+        <div class="summary-subtitle">What you shared for this campaign</div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card" *ngIf="hasPostDetails">
+          <div class="summary-card__title">Post details</div>
+
+          <div class="summary-row" *ngIf="postUrl">
+            <span class="summary-key">Post URL</span>
+            <a class="summary-link" [href]="postUrl" target="_blank" rel="noopener">{{ postUrl }}</a>
+          </div>
+
+          <div class="summary-row" *ngIf="selectedPostTypeLabel">
+            <span class="summary-key">Post type</span>
+            <span class="summary-value">{{ selectedPostTypeLabel }}</span>
+          </div>
+
+          <div class="summary-row" *ngIf="captionUsed">
+            <span class="summary-key">Caption used</span>
+            <span class="summary-value summary-value--multiline">{{ captionUsed }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card" *ngIf="hasProofDetails">
+          <div class="summary-card__title">Proof</div>
+
+          <div class="summary-proof-grid">
+            <div class="summary-proof" *ngIf="postScreenshotUrl">
+              <span class="summary-key">Post screenshot</span>
+              <img [src]="resolveImageUrl(postScreenshotUrl)" class="summary-proof__image" alt="Post screenshot">
+            </div>
+
+            <div class="summary-proof" *ngIf="insightsScreenshotUrl">
+              <span class="summary-key">Insights screenshot</span>
+              <img [src]="resolveImageUrl(insightsScreenshotUrl)" class="summary-proof__image" alt="Insights screenshot">
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-card" *ngIf="hasStatsDetails">
+          <div class="summary-card__title">Performance stats</div>
+
+          <div class="summary-stats-grid">
+            <div class="summary-stat" *ngIf="viewsCount != null">
+              <span class="summary-stat__label">Views / Plays</span>
+              <span class="summary-stat__value">{{ viewsCount }}</span>
+            </div>
+            <div class="summary-stat" *ngIf="likesCount != null">
+              <span class="summary-stat__label">Likes</span>
+              <span class="summary-stat__value">{{ likesCount }}</span>
+            </div>
+            <div class="summary-stat" *ngIf="commentsCount != null">
+              <span class="summary-stat__label">Comments</span>
+              <span class="summary-stat__value">{{ commentsCount }}</span>
+            </div>
+            <div class="summary-stat" *ngIf="sharesCount != null">
+              <span class="summary-stat__label">Shares</span>
+              <span class="summary-stat__value">{{ sharesCount }}</span>
+            </div>
+            <div class="summary-stat" *ngIf="reachCount != null">
+              <span class="summary-stat__label">Reach</span>
+              <span class="summary-stat__value">{{ reachCount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Campaign platform hint -->
-    <div *ngIf="campaignPlatforms.length" class="alert-info mb-3">
+    <div *ngIf="!isReadOnly && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
       <i class="bi bi-info-circle"></i>
       Campaign platforms: <strong>{{ campaignPlatforms.join(', ') }}</strong>.
       Only relevant post types are shown below.
     </div>
 
-    <!-- Special instructions -->
-    <div *ngIf="specialInstructions" class="alert-info mb-3">
+    <!-- Special instructions (editing only) -->
+    <div *ngIf="!isReadOnly && specialInstructions" class="alert-info alert-info--instructions mb-3">
       <i class="bi bi-chat-left-text"></i>
-      <strong>Brand instructions:</strong> {{ specialInstructions }}
+      <div class="alert-info__content">
+        <strong>Brand instructions</strong>
+        <div class="instructions-text">{{ formatSpecialInstructions(specialInstructions) }}</div>
+      </div>
     </div>
 
+
+    <!-- Error -->
+    <div *ngIf="error" class="alert-error">{{ error }}</div>
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
-    <div class="form-section">
+    <div class="form-section" *ngIf="!isReadOnly">
       <div class="section-heading">
         <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
         <ng-container *ngIf="isLocationCampaign">Content details</ng-container>
@@ -88,6 +163,7 @@
             class="field-input"
             [(ngModel)]="postUrl"
             (ngModelChange)="onPostUrlChange()"
+            [disabled]="isReadOnly"
             [placeholder]="isLocationCampaign ? 'https://www.instagram.com/p/... (story, reel, or post about your visit)' : 'https://www.instagram.com/p/...'"
           />
           <span *ngIf="detectedPlatform" class="platform-badge">
@@ -106,8 +182,10 @@
         <div class="pill-group">
           <button
             *ngFor="let pt of postTypes"
+            type="button"
             class="pill"
             [class.selected]="postType === pt.key"
+            [disabled]="isReadOnly"
             (click)="postType = pt.key"
           >{{ pt.label }}</button>
         </div>
@@ -120,13 +198,14 @@
           class="field-input"
           rows="3"
           [(ngModel)]="captionUsed"
+          [disabled]="isReadOnly"
           [placeholder]="isLocationCampaign ? 'What caption did you write about your visit?' : 'What caption did you write for this post?'"
         ></textarea>
       </div>
     </div>
 
     <!-- ─── SECTION 2: Proof ─────────────────────────── -->
-    <div class="form-section">
+    <div class="form-section" *ngIf="!isReadOnly">
       <div class="section-heading">
         Proof
         <span class="opt" style="font-size:0.82rem; font-weight:400; margin-left:6px;">
@@ -147,7 +226,7 @@
           <span class="opt" style="margin-left:4px;">(optional — strongly recommended)</span>
         </label>
         <label class="upload-box" [class.has-image]="postScreenshotUrl" [class.uploading]="screenshotUploading">
-          <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onScreenshotChange($event)">
+          <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onScreenshotChange($event)" [disabled]="isReadOnly">
           <ng-container *ngIf="!postScreenshotUrl && !screenshotUploading">
             <i class="bi bi-cloud-upload-fill upload-icon"></i>
             <div class="upload-label">
@@ -161,7 +240,7 @@
             <span>Uploading…</span>
           </div>
           <img *ngIf="postScreenshotUrl && !screenshotUploading" [src]="postScreenshotUrl" class="upload-preview" alt="Screenshot">
-          <button *ngIf="postScreenshotUrl" type="button" class="upload-change" (click)="$event.preventDefault(); postScreenshotUrl=''">
+          <button *ngIf="postScreenshotUrl && !isReadOnly" type="button" class="upload-change" (click)="$event.preventDefault(); postScreenshotUrl=''">
             <i class="bi bi-pencil"></i> Change
           </button>
         </label>
@@ -169,38 +248,49 @@
     </div>
 
     <!-- ─── SECTION 3: Stats ─────────────────────────── -->
-    <div class="form-section">
-      <button class="stats-toggle" (click)="showStats = !showStats">
+    <div class="form-section" *ngIf="!isReadOnly">
+
+      <!-- Insights locked: 24h window hasn't passed yet -->
+      <div class="insights-lock-banner" *ngIf="insightsLocked">
+        <i class="bi bi-clock-history"></i>
+        <div>
+          <strong>Insights unlock in {{ insightsCountdown }}</strong>
+          <p class="mb-0">Screenshot your analytics (likes, views, reach) and come back after 24 hours of posting.</p>
+          <small *ngIf="selectedPostDate">Your posting date: {{ selectedPostDate | date:'mediumDate' }}</small>
+        </div>
+      </div>
+
+      <button class="stats-toggle" type="button" (click)="showStats = !showStats" [disabled]="insightsLocked">
         <i class="bi" [class.bi-chevron-down]="!showStats" [class.bi-chevron-up]="showStats"></i>
-        Add performance stats <span class="opt">(optional — you can add these later)</span>
+        Add performance stats <span class="opt">({{ insightsLocked ? 'unlocks in ' + insightsCountdown : 'optional — you can add these later' }})</span>
       </button>
 
-      <div *ngIf="showStats" class="stats-grid">
+      <div *ngIf="showStats && !insightsLocked" class="stats-grid">
         <div class="stat-field">
           <label>Views / Plays</label>
-          <input type="number" min="0" class="field-input" [(ngModel)]="viewsCount" placeholder="0">
+          <input type="number" min="0" class="field-input" [(ngModel)]="viewsCount" [disabled]="isReadOnly" placeholder="0">
         </div>
         <div class="stat-field">
           <label>Likes</label>
-          <input type="number" min="0" class="field-input" [(ngModel)]="likesCount" placeholder="0">
+          <input type="number" min="0" class="field-input" [(ngModel)]="likesCount" [disabled]="isReadOnly" placeholder="0">
         </div>
         <div class="stat-field">
           <label>Comments</label>
-          <input type="number" min="0" class="field-input" [(ngModel)]="commentsCount" placeholder="0">
+          <input type="number" min="0" class="field-input" [(ngModel)]="commentsCount" [disabled]="isReadOnly" placeholder="0">
         </div>
         <div class="stat-field">
           <label>Shares</label>
-          <input type="number" min="0" class="field-input" [(ngModel)]="sharesCount" placeholder="0">
+          <input type="number" min="0" class="field-input" [(ngModel)]="sharesCount" [disabled]="isReadOnly" placeholder="0">
         </div>
         <div class="stat-field">
           <label>Reach (unique)</label>
-          <input type="number" min="0" class="field-input" [(ngModel)]="reachCount" placeholder="0">
+          <input type="number" min="0" class="field-input" [(ngModel)]="reachCount" [disabled]="isReadOnly" placeholder="0">
         </div>
 
         <div class="field-group full-width mt-3">
           <label class="field-label">Insights screenshot <span class="opt">(optional)</span></label>
           <label class="upload-box upload-box--sm" [class.has-image]="insightsScreenshotUrl" [class.uploading]="insightsUploading">
-            <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onInsightsChange($event)">
+            <input type="file" accept="image/png,image/jpeg,image/jpg" style="display:none" (change)="onInsightsChange($event)" [disabled]="isReadOnly">
             <ng-container *ngIf="!insightsScreenshotUrl && !insightsUploading">
               <i class="bi bi-bar-chart-fill upload-icon"></i>
               <div class="upload-label">Upload screenshot from app analytics/insights</div>
@@ -211,7 +301,7 @@
               <span>Uploading…</span>
             </div>
             <img *ngIf="insightsScreenshotUrl && !insightsUploading" [src]="insightsScreenshotUrl" class="upload-preview" alt="Insights">
-            <button *ngIf="insightsScreenshotUrl" type="button" class="upload-change" (click)="$event.preventDefault(); insightsScreenshotUrl=''">
+            <button *ngIf="insightsScreenshotUrl && !isReadOnly" type="button" class="upload-change" (click)="$event.preventDefault(); insightsScreenshotUrl=''">
               <i class="bi bi-pencil"></i> Change
             </button>
           </label>

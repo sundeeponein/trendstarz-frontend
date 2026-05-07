@@ -36,7 +36,7 @@
     </ng-container>
     <div class="txn-card txn-card--neutral">
       <div class="txn-card__label">Total Transactions</div>
-      <div class="txn-card__value">{{ transactions.length }}</div>
+      <div class="txn-card__value">{{ totalRecordsCount }}</div>
     </div>
   </div>
 
@@ -65,45 +65,58 @@
   <div class="txn-list" *ngIf="!loading && !error">
 
     <!-- Empty state -->
-    <div class="txn-empty" *ngIf="activeRows.length === 0">
+    <div class="txn-empty" *ngIf="activeGroups.length === 0">
       <i class="bi bi-inbox"></i>
       <p *ngIf="activeTab === 'pending'">No pending transactions.</p>
       <p *ngIf="activeTab === 'completed'">No completed transactions yet.</p>
     </div>
 
-    <!-- Transaction rows -->
-    <div class="txn-row" *ngFor="let tx of activeRows">
+    <!-- Transaction rows (grouped by payment batch / UTR) -->
+    <div class="txn-row" *ngFor="let g of activeGroups">
       <div class="txn-row__left">
-        <!-- Type icon -->
-        <div class="txn-row__icon" [class.txn-row__icon--green]="tx.payoutStatus === 'paid' || tx.collectionStatus === 'verified'"
-             [class.txn-row__icon--amber]="tx.payoutStatus !== 'paid' && tx.collectionStatus !== 'verified'">
-          <i class="bi bi-cash-stack" *ngIf="tx.transactionType === 'paid_collab'"></i>
-          <i class="bi bi-ticket-perforated" *ngIf="tx.transactionType === 'pay_to_join'"></i>
-        </div>
+        <!-- Brand image / TrendstarZ logo fallback -->
+           <div class="txn-row__avatar">
+          <img [src]="g.primary.otherPartyLogo || '/assets/logo-trendstarz-logo-text.png'"
+            [alt]="g.primary.otherPartyName || 'Brand'"
+            class="txn-row__avatar-img"
+            onerror="this.src='/assets/logo-trendstarz-logo-text.png'">
+           </div>
 
         <!-- Details -->
         <div class="txn-row__info">
           <div class="txn-row__campaign">
-            {{ tx.campaignTitle || 'Campaign' }}
+            {{ g.primary.campaignTitle || 'Campaign' }}
           </div>
           <div class="txn-row__meta">
-            <span class="txn-row__type">{{ typeLabel(tx) }}</span>
+            <span class="txn-row__type">{{ typeLabel(g.primary) }}</span>
             <span class="txn-row__sep">·</span>
-            <span class="txn-row__party" *ngIf="tx.otherPartyName">
-              {{ isInfluencer ? 'Brand' : 'Influencer' }}: {{ tx.otherPartyName }}
+            <span class="txn-row__party" *ngIf="groupPartyLabel(g)">
+              {{ isInfluencer ? 'Brand' : 'From' }}: {{ groupPartyLabel(g) }}
             </span>
           </div>
+          <div class="txn-row__group-toggle" *ngIf="g.count > 1" (click)="$event.stopPropagation(); toggleGroup(g.key)">
+            <i class="bi" [ngClass]="isGroupExpanded(g.key) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            {{ g.count }} influencers · {{ isGroupExpanded(g.key) ? 'Hide' : 'Show' }} breakdown
+          </div>
+          <!-- Expanded influencer breakdown -->
+          <div class="txn-row__breakdown" *ngIf="g.count > 1 && isGroupExpanded(g.key)">
+            <div class="txn-row__breakdown-row" *ngFor="let tx of g.rows">
+              <span class="txn-row__breakdown-name">{{ tx.otherPartyName || 'Influencer' }}</span>
+              <span class="txn-row__breakdown-amount">{{ influencerAmountDisplay(tx) }}</span>
+              <span class="txn-row__breakdown-status" [ngClass]="statusClass(tx)">{{ statusLabel(tx) }}</span>
+            </div>
+          </div>
           <div class="txn-row__dates">
-            <span>Created: {{ formatDate(tx.createdAt) }}</span>
-            <span *ngIf="tx.paidOutAt" class="ms-2">· Paid: {{ formatDate(tx.paidOutAt) }}</span>
-            <span *ngIf="tx.collectedAt" class="ms-2">· Collected: {{ formatDate(tx.collectedAt) }}</span>
+            <span>Created: {{ formatDate(g.primary.createdAt) }}</span>
+            <span *ngIf="g.primary.paidOutAt" class="ms-2">· Paid: {{ formatDate(g.primary.paidOutAt) }}</span>
+            <span *ngIf="g.primary.collectedAt" class="ms-2">· Collected: {{ formatDate(g.primary.collectedAt) }}</span>
           </div>
           <!-- UTR / proof if available -->
-          <div class="txn-row__utr" *ngIf="tx.utrNumber">
-            <i class="bi bi-hash"></i> UTR: <code>{{ tx.utrNumber }}</code>
+          <div class="txn-row__utr" *ngIf="g.primary.utrNumber">
+            <i class="bi bi-hash"></i> UTR: <code>{{ g.primary.utrNumber }}</code>
           </div>
-          <div class="txn-row__utr" *ngIf="tx.payoutUtr">
-            <i class="bi bi-hash"></i> Payout UTR: <code>{{ tx.payoutUtr }}</code>
+          <div class="txn-row__utr" *ngIf="g.primary.payoutUtr">
+            <i class="bi bi-hash"></i> Payout UTR: <code>{{ g.primary.payoutUtr }}</code>
           </div>
         </div>
       </div>
@@ -112,13 +125,13 @@
         <div class="txn-row__amount"
              [class.txn-row__amount--green]="isInfluencer"
              [class.txn-row__amount--red]="isBrand">
-          {{ amountDisplay(tx) }}
+          {{ groupAmountDisplay(g) }}
         </div>
-        <div class="txn-row__status" [ngClass]="statusClass(tx)">
-          {{ statusLabel(tx) }}
+        <div class="txn-row__status" [ngClass]="statusClass(g.primary)">
+          {{ statusLabel(g.primary) }}
         </div>
-        <div class="txn-row__fee" *ngIf="isBrand && tx.platformFee">
-          Incl. platform fee: {{ formatPaise(tx.platformFee) }}
+        <div class="txn-row__fee" *ngIf="isBrand && g.totalPlatformFee">
+          Incl. platform fee: {{ formatPaise(g.totalPlatformFee) }}
         </div>
       </div>
     </div>

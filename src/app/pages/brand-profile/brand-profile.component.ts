@@ -44,6 +44,11 @@ export class BrandProfileComponent implements OnInit {
     private cd: ChangeDetectorRef
   ) {}
 
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+  }
+
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
   step1Complete: boolean = false;
@@ -380,7 +385,7 @@ export class BrandProfileComponent implements OnInit {
         this.languagesList = dropdownData.languages || [];
         this.categoriesList = dropdownData.categories || [];
 
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const token = this.getToken();
         if (token) {
           this.configService.getBrandProfileById().subscribe({
         next: (profile: any) => {
@@ -645,7 +650,7 @@ export class BrandProfileComponent implements OnInit {
       }, 1200);
       return;
     }
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = this.getToken();
     if (!token) {
       this.paymentError = 'Not logged in.';
       return;
@@ -976,7 +981,7 @@ export class BrandProfileComponent implements OnInit {
     delete payload.premiumDuration;
     delete payload.productImages;
     delete payload.googleMapAddress;
-    let token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
+    const token = this.getToken();
     this.configService.updateBrandProfile(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;

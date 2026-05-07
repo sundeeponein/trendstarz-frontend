@@ -23,9 +23,11 @@ export class AdminPaymentsComponent {
   }
 
   onError(message: string) {
-    this.error = message;
-    this.successMessage = '';
-    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.error = message;
+      this.successMessage = '';
+      this.cdr.markForCheck();
+    });
   }
 
   onSuccess(message: string) {
