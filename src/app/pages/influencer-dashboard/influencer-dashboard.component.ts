@@ -251,29 +251,6 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  respondToInvite(inviteId: string, status: 'accepted' | 'declined') {
-    const selectedPostDate = status === 'accepted' ? this.selectedPostDates[inviteId] : undefined;
-    if (status === 'accepted' && !selectedPostDate) {
-      this.error = 'Please choose a posting date before accepting invite.';
-      return;
-    }
-    const invite = this.invites.find(i => i._id === inviteId);
-    if (status === 'accepted' && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
-      this.error = 'Posting date must be within campaign start and end dates.';
-      return;
-    }
-    const options = this.getInviteContentTypeOptions(invite);
-    const chosen = this.selectedContentTypes[inviteId];
-    if (status === 'accepted' && options.length > 0 && !chosen) {
-      this.error = 'Please select what you will create for this campaign.';
-      return;
-    }
-    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType).subscribe(() => {
-      this.ngOnInit();
-    });
-  }
-
   respond(inviteId: string, status: 'accepted' | 'declined') {
     if (this.responding) return;
     const selectedPostDate = status === 'accepted' ? this.selectedPostDates[inviteId] : undefined;
@@ -490,29 +467,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return c?.title || c?.campaignTitle || '(untitled)';
   }
 
-  getCampaignDesc(inv: any): string {
-    return this.getCampaign(inv)?.description || '';
-  }
-
   getCampaignCategories(inv: any): string[] {
     const c = this.getCampaign(inv);
     if (Array.isArray(c?.categories) && c.categories.length) return c.categories;
     if (c?.category) return [c.category];
     return [];
-  }
-
-  getCampaignBudget(inv: any): { min: number; max: number } | null {
-    const c = this.getCampaign(inv);
-    if (c?.budgetMin != null || c?.budgetMax != null) return { min: c.budgetMin || 0, max: c.budgetMax || 0 };
-    if (c?.budget) return { min: c.budget, max: c.budget };
-    return null;
-  }
-
-  formatCampaignBudget(inv: any): string {
-    const b = this.getCampaignBudget(inv);
-    if (!b) return '—';
-    if (b.min === b.max || !b.max) return `₹${b.min.toLocaleString('en-IN')}`;
-    return `₹${b.min.toLocaleString('en-IN')} – ₹${b.max.toLocaleString('en-IN')}`;
   }
 
   getCampaignTimeline(inv: any): { start: string; end: string } | null {
@@ -527,62 +486,6 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     if (!t) return '—';
     const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '?';
     return `${fmt(t.start)} – ${fmt(t.end)}`;
-  }
-
-  getDaysLeft(inv: any): string {
-    const t = this.getCampaignTimeline(inv);
-    if (!t?.end) return '';
-    const diff = Math.ceil((new Date(t.end).getTime() - Date.now()) / 86400000);
-    if (diff < 0) return 'Ended';
-    if (diff === 0) return 'Ends today';
-    return `${diff} days left`;
-  }
-
-  getCampaignPlatform(inv: any): string {
-    const c = this.getCampaign(inv);
-    return c?.platformPreference || c?.platform || '';
-  }
-
-  getMinTier(inv: any): string {
-    const c = this.getCampaign(inv);
-    return (c?.minInfluencerTier || '').trim();
-  }
-
-  getCampaignDeliverables(inv: any): string[] {
-    const c = this.getCampaign(inv);
-    if (Array.isArray(c?.deliverables)) return c.deliverables;
-    return [];
-  }
-
-  getSpecialInstructions(inv: any): string {
-    const c = this.getCampaign(inv);
-    return c?.specialInstructions || c?.instructions || '';
-  }
-
-  /** Returns array of { platform, handle, contentTypes:[{name,enabled,price}] }
-   *  Falls back to a single entry built from the campaign's platformPreference field */
-  getDetailSocialMedia(inv: any): any[] {
-    const c = this.getCampaign(inv);
-    if (Array.isArray(c?.socialMedia) && c.socialMedia.length) return c.socialMedia;
-    // Fallback: build a single row from platform + influencer's own social media handle
-    const platform = c?.platformPreference || c?.platform;
-    if (!platform) return [];
-    const b = this.getBrand(inv);
-    const matching = (b?.socialMedia || []).find((s: any) =>
-      (s.platform || '').toLowerCase() === platform.toLowerCase()
-    );
-    return [{ platform, handle: matching?.handle || '', contentTypes: [] }];
-  }
-
-  getPlatformIcon(platform: string): string {
-    const p = (platform || '').toLowerCase();
-    if (p.includes('instagram')) return 'bi bi-instagram';
-    if (p.includes('youtube')) return 'bi bi-youtube';
-    if (p.includes('twitter') || p.includes('x')) return 'bi bi-twitter-x';
-    if (p.includes('facebook')) return 'bi bi-facebook';
-    if (p.includes('linkedin')) return 'bi bi-linkedin';
-    if (p.includes('tiktok')) return 'bi bi-tiktok';
-    return 'bi bi-share';
   }
 
   formatDateRange(start: string, end: string): string {
@@ -621,10 +524,6 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   onCompleteProfile() {
     // Navigate to influencer profile page
     window.location.href = '/influencer-profile';
-  }
-
-  submitContent(inviteId: string) {
-    // Implement navigation to submission page or modal
   }
 
   goToSubmit(campaign: any) {
