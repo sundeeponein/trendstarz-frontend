@@ -17,6 +17,7 @@ export class TransactionsComponent implements OnInit {
   loading = true;
   error = '';
   activeTab: 'pending' | 'completed' = 'pending';
+  expandedGroups = new Set<string>();
 
   /** Summary values in paise */
   summary = { totalEarned: 0, totalPending: 0, totalPaid: 0 };
@@ -47,6 +48,10 @@ export class TransactionsComponent implements OnInit {
     return this.isInfluencer ? 'Received' : 'Paid Out';
   }
 
+  get totalRecordsCount(): number {
+    return this.groupTransactions(this.transactions).length;
+  }
+
   get pendingTab(): any[] {
     return this.transactions.filter(tx => {
       if (this.isInfluencer) {
@@ -71,6 +76,10 @@ export class TransactionsComponent implements OnInit {
 
   get activeRows(): any[] {
     return this.activeTab === 'pending' ? this.pendingTab : this.completedTab;
+  }
+
+  get activeGroups(): Array<{ key: string; rows: any[]; primary: any; count: number; totalAmount: number; totalPlatformFee: number; partyNames: string[] }> {
+    return this.groupTransactions(this.activeRows);
   }
 
   load() {
@@ -153,7 +162,82 @@ export class TransactionsComponent implements OnInit {
     return '-' + this.formatPaise(tx.payerTotal);
   }
 
+  groupAmountDisplay(group: { totalAmount: number }): string {
+    return (this.isInfluencer ? '+' : '-') + this.formatPaise(group.totalAmount);
+  }
+
+  groupPartyLabel(group: { count: number; partyNames: string[]; primary: any }): string {
+    if (this.isInfluencer) return group.primary?.otherPartyName || '';
+    if (group.count > 1) return `${group.count} influencers`;
+    return group.partyNames[0] || group.primary?.otherPartyName || '';
+  }
+
+  groupInfluencerNames(group: { partyNames: string[] }): string {
+    return group.partyNames.join(', ');
+  }
+
+  private groupTransactions(rows: any[]): Array<{ key: string; rows: any[]; primary: any; count: number; totalAmount: number; totalPlatformFee: number; partyNames: string[] }> {
+    const groups = new Map<string, { key: string; rows: any[]; primary: any; count: number; totalAmount: number; totalPlatformFee: number; partyNames: string[] }>();
+
+    for (const tx of rows) {
+      const key = this.groupKey(tx);
+      const amount = this.isInfluencer ? Number(tx.recipientPayout || 0) : Number(tx.payerTotal || 0);
+      const fee = Number(tx.platformFee || 0);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          rows: [tx],
+          primary: tx,
+          count: 1,
+          totalAmount: amount,
+          totalPlatformFee: fee,
+          partyNames: tx.otherPartyName ? [tx.otherPartyName] : [],
+        });
+        continue;
+      }
+
+      const g = groups.get(key)!;
+      g.rows.push(tx);
+      g.count += 1;
+      g.totalAmount += amount;
+      g.totalPlatformFee += fee;
+      if (tx.otherPartyName && !g.partyNames.includes(tx.otherPartyName)) {
+        g.partyNames.push(tx.otherPartyName);
+      }
+    }
+
+    return Array.from(groups.values());
+  }
+
+  private groupKey(tx: any): string {
+    const batchId = (tx.paymentBatchId || '').trim();
+    if (batchId) return `batch:${batchId}`;
+
+    const utr = (tx.utrNumber || '').trim();
+    if (utr) return `utr:${tx.campaignId || ''}:${utr}`;
+
+    return `tx:${tx._id || tx.inviteId || tx.createdAt || Math.random()}`;
+  }
+
   setTab(tab: 'pending' | 'completed') {
     this.activeTab = tab;
+  }
+
+  toggleGroup(key: string) {
+    if (this.expandedGroups.has(key)) {
+      this.expandedGroups.delete(key);
+    } else {
+      this.expandedGroups.add(key);
+    }
+  }
+
+  isGroupExpanded(key: string): boolean {
+    return this.expandedGroups.has(key);
+  }
+
+  influencerAmountDisplay(tx: any): string {
+    if (this.isInfluencer) return '+' + this.formatPaise(tx.recipientPayout);
+    return this.formatPaise(tx.recipientPayout);
   }
 }

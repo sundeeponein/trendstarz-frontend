@@ -70,15 +70,24 @@ const PRODUCT_ACCEPTED_INVITE = {
 };
 
 async function setBrandAuth(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('token', 'fake-brand-jwt');
+  const fakeJwt = (() => {
+    try {
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload: any = { role: 'brand', name: 'Test Brand', userId: 'brand_001' };
+      payload.exp = Math.floor(Date.now() / 1000) + 60 * 60;
+      const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${b64(header)}.${b64(payload)}.`;
+    } catch (e) {
+      return BRAND_TOKEN;
+    }
+  })();
+
+  await page.addInitScript((jwt) => {
+    localStorage.setItem('token', jwt as any);
     localStorage.setItem('userRole', 'brand');
     localStorage.setItem('loginTimestamp', Date.now().toString());
-    localStorage.setItem(
-      'user',
-      JSON.stringify({ role: 'brand', _id: 'brand_001', name: 'Test Brand' }),
-    );
-  });
+    localStorage.setItem('user', JSON.stringify({ role: 'brand', _id: 'brand_001', name: 'Test Brand' }));
+  }, fakeJwt);
 }
 
 async function mockBaseRoutes(page: Page) {
@@ -100,6 +109,11 @@ async function mockBaseRoutes(page: Page) {
   await page.route('**/users/brand-profile', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: { brand: { _id: 'brand_001', brandName: 'TestBrand', brandUsername: 'testbrand' } } }) }));
+  // Auth / me - brand user
+  await page.route('**/auth/me', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { _id: 'brand_001', role: 'brand', name: 'Test Brand' } }) }));
+  await page.route('**/api/auth/me', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { _id: 'brand_001', role: 'brand', name: 'Test Brand' } }) }));
   await page.route('**/users/influencers', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [] }) }));
@@ -153,7 +167,10 @@ test.describe('Brand — Slice E actions (Remind / Withdraw / Report)', () => {
     });
 
     await page.goto('/campaigns');
-    await page.waitForTimeout(3000);
+    // Trigger change detection and allow the list to render
+    await page.waitForTimeout(500);
+    await page.locator('body').click();
+    await page.waitForTimeout(1500);
 
     const inviteBtn = page.locator('.btn-invite').first();
     await inviteBtn.waitFor({ state: 'visible', timeout: 15000 });
@@ -254,18 +271,17 @@ test.describe('Brand — Slice E actions (Remind / Withdraw / Report)', () => {
     });
 
     await page.goto('/campaigns');
-    await page.waitForTimeout(3000);
     const inviteBtn = page.locator('.btn-invite').first();
     await inviteBtn.waitFor({ state: 'visible', timeout: 15000 });
     await inviteBtn.click();
     await expect(page.locator('.invite-drawer')).toBeVisible({ timeout: 5000 });
-    await page.waitForTimeout(1500);
+    await page.waitForSelector('.btn-action.btn-report', { state: 'visible', timeout: 5000 });
 
     const reportBtn = page.locator('.btn-action.btn-report').first();
     await expect(reportBtn).toBeVisible({ timeout: 5000 });
+    await reportBtn.scrollIntoViewIfNeeded();
     await reportBtn.click({ force: true });
-
-    await page.waitForTimeout(500);
+    await expect.poll(() => reportCalled, { timeout: 10000 }).toBe(true);
     expect(reportCalled).toBe(true);
     expect(reportBody?.reason).toContain('never delivered');
   });

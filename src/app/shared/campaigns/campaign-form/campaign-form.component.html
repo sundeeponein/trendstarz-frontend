@@ -87,6 +87,22 @@
         </div>
 
         <div class="field-group">
+          <label class="field-label">Campaign access mode <span class="required">*</span></label>
+          <select formControlName="campaignMode" class="field-input">
+            <option value="invite_only">🔒 Invite only — you pick &amp; invite influencers</option>
+            <option value="tier_filtered_open">🌐 Tier-filtered open — influencers apply</option>
+          </select>
+          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
+            <i class="bi bi-person-check"></i>
+            You manually select and invite specific influencers in Step 3.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+            <i class="bi bi-globe2"></i>
+            Eligible influencers matching your minimum tier (and optional location) can discover and apply. You review applicants from the dashboard.
+          </p>
+        </div>
+
+        <div class="field-group">
           <label class="field-label">Campaign title <span class="required">*</span></label>
           <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
@@ -190,6 +206,18 @@
         <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDateRange']">
           End date must be on or after start date.
         </span>
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Acceptance deadline <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="datetime-local" formControlName="acceptanceDeadline" class="field-input" />
+          </div>
+        </div>
+        <span class="field-error" *ngIf="f['acceptanceDeadline'].touched && form.errors?.['invalidAcceptanceDeadline']">
+          Acceptance deadline is invalid.
+        </span>
+        <span class="field-error" *ngIf="f['acceptanceDeadline'].touched && form.errors?.['invalidAcceptanceDeadlineRange']">
+          Acceptance deadline must be between campaign start and end dates.
+        </span>
         <p class="field-sublabel">
           Note: Influencers can only choose a posting date within your selected start and end dates when accepting invites.
         </p>
@@ -226,6 +254,24 @@
             <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
           </div>
         </div>
+
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label">Min accepted to close campaign <span class="required">*</span></label>
+            <input type="number" formControlName="minInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
+            <span class="field-error" *ngIf="f['minInfluencers'].touched && f['minInfluencers'].invalid">Enter at least 1</span>
+          </div>
+          <div class="field-group half">
+            <label class="field-label">Close rule preview</label>
+            <div class="field-input" style="display:flex; align-items:center; min-height:44px;">
+              Close accepts at {{ f['minInfluencers'].value || 0 }} / {{ f['maxInfluencers'].value || 0 }}
+            </div>
+          </div>
+        </div>
+
+        <span class="field-error" *ngIf="(f['minInfluencers'].touched || f['maxInfluencers'].touched) && form.errors?.['invalidMinMaxInfluencers']">
+          Min accepted cannot be greater than max influencers.
+        </span>
 
         <p class="field-sublabel" *ngIf="selectedCampaignType === 'paid_collab'">
           <i class="bi bi-info-circle"></i>
@@ -289,7 +335,7 @@
             placeholder="Any joining terms, quality checks, timeline, and acceptance rules..."></textarea>
         </div>
 
-        <p class="trust-note"><i class="bi bi-shield-check"></i> Brand pays only for accepted influencers</p>
+        <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted influencers</p>
 
         <div class="field-group">
           <label class="field-label">Content categories <span class="required">*</span></label>
@@ -384,6 +430,30 @@
           </select>
         </div>
 
+        <!-- ── Location targeting (only for tier_filtered_open) ── -->
+        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+          <label class="field-label">Target location <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <p class="field-sublabel" style="margin-bottom:8px;">
+            <i class="bi bi-geo-alt"></i>
+            Limit applicants to influencers from a specific state and/or city. Leave blank to accept from anywhere in India.
+          </p>
+          <div class="field-row">
+            <div class="field-group half">
+              <select formControlName="targetState" class="field-input">
+                <option value="">All states (India-wide)</option>
+                <option *ngFor="let s of states" [value]="s.name">{{ s.name }}</option>
+              </select>
+            </div>
+            <div class="field-group half">
+              <select formControlName="targetDistrict" class="field-input"
+                      [attr.disabled]="!f['targetState'].value || !targetDistricts.length ? true : null">
+                <option value="">{{ f['targetState'].value ? (targetDistricts.length ? 'All districts' : 'Loading…') : 'Select state first' }}</option>
+                <option *ngFor="let d of targetDistricts" [value]="d.name">{{ d.name }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="field-group">
           <div class="field-label-row">
             <label class="field-label">Special instructions / brief</label>
@@ -421,7 +491,8 @@
           <i class="bi bi-arrow-left"></i> Back
         </button>
         <button type="button" class="btn btn-next" (click)="nextStep()">
-          Next — Invite influencers <i class="bi bi-arrow-right"></i>
+          {{ f['campaignMode'].value === 'tier_filtered_open' ? 'Next — Review &amp; Publish' : 'Next — Invite influencers' }}
+          <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </form>
@@ -432,131 +503,186 @@
     <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
 
-        <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
-          <div *ngIf="f['pricePerInfluencer'].value">Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
-          <div>
-            Invited: <strong>{{ invitedCount }}</strong>
-            <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
-            &nbsp;/ <strong>{{ f['maxInfluencers'].value }}</strong>
+        <!-- ── TIER-FILTERED OPEN: no manual invites, influencers apply ── -->
+        <ng-container *ngIf="f['campaignMode'].value === 'tier_filtered_open'; else inviteOnlyStep3">
+
+          <div class="open-campaign-info">
+            <div class="open-campaign-icon"><i class="bi bi-globe2"></i></div>
+            <h4>Open Campaign — Influencers apply directly</h4>
+            <p>
+              This is a <strong>Tier-filtered open</strong> campaign. Once published, eligible influencers
+              who meet your minimum tier requirement will be able to discover it and send an application.
+              You review each application and approve or decline from your campaign dashboard.
+            </p>
+            <ul class="open-campaign-steps">
+              <li><i class="bi bi-1-circle-fill"></i> Publish the campaign — it becomes visible to eligible influencers</li>
+              <li><i class="bi bi-2-circle-fill"></i> Influencers matching your minimum tier apply</li>
+              <li><i class="bi bi-3-circle-fill"></i> You review &amp; approve applicants from the dashboard</li>
+              <li><i class="bi bi-4-circle-fill"></i> Approved influencers proceed with posting &amp; payment as usual</li>
+            </ul>
+            <p class="field-sublabel" style="margin-top:12px;">
+              <i class="bi bi-info-circle"></i>
+              You can also manually invite specific influencers from the campaign dashboard after saving.
+            </p>
           </div>
-          <div *ngIf="f['pricePerInfluencer'].value">Estimated total: <strong>₹{{ (takenSlotsCount * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
-        </div>
 
-        <p class="field-error" *ngIf="selectionLimitError">
-          {{ selectionLimitError }}
-        </p>
+          <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
+            <div>Max slots: <strong>{{ f['maxInfluencers'].value }}</strong></div>
+            <div *ngIf="f['minInfluencerTier'].value">
+              Min tier: <strong>{{ f['minInfluencerTier'].value }}</strong>
+            </div>
+            <div *ngIf="f['targetState'].value">
+              Target: <strong>{{ f['targetState'].value }}</strong>
+              <span *ngIf="f['targetDistrict'].value"> · {{ f['targetDistrict'].value }}</span>
+            </div>
+            <div *ngIf="!f['targetState'].value">Location: <strong>India-wide (all states)</strong></div>
+          </div>
 
-        <div class="inf-search-box">
-          <i class="bi bi-search"></i>
-          <input type="text" [(ngModel)]="influencerSearch" [ngModelOptions]="{standalone: true}" class="inf-search-input"
-                 placeholder="Search by name, category, or location…" />
-        </div>
+          <p class="step-indicator">Step 3 of 3</p>
+        </ng-container>
 
-        <div class="chip-list chip-list--sm">
-          <button type="button" class="chip chip--sm"
-            [class.chip--selected]="!filterCategory && !filterTier && !filterPlatform"
-            (click)="filterCategory=''; filterTier=''; filterPlatform=''">All</button>
-          <button type="button" class="chip chip--sm"
-                  *ngFor="let cat of getUniqueCategoryFilters()"
-                  [class.chip--selected]="filterCategory === cat"
-                  (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
-          <button type="button" class="chip chip--sm"
-            *ngFor="let tier of getAvailableTierFilters()"
-            [class.chip--selected]="filterTier === tier"
-            (click)="filterTier = filterTier === tier ? '' : tier">{{ tier }}</button>
-          <button type="button" class="chip chip--sm"
-                  [class.chip--selected]="filterPlatform === 'instagram'"
-                  (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
-          <button type="button" class="chip chip--sm"
-                  [class.chip--selected]="filterPlatform === 'youtube'"
-                  (click)="filterPlatform = filterPlatform === 'youtube' ? '' : 'youtube'">YouTube</button>
-        </div>
+        <!-- ── INVITE ONLY: manual influencer selection ── -->
+        <ng-template #inviteOnlyStep3>
 
-        <div class="inf-sel-bar" *ngIf="selectedInfluencerIds.size > 0">
-          <span class="inf-sel-count">
-            {{ selectedInfluencerIds.size }} influencer{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
-          </span>
-          <button type="button" class="btn btn-send" [disabled]="uploading" (click)="onSubmit()">
+          <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
+            <div *ngIf="f['pricePerInfluencer'].value">Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
+            <div>
+              Invited: <strong>{{ invitedCount }}</strong>
+              <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
+              &nbsp;/ <strong>{{ f['maxInfluencers'].value }}</strong>
+            </div>
+            <div *ngIf="f['pricePerInfluencer'].value">Estimated total: <strong>₹{{ (takenSlotsCount * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
+          </div>
+
+          <p class="field-error" *ngIf="selectionLimitError">
+            {{ selectionLimitError }}
+          </p>
+
+          <div class="inf-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" [(ngModel)]="influencerSearch" [ngModelOptions]="{standalone: true}" class="inf-search-input"
+                   placeholder="Search by name, category, or location…" />
+          </div>
+
+          <div class="chip-list chip-list--sm">
+            <button type="button" class="chip chip--sm"
+              [class.chip--selected]="!filterCategory && !filterTier && !filterPlatform"
+              (click)="filterCategory=''; filterTier=''; filterPlatform=''">All</button>
+            <button type="button" class="chip chip--sm"
+                    *ngFor="let cat of getUniqueCategoryFilters()"
+                    [class.chip--selected]="filterCategory === cat"
+                    (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
+            <button type="button" class="chip chip--sm"
+              *ngFor="let tier of getAvailableTierFilters()"
+              [class.chip--selected]="filterTier === tier"
+              (click)="filterTier = filterTier === tier ? '' : tier">{{ tier }}</button>
+            <button type="button" class="chip chip--sm"
+                    [class.chip--selected]="filterPlatform === 'instagram'"
+                    (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
+            <button type="button" class="chip chip--sm"
+                    [class.chip--selected]="filterPlatform === 'youtube'"
+                    (click)="filterPlatform = filterPlatform === 'youtube' ? '' : 'youtube'">YouTube</button>
+          </div>
+
+          <div class="inf-sel-bar" *ngIf="selectedInfluencerIds.size > 0">
+            <span class="inf-sel-count">
+              {{ selectedInfluencerIds.size }} influencer{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
+            </span>
+            <button type="button" class="btn btn-send" [disabled]="uploading" (click)="onSubmit()">
+              <span *ngIf="uploading">Saving…</span>
+              <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
+            </button>
+          </div>
+
+          <div class="trust-note-list">
+            <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
+          </div>
+
+          <div class="text-center py-4" *ngIf="influencersLoading">
+            <div class="spinner-border spinner-border-sm text-warning"></div>
+            <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading influencers…</p>
+          </div>
+
+          <div class="inf-list" *ngIf="!influencersLoading">
+            <div class="inf-row"
+              *ngFor="let inf of filteredInfluencers"
+              [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
+              [class.inf-row--invited]="isInfluencerInvited(inf)"
+              [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
+              (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
+              <app-user-avatar
+                [name]="inf.fullName || inf.name || inf.username || ''"
+                [src]="getInfluencerAvatar(inf)"
+                [size]="44"
+              ></app-user-avatar>
+              <div class="inf-info">
+                  <p class="inf-name">
+                   {{ inf.fullName || inf.name || 'Influencer' }}
+                   <i class="bi bi-patch-check-fill" *ngIf="inf.isPremium" title="Verified Premium"
+                     style="color:#22c55e;font-size:0.85rem;vertical-align:middle;margin-left:3px;"></i>
+                  </p>
+                <p class="inf-meta">
+                  <ng-container *ngIf="inf.location?.state">{{ inf.location.state }}</ng-container>
+                  <ng-container *ngIf="inf.location?.state && (inf.contentNiche || (inf.categories || []).length > 0)"> · </ng-container>
+                  <ng-container *ngIf="inf.contentNiche">{{ inf.contentNiche }}</ng-container>
+                  <ng-container *ngIf="!inf.contentNiche && (inf.categories || []).length > 0">{{ inf.categories[0] }}</ng-container>
+                </p>
+                <div class="inf-tags">
+                  <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
+                  <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
+                </div>
+              </div>
+              <div class="inf-right">
+                <span class="inf-engagement" *ngIf="inf.avgEngagement">
+                  Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
+                </span>
+                <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
+                  <span class="inf-invited-badge badge rounded-pill bg-success"><i class="bi bi-check-circle-fill"></i> Invited</span>
+                </ng-container>
+                <ng-template #selectable>
+                  <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">
+                    <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(inf._id)"></i>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
+            <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
+              <i class="bi bi-search"></i>
+              <p>No influencers match your filters.</p>
+            </div>
+          </div>
+
+          <p class="step-indicator">Step 3 of 3</p>
+        </ng-template>
+
+      </div>
+
+      <!-- Footer changes based on mode -->
+      <div class="form-footer" *ngIf="f['campaignMode'].value === 'tier_filtered_open'; else inviteOnlyFooter">
+        <button type="button" class="btn btn-back" (click)="prevStep()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-send" [disabled]="uploading" (click)="skipAndSave()">
+          <span *ngIf="uploading">Saving…</span>
+          <span *ngIf="!uploading">Publish campaign <i class="bi bi-arrow-right"></i></span>
+        </button>
+      </div>
+      <ng-template #inviteOnlyFooter>
+        <div class="form-footer">
+          <button type="button" class="btn btn-back" (click)="prevStep()">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+          <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading">
+            {{ isEdit ? 'Save changes' : 'Save as draft' }}
+          </button>
+          <button type="button" class="btn btn-send"
+            [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
             <span *ngIf="uploading">Saving…</span>
             <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
           </button>
         </div>
-
-        <div class="trust-note-list">
-          <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
-        </div>
-
-        <div class="text-center py-4" *ngIf="influencersLoading">
-          <div class="spinner-border spinner-border-sm text-warning"></div>
-          <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading influencers…</p>
-        </div>
-
-        <div class="inf-list" *ngIf="!influencersLoading">
-          <div class="inf-row"
-            *ngFor="let inf of filteredInfluencers"
-            [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
-            [class.inf-row--invited]="isInfluencerInvited(inf)"
-            [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
-            (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
-            <app-user-avatar
-              [name]="inf.fullName || inf.name || inf.username || ''"
-              [src]="getInfluencerAvatar(inf)"
-              [size]="44"
-            ></app-user-avatar>
-            <div class="inf-info">
-                <p class="inf-name">
-                 {{ inf.fullName || inf.name || 'Influencer' }}
-                 <i class="bi bi-patch-check-fill" *ngIf="inf.isPremium" title="Verified Premium"
-                   style="color:#22c55e;font-size:0.85rem;vertical-align:middle;margin-left:3px;"></i>
-                </p>
-              <p class="inf-meta">
-                <ng-container *ngIf="inf.location?.state">{{ inf.location.state }}</ng-container>
-                <ng-container *ngIf="inf.location?.state && (inf.contentNiche || (inf.categories || []).length > 0)"> · </ng-container>
-                <ng-container *ngIf="inf.contentNiche">{{ inf.contentNiche }}</ng-container>
-                <ng-container *ngIf="!inf.contentNiche && (inf.categories || []).length > 0">{{ inf.categories[0] }}</ng-container>
-              </p>
-              <div class="inf-tags">
-                <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
-                <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
-              </div>
-            </div>
-            <div class="inf-right">
-              <span class="inf-engagement" *ngIf="inf.avgEngagement">
-                Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
-              </span>
-              <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
-                <span class="inf-invited-badge badge rounded-pill bg-success"><i class="bi bi-check-circle-fill"></i> Invited</span>
-              </ng-container>
-              <ng-template #selectable>
-                <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(inf._id)">
-                  <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(inf._id)"></i>
-                </div>
-              </ng-template>
-            </div>
-          </div>
-
-          <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
-            <i class="bi bi-search"></i>
-            <p>No influencers match your filters.</p>
-          </div>
-        </div>
-
-        <p class="step-indicator">Step 3 of 3</p>
-      </div>
-
-      <div class="form-footer">
-        <button type="button" class="btn btn-back" (click)="prevStep()">
-          <i class="bi bi-arrow-left"></i> Back
-        </button>
-        <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading">
-          {{ isEdit ? 'Save changes' : 'Save as draft' }}
-        </button>
-        <button type="button" class="btn btn-send"
-          [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
-          <span *ngIf="uploading">Saving…</span>
-          <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
-        </button>
-      </div>
+      </ng-template>
     </form>
 
     </div><!-- /.modal-content -->

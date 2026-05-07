@@ -47,11 +47,23 @@ const MOCK_FREE_PLAN = {
 };
 
 async function setInfluencerAuth(page: Page) {
-  await page.addInitScript(({ token }) => {
-    localStorage.setItem('token', token);
+  const fakeJwt = (() => {
+    try {
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload: any = { role: 'influencer', name: 'Test Influencer', userId: 'inf_001' };
+      payload.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+      const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${b64(header)}.${b64(payload)}.`;
+    } catch (e) {
+      return INFLUENCER_TOKEN;
+    }
+  })();
+
+  await page.addInitScript((jwt) => {
+    localStorage.setItem('token', jwt);
     localStorage.setItem('loginTimestamp', Date.now().toString());
     localStorage.setItem('user', JSON.stringify({ role: 'influencer', _id: 'inf_001', name: 'Test Influencer' }));
-  }, { token: INFLUENCER_TOKEN });
+  }, fakeJwt);
 }
 
 async function mockUpgradeRoutes(page: Page) {
@@ -71,6 +83,14 @@ async function mockUpgradeRoutes(page: Page) {
       await route.continue();
     }
   });
+  // Auth / me - return influencer user so frontend doesn't redirect
+  await page.route('**/auth/me', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { _id: 'inf_001', role: 'influencer', name: 'Test Influencer' } }) });
+  });
+  // Plans capabilities for current user
+  await page.route('**/plans/my/capabilities', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ hasPremium: false, planName: 'Free', features: [], limits: [{ key: 'maxProfileImages', value: 1 }], policies: { imageRetentionDaysAfterExpiry: 45 }, endDate: null }) });
+  });
 }
 
 test.describe('Premium Upgrade', () => {
@@ -78,8 +98,11 @@ test.describe('Premium Upgrade', () => {
     await setInfluencerAuth(page);
     await mockUpgradeRoutes(page);
     await page.goto('/upgrade-premium');
-    await page.waitForSelector('.upgrade-card', { state: 'visible' });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('.upgrade-card, .plan-card', { state: 'visible' });
+    await page.waitForTimeout(1000);
+    // Trigger change detection in zoneless Angular
+    await page.locator('body').click();
+    await page.waitForTimeout(500);
   });
 
   test('renders plan selection step with plan cards', async ({ page }) => {
@@ -175,12 +198,10 @@ test.describe('Premium Upgrade', () => {
     await page.waitForTimeout(500);
     await page.click('.btn-upgrade:has-text("Proceed to Payment")');
     await page.waitForTimeout(500);
-    // Default is UPI
-    await expect(page.locator('.pay-tab.active')).toContainText('UPI');
-    // Switch to QR
-    await page.click('.pay-tab:has-text("QR Code")');
-    await page.waitForTimeout(300);
-    await expect(page.locator('.qr-section')).toBeVisible();
+    // UPI block should be visible (new payment UI)
+    await expect(page.locator('.pchk-upi-block')).toBeVisible();
+    // QR block should also be visible
+    await expect(page.locator('.pchk-qr-block')).toBeVisible();
   });
 
   test('confirm payment without UTR shows error', async ({ page }) => {
@@ -188,13 +209,11 @@ test.describe('Premium Upgrade', () => {
     await page.waitForTimeout(500);
     await page.click('.btn-upgrade:has-text("Proceed to Payment")');
     await page.waitForTimeout(500);
-    // Click confirm without entering UTR
-    await page.click('.btn-upgrade:has-text("Confirm Payment")');
-    await page.waitForTimeout(500);
-    await page.locator('body').click();
-    await page.waitForTimeout(300);
-    await expect(page.locator('.upgrade-error')).toBeVisible();
-    await expect(page.locator('.upgrade-error')).toContainText('enter the UPI Transaction ID');
+    // Confirm button should be disabled when UTR is empty
+    const confirmBtn = page.locator('.btn-upgrade:has-text("Confirm Payment")');
+    await expect(confirmBtn).toBeDisabled();
+    // There should be no upgrade error yet
+    await expect(page.locator('.upgrade-error')).toHaveCount(0);
   });
 
   test('confirm payment with UTR posts to API and shows success', async ({ page }) => {

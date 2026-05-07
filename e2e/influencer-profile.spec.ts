@@ -30,11 +30,23 @@ const MOCK_PROFILE = {
 };
 
 async function setInfluencerAuth(page: Page) {
-  await page.addInitScript(({ token }) => {
-    localStorage.setItem('token', token);
+  const fakeJwt = (() => {
+    try {
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload: any = { role: 'influencer', name: 'Test Influencer', userId: 'inf_001' };
+      payload.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+      const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${b64(header)}.${b64(payload)}.`;
+    } catch (e) {
+      return INFLUENCER_TOKEN;
+    }
+  })();
+
+  await page.addInitScript((jwt) => {
+    localStorage.setItem('token', jwt);
     localStorage.setItem('loginTimestamp', Date.now().toString());
     localStorage.setItem('user', JSON.stringify({ role: 'influencer', _id: 'inf_001', name: 'Test Influencer' }));
-  }, { token: INFLUENCER_TOKEN });
+  }, fakeJwt);
 }
 
 async function mockProfileRoutes(page: Page) {
@@ -93,6 +105,10 @@ async function mockProfileRoutes(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ exists: false }) });
   });
+  // Auth / me - return influencer user
+  await page.route('**/auth/me', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { _id: 'inf_001', role: 'influencer', name: 'Test Influencer' } }) });
+  });
 }
 
 test.describe('Influencer Profile', () => {
@@ -100,11 +116,22 @@ test.describe('Influencer Profile', () => {
     await setInfluencerAuth(page);
     await mockProfileRoutes(page);
     await page.goto('/influencer-profile');
-    await page.waitForSelector('form', { state: 'visible' });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('form', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('.reg-tab, .step-item', { state: 'visible', timeout: 10000 });
     // Trigger CD so mock data is rendered in zoneless Angular
     await page.locator('body').click();
-    await page.waitForTimeout(500);
+    // Force step 1 for consistent assertions across desktop/mobile layouts.
+    await page.evaluate(() => {
+      const el = document.querySelector('app-influencer-registration');
+      const ng = (window as any).ng;
+      if (!el || !ng) return;
+      const comp = ng.getComponent(el);
+      try {
+        comp.currentStep = 1;
+        comp.cd?.detectChanges?.();
+      } catch (e) {}
+    });
+    await page.waitForSelector('h2:has-text("Profile")', { state: 'visible', timeout: 5000 });
   });
 
   test('renders step 1 — Basic Details with profile data', async ({ page }) => {

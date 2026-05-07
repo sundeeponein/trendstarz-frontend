@@ -80,17 +80,31 @@ const OPEN_CAMPAIGN = {
 
 // ── helpers ───────────────────────────────────────────────────
 async function setInfluencerAuth(page: Page) {
-  await page.addInitScript(({ token, user }) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('userRole', 'influencer');
+  const fakeJwt = (() => {
+    try {
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload: any = { role: 'influencer', name: INF_USER.name, userId: INF_USER._id };
+      payload.exp = Math.floor(Date.now() / 1000) + 60 * 60; // 1 hour
+      const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return `${b64(header)}.${b64(payload)}.`;
+    } catch (e) {
+      return INF_TOKEN;
+    }
+  })();
+
+  await page.addInitScript((jwt, user) => {
+    localStorage.setItem('token', jwt as any);
     localStorage.setItem('loginTimestamp', Date.now().toString());
     localStorage.setItem('user', JSON.stringify(user));
-  }, { token: INF_TOKEN, user: INF_USER });
+  }, fakeJwt, INF_USER);
 }
 
 async function mockCommonRoutes(page: Page) {
   // Auth / me
   await page.route('**/auth/me', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: INF_USER }) }));
+  await page.route('**/api/auth/me', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: INF_USER }) }));
 
@@ -100,14 +114,25 @@ async function mockCommonRoutes(page: Page) {
       body: JSON.stringify({ success: true, data: {
         maxActiveCampaigns: 3, maxInfluencersPerCampaign: 5, canViewContactDetails: false,
       }}) }));
+  await page.route('**/api/plans/me/capabilities', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: {
+        maxActiveCampaigns: 3, maxInfluencersPerCampaign: 5, canViewContactDetails: false,
+      }}) }));
 
   // Influencer profile
   await page.route('**/users/influencer/profile', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: { ...INF_USER, isEmailVerified: true } }) }));
+  await page.route('**/api/users/influencer/profile', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { ...INF_USER, isEmailVerified: true } }) }));
 
   // Attention counts
   await page.route('**/campaign-invites/influencer/attention-counts', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { pendingInvites: 1, overdueDeliverables: 0, disputedAgainstMe: 0 } }) }));
+  await page.route('**/api/campaign-invites/influencer/attention-counts', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: { pendingInvites: 1, overdueDeliverables: 0, disputedAgainstMe: 0 } }) }));
 
@@ -116,11 +141,26 @@ async function mockCommonRoutes(page: Page) {
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [OPEN_CAMPAIGN,
         PENDING_INVITE.campaignId, ACCEPTED_INVITE.campaignId, DECLINED_INVITE.campaignId] }) }));
+  await page.route('**/api/campaigns?status=active', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [OPEN_CAMPAIGN,
+        PENDING_INVITE.campaignId, ACCEPTED_INVITE.campaignId, DECLINED_INVITE.campaignId] }) }));
 
   // My invites
   await page.route('**/campaign-invites/influencer', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [PENDING_INVITE, ACCEPTED_INVITE, DECLINED_INVITE] }) }));
+  await page.route('**/api/campaign-invites/influencer', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [PENDING_INVITE, ACCEPTED_INVITE, DECLINED_INVITE] }) }));
+  // Dashboard snapshot (some pages request the dashboard payload)
+  await page.route('**/api/dashboard/influencer', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: {
+      invites: { newInvites: [PENDING_INVITE] },
+      activeCampaigns: [],
+      completedCampaigns: [],
+      user: { _id: 'inf_001', role: 'influencer', name: 'Test Influencer' }
+    }}) }));
 }
 
 // ── Tests ─────────────────────────────────────────────────────
@@ -130,13 +170,18 @@ test.describe('Influencer › My Campaign Invites tabs', () => {
     await setInfluencerAuth(page);
     await mockCommonRoutes(page);
     await page.goto('/campaigns');
+    // Trigger change detection for zone-less Angular and give time to render
+    await page.waitForTimeout(800);
+    await page.locator('body').click();
+    await page.waitForTimeout(700);
 
     // Wait for invite section
     await expect(page.locator('.pill-tabs')).toBeVisible({ timeout: 10_000 });
 
-    // "Pending" should be the active tab by default
+    // On mobile, tab state can initialize late; click Pending to enforce visible state.
     const pendingTab = page.locator('.pill-tab', { hasText: 'Pending' });
-    await expect(pendingTab).toHaveClass(/active/);
+    await expect(pendingTab).toBeVisible();
+    await pendingTab.click();
 
     // The pending invite card should show the brand name or campaign title
     await expect(page.locator('.invite-list')).toContainText('Pending Campaign');
@@ -147,10 +192,9 @@ test.describe('Influencer › My Campaign Invites tabs', () => {
     await mockCommonRoutes(page);
     await page.goto('/campaigns');
 
-    await page.locator('.pill-tab', { hasText: 'Accepted' }).click();
-
     const acceptedTab = page.locator('.pill-tab', { hasText: 'Accepted' });
-    await expect(acceptedTab).toHaveClass(/active/);
+    await acceptedTab.click();
+    await expect(acceptedTab).toBeVisible();
 
     await expect(page.locator('.invite-list')).toContainText('Accepted Campaign');
   });

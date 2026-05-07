@@ -33,6 +33,9 @@ interface ContentTypeOption {
 export class CampaignDetailModalComponent {
   @Input() invite: any;
   @Input() visible = false;
+  // Optional: platform/tier that the current influencer qualifies with for this campaign
+  @Input() qualifyingPlatform?: string | null;
+  @Input() qualifyingTier?: string | null;
   @Input() showDateInput = true;
   @Input() busy = false;
   @Input() set initialPostDate(v: string | undefined) {
@@ -51,6 +54,7 @@ export class CampaignDetailModalComponent {
   selectedContentTypeKey = '';
   toastError = '';
   private toastTimer: any;
+  // Previously used to delay pointer-events; removed now that modal mounts immediately.
 
   private get campaign(): any {
     return this.invite?.campaign || this.invite?.campaignId || {};
@@ -196,7 +200,12 @@ export class CampaignDetailModalComponent {
     const sm = this.campaign?.socialMedia;
     if (Array.isArray(sm) && sm.length) {
       const outputs: string[] = [];
+      const locked = this.normalized(this.lockedPlatform);
+      const qualifying = this.qualifyingPlatformKeySet;
       for (const row of sm) {
+        const rowPlatform = this.normalized(row?.platform || '');
+        if (locked && rowPlatform && rowPlatform !== locked) continue;
+        if (!locked && qualifying.size && rowPlatform && !qualifying.has(rowPlatform)) continue;
         const platform = this.platformLabel(row?.platform || '');
         for (const ct of row?.contentTypes || []) {
           if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
@@ -208,13 +217,36 @@ export class CampaignDetailModalComponent {
     return Array.isArray(legacy) ? legacy : [];
   }
 
+
+  get lockedPlatform(): string {
+    return String(this.invite?.selectedPlatform || '').trim();
+  }
+
+  isOptionSelectable(opt: ContentTypeOption): boolean {
+    if (!this.lockedPlatform) return true;
+    return this.normalized(opt.platform) === this.normalized(this.lockedPlatform);
+  }
+
   get platforms(): { platform: string }[] {
     const c = this.campaign;
     if (Array.isArray(c?.socialMedia) && c.socialMedia.length) {
-      return c.socialMedia.map((sm: any) => ({ platform: sm.platform || '' }));
+      const list = c.socialMedia.map((sm: any) => ({ platform: sm.platform || '' }));
+      const qualifying = this.qualifyingPlatformKeySet;
+      if (!this.lockedPlatform && qualifying.size) {
+        const filteredByQual = list.filter((p: any) => qualifying.has(this.normalized(p.platform)));
+        return filteredByQual.length ? filteredByQual : [];
+      }
+      if (!this.lockedPlatform) return list;
+      const locked = this.normalized(this.lockedPlatform);
+      const filtered = list.filter((p: any) => this.normalized(p.platform) === locked);
+      return filtered.length ? filtered : list;
     }
     if (Array.isArray(c?.platforms) && c.platforms.length) {
-      return c.platforms.map((p: string) => ({ platform: p }));
+      const list = c.platforms.map((p: string) => ({ platform: p }));
+      if (!this.lockedPlatform) return list;
+      const locked = this.normalized(this.lockedPlatform);
+      const filtered = list.filter((p: any) => this.normalized(p.platform) === locked);
+      return filtered.length ? filtered : list;
     }
     return [];
   }
@@ -240,9 +272,35 @@ export class CampaignDetailModalComponent {
     return out;
   }
 
+  get selectableContentTypeOptions(): ContentTypeOption[] {
+    const qualifying = this.qualifyingPlatformKeySet;
+    return this.contentTypeOptions.filter((opt) => {
+      if (!this.isOptionSelectable(opt)) return false;
+      if (!this.lockedPlatform && qualifying.size) return qualifying.has(this.normalized(opt.platform));
+      return true;
+    });
+  }
+
+  /** UI options shown to influencer; for tier-locked invites we show only relevant platform choices. */
+  get displayContentTypeOptions(): ContentTypeOption[] {
+    return this.lockedPlatform || this.qualifyingPlatformKeySet.size
+      ? this.selectableContentTypeOptions
+      : this.contentTypeOptions;
+  }
+
+  private normalized(v: string): string {
+    return (v || '').toLowerCase().trim();
+  }
+
+  private get qualifyingPlatformKeySet(): Set<string> {
+    const set = new Set<string>();
+    if (this.qualifyingPlatform) set.add(this.normalized(this.qualifyingPlatform));
+    return set;
+  }
+
   get selectedContentTypeOption(): ContentTypeOption | undefined {
     if (!this.selectedContentTypeKey) return undefined;
-    return this.contentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
+    return this.selectableContentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
   }
 
   get selectedPayoutHint(): string {
@@ -271,7 +329,7 @@ export class CampaignDetailModalComponent {
   get checklistContentTypeText(): string {
     const selected = this.selectedContentTypeOption;
     if (selected?.contentType) return selected.contentType;
-    if (this.contentTypeOptions.length > 0) return 'Select one before accepting';
+    if (this.selectableContentTypeOptions.length > 0) return 'Select one before accepting';
     return 'As discussed with brand';
   }
 
@@ -309,6 +367,13 @@ export class CampaignDetailModalComponent {
     return loc.state || loc.district || '';
   }
   get brandWebsite(): string { return this.brand?.website || ''; }
+  get brandWebsiteHref(): string {
+    const raw = String(this.brandWebsite || '').trim();
+    if (!raw) return '';
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) return raw;
+    if (raw.startsWith('//')) return `https:${raw}`;
+    return `https://${raw}`;
+  }
   get brandProfileLink(): any[] | null {
     const slug = this.brand?.brandUsername || this.brand?.brandName;
     return slug ? ['/brand', slug] : null;
@@ -376,8 +441,16 @@ export class CampaignDetailModalComponent {
       this.showToastError('Please select a posting date before accepting.');
       return;
     }
-    if (this.contentTypeOptions.length && !this.selectedContentTypeKey) {
+    if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
       this.showToastError('Please select a content type before accepting.');
+      return;
+    }
+    if (this.selectedContentTypeKey && !this.selectedContentTypeOption) {
+      this.showToastError(
+        this.lockedPlatform
+          ? `Please choose a content option only for ${this.platformLabel(this.lockedPlatform)}.`
+          : 'Please select a valid content type.'
+      );
       return;
     }
     this.toastError = '';

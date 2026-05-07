@@ -30,6 +30,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   // detail modal state
   selectedInvite: any = null;
+  selectedInviteManual = false;
   responding: string | null = null;
   selectedPostDates: Record<string, string> = {};
   // Content type selection: key = inviteId, value = "platform::contentType"
@@ -42,6 +43,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     mobile: '',
     accountHolderName: '',
   };
+  selectedInviteQualifyingPlatform: string | null = null;
+  selectedInviteQualifyingTier: string | null = null;
+  myInfluencerSocialMedia: Array<{ platform: string; tier: string }> = [];
   paymentHistory: any[] = [];
   paymentSummary = {
     earnedThisMonth: 0,
@@ -93,6 +97,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
               mobile: profile?.payout?.mobile || profile?.phoneNumber || '',
               accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
             };
+            this.myInfluencerSocialMedia = (profile?.socialMedia || []).map((sm: any) => ({ platform: sm.platform || '', tier: sm.tier || '' }));
             // Only call setUser if profile data is different
             const merged = { ...user, ...profile };
             const isSame = JSON.stringify(user) === JSON.stringify(merged);
@@ -355,11 +360,26 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   openDetail(invite: any) {
     this.error = '';
     this.selectedInvite = invite;
+    this.selectedInviteManual = true;
+    // compute qualifying platform/tier for this invite's campaign (treat minInfluencerTier as tier-filtered)
+    const campaign = invite?.campaign || invite?.campaignId || null;
+    const isTierFiltered = !!campaign && (String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!campaign?.minInfluencerTier);
+    if (campaign && isTierFiltered) {
+      const qual = this.computeQualifyingPlatformAndTierForCampaign(campaign);
+      this.selectedInviteQualifyingPlatform = qual?.platform || null;
+      this.selectedInviteQualifyingTier = qual?.tier || null;
+    } else {
+      this.selectedInviteQualifyingPlatform = null;
+      this.selectedInviteQualifyingTier = null;
+    }
     this.cdr.markForCheck();
   }
 
   closeDetail() {
     this.selectedInvite = null;
+    this.selectedInviteManual = false;
+    this.selectedInviteQualifyingPlatform = null;
+    this.selectedInviteQualifyingTier = null;
     this.cdr.markForCheck();
   }
 
@@ -401,6 +421,39 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.selectedPostDates[inviteId] = value;
   }
 
+  private computeQualifyingPlatformAndTierForCampaign(campaign: any): { platform?: string; tier?: string } | null {
+    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
+    const normalized = (s: string) => (s || '').toLowerCase().trim();
+    const mySm = this.myInfluencerSocialMedia || [];
+    if (!mySm.length) return null;
+
+    let candidates = mySm;
+    const campaignPlatforms: string[] = (campaign as any)?.platforms || [];
+    if (campaignPlatforms.length > 0) {
+      candidates = candidates.filter(smEntry => campaignPlatforms.some(p => normalized(p) === normalized(smEntry.platform)));
+    }
+    if (!candidates.length) return null;
+
+    const minTier: string = (campaign as any)?.minInfluencerTier || '';
+    const minIdx = TIER_ORDER.indexOf(minTier);
+    if (minIdx !== -1) {
+      candidates = candidates.filter(smEntry => {
+        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
+        return idx !== -1 && idx === minIdx;
+      });
+    }
+    if (!candidates.length) return null;
+
+    // pick highest tier among candidates (safe in case multiple match)
+    let best = candidates[0];
+    let bestIdx = TIER_ORDER.indexOf(best.tier || '');
+    for (const c of candidates) {
+      const idx = TIER_ORDER.indexOf(c.tier || '');
+      if (idx > bestIdx) { bestIdx = idx; best = c; }
+    }
+    return { platform: best.platform, tier: best.tier };
+  }
+
   onCardContentTypeChange(inviteId: string, key: string) {
     this.selectedContentTypes[inviteId] = key;
   }
@@ -425,8 +478,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   getBrandLogo(inv: any): string | null {
     const b = this.getBrand(inv);
-    const logo = b?.logoUrl || b?.profileImage || b?.logo;
-    return logo || null;
+    // brandLogo is an array of Cloudinary objects { url, public_id }
+    if (Array.isArray(b?.brandLogo) && b.brandLogo.length) {
+      return b.brandLogo[0]?.url || null;
+    }
+    return b?.logoUrl || b?.profileImage || b?.logo || null;
   }
 
   getCampaignTitle(inv: any): string {

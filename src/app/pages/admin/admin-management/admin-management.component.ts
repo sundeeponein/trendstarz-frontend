@@ -79,8 +79,13 @@ export class AdminManagementComponent implements OnInit {
     this.activeTab = tab;
   }
 
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
   loadSettings() {
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, headers).subscribe({
       next: (res) => {
@@ -111,7 +116,7 @@ export class AdminManagementComponent implements OnInit {
     this.settingsSaving = true;
     this.settingsSaved = false;
     this.cdr.detectChanges();
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
     // Safety: if the request hangs (backend down / network), unstick the button after 15s.
@@ -285,7 +290,7 @@ export class AdminManagementComponent implements OnInit {
         reloadFn = () => this.loadConfig();
     }
     // debug: batch update payload
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.http.post(baseUrl + '/admin/batch-update-visibility', payload, headers)
       .subscribe({

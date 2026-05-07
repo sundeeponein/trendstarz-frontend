@@ -154,7 +154,10 @@ export class AdminUserTableComponent implements OnInit {
     if (typeof window !== 'undefined') {
       window.addEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
     }
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : null;
     // debug: profile token
     if (token) {
       this.configService.getInfluencerProfileById().subscribe({
@@ -181,7 +184,7 @@ export class AdminUserTableComponent implements OnInit {
     this.isLoading = true;
     let token = '';
     if (typeof window !== 'undefined' && window.localStorage) {
-      token = localStorage.getItem('token') || '';
+      token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     }
     const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const influencerUrl = `${environment.apiBaseUrl}/admin/influencers${this.isDeletedTab() ? '?status=deleted' : ''}`;
@@ -350,7 +353,10 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getAuthHeaders() {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : '';
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 

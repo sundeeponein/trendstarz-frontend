@@ -5,7 +5,7 @@
   border: 1.5px solid #f0ece8;
   border-radius: 0.9rem;
   padding: 1rem 1.2rem;
-  cursor: pointer;
+  // cursor: pointer;
   transition: box-shadow 0.15s, border-color 0.15s;
 
   &:hover { box-shadow: 0 4px 18px #e8612d20; border-color: #e8612d80; }
@@ -27,6 +27,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    align-items:end;
+    justify-content: end;
 
     // hide the row entirely when there's nothing to show
     &:empty { display: none; }
@@ -127,6 +129,32 @@
   border: 1px solid #e5e7eb;
 
   &--deliv { background: #fff3ee; color: #b3461e; border-color: #f3c7b3; }
+}
+
+.inv-platform-lock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+  i {
+    color: #22c55e;
+    font-size: 0.9rem;
+  }
+}
+.inv-platform-lock-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+.inv-platform-lock-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #15803d;
 }
 
 .inv-ct-row {
@@ -448,7 +476,7 @@
 
 // ── Action buttons inside card CTA row ───────────────────────────
 .inv-cta-btn {
-  width: 100%;
+  // width: 100%;
   border: none;
   border-radius: 8px;
   padding: 10px 16px;

@@ -1,0 +1,49 @@
+.hero-block {
+  .pill-label {
+    display:inline-block;
+    background: rgba(255,255,255,0.08);
+    color: #ff7a00;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight:700;
+    font-size:0.8rem;
+  }
+  .hero-title {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #0b1220;
+    margin: 0;
+    .highlight { color: #ff7a00; }
+  }
+  .hero-copy { color: rgba(11,18,32,0.75); font-size:1rem; }
+  .hero-media {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 320px;
+    background-size: cover;
+    background-position: center right;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
+  .hero-media img { display: none; }
+  .media-caption { position: absolute; left:12px; bottom:12px; color:white; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+  .corner-thumb {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    width: 92px;
+    height: 92px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transform: translateZ(0);
+    border: 4px solid rgba(255,255,255,0.06);
+  }
+}
+
+  @media (min-width: 992px) {
+    .hero-block { .hero-title { font-size: 3rem; } .hero-media { min-height: 420px; } }
+}
