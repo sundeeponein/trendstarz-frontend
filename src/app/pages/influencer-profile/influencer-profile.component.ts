@@ -259,6 +259,7 @@ export class InfluencerProfileComponent implements OnInit {
   get imageUploadAllowed(): boolean { return this.currentImageCount < this.maxImages; }
   registrationSuccess = false;
   registrationError = '';
+  registrationSuccessMessage = '';
   registrationForm!: FormGroup;
   states: any[] = [];
   districts: any[] = [];
@@ -797,10 +798,12 @@ export class InfluencerProfileComponent implements OnInit {
       // Inline error is rendered in template; clear registrationError to avoid duplicate.
       this.registrationError = '';
       this.registrationSuccess = false;
+      this.registrationSuccessMessage = '';
       return;
     }
     this.registrationError = '';
     this.registrationSuccess = false;
+    this.registrationSuccessMessage = '';
     const raw = this.registrationForm.getRawValue();
     // Always slugify username before saving
     if (raw.username) {
@@ -891,7 +894,12 @@ export class InfluencerProfileComponent implements OnInit {
       categories: categoryNames,
       socialMedia,
       profileImages,
-      contact: raw.contact
+      contact: raw.contact,
+      payout: {
+        upiId: String(raw?.payout?.upiId || '').trim(),
+        mobile: String(raw?.payout?.mobile || '').trim(),
+        accountHolderName: String(raw?.payout?.accountHolderName || '').trim(),
+      },
     };
     // Never allow profile save to set isPremium or paymentOption — those are payment-gated
     delete payload.paymentOption;
@@ -905,6 +913,12 @@ export class InfluencerProfileComponent implements OnInit {
       next: (res: any) => {
         // debug: PATCH response received
         this.registrationSuccess = true;
+        const payoutSummary = payload.payout?.upiId
+          ? ` Payout saved: ${payload.payout.upiId}`
+          : payload.payout?.mobile
+            ? ` Payout mobile saved: ${payload.payout.mobile}`
+            : '';
+        this.registrationSuccessMessage = `Profile updated successfully.${payoutSummary}`;
         this.isEditMode = false;
         this.registrationForm.disable({ emitEvent: false });
         this.profileImagePreview = null;
@@ -931,8 +945,10 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
+        this.fetchAndPatchProfile().catch(() => {});
       },
       error: err => {
+        this.registrationSuccessMessage = '';
         this.registrationError = 'Update failed. Please try again.';
         console.error('[PATCH error]', err);
       }

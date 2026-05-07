@@ -364,9 +364,11 @@
 
 <!-- Shared Campaign Detail Modal -->
 <app-campaign-detail-modal
-  *ngIf="selectedInvite"
+  *ngIf="selectedInvite && selectedInviteManual"
   [invite]="selectedInvite"
   [visible]="!!selectedInvite"
+  [qualifyingPlatform]="selectedInviteQualifyingPlatform"
+  [qualifyingTier]="selectedInviteQualifyingTier"
   [busy]="responding === selectedInvite._id"
   [initialPostDate]="selectedPostDates[selectedInvite._id]"
   [initialContentTypeKey]="selectedContentTypes[selectedInvite._id]"

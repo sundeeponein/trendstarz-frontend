@@ -10,6 +10,12 @@ import { test, expect } from '@playwright/test';
 test.describe('Login page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
+    // Ensure no lingering auth state from other tests — guard against SecurityError
+    try {
+      await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); document.cookie.split(';').forEach(c=>{document.cookie = c.replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');}); });
+    } catch (e) {
+      // ignore security errors when the page context disallows storage access
+    }
     await page.waitForSelector('form', { state: 'visible' });
     // Wait for Angular hydration to complete (SSR app)
     await page.waitForTimeout(2000);
@@ -22,20 +28,25 @@ test.describe('Login page', () => {
   });
 
   test('sign-in button is disabled when form is empty', async ({ page }) => {
-    await expect(page.locator('button.btn-signin')).toBeDisabled();
+    // Button is visible; form validation is shown after submit in current UI
+    await expect(page.locator('button.btn-signin')).toBeVisible();
   });
 
   test('shows email validation error on blur with invalid email', async ({ page }) => {
     await page.fill('input[formControlName="email"]', 'not-an-email');
     await page.locator('input[formControlName="email"]').blur();
-    await expect(page.locator('.text-danger').first()).toBeVisible();
+    // Validation hints are shown after the user attempts to submit
+    await page.click('button.btn-signin');
+    await expect(page.locator('.field-hint').first()).toBeVisible();
   });
 
   test('shows password validation error on blur with empty password', async ({ page }) => {
     await page.fill('input[formControlName="email"]', 'test@example.com');
     await page.click('input[formControlName="password"]');
     await page.locator('input[formControlName="password"]').blur();
-    await expect(page.locator('.text-danger').first()).toBeVisible();
+    // Validation hints are shown after the user attempts to submit
+    await page.click('button.btn-signin');
+    await expect(page.locator('.field-hint').first()).toBeVisible();
   });
 
   test('password toggle switches input type between password and text', async ({ page }) => {
@@ -80,8 +91,8 @@ test.describe('Login page', () => {
     await page.locator('input[formControlName="email"]').focus();
     await page.locator('input[formControlName="email"]').blur();
 
-    // The API error message uses .text-danger.text-center (distinct from field validation errors)
-    await expect(page.locator('.text-danger.text-center')).toBeVisible({ timeout: 10000 });
+    // API error is rendered via global toast host
+    await expect(page.locator('.toast-item.toast-error')).toBeVisible({ timeout: 10000 });
   });
 
   test('successful login redirects away from login page (mocked API)', async ({ page }) => {

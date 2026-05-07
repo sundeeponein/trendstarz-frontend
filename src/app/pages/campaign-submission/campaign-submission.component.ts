@@ -53,6 +53,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   campaignPlatforms: string[] = [];
   campaignSocialMedia: any[] = [];
   specialInstructions = '';
+  acceptedPlatform = '';
+  acceptedContentType = '';
 
   get isLocationCampaign(): boolean {
     return this.campaignType === 'invite_location';
@@ -102,6 +104,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             this.startCountdown();
           }
           const campaign = res?.campaign;
+          this.acceptedPlatform = String(res?.invite?.selectedPlatform || '').toLowerCase().trim();
+          this.acceptedContentType = String(res?.invite?.selectedContentType || '').toLowerCase().trim();
           if (campaign) {
             this.campaignType = campaign.campaignType || '';
             // Collect platforms from socialMedia (enabled content types)
@@ -113,14 +117,23 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
               this.campaignPlatforms = campaign.platforms.map((p: string) => p.toLowerCase());
             }
             this.specialInstructions = campaign.specialInstructions || '';
-            // Filter post types to only those relevant to the campaign platforms
-            if (this.campaignPlatforms.length) {
-              this.postTypes = this.allPostTypes.filter(pt =>
-                pt.platforms.some(p => this.campaignPlatforms.includes(p))
+            // Filter post types to accepted invite selection first, fallback to campaign platforms.
+            const acceptedTypeKey = this.mapContentTypeToPostType(this.acceptedContentType);
+            if (this.acceptedPlatform && acceptedTypeKey) {
+              this.postTypes = this.allPostTypes.filter(
+                (pt) => pt.key === acceptedTypeKey && pt.platforms.includes(this.acceptedPlatform),
               );
-              // If no match, show all
-              if (!this.postTypes.length) this.postTypes = [...this.allPostTypes];
+              this.campaignPlatforms = [this.acceptedPlatform];
+            } else if (this.acceptedPlatform) {
+              this.postTypes = this.allPostTypes.filter((pt) => pt.platforms.includes(this.acceptedPlatform));
+              this.campaignPlatforms = [this.acceptedPlatform];
+            } else if (this.campaignPlatforms.length) {
+              this.postTypes = this.allPostTypes.filter((pt) =>
+                pt.platforms.some((p) => this.campaignPlatforms.includes(p)),
+              );
             }
+            if (!this.postTypes.length) this.postTypes = [...this.allPostTypes];
+            if (this.postTypes.length === 1) this.postType = this.postTypes[0].key;
             this.cdr.markForCheck();
           }
         },
@@ -190,13 +203,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   onPostUrlChange() {
-    const url = this.postUrl;
-    if (/instagram\.com/i.test(url)) this.detectedPlatform = 'instagram';
-    else if (/youtube\.com|youtu\.be/i.test(url)) this.detectedPlatform = 'youtube';
-    else if (/twitter\.com|x\.com/i.test(url)) this.detectedPlatform = 'twitter';
-    else if (/tiktok\.com/i.test(url)) this.detectedPlatform = 'tiktok';
-    else if (/facebook\.com/i.test(url)) this.detectedPlatform = 'facebook';
-    else this.detectedPlatform = '';
+    this.detectedPlatform = this.detectPlatformFromUrl(this.postUrl);
   }
 
   platformIcon(): string {
@@ -207,6 +214,58 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     if (p === 'tiktok') return 'bi-tiktok';
     if (p === 'facebook') return 'bi-facebook';
     return 'bi-link-45deg';
+  }
+
+  private mapContentTypeToPostType(contentType: string): PostType | '' {
+    const normalized = String(contentType || '').toLowerCase().trim();
+    if (!normalized) return '';
+    if (normalized === 'reel' || normalized === 'reels') return 'reel';
+    if (normalized === 'short' || normalized === 'shorts') return 'short';
+    if (normalized === 'story' || normalized === 'stories') return 'story';
+    if (normalized === 'post' || normalized === 'photo' || normalized === 'image') return 'photo';
+    if (normalized === 'video') return 'video';
+    if (normalized === 'thread' || normalized === 'tweet') return 'thread';
+    return '';
+  }
+
+  private detectPlatformFromUrl(url: string): string {
+    if (/instagram\.com/i.test(url)) return 'instagram';
+    if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube';
+    if (/twitter\.com|x\.com/i.test(url)) return 'twitter';
+    if (/tiktok\.com/i.test(url)) return 'tiktok';
+    if (/facebook\.com/i.test(url)) return 'facebook';
+    if (/linkedin\.com/i.test(url)) return 'linkedin';
+    return 'other';
+  }
+
+  private normalizePlatformKey(platform: string): string {
+    const p = String(platform || '').toLowerCase().trim();
+    if (p === 'x') return 'twitter';
+    return p;
+  }
+
+  formatSpecialInstructions(text: string): string {
+    const raw = String(text || '').trim();
+    if (!raw) return '';
+
+    const headings = [
+      'Dos:',
+      "Don'ts:",
+      'Must include:',
+      'Must mention:',
+      'Before the visit:',
+      'During the visit:',
+      'After the visit:',
+      'Important Notes:',
+    ];
+
+    let formatted = raw;
+    for (const heading of headings) {
+      const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      formatted = formatted.replace(new RegExp(`\\s*${escaped}\\s*`, 'gi'), `\n${heading} `);
+    }
+
+    return formatted.replace(/\s*•\s*/g, '\n• ').trim();
   }
 
   async uploadImage(file: File, type: 'screenshot' | 'insights') {
@@ -282,6 +341,16 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       postUrl: this.postUrl.trim(),
       postScreenshotUrl: this.postScreenshotUrl,
     };
+
+    const submittedPlatform = this.normalizePlatformKey(this.detectPlatformFromUrl(payload.postUrl));
+    const acceptedPlatform = this.normalizePlatformKey(this.acceptedPlatform);
+    if (acceptedPlatform && submittedPlatform !== 'other' && submittedPlatform !== acceptedPlatform) {
+      this.error = `Please submit a ${this.acceptedPlatform} URL as per your accepted platform.`;
+      this.submitting = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
     if (this.postType) payload.postType = this.postType;
     if (this.captionUsed) payload.captionUsed = this.captionUsed;
     // Only include insights data once the 24h window has passed

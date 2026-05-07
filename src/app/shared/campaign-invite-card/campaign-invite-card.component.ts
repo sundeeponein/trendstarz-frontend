@@ -39,6 +39,8 @@ interface ContentTypeOption {
 export class CampaignInviteCardComponent {
   @Input() invite: any;
   @Input() busy = false;
+  @Input() qualifyingPlatforms: string[] | null = null;
+  @Input() influencerSocialMedia: Array<{ platform: string; tier: string }> | null = null;
   /** initial value for the post-date input (one-shot seed) */
   @Input() set initialPostDate(v: string | undefined) {
     if (v && !this.postDate) this.postDate = v;
@@ -110,6 +112,7 @@ export class CampaignInviteCardComponent {
   get showWaitingUnlock(): boolean {
     const s = this.status;
     if (this.isUnlocked) return false;
+    if (s === 'accepted' && this.campaignTypeKey === 'paid_collab') return false;
     return ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(s);
   }
 
@@ -325,7 +328,19 @@ export class CampaignInviteCardComponent {
   get maxPostDate(): string { return (this.timelineRange.end || '').substring(0, 10); }
 
   get platformText(): string {
-    // For tier_filtered_open campaigns, show the specific platform the influencer applied on
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
+    if (this.isActionable && (isTierFiltered || this.hasMultiplePlatformChoices)) {
+      if (this.qualifyingPlatformChoices.length) {
+        return this.qualifyingPlatformChoices.map((platform) => this.platformLabel(platform)).join(', ');
+      }
+      // For tier-filtered campaigns, do not fall back to showing all campaign platforms
+      // when the influencer doesn't qualify for any; show nothing instead.
+      if (isTierFiltered) return '';
+      const c = this.campaign;
+      if (Array.isArray(c?.platforms) && c.platforms.length) return c.platforms.join(', ');
+    }
+    // Show locked/selected platform when available
     const selected = this.invite?.selectedPlatform;
     if (selected) return selected;
     const c = this.campaign;
@@ -338,9 +353,19 @@ export class CampaignInviteCardComponent {
 
   get selectedOutputs(): string[] {
     const sm = this.campaign?.socialMedia;
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
+    const qualifying = this.qualifyingPlatformKeySet;
+    // If campaign is tier-filtered and influencer doesn't qualify for any platform,
+    // do not show legacy deliverables — return empty list.
+    if (isTierFiltered && qualifying.size === 0) return [];
     if (Array.isArray(sm) && sm.length) {
       const outputs: string[] = [];
+      const locked = this.normalized(this.lockedPlatform);
       for (const row of sm) {
+        const rowPlatform = this.normalized(row?.platform || '');
+        if (locked && rowPlatform && rowPlatform !== locked) continue;
+        if (!locked && qualifying.size && rowPlatform && !qualifying.has(rowPlatform)) continue;
         const platform = this.platformLabel(row?.platform || '');
         for (const ct of row?.contentTypes || []) {
           if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
@@ -350,6 +375,85 @@ export class CampaignInviteCardComponent {
     }
     const legacy = this.campaign?.deliverables;
     return Array.isArray(legacy) ? legacy : [];
+  }
+
+  private normalized(v: string): string {
+    return (v || '').toLowerCase().trim();
+  }
+
+  private get qualifyingPlatformChoices(): string[] {
+    const explicitChoices = Array.isArray(this.qualifyingPlatforms) ? this.qualifyingPlatforms : [];
+    const derivedChoices = explicitChoices.length ? explicitChoices : this.deriveTierQualifyingPlatforms();
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const platform of derivedChoices) {
+      const normalizedPlatform = this.normalized(platform);
+      if (!normalizedPlatform || seen.has(normalizedPlatform)) continue;
+      seen.add(normalizedPlatform);
+      out.push(String(platform).trim());
+    }
+    return out;
+  }
+
+  private deriveTierQualifyingPlatforms(): string[] {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
+    if (!isTierFiltered) return [];
+    const socials = Array.isArray(this.influencerSocialMedia) && this.influencerSocialMedia.length
+      ? this.influencerSocialMedia
+      : Array.isArray(this.invite?.influencerId?.socialMedia)
+        ? this.invite.influencerId.socialMedia
+        : [];
+    if (!socials.length) return [];
+
+    const tierOrder = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
+    const requiredTier = String(this.campaign?.minInfluencerTier || '').trim();
+    const requiredTierIndex = tierOrder.indexOf(requiredTier);
+    if (requiredTier && requiredTierIndex === -1) return [];
+
+    const campaignPlatforms = Array.isArray(this.campaign?.platforms) ? this.campaign.platforms : [];
+    const allowedPlatforms = new Set(campaignPlatforms.map((platform: string) => this.normalized(platform)));
+
+    return socials
+      .filter((entry: any) => {
+        const platformKey = this.normalized(entry?.platform || '');
+        if (!platformKey) return false;
+        if (allowedPlatforms.size && !allowedPlatforms.has(platformKey)) return false;
+        if (requiredTierIndex === -1) return true;
+        return tierOrder.indexOf(String(entry?.tier || '').trim()) === requiredTierIndex;
+      })
+      .map((entry: any) => String(entry?.platform || '').trim())
+      .filter(Boolean);
+  }
+
+  private get qualifyingPlatformKeySet(): Set<string> {
+    return new Set(this.qualifyingPlatformChoices.map((platform) => this.normalized(platform)));
+  }
+
+  private get hasMultiplePlatformChoices(): boolean {
+    const sm = this.campaign?.socialMedia;
+    if (!Array.isArray(sm) || !sm.length) return false;
+    const qualifying = this.qualifyingPlatformKeySet;
+    const platforms = new Set<string>();
+    for (const row of sm) {
+      const platform = String(row?.platform || '').trim();
+      if (!platform) continue;
+      if (qualifying.size && !qualifying.has(this.normalized(platform))) continue;
+      const hasEnabled = Array.isArray(row?.contentTypes) && row.contentTypes.some((ct: any) => !!ct?.enabled);
+      if (hasEnabled) platforms.add(this.normalized(platform));
+    }
+    return platforms.size > 1;
+  }
+
+  get lockedPlatform(): string {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    if (this.isActionable && (campaignMode === 'tier_filtered_open' || this.hasMultiplePlatformChoices)) return '';
+    return String(this.invite?.selectedPlatform || '').trim();
+  }
+
+  isOptionSelectable(opt: ContentTypeOption): boolean {
+    if (!this.lockedPlatform) return true;
+    return this.normalized(opt.platform) === this.normalized(this.lockedPlatform);
   }
 
   get contentTypeOptions(): ContentTypeOption[] {
@@ -373,9 +477,36 @@ export class CampaignInviteCardComponent {
     return out;
   }
 
+  get selectableContentTypeOptions(): ContentTypeOption[] {
+    const qualifying = this.qualifyingPlatformKeySet;
+    return this.contentTypeOptions.filter((opt) => {
+      if (!this.isOptionSelectable(opt)) return false;
+      if (!this.lockedPlatform && qualifying.size) {
+        return qualifying.has(this.normalized(opt.platform));
+      }
+      return true;
+    });
+  }
+
+  /** UI options shown to influencer; for tier-locked invites we show only relevant platform choices. */
+  get displayContentTypeOptions(): ContentTypeOption[] {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
+    const qualifying = this.qualifyingPlatformKeySet;
+    if (isTierFiltered && qualifying.size === 0) {
+      // If a campaign requires an exact tier but we couldn't determine
+      // any qualifying platform for this influencer, do not show
+      // content-type options (prevents showing irrelevant platforms).
+      return [];
+    }
+    return this.lockedPlatform || qualifying.size
+      ? this.selectableContentTypeOptions
+      : this.contentTypeOptions;
+  }
+
   get selectedContentTypeOption(): ContentTypeOption | undefined {
     if (!this.selectedContentTypeKey) return undefined;
-    return this.contentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
+    return this.selectableContentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
   }
 
   get selectedPayoutHint(): string {
@@ -456,6 +587,8 @@ export class CampaignInviteCardComponent {
   onActionsClick(ev: Event) { ev.stopPropagation(); }
 
   selectContentType(key: string) {
+    const option = this.contentTypeOptions.find((opt) => opt.key === key);
+    if (!option || !this.isOptionSelectable(option)) return;
     this.selectedContentTypeKey = key;
     this.contentTypeChange.emit(key);
   }
@@ -472,8 +605,16 @@ export class CampaignInviteCardComponent {
       this.validationError.emit('Please select a posting date before accepting.');
       return;
     }
-    if (this.contentTypeOptions.length && !this.selectedContentTypeKey) {
+    if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
       this.validationError.emit('Please select what you will create.');
+      return;
+    }
+    if (this.selectedContentTypeKey && !this.selectedContentTypeOption) {
+      this.validationError.emit(
+        this.lockedPlatform
+          ? `Please choose a content option only for ${this.platformLabel(this.lockedPlatform)}.`
+          : 'Please select a valid content option.'
+      );
       return;
     }
     const [platform, contentType] = this.selectedContentTypeKey

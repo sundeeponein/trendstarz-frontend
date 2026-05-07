@@ -304,7 +304,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Open campaigns list filtered to hide ones the influencer already applied to */
   get openCampaignsForInfluencer(): any[] {
     const applied = this.myInvitedCampaignIds;
-    return this.campaigns.filter(c => !applied.has(String(c._id || '')));
+    return this.campaigns.filter(c => {
+      if (applied.has(String(c._id || ''))) return false;
+      // Non-tier campaigns are visible to all influencers (unless applied)
+      if ((c as any)?.campaignMode !== 'tier_filtered_open') return true;
+      // For tier-filtered open campaigns, show only if influencer has a qualifying social entry
+      return this.getTierQualifyingSocials(c).length > 0;
+    });
   }
   openingCampaignIds = new Set<string>();
 
@@ -1040,6 +1046,34 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return [...known, ...unknown].slice(0, max);
   }
 
+  /**
+   * For tier-filtered campaigns, show only the invite-selected platform tier chip
+   * so brand sees the exact relevant fit (e.g. IG · Mid-Tier).
+   */
+  getInviteRelevantSocialTags(inv: any, campaign: any, max: number = 3): Array<{ platform: string; tier: string }> {
+    const all = this.getInfluencerSocialTags(inv?.influencerId || {}, max);
+    if (!all.length) return all;
+    if (String(campaign?.campaignMode || '') !== 'tier_filtered_open') return all;
+
+    const selected = String(inv?.selectedPlatform || '').trim().toLowerCase();
+    if (!selected) return all;
+
+    const toKey = (platformRaw: string): string => {
+      const p = String(platformRaw || '').toLowerCase();
+      if (p.includes('instagram')) return 'ig';
+      if (p.includes('youtube')) return 'yt';
+      if (p === 'x' || p.includes('twitter')) return 'x';
+      if (p.includes('facebook')) return 'fb';
+      if (p.includes('linkedin')) return 'in';
+      if (p.includes('tiktok')) return 'tt';
+      return p;
+    };
+
+    const key = toKey(selected);
+    const filtered = all.filter((sm) => toKey(sm.platform) === key);
+    return filtered.length ? filtered.slice(0, max) : all;
+  }
+
   isInfluencerPremium(inf: any): boolean {
     if (!inf) return false;
     if (inf.isPremium === true) return true;
@@ -1199,6 +1233,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return inv?.status === 'pending';
   }
 
+  canDeclineAccepted(inv: any, campaign?: any): boolean {
+    if (!inv) return false;
+    if (inv.status !== 'accepted') return false;
+    // Show decline only before payment for paid_collab campaigns.
+    return String(campaign?.campaignType || '').toLowerCase() === 'paid_collab';
+  }
+
   canReport(inv: any): boolean {
     if (!inv) return false;
     if (inv.status === 'pending' || inv.status === 'declined' || inv.status === 'withdrawn') return false;
@@ -1242,17 +1283,23 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   withdrawInvite(inv: any): void {
     if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
-    const reason = (window.prompt('Reason for withdrawing? (optional)') || '').trim();
-    // Cancelled prompt → don't withdraw
-    if (reason === null) return;
-    if (!confirm('Withdraw this invite? The influencer will no longer see it.')) return;
+    const isAccepted = inv?.status === 'accepted';
+    const promptLabel = isAccepted
+      ? 'Reason for declining this accepted influencer? (optional)'
+      : 'Reason for withdrawing? (optional)';
+    const reason = (window.prompt(promptLabel) || '').trim();
+    if (!confirm(isAccepted
+      ? 'Decline this accepted influencer from the campaign?'
+      : 'Withdraw this invite? The influencer will no longer see it.')) {
+      return;
+    }
     this.actioningInviteIds.add(inv._id);
     this.cd.detectChanges();
     this.config.withdrawInvite(inv._id, reason || undefined).subscribe({
       next: () => {
         inv.status = 'withdrawn';
         this.actioningInviteIds.delete(inv._id);
-        this.toast.success('Invite withdrawn.');
+        this.toast.success(isAccepted ? 'Influencer declined.' : 'Invite withdrawn.');
         this.cd.detectChanges();
       },
       error: (err: any) => {
@@ -1469,11 +1516,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   /** Label for an influencer's invite status on a campaign card. */
-  myInviteStatusLabel(status: string): string {
+  myInviteStatusLabel(inviteOrStatus: any): string {
+    const status = typeof inviteOrStatus === 'string'
+      ? inviteOrStatus
+      : String(inviteOrStatus?.status || '');
+    const campaignType = String(inviteOrStatus?.campaignId?.campaignType || inviteOrStatus?.campaignType || '').toLowerCase();
     const map: Record<string, string> = {
       pending: 'Applied · Pending',
       invited: 'Invited',
-      accepted: 'Accepted',
+      accepted: campaignType === 'paid_collab' ? 'Awaiting Payment' : 'Accepted',
       payment_confirmed: 'Payment Confirmed',
       working: 'In Progress',
       submitted: 'Work Submitted',
@@ -1524,6 +1575,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   // Preview modal — shows campaign + brand details before accept/decline
   invitePreview: any | null = null;
+  // Only show preview modal when opened explicitly by user action
+  invitePreviewManual = false;
   invitePreviewQualifyingPlatform: string | null = null;
   invitePreviewQualifyingTier: string | null = null;
   selectedInvitePostDates: Record<string, string> = {};
@@ -1541,11 +1594,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Social media entries from the logged-in influencer's profile (for platform-based tier checks) */
   myInfluencerSocialMedia: Array<{ platform: string; tier: string }> = [];
 
-  /** Platform picker state — shown when influencer qualifies for multiple platforms */
-  platformPickerOpen = false;
-  platformPickerOptions: string[] = [];
-  platformPickerCampaign: Campaign | null = null;
-
   /** Open campaign preview modal — shown before apply */
   openCampaignPreview: Campaign | null = null;
   openCampaignPreviewQualifyingPlatform: string | null = null;
@@ -1553,6 +1601,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   openInvitePreview(inv: any) {
     this.invitePreview = inv;
+    this.invitePreviewManual = true;
     const camp = inv?.campaign || inv?.campaignId || null;
     const qual = camp ? this.getQualifyingPlatformAndTier(camp) : null;
     this.invitePreviewQualifyingPlatform = qual?.platform || null;
@@ -1574,13 +1623,31 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // For tier_filtered_open campaigns — show campaign detail preview first
+    // For tier_filtered_open campaigns — show campaign detail preview first.
+    // Ensure influencer social profile is loaded so platform/tier matching is accurate.
     if ((campaign as any).campaignMode === 'tier_filtered_open') {
-      const qual = this.getQualifyingPlatformAndTier(campaign);
-      this.openCampaignPreviewQualifyingPlatform = qual?.platform || null;
-      this.openCampaignPreviewQualifyingTier = qual?.tier || null;
-      this.openCampaignPreview = campaign;
-      this.cd.detectChanges();
+      const proceed = () => {
+        const qual = this.getQualifyingPlatformAndTier(campaign);
+        this.openCampaignPreviewQualifyingPlatform = qual?.platform || null;
+        this.openCampaignPreviewQualifyingTier = qual?.tier || null;
+        this.openCampaignPreview = campaign;
+        this.cd.detectChanges();
+      };
+      if (!this.myInfluencerSocialMedia || this.myInfluencerSocialMedia.length === 0) {
+        this.config.getInfluencerProfileById().subscribe({
+          next: (profile: any) => {
+            this.myInfluencerSocialMedia = (profile?.socialMedia || []).map((sm: any) => ({ platform: sm.platform || '', tier: sm.tier || '' }));
+            proceed();
+          },
+          error: () => {
+            // Fallback: still open preview but without qualifying hints
+            this.openCampaignPreview = campaign;
+            this.cd.detectChanges();
+          }
+        });
+        return;
+      }
+      proceed();
       return;
     }
 
@@ -1596,46 +1663,23 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const campaign = this.openCampaignPreview;
     if (!campaign?._id) return;
     const campaignId = String(campaign._id);
-
-    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
-    const normalized = (s: string) => (s || '').toLowerCase().trim();
     const campaignPlatforms: string[] = (campaign as any).platforms || [];
-    const minTier: string = (campaign as any).minInfluencerTier || '';
-    const minIdx = TIER_ORDER.indexOf(minTier);
+    const qualifying = this.getQualifyingPlatformAndTier(campaign);
 
-    const qualifying = this.myInfluencerSocialMedia.filter(sm => {
-      const platformMatch = campaignPlatforms.length === 0 ||
-        campaignPlatforms.some(p => normalized(p) === normalized(sm.platform));
-      if (!platformMatch) return false;
-      if (minIdx === -1) return true;
-      const infIdx = TIER_ORDER.indexOf(sm.tier);
-      return infIdx !== -1 && infIdx >= minIdx;
-    });
-
-    if (qualifying.length === 0 && campaignPlatforms.length > 0) {
+    if (!qualifying && campaignPlatforms.length > 0) {
       this.closeOpenCampaignPreview();
+      const minTier: string = (campaign as any).minInfluencerTier || '';
       this.showError(`You don't have a qualifying platform for this campaign. Required: ${campaignPlatforms.join(' / ')}${minTier ? ' at ' + minTier + ' tier or above' : ''}.`);
       return;
     }
 
-    if (qualifying.length > 1) {
-      // Close preview and open platform picker
-      this.openCampaignPreview = null;
-      this.platformPickerOptions = qualifying.map(sm => sm.platform);
-      this.platformPickerCampaign = campaign;
-      this.platformPickerOpen = true;
-      this.cd.detectChanges();
-      return;
-    }
-
-    // Single qualifying platform — apply directly
-    const selectedPlatform = qualifying.length === 1 ? qualifying[0].platform : undefined;
+    // Apply without pre-locking platform; influencer chooses platform/content type in pending invite step.
     this.openCampaignPreview = null;
-    this.openCampaignPreviewQualifyingPlatform = selectedPlatform ?? null;
-    this.openCampaignPreviewQualifyingTier = selectedPlatform ? qualifying[0].tier : null;
+    this.openCampaignPreviewQualifyingPlatform = null;
+    this.openCampaignPreviewQualifyingTier = qualifying?.tier ?? null;
     this.openingCampaignIds.add(campaignId);
     this.cd.detectChanges();
-    this.config.applyToOpenCampaign(campaignId, selectedPlatform).subscribe({
+    this.config.applyToOpenCampaign(campaignId).subscribe({
       next: () => {
         this.openingCampaignIds.delete(campaignId);
         this.toastMessage = 'Application sent! The brand will review your profile.';
@@ -1656,28 +1700,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Find the best qualifying platform + tier for the current influencer for a campaign */
   getQualifyingPlatformAndTier(campaign: Campaign): { platform?: string; tier?: string } | null {
     const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
-    const normalized = (s: string) => (s || '').toLowerCase().trim();
-    const campaignPlatforms: string[] = (campaign as any).platforms || [];
-    const minTier: string = (campaign as any).minInfluencerTier || '';
-    const minIdx = TIER_ORDER.indexOf(minTier);
-
-    const sm = this.myInfluencerSocialMedia || [];
-    if (!sm.length) return null;
-
-    let candidates = sm;
-    if (campaignPlatforms.length > 0) {
-      candidates = sm.filter(smEntry => campaignPlatforms.some(p => normalized(p) === normalized(smEntry.platform)));
-    }
+    const candidates = this.getTierQualifyingSocials(campaign);
     if (!candidates.length) return null;
-
-    // Apply min tier filter if present
-    if (minIdx !== -1) {
-      candidates = candidates.filter(smEntry => {
-        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
-        return idx !== -1 && idx >= minIdx;
-      });
-      if (!candidates.length) return null;
-    }
 
     // Pick the highest-tier candidate
     let best = candidates[0];
@@ -1689,46 +1713,100 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return { platform: best.platform, tier: best.tier };
   }
 
+  private getTierQualifyingSocials(campaign: Campaign): Array<{ platform: string; tier: string }> {
+    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
+    const normalized = (s: string) => (s || '').toLowerCase().trim();
+    const campaignPlatforms: string[] = (campaign as any)?.platforms || [];
+    const minTier: string = (campaign as any)?.minInfluencerTier || '';
+    const minIdx = TIER_ORDER.indexOf(minTier);
+    const sm = this.myInfluencerSocialMedia || [];
+    if (!sm.length) return [];
+
+    let candidates = sm;
+    if (campaignPlatforms.length > 0) {
+      candidates = sm.filter(smEntry => campaignPlatforms.some(p => normalized(p) === normalized(smEntry.platform)));
+    }
+    if (!candidates.length) return [];
+
+    if (minIdx !== -1) {
+      candidates = candidates.filter(smEntry => {
+        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
+        return idx !== -1 && idx === minIdx;
+      });
+    }
+    return candidates;
+  }
+
+  getOpenCampaignPreviewPlatforms(campaign: Campaign | null): string[] {
+    if (!campaign) return [];
+    const platforms: string[] = Array.isArray((campaign as any)?.platforms) ? (campaign as any).platforms : [];
+    // Treat campaigns as tier-filtered when either the explicit campaignMode is set
+    // to 'tier_filtered_open' OR a minimum influencer tier is provided on the campaign.
+    const isTierFiltered = String((campaign as any)?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!(campaign as any)?.minInfluencerTier;
+    if (!isTierFiltered) return platforms;
+
+    const norm = (s: string) => String(s || '').trim().toLowerCase();
+    const qualifying = this.getTierQualifyingSocials(campaign);
+    const qualifyingSet = new Set(qualifying.map((sm) => norm(sm.platform)));
+    // Only show platforms that the influencer actually qualifies for.
+    const filtered = platforms.filter((p) => qualifyingSet.has(norm(p)));
+    return filtered;
+  }
+
+  getOpenCampaignRelevantOutputs(campaign: Campaign | null): string[] {
+    if (!campaign) return [];
+    const rows = Array.isArray((campaign as any)?.socialMedia) ? (campaign as any).socialMedia : [];
+    if (!rows.length) return Array.isArray((campaign as any)?.deliverables) ? (campaign as any).deliverables : [];
+
+    const norm = (v: string) => String(v || '').toLowerCase().trim();
+    const allowedPlatforms = new Set(this.getOpenCampaignPreviewPlatforms(campaign).map((p) => norm(p)));
+    const outputs: string[] = [];
+
+    for (const row of rows) {
+      const platformRaw = String(row?.platform || '');
+      if (allowedPlatforms.size > 0 && !allowedPlatforms.has(norm(platformRaw))) continue;
+      const platformLabel = this.platformShortLabel(platformRaw);
+      for (const ct of (row?.contentTypes || [])) {
+        if (ct?.enabled) outputs.push(`${platformLabel} · ${ct.name}`);
+      }
+    }
+
+    return outputs;
+  }
+
+  getOpenCampaignDescriptionText(description: string | null | undefined): string {
+    const raw = String(description || '').trim();
+    if (!raw) return '';
+
+    const headingLabels = [
+      'What we expect:',
+      'Content Guidelines:',
+      'Deliverables:',
+      'Timeline:',
+      'Payment:',
+      'Important Notes:',
+      "Do's:",
+      "Don'ts:",
+      'Must include:',
+    ];
+
+    let text = raw;
+    for (const label of headingLabels) {
+      const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      text = text.replace(new RegExp(`\\s*${esc}\\s*`, 'gi'), `\n${label} `);
+    }
+
+    text = text.replace(/\s*•\s*/g, '\n• ');
+    return text.trim();
+  }
+
   isOpeningCampaign(campaign: Campaign): boolean {
     return !!campaign?._id && this.openingCampaignIds.has(String(campaign._id));
   }
 
-  /** Called when influencer selects a platform from the picker and confirms */
-  confirmPlatformAndApply(selectedPlatform: string) {
-    this.platformPickerOpen = false;
-    const campaign = this.platformPickerCampaign;
-    this.platformPickerCampaign = null;
-    this.platformPickerOptions = [];
-    if (!campaign?._id) return;
-    const campaignId = String(campaign._id);
-    this.openingCampaignIds.add(campaignId);
-    this.cd.detectChanges();
-    this.config.applyToOpenCampaign(campaignId, selectedPlatform).subscribe({
-      next: () => {
-        this.openingCampaignIds.delete(campaignId);
-        this.toastMessage = `Application sent via ${selectedPlatform}! The brand will review your profile.`;
-        this.showSuccessToast = true;
-        setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-        this.reloadMyInvites();
-        this.cd.detectChanges();
-      },
-      error: (err: any) => {
-        this.openingCampaignIds.delete(campaignId);
-        const msg = err?.error?.message || err?.message || 'Failed to apply. Please try again.';
-        this.showError(msg);
-        this.cd.detectChanges();
-      },
-    });
-  }
-
-  cancelPlatformPicker() {
-    this.platformPickerOpen = false;
-    this.platformPickerCampaign = null;
-    this.platformPickerOptions = [];
-  }
-
   closeInvitePreview() {
     this.invitePreview = null;
+    this.invitePreviewManual = false;
   }
 
   onModalAccept(payload: CampaignAcceptPayload) {
@@ -1826,13 +1904,39 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  getInviteQualifyingPlatforms(inv: any): string[] {
+    const embedded = inv?.campaign || inv?.campaignId;
+    if (!embedded) return [];
+    // Prefer the fully-loaded campaign from this.campaigns (has all fields incl. campaignMode, minInfluencerTier).
+    // The embedded campaignId object from the invites API often omits those fields.
+    const cid = embedded?._id || embedded?.id;
+    const campaign: any = (cid && this.campaigns.find((c: any) => String(c._id) === String(cid))) || embedded;
+    const isTierFiltered = String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!campaign?.minInfluencerTier;
+    if (!isTierFiltered) return [];
+    const normalized = (value: string) => String(value || '').trim().toLowerCase();
+    const seen = new Set<string>();
+    return this.getTierQualifyingSocials(campaign as Campaign)
+      .map((sm) => String(sm?.platform || '').trim())
+      .filter((platform) => {
+        const key = normalized(platform);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
   /** Returns flat list of enabled content type options for an invite's campaign */
   getInviteContentTypeOptions(inv: any): { key: string; label: string; platform: string; contentType: string; price: number }[] {
     const socialMedia = inv?.campaignId?.socialMedia;
     if (!Array.isArray(socialMedia) || !socialMedia.length) return [];
+    const normalized = (v: string) => (v || '').toLowerCase().trim();
+    const lockedPlatform = String(inv?.selectedPlatform || '').trim();
+    const qualifyingPlatforms = new Set(this.getInviteQualifyingPlatforms(inv).map((platform) => normalized(platform)));
     const options: { key: string; label: string; platform: string; contentType: string; price: number }[] = [];
     for (const sm of socialMedia) {
       const platform = sm.platform || '';
+      if (lockedPlatform && normalized(platform) !== normalized(lockedPlatform)) continue;
+      if (!lockedPlatform && qualifyingPlatforms.size && !qualifyingPlatforms.has(normalized(platform))) continue;
       for (const ct of (sm.contentTypes || [])) {
         if (ct.enabled) {
           options.push({
@@ -2010,6 +2114,55 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return invites;
   }
 
+  /** In tier-filtered mode, show only accepted/relevant influencer rows in expanded list. */
+  getExpandVisibleInvites(c: Campaign): any[] {
+    const rows = this.getExpandInvites(c);
+    if ((c as any)?.campaignMode !== 'tier_filtered_open') return rows;
+
+    return rows.filter((inv: any) => {
+      const status = String(inv?.status || '');
+      const activeStatuses = new Set([
+        'accepted',
+        'payment_confirmed',
+        'working',
+        'submitted',
+        'completed',
+        'approved',
+        'disputed',
+      ]);
+      if (!activeStatuses.has(status)) return false;
+
+      const selectedPlatform = String(inv?.selectedPlatform || '').trim().toLowerCase();
+
+      const requiredTier = String((c as any)?.minInfluencerTier || '').trim();
+      if (!requiredTier) return true;
+
+      const ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
+      const reqIdx = ORDER.indexOf(requiredTier);
+      if (reqIdx === -1) return true;
+
+      const smList = Array.isArray(inv?.influencerId?.socialMedia) ? inv.influencerId.socialMedia : [];
+      if (!smList.length) return true;
+
+      const campaignPlatforms = Array.isArray((c as any)?.platforms) ? (c as any).platforms : [];
+      const normalized = (v: string) => String(v || '').trim().toLowerCase();
+      const relevant = campaignPlatforms.length
+        ? smList.filter((sm: any) => campaignPlatforms.some((p: string) => normalized(p) === normalized(sm?.platform || '')))
+        : smList;
+
+      if (selectedPlatform) {
+        const matched = smList.find((sm: any) => String(sm?.platform || '').trim().toLowerCase() === selectedPlatform);
+        if (matched) {
+          const infIdx = ORDER.indexOf(String(matched?.tier || '').trim());
+          if (infIdx !== -1 && infIdx === reqIdx) return true;
+        }
+      }
+
+      if (!relevant.length) return false;
+      return relevant.some((sm: any) => ORDER.indexOf(String(sm?.tier || '').trim()) === reqIdx);
+    });
+  }
+
   getExpandInvitesByStatus(c: Campaign, status: string): number {
     return this.getExpandInvites(c).filter((i: any) => i.status === status).length;
   }
@@ -2069,6 +2222,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     };
       if (c.budgetMin && c.budgetMax && c.budgetMin !== c.budgetMax) return `${fmt(c.budgetMin)}–${fmt(c.budgetMax)}`;
     return c.budgetMin ? fmt(c.budgetMin) : fmt(c.budgetMax!);
+  }
+
+  formatPricePerInfluencer(c: Campaign): string {
+    const v = Number((c as any).pricePerInfluencer || 0);
+    if (!v) return '—';
+    const rupees = v / 100; // stored in paise
+    const fmt = (n: number): string => {
+      if (n >= 100000) return '₹' + (n / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+      if (n >= 1000) return '₹' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      return '₹' + Math.round(n);
+    };
+    return fmt(rupees);
   }
 
   activateCampaign(c: Campaign) {

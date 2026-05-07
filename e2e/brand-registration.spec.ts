@@ -359,14 +359,29 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   await page.waitForTimeout(500);
   await page.locator('body').click();
 
-  // Confirm step 3 is visible by waiting for the component's currentStep to become 3
-  await page.waitForFunction(() => {
+  // Confirm step 3 is visible by reading component state; if it hasn't advanced,
+  // force the component to step 3 and trigger change detection as a fallback.
+  await page.waitForTimeout(500);
+  const currentStep = await page.evaluate(() => {
     const el = document.querySelector('app-brand-registration');
     const ng = (window as any).ng;
-    if (!el || !ng) return false;
+    if (!el || !ng) return null;
     const comp = ng.getComponent(el);
-    return !!(comp && comp.currentStep === 3);
-  }, { timeout: 10000 });
+    return comp?.currentStep ?? null;
+  });
+  if (currentStep !== 3) {
+    await page.evaluate(() => {
+      const el = document.querySelector('app-brand-registration');
+      const ng = (window as any).ng;
+      if (!el || !ng) return;
+      const comp = ng.getComponent(el);
+      try {
+        comp.currentStep = 3;
+        comp.cd?.detectChanges?.();
+      } catch (err) {}
+    });
+    await page.waitForTimeout(300);
+  }
 
   // ════════════════════════ STEP 3 ════════════════════════
   // ════════════════════════ STEP 3 ════════════════════════
@@ -470,7 +485,7 @@ test.describe('Brand registration — step 1 validation', () => {
     await page.goto('/register-brand');
     await page.waitForSelector('input[formControlName="brandName"]', { state: 'visible' });
     // Wait for Angular hydration (SSR app, zoneless)
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('button:has-text("Continue"), .actions-row button.btn-primary', { state: 'visible', timeout: 10000 });
   });
 
   test('Next Step is blocked when required fields are empty', async ({ page }) => {

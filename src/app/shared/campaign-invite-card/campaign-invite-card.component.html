@@ -1,4 +1,4 @@
-<div class="invite-card" (click)="onCardClick()">
+<div class="invite-card">
   <!-- Brand + campaign header -->
   <div class="invite-card__header d-flex align-items-center">
     <div class="invite-brand-logo me-2">
@@ -95,13 +95,21 @@
 
   <!-- CTA buttons -->
   <div class="invite-card__actions" (click)="onActionsClick($event)" *ngIf="isActionable">
+    
     <ng-container *ngIf="contentTypeOptions.length > 0">
+      <div class="inv-platform-lock" *ngIf="lockedPlatform">
+        <i class="bi bi-pin-fill"></i>
+        <span class="inv-platform-lock-label">Posting on:</span>
+        <span class="inv-platform-lock-value">{{ platformLabel(lockedPlatform) }}</span>
+      </div>
       <div class="inv-ct-row">
         <span class="inv-ct-row-label">Create (choose one):</span>
-        <button *ngFor="let opt of contentTypeOptions"
+        <button *ngFor="let opt of displayContentTypeOptions"
                 type="button"
                 class="inv-ct-pill"
                 [class.selected]="selectedContentTypeKey === opt.key"
+                [class.disabled]="!isOptionSelectable(opt)"
+                [disabled]="!isOptionSelectable(opt)"
                 (click)="selectContentType(opt.key)">
           <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
           {{ opt.label }}
@@ -109,6 +117,7 @@
         </button>
       </div>
     </ng-container>
+    
     <input
       class="invite-post-date"
       type="date"
@@ -163,7 +172,7 @@
   </div>
 
   <div class="invite-card__actions" *ngIf="!isActionable" (click)="onActionsClick($event)">
-    <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted'">
+    <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted' && !showPaymentAwaited">
       <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
     </p>
     <!-- Influencer-side: contact-unlock state -->

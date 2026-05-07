@@ -76,7 +76,7 @@
   gap: 8px;
   background: rgba(234,179,8,0.1);
   border: 1px solid rgba(234,179,8,0.3);
-  color: #fde68a;
+  color: #c9ac3a;
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.82rem;
@@ -97,12 +97,35 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: rgba(59,130,246,0.1);
-  border: 1px solid rgba(59,130,246,0.3);
-  color: #93c5fd;
+  background: #f8fbff;
+  border: 1px solid #bfd7ff;
+  color: #1e3a5f;
   border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 0.85rem;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+
+  i {
+    color: #2563eb;
+    margin-top: 1px;
+  }
+
+  strong {
+    color: #15385f;
+    font-weight: 700;
+  }
+}
+
+.alert-info__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alert-info--instructions .instructions-text {
+  white-space: pre-line;
+  line-height: 1.55;
+  font-size: 1rem;
+  color: #294869;
 }
 
 .read-only-summary {

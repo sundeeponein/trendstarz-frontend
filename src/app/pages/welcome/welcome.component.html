@@ -1,43 +1,27 @@
 <div class="home-shell rounded-3 shadow-sm">
 
-  <section class="hero-block py-5">
-    <div class="container">
-      <div class="row g-4 align-items-center">
-        <div class="col-12 col-lg-6">
-          <span class="pill-label">Next-Gen Influencer Platform</span>
-          <h1 class="hero-title mt-3">Connect with the World&apos;s <span>Top Creators</span></h1>
-          <p class="hero-copy mt-3">Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling.</p>
-          <div class="d-flex flex-wrap gap-3 mt-4" *ngIf="!isLoggedIn()">
-            <button class="btn btn-primary" (click)="router.navigate(['/register-brand'])" type="button">Register as Brand</button>
-            <button class="btn btn-dark" (click)="router.navigate(['/register-influencer'])" type="button">Register as Influencer</button>
-          </div>
-          <div class="d-flex flex-wrap gap-3 mt-4" *ngIf="isLoggedIn()">
-            <button class="btn btn-primary" (click)="handleStartCampaign()" type="button">Start a Campaign</button>
-            <button class="btn btn-dark" (click)="handleFindCreators()" type="button">Find Creators</button>
-          </div>
-        </div>
-        <div class="col-12 col-lg-6">
-          <div class="hero-media">
-            <img src="assets/default-profile-brands.png" alt="Campaign success story" />
-            <div class="media-caption">
-              <small>SUCCESS STORY</small>
-              <h5>Luxe Cosmetics + Sarah Jenkins</h5>
-              <p>Grew brand awareness by 240% in 3 months</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  
+
+  <app-hero-banner
+    badge="Next-Gen Influencer Platform"
+    titleMain="Connect with the World's"
+    titleHighlight="Top Creators"
+    subtitle="Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling."
+    [primaryLabel]="isLoggedIn() ? 'Start a Campaign' : 'Register as Brand'"
+    [primaryRoute]="isLoggedIn() ? '/campaigns' : '/register-brand'"
+    [secondaryLabel]="isLoggedIn() ? 'Find Creators' : 'Register as Influencer'"
+    [secondaryRoute]="isLoggedIn() ? '/search' : '/register-influencer'"
+    imageUrl="assets/default-profile-brands.png"
+  ></app-hero-banner>
 
   <section class="trust-strip py-4" aria-label="Industry Leaders">
     <div class="container text-center">
-      <p class="trust-title mb-3">INDUSTRY LEADERS WHO TRUST US</p>
+      <p class="trust-title mb-3">WHO TRUST US</p>
       <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 trust-logos">
-        <span>GLO-UP</span>
-        <span>LUMINA</span>
-        <span>TECHCORE</span>
-        <span>VIBE-X</span>
+        <span>VaarahiFashions</span>
+        <span>DealGo</span>
+        <span>Blue Ink</span>
+        <span>Mad Bakers</span>
         <span>UNIFY</span>
       </div>
     </div>
