@@ -1544,31 +1544,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return 'inf-status-pending';
   }
 
-  getBrandAvatar(invite: any): string {
-    const logo = invite.brandId?.brandLogo;
-    if (Array.isArray(logo) && logo.length > 0) {
-      if (logo[0]?.url) return logo[0].url;
-      if (typeof logo[0] === 'string') return logo[0];
-    }
-    return 'assets/default-profile.png';
-  }
-
-  getCampaignAvatar(invite: any): string {
-    return invite.campaignId?.image?.url || 'assets/default-profile.png';
-  }
-
   getPendingInviteCount(): number {
     return this.myInvites.filter(i => i.status === 'pending' || i.status === 'invited').length;
-  }
-
-  formatInviteBudget(inv: any): string {
-    const c = inv.campaignId;
-    if (!c) return '—';
-    const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
-    if (c.budgetMin && c.budgetMax) return `${fmt(c.budgetMin)} – ${fmt(c.budgetMax)}`;
-    if (c.budgetMin) return `From ${fmt(c.budgetMin)}`;
-    if (c.budgetMax) return `Up to ${fmt(c.budgetMax)}`;
-    return '—';
   }
 
   // ── My Invites (influencer) ───────────────────────────────────
@@ -1972,31 +1949,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return s >= new Date(start) && s <= new Date(end);
   }
 
-  formatPreviewTimeline(inv: any): string {
-    const c = inv.campaignId;
-    if (!c?.timelineStart) return '—';
-    const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    return c.timelineEnd ? `${fmt(c.timelineStart)} – ${fmt(c.timelineEnd)}` : `From ${fmt(c.timelineStart)}`;
-  }
-
-  campaignTypeLabel(type: string): string {
-    const m: Record<string, string> = {
-      paid_collab: 'Paid Collab',
-      product: 'Product / Barter',
-      invite_location: 'Invite to Location',
-      pay_to_join: 'Pay to Join',
-    };
-    return m[(type || '').toLowerCase()] || type;
-  }
-
-  getBrandProfileLink(inv: any): any[] | null {
-    const b = inv?.brandId;
-    if (!b) return null;
-    const slug = b.brandUsername || b.brandName;
-    if (!slug) return null;
-    return ['/brand', slug];
-  }
-
   // ── Expandable row panel ──────────────────────────────────────
 
   loadAllInvites() {
@@ -2060,10 +2012,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  getSubmissions(c: Campaign): any[] {
-    return this.campaignSubmissionsMap.get(c._id!) || [];
-  }
-
   getSubmissionForInvite(c: Campaign, inv: any): any | null {
     const submissions = this.campaignSubmissionsMap.get(c._id!) || [];
     return submissions.find(
@@ -2100,18 +2048,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getExpandInvites(c: Campaign): any[] {
-    // Log for debugging
-    const invites = this.campaignInvitesMap.get(c._id!) || [];
-    if (invites.length === 0) {
-      console.warn('No invites found for campaign', c._id, c.title);
-    } else {
-      invites.forEach(inv => {
-        if (!inv.influencerId || typeof inv.influencerId === 'string') {
-          console.warn('Invite missing influencer details:', inv);
-        }
-      });
-    }
-    return invites;
+    return this.campaignInvitesMap.get(c._id!) || [];
   }
 
   /** In tier-filtered mode, show only accepted/relevant influencer rows in expanded list. */
