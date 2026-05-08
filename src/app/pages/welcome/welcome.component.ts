@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-welcome',
@@ -13,6 +14,42 @@ import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.compon
   styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
+  readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
+  readonly minPublicBrands = environment.marketplacePublicMinBrands;
+
+  readonly placeholderCategories: string[] = [
+    'Fashion',
+    'Beauty',
+    'Tech',
+    'Travel',
+    'Food',
+    'Fitness'
+  ];
+
+  readonly successMetrics = [
+    { label: 'Campaign match time', value: '48 hrs' },
+    { label: 'Verified creator quality checks', value: '100%' },
+    { label: 'Avg. campaign completion target', value: '95%' }
+  ];
+
+  readonly featuredCampaignExamples = [
+    {
+      title: 'Beauty Product Launch',
+      summary: 'A D2C beauty brand partnered with micro-creators for authentic unboxing reels and saw rapid social buzz in week one.',
+      focus: 'Reels + Story bundles'
+    },
+    {
+      title: 'Festive Fashion Edit',
+      summary: 'Regional creators produced local-language festive content, helping a fashion label increase conversion quality before sale week.',
+      focus: 'Regional content strategy'
+    },
+    {
+      title: 'App Awareness Sprint',
+      summary: 'A startup ran a 14-day creator burst campaign with clear CTA tracking and scaled installs in key metro cities.',
+      focus: 'Performance-focused UGC'
+    }
+  ];
+
   private routerSubscription: any;
   influencers: any[] = [];
   allInfluencers: any[] = [];
@@ -25,6 +62,14 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   creatorCategories: string[] = [];
 
   private isBrowser: boolean;
+
+  get isMarketplaceReadyForPublic(): boolean {
+    return this.brands.length >= this.minPublicBrands && this.allInfluencers.length >= this.minPublicInfluencers;
+  }
+
+  get homepageCategories(): string[] {
+    return this.creatorCategories.length > 0 ? this.creatorCategories : this.placeholderCategories;
+  }
 
   constructor(
     private meta: Meta,

@@ -3,5 +3,7 @@ export const environment = {
   apiBaseUrl: 'http://localhost:3000/api',
   razorpayKeyId: 'rzp_test_XXXXXXXXXXXXXXXX',
   cloudinaryUploadPreset: 'trendstarz_dev',
-  cloudinaryCloudName: 'ddnsoypf8'
+  cloudinaryCloudName: 'ddnsoypf8',
+  marketplacePublicMinInfluencers: 20,
+  marketplacePublicMinBrands: 5
 };
