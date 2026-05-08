@@ -10,10 +10,9 @@ import { RouterModule, Router } from '@angular/router';
   styleUrls: ['./hero-banner.component.scss']
 })
 export class HeroBannerComponent {
-  @Input() primaryLabel = 'Register as Brand';
   @Input() primaryRoute = '/register-brand';
-  @Input() secondaryLabel = 'Register as Influencer';
   @Input() secondaryRoute = '/register-influencer';
+  @Input() thirdRoute = '/how-it-works';
 
   // simple cache buster so changed images appear immediately during development
   cacheBuster = Date.now();
