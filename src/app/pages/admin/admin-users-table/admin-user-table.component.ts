@@ -63,11 +63,11 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getBrandLogo(user: any): string {
-    if (!user.brandLogo || !user.brandLogo.length) return 'assets/default-logo.png';
+    if (!user.brandLogo || !user.brandLogo.length) return 'assets/default-profile-brands.png';
     const img = user.brandLogo[0];
     if (img && typeof img === 'object' && img.url) return img.url;
     if (typeof img === 'string' && img) return img;
-    return 'assets/default-logo.png';
+    return 'assets/default-profile-brands.png';
   }
 
   getSignupSource(user: any): string {
