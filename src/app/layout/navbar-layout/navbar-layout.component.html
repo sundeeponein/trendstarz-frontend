@@ -10,7 +10,7 @@
 
     <!-- Navigation Tabs -->
     <div class="navbar-tabs">
-      <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+      <a *ngIf="user || showPublicSearchTab" routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Search
       </a>
       <a *ngIf="user?.role === 'brand'" routerLink="/brand-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">

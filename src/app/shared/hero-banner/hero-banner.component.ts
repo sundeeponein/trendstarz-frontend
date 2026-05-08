@@ -10,6 +10,15 @@ import { RouterModule, Router } from '@angular/router';
   styleUrls: ['./hero-banner.component.scss']
 })
 export class HeroBannerComponent {
+  @Input() badge = 'Next-Gen Influencer';
+  @Input() titleMain = 'Connect Brands with India\'s';
+  @Input() titleHighlight = 'Top Creators';
+  @Input() subtitle = 'TrendStarz helps brands discover creators, launch campaigns, and manage collaborations efficiently.';
+  @Input() primaryLabel = 'Register as Brand';
+  @Input() secondaryLabel = 'Join as Influencer';
+  @Input() thirdLabel = '';
+  @Input() imageUrl = 'assets/banner-trendstarz.jpg';
+  @Input() liveMetricText = '';
   @Input() primaryRoute = '/register-brand';
   @Input() secondaryRoute = '/register-influencer';
   @Input() thirdRoute = '/how-it-works';

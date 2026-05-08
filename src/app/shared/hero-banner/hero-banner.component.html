@@ -2,24 +2,22 @@
   <div class="container">
     <div class="row g-4 align-items-center">
       <div class="col-12 col-lg-6">
-        <span class="pill-label">Next-Gen Influencer</span>
-        <h1 class="hero-title mt-3">India’s <span class="highlight">Influencer Collaboration</span> Platform</h1>
-        <p class="hero-copy mt-3">Find influencers, launch campaigns, and collaborate faster with verified creators across India.</p>
+        <span class="pill-label">{{ badge }}</span>
+        <h1 class="hero-title mt-3">{{ titleMain }} <span class="highlight">{{ titleHighlight }}</span> Platform</h1>
+        <p class="hero-copy mt-3">{{ subtitle }}</p>
         <div class="d-flex flex-wrap gap-3 mt-4">
-          <button class="btn btn-lg btn-primary" (click)="go(primaryRoute)">Register as Brand</button>
-          <button class="btn btn-lg btn-dark" (click)="go(secondaryRoute)">Join as Influencer</button>
-
-          <button class="btn btn-lg btn-text" style="font-size: 14px;" (click)="go(thirdRoute)">Explore How It Works</button>
+          <button class="btn btn-lg btn-primary" (click)="go(primaryRoute)">{{ primaryLabel }}</button>
+          <button class="btn btn-lg btn-dark" (click)="go(secondaryRoute)">{{ secondaryLabel }}</button>
+          <button *ngIf="thirdLabel" class="btn btn-lg btn-text" style="font-size: 14px;" (click)="go(thirdRoute)">{{ thirdLabel }}</button>
         </div>
       </div>
       <div class="col-12 col-lg-6">
-        <div class="hero-media" style="background-image: url('assets/banner-trendstarz.jpg')" role="img" aria-label="Hero image">
-          <!-- <div class="media-caption">
-            <small>SUCCESS STORY</small>
-            <h5>Luxe Cosmetics + Sarah Jenkins</h5>
-            <p>Grew brand awareness by 240% in 3 months</p>
-          </div> -->
-          <img class="corner-thumb" src="assets/banner-trendstarz.jpg" alt="" aria-hidden="true" />
+        <div class="hero-media" [style.background-image]="'url(' + imageUrl + ')'" role="img" aria-label="Hero image">
+          <div class="live-metric" *ngIf="liveMetricText">
+            <span class="dot"></span>
+            <span>{{ liveMetricText }}</span>
+          </div>
+          <img class="corner-thumb" [src]="imageUrl" alt="" aria-hidden="true" />
         </div>
       </div>
     </div>
