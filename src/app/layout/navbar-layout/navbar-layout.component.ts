@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { environment } from '../../../environments/environment';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-navbar-layout',
@@ -15,6 +16,10 @@ import { environment } from '../../../environments/environment';
   styleUrl: './navbar-layout.component.scss'
 })
 export class NavbarLayoutComponent {
+  readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
+  readonly minPublicBrands = environment.marketplacePublicMinBrands;
+  showPublicSearchTab = false;
+
   get displayName(): string {
     if (!this.user) return '';
     return this.user.name || this.user.fullname || this.user.brandName || this.user.email || 'User';
@@ -42,7 +47,34 @@ export class NavbarLayoutComponent {
           this.cdr.detectChanges();
         }
       });
+      this.showPublicSearchTab = true;
+    } else {
+      this.updatePublicSearchVisibility();
     }
+  }
+
+  private updatePublicSearchVisibility() {
+    forkJoin({
+      brands: this.config.getBrands(),
+      influencers: this.config.getInfluencers()
+    }).subscribe({
+      next: ({ brands, influencers }) => {
+        const brandCount = this.extractCount(brands);
+        const influencerCount = this.extractCount(influencers);
+        this.showPublicSearchTab = brandCount >= this.minPublicBrands && influencerCount >= this.minPublicInfluencers;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.showPublicSearchTab = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private extractCount(payload: any): number {
+    if (Array.isArray(payload)) return payload.length;
+    if (payload && Array.isArray(payload.data)) return payload.data.length;
+    return 0;
   }
   get validProfileImage(): string {
     if (this.user) {

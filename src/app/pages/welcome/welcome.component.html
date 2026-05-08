@@ -1,33 +1,102 @@
 <div class="home-shell rounded-3 shadow-sm">
-
-  
-
   <app-hero-banner
     badge="Next-Gen Influencer Platform"
-    titleMain="Connect with the World's"
+    titleMain="Connect with India's"
     titleHighlight="Top Creators"
-    subtitle="Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling."
+    subtitle="Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling. Launch your first campaign in minutes."
     [primaryLabel]="isLoggedIn() ? 'Start a Campaign' : 'Register as Brand'"
     [primaryRoute]="isLoggedIn() ? '/campaigns' : '/register-brand'"
     [secondaryLabel]="isLoggedIn() ? 'Find Creators' : 'Register as Influencer'"
     [secondaryRoute]="isLoggedIn() ? '/search' : '/register-influencer'"
-    imageUrl="assets/default-profile-brands.png"
+    [thirdLabel]="''"
+    liveMetricText="Live: 5,400+ Campaigns active now"
+    imageUrl="assets/banner-trendstarz.jpg"
   ></app-hero-banner>
 
-  <section class="trust-strip py-4" aria-label="Industry Leaders">
-    <div class="container text-center">
-      <p class="trust-title mb-3">WHO TRUST US</p>
-      <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 trust-logos">
-        <span>VaarahiFashions</span>
-        <span>DealGo</span>
-        <span>Blue Ink</span>
-        <span>Mad Bakers</span>
-        <span>UNIFY</span>
+  <section class="built-for-strip py-4" aria-label="Built For Audiences">
+    <div class="container">
+      <h2 class="built-for-title mb-1 text-center">Built For Every Industry</h2>
+      <p class="built-for-subtitle mb-4 text-center">Tailored influencer marketing solutions for your niche.</p>
+      <div class="built-for-grid">
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-person"></i>
+            </div>
+            <h5>Fashion Brands</h5>
+            <p>Apparel & Accessories</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-geo-alt"></i>
+            </div>
+            <h5>Restaurants</h5>
+            <p>Food & Dining</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-heart"></i>
+            </div>
+            <h5>Beauty Brands</h5>
+            <p>Skincare & Makeup</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-display"></i>
+            </div>
+            <h5>Tech & Gadgets</h5>
+            <p>Electronics & Apps</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-rocket"></i>
+            </div>
+            <h5>Startups</h5>
+            <p>Growth & Awareness</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-people-fill"></i>
+            </div>
+            <h5>Lifestyle Creators</h5>
+            <p>Daily Life & Trends</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-building"></i>
+            </div>
+            <h5>Local Businesses</h5>
+            <p>City & Hyperlocal Reach</p>
+          </article>
+        </div>
+        <div class="built-for-item">
+          <article class="built-for-card">
+            <div class="built-for-tile">
+              <i class="bi bi-chat-left-quote"></i>
+            </div>
+            <h5>Food Bloggers</h5>
+            <p>Taste & Review Content</p>
+          </article>
+        </div>
       </div>
     </div>
   </section>
- 
-  <section class="brands-strip py-5" aria-label="Brands Grid">
+
+
+
+  <section class="brands-strip py-5" aria-label="Brands Grid" *ngIf="isMarketplaceReadyForPublic">
     <div class="container">
       <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
@@ -38,8 +107,6 @@
       </div>
 
       <div *ngIf="brandsLoading && brands.length === 0" class="text-center text-muted">Loading brands...</div>
-      <div *ngIf="!brandsLoading && !brandsError && brands.length === 0" class="text-center text-muted">No brands found.</div>
-      <div *ngIf="brandsError && brands.length === 0" class="text-danger text-center">{{ brandsError }}</div>
 
       <div class="row g-3" *ngIf="brands.length > 0">
         <div class="col-12 col-sm-6 col-lg-3" *ngFor="let brand of brands | slice:0:8">
@@ -59,7 +126,7 @@
     </div>
   </section>
 
-  <section class="creators-strip py-5" aria-label="Influencers Grid">
+  <section class="creators-strip py-5" aria-label="Influencers Grid" *ngIf="isMarketplaceReadyForPublic">
     <div class="container">
       <h2 class="section-title text-white mb-1">Trending Creators</h2>
       <div class="chip-row mb-4">
@@ -68,8 +135,6 @@
       </div>
 
       <div *ngIf="influencersLoading && influencers.length === 0" class="text-center text-white-50">Loading influencers...</div>
-      <div *ngIf="!influencersLoading && !influencersError && influencers.length === 0" class="text-center text-white-50">No influencers found.</div>
-      <div *ngIf="influencersError && influencers.length === 0" class="text-warning text-center">{{ influencersError }}</div>
 
       <div class="row g-3" *ngIf="influencers.length > 0">
         <div class="col-12 col-md-6 col-lg-4" *ngFor="let influencer of influencers | slice:0:6">
@@ -88,6 +153,61 @@
       </div>
     </div>
   </section>
+
+  <section class="prelaunch-strip py-5" aria-label="Marketplace Highlights" *ngIf="!isMarketplaceReadyForPublic">
+    <div class="container">
+      <div class="row g-4 align-items-stretch">
+        <div class="col-12 col-lg-7">
+          <article class="prelaunch-card h-100">
+            <h2 class="section-title mb-2">Building India's Most Trusted Creator Marketplace</h2>
+            <p class="section-subtitle mb-4">TrendStarz helps brands discover aligned creators, launch campaigns faster, and track outcomes with confidence.</p>
+            <div class="benefit-grid">
+              <div class="benefit-item">
+                <h5>Verified Creator Network</h5>
+                <p>Identity and profile checks designed for reliable brand partnerships.</p>
+              </div>
+              <div class="benefit-item">
+                <h5>Campaign Operations</h5>
+                <p>From brief to payout, the workflow is structured to reduce coordination overhead.</p>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-lg-5">
+          <article class="prelaunch-card h-100">
+            <h3 class="mb-3">Early Success Targets</h3>
+            <div class="metric-list">
+              <div class="metric-item" *ngFor="let metric of successMetrics">
+                <span>{{ metric.label }}</span>
+                <strong>{{ metric.value }}</strong>
+              </div>
+            </div>
+            <hr />
+            <h4 class="mb-2">Top Creator Categories</h4>
+            <div class="chip-row dark mb-3">
+              <span class="chip light" *ngFor="let cat of homepageCategories">{{ cat }}</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-campaigns-strip py-5" aria-label="Featured Campaign Examples" *ngIf="!isMarketplaceReadyForPublic">
+    <div class="container">
+      <h2 class="section-title text-center text-white mb-4">Featured Campaign Examples</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-6 col-lg-4" *ngFor="let campaign of featuredCampaignExamples">
+          <article class="example-item h-100">
+            <h5>{{ campaign.title }}</h5>
+            <p>{{ campaign.summary }}</p>
+            <span>{{ campaign.focus }}</span>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+  
 
   <section class="cta-strip py-5 text-center">
     <div class="container">
