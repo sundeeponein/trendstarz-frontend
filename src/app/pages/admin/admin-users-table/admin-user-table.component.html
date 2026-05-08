@@ -112,7 +112,7 @@
       <tbody>
         <tr *ngFor="let user of filteredInfluencers">
           <td>
-            <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle">
+            <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
@@ -235,7 +235,7 @@
         <tr *ngFor="let user of filteredBrands">
           <td>
             <!-- <div style="font-size: 0.7em; color: #888;">brandLogo: {{ user.brandLogo | json }}</div> -->
-            <img [src]="getBrandLogo(user)" alt="Logo" width="40" height="40" class="rounded-circle">
+            <img [src]="getBrandLogo(user)" alt="Logo" width="40" height="40" class="rounded-circle" (error)="$any($event.target).src='assets/default-profile-brands.png'">
           </td>
           <td>{{ user.brandName || '-' }}</td>
           <td>
