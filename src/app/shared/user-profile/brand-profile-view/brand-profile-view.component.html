@@ -23,7 +23,15 @@
         </div>
       </div>
       <div class="brand-header-actions">
-        <button class="btn btn-follow" *ngIf="isLoggedIn">Follow</button>
+        <a
+          class="btn btn-follow"
+          *ngIf="isLoggedIn"
+          [href]="getMainSocialLink()"
+          [attr.target]="hasFollowLink ? '_blank' : null"
+          [attr.rel]="hasFollowLink ? 'noopener noreferrer' : null"
+          [class.btn-follow--disabled]="!hasFollowLink"
+          (click)="!hasFollowLink && $event.preventDefault()"
+        >Follow</a>
         <!-- <button class="btn btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
       </div>
     </div>
@@ -88,27 +96,31 @@
         </div>
 
         <!-- Active Public Campaigns -->
-        <div class="content-section" *ngIf="brand.products?.length">
+        <div class="content-section">
           <div class="section-header-row">
             <h3 class="section-title">Active Public Campaigns</h3>
-            <a class="view-all-link">View all campaigns</a>
+            <button type="button" class="view-all-link" (click)="activeTab = 'campaigns'">View all campaigns</button>
           </div>
-          <div class="campaign-cards">
-            <div *ngFor="let img of brand.products; let i = index" class="campaign-card">
-              <div class="campaign-img-wrap">
-                <img [src]="img.url || img" (error)="onImgError($event)" class="campaign-img" />
-                <span class="campaign-badge active">ACTIVE</span>
-              </div>
-              <div class="campaign-info">
-                <h4 class="campaign-title">{{ brand.brandName || brand.name }} Campaign</h4>
-                <p class="campaign-desc">Explore {{ brand.categories?.[0] || 'our' }} collections and featured products.</p>
-                <div class="campaign-footer">
-                  <span class="campaign-price" *ngIf="brand.promotionalPrice">
-                    ₹{{ brand.promotionalPrice }}
-                  </span>
-                  <button class="btn btn-apply">Apply Now</button>
-                </div>
-              </div>
+          <div class="campaign-cards" *ngIf="activePublicCampaigns.length; else noActiveCampaigns">
+            <app-campaign-card
+              *ngFor="let campaign of activePublicCampaigns"
+              [campaign]="toOverviewCampaign(campaign)"
+              [limited]="true"
+              [isOwner]="false"
+              (viewDetails)="onCampaignViewDetails($event)"
+            ></app-campaign-card>
+          </div>
+          <ng-template #noActiveCampaigns>
+            <p class="muted-empty">No active public campaigns right now.</p>
+          </ng-template>
+        </div>
+
+        <!-- Product Gallery -->
+        <div class="content-section" *ngIf="productImages.length">
+          <h3 class="section-title">Product Gallery</h3>
+          <div class="product-grid">
+            <div class="product-card" *ngFor="let imageUrl of productImages">
+              <img [src]="imageUrl" (error)="onImgError($event)" class="product-img" alt="Brand product" />
             </div>
           </div>
         </div>
@@ -215,14 +227,24 @@
     <!-- ══════ TAB: CAMPAIGNS ══════ -->
     <div *ngIf="activeTab === 'campaigns'">
       <app-campaign-list
-        [campaigns]="campaigns"
+        [campaigns]="campaignCardsForProfile"
         [brandName]="brand.brandName || brand.name"
         [isOwner]="isOwner"
+        [externalDetailHandling]="true"
+        [limitedCards]="true"
         (createCampaign)="onCreateCampaign($event)"
         (editCampaign)="onEditCampaign($event)"
         (deleteCampaign)="onDeleteCampaign($event)"
+        (viewDetails)="onCampaignViewDetails($event)"
       ></app-campaign-list>
     </div>
+
+    <app-campaign-detail-modal
+      [visible]="!!selectedCampaign"
+      [invite]="selectedCampaignInvite"
+      [showDateInput]="false"
+      (close)="closeCampaignDetails()"
+    ></app-campaign-detail-modal>
 
     <!-- ══════ BOTTOM CTA BAR ══════ -->
     <div class="bottom-cta">

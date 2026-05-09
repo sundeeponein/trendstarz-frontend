@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
@@ -81,13 +81,76 @@ export class SearchComponent implements OnInit {
 
   get currentUser(): any { return this.session.getUser(); }
   get isBrandUser(): boolean { return this.currentUser?.role === 'brand'; }
+  get isInfluencerUser(): boolean { return this.currentUser?.role === 'influencer'; }
+  get isGuestUser(): boolean { return !this.currentUser; }
+
+  /**
+   * Search mode by viewer role:
+   * - Brand users search influencers
+   * - Influencer users search brands
+   * - Guests search influencers
+   */
+  get searchMode(): 'influencers' | 'brands' {
+    if (this.isBrandUser) return 'influencers';
+    if (this.isInfluencerUser) return 'brands';
+    return 'influencers';
+  }
+
+  get isInfluencerMode(): boolean { return this.searchMode === 'influencers'; }
+  get isBrandMode(): boolean { return this.searchMode === 'brands'; }
+
+  get pageTitle(): string {
+    return this.isInfluencerMode ? 'Discover Influencers' : 'Discover Brands';
+  }
+
+  get pageSubtitle(): string {
+    if (this.isInfluencerMode) {
+      const count = this.filteredInfluencers.length;
+      const suffix = this.selectedCount > 0 ? ` · ${this.selectedCount} selected` : '';
+      return `Showing ${count} creators matching your criteria${suffix}`;
+    }
+    return `Showing ${this.filteredBrands.length} brands matching your criteria`;
+  }
+
+  get activeKeyword(): string {
+    return this.isInfluencerMode ? this.infFilters.keyword : this.brandFilters.keyword;
+  }
+
+  get activeCategory(): string {
+    return this.isInfluencerMode ? this.infFilters.category : this.brandFilters.category;
+  }
+
+  get activeLocation(): string {
+    return this.isInfluencerMode ? this.infFilters.location : this.brandFilters.location;
+  }
+
+  get activeCategoryOptions(): string[] {
+    return this.isInfluencerMode ? this.categoryOptions : this.brandCategoryOptions;
+  }
+
+  get activeLocationOptions(): string[] {
+    return this.isInfluencerMode ? this.locationOptions : this.brandLocationOptions;
+  }
+
+  get searchPlaceholder(): string {
+    return this.isInfluencerMode
+      ? 'Search creators, keywords, or niches...'
+      : 'Search brands, keywords, or industries...';
+  }
+
+  get categoryLabel(): string {
+    return this.isInfluencerMode ? 'Niche' : 'Industry';
+  }
+
+  get categoryDefaultLabel(): string {
+    return this.isInfluencerMode ? 'All Niches' : 'All Industries';
+  }
 
   constructor(
     private config: ConfigService,
     private session: SessionService,
     private cd: ChangeDetectorRef,
     public router: Router,
-    private route: ActivatedRoute,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -95,24 +158,56 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
-    // Honour ?tab= query param, then fall back to role-based default
-    const paramTab = this.route.snapshot.queryParamMap.get('tab');
-    if (paramTab === 'influencers' || paramTab === 'brands') {
-      this.activeTab = paramTab;
-    } else if (this.isBrandUser) {
-      this.activeTab = 'influencers';
-    } else if (this.currentUser) {
-      this.activeTab = 'brands';
+    this.activeTab = this.searchMode;
+    if (this.isInfluencerMode) {
+      this.fetchInfluencers();
     } else {
-      this.activeTab = 'influencers';
+      this.fetchBrands();
     }
-    this.fetchInfluencers();
-    this.fetchBrands();
   }
 
   setTab(tab: 'influencers' | 'brands') {
+    if (tab !== this.searchMode) return;
     this.activeTab = tab;
     this.router.navigate([], { queryParams: { tab }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  onKeywordChange(value: string) {
+    if (this.isInfluencerMode) {
+      this.infFilters.keyword = value;
+      this.applyInfluencerFilters();
+      return;
+    }
+    this.brandFilters.keyword = value;
+    this.applyBrandFilters();
+  }
+
+  onCategoryChange(value: string) {
+    if (this.isInfluencerMode) {
+      this.infFilters.category = value;
+      this.applyInfluencerFilters();
+      return;
+    }
+    this.brandFilters.category = value;
+    this.applyBrandFilters();
+  }
+
+  onLocationChange(value: string) {
+    if (this.isInfluencerMode) {
+      this.infFilters.location = value;
+      this.applyInfluencerFilters();
+      return;
+    }
+    this.brandFilters.location = value;
+    this.applyBrandFilters();
+  }
+
+  clearActiveFilters() {
+    if (this.isInfluencerMode) {
+      this.clearInfluencerFilters();
+      return;
+    }
+    this.clearBrandFilters();
   }
 
   fetchInfluencers() {
