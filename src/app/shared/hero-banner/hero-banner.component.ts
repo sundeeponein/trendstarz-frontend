@@ -21,7 +21,7 @@ export class HeroBannerComponent {
   @Input() liveMetricText = '';
   @Input() primaryRoute = '/register-brand';
   @Input() secondaryRoute = '/register-influencer';
-  @Input() thirdRoute = '/how-it-works';
+  @Input() thirdRoute = '/features';
 
   // simple cache buster so changed images appear immediately during development
   cacheBuster = Date.now();

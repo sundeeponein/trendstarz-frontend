@@ -1,6 +1,6 @@
 <section class="how-wrap">
   <header class="hero">
-    <p class="eyebrow">How It Works</p>
+    <p class="eyebrow">{{ pageEyebrow }}</p>
     <h1 *ngIf="role === 'guest'">Get collaborations moving in 3 simple steps</h1>
     <h1 *ngIf="role === 'influencer'">You are live. Turn visibility into offers.</h1>
     <h1 *ngIf="role === 'brand'">You are ready. Launch your first campaign.</h1>
@@ -15,9 +15,9 @@
     </p>
 
     <div class="audience-switch" *ngIf="role === 'guest' || role === 'admin'">
-      <a routerLink="/how-it-works" class="audience-pill" [class.active]="audienceMode === 'all'">All</a>
-      <a routerLink="/how-it-works/influencers" class="audience-pill" [class.active]="audienceMode === 'influencer'">Influencers</a>
-      <a routerLink="/how-it-works/brands" class="audience-pill" [class.active]="audienceMode === 'brand'">Brands</a>
+      <a [routerLink]="routeBasePath" class="audience-pill" [class.active]="audienceMode === 'all'">All</a>
+      <a [routerLink]="routeBasePath + '/influencers'" class="audience-pill" [class.active]="audienceMode === 'influencer'">Influencers</a>
+      <a [routerLink]="routeBasePath + '/brands'" class="audience-pill" [class.active]="audienceMode === 'brand'">Brands</a>
     </div>
   </header>
 

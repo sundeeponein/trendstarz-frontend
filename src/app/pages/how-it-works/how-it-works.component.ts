@@ -19,24 +19,30 @@ export class HowItWorksComponent implements OnDestroy {
   user: any = null;
   role: UserRole = 'guest';
   audienceMode: 'all' | 'influencer' | 'brand' = 'all';
+  routeBasePath = '/how-it-works';
+  routeSource = 'how-it-works';
+
+  get pageEyebrow(): string {
+    return this.routeBasePath === '/features' ? 'Features' : 'How It Works';
+  }
 
   influencerSignupParams = {
-    source: 'how-it-works',
+    source: this.routeSource,
     audience: 'influencer',
   };
 
   brandSignupParams = {
-    source: 'how-it-works',
+    source: this.routeSource,
     audience: 'brand',
   };
 
   influencerCampaignParams = {
-    source: 'how-it-works-activation',
+    source: `${this.routeSource}-activation`,
     audience: 'influencer',
   };
 
   brandCampaignParams = {
-    source: 'how-it-works-activation',
+    source: `${this.routeSource}-activation`,
     audience: 'brand',
   };
 
@@ -50,6 +56,12 @@ export class HowItWorksComponent implements OnDestroy {
     this.user = this.session.getUser();
     this.role = this.resolveRole(this.user);
     this.audienceMode = this.resolveAudience(this.route.snapshot.data?.['audience']);
+    this.routeBasePath = this.resolveBasePath(this.route.snapshot.routeConfig?.path);
+    this.routeSource = this.routeBasePath === '/features' ? 'features' : 'how-it-works';
+    this.influencerSignupParams.source = this.routeSource;
+    this.brandSignupParams.source = this.routeSource;
+    this.influencerCampaignParams.source = `${this.routeSource}-activation`;
+    this.brandCampaignParams.source = `${this.routeSource}-activation`;
 
     this.sub = this.session.user$.subscribe((user) => {
       this.user = user;
@@ -73,5 +85,10 @@ export class HowItWorksComponent implements OnDestroy {
   ): 'all' | 'influencer' | 'brand' {
     if (audience === 'influencer' || audience === 'brand') return audience;
     return 'all';
+  }
+
+  private resolveBasePath(path: string | undefined): string {
+    if (path?.startsWith('features')) return '/features';
+    return '/how-it-works';
   }
 }
