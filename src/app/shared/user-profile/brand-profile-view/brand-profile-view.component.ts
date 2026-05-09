@@ -6,13 +6,16 @@ import { SessionService } from '../../../core/session.service';
 import { switchMap } from 'rxjs/operators';
 import { Campaign } from '../../campaigns/campaign.model';
 import { CampaignListComponent } from '../../campaigns/campaign-list/campaign-list.component';
+import { CampaignCardComponent } from '../../campaigns/campaign-card/campaign-card.component';
+import { CampaignDetailModalComponent } from '../../campaign-detail-modal/campaign-detail-modal.component';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule, CampaignListComponent, WriteReviewComponent, ReviewListComponent],
+  imports: [CommonModule, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: ['./brand-profile-view.component.scss']
 })
@@ -23,6 +26,7 @@ export class BrandProfileViewComponent implements OnInit {
   showContact = false;
   activeTab: 'overview' | 'campaigns' | 'analytics' = 'overview';
   campaigns: Campaign[] = [];
+  selectedCampaign: Campaign | null = null;
   isOwner = false;
 
   // Review state
@@ -60,9 +64,88 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   get displayImage(): string {
-    return this.brand?.brandLogo?.[0]?.url
-      || (typeof this.brand?.brandLogo === 'string' ? this.brand.brandLogo : null)
-      || 'assets/default-profile.png';
+    const firstLogo = this.brand?.brandLogo?.[0]?.url
+      || (typeof this.brand?.brandLogo === 'string' ? this.brand.brandLogo : null);
+    return this.normalizeImageUrl(firstLogo) || 'assets/default-profile.png';
+  }
+
+  private normalizeImageUrl(url?: string | null): string {
+    if (!url) return '';
+    if (url.startsWith('/assets/') || url.startsWith('/assets')) {
+      const api = environment.apiBaseUrl || '';
+      const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
+      return backend ? backend + url : url;
+    }
+    return url;
+  }
+
+  private campaignStatus(status: unknown): string {
+    return String(status || '').trim().toLowerCase();
+  }
+
+  get activePublicCampaigns(): Campaign[] {
+    return (this.campaigns || []).filter((campaign) => this.campaignStatus(campaign?.status) === 'active');
+  }
+
+  get campaignCardsForProfile(): Campaign[] {
+    return (this.campaigns || []).map((campaign) => this.toOverviewCampaign(campaign));
+  }
+
+  get productImages(): string[] {
+    const source = Array.isArray(this.brand?.products)
+      ? this.brand.products
+      : (Array.isArray(this.brand?.productImages) ? this.brand.productImages : []);
+    return source
+      .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url))
+      .filter((url: string) => !!url);
+  }
+
+  getCampaignImage(campaign: Campaign): string {
+    const campaignImage = this.normalizeImageUrl(campaign?.image?.url || '');
+    if (campaignImage) return campaignImage;
+    if (this.productImages.length) return this.productImages[0];
+    return 'assets/default-profile.png';
+  }
+
+  toOverviewCampaign(campaign: Campaign): Campaign {
+    const fallbackImage = this.getCampaignImage(campaign);
+    return {
+      ...campaign,
+      image: campaign.image?.url ? campaign.image : { url: fallbackImage, public_id: '' },
+      applicants: undefined,
+    };
+  }
+
+  onCampaignViewDetails(campaign: Campaign): void {
+    this.selectedCampaign = campaign;
+  }
+
+  closeCampaignDetails(): void {
+    this.selectedCampaign = null;
+  }
+
+  get selectedCampaignInvite(): any | null {
+    if (!this.selectedCampaign) return null;
+    return {
+      _id: this.selectedCampaign._id || 'campaign-preview',
+      status: 'accepted',
+      campaign: this.selectedCampaign,
+      brandId: {
+        brandName: this.brand?.brandName || this.brand?.name || '',
+        brandUsername: this.brand?.brandUsername || '',
+      },
+    };
+  }
+
+  getCampaignBudget(campaign: Campaign): string {
+    const min = Number(campaign?.budgetMin || 0);
+    const max = Number(campaign?.budgetMax || 0);
+    if (!min && !max) return '';
+    if (min && max) {
+      if (min === max) return `₹${min.toLocaleString('en-IN')}`;
+      return `₹${min.toLocaleString('en-IN')} - ₹${max.toLocaleString('en-IN')}`;
+    }
+    return `₹${(min || max).toLocaleString('en-IN')}`;
   }
 
   getTotalFollowers(): number {
@@ -119,7 +202,13 @@ export class BrandProfileViewComponent implements OnInit {
     if (this.brand?.socialMedia?.length) {
       return this.getSocialUrl(this.brand.socialMedia[0]);
     }
+    const website = String(this.brand?.website || '').trim();
+    if (website) return website;
     return '#';
+  }
+
+  get hasFollowLink(): boolean {
+    return this.getMainSocialLink() !== '#';
   }
 
   constructor(private route: ActivatedRoute, private config: ConfigService, private session: SessionService, private cd: ChangeDetectorRef) {}

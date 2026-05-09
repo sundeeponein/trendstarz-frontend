@@ -27,10 +27,15 @@
     <!-- Body -->
     <div class="cdm-body">
 
+      <!-- Campaign image -->
+      <div class="cdm-campaign-image-wrap" *ngIf="campaignImageUrl">
+        <img class="cdm-campaign-image" [src]="campaignImageUrl" (error)="onCampaignImgError($event)" alt="" />
+      </div>
+
       <!-- Description -->
-      <div class="cdm-section" *ngIf="campaignDescription">
+      <div class="cdm-section" *ngIf="campaignDescriptionSafe">
         <div class="cdm-section-label">DESCRIPTION</div>
-        <div class="cdm-brief-box cdm-description">{{ campaignDescription }}</div>
+        <div class="cdm-brief-box cdm-description" [innerText]="campaignDescriptionSafe"></div>
       </div>
 
       <!-- Stat cards -->
@@ -38,6 +43,10 @@
         <div class="cdm-stat-card" *ngIf="yourPayoutText">
           <div class="cdm-stat-label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
           <div class="cdm-stat-value">{{ yourPayoutText }}</div>
+        </div>
+        <div class="cdm-stat-card" *ngIf="!yourPayoutText && campaignBudgetText">
+          <div class="cdm-stat-label"><i class="bi bi-cash-coin"></i> BUDGET</div>
+          <div class="cdm-stat-value" style="color:var(--ts-primary,#e8620f)">{{ campaignBudgetText }}</div>
         </div>
         <div class="cdm-stat-card">
           <div class="cdm-stat-label"><i class="bi bi-calendar3"></i> TIMELINE</div>

@@ -14,7 +14,7 @@
   <!-- Tab bar -->
   <div class="campaigns-tabs">
     <button
-      *ngFor="let tab of tabs"
+      *ngFor="let tab of visibleTabs"
       class="tab-btn"
       [class.active]="activeTab === tab.key"
       (click)="switchTab(tab.key)"
@@ -28,6 +28,7 @@
     <app-campaign-card
       *ngFor="let c of pagedCampaigns"
       [campaign]="c"
+      [limited]="limitedCards"
       [isOwner]="isOwner"
       (viewDetails)="onViewDetails($event)"
       (manage)="onManage($event)"
@@ -60,5 +61,13 @@
     (save)="onFormSave($event)"
     (cancel)="closeForm()"
   ></app-campaign-form>
+
+  <app-campaign-detail-modal
+    *ngIf="!externalDetailHandling"
+    [visible]="!!selectedCampaign"
+    [invite]="selectedCampaignInvite"
+    [showDateInput]="false"
+    (close)="closeDetails()"
+  ></app-campaign-detail-modal>
 
 </div>

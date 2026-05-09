@@ -63,6 +63,14 @@ export class CampaignDetailModalComponent {
     return this.invite?.brand || this.invite?.brandId || {};
   }
 
+  get campaignImageUrl(): string {
+    return this.campaign?.image?.url || '';
+  }
+
+  onCampaignImgError(event: Event) {
+    (event.target as HTMLImageElement).style.display = 'none';
+  }
+
   get inviteId(): string { return this.invite?._id || ''; }
 
   get isPending(): boolean { return this.invite?.status === 'pending'; }
@@ -78,6 +86,22 @@ export class CampaignDetailModalComponent {
     return this.campaign?.title || this.campaign?.campaignTitle || 'Campaign';
   }
   get campaignDescription(): string { return this.campaign?.description || ''; }
+  /** Description cleaned of literal "undefined" / empty strings, formatted for display */
+  get campaignDescriptionSafe(): string {
+    const raw = String(this.campaignDescription || '').replace(/\s+/g, ' ').trim();
+    if (!raw || raw === 'undefined' || raw === 'null') return '';
+    return this.campaignDescriptionFormatted;
+  }
+  get campaignDescriptionFormatted(): string {
+    const raw = String(this.campaignDescription || '').replace(/\s+/g, ' ').trim();
+    if (!raw || raw === 'undefined' || raw === 'null') return '';
+    const withHeadings = raw.replace(
+      /\s*(What we expect:|Content Guidelines:|Deliverables:|Timeline:|Payment:|Important Notes:)/gi,
+      '\n$1'
+    );
+    const withBullets = withHeadings.replace(/\s*•\s*/g, '\n• ');
+    return withBullets.replace(/\n{2,}/g, '\n').trim();
+  }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
 
   get campaignTypeKey(): string {
@@ -473,4 +497,5 @@ export class CampaignDetailModalComponent {
   onLogoError(event: Event) {
     (event.target as HTMLImageElement).style.display = 'none';
   }
+
 }
