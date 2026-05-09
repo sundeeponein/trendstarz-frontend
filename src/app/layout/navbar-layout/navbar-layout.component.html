@@ -25,8 +25,8 @@
       <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Transactions
       </a>
-      <a routerLink="/how-it-works" routerLinkActive="active" class="nav-tab">
-        How it Works
+      <a routerLink="/features" routerLinkActive="active" class="nav-tab">
+        Features
       </a>
       <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
         Register as Influencer
