@@ -155,14 +155,6 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
         discountPercent = offer.value;
       }
     }
-    // Set discount label for UI
-    if (discountPercent > 0) {
-      plan.discountLabel = `Save ${discountPercent}%`;
-    } else if (this.selectedDurationKey === '1y') {
-      plan.discountLabel = 'Best value';
-    } else {
-      plan.discountLabel = '';
-    }
     // Store the discount percent for use in calculation
     this.planDiscountPercent = discountPercent;
     this.applyPlanDiscount();
@@ -171,6 +163,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   applyPlanDiscount() {
     // Reset discount
     this.planDiscountPercent = 0;
+    this.discountLabel = this.selectedPlan?.discountLabel || '';
     if (!this.selectedPlan || !this.selectedPlan.offers) return;
     // Robust: check both discount keys for both roles
     let discountKeys = ["discountOnBrandPro", "discountOnInfluencerPro"];

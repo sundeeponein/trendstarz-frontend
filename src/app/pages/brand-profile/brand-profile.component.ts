@@ -4,7 +4,7 @@ import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
-import { PlansService } from '../../shared/plans.service';
+import { PlansService, Plan } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
 import { of, forkJoin, firstValueFrom } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
@@ -23,6 +23,10 @@ import { ResetPasswordModalComponent } from '../../shared/components/reset-passw
   styleUrls: ['./brand-profile.component.scss']
 })
 export class BrandProfileComponent implements OnInit {
+  premiumMonthlyPrice = 999;
+  premiumOriginalMonthlyPrice: number | null = null;
+  premiumOfferChip = '';
+
       
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -310,6 +314,8 @@ export class BrandProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadPremiumMonthlyPrice();
+
     // ngOnInit called
 
     this.registrationForm = this.fb.group({
@@ -546,6 +552,45 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
     this.refreshStepCompletion();
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('BRAND').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (!paidPlan) return;
+
+      const monthly = paidPlan?.price?.monthly ?? 0;
+      if (monthly > 0) {
+        this.premiumMonthlyPrice = monthly;
+      }
+
+      const discountPercent = this.getPlanDiscountPercent(paidPlan, ['discountOnBrandPro', 'discountMonthly']);
+        if (discountPercent > 0) {
+          this.premiumOriginalMonthlyPrice = monthly;
+          this.premiumMonthlyPrice = Math.round(monthly * (1 - discountPercent / 100));
+        }
+      this.premiumOfferChip = this.resolveOfferChipLabel(paidPlan, discountPercent);
+    });
+  }
+
+  private getPlanDiscountPercent(plan: Plan, keys: string[]): number {
+    if (!Array.isArray(plan?.offers)) return 0;
+    const offer = plan.offers.find((item) => keys.includes(item.key) && Number(item.value) > 0);
+    return offer ? Number(offer.value) : 0;
+  }
+
+  private computeOriginalPrice(discountedPrice: number, discountPercent: number): number | null {
+    if (!discountedPrice || !discountPercent || discountPercent <= 0 || discountPercent >= 100) return null;
+    const original = Math.round(discountedPrice / (1 - discountPercent / 100));
+    return original > discountedPrice ? original : null;
+  }
+
+  private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
+    if (plan?.discountLabel) return plan.discountLabel;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const hasTrialOffer = Array.isArray(plan?.offers)
+      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
+    return hasTrialOffer ? 'Early Access Offer' : '';
   }
 
   // Sanitize brand username input (replace spaces with hyphens, remove invalid chars)

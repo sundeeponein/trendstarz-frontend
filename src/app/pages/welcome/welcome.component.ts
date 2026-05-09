@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -14,6 +15,22 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
+  readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
+  readonly builtForAudiencesInputs = {
+    heading: 'Built For Every Industry',
+    subheading: 'Tailored influencer marketing solutions for your niche.',
+    items: [
+      { icon: 'bi-person', title: 'Fashion Brands', subtitle: 'Apparel & Accessories' },
+      { icon: 'bi-geo-alt', title: 'Restaurants', subtitle: 'Food & Dining' },
+      { icon: 'bi-heart', title: 'Beauty Brands', subtitle: 'Skincare & Makeup' },
+      { icon: 'bi-display', title: 'Tech & Gadgets', subtitle: 'Electronics & Apps' },
+      { icon: 'bi-rocket', title: 'Startups', subtitle: 'Growth & Awareness' },
+      { icon: 'bi-people-fill', title: 'Lifestyle Creators', subtitle: 'Daily Life & Trends' },
+      { icon: 'bi-building', title: 'Local Businesses', subtitle: 'City & Hyperlocal Reach' },
+      { icon: 'bi-chat-left-quote', title: 'Food Bloggers', subtitle: 'Taste & Review Content' },
+    ],
+  };
+
   readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
   readonly minPublicBrands = environment.marketplacePublicMinBrands;
 

@@ -1,0 +1,92 @@
+.built-for-strip {
+  background: #ffffff;
+  border-top: 1px solid #dce3ed;
+  border-bottom: 1px solid #dce3ed;
+}
+
+.built-for-title {
+  font-size: clamp(1.65rem, 2.8vw, 2.35rem);
+  color: #20242d;
+  font-weight: 800;
+}
+
+.built-for-subtitle {
+  color: #687289;
+  font-size: 1rem;
+}
+
+.built-for-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.built-for-item {
+  min-width: 0;
+}
+
+.built-for-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.55rem;
+  border: 1px solid #e3e7ee;
+  border-radius: 12px;
+  background: #f2f4f8;
+  padding: 1.35rem 1rem;
+}
+
+.built-for-tile {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ece6f8;
+}
+
+.built-for-card i {
+  color: #6f52aa;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.built-for-card h5 {
+  margin: 0.5rem 0 0;
+  color: #212736;
+  font-size: 1.04rem;
+  font-weight: 800;
+}
+
+.built-for-card p {
+  margin: 0;
+  color: #6c758b;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 991px) {
+  .built-for-card {
+    padding: 1.1rem 0.8rem;
+  }
+
+  .built-for-tile {
+    width: 44px;
+    height: 44px;
+  }
+
+  .built-for-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .built-for-card h5 {
+    font-size: 0.96rem;
+  }
+
+  .built-for-card p {
+    font-size: 0.84rem;
+  }
+}

@@ -15,6 +15,7 @@
     <div class="plans-grid">
       <div *ngFor="let plan of plans" class="plan-card" [class.selected]="selectedPlan === plan" (click)="selectPlanCard(plan)">
         <div class="plan-badge">{{ plan.name }}</div>
+        <div class="plan-offer-chip-upgrade" *ngIf="plan.discountLabel">{{ plan.discountLabel }}</div>
 
         <!-- Duration selector for paid plans -->
         <ng-container *ngIf="plan.price.monthly > 0 && selectedPlan === plan">
@@ -49,7 +50,7 @@
               {{ planDiscountPercent }}% Discount
             </span>
           </div>
-          <div class="price-monthly-hint">
+          <div class="price-monthly-hint mt-1">
             <span *ngIf="selectedDurationKey === '3m' || selectedDurationKey === '1y'" class="per-month-after-discount">
               ₹{{ (selectedDuration?.price / (selectedDurationKey === '3m' ? 3 : selectedDurationKey === '1y' ? 12 : 1)).toFixed(0) }}/mo
             </span>

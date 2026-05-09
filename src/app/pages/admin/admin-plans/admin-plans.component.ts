@@ -66,11 +66,11 @@ export class AdminPlansComponent implements OnInit {
   readonly masterOffers: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnBrandPro', label: 'Discount on Brand Pro plan (%)' },
+      { key: 'discountOnInfluencerPro', label: 'Discount on Influencer Pro plan (%)' },
     ],
     BRAND: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnInfluencerPro', label: 'Discount on Influencer Pro plan (%)' },
+      { key: 'discountOnBrandPro', label: 'Discount on Brand Pro plan (%)' },
     ],
   };
 
