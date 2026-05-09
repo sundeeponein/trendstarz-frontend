@@ -77,6 +77,19 @@
   flex: 1;
 }
 
+.cdm-campaign-image-wrap {
+  margin: 0 -26px 18px;
+  max-height: 220px;
+  overflow: hidden;
+  border-bottom: 1px solid #f0f0f0;
+}
+.cdm-campaign-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
 /* Stat cards */
 .cdm-stats {
   display: grid;

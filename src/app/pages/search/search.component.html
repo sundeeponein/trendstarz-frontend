@@ -5,16 +5,10 @@
     <div class="header-content">
       <div class="header-text">
         <h1 class="page-title">
-          {{ isBrandUser ? 'Discover Influencers' : 'Discover Brands' }}
+          {{ pageTitle }}
         </h1>
-        <p class="page-subtitle" *ngIf="isBrandUser && !influencersLoading">
-          Showing {{ filteredInfluencers.length }} creators matching your criteria
-          <ng-container *ngIf="selectedCount > 0">
-            &nbsp;· <strong>{{ selectedCount }} selected</strong>
-          </ng-container>
-        </p>
-        <p class="page-subtitle" *ngIf="!isBrandUser && !brandsLoading">
-          Showing {{ filteredBrands.length }} brands matching your criteria
+        <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading)">
+          {{ pageSubtitle }}
         </p>
       </div>
       <!-- Right actions -->
@@ -47,8 +41,8 @@
     <a routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
   </div>
 
-  <!-- ───── INFLUENCER FILTERS ───── -->
-  <div class="filter-bar" *ngIf="activeTab === 'influencers'">
+  <!-- ───── REUSABLE FILTERS ───── -->
+  <div class="filter-bar">
     <!-- Keyword Search -->
     <div class="filter-item search-item">
       <label class="filter-label">Search</label>
@@ -57,32 +51,32 @@
         <input
           type="text"
           class="filter-input"
-          placeholder="Search creators, keywords, or niches…"
-          [(ngModel)]="infFilters.keyword"
-          (ngModelChange)="applyInfluencerFilters()" />
+          [placeholder]="searchPlaceholder"
+          [ngModel]="activeKeyword"
+          (ngModelChange)="onKeywordChange($event)" />
       </div>
     </div>
 
     <!-- Niche / Category -->
     <div class="filter-item">
-      <label class="filter-label">Niche</label>
-      <select class="filter-select" [(ngModel)]="infFilters.category" (ngModelChange)="applyInfluencerFilters()">
-        <option value="">All Niches</option>
-        <option *ngFor="let cat of categoryOptions" [value]="cat">{{ cat }}</option>
+      <label class="filter-label">{{ categoryLabel }}</label>
+      <select class="filter-select" [ngModel]="activeCategory" (ngModelChange)="onCategoryChange($event)">
+        <option value="">{{ categoryDefaultLabel }}</option>
+        <option *ngFor="let cat of activeCategoryOptions" [value]="cat">{{ cat }}</option>
       </select>
     </div>
 
     <!-- Location -->
     <div class="filter-item">
       <label class="filter-label">Location</label>
-      <select class="filter-select" [(ngModel)]="infFilters.location" (ngModelChange)="applyInfluencerFilters()">
+      <select class="filter-select" [ngModel]="activeLocation" (ngModelChange)="onLocationChange($event)">
         <option value="">All Locations</option>
-        <option *ngFor="let loc of locationOptions" [value]="loc">{{ loc }}</option>
+        <option *ngFor="let loc of activeLocationOptions" [value]="loc">{{ loc }}</option>
       </select>
     </div>
 
-    <!-- Tier -->
-    <div class="filter-item">
+    <!-- Tier (influencer search only) -->
+    <div class="filter-item" *ngIf="isInfluencerMode">
       <label class="filter-label">Tier</label>
       <select class="filter-select" [(ngModel)]="infFilters.tier" (ngModelChange)="applyInfluencerFilters()">
         <option value="">All Tiers</option>
@@ -92,56 +86,14 @@
 
     <!-- Actions -->
     <div class="filter-actions">
-      <button class="btn-clear" (click)="clearInfluencerFilters()">
-        <i class="bi bi-x-circle"></i> Clear
-      </button>
-    </div>
-  </div>
-
-  <!-- ───── BRAND FILTERS ───── -->
-  <div class="filter-bar" *ngIf="activeTab === 'brands'">
-    <!-- Keyword Search -->
-    <div class="filter-item search-item">
-      <label class="filter-label">Search</label>
-      <div class="search-input-wrapper">
-        <i class="bi bi-search search-icon"></i>
-        <input
-          type="text"
-          class="filter-input"
-          placeholder="Search brands, keywords, or niches…"
-          [(ngModel)]="brandFilters.keyword"
-          (ngModelChange)="applyBrandFilters()" />
-      </div>
-    </div>
-
-    <!-- Niche / Category -->
-    <div class="filter-item">
-      <label class="filter-label">Industry</label>
-      <select class="filter-select" [(ngModel)]="brandFilters.category" (ngModelChange)="applyBrandFilters()">
-        <option value="">All Industries</option>
-        <option *ngFor="let cat of brandCategoryOptions" [value]="cat">{{ cat }}</option>
-      </select>
-    </div>
-
-    <!-- Location -->
-    <div class="filter-item">
-      <label class="filter-label">Location</label>
-      <select class="filter-select" [(ngModel)]="brandFilters.location" (ngModelChange)="applyBrandFilters()">
-        <option value="">All Locations</option>
-        <option *ngFor="let loc of brandLocationOptions" [value]="loc">{{ loc }}</option>
-      </select>
-    </div>
-
-    <!-- Actions -->
-    <div class="filter-actions">
-      <button class="btn-clear" (click)="clearBrandFilters()">
+      <button class="btn-clear" (click)="clearActiveFilters()">
         <i class="bi bi-x-circle"></i> Clear
       </button>
     </div>
   </div>
 
   <!-- ───── INFLUENCER RESULTS ───── -->
-  <div class="results-area" *ngIf="activeTab === 'influencers'">
+  <div class="results-area" *ngIf="isInfluencerMode">
     <!-- Pro users appear first hint -->
     <div class="pro-first-hint" *ngIf="!isProView">
       <i class="bi bi-star-fill"></i> Pro users appear first
@@ -193,7 +145,7 @@
   </div>
 
   <!-- ───── BRAND RESULTS ───── -->
-  <div class="results-area" *ngIf="activeTab === 'brands'">
+  <div class="results-area" *ngIf="isBrandMode">
     <!-- Loading -->
     <div class="loading-state" *ngIf="brandsLoading">
       <div class="spinner-border text-primary" role="status"></div>

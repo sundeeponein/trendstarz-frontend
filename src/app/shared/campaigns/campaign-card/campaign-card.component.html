@@ -1,4 +1,4 @@
-<div class="campaign-card">
+<div class="campaign-card" [class.campaign-card--limited]="limited">
   <div class="card-image-wrap">
     <img
       [src]="campaign.image?.url || 'assets/default-profile.png'"
@@ -19,7 +19,7 @@
         <span class="meta-label">BUDGET</span>
         <span class="meta-value budget">{{ budgetDisplay }}</span>
       </div>
-      <div class="meta-item" *ngIf="campaign.applicants !== undefined">
+      <div class="meta-item" *ngIf="!limited && campaign.applicants !== undefined">
         <span class="meta-label">APPLICANTS</span>
         <span class="meta-value">{{ applicantLabel }}</span>
       </div>

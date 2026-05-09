@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { SessionService } from '../../../core/session.service';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-influencer-profile-view',
@@ -59,8 +60,31 @@ export class InfluencerProfileViewComponent implements OnInit {
     }
   }
 
+  private normalizeImageUrl(url?: string | null): string {
+    if (!url) return '';
+    if (url.startsWith('/assets/') || url.startsWith('/assets')) {
+      const api = environment.apiBaseUrl || '';
+      const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
+      return backend ? backend + url : url;
+    }
+    return url;
+  }
+
   get displayImage(): string {
-    return this.influencer?.profileImage || this.influencer?.profileImages?.[0]?.url || 'assets/default-profile.png';
+    const imageUrl = this.influencer?.profileImage || this.influencer?.profileImages?.[0]?.url;
+    return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';
+  }
+
+  get galleryImages(): string[] {
+    const raw = Array.isArray(this.influencer?.profileImages) ? this.influencer.profileImages : [];
+    const normalized = raw
+      .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url))
+      .filter((url: string) => !!url);
+    const unique: string[] = Array.from(new Set<string>(normalized));
+    if (!unique.length && this.displayImage && this.displayImage !== 'assets/default-profile.png') {
+      unique.push(this.displayImage);
+    }
+    return unique;
   }
 
   getTotalFollowers(): number {

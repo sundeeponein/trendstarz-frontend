@@ -12,6 +12,7 @@ import { Campaign } from '../campaign.model';
 export class CampaignCardComponent {
   @Input() campaign!: Campaign;
   @Input() isOwner = false;
+  @Input() limited = false;
   @Output() viewDetails = new EventEmitter<Campaign>();
   @Output() manage = new EventEmitter<Campaign>();
 
@@ -23,6 +24,7 @@ export class CampaignCardComponent {
     if (!this.campaign?.budgetMin && !this.campaign?.budgetMax) return '';
     const min = this.campaign.budgetMin ? `₹${this.campaign.budgetMin.toLocaleString('en-IN')}` : '';
     const max = this.campaign.budgetMax ? `₹${this.campaign.budgetMax.toLocaleString('en-IN')}` : '';
+    if (min && max && min === max) return min;
     if (min && max) return `${min} - ${max}`;
     return min || max;
   }

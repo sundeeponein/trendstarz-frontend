@@ -104,3 +104,71 @@
     }
   }
 }
+
+.campaign-details-modal {
+  z-index: 1200;
+
+  .modal-content {
+    border: 1px solid $border;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid $border;
+  }
+
+  .modal-title {
+    color: $text-dark;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+}
+
+.details-image {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid $border;
+}
+
+.details-description {
+  margin: 14px 0;
+  color: $text-muted;
+  line-height: 1.5;
+  white-space: pre-line;
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background: #fafbff;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.details-item {
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 10px;
+
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    color: $text-muted;
+    margin-bottom: 4px;
+  }
+
+  strong {
+    color: $text-dark;
+    font-size: 0.9rem;
+  }
+}
