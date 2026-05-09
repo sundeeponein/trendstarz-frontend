@@ -6,6 +6,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
 import { map, debounceTime, first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
@@ -13,6 +14,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { PlansService, Plan } from '../../shared/plans.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -200,17 +202,23 @@ export class InfluencerRegistrationComponent implements OnInit {
   duplicatePhoneError = '';
   isSubmitting = false;
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  premiumMonthlyPrice = 399;
+  premiumOriginalMonthlyPrice: number | null = null;
+  premiumOfferChip = '';
 
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
     private ngZone: NgZone,
     private otpService: OtpService,
+    private plansService: PlansService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    this.loadPremiumMonthlyPrice();
+
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';
     this.signupAttribution = {
@@ -297,6 +305,45 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (!paidPlan) return;
+
+      const monthly = paidPlan?.price?.monthly ?? 0;
+      if (monthly > 0) {
+        this.premiumMonthlyPrice = monthly;
+      }
+
+      const discountPercent = this.getPlanDiscountPercent(paidPlan, ['discountOnInfluencerPro', 'discountMonthly']);
+        if (discountPercent > 0) {
+          this.premiumOriginalMonthlyPrice = monthly;
+          this.premiumMonthlyPrice = Math.round(monthly * (1 - discountPercent / 100));
+        }
+      this.premiumOfferChip = this.resolveOfferChipLabel(paidPlan, discountPercent);
+    });
+  }
+
+  private getPlanDiscountPercent(plan: Plan, keys: string[]): number {
+    if (!Array.isArray(plan?.offers)) return 0;
+    const offer = plan.offers.find((item) => keys.includes(item.key) && Number(item.value) > 0);
+    return offer ? Number(offer.value) : 0;
+  }
+
+  private computeOriginalPrice(discountedPrice: number, discountPercent: number): number | null {
+    if (!discountedPrice || !discountPercent || discountPercent <= 0 || discountPercent >= 100) return null;
+    const original = Math.round(discountedPrice / (1 - discountPercent / 100));
+    return original > discountedPrice ? original : null;
+  }
+
+  private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
+    if (plan?.discountLabel) return plan.discountLabel;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const hasTrialOffer = Array.isArray(plan?.offers)
+      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
+    return hasTrialOffer ? 'Early Access Offer' : '';
+  }
+
   private enforcePlatformLimit() {
     if (this.isPremiumPlan()) return;
     const selected = this.selectedPlatforms();
@@ -356,8 +403,18 @@ export class InfluencerRegistrationComponent implements OnInit {
     return this.isStepComplete(1) && this.isStepComplete(2);
   }
 
-  nextStep() {
+  async nextStep() {
     if (!this.validateCurrentStep()) return;
+
+    if (this.currentStep === 1) {
+      const noConflicts = await this.validateStep1Uniqueness();
+      if (!noConflicts) {
+        this.currentStep = 1;
+        this.refreshStepCompletion();
+        return;
+      }
+    }
+
     if (this.currentStep < this.totalSteps) {
       this.currentStep = (this.currentStep + 1) as 1 | 2 | 3;
       this.submitted = false;
@@ -365,6 +422,62 @@ export class InfluencerRegistrationComponent implements OnInit {
       if (this.currentStep === 2) this.step2Attempted = false;
       this.refreshStepCompletion();
     }
+  }
+
+  private async validateStep1Uniqueness(): Promise<boolean> {
+    this.duplicateUsernameError = '';
+    this.duplicateEmailError = '';
+    this.duplicatePhoneError = '';
+
+    const username = String(this.registrationForm.get('username')?.value || '').trim();
+    const email = String(this.registrationForm.get('email')?.value || '').trim();
+    const phoneNumber = String(this.registrationForm.get('phoneNumber')?.value || '').trim();
+
+    if (!username && !email && !phoneNumber) return true;
+
+    const result = await firstValueFrom(
+      this.configService.checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        username,
+        email,
+        phoneNumber,
+      }),
+    );
+
+    let hasConflict = false;
+
+    if (result.username) {
+      hasConflict = true;
+      this.duplicateUsernameError = 'Username already exists.';
+      this.registrationForm.get('username')?.setErrors({
+        ...(this.registrationForm.get('username')?.errors || {}),
+        duplicate: true,
+      });
+    }
+    if (result.email) {
+      hasConflict = true;
+      this.duplicateEmailError = 'Email already exists.';
+      this.registrationForm.get('email')?.setErrors({
+        ...(this.registrationForm.get('email')?.errors || {}),
+        duplicate: true,
+      });
+    }
+    if (result.phoneNumber) {
+      hasConflict = true;
+      this.duplicatePhoneError = 'Mobile number already exists.';
+      this.registrationForm.get('phoneNumber')?.setErrors({
+        ...(this.registrationForm.get('phoneNumber')?.errors || {}),
+        duplicate: true,
+      });
+    }
+
+    if (hasConflict) {
+      this.registrationError = 'Username, email, or mobile already exists. Please update Step 1 details.';
+      return false;
+    }
+
+    this.registrationError = '';
+    return true;
   }
 
   prevStep() {

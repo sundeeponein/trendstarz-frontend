@@ -61,6 +61,9 @@
             <span class="sep">·</span>
             <span>₹{{ plan.price.yearly || 0 }}/yr</span>
           </div>
+          <div class="plan-pricing" *ngIf="plan.discountLabel">
+            <span>{{ plan.discountLabel }}</span>
+          </div>
 
           <!-- Features -->
           <div class="section-label">Features</div>
@@ -125,6 +128,9 @@
             <span class="sep">·</span>
             <span>₹{{ plan.price.yearly || 0 }}/yr
             </span>
+          </div>
+          <div class="plan-pricing" *ngIf="plan.discountLabel">
+            <span>{{ plan.discountLabel }}</span>
           </div>
 
           <!-- Features -->
@@ -196,6 +202,11 @@
         <label>Yearly Price (₹)</label>
         <input type="number" [(ngModel)]="editingPlan.price.yearly" min="0" />
       </div>
+    </div>
+
+    <div class="form-row">
+      <label>Offer Tagline (shown under Premium)</label>
+      <input type="text" [(ngModel)]="editingPlan.discountLabel" placeholder="e.g. Early Access Offer / New Year Offer" />
     </div>
 
     <!-- Features section: always show all for type -->

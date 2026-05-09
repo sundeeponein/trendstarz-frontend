@@ -327,17 +327,21 @@
             <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
               (click)="registrationForm.get('paymentOption')?.setValue('free')">
               <div class="plan-card-top">
-                <span class="plan-card-name">Default</span>
+                <span class="plan-card-name">Starter</span>
                 <span class="plan-card-price free">Free</span>
               </div>
-              <div class="plan-card-desc">Basic visibility, post campaigns, find influencers</div>
+              <div class="plan-card-desc">Basic visibility, Post campaigns</div>
             </div>
             <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
               (click)="registrationForm.get('paymentOption')?.setValue('premium')">
               <div class="plan-card-top">
                 <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
-                <span class="plan-card-price premium">₹499/mo</span>
+                <span class="plan-card-price premium">
+                  <span *ngIf="premiumOriginalMonthlyPrice" class="plan-card-price-original">₹{{ premiumOriginalMonthlyPrice }}</span>
+                  ₹{{ premiumMonthlyPrice }}/mo
+                </span>
               </div>
+              <div *ngIf="premiumOfferChip" class="plan-offer-chip">{{ premiumOfferChip }}</div>
               <div class="plan-card-desc">Priority campaigns, analytics, advanced filters</div>
             </div>
           </div>

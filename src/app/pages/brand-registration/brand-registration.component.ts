@@ -6,10 +6,12 @@ import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, 
 import { ConfigService } from '../../shared/config.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { map, first } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { PlansService, Plan } from '../../shared/plans.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -108,15 +110,21 @@ export class BrandRegistrationComponent implements OnInit {
   // Per-index cached upload result for product images.
   uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  premiumMonthlyPrice = 999;
+  premiumOriginalMonthlyPrice: number | null = null;
+  premiumOfferChip = '';
 
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private plansService: PlansService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
+    this.loadPremiumMonthlyPrice();
+
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';
     this.signupAttribution = {
@@ -254,6 +262,45 @@ export class BrandRegistrationComponent implements OnInit {
     });
 
     this.refreshStepCompletion();
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('BRAND').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (!paidPlan) return;
+
+      const monthly = paidPlan?.price?.monthly ?? 0;
+      if (monthly > 0) {
+        this.premiumMonthlyPrice = monthly;
+      }
+
+      const discountPercent = this.getPlanDiscountPercent(paidPlan, ['discountOnBrandPro', 'discountMonthly']);
+        if (discountPercent > 0) {
+          this.premiumOriginalMonthlyPrice = monthly;
+          this.premiumMonthlyPrice = Math.round(monthly * (1 - discountPercent / 100));
+        }
+      this.premiumOfferChip = this.resolveOfferChipLabel(paidPlan, discountPercent);
+    });
+  }
+
+  private getPlanDiscountPercent(plan: Plan, keys: string[]): number {
+    if (!Array.isArray(plan?.offers)) return 0;
+    const offer = plan.offers.find((item) => keys.includes(item.key) && Number(item.value) > 0);
+    return offer ? Number(offer.value) : 0;
+  }
+
+  private computeOriginalPrice(discountedPrice: number, discountPercent: number): number | null {
+    if (!discountedPrice || !discountPercent || discountPercent <= 0 || discountPercent >= 100) return null;
+    const original = Math.round(discountedPrice / (1 - discountPercent / 100));
+    return original > discountedPrice ? original : null;
+  }
+
+  private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
+    if (plan?.discountLabel) return plan.discountLabel;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const hasTrialOffer = Array.isArray(plan?.offers)
+      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
+    return hasTrialOffer ? 'Early Access Offer' : '';
   }
 
   resendEmailVerification() {
@@ -613,8 +660,18 @@ export class BrandRegistrationComponent implements OnInit {
     return false;
   }
 
-  nextStep() {
+  async nextStep() {
     if (!this.validateCurrentStep()) return;
+
+    if (this.currentStep === 1) {
+      const noConflicts = await this.validateStep1Uniqueness();
+      if (!noConflicts) {
+        this.currentStep = 1;
+        this.refreshStepCompletion();
+        return;
+      }
+    }
+
     if (this.currentStep < this.totalSteps) {
       this.currentStep = (this.currentStep + 1) as 1 | 2 | 3;
       this.submitted = false;
@@ -624,6 +681,73 @@ export class BrandRegistrationComponent implements OnInit {
       }
       this.refreshStepCompletion();
     }
+  }
+
+  private async validateStep1Uniqueness(): Promise<boolean> {
+    this.duplicateBrandNameError = '';
+    this.duplicateUsernameError = '';
+    this.duplicateEmailError = '';
+    this.duplicatePhoneError = '';
+
+    const brandName = String(this.registrationForm.get('brandName')?.value || '').trim();
+    const brandUsername = String(this.registrationForm.get('brandUsername')?.value || '').trim();
+    const email = String(this.registrationForm.get('email')?.value || '').trim();
+    const phoneNumber = String(this.registrationForm.get('phoneNumber')?.value || '').trim();
+
+    if (!brandName && !brandUsername && !email && !phoneNumber) return true;
+
+    const result = await firstValueFrom(
+      this.configService.checkRegistrationConflicts({
+        userType: 'BRAND',
+        brandName,
+        brandUsername,
+        email,
+        phoneNumber,
+      }),
+    );
+
+    let hasConflict = false;
+
+    if (result.brandName) {
+      hasConflict = true;
+      this.duplicateBrandNameError = 'Brand name already exists. Please choose another.';
+      this.registrationForm.get('brandName')?.setErrors({
+        ...(this.registrationForm.get('brandName')?.errors || {}),
+        duplicate: true,
+      });
+    }
+    if (result.brandUsername) {
+      hasConflict = true;
+      this.duplicateUsernameError = 'Brand username already exists. Please choose another.';
+      this.registrationForm.get('brandUsername')?.setErrors({
+        ...(this.registrationForm.get('brandUsername')?.errors || {}),
+        duplicate: true,
+      });
+    }
+    if (result.email) {
+      hasConflict = true;
+      this.duplicateEmailError = 'Email already exists. Please use another email or login.';
+      this.registrationForm.get('email')?.setErrors({
+        ...(this.registrationForm.get('email')?.errors || {}),
+        duplicate: true,
+      });
+    }
+    if (result.phoneNumber) {
+      hasConflict = true;
+      this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
+      this.registrationForm.get('phoneNumber')?.setErrors({
+        ...(this.registrationForm.get('phoneNumber')?.errors || {}),
+        duplicate: true,
+      });
+    }
+
+    if (hasConflict) {
+      this.registrationError = 'Some Step 1 details already exist. Please update and continue.';
+      return false;
+    }
+
+    this.registrationError = '';
+    return true;
   }
 
   prevStep() {
