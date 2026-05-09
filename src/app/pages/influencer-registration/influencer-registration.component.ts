@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { PlansService } from '../../shared/plans.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -200,17 +201,21 @@ export class InfluencerRegistrationComponent implements OnInit {
   duplicatePhoneError = '';
   isSubmitting = false;
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  premiumMonthlyPrice = 399;
 
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
     private ngZone: NgZone,
     private otpService: OtpService,
+    private plansService: PlansService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    this.loadPremiumMonthlyPrice();
+
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';
     this.signupAttribution = {
@@ -295,6 +300,15 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
     this.refreshStepCompletion();
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (paidPlan?.price?.monthly) {
+        this.premiumMonthlyPrice = paidPlan.price.monthly;
+      }
+    });
   }
 
   private enforcePlatformLimit() {

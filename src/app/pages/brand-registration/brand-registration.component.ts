@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { PlansService } from '../../shared/plans.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -108,15 +109,19 @@ export class BrandRegistrationComponent implements OnInit {
   // Per-index cached upload result for product images.
   uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  premiumMonthlyPrice = 999;
 
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private plansService: PlansService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
+    this.loadPremiumMonthlyPrice();
+
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';
     this.signupAttribution = {
@@ -254,6 +259,15 @@ export class BrandRegistrationComponent implements OnInit {
     });
 
     this.refreshStepCompletion();
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('BRAND').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (paidPlan?.price?.monthly) {
+        this.premiumMonthlyPrice = paidPlan.price.monthly;
+      }
+    });
   }
 
   resendEmailVerification() {

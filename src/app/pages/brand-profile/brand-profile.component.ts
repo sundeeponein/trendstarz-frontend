@@ -23,6 +23,8 @@ import { ResetPasswordModalComponent } from '../../shared/components/reset-passw
   styleUrls: ['./brand-profile.component.scss']
 })
 export class BrandProfileComponent implements OnInit {
+  premiumMonthlyPrice = 999;
+
       
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -310,6 +312,8 @@ export class BrandProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadPremiumMonthlyPrice();
+
     // ngOnInit called
 
     this.registrationForm = this.fb.group({
@@ -546,6 +550,15 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.get('password')?.disable();
     this.registrationForm.get('confirmPassword')?.disable();
     this.refreshStepCompletion();
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('BRAND').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (paidPlan?.price?.monthly) {
+        this.premiumMonthlyPrice = paidPlan.price.monthly;
+      }
+    });
   }
 
   // Sanitize brand username input (replace spaces with hyphens, remove invalid chars)

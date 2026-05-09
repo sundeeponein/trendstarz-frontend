@@ -70,7 +70,7 @@
       <tbody>
         <tr *ngFor="let user of filteredInfluencers">
           <td>
-            <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40">
+            <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
@@ -106,7 +106,7 @@
       <tbody>
         <tr *ngFor="let user of filteredBrands">
           <td>
-            <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-logo.png')" alt="Logo" width="40" height="40">
+            <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-profile-brands.png')" alt="Logo" width="40" height="40" (error)="$any($event.target).src='assets/default-profile-brands.png'">
           </td>
           <td>{{ user.brandName || '-' }}</td>
           <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>

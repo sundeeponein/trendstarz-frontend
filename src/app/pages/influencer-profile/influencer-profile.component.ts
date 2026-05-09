@@ -24,6 +24,8 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  premiumMonthlyPrice = 399;
+
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
     const idx = arr.indexOf(id);
@@ -295,6 +297,8 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadPremiumMonthlyPrice();
+
     // Load plan capabilities
     this.plansService.getMyCapabilities().subscribe(caps => {
       this.planCaps = caps;
@@ -495,6 +499,15 @@ export class InfluencerProfileComponent implements OnInit {
     });
 
     this.refreshStepCompletion();
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (paidPlan?.price?.monthly) {
+        this.premiumMonthlyPrice = paidPlan.price.monthly;
+      }
+    });
   }
 
   private hasExistingProfileImage(): boolean {
