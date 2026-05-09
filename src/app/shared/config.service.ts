@@ -65,6 +65,54 @@ export class ConfigService {
       .pipe(map(res => !!res.exists), catchError(() => of(false)));
   }
 
+  checkRegistrationConflicts(payload: {
+    userType: 'INFLUENCER' | 'BRAND';
+    username?: string;
+    brandUsername?: string;
+    brandName?: string;
+    email?: string;
+    phoneNumber?: string;
+  }): Observable<{
+    username: boolean;
+    brandUsername: boolean;
+    brandName: boolean;
+    email: boolean;
+    phoneNumber: boolean;
+    duplicateFields: string[];
+  }> {
+    const params = new URLSearchParams();
+    params.set('userType', payload.userType);
+    if (payload.username) params.set('username', payload.username);
+    if (payload.brandUsername) params.set('brandUsername', payload.brandUsername);
+    if (payload.brandName) params.set('brandName', payload.brandName);
+    if (payload.email) params.set('email', payload.email);
+    if (payload.phoneNumber) params.set('phoneNumber', payload.phoneNumber);
+
+    return this.http.get<any>(`${this.apiUrl}/users/check-registration-conflicts?${params.toString()}`).pipe(
+      map((res: any) => {
+        const data = res?.data ?? res ?? {};
+        return {
+          username: !!data.username,
+          brandUsername: !!data.brandUsername,
+          brandName: !!data.brandName,
+          email: !!data.email,
+          phoneNumber: !!data.phoneNumber,
+          duplicateFields: Array.isArray(data.duplicateFields) ? data.duplicateFields : [],
+        };
+      }),
+      catchError(() =>
+        of({
+          username: false,
+          brandUsername: false,
+          brandName: false,
+          email: false,
+          phoneNumber: false,
+          duplicateFields: [],
+        }),
+      ),
+    );
+  }
+
 
   // Fetch influencer by ID (for public profile view)
   getInfluencerById(id: string): Observable<any> {

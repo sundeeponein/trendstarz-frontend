@@ -118,9 +118,33 @@
 .plan-card-price {
   font-size: 0.95rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
 
   &.free { color: #22c55e; }
   &.premium { color: #f55b0a; }
+}
+
+.plan-card-price-original {
+  color: #9ca3af;
+  text-decoration: line-through;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.plan-offer-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #c2410c;
 }
 
 .plan-card-desc {

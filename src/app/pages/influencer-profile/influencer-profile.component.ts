@@ -14,7 +14,7 @@ import { RouterModule } from '@angular/router';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import imageCompression from 'browser-image-compression';
-import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -25,6 +25,8 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
 })
 export class InfluencerProfileComponent implements OnInit {
   premiumMonthlyPrice = 399;
+  premiumOriginalMonthlyPrice: number | null = null;
+  premiumOfferChip = '';
 
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -504,10 +506,40 @@ export class InfluencerProfileComponent implements OnInit {
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
-      if (paidPlan?.price?.monthly) {
-        this.premiumMonthlyPrice = paidPlan.price.monthly;
+      if (!paidPlan) return;
+
+      const monthly = paidPlan?.price?.monthly ?? 0;
+      if (monthly > 0) {
+        this.premiumMonthlyPrice = monthly;
       }
+
+      const discountPercent = this.getPlanDiscountPercent(paidPlan, ['discountOnInfluencerPro', 'discountMonthly']);
+        if (discountPercent > 0) {
+          this.premiumOriginalMonthlyPrice = monthly;
+          this.premiumMonthlyPrice = Math.round(monthly * (1 - discountPercent / 100));
+        }
+      this.premiumOfferChip = this.resolveOfferChipLabel(paidPlan, discountPercent);
     });
+  }
+
+  private getPlanDiscountPercent(plan: Plan, keys: string[]): number {
+    if (!Array.isArray(plan?.offers)) return 0;
+    const offer = plan.offers.find((item) => keys.includes(item.key) && Number(item.value) > 0);
+    return offer ? Number(offer.value) : 0;
+  }
+
+  private computeOriginalPrice(discountedPrice: number, discountPercent: number): number | null {
+    if (!discountedPrice || !discountPercent || discountPercent <= 0 || discountPercent >= 100) return null;
+    const original = Math.round(discountedPrice / (1 - discountPercent / 100));
+    return original > discountedPrice ? original : null;
+  }
+
+  private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
+    if (plan?.discountLabel) return plan.discountLabel;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const hasTrialOffer = Array.isArray(plan?.offers)
+      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
+    return hasTrialOffer ? 'Early Access Offer' : '';
   }
 
   private hasExistingProfileImage(): boolean {
