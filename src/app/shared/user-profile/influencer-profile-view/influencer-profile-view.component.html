@@ -113,6 +113,11 @@
             </a>
           </div>
 
+          <div class="detail-row" *ngIf="influencer.gender">
+            <span class="detail-key">Gender</span>
+            <span class="detail-val">{{ influencer.gender }}</span>
+          </div>
+
         </div>
       </div>
 
@@ -314,9 +319,9 @@
               <span class="insight-stat-lbl">Platforms</span>
             </div>
           </div>
-          <div class="insight-detail-row">
+          <div class="insight-detail-row" *ngIf="primaryAgeRange">
             <span class="insight-key">Primary age</span>
-            <span class="insight-val">{{ influencer.audienceDemographics?.ageRange || '18–34' }}</span>
+            <span class="insight-val">{{ primaryAgeRange }}</span>
           </div>
           <div class="insight-detail-row" *ngIf="influencer.categories?.length">
             <span class="insight-key">Top keywords</span>

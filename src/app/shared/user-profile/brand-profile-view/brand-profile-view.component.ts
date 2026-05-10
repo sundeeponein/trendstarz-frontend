@@ -225,6 +225,19 @@ export class BrandProfileViewComponent implements OnInit {
     return this.getMainSocialLink() !== '#';
   }
 
+  get displayCompanySize(): string {
+    const raw = String(this.brand?.companySize || '').trim();
+    if (!raw) return '';
+    const labels: Record<string, string> = {
+      '1-10': 'Small team',
+      '11-50': 'Growing team',
+      '51-200': 'Mid-size company',
+      '201-500': 'Large company',
+      '500+': 'Enterprise',
+    };
+    return labels[raw] ? `${labels[raw]} (${raw})` : raw;
+  }
+
   constructor(private route: ActivatedRoute, private config: ConfigService, private session: SessionService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {

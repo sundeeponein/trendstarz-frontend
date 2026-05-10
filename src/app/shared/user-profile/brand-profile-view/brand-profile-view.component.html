@@ -156,6 +156,14 @@
               <span class="detail-label">Advertising Price</span>
               <span class="detail-value price-val">₹{{ brand.promotionalPrice }}</span>
             </div>
+            <div class="detail-row" *ngIf="brand.foundedYear">
+              <span class="detail-label">Founded</span>
+              <span class="detail-value">{{ brand.foundedYear }}</span>
+            </div>
+            <div class="detail-row" *ngIf="displayCompanySize">
+              <span class="detail-label">Company Size</span>
+              <span class="detail-value">{{ displayCompanySize }}</span>
+            </div>
             <div class="detail-row" *ngIf="brand.googleMapAddress">
               <span class="detail-label">Address</span>
               <span class="detail-value">{{ brand.googleMapAddress }}</span>

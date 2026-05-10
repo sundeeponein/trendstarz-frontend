@@ -315,6 +315,8 @@ export class InfluencerProfileComponent implements OnInit {
       ],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
+      dateOfBirth: [{ value: '', disabled: true }, Validators.required],
+      gender: [{ value: '', disabled: true }],
       paymentOption: [{ value: 'free', disabled: true }, Validators.required],
       location: this.fb.group({
         state: [{ value: '', disabled: true }, Validators.required],
@@ -409,6 +411,8 @@ export class InfluencerProfileComponent implements OnInit {
               username: profile.username || '',
               phoneNumber: profile.phoneNumber || '',
               email: profile.email || '',
+              dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
+              gender: profile.gender || '',
               paymentOption: profile.isPremium ? 'premium' : 'free',
               location: { state: stateId, district: districtId },
               promotionalPrice: profile.promotionalPrice || '',
@@ -559,6 +563,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('username')?.valid &&
         this.registrationForm.get('phoneNumber')?.valid &&
         this.registrationForm.get('email')?.valid &&
+        this.registrationForm.get('dateOfBirth')?.valid &&
         this.hasExistingProfileImage()
       );
     }
@@ -608,8 +613,10 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   private validateCurrentStep(): boolean {
+    this.submitted = true;
+
     if (this.currentStep === 1) {
-      const fields = ['name', 'username', 'phoneNumber', 'email'];
+      const fields = ['name', 'username', 'phoneNumber', 'email', 'dateOfBirth'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const fieldsValid = fields.every((path) => this.registrationForm.get(path)?.valid);
       return fieldsValid && this.hasExistingProfileImage();
@@ -833,6 +840,8 @@ export class InfluencerProfileComponent implements OnInit {
 
 
   async onSubmit() {
+    this.submitted = true;
+
     if (!this.isEditMode || this.registrationForm.invalid || (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url))) {
       if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
         this.registrationError = 'Profile image is required.';
@@ -1026,6 +1035,8 @@ export class InfluencerProfileComponent implements OnInit {
                 username: profile.username || '',
                 phoneNumber: profile.phoneNumber || '',
                 email: profile.email || '',
+                dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
+                gender: profile.gender || '',
                 paymentOption: profile.isPremium ? 'premium' : 'free',
                 location: { state: stateId, district: districtId },
                 languages: languageIds,
@@ -1102,6 +1113,16 @@ export class InfluencerProfileComponent implements OnInit {
         });
       });
     }
+  }
+
+  private normalizeDateForInput(value: unknown): string {
+    if (!value) return '';
+    const dt = new Date(String(value));
+    if (Number.isNaN(dt.getTime())) return '';
+    const year = dt.getFullYear();
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
 

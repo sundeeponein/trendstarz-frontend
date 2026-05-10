@@ -166,6 +166,14 @@ export class InfluencerProfileViewComponent implements OnInit {
     return avg.toFixed(1) + '%';
   }
 
+  get primaryAgeRange(): string {
+    const ageRange =
+      this.influencer?.audienceDemographics?.ageRange ||
+      this.influencer?.ageRange ||
+      '';
+    return String(ageRange || '').trim();
+  }
+
   onContactClick(): void {
     this.showContactInfo = true;
     if (typeof document !== 'undefined') {

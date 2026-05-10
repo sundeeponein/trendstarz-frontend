@@ -84,6 +84,14 @@
       </select>
     </div>
 
+    <div class="filter-item" *ngIf="isInfluencerMode">
+      <label class="filter-label">Age Range</label>
+      <select class="filter-select" [ngModel]="activeAgeRange" (ngModelChange)="onAgeRangeChange($event)">
+        <option value="">All Ages</option>
+        <option *ngFor="let range of ageRangeOptions" [value]="range">{{ range }}</option>
+      </select>
+    </div>
+
     <!-- Actions -->
     <div class="filter-actions">
       <button class="btn-clear" (click)="clearActiveFilters()">
