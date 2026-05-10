@@ -36,6 +36,11 @@ export class BrandRegistrationComponent implements OnInit {
   readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
   readonly MAX_IMAGE_SIZE_MB = 5; // reject images larger than this before attempting compression/upload
+  readonly currentYear = new Date().getFullYear();
+  readonly brandFoundedYears: number[] = Array.from(
+    { length: this.currentYear - 1899 },
+    (_, index) => this.currentYear - index,
+  );
 
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -135,6 +140,7 @@ export class BrandRegistrationComponent implements OnInit {
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
+      contactPersonName: ['', Validators.required],
       brandUsername: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)], [this.brandUsernameUniqueValidator()]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, passwordStrengthValidator]],
@@ -149,6 +155,8 @@ export class BrandRegistrationComponent implements OnInit {
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
+      foundedYear: [''],
+      companySize: [''],
       promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
       description: [''],
@@ -561,6 +569,7 @@ export class BrandRegistrationComponent implements OnInit {
       const f = this.registrationForm;
       return !!(
         f.get('brandName')?.valid &&
+        f.get('contactPersonName')?.valid &&
         f.get('brandUsername')?.valid &&
         f.get('email')?.valid &&
         f.get('phoneNumber')?.valid &&
@@ -620,7 +629,7 @@ export class BrandRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'password', 'confirmPassword'];
+      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'password', 'confirmPassword'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       this.submitted = true;
 
@@ -906,6 +915,7 @@ export class BrandRegistrationComponent implements OnInit {
 
     const payload: any = {
       ...raw,
+      foundedYear: raw.foundedYear ? Number(raw.foundedYear) : undefined,
       promotionalPrice: Number(raw.promotionalPrice) || 0,
       location: {
         state: stateObj ? stateObj.name : raw.location.state,

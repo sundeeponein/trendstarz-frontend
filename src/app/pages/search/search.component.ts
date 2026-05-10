@@ -44,6 +44,7 @@ export class SearchComponent implements OnInit {
   locationOptions: string[] = [];
   brandLocationOptions: string[] = [];
   tierOptions: string[] = [];
+  ageRangeOptions: string[] = ['18-24', '25-34', '35-44', '45+'];
 
   // Influencer filters
   infFilters = {
@@ -51,6 +52,7 @@ export class SearchComponent implements OnInit {
     category: '',
     location: '',
     tier: '',
+    ageRange: '',
     minEngagement: 0,
   };
 
@@ -122,6 +124,10 @@ export class SearchComponent implements OnInit {
 
   get activeLocation(): string {
     return this.isInfluencerMode ? this.infFilters.location : this.brandFilters.location;
+  }
+
+  get activeAgeRange(): string {
+    return this.isInfluencerMode ? this.infFilters.ageRange : '';
   }
 
   get activeCategoryOptions(): string[] {
@@ -200,6 +206,12 @@ export class SearchComponent implements OnInit {
     }
     this.brandFilters.location = value;
     this.applyBrandFilters();
+  }
+
+  onAgeRangeChange(value: string) {
+    if (!this.isInfluencerMode) return;
+    this.infFilters.ageRange = value;
+    this.applyInfluencerFilters();
   }
 
   clearActiveFilters() {
@@ -301,8 +313,35 @@ export class SearchComponent implements OnInit {
         const tier = this.normalizeTierLabel(this.getInfluencerPrimaryTier(u));
         if (!tier || tier !== this.normalizeTierLabel(f.tier)) return false;
       }
+      if (f.ageRange) {
+        const ageRange = this.getInfluencerAgeRange(u);
+        if (!ageRange || ageRange !== f.ageRange) return false;
+      }
       return true;
     });
+  }
+
+  private getInfluencerAgeRange(influencer: any): string {
+    const precomputed = String(influencer?.ageRange || '').trim();
+    if (precomputed) return precomputed;
+
+    const dobRaw = influencer?.dateOfBirth;
+    if (!dobRaw) return '';
+
+    const dob = new Date(dobRaw);
+    if (Number.isNaN(dob.getTime())) return '';
+
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const monthDiff = now.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age <= 24) return '18-24';
+    if (age <= 34) return '25-34';
+    if (age <= 44) return '35-44';
+    return '45+';
   }
 
   applyBrandFilters() {
@@ -321,7 +360,7 @@ export class SearchComponent implements OnInit {
   }
 
   clearInfluencerFilters() {
-    this.infFilters = { keyword: '', category: '', location: '', tier: '', minEngagement: 0 };
+    this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0 };
     this.applyInfluencerFilters();
   }
 

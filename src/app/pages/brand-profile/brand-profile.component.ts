@@ -26,6 +26,11 @@ export class BrandProfileComponent implements OnInit {
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
+  readonly currentYear = new Date().getFullYear();
+  readonly brandFoundedYears: number[] = Array.from(
+    { length: this.currentYear - 1899 },
+    (_, index) => this.currentYear - index,
+  );
 
       
   toggleChip(field: 'languages' | 'categories', id: string): void {
@@ -320,6 +325,7 @@ export class BrandProfileComponent implements OnInit {
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
+      contactPersonName: ['', Validators.required],
       brandUsername: [
         '',
         [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)],
@@ -337,6 +343,8 @@ export class BrandProfileComponent implements OnInit {
       categories: [[], Validators.required],
       languages: [[], Validators.required],
       website: [''],
+      foundedYear: [''],
+      companySize: [''],
       promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
       description: [''],
@@ -429,6 +437,7 @@ export class BrandProfileComponent implements OnInit {
           const doPatchBrandForm = (districtId: string) => {
             this.registrationForm.patchValue({
               brandName: profile.brandName || '',
+              contactPersonName: profile.contactPersonName || '',
               brandUsername: resolvedBrandUsername,
               email: profile.email || '',
             phoneNumber: profile.phoneNumber || '',
@@ -442,6 +451,8 @@ export class BrandProfileComponent implements OnInit {
             categories: categoryIds,
             languages: languageIds,
             website: profile.website || '',
+            foundedYear: profile.foundedYear || '',
+            companySize: profile.companySize || '',
             promotionalPrice: Number(profile.promotionalPrice ?? 500),
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
             description: profile.description || '',
@@ -839,6 +850,7 @@ export class BrandProfileComponent implements OnInit {
     if (step === 1) {
       return !!(
         this.registrationForm.get('brandName')?.valid &&
+        this.registrationForm.get('contactPersonName')?.valid &&
         this.registrationForm.get('brandUsername')?.valid &&
         this.registrationForm.get('email')?.valid &&
         this.registrationForm.get('phoneNumber')?.valid &&
@@ -897,8 +909,10 @@ export class BrandProfileComponent implements OnInit {
   }
 
   private validateCurrentStep(): boolean {
+    this.submitted = true;
+
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'brandUsername', 'email', 'phoneNumber'];
+      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return fields.every((path) => this.registrationForm.get(path)?.valid) && this.hasBrandLogo();
     }
@@ -1007,6 +1021,7 @@ export class BrandProfileComponent implements OnInit {
     };
     const payload: any = {
   ...raw,
+  foundedYear: raw.foundedYear ? Number(raw.foundedYear) : undefined,
   promotionalPrice: Number(raw.promotionalPrice) || 0,
   location,
   languages: languageNames,

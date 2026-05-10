@@ -6,6 +6,16 @@
       <i class="bi bi-heart"></i>
     </button>
 
+    <!-- Admin badges on image -->
+    <div class="brand-card__img-tags" *ngIf="displayTags.length">
+      <span
+        *ngFor="let tag of displayTags"
+        class="brand-card__img-tag badge rounded-pill"
+        [ngClass]="tagBadgeClass(tag)">
+        {{ tag }}
+      </span>
+    </div>
+
   </div>
 
   <!-- Body -->
