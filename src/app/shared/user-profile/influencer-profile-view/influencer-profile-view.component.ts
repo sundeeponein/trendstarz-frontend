@@ -91,6 +91,12 @@ export class InfluencerProfileViewComponent implements OnInit {
     return (this.influencer?.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
+  get displayTags(): string[] {
+    return Array.isArray(this.influencer?.adminTags)
+      ? this.influencer.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      : [];
+  }
+
   getPrimaryTier(): string {
     const list: any[] = this.influencer?.socialMedia || [];
     return list[0]?.tier || list.find((sm: any) => sm?.tier)?.tier || '';
@@ -133,6 +139,14 @@ export class InfluencerProfileViewComponent implements OnInit {
     if (p.includes('tiktok')) return 'https://tiktok.com/@' + handle;
     if (p.includes('linkedin')) return 'https://linkedin.com/in/' + handle;
     return sm?.url || '#';
+  }
+
+  tagBadgeClass(tag: string): string {
+    const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('founder')) return 'tag-badge--founder';
+    if (normalized.includes('verified')) return 'tag-badge--verified';
+    if (normalized.includes('internal')) return 'tag-badge--internal';
+    return 'tag-badge--neutral';
   }
 
   getMainSocialLink(): string {

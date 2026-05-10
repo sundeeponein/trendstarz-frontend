@@ -25,6 +25,14 @@
           <span class="pro-badge" *ngIf="influencer.isPremium">PRO</span>
         </div>
         <h2 class="profile-name">{{ influencer.name }}</h2>
+        <div class="profile-tags" *ngIf="displayTags.length">
+          <span
+            *ngFor="let tag of displayTags"
+            class="profile-tag badge rounded-pill"
+            [ngClass]="tagBadgeClass(tag)">
+            {{ tag }}
+          </span>
+        </div>
         <p class="profile-categories" *ngIf="influencer.categories?.length">
           <ng-container *ngFor="let cat of influencer.categories; let last = last">
             <span>{{ cat }}</span><span *ngIf="!last" class="cat-sep"> · </span>
