@@ -232,6 +232,8 @@ export class InfluencerRegistrationComponent implements OnInit {
       username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      dateOfBirth: ['', Validators.required],
+      gender: [''],
       password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
@@ -366,7 +368,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 1) {
       const f = this.registrationForm;
       return !!(f.get('name')?.valid && f.get('username')?.valid && f.get('phoneNumber')?.valid &&
-        f.get('email')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid &&
+        f.get('email')?.valid && f.get('dateOfBirth')?.valid && f.get('password')?.valid && f.get('confirmPassword')?.valid &&
         !f.errors?.['passwordMismatch'] && !!this.profileImagePreview);
     }
     if (step === 2) {
@@ -493,7 +495,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   private validateCurrentStep(): boolean {
     this.submitted = true;
     if (this.currentStep === 1) {
-      ['name', 'username', 'phoneNumber', 'email', 'password', 'confirmPassword'].forEach(f =>
+      ['name', 'username', 'phoneNumber', 'email', 'dateOfBirth', 'password', 'confirmPassword'].forEach(f =>
         this.registrationForm.get(f)?.markAsTouched());
       if (!this.profileImagePreview) { this.registrationError = 'Profile photo is required.'; }
       else { this.registrationError = ''; }

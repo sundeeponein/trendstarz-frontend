@@ -152,6 +152,12 @@ export class BrandProfileViewComponent implements OnInit {
     return (this.brand?.socialMedia || []).reduce((sum: number, sm: any) => sum + (sm.followersCount || 0), 0);
   }
 
+  get displayTags(): string[] {
+    return Array.isArray(this.brand?.adminTags)
+      ? this.brand.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      : [];
+  }
+
   formatFollowers(count: number): string {
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
@@ -198,6 +204,14 @@ export class BrandProfileViewComponent implements OnInit {
     return sm?.url || '#';
   }
 
+  tagBadgeClass(tag: string): string {
+    const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('founder')) return 'tag-badge--founder';
+    if (normalized.includes('verified')) return 'tag-badge--verified';
+    if (normalized.includes('internal')) return 'tag-badge--internal';
+    return 'tag-badge--neutral';
+  }
+
   getMainSocialLink(): string {
     if (this.brand?.socialMedia?.length) {
       return this.getSocialUrl(this.brand.socialMedia[0]);
@@ -209,6 +223,19 @@ export class BrandProfileViewComponent implements OnInit {
 
   get hasFollowLink(): boolean {
     return this.getMainSocialLink() !== '#';
+  }
+
+  get displayCompanySize(): string {
+    const raw = String(this.brand?.companySize || '').trim();
+    if (!raw) return '';
+    const labels: Record<string, string> = {
+      '1-10': 'Small team',
+      '11-50': 'Growing team',
+      '51-200': 'Mid-size company',
+      '201-500': 'Large company',
+      '500+': 'Enterprise',
+    };
+    return labels[raw] ? `${labels[raw]} (${raw})` : raw;
   }
 
   constructor(private route: ActivatedRoute, private config: ConfigService, private session: SessionService, private cd: ChangeDetectorRef) {}

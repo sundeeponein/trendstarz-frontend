@@ -70,6 +70,27 @@
     }
   }
 
+  &__img-tags {
+    position: absolute;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.35rem;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  &__img-tag {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.34rem 0.52rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
   // Selection checkbox button (brand mode)
   &__select-btn {
     position: absolute;
@@ -177,6 +198,26 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .badge--founder {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .badge--verified {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .badge--internal {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  .badge--neutral {
+    background: #eef2ff;
+    color: #4338ca;
   }
 
   // --- Stats ---

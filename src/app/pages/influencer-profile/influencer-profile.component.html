@@ -65,12 +65,14 @@
             <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
               *ngIf="isEditMode && profileImagesFormArray.length > 0" (click)="removeProfileImage(0)">Remove</button>
             <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted mt-1" style="font-size:0.82rem">Remove an image to upload a new one, or upgrade your plan.</p>
+            <div *ngIf="submitted && !profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)" class="text-danger mt-1">Profile photo is required.</div>
           </div>
 
           <div class="field-grid">
             <div class="field-block">
               <label>Name</label>
               <input formControlName="name" type="text" class="form-control" />
+              <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Name is required.</div>
             </div>
             <div class="field-block">
               <label>Username
@@ -80,6 +82,7 @@
                 <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/influencer/</span>
                 <input formControlName="username" type="text" class="form-control" [readonly]="!isEditMode" />
               </div>
+              <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">Valid username is required.</div>
             </div>
             <div class="field-block">
               <label>Phone Number</label>
@@ -87,6 +90,7 @@
                 <input formControlName="phoneNumber" type="text" class="form-control" />
                 <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
               </div>
+              <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
             </div>
             <div class="field-block">
               <label>Email</label>
@@ -94,6 +98,25 @@
                 <input formControlName="email" type="email" class="form-control" />
                 <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
               </div>
+              <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Date of Birth</label>
+              <input formControlName="dateOfBirth" type="date" class="form-control" />
+              <small class="text-muted mt-1">Used for safety checks and age-range matching. Your exact DOB is not shown publicly.</small>
+              <div *ngIf="submitted && registrationForm.get('dateOfBirth')?.invalid" class="text-danger mt-1">Date of birth is required.</div>
+            </div>
+
+            <div class="field-block">
+              <label>Gender <span class="text-muted">(Optional)</span></label>
+              <select formControlName="gender" class="form-control">
+                <option value="">Prefer not to say</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
+              </select>
+              <small class="text-muted mt-1">Visible only to verified members on full profile.</small>
             </div>
           </div>
 
@@ -147,6 +170,7 @@
                 <option value="" disabled>Select your state</option>
                 <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
               </select>
+              <div *ngIf="(step2Attempted || registrationForm.get('location.state')?.touched) && registrationForm.get('location.state')?.invalid" class="text-danger mt-1">State is required.</div>
             </div>
 
             <div class="field-block" formGroupName="location">
@@ -155,6 +179,7 @@
                 <option value="" disabled>Select your district</option>
                 <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
               </select>
+              <div *ngIf="(step2Attempted || registrationForm.get('location.district')?.touched) && registrationForm.get('location.district')?.invalid" class="text-danger mt-1">District is required.</div>
             </div>
 
             <div class="field-block">
@@ -181,6 +206,7 @@
                   </div>
                 </ng-template>
               </div>
+              <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
 
             <div class="field-block">
@@ -207,6 +233,7 @@
                   </div>
                 </ng-template>
               </div>
+              <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
           </div>
 
@@ -278,8 +305,12 @@
                 </div>
               </ng-container>
             </div>
-            <div class="text-muted" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
+            <div class="text-muted" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
             
+          </div>
+
+          <div *ngIf="step2Attempted && selectedPlatforms().length === 0" class="text-danger fw-bold mt-2">
+            Please select at least one social platform.
           </div>
 
           <div class="actions-row dual">
@@ -362,7 +393,8 @@
             <div class="field-block full-width">
               <label>Starting Price</label>
               <input formControlName="promotionalPrice" type="number" class="form-control" [readonly]="!isEditMode" />
-              <div class="form-text mt-1" style="font-size:0.92em;">Prices are negotiable. Brands can send offers.</div>
+              <div class="form-text mt-1" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
+              <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">Starting price is required.</div>
             </div>
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you?</label>
@@ -384,6 +416,7 @@
                 </label>
               </div>
               <div *ngIf="!planCaps.hasPremium" class="text-muted mt-1">Contact options are only available for Premium users.</div>
+              <div *ngIf="submitted && registrationForm.get('contact')?.invalid" class="text-danger mt-1">Please select at least one contact option.</div>
             </div>
           </div>
 

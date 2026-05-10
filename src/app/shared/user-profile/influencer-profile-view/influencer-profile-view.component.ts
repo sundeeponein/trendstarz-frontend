@@ -91,6 +91,12 @@ export class InfluencerProfileViewComponent implements OnInit {
     return (this.influencer?.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
+  get displayTags(): string[] {
+    return Array.isArray(this.influencer?.adminTags)
+      ? this.influencer.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      : [];
+  }
+
   getPrimaryTier(): string {
     const list: any[] = this.influencer?.socialMedia || [];
     return list[0]?.tier || list.find((sm: any) => sm?.tier)?.tier || '';
@@ -135,6 +141,14 @@ export class InfluencerProfileViewComponent implements OnInit {
     return sm?.url || '#';
   }
 
+  tagBadgeClass(tag: string): string {
+    const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('founder')) return 'tag-badge--founder';
+    if (normalized.includes('verified')) return 'tag-badge--verified';
+    if (normalized.includes('internal')) return 'tag-badge--internal';
+    return 'tag-badge--neutral';
+  }
+
   getMainSocialLink(): string {
     if (this.influencer?.socialMedia?.length) {
       return this.getSocialUrl(this.influencer.socialMedia[0]);
@@ -150,6 +164,14 @@ export class InfluencerProfileViewComponent implements OnInit {
     if (!rates.length) return '—';
     const avg = rates.reduce((a: number, b: number) => a + b, 0) / rates.length;
     return avg.toFixed(1) + '%';
+  }
+
+  get primaryAgeRange(): string {
+    const ageRange =
+      this.influencer?.audienceDemographics?.ageRange ||
+      this.influencer?.ageRange ||
+      '';
+    return String(ageRange || '').trim();
   }
 
   onContactClick(): void {

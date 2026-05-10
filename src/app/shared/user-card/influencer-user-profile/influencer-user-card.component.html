@@ -17,6 +17,16 @@
     <button class="inf-card__heart" (click)="$event.stopPropagation()" title="Save">
       <i class="bi bi-heart"></i>
     </button>
+
+    <!-- Admin badges on image -->
+    <div class="inf-card__img-tags" *ngIf="displayTags.length">
+      <span
+        *ngFor="let tag of displayTags"
+        class="inf-card__img-tag badge rounded-pill"
+        [ngClass]="tagBadgeClass(tag)">
+        {{ tag }}
+      </span>
+    </div>
   </div>
 
   <!-- Body -->

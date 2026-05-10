@@ -1,9 +1,5 @@
 <div class="home-shell rounded-3 shadow-sm">
   <app-hero-banner
-    badge="Next-Gen Influencer Platform"
-    titleMain="Connect with India's"
-    titleHighlight="Top Creators"
-    subtitle="Trendstarz is the leading influencer marketing platform for high-impact campaigns and authentic brand storytelling. Launch your first campaign in minutes."
     [primaryLabel]="isLoggedIn() ? 'Start a Campaign' : 'Register as Brand'"
     [primaryRoute]="isLoggedIn() ? '/campaigns' : '/register-brand'"
     [secondaryLabel]="isLoggedIn() ? 'Find Creators' : 'Register as Influencer'"

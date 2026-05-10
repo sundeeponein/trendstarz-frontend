@@ -20,6 +20,7 @@ export class BrandUserCardComponent {
   @Input() location: any = {};
   @Input() products: any[] = [];
   @Input() website = '';
+  @Input() adminTags: string[] = [];
   @Input() isPremium = false;
   @Input() productImages: any[] = [];
   @Input() socialMedia: any[] = [];
@@ -51,6 +52,10 @@ export class BrandUserCardComponent {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
+  get displayTags(): string[] {
+    return Array.isArray(this.adminTags) ? this.adminTags.filter((tag) => !!String(tag || '').trim()) : [];
+  }
+
   /** Tier of the first social handle the user added (entry order). */
   get primaryTier(): string {
     const list = this.socialMedia || [];
@@ -66,6 +71,14 @@ export class BrandUserCardComponent {
     if (p === 'twitter' || p === 'x' || p === 'x / twitter') return 'bi-twitter-x';
     if (p === 'tiktok') return 'bi-tiktok';
     return 'bi-globe';
+  }
+
+  tagBadgeClass(tag: string): string {
+    const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('founder')) return 'badge--founder';
+    if (normalized.includes('verified')) return 'badge--verified';
+    if (normalized.includes('internal')) return 'badge--internal';
+    return 'badge--neutral';
   }
 
   formatFollowers(count: number | undefined): string {

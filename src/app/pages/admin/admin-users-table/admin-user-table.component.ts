@@ -17,6 +17,9 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator'];
+  readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand'];
+
     public getPremiumDurationLabel(duration: string | undefined): string {
       switch (duration) {
         case '1m':
@@ -119,14 +122,16 @@ export class AdminUserTableComponent implements OnInit {
     premium: '',
     category: '',
     state: '',
-    signupSource: ''
+    signupSource: '',
+    badgeTag: ''
   };
   brandFilters = {
     status: '',
     premium: '',
     category: '',
     state: '',
-    signupSource: ''
+    signupSource: '',
+    badgeTag: ''
   };
 
   // Available filter options
@@ -141,6 +146,12 @@ export class AdminUserTableComponent implements OnInit {
   premiumDuration: '1m' | '3m' | '1y' | '' = '';
   premiumIsPremium = true;
   premiumType: 'influencer' | 'brand' | null = null;
+
+  // Badge/tag modal state
+  showTagModal = false;
+  tagUserId: string | null = null;
+  tagType: 'influencer' | 'brand' | null = null;
+  selectedTagOptions: string[] = [];
 
   // Holds an error message when profile/registration fetch fails
   registrationError: string | null = null;
@@ -324,6 +335,10 @@ export class AdminUserTableComponent implements OnInit {
     ) {
       return false;
     }
+
+    if (filters.badgeTag && !this.getUserTags(user).includes(filters.badgeTag)) {
+      return false;
+    }
     
     return true;
   }
@@ -334,11 +349,82 @@ export class AdminUserTableComponent implements OnInit {
 
   resetFilters(userType: 'influencer' | 'brand') {
     if (userType === 'influencer') {
-      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '' };
+      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '' };
     } else {
-      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '' };
+      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '' };
     }
     this.applyFilters(userType);
+  }
+
+  getTagOptions(userType: 'influencer' | 'brand'): string[] {
+    return userType === 'influencer' ? this.influencerBadgeOptions : this.brandBadgeOptions;
+  }
+
+  getUserTags(user: any): string[] {
+    return Array.isArray(user?.adminTags) ? user.adminTags.filter((tag: any) => !!String(tag || '').trim()) : [];
+  }
+
+  getTagBadgeClass(tag: string): string {
+    const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('founder')) return 'bg-warning text-dark';
+    if (normalized.includes('verified')) return 'bg-success';
+    if (normalized.includes('internal')) return 'bg-info text-dark';
+    if (normalized.includes('partner')) return 'bg-primary';
+    if (normalized.includes('early access')) return 'bg-dark';
+    return 'bg-secondary';
+  }
+
+  openTagModal(user: any, userType: 'influencer' | 'brand') {
+    this.tagUserId = user?._id || null;
+    this.tagType = userType;
+    this.selectedTagOptions = [...this.getUserTags(user)];
+    this.showTagModal = true;
+  }
+
+  toggleTagSelection(tag: string) {
+    if (!tag) return;
+    if (this.selectedTagOptions.includes(tag)) {
+      this.selectedTagOptions = this.selectedTagOptions.filter((value) => value !== tag);
+      return;
+    }
+    this.selectedTagOptions = [...this.selectedTagOptions, tag];
+  }
+
+  saveTags() {
+    if (!this.tagUserId || !this.tagType) {
+      return;
+    }
+    const payload = { adminTags: this.selectedTagOptions };
+    this.http.patch(`${environment.apiBaseUrl}/admin/users/${this.tagType}/${this.tagUserId}/tags`, payload, this.getAuthHeaders())
+      .pipe(catchError(err => {
+        alert('Error updating tags: ' + (err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err)));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (res?.user) {
+          alert('Tags updated successfully!');
+          this.showTagModal = false;
+          this.tagUserId = null;
+          this.tagType = null;
+          this.selectedTagOptions = [];
+          this.fetchUsers();
+          return;
+        }
+        if (res) {
+          this.showTagModal = false;
+          this.tagUserId = null;
+          this.tagType = null;
+          this.selectedTagOptions = [];
+          this.fetchUsers();
+        }
+      });
+  }
+
+  closeTagModal() {
+    this.showTagModal = false;
+    this.tagUserId = null;
+    this.tagType = null;
+    this.selectedTagOptions = [];
   }
 
   setTab(tab: 'influencer' | 'brand') {

@@ -95,6 +95,12 @@
             </div>
 
             <div class="field-block">
+              <label>Contact Person Name <span class="text-danger">*</span></label>
+              <input formControlName="contactPersonName" type="text" class="form-control" placeholder="Primary contact person" />
+              <div *ngIf="submitted && registrationForm.get('contactPersonName')?.invalid" class="text-danger mt-1">Contact person name is required.</div>
+            </div>
+
+            <div class="field-block">
               <label>Phone <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text">+91</span>
@@ -110,12 +116,32 @@
             </div>
 
             <div class="field-block">
+              <label>Founded Year</label>
+              <select formControlName="foundedYear" class="form-control">
+                <option value="">Select year (optional)</option>
+                <option *ngFor="let year of brandFoundedYears" [value]="year">{{ year }}</option>
+              </select>
+            </div>
+
+            <div class="field-block">
+              <label>Company Size</label>
+              <select formControlName="companySize" class="form-control">
+                <option value="">Select size (optional)</option>
+                <option value="1-10">1-10</option>
+                <option value="11-50">11-50</option>
+                <option value="51-200">51-200</option>
+                <option value="201-500">201-500</option>
+                <option value="500+">500+</option>
+              </select>
+            </div>
+
+            <div class="field-block">
               <label>Starting Price</label>
               <div class="input-group">
                 <span class="input-group-text">₹</span>
                 <input formControlName="promotionalPrice" type="number" min="0" class="form-control" placeholder="500" />
               </div>
-              <small class="text-muted">Prices are negotiable. Brands can send offers.</small>
+              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
             </div>
 
             <div class="field-block full-width">

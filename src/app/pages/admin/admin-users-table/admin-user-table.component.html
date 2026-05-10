@@ -76,6 +76,17 @@
             </select>
           </div>
 
+          <!-- Badge / Tag Filter -->
+          <div class="filter-item">
+            <label>Badge / Tag</label>
+            <select id="badge-tag-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.badgeTag : brandFilters.badgeTag"
+                    (change)="activeTab === 'influencer' ? influencerFilters.badgeTag = $any($event.target).value : brandFilters.badgeTag = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All Tags</option>
+              <option *ngFor="let tag of getTagOptions(activeTab)" [value]="tag">{{ tag }}</option>
+            </select>
+          </div>
+
           <!-- Reset Button -->
           <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
         </div>
@@ -103,6 +114,7 @@
           <th>Starting Price</th>
           <th>Social Media</th>
           <th>Profile Traffic</th>
+          <th>Badges / Tags</th>
           <th>Premium</th>
           <th>Payment Method</th>
           <th>Status</th>
@@ -156,6 +168,17 @@
             </small>
           </td>
           <td>
+            <ng-container *ngIf="getUserTags(user).length; else noTagsInf">
+              <span
+                *ngFor="let tag of getUserTags(user)"
+                class="badge rounded-pill me-1 mb-1"
+                [ngClass]="getTagBadgeClass(tag)">
+                {{ tag }}
+              </span>
+            </ng-container>
+            <ng-template #noTagsInf>-</ng-template>
+          </td>
+          <td>
             <ng-container *ngIf="user.isPremium; else freeTpl">
               Premium
               <span *ngIf="getPremiumPeriod(user) as period">
@@ -201,6 +224,7 @@
             </button>
             <button class="btn btn-outline-primary btn-sm me-1" *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'influencer')">Set Premium</button>
             <button class="btn btn-outline-secondary btn-sm" *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'influencer')">Set Free</button>
+            <button class="btn btn-outline-info btn-sm ms-1" (click)="openTagModal(user, 'influencer')">Edit Tags</button>
           </td>
         </tr>
       </tbody>
@@ -224,6 +248,7 @@
           <th>Products</th>
           <th>Social Media</th>
           <th>Profile Traffic</th>
+          <th>Badges / Tags</th>
           <th>Premium</th>
           <th>Payment Method</th>
           <th>Status</th>
@@ -291,6 +316,17 @@
             </small>
           </td>
           <td>
+            <ng-container *ngIf="getUserTags(user).length; else noTagsBrand">
+              <span
+                *ngFor="let tag of getUserTags(user)"
+                class="badge rounded-pill me-1 mb-1"
+                [ngClass]="getTagBadgeClass(tag)">
+                {{ tag }}
+              </span>
+            </ng-container>
+            <ng-template #noTagsBrand>-</ng-template>
+          </td>
+          <td>
             <ng-container *ngIf="user.isPremium; else freeTplBrand">
               Premium
               <span *ngIf="getPremiumPeriod(user) as period">
@@ -337,6 +373,7 @@
             <!-- Restore and Delete Permanently buttons removed -->
             <button class="btn btn-outline-primary btn-sm me-1" *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'brand')">Set Premium</button>
             <button class="btn btn-outline-secondary btn-sm" *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'brand')">Set Free</button>
+            <button class="btn btn-outline-info btn-sm ms-1" (click)="openTagModal(user, 'brand')">Edit Tags</button>
           </td>
         </tr>
       </tbody>
@@ -368,6 +405,35 @@
             <button (click)="closePremiumModal()">Cancel</button>
           </div>
           <!-- Premium features and plans are shown dynamically above -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Badge / Tag Modal -->
+  <div *ngIf="showTagModal" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+    <div class="modal-dialog modal-dialog-centered premium-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>Edit Badge / Tag</h4>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">Choose one or more labels to show on the user card and profile.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="btn btn-sm"
+              *ngFor="let tag of getTagOptions(tagType || activeTab)"
+              [class.btn-primary]="selectedTagOptions.includes(tag)"
+              [class.btn-outline-primary]="!selectedTagOptions.includes(tag)"
+              (click)="toggleTagSelection(tag)">
+              {{ tag }}
+            </button>
+          </div>
+          <div class="modal-actions mt-4">
+            <button (click)="saveTags()">Save</button>
+            <button (click)="closeTagModal()">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
