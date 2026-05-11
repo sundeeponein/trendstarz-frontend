@@ -43,9 +43,9 @@
       </button>
 
       <div class="navbar-icons">
-        <!-- <a routerLink="/login" class="btn btn-sm btn-login" *ngIf="!user">
+        <a routerLink="/login" class="btn btn-sm btn-login" *ngIf="!user">
           Login
-        </a> -->
+        </a>
 
         <span class="badge rounded-pill bg-success d-none d-md-block" *ngIf="user && user.isPremium">Pro plan</span>
         <span class="badge rounded-pill bg-secondary d-none d-md-block" *ngIf="user && !user.isPremium">Free plan</span>
