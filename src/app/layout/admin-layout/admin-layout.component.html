@@ -128,31 +128,31 @@
       </div>
 
       <div class="mobile-user-card" *ngIf="adminUser">
-        <img [src]="adminUser.profileImage || 'assets/default-profile.png'" [alt]="adminUser.name" class="mobile-avatar" />
         <div class="mobile-user-meta-wrap">
+          <img [src]="adminUser.profileImage || 'assets/default-profile.png'" [alt]="adminUser.name" class="mobile-avatar" />
           <div class="mobile-user-name-row">
             <div class="mobile-user-name">{{ adminUser.name }}</div>
             <span class="mobile-plan-tag pro">Pro plan</span>
           </div>
           <button class="mobile-user-toggle" type="button" (click)="toggleMobileProfileMenu()" [attr.aria-expanded]="mobileProfileMenuOpen">
+            <i class="bi bi-person"></i>
             <span>Administrator</span>
             <i class="bi" [ngClass]="mobileProfileMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
           </button>
+
+          <div class="mobile-user-dropdown" [class.open]="mobileProfileMenuOpen" [attr.aria-hidden]="!mobileProfileMenuOpen">
+            <a class="mobile-link" routerLink="/admin/admin-dashboard" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Profile Settings</span></a>
+            <a class="mobile-link" routerLink="/admin/admin-management" (click)="closeMobileMenu()"><i class="bi bi-sliders"></i><span>Account Settings</span></a>
+          </div>
         </div>
       </div>
 
-      <div class="mobile-user-dropdown" *ngIf="adminUser && mobileProfileMenuOpen">
-        <a class="mobile-link" routerLink="/admin/admin-dashboard" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Profile Settings</span></a>
-        <a class="mobile-link" routerLink="/admin/admin-management" (click)="closeMobileMenu()"><i class="bi bi-sliders"></i><span>Account Settings</span></a>
-        <button class="btn btn-outline-danger w-100" type="button" (click)="logout(); closeMobileMenu()">Log Out</button>
-      </div>
-
-      <div class="mobile-search-box" *ngIf="!mobileProfileMenuOpen">
+      <div class="mobile-search-box">
         <i class="bi bi-search"></i>
         <input type="text" placeholder="Search admin menu..." readonly />
       </div>
 
-      <div class="mobile-link-list" *ngIf="!mobileProfileMenuOpen">
+      <div class="mobile-link-list">
         <a routerLink="/admin/admin-user-table" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-people"></i><span>User Management</span></a>
         <a routerLink="/admin/deleted-users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-trash3"></i><span>Deleted Users</span></a>
         <a routerLink="/admin/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-wallet2"></i><span>Payments</span></a>
@@ -162,13 +162,13 @@
         <a routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Admin Management</span></a>
       </div>
 
-      <div class="mobile-upgrade" *ngIf="!mobileProfileMenuOpen">
+      <div class="mobile-upgrade">
         <h6>Quick Access</h6>
         <p>Manage platform operations from one place.</p>
       </div>
 
-      <div class="mobile-footer-actions" *ngIf="!mobileProfileMenuOpen">
-        <button *ngIf="adminUser" class="btn btn-outline-danger w-100" type="button" (click)="logout(); closeMobileMenu()">Log Out</button>
+      <div class="mobile-footer-actions">
+        <button *ngIf="adminUser" class="btn btn-outline-danger w-100 d-inline-flex align-items-center justify-content-center gap-2" type="button" (click)="logout(); closeMobileMenu()"><i class="bi bi-box-arrow-right"></i> Log Out</button>
         <a *ngIf="!adminUser" routerLink="/login" class="btn btn-primary w-100" (click)="closeMobileMenu()">Login</a>
       </div>
     </div>
