@@ -52,9 +52,79 @@
       pointer-events: none;
     }
   }
+
+  .mobile-menu-toggle {
+    display: none;
+    appearance: none;
+    border: 1.5px solid rgba(255, 107, 53, 0.95);
+    background: transparent;
+    color: shared.$orange-primary;
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 0.72rem;
+    padding: 0;
+    cursor: pointer;
+
+    i {
+      font-size: 1.45rem;
+      line-height: 1;
+      color: shared.$orange-primary;
+    }
+
+    &:hover,
+    &:focus {
+      border-color: shared.$orange-primary;
+      color: shared.$orange-primary;
+      background: rgba(255, 107, 53, 0.09);
+      box-shadow: none;
+    }
+
+    @media (max-width: 768px) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .navbar-tabs {
+      display: none !important;
+    }
+
+    .navbar-actions {
+      width: auto;
+      order: 2;
+      margin-left: auto;
+    }
+
+    .navbar-icons {
+      .notification-btn,
+      .settings-btn,
+      .profile-dropdown {
+        display: none;
+      }
+    }
+  }
 }
 
 @include shared.navbar-responsive('.admin-navbar');
+
+// Mobile sidebar — shared styles from mixin; .dispute-badge is injected as extra content
+@include shared.mobile-sidebar {
+  .dispute-badge {
+    display: inline-block;
+    margin-left: 6px;
+    min-width: 20px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #d62828;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.5;
+  }
+}
 
 // Admin content area
 .admin-container {
@@ -63,20 +133,6 @@
   padding: 2rem;
 
   @media (max-width: 768px) { padding: 1rem; }
-}
-
-.dispute-badge {
-  display: inline-block;
-  margin-left: 6px;
-  min-width: 20px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: #d62828;
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.5;
 }
 
 :host ::ng-deep { @include shared.ng-deep-overrides; }

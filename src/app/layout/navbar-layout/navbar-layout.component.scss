@@ -32,9 +32,69 @@
     }
     &:hover .profile-name { color: shared.$text-white; }
   }
+
+  .mobile-menu-toggle {
+    display: none;
+    appearance: none;
+    border: 1.5px solid rgba(255, 107, 53, 0.95);
+    background: transparent;
+    color: shared.$orange-primary;
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 0.72rem;
+    padding: 0;
+    cursor: pointer;
+
+    i {
+      font-size: 1.45rem;
+      line-height: 1;
+      color: shared.$orange-primary;
+    }
+
+    &:hover,
+    &:focus {
+      border-color: shared.$orange-primary;
+      color: shared.$orange-primary;
+      background: rgba(255, 107, 53, 0.09);
+      box-shadow: none;
+    }
+
+    @media (max-width: 768px) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .navbar-tabs {
+      display: none !important;
+    }
+
+    .navbar-actions {
+      width: auto;
+      order: 2;
+      margin-left: auto;
+
+      .navbar-icons {
+        gap: 0.35rem;
+      }
+    }
+  }
 }
 
 @include shared.navbar-responsive('.navbar');
+
+// Mobile sidebar — shared styles from mixin; .btn-login is injected as extra content
+@include shared.mobile-sidebar {
+  .btn-login {
+    background-color: shared.$orange-primary;
+    border-color: shared.$orange-primary;
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 0.72rem;
+  }
+}
 
 // Plan badge
 .plan-badge {
