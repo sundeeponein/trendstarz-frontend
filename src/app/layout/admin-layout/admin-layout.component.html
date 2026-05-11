@@ -56,6 +56,17 @@
 
     <!-- Search and Icons -->
     <div class="navbar-actions">
+      <button
+        class="mobile-menu-toggle"
+        type="button"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen"
+        aria-controls="adminMobileSidebar"
+        aria-label="Toggle admin navigation menu"
+      >
+        <i class="bi" [ngClass]="mobileMenuOpen ? 'bi-x-lg' : 'bi-list'"></i>
+      </button>
+
       <!-- Search Bar -->
       <!-- <div class="search-container">
         <input type="text" class="search-input" placeholder="Search influencers..." />
@@ -64,15 +75,15 @@
 
       <!-- Icons -->
       <div class="navbar-icons">
-        <button class="icon-btn notification-btn" title="Notifications">
+        <button class="icon-btn notification-btn d-none d-md-block" title="Notifications">
           <i class="bi bi-bell"></i>
         </button>
-        <button class="icon-btn settings-btn" title="Settings">
+        <button class="icon-btn settings-btn d-none d-md-block" title="Settings">
           <i class="bi bi-gear"></i>
         </button>
 
         <!-- Profile Dropdown -->
-        <div class="profile-dropdown" *ngIf="adminUser">
+        <div class="profile-dropdown d-none d-md-block" *ngIf="adminUser">
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
             <img [src]="adminUser.profileImage || 'assets/default-profile.png'" 
                  [alt]="adminUser.name" 
@@ -81,8 +92,8 @@
           <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
             <li><span class="dropdown-header">{{ adminUser.name }}</span></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Profile Settings</a></li>
-            <li><a class="dropdown-item" href="#">Account Settings</a></li>
+            <li><a class="dropdown-item" routerLink="/admin/admin-dashboard">Profile Settings</a></li>
+            <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>
@@ -95,6 +106,74 @@
     </div>
   </div>
 </nav>
+
+<div class="offcanvas-backdrop fade show d-md-none" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
+<div
+  id="adminMobileSidebar"
+  class="offcanvas offcanvas-start d-md-none mobile-sidebar"
+  tabindex="-1"
+  [class.show]="mobileMenuOpen"
+  [style.visibility]="mobileMenuOpen ? 'visible' : 'hidden'"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="offcanvas-body p-0">
+    <div class="mobile-shell">
+      <div class="mobile-header-row">
+        <div>
+          <div class="mobile-brand-title">TrendStarz</div>
+          <div class="mobile-brand-subtitle">Admin</div>
+        </div>
+        <button type="button" class="btn-close" (click)="closeMobileMenu()" aria-label="Close"></button>
+      </div>
+
+      <div class="mobile-user-card" *ngIf="adminUser">
+        <img [src]="adminUser.profileImage || 'assets/default-profile.png'" [alt]="adminUser.name" class="mobile-avatar" />
+        <div class="mobile-user-meta-wrap">
+          <div class="mobile-user-name-row">
+            <div class="mobile-user-name">{{ adminUser.name }}</div>
+            <span class="mobile-plan-tag pro">Pro plan</span>
+          </div>
+          <button class="mobile-user-toggle" type="button" (click)="toggleMobileProfileMenu()" [attr.aria-expanded]="mobileProfileMenuOpen">
+            <span>Administrator</span>
+            <i class="bi" [ngClass]="mobileProfileMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile-user-dropdown" *ngIf="adminUser && mobileProfileMenuOpen">
+        <a class="mobile-link" routerLink="/admin/admin-dashboard" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Profile Settings</span></a>
+        <a class="mobile-link" routerLink="/admin/admin-management" (click)="closeMobileMenu()"><i class="bi bi-sliders"></i><span>Account Settings</span></a>
+        <button class="btn btn-outline-danger w-100" type="button" (click)="logout(); closeMobileMenu()">Log Out</button>
+      </div>
+
+      <div class="mobile-search-box" *ngIf="!mobileProfileMenuOpen">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Search admin menu..." readonly />
+      </div>
+
+      <div class="mobile-link-list" *ngIf="!mobileProfileMenuOpen">
+        <a routerLink="/admin/admin-user-table" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-people"></i><span>User Management</span></a>
+        <a routerLink="/admin/deleted-users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-trash3"></i><span>Deleted Users</span></a>
+        <a routerLink="/admin/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-wallet2"></i><span>Payments</span></a>
+        <a routerLink="/admin/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gem"></i><span>Plans</span></a>
+        <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
+        <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
+        <a routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Admin Management</span></a>
+      </div>
+
+      <div class="mobile-upgrade" *ngIf="!mobileProfileMenuOpen">
+        <h6>Quick Access</h6>
+        <p>Manage platform operations from one place.</p>
+      </div>
+
+      <div class="mobile-footer-actions" *ngIf="!mobileProfileMenuOpen">
+        <button *ngIf="adminUser" class="btn btn-outline-danger w-100" type="button" (click)="logout(); closeMobileMenu()">Log Out</button>
+        <a *ngIf="!adminUser" routerLink="/login" class="btn btn-primary w-100" (click)="closeMobileMenu()">Login</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="admin-container">
   <router-outlet></router-outlet>

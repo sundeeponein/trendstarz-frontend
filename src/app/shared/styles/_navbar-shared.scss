@@ -207,11 +207,11 @@ $hover-bg: rgba(255, 255, 255, 0.08);
   @media (max-width: 768px) {
     #{$selector} {
       .navbar-content {
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         gap: 1rem;
 
-        .navbar-brand { width: 100%; display: flex; justify-content: center; }
+        .navbar-brand { width: 35%; display: flex; justify-content:start; }
 
         .navbar-tabs {
           display: flex;
@@ -234,7 +234,7 @@ $hover-bg: rgba(255, 255, 255, 0.08);
           }
         }
 
-        .navbar-actions { width: 100%; }
+        .navbar-actions { width: 55%; justify-content:end; }
       }
     }
   }

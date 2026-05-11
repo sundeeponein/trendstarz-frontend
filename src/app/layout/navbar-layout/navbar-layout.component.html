@@ -1,18 +1,12 @@
 <nav class="navbar">
   <div class="navbar-content d-flex justify-content-between w-100">
-    
-    <!-- Logo and Brand -->
     <div class="navbar-brand">
       <a routerLink="/" class="logo-link">
         <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
       </a>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="navbar-tabs">
-      <!-- <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
-        Search
-      </a> -->
       <a *ngIf="user?.role === 'brand'" routerLink="/brand-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Dashboard
       </a>
@@ -36,29 +30,34 @@
       </a>
     </div>
 
-    <!-- Search and Icons -->
     <div class="navbar-actions">
-      <!-- Icons -->
+      <button
+        class="mobile-menu-toggle"
+        type="button"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen"
+        aria-controls="mainMobileSidebar"
+        aria-label="Toggle navigation menu"
+      >
+        <i class="bi" [ngClass]="mobileMenuOpen ? 'bi-x-lg' : 'bi-list'" aria-hidden="true"></i>
+      </button>
+
       <div class="navbar-icons">
-        <!-- App Switcher Button -->
         <button class="icon-btn app-switcher-btn" title="Settings" *ngIf="!user">
           <i class="bi bi-gear"></i>
         </button>
 
-        <!-- Login Button (when not logged in) -->
         <a routerLink="/login" class="btn btn-sm btn-login" *ngIf="!user">
           Login
         </a>
 
-        <!-- Plan Badge (when logged in) -->
-        <span class="badge rounded-pill bg-success" *ngIf="user && user.isPremium">Pro plan</span>
-        <span class="badge rounded-pill bg-secondary" *ngIf="user && !user.isPremium">Free plan</span>
+        <span class="badge rounded-pill bg-success d-none d-md-block" *ngIf="user && user.isPremium">Pro plan</span>
+        <span class="badge rounded-pill bg-secondary d-none d-md-block" *ngIf="user && !user.isPremium">Free plan</span>
 
-        <!-- Profile Dropdown (when logged in) -->
-        <div class="profile-dropdown" *ngIf="user">
+        <div class="profile-dropdown d-none d-md-block" *ngIf="user">
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
-            <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" 
-                 [alt]="user.name || user.brandName || 'User'" 
+            <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'"
+                 [alt]="user.name || user.brandName || 'User'"
                  class="profile-avatar" />
             <span class="profile-name">
               {{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : 'User') }}
@@ -79,12 +78,80 @@
         </div>
       </div>
     </div>
-
-  </div>
+</div>
 </nav>
 
+<div class="offcanvas-backdrop fade show d-md-none" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
+<div
+  id="mainMobileSidebar"
+  class="offcanvas offcanvas-start d-md-none mobile-sidebar"
+  tabindex="-1"
+  [class.show]="mobileMenuOpen"
+  [style.visibility]="mobileMenuOpen ? 'visible' : 'hidden'"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="offcanvas-body p-0">
+    <div class="mobile-shell">
+      <div class="mobile-header-row">
+        <div>
+          <div class="mobile-brand-title">TrendStarz</div>
+          <div class="mobile-brand-subtitle">Menu</div>
+        </div>
+        <button type="button" class="btn-close" (click)="closeMobileMenu()" aria-label="Close"></button>
+      </div>
+
+      <div class="mobile-user-card" *ngIf="user">
+        <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" [alt]="displayName" class="mobile-avatar" />
+        <div class="mobile-user-meta-wrap">
+          <div class="mobile-user-name-row">
+            <div class="mobile-user-name">{{ displayName }}</div>
+            <span class="mobile-plan-tag" [class.pro]="!!user?.isPremium">{{ user?.isPremium ? 'Pro plan' : 'Free plan' }}</span>
+          </div>
+          <button class="mobile-user-toggle" type="button" (click)="toggleMobileProfileMenu()" [attr.aria-expanded]="mobileProfileMenuOpen">
+            <span>{{ user?.role || 'member' }}</span>
+            <i class="bi" [ngClass]="mobileProfileMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile-user-dropdown" *ngIf="user && mobileProfileMenuOpen">
+        <a *ngIf="user?.role === 'influencer'" class="mobile-link" routerLink="/influencer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+        <a *ngIf="user?.role === 'brand'" class="mobile-link" routerLink="/brand-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+        <a *ngIf="user?.role === 'influencer' || user?.role === 'brand'" class="mobile-link" routerLink="/payment-history" (click)="closeMobileMenu()"><i class="bi bi-clock-history"></i><span>Subscription History</span></a>
+        <a *ngIf="user?.role === 'admin'" class="mobile-link" routerLink="/admin/deleted-users" (click)="closeMobileMenu()"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>
+      </div>
+
+      <div class="mobile-search-box" *ngIf="!mobileProfileMenuOpen">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Search menu..." readonly />
+      </div>
+
+      <div class="mobile-link-list" *ngIf="!mobileProfileMenuOpen">
+        <a *ngIf="user?.role === 'brand'" routerLink="/brand-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+        <a *ngIf="user?.role === 'influencer'" routerLink="/influencer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+        <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
+        <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
+        <a routerLink="/features" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Features</span></a>
+        <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
+        <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
+      </div>
+
+      <div class="mobile-upgrade" *ngIf="user && !user?.isPremium && !mobileProfileMenuOpen">
+        <h6>Upgrade to Pro</h6>
+        <p>Unlock priority campaigns and premium tools.</p>
+      </div>
+
+      <div class="mobile-footer-actions" *ngIf="!mobileProfileMenuOpen">
+        <a *ngIf="!user" routerLink="/login" class="btn btn-login w-100" (click)="closeMobileMenu()">Login</a>
+        <button *ngIf="user" class="btn btn-outline-danger w-100" type="button" (click)="logout(); closeMobileMenu()">Log Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="content-area bg-white rounded-3 shadow-sm mx-3 py-2 mt-3">
-<router-outlet></router-outlet>
+  <router-outlet></router-outlet>
 </div>
 
 <app-footer></app-footer>
