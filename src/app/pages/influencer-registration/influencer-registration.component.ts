@@ -205,6 +205,8 @@ export class InfluencerRegistrationComponent implements OnInit {
   duplicateUsernameError = '';
   duplicateEmailError = '';
   duplicatePhoneError = '';
+  verificationCallNumber = '';
+
   isSubmitting = false;
   stepTransitioning = false;
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
@@ -224,6 +226,9 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPremiumMonthlyPrice();
+    this.configService.getSupportContact().subscribe(s => {
+      this.verificationCallNumber = s.verificationCallNumber || '';
+    });
 
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';

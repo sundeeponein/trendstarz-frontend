@@ -21,13 +21,16 @@
         </button>
       </div>
       <div *ngIf="showEmailVerificationPrompt && !emailVerified" class="alert alert-warning mb-4">
-        <strong>Email not verified.</strong> Please check your inbox and click the verification link.
+        <strong>Email verification pending.</strong> Please check your inbox and click the verification link.
         <button class="btn btn-link p-0 ms-2" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">Resend Verification Email</button>
         <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
         <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
       </div>
-      <div *ngIf="phoneVerified" class="alert alert-success mb-4">
-        <strong>Mobile verified.</strong> Your mobile number has been successfully verified.
+      <div *ngIf="!phoneVerified" class="alert alert-warning mb-4">
+        <strong><i class="bi bi-hourglass-split me-1"></i>Mobile verification pending.</strong>
+        Mobile verification is manually reviewed within 24-48 hours.
+        <span *ngIf="verificationCallNumber"> Expected call-from number: <strong>{{ verificationCallNumber }}</strong>.</span>
+        Please ensure your mobile number is valid and reachable.
       </div>
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
@@ -69,8 +72,15 @@
               <div style="display: flex; align-items: center; gap: 0.5em;">
                 <input formControlName="phoneNumber" type="text" class="form-control" />
                 <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
+                <span *ngIf="!phoneVerified" class="verified-icon" title="Mobile verification pending" style="color: #f59e0b; font-size: 1.2em;"><i class="bi bi-hourglass-split"></i></span>
               </div>
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
+              <small *ngIf="verificationCallNumber && !phoneVerified" class="text-muted mt-1">
+                You may receive a verification call from our team <strong>{{ verificationCallNumber }}</strong>.
+              </small>
+              <small *ngIf="!phoneVerified" class="text-muted d-block mt-1">
+                Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.
+              </small>
             </div>
             <div class="field-block">
               <label>Website</label>
@@ -389,6 +399,12 @@
           <div class="field-grid mt-3">
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
+              <div class="text-muted mt-1" style="font-size:0.9em;">
+                Contact details are shared only with influencers in campaign flow after acceptance.
+                Email is shown to influencers only when email is verified. Call/WhatsApp are shown to influencers only when mobile is verified.
+                <br>
+                <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+              </div>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
                   <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!isEditMode" />

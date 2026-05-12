@@ -165,6 +165,8 @@ export class InfluencerProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  verificationCallNumber = '';
+
   emailVerified: boolean = false;
   showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
@@ -307,6 +309,10 @@ export class InfluencerProfileComponent implements OnInit {
 
   ngOnInit() {
     this.loadPremiumMonthlyPrice();
+    this.configService.getSupportContact().subscribe(s => {
+      this.verificationCallNumber = s.verificationCallNumber || '';
+      this.cd.markForCheck();
+    });
 
     // Load plan capabilities
     this.plansService.getMyCapabilities().subscribe(caps => {
@@ -413,6 +419,7 @@ export class InfluencerProfileComponent implements OnInit {
             return;
           }
           this.emailVerified = !!profile.isEmailVerified;
+          this.phoneVerified = !!profile.isMobileVerified;
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
           // Map state name to ID
@@ -1072,6 +1079,7 @@ export class InfluencerProfileComponent implements OnInit {
               return;
             }
             this.emailVerified = !!profile.isEmailVerified;
+            this.phoneVerified = !!profile.isMobileVerified;
             this.showEmailVerificationPrompt = !this.emailVerified;
             const stateId = (this.states || []).find((s: any) => s.name === profile.location?.state)?.['_id'] || '';
             const languageIds = (profile.languages || []).map((name: string) =>

@@ -46,8 +46,10 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     platformFeesPaid: 0,
     pendingPayouts: 0,
   };
+  verificationCallNumber = '';
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
+  emailBannerDismissed = false;
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -76,6 +78,16 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         this.emailVerificationError = params.get('emailVerificationError');
       }
     }
+
+    this.config.getSupportContact().subscribe({
+      next: (support: any) => {
+        this.verificationCallNumber = support?.verificationCallNumber || '';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.verificationCallNumber = '';
+      },
+    });
     // Only fetch profile and load dashboard once per user
     this.userSub = this.session.user$.subscribe(user => {
       if (user) {
@@ -218,6 +230,15 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       window.location.href = '/verify-email?returnUrl=/brand-dashboard';
     }
+  }
+
+  dismissEmailBanner() {
+    this.emailBannerDismissed = true;
+  }
+
+  onMobileVerificationHelp() {
+    const numberText = this.verificationCallNumber ? ` Team calls come from ${this.verificationCallNumber}.` : '';
+    alert(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
   }
 
   onUpgrade() {
