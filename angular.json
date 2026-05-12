@@ -44,6 +44,7 @@
           },
           "configurations": {
             "production": {
+              "outputMode": "static",
               "serviceWorker": "ngsw-config.json",
               "outputHashing": "all",
               "fileReplacements": [
