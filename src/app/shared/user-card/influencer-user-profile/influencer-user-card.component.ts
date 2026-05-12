@@ -17,6 +17,11 @@ export class InfluencerUserCardComponent {
   @Input() email = '';
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
+  @Input() influencerCategory = '';
+  @Input() professionalStatus = false;
+  @Input() expertiseArea = '';
+  @Input() verificationStatus = 'not_submitted';
+  @Input() verifiedByTrendStarz = false;
   @Input() location: any = {};
   @Input() socialMedia: any[] = [];
   @Input() adminTags: string[] = [];
@@ -58,6 +63,15 @@ export class InfluencerUserCardComponent {
 
   get displayTags(): string[] {
     return Array.isArray(this.adminTags) ? this.adminTags.filter((tag) => !!String(tag || '').trim()) : [];
+  }
+
+  get displayCategory(): string {
+    if (String(this.influencerCategory || '').trim()) return this.influencerCategory;
+    return this.categories?.[0] || '—';
+  }
+
+  get isTrendstarzVerified(): boolean {
+    return this.verifiedByTrendStarz || this.verificationStatus === 'approved';
   }
 
   /** Tier of the first social handle the user added (entry order). */

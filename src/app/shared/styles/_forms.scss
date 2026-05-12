@@ -102,6 +102,12 @@ input {
   min-height: 46px;
 }
 
+
+.form-check-input[type=checkbox] {
+  min-height: 18px;
+  min-width: 18px;
+}
+
 // Global ng-dropdown-panel overrides (appended to body)
 ::ng-deep ng-dropdown-panel {
   background: #ffffff !important;

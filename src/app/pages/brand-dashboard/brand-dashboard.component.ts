@@ -216,7 +216,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   }
   onVerifyEmail() {
     if (typeof window !== 'undefined') {
-      window.location.href = '/verify-email';
+      window.location.href = '/verify-email?returnUrl=/brand-dashboard';
     }
   }
 

@@ -504,8 +504,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   onVerifyEmail() {
-    // Navigate to verify email page
-    window.location.href = '/verify-email';
+    // Navigate to verify email page, passing returnUrl so user can go back
+    window.location.href = '/verify-email?returnUrl=/influencer-dashboard';
   }
 
   dismissEmailBanner() {
