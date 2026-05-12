@@ -76,6 +76,30 @@
             </select>
           </div>
 
+          <!-- Email Verified Filter -->
+          <div class="filter-item">
+            <label>Email Verified</label>
+            <select id="email-verified-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.emailVerified : brandFilters.emailVerified"
+                    (change)="activeTab === 'influencer' ? influencerFilters.emailVerified = $any($event.target).value : brandFilters.emailVerified = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All</option>
+              <option value="verified">Verified</option>
+              <option value="not_verified">Verification Pending</option>
+            </select>
+          </div>
+
+          <!-- Mobile Verified Filter -->
+          <div class="filter-item">
+            <label>Mobile Verified</label>
+            <select id="mobile-verified-filter"
+                    [ngModel]="activeTab === 'influencer' ? influencerFilters.mobileVerified : brandFilters.mobileVerified"
+                    (change)="activeTab === 'influencer' ? influencerFilters.mobileVerified = $any($event.target).value : brandFilters.mobileVerified = $any($event.target).value; onFilterChange(activeTab)">
+              <option value="">All</option>
+              <option value="verified">Verified</option>
+              <option value="not_verified">Verification Pending</option>
+            </select>
+          </div>
+
           <!-- Badge / Tag Filter -->
           <div class="filter-item">
             <label>Badge / Tag</label>
@@ -114,9 +138,7 @@
           <th>Starting Price</th>
           <th>Social Media</th>
           <th>Profile Traffic</th>
-          <th>Verification Docs</th>
-          <th>Verification Status</th>
-          <th>Verification Notes</th>
+          <th>Document Verification</th>
           <th>Badges / Tags</th>
           <th>Premium</th>
           <th>Payment Method</th>
@@ -132,8 +154,30 @@
           <td>{{ user.name || '-' }}</td>
           <td>{{ user.username || '-' }}</td>
           <td>
-            {{ user.email || '-' }} <br>
+            <div>{{ user.email || '-' }}</div>
             <small>{{ user.phoneNumber || '-' }}</small>
+            <div class="mt-1 d-flex flex-column gap-1">
+              <div>
+                <span class="badge me-1" [ngClass]="isEmailVerified(user) ? 'bg-success' : 'bg-secondary'">
+                  <i *ngIf="isEmailVerified(user)" class="bi bi-check-circle-fill me-1"></i>
+                  <i *ngIf="!isEmailVerified(user)" class="bi bi-hourglass-split me-1"></i>
+                  Email {{ isEmailVerified(user) ? 'Verified' : 'Verification Pending' }}
+                </span>
+              </div>
+              <div>
+                <span class="badge me-1" [ngClass]="isMobileVerified(user) ? 'bg-success' : 'bg-secondary'">
+                  <i *ngIf="isMobileVerified(user)" class="bi bi-check-circle-fill me-1"></i>
+                  <i *ngIf="!isMobileVerified(user)" class="bi bi-hourglass-split me-1"></i>
+                  Mobile {{ isMobileVerified(user) ? 'Verified' : 'Verification Pending' }}
+                </span>
+              </div>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="btn btn-outline-success btn-sm" *ngIf="!isEmailVerified(user)" (click)="updateContactVerification(user, 'influencer', 'isEmailVerified', true)">Verify Email</button>
+                <button class="btn btn-outline-secondary btn-sm" *ngIf="isEmailVerified(user)" (click)="updateContactVerification(user, 'influencer', 'isEmailVerified', false)">Unverify Email</button>
+                <button class="btn btn-outline-success btn-sm" *ngIf="!isMobileVerified(user)" (click)="updateContactVerification(user, 'influencer', 'isMobileVerified', true)">Verify Mobile</button>
+                <button class="btn btn-outline-secondary btn-sm" *ngIf="isMobileVerified(user)" (click)="updateContactVerification(user, 'influencer', 'isMobileVerified', false)">Unverify Mobile</button>
+              </div>
+            </div>
           </td>
           <td>{{ getSignupSource(user) }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
@@ -171,41 +215,14 @@
             </small>
           </td>
           <td>
-            <ng-container *ngIf="user.verificationDocuments?.length; else noVerifyDocs">
-              <div *ngFor="let doc of user.verificationDocuments; let i = index">
-                <a [href]="doc.url" target="_blank" rel="noopener noreferrer">Doc {{ i + 1 }}</a>
-              </div>
-            </ng-container>
-            <ng-template #noVerifyDocs>-</ng-template>
-          </td>
-          <td>
-            <span class="badge"
-              [ngClass]="{
-                'bg-secondary': (user.verificationStatus || 'not_submitted') === 'not_submitted',
-                'bg-info text-dark': user.verificationStatus === 'pending',
-                'bg-success': user.verificationStatus === 'approved',
-                'bg-warning text-dark': user.verificationStatus === 'rejected',
-                'bg-dark': user.verificationStatus === 'removed'
-              }">
+            <button class="btn btn-sm" 
+                    [ngClass]="user.verificationStatus === 'approved' ? 'btn-success' : (user.verificationStatus === 'pending' ? 'btn-info text-dark' : 'btn-secondary')"
+                    (click)="openVerificationDocsModal(user, 'influencer')"
+                    [disabled]="!user.verificationDocuments || user.verificationDocuments.length === 0"
+                    [title]="user.verificationDocuments?.length ? 'Click to review/manage document verification' : 'No documents submitted yet'">
+              <i class="bi" [ngClass]="user.verificationStatus === 'approved' ? 'bi-check-circle-fill' : 'bi-file-text'"></i>
               {{ user.verificationStatus || 'not_submitted' }}
-            </span>
-            <div class="mt-1" *ngIf="user.verifiedByTrendStarz">
-              <small class="text-success">Verified by TrendStarz</small>
-            </div>
-          </td>
-          <td>
-            <textarea
-              class="form-control form-control-sm"
-              rows="2"
-              [ngModel]="getVerificationNotes(user)"
-              (ngModelChange)="setVerificationNotes(user, $event)"
-              placeholder="Admin notes"></textarea>
-            <div class="d-flex gap-1 mt-1">
-              <button class="btn btn-sm btn-success" (click)="updateInfluencerVerification(user, 'approve')">Approve</button>
-              <button class="btn btn-sm btn-warning" (click)="updateInfluencerVerification(user, 'reject')">Reject</button>
-              <button class="btn btn-sm btn-secondary" (click)="updateInfluencerVerification(user, 'pending')">Pending</button>
-              <button class="btn btn-sm btn-dark" (click)="updateInfluencerVerification(user, 'remove')">Remove</button>
-            </div>
+            </button>
           </td>
           <td>
             <ng-container *ngIf="getUserTags(user).length; else noTagsInf">
@@ -304,8 +321,30 @@
           </td>
           <td>{{ user.brandName || '-' }}</td>
           <td>
-            {{ user.email || '-' }} <br>
+            <div>{{ user.email || '-' }}</div>
             <small>{{ user.phoneNumber || '-' }}</small>
+            <div class="mt-1 d-flex flex-column gap-1">
+              <div>
+                <span class="badge me-1" [ngClass]="isEmailVerified(user) ? 'bg-success' : 'bg-secondary'">
+                  <i *ngIf="isEmailVerified(user)" class="bi bi-check-circle-fill me-1"></i>
+                  <i *ngIf="!isEmailVerified(user)" class="bi bi-hourglass-split me-1"></i>
+                  Email {{ isEmailVerified(user) ? 'Verified' : 'Verification Pending' }}
+                </span>
+              </div>
+              <div>
+                <span class="badge me-1" [ngClass]="isMobileVerified(user) ? 'bg-success' : 'bg-secondary'">
+                  <i *ngIf="isMobileVerified(user)" class="bi bi-check-circle-fill me-1"></i>
+                  <i *ngIf="!isMobileVerified(user)" class="bi bi-hourglass-split me-1"></i>
+                  Mobile {{ isMobileVerified(user) ? 'Verified' : 'Verification Pending' }}
+                </span>
+              </div>
+              <div class="d-flex gap-1 flex-wrap">
+                <button class="btn btn-outline-success btn-sm" *ngIf="!isEmailVerified(user)" (click)="updateContactVerification(user, 'brand', 'isEmailVerified', true)">Verify Email</button>
+                <button class="btn btn-outline-secondary btn-sm" *ngIf="isEmailVerified(user)" (click)="updateContactVerification(user, 'brand', 'isEmailVerified', false)">Unverify Email</button>
+                <button class="btn btn-outline-success btn-sm" *ngIf="!isMobileVerified(user)" (click)="updateContactVerification(user, 'brand', 'isMobileVerified', true)">Verify Mobile</button>
+                <button class="btn btn-outline-secondary btn-sm" *ngIf="isMobileVerified(user)" (click)="updateContactVerification(user, 'brand', 'isMobileVerified', false)">Unverify Mobile</button>
+              </div>
+            </div>
           </td>
           <td>{{ getSignupSource(user) }}</td>
           <td>{{ user.categories && user.categories.length ? user.categories.join(', ') : '-' }}</td>
@@ -473,6 +512,84 @@
           <div class="modal-actions mt-4">
             <button (click)="saveTags()">Save</button>
             <button (click)="closeTagModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification Docs Modal -->
+  <div *ngIf="showVerificationDocsModal && verificationDocsUser" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+      <div class="modal-content">
+        <div class="modal-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Review Document Verification</h5>
+          <button type="button" class="btn-close" (click)="closeVerificationDocsModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Uploaded Documents Section -->
+          <div class="mb-4">
+            <h6 class="fw-bold">Submitted Documents</h6>
+            <ng-container *ngIf="verificationDocsUser.verificationDocuments?.length; else noDocs">
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let doc of verificationDocsUser.verificationDocuments; let i = index" class="d-flex align-items-center gap-2 p-2 bg-light rounded">
+                  <i class="bi bi-file-pdf text-danger fs-5"></i>
+                  <a [href]="doc.url" target="_blank" rel="noopener noreferrer" class="link-primary">Document {{ i + 1 }}</a>
+                  <span class="ms-auto badge bg-secondary">{{ doc.type || 'File' }}</span>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #noDocs>
+              <p class="text-muted mb-0">No documents submitted yet.</p>
+            </ng-template>
+          </div>
+
+          <!-- Current Status -->
+          <div class="mb-4">
+            <h6 class="fw-bold">Current Status</h6>
+            <span class="badge fs-5"
+              [ngClass]="{
+                'bg-secondary': (verificationDocsUser.verificationStatus || 'not_submitted') === 'not_submitted',
+                'bg-info text-dark': verificationDocsUser.verificationStatus === 'pending',
+                'bg-success': verificationDocsUser.verificationStatus === 'approved',
+                'bg-warning text-dark': verificationDocsUser.verificationStatus === 'rejected',
+                'bg-dark': verificationDocsUser.verificationStatus === 'removed'
+              }">
+              {{ verificationDocsUser.verificationStatus || 'not_submitted' }}
+            </span>
+            <div *ngIf="verificationDocsUser.verifiedByTrendStarz" class="mt-2">
+              <small class="text-success fw-bold">✓ Verified by TrendStarz</small>
+            </div>
+          </div>
+
+          <!-- Admin Notes -->
+          <div class="mb-4">
+            <label class="fw-bold">Admin Notes</label>
+            <textarea
+              class="form-control"
+              rows="4"
+              [(ngModel)]="verificationDocsDraft"
+              placeholder="Add notes about expiry dates, mismatches, or reasons for rejection..."></textarea>
+            <small class="text-muted">Use this to document mismatches, expired certifications, or reasons for removal.</small>
+          </div>
+        </div>
+
+        <!-- Modal Footer with Actions -->
+        <div class="modal-footer d-flex gap-2 justify-content-between">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeVerificationDocsModal()">Cancel</button>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success" (click)="updateInfluencerVerificationFromModal('approve')" title="Approve documents as authentic">
+              <i class="bi bi-check-circle"></i> Approve
+            </button>
+            <button type="button" class="btn btn-warning text-dark" (click)="updateInfluencerVerificationFromModal('reject')" title="Reject documents - need resubmission">
+              <i class="bi bi-x-circle"></i> Reject
+            </button>
+            <button type="button" class="btn btn-info text-dark" (click)="updateInfluencerVerificationFromModal('pending')" title="Mark as pending review">
+              <i class="bi bi-hourglass-split"></i> Pending
+            </button>
+            <button type="button" class="btn btn-danger" (click)="updateInfluencerVerificationFromModal('remove')" title="Remove - for expired/invalid docs">
+              <i class="bi bi-trash"></i> Remove
+            </button>
           </div>
         </div>
       </div>

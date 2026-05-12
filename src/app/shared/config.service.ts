@@ -33,6 +33,7 @@ export class ConfigService {
     phone: string;
     whatsapp: string;
     message: string;
+    verificationCallNumber: string;
   }> {
     return this.http
       .get<any>(`${this.apiUrl}/public/support-contact`)
@@ -45,6 +46,7 @@ export class ConfigService {
             phone: d.phone || '',
             whatsapp: d.whatsapp || '',
             message: d.message || '',
+            verificationCallNumber: d.verificationCallNumber || '',
           };
         }),
         catchError(() =>
@@ -54,6 +56,7 @@ export class ConfigService {
             phone: '',
             whatsapp: '',
             message: '',
+            verificationCallNumber: '',
           }),
         ),
       );
