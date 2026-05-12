@@ -170,7 +170,7 @@ test.describe('Admin User Table', () => {
     await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
     const apiCalled = page.waitForResponse(resp => resp.url().includes('/accept'), { timeout: 5000 }).catch(() => null);
     // Click accept on the first (pending) influencer
-    const acceptBtn = page.locator('table.admin-table tbody tr').first().locator('button.btn-success');
+    const acceptBtn = page.locator('table.admin-table tbody tr').first().locator('button[title="Accept"]');
     await acceptBtn.scrollIntoViewIfNeeded();
     await acceptBtn.click({ force: true });
     // Trigger CD for potential action handling in zone-less mode
@@ -189,7 +189,7 @@ test.describe('Admin User Table', () => {
   test('decline user triggers confirm dialog and API call', async ({ page }) => {
     await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
     const apiCalled = page.waitForResponse(resp => resp.url().includes('/decline'), { timeout: 5000 }).catch(() => null);
-    const declineBtn = page.locator('table.admin-table tbody tr').first().locator('button.btn-warning');
+    const declineBtn = page.locator('table.admin-table tbody tr').first().locator('button[title="Decline"]');
     await declineBtn.scrollIntoViewIfNeeded();
     await declineBtn.click({ force: true });
     await page.locator('body').click();

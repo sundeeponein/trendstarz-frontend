@@ -114,6 +114,9 @@
           <th>Starting Price</th>
           <th>Social Media</th>
           <th>Profile Traffic</th>
+          <th>Verification Docs</th>
+          <th>Verification Status</th>
+          <th>Verification Notes</th>
           <th>Badges / Tags</th>
           <th>Premium</th>
           <th>Payment Method</th>
@@ -166,6 +169,43 @@
               <span title="Impressions"><i class="bi bi-eye"></i> {{ user.profileTraffic?.impressions ?? 0 }}</span>&nbsp;
               <span title="Clicks"><i class="bi bi-cursor"></i> {{ user.profileTraffic?.clicks ?? 0 }}</span>
             </small>
+          </td>
+          <td>
+            <ng-container *ngIf="user.verificationDocuments?.length; else noVerifyDocs">
+              <div *ngFor="let doc of user.verificationDocuments; let i = index">
+                <a [href]="doc.url" target="_blank" rel="noopener noreferrer">Doc {{ i + 1 }}</a>
+              </div>
+            </ng-container>
+            <ng-template #noVerifyDocs>-</ng-template>
+          </td>
+          <td>
+            <span class="badge"
+              [ngClass]="{
+                'bg-secondary': (user.verificationStatus || 'not_submitted') === 'not_submitted',
+                'bg-info text-dark': user.verificationStatus === 'pending',
+                'bg-success': user.verificationStatus === 'approved',
+                'bg-warning text-dark': user.verificationStatus === 'rejected',
+                'bg-dark': user.verificationStatus === 'removed'
+              }">
+              {{ user.verificationStatus || 'not_submitted' }}
+            </span>
+            <div class="mt-1" *ngIf="user.verifiedByTrendStarz">
+              <small class="text-success">Verified by TrendStarz</small>
+            </div>
+          </td>
+          <td>
+            <textarea
+              class="form-control form-control-sm"
+              rows="2"
+              [ngModel]="getVerificationNotes(user)"
+              (ngModelChange)="setVerificationNotes(user, $event)"
+              placeholder="Admin notes"></textarea>
+            <div class="d-flex gap-1 mt-1">
+              <button class="btn btn-sm btn-success" (click)="updateInfluencerVerification(user, 'approve')">Approve</button>
+              <button class="btn btn-sm btn-warning" (click)="updateInfluencerVerification(user, 'reject')">Reject</button>
+              <button class="btn btn-sm btn-secondary" (click)="updateInfluencerVerification(user, 'pending')">Pending</button>
+              <button class="btn btn-sm btn-dark" (click)="updateInfluencerVerification(user, 'remove')">Remove</button>
+            </div>
           </td>
           <td>
             <ng-container *ngIf="getUserTags(user).length; else noTagsInf">

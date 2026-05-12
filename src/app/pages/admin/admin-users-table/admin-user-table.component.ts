@@ -19,6 +19,8 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
 export class AdminUserTableComponent implements OnInit {
   readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator'];
   readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand'];
+  readonly verificationStatusOptions = ['not_submitted', 'pending', 'approved', 'rejected', 'removed'];
+  verificationNotesDraft: Record<string, string> = {};
 
     public getPremiumDurationLabel(duration: string | undefined): string {
       switch (duration) {
@@ -345,6 +347,37 @@ export class AdminUserTableComponent implements OnInit {
 
   onFilterChange(userType: 'influencer' | 'brand') {
     this.applyFilters(userType);
+  }
+
+  getVerificationNotes(user: any): string {
+    const key = String(user?._id || '');
+    if (!key) return '';
+    if (this.verificationNotesDraft[key] === undefined) {
+      this.verificationNotesDraft[key] = String(user?.verificationAdminNotes || '');
+    }
+    return this.verificationNotesDraft[key];
+  }
+
+  setVerificationNotes(user: any, value: string): void {
+    const key = String(user?._id || '');
+    if (!key) return;
+    this.verificationNotesDraft[key] = value;
+  }
+
+  updateInfluencerVerification(user: any, action: 'pending' | 'approve' | 'reject' | 'remove') {
+    const userId = String(user?._id || '');
+    if (!userId) return;
+    const notes = this.getVerificationNotes(user);
+    const payload = { action, notes };
+    this.http.patch(`${environment.apiBaseUrl}/admin/users/influencer/${userId}/verification`, payload, this.getAuthHeaders())
+      .pipe(catchError(err => {
+        alert('Error updating verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (!res) return;
+        this.fetchUsers();
+      });
   }
 
   resetFilters(userType: 'influencer' | 'brand') {
