@@ -33,6 +33,109 @@
     &:hover .profile-name { color: shared.$text-white; }
   }
 
+  .navbar-actions .navbar-icons .notification-dropdown {
+    position: relative;
+
+    .notification-btn {
+      position: relative;
+    }
+
+    .notif-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      line-height: 1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .notifications-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: min(360px, calc(100vw - 24px));
+      max-height: 420px;
+      overflow-y: auto;
+      background: #1a2741;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      z-index: 1100;
+      padding: 0.4rem;
+    }
+
+    .notifications-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+      font-size: 0.9rem;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 0.25rem;
+    }
+
+    .mark-all-btn {
+      background: transparent;
+      border: none;
+      color: #ff6b35;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .notification-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: left;
+      border-radius: 10px;
+      padding: 0.6rem;
+      cursor: pointer;
+      color: #c7d2fe;
+      display: block;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &.unread {
+        background: rgba(255, 107, 53, 0.14);
+      }
+    }
+
+    .notification-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.2rem;
+    }
+
+    .notification-body {
+      font-size: 0.78rem;
+      line-height: 1.3;
+      color: #d1d5db;
+    }
+
+    .notifications-empty {
+      color: #9ca3af;
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 0.9rem 0.6rem;
+    }
+  }
+
   .mobile-menu-toggle {
     display: none;
     appearance: none;

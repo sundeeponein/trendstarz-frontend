@@ -31,18 +31,38 @@
     </div>
 
     <div class="navbar-actions">
-      <button
-        class="mobile-menu-toggle"
-        type="button"
-        (click)="toggleMobileMenu()"
-        [attr.aria-expanded]="mobileMenuOpen"
-        aria-controls="mainMobileSidebar"
-        aria-label="Toggle navigation menu"
-      >
-        <i class="bi" [ngClass]="mobileMenuOpen ? 'bi-x-lg' : 'bi-list'" aria-hidden="true"></i>
-      </button>
+      
 
       <div class="navbar-icons">
+        <div class="notification-dropdown" *ngIf="user">
+          <button class="icon-btn notification-btn" type="button" (click)="toggleNotifications()" [attr.aria-expanded]="notificationsOpen" aria-label="Notifications">
+            <i class="bi bi-bell"></i>
+            <span class="notif-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
+          </button>
+
+          <div class="notifications-menu" *ngIf="notificationsOpen">
+            <div class="notifications-header">
+              <strong>Notifications</strong>
+              <button type="button" class="mark-all-btn" *ngIf="unreadNotificationCount > 0" (click)="markAllNotificationsRead()">Mark all read</button>
+            </div>
+
+            <button
+              type="button"
+              class="notification-item"
+              *ngFor="let item of notifications"
+              [class.unread]="!item.read"
+              (click)="openNotification(item)"
+            >
+              <div class="notification-title">{{ item.title }}</div>
+              <div class="notification-body">{{ item.body }}</div>
+            </button>
+
+            <div class="notifications-empty" *ngIf="notifications.length === 0">
+              No notifications yet.
+            </div>
+          </div>
+        </div>
+
         <a routerLink="/login" class="btn btn-sm btn-login" *ngIf="!user">
           Login
         </a>
@@ -73,6 +93,17 @@
           </ul>
         </div>
       </div>
+
+      <button
+        class="mobile-menu-toggle"
+        type="button"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen"
+        aria-controls="mainMobileSidebar"
+        aria-label="Toggle navigation menu"
+      >
+        <i class="bi" [ngClass]="mobileMenuOpen ? 'bi-x-lg' : 'bi-list'" aria-hidden="true"></i>
+      </button>
     </div>
 </div>
 </nav>
