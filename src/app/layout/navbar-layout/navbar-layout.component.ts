@@ -18,6 +18,9 @@ import { filter, Subscription } from 'rxjs';
 export class NavbarLayoutComponent implements OnDestroy {
   mobileMenuOpen = false;
   mobileProfileMenuOpen = false;
+  notificationsOpen = false;
+  notifications: any[] = [];
+  unreadNotificationCount = 0;
   private readonly subs = new Subscription();
 
   private setMobileMenuState(open: boolean) {
@@ -64,6 +67,9 @@ export class NavbarLayoutComponent implements OnDestroy {
           this.cdr.detectChanges();
         }
       });
+
+      this.refreshNotifications();
+      this.refreshNotificationCount();
     }
   }
 
@@ -102,12 +108,20 @@ export class NavbarLayoutComponent implements OnDestroy {
     this.subs.add(
       this.session.user$.subscribe(user => {
         this.user = user;
+        if (!user) {
+          this.notificationsOpen = false;
+          this.notifications = [];
+          this.unreadNotificationCount = 0;
+        }
       }),
     );
     this.subs.add(
       this.router.events
         .pipe(filter((event) => event instanceof NavigationStart))
-        .subscribe(() => this.closeMobileMenu()),
+        .subscribe(() => {
+          this.closeMobileMenu();
+          this.notificationsOpen = false;
+        }),
     );
     // No need to call loadUserFromStorage here; handled in App root
   }
@@ -134,6 +148,61 @@ export class NavbarLayoutComponent implements OnDestroy {
 
   toggleMobileProfileMenu() {
     this.mobileProfileMenuOpen = !this.mobileProfileMenuOpen;
+  }
+
+  toggleNotifications() {
+    if (!this.user) return;
+    this.notificationsOpen = !this.notificationsOpen;
+    if (this.notificationsOpen) {
+      this.refreshNotifications();
+      this.refreshNotificationCount();
+    }
+  }
+
+  refreshNotifications() {
+    this.subs.add(
+      this.config.getMyNotifications(20).subscribe((items) => {
+        this.notifications = Array.isArray(items) ? items : [];
+        this.cdr.detectChanges();
+      }),
+    );
+  }
+
+  refreshNotificationCount() {
+    this.subs.add(
+      this.config.getUnreadNotificationsCount().subscribe((count) => {
+        this.unreadNotificationCount = Number(count || 0);
+        this.cdr.detectChanges();
+      }),
+    );
+  }
+
+  openNotification(item: any) {
+    if (!item) return;
+    if (!item.read) {
+      this.subs.add(
+        this.config.markNotificationRead(item._id).subscribe(() => {
+          item.read = true;
+          this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
+          this.cdr.detectChanges();
+        }),
+      );
+    }
+
+    this.notificationsOpen = false;
+    if (item.url) {
+      this.router.navigateByUrl(item.url);
+    }
+  }
+
+  markAllNotificationsRead() {
+    this.subs.add(
+      this.config.markAllNotificationsRead().subscribe(() => {
+        this.notifications = this.notifications.map((n) => ({ ...n, read: true }));
+        this.unreadNotificationCount = 0;
+        this.cdr.detectChanges();
+      }),
+    );
   }
 
   @HostListener('window:pageshow')

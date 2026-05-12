@@ -25,7 +25,7 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
         <div class="pwa-inner">
           <img src="assets/logo-trendstarz-logo-text.png" class="pwa-icon" alt="TrendStarZ" />
           <div class="pwa-text">
-            <strong>Install TrendStarZ</strong>
+            <strong>iPhone Safari/Chrome</strong>
             <span>Tap <span class="share-icon">⎙</span> then <em>Add to Home Screen</em></span>
           </div>
           <button class="pwa-dismiss" (click)="dismiss()" aria-label="Dismiss">✕</button>
@@ -37,10 +37,10 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
         <div class="pwa-inner">
           <img src="assets/logo-trendstarz-logo-text.png" class="pwa-icon" alt="TrendStarZ" />
           <div class="pwa-text">
-            <strong>TrendStarZ App</strong>
-            <span>Install for a faster experience</span>
+            <strong>Android Chrome</strong>
+            <span>Install TrendStarZ for a faster experience</span>
           </div>
-          <button class="pwa-install-btn" (click)="install()">Install</button>
+          <button class="pwa-install-btn" (click)="install()">Install app</button>
           <button class="pwa-dismiss" (click)="dismiss()" aria-label="Dismiss">✕</button>
         </div>
       </ng-template>
@@ -106,6 +106,40 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
       line-height: 1;
     }
     .pwa-dismiss:hover { color: #111827; }
+
+    @media (max-width: 768px) {
+      .pwa-banner {
+        padding: .55rem .75rem;
+      }
+
+      .pwa-inner {
+        gap: .55rem;
+      }
+
+      .pwa-icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .pwa-text {
+        font-size: .78rem;
+        line-height: 1.2;
+      }
+
+      .pwa-text strong {
+        font-size: .82rem;
+      }
+
+      .pwa-install-btn {
+        padding: .35rem .85rem;
+        font-size: .78rem;
+        border-radius: 7px;
+      }
+
+      .pwa-dismiss {
+        font-size: 1rem;
+      }
+    }
   `],
 })
 export class PwaInstallBannerComponent implements OnInit, OnDestroy {
@@ -129,9 +163,9 @@ export class PwaInstallBannerComponent implements OnInit, OnDestroy {
     const ua = navigator.userAgent;
     const iosMobile = /iPhone|iPad|iPod/i.test(ua) && !(window as any).MSStream;
     const isAndroid = /Android/i.test(ua);
-    const isMobile = iosMobile || isAndroid || window.innerWidth <= 768;
+    const isMobile = iosMobile || isAndroid;
 
-    if (!isMobile) return; // only show on mobile/tablet
+    if (!isMobile) return; // only show on real mobile browsers
 
     if (iosMobile) {
       // iOS Safari has no beforeinstallprompt — show manual instruction

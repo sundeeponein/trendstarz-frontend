@@ -444,6 +444,28 @@ export class ConfigService {
     );
   }
 
+  getMyNotifications(limit = 20): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/notifications?limit=${limit}`).pipe(
+      map((res) => this.extractData<any[]>(res) || []),
+      catchError(() => of([])),
+    );
+  }
+
+  getUnreadNotificationsCount(): Observable<number> {
+    return this.http.get<any>(`${this.apiUrl}/notifications/unread-count`).pipe(
+      map((res) => Number(res?.count || 0)),
+      catchError(() => of(0)),
+    );
+  }
+
+  markNotificationRead(notificationId: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/notifications/${notificationId}/read`, {});
+  }
+
+  markAllNotificationsRead(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/notifications/mark-all-read`, {});
+  }
+
   submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
   }
