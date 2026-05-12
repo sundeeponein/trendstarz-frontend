@@ -196,6 +196,14 @@
       </div>
 
       <div class="mb-3">
+        <label class="form-label text-white" for="verificationCallNumber">Verification call-from number</label>
+        <input id="verificationCallNumber" type="tel" class="form-control"
+          placeholder="+91 98765 43210"
+          [(ngModel)]="settings.verificationCallNumber" />
+        <small class="text-muted">Shown below the Mobile Number field on registration &amp; profile forms. Leave blank to hide the hint.</small>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label text-white" for="supportWhatsapp">WhatsApp number</label>
         <input id="supportWhatsapp" type="tel" class="form-control"
           placeholder="919876543210 (digits only, with country code)"
@@ -213,7 +221,7 @@
           <em>"Have a question about your campaign? Reach out to us anytime."</em>
         </small>
       </div>
-
+      <hr />
       <hr />
       <h4 class="text-white">Platform commission & GST</h4>
       <div class="form-check form-switch mb-3">

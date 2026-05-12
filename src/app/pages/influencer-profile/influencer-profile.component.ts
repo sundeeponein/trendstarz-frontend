@@ -27,6 +27,13 @@ export class InfluencerProfileComponent implements OnInit {
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
+  showProfessionalOptional = false;
+  verificationDocuments: Array<{ url: string; public_id: string; originalName?: string; mimeType?: string }> = [];
+  verificationUploading = false;
+  verificationUploadError = '';
+  verificationConsentError = '';
+  verificationStatusDisplay = 'not_submitted';
+  verificationAdminNotesDisplay = '';
 
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -158,6 +165,8 @@ export class InfluencerProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  verificationCallNumber = '';
+
   emailVerified: boolean = false;
   showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
@@ -300,6 +309,10 @@ export class InfluencerProfileComponent implements OnInit {
 
   ngOnInit() {
     this.loadPremiumMonthlyPrice();
+    this.configService.getSupportContact().subscribe(s => {
+      this.verificationCallNumber = s.verificationCallNumber || '';
+      this.cd.markForCheck();
+    });
 
     // Load plan capabilities
     this.plansService.getMyCapabilities().subscribe(caps => {
@@ -317,6 +330,11 @@ export class InfluencerProfileComponent implements OnInit {
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       dateOfBirth: [{ value: '', disabled: true }, Validators.required],
       gender: [{ value: '', disabled: true }],
+      influencerCategory: [{ value: '', disabled: true }],
+      professionalStatus: [{ value: false, disabled: true }],
+      expertiseArea: [{ value: '', disabled: true }],
+      verificationDocuments: [{ value: [], disabled: true }],
+      verificationDisclaimerAccepted: [{ value: false, disabled: true }],
       paymentOption: [{ value: 'free', disabled: true }, Validators.required],
       location: this.fb.group({
         state: [{ value: '', disabled: true }, Validators.required],
@@ -350,6 +368,15 @@ export class InfluencerProfileComponent implements OnInit {
 
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+    // Clear professional fields when professionalStatus is unchecked
+    this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
+      if (!isProfessional) {
+        this.showProfessionalOptional = false;
+        this.registrationForm.get('influencerCategory')?.setValue('');
+        this.registrationForm.get('expertiseArea')?.setValue('');
+      }
+    });
 
     // Load districts when state changes (robust: accept id or name, request by name+id)
     this.registrationForm.get('location.state')?.valueChanges.subscribe(stateIdOrName => {
@@ -392,6 +419,7 @@ export class InfluencerProfileComponent implements OnInit {
             return;
           }
           this.emailVerified = !!profile.isEmailVerified;
+          this.phoneVerified = !!profile.isMobileVerified;
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
           // Map state name to ID
@@ -413,6 +441,13 @@ export class InfluencerProfileComponent implements OnInit {
               email: profile.email || '',
               dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
               gender: profile.gender || '',
+              influencerCategory:
+                this.categoriesList.find((c: any) => c.name === profile.influencerCategory)?._id ||
+                '',
+              professionalStatus: !!profile.professionalStatus,
+              expertiseArea: profile.expertiseArea || '',
+              verificationDocuments: profile.verificationDocuments || [],
+              verificationDisclaimerAccepted: !!profile.verificationDisclaimerAccepted,
               paymentOption: profile.isPremium ? 'premium' : 'free',
               location: { state: stateId, district: districtId },
               promotionalPrice: profile.promotionalPrice || '',
@@ -433,6 +468,11 @@ export class InfluencerProfileComponent implements OnInit {
             url: this.normalizeImageUrl(img.url),
             public_id: img.public_id
           })));
+          this.verificationDocuments = Array.isArray(profile.verificationDocuments)
+            ? profile.verificationDocuments
+            : [];
+          this.verificationStatusDisplay = profile.verificationStatus || 'not_submitted';
+          this.verificationAdminNotesDisplay = profile.verificationAdminNotes || '';
           // Show first image as preview on load (normalize backend-local asset paths)
           this.profileImagePreview = (profile.profileImages && profile.profileImages[0]?.url) ? this.normalizeImageUrl(profile.profileImages[0].url) : null;
           // Do not set profileImageFile to the remote image object — only File objects should be used for upload
@@ -626,6 +666,11 @@ export class InfluencerProfileComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
+      if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
+        this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+        return false;
+      }
+      this.verificationConsentError = '';
       return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
     }
 
@@ -859,6 +904,11 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationSuccess = false;
     this.registrationSuccessMessage = '';
     const raw = this.registrationForm.getRawValue();
+    if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
+      this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+      return;
+    }
+    this.verificationConsentError = '';
     // Always slugify username before saving
     if (raw.username) {
       raw.username = this.slugifyUsername(raw.username);
@@ -889,6 +939,9 @@ export class InfluencerProfileComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
+    const influencerCategoryName = raw.influencerCategory
+      ? (this.categoriesList.find((c: any) => c._id === raw.influencerCategory)?.name || raw.influencerCategory)
+      : '';
     // Build social media from platformForms
     const socialMedia = this.selectedPlatforms().map(platform => {
       const pf = this.platformForms[platform._id];
@@ -946,6 +999,11 @@ export class InfluencerProfileComponent implements OnInit {
       promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
+      influencerCategory: influencerCategoryName,
+      professionalStatus: !!raw.professionalStatus,
+      expertiseArea: raw.expertiseArea || '',
+      verificationDocuments: this.verificationDocuments,
+      verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
       socialMedia,
       profileImages,
       contact: raw.contact,
@@ -1021,6 +1079,7 @@ export class InfluencerProfileComponent implements OnInit {
               return;
             }
             this.emailVerified = !!profile.isEmailVerified;
+            this.phoneVerified = !!profile.isMobileVerified;
             this.showEmailVerificationPrompt = !this.emailVerified;
             const stateId = (this.states || []).find((s: any) => s.name === profile.location?.state)?.['_id'] || '';
             const languageIds = (profile.languages || []).map((name: string) =>
@@ -1037,6 +1096,13 @@ export class InfluencerProfileComponent implements OnInit {
                 email: profile.email || '',
                 dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
                 gender: profile.gender || '',
+                influencerCategory:
+                  (this.categoriesList || []).find((c: any) => c.name === profile.influencerCategory)?._id ||
+                  '',
+                professionalStatus: !!profile.professionalStatus,
+                expertiseArea: profile.expertiseArea || '',
+                verificationDocuments: profile.verificationDocuments || [],
+                verificationDisclaimerAccepted: !!profile.verificationDisclaimerAccepted,
                 paymentOption: profile.isPremium ? 'premium' : 'free',
                 location: { state: stateId, district: districtId },
                 languages: languageIds,
@@ -1056,6 +1122,11 @@ export class InfluencerProfileComponent implements OnInit {
                   url: this.normalizeImageUrl(img.url),
                   public_id: img.public_id
                 })));
+                this.verificationDocuments = Array.isArray(profile.verificationDocuments)
+                  ? profile.verificationDocuments
+                  : [];
+                this.verificationStatusDisplay = profile.verificationStatus || 'not_submitted';
+                this.verificationAdminNotesDisplay = profile.verificationAdminNotes || '';
                 // set preview for fetched profile; keep file null to avoid attempting to upload a non-File object
                 this.profileImagePreview = (profile.profileImages && profile.profileImages[0]?.url) ? this.normalizeImageUrl(profile.profileImages[0].url) : null;
                 this.profileImageFile = null;
@@ -1112,6 +1183,73 @@ export class InfluencerProfileComponent implements OnInit {
           }
         });
       });
+    }
+  }
+
+  toggleProfessionalOptional(): void {
+    this.showProfessionalOptional = !this.showProfessionalOptional;
+  }
+
+  async onVerificationFilesChange(event: any): Promise<void> {
+    if (!this.isEditMode) return;
+    this.verificationUploadError = '';
+    const files: File[] = Array.from(event?.target?.files || []);
+    if (!files.length) return;
+
+    const allowed = new Set(['application/pdf', 'image/jpeg', 'image/png']);
+    this.verificationUploading = true;
+    try {
+      for (const file of files) {
+        if (!allowed.has(file.type)) {
+          this.verificationUploadError = 'Only PDF, JPG, PNG files are allowed.';
+          continue;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          this.verificationUploadError = 'Each file must be 10 MB or smaller.';
+          continue;
+        }
+
+        const fd = new FormData();
+        fd.append('file', file, file.name);
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
+          method: 'POST',
+          body: fd,
+        });
+        if (!resp.ok) {
+          this.verificationUploadError = 'Verification upload failed for one or more files.';
+          continue;
+        }
+        const uploaded = await resp.json();
+        if (uploaded?.url && uploaded?.public_id) {
+          this.verificationDocuments = [
+            ...this.verificationDocuments,
+            {
+              url: uploaded.url,
+              public_id: uploaded.public_id,
+              originalName: uploaded.originalName || file.name,
+              mimeType: uploaded.mimeType || file.type,
+            },
+          ];
+        }
+      }
+      this.registrationForm.get('verificationDocuments')?.setValue(this.verificationDocuments);
+      this.registrationForm.get('verificationDocuments')?.markAsDirty();
+      this.cd.detectChanges();
+    } catch {
+      this.verificationUploadError = 'Verification upload failed. Please try again.';
+    } finally {
+      this.verificationUploading = false;
+      if (event?.target) event.target.value = '';
+    }
+  }
+
+  removeVerificationDocument(index: number): void {
+    if (!this.isEditMode) return;
+    this.verificationDocuments = this.verificationDocuments.filter((_, i) => i !== index);
+    this.registrationForm.get('verificationDocuments')?.setValue(this.verificationDocuments);
+    if (!this.verificationDocuments.length) {
+      this.registrationForm.get('verificationDisclaimerAccepted')?.setValue(false);
+      this.verificationConsentError = '';
     }
   }
 

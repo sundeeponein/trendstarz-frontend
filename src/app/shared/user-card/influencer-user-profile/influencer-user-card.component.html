@@ -35,10 +35,18 @@
     <div class="inf-card__name">
       {{ name }}
       <i class="bi bi-patch-check-fill inf-card__verified" *ngIf="isPremium" title="Verified"></i>
+      <span class="inf-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
     </div>
 
     <!-- Categories -->
-    <div class="inf-card__category">{{ categories.join(' · ') || '—' }}</div>
+    <div class="inf-card__category">{{ displayCategory }}</div>
+
+    <div class="inf-card__trust-row">
+      <span class="inf-card__trust-pill" [class.inf-card__trust-pill--on]="professionalStatus">
+        {{ professionalStatus ? 'Professional: Yes' : 'Professional: No' }}
+      </span>
+    </div>
+    <div class="inf-card__expertise" *ngIf="expertiseArea">Expertise: {{ expertiseArea }}</div>
 
     <!-- Location -->
     <div class="inf-card__location" *ngIf="location?.state">

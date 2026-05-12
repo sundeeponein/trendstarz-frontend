@@ -56,6 +56,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
   emailBannerDismissed = false;
+  verificationCallNumber = '';
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -84,6 +85,16 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         this.emailBannerDismissed = true;
       }
     }
+
+    this.config.getSupportContact().subscribe({
+      next: (support: any) => {
+        this.verificationCallNumber = support?.verificationCallNumber || '';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.verificationCallNumber = '';
+      },
+    });
 
     // Only fetch profile and load dashboard once per user
     this.userSub = this.session.user$.subscribe(user => {
@@ -504,8 +515,13 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   onVerifyEmail() {
-    // Navigate to verify email page
-    window.location.href = '/verify-email';
+    // Navigate to verify email page, passing returnUrl so user can go back
+    window.location.href = '/verify-email?returnUrl=/influencer-dashboard';
+  }
+
+  onMobileVerificationHelp() {
+    const numberText = this.verificationCallNumber ? ` Team calls come from ${this.verificationCallNumber}.` : '';
+    alert(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
   }
 
   dismissEmailBanner() {

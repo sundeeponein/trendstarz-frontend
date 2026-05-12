@@ -19,6 +19,8 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
 export class AdminUserTableComponent implements OnInit {
   readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator'];
   readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand'];
+  readonly verificationStatusOptions = ['not_submitted', 'pending', 'approved', 'rejected', 'removed'];
+  verificationNotesDraft: Record<string, string> = {};
 
     public getPremiumDurationLabel(duration: string | undefined): string {
       switch (duration) {
@@ -123,7 +125,9 @@ export class AdminUserTableComponent implements OnInit {
     category: '',
     state: '',
     signupSource: '',
-    badgeTag: ''
+    badgeTag: '',
+    emailVerified: '',
+    mobileVerified: ''
   };
   brandFilters = {
     status: '',
@@ -131,7 +135,9 @@ export class AdminUserTableComponent implements OnInit {
     category: '',
     state: '',
     signupSource: '',
-    badgeTag: ''
+    badgeTag: '',
+    emailVerified: '',
+    mobileVerified: ''
   };
 
   // Available filter options
@@ -152,6 +158,12 @@ export class AdminUserTableComponent implements OnInit {
   tagUserId: string | null = null;
   tagType: 'influencer' | 'brand' | null = null;
   selectedTagOptions: string[] = [];
+
+  // Verification docs modal state
+  showVerificationDocsModal = false;
+  verificationDocsUser: any = null;
+  verificationDocsUserType: 'influencer' | 'brand' | null = null;
+  verificationDocsDraft = '';
 
   // Holds an error message when profile/registration fetch fails
   registrationError: string | null = null;
@@ -310,6 +322,22 @@ export class AdminUserTableComponent implements OnInit {
       return false;
     }
     
+    // Email Verified filter
+    if (filters.emailVerified === 'verified' && !user.isEmailVerified) {
+      return false;
+    }
+    if (filters.emailVerified === 'not_verified' && user.isEmailVerified) {
+      return false;
+    }
+    
+    // Mobile Verified filter
+    if (filters.mobileVerified === 'verified' && !user.isMobileVerified) {
+      return false;
+    }
+    if (filters.mobileVerified === 'not_verified' && user.isMobileVerified) {
+      return false;
+    }
+    
     // Premium filter
     if (filters.premium === 'premium' && !user.isPremium) {
       return false;
@@ -347,11 +375,117 @@ export class AdminUserTableComponent implements OnInit {
     this.applyFilters(userType);
   }
 
+  getVerificationNotes(user: any): string {
+    const key = String(user?._id || '');
+    if (!key) return '';
+    if (this.verificationNotesDraft[key] === undefined) {
+      this.verificationNotesDraft[key] = String(user?.verificationAdminNotes || '');
+    }
+    return this.verificationNotesDraft[key];
+  }
+
+  isEmailVerified(user: any): boolean {
+    return !!user?.isEmailVerified;
+  }
+
+  isMobileVerified(user: any): boolean {
+    return !!user?.isMobileVerified;
+  }
+
+  updateContactVerification(
+    user: any,
+    userType: 'influencer' | 'brand',
+    field: 'isEmailVerified' | 'isMobileVerified',
+    value: boolean,
+  ): void {
+    const userId = String(user?._id || '');
+    if (!userId) return;
+    const label = field === 'isEmailVerified' ? 'email' : 'mobile';
+    this.showConfirm(`Mark ${label} as ${value ? 'verified' : 'pending verification'}?`, () => {
+      const payload: any = {
+        [field]: value,
+      };
+      this.http.patch(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/contact-verification`,
+        payload,
+        this.getAuthHeaders(),
+      )
+        .pipe(catchError(err => {
+          alert('Error updating contact verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
+          return of(null);
+        }))
+        .subscribe((res: any) => {
+          if (!res) return;
+          user[field] = value;
+          this.fetchUsers();
+        });
+    });
+  }
+
+  openVerificationDocsModal(user: any, userType: 'influencer' | 'brand'): void {
+    this.verificationDocsUser = user;
+    this.verificationDocsUserType = userType;
+    this.verificationDocsDraft = String(user?.verificationAdminNotes || '');
+    this.showVerificationDocsModal = true;
+  }
+
+  closeVerificationDocsModal(): void {
+    this.showVerificationDocsModal = false;
+    this.verificationDocsUser = null;
+    this.verificationDocsUserType = null;
+    this.verificationDocsDraft = '';
+  }
+
+  updateInfluencerVerificationFromModal(action: 'pending' | 'approve' | 'reject' | 'remove'): void {
+    if (!this.verificationDocsUser || !this.verificationDocsUserType) return;
+    const user = this.verificationDocsUser;
+    const userId = String(user?._id || '');
+    if (!userId) return;
+    const notes = this.verificationDocsDraft;
+    const payload = { action, notes };
+    this.http.patch(
+      `${environment.apiBaseUrl}/admin/users/influencer/${userId}/verification`,
+      payload,
+      this.getAuthHeaders(),
+    )
+      .pipe(catchError(err => {
+        alert('Error updating verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (!res) return;
+        this.closeVerificationDocsModal();
+        this.fetchUsers();
+      });
+  }
+
+  setVerificationNotes(user: any, value: string): void {
+    const key = String(user?._id || '');
+    if (!key) return;
+    this.verificationNotesDraft[key] = value;
+  }
+
+  updateInfluencerVerification(user: any, action: 'pending' | 'approve' | 'reject' | 'remove') {
+    const userId = String(user?._id || '');
+    if (!userId) return;
+    const notes = this.getVerificationNotes(user);
+    const payload = { action, notes };
+    this.http.patch(`${environment.apiBaseUrl}/admin/users/influencer/${userId}/verification`, payload, this.getAuthHeaders())
+      .pipe(catchError(err => {
+        alert('Error updating verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (!res) return;
+        this.fetchUsers();
+      });
+  }
+
   resetFilters(userType: 'influencer' | 'brand') {
     if (userType === 'influencer') {
-      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '' };
+      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
     } else {
-      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '' };
+      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
     }
     this.applyFilters(userType);
   }

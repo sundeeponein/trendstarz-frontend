@@ -4,13 +4,13 @@
 
   <!-- Alert Cards Row -->
   <div class="row mb-4 gx-3">
-    <div class="col-md-6 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.user?.isEmailVerified">
+    <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.user?.isEmailVerified">
       <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">
           <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
           <div class="flex-1">
-            <div class="alert-card-title fw-bold">Verify your email</div>
-            <div class="alert-card-desc">Verify your email to unlock full platform access and start connecting with brands.</div>
+            <div class="alert-card-title fw-bold">{{ dashboard?.user?.isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
+            <div class="alert-card-desc">{{ dashboard?.user?.isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start connecting with brands.' }}</div>
             <div *ngIf="emailVerificationError" class="text-danger mt-2">{{ emailVerificationError }}</div>
           </div>
           <button *ngIf="dashboard?.user?.isEmailVerified === false"
@@ -22,7 +22,21 @@
         <span *ngIf="dashboard?.user && dashboard?.user.isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
       </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
+        <div class="d-flex align-items-start">
+          <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
+          <div>
+            <div class="alert-card-title fw-bold">{{ dashboard?.user?.isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+            <div class="alert-card-desc">Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.</div>
+            <div *ngIf="verificationCallNumber" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+          </div>
+        </div>
+        <a *ngIf="dashboard?.user && dashboard?.user.isMobileVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+        <span *ngIf="dashboard?.user && dashboard?.user.isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+      </div>
+    </div>
+    <div class="col-md-4">
       <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">
           <span class="alert-card-icon me-3"><i class="bi bi-person-fill"></i></span>

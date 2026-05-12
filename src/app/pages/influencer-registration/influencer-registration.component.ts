@@ -181,6 +181,11 @@ export class InfluencerRegistrationComponent implements OnInit {
   preApproveActive = false;
   showPassword = false;
   showConfirmPassword = false;
+  showProfessionalOptional = false;
+  verificationDocuments: Array<{ url: string; public_id: string; originalName?: string; mimeType?: string }> = [];
+  verificationUploading = false;
+  verificationUploadError = '';
+  verificationConsentError = '';
   togglePasswordVisibility() { this.showPassword = !this.showPassword; }
   toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
   registrationForm!: FormGroup;
@@ -200,7 +205,10 @@ export class InfluencerRegistrationComponent implements OnInit {
   duplicateUsernameError = '';
   duplicateEmailError = '';
   duplicatePhoneError = '';
+  verificationCallNumber = '';
+
   isSubmitting = false;
+  stepTransitioning = false;
   signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
@@ -218,6 +226,9 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPremiumMonthlyPrice();
+    this.configService.getSupportContact().subscribe(s => {
+      this.verificationCallNumber = s.verificationCallNumber || '';
+    });
 
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';
@@ -229,11 +240,16 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
-      username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)], [this.usernameUniqueValidator()]],
+      username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9-]+$/)]],
       phoneNumber: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       dateOfBirth: ['', Validators.required],
       gender: [''],
+      influencerCategory: [''],
+      professionalStatus: [false],
+      expertiseArea: [''],
+      verificationDocuments: [[]],
+      verificationDisclaimerAccepted: [false],
       password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
@@ -251,6 +267,26 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationForm.get('username')?.valueChanges.subscribe(() => this.onUsernameInput());
     this.registrationForm.get('phoneNumber')?.valueChanges.subscribe(() => { this.duplicatePhoneError = ''; });
     this.registrationForm.get('email')?.valueChanges.subscribe(() => { this.duplicateEmailError = ''; });
+    
+    // Auto-generate username from name if not manually set
+    this.registrationForm.get('name')?.valueChanges.subscribe((name: string) => {
+      const usernameCtrl = this.registrationForm.get('username');
+      if (usernameCtrl && !usernameCtrl.dirty) {
+        const slug = this.slugifyUsername(name || '');
+        usernameCtrl.setValue(slug, { emitEvent: false });
+        usernameCtrl.markAsTouched();
+      }
+      this.duplicateUsernameError = '';
+    });
+
+    this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
+      if (!isProfessional) {
+        this.showProfessionalOptional = false;
+        this.registrationForm.get('influencerCategory')?.setValue('');
+        this.registrationForm.get('expertiseArea')?.setValue('');
+      }
+    });
+    
     this.registrationForm.valueChanges.subscribe(() => {
       if (this.registrationSuccess && this.registrationForm.dirty) this.registrationSuccess = false;
       if (this.registrationError && this.registrationForm.dirty) this.registrationError = '';
@@ -373,7 +409,12 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
     if (step === 2) {
       const f = this.registrationForm;
-      const detailsValid = !!(f.get('location.state')?.valid && f.get('location.district')?.valid && f.get('languages')?.valid && f.get('categories')?.valid);
+      const detailsValid = !!(
+        f.get('location.state')?.valid &&
+        f.get('location.district')?.valid &&
+        f.get('languages')?.valid &&
+        f.get('categories')?.valid
+      );
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
     if (step === 3) {
@@ -406,15 +447,12 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   async nextStep() {
-    if (!this.validateCurrentStep()) return;
+    if (this.stepTransitioning) return;
+    this.stepTransitioning = true;
 
-    if (this.currentStep === 1) {
-      const noConflicts = await this.validateStep1Uniqueness();
-      if (!noConflicts) {
-        this.currentStep = 1;
-        this.refreshStepCompletion();
-        return;
-      }
+    if (!this.validateCurrentStep()) {
+      this.stepTransitioning = false;
+      return;
     }
 
     if (this.currentStep < this.totalSteps) {
@@ -424,6 +462,8 @@ export class InfluencerRegistrationComponent implements OnInit {
       if (this.currentStep === 2) this.step2Attempted = false;
       this.refreshStepCompletion();
     }
+
+    this.stepTransitioning = false;
   }
 
   private async validateStep1Uniqueness(): Promise<boolean> {
@@ -507,6 +547,11 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.markAsTouched();
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
+      if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
+        this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+        return false;
+      }
+      this.verificationConsentError = '';
       if (this.selectedPlatforms().length > 0 && !this.arePlatformsValid()) {
         // Inline message is already rendered; clear registrationError to avoid dup.
         this.registrationError = '';
@@ -633,12 +678,21 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     this.isSubmitting = true; this.registrationError = ''; this.registrationSuccess = false;
     const raw = this.registrationForm.value;
+    if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
+      this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+      this.isSubmitting = false;
+      return;
+    }
+    this.verificationConsentError = '';
     if (raw.username) raw.username = this.slugifyUsername(raw.username);
 
     const stateObj = this.states.find(s => s._id === raw.location.state);
     const districtObj = this.districts.find(d => d._id === raw.location.district);
     const languageNames = (raw.languages || []).map((id: string) => { const l = this.languagesList.find((x: any) => x._id === id); return l ? l.name : id; });
     const categoryNames = (raw.categories || []).map((id: string) => { const c = this.categoriesList.find((x: any) => x._id === id); return c ? c.name : id; });
+    const influencerCategoryName = raw.influencerCategory
+      ? (this.categoriesList.find((x: any) => x._id === raw.influencerCategory)?.name || raw.influencerCategory)
+      : '';
 
     const socialMedia = this.selectedPlatforms().map(platform => {
       const pf = this.platformForms[platform._id];
@@ -682,6 +736,11 @@ export class InfluencerRegistrationComponent implements OnInit {
       ...raw,
       location: { state: stateObj ? stateObj.name : raw.location.state, district: districtObj ? districtObj.name : raw.location.district },
       languages: languageNames, categories: categoryNames,
+      influencerCategory: influencerCategoryName,
+      professionalStatus: !!raw.professionalStatus,
+      expertiseArea: raw.expertiseArea || '',
+      verificationDocuments: this.verificationDocuments,
+      verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
       socialMedia, profileImages: imageUploadResult ? [imageUploadResult] : [], contact: raw.contact
     };
     if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
@@ -754,9 +813,77 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationForm.reset();
     this.profileImagePreview = null;
     this.profileImageFile = null;
+    this.verificationDocuments = [];
+    this.verificationUploadError = '';
+    this.verificationConsentError = '';
     this.platformForms = {};
     this.submitted = false;
     this.pendingVerificationEmail = '';
     window.location.href = '/';
+  }
+
+  toggleProfessionalOptional(): void {
+    this.showProfessionalOptional = !this.showProfessionalOptional;
+  }
+
+  async onVerificationFilesChange(event: any): Promise<void> {
+    this.verificationUploadError = '';
+    const files: File[] = Array.from(event?.target?.files || []);
+    if (!files.length) return;
+
+    const allowed = new Set(['application/pdf', 'image/jpeg', 'image/png']);
+    this.verificationUploading = true;
+    try {
+      for (const file of files) {
+        if (!allowed.has(file.type)) {
+          this.verificationUploadError = 'Only PDF, JPG, PNG files are allowed.';
+          continue;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          this.verificationUploadError = 'Each file must be 10 MB or smaller.';
+          continue;
+        }
+
+        const fd = new FormData();
+        fd.append('file', file, file.name);
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
+          method: 'POST',
+          body: fd,
+        });
+        if (!resp.ok) {
+          this.verificationUploadError = 'Verification upload failed for one or more files.';
+          continue;
+        }
+        const uploaded = await resp.json();
+        if (uploaded?.url && uploaded?.public_id) {
+          this.verificationDocuments = [
+            ...this.verificationDocuments,
+            {
+              url: uploaded.url,
+              public_id: uploaded.public_id,
+              originalName: uploaded.originalName || file.name,
+              mimeType: uploaded.mimeType || file.type,
+            },
+          ];
+        }
+      }
+      this.registrationForm.get('verificationDocuments')?.setValue(this.verificationDocuments);
+      this.registrationForm.get('verificationDocuments')?.markAsDirty();
+      this.cdr.detectChanges();
+    } catch {
+      this.verificationUploadError = 'Verification upload failed. Please try again.';
+    } finally {
+      this.verificationUploading = false;
+      if (event?.target) event.target.value = '';
+    }
+  }
+
+  removeVerificationDocument(index: number): void {
+    this.verificationDocuments = this.verificationDocuments.filter((_, i) => i !== index);
+    this.registrationForm.get('verificationDocuments')?.setValue(this.verificationDocuments);
+    if (!this.verificationDocuments.length) {
+      this.registrationForm.get('verificationDisclaimerAccepted')?.setValue(false);
+      this.verificationConsentError = '';
+    }
   }
 }

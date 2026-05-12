@@ -83,6 +83,7 @@ export class BrandRegistrationComponent implements OnInit {
   emailVerificationSent: boolean = false;
   emailVerificationError: string | null = null;
   emailVerified: boolean = false;
+  isMobileVerified: boolean = false;
   showEmailVerificationPrompt: boolean = false;
   resendingEmailVerification: boolean = false;
   resendEmailVerificationSuccess: boolean = false;
@@ -93,6 +94,7 @@ export class BrandRegistrationComponent implements OnInit {
   duplicateUsernameError: string = '';
   duplicateEmailError: string = '';
   duplicatePhoneError: string = '';
+  verificationCallNumber = '';
 
   brandUsernameError: string = '';
   registrationForm!: FormGroup;
@@ -129,6 +131,9 @@ export class BrandRegistrationComponent implements OnInit {
 
   ngOnInit() {
     this.loadPremiumMonthlyPrice();
+    this.configService.getSupportContact().subscribe(s => {
+      this.verificationCallNumber = s.verificationCallNumber || '';
+    });
 
     const source = this.route.snapshot.queryParamMap.get('source') || '';
     const audience = this.route.snapshot.queryParamMap.get('audience') || '';

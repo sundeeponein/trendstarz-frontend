@@ -73,6 +73,8 @@ export class BrandProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  verificationCallNumber = '';
+
   emailVerified: boolean = false;
   showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
@@ -320,6 +322,9 @@ export class BrandProfileComponent implements OnInit {
 
   ngOnInit() {
     this.loadPremiumMonthlyPrice();
+    this.configService.getSupportContact().subscribe(s => {
+      this.verificationCallNumber = s.verificationCallNumber || '';
+    });
 
     // ngOnInit called
 
@@ -409,6 +414,7 @@ export class BrandProfileComponent implements OnInit {
           }
 
           this.emailVerified = !!profile?.isEmailVerified;
+          this.phoneVerified = !!profile?.isMobileVerified;
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
 

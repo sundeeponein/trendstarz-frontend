@@ -6,6 +6,9 @@
     <h2>Check your email</h2>
     <p>A verification link has been sent to your email address. Click the link to verify your account.</p>
     <p class="verify-hint">Didn't receive it? Check your spam folder or go back to registration to resend.</p>
+    <button *ngIf="returnUrl" type="button" class="btn btn-outline-light mt-3" (click)="goBack()">
+      ← Back
+    </button>
   </div>
 
   <!-- Success: auto-approved -->
@@ -13,7 +16,8 @@
     <div class="verify-icon">🎉</div>
     <h2>Email Verified &amp; Account Activated!</h2>
     <p>Your email has been verified and your account is <strong>now active</strong>. You can log in right away.</p>
-    <a routerLink="/login" class="btn btn-success mt-3">Go to Login</a>
+    <button *ngIf="returnUrl" type="button" class="btn btn-success mt-3" (click)="goBack()">Back to Dashboard</button>
+    <a *ngIf="!returnUrl" routerLink="/login" class="btn btn-success mt-3">Go to Login</a>
   </div>
 
   <!-- Success: pending manual approval -->
@@ -21,7 +25,8 @@
     <div class="verify-icon">✅</div>
     <h2>Email Verified!</h2>
     <p>Your email has been verified. Your account is <strong>pending admin review</strong> and will be activated shortly.</p>
-    <a routerLink="/login" class="btn btn-outline-light mt-3">Go to Login</a>
+    <button *ngIf="returnUrl" type="button" class="btn btn-outline-light mt-3" (click)="goBack()">Back to Dashboard</button>
+    <a *ngIf="!returnUrl" routerLink="/login" class="btn btn-outline-light mt-3">Go to Login</a>
   </div>
 
   <!-- Failed -->
@@ -29,7 +34,8 @@
     <div class="verify-icon">❌</div>
     <h2>Verification Failed</h2>
     <p>The link is invalid or has expired. Please request a new verification email.</p>
-    <a routerLink="/login" class="btn btn-outline-light mt-3">Back to Login</a>
+    <button *ngIf="returnUrl" type="button" class="btn btn-outline-light mt-3" (click)="goBack()">← Back</button>
+    <a *ngIf="!returnUrl" routerLink="/login" class="btn btn-outline-light mt-3">Back to Login</a>
   </div>
 
 </div>

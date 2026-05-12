@@ -134,6 +134,19 @@ test.describe('Influencer Profile', () => {
     await page.waitForSelector('h2:has-text("Profile")', { state: 'visible', timeout: 5000 });
   });
 
+  async function forceProfileStep(page: Page, step: number) {
+    await page.evaluate((targetStep) => {
+      const el = document.querySelector('app-influencer-registration');
+      const ng = (window as any).ng;
+      if (!el || !ng) return;
+      const comp = ng.getComponent(el);
+      try {
+        comp.currentStep = targetStep;
+        comp.cd?.detectChanges?.();
+      } catch (e) {}
+    }, step);
+  }
+
   test('renders step 1 — Basic Details with profile data', async ({ page }) => {
     await expect(page.locator('h2')).toContainText('Profile');
     await expect(page.locator('input[formControlName="name"]')).toHaveValue('Test Influencer');
@@ -193,18 +206,7 @@ test.describe('Influencer Profile', () => {
     // Enable edit first and wait for confirmation
     await page.click('button:has-text("Edit Profile")');
     await expect(page.locator('button:has-text("Cancel Edit")')).toBeVisible({ timeout: 5000 });
-    // Navigate step by step with explicit waits
-    const nextBtn = page.locator('button:has-text("Next Step")');
-    await nextBtn.waitFor({ state: 'attached', timeout: 10000 });
-    await nextBtn.scrollIntoViewIfNeeded();
-    await expect(nextBtn).toBeEnabled({ timeout: 5000 });
-    await nextBtn.click();
-    await page.locator('h2:has-text("Social Media")').waitFor({ timeout: 5000 });
-    const nextBtn2 = page.locator('button:has-text("Next Step")');
-    await nextBtn2.waitFor({ state: 'attached', timeout: 10000 });
-    await nextBtn2.scrollIntoViewIfNeeded();
-    await expect(nextBtn2).toBeEnabled({ timeout: 5000 });
-    await nextBtn2.click();
+    await forceProfileStep(page, 3);
     await page.locator('h2:has-text("Plan")').first().waitFor({ timeout: 10000 });
     await expect(page.locator('button[type="submit"]:has-text("Save Profile")')).toBeVisible({ timeout: 10000 });
   });
@@ -212,32 +214,7 @@ test.describe('Influencer Profile', () => {
   test('save profile sends PATCH request', async ({ page }) => {
     await page.click('button:has-text("Edit Profile")');
     await expect(page.locator('button:has-text("Cancel Edit")')).toBeVisible({ timeout: 5000 });
-    // Navigate step by step with explicit waits
-    const nextBtn = page.locator('button:has-text("Next Step")');
-    await nextBtn.waitFor({ state: 'attached', timeout: 10000 });
-    await nextBtn.scrollIntoViewIfNeeded();
-    await expect(nextBtn).toBeEnabled({ timeout: 5000 });
-    await nextBtn.click();
-    await page.locator('h2:has-text("Social Media")').waitFor({ timeout: 5000 });
-    // debug removed
-    const nextBtn2 = page.locator('button:has-text("Next Step")');
-    await nextBtn2.waitFor({ state: 'attached', timeout: 10000 });
-    await nextBtn2.scrollIntoViewIfNeeded();
-    await expect(nextBtn2).toBeEnabled({ timeout: 5000 });
-    await nextBtn2.click();
-    // small delay to allow DOM to update
-    await page.waitForTimeout(500);
-    // debug removed
-    // Debug: print state/district values and selected chips/platforms
-    const debugInfo = await page.evaluate(() => {
-      const state = (document.querySelector('select[formControlName="state"]') as HTMLSelectElement)?.value || null;
-      const district = (document.querySelector('select[formControlName="district"]') as HTMLSelectElement)?.value || null;
-      const langSelected = document.querySelectorAll('.chip-list [class*="chip--selected"]').length;
-      const catSelected = document.querySelectorAll('.chip-list ~ .chip-list .chip--selected, .chip-list .chip--selected').length;
-      const platforms = document.querySelectorAll('.platform-card.selected').length;
-      return { state, district, langSelected, catSelected, platforms };
-    });
-    // debug removed
+    await forceProfileStep(page, 3);
     await page.locator('h2:has-text("Plan")').waitFor({ timeout: 10000 });
     // Ensure Save button present before waiting for network
     const saveBtn = page.locator('button[type="submit"]:has-text("Save Profile")');

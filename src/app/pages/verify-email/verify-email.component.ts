@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
@@ -12,8 +12,9 @@ import { CommonModule } from '@angular/common';
 export class VerifyEmailComponent implements OnInit {
   status: 'success' | 'failed' | 'pending' = 'pending';
   autoApproved = false;
+  returnUrl = '';
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(private route: ActivatedRoute, private router: Router, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -24,7 +25,16 @@ export class VerifyEmailComponent implements OnInit {
       } else if (status === 'failed') {
         this.status = 'failed';
       }
-      // If no ?status param, stay 'pending' — the backend redirect hasn't happened yet
+      // Capture where the user came from so we can navigate back
+      if (params['returnUrl']) {
+        this.returnUrl = params['returnUrl'];
+      }
+      this.cd.markForCheck();
     });
+  }
+
+  goBack() {
+    const dest = this.returnUrl || '/';
+    this.router.navigateByUrl(dest);
   }
 }

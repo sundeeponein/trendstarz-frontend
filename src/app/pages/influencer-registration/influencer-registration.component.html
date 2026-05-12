@@ -22,13 +22,20 @@
       </div>
       <div *ngIf="showEmailVerificationPrompt" class="alert alert-warning mb-4">
         <div>
-          <strong>Email not verified.</strong> Please check your inbox and click the verification link.<br>
+          <strong>Email verification pending.</strong> Please check your inbox and click the verification link.<br>
           <button class="btn btn-link p-0" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
             Resend Verification Email
           </button>
           <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
           <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
         </div>
+      </div>
+
+      <div *ngIf="showEmailVerificationPrompt && !phoneVerified" class="alert alert-warning mb-4">
+        <strong><i class="bi bi-hourglass-split me-1"></i>Mobile verification pending.</strong>
+        Mobile verification is manually reviewed within 24-48 hours.
+        <span *ngIf="verificationCallNumber"> Expected call-from number: <strong>{{ verificationCallNumber }}</strong>.</span>
+        Please ensure your mobile number is valid and reachable.
       </div>
 
       <div *ngIf="preApproveActive" class="auto-approve-notice">
@@ -92,6 +99,9 @@
                 <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
               </div>
               <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
+              <small *ngIf="verificationCallNumber" class="text-muted mt-1">
+                You may receive a verification call from our team <strong>{{ verificationCallNumber }}</strong>.
+              </small>
             </div>
 
             <div class="field-block">
@@ -164,7 +174,7 @@
           
           </div>
             <div class="actions-row">
-              <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+              <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="stepTransitioning">Next Step</button>
             </div>
         </section>
 
@@ -222,7 +232,7 @@
 
           <div class="grid mt-2">
             <div class="field-block">
-              <label>Categories <span class="text-danger">*</span>
+              <label>Content Categories <span class="text-danger">*</span>
                 <span *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger ms-2">Required</span>
               </label>
               <div class="chip-list">
@@ -242,7 +252,68 @@
               </div>
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
-          </div>
+
+            <div class="card mt-2">
+              <div class="card-body">
+                  <div class="field-block">
+                    <label>Professional Status</label>
+                    <div class="form-check my-2">
+                      <input id="professionalStatus" class="form-check-input" type="checkbox" formControlName="professionalStatus" />
+                      <label class="form-check-label" for="professionalStatus">
+                        I create content professionally in this domain.
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
+                    <label>Influencer Category <span class="text-muted">(Optional)</span></label>
+                    <select formControlName="influencerCategory" class="form-control">
+                      <option value="" disabled selected>Select primary category</option>
+                      <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
+                    </select>
+                  </div>
+
+                  <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
+                    <label>Expertise Area <span class="text-muted">(Optional)</span></label>
+                    <input formControlName="expertiseArea" type="text" class="form-control" placeholder="e.g. Skincare, SaaS, Education" />
+                  </div>
+                </div>
+
+                <div class="optional-verify mt-3 px-2 pb-2" *ngIf="registrationForm.get('professionalStatus')?.value">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="toggleProfessionalOptional()">
+                    {{ showProfessionalOptional ? 'Hide' : 'Show' }} Professional / Expertise Information (Optional)
+                  </button>
+
+                  <div *ngIf="showProfessionalOptional" class="optional-verify__body mt-2">
+                    <label class="fw-semibold">Certification / Verification Documents (Optional)</label>
+                    <div class="text-muted small mb-2">Supported: PDF, JPG, PNG. Examples: certificates, work proof, portfolio proof, LinkedIn proof, license docs.</div>
+                    <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" multiple (change)="onVerificationFilesChange($event)" />
+                    <div class="text-muted small mt-1" *ngIf="verificationUploading">Uploading verification files...</div>
+                    <div class="text-danger mt-1" *ngIf="verificationUploadError">{{ verificationUploadError }}</div>
+
+                    <div class="mt-2" *ngIf="verificationDocuments.length > 0">
+                      <div class="small fw-semibold mb-1">Uploaded documents</div>
+                      <div *ngFor="let doc of verificationDocuments; let i = index" class="d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1">
+                        <span class="small text-truncate me-2">{{ doc.originalName || ('Document ' + (i + 1)) }}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeVerificationDocument(i)">Remove</button>
+                      </div>
+                    </div>
+
+                    <div class="alert alert-light border mt-2 small mb-2">
+                      TrendStarz verification team will manually review submitted certifications/documents before approval. If any information is found misleading, invalid, unverifiable, or suspicious, TrendStarz reserves the right to reject or remove verification status and associated badges/tags at any time.
+                    </div>
+
+                    <div class="form-check" *ngIf="verificationDocuments.length > 0">
+                      <input id="verificationDisclaimerAccepted" class="form-check-input" type="checkbox" formControlName="verificationDisclaimerAccepted" />
+                      <label class="form-check-label" for="verificationDisclaimerAccepted">
+                        I confirm that the submitted information and documents are accurate and belong to me.
+                      </label>
+                    </div>
+                    <div class="text-danger mt-1" *ngIf="verificationConsentError">{{ verificationConsentError }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
           
 
@@ -405,6 +476,12 @@
 
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
+              <div class="text-muted mt-1" style="font-size:0.9em;">
+                Contact details are shared only with brands in campaign flow after acceptance.
+                Email is shown to brands only when email is verified. Call/WhatsApp are shown to brands only when mobile is verified.
+                <br>
+                <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+              </div>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
                   <input type="checkbox" formControlName="whatsapp" hidden />
