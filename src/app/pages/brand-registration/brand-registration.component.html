@@ -304,7 +304,8 @@
               </div>
 
               <ng-container *ngIf="activePlatformTab">
-                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card">
+                <small>“Accurate profile information improves visibility and brand collaboration opportunities.”</small>
+                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2">
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                     <span class="platform-name">{{ platform.name }}</span>

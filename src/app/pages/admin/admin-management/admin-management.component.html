@@ -245,12 +245,14 @@
               <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" />
             </div>
           </div>
-
-          <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
-            {{ settingsSaving ? 'Saving…' : 'Save support settings' }}
-          </button>
-          <span *ngIf="settingsSaved" class="text-success ms-3">Saved.</span>
         </div>
+
+
+
+        <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+          {{ settingsSaving ? 'Saving…' : 'Save support settings' }}
+        </button>
+        <span *ngIf="settingsSaved" class="text-success ms-3">Saved.</span>
       </div>
     </div>
 
