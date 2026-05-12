@@ -124,7 +124,8 @@
     <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
       <p>No Data</p>
     </div>
-    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table">
+    <div class="table-scroll-wrapper" *ngIf="filteredInfluencers && filteredInfluencers.length > 0">
+    <table class="table table-hover admin-table">
       <thead>
         <tr>
           <th>Profile</th>
@@ -286,13 +287,15 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <div *ngIf="activeTab === 'brand'">
     <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
       <p>No Data</p>
     </div>
-    <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
+    <div class="table-scroll-wrapper" *ngIf="filteredBrands && filteredBrands.length > 0">
+    <table class="admin-table table table-hover">
       <thead>
         <tr>
           <th>Logo</th>
@@ -457,6 +460,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
   
 </div>
