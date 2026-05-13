@@ -416,7 +416,7 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.get('location.state')?.invalid || registrationForm.get('location.district')?.invalid || registrationForm.get('languages')?.invalid || registrationForm.get('categories')?.invalid">Next Step</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="registrationForm.get('location.state')?.invalid || registrationForm.get('location.district')?.invalid || registrationForm.get('languages')?.invalid || registrationForm.get('categories')?.invalid || selectedPlatforms().length === 0">Next Step</button>
           </div>
         </section>
 
