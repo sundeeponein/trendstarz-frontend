@@ -638,6 +638,13 @@ export class BrandRegistrationComponent implements OnInit {
         this.step2Attempted = false;
       }
       this.refreshStepCompletion();
+      this.scrollToTop();
+    }
+  }
+
+  private scrollToTop(): void {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -703,6 +710,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.step2Attempted = false;
       }
       this.refreshStepCompletion();
+      this.scrollToTop();
     }
   }
 
@@ -782,6 +790,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.step2Attempted = false;
       }
       this.refreshStepCompletion();
+      this.scrollToTop();
     }
   }
 
