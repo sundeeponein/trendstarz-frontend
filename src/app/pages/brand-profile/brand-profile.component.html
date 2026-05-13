@@ -113,7 +113,7 @@
               <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
             </div>
             <div class="field-block full-width">
-              <label>Category / Industry</label>
+              <label>Category / Industry <span class="text-danger">*</span></label>
               <div class="chip-list">
                 <ng-container *ngIf="isEditMode; else viewCategories">
                   <div
@@ -134,6 +134,7 @@
                   </div>
                 </ng-template>
               </div>
+              <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
             <div class="field-block full-width">
               <label>Brand Description</label>
@@ -310,7 +311,7 @@
                         <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
                           <option value="" disabled>Select tier</option>
-                          <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
                       </div>
                     </div>

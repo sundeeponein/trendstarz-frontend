@@ -217,7 +217,7 @@
             </div>
 
             <div class="field-block">
-              <label>Content Categories</label>
+              <label>Content Categories <span class="text-danger">*</span></label>
               <div class="chip-list">
                 <ng-container *ngIf="isEditMode; else viewCategories">
                   <div
@@ -258,11 +258,12 @@
               </div>
 
               <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
-                <label>Influencer Category <span class="text-muted">(Optional)</span></label>
+                <label>Influencer Category <span class="text-danger">*</span></label>
                 <select formControlName="influencerCategory" class="form-control">
                   <option value="" disabled>Select primary category</option>
                   <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
                 </select>
+                <div *ngIf="(step2Attempted || registrationForm.get('influencerCategory')?.touched) && registrationForm.get('professionalStatus')?.value && registrationForm.get('influencerCategory')?.invalid" class="text-danger mt-1">Influencer Category is required.</div>
               </div>
 
               <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
@@ -362,7 +363,7 @@
                         <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
                         <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
                           <option value="" disabled>Select tier</option>
-                          <option *ngFor="let t of tiers" [value]="t.name">{{ t.name }}</option>
+                          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
                       </div>
                     </div>
