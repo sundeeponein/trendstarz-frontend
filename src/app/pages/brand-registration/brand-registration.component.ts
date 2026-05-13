@@ -12,6 +12,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { PlansService, Plan } from '../../shared/plans.service';
+import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -52,6 +53,14 @@ export class BrandRegistrationComponent implements OnInit {
     }
     this.registrationForm.get(field)?.setValue([...arr]);
     this.registrationForm.get(field)?.markAsTouched();
+  }
+
+  getTierOptionLabel(tier: any): string {
+    const name = String(tier?.name || '').trim();
+    const descFromApi = String(tier?.desc || '').trim();
+    const desc = descFromApi || TIER_DESC_MAP[name.toLowerCase()] || '';
+    if (!desc) return name;
+    return `${name} (${desc})`;
   }
 
   // --- Password strength live checks ---

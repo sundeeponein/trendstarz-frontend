@@ -109,6 +109,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     return '';
   }
 
+  getTierOptionLabel(tier: any): string {
+    const name = String(tier?.name || '').trim();
+    const range = String(tier?.desc || '').trim();
+    if (!range) return name;
+    return `${name} (${range})`;
+  }
+
   stripAtSign(platformId: string) {
     const pf = this.platformForms[platformId];
     if (!pf) return;
@@ -280,11 +287,19 @@ export class InfluencerRegistrationComponent implements OnInit {
     });
 
     this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
-      if (!isProfessional) {
+      const catCtrl = this.registrationForm.get('influencerCategory');
+      if (isProfessional) {
+        catCtrl?.setValidators([Validators.required]);
+      } else {
         this.showProfessionalOptional = false;
-        this.registrationForm.get('influencerCategory')?.setValue('');
+        catCtrl?.clearValidators();
+        catCtrl?.setValue('');
+        catCtrl?.markAsUntouched();
+        catCtrl?.markAsPristine();
         this.registrationForm.get('expertiseArea')?.setValue('');
       }
+      catCtrl?.updateValueAndValidity();
+      this.refreshStepCompletion();
     });
     
     this.registrationForm.valueChanges.subscribe(() => {
@@ -409,11 +424,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
     if (step === 2) {
       const f = this.registrationForm;
+      const isProfessional = !!f.get('professionalStatus')?.value;
       const detailsValid = !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
         f.get('languages')?.valid &&
-        f.get('categories')?.valid
+        f.get('categories')?.valid &&
+        (!isProfessional || f.get('influencerCategory')?.valid)
       );
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
@@ -547,6 +564,9 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('location.district')?.markAsTouched();
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
+      if (this.registrationForm.get('professionalStatus')?.value) {
+        this.registrationForm.get('influencerCategory')?.markAsTouched();
+      }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
         return false;
