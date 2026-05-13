@@ -17,7 +17,7 @@ export class AdminManagementComponent implements OnInit {
   getDistrictIndex(dist: any): number {
     return this.config.districts.findIndex((d: any) => d._id === dist._id);
   }
-  activeTab: string = 'influencer';
+  activeTab: string = 'details';
   config: any = {
     socialMediaPlatforms: [],
     categories: [],
