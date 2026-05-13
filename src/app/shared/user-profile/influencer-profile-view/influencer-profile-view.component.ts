@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -188,7 +190,11 @@ export class InfluencerProfileViewComponent implements OnInit {
     private route: ActivatedRoute,
     private config: ConfigService,
     private cd: ChangeDetectorRef,
-    private session: SessionService
+    private session: SessionService,
+    private titleService: Title,
+    private meta: Meta,
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit(): void {
@@ -201,8 +207,12 @@ export class InfluencerProfileViewComponent implements OnInit {
         this.config.getInfluencerByUsername(username).subscribe({
           next: (data) => {
             this.influencer = data || null;
-            if (!data) this.error = 'Influencer not found.';
+            if (!data) {
+              this.error = 'Influencer not found.';
+              this.setDefaultMetadata();
+            }
             if (data) {
+              this.updateMetadata(data);
               this.config.trackInfluencerProfileImpression(username).subscribe({
                 next: () => {},
                 error: () => {}
@@ -218,15 +228,68 @@ export class InfluencerProfileViewComponent implements OnInit {
           error: () => {
             this.error = 'Could not load influencer profile.';
             this.loading = false;
+            this.setDefaultMetadata();
             this.cd.detectChanges();
           }
         });
       } else {
         this.error = 'No influencer username provided.';
         this.loading = false;
+        this.setDefaultMetadata();
         this.cd.detectChanges();
       }
     });
+  }
+
+  private updateMetadata(influencer: any): void {
+    const name = String(influencer?.name || '').trim() || 'Creator';
+    const categories = Array.isArray(influencer?.categories)
+      ? influencer.categories.slice(0, 2).join(', ')
+      : '';
+    const followers = this.formatFollowers(this.getTotalFollowers());
+    const title = `${name}${categories ? ' - ' + categories : ''} | Influencer | TrendStarz`;
+    const description = `Discover ${name}${categories ? ' (' + categories + ')' : ''} on TrendStarz. ${followers} followers. Contact for collaborations, campaigns, and brand partnerships.`;
+    const canonical = `https://trendstarz.in/influencer/${influencer?.username || ''}`;
+
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'index, follow' });
+    this.meta.updateTag({ property: 'og:type', content: 'profile' });
+    this.meta.updateTag({ property: 'og:title', content: title });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:url', content: canonical });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: title });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.updateCanonical(canonical);
+
+    if (isPlatformBrowser(this.platformId)) {
+      (window as any).dataLayer = (window as any).dataLayer || [];
+      (window as any).gtag?.('config', 'G-5912TSJYW5', {
+        page_title: title,
+        page_path: `/influencer/${influencer?.username}`,
+        creator_name: name,
+        creator_categories: categories,
+      });
+    }
+  }
+
+  private setDefaultMetadata(): void {
+    const title = 'Influencer Profile | TrendStarz';
+    const description = 'View influencer profile details and collaboration highlights on TrendStarz.';
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+  }
+
+  private updateCanonical(href: string): void {
+    let canonical = this.document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = this.document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', href);
   }
 
   loadCompletedInvite(influencerId: string) {
