@@ -405,7 +405,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
   }
 
-  private refreshStepCompletion() {
+  refreshStepCompletion() {
     this.step1Complete = this.computeStepComplete(1);
     this.step2Complete = this.computeStepComplete(2);
     this.step3Complete = this.computeStepComplete(3);
@@ -572,8 +572,11 @@ export class InfluencerRegistrationComponent implements OnInit {
         return false;
       }
       this.verificationConsentError = '';
+      if (this.selectedPlatforms().length === 0) {
+        this.registrationError = 'Please select at least one social media platform.';
+        return false;
+      }
       if (this.selectedPlatforms().length > 0 && !this.arePlatformsValid()) {
-        // Inline message is already rendered; clear registrationError to avoid dup.
         this.registrationError = '';
         return false;
       }
