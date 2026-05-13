@@ -319,7 +319,7 @@
           
 
           <div class="social-media-section">
-            <h3>Social Media Platforms</h3>
+            <h3>Social Media Platforms <span class="text-danger">*</span></h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
             <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns.
             <small>“Accurate profile information improves visibility and brand collaboration opportunities.”</small></div>
@@ -371,7 +371,7 @@
                     <div class="row">
                       <div class="col">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" (ngModelChange)="refreshStepCompletion()" />
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                            [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                            target="_blank" rel="noopener noreferrer" class="verify-profile-link">
@@ -380,7 +380,7 @@
                       </div>
                       <div class="col">
                         <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
-                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control">
+                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" (ngModelChange)="refreshStepCompletion()">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
@@ -406,6 +406,9 @@
             
           </div>
 
+          <div *ngIf="step2Attempted && selectedPlatforms().length === 0" class="text-danger fw-bold mt-2">
+            Please select at least one social media platform.
+          </div>
           <div *ngIf="selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold mt-2">
             Please enter both Handle and Tier for every selected platform, or remove it.
           </div>
