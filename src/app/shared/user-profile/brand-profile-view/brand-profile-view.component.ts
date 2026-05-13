@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
 import { switchMap } from 'rxjs/operators';
@@ -238,7 +239,16 @@ export class BrandProfileViewComponent implements OnInit {
     return labels[raw] ? `${labels[raw]} (${raw})` : raw;
   }
 
-  constructor(private route: ActivatedRoute, private config: ConfigService, private session: SessionService, private cd: ChangeDetectorRef) {}
+  constructor(
+    private route: ActivatedRoute,
+    private config: ConfigService,
+    private session: SessionService,
+    private cd: ChangeDetectorRef,
+    private titleService: Title,
+    private meta: Meta,
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {}
 
   ngOnInit() {
     this.route.paramMap
@@ -263,8 +273,10 @@ export class BrandProfileViewComponent implements OnInit {
           if (!data) {
             this.error = 'Brand not found.';
             this.brand = null;
+            this.setDefaultMetadata();
           } else {
             this.brand = data;
+            this.updateMetadata(data);
             const routeBrandName = this.route.snapshot.paramMap.get('brandName');
             if (routeBrandName) {
               this.config.trackBrandProfileImpression(routeBrandName).subscribe({
@@ -305,6 +317,7 @@ export class BrandProfileViewComponent implements OnInit {
         error: (err: any) => {
           console.error('Brand API error:', err);
           this.error = 'Could not load brand profile.';
+          this.setDefaultMetadata();
           this.loading = false;
           this.cd.detectChanges();
         }
@@ -315,6 +328,56 @@ export class BrandProfileViewComponent implements OnInit {
     const user = this.session.getUser();
     if (!user) { this.isOwner = false; return; }
     this.isOwner = user.id === brand._id || user.id === brand.userId || user.email === brand.email;
+  }
+
+  private updateMetadata(brand: any): void {
+    const name = String(brand?.brandName || '').trim() || 'Brand';
+    const followers = this.formatFollowers(this.getTotalFollowers());
+    const campaignCount = (this.activePublicCampaigns || []).length;
+    const title = `${name} | Brand | TrendStarz`;
+    const description = `Discover ${name} on TrendStarz. ${followers} followers. ${campaignCount} active campaigns. Contact for influencer collaborations and brand partnerships.`;
+    const canonical = `https://trendstarz.in/brand/${brand?.brandUsername || brand?.brandName || ''}`;
+
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'index, follow' });
+    this.meta.updateTag({ property: 'og:type', content: 'business.business' });
+    this.meta.updateTag({ property: 'og:title', content: title });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:url', content: canonical });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: title });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.updateCanonical(canonical);
+
+    if (isPlatformBrowser(this.platformId)) {
+      (window as any).dataLayer = (window as any).dataLayer || [];
+      (window as any).gtag?.('config', 'G-5912TSJYW5', {
+        page_title: title,
+        page_path: `/brand/${brand?.brandUsername || brand?.brandName}`,
+        brand_name: name,
+        brand_followers: followers,
+        active_campaigns: campaignCount,
+      });
+    }
+  }
+
+  private setDefaultMetadata(): void {
+    const title = 'Brand Profile | TrendStarz';
+    const description = 'View brand profile and campaign collaboration details on TrendStarz.';
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+  }
+
+  private updateCanonical(href: string): void {
+    let canonical = this.document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = this.document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', href);
   }
 
   onCreateCampaign(data: Partial<Campaign>) {
