@@ -315,7 +315,7 @@
           </div>
 
           <div class="social-media-section mt-3">
-            <h3>Social Media Platforms</h3>
+            <h3>Social Media Platforms <span class="text-danger">*</span></h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>
             <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns. 
                 <small>“Accurate profile information improves visibility and brand collaboration opportunities.”</small></div>
@@ -352,7 +352,7 @@
                     <div class="row">
                       <div class="col">
                         <label>{{ platform.handleLabel || 'Handle' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" />
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="@yourhandle" [readonly]="!isEditMode" (ngModelChange)="refreshStepCompletion()" />
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                             [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                             target="_blank" rel="noopener noreferrer" class="verify-profile-link">
@@ -361,7 +361,7 @@
                       </div>
                       <div class="col">
                         <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
-                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode">
+                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode" (ngModelChange)="refreshStepCompletion()">
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>

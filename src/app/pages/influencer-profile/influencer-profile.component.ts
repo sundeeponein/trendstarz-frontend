@@ -646,7 +646,7 @@ export class InfluencerProfileComponent implements OnInit {
     return false;
   }
 
-  private refreshStepCompletion() {
+  refreshStepCompletion() {
     if (!this.isEditMode) {
       this.step1Complete = this.currentStep > 1;
       this.step2Complete = this.currentStep > 2;
@@ -694,7 +694,17 @@ export class InfluencerProfileComponent implements OnInit {
       this.verificationConsentError = '';
       const requiredValid = required.every((path) => this.registrationForm.get(path)?.valid);
       const influencerCatValid = !isProfessional || !!this.registrationForm.get('influencerCategory')?.valid;
-      return requiredValid && influencerCatValid && this.selectedPlatforms().length > 0;
+      if (!requiredValid || !influencerCatValid) return false;
+      if (this.selectedPlatforms().length === 0) {
+        this.registrationError = 'Please select at least one social media platform.';
+        return false;
+      }
+      if (!this.arePlatformsValid()) {
+        this.registrationError = '';
+        return false;
+      }
+      this.registrationError = '';
+      return true;
     }
 
     if (this.currentStep === 3) {
