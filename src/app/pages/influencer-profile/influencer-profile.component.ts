@@ -667,6 +667,13 @@ export class InfluencerProfileComponent implements OnInit {
       this.step2Attempted = false;
     }
     this.refreshStepCompletion();
+    this.scrollToTop();
+  }
+
+  private scrollToTop(): void {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   private validateCurrentStep(): boolean {
@@ -726,6 +733,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.step2Attempted = false;
       }
       this.refreshStepCompletion();
+      this.scrollToTop();
     }
   }
 
@@ -737,6 +745,7 @@ export class InfluencerProfileComponent implements OnInit {
       if (this.currentStep === 2) {
         this.step2Attempted = false;
       }
+      this.scrollToTop();
     }
   }
 

@@ -454,6 +454,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationError = '';
       if (step === 2) this.step2Attempted = false;
       this.refreshStepCompletion();
+      this.scrollToTop();
     }
   }
 
@@ -461,6 +462,12 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 1) return true;
     if (step === 2) return this.isStepComplete(1);
     return this.isStepComplete(1) && this.isStepComplete(2);
+  }
+
+  private scrollToTop(): void {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   async nextStep() {
@@ -478,6 +485,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationError = '';
       if (this.currentStep === 2) this.step2Attempted = false;
       this.refreshStepCompletion();
+      this.scrollToTop();
     }
 
     this.stepTransitioning = false;
@@ -546,6 +554,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationError = '';
       if (this.currentStep === 2) this.step2Attempted = false;
       this.refreshStepCompletion();
+      this.scrollToTop();
     }
   }
 
@@ -573,7 +582,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       }
       this.verificationConsentError = '';
       if (this.selectedPlatforms().length === 0) {
-        this.registrationError = 'Please select at least one social media platform.';
+        this.registrationError = '';
         return false;
       }
       if (this.selectedPlatforms().length > 0 && !this.arePlatformsValid()) {
