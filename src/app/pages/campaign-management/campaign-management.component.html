@@ -445,7 +445,7 @@
                 *ngIf="c.campaignType === 'paid_collab' && c.status !== 'completed'"
                 [disabled]="getExpandInvitesByStatus(c, 'accepted') === 0"
                 [title]="getExpandInvitesByStatus(c, 'accepted') === 0 ? 'All accepted influencers have already been paid' : 'Record Payment'">
-                <i class="bi bi-wallet2"></i> Record Payment
+                <i class="bi bi-wallet2"></i> Payment
               </button>
             </div>
             <span class="status-badge active" *ngIf="isInfluencerView">Open</span>
