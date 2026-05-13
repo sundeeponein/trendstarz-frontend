@@ -426,7 +426,7 @@
           </label>
           <select [formControl]="$any(form.get('minInfluencerTier'))" class="field-input">
             <option value="">Any tier</option>
-            <option *ngFor="let tier of tierOrder" [value]="tier">{{ tier }}</option>
+            <option *ngFor="let tier of tierOrder" [value]="tier">{{ getTierOptionLabel(tier) }}</option>
           </select>
         </div>
 

@@ -7,7 +7,7 @@ import { environment } from '../../../../environments/environment';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
 import { TierInfoService } from '../../components/tier-info-modal/tier-info.service';
 import { FlowHelpModalService } from '../../components/flow-help-modal/flow-help-modal.service';
-import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
+import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 
 
 
@@ -263,6 +263,14 @@ export class CampaignFormComponent implements OnInit {
   get f() { return this.form.controls; }
   get selectedCampaignType(): string {
     return String(this.f['campaignType']?.value || 'paid_collab');
+  }
+
+  getTierOptionLabel(tier: string): string {
+    const normalized = normalizeTierLabel(tier);
+    const key = normalized.toLowerCase();
+    const desc = TIER_DESC_MAP[key] || '';
+    if (!desc) return normalized || String(tier || '');
+    return `${normalized} (${desc})`;
   }
 
   get estimatedBudgetRupees(): number {

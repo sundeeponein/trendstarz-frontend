@@ -14,6 +14,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
+import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 
 @Component({
   selector: 'app-brand-registration',
@@ -43,6 +44,14 @@ export class BrandProfileComponent implements OnInit {
     }
     this.registrationForm.get(field)?.setValue([...arr]);
     this.registrationForm.get(field)?.markAsTouched();
+  }
+
+  getTierOptionLabel(tier: any): string {
+    const name = String(tier?.name || '').trim();
+    const descFromApi = String(tier?.desc || '').trim();
+    const desc = descFromApi || TIER_DESC_MAP[name.toLowerCase()] || '';
+    if (!desc) return name;
+    return `${name} (${desc})`;
   }
 
   constructor(

@@ -150,6 +150,13 @@ export class InfluencerProfileComponent implements OnInit {
     return '';
   }
 
+  getTierOptionLabel(tier: any): string {
+    const name = String(tier?.name || '').trim();
+    const range = String(tier?.desc || '').trim();
+    if (!range) return name;
+    return `${name} (${range})`;
+  }
+
 
   currentStep: 1 | 2 | 3 = 1;
   readonly totalSteps = 3;
@@ -370,12 +377,21 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
     // Clear professional fields when professionalStatus is unchecked
+    // Dynamic validator for influencerCategory based on professionalStatus
     this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
-      if (!isProfessional) {
+      const catCtrl = this.registrationForm.get('influencerCategory');
+      if (isProfessional) {
+        catCtrl?.setValidators([Validators.required]);
+      } else {
         this.showProfessionalOptional = false;
-        this.registrationForm.get('influencerCategory')?.setValue('');
+        catCtrl?.clearValidators();
+        catCtrl?.setValue('');
+        catCtrl?.markAsUntouched();
+        catCtrl?.markAsPristine();
         this.registrationForm.get('expertiseArea')?.setValue('');
       }
+      catCtrl?.updateValueAndValidity();
+      this.refreshStepCompletion();
     });
 
     // Load districts when state changes (robust: accept id or name, request by name+id)
@@ -615,6 +631,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
+        (!this.registrationForm.get('professionalStatus')?.value || this.registrationForm.get('influencerCategory')?.valid) &&
         this.selectedPlatforms().length > 0
       );
     }
@@ -666,12 +683,18 @@ export class InfluencerProfileComponent implements OnInit {
       this.step2Attempted = true;
       const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
+      const isProfessional = !!this.registrationForm.get('professionalStatus')?.value;
+      if (isProfessional) {
+        this.registrationForm.get('influencerCategory')?.markAsTouched();
+      }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
         return false;
       }
       this.verificationConsentError = '';
-      return required.every((path) => this.registrationForm.get(path)?.valid) && this.selectedPlatforms().length > 0;
+      const requiredValid = required.every((path) => this.registrationForm.get(path)?.valid);
+      const influencerCatValid = !isProfessional || !!this.registrationForm.get('influencerCategory')?.valid;
+      return requiredValid && influencerCatValid && this.selectedPlatforms().length > 0;
     }
 
     if (this.currentStep === 3) {
