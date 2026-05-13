@@ -1,102 +1,166 @@
 <div class="admin-dashboard container py-4">
   <h2 class="mb-4 text-white">Admin Dashboard</h2>
-  <div class="row mb-4">
-    <!-- Influencers Card -->
-    <div class="col-md-6 mb-4">
-      <div class="card shadow influencer-card">
-        <div class="card-header bg-primary text-white fw-bold">Influencers</div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Registered</span>
-            <span class="badge bg-primary fs-5">{{ influencerCount }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Activated</span>
-            <span class="badge bg-success">{{ influencerActivated }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Pending Verification</span>
-            <span class="badge bg-warning text-dark">{{ influencerPending }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Premium Users</span>
-            <span class="badge bg-info text-dark">{{ influencerPremium }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Deleted Users</span>
-            <span class="badge bg-info text-dark">{{ influencerDeleted }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Brands Card -->
-    <div class="col-md-6 mb-4">
-      <div class="card shadow brand-card">
-        <div class="card-header bg-secondary text-white fw-bold">Brands</div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Registered</span>
-            <span class="badge bg-primary fs-5">{{ brandCount }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Activated</span>
-            <span class="badge bg-success">{{ brandActivated }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Pending</span>
-            <span class="badge bg-warning text-dark">{{ brandPending }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Premium Users</span>
-            <span class="badge bg-info text-dark">{{ brandPremium }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span>Deleted Users</span>
-            <span class="badge bg-info text-dark">{{ brandDeleted }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Admin Management Section -->
-  <div class="admin-management mb-4">
-    <div class="d-flex align-items-center mb-2">
-      <span class="badge bg-warning text-dark me-2">SYSTEM CONFIG</span>
-      <h3 class="mb-0 text-white">Admin Management</h3>
-      <div class="ms-auto">
-        <button class="btn btn-warning"><i class="bi bi-person-plus"></i> Invite Admin</button>
+  <!-- Card Style Overview -->
+  <section class="stats-strip mb-4">
+    <article class="stat-card">
+      <p class="stat-title">Total</p>
+      <h3 class="stat-total">{{ influencerCount + brandCount }}</h3>
+      <div class="stat-split-head">
+        <span>Influencers</span>
+        <span>Brands</span>
       </div>
+      <div class="stat-split-values">
+        <span>{{ influencerCount }}</span>
+        <span>{{ brandCount }}</span>
+      </div>
+    </article>
+
+    <article class="stat-card warn-card">
+      <p class="stat-title">Pending</p>
+      <h3 class="stat-total">{{ totalPending }}</h3>
+      <div class="stat-split-head">
+        <span>Influencers</span>
+        <span>Brands</span>
+      </div>
+      <div class="stat-split-values">
+        <span>{{ influencerPending }}</span>
+        <span>{{ brandPending }}</span>
+      </div>
+    </article>
+
+    <article class="stat-card ok-card">
+      <p class="stat-title">Verified</p>
+      <h3 class="stat-total">{{ totalVerified }}</h3>
+      <div class="stat-split-head">
+        <span>Influencers</span>
+        <span>Brands</span>
+      </div>
+      <div class="stat-split-values">
+        <span>{{ influencerActivated }}</span>
+        <span>{{ brandActivated }}</span>
+      </div>
+    </article>
+
+    <article class="stat-card premium-card">
+      <p class="stat-title">Premium</p>
+      <h3 class="stat-total">{{ premiumTotal }}</h3>
+      <div class="stat-split-head">
+        <span>Influencers</span>
+        <span>Brands</span>
+      </div>
+      <div class="stat-split-values">
+        <span>{{ influencerPremium }}</span>
+        <span>{{ brandPremium }}</span>
+      </div>
+    </article>
+
+    <article class="stat-card danger-card">
+      <p class="stat-title">Suspicious / Flagged</p>
+      <h3 class="stat-total">{{ suspiciousFlaggedTotal }}</h3>
+      <div class="stat-split-head">
+        <span>Influencers</span>
+        <span>Brands</span>
+      </div>
+      <div class="stat-split-values">
+        <span>{{ suspiciousFlaggedInfluencers }}</span>
+        <span>{{ suspiciousFlaggedBrands }}</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- Recent Registrations & 7-Day Chart -->
+   <div class="role-tabs" role="tablist" aria-label="Recent registration role filter">
+            <button
+              type="button"
+              class="role-tab"
+              [class.active]="selectedRoleTab === 'influencer'"
+              (click)="setRoleTab('influencer')"
+            >
+              <i class="bi bi-person-fill role-tab-icon" aria-hidden="true"></i>
+              Influencers
+            </button>
+            <button
+              type="button"
+              class="role-tab"
+              [class.active]="selectedRoleTab === 'brand'"
+              (click)="setRoleTab('brand')"
+            >
+              <i class="bi bi-building role-tab-icon" aria-hidden="true"></i>
+              Brands
+            </button>
+          </div>
+  <section class="recent-section mb-4">
+
+    <!-- 7-Day chart: shown above heading on the right via grid -->
+    <div class="recent-grid">
+
+      <!-- Left: Recent Registrations Table -->
+      <article class="recent-card registrations-card">
+        <header class="recent-header">
+          <div>
+            <h4>Recent Registrations</h4>
+            <span>Role-based view for faster moderation</span>
+          </div>
+          
+        </header>
+        <div *ngIf="visibleRecentRegistrations.length === 0" class="no-data">No registrations in this role yet.</div>
+        <div *ngFor="let r of visibleRecentRegistrations" class="reg-row">
+          <span class="reg-badge" [class.inf]="r.type === 'influencer'" [class.brand]="r.type === 'brand'">
+            <i [class]="r.type === 'influencer' ? 'bi bi-person-fill' : 'bi bi-building'" aria-hidden="true"></i>
+          </span>
+          <div class="reg-info">
+            <strong>{{ r.name }}</strong>
+            <small>{{ r.email }}</small>
+          </div>
+          <div class="reg-meta">
+            <span class="reg-status" [class.accepted]="r.status === 'accepted'" [class.pending]="r.status === 'pending'">
+              {{ r.status }}
+            </span>
+            <small class="reg-date">{{ r.createdAt | date:'d MMM, HH:mm' }}</small>
+          </div>
+        </div>
+      </article>
+
+      <!-- Right: 7-Day Registration Bar Chart -->
+      <!-- Right: Verification / Pending Queue -->
+      <article class="recent-card queue-card">
+        <header class="recent-header">
+          <div>
+            <h4>Pending Actions Queue</h4>
+            <span>{{ selectedRoleTab === 'influencer' ? 'Influencer queue' : 'Brand queue' }}</span>
+          </div>
+        </header>
+
+        <div class="queue-row" [class.queue-alert]="visiblePendingApprovalCount > 0">
+          <span class="queue-icon" aria-hidden="true"><i class="bi bi-person-check"></i></span>
+          <span class="queue-label">Account Approvals</span>
+          <span class="queue-count" [class.nonzero]="visiblePendingApprovalCount > 0">{{ visiblePendingApprovalCount }}</span>
+        </div>
+        <div class="queue-row" [class.queue-alert]="visiblePendingMobileCount > 0">
+          <span class="queue-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
+          <span class="queue-label">Mobile Unverified</span>
+          <span class="queue-count" [class.nonzero]="visiblePendingMobileCount > 0">{{ visiblePendingMobileCount }}</span>
+        </div>
+        <div class="queue-row" [class.queue-alert]="visiblePendingEmailCount > 0">
+          <span class="queue-icon" aria-hidden="true"><i class="bi bi-envelope-exclamation"></i></span>
+          <span class="queue-label">Email Unverified</span>
+          <span class="queue-count" [class.nonzero]="visiblePendingEmailCount > 0">{{ visiblePendingEmailCount }}</span>
+        </div>
+
+        <div *ngIf="visiblePendingUsers.length > 0" class="queue-preview-header">Latest Pending</div>
+        <div *ngFor="let u of visiblePendingUsers" class="queue-preview-row">
+          <span class="reg-badge" [class.inf]="u.type === 'influencer'" [class.brand]="u.type === 'brand'">
+            <i [class]="u.type === 'influencer' ? 'bi bi-person-fill' : 'bi bi-building'" aria-hidden="true"></i>
+          </span>
+          <div class="queue-preview-info">
+            <strong>{{ u.name }}</strong>
+            <small>{{ u.label }}</small>
+          </div>
+        </div>
+        <div *ngIf="visiblePendingUsers.length === 0" class="no-data">No pending users in this role.</div>
+      </article>
     </div>
-    <div class="row g-3">
-      <div class="col-md-3">
-        <div class="card h-100 p-3">
-          <div class="mb-2"><i class="bi bi-gear fs-3 text-primary"></i></div>
-          <div class="fw-bold">Core Config</div>
-          <div class="text-muted small">API keys, global timeouts, and system flags.</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card h-100 p-3">
-          <div class="mb-2"><i class="bi bi-share fs-3 text-primary"></i></div>
-          <div class="fw-bold">Social Integration</div>
-          <div class="text-muted small">Auth providers, webhooks, and pixel tracking.</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card h-100 p-3">
-          <div class="mb-2"><i class="bi bi-translate fs-3 text-primary"></i></div>
-          <div class="fw-bold">Language &amp; I18n</div>
-          <div class="text-muted small">Dictionary management and region overrides.</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card h-100 p-3">
-          <div class="mb-2"><i class="bi bi-shield-lock fs-3 text-primary"></i></div>
-          <div class="fw-bold">Roles &amp; Policies</div>
-          <div class="text-muted small">RBAC, MFA enforcement, and access logs.</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </section>
+
 </div>
