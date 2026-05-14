@@ -542,38 +542,188 @@
               <button
                 class="btn btn-outline-primary btn-sm"
                 (click)="runEarlyAccessRefillNow()"
-                [disabled]="earlyAccessRefillRunning"
+                [disabled]="earlyAccessRefillRunning || settings.earlyAccessAssignmentMode !== 'auto'"
               >
                 {{ earlyAccessRefillRunning ? 'Running…' : 'Run Refill Now' }}
               </button>
+              <div class="mt-2">
+                <button
+                  class="btn btn-link btn-sm p-0"
+                  type="button"
+                  (click)="earlyAccessAdvancedOpen = !earlyAccessAdvancedOpen"
+                >
+                  {{ earlyAccessAdvancedOpen ? 'Hide Advanced' : 'Show Advanced' }}
+                </button>
+              </div>
+              <div *ngIf="earlyAccessAdvancedOpen" class="mt-2">
+                <button
+                  class="btn btn-outline-warning btn-sm"
+                  (click)="runNormalizeExistingCommissionTags()"
+                  [disabled]="earlyAccessNormalizeRunning"
+                >
+                  {{ earlyAccessNormalizeRunning ? 'Normalizing…' : 'Normalize Existing' }}
+                </button>
+              </div>
               <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessRefillMessage">
                 {{ earlyAccessRefillMessage }}
+              </small>
+              <small class="text-light-emphasis d-block" *ngIf="settings.earlyAccessAssignmentMode !== 'auto'">
+                Run Refill is available only in Auto mode.
               </small>
               <small class="text-light-emphasis d-block" *ngIf="earlyAccessPreviewCopyMessage">
                 {{ earlyAccessPreviewCopyMessage }}
               </small>
-              <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessPreview">
-                Influencers: {{ earlyAccessPreview?.influencers?.activeCount || 0 }}/{{ earlyAccessPreview?.influencers?.cap || 0 }} active,
-                {{ earlyAccessPreview?.influencers?.slotsOpen || 0 }} slots open,
-                {{ earlyAccessPreview?.influencers?.eligibleCount || 0 }} eligible.
+              <small class="text-light-emphasis d-block" *ngIf="earlyAccessNormalizeMessage && earlyAccessAdvancedOpen">
+                {{ earlyAccessNormalizeMessage }}
               </small>
-              <small class="text-light-emphasis d-block" *ngIf="earlyAccessPreview">
-                Brands: {{ earlyAccessPreview?.brands?.activeCount || 0 }}/{{ earlyAccessPreview?.brands?.cap || 0 }} active,
-                {{ earlyAccessPreview?.brands?.slotsOpen || 0 }} slots open,
-                {{ earlyAccessPreview?.brands?.eligibleCount || 0 }} eligible.
-              </small>
-              <small class="text-light-emphasis d-block" *ngIf="(earlyAccessPreview?.influencers?.previewUsers || []).length > 0">
-                Next influencers:
-                <span *ngFor="let user of earlyAccessPreview.influencers.previewUsers; let i = index">
-                  {{ i ? ', ' : ' ' }}{{ formatPreviewUser(user) }}
-                </span>
-              </small>
-              <small class="text-light-emphasis d-block" *ngIf="(earlyAccessPreview?.brands?.previewUsers || []).length > 0">
-                Next brands:
-                <span *ngFor="let user of earlyAccessPreview.brands.previewUsers; let i = index">
-                  {{ i ? ', ' : ' ' }}{{ formatPreviewUser(user) }}
-                </span>
-              </small>
+              <div class="table-responsive mt-2" *ngIf="earlyAccessPreview">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Group</th>
+                      <th>Cap</th>
+                      <th>Active</th>
+                      <th>Open Slots</th>
+                      <th>Eligible</th>
+                      <th>Fill</th>
+                      <th>Status</th>
+                      <th>Top Candidates</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Influencers</td>
+                      <td>{{ earlyAccessPreview?.influencers?.cap || 0 }}</td>
+                      <td>{{ earlyAccessPreview?.influencers?.activeCount || 0 }}</td>
+                      <td>
+                        <span
+                          [class.text-success]="(earlyAccessPreview?.influencers?.slotsOpen || 0) === 0"
+                          [class.text-warning]="(earlyAccessPreview?.influencers?.slotsOpen || 0) > 0 && (earlyAccessPreview?.influencers?.eligibleCount || 0) > 0"
+                          [class.text-danger]="(earlyAccessPreview?.influencers?.slotsOpen || 0) > 0 && (earlyAccessPreview?.influencers?.eligibleCount || 0) === 0"
+                        >
+                          {{ earlyAccessPreview?.influencers?.slotsOpen || 0 }}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          [class.text-success]="(earlyAccessPreview?.influencers?.eligibleCount || 0) > 0"
+                          [class.text-muted]="(earlyAccessPreview?.influencers?.eligibleCount || 0) === 0"
+                        >
+                          {{ earlyAccessPreview?.influencers?.eligibleCount || 0 }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="progress" style="height: 8px; min-width: 90px;">
+                          <div
+                            class="progress-bar"
+                            role="progressbar"
+                            [style.width.%]="(earlyAccessPreview?.influencers?.cap || 0) > 0 ? ((earlyAccessPreview?.influencers?.activeCount || 0) * 100 / (earlyAccessPreview?.influencers?.cap || 1)) : 0"
+                          ></div>
+                        </div>
+                        <small class="text-light-emphasis">
+                          {{ earlyAccessPreview?.influencers?.activeCount || 0 }}/{{ earlyAccessPreview?.influencers?.cap || 0 }}
+                          ({{ ((earlyAccessPreview?.influencers?.cap || 0) > 0 ? ((earlyAccessPreview?.influencers?.activeCount || 0) * 100 / (earlyAccessPreview?.influencers?.cap || 1)) : 0) | number:'1.0-0' }}%)
+                        </small>
+                      </td>
+                      <td>
+                        <span
+                          class="badge"
+                          [class.bg-success]="(earlyAccessPreview?.influencers?.slotsOpen || 0) === 0"
+                          [class.bg-warning]="(earlyAccessPreview?.influencers?.slotsOpen || 0) > 0 && (earlyAccessPreview?.influencers?.eligibleCount || 0) > 0"
+                          [class.text-dark]="(earlyAccessPreview?.influencers?.slotsOpen || 0) > 0 && (earlyAccessPreview?.influencers?.eligibleCount || 0) > 0"
+                          [class.bg-danger]="(earlyAccessPreview?.influencers?.slotsOpen || 0) > 0 && (earlyAccessPreview?.influencers?.eligibleCount || 0) === 0"
+                        >
+                          {{ (earlyAccessPreview?.influencers?.slotsOpen || 0) === 0
+                            ? 'Full'
+                            : ((earlyAccessPreview?.influencers?.eligibleCount || 0) > 0 ? 'Ready' : 'Blocked') }}
+                        </span>
+                      </td>
+                      <td>
+                        <ng-container *ngIf="earlyAccessPreview?.influencers?.previewUsers as infCandidates">
+                          <span *ngIf="infCandidates.length === 0" class="text-light-emphasis">No eligible users</span>
+                          <div *ngFor="let user of (infCandidates | slice:0:3)">
+                            {{ formatPreviewUser(user) }}
+                          </div>
+                          <small *ngIf="infCandidates.length > 3" class="text-light-emphasis">
+                            +{{ infCandidates.length - 3 }} more
+                          </small>
+                        </ng-container>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Brands</td>
+                      <td>{{ earlyAccessPreview?.brands?.cap || 0 }}</td>
+                      <td>{{ earlyAccessPreview?.brands?.activeCount || 0 }}</td>
+                      <td>
+                        <span
+                          [class.text-success]="(earlyAccessPreview?.brands?.slotsOpen || 0) === 0"
+                          [class.text-warning]="(earlyAccessPreview?.brands?.slotsOpen || 0) > 0 && (earlyAccessPreview?.brands?.eligibleCount || 0) > 0"
+                          [class.text-danger]="(earlyAccessPreview?.brands?.slotsOpen || 0) > 0 && (earlyAccessPreview?.brands?.eligibleCount || 0) === 0"
+                        >
+                          {{ earlyAccessPreview?.brands?.slotsOpen || 0 }}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          [class.text-success]="(earlyAccessPreview?.brands?.eligibleCount || 0) > 0"
+                          [class.text-muted]="(earlyAccessPreview?.brands?.eligibleCount || 0) === 0"
+                        >
+                          {{ earlyAccessPreview?.brands?.eligibleCount || 0 }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="progress" style="height: 8px; min-width: 90px;">
+                          <div
+                            class="progress-bar bg-info"
+                            role="progressbar"
+                            [style.width.%]="(earlyAccessPreview?.brands?.cap || 0) > 0 ? ((earlyAccessPreview?.brands?.activeCount || 0) * 100 / (earlyAccessPreview?.brands?.cap || 1)) : 0"
+                          ></div>
+                        </div>
+                        <small class="text-light-emphasis">
+                          {{ earlyAccessPreview?.brands?.activeCount || 0 }}/{{ earlyAccessPreview?.brands?.cap || 0 }}
+                          ({{ ((earlyAccessPreview?.brands?.cap || 0) > 0 ? ((earlyAccessPreview?.brands?.activeCount || 0) * 100 / (earlyAccessPreview?.brands?.cap || 1)) : 0) | number:'1.0-0' }}%)
+                        </small>
+                      </td>
+                      <td>
+                        <span
+                          class="badge"
+                          [class.bg-success]="(earlyAccessPreview?.brands?.slotsOpen || 0) === 0"
+                          [class.bg-warning]="(earlyAccessPreview?.brands?.slotsOpen || 0) > 0 && (earlyAccessPreview?.brands?.eligibleCount || 0) > 0"
+                          [class.text-dark]="(earlyAccessPreview?.brands?.slotsOpen || 0) > 0 && (earlyAccessPreview?.brands?.eligibleCount || 0) > 0"
+                          [class.bg-danger]="(earlyAccessPreview?.brands?.slotsOpen || 0) > 0 && (earlyAccessPreview?.brands?.eligibleCount || 0) === 0"
+                        >
+                          {{ (earlyAccessPreview?.brands?.slotsOpen || 0) === 0
+                            ? 'Full'
+                            : ((earlyAccessPreview?.brands?.eligibleCount || 0) > 0 ? 'Ready' : 'Blocked') }}
+                        </span>
+                      </td>
+                      <td>
+                        <ng-container *ngIf="earlyAccessPreview?.brands?.previewUsers as brandCandidates">
+                          <span *ngIf="brandCandidates.length === 0" class="text-light-emphasis">No eligible users</span>
+                          <div *ngFor="let user of (brandCandidates | slice:0:3)">
+                            {{ formatPreviewUser(user) }}
+                          </div>
+                          <small *ngIf="brandCandidates.length > 3" class="text-light-emphasis">
+                            +{{ brandCandidates.length - 3 }} more
+                          </small>
+                        </ng-container>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <small class="text-light-emphasis d-block mt-2">
+                  Mode: {{ earlyAccessPreview?.mode || 'manual' }}
+                </small>
+                <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessPreviewRefreshedAt">
+                  Preview refreshed: {{ earlyAccessPreviewRefreshedAt | date:'medium' }}
+                </small>
+                <small class="text-light-emphasis d-block mt-1">
+                  Legend:
+                  <span class="text-success">Green</span> = healthy,
+                  <span class="text-warning">Yellow</span> = open slots with candidates,
+                  <span class="text-danger">Red</span> = open slots but no eligible candidates.
+                </small>
+              </div>
             </div>
           </div>
           <div class="condition-item">

@@ -73,7 +73,11 @@ export class AdminManagementComponent implements OnInit {
   earlyAccessLastRunDetails = '';
   earlyAccessPreviewLoading = false;
   earlyAccessPreview: any = null;
+  earlyAccessPreviewRefreshedAt: Date | null = null;
   earlyAccessPreviewCopyMessage = '';
+  earlyAccessNormalizeRunning = false;
+  earlyAccessNormalizeMessage = '';
+  earlyAccessAdvancedOpen = false;
 
   commissionCounts = {
     influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
@@ -375,6 +379,12 @@ export class AdminManagementComponent implements OnInit {
   }
 
   runEarlyAccessRefillNow() {
+    if (this.settings.earlyAccessAssignmentMode !== 'auto') {
+      this.earlyAccessRefillMessage = 'Switch to Auto mode and save settings before running refill.';
+      this.cdr.detectChanges();
+      return;
+    }
+
     if (this.earlyAccessRefillRunning) return;
 
     this.earlyAccessRefillRunning = true;
@@ -427,12 +437,14 @@ export class AdminManagementComponent implements OnInit {
         next: (res) => {
           const data = res?.data ?? res;
           this.earlyAccessPreview = data || null;
+          this.earlyAccessPreviewRefreshedAt = new Date();
           this.earlyAccessPreviewLoading = false;
           this.cdr.detectChanges();
         },
         error: () => {
           this.earlyAccessPreviewLoading = false;
           this.earlyAccessPreview = null;
+          this.earlyAccessPreviewRefreshedAt = null;
           this.cdr.detectChanges();
         }
       });
@@ -518,5 +530,36 @@ export class AdminManagementComponent implements OnInit {
     }
 
     fallbackCopy();
+  }
+
+  runNormalizeExistingCommissionTags() {
+    if (this.earlyAccessNormalizeRunning) return;
+
+    this.earlyAccessNormalizeRunning = true;
+    this.earlyAccessNormalizeMessage = '';
+    this.cdr.detectChanges();
+
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/normalize-existing-tags`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          const inflUpdated = Number(data?.influencers?.updatedCount || 0);
+          const brandUpdated = Number(data?.brands?.updatedCount || 0);
+          this.earlyAccessNormalizeMessage =
+            `Normalized ${inflUpdated} influencer + ${brandUpdated} brand records.`;
+          this.earlyAccessNormalizeRunning = false;
+          this.loadCommissionCounts();
+          this.loadEarlyAccessRefillPreview();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.earlyAccessNormalizeRunning = false;
+          this.earlyAccessNormalizeMessage =
+            `Normalize failed: ${err?.error?.message || err?.message || 'Unknown error'}`;
+          this.cdr.detectChanges();
+        }
+      });
   }
 }
