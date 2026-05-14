@@ -60,4 +60,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'influencer/:username', renderMode: RenderMode.Server },
   { path: 'brand/:brandName', renderMode: RenderMode.Server },
 
+  // Fallback
+  { path: '**', renderMode: RenderMode.Client },
+
 ];

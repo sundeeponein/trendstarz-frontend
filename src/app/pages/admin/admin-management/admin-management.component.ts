@@ -73,6 +73,11 @@ export class AdminManagementComponent implements OnInit {
   earlyAccessLastRunDetails = '';
   earlyAccessPreviewLoading = false;
   earlyAccessPreview: any = null;
+  earlyAccessPreviewRefreshedAt: Date | null = null;
+  earlyAccessPreviewCopyMessage = '';
+  earlyAccessNormalizeRunning = false;
+  earlyAccessNormalizeMessage = '';
+  earlyAccessAdvancedOpen = false;
 
   commissionCounts = {
     influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
@@ -374,6 +379,12 @@ export class AdminManagementComponent implements OnInit {
   }
 
   runEarlyAccessRefillNow() {
+    if (this.settings.earlyAccessAssignmentMode !== 'auto') {
+      this.earlyAccessRefillMessage = 'Switch to Auto mode and save settings before running refill.';
+      this.cdr.detectChanges();
+      return;
+    }
+
     if (this.earlyAccessRefillRunning) return;
 
     this.earlyAccessRefillRunning = true;
@@ -426,12 +437,14 @@ export class AdminManagementComponent implements OnInit {
         next: (res) => {
           const data = res?.data ?? res;
           this.earlyAccessPreview = data || null;
+          this.earlyAccessPreviewRefreshedAt = new Date();
           this.earlyAccessPreviewLoading = false;
           this.cdr.detectChanges();
         },
         error: () => {
           this.earlyAccessPreviewLoading = false;
           this.earlyAccessPreview = null;
+          this.earlyAccessPreviewRefreshedAt = null;
           this.cdr.detectChanges();
         }
       });
@@ -441,5 +454,112 @@ export class AdminManagementComponent implements OnInit {
     const displayName = String(user?.name || user?.brandName || 'Unknown');
     const email = String(user?.email || '').trim();
     return email ? `${displayName} (${email})` : displayName;
+  }
+
+  private buildEarlyAccessPreviewText(): string {
+    if (!this.earlyAccessPreview) {
+      return 'Early Access preview is empty. Run Preview Refill first.';
+    }
+
+    const preview = this.earlyAccessPreview;
+    const inf = preview?.influencers || {};
+    const br = preview?.brands || {};
+    const infUsers = Array.isArray(inf?.previewUsers) ? inf.previewUsers : [];
+    const brUsers = Array.isArray(br?.previewUsers) ? br.previewUsers : [];
+    const influencerList = infUsers.length
+      ? infUsers.map((u: any) => this.formatPreviewUser(u)).join(', ')
+      : 'None';
+    const brandList = brUsers.length
+      ? brUsers.map((u: any) => this.formatPreviewUser(u)).join(', ')
+      : 'None';
+
+    return [
+      'Early Access Refill Preview',
+      `Mode: ${String(preview?.mode || 'manual')}`,
+      '',
+      'Influencers',
+      `Active: ${Number(inf?.activeCount || 0)}/${Number(inf?.cap || 0)}`,
+      `Open slots: ${Number(inf?.slotsOpen || 0)}`,
+      `Eligible: ${Number(inf?.eligibleCount || 0)}`,
+      `Top candidates: ${influencerList}`,
+      '',
+      'Brands',
+      `Active: ${Number(br?.activeCount || 0)}/${Number(br?.cap || 0)}`,
+      `Open slots: ${Number(br?.slotsOpen || 0)}`,
+      `Eligible: ${Number(br?.eligibleCount || 0)}`,
+      `Top candidates: ${brandList}`,
+    ].join('\n');
+  }
+
+  copyEarlyAccessPreview() {
+    const text = this.buildEarlyAccessPreviewText();
+    this.earlyAccessPreviewCopyMessage = '';
+
+    if (typeof window === 'undefined') {
+      this.earlyAccessPreviewCopyMessage = 'Copy unavailable on server.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const fallbackCopy = () => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', 'true');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      this.earlyAccessPreviewCopyMessage = copied
+        ? 'Preview copied.'
+        : 'Copy failed. Please copy manually.';
+      this.cdr.detectChanges();
+    };
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          this.earlyAccessPreviewCopyMessage = 'Preview copied.';
+          this.cdr.detectChanges();
+        })
+        .catch(() => fallbackCopy());
+      return;
+    }
+
+    fallbackCopy();
+  }
+
+  runNormalizeExistingCommissionTags() {
+    if (this.earlyAccessNormalizeRunning) return;
+
+    this.earlyAccessNormalizeRunning = true;
+    this.earlyAccessNormalizeMessage = '';
+    this.cdr.detectChanges();
+
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/normalize-existing-tags`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          const inflUpdated = Number(data?.influencers?.updatedCount || 0);
+          const brandUpdated = Number(data?.brands?.updatedCount || 0);
+          this.earlyAccessNormalizeMessage =
+            `Normalized ${inflUpdated} influencer + ${brandUpdated} brand records.`;
+          this.earlyAccessNormalizeRunning = false;
+          this.loadCommissionCounts();
+          this.loadEarlyAccessRefillPreview();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.earlyAccessNormalizeRunning = false;
+          this.earlyAccessNormalizeMessage =
+            `Normalize failed: ${err?.error?.message || err?.message || 'Unknown error'}`;
+          this.cdr.detectChanges();
+        }
+      });
   }
 }
