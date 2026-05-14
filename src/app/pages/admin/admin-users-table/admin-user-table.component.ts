@@ -18,8 +18,8 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
 })
 export class AdminUserTableComponent implements OnInit {
   filtersExpanded = true;
-  readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator'];
-  readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand'];
+  readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator', 'Early Access', 'Partner', 'Internal/Test'];
+  readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand', 'Early Access', 'Partner', 'Internal/Test'];
   readonly verificationStatusOptions = ['not_submitted', 'pending', 'approved', 'rejected', 'removed'];
   verificationNotesDraft: Record<string, string> = {};
 
@@ -213,26 +213,22 @@ export class AdminUserTableComponent implements OnInit {
 
   fetchUsers() {
     this.isLoading = true;
-    let token = '';
-    if (typeof window !== 'undefined' && window.localStorage) {
-      token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    }
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const headers = this.getAuthHeaders();
     const influencerUrl = `${environment.apiBaseUrl}/admin/influencers${this.isDeletedTab() ? '?status=deleted' : ''}`;
     this.http.get<any>(influencerUrl, headers)
-      .pipe(timeout(5000), catchError(err => { return of([]); }))
+      .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
         const users = Array.isArray(res) ? res : (res?.data || []);
-        // debug: fetched influencers
         this.influencers = users;
         this.applyFilters('influencer');
         this.updateAllFilterOptions();
         this.isLoading = false;
         this.cd.detectChanges();
       });
+
     const brandUrl = `${environment.apiBaseUrl}/admin/brands${this.isDeletedTab() ? '?status=deleted' : ''}`;
     this.http.get<any>(brandUrl, headers)
-      .pipe(timeout(5000), catchError(err => { return of([]); }))
+      .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
         const users = Array.isArray(res) ? res : (res?.data || []);
         this.brands = users;
@@ -502,8 +498,42 @@ export class AdminUserTableComponent implements OnInit {
     return userType === 'influencer' ? this.influencerBadgeOptions : this.brandBadgeOptions;
   }
 
+  getRegularTagOptions(userType: 'influencer' | 'brand'): string[] {
+    const commissionTags = new Set(['Early Access', 'Partner', 'Internal/Test']);
+    return this.getTagOptions(userType).filter((tag) => !commissionTags.has(tag));
+  }
+
+  getCommissionTagOptions(userType: 'influencer' | 'brand'): string[] {
+    const commissionTags = new Set(['Early Access', 'Partner', 'Internal/Test']);
+    return this.getTagOptions(userType).filter((tag) => commissionTags.has(tag));
+  }
+
+  private isCommissionTag(tag: string): boolean {
+    return ['Early Access', 'Partner', 'Internal/Test'].includes(tag);
+  }
+
   getUserTags(user: any): string[] {
-    return Array.isArray(user?.adminTags) ? user.adminTags.filter((tag: any) => !!String(tag || '').trim()) : [];
+    const tags = Array.isArray(user?.adminTags)
+      ? user.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      : [];
+
+    const commissionBadgeMap: Record<string, string> = {
+      early_access_creator: 'Early Access',
+      partner_creator: 'Partner',
+      internal_test_creator: 'Internal/Test',
+      early_access_brand: 'Early Access',
+      partner_brand: 'Partner',
+      internal_test_brand: 'Internal/Test',
+      launch_partner: 'Partner',
+      zero_commission_creator: 'Early Access',
+      zero_commission_brand: 'Early Access',
+    };
+
+    const commissionTag = user?.commissionBadge
+      ? (commissionBadgeMap[String(user.commissionBadge)] || '')
+      : '';
+
+    return [...new Set([...tags, ...(commissionTag ? [commissionTag] : [])])];
   }
 
   getTagBadgeClass(tag: string): string {
@@ -516,6 +546,30 @@ export class AdminUserTableComponent implements OnInit {
     return 'bg-secondary';
   }
 
+  getCommissionBenefitText(user: any): string {
+    const badge = String(user?.commissionBadge || '');
+    const override = user?.commissionOverride;
+    if (!badge || !override?.enabled) return '';
+
+    const untilDate = override.validUntil ? new Date(override.validUntil) : null;
+    const untilText = untilDate
+      ? ` till ${untilDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+      : '';
+
+    if (badge.includes('early_access')) {
+      return `0% commission${untilText}`;
+    }
+    if (badge.includes('internal_test')) {
+      return `0% commission${untilText}`;
+    }
+    if (badge.includes('partner')) {
+      const value = typeof override.value === 'number' ? override.value : 0;
+      const displayPercent = override.overrideType === 'fixed' ? `${value}%` : 'custom';
+      return `${displayPercent} commission${untilText}`;
+    }
+    return '';
+  }
+
   openTagModal(user: any, userType: 'influencer' | 'brand') {
     this.tagUserId = user?._id || null;
     this.tagType = userType;
@@ -525,11 +579,20 @@ export class AdminUserTableComponent implements OnInit {
 
   toggleTagSelection(tag: string) {
     if (!tag) return;
+    const isCommissionTag = this.isCommissionTag(tag);
+    const siblingTags = isCommissionTag
+      ? this.getCommissionTagOptions(this.tagType || this.activeTab)
+      : this.getRegularTagOptions(this.tagType || this.activeTab);
+
     if (this.selectedTagOptions.includes(tag)) {
       this.selectedTagOptions = this.selectedTagOptions.filter((value) => value !== tag);
       return;
     }
-    this.selectedTagOptions = [...this.selectedTagOptions, tag];
+
+    this.selectedTagOptions = [
+      ...this.selectedTagOptions.filter((value) => !siblingTags.includes(value)),
+      tag,
+    ];
   }
 
   saveTags() {
@@ -544,7 +607,10 @@ export class AdminUserTableComponent implements OnInit {
       }))
       .subscribe((res: any) => {
         if (res?.user) {
-          alert('Tags updated successfully!');
+          const warningText = Array.isArray(res?.warnings) && res.warnings.length
+            ? `\n\nNote:\n- ${res.warnings.join('\n- ')}`
+            : '';
+          alert(`Tags updated successfully!${warningText}`);
           this.showTagModal = false;
           this.tagUserId = null;
           this.tagType = null;

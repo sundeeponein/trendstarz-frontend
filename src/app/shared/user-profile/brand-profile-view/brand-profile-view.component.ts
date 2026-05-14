@@ -154,8 +154,11 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   get displayTags(): string[] {
+    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
     return Array.isArray(this.brand?.adminTags)
-      ? this.brand.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      ? this.brand.adminTags
+          .filter((tag: any) => !!String(tag || '').trim())
+          .filter((tag: any) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
       : [];
   }
 

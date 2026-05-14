@@ -94,8 +94,11 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   get displayTags(): string[] {
+    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
     return Array.isArray(this.influencer?.adminTags)
-      ? this.influencer.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      ? this.influencer.adminTags
+          .filter((tag: any) => !!String(tag || '').trim())
+          .filter((tag: any) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
       : [];
   }
 
