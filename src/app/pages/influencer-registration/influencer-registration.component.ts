@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
@@ -47,6 +48,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
     this.registrationForm.get(field)?.setValue([...arr]);
     this.registrationForm.get(field)?.markAsTouched();
+  }
+
+  openProfilePhotoGuidelines(): void {
+    this.guidelinesService.open('influencer');
   }
 
   // --- Password strength live checks ---
@@ -229,6 +234,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     private plansService: PlansService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
+    private guidelinesService: ImageGuidelinesService,
   ) {}
 
   ngOnInit(): void {

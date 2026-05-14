@@ -5,13 +5,14 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavigationStart, Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
+import { ImageGuidelinesModalComponent } from '../../shared/components/image-guidelines-modal/image-guidelines-modal.component';
 import { environment } from '../../../environments/environment';
 import { filter, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FooterComponent],
+  imports: [CommonModule, RouterModule, FooterComponent, ImageGuidelinesModalComponent],
   templateUrl: './navbar-layout.component.html',
   styleUrl: './navbar-layout.component.scss'
 })

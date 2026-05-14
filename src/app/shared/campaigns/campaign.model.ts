@@ -12,7 +12,14 @@ export interface Campaign {
   campaignType?: 'paid_collab' | 'product' | 'invite_location' | 'pay_to_join';
   campaignMode?: 'invite_only' | 'tier_filtered_open';
   image?: { url: string; public_id: string };
-  status: 'active' | 'pending' | 'completed' | 'draft';
+  status:
+    | 'active'
+    | 'pending'
+    | 'pending_review'
+    | 'needs_changes'
+    | 'rejected'
+    | 'completed'
+    | 'draft';
   budgetMin?: number;
   budgetMax?: number;
   pricePerInfluencer?: number; // paise
@@ -31,7 +38,10 @@ export interface Campaign {
   categories?: string[];
   deliverables?: string[];
   minFollowerCount?: number;
+  maxFollowerCount?: number;
   minInfluencerTier?: string;
+  targetState?: string;
+  targetDistrict?: string;
   targetTiers?: string[];
   targetCities?: string[];
   platformPreference?: string;
@@ -48,6 +58,8 @@ export interface Campaign {
   productValue?: number; // paise
   productPaymentMode?: 'product_only' | 'product_plus_payment';
   productPaymentAmount?: number; // paise (when mode = product_plus_payment)
+  productShippingRequired?: boolean;
+  moderationNote?: string;
   // Invite to location specific benefits text (e.g. "Stay + food included")
   inviteBenefits?: string;
   // Pay-to-join specific fields

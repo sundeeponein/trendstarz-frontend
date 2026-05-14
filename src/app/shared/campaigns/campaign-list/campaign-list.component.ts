@@ -5,7 +5,13 @@ import { CampaignCardComponent } from '../campaign-card/campaign-card.component'
 import { CampaignFormComponent } from '../campaign-form/campaign-form.component';
 import { CampaignDetailModalComponent } from '../../campaign-detail-modal/campaign-detail-modal.component';
 
-type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
+type TabStatus =
+  | 'active'
+  | 'pending_review'
+  | 'needs_changes'
+  | 'rejected'
+  | 'completed'
+  | 'draft';
 
 @Component({
   selector: 'app-campaign-list',
@@ -37,7 +43,9 @@ export class CampaignListComponent implements OnChanges {
 
   tabs: { key: TabStatus; label: string }[] = [
     { key: 'active', label: 'Active' },
-    { key: 'pending', label: 'Pending' },
+    { key: 'pending_review', label: 'Pending Review' },
+    { key: 'needs_changes', label: 'Needs Changes' },
+    { key: 'rejected', label: 'Rejected' },
     { key: 'completed', label: 'Completed' },
     { key: 'draft', label: 'Drafts' },
   ];
@@ -58,7 +66,15 @@ export class CampaignListComponent implements OnChanges {
 
   private statusKey(status: unknown): TabStatus | '' {
     const normalized = String(status || '').trim().toLowerCase();
-    if (normalized === 'active' || normalized === 'pending' || normalized === 'completed' || normalized === 'draft') {
+    if (normalized === 'pending') return 'pending_review';
+    if (
+      normalized === 'active'
+      || normalized === 'pending_review'
+      || normalized === 'needs_changes'
+      || normalized === 'rejected'
+      || normalized === 'completed'
+      || normalized === 'draft'
+    ) {
       return normalized;
     }
     return '';

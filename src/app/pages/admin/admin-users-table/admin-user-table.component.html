@@ -19,7 +19,14 @@
 
     <div class="col-8">
       <div class="filters-section p-0 bg-transparent border-0">
-        <div class="filter-group justify-content-end">
+        <div class="filters-header justify-content-end">
+          <button class="btn btn-outline-light btn-sm filter-toggle-btn" type="button" (click)="toggleFilters()">
+            <i class="bi" [class.bi-chevron-up]="filtersExpanded" [class.bi-chevron-down]="!filtersExpanded"></i>
+            {{ filtersExpanded ? 'Collapse Filters' : 'Expand Filters' }}
+          </button>
+        </div>
+
+        <div class="filter-group justify-content-end" *ngIf="filtersExpanded">
           <!-- Status Filter -->
           <div class="filter-item">
             <label>Status</label>

@@ -110,6 +110,15 @@
         </div>
 
         <div class="field-group">
+          <label class="field-label">Brand name</label>
+          <input type="text" formControlName="brandName" class="field-input" readonly placeholder="Auto from your profile" />
+          <p class="field-sublabel">
+            <i class="bi bi-shield-check"></i>
+            Verified brand identity is shown from your registered account details.
+          </p>
+        </div>
+
+        <div class="field-group">
           <div class="field-label-row">
             <label class="field-label">Campaign description</label>
             <button
@@ -132,6 +141,13 @@
           <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Event/Location brief, including venue details, timing, and attendance expectations. [You can edit venue, timing, and requirements.]
           </p>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Deliverables</label>
+          <textarea formControlName="deliverablesText" class="field-textarea" rows="3"
+                    placeholder="Example: 1 Reel, 2 Stories, 1 Static post (one deliverable per line or comma-separated)"></textarea>
+          <p class="field-sublabel">This helps influencers understand exact expected output before applying.</p>
         </div>
 
         
@@ -316,6 +332,12 @@
             <label class="field-label">Cash component per influencer (₹) <span class="required">*</span></label>
             <input type="number" formControlName="productPaymentAmount" class="field-input" placeholder="e.g. 500" min="1" />
             <span class="field-error" *ngIf="f['productPaymentAmount'].touched && f['productPaymentAmount'].invalid">Enter a value greater than 0</span>
+          </div>
+
+          <label class="field-label mt-3">Product shipping required?</label>
+          <div class="chip-list">
+            <button type="button" class="chip" [class.chip--selected]="f['productShippingRequired'].value === true" (click)="form.patchValue({ productShippingRequired: true })">Yes</button>
+            <button type="button" class="chip" [class.chip--selected]="f['productShippingRequired'].value === false" (click)="form.patchValue({ productShippingRequired: false })">No</button>
           </div>
         </div>
 
@@ -511,14 +533,14 @@
             <h4>Open Campaign — Influencers apply directly</h4>
             <p>
               This is a <strong>Tier-filtered open</strong> campaign. Once published, eligible influencers
-              who meet your minimum tier requirement will be able to discover it and send an application.
-              You review each application and approve or decline from your campaign dashboard.
+              who meet your minimum tier requirement can discover it and send an application.
+              Campaigns are submitted for admin approval before they become publicly visible.
             </p>
             <ul class="open-campaign-steps">
-              <li><i class="bi bi-1-circle-fill"></i> Publish the campaign — it becomes visible to eligible influencers</li>
-              <li><i class="bi bi-2-circle-fill"></i> Influencers matching your minimum tier apply</li>
-              <li><i class="bi bi-3-circle-fill"></i> You review &amp; approve applicants from the dashboard</li>
-              <li><i class="bi bi-4-circle-fill"></i> Approved influencers proceed with posting &amp; payment as usual</li>
+              <li><i class="bi bi-1-circle-fill"></i> Submit campaign for admin moderation</li>
+              <li><i class="bi bi-2-circle-fill"></i> Approved campaigns become visible to eligible influencers</li>
+              <li><i class="bi bi-3-circle-fill"></i> Influencers matching your minimum tier apply</li>
+              <li><i class="bi bi-4-circle-fill"></i> You review applicants from the dashboard</li>
             </ul>
             <p class="field-sublabel" style="margin-top:12px;">
               <i class="bi bi-info-circle"></i>
@@ -665,7 +687,7 @@
         </button>
         <button type="button" class="btn btn-send" [disabled]="uploading" (click)="skipAndSave()">
           <span *ngIf="uploading">Saving…</span>
-          <span *ngIf="!uploading">Publish campaign <i class="bi bi-arrow-right"></i></span>
+          <span *ngIf="!uploading">Submit for review <i class="bi bi-arrow-right"></i></span>
         </button>
       </div>
       <ng-template #inviteOnlyFooter>
@@ -679,7 +701,7 @@
           <button type="button" class="btn btn-send"
             [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">
             <span *ngIf="uploading">Saving…</span>
-            <span *ngIf="!uploading">Send invites <i class="bi bi-arrow-right"></i></span>
+            <span *ngIf="!uploading">Send invites &amp; submit for review <i class="bi bi-arrow-right"></i></span>
           </button>
         </div>
       </ng-template>

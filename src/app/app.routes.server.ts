@@ -35,6 +35,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin', renderMode: RenderMode.Client },
   { path: 'admin/admin-dashboard', renderMode: RenderMode.Client },
   { path: 'admin/admin-user-table', renderMode: RenderMode.Client },
+  { path: 'admin/campaign-review', renderMode: RenderMode.Client },
   { path: 'admin/admin-management', renderMode: RenderMode.Client },
   { path: 'admin/payments', renderMode: RenderMode.Client },
   { path: 'admin/plans', renderMode: RenderMode.Client },
