@@ -516,6 +516,7 @@ export class AdminUserTableComponent implements OnInit {
     const tags = Array.isArray(user?.adminTags)
       ? user.adminTags.filter((tag: any) => !!String(tag || '').trim())
       : [];
+    const commissionTags = ['Early Access', 'Partner', 'Internal/Test'];
 
     const commissionBadgeMap: Record<string, string> = {
       early_access_creator: 'Early Access',
@@ -532,8 +533,16 @@ export class AdminUserTableComponent implements OnInit {
     const commissionTag = user?.commissionBadge
       ? (commissionBadgeMap[String(user.commissionBadge)] || '')
       : '';
+    const regularTags = tags.filter((tag: string) => !commissionTags.includes(tag));
+    const fallbackCommissionTag = commissionTags.find((tag) => tags.includes(tag)) || '';
+    const effectiveCommissionTag = commissionTag || fallbackCommissionTag;
 
-    return [...new Set([...tags, ...(commissionTag ? [commissionTag] : [])])];
+    return [
+      ...new Set([
+        ...regularTags,
+        ...(effectiveCommissionTag ? [effectiveCommissionTag] : []),
+      ]),
+    ];
   }
 
   getTagBadgeClass(tag: string): string {
@@ -606,6 +615,13 @@ export class AdminUserTableComponent implements OnInit {
         return of(null);
       }))
       .subscribe((res: any) => {
+        if (res?.blocked) {
+          const warningText = Array.isArray(res?.warnings) && res.warnings.length
+            ? `\n\nReason:\n- ${res.warnings.join('\n- ')}`
+            : '';
+          alert(`Tags were not updated.${warningText}`);
+          return;
+        }
         if (res?.user) {
           const warningText = Array.isArray(res?.warnings) && res.warnings.length
             ? `\n\nNote:\n- ${res.warnings.join('\n- ')}`
