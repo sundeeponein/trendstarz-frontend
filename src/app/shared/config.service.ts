@@ -165,14 +165,14 @@ export class ConfigService {
         brandRequireEmailVerified: res?.brandRequireEmailVerified !== false,
         brandRequireMobileVerified: !!res?.brandRequireMobileVerified,
         platformFeeEnabled: !!res?.platformFeeEnabled,
-        platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : 10,
-        gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : 18,
+        platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : undefined,
+        gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : undefined,
         paymentUpiId: res?.paymentUpiId || 'trendstarzin@kotak',
       })),
       catchError(() => of({
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
-        platformFeeEnabled: false, platformFeePercent: 10, gstPercent: 18, paymentUpiId: 'trendstarzin@kotak'
+        platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak'
       }))
     );
   }

@@ -10,14 +10,14 @@
   <h2 class="text-white">Admin Users</h2>
 
   <div class="row">
-    <div class="col-4">
+    <div class="col-md-3 col-7">
       <div class="admin-tabs">
         <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
         <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
       </div>
     </div>
 
-    <div class="col-8">
+    <div class="col-md-9 col-5">
       <div class="filters-section p-0 bg-transparent border-0">
         <div class="filters-header justify-content-end">
           <button class="btn btn-outline-light btn-sm filter-toggle-btn" type="button" (click)="toggleFilters()">
@@ -241,6 +241,9 @@
                 {{ tag }}
               </span>
             </ng-container>
+            <div *ngIf="getCommissionBenefitText(user)" class="small text-muted mt-1">
+              {{ getCommissionBenefitText(user) }}
+            </div>
             <ng-template #noTagsInf>-</ng-template>
           </td>
           <td>
@@ -413,6 +416,9 @@
                 {{ tag }}
               </span>
             </ng-container>
+            <div *ngIf="getCommissionBenefitText(user)" class="small text-muted mt-1">
+              {{ getCommissionBenefitText(user) }}
+            </div>
             <ng-template #noTagsBrand>-</ng-template>
           </td>
           <td>
@@ -509,17 +515,35 @@
         </div>
         <div class="modal-body">
           <p class="text-muted mb-3">Choose one or more labels to show on the user card and profile.</p>
+
           <div class="d-flex flex-wrap gap-2">
+            <h5 class="me-2">User Tags</h5>
             <button
               type="button"
               class="btn btn-sm"
-              *ngFor="let tag of getTagOptions(tagType || activeTab)"
+              *ngFor="let tag of getRegularTagOptions(tagType || activeTab)"
               [class.btn-primary]="selectedTagOptions.includes(tag)"
               [class.btn-outline-primary]="!selectedTagOptions.includes(tag)"
               (click)="toggleTagSelection(tag)">
               {{ tag }}
             </button>
           </div>
+
+          <hr *ngIf="getCommissionTagOptions(tagType || activeTab).length" class="my-3" />
+
+          <h5>Commission to users</h5>
+          <div class="d-flex flex-wrap gap-2" *ngIf="getCommissionTagOptions(tagType || activeTab).length">
+            <button
+              type="button"
+              class="btn btn-sm"
+              *ngFor="let tag of getCommissionTagOptions(tagType || activeTab)"
+              [class.btn-primary]="selectedTagOptions.includes(tag)"
+              [class.btn-outline-primary]="!selectedTagOptions.includes(tag)"
+              (click)="toggleTagSelection(tag)">
+              {{ tag }}
+            </button>
+          </div>
+
           <div class="modal-actions mt-4">
             <button (click)="saveTags()">Save</button>
             <button (click)="closeTagModal()">Cancel</button>

@@ -35,8 +35,8 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   paymentProofPreview: string | null = null;
 
   // admin-configurable defaults
-  commissionPercent = 10;
-  gstPercent = 18;
+  commissionPercent: number = 0;
+  gstPercent: number = 0;
   paymentUpiId = 'trendstarzin@kotak';
 
   // current transaction status (polled after modal opens)

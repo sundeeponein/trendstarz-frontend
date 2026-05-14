@@ -53,7 +53,12 @@ export class BrandUserCardComponent {
   }
 
   get displayTags(): string[] {
-    return Array.isArray(this.adminTags) ? this.adminTags.filter((tag) => !!String(tag || '').trim()) : [];
+    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
+    return Array.isArray(this.adminTags)
+      ? this.adminTags
+          .filter((tag) => !!String(tag || '').trim())
+          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
+      : [];
   }
 
   /** Tier of the first social handle the user added (entry order). */

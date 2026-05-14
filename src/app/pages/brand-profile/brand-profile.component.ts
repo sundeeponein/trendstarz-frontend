@@ -26,6 +26,15 @@ import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 })
 export class BrandProfileComponent implements OnInit {
   premiumMonthlyPrice = 999;
+  commissionAccessTags: string[] = [];
+
+  private extractCommissionAccessTags(tags: unknown): string[] {
+    const all = Array.isArray(tags) ? tags : [];
+    const allowed = new Set(['early access', 'partner', 'internal/test', 'internal test']);
+    return all
+      .map((tag: any) => String(tag || '').trim())
+      .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
+  }
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
   readonly currentYear = new Date().getFullYear();
@@ -430,6 +439,7 @@ export class BrandProfileComponent implements OnInit {
 
           this.emailVerified = !!profile?.isEmailVerified;
           this.phoneVerified = !!profile?.isMobileVerified;
+          this.commissionAccessTags = this.extractCommissionAccessTags(profile?.adminTags);
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
 

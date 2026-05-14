@@ -35,6 +35,15 @@ export class InfluencerProfileComponent implements OnInit {
   verificationConsentError = '';
   verificationStatusDisplay = 'not_submitted';
   verificationAdminNotesDisplay = '';
+  commissionAccessTags: string[] = [];
+
+  private extractCommissionAccessTags(tags: unknown): string[] {
+    const all = Array.isArray(tags) ? tags : [];
+    const allowed = new Set(['early access', 'partner', 'internal/test', 'internal test']);
+    return all
+      .map((tag: any) => String(tag || '').trim())
+      .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
+  }
 
   toggleChip(field: 'languages' | 'categories', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
@@ -442,6 +451,7 @@ export class InfluencerProfileComponent implements OnInit {
           }
           this.emailVerified = !!profile.isEmailVerified;
           this.phoneVerified = !!profile.isMobileVerified;
+          this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
           // Map state name to ID
@@ -1128,6 +1138,7 @@ export class InfluencerProfileComponent implements OnInit {
             }
             this.emailVerified = !!profile.isEmailVerified;
             this.phoneVerified = !!profile.isMobileVerified;
+            this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
             this.showEmailVerificationPrompt = !this.emailVerified;
             const stateId = (this.states || []).find((s: any) => s.name === profile.location?.state)?.['_id'] || '';
             const languageIds = (profile.languages || []).map((name: string) =>

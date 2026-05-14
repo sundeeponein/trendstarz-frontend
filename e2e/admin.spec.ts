@@ -254,6 +254,27 @@ test.describe('Admin User Table', () => {
     expect(response.status()).toBe(200);
   });
 
+  test('tag modal keeps one regular tag and one commission tag selected at a time', async ({ page }) => {
+    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await page.locator('table.admin-table tbody tr').first().locator('button:has-text("Edit Tags")').click({ force: true });
+    await page.waitForSelector('.modal-body', { state: 'visible', timeout: 5000 });
+
+    const regularGroup = page.locator('.modal-body div.d-flex.flex-wrap.gap-2').first();
+    const commissionGroup = page.locator('.modal-body div.d-flex.flex-wrap.gap-2').nth(1);
+
+    await regularGroup.locator('button:has-text("Founder")').click({ force: true });
+    await regularGroup.locator('button:has-text("Internal Creator")').click({ force: true });
+    await expect(regularGroup.locator('button.btn-primary:has-text("Internal Creator")')).toBeVisible();
+    await expect(regularGroup.locator('button.btn-primary:has-text("Founder")')).toHaveCount(0);
+
+    await commissionGroup.locator('button:has-text("Early Access")').click({ force: true });
+    await commissionGroup.locator('button:has-text("Partner")').click({ force: true });
+    await expect(commissionGroup.locator('button.btn-primary:has-text("Partner")')).toBeVisible();
+    await expect(commissionGroup.locator('button.btn-primary:has-text("Early Access")')).toHaveCount(0);
+
+    await expect(page.locator('.modal-body button.btn-primary')).toHaveCount(2);
+  });
+
   test('reset filters clears all dropdowns', async ({ page }) => {
     await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
     // Apply a filter first
