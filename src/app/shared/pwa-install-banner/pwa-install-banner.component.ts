@@ -23,11 +23,12 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
       <!-- iOS instruction -->
       <ng-container *ngIf="isIos; else promptBanner">
         <div class="pwa-inner">
-          <img src="assets/logo-trendstarz-logo-text.png" class="pwa-icon" alt="TrendStarZ" />
+          <img src="/favicon.png" class="pwa-icon" alt="TrendStarZ" />
           <div class="pwa-text">
             <strong>iPhone Safari/Chrome</strong>
             <span>Tap <span class="share-icon">⎙</span> then <em>Add to Home Screen</em></span>
           </div>
+          <button class="pwa-install-btn" (click)="install()">Install</button>
           <button class="pwa-dismiss" (click)="dismiss()" aria-label="Dismiss">✕</button>
         </div>
       </ng-container>
@@ -35,7 +36,7 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
       <!-- Chrome / Android prompt -->
       <ng-template #promptBanner>
         <div class="pwa-inner">
-          <img src="assets/logo-trendstarz-logo-text.png" class="pwa-icon" alt="TrendStarZ" />
+          <img src="/favicon.png" class="pwa-icon" alt="TrendStarZ" />
           <div class="pwa-text">
             <strong>Android Chrome</strong>
             <span>Install TrendStarZ for a faster experience</span>
@@ -184,6 +185,13 @@ export class PwaInstallBannerComponent implements OnInit, OnDestroy {
   }
 
   async install(): Promise<void> {
+    if (this.isIos) {
+      if (isPlatformBrowser(this.platformId)) {
+        window.alert('To install TrendStarZ on iPhone: tap the Share button in Safari/Chrome, then choose "Add to Home Screen".');
+      }
+      return;
+    }
+
     if (!this.deferredPrompt) return;
     this.deferredPrompt.prompt();
     const { outcome } = await this.deferredPrompt.userChoice;
