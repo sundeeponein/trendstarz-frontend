@@ -533,6 +533,13 @@
                 {{ earlyAccessPreviewLoading ? 'Loading…' : 'Preview Refill' }}
               </button>
               <button
+                class="btn btn-outline-dark btn-sm me-2"
+                (click)="copyEarlyAccessPreview()"
+                [disabled]="!earlyAccessPreview"
+              >
+                Copy Preview
+              </button>
+              <button
                 class="btn btn-outline-primary btn-sm"
                 (click)="runEarlyAccessRefillNow()"
                 [disabled]="earlyAccessRefillRunning"
@@ -541,6 +548,9 @@
               </button>
               <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessRefillMessage">
                 {{ earlyAccessRefillMessage }}
+              </small>
+              <small class="text-light-emphasis d-block" *ngIf="earlyAccessPreviewCopyMessage">
+                {{ earlyAccessPreviewCopyMessage }}
               </small>
               <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessPreview">
                 Influencers: {{ earlyAccessPreview?.influencers?.activeCount || 0 }}/{{ earlyAccessPreview?.influencers?.cap || 0 }} active,
@@ -553,10 +563,16 @@
                 {{ earlyAccessPreview?.brands?.eligibleCount || 0 }} eligible.
               </small>
               <small class="text-light-emphasis d-block" *ngIf="(earlyAccessPreview?.influencers?.previewUsers || []).length > 0">
-                Next influencers: {{ formatPreviewUser(earlyAccessPreview.influencers.previewUsers[0]) }}
+                Next influencers:
+                <span *ngFor="let user of earlyAccessPreview.influencers.previewUsers; let i = index">
+                  {{ i ? ', ' : ' ' }}{{ formatPreviewUser(user) }}
+                </span>
               </small>
               <small class="text-light-emphasis d-block" *ngIf="(earlyAccessPreview?.brands?.previewUsers || []).length > 0">
-                Next brands: {{ formatPreviewUser(earlyAccessPreview.brands.previewUsers[0]) }}
+                Next brands:
+                <span *ngFor="let user of earlyAccessPreview.brands.previewUsers; let i = index">
+                  {{ i ? ', ' : ' ' }}{{ formatPreviewUser(user) }}
+                </span>
               </small>
             </div>
           </div>
