@@ -50,7 +50,12 @@
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <!-- ═══ STEP 1: BRAND INFO ═══ -->
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Brand Info</h2>
+          <h2 class="d-flex align-items-center justify-content-between">
+            <span>Brand Info</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="openBrandImageGuidelines()" title="View brand image guidelines">
+              <i class="bi bi-info-circle me-1"></i>Guidelines
+            </button>
+          </h2>
           <p class="section-subtitle">Create your brand identity.</p>
 
           <!-- Logo upload -->
@@ -116,7 +121,7 @@
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</div>
               <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
               <small *ngIf="verificationCallNumber" class="text-muted mt-1">
-                You may receive a verification call from our team <strong>{{ verificationCallNumber }}</strong>.
+                You may receive a verification call from our team.
               </small>
             </div>
 
@@ -277,6 +282,7 @@
             </div>
             <button type="button" class="add-social-btn mt-2" (click)="addProductImage()" [disabled]="!canAddProductImage()">+ Add Product Image</button>
             <div *ngIf="!isPremiumPlan()" class="text-muted mt-1" style="font-size:0.82rem">Free users can add one product image. Upgrade to premium for multiple.</div>
+            <div *ngIf="step2Attempted && !hasAtLeastOneProductImage()" class="text-danger mt-1">At least one company/product image is required.</div>
           </div>
 
           <!-- Social Media — optional, for brand trust -->

@@ -4,12 +4,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-admin-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './admin-management.component.html',
   styleUrls: ['./admin-management.component.scss']
 })
@@ -17,7 +18,7 @@ export class AdminManagementComponent implements OnInit {
   getDistrictIndex(dist: any): number {
     return this.config.districts.findIndex((d: any) => d._id === dist._id);
   }
-  activeTab: string = 'details';
+  activeTab: string = 'campaigns';
   config: any = {
     socialMediaPlatforms: [],
     categories: [],
@@ -42,6 +43,7 @@ export class AdminManagementComponent implements OnInit {
     preApproveBrands: false,
     brandRequireEmailVerified: true,
     brandRequireMobileVerified: false,
+    campaignApprovalMode: 'manual',
     // Admin-managed support contact (shown on campaign-management page banner).
     // Can be toggled off entirely via supportContactEnabled. Stays useful even
     // after Razorpay automation lands — repurposed as "Need help?" channel.
@@ -100,6 +102,7 @@ export class AdminManagementComponent implements OnInit {
         this.settings.preApproveBrands = !!data?.preApproveBrands;
         this.settings.brandRequireEmailVerified = !!data?.brandRequireEmailVerified;
         this.settings.brandRequireMobileVerified = !!data?.brandRequireMobileVerified;
+        this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
         this.settings.supportContactEmail = data?.supportContactEmail || 'support@trendstarz.in';
         this.settings.supportContactPhone = data?.supportContactPhone || '';
@@ -113,6 +116,10 @@ export class AdminManagementComponent implements OnInit {
       },
       error: () => {}
     });
+  }
+
+  onCampaignApprovalModeToggle(isAutoLive: boolean) {
+    this.settings.campaignApprovalMode = isAutoLive ? 'auto_live' : 'manual';
   }
 
   saveSettings() {

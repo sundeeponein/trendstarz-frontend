@@ -13,6 +13,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 
@@ -46,6 +47,10 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.get(field)?.markAsTouched();
   }
 
+  openBrandImageGuidelines(): void {
+    this.guidelinesService.open('brand');
+  }
+
   getTierOptionLabel(tier: any): string {
     const name = String(tier?.name || '').trim();
     const descFromApi = String(tier?.desc || '').trim();
@@ -59,7 +64,8 @@ export class BrandProfileComponent implements OnInit {
     private configService: ConfigService,
     private otpService: OtpService,
     private plansService: PlansService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private guidelinesService: ImageGuidelinesService
   ) {}
 
   private getToken(): string | null {

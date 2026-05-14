@@ -20,6 +20,7 @@ import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier
 })
 export class CampaignFormComponent implements OnInit {
   readonly tierOrder: readonly string[] = TIER_ORDER;
+  currentBrandName = '';
     selectionLimitError = '';
 
     /** Count of non-declined invites already sent for this campaign. */
@@ -131,9 +132,12 @@ export class CampaignFormComponent implements OnInit {
   constructor(private fb: FormBuilder, private config: ConfigService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
+    this.currentBrandName = this.readCurrentBrandName();
     this.form = this.fb.group({
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
+      brandName: [this.currentBrandName],
       description: [this.campaign?.description || ''],
+      deliverablesText: [Array.isArray((this.campaign as any)?.deliverables) ? (this.campaign as any).deliverables.join('\n') : ''],
       campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
       campaignMode: [(this.campaign as any)?.campaignMode || 'invite_only', [Validators.required]],
       status: [this.campaign?.status || 'draft'],
@@ -146,7 +150,6 @@ export class CampaignFormComponent implements OnInit {
       acceptanceDeadline: [this.formatDateTimeLocal((this.campaign as any)?.acceptanceDeadline)],
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
-      minFollowerCount: [this.campaign?.minFollowerCount || null, [Validators.min(0)]],
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
       targetState: [(this.campaign as any)?.targetState || ''],
       targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
@@ -164,6 +167,7 @@ export class CampaignFormComponent implements OnInit {
       productDescription: [(this.campaign as any)?.productDescription || ''],
       productPaymentMode: [(this.campaign as any)?.productPaymentMode || 'product_only'],
       productPaymentAmount: [this.getInitialProductPaymentAmount()],
+      productShippingRequired: [!!(this.campaign as any)?.productShippingRequired],
       inviteBenefits: [(this.campaign as any)?.inviteBenefits || ''],
     }, { validators: [this.dateRangeValidator, this.minMaxInfluencerValidator] });
 
@@ -318,6 +322,31 @@ export class CampaignFormComponent implements OnInit {
     if (!min || !max) return null;
     return min <= max ? null : { invalidMinMaxInfluencers: true };
   };
+
+  private readCurrentBrandName(): string {
+    if (typeof window === 'undefined') return '';
+    const keys = ['user', 'currentUser'];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw);
+        const name = String(parsed?.brandName || parsed?.name || '').trim();
+        if (name) return name;
+      } catch {
+        // Ignore malformed cached values.
+      }
+    }
+    return '';
+  }
+
+  private parseDeliverables(raw: string): string[] {
+    return String(raw || '')
+      .split(/\n|,/g)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  }
 
   // ── Stepper helpers ──────────────────────────────────────────
   step1Valid(): boolean {
@@ -774,7 +803,8 @@ export class CampaignFormComponent implements OnInit {
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
-      status: isTierOpen ? 'active' : 'draft',
+      status: isTierOpen ? 'pending_review' : 'draft',
+      deliverables: this.parseDeliverables(v.deliverablesText),
       targetCities: v.targetDistrict ? [v.targetDistrict] : [],
       targetDistrict: undefined,
       categories: this.selectedCategories,
@@ -819,7 +849,8 @@ export class CampaignFormComponent implements OnInit {
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
-      status: 'active',
+      status: 'pending_review',
+      deliverables: this.parseDeliverables(v.deliverablesText),
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
       ? new Date(payload.acceptanceDeadline).toISOString()

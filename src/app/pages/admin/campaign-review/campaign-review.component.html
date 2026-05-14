@@ -1,0 +1,143 @@
+<div class="campaign-review-page container-fluid p-4">
+  <div class="campaign-review-header">
+    <div>
+      <h2 class="text-white">Campaign Review</h2>
+      <p>
+        Approve, reject, or request changes for campaigns submitted by brands.
+      </p>
+    </div>
+    <a routerLink="/admin/admin-management" class="btn btn-outline-light review-settings-link">
+      Approval Settings
+    </a>
+  </div>
+
+  <div class="review-card">
+    <div class="review-card-header">
+      <div>
+        <strong>Current moderation mode</strong>
+        <p *ngIf="campaignApprovalMode === 'manual'">
+          Manual: New campaign submits as <strong>Pending Review</strong> and needs admin decision.
+        </p>
+        <p *ngIf="campaignApprovalMode === 'auto_live'">
+          Auto-live: Campaign goes public immediately (still appears in admin queue for audit).
+        </p>
+      </div>
+    </div>
+
+    <div class="admin-tabs review-status-tabs" aria-label="Campaign review status tabs">
+      <button
+        *ngFor="let tab of statusTabs"
+        type="button"
+        class="tab-btn"
+        [class.active]="campaignApprovalStatusFilter === tab.key"
+        (click)="setStatusTab(tab.key)"
+      >
+        {{ tab.label }} <span class="tab-count">{{ getStatusCount(tab.key) }}</span>
+      </button>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-2 campaign-queue-title-row">
+      <strong>Campaign Approval Queue</strong>
+      <button class="btn btn-outline-light btn-sm campaign-filter-toggle" type="button" (click)="toggleCampaignFilters()">
+        <i class="bi" [class.bi-chevron-up]="campaignFiltersExpanded" [class.bi-chevron-down]="!campaignFiltersExpanded"></i>
+        {{ campaignFiltersExpanded ? 'Collapse Filters' : 'Expand Filters' }}
+      </button>
+    </div>
+
+    <div class="campaign-filters" *ngIf="campaignFiltersExpanded">
+      <div class="campaign-filter-group">
+        <div class="filter-summary">
+          <span class="filter-summary-label">Active filter</span>
+          <strong>{{ campaignStatusLabel(campaignApprovalStatusFilter) }}</strong>
+        </div>
+        <div class="campaign-filter-actions">
+          <button class="btn btn-outline-light btn-sm" type="button" (click)="loadCampaignApprovals()">Refresh</button>
+          <button class="btn btn-secondary btn-sm" type="button" (click)="resetCampaignApprovalFilters()">Reset Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="campaignApprovalsLoading" class="text-muted">Loading campaign approvals...</div>
+    <div *ngIf="campaignApprovalsError" class="text-danger">{{ campaignApprovalsError }}</div>
+
+    <div class="table-scroll-wrapper" *ngIf="!campaignApprovalsLoading && !campaignApprovalsError">
+      <table class="table table-hover align-middle admin-table campaign-review-table">
+        <thead>
+          <tr>
+            <th>Campaign</th>
+            <th>Brand</th>
+            <th>Status</th>
+            <th>Budget</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of campaignApprovals">
+            <td>
+              <button type="button" class="review-campaign-link" (click)="openCampaignPreview(c)">
+                <div class="fw-semibold">{{ c.title || 'Untitled campaign' }}</div>
+              </button>
+              <div class="small text-secondary" *ngIf="c.campaignType">{{ c.campaignType }}</div>
+            </td>
+            <td>
+              <div>{{ c.brand?.brandName || '-' }}</div>
+              <div class="small text-secondary" *ngIf="c.brand?.email">{{ c.brand.email }}</div>
+            </td>
+            <td>{{ campaignStatusLabel(c.status) }}</td>
+            <td>₹{{ ((c.budgetMin || 0) > 0 ? c.budgetMin : (c.pricePerInfluencer || 0) / 100) | number:'1.0-0' }}</td>
+            <td>{{ (c.updatedAt || c.createdAt) | date:'medium' }}</td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  type="button"
+                  (click)="openCampaignPreview(c)"
+                >View</button>
+                <button
+                  *ngIf="canApproveCampaign(c)"
+                  class="btn btn-outline-success btn-sm"
+                  type="button"
+                  [disabled]="moderatingCampaignId === c._id"
+                  (click)="moderateCampaign(c, 'approve')"
+                >Approve</button>
+                <button
+                  *ngIf="canRequestChangesCampaign(c)"
+                  class="btn btn-outline-warning btn-sm"
+                  type="button"
+                  [disabled]="moderatingCampaignId === c._id"
+                  (click)="moderateCampaign(c, 'needs_changes')"
+                >Needs Changes</button>
+                <button
+                  *ngIf="canRejectCampaign(c)"
+                  class="btn btn-outline-danger btn-sm"
+                  type="button"
+                  [disabled]="moderatingCampaignId === c._id"
+                  (click)="moderateCampaign(c, 'reject')"
+                >Reject</button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="campaignApprovals.length === 0">
+            <td colspan="6" class="text-center text-muted">No campaigns found for selected status.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<app-campaign-detail-modal
+  *ngIf="selectedCampaignInvite"
+  [invite]="selectedCampaignInvite"
+  [visible]="!!selectedCampaignInvite"
+  [showDateInput]="false"
+  [busy]="moderatingCampaignId === selectedCampaign?._id"
+  [adminReview]="selectedCampaignCanModerate"
+  [adminCanApprove]="selectedCampaignCanApprove"
+  [adminCanRequestChanges]="selectedCampaignCanRequestChanges"
+  [adminCanReject]="selectedCampaignCanReject"
+  (close)="closeCampaignPreview()"
+  (approve)="moderateCampaign(selectedCampaign, 'approve')"
+  (requestChanges)="moderateCampaign(selectedCampaign, 'needs_changes')"
+  (reject)="moderateCampaign(selectedCampaign, 'reject')"
+></app-campaign-detail-modal>

@@ -16,6 +16,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   searchQuery = '';
   adminUser: any = null;
   dropdownOpen = false;
+  userManagementMenuOpen = false;
   mobileMenuOpen = false;
   mobileProfileMenuOpen = false;
   openDisputesCount = 0;
@@ -90,6 +91,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (this.dropdownOpen && !this.elRef.nativeElement.querySelector('.profile-dropdown')?.contains(event.target)) {
       this.dropdownOpen = false;
     }
+    if (this.userManagementMenuOpen && !this.elRef.nativeElement.querySelector('.nav-dropdown')?.contains(event.target)) {
+      this.userManagementMenuOpen = false;
+    }
   }
 
   loadAdminUser() {
@@ -125,6 +129,21 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   toggleMobileProfileMenu() {
     this.mobileProfileMenuOpen = !this.mobileProfileMenuOpen;
+  }
+
+  toggleUserManagementMenu(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.userManagementMenuOpen = !this.userManagementMenuOpen;
+  }
+
+  closeUserManagementMenu() {
+    this.userManagementMenuOpen = false;
+  }
+
+  isUserManagementSection(): boolean {
+    const current = this.router.url || '';
+    return current.startsWith('/admin/admin-user-table') || current.startsWith('/admin/deleted-users');
   }
 
   @HostListener('window:pageshow')

@@ -17,7 +17,17 @@ export class CampaignCardComponent {
   @Output() manage = new EventEmitter<Campaign>();
 
   get statusClass(): string {
-    return this.campaign?.status || 'active';
+    const status = String(this.campaign?.status || 'active').toLowerCase();
+    return status === 'pending' ? 'pending_review' : status;
+  }
+
+  get statusLabel(): string {
+    const status = this.statusClass;
+    if (status === 'pending_review') return 'Pending Review';
+    if (status === 'needs_changes') return 'Needs Changes';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'active') return 'Approved';
+    return status.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
   }
 
   get budgetDisplay(): string {

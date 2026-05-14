@@ -12,6 +12,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
@@ -47,13 +48,18 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.get(field)?.markAsTouched();
   }
 
+  openProfilePhotoGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
   // --- New Social Media Platform UI ---
   constructor(
     public fb: FormBuilder,
     private configService: ConfigService,
     private otpService: OtpService,
     private plansService: PlansService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private guidelinesService: ImageGuidelinesService
   ) {}
 
   private getToken(): string | null {

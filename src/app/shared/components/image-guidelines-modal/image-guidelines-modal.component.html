@@ -1,0 +1,107 @@
+<div class="modal-backdrop show" *ngIf="isOpen" (click)="close()"></div>
+<div class="modal d-block image-guidelines-modal" *ngIf="isOpen" tabindex="1" role="dialog">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i *ngIf="currentType === 'influencer'" class="bi bi-person me-2 title-icon title-icon--influencer"></i>
+          <i *ngIf="currentType === 'brand'" class="bi bi-building me-2 title-icon title-icon--brand"></i>
+          {{ currentType === 'influencer' ? 'Influencer Profile Guidelines' : 'Brand Rules' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <ng-container *ngIf="currentType === 'influencer'">
+          <h6 class="examples-title">Approved Photography Examples</h6>
+          <div class="examples-grid examples-grid--three mb-4">
+            <div class="example-card">
+              <img src="assets/default-profile-influencers.png" alt="Approved influencer profile example - front portrait" />
+            </div>
+            <div class="example-card">
+              <img src="assets/default-profile.png" alt="Approved influencer profile example - side portrait" />
+            </div>
+            <div class="example-card">
+              <img src="assets/default-profile-influencers.png" alt="Approved influencer profile example - professional headshot" />
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <h6 class="panel-title panel-title--good"><i class="bi bi-check-circle-fill me-2"></i>What is Allowed</h6>
+              <div class="stack-list">
+                <div class="stack-item stack-item--good"><i class="bi bi-emoji-smile"></i><span>Clear face visible with natural expression</span></div>
+                <div class="stack-item stack-item--good"><i class="bi bi-brightness-high"></i><span>Good lighting with neutral or pleasing settings</span></div>
+                <div class="stack-item stack-item--good"><i class="bi bi-person"></i><span>Single person preferred for primary avatar</span></div>
+                <div class="stack-item stack-item--good"><i class="bi bi-check-square"></i><span>Natural professional or trendy casual look</span></div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h6 class="panel-title panel-title--bad"><i class="bi bi-x-circle-fill me-2"></i>Not Allowed</h6>
+              <div class="forbidden-grid">
+                <div class="forbidden-card"><i class="bi bi-magic"></i><span>Heavy Filters</span></div>
+                <div class="forbidden-card"><i class="bi bi-people"></i><span>Group Photos</span></div>
+                <div class="forbidden-card"><i class="bi bi-telephone-x"></i><span>Contact Details</span></div>
+                <div class="forbidden-card"><i class="bi bi-eye-slash"></i><span>Sunglasses</span></div>
+              </div>
+              <ul class="guideline-notes-list mt-3">
+                <li>No Instagram handles as text on image</li>
+                <li>No brand logos or collages</li>
+                <li>Avoid heavy blue/red backgrounds</li>
+              </ul>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="currentType === 'brand'">
+          <h6 class="examples-title examples-title--brand">Approved Brand Examples</h6>
+          <div class="examples-grid examples-grid--two mb-4">
+            <div class="example-card example-card--logo">
+              <img src="assets/logo-trendstarz-logo-text.png" alt="Approved brand logo example" />
+            </div>
+            <div class="example-card">
+              <img src="assets/banner-trendstarz.jpg" alt="Approved product showcase example" />
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <h6 class="panel-title panel-title--good"><i class="bi bi-check-circle-fill me-2"></i>Requirements</h6>
+              <div class="stack-list">
+                <div class="stack-item stack-item--good"><i class="bi bi-patch-check"></i><span><strong>Brand Logo</strong><small>High resolution vector or PNG</small></span></div>
+                <div class="stack-item stack-item--good"><i class="bi bi-image"></i><span><strong>Product Showcase</strong><small>At least one high-quality product image</small></span></div>
+              </div>
+
+              <div class="verification-note mt-3">
+                <h6>Verification Note</h6>
+                <p class="mb-0">GST and official business proof may be requested during the verification stage for "Verified Brand" status.</p>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h6 class="panel-title panel-title--bad"><i class="bi bi-x-circle-fill me-2"></i>Prohibited</h6>
+              <div class="forbidden-grid">
+                <div class="forbidden-card"><i class="bi bi-envelope"></i><span>No Emails</span></div>
+                <div class="forbidden-card"><i class="bi bi-telephone"></i><span>No Phone Nos.</span></div>
+                <div class="forbidden-card"><i class="bi bi-exclamation-triangle"></i><span>No Offensive</span></div>
+                <div class="forbidden-card"><i class="bi bi-bullseye"></i><span>No Misleading</span></div>
+              </div>
+              <ul class="guideline-notes-list mt-3">
+                <li>No watermarks over logos</li>
+                <li>No blurry low-res imagery</li>
+                <li>No promotional pricing text on banners</li>
+              </ul>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="close()">
+          <i class="bi bi-check-lg me-1"></i>Got it
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
