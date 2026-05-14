@@ -106,6 +106,10 @@ export class CampaignReviewComponent implements OnInit {
     return status === 'active';
   }
 
+  private hasInfluencerProgress(campaign: any): boolean {
+    return !!campaign?.hasInfluencerProgress;
+  }
+
   canApproveCampaign(campaign: any): boolean {
     return this.campaignApprovalMode === 'manual' && this.isPendingCampaign(campaign);
   }
@@ -114,14 +118,14 @@ export class CampaignReviewComponent implements OnInit {
     if (this.campaignApprovalMode === 'manual') {
       return this.isPendingCampaign(campaign);
     }
-    return this.isActiveCampaign(campaign);
+    return this.isActiveCampaign(campaign) && !this.hasInfluencerProgress(campaign);
   }
 
   canRejectCampaign(campaign: any): boolean {
     if (this.campaignApprovalMode === 'manual') {
       return this.isPendingCampaign(campaign);
     }
-    return this.isActiveCampaign(campaign);
+    return this.isActiveCampaign(campaign) && !this.hasInfluencerProgress(campaign);
   }
 
   canModerateCampaign(campaign: any): boolean {
