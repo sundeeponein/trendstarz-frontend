@@ -237,9 +237,9 @@
     </p>
 
     <div class="container">
-      <div class="row gap-2">
+      <div class="row">
 
-        <div class="col settings-row">
+        <div class="col-12 col-xl-7 settings-row">
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="supportEnabled"
               [(ngModel)]="settings.supportContactEnabled" />
@@ -293,7 +293,7 @@
           </div>
         </div>
 
-        <div class="col settings-row">
+        <div class="col-12 col-xl-5 settings-row">
           <h4>Platform commission & GST</h4>
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="platformFeeEnabled"
@@ -308,6 +308,64 @@
             <div class="col">
               <label class="form-label">GST (%)</label>
               <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <h6 class="mb-2">Commission to users</h6>
+            <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
+              Assign commission badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
+            </p>
+            <div class="row g-2 mb-3">
+              <div class="col-12 col-sm-6 col-lg-3">
+                <label class="form-label" style="font-size:0.9rem;">Early Access (%)</label>
+                <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.earlyAccessCommissionPercent" />
+              </div>
+              <div class="col-12 col-sm-6 col-lg-3">
+                <label class="form-label" style="font-size:0.9rem;">Partner (%)</label>
+                <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.partnerCommissionPercent" />
+              </div>
+              <div class="col-12 col-sm-6 col-lg-3">
+                <label class="form-label" style="font-size:0.9rem;">Internal/Test (%)</label>
+                <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.internalTestCommissionPercent" />
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Badge</th>
+                    <th>Commission</th>
+                    <th>Influencers</th>
+                    <th>Brands</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Normal (no badge)</td>
+                    <td>{{ settings.platformFeePercent }}%</td>
+                    <td colspan="2"><small class="text-muted">All users without a badge</small></td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
+                    <td>{{ settings.earlyAccessCommissionPercent }}%</td>
+                    <td>{{ commissionCounts.influencer.early_access_creator }}</td>
+                    <td>{{ commissionCounts.brand.early_access_brand }}</td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
+                    <td>{{ settings.partnerCommissionPercent }}%</td>
+                    <td>{{ commissionCounts.influencer.partner_creator }}</td>
+                    <td>{{ commissionCounts.brand.partner_brand }}</td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
+                    <td>{{ settings.internalTestCommissionPercent }}%</td>
+                    <td>{{ commissionCounts.influencer.internal_test_creator }}</td>
+                    <td>{{ commissionCounts.brand.internal_test_brand }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -418,6 +476,102 @@
                 {{ settings.brandRequireMobileVerified ? 'Yes' : 'No' }}
               </label>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong>Early Access Assignment</strong>
+            <p>Choose whether Early Access slots are assigned manually by admins or auto-filled to oldest eligible users.</p>
+          </div>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Assignment mode</span>
+            <div>
+              <div class="form-check form-check-inline">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  id="earlyAccessModeManual"
+                  name="earlyAccessAssignmentMode"
+                  value="manual"
+                  [(ngModel)]="settings.earlyAccessAssignmentMode"
+                />
+                <label class="form-check-label" for="earlyAccessModeManual">Manual by admin</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  id="earlyAccessModeAuto"
+                  name="earlyAccessAssignmentMode"
+                  value="auto"
+                  [(ngModel)]="settings.earlyAccessAssignmentMode"
+                />
+                <label class="form-check-label" for="earlyAccessModeAuto">Auto assign oldest eligible users</label>
+              </div>
+            </div>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Auto mode behavior</span>
+            <small class="text-light-emphasis">
+              Expired Early Access slots are refilled automatically up to cap using oldest eligible registrations first.
+            </small>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Manual trigger</span>
+            <div>
+              <button
+                class="btn btn-outline-secondary btn-sm me-2"
+                (click)="loadEarlyAccessRefillPreview()"
+                [disabled]="earlyAccessPreviewLoading"
+              >
+                {{ earlyAccessPreviewLoading ? 'Loading…' : 'Preview Refill' }}
+              </button>
+              <button
+                class="btn btn-outline-primary btn-sm"
+                (click)="runEarlyAccessRefillNow()"
+                [disabled]="earlyAccessRefillRunning"
+              >
+                {{ earlyAccessRefillRunning ? 'Running…' : 'Run Refill Now' }}
+              </button>
+              <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessRefillMessage">
+                {{ earlyAccessRefillMessage }}
+              </small>
+              <small class="text-light-emphasis d-block mt-1" *ngIf="earlyAccessPreview">
+                Influencers: {{ earlyAccessPreview?.influencers?.activeCount || 0 }}/{{ earlyAccessPreview?.influencers?.cap || 0 }} active,
+                {{ earlyAccessPreview?.influencers?.slotsOpen || 0 }} slots open,
+                {{ earlyAccessPreview?.influencers?.eligibleCount || 0 }} eligible.
+              </small>
+              <small class="text-light-emphasis d-block" *ngIf="earlyAccessPreview">
+                Brands: {{ earlyAccessPreview?.brands?.activeCount || 0 }}/{{ earlyAccessPreview?.brands?.cap || 0 }} active,
+                {{ earlyAccessPreview?.brands?.slotsOpen || 0 }} slots open,
+                {{ earlyAccessPreview?.brands?.eligibleCount || 0 }} eligible.
+              </small>
+              <small class="text-light-emphasis d-block" *ngIf="(earlyAccessPreview?.influencers?.previewUsers || []).length > 0">
+                Next influencers: {{ formatPreviewUser(earlyAccessPreview.influencers.previewUsers[0]) }}
+              </small>
+              <small class="text-light-emphasis d-block" *ngIf="(earlyAccessPreview?.brands?.previewUsers || []).length > 0">
+                Next brands: {{ formatPreviewUser(earlyAccessPreview.brands.previewUsers[0]) }}
+              </small>
+            </div>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="earlyAccessLastRunAt; else noEarlyAccessRunYet">
+                {{ earlyAccessLastRunAt | date:'medium' }}
+                <span *ngIf="earlyAccessLastRunStatus"> ({{ earlyAccessLastRunStatus }})</span>
+                <span *ngIf="earlyAccessLastRunDetails"> - {{ earlyAccessLastRunDetails }}</span>
+              </ng-container>
+              <ng-template #noEarlyAccessRunYet>
+                Not run yet.
+              </ng-template>
+            </small>
           </div>
         </div>
       </div>

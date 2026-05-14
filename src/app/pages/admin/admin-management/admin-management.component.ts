@@ -56,11 +56,28 @@ export class AdminManagementComponent implements OnInit {
     verificationCallNumber: '',
     // Platform commission and tax (admin-managed)
     platformFeeEnabled: false,
-    platformFeePercent: 10,
-    gstPercent: 18,
+    platformFeePercent: 0,
+    gstPercent: 0,
+    earlyAccessAssignmentMode: 'manual',
+    // Commission percentages for badge types (applicable when badge is assigned)
+    earlyAccessCommissionPercent: 0,
+    partnerCommissionPercent: 0,
+    internalTestCommissionPercent: 0,
   };
   settingsSaving = false;
   settingsSaved = false;
+  earlyAccessRefillRunning = false;
+  earlyAccessRefillMessage = '';
+  earlyAccessLastRunAt: string | null = null;
+  earlyAccessLastRunStatus = '';
+  earlyAccessLastRunDetails = '';
+  earlyAccessPreviewLoading = false;
+  earlyAccessPreview: any = null;
+
+  commissionCounts = {
+    influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
+    brand: { early_access_brand: 0, partner_brand: 0, internal_test_brand: 0 },
+  };
 
   isServer: boolean;
 
@@ -76,6 +93,7 @@ export class AdminManagementComponent implements OnInit {
     if (!this.isServer) {
       this.loadConfig();
       this.loadSettings();
+      this.loadCommissionCounts();
     }
   }
 
@@ -112,6 +130,13 @@ export class AdminManagementComponent implements OnInit {
           this.settings.platformFeeEnabled = !!data?.platformFeeEnabled;
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
+          this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
+          this.earlyAccessLastRunAt = data?.earlyAccessLastRunAt || null;
+          this.earlyAccessLastRunStatus = String(data?.earlyAccessLastRunStatus || '');
+          this.earlyAccessLastRunDetails = String(data?.earlyAccessLastRunDetails || '');
+          this.settings.earlyAccessCommissionPercent = typeof data?.earlyAccessCommissionPercent === 'number' ? data.earlyAccessCommissionPercent : 0;
+          this.settings.partnerCommissionPercent = typeof data?.partnerCommissionPercent === 'number' ? data.partnerCommissionPercent : 2;
+          this.settings.internalTestCommissionPercent = typeof data?.internalTestCommissionPercent === 'number' ? data.internalTestCommissionPercent : 0;
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -313,5 +338,108 @@ export class AdminManagementComponent implements OnInit {
           console.error('Batch update error:', err);
         }
       });
+  }
+
+  loadCommissionCounts() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const base = environment.apiBaseUrl;
+
+    const influencerBadges: (keyof typeof this.commissionCounts.influencer)[] =
+      ['early_access_creator', 'partner_creator', 'internal_test_creator'];
+    const brandBadges: (keyof typeof this.commissionCounts.brand)[] =
+      ['early_access_brand', 'partner_brand', 'internal_test_brand'];
+
+    influencerBadges.forEach(badge => {
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/influencer/${badge}`, headers).subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.commissionCounts.influencer[badge] = data.count || 0;
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    });
+
+    brandBadges.forEach(badge => {
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/brand/${badge}`, headers).subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.commissionCounts.brand[badge] = data.count || 0;
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    });
+  }
+
+  runEarlyAccessRefillNow() {
+    if (this.earlyAccessRefillRunning) return;
+
+    this.earlyAccessRefillRunning = true;
+    this.earlyAccessRefillMessage = '';
+    this.cdr.detectChanges();
+
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/auto-assign`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.earlyAccessLastRunAt = data?.lastRunAt || this.earlyAccessLastRunAt;
+          this.earlyAccessLastRunStatus = String(data?.lastRunStatus || this.earlyAccessLastRunStatus || '');
+          this.earlyAccessLastRunDetails = String(data?.lastRunDetails || this.earlyAccessLastRunDetails || '');
+          if (data?.skipped) {
+            this.earlyAccessRefillMessage = 'Skipped: Early Access assignment mode is Manual.';
+          } else {
+            const inflAssigned = Number(data?.influencers?.assignedCount || 0);
+            const brandAssigned = Number(data?.brands?.assignedCount || 0);
+            const inflReleased = Number(data?.influencers?.releasedCount || 0);
+            const brandReleased = Number(data?.brands?.releasedCount || 0);
+            this.earlyAccessRefillMessage =
+              `Refill complete. Assigned ${inflAssigned} influencers + ${brandAssigned} brands. ` +
+              `Released ${inflReleased} influencer slots + ${brandReleased} brand slots.`;
+            this.loadCommissionCounts();
+          }
+          this.loadSettings();
+          this.earlyAccessRefillRunning = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.earlyAccessRefillRunning = false;
+          this.earlyAccessRefillMessage = `Refill failed: ${err?.error?.message || err?.message || 'Unknown error'}`;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  loadEarlyAccessRefillPreview() {
+    if (this.earlyAccessPreviewLoading) return;
+
+    this.earlyAccessPreviewLoading = true;
+    this.cdr.detectChanges();
+
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/early-access/auto-assign/preview`, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.earlyAccessPreview = data || null;
+          this.earlyAccessPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.earlyAccessPreviewLoading = false;
+          this.earlyAccessPreview = null;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  formatPreviewUser(user: any): string {
+    const displayName = String(user?.name || user?.brandName || 'Unknown');
+    const email = String(user?.email || '').trim();
+    return email ? `${displayName} (${email})` : displayName;
   }
 }
