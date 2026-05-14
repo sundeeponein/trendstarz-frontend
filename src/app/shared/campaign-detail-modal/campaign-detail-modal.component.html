@@ -242,7 +242,19 @@
         {{ statusFooterLabel }}
       </span>
 
-      <ng-container *ngIf="isPending">
+      <ng-container *ngIf="adminReview">
+        <button class="cdm-btn cdm-btn--accept" *ngIf="adminCanApprove" (click)="onAdminApprove()" [disabled]="busy">
+          Approve
+        </button>
+        <button class="cdm-btn cdm-btn--secondary" *ngIf="adminCanRequestChanges" (click)="onAdminRequestChanges()" [disabled]="busy">
+          Needs Changes
+        </button>
+        <button class="cdm-btn cdm-btn--decline" *ngIf="adminCanReject" (click)="onAdminReject()" [disabled]="busy">
+          Reject
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="isPending && !adminReview">
         <span class="cdm-selected-payout" *ngIf="selectedPayoutHint">{{ selectedPayoutHint }}</span>
         <input *ngIf="showDateInput"
                type="date"
@@ -262,6 +274,10 @@
       </ng-container>
 
       <button class="cdm-btn cdm-btn--secondary" *ngIf="!isPending" (click)="onClose()">
+        Close
+      </button>
+
+      <button class="cdm-btn cdm-btn--secondary" *ngIf="adminReview" (click)="onClose()">
         Close
       </button>
     </div>

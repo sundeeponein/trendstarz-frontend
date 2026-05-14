@@ -10,6 +10,7 @@
   </section>
 
   <nav class="section-tabs" aria-label="Admin management sections">
+    <button class="tab-chip" [class.active]="activeTab === 'campaigns'" (click)="setTab('campaigns')">Campaigns</button>
     <button class="tab-chip" [class.active]="activeTab === 'details'" (click)="setTab('details')">Overview</button>
     <button class="tab-chip" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social</button>
     <button class="tab-chip" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
@@ -429,6 +430,64 @@
       </div>
     </div>
     
+  </div>
+
+  <!-- Campaigns Tab -->
+  <div *ngIf="activeTab === 'campaigns'">
+    <h2>Campaign Management</h2>
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      Configure campaign moderation and review queue handling. In <strong>manual</strong> mode,
+      campaigns require admin approval before going live.
+    </p>
+
+    <div class="settings-row row-expanded">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Campaign Approval Workflow</strong>
+          <p>Choose whether campaigns go live automatically or require manual admin moderation.</p>
+        </div>
+        <div class="form-check form-switch settings-toggle">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            id="campaignApprovalMode"
+            [checked]="settings.campaignApprovalMode === 'auto_live'"
+            (change)="onCampaignApprovalModeToggle($any($event.target).checked)"
+          >
+          <label class="form-check-label" for="campaignApprovalMode">
+            {{ settings.campaignApprovalMode === 'auto_live' ? 'Auto live' : 'Manual review' }}
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-conditions">
+        <span class="conditions-label">Current moderation mode:</span>
+        <div class="condition-item">
+          <span class="condition-name" *ngIf="settings.campaignApprovalMode === 'manual'">
+            Manual: New campaign submits as <strong>Pending Review</strong> and needs admin decision.
+          </span>
+          <span class="condition-name" *ngIf="settings.campaignApprovalMode === 'auto_live'">
+            Auto-live: Campaign goes public immediately (still appears in admin queue for audit).
+          </span>
+        </div>
+      </div>
+
+      <div class="settings-conditions">
+        <div class="condition-item">
+          <span class="condition-name">
+            Review submissions on the separate <a routerLink="/admin/campaign-review">Campaign Review</a> page.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions p-0 mt-3">
+      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+        {{ settingsSaving ? 'Saving…' : 'Save Settings' }}
+      </button>
+      <span *ngIf="settingsSaved" style="color:#22c55e; margin-left:1rem;">✓ Saved</span>
+    </div>
   </div>
 
   </div>

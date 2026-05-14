@@ -40,7 +40,12 @@
 
           <!-- Profile Image Upload -->
           <div class="field-block profile-upload-block">
-            <label>Profile Photo</label>
+            <label>
+              Profile Photo
+              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openProfilePhotoGuidelines()" title="View photo guidelines">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </label>
             <div class="plan-image-limit" *ngIf="isEditMode">
               <span [class.limit-reached]="!imageUploadAllowed">
                 {{ currentImageCount }} / {{ maxImages }} images used
@@ -93,7 +98,7 @@
               </div>
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
               <small *ngIf="verificationCallNumber && !phoneVerified" class="text-muted mt-1">
-                You may receive a verification call from our team <strong>{{ verificationCallNumber }}</strong>.
+                You may receive a verification call from our team.
               </small>
               <small *ngIf="!phoneVerified" class="text-muted d-block mt-1">
                 Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.

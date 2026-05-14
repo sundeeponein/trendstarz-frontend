@@ -17,6 +17,7 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  filtersExpanded = true;
   readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator'];
   readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand'];
   readonly verificationStatusOptions = ['not_submitted', 'pending', 'approved', 'rejected', 'removed'];
@@ -173,6 +174,9 @@ export class AdminUserTableComponent implements OnInit {
   constructor(private http: HttpClient, private configService: ConfigService, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
+    if (typeof window !== 'undefined') {
+      this.filtersExpanded = window.innerWidth >= 768;
+    }
     this.fetchUsers();
     if (typeof window !== 'undefined') {
       window.addEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
@@ -194,6 +198,10 @@ export class AdminUserTableComponent implements OnInit {
         }
       });
     }
+  }
+
+  toggleFilters() {
+    this.filtersExpanded = !this.filtersExpanded;
   }
 
   ngOnDestroy() {

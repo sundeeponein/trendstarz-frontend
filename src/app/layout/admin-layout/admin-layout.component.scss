@@ -16,6 +16,77 @@
         border-color: color.adjust(shared.$orange-primary, $lightness: -10%);
       }
     }
+
+    .navbar-tabs {
+      .nav-dropdown {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+
+        .nav-tab-parent {
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .nav-dropdown-toggle {
+          border: none;
+          background: transparent;
+          color: shared.$text-muted;
+          padding: 0 0.5rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+
+          i {
+            font-size: 0.85rem;
+            line-height: 1;
+          }
+
+          &:hover {
+            color: shared.$text-white;
+          }
+        }
+
+        .nav-submenu {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          min-width: 180px;
+          background: rgba(7, 20, 52, 0.96);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 10px;
+          padding: 0.35rem;
+          z-index: 30;
+        }
+
+        .nav-submenu-item {
+          display: block;
+          padding: 0.55rem 0.7rem;
+          border-radius: 8px;
+          color: shared.$text-muted !important;
+          text-decoration: none !important;
+          font-size: 0.9rem;
+          white-space: nowrap;
+
+          &:hover,
+          &.active {
+            color: shared.$text-white;
+            background: rgba(255, 107, 53, 0.2);
+          }
+        }
+
+        &.active .nav-tab-parent {
+          color: shared.$orange-primary;
+        }
+
+        &.open {
+          .nav-dropdown-toggle {
+            color: shared.$orange-primary;
+          }
+        }
+      }
+    }
   }
 
   // Unique to admin navbar: search box
@@ -123,6 +194,11 @@
     font-weight: 600;
     text-align: center;
     line-height: 1.5;
+  }
+
+  .mobile-link-sub {
+    margin-left: 1.2rem;
+    opacity: 0.9;
   }
 }
 

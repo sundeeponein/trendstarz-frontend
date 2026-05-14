@@ -76,7 +76,7 @@
               </div>
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
               <small *ngIf="verificationCallNumber && !phoneVerified" class="text-muted mt-1">
-                You may receive a verification call from our team <strong>{{ verificationCallNumber }}</strong>.
+                You may receive a verification call from our team.
               </small>
               <small *ngIf="!phoneVerified" class="text-muted d-block mt-1">
                 Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.
@@ -143,7 +143,12 @@
           </div>
 
           <div class="field-block media-uploader mt-3">
-            <label>Brand Logo</label>
+            <label>
+              Brand Logo
+              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openBrandImageGuidelines()" title="View image guidelines">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </label>
             <div class="upload-box">
               <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand logo preview" class="preview-image" />
               <img *ngIf="!brandLogoPreview && brandLogoFormArray.length > 0 && brandLogoFormArray.at(0).value?.url" [src]="brandLogoFormArray.at(0).value.url" alt="Current brand logo" class="preview-image" />
@@ -252,7 +257,12 @@
           </div>
 
           <div class="social-media-section mt-3">
-            <h3>Product Images</h3>
+            <h3>
+              Product Images
+              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openBrandImageGuidelines()" title="View image guidelines">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </h3>
             <div class="image-grid" *ngIf="(productImagesFormArray.length || 0) > 0">
               <div class="image-card" *ngFor="let imgCtrl of productImagesFormArray.controls; let i = index">
                 <img *ngIf="productImagesPreview[i]" [src]="productImagesPreview[i]" alt="Product preview" class="preview-image" />

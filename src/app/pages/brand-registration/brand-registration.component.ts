@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 
@@ -53,6 +54,10 @@ export class BrandRegistrationComponent implements OnInit {
     }
     this.registrationForm.get(field)?.setValue([...arr]);
     this.registrationForm.get(field)?.markAsTouched();
+  }
+
+  openBrandImageGuidelines(): void {
+    this.guidelinesService.open('brand');
   }
 
   getTierOptionLabel(tier: any): string {
@@ -136,6 +141,7 @@ export class BrandRegistrationComponent implements OnInit {
     private plansService: PlansService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
+    private guidelinesService: ImageGuidelinesService,
   ) {}
 
   ngOnInit() {
@@ -354,6 +360,10 @@ export class BrandRegistrationComponent implements OnInit {
 
   canAddProductImage(): boolean {
     return this.isPremiumPlan() || this.productImagesFiles.length < this.FREE_PRODUCT_IMAGE_LIMIT;
+  }
+
+  hasAtLeastOneProductImage(): boolean {
+    return this.productImagesFiles.some((f) => !!f);
   }
 
   private enforceProductImageLimit() {
@@ -669,6 +679,11 @@ export class BrandRegistrationComponent implements OnInit {
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const baseValid = required.every((path) => this.registrationForm.get(path)?.valid);
       if (!baseValid) return false;
+      const hasAtLeastOneProductImage = this.hasAtLeastOneProductImage();
+      if (!hasAtLeastOneProductImage) {
+        this.registrationError = 'At least one company/product image is required.';
+        return false;
+      }
       if (!this.arePlatformsValid()) {
         // Inline platform error is already rendered in the template; do not set
         // registrationError to avoid duplicate messages.

@@ -38,6 +38,10 @@ export class CampaignDetailModalComponent {
   @Input() qualifyingTier?: string | null;
   @Input() showDateInput = true;
   @Input() busy = false;
+  @Input() adminReview = false;
+  @Input() adminCanApprove = true;
+  @Input() adminCanRequestChanges = true;
+  @Input() adminCanReject = true;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
   }
@@ -48,6 +52,9 @@ export class CampaignDetailModalComponent {
   @Output() close = new EventEmitter<void>();
   @Output() accept = new EventEmitter<CampaignAcceptPayload>();
   @Output() decline = new EventEmitter<CampaignDeclinePayload>();
+  @Output() approve = new EventEmitter<void>();
+  @Output() requestChanges = new EventEmitter<void>();
+  @Output() reject = new EventEmitter<void>();
   @Output() validationError = new EventEmitter<string>();
 
   postDate = '';
@@ -492,6 +499,18 @@ export class CampaignDetailModalComponent {
   onDecline() {
     if (!this.inviteId) return;
     this.decline.emit({ inviteId: this.inviteId });
+  }
+
+  onAdminApprove() {
+    this.approve.emit();
+  }
+
+  onAdminRequestChanges() {
+    this.requestChanges.emit();
+  }
+
+  onAdminReject() {
+    this.reject.emit();
   }
 
   onLogoError(event: Event) {

@@ -1,5 +1,22 @@
 /* Unique styles only. All admin table, button, tab, and filter styles are now global. */
 
+.filters-header {
+	display: flex;
+	margin-bottom: 0.75rem;
+}
+
+.filter-toggle-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+@media (max-width: 767px) {
+	.filters-header {
+		justify-content: flex-start !important;
+	}
+}
+
 /* Scrollable table container with sticky header */
 .table-scroll-wrapper {
   overflow-x: auto;

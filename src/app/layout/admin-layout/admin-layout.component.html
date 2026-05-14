@@ -9,17 +9,23 @@
 
     <!-- Navigation Tabs -->
     <div class="navbar-tabs">
-      <a routerLink="/admin/admin-user-table" 
-         routerLinkActive="active" 
+        <a routerLink="/admin/admin-user-table"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: false }"
+         class="nav-tab">
+          User Management
+        </a>
+          <a routerLink="/admin/deleted-users"
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{ exact: false }"
+         class="nav-tab">
+            Deleted Users
+          </a>
+      <a routerLink="/admin/campaign-review"
+         routerLinkActive="active"
          [routerLinkActiveOptions]="{ exact: false }"
          class="nav-tab">
-        User Management
-      </a>
-      <a routerLink="/admin/deleted-users" 
-         routerLinkActive="active" 
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-        Deleted Users
+        Campaign Review
       </a>
       <a routerLink="/admin/payments" 
          routerLinkActive="active" 
@@ -46,12 +52,7 @@
         Disputes
         <span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span>
       </a>
-      <a routerLink="/admin/admin-management" 
-         routerLinkActive="active" 
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-        Admin Management
-      </a>
+      
     </div>
 
     <!-- Search and Icons -->
@@ -91,6 +92,7 @@
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-dashboard">Profile Settings</a></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li>
+            <li><a class="dropdown-item" routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" >Admin Management</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>
@@ -140,6 +142,7 @@
           <div class="mobile-user-dropdown" [class.open]="mobileProfileMenuOpen" [attr.aria-hidden]="!mobileProfileMenuOpen">
             <a class="mobile-link" routerLink="/admin/admin-dashboard" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Profile Settings</span></a>
             <a class="mobile-link" routerLink="/admin/admin-management" (click)="closeMobileMenu()"><i class="bi bi-sliders"></i><span>Account Settings</span></a>
+            <a class="mobile-link" routerLink="/admin/admin-management" (click)="closeMobileMenu()"><i class="bi bi-shield-lock"></i><span>Admin Management</span></a>
           </div>
         </div>
       </div>
@@ -151,12 +154,12 @@
 
       <div class="mobile-link-list">
         <a routerLink="/admin/admin-user-table" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-people"></i><span>User Management</span></a>
-        <a routerLink="/admin/deleted-users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-trash3"></i><span>Deleted Users</span></a>
+        <a routerLink="/admin/deleted-users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link mobile-link-sub" (click)="closeMobileMenu()"><i class="bi bi-trash3"></i><span>Deleted Users</span></a>
+        <a routerLink="/admin/campaign-review" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-kanban"></i><span>Campaign Review</span></a>
         <a routerLink="/admin/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-wallet2"></i><span>Payments</span></a>
         <a routerLink="/admin/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gem"></i><span>Plans</span></a>
         <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
         <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
-        <a routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-gear"></i><span>Admin Management</span></a>
       </div>
 
       <div class="mobile-upgrade">

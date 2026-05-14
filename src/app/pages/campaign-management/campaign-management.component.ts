@@ -193,9 +193,25 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getCount(status: string): number {
-  if (!this.campaigns) return 0;
-  return this.campaigns.filter(c => c.status === status).length;
-}
+    if (!this.campaigns) return 0;
+    return this.campaigns.filter(c => this.getCampaignTabStatus(c) === status).length;
+  }
+
+  private getCampaignTabStatus(campaign: Campaign): TabStatus {
+    const status = String(campaign?.status || '').trim().toLowerCase();
+    const hasStartedWork = (this.campaignInvitesMap.get(String(campaign?._id || '')) || []).some((invite: any) => {
+      return ['accepted', 'payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed']
+        .includes(String(invite?.status || '').trim().toLowerCase());
+    });
+
+    if (status === 'completed') return 'completed';
+    if (status === 'active') return 'active';
+    if (status === 'pending' || status === 'pending_review') return 'pending';
+    if (status === 'rejected' || status === 'needs_changes' || status === 'draft') {
+      if (hasStartedWork || this.isExpired(campaign)) return 'completed';
+    }
+    return 'draft';
+  }
 
   sendSelectedInvites() {
     if (!this.invitePanelCampaign?._id || this.selectedInfluencerIds.size === 0) return;
@@ -478,7 +494,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get filtered(): Campaign[] {
     if (this.isInfluencerView) return this.openCampaignsForInfluencer;
-    return this.campaigns.filter(c => c.status === this.activeTab);
+    return this.campaigns.filter(c => this.getCampaignTabStatus(c) === this.activeTab);
   }
 
   get totalPages(): number {
