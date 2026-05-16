@@ -84,7 +84,12 @@
               <div>{{ c.brand?.brandName || '-' }}</div>
               <div class="small text-secondary" *ngIf="c.brand?.email">{{ c.brand.email }}</div>
             </td>
-            <td>{{ campaignStatusLabel(c.status) }}</td>
+            <td>
+              <div>{{ campaignStatusLabel(c.status) }}</div>
+              <div class="small campaign-note-preview" *ngIf="c.moderationNote">
+                <i class="bi bi-chat-square-text"></i> {{ c.moderationNote }}
+              </div>
+            </td>
             <td>₹{{ ((c.budgetMin || 0) > 0 ? c.budgetMin : (c.pricePerInfluencer || 0) / 100) | number:'1.0-0' }}</td>
             <td>{{ (c.updatedAt || c.createdAt) | date:'medium' }}</td>
             <td>
@@ -99,21 +104,21 @@
                   class="btn btn-outline-success btn-sm"
                   type="button"
                   [disabled]="moderatingCampaignId === c._id"
-                  (click)="moderateCampaign(c, 'approve')"
+                  (click)="openModerationModal(c, 'approve')"
                 >Approve</button>
                 <button
                   *ngIf="canRequestChangesCampaign(c)"
                   class="btn btn-outline-warning btn-sm"
                   type="button"
                   [disabled]="moderatingCampaignId === c._id"
-                  (click)="moderateCampaign(c, 'needs_changes')"
+                  (click)="openModerationModal(c, 'needs_changes')"
                 >Needs Changes</button>
                 <button
                   *ngIf="canRejectCampaign(c)"
                   class="btn btn-outline-danger btn-sm"
                   type="button"
                   [disabled]="moderatingCampaignId === c._id"
-                  (click)="moderateCampaign(c, 'reject')"
+                  (click)="openModerationModal(c, 'reject')"
                 >Reject</button>
               </div>
             </td>
@@ -137,7 +142,39 @@
   [adminCanRequestChanges]="selectedCampaignCanRequestChanges"
   [adminCanReject]="selectedCampaignCanReject"
   (close)="closeCampaignPreview()"
-  (approve)="moderateCampaign(selectedCampaign, 'approve')"
-  (requestChanges)="moderateCampaign(selectedCampaign, 'needs_changes')"
-  (reject)="moderateCampaign(selectedCampaign, 'reject')"
+  (approve)="openModerationModal(selectedCampaign, 'approve')"
+  (requestChanges)="openModerationModal(selectedCampaign, 'needs_changes')"
+  (reject)="openModerationModal(selectedCampaign, 'reject')"
 ></app-campaign-detail-modal>
+
+<div class="modal-backdrop show" *ngIf="showModerationModal" (click)="closeModerationModal()"></div>
+<div class="modal d-block" *ngIf="showModerationModal" tabindex="-1" (click)="closeModerationModal()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal moderation-modal">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ moderationModalTitle }}</h5>
+        <button type="button" class="btn-close" (click)="closeModerationModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="target-campaign-name">{{ moderationTargetCampaign?.title || 'Untitled campaign' }}</div>
+        <label class="form-label" for="moderationNoteInput">{{ moderationModalNoteLabel }}</label>
+        <textarea
+          id="moderationNoteInput"
+          class="form-control"
+          rows="4"
+          [(ngModel)]="moderationNoteInput"
+          [attr.placeholder]="isModerationNoteRequired ? 'Describe the required changes for the brand' : 'Optional note'"
+          [attr.required]="isModerationNoteRequired ? true : null"
+        ></textarea>
+        <div class="form-text">{{ moderationModalHelpText }}</div>
+        <div class="text-danger mt-2" *ngIf="moderationModalError">{{ moderationModalError }}</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" type="button" (click)="closeModerationModal()" [disabled]="isSubmittingModeration">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="submitModerationFromModal()" [disabled]="isSubmittingModeration">
+          {{ isSubmittingModeration ? 'Saving...' : moderationModalPrimaryText }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

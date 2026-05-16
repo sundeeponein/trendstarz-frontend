@@ -334,7 +334,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     });
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
-    this.configService.getCategories().subscribe(data => {
+    this.configService.getCategories('influencer').subscribe(data => {
       this.categoriesList = data;
       this.cdr.detectChanges();
     });

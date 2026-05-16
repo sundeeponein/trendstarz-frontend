@@ -2152,6 +2152,37 @@
   animation: expandSlide 0.2s ease;
 }
 
+.ccard-moderation-note {
+  margin: 0 24px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.82rem;
+
+  i {
+    margin-top: 1px;
+  }
+}
+
+.draft-moderation-note {
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
 @keyframes expandSlide {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -2381,6 +2412,21 @@
   color: #c53030;
   border: 1.5px solid #ffd5cc;
   &:hover { background: #c53030; color: #fff; }
+}
+
+.btn-expand-review {
+  @extend %expand-btn-base;
+  background: #f0f4ff;
+  color: #3b5bdb;
+  border: 1.5px solid #bac8ff;
+  &:hover:not(:disabled) { background: #3b5bdb; color: #fff; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.draft-moderation-note--rejected {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 /* ── New primary action button ── */
@@ -3067,6 +3113,72 @@
 }
 
 .fulfill-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid $border;
+  background: #fafafa;
+}
+
+/* Reusable invite action modal (withdraw / decline / report) */
+.invite-action-modal {
+  width: min(520px, 92vw);
+}
+
+.invite-action-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid $border;
+
+  h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: $text-dark;
+  }
+}
+
+.invite-action-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+}
+
+.invite-action-modal__help {
+  margin: 0;
+  font-size: 0.88rem;
+  color: $text-muted;
+}
+
+.invite-action-modal__label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $text-dark;
+}
+
+.invite-action-modal__textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 8px 10px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 0.9rem;
+  color: $text-dark;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: $accent;
+    box-shadow: 0 0 0 2px rgba($accent, 0.15);
+  }
+}
+
+.invite-action-modal__footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;

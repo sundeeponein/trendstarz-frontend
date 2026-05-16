@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-campaign-review',
@@ -30,8 +31,14 @@ export class CampaignReviewComponent implements OnInit {
   campaignApprovalsLoading = false;
   campaignApprovalsError = '';
   moderatingCampaignId = '';
+  isSubmittingModeration = false;
   campaignApprovalMode: 'manual' | 'auto_live' = 'manual';
   selectedCampaign: any | null = null;
+  showModerationModal = false;
+  moderationTargetCampaign: any | null = null;
+  moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
+  moderationNoteInput = '';
+  moderationModalError = '';
 
   private readonly isServer: boolean;
 
@@ -39,6 +46,7 @@ export class CampaignReviewComponent implements OnInit {
     private http: HttpClient,
     @Inject(PLATFORM_ID) platformId: object,
     private cdr: ChangeDetectorRef,
+    private toast: ToastService,
   ) {
     this.isServer = isPlatformServer(platformId);
   }
@@ -155,25 +163,106 @@ export class CampaignReviewComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  moderateCampaign(campaign: any, action: 'approve' | 'reject' | 'needs_changes') {
+  private moderateCampaign(campaign: any, action: 'approve' | 'reject' | 'needs_changes', moderationNote = '') {
     if (!campaign?._id) return;
-    const note = prompt('Optional moderation note for brand (shown in campaign status):', campaign?.moderationNote || '') ?? '';
+    const note = String(moderationNote || '').trim();
     this.moderatingCampaignId = String(campaign._id);
+    this.isSubmittingModeration = true;
+    this.cdr.detectChanges();
     this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/moderation`, {
       action,
       moderationNote: note,
     }, this.getAuthHeaders()).subscribe({
       next: () => {
+        this.isSubmittingModeration = false;
         this.moderatingCampaignId = '';
+        const labels: Record<string, string> = {
+          approve: 'Campaign approved successfully.',
+          needs_changes: 'Needs Changes sent to brand.',
+          reject: 'Campaign rejected.',
+        };
+        this.closeModerationModal();
         this.closeCampaignPreview();
-        this.loadCampaignApprovals();
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.toast.success(labels[action] ?? 'Campaign updated.');
+          this.loadCampaignApprovals();
+          this.cdr.detectChanges();
+        }, 0);
       },
       error: (err) => {
+        this.isSubmittingModeration = false;
         this.moderatingCampaignId = '';
-        alert(err?.error?.message || 'Failed to update campaign moderation status.');
+        const msg = err?.error?.message || 'Failed to update campaign moderation status.';
+        this.moderationModalError = msg;
         this.cdr.detectChanges();
+        this.toast.error(msg);
       },
     });
+  }
+
+  openModerationModal(campaign: any, action: 'approve' | 'reject' | 'needs_changes') {
+    if (!campaign?._id) return;
+    this.moderationTargetCampaign = campaign;
+    this.moderationAction = action;
+    this.moderationModalError = '';
+    const existing = String(campaign?.moderationNote || '').trim();
+    this.moderationNoteInput = action === 'approve' ? '' : existing;
+    this.showModerationModal = true;
+  }
+
+  closeModerationModal() {
+    this.showModerationModal = false;
+    this.moderationTargetCampaign = null;
+    this.moderationAction = 'needs_changes';
+    this.moderationNoteInput = '';
+    this.moderationModalError = '';
+  }
+
+  get moderationModalTitle(): string {
+    if (this.moderationAction === 'needs_changes') return 'Request Changes';
+    if (this.moderationAction === 'reject') return 'Reject Campaign';
+    return 'Approve Campaign';
+  }
+
+  get moderationModalPrimaryText(): string {
+    if (this.moderationAction === 'needs_changes') return 'Send To Brand';
+    if (this.moderationAction === 'reject') return 'Reject Campaign';
+    return 'Approve Campaign';
+  }
+
+  get moderationModalNoteLabel(): string {
+    if (this.moderationAction === 'needs_changes') return 'Message for brand';
+    if (this.moderationAction === 'reject') return 'Reason (optional)';
+    return 'Comment (optional)';
+  }
+
+  get moderationModalHelpText(): string {
+    if (this.moderationAction === 'needs_changes') {
+      return 'This comment is visible to the brand in Drafts so they know what to fix.';
+    }
+    if (this.moderationAction === 'reject') {
+      return 'Share the reason so the brand understands why it was rejected.';
+    }
+    return 'Optional note for audit context.';
+  }
+
+  get isModerationNoteRequired(): boolean {
+    return this.moderationAction === 'needs_changes';
+  }
+
+  submitModerationFromModal() {
+    const campaign = this.moderationTargetCampaign;
+    if (!campaign?._id || this.isSubmittingModeration) return;
+
+    const note = String(this.moderationNoteInput || '').trim();
+    if (this.isModerationNoteRequired && !note) {
+      this.moderationModalError = 'Please add a message for the brand before sending Needs Changes.';
+      return;
+    }
+
+    this.moderationModalError = '';
+    this.moderateCampaign(campaign, this.moderationAction, note);
   }
 
   openCampaignPreview(campaign: any) {

@@ -200,8 +200,9 @@ export class ConfigService {
     });
   }
 
-  getCategories(): Observable<any[]> {
-    return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
+  getCategories(role?: 'influencer' | 'brand' | 'both'): Observable<any[]> {
+    const qs = role ? `?role=${encodeURIComponent(role)}` : '';
+    return this.http.get<any>(`${this.apiUrl}/categories${qs}`).pipe(
       map((res) => this.extractData<any[]>(res) || [])
     );
   }
@@ -260,8 +261,13 @@ export class ConfigService {
     return payload as T;
   }
 
-  getInfluencers(): Observable<any[]> {
-    return this.http.get<any>(`${this.apiUrl}/users/influencers`).pipe(
+  getInfluencers(options?: { page?: number; limit?: number; lite?: boolean }): Observable<any[]> {
+    const params: string[] = [];
+    if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
+    if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
+    if (typeof options?.lite === 'boolean') params.push(`lite=${options.lite ? '1' : '0'}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<any>(`${this.apiUrl}/users/influencers${qs}`).pipe(
       map((res) => {
         const data = this.extractData<any>(res);
         return (data?.data || data || []) as any[];
@@ -270,8 +276,13 @@ export class ConfigService {
     );
   }
 
-  getBrands(): Observable<any[]> {
-    return this.http.get<any>(`${this.apiUrl}/users/brands`).pipe(
+  getBrands(options?: { page?: number; limit?: number; lite?: boolean }): Observable<any[]> {
+    const params: string[] = [];
+    if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
+    if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
+    if (typeof options?.lite === 'boolean') params.push(`lite=${options.lite ? '1' : '0'}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<any>(`${this.apiUrl}/users/brands${qs}`).pipe(
       map((res) => {
         const data = this.extractData<any>(res);
         return (data?.data || data || []) as any[];

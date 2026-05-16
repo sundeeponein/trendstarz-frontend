@@ -430,7 +430,7 @@ export class InfluencerProfileComponent implements OnInit {
       tiers: this.configService.getTiers(),
       socialMedia: this.configService.getSocialMedia(),
       languages: this.configService.getLanguages(),
-      categories: this.configService.getCategories()
+      categories: this.configService.getCategories('influencer')
     }).subscribe({
       next: (dropdownData) => {
         this.states = dropdownData.states || [];

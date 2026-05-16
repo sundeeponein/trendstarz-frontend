@@ -455,6 +455,11 @@
           </div>
         </div>
 
+        <div class="ccard-moderation-note" *ngIf="shouldShowCampaignModerationNote(c)">
+          <i class="bi bi-exclamation-circle"></i>
+          <span><strong>Admin feedback:</strong> {{ getCampaignModerationNote(c) }}</span>
+        </div>
+
         <!-- Expand panel (brand only) -->
         <div class="ccard-expand" *ngIf="!isInfluencerView && expandedCampaignId === c._id">
 
@@ -786,13 +791,43 @@
                 </button>
               </ng-container>
 
-              <!-- Draft -->
+              <!-- Draft (brand created, never submitted) -->
               <ng-container *ngIf="c.status === 'draft'">
-                <button class="btn-expand-primary" (click)="activateCampaign(c)">
-                  <i class="bi bi-send"></i> Publish Campaign
+                <button class="btn-expand-primary" (click)="submitForReview(c)">
+                  <i class="bi bi-send"></i> Submit for Review
                 </button>
                 <button class="btn-expand-edit" (click)="extendTimeline(c)">
                   <i class="bi bi-pencil"></i> Edit
+                </button>
+              </ng-container>
+
+              <!-- Needs Changes (returned from admin) -->
+              <ng-container *ngIf="c.status === 'needs_changes'">
+                <div class="draft-moderation-note" *ngIf="shouldShowCampaignModerationNote(c)">
+                  <i class="bi bi-info-circle"></i>
+                  <span><strong>Admin feedback:</strong> {{ getCampaignModerationNote(c) }}</span>
+                </div>
+                <button class="btn-expand-primary" (click)="extendTimeline(c)">
+                  <i class="bi bi-pencil"></i> Edit Campaign
+                </button>
+                <button class="btn-expand-review" (click)="submitForReview(c)" [disabled]="submittingReviewId === c._id">
+                  <i class="bi bi-arrow-up-circle"></i>
+                  {{ submittingReviewId === c._id ? 'Submitting...' : 'Submit for Review' }}
+                </button>
+              </ng-container>
+
+              <!-- Rejected -->
+              <ng-container *ngIf="c.status === 'rejected'">
+                <div class="draft-moderation-note draft-moderation-note--rejected" *ngIf="shouldShowCampaignModerationNote(c)">
+                  <i class="bi bi-x-circle"></i>
+                  <span><strong>Rejection reason:</strong> {{ getCampaignModerationNote(c) }}</span>
+                </div>
+                <button class="btn-expand-edit" (click)="extendTimeline(c)">
+                  <i class="bi bi-pencil"></i> Edit Campaign
+                </button>
+                <button class="btn-expand-review" (click)="submitForReview(c)" [disabled]="submittingReviewId === c._id">
+                  <i class="bi bi-arrow-up-circle"></i>
+                  {{ submittingReviewId === c._id ? 'Submitting...' : 'Resubmit for Review' }}
                 </button>
               </ng-container>
 
@@ -1164,6 +1199,54 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
+
+  <!-- ─── Invite Action Modal (withdraw/decline/report) ─── -->
+  <div class="modal-backdrop show"
+       *ngIf="inviteActionModalOpen"
+       (click)="!isInviteActionSubmitting && closeInviteActionModal()"></div>
+  <div class="modal d-block"
+       *ngIf="inviteActionModalOpen"
+       tabindex="-1"
+       (click)="!isInviteActionSubmitting && closeInviteActionModal()">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content ts-modal invite-action-modal">
+        <div class="invite-action-modal__header">
+          <h4>{{ inviteActionModalTitle }}</h4>
+          <button class="drawer-close"
+                  type="button"
+                  [disabled]="isInviteActionSubmitting"
+                  (click)="closeInviteActionModal()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="invite-action-modal__body">
+          <p class="invite-action-modal__help">{{ inviteActionModalHelpText }}</p>
+          <label class="invite-action-modal__label" for="invite-action-reason-input">{{ inviteActionModalReasonLabel }}</label>
+          <textarea id="invite-action-reason-input"
+                    class="invite-action-modal__textarea"
+                    rows="4"
+                    [ngModel]="inviteActionReasonInput"
+                    (ngModelChange)="inviteActionReasonInput = $event; inviteActionModalError = ''"
+                    placeholder="Add details here..."></textarea>
+          <div class="text-danger small" *ngIf="inviteActionModalError">{{ inviteActionModalError }}</div>
+        </div>
+
+        <div class="invite-action-modal__footer">
+          <button class="btn btn-outline-secondary"
+                  type="button"
+                  [disabled]="isInviteActionSubmitting"
+                  (click)="closeInviteActionModal()">Cancel</button>
+          <button class="btn btn-primary"
+                  type="button"
+                  [disabled]="isInviteActionSubmitting"
+                  (click)="submitInviteActionFromModal()">
+            {{ isInviteActionSubmitting ? 'Saving...' : inviteActionModalSubmitText }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ─── Fulfillment Modal (Slice D) ─── -->
   <div class="modal-backdrop show" *ngIf="fulfillModalOpen && fulfillInvite" (click)="closeFulfillment()"></div>

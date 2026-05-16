@@ -1,4 +1,4 @@
-<div class="inf-card" [class.inf-card--selected]="selected" (click)="isProViewer && viewProfileClick.emit()">
+<div class="inf-card" [class.inf-card--selected]="selected" (click)="viewProfileClick.emit()">
   <!-- Image + overlays -->
   <div class="inf-card__img-wrap">
     <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" />
@@ -12,10 +12,6 @@
       [title]="selected ? 'Deselect' : 'Select'"
       type="button">
       <i class="bi" [class.bi-check2]="selected" [class.bi-circle]="!selected"></i>
-    </button>
-
-    <button class="inf-card__heart" (click)="$event.stopPropagation()" title="Save">
-      <i class="bi bi-heart"></i>
     </button>
 
     <!-- Admin badges on image -->
@@ -38,23 +34,22 @@
       <span class="inf-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
     </div>
 
-    <!-- Categories -->
-    <div class="inf-card__category">{{ displayCategory }}</div>
-
-    <div class="inf-card__trust-row">
-      <span class="inf-card__trust-pill" [class.inf-card__trust-pill--on]="professionalStatus">
-        {{ professionalStatus ? 'Professional: Yes' : 'Professional: No' }}
-      </span>
+    <!-- Categories + welcome-only starting price -->
+    <div class="inf-card__category-row">
+      <div class="inf-card__category">{{ displayCategory }}</div>
+      <div class="inf-card__welcome-price" *ngIf="showWelcomeStartingPrice && promotionalPrice">
+        ₹{{ promotionalPrice | number:'1.0-0' }}
+      </div>
     </div>
-    <div class="inf-card__expertise" *ngIf="expertiseArea">Expertise: {{ expertiseArea }}</div>
 
     <!-- Location -->
     <div class="inf-card__location" *ngIf="location?.state">
-      <i class="bi bi-geo-alt"></i> {{ location.district }}, {{ location.state }}
+      <i class="bi bi-geo-alt"></i>
+      <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
     </div>
 
     <!-- Stats row -->
-    <div class="inf-card__stats">
+    <!-- <div class="inf-card__stats">
       <div class="inf-card__stat">
         <span class="inf-card__stat-value">{{ primaryTier || '—' }}</span>
         <span class="inf-card__stat-label">Tier</span>
@@ -63,16 +58,19 @@
         <span class="inf-card__stat-value">{{ socialMedia.length }}</span>
         <span class="inf-card__stat-label">Platforms</span>
       </div>
-    </div>
+    </div> -->
 
     <!-- Platform icons -->
-    <div class="inf-card__platforms" *ngIf="socialMedia.length > 0">
+    <!-- <div class="inf-card__platforms" *ngIf="socialMedia.length > 0">
       <span class="inf-card__platform-icon" *ngFor="let sm of socialMedia" [title]="sm.platform">
         <i class="bi {{ platformIcon(sm.platform) }}"></i>
       </span>
-    </div>
+    </div> -->
 
-    <!-- Pricing (visible to everyone) -->
+    <!--
+    Pricing block intentionally hidden for influencer cards for now.
+    Keep this block commented until we re-enable based on user feedback.
+
     <div class="inf-card__pricing-row" *ngIf="promotionalPrice">
       <span class="inf-card__pricing-label">Starting from</span>
       <div class="inf-card__pricing-bottom">
@@ -80,21 +78,12 @@
         <span class="inf-card__engagement" *ngIf="isProViewer && engagementRate">{{ engagementRate }}%<br><small>engagement</small></span>
       </div>
     </div>
+    -->
 
     <!-- PRO VIEW: Contact-visible badge -->
-    <div class="inf-card__contact" *ngIf="isProViewer && !contactRestricted">
+    <!-- <div class="inf-card__contact" *ngIf="isProViewer && !contactRestricted">
       <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
       <span>Contact details visible</span>
-    </div>
-
-    <!-- Buttons -->
-    <div class="inf-card__actions">
-      <button class="inf-card__btn inf-card__btn--outline" (click)="viewProfileClick.emit(); $event.stopPropagation()">
-        View Profile
-      </button>
-      <button class="inf-card__btn inf-card__btn--primary" *ngIf="showCampaignBtn" (click)="createCampaignClick.emit(); $event.stopPropagation()">
-        <i class="bi bi-plus-lg"></i> Campaign
-      </button>
-    </div>
+    </div> -->
   </div>
 </div>

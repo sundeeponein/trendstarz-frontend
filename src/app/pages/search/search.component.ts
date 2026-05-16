@@ -18,6 +18,8 @@ import { CampaignInfluencer } from '../../shared/campaigns/campaign.model';
 })
 export class SearchComponent implements OnInit {
   private readonly tierOrder = TIER_ORDER;
+  private influencerRoleCategoryOptions: string[] = [];
+  private brandRoleCategoryOptions: string[] = [];
 
   activeTab: 'influencers' | 'brands' = 'influencers';
 
@@ -164,12 +166,43 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
+    this.loadRoleCategoryOptions();
     this.activeTab = this.searchMode;
     if (this.isInfluencerMode) {
       this.fetchInfluencers();
     } else {
       this.fetchBrands();
     }
+  }
+
+  private loadRoleCategoryOptions(): void {
+    this.config.getCategories('influencer').subscribe({
+      next: (rows: any[]) => {
+        const names = (Array.isArray(rows) ? rows : [])
+          .map((c: any) => String(c?.name || '').trim())
+          .filter((name: string) => !!name);
+        this.influencerRoleCategoryOptions = Array.from(new Set(names)).sort();
+        if (this.influencerRoleCategoryOptions.length) {
+          this.categoryOptions = this.influencerRoleCategoryOptions;
+          setTimeout(() => this.cd.detectChanges(), 0);
+        }
+      },
+      error: () => {},
+    });
+
+    this.config.getCategories('brand').subscribe({
+      next: (rows: any[]) => {
+        const names = (Array.isArray(rows) ? rows : [])
+          .map((c: any) => String(c?.name || '').trim())
+          .filter((name: string) => !!name);
+        this.brandRoleCategoryOptions = Array.from(new Set(names)).sort();
+        if (this.brandRoleCategoryOptions.length) {
+          this.brandCategoryOptions = this.brandRoleCategoryOptions;
+          setTimeout(() => this.cd.detectChanges(), 0);
+        }
+      },
+      error: () => {},
+    });
   }
 
   setTab(tab: 'influencers' | 'brands') {
@@ -225,19 +258,19 @@ export class SearchComponent implements OnInit {
   fetchInfluencers() {
     this.influencersLoading = true;
     this.influencersError = '';
-    this.config.getInfluencers().subscribe({
+    this.config.getInfluencers({ lite: true, limit: 60 }).subscribe({
       next: (data: any) => {
         const arr = Array.isArray(data) ? data : (data?.data ?? []);
         this.allInfluencers = arr;
         this.buildInfluencerOptions(arr);
         this.applyInfluencerFilters();
         this.influencersLoading = false;
-        this.cd.detectChanges();
+        setTimeout(() => this.cd.detectChanges(), 0);
       },
       error: () => {
         this.influencersError = 'Failed to load influencers.';
         this.influencersLoading = false;
-        this.cd.detectChanges();
+        setTimeout(() => this.cd.detectChanges(), 0);
       }
     });
   }
@@ -245,25 +278,25 @@ export class SearchComponent implements OnInit {
   fetchBrands() {
     this.brandsLoading = true;
     this.brandsError = '';
-    this.config.getBrands().subscribe({
+    this.config.getBrands({ lite: true, limit: 60 }).subscribe({
       next: (data: any) => {
         const arr = Array.isArray(data) ? data : (data?.data ?? []);
         this.allBrands = arr;
         this.buildBrandOptions(arr);
         this.applyBrandFilters();
         this.brandsLoading = false;
-        this.cd.detectChanges();
+        setTimeout(() => this.cd.detectChanges(), 0);
       },
       error: () => {
         this.brandsError = 'Failed to load brands.';
         this.brandsLoading = false;
-        this.cd.detectChanges();
+        setTimeout(() => this.cd.detectChanges(), 0);
       }
     });
   }
 
   buildInfluencerOptions(data: any[]) {
-    const cats = new Set<string>();
+    const cats = new Set<string>(this.influencerRoleCategoryOptions);
     const locs = new Set<string>();
     const tiers = new Set<string>();
     data.forEach(u => {
@@ -287,7 +320,7 @@ export class SearchComponent implements OnInit {
   private getInfluencerPrimaryTier(u: any): string { return getInfluencerPrimaryTier(u); }
 
   buildBrandOptions(data: any[]) {
-    const cats = new Set<string>();
+    const cats = new Set<string>(this.brandRoleCategoryOptions);
     const locs = new Set<string>();
     data.forEach(u => {
       (u.categories || []).forEach((c: string) => cats.add(c));
@@ -380,15 +413,26 @@ export class SearchComponent implements OnInit {
     this.router.navigate(['/influencer', username]);
   }
 
+  private slugify(value: string): string {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
   viewBrandProfile(brand: any) {
-    const name = brand.brandName || brand._id;
-    if (name) {
-      this.config.trackBrandProfileClick(name).subscribe({
+    const rawName = brand.brandName || brand._id;
+    const brandSlug = brand.brandName ? this.slugify(brand.brandName) : rawName;
+    if (brandSlug) {
+      this.config.trackBrandProfileClick(brandSlug).subscribe({
         next: () => {},
         error: () => {}
       });
     }
-    this.router.navigate(['/brand', name]);
+    this.router.navigate(['/brand', brandSlug]);
   }
 
   getBrandLogoUrl(brand: any): string {

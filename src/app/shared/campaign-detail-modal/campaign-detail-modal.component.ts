@@ -111,6 +111,10 @@ export class CampaignDetailModalComponent {
   }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
 
+  get campaignModerationNote(): string {
+    return String(this.campaign?.moderationNote || '').trim();
+  }
+
   get campaignTypeKey(): string {
     return (this.campaign?.campaignType || '').toLowerCase();
   }

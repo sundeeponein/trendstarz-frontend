@@ -45,6 +45,21 @@ export class NavbarLayoutComponent implements OnDestroy {
     if (!this.user) return '';
     return this.user.name || this.user.fullname || this.user.brandName || this.user.email || 'User';
   }
+
+  get searchLabel(): string {
+    if (this.user?.role === 'influencer') return 'Search';
+    return 'Search';
+  }
+
+  get showSearchLink(): boolean {
+    return true;
+  }
+
+  get searchTooltip(): string {
+    if (this.user?.role === 'brand') return 'Search influencers';
+    if (this.user?.role === 'influencer') return 'Search brands';
+    return 'Search influencers';
+  }
   ngOnInit() {
     // Sync isPremium from the live profile API into the session
     // so the navbar always reflects the correct plan status without requiring re-login

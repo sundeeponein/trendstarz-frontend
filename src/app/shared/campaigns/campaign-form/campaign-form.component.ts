@@ -251,7 +251,7 @@ export class CampaignFormComponent implements OnInit {
       }
     }
 
-    this.config.getCategories().subscribe(data => {
+    this.config.getCategories('influencer').subscribe(data => {
       this.categoriesList = data;
       this.cd.detectChanges();
     });
@@ -264,6 +264,11 @@ export class CampaignFormComponent implements OnInit {
   }
 
   get isEdit(): boolean { return this.mode === 'edit'; }
+
+  get isEditingForReview(): boolean {
+    const s = String(this.campaign?.status || '').toLowerCase();
+    return this.isEdit && (s === 'draft' || s === 'needs_changes' || s === 'rejected');
+  }
   get f() { return this.form.controls; }
   get selectedCampaignType(): string {
     return String(this.f['campaignType']?.value || 'paid_collab');
@@ -800,10 +805,12 @@ export class CampaignFormComponent implements OnInit {
     const v = this.form.value;
     const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
     const isTierOpen = v.campaignMode === 'tier_filtered_open';
+    const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
+    const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
-      status: isTierOpen ? 'pending_review' : 'draft',
+      status: (isTierOpen || isResubmit) ? 'pending_review' : 'draft',
       deliverables: this.parseDeliverables(v.deliverablesText),
       targetCities: v.targetDistrict ? [v.targetDistrict] : [],
       targetDistrict: undefined,
