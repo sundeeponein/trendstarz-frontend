@@ -29,17 +29,18 @@
 
       <div class="row g-3" *ngIf="brands.length > 0">
         <div class="col-12 col-sm-6 col-lg-3" *ngFor="let brand of brands | slice:0:8">
-          <article class="brand-card h-100" (click)="viewBrandProfile(brand)">
-            <div class="brand-icon-wrap">
-              <img [src]="brand.brandLogo?.[0]?.url || 'assets/default-profile-brands.png'" [alt]="brand.brandName" />
-            </div>
-            <h5>{{ brand.brandName }}</h5>
-            <p>{{ brand.categories?.[0] || 'Brand Campaigns' }}</p>
-            <div class="brand-meta">
-              <span>ACTIVE CAMPAIGNS</span>
-              <span class="live-pill">{{ brand.isPremium ? '15 Live' : '5 Live' }}</span>
-            </div>
-          </article>
+          <app-brand-user-card
+            class="welcome-card-host"
+            [brandLogo]="brand.brandLogo"
+            [brandName]="brand.brandName || ''"
+            [categories]="brand.categories || []"
+            [isPremium]="brand.isPremium || false"
+            [adminTags]="[]"
+            [location]="{ state: brand.location?.state || '' }"
+            [showWelcomeCampaignMeta]="showBrandCampaignMetaOnWelcome"
+            [welcomeCampaignStatus]="getWelcomeBrandCampaignStatus(brand)"
+            (viewProfileClick)="viewBrandProfile(brand)">
+          </app-brand-user-card>
         </div>
       </div>
     </div>
@@ -56,18 +57,22 @@
       <div *ngIf="influencersLoading && influencers.length === 0" class="text-center text-white-50">Loading influencers...</div>
 
       <div class="row g-3" *ngIf="influencers.length > 0">
-        <div class="col-12 col-md-6 col-lg-4" *ngFor="let influencer of influencers | slice:0:6">
-          <article class="creator-card" (click)="viewInfluencerProfile(influencer)">
-            <img
-              [src]="influencer.profileImages?.[0]?.url || influencer.profileImage || 'assets/default-profile-brands.png'"
-              [alt]="influencer.name"
-            />
-            <div class="overlay">
-              <span class="verify-pill" *ngIf="influencer.isPremium">VERIFIED</span>
-              <h5>{{ influencer.name }}</h5>
-              <p>{{ influencer.categories?.[0] || 'Creator' }}<span *ngIf="getTotalFollowers(influencer) > 0"> · {{ formatFollowers(getTotalFollowers(influencer)) }} Followers</span></p>
-            </div>
-          </article>
+        <div class="col-12 col-md-6 col-lg-3" *ngFor="let influencer of influencers | slice:0:6">
+          <app-influencer-user-card
+            class="welcome-card-host"
+            [profileImage]="influencer.profileImage || influencer.profileImages?.[0]?.url || ''"
+            [name]="influencer.name || influencer.fullname || ''"
+            [influencerCategory]="influencer.influencerCategory || influencer.categories?.[0] || ''"
+            [isPremium]="influencer.isPremium || false"
+            [promotionalPrice]="influencer.promotionalPrice"
+            [showWelcomeStartingPrice]="true"
+            [verificationStatus]="'not_submitted'"
+            [verifiedByTrendStarz]="false"
+            [location]="{ state: influencer.location?.state || '' }"
+            [socialMedia]="[]"
+            [adminTags]="[]"
+            (viewProfileClick)="viewInfluencerProfile(influencer)">
+          </app-influencer-user-card>
         </div>
       </div>
     </div>

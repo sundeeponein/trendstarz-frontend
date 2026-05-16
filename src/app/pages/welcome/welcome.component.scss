@@ -111,6 +111,11 @@
   color: #cc581b;
 }
 
+.welcome-card-host {
+  display: block;
+  height: 100%;
+}
+
 .brand-card {
   border: 1px solid #dde3ef;
   border-radius: 14px;
@@ -306,54 +311,6 @@
   border-color: #ef6a22;
 }
 
-.creator-card {
-  position: relative;
-  border-radius: 14px;
-  overflow: hidden;
-  min-height: 430px;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.creator-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.overlay {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 1.1rem;
-  background: linear-gradient(to top, rgba(7, 11, 20, 0.88), rgba(7, 11, 20, 0));
-}
-
-.overlay h5 {
-  color: #fff;
-  margin-bottom: 0.2rem;
-  font-weight: 700;
-}
-
-.overlay p {
-  margin: 0;
-  color: #d3dbeb;
-  font-size: 0.84rem;
-}
-
-.verify-pill {
-  display: inline-block;
-  padding: 0.2rem 0.45rem;
-  background: #f0641c;
-  color: #fff;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  margin-bottom: 0.45rem;
-}
-
 .cta-strip {
   background: #f4f5f7;
 }
@@ -372,10 +329,6 @@
 @media (max-width: 991px) {
   .hero-media {
     min-height: 220px;
-  }
-
-  .creator-card {
-    min-height: 340px;
   }
 
   .prelaunch-card {

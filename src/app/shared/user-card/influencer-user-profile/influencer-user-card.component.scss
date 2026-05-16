@@ -1,97 +1,13 @@
+@use '../../styles/user-card-shared' as card;
+
+@include card.user-card-base('.inf-card', 2px);
+
 .inf-card {
-  background: #fff;
-  border-radius: 0.875rem;
-  border: 2px solid #f0f0f0;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-
-  &:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
-
   &--selected {
     border-color: #ff6b35;
     box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.18), 0 8px 24px rgba(255, 107, 53, 0.12);
   }
 
-  // --- Image wrapper ---
-  &__img-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-    background: #f5f5f5;
-    flex-shrink: 0;
-  }
-
-  &__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
-
-    .inf-card:hover & {
-      transform: scale(1.03);
-    }
-  }
-
-  &__heart {
-    position: absolute;
-    top: 0.6rem;
-    right: 0.6rem;
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(4px);
-
-    i {
-      font-size: 0.95rem;
-      color: #888;
-      transition: color 0.2s;
-    }
-
-    &:hover {
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-
-      i { color: #ff6b35; }
-    }
-  }
-
-  &__img-tags {
-    position: absolute;
-    left: 0.5rem;
-    right: 0.5rem;
-    bottom: 0.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.35rem;
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  &__img-tag {
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    padding: 0.34rem 0.52rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  }
-
-  // Selection checkbox button (brand mode)
   &__select-btn {
     position: absolute;
     top: 0.6rem;
@@ -120,42 +36,19 @@
       border-color: #ff6b35;
       box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
 
-      i { color: #fff; }
+      i {
+        color: #fff;
+      }
     }
 
     &:hover:not(#{&}--checked) {
       background: #fff;
       border-color: #ff6b35;
-      i { color: #ff6b35; }
+
+      i {
+        color: #ff6b35;
+      }
     }
-  }
-
-  // --- Body ---
-  &__body {
-    padding: 0.9rem 1rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    flex: 1;
-  }
-
-  &__name {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1a1a2e;
-    line-height: 1.3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-
-  &__verified {
-    color: #ff6b35;
-    font-size: 0.85rem;
-    flex-shrink: 0;
   }
 
   &__ts-verified {
@@ -169,46 +62,27 @@
     white-space: nowrap;
   }
 
-  &__location {
-    font-size: 0.78rem;
-    color: #6b7280;
-    margin: 0.1rem 0 0.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    i { font-size: 0.75rem; }
-  }
-
-  // --- Platform icons ---
-  &__platforms {
-    display: flex;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.6rem;
-  }
-
-  &__platform-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    background: #f0f2f5;
-    color: #444;
-    font-size: 0.9rem;
-    cursor: default;
-    user-select: none;
-  }
-
   &__category {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #ff6b35;
     margin-bottom: 0.5rem;
+  }
+
+  &__category-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  &__welcome-price {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1f2937;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  }
+
+  &__stats {
+    gap: 1.5rem;
+    flex-wrap: nowrap;
   }
 
   &__trust-row {
@@ -237,88 +111,20 @@
     color: #334155;
     margin-bottom: 0.45rem;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .badge--founder {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .badge--verified {
-    background: #dcfce7;
-    color: #166534;
-  }
-
-  .badge--internal {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .badge--neutral {
-    background: #eef2ff;
-    color: #4338ca;
-  }
-
-  // --- Stats ---
-  &__stats {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  &__stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.05rem;
-  }
-
-  &__stat-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #a0a8b8;
-    text-transform: uppercase;
-  }
-
-  &__stat-value {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1a1a2e;
-
-    &--orange {
-      color: #ff6b35;
-    }
-  }
-
-  // --- Pricing row (Pro view) ---
   &__pricing-row {
-    display: flex;
-    flex-direction: column;
     gap: 0.15rem;
-    margin-bottom: 0.6rem;
-  }
-
-  &__pricing-label {
-    font-size: 0.62rem;
-    color: #a0a8b8;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
   }
 
   &__pricing-bottom {
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-
-  &__price {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #1a1a2e;
   }
 
   &__engagement {
@@ -331,93 +137,10 @@
     padding: 0.2rem 0.5rem;
     text-align: center;
     line-height: 1.3;
-    small { font-size: 0.6rem; font-weight: 500; }
-  }
 
-  // --- Button ---
-  &__actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: auto;
-  }
-
-  // --- Contact visible (Pro) ---
-  &__contact {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.45rem 0.65rem;
-    border-radius: 0.4rem;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #15803d;
-    margin-bottom: 0.6rem;
-  }
-
-  &__contact-icon {
-    color: #22c55e;
-    font-size: 0.85rem;
-  }
-
-  // --- Pricing locked (Free) ---
-  &__locked {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.45rem 0.65rem;
-    border-radius: 0.4rem;
-    background: #fff7f3;
-    border: 1px solid #fdd5c0;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #c2410c;
-    margin-bottom: 0.6rem;
-  }
-
-  &__locked-icon {
-    color: #f0641c;
-    font-size: 0.85rem;
-  }
-
-  &__btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    padding: 0.55rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.82rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-
-    i { font-size: 0.85rem; }
-
-    &--outline {
-      border: 1.5px solid #d0d5dd;
-      background: #fff;
-      color: #1a1a2e;
-
-      &:hover {
-        background: #f8f9fa;
-        border-color: #adb5bd;
-      }
-    }
-
-    &--primary {
-      border: none;
-      background: #ff6b35;
-      color: #fff;
-      box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
-
-      &:hover {
-        background: #e55a25;
-        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
-      }
+    small {
+      font-size: 0.6rem;
+      font-weight: 500;
     }
   }
 }

@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -59,7 +60,8 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     private session: SessionService,
     private config: ConfigService,
     private plansService: PlansService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -238,7 +240,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
 
   onMobileVerificationHelp() {
     const numberText = this.verificationCallNumber ? ` Team calls come from ${this.verificationCallNumber}.` : '';
-    alert(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
+    this.toast.info(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
   }
 
   onUpgrade() {

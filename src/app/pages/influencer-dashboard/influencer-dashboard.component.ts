@@ -521,7 +521,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   onMobileVerificationHelp() {
     const numberText = this.verificationCallNumber ? ` Team calls come from ${this.verificationCallNumber}.` : '';
-    alert(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
+    this.toast.info(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
   }
 
   dismissEmailBanner() {

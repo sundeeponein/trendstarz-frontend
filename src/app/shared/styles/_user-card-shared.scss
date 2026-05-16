@@ -1,0 +1,359 @@
+$user-card-bg: #fff;
+$user-card-border-color: #f0f0f0;
+$user-card-radius: 0.875rem;
+$user-card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+$user-card-transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+
+$user-card-img-bg: #f5f5f5;
+$user-card-icon-bg: rgba(255, 255, 255, 0.9);
+$user-card-icon-color: #888;
+$user-card-icon-hover-color: #ff6b35;
+
+$user-card-name-color: #1a1a2e;
+$user-card-subtle-color: #6b7280;
+$user-card-accent: #ff6b35;
+$user-card-muted: #a0a8b8;
+
+$user-card-surface-soft: #f0f2f5;
+$user-card-success-bg: #f0fdf4;
+$user-card-success-border: #bbf7d0;
+$user-card-success-text: #15803d;
+
+$user-card-warn-bg: #fff7f3;
+$user-card-warn-border: #fdd5c0;
+$user-card-warn-text: #c2410c;
+$user-card-warn-icon: #f0641c;
+
+$user-card-btn-outline-border: #d0d5dd;
+$user-card-btn-outline-hover: #f8f9fa;
+$user-card-btn-outline-hover-border: #adb5bd;
+
+$user-card-btn-primary-bg: #ff6b35;
+$user-card-btn-primary-hover-bg: #e55a25;
+$user-card-btn-primary-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+$user-card-btn-primary-hover-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+
+@mixin user-card-base($root, $border-width: 1px) {
+  #{$root} {
+    background: $user-card-bg;
+    border-radius: $user-card-radius;
+    border: $border-width solid $user-card-border-color;
+    overflow: hidden;
+    transition: $user-card-transition;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+
+    &:hover {
+      box-shadow: $user-card-hover-shadow;
+      transform: translateY(-2px);
+    }
+
+    &__img-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 4;
+      overflow: hidden;
+      background: $user-card-img-bg;
+      flex-shrink: 0;
+    }
+
+    &__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+
+      #{$root}:hover & {
+        transform: scale(1.03);
+      }
+    }
+
+    &__heart {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: $user-card-icon-bg;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+
+      i {
+        font-size: 0.95rem;
+        color: $user-card-icon-color;
+        transition: color 0.2s;
+      }
+
+      &:hover {
+        background: $user-card-bg;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+        i {
+          color: $user-card-icon-hover-color;
+        }
+      }
+    }
+
+    &__img-tags {
+      position: absolute;
+      left: 0.5rem;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.35rem;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    &__img-tag {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0.34rem 0.52rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    &__body {
+      padding: 0.9rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      flex: 1;
+    }
+
+    &__name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: $user-card-name-color;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    &__verified {
+      color: $user-card-accent;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    &__location {
+      font-size: 0.78rem;
+      color: $user-card-subtle-color;
+      margin: 0.1rem 0 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      i {
+        font-size: 0.75rem;
+      }
+    }
+
+    &__category {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: $user-card-accent;
+      margin-bottom: 0.3rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge--founder {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge--verified {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge--internal {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .badge--neutral {
+      background: #eef2ff;
+      color: #4338ca;
+    }
+
+    &__platforms {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+
+    &__platform-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: $user-card-surface-soft;
+      color: #444;
+      font-size: 0.9rem;
+      cursor: default;
+      user-select: none;
+    }
+
+    &__stats {
+      display: flex;
+      gap: 1.25rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    &__stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+      min-width: 0;
+    }
+
+    &__stat-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: $user-card-muted;
+      text-transform: uppercase;
+    }
+
+    &__stat-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: $user-card-name-color;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &--orange {
+        color: #ff6b35;
+      }
+    }
+
+    &__pricing-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    &__pricing-label {
+      font-size: 0.62rem;
+      color: $user-card-muted;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    &__price {
+      font-size: 1rem;
+      font-weight: 800;
+      color: $user-card-name-color;
+    }
+
+    &__contact {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.65rem;
+      border-radius: 0.4rem;
+      background: $user-card-success-bg;
+      border: 1px solid $user-card-success-border;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: $user-card-success-text;
+      margin-bottom: 0.6rem;
+    }
+
+    &__contact-icon {
+      color: $user-card-success-text;
+      font-size: 0.85rem;
+    }
+
+    &__locked {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.65rem;
+      border-radius: 0.4rem;
+      background: $user-card-warn-bg;
+      border: 1px solid $user-card-warn-border;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: $user-card-warn-text;
+      margin-bottom: 0.6rem;
+    }
+
+    &__locked-icon {
+      color: $user-card-warn-icon;
+      font-size: 0.85rem;
+    }
+
+    &__actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+
+    &__btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+
+      i {
+        font-size: 0.85rem;
+      }
+
+      &--outline {
+        border: 1.5px solid $user-card-btn-outline-border;
+        background: $user-card-bg;
+        color: $user-card-name-color;
+
+        &:hover {
+          background: $user-card-btn-outline-hover;
+          border-color: $user-card-btn-outline-hover-border;
+        }
+      }
+
+      &--primary {
+        border: none;
+        background: $user-card-btn-primary-bg;
+        color: $user-card-bg;
+        box-shadow: $user-card-btn-primary-shadow;
+
+        &:hover {
+          background: $user-card-btn-primary-hover-bg;
+          box-shadow: $user-card-btn-primary-hover-shadow;
+        }
+      }
+    }
+  }
+}

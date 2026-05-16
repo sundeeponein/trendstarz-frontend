@@ -13,6 +13,10 @@
       <a *ngIf="user?.role === 'influencer'" routerLink="/influencer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Dashboard
       </a>
+      <!-- will active on in 30days so dont remove this code  -->
+      <!-- <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+        {{ searchLabel }}
+      </a> -->
       <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Campaigns
       </a>
@@ -160,6 +164,7 @@
         <a *ngIf="user?.role === 'brand'" routerLink="/brand-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a *ngIf="user?.role === 'influencer'" routerLink="/influencer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
+        <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/features" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>Features</span></a>
         <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>

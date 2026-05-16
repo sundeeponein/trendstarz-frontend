@@ -18,8 +18,6 @@ export class InfluencerUserCardComponent {
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
   @Input() influencerCategory = '';
-  @Input() professionalStatus = false;
-  @Input() expertiseArea = '';
   @Input() verificationStatus = 'not_submitted';
   @Input() verifiedByTrendStarz = false;
   @Input() location: any = {};
@@ -27,6 +25,7 @@ export class InfluencerUserCardComponent {
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
   @Input() promotionalPrice?: number;
+  @Input() showWelcomeStartingPrice = false;
   @Input() engagementRate?: number | string;
   /** Show the "+ Campaign" button — pass true for brand users */
   @Input() showCampaignBtn = false;

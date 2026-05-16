@@ -16,6 +16,7 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -68,7 +69,8 @@ export class InfluencerProfileComponent implements OnInit {
     private otpService: OtpService,
     private plansService: PlansService,
     private cd: ChangeDetectorRef,
-    private guidelinesService: ImageGuidelinesService
+    private guidelinesService: ImageGuidelinesService,
+    private toast: ToastService,
   ) {}
 
   private getToken(): string | null {
@@ -430,7 +432,7 @@ export class InfluencerProfileComponent implements OnInit {
       tiers: this.configService.getTiers(),
       socialMedia: this.configService.getSocialMedia(),
       languages: this.configService.getLanguages(),
-      categories: this.configService.getCategories()
+      categories: this.configService.getCategories('influencer')
     }).subscribe({
       next: (dropdownData) => {
         this.states = dropdownData.states || [];
@@ -910,7 +912,7 @@ export class InfluencerProfileComponent implements OnInit {
     if (!file) return;
     const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
     if (!validation.valid) {
-      alert(validation.reason || 'Please select a valid image file.');
+      this.toast.error(validation.reason || 'Please select a valid image file.');
       return;
     }
     // Compress and resize before upload
@@ -929,7 +931,7 @@ export class InfluencerProfileComponent implements OnInit {
       };
       reader.readAsDataURL(compressedFile);
     } catch (err) {
-      alert('Image compression failed.');
+      this.toast.error('Image compression failed.');
       return;
     }
   }
