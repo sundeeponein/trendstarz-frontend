@@ -37,7 +37,7 @@ export class LoginComponent {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
-      rememberMe: [false],
+      rememberMe: [this.session.prefersPersistentSession()],
     });
 
     // Reset “submitted” flag when the user starts editing again so any

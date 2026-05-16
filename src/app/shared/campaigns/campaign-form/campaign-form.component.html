@@ -360,7 +360,7 @@
         <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted influencers</p>
 
         <div class="field-group">
-          <label class="field-label">Content categories <span class="required">*</span></label>
+          <label class="field-label">Target Influencer Categories <span class="required">*</span></label>
           <div class="chip-list">
             <button type="button" class="chip"
                     [class.chip--selected]="isCategorySelected(cat.name)"
@@ -368,12 +368,12 @@
                     (click)="toggleCategory(cat.name)">
               {{ cat.name }}
             </button>
-            <span class="chip-placeholder" *ngIf="categoriesList.length === 0">Loading categories…</span>
+            <span class="chip-placeholder" *ngIf="categoriesList.length === 0">Loading influencer categories…</span>
           </div>
           <p class="chip-hint" *ngIf="selectedCategories.length > 0">
-            <i class="bi bi-check-circle-fill"></i> {{ selectedCategories.join(', ') }}
+            <i class="bi bi-check-circle-fill"></i> Targeting: {{ selectedCategories.join(', ') }}
           </p>
-          <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one category</span>
+          <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one target influencer category</span>
         </div>
 
         <!-- ── Platform multi-select ── -->
@@ -696,7 +696,7 @@
             <i class="bi bi-arrow-left"></i> Back
           </button>
           <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading">
-            {{ isEdit ? 'Save changes' : 'Save as draft' }}
+            {{ isEditingForReview ? 'Save & Submit for Review' : (isEdit ? 'Save changes' : 'Save as draft') }}
           </button>
           <button type="button" class="btn btn-send"
             [disabled]="selectedInfluencerIds.size === 0 || uploading" (click)="onSubmit()">

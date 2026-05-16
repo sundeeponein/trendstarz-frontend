@@ -6,6 +6,7 @@ import { ConfigService } from '../../config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SessionService } from '../../../core/session.service';
+import { VisibilityService } from '../../../core/visibility.service';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
 import { environment } from '../../../../environments/environment';
@@ -34,12 +35,20 @@ export class InfluencerProfileViewComponent implements OnInit {
 
   /** Whether the logged-in viewer has a Pro subscription */
   get isProViewer(): boolean {
-    return !!this.session.getUser()?.isPremium;
+    return this.visibility.isPro();
+  }
+
+  get isFreeViewer(): boolean {
+    return this.visibility.isFree();
+  }
+
+  get isGuestViewer(): boolean {
+    return this.visibility.isGuest();
   }
 
   /** Whether any user is logged in (used to gate contact details for guests) */
   get isLoggedIn(): boolean {
-    return !!this.session.getUser();
+    return this.visibility.isLoggedIn();
   }
 
   get isBrandViewer(): boolean {
@@ -194,6 +203,7 @@ export class InfluencerProfileViewComponent implements OnInit {
     private config: ConfigService,
     private cd: ChangeDetectorRef,
     private session: SessionService,
+    private visibility: VisibilityService,
     private titleService: Title,
     private meta: Meta,
     @Inject(DOCUMENT) private document: Document,

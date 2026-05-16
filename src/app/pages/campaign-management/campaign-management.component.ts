@@ -19,6 +19,7 @@ import { FlowHelpModalService } from '../../shared/components/flow-help-modal/fl
 import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
+type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 
 @Component({
   selector: 'app-campaign-management',
@@ -88,6 +89,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   // ── Slice D/E: brand actions + fulfillment state ─────────────
   actioningInviteIds = new Set<string>();
+  inviteActionModalOpen = false;
+  inviteActionModalInvite: any = null;
+  inviteActionModalMode: InviteActionReasonModalMode = 'withdraw';
+  inviteActionReasonInput = '';
+  inviteActionModalError = '';
   fulfillModalOpen = false;
   fulfillInvite: any = null;
   fulfillForm: {
@@ -211,6 +217,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       if (hasStartedWork || this.isExpired(campaign)) return 'completed';
     }
     return 'draft';
+  }
+
+  getCampaignModerationNote(campaign: Campaign): string {
+    return String(campaign?.moderationNote || '').trim();
+  }
+
+  shouldShowCampaignModerationNote(campaign: Campaign): boolean {
+    if (!campaign || this.isInfluencerView) return false;
+    const note = this.getCampaignModerationNote(campaign);
+    if (!note) return false;
+    const status = String(campaign?.status || '').trim().toLowerCase();
+    return status === 'needs_changes' || status === 'rejected' || status === 'draft';
   }
 
   sendSelectedInvites() {
@@ -581,7 +599,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       }
     }
     if (!validBrandId) {
-      alert('Brand profile not loaded or invalid. Please wait and try again.');
+      this.showError('Brand profile not loaded or invalid. Please wait and try again.');
       // Attempt to reload brand profile and update state
       this.config.getBrandProfileById().subscribe({
         next: (profile: any) => {
@@ -677,7 +695,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       // debug: creating campaign payload
       // Basic required fields check
       if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId) {
-        alert('Please fill all required fields (title, timeline, brand).');
+        this.showError('Please fill all required fields (title, timeline, brand).');
         return;
       }
       this.config.createCampaign(payload).subscribe({
@@ -1276,6 +1294,107 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return campaign.campaignType === 'product' ? 'Shipping' : 'Check-in';
   }
 
+  get inviteActionModalTitle(): string {
+    if (this.inviteActionModalMode === 'report') return 'Report Invite Issue';
+    if (this.inviteActionModalMode === 'decline_accepted') return 'Decline Accepted Influencer';
+    return 'Withdraw Invite';
+  }
+
+  get inviteActionModalSubmitText(): string {
+    if (this.inviteActionModalMode === 'report') return 'Report';
+    if (this.inviteActionModalMode === 'decline_accepted') return 'Decline Influencer';
+    return 'Withdraw Invite';
+  }
+
+  get inviteActionModalReasonLabel(): string {
+    if (this.inviteActionModalMode === 'report') return 'Issue details';
+    if (this.inviteActionModalMode === 'decline_accepted') return 'Reason for declining (optional)';
+    return 'Reason for withdrawal (optional)';
+  }
+
+  get inviteActionModalHelpText(): string {
+    if (this.inviteActionModalMode === 'report') return 'Describe the issue clearly (for example: no-show, non-delivery, dispute).';
+    if (this.inviteActionModalMode === 'decline_accepted') return 'This accepted influencer will be removed from this campaign.';
+    return 'The influencer will no longer see this pending invite.';
+  }
+
+  get isInviteActionReasonRequired(): boolean {
+    return this.inviteActionModalMode === 'report';
+  }
+
+  get isInviteActionSubmitting(): boolean {
+    return !!this.inviteActionModalInvite?._id && this.actioningInviteIds.has(this.inviteActionModalInvite._id);
+  }
+
+  openInviteActionModal(inv: any, mode: InviteActionReasonModalMode): void {
+    if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
+    this.inviteActionModalInvite = inv;
+    this.inviteActionModalMode = mode;
+    this.inviteActionReasonInput = '';
+    this.inviteActionModalError = '';
+    this.inviteActionModalOpen = true;
+    this.cd.detectChanges();
+  }
+
+  closeInviteActionModal(): void {
+    this.inviteActionModalOpen = false;
+    this.inviteActionModalInvite = null;
+    this.inviteActionReasonInput = '';
+    this.inviteActionModalError = '';
+    this.cd.detectChanges();
+  }
+
+  submitInviteActionFromModal(): void {
+    const inv = this.inviteActionModalInvite;
+    if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
+    const reason = String(this.inviteActionReasonInput || '').trim();
+
+    if (this.isInviteActionReasonRequired && !reason) {
+      this.inviteActionModalError = 'Please provide issue details before reporting.';
+      this.cd.detectChanges();
+      return;
+    }
+
+    this.inviteActionModalError = '';
+    this.actioningInviteIds.add(inv._id);
+    this.cd.detectChanges();
+
+    if (this.inviteActionModalMode === 'report') {
+      this.config.reportInviteIssue(inv._id, reason).subscribe({
+        next: (data: any) => {
+          if (data?.status) inv.status = data.status;
+          inv.reportedIssue = { reason, reportedAt: new Date() };
+          this.actioningInviteIds.delete(inv._id);
+          this.closeInviteActionModal();
+          this.toast.success('Issue reported.');
+          this.cd.detectChanges();
+        },
+        error: (err: any) => {
+          this.actioningInviteIds.delete(inv._id);
+          this.inviteActionModalError = err?.error?.message || 'Failed to report issue.';
+          this.cd.detectChanges();
+        },
+      });
+      return;
+    }
+
+    const isAcceptedDecline = this.inviteActionModalMode === 'decline_accepted';
+    this.config.withdrawInvite(inv._id, reason || undefined).subscribe({
+      next: () => {
+        inv.status = 'withdrawn';
+        this.actioningInviteIds.delete(inv._id);
+        this.closeInviteActionModal();
+        this.toast.success(isAcceptedDecline ? 'Influencer declined.' : 'Invite withdrawn.');
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.actioningInviteIds.delete(inv._id);
+        this.inviteActionModalError = err?.error?.message || 'Failed to withdraw invite.';
+        this.cd.detectChanges();
+      },
+    });
+  }
+
   // ── Slice E: brand action handlers ────────────────────────────
   remindInvite(inv: any): void {
     if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
@@ -1300,52 +1419,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   withdrawInvite(inv: any): void {
     if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
     const isAccepted = inv?.status === 'accepted';
-    const promptLabel = isAccepted
-      ? 'Reason for declining this accepted influencer? (optional)'
-      : 'Reason for withdrawing? (optional)';
-    const reason = (window.prompt(promptLabel) || '').trim();
-    if (!confirm(isAccepted
-      ? 'Decline this accepted influencer from the campaign?'
-      : 'Withdraw this invite? The influencer will no longer see it.')) {
-      return;
-    }
-    this.actioningInviteIds.add(inv._id);
-    this.cd.detectChanges();
-    this.config.withdrawInvite(inv._id, reason || undefined).subscribe({
-      next: () => {
-        inv.status = 'withdrawn';
-        this.actioningInviteIds.delete(inv._id);
-        this.toast.success(isAccepted ? 'Influencer declined.' : 'Invite withdrawn.');
-        this.cd.detectChanges();
-      },
-      error: (err: any) => {
-        this.actioningInviteIds.delete(inv._id);
-        this.toast.error(err?.error?.message || 'Failed to withdraw invite.');
-        this.cd.detectChanges();
-      },
-    });
+    this.openInviteActionModal(inv, isAccepted ? 'decline_accepted' : 'withdraw');
   }
 
   reportInvite(inv: any): void {
-    if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
-    const reason = (window.prompt('Describe the issue (no-show, non-delivery, dispute, …):') || '').trim();
-    if (!reason) return;
-    this.actioningInviteIds.add(inv._id);
-    this.cd.detectChanges();
-    this.config.reportInviteIssue(inv._id, reason).subscribe({
-      next: (data: any) => {
-        if (data?.status) inv.status = data.status;
-        inv.reportedIssue = { reason, reportedAt: new Date() };
-        this.actioningInviteIds.delete(inv._id);
-        this.toast.success('Issue reported.');
-        this.cd.detectChanges();
-      },
-      error: (err: any) => {
-        this.actioningInviteIds.delete(inv._id);
-        this.toast.error(err?.error?.message || 'Failed to report issue.');
-        this.cd.detectChanges();
-      },
-    });
+    this.openInviteActionModal(inv, 'report');
   }
 
   // ── Slice D: fulfillment modal ────────────────────────────────
@@ -2012,8 +2090,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           this.cd.detectChanges();
         },
         error: (err) => {
-          alert('Failed to create campaign. Please try again.');
-          console.error('Create campaign error:', err);
+          this.expandInvitesLoading.delete(c._id!);
+          this.toast.error('Failed to load invites for this campaign. Please try again.');
+          console.error('Load campaign invites error:', err);
+          this.cd.detectChanges();
         }
       });
     }
@@ -2200,6 +2280,25 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.config.updateCampaign(c._id, { status: 'active' as any }).subscribe({
       next: () => {
         this.campaigns = this.campaigns.map(x => x._id === c._id ? { ...x, status: 'active' } : x);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  submittingReviewId: string | null = null;
+
+  submitForReview(c: Campaign) {
+    if (!c._id || this.submittingReviewId) return;
+    this.submittingReviewId = c._id;
+    this.config.updateCampaign(c._id, { status: 'pending_review' as any }).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.map(x => x._id === c._id ? { ...x, status: 'pending_review' } : x);
+        this.expandedCampaignId = null;
+        this.submittingReviewId = null;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.submittingReviewId = null;
         this.cd.detectChanges();
       }
     });

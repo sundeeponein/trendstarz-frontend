@@ -26,6 +26,9 @@ export class BrandUserCardComponent {
   @Input() socialMedia: any[] = [];
   /** Show the "+ Campaign" button — pass true for brand users */
   @Input() showCampaignBtn = false;
+  @Input() showWelcomeCampaignMeta = false;
+  @Input() welcomeCampaignMetaLabel = 'ACTIVE CAMPAIGNS';
+  @Input() welcomeCampaignStatus = '';
   /** Whether the viewer has a Pro subscription (controls visible details) */
   @Input() isProViewer = false;
   /** Backend-driven visibility guard for contact details */

@@ -8,6 +8,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { isPlatformBrowser, NgIf } from '@angular/common';
+import { ToastService } from '../toast/toast.service';
 
 /** Install prompt storage key — dismissed once per session. */
 const DISMISSED_KEY = 'pwa_install_dismissed';
@@ -150,7 +151,10 @@ export class PwaInstallBannerComponent implements OnInit, OnDestroy {
   private deferredPrompt: any = null;
   private promptHandler: ((e: Event) => void) | null = null;
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private toast: ToastService,
+  ) {}
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -187,7 +191,7 @@ export class PwaInstallBannerComponent implements OnInit, OnDestroy {
   async install(): Promise<void> {
     if (this.isIos) {
       if (isPlatformBrowser(this.platformId)) {
-        window.alert('To install TrendStarZ on iPhone: tap the Share button in Safari/Chrome, then choose "Add to Home Screen".');
+        this.toast.info('To install TrendStarZ on iPhone: tap the Share button in Safari or Chrome, then choose Add to Home Screen.');
       }
       return;
     }

@@ -27,6 +27,12 @@
     <!-- Body -->
     <div class="cdm-body">
 
+      <!-- Admin: requested changes note -->
+      <div class="cdm-moderation-note" *ngIf="adminReview && campaignModerationNote">
+        <div class="cdm-moderation-note__label"><i class="bi bi-exclamation-circle-fill"></i> Requested Changes</div>
+        <div class="cdm-moderation-note__text">{{ campaignModerationNote }}</div>
+      </div>
+
       <!-- Campaign image -->
       <div class="cdm-campaign-image-wrap" *ngIf="campaignImageUrl">
         <img class="cdm-campaign-image" [src]="campaignImageUrl" (error)="onCampaignImgError($event)" alt="" />
@@ -273,7 +279,7 @@
         </button>
       </ng-container>
 
-      <button class="cdm-btn cdm-btn--secondary" *ngIf="!isPending" (click)="onClose()">
+      <button class="cdm-btn cdm-btn--secondary" *ngIf="!isPending && !adminReview" (click)="onClose()">
         Close
       </button>
 

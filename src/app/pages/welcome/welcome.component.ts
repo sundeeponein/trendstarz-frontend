@@ -5,16 +5,23 @@ import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
 import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
+import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
+import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
 import { environment } from '../../../environments/environment';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, HeroBannerComponent],
+  imports: [CommonModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
+  // Welcome brand cards: keep minimal by default (logo, name, verified, category).
+  // Flip to true when campaign meta row is needed again.
+  readonly showBrandCampaignMetaOnWelcome = false;
+
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
   readonly builtForAudiencesInputs = {
     heading: 'Built For Every Industry',
@@ -71,6 +78,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   influencers: any[] = [];
   allInfluencers: any[] = [];
   brands: any[] = [];
+  brandCampaignStatusMap: Record<string, string> = {};
   influencersLoading = false;
   brandsLoading = false;
   influencersError: string = '';
@@ -237,6 +245,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brandsLoading = true;
     this.brandsError = '';
     this.brands = [];
+    this.brandCampaignStatusMap = {};
     this.config.getBrands().subscribe({
       next: (data) => {
         console.debug('WelcomeComponent.fetchBrands data', data);
@@ -244,6 +253,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
           ? data
           : (data && Array.isArray((data as any).data) ? (data as any).data : []);
         this.brands = brandArray;
+        if (this.showBrandCampaignMetaOnWelcome) {
+          this.populateWelcomeBrandCampaignStatus(brandArray);
+        }
         this.brandsLoading = false;        this.cd.detectChanges();
       },
       error: (err) => {
@@ -252,6 +264,76 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         console.error('Brand fetch error:', err);
         this.cd.detectChanges();
       }
+    });
+  }
+
+  private getBrandMapKey(brand: any): string {
+    return String(brand?._id || brand?.brandName || '').trim();
+  }
+
+  getWelcomeBrandCampaignStatus(brand: any): string {
+    const fallback = '0 Live';
+    const key = this.getBrandMapKey(brand);
+    return this.brandCampaignStatusMap[key] || fallback;
+  }
+
+  private populateWelcomeBrandCampaignStatus(brands: any[]): void {
+    const visibleBrands = (Array.isArray(brands) ? brands : []).slice(0, 8);
+    if (!visibleBrands.length) {
+      this.brandCampaignStatusMap = {};
+      return;
+    }
+
+    forkJoin(
+      visibleBrands.map((brand: any) => {
+        const brandName = String(brand?.brandName || '').trim();
+        const key = this.getBrandMapKey(brand);
+
+        if (!brandName) {
+          return of({ key, status: '0 Live' });
+        }
+
+        return this.config.getCampaignsByBrandName(brandName).pipe(
+          switchMap((campaigns: any[]) => {
+            const rows = Array.isArray(campaigns) ? campaigns.filter((campaign: any) => !!campaign?._id) : [];
+            if (!rows.length) {
+              return of({ key, status: '0 Live' });
+            }
+
+            return forkJoin(
+              rows.map((campaign: any) =>
+                this.config.getInvitesByCampaign(campaign._id).pipe(
+                  map((invites: any[]) => ({ campaign, invites: Array.isArray(invites) ? invites : [] })),
+                  catchError(() => of({ campaign, invites: [] })),
+                ),
+              ),
+            ).pipe(
+              map((campaignRows: Array<{ campaign: any; invites: any[] }>) => {
+                const liveCount = campaignRows.filter(({ campaign, invites }) => {
+                  const status = String(campaign?.status || '').toLowerCase();
+                  const hasInvitedInfluencers = invites.length > 0;
+                  return status === 'completed' || hasInvitedInfluencers;
+                }).length;
+
+                return { key, status: `${liveCount} Live` };
+              }),
+            );
+          }),
+          catchError(() => of({ key, status: '0 Live' })),
+        );
+      }),
+    ).subscribe({
+      next: (items: Array<{ key: string; status: string }>) => {
+        this.brandCampaignStatusMap = items.reduce<Record<string, string>>((acc, item) => {
+          acc[item.key] = item.status;
+          return acc;
+        }, {});
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.brandCampaignStatusMap = {};
+        this.cd.detectChanges();
+      },
     });
   }
 

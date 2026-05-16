@@ -231,7 +231,7 @@
           </div>
         </div>
       </div>
-      <div class="plan-status-card plan-status-card--free" *ngIf="!isProViewer">
+      <div class="plan-status-card plan-status-card--free" *ngIf="isFreeViewer">
         <div class="plan-status-card__row">
           <span style="font-size:1.3em;">🔒</span>
           <div>
@@ -239,7 +239,18 @@
             <div><small>Contact details are shown only after invite acceptance and unlock in campaigns.</small></div>
           </div>
         </div>
-        <a routerLink="/campaigns" class="plan-status-card__btn">Start Campaign</a>
+        <a *ngIf="isBrandViewer" routerLink="/campaigns" class="plan-status-card__btn">Start Campaign</a>
+      </div>
+
+      <div class="plan-status-card plan-status-card--free" *ngIf="isGuestViewer">
+        <div class="plan-status-card__row">
+          <span style="font-size:1.3em;">👋</span>
+          <div>
+            <strong>Guest View</strong>
+            <div><small>Sign in to access more profile details and campaign actions.</small></div>
+          </div>
+        </div>
+        <a routerLink="/login" class="plan-status-card__btn">Login to Continue</a>
       </div>
 
       <!-- Contact Info (logged-in users only) -->

@@ -11,6 +11,7 @@ export class SessionService {
   private static readonly TOKEN_KEY = 'token';
   private static readonly LOGIN_TIME_KEY = 'loginTimestamp';
   private static readonly SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
+  private static readonly REMEMBER_ME_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 
   private static readonly USER_KEY = 'user';
   private userSubject = new BehaviorSubject<any | null>(null);
@@ -20,19 +21,49 @@ export class SessionService {
     return typeof window !== 'undefined' && !!window.localStorage;
   }
 
+  prefersPersistentSession(): boolean {
+    if (!this.isBrowser()) return false;
+    const standalone =
+      window.matchMedia?.('(display-mode: standalone)').matches ||
+      (window.navigator as any)?.standalone === true;
+    const ua = navigator.userAgent || '';
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    return standalone || isMobile;
+  }
+
+  private isRememberedSessionValid(): boolean {
+    const savedAt = localStorage.getItem(SessionService.LOGIN_TIME_KEY);
+    if (!savedAt) return false;
+    const timestamp = Number(savedAt);
+    if (!Number.isFinite(timestamp)) return false;
+    return Date.now() - timestamp < SessionService.REMEMBER_ME_DURATION;
+  }
+
+  private clearRememberedSession(): void {
+    localStorage.removeItem(SessionService.TOKEN_KEY);
+    localStorage.removeItem(SessionService.LOGIN_TIME_KEY);
+  }
+
   setToken(token: string, rememberMe = false) {
     if (!this.isBrowser()) return;
     if (rememberMe) {
       localStorage.setItem(SessionService.TOKEN_KEY, token);
+      localStorage.setItem(SessionService.LOGIN_TIME_KEY, String(Date.now()));
+      sessionStorage.removeItem(SessionService.TOKEN_KEY);
     } else {
+      this.clearRememberedSession();
       sessionStorage.setItem(SessionService.TOKEN_KEY, token);
     }
   }
 
   getToken(): string | null {
     if (!this.isBrowser()) return null;
-    return localStorage.getItem(SessionService.TOKEN_KEY)
-        || sessionStorage.getItem(SessionService.TOKEN_KEY);
+    const rememberedToken = localStorage.getItem(SessionService.TOKEN_KEY);
+    if (rememberedToken) {
+      if (this.isRememberedSessionValid()) return rememberedToken;
+      this.clearRememberedSession();
+    }
+    return sessionStorage.getItem(SessionService.TOKEN_KEY);
   }
 
   setUser(user: any) {
