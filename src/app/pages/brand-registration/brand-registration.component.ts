@@ -177,7 +177,7 @@ export class BrandRegistrationComponent implements OnInit {
       website: [''],
       foundedYear: [''],
       companySize: [''],
-      promotionalPrice: [500, [Validators.min(0)]],
+      promotionalPrice: ['', [Validators.required, Validators.min(0)]],
       googleMapAddress: [''],
       description: [''],
 
@@ -994,7 +994,7 @@ export class BrandRegistrationComponent implements OnInit {
         // under zoneless change detection.
         this.registrationForm.reset({
           paymentOption: 'free',
-          promotionalPrice: 500,
+          promotionalPrice: '',
           contact: { whatsapp: false, email: false, call: false }
         });
         this.refreshStepCompletion();
