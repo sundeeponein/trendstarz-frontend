@@ -16,6 +16,7 @@ import { TierInfoService } from '../../shared/components/tier-info-modal/tier-in
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-brand-registration',
@@ -74,8 +75,15 @@ export class BrandProfileComponent implements OnInit {
     private otpService: OtpService,
     private plansService: PlansService,
     private cd: ChangeDetectorRef,
-    private guidelinesService: ImageGuidelinesService
+    private guidelinesService: ImageGuidelinesService,
+    private toast: ToastService,
   ) {}
+
+  private showValidationMessage(message: string): void {
+    this.registrationError = message;
+    this.toast.error(message);
+    this.cd.detectChanges();
+  }
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
@@ -231,11 +239,11 @@ export class BrandProfileComponent implements OnInit {
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
+      this.showValidationMessage('Please select a valid image file.');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image size must be below 2MB.');
+      this.showValidationMessage('Image size must be below 2MB.');
       return;
     }
     // Compress image before upload
@@ -284,11 +292,11 @@ export class BrandProfileComponent implements OnInit {
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
+      this.showValidationMessage('Please select a valid image file.');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image size must be below 2MB.');
+      this.showValidationMessage('Image size must be below 2MB.');
       return;
     }
     // Compress image before upload

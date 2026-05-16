@@ -176,23 +176,29 @@
           </div> -->
 
           <!-- Invite tabs -->
-          <div class="pill-tabs invite-tabs-row">
-            <button class="pill-tab" [class.active]="myInviteTab === 'pending'" (click)="myInviteTab = 'pending'">
-              Pending
-              <span class="pill-tab-badge badge-pending" *ngIf="myInvitesPending.length > 0">{{ myInvitesPending.length }}</span>
-            </button>
-            <button class="pill-tab" [class.active]="myInviteTab === 'accepted'" (click)="myInviteTab = 'accepted'">
-              Accepted
-              <span class="pill-tab-badge badge-accepted" *ngIf="myInvitesAccepted.length > 0">{{ myInvitesAccepted.length }}</span>
-            </button>
-            <button class="pill-tab" [class.active]="myInviteTab === 'completed'" (click)="myInviteTab = 'completed'">
-              Completed
-              <span class="pill-tab-badge badge-completed" *ngIf="myInvitesCompleted.length > 0">{{ myInvitesCompleted.length }}</span>
-            </button>
-            <button class="pill-tab" [class.active]="myInviteTab === 'declined'" (click)="myInviteTab = 'declined'">
-              Declined
-              <span class="pill-tab-badge badge-declined" *ngIf="myInvitesDeclined.length > 0">{{ myInvitesDeclined.length }}</span>
-            </button>
+          <div class="invite-tabs-shell mobile-scroll-shell">
+            <div class="pill-tabs invite-tabs-row mobile-scroll-row">
+              <button class="pill-tab" [class.active]="myInviteTab === 'pending'" (click)="myInviteTab = 'pending'">
+                Pending
+                <span class="pill-tab-badge badge-pending" *ngIf="myInvitesPending.length > 0">{{ myInvitesPending.length }}</span>
+              </button>
+              <button class="pill-tab" [class.active]="myInviteTab === 'accepted'" (click)="myInviteTab = 'accepted'">
+                Accepted
+                <span class="pill-tab-badge badge-accepted" *ngIf="myInvitesAccepted.length > 0">{{ myInvitesAccepted.length }}</span>
+              </button>
+              <button class="pill-tab" [class.active]="myInviteTab === 'completed'" (click)="myInviteTab = 'completed'">
+                Completed
+                <span class="pill-tab-badge badge-completed" *ngIf="myInvitesCompleted.length > 0">{{ myInvitesCompleted.length }}</span>
+              </button>
+              <button class="pill-tab" [class.active]="myInviteTab === 'declined'" (click)="myInviteTab = 'declined'">
+                Declined
+                <span class="pill-tab-badge badge-declined" *ngIf="myInvitesDeclined.length > 0">{{ myInvitesDeclined.length }}</span>
+              </button>
+            </div>
+            <div class="invite-tabs-mobile-hint mobile-scroll-hint">
+              <i class="bi bi-arrow-left-right"></i>
+              Swipe left or right to see more tabs
+            </div>
           </div>
 
           <div class="invite-list" *ngIf="myInvitesFiltered.length > 0">
@@ -306,16 +312,22 @@
     </div>
 
     <!-- Tabs (brand only) -->
-    <div class="cm-tabs" *ngIf="!isInfluencerView">
-      <button
-        *ngFor="let tab of tabs"
-        class="cm-tab"
-        [class.active]="activeTab === tab.key"
-        (click)="switchTab(tab.key)"
-      >
-        {{ tab.label }}
-        <span class="tab-count" [class.active-count]="activeTab === tab.key">{{ getCount(tab.key) }}</span>
-      </button>
+    <div class="cm-tabs-shell mobile-scroll-shell" *ngIf="!isInfluencerView">
+      <div class="cm-tabs mobile-scroll-row">
+        <button
+          *ngFor="let tab of tabs"
+          class="cm-tab"
+          [class.active]="activeTab === tab.key"
+          (click)="switchTab(tab.key)"
+        >
+          {{ tab.label }}
+          <span class="tab-count" [class.active-count]="activeTab === tab.key">{{ getCount(tab.key) }}</span>
+        </button>
+      </div>
+      <div class="cm-tabs-mobile-hint mobile-scroll-hint">
+        <i class="bi bi-arrow-left-right"></i>
+        Swipe left or right to see more tabs
+      </div>
     </div>
 
     <!-- Campaign cards -->
