@@ -21,7 +21,7 @@
       <!-- Card header -->
       <div class="arc-header">
         <span class="arc-type-badge" [ngClass]="r.reviewerType">
-          <i [class]="r.reviewerType === 'brand' ? 'bi bi-building' : 'bi bi-person'"></i>
+          <i [class]="r.reviewerType === 'brand' ? 'bi bi-building' : (r.reviewerType === 'photographer' ? 'bi bi-camera' : 'bi bi-person')"></i>
           {{ r.reviewerType | titlecase }} → {{ r.targetType | titlecase }}
         </span>
         <span class="arc-stars">

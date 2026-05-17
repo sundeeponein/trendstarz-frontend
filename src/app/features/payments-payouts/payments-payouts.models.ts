@@ -69,7 +69,7 @@ export interface TransactionSummary {
 export interface PremiumPayment {
   _id: string;
   userId: any;
-  userType: 'Influencer' | 'Brand';
+  userType: 'Influencer' | 'Brand' | 'Photographer';
   userSnapshot?: {
     name?: string;
     email?: string;

@@ -8,7 +8,7 @@
     <div class="form-header">
       <div>
         <h3>
-          {{ isEdit ? 'Edit Campaign' : 'Create new campaign' }}
+          {{ isEdit ? ('Edit ' + formTitleNoun) : ('Create ' + formTitleNoun) }}
           <button
             type="button"
             class="form-help-btn"
@@ -19,9 +19,9 @@
           </button>
         </h3>
         <p class="form-subtitle">
-          Fill in details, then invite influencers.
+          Fill in details, then invite creators.
           <button type="button" class="form-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
-            <i class="bi bi-diagram-3"></i> How campaigns work
+            <i class="bi bi-diagram-3"></i> {{ isPhotographerCreator ? 'How collaboration requests work' : 'How campaigns work' }}
           </button>
         </p>
       </div>
@@ -36,7 +36,7 @@
           <i class="bi bi-check-lg" *ngIf="currentStep > 1"></i>
           <span *ngIf="currentStep <= 1">1</span>
         </div>
-        <span class="step-label">Campaign details</span>
+        <span class="step-label">{{ isPhotographerCreator ? 'Collaboration details' : 'Campaign details' }}</span>
       </div>
       <div class="step-line" [class.done]="currentStep > 1"></div>
       <div class="wizard-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2"
@@ -63,9 +63,9 @@
         <div class="field-group">
           <label class="field-label">Collaboration Type <span class="required">*</span> <i class="bi bi-info-circle" title="What is each collaboration type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
-            <option value="paid_collab">💰 Paid Collab</option>
-            <option value="product" [disabled]="!hasPremium">🎁 Product Collab{{ !hasPremium ? ' 🔒 Premium' : '' }}</option>
-            <option value="invite_location" [disabled]="!hasPremium">📍 Invite to Location{{ !hasPremium ? ' 🔒 Premium' : '' }}</option>
+            <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="!hasPremium && !!opt.premiumOnly">
+              {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}
+            </option>
           </select>
           <p class="field-sublabel premium-lock-hint" *ngIf="!hasPremium">
             <i class="bi bi-lock-fill"></i>
@@ -87,10 +87,10 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">Campaign access mode <span class="required">*</span></label>
+          <label class="field-label">{{ isPhotographerCreator ? 'Collaboration access mode' : 'Campaign access mode' }} <span class="required">*</span></label>
           <select formControlName="campaignMode" class="field-input">
-            <option value="invite_only">🔒 Invite only — you pick &amp; invite influencers</option>
-            <option value="tier_filtered_open">🌐 Tier-filtered open — influencers apply</option>
+            <option value="invite_only">🔒 Invite only — you pick &amp; invite creators</option>
+            <option value="tier_filtered_open">🌐 Open to all (with filters) — creators apply</option>
           </select>
           <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
             <i class="bi bi-person-check"></i>
@@ -103,14 +103,14 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">Campaign title <span class="required">*</span></label>
+          <label class="field-label">{{ isPhotographerCreator ? 'Collaboration Title' : 'Campaign title' }} <span class="required">*</span></label>
           <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['minlength']">Minimum 3 characters</span>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Brand name</label>
+          <label class="field-label">{{ isPhotographerCreator ? 'Creator name' : 'Brand name' }}</label>
           <input type="text" formControlName="brandName" class="field-input" readonly placeholder="Auto from your profile" />
           <p class="field-sublabel">
             <i class="bi bi-shield-check"></i>

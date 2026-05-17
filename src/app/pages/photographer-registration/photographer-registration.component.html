@@ -1,0 +1,385 @@
+<div class="registration-shell">
+  <div class="registration-wrap">
+    <main class="content-panel">
+
+      <!-- Success State -->
+      <div *ngIf="registrationSuccess" class="success-card">
+        <div class="success-icon">🎉</div>
+        <h2>You're registered!</h2>
+        <p>A verification email has been sent to your inbox. Please verify your email to activate your account.</p>
+        <p class="text-muted">Once approved by admin, you can log in and complete your profile.</p>
+        <a routerLink="/auth/login" class="btn btn-primary mt-3">Go to Login</a>
+      </div>
+
+      <ng-container *ngIf="!registrationSuccess">
+        <!-- Step tabs -->
+        <div class="reg-tab-strip">
+          <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
+            <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
+            <span class="reg-tab-label">Basics</span>
+          </button>
+          <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
+          <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
+            <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
+            <span class="reg-tab-label">Skills & Social</span>
+          </button>
+          <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
+          <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
+            <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
+            <span class="reg-tab-label">Plan</span>
+          </button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+          <!-- ── STEP 1: Basics ── -->
+          <section class="form-card" *ngIf="currentStep === 1">
+            <h2>Basic Info</h2>
+            <p class="section-subtitle">Tell us who you are as a Photographer / Videographer.</p>
+
+            <!-- Profile Photo -->
+            <div class="field-block profile-upload-block">
+              <div class="profile-upload-box" [class.has-image]="profileImagePreview" (click)="profileFileInput.click()">
+                <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile" class="profile-upload-preview" />
+                <ng-container *ngIf="!profileImagePreview">
+                  <span class="profile-upload-icon">📷</span>
+                  <span class="profile-upload-label">Upload profile photo</span>
+                  <span class="profile-upload-hint">JPG, PNG up to 5MB</span>
+                </ng-container>
+                <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview" (click)="removeProfileImage()">Remove</button>
+            </div>
+
+            <div class="field-grid">
+              <!-- Name -->
+              <div class="field-block">
+                <label>Full Name <span class="text-danger">*</span></label>
+                <input formControlName="name" type="text" class="form-control" />
+                <div *ngIf="submitted && form.get('name')?.invalid" class="text-danger mt-1">Name is required.</div>
+              </div>
+
+              <!-- Email -->
+              <div class="field-block">
+                <label>Email <span class="text-danger">*</span></label>
+                <input formControlName="email" type="email" class="form-control" />
+                <div *ngIf="submitted && form.get('email')?.invalid" class="text-danger mt-1">Valid email required.</div>
+                <div *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</div>
+              </div>
+
+              <!-- Phone -->
+              <div class="field-block">
+                <label>Mobile Number <span class="text-danger">*</span></label>
+                <input formControlName="phoneNumber" type="tel" class="form-control" placeholder="10-digit mobile" />
+                <div *ngIf="submitted && form.get('phoneNumber')?.invalid" class="text-danger mt-1">Mobile number is required.</div>
+                <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
+              </div>
+
+              <!-- DOB -->
+              <div class="field-block">
+                <label>Date of Birth</label>
+                <input formControlName="dateOfBirth" type="date" class="form-control" />
+              </div>
+
+              <!-- Gender -->
+              <div class="field-block">
+                <label>Gender</label>
+                <select formControlName="gender" class="form-select">
+                  <option value="">Prefer not to say</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
+                </select>
+              </div>
+
+              <!-- Portfolio -->
+              <div class="field-block">
+                <label>Portfolio / Website <span class="text-muted" style="font-size:0.78rem;">(optional)</span></label>
+                <input formControlName="portfolio" type="url" class="form-control" placeholder="https://yourportfolio.com" />
+              </div>
+
+              <!-- State -->
+              <div class="field-block" formGroupName="location">
+                <label>State <span class="text-danger">*</span></label>
+                <select formControlName="state" class="form-select">
+                  <option value="">Select state</option>
+                  <option *ngFor="let s of states" [value]="s._id || s.name">{{ s.name }}</option>
+                </select>
+                <div *ngIf="submitted && form.get('location.state')?.invalid" class="text-danger mt-1">State is required.</div>
+              </div>
+
+              <!-- District -->
+              <div class="field-block" formGroupName="location">
+                <label>District <span class="text-danger">*</span></label>
+                <select formControlName="district" class="form-select">
+                  <option value="">Select district</option>
+                  <option *ngFor="let d of districts" [value]="d._id || d.name">{{ d.name }}</option>
+                </select>
+                <div *ngIf="submitted && form.get('location.district')?.invalid" class="text-danger mt-1">District is required.</div>
+              </div>
+
+              <!-- Password -->
+              <div class="field-block">
+                <label>Password <span class="text-danger">*</span></label>
+                <div class="password-wrap">
+                  <input formControlName="password" [type]="showPassword ? 'text' : 'password'" class="form-control" />
+                  <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                    <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  </button>
+                </div>
+                <ul class="pw-checklist text-black" *ngIf="form.get('password')?.value || form.get('password')?.touched">
+                  <li *ngFor="let check of passwordChecks" [class.passed]="check.passed">
+                    <i class="bi" [class.bi-check-circle-fill]="check.passed" [class.bi-circle]="!check.passed"></i>
+                    {{ check.label }}
+                  </li>
+                </ul>
+                <div *ngIf="submitted && form.get('password')?.invalid" class="text-danger mt-1">Please enter a valid password.</div>
+              </div>
+
+              <!-- Confirm Password -->
+              <div class="field-block">
+                <label>Confirm Password <span class="text-danger">*</span></label>
+                <div class="password-wrap">
+                  <input formControlName="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" />
+                  <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'">
+                    <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  </button>
+                </div>
+                <div *ngIf="submitted && form.get('confirmPassword')?.invalid" class="text-danger mt-1">Please confirm your password.</div>
+                <div *ngIf="submitted && form.errors?.['passwordMismatch']" class="text-danger mt-1">Passwords do not match.</div>
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-primary" (click)="nextStep()">Next: Skills & Social →</button>
+              <div class="mt-3 text-center text-muted" style="font-size:0.9rem;">
+                Already registered? <a routerLink="/auth/login">Log in</a>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── STEP 2: Skills, Pricing & Social ── -->
+          <section class="form-card" *ngIf="currentStep === 2">
+            <h2>Skills, Pricing & Equipment</h2>
+            <p class="section-subtitle">Help clients know what you offer and at what price.</p>
+
+            <!-- Skills chips -->
+            <div class="field-block">
+              <label>Skills / Specialties <span class="text-danger">*</span></label>
+              <div class="chip-list">
+                <button type="button" class="chip" *ngFor="let skill of skillOptions"
+                  [class.chip--selected]="isSkillSelected(skill)"
+                  (click)="toggleSkill(skill)">
+                  {{ skill }}
+                </button>
+              </div>
+              <div *ngIf="submitted && !hasSelectedSkills" class="text-danger mt-2">Please select at least one skill or specialty.</div>
+            </div>
+
+            <!-- Pricing -->
+            <div class="field-block mt-3">
+              <label>Pricing <span class="text-muted" style="font-size:0.78rem;">(check the ones you offer)</span></label>
+              <div class="pricing-rows">
+                <div class="pricing-row" *ngFor="let p of pricingOptions">
+                  <label class="pricing-check-label">
+                    <input type="checkbox" [(ngModel)]="pricingState[p.key].enabled" [ngModelOptions]="{standalone: true}" />
+                    <span>{{ p.label }}</span>
+                  </label>
+                  <div class="pricing-input-wrap" *ngIf="pricingState[p.key].enabled">
+                    <span class="currency-symbol">₹</span>
+                    <input type="number" min="0" class="form-control pricing-input"
+                      [(ngModel)]="pricingState[p.key].price"
+                      [ngModelOptions]="{standalone: true}"
+                      placeholder="0" />
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="submitted && !hasSelectedPricing" class="text-danger mt-2">Please select at least one pricing option.</div>
+            </div>
+
+            <!-- Equipment chips -->
+            <div class="field-block mt-3">
+              <label>Equipment <span class="text-muted" style="font-size:0.78rem;">(optional)</span></label>
+              <div class="chip-list">
+                <button type="button" class="chip" *ngFor="let eq of equipmentOptions"
+                  [class.chip--selected]="isEquipmentSelected(eq)"
+                  (click)="toggleEquipment(eq)">
+                  {{ eq }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Photoshoot Gallery -->
+            <div class="field-block mt-3">
+              <label>Photoshoot Gallery <span class="text-muted" style="font-size:0.78rem;">(optional, up to {{ MAX_PHOTOSHOOT_IMAGES }} images)</span></label>
+              <div class="gallery-upload-wrap">
+                <label class="gallery-upload-cta" for="photoshootGalleryInput">
+                  <i class="bi bi-images"></i>
+                  <span>Add photoshoot images</span>
+                </label>
+                <input
+                  id="photoshootGalleryInput"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  (change)="onPhotoshootImagesChange($event)"
+                />
+                <div class="text-muted" style="font-size:0.84rem;">Use this to showcase past shoots on your public profile.</div>
+              </div>
+
+              <div class="gallery-preview-grid" *ngIf="photoshootImagesPreview.length">
+                <div class="gallery-preview-card" *ngFor="let img of photoshootImagesPreview; let i = index">
+                  <img [src]="img" alt="Photoshoot preview" class="gallery-preview-image" />
+                  <button type="button" class="gallery-remove-btn" (click)="removePhotoshootImage(i)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <h2 class="mt-3">Social Media Platforms <span class="text-danger">*</span></h2>
+            <p class="section-subtitle">Select your platforms and set your rates for each content type.</p>
+            <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns.
+              <small>"Accurate profile information improves visibility and brand collaboration opportunities."</small>
+            </div>
+
+            <div class="platform-cards">
+              <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
+                <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                <span class="platform-name">{{ platform.name }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
+              <div class="platform-tab-strip">
+                <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
+                  [class.platform-tab--active]="activePlatformTab === platform._id"
+                  (click)="activePlatformTab = platform._id">
+                  <i [class]="platform.icon"></i> {{ platform.name }}
+                </button>
+                <div class="platform-tab-spacer"></div>
+                <button type="button" class="tab-remove" *ngIf="activePlatformTab"
+                  (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
+                  <i class="bi bi-x-lg"></i> Remove
+                </button>
+              </div>
+
+              <ng-container *ngIf="activePlatformTab">
+                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2">
+                  <div class="platform-details-header">
+                    <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                    <span class="platform-name">{{ platform.name }}</span>
+                    <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
+                  </div>
+
+                  <div class="platform-details-body">
+                    <div class="field-grid">
+                      <div class="field-block">
+                        <label>{{ platform.handleLabel || 'Handle' }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" [(ngModel)]="platformForms[platform._id].handle"
+                          [ngModelOptions]="{standalone: true}"
+                          (blur)="stripAtSign(platform._id)"
+                          placeholder="@yourhandle" />
+                        <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                          [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                          target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                          <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                        </a>
+                        <div *ngIf="submitted && !(platformForms[platform._id].handle || '').trim()" class="text-danger mt-1">Handle is required.</div>
+                      </div>
+                      <div class="field-block">
+                        <label>Tier <span class="text-danger">*</span></label>
+                        <select class="form-select" [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}">
+                          <option value="">Select tier</option>
+                          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
+                        </select>
+                        <div *ngIf="submitted && !(platformForms[platform._id].tier || '').trim()" class="text-danger mt-1">Tier is required.</div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+            <div *ngIf="submitted && !platformsValid" class="text-danger mb-3">
+              Please add at least one social platform with handle and tier filled in.
+            </div>
+
+            <!-- Error -->
+            <div *ngIf="registrationError" class="alert alert-danger mt-3">{{ registrationError }}</div>
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-outline-secondary me-2" (click)="prevStep()">← Back</button>
+              <button type="button" class="btn btn-primary" (click)="nextStep()">Continue →</button>
+            </div>
+          </section>
+
+          <!-- ── STEP 3: Plan ── -->
+          <section class="form-card" *ngIf="currentStep === 3">
+            <h2>Plan</h2>
+            <p class="section-subtitle">Choose your photographer plan and complete your registration.</p>
+
+            <div class="plan-info-banner">
+              <i class="bi bi-info-circle"></i>
+              Pick a plan to boost profile visibility and get matched with more relevant campaigns.
+            </div>
+
+            <div class="plan-cards">
+              <div class="plan-card" [class.selected]="form.get('paymentOption')?.value === 'free'"
+                (click)="form.get('paymentOption')?.setValue('free')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Starter</span>
+                  <span class="plan-card-price free">Free</span>
+                </div>
+                <div class="plan-card-desc">Basic discovery, profile listing and campaign visibility.</div>
+              </div>
+
+              <div class="plan-card" [class.selected]="form.get('paymentOption')?.value === 'premium'"
+                (click)="form.get('paymentOption')?.setValue('premium')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Pro Photographer <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-price premium">₹{{ premiumMonthlyPrice }}/mo</span>
+                </div>
+                <div class="plan-card-desc">Priority listing, higher trust visibility and premium campaign opportunities.</div>
+              </div>
+            </div>
+
+            <div *ngIf="isPremiumPlan()" class="premium-upgrade-cta mt-3">
+              <div class="premium-cta-content">
+                <span class="premium-cta-icon">🌟</span>
+                <div>
+                  <strong>Upgrade to Pro Photographer</strong>
+                  <p class="text-muted mb-0" style="font-size:0.9em;">After registration, log in to complete your premium upgrade.</p>
+                </div>
+              </div>
+              <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
+            </div>
+
+            <div class="field-grid mt-3">
+              <div class="field-block full-width">
+                <label>Starting Price <span class="text-danger">*</span></label>
+                <input formControlName="startingPrice" type="number" min="0" required class="form-control" placeholder="Enter your starting price" />
+                <div class="form-text mt-1" style="font-size:0.95em">
+                  Shown to brands as your starting price when they discover your profile.
+                </div>
+                <div class="form-text" style="font-size:0.92em;">Use this as your base quote. You can still keep detailed pricing in Step 2.</div>
+                <div *ngIf="submitted && form.get('startingPrice')?.invalid" class="text-danger mt-1">Starting price is required.</div>
+              </div>
+            </div>
+
+            <div *ngIf="registrationError" class="alert alert-danger mt-3">{{ registrationError }}</div>
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-outline-secondary me-2" (click)="prevStep()">← Back</button>
+              <button type="submit" class="btn btn-success" [disabled]="submitting">
+                {{ submitting ? 'Registering...' : 'Create Account' }}
+              </button>
+            </div>
+          </section>
+
+        </form>
+      </ng-container>
+    </main>
+  </div>
+</div>

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformServer } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
@@ -33,6 +33,7 @@ export class CampaignReviewComponent implements OnInit {
   moderatingCampaignId = '';
   isSubmittingModeration = false;
   campaignApprovalMode: 'manual' | 'auto_live' = 'manual';
+  collaborationApprovalMode: 'manual' | 'auto_live' = 'manual';
   selectedCampaign: any | null = null;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
@@ -47,6 +48,7 @@ export class CampaignReviewComponent implements OnInit {
     @Inject(PLATFORM_ID) platformId: object,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
+    private router: Router,
   ) {
     this.isServer = isPlatformServer(platformId);
   }
@@ -56,6 +58,29 @@ export class CampaignReviewComponent implements OnInit {
     this.campaignFiltersExpanded = window.innerWidth >= 768;
     this.loadApprovalMode();
     this.loadCampaignApprovals();
+  }
+
+  get reviewScope(): 'campaign' | 'collaboration' {
+    const url = String(this.router.url || '');
+    return url.includes('/admin/collaboration-review') ? 'collaboration' : 'campaign';
+  }
+
+  get isCollaborationScope(): boolean {
+    return this.reviewScope === 'collaboration';
+  }
+
+  get queueTitle(): string {
+    return this.isCollaborationScope ? 'Collaboration Approval Queue' : 'Campaign Approval Queue';
+  }
+
+  get pageTitle(): string {
+    return this.isCollaborationScope ? 'Collaboration Review' : 'Campaign Review';
+  }
+
+  get pageSubtitle(): string {
+    return this.isCollaborationScope
+      ? 'Approve, reject, or request changes for collaborations submitted by photographers.'
+      : 'Approve, reject, or request changes for campaigns submitted by brands.';
   }
 
   private getToken(): string | null {
@@ -73,6 +98,7 @@ export class CampaignReviewComponent implements OnInit {
       next: (res) => {
         const data = res?.data ?? res;
         this.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
+        this.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.cdr.detectChanges();
       },
       error: () => {},
@@ -82,7 +108,8 @@ export class CampaignReviewComponent implements OnInit {
   loadCampaignApprovals() {
     this.campaignApprovalsLoading = true;
     this.campaignApprovalsError = '';
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?status=all`, this.getAuthHeaders()).subscribe({
+    const ownerType = this.isCollaborationScope ? 'photographer' : 'brand';
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?status=all&ownerType=${ownerType}`, this.getAuthHeaders()).subscribe({
       next: (res) => {
         const data = res?.data ?? [];
         this.allCampaignApprovals = Array.isArray(data) ? data : [];
@@ -119,18 +146,21 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   canApproveCampaign(campaign: any): boolean {
-    return this.campaignApprovalMode === 'manual' && this.isPendingCampaign(campaign);
+    const mode = this.isCollaborationScope ? this.collaborationApprovalMode : this.campaignApprovalMode;
+    return mode === 'manual' && this.isPendingCampaign(campaign);
   }
 
   canRequestChangesCampaign(campaign: any): boolean {
-    if (this.campaignApprovalMode === 'manual') {
+    const mode = this.isCollaborationScope ? this.collaborationApprovalMode : this.campaignApprovalMode;
+    if (mode === 'manual') {
       return this.isPendingCampaign(campaign);
     }
     return this.isActiveCampaign(campaign) && !this.hasInfluencerProgress(campaign);
   }
 
   canRejectCampaign(campaign: any): boolean {
-    if (this.campaignApprovalMode === 'manual') {
+    const mode = this.isCollaborationScope ? this.collaborationApprovalMode : this.campaignApprovalMode;
+    if (mode === 'manual') {
       return this.isPendingCampaign(campaign);
     }
     return this.isActiveCampaign(campaign) && !this.hasInfluencerProgress(campaign);

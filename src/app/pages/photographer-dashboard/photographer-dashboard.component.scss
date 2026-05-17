@@ -1,0 +1,83 @@
+@use '../../shared/styles/dashboard-layout' as *;
+
+.photographer-dashboard {
+  min-height: 100%;
+}
+
+.profile-traffic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.traffic-stat-box {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+
+.traffic-stat-label {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.traffic-stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.traffic-stat-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.snapshot-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  color: #374151;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.chip--accent {
+  background: #fff7ed;
+  color: #f97316;
+  border-color: #fed7aa;
+}
+
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .profile-traffic-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -10,6 +10,7 @@ import { CampaignPaymentComponent } from '../campaign-payment/campaign-payment.c
 import { SessionService } from '../../core/session.service';
 import { Campaign } from '../../shared/campaigns/campaign.model';
 import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/campaign-form.component';
+import { PhotographerCollaborationFormComponent } from '../../shared/collaborations/photographer-collaboration-form/photographer-collaboration-form.component';
 import { CampaignDetailModalComponent, CampaignAcceptPayload, CampaignDeclinePayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignInviteCardComponent, InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { environment } from '../../../environments/environment';
@@ -24,7 +25,7 @@ type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, PhotographerCollaborationFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -63,6 +64,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   /** True when an influencer is viewing — switches to read-only open-campaigns mode */
   isInfluencerView = false;
+  isPhotographerView = false;
 
   activeTab: TabStatus = 'active';
   pageSize = 10;
@@ -374,6 +376,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const token = this.getToken();
     const user = this.session.getUser();
     this.isInfluencerView = user?.role === 'influencer';
+    this.isPhotographerView = user?.role === 'photographer';
 
     if (this.isInfluencerView) {
       // Auto-refresh invites when user returns to this tab (browser only)
@@ -428,6 +431,42 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         error: () => {
           this.campaigns = [];
           this.campaignLoadError = 'Failed to load open campaigns.';
+          this.loading = false;
+          this.cd.detectChanges();
+        }
+      });
+    } else if (this.isPhotographerView) {
+      // Photographer: fetch profile first, then load owned collaboration requests
+      this.loading = true;
+      this.config.getPhotographerProfileById().subscribe({
+        next: (profile: any) => {
+          const owner = profile?.data?.photographer || profile?.photographer || profile;
+          this.brandId = owner?._id || owner?.id || '';
+          this.brandName = owner?.name || 'Photographer';
+          if (!this.brandId) {
+            this.campaignLoadError = 'No photographer profile found. Please complete your profile first.';
+            this.loading = false;
+            this.cd.detectChanges();
+            return;
+          }
+          this.config.getCampaignsByBrandId(this.brandId).subscribe({
+            next: (campaigns: Campaign[]) => {
+              this.campaigns = campaigns || [];
+              this.campaignLoadError = '';
+              this.loading = false;
+              this.cd.detectChanges();
+              this.loadAllInvites();
+            },
+            error: () => {
+              this.campaigns = [];
+              this.campaignLoadError = 'Failed to load collaboration requests.';
+              this.loading = false;
+              this.cd.detectChanges();
+            }
+          });
+        },
+        error: () => {
+          this.campaignLoadError = 'Failed to load photographer profile. Please try again.';
           this.loading = false;
           this.cd.detectChanges();
         }
@@ -566,11 +605,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   onManage(campaign: Campaign) {
     // Always refresh brand profile before editing
-    this.config.getBrandProfileById().subscribe({
+    const ownerProfile$ = this.isPhotographerView
+      ? this.config.getPhotographerProfileById()
+      : this.config.getBrandProfileById();
+    ownerProfile$.subscribe({
         next: (profile: any) => {
-        const brand = profile?.data?.brand || profile?.brand || profile;
-        this.brandId = brand?._id || brand?.id || brand?.brandUsername || '';
-        this.brandName = brand?.brandName || brand?.name || '';
+        const owner = this.isPhotographerView
+          ? (profile?.data?.photographer || profile?.photographer || profile)
+          : (profile?.data?.brand || profile?.brand || profile);
+        this.brandId = owner?._id || owner?.id || owner?.brandUsername || '';
+        this.brandName = owner?.brandName || owner?.name || '';
         this.editingCampaign = campaign;
         this.formMode = 'edit';
         this.showForm = true;
@@ -601,11 +645,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (!validBrandId) {
       this.showError('Brand profile not loaded or invalid. Please wait and try again.');
       // Attempt to reload brand profile and update state
-      this.config.getBrandProfileById().subscribe({
+      const ownerProfile$ = this.isPhotographerView
+        ? this.config.getPhotographerProfileById()
+        : this.config.getBrandProfileById();
+      ownerProfile$.subscribe({
         next: (profile: any) => {
-          const brand = profile?.data?.brand || profile?.brand || profile;
-          this.brandId = brand?._id || brand?.id || '';
-          this.brandName = brand?.brandName || brand?.name || '';
+          const owner = this.isPhotographerView
+            ? (profile?.data?.photographer || profile?.photographer || profile)
+            : (profile?.data?.brand || profile?.brand || profile);
+          this.brandId = owner?._id || owner?.id || '';
+          this.brandName = owner?.brandName || owner?.name || '';
           this.cd.detectChanges();
         }
       });
@@ -679,11 +728,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           }
           this.loadAllInvitesForce();
           this.cd.detectChanges();
-          this.config.getBrandProfileById().subscribe({
+          const ownerProfile$ = this.isPhotographerView
+            ? this.config.getPhotographerProfileById()
+            : this.config.getBrandProfileById();
+          ownerProfile$.subscribe({
             next: (profile: any) => {
-              const brand = profile?.data?.brand || profile?.brand || profile;
-              this.brandId = brand?._id || brand?.id || '';
-              this.brandName = brand?.brandName || brand?.name || '';
+              const owner = this.isPhotographerView
+                ? (profile?.data?.photographer || profile?.photographer || profile)
+                : (profile?.data?.brand || profile?.brand || profile);
+              this.brandId = owner?._id || owner?.id || '';
+              this.brandName = owner?.brandName || owner?.name || '';
               this.cd.detectChanges();
             }
           });
@@ -701,11 +755,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.config.createCampaign(payload).subscribe({
         next: (created: Campaign) => {
           // Refresh brand profile in background (non-blocking)
-          this.config.getBrandProfileById().subscribe({
+          const ownerProfile$ = this.isPhotographerView
+            ? this.config.getPhotographerProfileById()
+            : this.config.getBrandProfileById();
+          ownerProfile$.subscribe({
             next: (profile: any) => {
-              const brand = profile?.data?.brand || profile?.brand || profile;
-              this.brandId = brand?._id || brand?.id || brand?.brandUsername || '';
-              this.brandName = brand?.brandName || brand?.name || '';
+              const owner = this.isPhotographerView
+                ? (profile?.data?.photographer || profile?.photographer || profile)
+                : (profile?.data?.brand || profile?.brand || profile);
+              this.brandId = owner?._id || owner?.id || owner?.brandUsername || '';
+              this.brandName = owner?.brandName || owner?.name || '';
               this.cd.detectChanges();
             }
           });
