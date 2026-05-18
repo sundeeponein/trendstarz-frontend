@@ -529,7 +529,13 @@
                     Mobile {{ isMobileVerified(user) ? 'Verified' : 'Verification Pending' }}
                   </span>
                 </div>
-              </div>
+                </div>
+                <div class="d-flex gap-1 flex-wrap">
+                  <button class="btn btn-outline-success btn-sm" *ngIf="!isEmailVerified(user)" (click)="updateContactVerification(user, 'photographer', 'isEmailVerified', true)">Verify Email</button>
+                  <button class="btn btn-outline-secondary btn-sm" *ngIf="isEmailVerified(user)" (click)="updateContactVerification(user, 'photographer', 'isEmailVerified', false)">Unverify Email</button>
+                  <button class="btn btn-outline-success btn-sm" *ngIf="!isMobileVerified(user)" (click)="updateContactVerification(user, 'photographer', 'isMobileVerified', true)">Verify Mobile</button>
+                  <button class="btn btn-outline-secondary btn-sm" *ngIf="isMobileVerified(user)" (click)="updateContactVerification(user, 'photographer', 'isMobileVerified', false)">Unverify Mobile</button>
+                </div>
             </td>
             <td>{{ getSignupSource(user) }}</td>
             <td>{{ (user.categories && user.categories.length ? user.categories : (user.skills || [])).length ? (user.categories && user.categories.length ? user.categories : (user.skills || [])).join(', ') : '-' }}</td>

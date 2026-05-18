@@ -121,23 +121,15 @@ test.describe('Premium Upgrade', () => {
   });
 
   test('duration toggle updates displayed price', async ({ page }) => {
-    // On mobile, force click may not trigger Angular's click handler — use JS
-    await page.evaluate(() => {
-      const cards = document.querySelectorAll('.plan-card');
-      cards.forEach(c => { if (c.textContent?.includes('Star')) (c as HTMLElement).click(); });
-    });
-    await page.waitForTimeout(500);
-    await page.locator('body').click();
-    await page.waitForTimeout(500);
-    // Select 3 months
-    const durBtn = page.locator('.dur-btn:has-text("3 Months")');
-    await durBtn.scrollIntoViewIfNeeded();
-    await durBtn.click({ force: true });
-    await page.waitForTimeout(300);
-    await page.locator('body').click();
-    await page.waitForTimeout(300);
-    // Price should show quarterly price (use selected plan's price)
-    await expect(page.locator('.plan-card.selected .plan-price')).toContainText('1347');
+    const starCard = page.locator('.plan-card').filter({ hasText: 'Star' }).first();
+    await starCard.scrollIntoViewIfNeeded();
+    await starCard.click({ force: true });
+
+    const quarterlyBtn = starCard.locator('.dur-btn:has-text("3 Months")');
+    await expect(quarterlyBtn).toBeVisible();
+    await quarterlyBtn.click({ force: true });
+
+    await expect(starCard.locator('.plan-price')).toContainText('1347');
   });
 
   test('proceed to payment step', async ({ page }) => {

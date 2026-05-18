@@ -80,7 +80,7 @@ async function mockBrandProfileRoutes(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'lang1', name: 'English' }] }) });
   });
-  await page.route('**/categories', async (route) => {
+  await page.route('**/categories**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'cat1', name: 'Fashion' }] }) });
   });
@@ -115,7 +115,11 @@ test.describe('Brand Profile', () => {
   test.beforeEach(async ({ page }) => {
     await setBrandAuth(page);
     await mockBrandProfileRoutes(page);
+    const profileLoaded = page.waitForResponse((resp) =>
+      resp.url().includes('/users/brand-profile') && resp.request().method() === 'GET'
+    );
     await page.goto('/brand-profile');
+    await profileLoaded;
     // Wait for the step/sidebar tabs to appear (more robust than fixed timeouts)
     await page.waitForSelector('.reg-tab', { state: 'visible', timeout: 10000 });
     // Trigger CD so mock data is rendered in zoneless Angular

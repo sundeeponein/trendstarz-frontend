@@ -111,6 +111,18 @@ test.describe('Admin Dashboard', () => {
 
 // ──────────────── Admin User Table ────────────────────────────
 test.describe('Admin User Table', () => {
+  async function ensureFiltersVisible(page: Page) {
+    const statusFilter = page.locator('#status-filter');
+    if (await statusFilter.count()) {
+      return;
+    }
+    const toggleBtn = page.locator('button.filter-toggle-btn');
+    if (await toggleBtn.count()) {
+      await toggleBtn.first().click({ force: true });
+      await page.waitForSelector('#status-filter', { state: 'visible', timeout: 10000 });
+    }
+  }
+
   test.beforeEach(async ({ page }) => {
     await setAdminAuth(page);
     await mockAdminRoutes(page);
@@ -159,6 +171,7 @@ test.describe('Admin User Table', () => {
 
   test('filters influencers by status', async ({ page }) => {
     await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await ensureFiltersVisible(page);
     await page.selectOption('#status-filter', 'accepted');
     await page.waitForTimeout(500);
     await page.locator('body').click();
@@ -170,6 +183,7 @@ test.describe('Admin User Table', () => {
 
   test('filters influencers by premium status', async ({ page }) => {
     await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await ensureFiltersVisible(page);
     await page.selectOption('#premium-filter', 'free');
     await page.waitForTimeout(500);
     await page.locator('body').click();
@@ -290,6 +304,7 @@ test.describe('Admin User Table', () => {
 
   test('reset filters clears all dropdowns', async ({ page }) => {
     await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await ensureFiltersVisible(page);
     // Apply a filter first
     await page.selectOption('#status-filter', 'accepted');
     await page.waitForTimeout(300);
