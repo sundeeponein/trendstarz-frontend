@@ -80,7 +80,7 @@ async function mockProfileRoutes(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'lang1', name: 'English' }] }) });
   });
-  await page.route('**/categories', async (route) => {
+  await page.route('**/categories**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ success: true, data: [{ _id: 'cat1', name: 'Fashion' }] }) });
   });
@@ -116,7 +116,11 @@ test.describe('Influencer Profile', () => {
   test.beforeEach(async ({ page }) => {
     await setInfluencerAuth(page);
     await mockProfileRoutes(page);
+    const profileLoaded = page.waitForResponse((resp) =>
+      resp.url().includes('/users/influencer-profile') && resp.request().method() === 'GET'
+    );
     await page.goto('/influencer-profile');
+    await profileLoaded;
     await page.waitForSelector('form', { state: 'visible', timeout: 10000 });
     await page.waitForSelector('.reg-tab, .step-item', { state: 'visible', timeout: 10000 });
     // Trigger CD so mock data is rendered in zoneless Angular

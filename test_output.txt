@@ -1,0 +1,118 @@
+
+Running 114 tests using 2 workers
+
+[1A[2K[1/114] [mobile-chrome] › e2e/admin-disputes.spec.ts:120:3 › Admin disputes page › shows count badge in admin nav and lists open disputes
+[1A[2K[2/114] [mobile-chrome] › e2e/admin-photographer-parity.spec.ts:41:3 › Admin Photographer Parity Smoke › admin user table shows Photographers tab and photographer row
+[1A[2K[3/114] [mobile-chrome] › e2e/admin-disputes.spec.ts:135:3 › Admin disputes page › filter tabs switch between open / resolved / all
+[1A[2K[4/114] [mobile-chrome] › e2e/admin-photographer-parity.spec.ts:81:3 › Admin Photographer Parity Smoke › photographer tab filters and actions match user-management parity
+[1A[2K[5/114] [mobile-chrome] › e2e/admin-disputes.spec.ts:148:3 › Admin disputes page › resolve button POSTs to /admin/:id/resolve-dispute and removes the row
+[1A[2K[6/114] [mobile-chrome] › e2e/admin-photographer-parity.spec.ts:179:3 › Admin Photographer Parity Smoke › photographer Edit Tags modal saves tags successfully
+[1A[2K[7/114] [mobile-chrome] › e2e/admin-disputes.spec.ts:176:3 › Admin disputes page › bulk resolve POSTs to /admin/disputes/bulk-resolve with selected ids
+[1A[2K[8/114] [mobile-chrome] › e2e/admin-photographer-parity.spec.ts:249:3 › Admin Photographer Parity Smoke › deleted users page shows photographer deleted tab data
+[1A[2K[9/114] [mobile-chrome] › e2e/admin.spec.ts:74:3 › Admin Dashboard › renders dashboard heading and both stat cards
+[1A[2K[10/114] [mobile-chrome] › e2e/admin-photographer-parity.spec.ts:284:3 › Admin Photographer Parity Smoke › collaboration review route renders collaboration-scoped copy
+[1A[2K[11/114] [mobile-chrome] › e2e/admin.spec.ts:80:3 › Admin Dashboard › shows correct influencer stats
+[1A[2K[12/114] [mobile-chrome] › e2e/brand-profile.spec.ts:142:3 › Brand Profile › renders step 1 — Brand Basics with profile data
+[1A[2K[13/114] [mobile-chrome] › e2e/admin.spec.ts:91:3 › Admin Dashboard › shows correct brand stats
+[1A[2K[14/114] [mobile-chrome] › e2e/brand-profile.spec.ts:150:3 › Brand Profile › shows step progress sidebar with 3 steps
+[1A[2K[15/114] [mobile-chrome] › e2e/admin.spec.ts:144:3 › Admin User Table › renders user table heading and influencer tab active by default
+[1A[2K[16/114] [mobile-chrome] › e2e/brand-profile.spec.ts:155:3 › Brand Profile › Edit Profile button enables form fields
+[1A[2K[17/114] [mobile-chrome] › e2e/admin.spec.ts:149:3 › Admin User Table › shows influencer rows in table
+[1A[2K[18/114] [mobile-chrome] › e2e/brand-profile.spec.ts:161:3 › Brand Profile › navigates through all 3 steps
+[1A[2K[19/114] [mobile-chrome] › e2e/admin.spec.ts:156:3 › Admin User Table › switches to Brands tab and shows brand rows
+[1A[2K[20/114] [mobile-chrome] › e2e/admin.spec.ts:172:3 › Admin User Table › filters influencers by status
+[1A[2K[21/114] [mobile-chrome] › e2e/brand-profile.spec.ts:178:3 › Brand Profile › step 2 shows Media & Discovery fields
+[1A[2K[22/114] [mobile-chrome] › e2e/brand-profile.spec.ts:185:3 › Brand Profile › step 3 shows Professional fields and Save button in edit mode
+[1A[2K[23/114] [mobile-chrome] › e2e/admin.spec.ts:184:3 › Admin User Table › filters influencers by premium status
+[1A[2K[24/114] [mobile-chrome] › e2e/brand-profile.spec.ts:195:3 › Brand Profile › save profile sends PATCH request
+[1A[2K[25/114] [mobile-chrome] › e2e/admin.spec.ts:196:3 › Admin User Table › accept user triggers confirm dialog and API call
+[1A[2K[26/114] [mobile-chrome] › e2e/brand-profile.spec.ts:225:3 › Brand Profile › sidebar step clicks navigate directly
+[1A[2K[27/114] [mobile-chrome] › e2e/brand-registration.spec.ts:12:1 › Brand registration — full 3-step flow (mocked API)
+[1A[2K[28/114] [mobile-chrome] › e2e/admin.spec.ts:216:3 › Admin User Table › decline user triggers confirm dialog and API call
+[1A[2K[29/114] [mobile-chrome] › e2e/brand-registration.spec.ts:446:3 › Brand registration — step 1 validation › Next Step is blocked when required fields are empty
+[1A[2K[30/114] [mobile-chrome] › e2e/brand-registration.spec.ts:456:3 › Brand registration — step 1 validation › password strength checklist appears when typing password
+[1A[2K[31/114] [mobile-chrome] › e2e/admin.spec.ts:234:3 › Admin User Table › delete user triggers confirm dialog and API call
+[1A[2K[32/114] [mobile-chrome] › e2e/brand-registration.spec.ts:461:3 › Brand registration — step 1 validation › password mismatch shows error
+[1A[2K[33/114] [mobile-chrome] › e2e/brand-registration.spec.ts:469:3 › Brand registration — step 1 validation › password toggle works on password field
+[1A[2K[34/114] [mobile-chrome] › e2e/campaign-actions.spec.ts:144:1 › renders bucket chips and triggers Remind via API
+[1A[2K[35/114] [mobile-chrome] › e2e/campaign-actions.spec.ts:164:1 › Withdraw button calls withdraw endpoint after confirm
+[1A[2K[36/114] [mobile-chrome] › e2e/admin.spec.ts:252:3 › Admin User Table › Set Premium opens modal with duration radio buttons
+[1A[2K[37/114] [mobile-chrome] › e2e/campaign-actions.spec.ts:192:1 › Report button calls report endpoint with reason
+[1A[2K[38/114] [mobile-chrome] › e2e/campaign-actions.spec.ts:220:1 › opens fulfillment modal and saves shipping info
+[1A[2K[39/114] [mobile-chrome] › e2e/admin.spec.ts:267:3 › Admin User Table › Set Premium confirm sends API call with duration
+[1A[2K[40/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:89:1 › campaign-payment: page loads with tabs and UPI ID
+[1A[2K[41/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:119:1 › campaign-payment: UPI tab displays platform UPI ID
+[1A[2K[42/114] [mobile-chrome] › e2e/admin.spec.ts:284:3 › Admin User Table › tag modal keeps one regular tag and one commission tag selected at a time
+[1A[2K[43/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:165:1 › campaign-payment: brand submits UTR reference successfully
+[1A[2K[44/114] [mobile-chrome] › e2e/admin.spec.ts:305:3 › Admin User Table › reset filters clears all dropdowns
+[1A[2K[45/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:187:1 › campaign-payment: status tab shows pending verification state
+[1A[2K[46/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:216:1 › campaign-payment: status tab shows verified state
+[1A[2K[47/114] [mobile-chrome] › e2e/campaigns.spec.ts:151:3 › Brand — create campaign › opens campaign form modal and creates a campaign (mocked API)
+[1A[2K[48/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:245:1 › campaign-payment: status tab shows rejected state and resubmit option
+[1A[2K[49/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:275:1 › campaign-payment: status tab shows dispute-open frozen alert
+[1A[2K[50/114] [mobile-chrome] › e2e/campaign-payment.spec.ts:305:1 › campaign-payment: status tab shows payout paid completed state
+[1A[2K[51/114] [mobile-chrome] › e2e/how-it-works.spec.ts:4:3 › How it Works page › features alias shows features eyebrow and route-aware CTA links
+[1A[2K[52/114] [mobile-chrome] › e2e/how-it-works.spec.ts:18:3 › How it Works page › guest sees both influencer and brand journeys with CTA links
+[1A[2K[53/114] [mobile-chrome] › e2e/how-it-works.spec.ts:31:3 › How it Works page › audience route for influencers shows only influencer journey
+[1A[2K[54/114] [mobile-chrome] › e2e/how-it-works.spec.ts:38:3 › How it Works page › audience route for brands shows only brand journey
+[1A[2K[55/114] [mobile-chrome] › e2e/how-it-works.spec.ts:45:3 › How it Works page › logged in influencer sees activation section and campaigns CTA
+[1A[2K[56/114] [mobile-chrome] › e2e/how-it-works.spec.ts:73:3 › How it Works page › logged in brand sees activation section and create campaign CTA
+[1A[2K[57/114] [mobile-chrome] › e2e/how-it-works.spec.ts:101:3 › How it Works page › homepage hero features CTA navigates to features page
+[1A[2K[58/114] [mobile-chrome] › e2e/influencer-invite-tabs.spec.ts:169:3 › Influencer › My Campaign Invites tabs › 1. Pending tab is default and shows the pending invite
+[1A[2K[59/114] [mobile-chrome] › e2e/campaigns.spec.ts:274:3 › Brand — invite influencer › opens invite drawer and sends invite (mocked API)
+[1A[2K[60/114] [mobile-chrome] › e2e/campaigns.spec.ts:394:3 › Influencer — submit campaign post › fills submission form and submits (mocked API)
+[1A[2K[61/114] [mobile-chrome] › e2e/influencer-invite-tabs.spec.ts:190:3 › Influencer › My Campaign Invites tabs › 2. Clicking Accepted tab shows accepted invite
+[1A[2K[62/114] [mobile-chrome] › e2e/influencer-invite-tabs.spec.ts:202:3 › Influencer › My Campaign Invites tabs › 3. Accepted tab shows "Submit your post" button
+[1A[2K[63/114] [mobile-chrome] › e2e/influencer-invite-tabs.spec.ts:212:3 › Influencer › My Campaign Invites tabs › 4. Open Campaigns hides campaigns influencer already has an invite for
+[1A[2K[64/114] [mobile-chrome] › e2e/influencer-invite-tabs.spec.ts:230:3 › Influencer › My Campaign Invites tabs › 5. "Submit your post" button navigates to campaign-submission page
+[1A[2K[65/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:155:3 › Influencer Profile › renders step 1 — Basic Details with profile data
+[1A[2K[66/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:163:3 › Influencer Profile › shows step progress with 3 tabs
+[1A[2K[67/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:173:3 › Influencer Profile › Edit Profile button enables form fields
+[1A[2K[68/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:181:3 › Influencer Profile › navigates through all 3 steps
+[1A[2K[69/114] [mobile-chrome] › e2e/campaigns.spec.ts:468:3 › Influencer — submit campaign post › shows error when postUrl is missing and submit is clicked
+[1A[2K[70/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:201:3 › Influencer Profile › step 2 shows Media & Platforms fields
+[1A[2K[71/114] [mobile-chrome] › e2e/campaigns.spec.ts:490:3 › Brand — review submission › approves a submitted post (mocked API)
+[1A[2K[72/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:210:3 › Influencer Profile › step 3 shows Professional fields and Save button in edit mode
+[1A[2K[73/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:219:3 › Influencer Profile › save profile sends PATCH request
+[1A[2K[74/114] [mobile-chrome] › e2e/influencer-profile.spec.ts:235:3 › Influencer Profile › sidebar step clicks navigate directly
+[1A[2K[75/114] [mobile-chrome] › e2e/influencer-registration-campaign.spec.ts:12:1 › Influencer registration — full 3-step flow (mocked API)
+[1A[2K[76/114] [mobile-chrome] › e2e/login.spec.ts:24:3 › Login page › renders email, password fields and sign-in button
+[1A[2K[77/114] [mobile-chrome] › e2e/influencer-registration-campaign.spec.ts:221:3 › Influencer registration — step 1 validation › Next Step is blocked when required fields are empty
+[1A[2K[78/114] [mobile-chrome] › e2e/influencer-registration-campaign.spec.ts:227:3 › Influencer registration — step 1 validation › password mismatch shows error
+[1A[2K[79/114] [mobile-chrome] › e2e/login.spec.ts:30:3 › Login page › sign-in button is disabled when form is empty
+[1A[2K[80/114] [mobile-chrome] › e2e/password-reset.spec.ts:16:3 › Forgot password page › renders email field and Send Reset Link button
+[1A[2K[81/114] [mobile-chrome] › e2e/login.spec.ts:35:3 › Login page › shows email validation error on blur with invalid email
+[1A[2K[82/114] [mobile-chrome] › e2e/password-reset.spec.ts:21:3 › Forgot password page › button is disabled when email is empty
+[1A[2K[83/114] [mobile-chrome] › e2e/login.spec.ts:43:3 › Login page › shows password validation error on blur with empty password
+[1A[2K[84/114] [mobile-chrome] › e2e/password-reset.spec.ts:25:3 › Forgot password page › shows validation error for invalid email format
+[1A[2K[85/114] [mobile-chrome] › e2e/login.spec.ts:52:3 › Login page › password toggle switches input type between password and text
+[1A[2K[86/114] [mobile-chrome] › e2e/password-reset.spec.ts:31:3 › Forgot password page › shows success message after submitting valid email (mocked API)
+[1A[2K[87/114] [mobile-chrome] › e2e/login.spec.ts:65:3 › Login page › forgot password link navigates to forgot-password page
+[1A[2K[88/114] [mobile-chrome] › e2e/password-reset.spec.ts:46:3 › Forgot password page › shows same success message when email is not registered (mocked API)
+[1A[2K[89/114] [mobile-chrome] › e2e/login.spec.ts:70:3 › Login page › shows error message for invalid credentials (mocked API)
+[1A[2K[90/114] [mobile-chrome] › e2e/password-reset.spec.ts:62:3 › Forgot password page › Back to Login link navigates to /login
+[1A[2K[91/114] [mobile-chrome] › e2e/login.spec.ts:98:3 › Login page › successful login redirects away from login page (mocked API)
+[1A[2K[92/114] [mobile-chrome] › e2e/password-reset.spec.ts:81:3 › Reset password page › renders new password and confirm password fields
+[1A[2K[93/114] [mobile-chrome] › e2e/photographer-profile.spec.ts:247:1 › Photographer profile — view and edit (mocked API)
+[1A[2K[94/114] [mobile-chrome] › e2e/photographer-profile.spec.ts:308:1 › Photographer profile — commission badge display
+[1A[2K[95/114] [mobile-chrome] › e2e/password-reset.spec.ts:87:3 › Reset password page › password strength checklist appears when typing
+[1A[2K[96/114] [mobile-chrome] › e2e/photographer-registration.spec.ts:12:1 › Photographer registration — full 3-step flow (mocked API)
+[1A[2K[97/114] [mobile-chrome] › e2e/password-reset.spec.ts:92:3 › Reset password page › all checklist items pass with a strong password
+[1A[2K[98/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:108:3 › Premium Upgrade › renders plan selection step with plan cards
+[1A[2K[99/114] [mobile-chrome] › e2e/password-reset.spec.ts:102:3 › Reset password page › shows mismatch error when passwords differ
+[1A[2K[100/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:114:3 › Premium Upgrade › paid plan card shows duration buttons when selected
+[1A[2K[101/114] [mobile-chrome] › e2e/password-reset.spec.ts:109:3 › Reset password page › password toggle works on both fields
+[1A[2K[102/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:123:3 › Premium Upgrade › duration toggle updates displayed price
+[1A[2K[103/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:135:3 › Premium Upgrade › proceed to payment step
+[1A[2K[104/114] [mobile-chrome] › e2e/password-reset.spec.ts:128:3 › Reset password page › shows success message after valid reset (mocked API)
+[1A[2K[105/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:145:3 › Premium Upgrade › coupon TRENDSTARZ10 applies 10% discount
+[1A[2K[106/114] [mobile-chrome] › e2e/password-reset.spec.ts:155:3 › Reset password page › shows error when token is invalid (mocked API)
+[1A[2K[107/114] [mobile-chrome] › e2e/qualifying-platforms.spec.ts:20:1 › Open campaign preview shows only qualifying platform for tier_filtered_open
+[1A[2K[108/114] [mobile-chrome] › e2e/submission-accepted-platform.spec.ts:20:1 › Submission page prefers accepted platform/content only
+[1A[2K[109/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:161:3 › Premium Upgrade › coupon TRENDSTARZ20 applies 20% discount
+[1A[2K[110/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:174:3 › Premium Upgrade › invalid coupon shows error
+[1A[2K[111/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:188:3 › Premium Upgrade › UPI and QR tabs switch payment method view
+[1A[2K[112/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:199:3 › Premium Upgrade › confirm payment without UTR shows error
+[1A[2K[113/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:211:3 › Premium Upgrade › confirm payment with UTR posts to API and shows success
+[1A[2K[114/114] [mobile-chrome] › e2e/plan-upgrade.spec.ts:232:3 › Premium Upgrade › back to profile button on success screen navigates away
+[1A[2K  114 passed (3.5m)

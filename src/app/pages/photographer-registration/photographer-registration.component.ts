@@ -43,6 +43,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   submitting = false;
   registrationSuccess = false;
   registrationError = '';
+  galleryUploadWarning = '';
 
   states: any[] = [];
   districts: any[] = [];
@@ -294,13 +295,15 @@ export class PhotographerRegistrationComponent implements OnInit {
     const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
     if (!selectedFiles.length) return;
 
+    let failedUploads = 0;
+
     for (const file of selectedFiles) {
       if (!file.type.startsWith('image/')) {
-        this.registrationError = 'Please select valid image files only.';
+        failedUploads += 1;
         continue;
       }
       if (file.size > 5 * 1024 * 1024) {
-        this.registrationError = 'Each gallery image must be below 5MB.';
+        failedUploads += 1;
         continue;
       }
 
@@ -312,7 +315,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       }).catch(() => '');
 
       if (!preview) {
-        this.registrationError = 'Could not preview one of the selected images.';
+        failedUploads += 1;
         continue;
       }
 
@@ -334,15 +337,20 @@ export class PhotographerRegistrationComponent implements OnInit {
       });
 
       if (!uploaded) {
-        this.registrationError = 'Failed to upload one of the gallery images.';
+        failedUploads += 1;
         continue;
       }
 
       this.photoshootImagesPreview.push(preview);
       this.photoshootImagesData.push(uploaded);
-      this.registrationError = '';
       this.cdr.detectChanges();
     }
+
+    this.galleryUploadWarning = failedUploads
+      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+      : '';
+
+    this.cdr.detectChanges();
   }
 
   removePhotoshootImage(index: number) {
@@ -465,6 +473,7 @@ export class PhotographerRegistrationComponent implements OnInit {
 
     this.submitting = true;
     this.registrationError = '';
+    this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
       next: () => {
         this.submitting = false;
@@ -486,5 +495,10 @@ export class PhotographerRegistrationComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  closeSuccessModal() {
+    this.registrationSuccess = false;
+    this.router.navigate(['/auth/login']);
   }
 }

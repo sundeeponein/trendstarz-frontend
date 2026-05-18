@@ -229,8 +229,9 @@ test('Photographer registration — full 3-step flow (mocked API)', async ({ pag
   await expect(submitBtn).toBeEnabled();
   await submitBtn.click();
 
-  // Wait for success card
-  await page.locator('.success-card').waitFor({ timeout: 10000 });
+  // Wait for success modal
+  await page.locator('.reg-success-modal-overlay').waitFor({ timeout: 10000 });
+  await expect(page.getByText('Successfully Registered!')).toBeVisible();
 
   // Verify registration API was called
   expect(photoSubmitCalled).toBeTruthy();
