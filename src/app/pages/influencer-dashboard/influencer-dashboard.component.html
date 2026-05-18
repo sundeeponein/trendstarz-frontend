@@ -51,6 +51,42 @@
     </div>
   </div>
 
+  <div class="section-card mb-4" *ngIf="!loading">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--blue me-2"></span>
+      Dual Role Summary
+      <span class="section-count ms-2">Receive + Post</span>
+    </div>
+    <div class="row gx-3">
+      <div class="col-12 col-md-6 mb-3 mb-md-0">
+        <div class="card text-center shadow-sm border-0 h-100">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1 text-primary">{{ incomingInvitesCount }}</div>
+            <div class="text-muted">Incoming invites from brands</div>
+            <button class="btn btn-sm btn-outline-primary mt-2" (click)="openCampaignManagement()">
+              View incoming invites
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card text-center shadow-sm border-0 h-100">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold mb-1 text-success">{{ postedRequestsCount }}</div>
+            <div class="text-muted">Posted collaboration requests</div>
+            <div class="small mt-1 text-muted">
+              Active: <strong>{{ postedRequestsActiveCount }}</strong>
+              · Pending review: <strong>{{ postedRequestsPendingReviewCount }}</strong>
+            </div>
+            <button class="btn btn-sm btn-outline-success mt-2" (click)="openCampaignManagement()">
+              Manage posted requests
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Needs Attention Widget -->
   <div class="needs-attention mb-4"
        *ngIf="(attentionCounts.pendingInvites + attentionCounts.overdueDeliverables + attentionCounts.disputedAgainstMe) > 0">
@@ -189,6 +225,54 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading" class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--purple me-2"></span>
+      My Collaboration Requests
+      <span class="section-count ms-2">{{ postedCollaborations.length }}</span>
+    </div>
+
+    <div *ngIf="postedCollaborations.length === 0" class="section-empty py-3">
+      <div class="section-empty-icon"><i class="bi bi-camera-reels"></i></div>
+      <div class="section-empty-title">No collaboration requests posted</div>
+      <div class="section-empty-desc">If your role supports creator flow, requests you post to influencers will appear here.</div>
+      <button class="btn btn-sm btn-outline-primary mt-2" (click)="openCampaignManagement()">Open Campaigns</button>
+    </div>
+
+    <div *ngFor="let c of postedCollaborations" class="active-camp-card" (click)="openCampaignManagement()">
+      <div class="d-flex align-items-start gap-2">
+        <div class="active-camp-dot"></div>
+        <div class="flex-1">
+          <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
+          <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:90 }}{{ c.description?.length > 90 ? '…' : '' }}</div>
+          <div class="d-flex gap-2 mt-1 flex-wrap">
+            <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || []) | slice:0:3">{{ cat }}</span>
+          </div>
+        </div>
+        <span class="badge rounded-pill ms-2"
+              [ngClass]="{
+                'bg-success': c.status === 'active',
+                'bg-warning text-dark': c.status === 'pending' || c.status === 'pending_review',
+                'bg-secondary': c.status === 'draft',
+                'bg-danger': c.status === 'rejected'
+              }">
+          {{ (c.status || 'draft') | titlecase }}
+        </span>
+      </div>
+      <div class="active-camp-meta mt-2">
+        <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
+        <span *ngIf="c.pricePerInfluencer"><i class="bi bi-currency-rupee"></i> ₹{{ ((c.pricePerInfluencer || 0) / 100) | number:'1.0-0' }} / influencer</span>
+        <span *ngIf="c.maxInfluencers"><i class="bi bi-people"></i> Max {{ c.maxInfluencers }}</span>
+      </div>
+    </div>
+
+    <div class="txn-see-all" *ngIf="postedCollaborations.length">
+      <a routerLink="/campaigns" class="txn-see-all__link">
+        <i class="bi bi-arrow-right-circle"></i> Manage all collaboration requests
+      </a>
     </div>
   </div>
 

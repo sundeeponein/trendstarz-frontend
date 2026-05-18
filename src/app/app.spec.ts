@@ -1,10 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
+import { PushNotificationService } from './core/push-notification.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        {
+          provide: PushNotificationService,
+          useValue: {
+            requestSubscription: async () => false,
+          },
+        },
+      ],
     }).compileComponents();
   });
 

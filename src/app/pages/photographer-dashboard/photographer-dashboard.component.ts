@@ -14,6 +14,10 @@ import { ConfigService } from '../../shared/config.service';
 })
 export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   photographer: any = null;
+  brandCampaigns: any[] = [];
+  brandCampaignsLoading = false;
+  brandInvites: any[] = [];
+  brandInvitesLoading = false;
   loading = true;
   error = '';
   profileIncomplete = false;
@@ -101,6 +105,8 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         };
         this.profileIncomplete = !profile?.name || !profile?.location?.state || !Array.isArray(profile?.skills) || profile.skills.length === 0 || !Array.isArray(profile?.socialMedia) || profile.socialMedia.length === 0;
         this.loading = false;
+        this.loadBrandInvites();
+        this.loadBrandCampaigns();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -109,6 +115,62 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  loadBrandCampaigns(): void {
+    this.brandCampaignsLoading = true;
+    this.config.getAllCampaigns('active').subscribe({
+      next: (rows: any[]) => {
+        const all = Array.isArray(rows) ? rows : [];
+        // Show latest active campaigns from brands for quick discovery.
+        this.brandCampaigns = all
+          .filter((c: any) => String(c?.status || '').toLowerCase() === 'active')
+          .sort((a: any, b: any) => {
+            const at = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+            const bt = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+            return bt - at;
+          })
+          .slice(0, 6);
+        this.brandCampaignsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.brandCampaigns = [];
+        this.brandCampaignsLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadBrandInvites(): void {
+    this.brandInvitesLoading = true;
+    this.config.getMyPhotographerInvites().subscribe({
+      next: (rows: any[]) => {
+        this.brandInvites = Array.isArray(rows) ? rows : [];
+        this.brandInvitesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.brandInvites = [];
+        this.brandInvitesLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  getBrandName(campaign: any): string {
+    const b = campaign?.brandId;
+    if (typeof b === 'object' && b) {
+      return b.brandName || b.businessName || b.name || 'Brand';
+    }
+    return 'Brand';
+  }
+
+  formatTimeline(start?: string, end?: string): string {
+    const fmt = (d?: string) => d
+      ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+      : '?';
+    return `${fmt(start)} – ${fmt(end)}`;
   }
 
   formatDate(value: string): string {
@@ -133,5 +195,9 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   onSearch(): void {
     this.router.navigate(['/search']);
+  }
+
+  onOpenCampaigns(): void {
+    this.router.navigate(['/campaigns']);
   }
 }

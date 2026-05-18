@@ -50,7 +50,7 @@
       <div class="step-line" [class.done]="currentStep > 2"></div>
       <div class="wizard-step" [class.active]="currentStep === 3">
         <div class="step-circle"><span>3</span></div>
-        <span class="step-label">Invite influencers</span>
+        <span class="step-label">Invite {{ isPhotographerCreator ? 'influencers' : 'recipients' }}</span>
       </div>
     </div>
 
@@ -90,15 +90,27 @@
           <label class="field-label">{{ isPhotographerCreator ? 'Collaboration access mode' : 'Campaign access mode' }} <span class="required">*</span></label>
           <select formControlName="campaignMode" class="field-input">
             <option value="invite_only">🔒 Invite only — you pick &amp; invite creators</option>
-            <option value="tier_filtered_open">🌐 Open to all (with filters) — creators apply</option>
+            <option value="tier_filtered_open" *ngIf="!isInvitingPhotographers">🌐 Open to all (with filters) — creators apply</option>
           </select>
           <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
             <i class="bi bi-person-check"></i>
-            You manually select and invite specific influencers in Step 3.
+            You manually select and invite specific {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} in Step 3.
           </p>
-          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open' && !isInvitingPhotographers">
             <i class="bi bi-globe2"></i>
-            Eligible influencers matching your minimum tier (and optional location) can discover and apply. You review applicants from the dashboard.
+            Eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} matching your minimum tier (and optional location) can discover and apply. You review applicants from the dashboard.
+          </p>
+        </div>
+
+        <div class="field-group" *ngIf="!isPhotographerCreator">
+          <label class="field-label">Who do you want to invite? <span class="required">*</span></label>
+          <select formControlName="inviteRecipientRole" class="field-input">
+            <option value="influencer">Influencers</option>
+            <option value="photographer">Photo/Videographers</option>
+          </select>
+          <p class="field-sublabel" *ngIf="isInvitingPhotographers">
+            <i class="bi bi-info-circle"></i>
+            Photo/Videographer flow is invite-only. Open apply mode is disabled for this recipient type.
           </p>
         </div>
 
@@ -120,7 +132,7 @@
 
         <div class="field-group">
           <div class="field-label-row">
-            <label class="field-label">Campaign description</label>
+            <label class="field-label">{{ isPhotographerCreator ? 'Collaboration description' : 'Campaign description' }}</label>
             <button
               type="button"
               class="btn-use-template"
@@ -140,6 +152,30 @@
           </p>
           <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Event/Location brief, including venue details, timing, and attendance expectations. [You can edit venue, timing, and requirements.]
+          </p>
+        </div>
+
+        <div class="field-group" *ngIf="isPhotographerCreator">
+          <label class="field-label">Shoot location type <span class="required">*</span></label>
+          <select formControlName="shootLocationType" class="field-input">
+            <option value="">Select shoot location type</option>
+            <option *ngFor="let opt of SHOOT_LOCATION_TYPES" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+          <span class="field-error" *ngIf="f['shootLocationType'].touched && f['shootLocationType'].invalid">Location type is required</span>
+
+          <label class="field-label mt-2">Shoot address / meeting point <span class="required">*</span></label>
+          <textarea formControlName="shootLocationAddress" class="field-textarea" rows="2"
+                    placeholder="Studio address, meetup point, or exact shoot location for influencer"></textarea>
+          <span class="field-error" *ngIf="f['shootLocationAddress'].touched && f['shootLocationAddress'].invalid">Shoot address is required</span>
+
+          <label class="field-label mt-2">Google Maps link <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <input type="url" formControlName="shootLocationMapUrl" class="field-input" placeholder="https://maps.google.com/..." />
+
+          <label class="field-label mt-2">Pickup / indoor-outdoor notes <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <textarea formControlName="shootLocationNotes" class="field-textarea" rows="2"
+                    placeholder="Example: Indoor studio setup available, product pickup at front desk, parking details"></textarea>
+          <p class="field-sublabel">
+            <i class="bi bi-info-circle"></i> This location information is shown to influencers before they accept the collaboration.
           </p>
         </div>
 
@@ -190,7 +226,7 @@
           <span class="field-error" *ngIf="f['inviteBenefits'].touched && f['inviteBenefits'].invalid">Benefits are required</span>
         </div>
 
-        <div class="field-group">
+        <div class="field-group" *ngIf="!isPhotographerCreator">
           <label class="field-label">Campaign image</label>
           <div class="image-upload-area" *ngIf="!imagePreview">
             <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
@@ -235,7 +271,7 @@
           Acceptance deadline must be between campaign start and end dates.
         </span>
         <p class="field-sublabel">
-          Note: Influencers can only choose a posting date within your selected start and end dates when accepting invites.
+          Note: {{ inviteRecipientLabelPlural }} can only choose a posting date within your selected start and end dates when accepting invites.
         </p>
 
         <p class="step-indicator">Step 1 of 3</p>
@@ -258,7 +294,7 @@
         <div class="field-row" *ngIf="selectedCampaignType === 'paid_collab' || selectedCampaignType === 'pay_to_join'">
           <div class="field-group half">
             <label class="field-label">
-              {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per influencer (₹)' : 'Campaign Budget (₹)' }}
+              {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per influencer (₹)' : (isPhotographerCreator ? 'Collaboration Budget (₹)' : 'Campaign Budget (₹)') }}
               <span class="required">*</span>
             </label>
             <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 3000" min="1" />
@@ -273,7 +309,7 @@
 
         <div class="field-row">
           <div class="field-group half">
-            <label class="field-label">Min accepted to close campaign <span class="required">*</span></label>
+            <label class="field-label">Min accepted to close {{ isPhotographerCreator ? 'collaboration' : 'campaign' }} <span class="required">*</span></label>
             <input type="number" formControlName="minInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
             <span class="field-error" *ngIf="f['minInfluencers'].touched && f['minInfluencers'].invalid">Enter at least 1</span>
           </div>
@@ -357,10 +393,10 @@
             placeholder="Any joining terms, quality checks, timeline, and acceptance rules..."></textarea>
         </div>
 
-        <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted influencers</p>
+        <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}</p>
 
-        <div class="field-group">
-          <label class="field-label">Target Influencer Categories <span class="required">*</span></label>
+        <div class="field-group" *ngIf="!isPhotographerCreator">
+          <label class="field-label">Target {{ inviteRecipientLabelPlural }} Categories <span class="required">*</span></label>
           <div class="chip-list">
             <button type="button" class="chip"
                     [class.chip--selected]="isCategorySelected(cat.name)"
@@ -368,16 +404,16 @@
                     (click)="toggleCategory(cat.name)">
               {{ cat.name }}
             </button>
-            <span class="chip-placeholder" *ngIf="categoriesList.length === 0">Loading influencer categories…</span>
+            <span class="chip-placeholder" *ngIf="categoriesList.length === 0">Loading {{ inviteRecipientLabelPlural.toLowerCase() }} categories…</span>
           </div>
           <p class="chip-hint" *ngIf="selectedCategories.length > 0">
             <i class="bi bi-check-circle-fill"></i> Targeting: {{ selectedCategories.join(', ') }}
           </p>
-          <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one target influencer category</span>
+          <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one target {{ inviteRecipientLabelSingular.toLowerCase() }} category</span>
         </div>
 
         <!-- ── Platform multi-select ── -->
-        <div class="field-group">
+        <div class="field-group" *ngIf="!isPhotographerCreator && !isInvitingPhotographers">
           <label class="field-label">Platforms <span class="required">*</span></label>
           <p class="field-sublabel">Select one or more platforms. Then toggle deliverables and set a price for each.</p>
           <p class="field-sublabel">Example: YT -> Reel 1500, Photo Post 1500. While accepting, influencer selects one enabled content output.</p>
@@ -393,7 +429,7 @@
         </div>
 
         <!-- ── Per-platform tabs ── -->
-        <div *ngIf="platformDeliverables.length > 0" class="platform-tabs-wrap">
+        <div *ngIf="platformDeliverables.length > 0 && !isPhotographerCreator && !isInvitingPhotographers" class="platform-tabs-wrap">
 
           <!-- Tab strip -->
           <div class="platform-tab-strip">
@@ -440,8 +476,58 @@
 
         </div>
 
+        <!-- ── Photographer: Services / Pricing / Deliverables ── -->
+        <ng-container *ngIf="isPhotographerCreator">
+          <div class="field-group">
+            <label class="field-label">Services Offered <span class="required">*</span></label>
+            <div class="chip-list">
+              <button type="button" class="chip"
+                      [class.chip--selected]="selectedPhotographerServices.includes(s)"
+                      *ngFor="let s of PHOTOGRAPHER_SERVICES"
+                      (click)="togglePhotographerService(s)">{{ s }}</button>
+            </div>
+            <span class="field-error" *ngIf="selectedPhotographerServices.length === 0 && platformsTouched">Select at least one service</span>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Pricing <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <div class="chip-list">
+              <button type="button" class="chip"
+                      [class.chip--selected]="selectedPhotographerPricing.includes(p)"
+                      *ngFor="let p of PHOTOGRAPHER_PRICING_OPTIONS"
+                      (click)="togglePhotographerPricing(p)">{{ p }}</button>
+            </div>
+          </div>
+
+          <!-- Pricing inputs for selected options -->
+          <div class="field-group" *ngIf="selectedPhotographerPricing.length > 0">
+            <label class="field-label">Set prices for selected options</label>
+            <div class="pricing-inputs-wrap">
+              <div class="pricing-input-row" *ngFor="let p of selectedPhotographerPricing">
+                <label class="pricing-label">{{ p }}</label>
+                <div class="pricing-input-group">
+                  <span class="pricing-rupee">₹</span>
+                  <input type="number" [(ngModel)]="photographerPricingPrices[p]" [ngModelOptions]="{standalone: true}"
+                         class="field-input pricing-input" placeholder="0" min="0" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Deliverables <span class="required">*</span></label>
+            <div class="chip-list">
+              <button type="button" class="chip"
+                      [class.chip--selected]="selectedPhotographerDeliverables.includes(d)"
+                      *ngFor="let d of PHOTOGRAPHER_DELIVERABLES"
+                      (click)="togglePhotographerDeliverable(d)">{{ d }}</button>
+            </div>
+            <span class="field-error" *ngIf="selectedPhotographerDeliverables.length === 0 && platformsTouched">Select at least one deliverable</span>
+          </div>
+        </ng-container>
+
         <!-- ── Minimum tier ── -->
-        <div class="field-group">
+        <div class="field-group" *ngIf="!isInvitingPhotographers">
           <label class="field-label">
             Minimum tier
             <i class="bi bi-info-circle" title="View tier info" style="cursor:pointer;margin-left:6px;" (click)="tierInfo.open()"></i>
@@ -453,11 +539,11 @@
         </div>
 
         <!-- ── Location targeting (only for tier_filtered_open) ── -->
-        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open' && !isInvitingPhotographers">
           <label class="field-label">Target location <span class="text-muted" style="font-weight:400;">(optional)</span></label>
           <p class="field-sublabel" style="margin-bottom:8px;">
             <i class="bi bi-geo-alt"></i>
-            Limit applicants to influencers from a specific state and/or city. Leave blank to accept from anywhere in India.
+            Limit applicants to {{ inviteRecipientLabelPlural.toLowerCase() }} from a specific state and/or city. Leave blank to accept from anywhere in India.
           </p>
           <div class="field-row">
             <div class="field-group half">
@@ -482,16 +568,19 @@
             <button
               type="button"
               class="btn-use-template"
-              *ngIf="SPECIAL_INSTRUCTIONS_EXAMPLES[selectedCampaignType]"
+              *ngIf="getSpecialInstructionsExample()"
               (click)="applySpecialInstructionsExample()"
-              title="Fill with example instructions for this campaign type">
+              title="Fill with an example brief based on selected type and access mode">
               <i class="bi bi-list-check"></i> Example
             </button>
           </div>
           <textarea [formControl]="$any(form.get('specialInstructions'))" class="field-textarea" rows="4"
                     placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab' && f['campaignMode'].value === 'invite_only'">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load a ready-made set of dos, don'ts, and must-include instructions for Paid Collab. Edit freely to match your brand.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab' && f['campaignMode'].value === 'tier_filtered_open'">
+            <i class="bi bi-lightbulb"></i> Tip: Open mode example includes clear eligibility filters and application review criteria.
           </p>
           <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load product collab guidelines — what to show, what to avoid, and mandatory disclosures.
@@ -513,14 +602,14 @@
           <i class="bi bi-arrow-left"></i> Back
         </button>
         <button type="button" class="btn btn-next" (click)="nextStep()">
-          {{ f['campaignMode'].value === 'tier_filtered_open' ? 'Next — Review &amp; Publish' : 'Next — Invite influencers' }}
+          {{ f['campaignMode'].value === 'tier_filtered_open' ? 'Next — Review &amp; Publish' : ('Next — Invite ' + inviteRecipientLabelPlural) }}
           <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </form>
 
     <!-- ══════════════════════════════════════════
-         STEP 3 — Invite Influencers
+         STEP 3 — Invite {{ inviteRecipientLabelPlural }}
     ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
@@ -530,25 +619,45 @@
 
           <div class="open-campaign-info">
             <div class="open-campaign-icon"><i class="bi bi-globe2"></i></div>
-            <h4>Open Campaign — Influencers apply directly</h4>
+            <h4>{{ isPhotographerCreator ? 'Open Collaboration — Creators apply directly' : ('Open Campaign — ' + inviteRecipientLabelPlural + ' apply directly') }}</h4>
             <p>
-              This is a <strong>Tier-filtered open</strong> campaign. Once published, eligible influencers
+              This is a <strong>Tier-filtered open</strong> {{ isPhotographerCreator ? 'collaboration' : 'campaign' }}. Once published, eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }}
               who meet your minimum tier requirement can discover it and send an application.
-              Campaigns are submitted for admin approval before they become publicly visible.
+              {{ isPhotographerCreator ? 'Collaborations' : 'Campaigns' }} are submitted for admin approval before they become publicly visible.
             </p>
             <ul class="open-campaign-steps">
-              <li><i class="bi bi-1-circle-fill"></i> Submit campaign for admin moderation</li>
-              <li><i class="bi bi-2-circle-fill"></i> Approved campaigns become visible to eligible influencers</li>
-              <li><i class="bi bi-3-circle-fill"></i> Influencers matching your minimum tier apply</li>
+              <li><i class="bi bi-1-circle-fill"></i> Submit {{ isPhotographerCreator ? 'collaboration' : 'campaign' }} for admin moderation</li>
+              <li><i class="bi bi-2-circle-fill"></i> Approved {{ isPhotographerCreator ? 'collaborations' : 'campaigns' }} become visible to eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }}</li>
+              <li><i class="bi bi-3-circle-fill"></i> {{ isPhotographerCreator ? 'Creators' : inviteRecipientLabelPlural }} matching your minimum tier apply</li>
               <li><i class="bi bi-4-circle-fill"></i> You review applicants from the dashboard</li>
             </ul>
             <p class="field-sublabel" style="margin-top:12px;">
               <i class="bi bi-info-circle"></i>
-              You can also manually invite specific influencers from the campaign dashboard after saving.
+              You can also manually invite specific {{ isPhotographerCreator ? 'creators' : 'influencers' }} from the {{ isPhotographerCreator ? 'collaboration' : 'campaign' }} dashboard after saving.
             </p>
           </div>
 
-          <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
+          <!-- Photographer collaboration summary -->
+          <div class="invite-summary" *ngIf="isPhotographerCreator">
+            <div>
+              Services: <strong>{{ selectedPhotographerServices.join(', ') }}</strong>
+            </div>
+            <div *ngIf="selectedPhotographerPricing.length > 0">
+              Pricing: <strong>
+                <span *ngFor="let p of selectedPhotographerPricing; let last = last">
+                  {{ p }} ₹{{ photographerPricingPrices[p] || 0 }}<span *ngIf="!last">, </span>
+                </span>
+              </strong>
+            </div>
+            <div>
+              Deliverables: <strong>{{ selectedPhotographerDeliverables.join(', ') }}</strong>
+            </div>
+            <div *ngIf="f['minInfluencerTier'].value">
+              Min tier: <strong>{{ f['minInfluencerTier'].value }}</strong>
+            </div>
+          </div>
+
+          <div class="invite-summary" *ngIf="!isPhotographerCreator && f['maxInfluencers'].value">
             <div>Max slots: <strong>{{ f['maxInfluencers'].value }}</strong></div>
             <div *ngIf="f['minInfluencerTier'].value">
               Min tier: <strong>{{ f['minInfluencerTier'].value }}</strong>
@@ -583,7 +692,7 @@
           <div class="inf-search-box">
             <i class="bi bi-search"></i>
             <input type="text" [(ngModel)]="influencerSearch" [ngModelOptions]="{standalone: true}" class="inf-search-input"
-                   placeholder="Search by name, category, or location…" />
+                   [placeholder]="'Search ' + inviteRecipientLabelPlural.toLowerCase() + ' by name, category, or location…'" />
           </div>
 
           <div class="chip-list chip-list--sm">
@@ -608,7 +717,7 @@
 
           <div class="inf-sel-bar" *ngIf="selectedInfluencerIds.size > 0">
             <span class="inf-sel-count">
-              {{ selectedInfluencerIds.size }} influencer{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
+              {{ selectedInfluencerIds.size }} {{ inviteRecipientLabelSingular.toLowerCase() }}{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
             </span>
             <button type="button" class="btn btn-send" [disabled]="uploading" (click)="onSubmit()">
               <span *ngIf="uploading">Saving…</span>
@@ -620,12 +729,12 @@
             <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
           </div>
 
-          <div class="text-center py-4" *ngIf="influencersLoading">
+          <div class="text-center py-4" *ngIf="influencersLoading || photographersLoading">
             <div class="spinner-border spinner-border-sm text-warning"></div>
-            <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading influencers…</p>
+            <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading {{ inviteRecipientLabelPlural.toLowerCase() }}…</p>
           </div>
 
-          <div class="inf-list" *ngIf="!influencersLoading">
+          <div class="inf-list" *ngIf="!influencersLoading && !photographersLoading">
             <div class="inf-row"
               *ngFor="let inf of filteredInfluencers"
               [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
@@ -639,7 +748,7 @@
               ></app-user-avatar>
               <div class="inf-info">
                   <p class="inf-name">
-                   {{ inf.fullName || inf.name || 'Influencer' }}
+                   {{ inf.fullName || inf.name || inviteRecipientLabelSingular }}
                    <i class="bi bi-patch-check-fill" *ngIf="inf.isPremium" title="Verified Premium"
                      style="color:#22c55e;font-size:0.85rem;vertical-align:middle;margin-left:3px;"></i>
                   </p>
@@ -671,7 +780,7 @@
 
             <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
               <i class="bi bi-search"></i>
-              <p>No influencers match your filters.</p>
+              <p>No {{ inviteRecipientLabelPlural.toLowerCase() }} match your filters.</p>
             </div>
           </div>
 

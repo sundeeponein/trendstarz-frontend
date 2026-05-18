@@ -1,4 +1,4 @@
-<!-- Success message for Invite Influencers panel -->
+<!-- Success message for invite panel -->
 <div *ngIf="invitePanelSuccessMessage" class="cm-toast cm-toast-success" style="margin-bottom: 8px;">
   <i class="bi bi-check-circle-fill"></i> {{ invitePanelSuccessMessage }}
 </div>
@@ -134,47 +134,78 @@
       <i class="bi bi-exclamation-triangle"></i> {{ campaignLoadError }}
     </div>
 
-    <!-- ───── MY INVITES (influencer view) ───── -->
+    <!-- ───── INBOX (influencer view) ───── -->
     <div class="my-invites-section" *ngIf="isInfluencerView">
       <div class="my-invites-header">
-        <h2 class="my-invites-title">
-          <i class="bi bi-envelope-fill"></i> My Campaign Invites
-        </h2>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary ms-2"
-          title="Refresh invites"
-          [disabled]="myInvitesLoading"
-          (click)="reloadMyInvites()"
-        >
-          <i class="bi bi-arrow-clockwise" [class.spin]="myInvitesLoading"></i>
-        </button>
-        <button
-          type="button"
-          class="flow-info-trigger border-0"
-          title="How campaigns work — full flow guide"
-          (click)="flowHelp.openCampaignFlowDiagram()"
-        >
-          <i class="bi bi-info-circle"></i>
-        </button>
-        <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
-          {{ getPendingInviteCount() }} pending
-        </span>
+        <div class="inbox-title-group">
+          <h2 class="my-invites-title">
+            <i class="bi bi-inbox-fill"></i> Inbox
+          </h2>
+          <span class="inbox-subtitle">Your campaign invitations</span>
+        </div>
+        <div class="inbox-header-actions">
+          <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
+            {{ getPendingInviteCount() }} pending
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            title="Refresh invites"
+            [disabled]="myInvitesLoading"
+            (click)="reloadMyInvites()"
+          >
+            <i class="bi bi-arrow-clockwise" [class.spin]="myInvitesLoading"></i>
+          </button>
+          <button
+            type="button"
+            class="flow-info-trigger border-0"
+            title="How campaigns work — full flow guide"
+            (click)="flowHelp.openCampaignFlowDiagram()"
+          >
+            <i class="bi bi-info-circle"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="text-center py-3" *ngIf="myInvitesLoading">
-        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+      <!-- Type filter chips (only show when there are invites of both types) -->
+      <div class="inbox-type-filter" *ngIf="!myInvitesLoading && myInvites.length > 0">
+        <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'all'" (click)="myInviteTypeFilter = 'all'">
+          All
+          <span class="itc-count">{{ myInvites.length }}</span>
+        </button>
+        <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'brand'" (click)="myInviteTypeFilter = 'brand'"
+                *ngIf="myBrandCount > 0">
+          <i class="bi bi-megaphone"></i> Brand Campaigns
+          <span class="itc-count">{{ myBrandCount }}</span>
+        </button>
+        <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'collab'" (click)="myInviteTypeFilter = 'collab'"
+                *ngIf="myCollabCount > 0">
+          <i class="bi bi-camera-reels"></i> Collaborations
+          <span class="itc-count">{{ myCollabCount }}</span>
+        </button>
+      </div>
+
+      <!-- Skeleton loading -->
+      <div *ngIf="myInvitesLoading" class="invite-skeleton-list">
+        <div class="invite-skeleton" *ngFor="let _ of [1,2,3]">
+          <div class="skel-row">
+            <div class="skel-avatar"></div>
+            <div class="skel-lines">
+              <div class="skel-line skel-line--short"></div>
+              <div class="skel-line skel-line--long"></div>
+              <div class="skel-line skel-line--medium"></div>
+            </div>
+            <div class="skel-badge"></div>
+          </div>
+          <div class="skel-detail-row">
+            <div class="skel-detail"></div>
+            <div class="skel-detail"></div>
+          </div>
+        </div>
       </div>
 
       <div *ngIf="!myInvitesLoading">
         <ng-container *ngIf="myInvites.length > 0">
-          <!-- <div class="invite-flow-hint">
-            <span>Need help before accepting?</span>
-            <button type="button" class="invite-flow-link" (click)="flowHelp.openInfluencerFlowGuide()">
-              <i class="bi bi-info-circle"></i> Open accept-to-complete guide
-            </button>
-          </div> -->
-
           <!-- Invite tabs -->
           <div class="invite-tabs-shell mobile-scroll-shell">
             <div class="pill-tabs invite-tabs-row mobile-scroll-row">
@@ -225,16 +256,20 @@
 
           <div class="empty-invites" *ngIf="myInvitesFiltered.length === 0">
             <i class="bi bi-inbox"></i>
-            <p *ngIf="myInviteTab === 'pending'">No pending invites.</p>
-            <p *ngIf="myInviteTab === 'accepted'">No active campaigns right now.</p>
-            <p *ngIf="myInviteTab === 'declined'">No declined invites.</p>
-            <p *ngIf="myInviteTab === 'completed'">No completed campaigns yet.</p>
+            <p *ngIf="myInviteTab === 'pending'">No pending invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
+            <p *ngIf="myInviteTab === 'accepted'">No active campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} right now.</p>
+            <p *ngIf="myInviteTab === 'declined'">No declined invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
+            <p *ngIf="myInviteTab === 'completed'">No completed campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} yet.</p>
+            <button class="btn-clear-type-filter" *ngIf="myInviteTypeFilter !== 'all'" (click)="myInviteTypeFilter = 'all'">
+              <i class="bi bi-x-circle"></i> Clear filter
+            </button>
           </div>
         </ng-container>
 
-        <div class="empty-invites" *ngIf="myInvites.length === 0">
-          <i class="bi bi-inbox"></i>
-          <p>No invites yet. Browse open campaigns below to get started.</p>
+        <div class="empty-invites empty-invites--first" *ngIf="myInvites.length === 0">
+          <i class="bi bi-envelope-open"></i>
+          <p class="empty-invites__title">No invites yet</p>
+          <p class="empty-invites__sub">Browse open campaigns below — brands will invite you once they find your profile.</p>
         </div>
       </div>
 
@@ -448,7 +483,7 @@
                 Manage <i class="bi bi-chevron-down"></i>
               </button>
               <button class="btn-invite" (click)="openInvitePanel(c)"
-                [title]="isInviteQuotaFull(c) ? 'Invite quota full (' + getCardInvitedCount(c) + '/' + (c.maxInfluencers || 0) + ')' : 'Invite Influencers'"
+                [title]="isInviteQuotaFull(c) ? 'Invite quota full (' + getCardInvitedCount(c) + '/' + (c.maxInfluencers || 0) + ')' : 'Invite recipients'"
                 [disabled]="c.status === 'completed' || isInviteQuotaFull(c)">
                 <i class="bi bi-person-plus-fill"></i>
                 {{ isInviteQuotaFull(c) ? 'Quota full' : 'Invite' }}
@@ -545,16 +580,16 @@
               </div>
             </div>
 
-            <!-- Invited influencers list -->
+            <!-- Invited recipients list -->
             <div class="expand-inf-list" *ngIf="getExpandVisibleInvites(c).length > 0">
               <div class="expand-inf-heading-row">
-                <p class="expand-inf-heading">Invited Influencers</p>
+                <p class="expand-inf-heading">Invited {{ inviteTargetPluralLabel }}</p>
                 <button class="tier-info-trigger" type="button" (click)="tierInfo.open(); $event.stopPropagation()">
                   <i class="bi bi-info-circle"></i> Tier info
                 </button>
               </div>
               <ng-container *ngFor="let inv of getExpandVisibleInvites(c)">
-                <!-- Influencer row -->
+                <!-- Recipient row -->
                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
                      [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
                   <app-user-avatar
@@ -564,7 +599,7 @@
                   ></app-user-avatar>
                   <div class="expand-inf-info">
                     <div class="expand-inf-name-row">
-                      <span class="expand-inf-name">{{ inv.influencerId?.name || 'Influencer' }}</span>
+                      <span class="expand-inf-name">{{ inv.influencerId?.name || inviteTargetSingularLabel }}</span>
                       <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
                       <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">
                         {{ getInfluencerTier(inv.influencerId) }}
@@ -655,7 +690,7 @@
                           *ngIf="canDeclineAccepted(inv, c)"
                             [disabled]="actioningInviteIds.has(inv._id)"
                             (click)="withdrawInvite(inv)"
-                            title="Decline this accepted influencer">
+                            title="Decline this accepted recipient">
                       <i class="bi bi-person-dash"></i> Decline
                     </button>
                     <button class="btn-action btn-report"
@@ -733,7 +768,7 @@
 
                     <!-- Review actions -->
                     <div class="sub-review-area" *ngIf="sub.status === 'submitted'">
-                      <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for influencer..."
+                      <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for recipient..."
                         [(ngModel)]="submissionFeedback[sub.inviteId]"></textarea>
                       <div class="sub-review-actions">
                         <button class="btn-sub-approve" [disabled]="reviewLoading.has(sub.inviteId)"
@@ -760,10 +795,10 @@
             </div>
             <div class="expand-empty-inf" *ngIf="getExpandVisibleInvites(c).length === 0">
               <ng-container *ngIf="c.campaignMode === 'tier_filtered_open'; else emptyInvitesDefault">
-                No accepted tier-matching influencers yet.
+                No accepted tier-matching {{ inviteTargetPluralLabel.toLowerCase() }} yet.
               </ng-container>
               <ng-template #emptyInvitesDefault>
-                No influencers invited yet. Use the <strong>Invite</strong> button to get started.
+                No {{ inviteTargetPluralLabel.toLowerCase() }} invited yet. Use the <strong>Invite</strong> button to get started.
               </ng-template>
             </div>
 
@@ -883,19 +918,9 @@
 
   </div>
 
-    <!-- Photographer Collaboration Form Modal -->
-  <app-photographer-collaboration-form
-    *ngIf="showForm && isPhotographerView"
-    [mode]="formMode"
-    [campaign]="editingCampaign"
-    [hasPremium]="!!planCapabilities?.hasPremium"
-    (save)="onFormSave($event)"
-    (cancel)="closeForm()"
-  ></app-photographer-collaboration-form>
-
-    <!-- Campaign Form Modal (brand only) -->
+    <!-- Campaign Form Modal (brand & photographer) -->
   <app-campaign-form
-    *ngIf="showForm && !isInfluencerView && !isPhotographerView"
+    *ngIf="showForm && !isInfluencerView"
     [mode]="formMode"
     [campaign]="editingCampaign"
     [hasPremium]="!!planCapabilities?.hasPremium"
@@ -911,10 +936,15 @@
     <!-- Drawer header -->
     <div class="drawer-header">
       <div>
-        <h3 class="drawer-title">Invite Influencers</h3>
+        <h3 class="drawer-title">Invite {{ inviteTargetPluralLabel }}</h3>
         <p class="drawer-subtitle">{{ invitePanelCampaign?.title }}</p>
       </div>
       <button class="drawer-close" (click)="closeInvitePanel()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="drawer-target-switch">
+      <button class="drawer-target-pill" [class.active]="inviteTargetRole === 'influencer'" type="button" (click)="switchInviteTarget('influencer')">Influencers</button>
+      <button class="drawer-target-pill" [class.active]="inviteTargetRole === 'photographer'" type="button" (click)="switchInviteTarget('photographer')">Photographers</button>
     </div>
 
     <!-- Quota banner -->
@@ -947,7 +977,7 @@
       </button>
       <button class="drawer-tab" [class.active]="inviteTab === 'search'" (click)="inviteTab = 'search'"
         *ngIf="invitePanelCampaign?.campaignMode !== 'tier_filtered_open'">
-        Find &amp; Invite
+        Find &amp; Invite {{ inviteTargetPluralLabel }}
       </button>
     </div>
 
@@ -1106,7 +1136,7 @@
         </div>
         <div class="drawer-empty" *ngIf="invites.length === 0">
           <i class="bi bi-people"></i>
-          <p>No influencers invited yet. Use <strong>Find &amp; Invite</strong> to get started.</p>
+            <p>No {{ inviteTargetPluralLabel.toLowerCase() }} invited yet. Use <strong>Find &amp; Invite {{ inviteTargetPluralLabel }}</strong> to get started.</p>
         </div>
       </div>
     </div>
@@ -1127,7 +1157,7 @@
           <input
             type="text"
             class="drawer-search-input"
-            placeholder="Search influencers by name…"
+            [placeholder]="inviteTargetSearchPlaceholder"
             [(ngModel)]="influencerSearch" [ngModelOptions]="{standalone: true}" />
         </div>
       </div>
@@ -1145,10 +1175,13 @@
       <div class="text-center py-4" *ngIf="influencersForInviteLoading">
         <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
       </div>
+      <div class="text-center py-4" *ngIf="photographersForInviteLoading">
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+      </div>
 
-      <div class="search-influencer-list" *ngIf="!influencersForInviteLoading">
+      <div class="search-influencer-list" *ngIf="!influencersForInviteLoading && !photographersForInviteLoading">
         <label class="search-inf-row"
-          *ngFor="let inf of filteredInfluencersForInvite"
+          *ngFor="let inf of filteredInviteRecipients"
           [class.is-selected]="selectedInfluencerIds.has(inf._id)"
           [class.is-already-invited]="invitedIds.has(inf._id)"
           [class.is-disabled]="!invitedIds.has(inf._id) && !canSelectInfluencerForInvite(inf._id)">
@@ -1162,12 +1195,12 @@
           <span class="inf-checkbox-spacer" *ngIf="invitedIds.has(inf._id)"></span>
 
           <app-user-avatar
-            [name]="inf?.name || inf?.fullName || inf?.fullname || inf?.username || 'Influencer'"
+            [name]="inf?.name || inf?.fullName || inf?.fullname || inf?.username || inviteTargetSingularLabel"
             [src]="getInfluencerAvatar(inf)"
             [size]="44"
           ></app-user-avatar>
           <div class="invited-info">
-            <p class="invited-name">{{ inf.name || inf.fullname }}
+            <p class="invited-name">{{ inf.name || inf.fullname || inf.fullName || inviteTargetSingularLabel }}
               <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inf)" title="Verified Premium"></i>
             </p>
             <p class="invited-username" *ngIf="inf.username">@{{ inf.username }}</p>
@@ -1186,16 +1219,16 @@
           </div>
         </label>
 
-        <div class="drawer-empty" *ngIf="filteredInfluencersForInvite.length === 0">
+        <div class="drawer-empty" *ngIf="filteredInviteRecipients.length === 0">
           <i class="bi bi-person-x"></i>
-          <p>No influencers found.</p>
+          <p>No {{ inviteTargetPluralLabel.toLowerCase() }} found.</p>
         </div>
       </div>
     </div>
 
     <!-- Sticky send footer (visible when selection exists) -->
     <div class="invite-send-footer" *ngIf="inviteTab === 'search' && selectedInfluencerIds.size > 0">
-      <span class="footer-count">{{ selectedInfluencerIds.size }} selected</span>
+      <span class="footer-count">{{ selectedInfluencerIds.size }} {{ inviteTargetSingularLabel.toLowerCase() }}{{ selectedInfluencerIds.size > 1 ? 's' : '' }} selected</span>
       <button class="btn-send-selected"
               [disabled]="bulkSending || isInviteQuotaFull(invitePanelCampaign)"
               (click)="sendSelectedInvites()">

@@ -44,7 +44,7 @@ const MOCK_PHOTOGRAPHER_PROFILE = {
   ],
   portfolio: 'https://testphotographer-portfolio.com',
   contact: { whatsapp: false, email: false, call: false },
-  adminTags: ['Verified Creator'],
+  adminTags: ['Partner'],
   commissionBadge: 'partner_creator',
   isPremium: false,
 };
@@ -92,13 +92,13 @@ async function mockPhotographerProfileRoutes(page: Page) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: MOCK_PHOTOGRAPHER_PROFILE }),
+        body: JSON.stringify(MOCK_PHOTOGRAPHER_PROFILE),
       });
     } else if (route.request().method() === 'PATCH') {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: MOCK_PHOTOGRAPHER_PROFILE }),
+        body: JSON.stringify(MOCK_PHOTOGRAPHER_PROFILE),
       });
     } else {
       await route.continue();
@@ -256,9 +256,9 @@ test('Photographer profile — view and edit (mocked API)', async ({ page }) => 
   });
 
   // ────────────────────────────── Check profile fields loaded
-  await expect(page.locator('text=Test Photographer')).toBeVisible();
-  await expect(page.locator('text=testphotographer')).toBeVisible();
-  await expect(page.locator('text=photographer@e2e.com')).toBeVisible();
+  await expect(page.locator('input[formControlName="name"]')).toHaveValue('Test Photographer');
+  await expect(page.locator('input[formControlName="phoneNumber"]')).toHaveValue('9876543215');
+  await expect(page.locator('div.profile-upload-box')).toBeVisible();
 
   // Check commission badge if displayed
   const badgeLocator = page.locator('text=Partner');
@@ -316,12 +316,14 @@ test('Photographer profile — commission badge display', async ({ page }) => {
   });
 
   // Check if commission badge section exists
-  const badgeSection = page.locator('text=Access Badge, text=Partner');
+  const badgeSection = page.locator('div.alert.alert-info');
   const badgeVisible = await badgeSection.isVisible().catch(() => false);
 
   // If badge is displayed, verify it
   if (badgeVisible) {
-    await expect(badgeSection).toBeVisible();
+    await expect(badgeSection).toContainText('Access Badge');
+    await expect(badgeSection).toContainText('Partner');
+    return;
   }
 
   // Otherwise, badge might be displayed in a different location

@@ -11,7 +11,7 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./admin-dashboard.component.scss']
 })
 export class AdminDashboardComponent implements OnInit {
-  selectedRoleTab: 'influencer' | 'brand' = 'influencer';
+  selectedRoleTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
 
   // --- Summary counts ---
   influencerCount = 0;
@@ -26,6 +26,12 @@ export class AdminDashboardComponent implements OnInit {
   brandPremium = 0;
   brandDeleted = 0;
 
+  photographerCount = 0;
+  photographerActivated = 0;
+  photographerPending = 0;
+  photographerPremium = 0;
+  photographerDeleted = 0;
+
   // --- Quick stats strip ---
   totalPending = 0;
   totalVerified = 0;
@@ -33,30 +39,37 @@ export class AdminDashboardComponent implements OnInit {
   suspiciousFlaggedTotal = 0;
   suspiciousFlaggedInfluencers = 0;
   suspiciousFlaggedBrands = 0;
+  suspiciousFlaggedPhotographers = 0;
 
   // --- Verification queue ---
   pendingMobileVerif = 0;
   pendingEmailVerif = 0;
   pendingApproval = 0;
-  latestPendingUsers: { type: 'influencer' | 'brand'; name: string; label: string }[] = [];
+  latestPendingUsers: { type: 'influencer' | 'brand' | 'photographer'; name: string; label: string }[] = [];
 
   pendingMobileVerifInfluencer = 0;
   pendingMobileVerifBrand = 0;
+  pendingMobileVerifPhotographer = 0;
   pendingEmailVerifInfluencer = 0;
   pendingEmailVerifBrand = 0;
+  pendingEmailVerifPhotographer = 0;
   pendingApprovalInfluencer = 0;
   pendingApprovalBrand = 0;
+  pendingApprovalPhotographer = 0;
 
-  latestPendingInfluencers: { type: 'influencer' | 'brand'; name: string; label: string }[] = [];
-  latestPendingBrands: { type: 'influencer' | 'brand'; name: string; label: string }[] = [];
+  latestPendingInfluencers: { type: 'influencer' | 'brand' | 'photographer'; name: string; label: string }[] = [];
+  latestPendingBrands: { type: 'influencer' | 'brand' | 'photographer'; name: string; label: string }[] = [];
+  latestPendingPhotographers: { type: 'influencer' | 'brand' | 'photographer'; name: string; label: string }[] = [];
 
   // --- Recent registrations (left panel) ---
-  recentRegistrations: { type: 'influencer' | 'brand'; name: string; email: string; status: string; createdAt: string }[] = [];
-  recentInfluencerRegistrations: { type: 'influencer' | 'brand'; name: string; email: string; status: string; createdAt: string }[] = [];
-  recentBrandRegistrations: { type: 'influencer' | 'brand'; name: string; email: string; status: string; createdAt: string }[] = [];
+  recentRegistrations: { type: 'influencer' | 'brand' | 'photographer'; name: string; email: string; status: string; createdAt: string }[] = [];
+  recentInfluencerRegistrations: { type: 'influencer' | 'brand' | 'photographer'; name: string; email: string; status: string; createdAt: string }[] = [];
+  recentBrandRegistrations: { type: 'influencer' | 'brand' | 'photographer'; name: string; email: string; status: string; createdAt: string }[] = [];
+  recentPhotographerRegistrations: { type: 'influencer' | 'brand' | 'photographer'; name: string; email: string; status: string; createdAt: string }[] = [];
 
   private allInfluencers: any[] = [];
   private allBrands: any[] = [];
+  private allPhotographers: any[] = [];
   private fetchedCount = 0;
 
   getAuthHeaders() {
@@ -73,47 +86,53 @@ export class AdminDashboardComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.fetchInfluencers();
       this.fetchBrands();
+      this.fetchPhotographers();
     }
   }
 
   private onFetchDone() {
     this.fetchedCount++;
-    if (this.fetchedCount >= 2) {
+    if (this.fetchedCount >= 3) {
       this.buildDerivedData();
     }
   }
 
   get visibleRecentRegistrations() {
+    if (this.selectedRoleTab === 'photographer') return this.recentPhotographerRegistrations;
     return this.selectedRoleTab === 'influencer'
       ? this.recentInfluencerRegistrations
       : this.recentBrandRegistrations;
   }
 
   get visiblePendingUsers() {
+    if (this.selectedRoleTab === 'photographer') return this.latestPendingPhotographers;
     return this.selectedRoleTab === 'influencer'
       ? this.latestPendingInfluencers
       : this.latestPendingBrands;
   }
 
   get visiblePendingApprovalCount() {
+    if (this.selectedRoleTab === 'photographer') return this.pendingApprovalPhotographer;
     return this.selectedRoleTab === 'influencer'
       ? this.pendingApprovalInfluencer
       : this.pendingApprovalBrand;
   }
 
   get visiblePendingMobileCount() {
+    if (this.selectedRoleTab === 'photographer') return this.pendingMobileVerifPhotographer;
     return this.selectedRoleTab === 'influencer'
       ? this.pendingMobileVerifInfluencer
       : this.pendingMobileVerifBrand;
   }
 
   get visiblePendingEmailCount() {
+    if (this.selectedRoleTab === 'photographer') return this.pendingEmailVerifPhotographer;
     return this.selectedRoleTab === 'influencer'
       ? this.pendingEmailVerifInfluencer
       : this.pendingEmailVerifBrand;
   }
 
-  setRoleTab(role: 'influencer' | 'brand') {
+  setRoleTab(role: 'influencer' | 'brand' | 'photographer') {
     this.selectedRoleTab = role;
   }
 
@@ -133,37 +152,50 @@ export class AdminDashboardComponent implements OnInit {
         status: u.status || 'pending',
         createdAt: u.createdAt || '',
       })),
+      ...this.allPhotographers.map(u => ({
+        type: 'photographer' as const,
+        name: u.name || u.username || 'Photographer',
+        email: u.email || '',
+        status: u.status || 'pending',
+        createdAt: u.createdAt || '',
+      })),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     this.recentRegistrations = combined.slice(0, 8);
     this.recentInfluencerRegistrations = combined.filter(u => u.type === 'influencer').slice(0, 8);
     this.recentBrandRegistrations = combined.filter(u => u.type === 'brand').slice(0, 8);
+    this.recentPhotographerRegistrations = combined.filter(u => u.type === 'photographer').slice(0, 8);
 
     // --- Quick stats ---
-    this.totalPending = this.influencerPending + this.brandPending;
-    this.totalVerified = this.influencerActivated + this.brandActivated;
-    this.premiumTotal = this.influencerPremium + this.brandPremium;
+    this.totalPending = this.influencerPending + this.brandPending + this.photographerPending;
+    this.totalVerified = this.influencerActivated + this.brandActivated + this.photographerActivated;
+    this.premiumTotal = this.influencerPremium + this.brandPremium + this.photographerPremium;
 
     // --- Verification queue ---
     const activeInf = this.allInfluencers.filter(u => (u.status || '').toLowerCase() !== 'deleted');
     const activeBrand = this.allBrands.filter(u => (u.status || '').toLowerCase() !== 'deleted');
+    const activePhotographer = this.allPhotographers.filter(u => (u.status || '').toLowerCase() !== 'deleted');
 
     this.suspiciousFlaggedInfluencers = activeInf.filter((u: any) => this.isSuspiciousOrFlagged(u)).length;
     this.suspiciousFlaggedBrands = activeBrand.filter((u: any) => this.isSuspiciousOrFlagged(u)).length;
-    this.suspiciousFlaggedTotal = this.suspiciousFlaggedInfluencers + this.suspiciousFlaggedBrands;
+    this.suspiciousFlaggedPhotographers = activePhotographer.filter((u: any) => this.isSuspiciousOrFlagged(u)).length;
+    this.suspiciousFlaggedTotal = this.suspiciousFlaggedInfluencers + this.suspiciousFlaggedBrands + this.suspiciousFlaggedPhotographers;
 
     this.pendingMobileVerifInfluencer = activeInf.filter(u => !u.isMobileVerified).length;
     this.pendingMobileVerifBrand = activeBrand.filter(u => !u.isMobileVerified).length;
+    this.pendingMobileVerifPhotographer = activePhotographer.filter(u => !u.isMobileVerified).length;
     this.pendingMobileVerif =
-      this.pendingMobileVerifInfluencer + this.pendingMobileVerifBrand;
+      this.pendingMobileVerifInfluencer + this.pendingMobileVerifBrand + this.pendingMobileVerifPhotographer;
 
     this.pendingEmailVerifInfluencer = activeInf.filter(u => !u.isEmailVerified).length;
     this.pendingEmailVerifBrand = activeBrand.filter(u => !u.isEmailVerified).length;
+    this.pendingEmailVerifPhotographer = activePhotographer.filter(u => !u.isEmailVerified).length;
     this.pendingEmailVerif =
-      this.pendingEmailVerifInfluencer + this.pendingEmailVerifBrand;
+      this.pendingEmailVerifInfluencer + this.pendingEmailVerifBrand + this.pendingEmailVerifPhotographer;
 
     this.pendingApprovalInfluencer = this.influencerPending;
     this.pendingApprovalBrand = this.brandPending;
+    this.pendingApprovalPhotographer = this.photographerPending;
     this.pendingApproval = this.totalPending;
 
     // Latest pending users for queue preview (top 5)
@@ -173,11 +205,12 @@ export class AdminDashboardComponent implements OnInit {
       .map(u => ({
         type: u.type,
         name: u.name,
-        label: u.type === 'influencer' ? 'Influencer — Pending' : 'Brand — Pending',
+        label: u.type === 'influencer' ? 'Influencer — Pending' : u.type === 'brand' ? 'Brand — Pending' : 'Photographer — Pending',
       }));
 
     this.latestPendingInfluencers = this.latestPendingUsers.filter(u => u.type === 'influencer').slice(0, 5);
     this.latestPendingBrands = this.latestPendingUsers.filter(u => u.type === 'brand').slice(0, 5);
+    this.latestPendingPhotographers = this.latestPendingUsers.filter(u => u.type === 'photographer').slice(0, 5);
 
     this.cd.detectChanges();
   }
@@ -231,6 +264,27 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: (err) => {
           console.error('[AdminDashboard] Error fetching brands:', err);
+          this.onFetchDone();
+        }
+      });
+  }
+
+  fetchPhotographers() {
+    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/photographers`, this.getAuthHeaders())
+      .subscribe({
+        next: (data) => {
+          const all = Array.isArray(data) ? data : ((data as any)?.data || []);
+          this.allPhotographers = all;
+          const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
+          this.photographerCount = filtered.length;
+          this.photographerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
+          this.photographerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
+          this.photographerPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          this.photographerDeleted = all.filter((u: any) => (u.status || '').toLowerCase() === 'deleted').length;
+          this.onFetchDone();
+        },
+        error: (err) => {
+          console.error('[AdminDashboard] Error fetching photographers:', err);
           this.onFetchDone();
         }
       });

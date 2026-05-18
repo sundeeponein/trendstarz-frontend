@@ -5,14 +5,16 @@
   <section class="stats-strip mb-4">
     <article class="stat-card">
       <p class="stat-title">Total</p>
-      <h3 class="stat-total">{{ influencerCount + brandCount }}</h3>
+      <h3 class="stat-total">{{ influencerCount + brandCount + photographerCount }}</h3>
       <div class="stat-split-head">
         <span>Influencers</span>
         <span>Brands</span>
+        <span>Creators</span>
       </div>
       <div class="stat-split-values">
         <span>{{ influencerCount }}</span>
         <span>{{ brandCount }}</span>
+        <span>{{ photographerCount }}</span>
       </div>
     </article>
 
@@ -22,10 +24,12 @@
       <div class="stat-split-head">
         <span>Influencers</span>
         <span>Brands</span>
+        <span>Creators</span>
       </div>
       <div class="stat-split-values">
         <span>{{ influencerPending }}</span>
         <span>{{ brandPending }}</span>
+        <span>{{ photographerPending }}</span>
       </div>
     </article>
 
@@ -35,10 +39,12 @@
       <div class="stat-split-head">
         <span>Influencers</span>
         <span>Brands</span>
+        <span>Creators</span>
       </div>
       <div class="stat-split-values">
         <span>{{ influencerActivated }}</span>
         <span>{{ brandActivated }}</span>
+        <span>{{ photographerActivated }}</span>
       </div>
     </article>
 
@@ -48,10 +54,12 @@
       <div class="stat-split-head">
         <span>Influencers</span>
         <span>Brands</span>
+        <span>Creators</span>
       </div>
       <div class="stat-split-values">
         <span>{{ influencerPremium }}</span>
         <span>{{ brandPremium }}</span>
+        <span>{{ photographerPremium }}</span>
       </div>
     </article>
 
@@ -61,10 +69,12 @@
       <div class="stat-split-head">
         <span>Influencers</span>
         <span>Brands</span>
+        <span>Creators</span>
       </div>
       <div class="stat-split-values">
         <span>{{ suspiciousFlaggedInfluencers }}</span>
         <span>{{ suspiciousFlaggedBrands }}</span>
+        <span>{{ suspiciousFlaggedPhotographers }}</span>
       </div>
     </article>
   </section>
@@ -89,6 +99,15 @@
               <i class="bi bi-building role-tab-icon" aria-hidden="true"></i>
               Brands
             </button>
+            <button
+              type="button"
+              class="role-tab"
+              [class.active]="selectedRoleTab === 'photographer'"
+              (click)="setRoleTab('photographer')"
+            >
+              <i class="bi bi-camera-fill role-tab-icon" aria-hidden="true"></i>
+              Creators
+            </button>
           </div>
   <section class="recent-section mb-4">
 
@@ -106,8 +125,8 @@
         </header>
         <div *ngIf="visibleRecentRegistrations.length === 0" class="no-data">No registrations in this role yet.</div>
         <div *ngFor="let r of visibleRecentRegistrations" class="reg-row">
-          <span class="reg-badge" [class.inf]="r.type === 'influencer'" [class.brand]="r.type === 'brand'">
-            <i [class]="r.type === 'influencer' ? 'bi bi-person-fill' : 'bi bi-building'" aria-hidden="true"></i>
+          <span class="reg-badge" [class.inf]="r.type === 'influencer'" [class.brand]="r.type === 'brand'" [class.photographer]="r.type === 'photographer'">
+            <i [class]="r.type === 'influencer' ? 'bi bi-person-fill' : r.type === 'brand' ? 'bi bi-building' : 'bi bi-camera-fill'" aria-hidden="true"></i>
           </span>
           <div class="reg-info">
             <strong>{{ r.name }}</strong>
@@ -128,7 +147,7 @@
         <header class="recent-header">
           <div>
             <h4>Pending Actions Queue</h4>
-            <span>{{ selectedRoleTab === 'influencer' ? 'Influencer queue' : 'Brand queue' }}</span>
+            <span>{{ selectedRoleTab === 'influencer' ? 'Influencer queue' : selectedRoleTab === 'brand' ? 'Brand queue' : 'Creator queue' }}</span>
           </div>
         </header>
 
@@ -150,8 +169,8 @@
 
         <div *ngIf="visiblePendingUsers.length > 0" class="queue-preview-header">Latest Pending</div>
         <div *ngFor="let u of visiblePendingUsers" class="queue-preview-row">
-          <span class="reg-badge" [class.inf]="u.type === 'influencer'" [class.brand]="u.type === 'brand'">
-            <i [class]="u.type === 'influencer' ? 'bi bi-person-fill' : 'bi bi-building'" aria-hidden="true"></i>
+          <span class="reg-badge" [class.inf]="u.type === 'influencer'" [class.brand]="u.type === 'brand'" [class.photographer]="u.type === 'photographer'">
+            <i [class]="u.type === 'influencer' ? 'bi bi-person-fill' : u.type === 'brand' ? 'bi bi-building' : 'bi bi-camera-fill'" aria-hidden="true"></i>
           </span>
           <div class="queue-preview-info">
             <strong>{{ u.name }}</strong>

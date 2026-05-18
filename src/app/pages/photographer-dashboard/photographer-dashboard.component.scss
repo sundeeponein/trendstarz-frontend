@@ -76,6 +76,43 @@
   flex-direction: column;
 }
 
+.brand-campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.brand-campaign-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+}
+
+.brand-campaign-title {
+  font-weight: 700;
+  color: #111827;
+}
+
+.brand-campaign-meta {
+  margin-top: 0.2rem;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.brand-campaign-desc {
+  margin-top: 0.45rem;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .profile-traffic-grid {
     grid-template-columns: 1fr;

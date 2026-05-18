@@ -46,6 +46,11 @@ export interface Campaign {
   targetCities?: string[];
   platformPreference?: string;
   specialInstructions?: string;
+  // Photographer collaboration location fields (shown before influencer acceptance)
+  shootLocationType?: 'studio' | 'indoor' | 'outdoor' | 'client_location' | 'pickup_point';
+  shootLocationAddress?: string;
+  shootLocationMapUrl?: string;
+  shootLocationNotes?: string;
   // Invite-to-location specific fields
   venueName?: string;
   venueAddress?: string;
