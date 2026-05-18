@@ -1,7 +1,9 @@
 // Playwright config for e2e tests
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env['BASE_URL'] ?? 'http://localhost:4200';
+const BASE_URL =
+  (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.['BASE_URL']
+  ?? 'http://localhost:4200';
 
 export default defineConfig({
   testDir: './e2e',
@@ -9,6 +11,12 @@ export default defineConfig({
   retries: 0,
   workers: 2,
   reporter: [['list'], ['html', { open: 'never' }]],
+  webServer: {
+    command: 'npm run start:e2e',
+    port: 4200,
+    timeout: 120 * 1000,
+    reuseExistingServer: true,
+  },
   use: {
     baseURL: BASE_URL,
     headless: true,
