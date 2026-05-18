@@ -45,15 +45,22 @@ export class CampaignFormComponent implements OnInit {
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
   @Input() hasPremium: boolean = false;
   @Input() creatorRole: 'brand' | 'photographer' = 'brand';
-  @Output() save = new EventEmitter<Partial<Campaign> & { inviteInfluencerIds?: string[] }>();
+  @Output() save = new EventEmitter<Partial<Campaign> & {
+    inviteInfluencerIds?: string[];
+    inviteRecipientIds?: string[];
+    inviteRecipientRole?: 'influencer' | 'photographer';
+  }>();
   @Output() cancel = new EventEmitter<void>();
   form!: FormGroup;
 
-  // ── Step 3 influencers ───────────────────────────────────────
+  // ── Step 3 invite recipients ─────────────────────────────────
   allInfluencers: any[] = [];
+  allPhotographers: any[] = [];
   influencersLoading = false;
+  photographersLoading = false;
   influencerSearch = '';
   selectedInfluencerIds = new Set<string>();
+  inviteRecipientRole: 'influencer' | 'photographer' = 'influencer';
   filterCategory = '';
   filterTier = '';
   filterPlatform = '';
@@ -75,17 +82,36 @@ export class CampaignFormComponent implements OnInit {
     invite_location: `We are inviting influencers to attend an exclusive on-location experience at our venue and create engaging content around it.\n\nEvent Details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only collaboration (no product shipping)\n• Influencers must confirm availability before acceptance\n• If unable to attend after accepting, inform in advance\n• Only influencers who attend the location will be eligible for collaboration benefits`,
   };
 
+  readonly DESCRIPTION_MODE_EXAMPLES: Record<string, string> = {
+    invite_only: `Access mode note:\n• Invite only: you will manually shortlist and invite creators in Step 3.`,
+    tier_filtered_open: `Access mode note:\n• Open to all (with filters): eligible creators can discover and apply; you review applications from dashboard.`,
+  };
+
   readonly SPECIAL_INSTRUCTIONS_EXAMPLES: Record<string, string> = {
     paid_collab: `Dos:\n• Mention the brand name at least once in the video/caption\n• Use the hashtags: #[BrandHashtag] #[CampaignHashtag]\n• Keep the tone conversational — no hard selling\n• Post on the agreed date (or within the selected date range)\n\nDon'ts:\n• Do not post competitor brand content in the same week\n• Do not use filters that alter the product's appearance\n• Do not repost content previously used for another brand\n\nMust include:\n• Brand handle tag: @[BrandHandle]\n• CTA: "Check out the link in bio / visit our page"\n• Story reshare of the post (if Instagram)`,
     product: `Dos:\n• Unbox or showcase the product naturally on camera\n• Highlight your genuine experience / first impression\n• Use hashtags: #[BrandHashtag] #gifted #collab\n• Tag our account: @[BrandHandle]\n\nDon'ts:\n• Do not compare with competitor products\n• Do not make claims about benefits not listed on the product\n• Do not post before the agreed go-live date\n\nMust mention:\n• This is a gifted collaboration (#gifted)\n• At least one key benefit or use-case of the product`,
     invite_location: `Before the visit:\n• Confirm attendance at least 24 hours in advance\n• Carry your equipment (phone/camera) — lighting will be arranged on-site\n\nDuring the visit:\n• Create at least 1 Instagram Story from the location (tag us live)\n• Capture ambience, product/service, and your experience\n\nDon'ts:\n• Do not visit without a confirmed booking\n• Do not bring external teams without prior approval\n\nAfter the visit:\n• Post Reel/content within 2–3 days\n• Share post insights (reach, views) once live`,
   };
 
+  readonly SPECIAL_INSTRUCTIONS_MODE_EXAMPLES: Record<string, string> = {
+    invite_only: `Mode: Invite only\n• Manually shortlist and invite creators in Step 3\n• Keep acceptance criteria explicit to avoid back-and-forth\n• Mention expected response timeline from invited creators`,
+    tier_filtered_open: `Mode: Open to all (with filters)\n• Mention minimum tier and optional location constraints\n• Clarify that eligible creators apply and you'll review applicants\n• Add how quickly applications will be reviewed`,
+  };
+
   applySpecialInstructionsExample(): void {
-    const example = this.SPECIAL_INSTRUCTIONS_EXAMPLES[this.selectedCampaignType];
+    const example = this.getSpecialInstructionsExample();
     if (example) {
       this.form.patchValue({ specialInstructions: example });
     }
+  }
+
+  getSpecialInstructionsExample(): string {
+    const typeKey = this.selectedCampaignType;
+    const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
+    const base = this.SPECIAL_INSTRUCTIONS_EXAMPLES[typeKey] || '';
+    const mode = this.SPECIAL_INSTRUCTIONS_MODE_EXAMPLES[modeKey] || '';
+    if (base && mode) return `${base}\n\n${mode}`;
+    return base || mode;
   }
 
   private readonly AUTO_NOTE_SEP = '\n\n---\n';
@@ -97,8 +123,11 @@ export class CampaignFormComponent implements OnInit {
 
   applyDescriptionTemplate(): void {
     const template = this.DESCRIPTION_TEMPLATES[this.selectedCampaignType];
-    if (template) {
-      this.form.patchValue({ description: template });
+    const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
+    const modeNote = this.DESCRIPTION_MODE_EXAMPLES[modeKey] || '';
+    const mergedTemplate = template && modeNote ? `${template}\n\n${modeNote}` : (template || modeNote);
+    if (mergedTemplate) {
+      this.form.patchValue({ description: mergedTemplate });
       if (this.selectedCampaignType === 'product') {
         this.syncDescriptionCollabNote(String(this.f['productPaymentMode'].value || 'product_only'));
       } else if (this.selectedCampaignType === 'invite_location') {
@@ -120,6 +149,29 @@ export class CampaignFormComponent implements OnInit {
     if (note) desc += this.AUTO_NOTE_SEP + note;
     ctrl.setValue(desc, { emitEvent: false });
   }
+  // ── Photographer-specific ────────────────────────────────────
+  readonly PHOTOGRAPHER_SERVICES = [
+    'Reel Shoot', 'Video Editing', 'Product Photography',
+    'Fashion Shoot', 'Drone Shoot', 'YouTube Video Shoot',
+  ];
+  readonly PHOTOGRAPHER_PRICING_OPTIONS = [
+    'Starting Price', 'Per Hour', 'Per Project', 'Negotiable',
+  ];
+  readonly PHOTOGRAPHER_DELIVERABLES = [
+    'Raw Footage', 'Edited Reels', 'Photos', 'Cinematic Video', 'Shorts',
+  ];
+  readonly SHOOT_LOCATION_TYPES = [
+    { value: 'studio', label: 'At photographer studio' },
+    { value: 'indoor', label: 'Indoor shoot location' },
+    { value: 'outdoor', label: 'Outdoor shoot location' },
+    { value: 'client_location', label: 'At brand/client location' },
+    { value: 'pickup_point', label: 'Pickup / collection point' },
+  ];
+  selectedPhotographerServices: string[] = [];
+  selectedPhotographerPricing: string[] = [];
+  selectedPhotographerDeliverables: string[] = [];
+  photographerPricingPrices: { [key: string]: number | null } = {}; // Map of pricing type to price
+
   categoriesList: any[] = [];
   states: any[] = [];
   districts: any[] = [];
@@ -146,6 +198,10 @@ export class CampaignFormComponent implements OnInit {
       description: [this.campaign?.description || ''],
       deliverablesText: [Array.isArray((this.campaign as any)?.deliverables) ? (this.campaign as any).deliverables.join('\n') : ''],
       campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
+      inviteRecipientRole: [
+        this.isPhotographerCreator ? 'influencer' : ((this.campaign as any)?.inviteRecipientRole || 'influencer'),
+        [Validators.required],
+      ],
       campaignMode: [(this.campaign as any)?.campaignMode || 'invite_only', [Validators.required]],
       status: [this.campaign?.status || 'draft'],
       pricePerInfluencer: [this.getInitialPricePerInfluencer(), [Validators.required, Validators.min(1)]],
@@ -162,6 +218,10 @@ export class CampaignFormComponent implements OnInit {
       targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
       platformPreference: [this.campaign?.platformPreference || ''],
       specialInstructions: [this.campaign?.specialInstructions || ''],
+      shootLocationType: [(this.campaign as any)?.shootLocationType || ''],
+      shootLocationAddress: [(this.campaign as any)?.shootLocationAddress || ''],
+      shootLocationMapUrl: [(this.campaign as any)?.shootLocationMapUrl || ''],
+      shootLocationNotes: [(this.campaign as any)?.shootLocationNotes || ''],
       venueName: [(this.campaign as any)?.venueName || ''],
       venueAddress: [(this.campaign as any)?.venueAddress || ''],
       venueCity: [(this.campaign as any)?.venueCity || ''],
@@ -179,6 +239,9 @@ export class CampaignFormComponent implements OnInit {
     }, { validators: [this.dateRangeValidator, this.minMaxInfluencerValidator] });
 
     this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
+    this.inviteRecipientRole = this.isPhotographerCreator
+      ? 'influencer'
+      : (String(this.f['inviteRecipientRole']?.value || 'influencer') === 'photographer' ? 'photographer' : 'influencer');
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
     if (!this.hasPremium && this.isPremiumOnlyType(String(this.f['campaignType']?.value || ''))) {
       this.form.patchValue({ campaignType: 'paid_collab' }, { emitEvent: false });
@@ -197,6 +260,21 @@ export class CampaignFormComponent implements OnInit {
     this.form.get('productPaymentMode')?.valueChanges.subscribe((mode: string) => {
       this.syncDescriptionCollabNote(mode);
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
+    });
+
+    this.form.get('inviteRecipientRole')?.valueChanges.subscribe((role: string) => {
+      const normalized: 'influencer' | 'photographer' = role === 'photographer' ? 'photographer' : 'influencer';
+      this.inviteRecipientRole = this.isPhotographerCreator ? 'influencer' : normalized;
+      if (!this.isPhotographerCreator && this.inviteRecipientRole === 'photographer') {
+        this.form.patchValue({ campaignMode: 'invite_only' }, { emitEvent: false });
+      }
+      this.selectedInfluencerIds.clear();
+      this.selectionLimitError = '';
+      this.loadRecipientCategories();
+      if (this.currentStep === 3) {
+        this.loadInviteRecipients();
+      }
+      this.cd.detectChanges();
     });
 
     // Load states and (when state selected) districts
@@ -258,10 +336,7 @@ export class CampaignFormComponent implements OnInit {
       }
     }
 
-    this.config.getCategories('influencer').subscribe(data => {
-      this.categoriesList = data;
-      this.cd.detectChanges();
-    });
+    this.loadRecipientCategories();
 
     this.config.getSocialMedia().subscribe(data => {
       this.platformsList = Array.isArray(data) ? data : [];
@@ -278,6 +353,55 @@ export class CampaignFormComponent implements OnInit {
 
   get formTitleNoun(): string {
     return this.isPhotographerCreator ? 'Collaboration Request' : 'Campaign';
+  }
+
+  get inviteRecipientLabelSingular(): string {
+    if (this.isPhotographerCreator) return 'Influencer';
+    return this.inviteRecipientRole === 'photographer' ? 'Photo/Videographer' : 'Influencer';
+  }
+
+  get inviteRecipientLabelPlural(): string {
+    if (this.isPhotographerCreator) return 'Influencers';
+    return this.inviteRecipientRole === 'photographer' ? 'Photo/Videographers' : 'Influencers';
+  }
+
+  get inviteCandidates(): any[] {
+    return this.inviteRecipientRole === 'photographer' ? this.allPhotographers : this.allInfluencers;
+  }
+
+  get isInvitingPhotographers(): boolean {
+    return !this.isPhotographerCreator && this.inviteRecipientRole === 'photographer';
+  }
+
+  get inviteSelectionStepLabel(): string {
+    return this.isPhotographerCreator ? 'Invite influencers' : `Invite ${this.inviteRecipientLabelPlural.toLowerCase()}`;
+  }
+
+  private loadRecipientCategories() {
+    const role = this.isInvitingPhotographers ? 'photographer' : 'influencer';
+    this.config.getCategories(role).subscribe({
+      next: (data: any[]) => {
+        this.categoriesList = Array.isArray(data) ? data : [];
+        this.cd.detectChanges();
+      },
+      error: () => {
+        if (role === 'photographer') {
+          this.config.getCategories('influencer').subscribe({
+            next: (fallback: any[]) => {
+              this.categoriesList = Array.isArray(fallback) ? fallback : [];
+              this.cd.detectChanges();
+            },
+            error: () => {
+              this.categoriesList = [];
+              this.cd.detectChanges();
+            },
+          });
+        } else {
+          this.categoriesList = [];
+          this.cd.detectChanges();
+        }
+      },
+    });
   }
 
   getCampaignTypeOptions(): Array<{ value: string; label: string; premiumOnly?: boolean }> {
@@ -390,17 +514,36 @@ export class CampaignFormComponent implements OnInit {
   // ── Stepper helpers ──────────────────────────────────────────
   step1Valid(): boolean {
     const isLocation = this.selectedCampaignType === 'invite_location';
+    const photographerLocationValid = !this.isPhotographerCreator || (
+      this.f['shootLocationType'].valid && this.f['shootLocationAddress'].valid
+    );
     return !!(
       this.f['title'].valid &&
       this.f['campaignType'].valid &&
+      (this.isPhotographerCreator || this.f['inviteRecipientRole'].valid) &&
       this.f['timelineStart'].value &&
       this.f['timelineEnd'].value &&
+      photographerLocationValid &&
       (!isLocation || (this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid && this.f['inviteBenefits'].valid)) &&
       !this.form.errors?.['invalidDateRange']
     );
   }
 
   step2Valid(): boolean {
+    if (this.isPhotographerCreator) {
+      const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join';
+      const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
+      return !!(
+        priceValid &&
+        this.f['maxInfluencers'].valid &&
+        this.f['maxInfluencers'].value > 0 &&
+        this.f['minInfluencers'].valid &&
+        this.f['minInfluencers'].value > 0 &&
+        !this.form.errors?.['invalidMinMaxInfluencers'] &&
+        this.selectedPhotographerServices.length > 0 &&
+        this.selectedPhotographerDeliverables.length > 0
+      );
+    }
     const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join';
     const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
     return !!(
@@ -411,7 +554,7 @@ export class CampaignFormComponent implements OnInit {
       this.f['minInfluencers'].value > 0 &&
       !this.form.errors?.['invalidMinMaxInfluencers'] &&
       this.selectedCategories.length > 0 &&
-      this.platformDeliverables.length > 0
+      (this.isInvitingPhotographers || this.platformDeliverables.length > 0)
     );
   }
 
@@ -435,6 +578,8 @@ export class CampaignFormComponent implements OnInit {
     this.form.get('venueCity')?.setValidators(isLocation ? [Validators.required] : []);
     this.form.get('inviteBenefits')?.setValidators(isLocation ? [Validators.required, Validators.minLength(3)] : []);
     this.form.get('payToJoinBenefits')?.setValidators(isPayToJoin ? [Validators.required, Validators.minLength(5)] : []);
+    this.form.get('shootLocationType')?.setValidators(this.isPhotographerCreator ? [Validators.required] : []);
+    this.form.get('shootLocationAddress')?.setValidators(this.isPhotographerCreator ? [Validators.required, Validators.minLength(3)] : []);
 
     // Product: description required; productValue optional
     this.form.get('productDescription')?.setValidators(isProduct ? [Validators.required, Validators.minLength(3)] : []);
@@ -446,8 +591,9 @@ export class CampaignFormComponent implements OnInit {
 
     [
       'pricePerInfluencer', 'venueAddress', 'venueState', 'venueDistrict', 'venueCity', 'inviteBenefits',
-      'payToJoinBenefits', 'productDescription', 'productPaymentAmount'
+      'payToJoinBenefits', 'productDescription', 'productPaymentAmount', 'shootLocationType', 'shootLocationAddress'
     ].forEach(name => this.form.get(name)?.updateValueAndValidity({ emitEvent: false }));
+
     this.cd.markForCheck();
   }
 
@@ -483,6 +629,12 @@ export class CampaignFormComponent implements OnInit {
 
   private sanitizeCampaignTypeFields(payload: any): any {
     const t = String(payload?.campaignType || '');
+    if (!this.isPhotographerCreator) {
+      payload.shootLocationType = undefined;
+      payload.shootLocationAddress = undefined;
+      payload.shootLocationMapUrl = undefined;
+      payload.shootLocationNotes = undefined;
+    }
     if (t !== 'invite_location') {
       payload.venueName = undefined;
       payload.venueAddress = undefined;
@@ -545,9 +697,7 @@ export class CampaignFormComponent implements OnInit {
     }
     this.currentStep = step;
     if (step === 3) {
-      if (this.allInfluencers.length === 0) {
-        this.loadInfluencers();
-      }
+      this.loadInviteRecipients();
       // Always fetch invites when entering step 3 in edit mode
       if (this.isEdit && this.campaign?._id) {
         this.fetchCampaignInvites();
@@ -566,10 +716,47 @@ export class CampaignFormComponent implements OnInit {
   }
   isCategorySelected(name: string): boolean { return this.selectedCategories.includes(name); }
 
+  // ── Photographer-specific toggles ────────────────────────────
+  togglePhotographerService(s: string) {
+    const idx = this.selectedPhotographerServices.indexOf(s);
+    if (idx >= 0) this.selectedPhotographerServices.splice(idx, 1);
+    else this.selectedPhotographerServices.push(s);
+  }
+  togglePhotographerPricing(p: string) {
+    const idx = this.selectedPhotographerPricing.indexOf(p);
+    if (idx >= 0) {
+      this.selectedPhotographerPricing.splice(idx, 1);
+      delete this.photographerPricingPrices[p]; // Clean up price when unselected
+    } else {
+      this.selectedPhotographerPricing.push(p);
+      this.photographerPricingPrices[p] = null; // Initialize price field
+    }
+  }
+  togglePhotographerDeliverable(d: string) {
+    const idx = this.selectedPhotographerDeliverables.indexOf(d);
+    if (idx >= 0) this.selectedPhotographerDeliverables.splice(idx, 1);
+    else this.selectedPhotographerDeliverables.push(d);
+  }
 
 
-  // ── Influencers (step 3) ─────────────────────────────────────
-  loadInfluencers() {
+
+  // ── Invite recipients (step 3) ───────────────────────────────
+  loadInviteRecipients() {
+    if (this.inviteRecipientRole === 'photographer' && !this.isPhotographerCreator) {
+      if (this.allPhotographers.length > 0) return;
+      this.photographersLoading = true;
+      this.config.getPhotographers().subscribe({
+        next: (data: any[]) => {
+          this.allPhotographers = Array.isArray(data) ? data : [];
+          this.photographersLoading = false;
+          this.cd.detectChanges();
+        },
+        error: () => { this.photographersLoading = false; this.cd.detectChanges(); }
+      });
+      return;
+    }
+
+    if (this.allInfluencers.length > 0) return;
     this.influencersLoading = true;
     this.config.getInfluencers().subscribe({
       next: (data: any[]) => {
@@ -582,7 +769,7 @@ export class CampaignFormComponent implements OnInit {
   }
 
   get filteredInfluencers(): any[] {
-    let list = this.allInfluencers;
+    let list = this.inviteCandidates;
     // Hide influencers who are already invited (non-declined) for this campaign
     if (this.campaignInvites?.length) {
       list = list.filter(inf => !this.isInfluencerInvited(inf));
@@ -593,11 +780,11 @@ export class CampaignFormComponent implements OnInit {
         (inf.fullName || inf.name || '').toLowerCase().includes(q) ||
         (inf.username || '').toLowerCase().includes(q) ||
         (inf.location?.state || '').toLowerCase().includes(q) ||
-        (inf.categories || []).some((c: string) => c.toLowerCase().includes(q))
+        (inf.categories || inf.skills || []).some((c: string) => c.toLowerCase().includes(q))
       );
     }
     if (this.filterCategory) {
-      list = list.filter(inf => (inf.categories || []).includes(this.filterCategory));
+      list = list.filter(inf => (inf.categories || inf.skills || []).includes(this.filterCategory));
     }
     if (this.filterTier) {
       const activeTier = this.normalizeTierLabel(this.filterTier);
@@ -715,8 +902,13 @@ export class CampaignFormComponent implements OnInit {
 
   getUniqueCategoryFilters(): string[] {
     const cats = new Set<string>();
-    this.allInfluencers.forEach(inf => (inf.categories || []).forEach((c: string) => cats.add(c)));
+    this.inviteCandidates.forEach(inf => ((inf.categories || inf.skills || []) as string[]).forEach((c: string) => cats.add(c)));
     return Array.from(cats).slice(0, 5);
+  }
+
+  switchInviteRecipientRole(role: 'influencer' | 'photographer') {
+    if (this.isPhotographerCreator) return;
+    this.form.patchValue({ inviteRecipientRole: role });
   }
 
 
@@ -728,7 +920,7 @@ export class CampaignFormComponent implements OnInit {
       return;
     }
     if (max > 0 && this.takenSlotsCount >= max) {
-      this.selectionLimitError = `You can select up to ${max} influencers only (already invited: ${this.invitedCount}).`;
+      this.selectionLimitError = `You can select up to ${max} ${this.inviteRecipientLabelPlural.toLowerCase()} only (already invited: ${this.invitedCount}).`;
       this.toast.error(this.selectionLimitError);
       return;
     }
@@ -843,19 +1035,27 @@ export class CampaignFormComponent implements OnInit {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
       status: (isTierOpen || isResubmit) ? 'pending_review' : 'draft',
-      deliverables: this.parseDeliverables(v.deliverablesText),
+      deliverables: this.isPhotographerCreator
+        ? this.selectedPhotographerDeliverables
+        : this.parseDeliverables(v.deliverablesText),
       targetCities: v.targetDistrict ? [v.targetDistrict] : [],
       targetDistrict: undefined,
-      categories: this.selectedCategories,
-      platforms: this.platformDeliverables.map(pd => pd.platform),
-      socialMedia: this.platformDeliverables.map(pd => ({
-        platform: pd.platform,
-        contentTypes: pd.contentTypes.map(ct => ({
-          name: ct.name,
-          enabled: ct.enabled,
-          price: ct.price
-        }))
-      })),
+      categories: this.isPhotographerCreator
+        ? this.selectedPhotographerServices
+        : this.selectedCategories,
+      platforms: this.isPhotographerCreator
+        ? this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) }))
+        : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => pd.platform)),
+      socialMedia: this.isPhotographerCreator
+        ? []
+        : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => ({
+            platform: pd.platform,
+            contentTypes: pd.contentTypes.map(ct => ({
+              name: ct.name,
+              enabled: ct.enabled,
+              price: ct.price
+            }))
+          }))),
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
       ? new Date(payload.acceptanceDeadline).toISOString()
@@ -872,7 +1072,7 @@ export class CampaignFormComponent implements OnInit {
       return;
     }
     if (this.selectedInfluencerIds.size === 0) {
-      this.toast.error('Please select at least one influencer to invite.');
+      this.toast.error(`Please select at least one ${this.inviteRecipientLabelSingular.toLowerCase()} to invite.`);
       this.uploading = false;
       return;
     }
@@ -903,19 +1103,32 @@ export class CampaignFormComponent implements OnInit {
     this.uploading = false;
     this.save.emit({
       ...payload,
-      categories: this.selectedCategories,
-      platforms: this.platformDeliverables.map(pd => pd.platform),
-      socialMedia: this.platformDeliverables.map(pd => ({
-        platform: pd.platform,
-        contentTypes: pd.contentTypes.map(ct => ({
-          name: ct.name,
-          enabled: ct.enabled,
-          price: ct.price
-        }))
-      })),
+      categories: this.isPhotographerCreator
+        ? this.selectedPhotographerServices
+        : this.selectedCategories,
+      platforms: this.isPhotographerCreator
+        ? this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) }))
+        : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => pd.platform)),
+      socialMedia: this.isPhotographerCreator
+        ? []
+        : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => ({
+            platform: pd.platform,
+            contentTypes: pd.contentTypes.map(ct => ({
+              name: ct.name,
+              enabled: ct.enabled,
+              price: ct.price
+            }))
+          }))),
+      deliverables: this.isPhotographerCreator
+        ? this.selectedPhotographerDeliverables
+        : this.parseDeliverables(payload.deliverablesText ?? ''),
       inviteInfluencerIds: this.selectedInfluencerIds.size > 0
         ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
         : undefined,
+      inviteRecipientIds: this.selectedInfluencerIds.size > 0
+        ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
+        : undefined,
+      inviteRecipientRole: this.isPhotographerCreator ? 'influencer' : (this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer'),
     });
     if (this.isEdit && this.campaign?._id) {
       this.fetchCampaignInvites();

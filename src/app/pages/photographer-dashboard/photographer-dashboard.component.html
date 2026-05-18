@@ -98,6 +98,95 @@
       </div>
     </div>
 
+    <div class="section-card mb-4">
+      <div class="section-title d-flex align-items-center mb-3">
+        <span class="dot dot--blue me-2"></span>
+        Brand Invites
+        <span class="section-count ms-2">{{ brandInvites.length }}</span>
+      </div>
+
+      <div *ngIf="brandInvitesLoading" class="text-center py-3">
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+        <div class="mt-2 text-muted">Loading invites…</div>
+      </div>
+
+      <div *ngIf="!brandInvitesLoading && brandInvites.length === 0" class="section-empty py-4">
+        <div class="section-empty-icon"><i class="bi bi-envelope-paper"></i></div>
+        <div class="section-empty-title">No direct brand invites yet</div>
+        <div class="section-empty-desc">When a brand invites you to a campaign, it will appear here.</div>
+      </div>
+
+      <div class="brand-campaign-list" *ngIf="!brandInvitesLoading && brandInvites.length > 0">
+        <div class="brand-campaign-card" *ngFor="let inv of brandInvites">
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <div>
+              <div class="brand-campaign-title">{{ inv.campaignId?.title || 'Campaign invite' }}</div>
+              <div class="brand-campaign-meta">
+                <i class="bi bi-building"></i>
+                {{ inv.brandId?.brandName || 'Brand' }}
+                <span class="mx-1">•</span>
+                <i class="bi bi-calendar3"></i>
+                {{ formatDate(inv.createdAt) }}
+              </div>
+            </div>
+            <span class="badge rounded-pill bg-warning text-dark">{{ inv.status || 'pending' | uppercase }}</span>
+          </div>
+          <div class="brand-campaign-desc" *ngIf="inv.campaignId?.description">
+            {{ inv.campaignId.description | slice:0:120 }}{{ inv.campaignId?.description?.length > 120 ? '…' : '' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card mb-4">
+      <div class="section-title d-flex align-items-center mb-3">
+        <span class="dot dot--orange me-2"></span>
+        Campaigns from Brands
+        <span class="section-count ms-2">{{ brandCampaigns.length }}</span>
+      </div>
+
+      <div *ngIf="brandCampaignsLoading" class="text-center py-3">
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+        <div class="mt-2 text-muted">Loading campaigns…</div>
+      </div>
+
+      <div *ngIf="!brandCampaignsLoading && brandCampaigns.length === 0" class="section-empty py-4">
+        <div class="section-empty-icon"><i class="bi bi-inbox"></i></div>
+        <div class="section-empty-title">No active campaigns right now</div>
+        <div class="section-empty-desc">Active brand campaigns will appear here for quick access.</div>
+      </div>
+
+      <div class="brand-campaign-list" *ngIf="!brandCampaignsLoading && brandCampaigns.length > 0">
+        <div class="brand-campaign-card" *ngFor="let c of brandCampaigns" (click)="onOpenCampaigns()">
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <div>
+              <div class="brand-campaign-title">{{ c.title || '(untitled)' }}</div>
+              <div class="brand-campaign-meta">
+                <i class="bi bi-building"></i>
+                {{ getBrandName(c) }}
+                <span class="mx-1">•</span>
+                <i class="bi bi-calendar3"></i>
+                {{ formatTimeline(c.timelineStart || c.startDate, c.timelineEnd || c.endDate) }}
+              </div>
+            </div>
+            <span class="badge rounded-pill bg-success">Active</span>
+          </div>
+          <div class="brand-campaign-desc" *ngIf="c.description">
+            {{ c.description | slice:0:120 }}{{ c.description?.length > 120 ? '…' : '' }}
+          </div>
+          <div class="d-flex gap-2 mt-2 flex-wrap">
+            <span class="chip" *ngFor="let cat of (c.categories || []) | slice:0:3">{{ cat }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="txn-see-all mt-3">
+        <a class="txn-see-all__link" (click)="onOpenCampaigns()">
+          <i class="bi bi-arrow-right-circle"></i> View all campaigns
+        </a>
+      </div>
+    </div>
+
     <div class="section-card mb-4 profile-traffic-card">
       <div class="section-title d-flex align-items-center mb-2">
         <span class="dot dot--purple me-2"></span>

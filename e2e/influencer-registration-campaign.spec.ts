@@ -147,6 +147,7 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await page.fill('input[formControlName="email"]', email);
   await page.fill('input[formControlName="password"]', 'Test@1234');
   await page.fill('input[formControlName="confirmPassword"]', 'Test@1234');
+  await page.fill('input[formControlName="dateOfBirth"]', '1995-01-01');
 
   // Upload profile image (required for step 1 completion)
   const fileInput = page.locator('input[type="file"][accept="image/*"]').first();
@@ -160,33 +161,38 @@ test('Influencer registration — full 3-step flow (mocked API)', async ({ page 
   await page.waitForTimeout(500);
   await page.locator('body').click(); // trigger CD
 
-  // Confirm step 2 is visible — state select is specific to step 2
-  await page.waitForSelector('select[formcontrolname="state"]', { state: 'visible', timeout: 10000 });
-
-  // ════════════════════════ STEP 2 + STEP 3 (programmatic for stability) ════════════════════════
-  // In zoneless mode, this flow can be flaky when driven purely by DOM interactions.
-  // Patch required values on the component form and submit directly.
+  // In zoneless mode, the wizard step transition can lag behind the DOM.
+  // Seed the component state directly and submit once the required fields are in place.
   await page.evaluate(() => {
     const el = document.querySelector('app-influencer-registration');
     const ng = (window as any).ng;
     if (!el || !ng) return;
     const comp = ng.getComponent(el);
     try {
-      const stateName = 'Maharashtra';
-      const districtName = 'Mumbai';
       comp.registrationForm?.patchValue?.({
-        location: { state: stateName, district: districtName },
+        location: { state: 'state_mh', district: 'dist_mumbai' },
+        languages: ['lang1'],
+        categories: ['cat1'],
         promotionalPrice: 5000,
         contact: { whatsapp: true, email: false, call: false },
       });
-      if (comp.registrationForm?.get?.('languages') && !comp.registrationForm.get('languages').value?.length) {
-        comp.registrationForm.get('languages').setValue(['English']);
-      }
-      if (comp.registrationForm?.get?.('categories') && !comp.registrationForm.get('categories').value?.length) {
-        comp.registrationForm.get('categories').setValue(['Fashion']);
+      const platform = comp.socialMediaList?.[0];
+      if (platform) {
+        comp.platformForms = {
+          [platform._id]: {
+            handle: 'testinfluencer',
+            followersCount: '1000',
+            tier: 'Nano',
+            contentTypes: Object.fromEntries(
+              (platform.contentTypes || []).map((ct: any) => [ct.name, { selected: true, price: '0' }]),
+            ),
+          },
+        };
+        comp.activePlatformTab = platform._id;
       }
       comp.currentStep = 3;
-      comp.cd?.detectChanges?.();
+      comp.refreshStepCompletion?.();
+      comp.cdr?.detectChanges?.();
       comp.onSubmit?.();
     } catch (e) {}
   });

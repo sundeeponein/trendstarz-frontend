@@ -174,6 +174,32 @@ export class CampaignDetailModalComponent {
     return !!(this.venueName || this.venueAddress || this.venueCity || this.venueDistrict || this.venueState || this.venueMapUrl);
   }
 
+  get shootLocationType(): string {
+    return String(this.campaign?.shootLocationType || '').trim();
+  }
+  get shootLocationTypeLabel(): string {
+    const map: Record<string, string> = {
+      studio: 'At photographer studio',
+      indoor: 'Indoor shoot location',
+      outdoor: 'Outdoor shoot location',
+      client_location: 'At brand/client location',
+      pickup_point: 'Pickup / collection point',
+    };
+    return map[this.shootLocationType] || this.shootLocationType;
+  }
+  get shootLocationAddress(): string {
+    return String(this.campaign?.shootLocationAddress || '').trim();
+  }
+  get shootLocationMapUrl(): string {
+    return String(this.campaign?.shootLocationMapUrl || '').trim();
+  }
+  get shootLocationNotes(): string {
+    return String(this.campaign?.shootLocationNotes || '').trim();
+  }
+  get hasShootLocationDetails(): boolean {
+    return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
+  }
+
   get payToJoinBenefits(): string { return (this.campaign?.payToJoinBenefits || '').trim(); }
   get payToJoinInstructions(): string { return (this.campaign?.payToJoinInstructions || '').trim(); }
   get hasPayToJoinDetails(): boolean { return !!(this.payToJoinBenefits || this.payToJoinInstructions); }
@@ -375,6 +401,25 @@ export class CampaignDetailModalComponent {
       month: 'short',
       year: 'numeric',
     });
+  }
+
+  get hasChecklistLocationInfo(): boolean {
+    return this.hasShootLocationDetails || this.hasVenueDetails || !!(this.campaign?.targetState || this.campaign?.targetDistrict);
+  }
+
+  get checklistLocationText(): string {
+    if (this.hasShootLocationDetails) {
+      const parts = [this.shootLocationTypeLabel, this.shootLocationAddress].filter(Boolean);
+      return parts.join(' - ');
+    }
+    if (this.hasVenueDetails) {
+      const venueParts = [this.venueName, this.venueAddress, this.venueCityState].filter(Boolean);
+      return venueParts.join(' - ') || 'Venue details provided';
+    }
+    const state = String(this.campaign?.targetState || '').trim();
+    const district = String(this.campaign?.targetDistrict || '').trim();
+    if (state || district) return [district, state].filter(Boolean).join(', ');
+    return 'No fixed location (remote/online)';
   }
 
   get brandName(): string {

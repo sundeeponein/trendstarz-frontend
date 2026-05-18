@@ -729,3 +729,64 @@ form {
   &:hover:not(:disabled) { background: $accent-dark; }
   &:disabled { opacity: 0.45; cursor: not-allowed; }
 }
+
+/* ── Photographer Pricing Inputs ────────────────────────────── */
+.pricing-inputs-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.pricing-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid $border;
+}
+
+.pricing-label {
+  flex: 0 0 140px;
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: $text-dark;
+}
+
+.pricing-input-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 4px;
+  padding: 0 8px;
+  height: 36px;
+}
+
+.pricing-rupee {
+  color: $text-muted;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-right: 4px;
+}
+
+.pricing-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-weight: 600;
+  color: $text-dark;
+  width: 100%;
+  text-align: right;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::placeholder {
+    color: $text-muted;
+  }
+}

@@ -17,6 +17,7 @@ const MOCK_PROFILE = {
   username: 'testinfluencer',
   email: 'influencer@e2e.com',
   phoneNumber: '9876543210',
+  dateOfBirth: '1995-01-01',
   categories: ['Fashion'],
   languages: ['English'],
   location: { state: 'Maharashtra' },

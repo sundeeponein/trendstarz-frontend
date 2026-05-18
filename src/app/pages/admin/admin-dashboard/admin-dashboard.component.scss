@@ -47,8 +47,8 @@
 .stat-split-head,
 .stat-split-values {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.4rem;
 }
 
 .stat-split-head {
@@ -184,6 +184,11 @@
   &.brand {
     background: rgba(249,115,22,0.2);
     color: #fdba74;
+  }
+
+  &.photographer {
+    background: rgba(20,184,166,0.2);
+    color: #5eead4;
   }
 }
 

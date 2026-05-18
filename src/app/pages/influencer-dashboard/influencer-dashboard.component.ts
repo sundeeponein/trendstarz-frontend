@@ -21,6 +21,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
   invites: any[] = [];
+  postedCollaborations: any[] = [];
   activeCampaigns: any[] = [];
   completedCampaigns: any[] = [];
   loading = true;
@@ -145,6 +146,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.dashboard = data;
           // Primary source: dashboard payload. Fallback: direct influencer invites endpoint.
           this.invites = Array.isArray(data.invites?.newInvites) ? data.invites.newInvites : [];
+          this.loadPostedCollaborations(String(data?.user?._id || this.session.getUser()?._id || ''));
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];
           const user = data.user || {};
@@ -176,6 +178,38 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         }, 0);
       }
     });
+  }
+
+  loadPostedCollaborations(ownerId: string) {
+    if (!ownerId) {
+      this.postedCollaborations = [];
+      return;
+    }
+    this.config.getCampaignsByBrandId(ownerId).subscribe({
+      next: (rows: any[]) => {
+        const all = Array.isArray(rows) ? rows : [];
+        this.postedCollaborations = all
+          .filter((c: any) => {
+            const status = String(c?.status || '').toLowerCase();
+            return status !== 'completed';
+          })
+          .sort((a: any, b: any) => {
+            const at = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+            const bt = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+            return bt - at;
+          })
+          .slice(0, 5);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.postedCollaborations = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  openCampaignManagement() {
+    this.router.navigate(['/campaigns']);
   }
 
   loadAttentionCounts() {
@@ -582,6 +616,25 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   get isPremiumUser(): boolean {
     return !!this.dashboard?.user?.isPremium;
+  }
+
+  get incomingInvitesCount(): number {
+    return Array.isArray(this.invites) ? this.invites.length : 0;
+  }
+
+  get postedRequestsCount(): number {
+    return Array.isArray(this.postedCollaborations) ? this.postedCollaborations.length : 0;
+  }
+
+  get postedRequestsPendingReviewCount(): number {
+    return (this.postedCollaborations || []).filter((c: any) => {
+      const status = String(c?.status || '').toLowerCase();
+      return status === 'pending' || status === 'pending_review';
+    }).length;
+  }
+
+  get postedRequestsActiveCount(): number {
+    return (this.postedCollaborations || []).filter((c: any) => String(c?.status || '').toLowerCase() === 'active').length;
   }
 
   get canViewProfileTraffic(): boolean {
