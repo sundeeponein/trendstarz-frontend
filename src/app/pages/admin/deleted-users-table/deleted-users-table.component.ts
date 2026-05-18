@@ -38,9 +38,11 @@ export class DeletedUsersTableComponent implements OnInit {
   }
   influencers: any[] = [];
   brands: any[] = [];
+  photographers: any[] = [];
   filteredInfluencers: any[] = [];
   filteredBrands: any[] = [];
-  activeTab: 'influencer' | 'brand' = 'influencer';
+  filteredPhotographers: any[] = [];
+  activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   errorMessage: string | null = null;
 
   // Filter properties
@@ -49,6 +51,10 @@ export class DeletedUsersTableComponent implements OnInit {
     state: ''
   };
   brandFilters = {
+    category: '',
+    state: ''
+  };
+  photographerFilters = {
     category: '',
     state: ''
   };
@@ -90,8 +96,10 @@ export class DeletedUsersTableComponent implements OnInit {
   private removeUserFromDeletedLists(userId: string) {
     this.influencers = this.influencers.filter(user => user._id !== userId);
     this.brands = this.brands.filter(user => user._id !== userId);
+    this.photographers = this.photographers.filter(user => user._id !== userId);
     this.applyFilters('influencer');
     this.applyFilters('brand');
+    this.applyFilters('photographer');
     this.updateAllFilterOptions();
   }
 
@@ -147,6 +155,25 @@ export class DeletedUsersTableComponent implements OnInit {
           }
         }
       });
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/photographers?status=deleted`, headers)
+      .subscribe({
+        next: (res: any) => {
+          const users = Array.isArray(res) ? res : (res?.data || []);
+          this.photographers = users;
+          this.applyFilters('photographer');
+          this.updateAllFilterOptions();
+        },
+        error: (err) => {
+          if (err.status === 401) {
+            this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
+            if (typeof window !== 'undefined') {
+              setTimeout(() => { window.location.href = '/login'; }, 1500);
+            }
+          } else {
+            this.errorMessage = 'Failed to fetch deleted photographers.';
+          }
+        }
+      });
   }
 
   updateAllFilterOptions() {
@@ -172,22 +199,45 @@ export class DeletedUsersTableComponent implements OnInit {
         statesSet.add(user.location.state);
       }
     });
+
+    this.photographers.forEach(user => {
+      if (user.skills && Array.isArray(user.skills)) {
+        user.skills.forEach((cat: string) => categoriesSet.add(cat));
+      }
+      if (user.location?.state) {
+        statesSet.add(user.location.state);
+      }
+    });
     
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
   }
 
-  applyFilters(userType: 'influencer' | 'brand') {
-    const filters = userType === 'influencer' ? this.influencerFilters : this.brandFilters;
-    const source = userType === 'influencer' ? this.influencers : this.brands;
+  applyFilters(userType: 'influencer' | 'brand' | 'photographer') {
+    const filters = userType === 'influencer'
+      ? this.influencerFilters
+      : userType === 'brand'
+        ? this.brandFilters
+        : this.photographerFilters;
+    const source = userType === 'influencer'
+      ? this.influencers
+      : userType === 'brand'
+        ? this.brands
+        : this.photographers;
     
     this.filteredInfluencers = userType === 'influencer' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredInfluencers;
     this.filteredBrands = userType === 'brand' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredBrands;
+    this.filteredPhotographers = userType === 'photographer' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredPhotographers;
   }
 
   matchesFilters(user: any, filters: any): boolean {
     // Category filter
-    if (filters.category && (!user.categories || !user.categories.includes(filters.category))) {
+    const categories = Array.isArray(user.categories)
+      ? user.categories
+      : Array.isArray(user.skills)
+        ? user.skills
+        : [];
+    if (filters.category && !categories.includes(filters.category)) {
       return false;
     }
     
@@ -199,20 +249,22 @@ export class DeletedUsersTableComponent implements OnInit {
     return true;
   }
 
-  onFilterChange(userType: 'influencer' | 'brand') {
+  onFilterChange(userType: 'influencer' | 'brand' | 'photographer') {
     this.applyFilters(userType);
   }
 
-  resetFilters(userType: 'influencer' | 'brand') {
+  resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
     if (userType === 'influencer') {
       this.influencerFilters = { category: '', state: '' };
-    } else {
+    } else if (userType === 'brand') {
       this.brandFilters = { category: '', state: '' };
+    } else {
+      this.photographerFilters = { category: '', state: '' };
     }
     this.applyFilters(userType);
   }
 
-  setTab(tab: 'influencer' | 'brand') {
+  setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
     this.applyFilters(tab);
   }

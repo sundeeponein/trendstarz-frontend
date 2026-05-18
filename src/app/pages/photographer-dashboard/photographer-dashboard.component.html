@@ -1,0 +1,173 @@
+<div class="cm-page photographer-dashboard p-4">
+  <h1 class="welcome-title mb-1">Welcome, {{ photographer?.name || 'Photographer' }}</h1>
+  <div class="welcome-subtitle mb-4">Your portfolio, trust signals, and discovery stats live here.</div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status"></div>
+    <div class="mt-2 text-muted">Loading dashboard…</div>
+  </div>
+
+  <div *ngIf="!loading && error" class="alert alert-danger">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && !error && photographer">
+    <div class="row mb-4 gx-3">
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
+          <div class="d-flex align-items-start">
+            <span class="alert-card-icon me-3"><i class="bi bi-person-badge-fill"></i></span>
+            <div>
+              <div class="alert-card-title fw-bold">{{ photographer.status === 'accepted' ? 'Profile Approved' : 'Profile Review Pending' }}</div>
+              <div class="alert-card-desc">{{ photographer.status === 'accepted' ? 'Your profile is visible in discovery and search.' : 'Complete your details and wait for approval to appear in discovery.' }}</div>
+            </div>
+          </div>
+          <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Complete profile</a>
+          <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
+          <div class="d-flex align-items-start">
+            <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
+            <div>
+              <div class="alert-card-title fw-bold">{{ photographer.isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
+              <div class="alert-card-desc">Verified email helps brands trust your profile and increases response rates.</div>
+            </div>
+          </div>
+          <span *ngIf="photographer.isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+          <span *ngIf="!photographer.isEmailVerified" class="alert-card-link mt-2 fw-bold text-warning">Verify in profile</span>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
+          <div class="d-flex align-items-start">
+            <span class="alert-card-icon me-3"><i class="bi bi-geo-alt-fill"></i></span>
+            <div>
+              <div class="alert-card-title fw-bold">{{ photographer.location?.state || 'Location missing' }}</div>
+              <div class="alert-card-desc">{{ photographer.location?.district || 'Add district to improve discovery ranking.' }}</div>
+            </div>
+          </div>
+          <a class="alert-card-link mt-2 fw-bold" (click)="onSearch()">Search opportunities</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="performance-overview mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="performance-title">Performance Overview</div>
+        <span class="performance-range">LAST 30 DAYS</span>
+      </div>
+      <div class="row gx-3">
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
+          <div class="card text-center shadow-sm border-0">
+            <div class="card-body py-3">
+              <div class="display-6 fw-bold mb-1">{{ skillsCount }}</div>
+              <div class="text-muted">Skills</div>
+              <span class="badge rounded-pill bg-primary">Discovery</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
+          <div class="card text-center shadow-sm border-0">
+            <div class="card-body py-3">
+              <div class="display-6 fw-bold mb-1">{{ pricingCount }}</div>
+              <div class="text-muted">Pricing options</div>
+              <span class="badge rounded-pill bg-info text-dark">Offers</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
+          <div class="card text-center shadow-sm border-0">
+            <div class="card-body py-3">
+              <div class="display-6 fw-bold mb-1">{{ platformsCount }}</div>
+              <div class="text-muted">Platforms</div>
+              <span class="badge rounded-pill bg-success">Trust</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
+          <div class="card text-center shadow-sm border-0">
+            <div class="card-body py-3">
+              <div class="display-6 fw-bold mb-1">{{ equipmentCount }}</div>
+              <div class="text-muted">Equipment</div>
+              <span class="badge rounded-pill bg-dark">Gear</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card mb-4 profile-traffic-card">
+      <div class="section-title d-flex align-items-center mb-2">
+        <span class="dot dot--purple me-2"></span>
+        {{ trafficCardTitle }}
+        <span class="section-count ms-2">Last 30 days</span>
+      </div>
+
+      <div class="profile-traffic-grid">
+        <div class="traffic-stat-box">
+          <div class="traffic-stat-label">Impressions</div>
+          <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
+        </div>
+        <div class="traffic-stat-box">
+          <div class="traffic-stat-label">Clicks</div>
+          <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
+        </div>
+        <div class="traffic-stat-meta">
+          <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ formatDate(profileTraffic.lastImpressionAt) }}</span>
+          <span *ngIf="profileTraffic.lastClickAt">Last click: {{ formatDate(profileTraffic.lastClickAt) }}</span>
+          <span *ngIf="!profileTraffic.lastImpressionAt && !profileTraffic.lastClickAt">No traffic tracked yet.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-4 gx-3">
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="section-card h-100">
+          <div class="section-title d-flex align-items-center mb-2">
+            <span class="dot dot--orange me-2"></span> Profile Snapshot
+          </div>
+          <ul class="snapshot-list">
+            <li><strong>Name:</strong> {{ photographer.name || '—' }}</li>
+            <li><strong>Location:</strong> {{ photographer.location?.district || '—' }}, {{ photographer.location?.state || '—' }}</li>
+            <li><strong>Portfolio:</strong> <span *ngIf="photographer.portfolio; else noPortfolio"><a [href]="photographer.portfolio" target="_blank" rel="noopener noreferrer">Open portfolio</a></span></li>
+          </ul>
+          <ng-template #noPortfolio>
+            <span>Not added yet</span>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="section-card h-100">
+          <div class="section-title d-flex align-items-center mb-2">
+            <span class="dot dot--blue me-2"></span> Skills
+          </div>
+          <div class="chip-list" *ngIf="photographer.skills?.length; else noSkills">
+            <span class="chip chip--accent" *ngFor="let skill of photographer.skills">{{ skill }}</span>
+          </div>
+          <ng-template #noSkills>
+            <div class="section-empty py-4">
+              <div class="section-empty-title">No skills added</div>
+              <div class="section-empty-desc">Add skills to improve discovery and matching.</div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="section-card h-100">
+          <div class="section-title d-flex align-items-center mb-2">
+            <span class="dot dot--purple me-2"></span> Quick Actions
+          </div>
+          <div class="quick-actions">
+            <button class="btn btn-primary w-100 mb-2" (click)="onCompleteProfile()">Edit Profile</button>
+            <button class="btn btn-outline-primary w-100 mb-2" (click)="onViewPublicProfile()">View Public Profile</button>
+            <button class="btn btn-outline-secondary w-100" (click)="onSearch()">Search Discovery</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

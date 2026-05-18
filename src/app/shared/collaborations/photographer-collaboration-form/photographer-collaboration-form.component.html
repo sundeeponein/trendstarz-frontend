@@ -1,0 +1,199 @@
+<div class="modal-backdrop show" (click)="onCancel()"></div>
+
+<div class="modal d-block" tabindex="-1" (click)="onCancel()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content pcf-modal">
+      <div class="pcf-header">
+        <h3>{{ isEdit ? 'Edit Collaboration Request' : 'Create Collaboration Request' }}</h3>
+        <button type="button" class="btn-close" (click)="onCancel()"></button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pcf-form">
+        <div class="pcf-grid">
+          <div class="pcf-field pcf-full">
+            <label>Collaboration Title *</label>
+            <input class="form-control" formControlName="title" placeholder="Ex: Summer Reel Shoot in Bangalore" />
+          </div>
+
+          <div class="pcf-field pcf-full">
+            <label>Description *</label>
+            <textarea class="form-control" rows="4" formControlName="description" placeholder="Describe your shoot objective, expectations, and what creators should know."></textarea>
+          </div>
+
+          <div class="pcf-field">
+            <label>Collaboration Type *</label>
+            <select class="form-select" formControlName="collaborationType">
+              <option *ngFor="let type of collaborationTypes" [value]="type.value" [disabled]="!hasPremium && !!type.premiumOnly">
+                {{ type.label }}{{ (!hasPremium && !!type.premiumOnly) ? ' (Premium)' : '' }}
+              </option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Collaboration Access Mode *</label>
+            <select class="form-select" formControlName="campaignMode">
+              <option *ngFor="let mode of accessModes" [value]="mode.value">{{ mode.label }}</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Shoot Date *</label>
+            <input class="form-control" type="date" formControlName="timelineStart" />
+          </div>
+
+          <div class="pcf-field">
+            <label>End Date *</label>
+            <input class="form-control" type="date" formControlName="timelineEnd" />
+          </div>
+
+          <div class="pcf-field pcf-full" *ngIf="timelineInvalid">
+            <small class="text-danger">End date cannot be earlier than shoot date.</small>
+          </div>
+
+          <div class="pcf-field">
+            <label>State</label>
+            <select class="form-select" formControlName="targetState">
+              <option value="">Any state</option>
+              <option *ngFor="let s of states" [value]="s.name">{{ s.name }}</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>District</label>
+            <select class="form-select" formControlName="targetDistrict" [disabled]="!districts.length">
+              <option value="">Any district</option>
+              <option *ngFor="let d of districts" [value]="d.name">{{ d.name }}</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Compensation</label>
+            <select class="form-select" formControlName="compensationModel">
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="barter">Barter</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Budget per Creator (INR)</label>
+            <input class="form-control" type="number" min="0" formControlName="pricePerInfluencer" placeholder="Ex: 2500" />
+            <small class="text-danger" *ngIf="paidBudgetInvalid">Budget is required for paid collaborations.</small>
+          </div>
+
+          <div class="pcf-field">
+            <label>Min Accepted *</label>
+            <input class="form-control" type="number" min="1" formControlName="minInfluencers" />
+          </div>
+
+          <div class="pcf-field">
+            <label>Max Creators *</label>
+            <input class="form-control" type="number" min="1" formControlName="maxInfluencers" />
+          </div>
+
+          <div class="pcf-field">
+            <label>Preferred Tier</label>
+            <select class="form-select" formControlName="minInfluencerTier">
+              <option value="">Any tier</option>
+              <option *ngFor="let tier of tierOptions" [value]="tier">{{ tier }}</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Minimum Followers</label>
+            <input class="form-control" type="number" min="0" formControlName="minFollowers" placeholder="Optional" />
+          </div>
+
+          <div class="pcf-field">
+            <label>Indoor / Outdoor</label>
+            <select class="form-select" formControlName="indoorOutdoor">
+              <option value="">Not specified</option>
+              <option value="indoor">Indoor</option>
+              <option value="outdoor">Outdoor</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Duration</label>
+            <input class="form-control" formControlName="duration" placeholder="Ex: 3 hours" />
+          </div>
+
+          <div class="pcf-field">
+            <label>Gender Preference</label>
+            <select class="form-select" formControlName="genderPreference">
+              <option value="">Any</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+            </select>
+          </div>
+
+          <div class="pcf-field">
+            <label>Age Min</label>
+            <input class="form-control" type="number" min="0" formControlName="ageMin" />
+          </div>
+
+          <div class="pcf-field">
+            <label>Age Max</label>
+            <input class="form-control" type="number" min="0" formControlName="ageMax" />
+          </div>
+
+          <div class="pcf-field pcf-full" *ngIf="minMaxInvalid">
+            <small class="text-danger">Min accepted creators cannot be greater than max creators.</small>
+          </div>
+
+          <div class="pcf-field pcf-full" *ngIf="ageRangeInvalid">
+            <small class="text-danger">Age min cannot be greater than age max.</small>
+          </div>
+
+          <div class="pcf-field pcf-full">
+            <label>Influencer Categories *</label>
+            <div class="pcf-chip-wrap">
+              <button type="button" class="pcf-chip" [class.active]="selectedCategories.includes(cat)" *ngFor="let cat of categoryOptions" (click)="toggleCategory(cat)">{{ cat }}</button>
+            </div>
+            <small class="text-danger" *ngIf="categoriesInvalid">Select at least one influencer category.</small>
+          </div>
+
+          <div class="pcf-field pcf-full">
+            <label>Platforms *</label>
+            <div class="pcf-chip-wrap">
+              <button type="button" class="pcf-chip" [class.active]="selectedPlatforms.includes(p)" *ngFor="let p of platformOptions" (click)="togglePlatform(p)">{{ p }}</button>
+            </div>
+            <small class="text-danger" *ngIf="platformsInvalid">Select at least one platform.</small>
+          </div>
+
+          <div class="pcf-field pcf-full">
+            <label>Deliverables *</label>
+            <div class="pcf-chip-wrap">
+              <button type="button" class="pcf-chip" [class.active]="selectedDeliverables.includes(d)" *ngFor="let d of deliverableOptions" (click)="toggleDeliverable(d)">{{ d }}</button>
+            </div>
+            <small class="text-danger" *ngIf="deliverablesInvalid">Select at least one deliverable.</small>
+          </div>
+
+          <div class="pcf-field pcf-full">
+            <label>Requirements</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="instagramRequired" id="instaRequired" />
+              <label class="form-check-label" for="instaRequired">Instagram Link Required</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="portfolioRequired" id="portfolioRequired" />
+              <label class="form-check-label" for="portfolioRequired">Portfolio Required</label>
+            </div>
+          </div>
+
+          <div class="pcf-field pcf-full">
+            <label>Additional Instructions</label>
+            <textarea class="form-control" rows="3" formControlName="specialInstructions" placeholder="Any special notes for creators"></textarea>
+          </div>
+        </div>
+
+        <div class="pcf-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">Cancel</button>
+          <button type="submit" class="btn btn-primary">{{ isEdit ? 'Update Collaboration Request' : 'Create Collaboration Request' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -14,6 +14,7 @@
       <div class="admin-tabs">
         <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
         <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+        <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
       </div>
     </div>
 
@@ -31,8 +32,8 @@
           <div class="filter-item">
             <label>Status</label>
             <select id="status-filter" 
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.status : brandFilters.status"
-                    (change)="activeTab === 'influencer' ? influencerFilters.status = $any($event.target).value : brandFilters.status = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('status')"
+                    (change)="setActiveFilterValue('status', $any($event.target).value)">
               <option value="">All</option>
               <option *ngFor="let status of statusArray" [value]="status">{{ status | titlecase }}</option>
             </select>
@@ -42,8 +43,8 @@
           <div class="filter-item">
             <label>Premium</label>
             <select id="premium-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.premium : brandFilters.premium"
-                    (change)="activeTab === 'influencer' ? influencerFilters.premium = $any($event.target).value : brandFilters.premium = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('premium')"
+                    (change)="setActiveFilterValue('premium', $any($event.target).value)">
               <option value="">All</option>
               <option value="premium">Premium</option>
               <option value="free">Free</option>
@@ -54,8 +55,8 @@
           <div class="filter-item">
             <label>Category</label>
             <select id="category-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
-                    (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('category')"
+                    (change)="setActiveFilterValue('category', $any($event.target).value)">
               <option value="">All Categories</option>
               <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
             </select>
@@ -65,8 +66,8 @@
           <div class="filter-item">
             <label>State</label>
             <select id="state-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
-                    (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('state')"
+                    (change)="setActiveFilterValue('state', $any($event.target).value)">
               <option value="">All States</option>
               <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
             </select>
@@ -76,8 +77,8 @@
           <div class="filter-item">
             <label>Signup Source</label>
             <select id="signup-source-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.signupSource : brandFilters.signupSource"
-                    (change)="activeTab === 'influencer' ? influencerFilters.signupSource = $any($event.target).value : brandFilters.signupSource = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('signupSource')"
+                    (change)="setActiveFilterValue('signupSource', $any($event.target).value)">
               <option value="">All Sources</option>
               <option *ngFor="let source of signupSourcesArray" [value]="source">{{ source }}</option>
             </select>
@@ -87,8 +88,8 @@
           <div class="filter-item">
             <label>Email Verified</label>
             <select id="email-verified-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.emailVerified : brandFilters.emailVerified"
-                    (change)="activeTab === 'influencer' ? influencerFilters.emailVerified = $any($event.target).value : brandFilters.emailVerified = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('emailVerified')"
+                    (change)="setActiveFilterValue('emailVerified', $any($event.target).value)">
               <option value="">All</option>
               <option value="verified">Verified</option>
               <option value="not_verified">Verification Pending</option>
@@ -99,8 +100,8 @@
           <div class="filter-item">
             <label>Mobile Verified</label>
             <select id="mobile-verified-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.mobileVerified : brandFilters.mobileVerified"
-                    (change)="activeTab === 'influencer' ? influencerFilters.mobileVerified = $any($event.target).value : brandFilters.mobileVerified = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('mobileVerified')"
+                    (change)="setActiveFilterValue('mobileVerified', $any($event.target).value)">
               <option value="">All</option>
               <option value="verified">Verified</option>
               <option value="not_verified">Verification Pending</option>
@@ -111,8 +112,8 @@
           <div class="filter-item">
             <label>Badge / Tag</label>
             <select id="badge-tag-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.badgeTag : brandFilters.badgeTag"
-                    (change)="activeTab === 'influencer' ? influencerFilters.badgeTag = $any($event.target).value : brandFilters.badgeTag = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('badgeTag')"
+                    (change)="setActiveFilterValue('badgeTag', $any($event.target).value)">
               <option value="">All Tags</option>
               <option *ngFor="let tag of getTagOptions(activeTab)" [value]="tag">{{ tag }}</option>
             </select>
@@ -473,6 +474,162 @@
         </tr>
       </tbody>
     </table>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'photographer'">
+    <div *ngIf="!filteredPhotographers || filteredPhotographers.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <div class="table-scroll-wrapper" *ngIf="filteredPhotographers && filteredPhotographers.length > 0">
+      <table class="table table-hover admin-table">
+        <thead>
+          <tr>
+            <th>Profile</th>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Email & Phone</th>
+            <th>Signup Source</th>
+            <th>Categories</th>
+            <th>Languages</th>
+            <th>State</th>
+            <th>Starting Price</th>
+            <th>Social Media</th>
+            <th>Profile Traffic</th>
+            <th>Document Verification</th>
+            <th>Badges / Tags</th>
+            <th>Premium</th>
+            <th>Payment Method</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredPhotographers">
+            <td>
+              <img [src]="getProfileImage(user)" alt="Profile" width="40" height="40" class="rounded-circle" (error)="$any($event.target).src='assets/default-profile.png'">
+            </td>
+            <td>{{ user.name || '-' }}</td>
+            <td>{{ user.username || '-' }}</td>
+            <td>
+              <div>{{ user.email || '-' }}</div>
+              <small>{{ user.phoneNumber || '-' }}</small>
+              <div class="mt-1 d-flex flex-column gap-1">
+                <div>
+                  <span class="badge me-1" [ngClass]="isEmailVerified(user) ? 'bg-success' : 'bg-secondary'">
+                    <i *ngIf="isEmailVerified(user)" class="bi bi-check-circle-fill me-1"></i>
+                    <i *ngIf="!isEmailVerified(user)" class="bi bi-hourglass-split me-1"></i>
+                    Email {{ isEmailVerified(user) ? 'Verified' : 'Verification Pending' }}
+                  </span>
+                </div>
+                <div>
+                  <span class="badge me-1" [ngClass]="isMobileVerified(user) ? 'bg-success' : 'bg-secondary'">
+                    <i *ngIf="isMobileVerified(user)" class="bi bi-check-circle-fill me-1"></i>
+                    <i *ngIf="!isMobileVerified(user)" class="bi bi-hourglass-split me-1"></i>
+                    Mobile {{ isMobileVerified(user) ? 'Verified' : 'Verification Pending' }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>{{ getSignupSource(user) }}</td>
+            <td>{{ (user.categories && user.categories.length ? user.categories : (user.skills || [])).length ? (user.categories && user.categories.length ? user.categories : (user.skills || [])).join(', ') : '-' }}</td>
+            <td>{{ user.languages && user.languages.length ? user.languages.join(', ') : '-' }}</td>
+            <td>{{ user.location?.district || '-' }} {{ user.location?.state || '-' }}</td>
+            <td>{{ (user.promotionalPrice ?? user.price ?? user.pricing?.startingFrom) !== undefined ? ('Starting Price:' + (user.promotionalPrice ?? user.price ?? user.pricing?.startingFrom)) : '-' }}</td>
+            <td>
+              <span *ngIf="user.socialMedia && user.socialMedia.length; else noSocialPhotographer">
+                <ng-container *ngFor="let sm of user.socialMedia">
+                  <ng-container [ngSwitch]="sm | resolvePlatform">
+                    <a *ngSwitchCase="'instagram'" [href]="'https://instagram.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Instagram">
+                      <i class="bi bi-instagram fs-5"></i>
+                    </a>
+                    <a *ngSwitchCase="'youtube'" [href]="'https://youtube.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="YouTube">
+                      <i class="bi bi-youtube fs-5"></i>
+                    </a>
+                    <a *ngSwitchCase="'facebook'" [href]="'https://facebook.com/' + sm.handle" target="_blank" rel="noopener noreferrer" title="Facebook">
+                      <i class="bi bi-facebook fs-5"></i>
+                    </a>
+                    <a *ngSwitchDefault [href]="sm.url || sm.handle" target="_blank" rel="noopener noreferrer" title="Social">
+                      <i class="bi bi-link-45deg fs-5"></i>
+                    </a>
+                  </ng-container>
+                  <span *ngIf="sm.followersCount">({{ sm.followersCount }})</span>
+                  <br>
+                </ng-container>
+              </span>
+              <ng-template #noSocialPhotographer>-</ng-template>
+            </td>
+            <td>
+              <small>
+                <span title="Impressions"><i class="bi bi-eye"></i> {{ user.profileTraffic?.impressions ?? 0 }}</span>&nbsp;
+                <span title="Clicks"><i class="bi bi-cursor"></i> {{ user.profileTraffic?.clicks ?? 0 }}</span>
+              </small>
+            </td>
+            <td>
+              <span class="badge"
+                    [ngClass]="user.verificationStatus === 'approved' ? 'bg-success' : (user.verificationStatus === 'pending' ? 'bg-info text-dark' : 'bg-secondary')">
+                {{ user.verificationStatus || 'not_submitted' }}
+              </span>
+            </td>
+            <td>
+              <ng-container *ngIf="getUserTags(user).length; else noTagsPhotographer">
+                <span
+                  *ngFor="let tag of getUserTags(user)"
+                  class="badge rounded-pill me-1 mb-1"
+                  [ngClass]="getTagBadgeClass(tag)">
+                  {{ tag }}
+                </span>
+              </ng-container>
+              <div *ngIf="getCommissionBenefitText(user)" class="small text-muted mt-1">
+                {{ getCommissionBenefitText(user) }}
+              </div>
+              <ng-template #noTagsPhotographer>-</ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="user.isPremium; else freeTplPhotographer">
+                Premium
+                <span *ngIf="getPremiumPeriod(user) as period">
+                  <span *ngIf="user.premiumStart || user.acceptedAt">
+                    — {{ user.premiumStart ? 'Paid on' : 'Accepted on' }}
+                    {{ (user.premiumStart || user.acceptedAt) | date:'dd MMM yyyy' }}
+                  </span>
+                  <span>
+                    <br>from {{ period.start | date:'dd MMM yyyy' }}
+                    <span *ngIf="period.end"> till {{ period.end | date:'dd MMM yyyy' }}</span>
+                  </span>
+                </span>
+              </ng-container>
+              <ng-template #freeTplPhotographer>Free</ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="user.latestPayment && (user.latestPayment.paymentMethod === 'upi' || user.latestPayment.paymentMethod === 'qr'); else adminGrantedTplPhotographer">
+                {{ user.latestPayment.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}
+              </ng-container>
+              <ng-template #adminGrantedTplPhotographer>
+                <ng-container *ngIf="user.isPremium && (!user.latestPayment || !user.latestPayment.paymentMethod || user.latestPayment.paymentMethod === 'admin')">
+                  Admin Granted ({{ getPremiumDurationLabel(user.premiumDuration) }})
+                </ng-container>
+                <ng-container *ngIf="!user.isPremium">-</ng-container>
+              </ng-template>
+            </td>
+            <td>{{ user.status || '-' }}</td>
+            <td class="actions">
+              <button class="btn btn-success btn-sm me-1" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'">
+                <i class="bi bi-check-circle-fill"></i>
+              </button>
+              <button class="btn btn-warning btn-sm me-1" (click)="declineUser(user._id)">
+                <i class="bi bi-x-circle-fill"></i>
+              </button>
+              <button class="btn btn-danger btn-sm me-1" (click)="deleteUser(user._id)">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+              <button class="btn btn-outline-primary btn-sm me-1" *ngIf="!user.isPremium" (click)="openPremiumModal(user._id, 'photographer')">Set Premium</button>
+              <button class="btn btn-outline-secondary btn-sm" *ngIf="user.isPremium" (click)="setPremium(user._id, false, 'photographer')">Set Free</button>
+              <button class="btn btn-outline-info btn-sm ms-1" (click)="openTagModal(user, 'photographer')">Edit Tags</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
   

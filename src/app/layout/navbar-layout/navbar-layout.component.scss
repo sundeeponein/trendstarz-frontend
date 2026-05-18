@@ -213,5 +213,34 @@
   &--free { background: shared.$orange-primary; color: #fff; }
 }
 
+.commission-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-left: 0.4rem;
+
+  &--early { background: #1d4ed8; color: #fff; }
+  &--partner { background: #f97316; color: #fff; }
+  &--internal { background: #7c3aed; color: #fff; }
+}
+
+.mobile-commission-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-top: 0.25rem;
+
+  &.commission-badge--early { background: #1d4ed8; color: #fff; }
+  &.commission-badge--partner { background: #f97316; color: #fff; }
+  &.commission-badge--internal { background: #7c3aed; color: #fff; }
+}
+
 :host ::ng-deep { @include shared.ng-deep-overrides; }
 

@@ -8,6 +8,7 @@ import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { ResolvePlatformPipe } from '../../../shared/pipes/resolve-platform.pipe';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
+import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -18,8 +19,11 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
 })
 export class AdminUserTableComponent implements OnInit {
   filtersExpanded = true;
-  readonly influencerBadgeOptions = ['Founder', 'Internal Creator', 'Verified Creator', 'Early Access', 'Partner', 'Internal/Test'];
-  readonly brandBadgeOptions = ['Founder-owned', 'Partner brand', 'Early access brand', 'Early Access', 'Partner', 'Internal/Test'];
+  private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
+  influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
+  brandBadgeOptions = [...this.defaultUserTagOptions.brand];
+  photographerBadgeOptions = [...this.defaultUserTagOptions.photographer];
+  commissionBadgeOptions = [...this.defaultUserTagOptions.commission];
   readonly verificationStatusOptions = ['not_submitted', 'pending', 'approved', 'rejected', 'removed'];
   verificationNotesDraft: Record<string, string> = {};
 
@@ -105,7 +109,7 @@ export class AdminUserTableComponent implements OnInit {
     }
     return null;
   }
-  openPremiumModal(userId: string, userType: 'influencer' | 'brand') {
+  openPremiumModal(userId: string, userType: 'influencer' | 'brand' | 'photographer') {
       this.premiumUserId = userId;
       this.premiumDuration = '';
       this.premiumIsPremium = true;
@@ -113,11 +117,13 @@ export class AdminUserTableComponent implements OnInit {
       this.showPremiumModal = true;
       // debug: open premium modal
     }
-  activeTab: 'influencer' | 'brand' = 'influencer'; // Default to influencer tab
+  activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer'; // Default to influencer tab
   influencers: any[] = [];
   brands: any[] = [];
+  photographers: any[] = [];
   filteredInfluencers: any[] = [];
   filteredBrands: any[] = [];
+  filteredPhotographers: any[] = [];
 
   // Filter properties
   influencerFilters = {
@@ -140,6 +146,16 @@ export class AdminUserTableComponent implements OnInit {
     emailVerified: '',
     mobileVerified: ''
   };
+  photographerFilters = {
+    status: '',
+    premium: '',
+    category: '',
+    state: '',
+    signupSource: '',
+    badgeTag: '',
+    emailVerified: '',
+    mobileVerified: ''
+  };
 
   // Available filter options
   categoriesArray: string[] = [];
@@ -152,18 +168,18 @@ export class AdminUserTableComponent implements OnInit {
   premiumUserId: string | null = null;
   premiumDuration: '1m' | '3m' | '1y' | '' = '';
   premiumIsPremium = true;
-  premiumType: 'influencer' | 'brand' | null = null;
+  premiumType: 'influencer' | 'brand' | 'photographer' | null = null;
 
   // Badge/tag modal state
   showTagModal = false;
   tagUserId: string | null = null;
-  tagType: 'influencer' | 'brand' | null = null;
+  tagType: 'influencer' | 'brand' | 'photographer' | null = null;
   selectedTagOptions: string[] = [];
 
   // Verification docs modal state
   showVerificationDocsModal = false;
   verificationDocsUser: any = null;
-  verificationDocsUserType: 'influencer' | 'brand' | null = null;
+  verificationDocsUserType: 'influencer' | 'brand' | 'photographer' | null = null;
   verificationDocsDraft = '';
 
   // Holds an error message when profile/registration fetch fails
@@ -198,6 +214,22 @@ export class AdminUserTableComponent implements OnInit {
         }
       });
     }
+
+    this.configService.getUserTagOptions().subscribe((options) => {
+      this.influencerBadgeOptions = options.influencer?.length
+        ? options.influencer
+        : this.influencerBadgeOptions;
+      this.brandBadgeOptions = options.brand?.length
+        ? options.brand
+        : this.brandBadgeOptions;
+      this.photographerBadgeOptions = options.photographer?.length
+        ? options.photographer
+        : this.photographerBadgeOptions;
+      this.commissionBadgeOptions = options.commission?.length
+        ? options.commission
+        : this.commissionBadgeOptions;
+      this.cd.detectChanges();
+    });
   }
 
   toggleFilters() {
@@ -233,6 +265,18 @@ export class AdminUserTableComponent implements OnInit {
         const users = Array.isArray(res) ? res : (res?.data || []);
         this.brands = users;
         this.applyFilters('brand');
+        this.updateAllFilterOptions();
+        this.isLoading = false;
+        this.cd.detectChanges();
+      });
+
+    const photographerUrl = `${environment.apiBaseUrl}/admin/photographers${this.isDeletedTab() ? '?status=deleted' : ''}`;
+    this.http.get<any>(photographerUrl, headers)
+      .pipe(timeout(5000), catchError(() => of([])))
+      .subscribe((res: any) => {
+        const users = Array.isArray(res) ? res : (res?.data || []);
+        this.photographers = users;
+        this.applyFilters('photographer');
         this.updateAllFilterOptions();
         this.isLoading = false;
         this.cd.detectChanges();
@@ -278,6 +322,22 @@ export class AdminUserTableComponent implements OnInit {
         signupSourceSet.add(signupSource);
       }
     });
+
+    this.photographers.forEach(user => {
+      if (user.skills && Array.isArray(user.skills)) {
+        user.skills.forEach((cat: string) => categoriesSet.add(cat));
+      }
+      if (user.location?.state) {
+        statesSet.add(user.location.state);
+      }
+      if (user.status) {
+        statusSet.add(user.status);
+      }
+      const signupSource = this.getSignupSourceFilterValue(user);
+      if (signupSource) {
+        signupSourceSet.add(signupSource);
+      }
+    });
     
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
@@ -285,9 +345,17 @@ export class AdminUserTableComponent implements OnInit {
     this.signupSourcesArray = Array.from(signupSourceSet).sort();
   }
 
-  applyFilters(userType: 'influencer' | 'brand') {
-    const filters = userType === 'influencer' ? this.influencerFilters : this.brandFilters;
-    const source = userType === 'influencer' ? this.influencers : this.brands;
+  applyFilters(userType: 'influencer' | 'brand' | 'photographer') {
+    const filters = userType === 'influencer'
+      ? this.influencerFilters
+      : userType === 'brand'
+        ? this.brandFilters
+        : this.photographerFilters;
+    const source = userType === 'influencer'
+      ? this.influencers
+      : userType === 'brand'
+        ? this.brands
+        : this.photographers;
     // If on User Management tab, show only non-deleted users. If on Deleted Users tab, show only deleted users.
     let filtered = source;
     if (this.isDeletedTab()) {
@@ -302,11 +370,17 @@ export class AdminUserTableComponent implements OnInit {
       });
       // debug: filtered influencers updated
     } else {
-      this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters))
-      .sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-      // debug: filtered brands updated
+      if (userType === 'brand') {
+        this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters))
+        .sort((a, b) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      } else {
+        this.filteredPhotographers = filtered.filter(user => this.matchesFilters(user, filters))
+        .sort((a, b) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      }
     }
   }
 
@@ -351,7 +425,12 @@ export class AdminUserTableComponent implements OnInit {
     }
     
     // Category filter
-    if (filters.category && (!user.categories || !user.categories.includes(filters.category))) {
+    const categoryList = Array.isArray(user.categories)
+      ? user.categories
+      : Array.isArray(user.skills)
+        ? user.skills
+        : [];
+    if (filters.category && !categoryList.includes(filters.category)) {
       return false;
     }
     
@@ -375,8 +454,25 @@ export class AdminUserTableComponent implements OnInit {
     return true;
   }
 
-  onFilterChange(userType: 'influencer' | 'brand') {
+  onFilterChange(userType: 'influencer' | 'brand' | 'photographer') {
     this.applyFilters(userType);
+  }
+
+  private getFiltersForType(userType: 'influencer' | 'brand' | 'photographer') {
+    if (userType === 'influencer') return this.influencerFilters;
+    if (userType === 'brand') return this.brandFilters;
+    return this.photographerFilters;
+  }
+
+  getActiveFilterValue(field: string): string {
+    const filters = this.getFiltersForType(this.activeTab) as Record<string, string>;
+    return filters[field] || '';
+  }
+
+  setActiveFilterValue(field: string, value: string): void {
+    const filters = this.getFiltersForType(this.activeTab) as Record<string, string>;
+    filters[field] = value;
+    this.onFilterChange(this.activeTab);
   }
 
   getVerificationNotes(user: any): string {
@@ -398,7 +494,7 @@ export class AdminUserTableComponent implements OnInit {
 
   updateContactVerification(
     user: any,
-    userType: 'influencer' | 'brand',
+    userType: 'influencer' | 'brand' | 'photographer',
     field: 'isEmailVerified' | 'isMobileVerified',
     value: boolean,
   ): void {
@@ -426,7 +522,7 @@ export class AdminUserTableComponent implements OnInit {
     });
   }
 
-  openVerificationDocsModal(user: any, userType: 'influencer' | 'brand'): void {
+  openVerificationDocsModal(user: any, userType: 'influencer' | 'brand' | 'photographer'): void {
     this.verificationDocsUser = user;
     this.verificationDocsUserType = userType;
     this.verificationDocsDraft = String(user?.verificationAdminNotes || '');
@@ -485,38 +581,41 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
-  resetFilters(userType: 'influencer' | 'brand') {
+  resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
     if (userType === 'influencer') {
       this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
-    } else {
+    } else if (userType === 'brand') {
       this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
+    } else {
+      this.photographerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
     }
     this.applyFilters(userType);
   }
 
-  getTagOptions(userType: 'influencer' | 'brand'): string[] {
-    return userType === 'influencer' ? this.influencerBadgeOptions : this.brandBadgeOptions;
+  getTagOptions(userType: 'influencer' | 'brand' | 'photographer'): string[] {
+    if (userType === 'influencer') return this.influencerBadgeOptions;
+    if (userType === 'brand') return this.brandBadgeOptions;
+    return this.photographerBadgeOptions;
   }
 
-  getRegularTagOptions(userType: 'influencer' | 'brand'): string[] {
-    const commissionTags = new Set(['Early Access', 'Partner', 'Internal/Test']);
+  getRegularTagOptions(userType: 'influencer' | 'brand' | 'photographer'): string[] {
+    const commissionTags = new Set(this.commissionBadgeOptions);
     return this.getTagOptions(userType).filter((tag) => !commissionTags.has(tag));
   }
 
-  getCommissionTagOptions(userType: 'influencer' | 'brand'): string[] {
-    const commissionTags = new Set(['Early Access', 'Partner', 'Internal/Test']);
-    return this.getTagOptions(userType).filter((tag) => commissionTags.has(tag));
+  getCommissionTagOptions(userType: 'influencer' | 'brand' | 'photographer'): string[] {
+    return this.commissionBadgeOptions;
   }
 
   private isCommissionTag(tag: string): boolean {
-    return ['Early Access', 'Partner', 'Internal/Test'].includes(tag);
+    return this.commissionBadgeOptions.includes(tag);
   }
 
   getUserTags(user: any): string[] {
     const tags = Array.isArray(user?.adminTags)
       ? user.adminTags.filter((tag: any) => !!String(tag || '').trim())
       : [];
-    const commissionTags = ['Early Access', 'Partner', 'Internal/Test'];
+    const commissionTags = this.commissionBadgeOptions;
 
     const commissionBadgeMap: Record<string, string> = {
       early_access_creator: 'Early Access',
@@ -547,6 +646,7 @@ export class AdminUserTableComponent implements OnInit {
 
   getTagBadgeClass(tag: string): string {
     const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('featured')) return 'bg-primary';
     if (normalized.includes('founder')) return 'bg-warning text-dark';
     if (normalized.includes('verified')) return 'bg-success';
     if (normalized.includes('internal')) return 'bg-info text-dark';
@@ -579,7 +679,7 @@ export class AdminUserTableComponent implements OnInit {
     return '';
   }
 
-  openTagModal(user: any, userType: 'influencer' | 'brand') {
+  openTagModal(user: any, userType: 'influencer' | 'brand' | 'photographer') {
     this.tagUserId = user?._id || null;
     this.tagType = userType;
     this.selectedTagOptions = [...this.getUserTags(user)];
@@ -651,7 +751,7 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedTagOptions = [];
   }
 
-  setTab(tab: 'influencer' | 'brand') {
+  setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
     // Reset modal state when switching tabs to avoid blank screen
     this.showPremiumModal = false;
@@ -700,7 +800,7 @@ export class AdminUserTableComponent implements OnInit {
       setTimeout(() => { this.isLoading = false; }, 500);
     });
   }
-  setPremium(userId: string, isPremium: boolean, userType: 'influencer' | 'brand') {
+  setPremium(userId: string, isPremium: boolean, userType: 'influencer' | 'brand' | 'photographer') {
       try {
         this.premiumType = userType;
         if (isPremium) {

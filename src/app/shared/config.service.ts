@@ -1,9 +1,12 @@
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import {
+  buildDefaultUserTagOptions,
+} from './constants/user-tag-options.constants';
 
 
 @Injectable({ providedIn: 'root' })
@@ -152,6 +155,14 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/register-brand`, data);
   }
 
+  registerPhotographer(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/register-photographer`, data);
+  }
+
+  uploadImage(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/upload-image`, formData);
+  }
+
   getAppSettings(): Observable<{
     preApproveInfluencers: boolean; influencerRequireEmailVerified: boolean; influencerRequireMobileVerified: boolean;
     preApproveBrands: boolean; brandRequireEmailVerified: boolean; brandRequireMobileVerified: boolean;
@@ -200,16 +211,110 @@ export class ConfigService {
     });
   }
 
-  getCategories(role?: 'influencer' | 'brand' | 'both'): Observable<any[]> {
+  getCategories(role?: 'influencer' | 'brand' | 'photographer' | 'both'): Observable<any[]> {
     const qs = role ? `?role=${encodeURIComponent(role)}` : '';
     return this.http.get<any>(`${this.apiUrl}/categories${qs}`).pipe(
       map((res) => this.extractData<any[]>(res) || [])
     );
   }
 
+  getPhotographerCategories(): Observable<string[]> {
+    return this.getCategories('photographer').pipe(
+      switchMap((categories: any[]) => {
+        const strict = (Array.isArray(categories) ? categories : [])
+          .filter((c: any) => {
+            const role = String(c?.role || '').toLowerCase();
+            return role === 'photographer' || role === 'both';
+          })
+          .map((c: any) => String(c?.name || '').trim())
+          .filter((n: string) => !!n);
+
+        if (strict.length) {
+          return of(strict);
+        }
+
+        return this.getConfig().pipe(
+          map((cfg: any) => (Array.isArray(cfg?.categories) ? cfg.categories : [])
+            .filter((c: any) => {
+              const role = String(c?.role || '').toLowerCase();
+              return (role === 'photographer' || role === 'both') && c?.visible !== false;
+            })
+            .map((c: any) => String(c?.name || '').trim())
+            .filter((n: string) => !!n),
+          ),
+          catchError(() => of([])),
+        );
+      }),
+      catchError(() =>
+        this.getConfig().pipe(
+          map((cfg: any) => (Array.isArray(cfg?.categories) ? cfg.categories : [])
+            .filter((c: any) => {
+              const role = String(c?.role || '').toLowerCase();
+              return (role === 'photographer' || role === 'both') && c?.visible !== false;
+            })
+            .map((c: any) => String(c?.name || '').trim())
+            .filter((n: string) => !!n),
+          ),
+          catchError(() => of([])),
+        ),
+      ),
+    );
+  }
+
   getConfig(): Observable<any> {
     return this.http.get('/assets/admin-config.json').pipe(
       catchError(() => this.http.get('assets/admin-config.json')) // fallback for some setups
+    );
+  }
+
+  getUserTagOptions(): Observable<{
+    influencer: string[];
+    brand: string[];
+    photographer: string[];
+    commission: string[];
+  }> {
+    const fallback = buildDefaultUserTagOptions();
+
+    const normalize = (list: unknown, defaults: string[]) => {
+      if (!Array.isArray(list)) return defaults;
+      return list
+        .map((item: any) => {
+          if (typeof item === 'string') {
+            return item.trim();
+          }
+          if (item && typeof item === 'object') {
+            if (item.visible === false) return '';
+            return String(item.name || '').trim();
+          }
+          return '';
+        })
+        .filter((v: string) => !!v);
+    };
+
+    return this.http.get<any>(`${this.apiUrl}/user-tag-options`).pipe(
+      map((res: any) => {
+        const data = this.extractData<any>(res) || res || {};
+        return {
+          influencer: normalize(data.influencer, fallback.influencer),
+          brand: normalize(data.brand, fallback.brand),
+          photographer: normalize(data.photographer, fallback.photographer),
+          commission: normalize(data.commission, fallback.commission),
+        };
+      }),
+      catchError(() =>
+        this.getConfig().pipe(
+          map((cfg: any) => {
+            const fromConfig = cfg?.userTags || {};
+            return {
+              influencer: normalize(fromConfig.influencer, fallback.influencer),
+              brand: normalize(fromConfig.brand, fallback.brand),
+              photographer: normalize(fromConfig.photographer, fallback.photographer),
+              commission: normalize(fromConfig.commission, fallback.commission),
+            };
+          }),
+          catchError(() => of(buildDefaultUserTagOptions())),
+        ),
+      ),
     );
   }
 
@@ -254,6 +359,56 @@ export class ConfigService {
     );
   }
 
+  getEquipmentOptions(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/equipment-options`).pipe(
+      map((res) => this.extractData<any[]>(res) || []),
+      switchMap((items: any[]) => {
+        if (items.length) {
+          return of(items);
+        }
+        return this.getConfig().pipe(
+          map((cfg: any) => (Array.isArray(cfg?.equipmentOptions) ? cfg.equipmentOptions : [])
+            .filter((e: any) => e?.visible !== false)
+          ),
+          catchError(() => of([])),
+        );
+      }),
+      catchError(() =>
+        this.getConfig().pipe(
+          map((cfg: any) => (Array.isArray(cfg?.equipmentOptions) ? cfg.equipmentOptions : [])
+            .filter((e: any) => e?.visible !== false)
+          ),
+          catchError(() => of([])),
+        ),
+      ),
+    );
+  }
+
+  getPricingOptions(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/pricing-options`).pipe(
+      map((res) => this.extractData<any[]>(res) || []),
+      switchMap((items: any[]) => {
+        if (items.length) {
+          return of(items);
+        }
+        return this.getConfig().pipe(
+          map((cfg: any) => (Array.isArray(cfg?.pricingOptions) ? cfg.pricingOptions : [])
+            .filter((p: any) => p?.visible !== false)
+          ),
+          catchError(() => of([])),
+        );
+      }),
+      catchError(() =>
+        this.getConfig().pipe(
+          map((cfg: any) => (Array.isArray(cfg?.pricingOptions) ? cfg.pricingOptions : [])
+            .filter((p: any) => p?.visible !== false)
+          ),
+          catchError(() => of([])),
+        ),
+      ),
+    );
+  }
+
   private extractData<T>(payload: any): T {
     if (payload && typeof payload === 'object' && 'data' in payload) {
       return payload.data as T;
@@ -291,6 +446,29 @@ export class ConfigService {
     );
   }
 
+  getPhotographers(options?: { limit?: number; skill?: string; location?: string; keyword?: string }): Observable<any[]> {
+    const params: string[] = [];
+    if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
+    if (options?.skill) params.push(`skill=${encodeURIComponent(options.skill)}`);
+    if (options?.location) params.push(`location=${encodeURIComponent(options.location)}`);
+    if (options?.keyword) params.push(`keyword=${encodeURIComponent(options.keyword)}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<any>(`${this.apiUrl}/users/photographers${qs}`).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res);
+        return (Array.isArray(data) ? data : (data?.data || [])) as any[];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  getPhotographerById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/photographers/${encodeURIComponent(id)}`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError(() => of(null))
+    );
+  }
+
   updateBrandImages(id: string, images: { brandLogo?: any[]; products?: any[] }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
   }
@@ -319,6 +497,16 @@ export class ConfigService {
       map((res) => this.extractData<any>(res)),
       catchError((err) => {
         console.error('Error fetching brand profile:', err);
+        return of(null);
+      })
+    );
+  }
+
+  getPhotographerProfileById(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/photographers/me/profile`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError((err) => {
+        console.error('Error fetching photographer profile:', err);
         return of(null);
       })
     );

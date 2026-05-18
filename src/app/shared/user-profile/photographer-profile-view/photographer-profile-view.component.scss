@@ -1,0 +1,278 @@
+.photographer-profile-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.photographer-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hero-card,
+.info-card,
+.side-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
+}
+
+.hero-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hero-main {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hero-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+.hero-name {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+}
+
+.hero-tag {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.hero-trust-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
+.hero-trust-icon {
+  color: #f59e0b;
+}
+
+.hero-trust-text {
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.hero-location,
+.hero-summary {
+  margin: 0.2rem 0 0;
+  color: #6b7280;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-box {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.9fr);
+  gap: 1rem;
+}
+
+.content-main,
+.content-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-card,
+.side-card {
+  padding: 1.25rem;
+}
+
+.info-card h3,
+.side-card h3 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.chip-row,
+.social-list,
+.pricing-list,
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  background: #fff7ed;
+  color: #f97316;
+  border: 1px solid #fed7aa;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.chip--muted {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+
+.pricing-list {
+  flex-direction: column;
+}
+
+.pricing-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.pricing-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.pricing-name {
+  color: #374151;
+}
+
+.pricing-value {
+  font-weight: 800;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  width: 100%;
+}
+
+.gallery-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 14px;
+  background: #f3f4f6;
+}
+
+.badge--founder {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.badge--verified {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #86efac;
+}
+
+.badge--internal {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.badge--neutral {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.social-list {
+  flex-direction: column;
+}
+
+.social-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.social-handle {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.social-tier {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f97316;
+}
+
+@media (max-width: 992px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-avatar {
+    width: 96px;
+    height: 96px;
+  }
+}
