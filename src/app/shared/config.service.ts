@@ -214,7 +214,7 @@ export class ConfigService {
   getCategories(role?: 'influencer' | 'brand' | 'photographer' | 'both'): Observable<any[]> {
     const qs = role ? `?role=${encodeURIComponent(role)}` : '';
     return this.http.get<any>(`${this.apiUrl}/categories${qs}`).pipe(
-      map((res) => this.extractData<any[]>(res) || [])
+      map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }
 
@@ -326,7 +326,7 @@ export class ConfigService {
 
   getStates(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/states`).pipe(
-      map((res) => this.extractData<any[]>(res) || [])
+      map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }
 
@@ -337,25 +337,25 @@ export class ConfigService {
     if (stateId) params.push(`stateId=${encodeURIComponent(stateId)}`);
     if (params.length) url += `?${params.join('&')}`;
     return this.http.get<any>(url).pipe(
-      map((res) => this.extractData<any[]>(res) || [])
+      map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }
 
   getLanguages(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/languages`).pipe(
-      map((res) => this.extractData<any[]>(res) || [])
+      map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }
 
   getTiers(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/tiers`).pipe(
-      map((res) => this.extractData<any[]>(res) || [])
+      map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }
 
   getSocialMedia(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/social-media`).pipe(
-      map((res) => this.extractData<any[]>(res) || [])
+      map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }
 
@@ -414,6 +414,10 @@ export class ConfigService {
       return payload.data as T;
     }
     return payload as T;
+  }
+
+  private filterVisible<T extends { showInFrontend?: boolean }>(items: T[]): T[] {
+    return (Array.isArray(items) ? items : []).filter((item: T) => item?.showInFrontend !== false);
   }
 
   getInfluencers(options?: { page?: number; limit?: number; lite?: boolean }): Observable<any[]> {
