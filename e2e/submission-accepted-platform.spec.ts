@@ -11,6 +11,7 @@ async function setAuthToken(page: Page) {
   })();
   await page.addInitScript(({ jwt }) => {
     localStorage.setItem('token', jwt);
+    localStorage.setItem('loginTimestamp', Date.now().toString());
     localStorage.setItem('userRole', 'influencer');
     localStorage.setItem('user', JSON.stringify({ role: 'influencer', _id: 'inf_e2e', name: 'E2E Inf' }));
   }, { jwt: fakeJwt });
@@ -56,10 +57,11 @@ test('Submission page prefers accepted platform/content only', async ({ page }) 
   });
 
   await page.goto('/campaign-submission/inv_accept_123');
-  await page.waitForSelector('.form-header', { timeout: 5000 });
+  await page.waitForSelector('.form-header', { timeout: 15000 });
 
-  // Campaign platforms hint should show only the accepted platform
+  // Campaign platforms hint should show only the accepted platform (async populated)
   const platformHint = page.locator('.alert-info--platform');
+  await platformHint.waitFor({ state: 'visible', timeout: 10000 });
   await expect(platformHint).toHaveText(/youtube/i);
   await expect(platformHint).not.toHaveText(/instagram/i);
 

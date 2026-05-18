@@ -275,6 +275,32 @@ export class CampaignInviteCardComponent {
   }
   get hasVenueDetails(): boolean { return !!(this.venueShortText || this.venueFullAddress || this.venueMapUrl || this.inviteBenefits); }
 
+  get shootLocationType(): string {
+    return String(this.campaign?.shootLocationType || '').trim();
+  }
+  get shootLocationTypeLabel(): string {
+    const map: Record<string, string> = {
+      studio: 'At photographer studio',
+      indoor: 'Indoor shoot location',
+      outdoor: 'Outdoor shoot location',
+      client_location: 'At brand/client location',
+      pickup_point: 'Pickup / collection point',
+    };
+    return map[this.shootLocationType] || this.shootLocationType;
+  }
+  get shootLocationAddress(): string {
+    return String(this.campaign?.shootLocationAddress || '').trim();
+  }
+  get shootLocationMapUrl(): string {
+    return String(this.campaign?.shootLocationMapUrl || '').trim();
+  }
+  get shootLocationNotes(): string {
+    return String(this.campaign?.shootLocationNotes || '').trim();
+  }
+  get hasShootLocationDetails(): boolean {
+    return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
+  }
+
   get payToJoinFeeText(): string {
     const paise = Number(this.campaign?.pricePerInfluencer || 0);
     if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
@@ -525,6 +551,18 @@ export class CampaignInviteCardComponent {
     const text = this.specialInstructions;
     if (!text) return '';
     return text.length > 140 ? `${text.slice(0, 140)}...` : text;
+  }
+
+  /** Whether this invite was sent by a photographer/creator (collaboration) rather than a standard brand */
+  get isCollabInvite(): boolean {
+    return (this.brand?.role === 'photographer') || (this.campaign?.createdByRole === 'photographer');
+  }
+  /** Human-readable invite type shown as a badge on the card header */
+  get inviteTypeLabel(): string {
+    return this.isCollabInvite ? 'Collaboration' : 'Brand Campaign';
+  }
+  get inviteTypeIcon(): string {
+    return this.isCollabInvite ? 'bi-camera-reels' : 'bi-megaphone';
   }
 
   get brandName(): string {

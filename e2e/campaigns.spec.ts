@@ -190,7 +190,7 @@ test.describe('Brand — create campaign', () => {
 
     // ── Step 1: Campaign details ──────────────────────────
     // Wait for the current campaign modal header to appear
-    const modalHeader = page.locator('text=Create new campaign').first();
+    const modalHeader = page.locator('text=Create Campaign').first();
     await modalHeader.waitFor({ state: 'visible', timeout: 5000 });
     await page.fill('input[formControlName="title"]', 'E2E Test Campaign');
     await page.fill('textarea[formControlName="description"]', 'Created via automated E2E test');

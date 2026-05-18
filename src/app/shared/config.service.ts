@@ -677,8 +677,12 @@ export class ConfigService {
   }
 
   // ── Campaign Invite endpoints ───────────────
-  createCampaignInvite(data: { campaignId: string; influencerId: string }): Observable<any> {
+  createCampaignInvite(data: { campaignId: string; influencerId: string; recipientRole?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-invites`, data);
+  }
+
+  invitePhotographers(campaignId: string, photographerIds: string[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaigns/${campaignId}/invite-photographers`, { photographerIds });
   }
 
   getInviteWithCampaign(inviteId: string): Observable<any> {
@@ -705,6 +709,13 @@ export class ConfigService {
 
   getMyInvites(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/influencer`).pipe(
+      map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
+      catchError(() => of([]))
+    );
+  }
+
+  getMyPhotographerInvites(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/photographer`).pipe(
       map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
       catchError(() => of([]))
     );

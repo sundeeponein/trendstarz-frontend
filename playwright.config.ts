@@ -7,6 +7,7 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 60 * 1000,
   retries: 0,
+  workers: 2,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,
