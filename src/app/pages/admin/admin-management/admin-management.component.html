@@ -14,6 +14,7 @@
     <button class="tab-chip" [class.active]="activeTab === 'details'" (click)="setTab('details')">Overview</button>
     <button class="tab-chip" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social</button>
     <button class="tab-chip" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
+    <button class="tab-chip" [class.active]="activeTab === 'userTags'" (click)="setTab('userTags')">User Tags</button>
     <button class="tab-chip" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
     <button class="tab-chip" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-chip" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
@@ -121,29 +122,113 @@
         </div>
       </li>
     </ul>
-    <button class="btn btn-primary" (click)="saveAllVisibility()">Save</button>
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
   <div *ngIf="activeTab === 'categories'">
     <h2>Manage Categories</h2>
+
+    <div class="section-tabs mb-3" aria-label="Category role tabs">
+      <button class="tab-chip" [class.active]="categoriesRoleTab === 'influencer'" (click)="setCategoriesRoleTab('influencer')">Influencer</button>
+      <button class="tab-chip" [class.active]="categoriesRoleTab === 'brand'" (click)="setCategoriesRoleTab('brand')">Brand</button>
+      <button class="tab-chip" [class.active]="categoriesRoleTab === 'photographer'" (click)="setCategoriesRoleTab('photographer')">Photographer</button>
+    </div>
+
     <ul class="list-group mb-3">
-      <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let cat of config.categories; let i = index">
-        {{ cat.name }}
+      <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let cat of filteredCategories; let i = index">
+        <span>{{ cat.name }}</span>
         <div class="form-check form-switch d-inline-block ms-2">
           <input class="form-check-input" type="checkbox" role="switch"
-            id="switchCat{{i}}"
+            id="switchCat{{categoriesRoleTab}}{{i}}"
             [checked]="cat.visible"
-            (change)="toggleVisible('categories', i)"
+            (change)="toggleVisible('categories', getCategoryIndex(cat))"
           >
-          <label class="form-check-label" for="switchCat{{i}}">
+          <label class="form-check-label" for="switchCat{{categoriesRoleTab}}{{i}}">
             {{ cat.visible ? 'Show' : 'Hide' }}
           </label>
         </div>
       </li>
     </ul>
-    <button class="btn btn-primary" (click)="saveAllVisibility()">Save</button>
+
+    <ng-container *ngIf="categoriesRoleTab === 'photographer'">
+      <h3>Manage Equipment</h3>
+      <ul class="list-group mb-3" *ngIf="config.equipmentOptions?.length; else noEquipmentOptions">
+        <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let eq of config.equipmentOptions; let i = index">
+          <span>{{ eq.name }}</span>
+          <div class="form-check form-switch d-inline-block ms-2">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchEquipment' + i"
+              [checked]="eq.visible"
+              (change)="toggleVisible('equipmentOptions', i)"
+            >
+            <label class="form-check-label" [for]="'switchEquipment' + i">
+              {{ eq.visible ? 'Show' : 'Hide' }}
+            </label>
+          </div>
+        </li>
+      </ul>
+      <ng-template #noEquipmentOptions>
+        <p class="text-muted mb-3">No equipment options available.</p>
+      </ng-template>
+
+      <h3>Manage Pricing Options</h3>
+      <ul class="list-group mb-3" *ngIf="config.pricingOptions?.length; else noPricingOptions">
+        <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let pricing of config.pricingOptions; let i = index">
+          <div>
+            <strong>{{ pricing.label || pricing.key }}</strong>
+            <small class="text-muted d-block" *ngIf="pricing.key">({{ pricing.key }})</small>
+          </div>
+          <div class="form-check form-switch d-inline-block ms-2">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchPricing' + i"
+              [checked]="pricing.visible"
+              (change)="toggleVisible('pricingOptions', i)"
+            >
+            <label class="form-check-label" [for]="'switchPricing' + i">
+              {{ pricing.visible ? 'Show' : 'Hide' }}
+            </label>
+          </div>
+        </li>
+      </ul>
+      <ng-template #noPricingOptions>
+        <p class="text-muted mb-3">No pricing options available.</p>
+      </ng-template>
+    </ng-container>
+
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
+  <div *ngIf="activeTab === 'userTags'">
+    <h2>Manage User Tags</h2>
+
+    <div class="section-tabs mb-3" aria-label="User tag role tabs">
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'influencer'" (click)="setUserTagsRoleTab('influencer')">Influencer</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'brand'" (click)="setUserTagsRoleTab('brand')">Brand</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'photographer'" (click)="setUserTagsRoleTab('photographer')">Photographer</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'commission'" (click)="setUserTagsRoleTab('commission')">Commission</button>
+    </div>
+
+    <ul class="list-group mb-3" *ngIf="filteredUserTags.length; else noUserTags">
+      <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let tag of filteredUserTags; let i = index">
+        <span>{{ tag.name }}</span>
+        <div class="form-check form-switch d-inline-block ms-2">
+          <input class="form-check-input" type="checkbox" role="switch"
+            [id]="'switchUserTag' + userTagsRoleTab + i"
+            [checked]="tag.visible"
+            (change)="toggleVisible('userTags', getUserTagIndex(tag))"
+          >
+          <label class="form-check-label" [for]="'switchUserTag' + userTagsRoleTab + i">
+            {{ tag.visible ? 'Show' : 'Hide' }}
+          </label>
+        </div>
+      </li>
+    </ul>
+    <ng-template #noUserTags>
+      <p class="text-muted mb-3">No user tags available.</p>
+    </ng-template>
+
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
+  </div>
 
   <div *ngIf="activeTab === 'location'">
     <h2>Manage States & Districts</h2>
@@ -184,7 +269,7 @@
         </li>
       </ul>
     </div>
-    <button class="btn btn-primary" (click)="saveAllVisibility()">Save</button>
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
   <div *ngIf="activeTab === 'languages'">
@@ -204,7 +289,7 @@
         </div>
       </li>
     </ul>
-    <button class="btn btn-primary" (click)="saveAllVisibility()">Save</button>
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
   <div *ngIf="activeTab === 'tiers'">
@@ -224,7 +309,7 @@
         </div>
       </li>
     </ul>
-    <button class="btn btn-primary" (click)="saveAllVisibility()">Save</button>
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
   <!-- Support Contact Tab (admin-managed banner shown on Campaign Management page) -->
@@ -802,6 +887,48 @@
       </div>
     </div>
 
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Collaboration Approval Workflow</strong>
+          <p>Configure moderation mode for photographer collaboration requests.</p>
+        </div>
+        <div class="form-check form-switch settings-toggle">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            id="collaborationApprovalMode"
+            [checked]="settings.collaborationApprovalMode === 'auto_live'"
+            (change)="onCollaborationApprovalModeToggle($any($event.target).checked)"
+          >
+          <label class="form-check-label" for="collaborationApprovalMode">
+            {{ settings.collaborationApprovalMode === 'auto_live' ? 'Auto live' : 'Manual review' }}
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-conditions">
+        <span class="conditions-label">Current moderation mode:</span>
+        <div class="condition-item">
+          <span class="condition-name" *ngIf="settings.collaborationApprovalMode === 'manual'">
+            Manual: New collaboration submits as <strong>Pending Review</strong> and needs admin decision.
+          </span>
+          <span class="condition-name" *ngIf="settings.collaborationApprovalMode === 'auto_live'">
+            Auto-live: Collaboration goes public immediately (still appears in admin queue for audit).
+          </span>
+        </div>
+      </div>
+
+      <div class="settings-conditions">
+        <div class="condition-item">
+          <span class="condition-name">
+            Review submissions on the separate <a routerLink="/admin/collaboration-review">Collaboration Review</a> page.
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="settings-actions p-0 mt-3">
       <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
         {{ settingsSaving ? 'Saving…' : 'Save Settings' }}
@@ -810,5 +937,16 @@
     </div>
   </div>
 
+  </div>
+
+  <div class="confirm-overlay" *ngIf="showVisibilityConfirmModal">
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-label="Confirm visibility changes">
+      <h3>Confirm Changes</h3>
+      <p>Are you sure you want to apply these show or hide changes?</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelVisibilitySaveConfirmation()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="confirmVisibilitySave()">Yes, Save</button>
+      </div>
+    </div>
   </div>
 </div>

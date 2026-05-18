@@ -13,12 +13,18 @@
       <a *ngIf="user?.role === 'influencer'" routerLink="/influencer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Dashboard
       </a>
+      <a *ngIf="user?.role === 'photographer'" routerLink="/photographer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+        Dashboard
+      </a>
       <!-- will active on in 30days so dont remove this code  -->
       <!-- <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         {{ searchLabel }}
       </a> -->
       <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Campaigns
+      </a>
+      <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'photographer'" class="nav-tab">
+        Collaboration Requests
       </a>
       <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Transactions
@@ -31,6 +37,10 @@
       </a>
       <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="nav-tab">
         Register as Brand
+      </a>
+
+      <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
+        Register as Photographer
       </a>
     </div>
 
@@ -73,6 +83,7 @@
 
         <span class="badge rounded-pill bg-success d-none d-md-block" *ngIf="user && user.isPremium">Pro plan</span>
         <span class="badge rounded-pill bg-secondary d-none d-md-block" *ngIf="user && !user.isPremium">Free plan</span>
+        <span class="badge rounded-pill d-none d-md-inline-flex commission-badge" *ngIf="user && hasCommissionBadge" [ngClass]="commissionBadgeClass">{{ commissionBadgeLabel }}</span>
 
         <div class="profile-dropdown d-none d-md-block" *ngIf="user">
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
@@ -88,9 +99,12 @@
             <li><hr class="dropdown-divider"></li>
             <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/influencer-profile">Profile</a></li>
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
+            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-profile">Profile</a></li>
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
+            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns">Collaboration Requests</a></li>
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/transactions">Transactions</a></li>
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/payment-history">Subscription History</a></li>
+            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-dashboard">Dashboard</a></li>
             <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Admin Panel</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
@@ -139,6 +153,7 @@
           <div class="mobile-user-name-row">
             <div class="mobile-user-name">{{ displayName }}</div>
             <span class="mobile-plan-tag" [class.pro]="!!user?.isPremium">{{ user?.isPremium ? 'Pro plan' : 'Free plan' }}</span>
+            <span class="mobile-commission-tag" *ngIf="hasCommissionBadge" [ngClass]="commissionBadgeClass">{{ commissionBadgeLabel }}</span>
           </div>
           <button class="mobile-user-toggle" type="button" (click)="toggleMobileProfileMenu()" [attr.aria-expanded]="mobileProfileMenuOpen">
             <i class="bi bi-person"></i>
@@ -149,7 +164,9 @@
           <div class="mobile-user-dropdown" [class.open]="mobileProfileMenuOpen" [attr.aria-hidden]="!mobileProfileMenuOpen">
             <a *ngIf="user?.role === 'influencer'" class="mobile-link" routerLink="/influencer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             <a *ngIf="user?.role === 'brand'" class="mobile-link" routerLink="/brand-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+            <a *ngIf="user?.role === 'photographer'" class="mobile-link" routerLink="/photographer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             <a *ngIf="user?.role === 'influencer' || user?.role === 'brand'" class="mobile-link" routerLink="/payment-history" (click)="closeMobileMenu()"><i class="bi bi-clock-history"></i><span>Subscription History</span></a>
+            <a *ngIf="user?.role === 'photographer'" class="mobile-link" routerLink="/photographer-dashboard" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
             <a *ngIf="user?.role === 'admin'" class="mobile-link" routerLink="/admin/deleted-users" (click)="closeMobileMenu()"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>
           </div>
         </div>
@@ -163,12 +180,15 @@
       <div class="mobile-link-list">
         <a *ngIf="user?.role === 'brand'" routerLink="/brand-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a *ngIf="user?.role === 'influencer'" routerLink="/influencer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+        <a *ngIf="user?.role === 'photographer'" routerLink="/photographer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
+        <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaboration Requests</span></a>
         <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/features" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>Features</span></a>
         <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
         <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
+        <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
       </div>
 
       <div class="mobile-upgrade" *ngIf="user && !user?.isPremium">

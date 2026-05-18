@@ -14,6 +14,7 @@
       <div class="admin-tabs">
         <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
         <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+        <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
       </div>
     </div>
 
@@ -132,6 +133,39 @@
           <td class="actions">
             <button class="btn btn-success btn-sm me-1" (click)="restoreUser(user._id)">Restore</button>
             <button class="btn btn-danger btn-sm" (click)="deletePermanently(user._id)" title="Permanently delete this brand">Delete Permanently</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="activeTab === 'photographer'">
+    <div *ngIf="!filteredPhotographers || filteredPhotographers.length === 0" class="no-data-message">
+      <p>No Data</p>
+    </div>
+    <table *ngIf="filteredPhotographers && filteredPhotographers.length > 0" class="table table-hover admin-table">
+      <thead>
+        <tr>
+          <th>Profile</th>
+          <th>Name</th>
+          <th>Email <small>Phone</small></th>
+          <th>Skills</th>
+          <th>State</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredPhotographers">
+          <td>
+            <img [src]="user.profileImage || (user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png'))" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
+          </td>
+          <td>{{ user.name || '-' }}</td>
+          <td>{{ user.email || '-' }} <br> <small>{{ user.phoneNumber || '-' }}</small></td>
+          <td>{{ user.skills && user.skills.length ? user.skills.join(', ') : '-' }}</td>
+          <td>{{ user.location?.state || '-' }}</td>
+          <td class="actions">
+            <button class="btn btn-success btn-sm me-1" (click)="restoreUser(user._id)">Restore</button>
+            <button class="btn btn-danger btn-sm" (click)="deletePermanently(user._id)" title="Permanently delete this photographer">Delete Permanently</button>
           </td>
         </tr>
       </tbody>

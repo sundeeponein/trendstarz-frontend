@@ -7,7 +7,7 @@
         <h1 class="page-title">
           {{ pageTitle }}
         </h1>
-        <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading)">
+        <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading) || (isPhotographerMode && !photographersLoading)">
           {{ pageSubtitle }}
         </p>
       </div>
@@ -20,7 +20,19 @@
     </div>
   </div>
 
-  <!-- Tab Toggle -->
+  <!-- Tab Toggle (real) -->
+  <div class="search-tabs-row" *ngIf="showInfluencerTab || showPhotographersTab">
+    <div class="pill-tabs">
+      <button class="pill-tab" *ngIf="showInfluencerTab" [class.active]="activeTab === 'influencers'" (click)="setTab('influencers')">
+        <i class="bi bi-people-fill"></i> Influencers
+      </button>
+      <button class="pill-tab" *ngIf="showPhotographersTab" [class.active]="activeTab === 'photographers'" (click)="setTab('photographers')">
+        <i class="bi bi-camera-fill"></i> Photographers
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Toggle (commented old) -->
   <!-- <div class="search-tabs-row">
     <div class="pill-tabs">
       <button class="pill-tab" [class.active]="activeTab === 'influencers'" (click)="setTab('influencers')">
@@ -89,6 +101,15 @@
       <select class="filter-select" [ngModel]="activeAgeRange" (ngModelChange)="onAgeRangeChange($event)">
         <option value="">All Ages</option>
         <option *ngFor="let range of ageRangeOptions" [value]="range">{{ range }}</option>
+      </select>
+    </div>
+
+    <!-- Skill (photographer search only) -->
+    <div class="filter-item" *ngIf="isPhotographerMode">
+      <label class="filter-label">Skill</label>
+      <select class="filter-select" [(ngModel)]="photographerFilters.skill" (ngModelChange)="applyPhotographerFilters()">
+        <option value="">All Skills</option>
+        <option *ngFor="let s of photographerSkillOptions" [value]="s">{{ s }}</option>
       </select>
     </div>
 
@@ -198,6 +219,42 @@
         (viewProfileClick)="viewBrandProfile(brand)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-brand-user-card>
+    </div>
+  </div>
+
+  <!-- ───── PHOTOGRAPHER RESULTS ───── -->
+  <div class="results-area" *ngIf="isPhotographerMode">
+    <div class="loading-state" *ngIf="photographersLoading">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Loading photographers…</p>
+    </div>
+    <div class="error-state" *ngIf="!photographersLoading && photographersError">
+      <i class="bi bi-exclamation-circle"></i>
+      <p>{{ photographersError }}</p>
+    </div>
+    <div class="empty-state" *ngIf="!photographersLoading && !photographersError && filteredPhotographers.length === 0">
+      <i class="bi bi-camera"></i>
+      <p>No photographers found matching your filters.</p>
+      <button class="btn-clear" (click)="clearPhotographerFilters()">Clear Filters</button>
+    </div>
+    <div class="results-grid" *ngIf="!photographersLoading && !photographersError && filteredPhotographers.length > 0">
+      <app-photographer-user-card
+        *ngFor="let p of filteredPhotographers"
+        [profileImage]="p.profileImage || ''"
+        [profileImages]="p.profileImages || []"
+        [name]="p.name || ''"
+        [location]="p.location || {}"
+        [skills]="p.skills || []"
+        [pricing]="p.pricing || []"
+        [equipment]="p.equipment || []"
+        [socialMedia]="p.socialMedia || []"
+        [portfolio]="p.portfolio || ''"
+        [adminTags]="p.adminTags || []"
+        [isPremium]="p.isPremium || false"
+        [verifiedByTrendStarz]="p.verifiedByTrendStarz || false"
+        [verificationStatus]="p.verificationStatus || 'not_submitted'"
+        (viewProfileClick)="viewPhotographerProfile(p)">
+      </app-photographer-user-card>
     </div>
   </div>
 

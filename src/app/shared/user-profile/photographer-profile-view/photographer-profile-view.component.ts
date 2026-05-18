@@ -1,0 +1,299 @@
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
+import { ConfigService } from '../../config.service';
+import { SessionService } from '../../../core/session.service';
+import { environment } from '../../../../environments/environment';
+
+@Component({
+  selector: 'app-photographer-profile-view',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './photographer-profile-view.component.html',
+  styleUrls: ['./photographer-profile-view.component.scss']
+})
+export class PhotographerProfileViewComponent implements OnInit {
+  photographer: any = null;
+  loading = true;
+  error = '';
+  showContact = false;
+  pricingLabelMap: Record<string, string> = {};
+
+  private readonly fallbackPricingLabelMap: Record<string, string> = {
+    'Starting Price': 'Starting Price',
+    'Per Reel': 'Per Reel',
+    'Per Shoot': 'Per Shoot',
+    'Hourly': 'Hourly',
+    'Equipment': 'Equipment Rental',
+  };
+
+  get isLoggedIn(): boolean {
+    return !!this.session.getUser();
+  }
+
+  get isBrandViewer(): boolean {
+    const role = String(this.session.getUser()?.role || '').toLowerCase();
+    return role === 'brand';
+  }
+
+  get isInfluencerViewer(): boolean {
+    const role = String(this.session.getUser()?.role || '').toLowerCase();
+    return role === 'influencer';
+  }
+
+  get isPhotographerViewer(): boolean {
+    const role = String(this.session.getUser()?.role || '').toLowerCase();
+    return role === 'photographer';
+  }
+
+  get displayImage(): string {
+    const imageUrl = this.photographer?.profileImage || this.photographer?.profileImages?.[0]?.url;
+    return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';
+  }
+  
+  get isTrendstarzVerified(): boolean {
+    return !!this.photographer?.verifiedByTrendStarz || String(this.photographer?.verificationStatus || '').toLowerCase() === 'approved';
+  }
+  
+  get displayTags(): string[] {
+    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
+    return Array.isArray(this.photographer?.adminTags)
+      ? this.photographer.adminTags
+          .filter((tag: any) => !!String(tag || '').trim())
+          .filter((tag: any) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
+      : [];
+  }
+
+  tagBadgeClass(tag: string): string {
+    const normalized = String(tag || '').toLowerCase();
+    if (normalized.includes('founder')) return 'badge--founder';
+    if (normalized.includes('verified')) return 'badge--verified';
+    if (normalized.includes('internal')) return 'badge--internal';
+    return 'badge--neutral';
+  }
+
+  get galleryImages(): string[] {
+    const raw = Array.isArray(this.photographer?.profileImages) ? this.photographer.profileImages : [];
+    const normalized = raw
+      .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url))
+      .filter((url: string) => !!url);
+    return Array.from(new Set<string>(normalized));
+  }
+
+  get mainHeadline(): string {
+    const name = String(this.photographer?.name || '').trim() || 'Photographer';
+    const parts: string[] = [];
+    if (Array.isArray(this.photographer?.skills) && this.photographer.skills.length) {
+      parts.push(this.photographer.skills.slice(0, 3).join(' · '));
+    }
+    if (this.photographer?.location?.state) {
+      parts.push(this.photographer.location.state);
+    }
+    return [name, ...parts].filter(Boolean).join(' · ');
+  }
+
+  get totalPricingEnabled(): number {
+    return (this.photographer?.pricing || []).filter((p: any) => p?.enabled).length;
+  }
+
+  get enabledPricing(): any[] {
+    return (this.photographer?.pricing || []).filter((p: any) => p?.enabled);
+  }
+
+  get socialPlatforms(): any[] {
+    return Array.isArray(this.photographer?.socialMedia) ? this.photographer.socialMedia : [];
+  }
+
+  get locationLabel(): string {
+    const parts = [this.photographer?.location?.district, this.photographer?.location?.state].filter(Boolean);
+    return parts.join(', ') || '—';
+  }
+
+  getSkillChips(): string[] {
+    return Array.isArray(this.photographer?.skills) ? this.photographer.skills : [];
+  }
+
+  getEquipmentChips(): string[] {
+    return Array.isArray(this.photographer?.equipment) ? this.photographer.equipment : [];
+  }
+
+  getSocialIcon(platform: string): string {
+    const p = String(platform || '').toLowerCase();
+    if (p.includes('youtube')) return 'bi-youtube';
+    if (p.includes('instagram')) return 'bi-instagram';
+    if (p.includes('facebook')) return 'bi-facebook';
+    if (p.includes('tiktok')) return 'bi-tiktok';
+    if (p.includes('twitter') || p.includes('x')) return 'bi-twitter-x';
+    if (p.includes('linkedin')) return 'bi-linkedin';
+    return 'bi-globe';
+  }
+
+  getSocialUrl(sm: any): string {
+    const p = String(sm?.platform || '').toLowerCase();
+    const handle = String(sm?.handle || '').replace(/^@+/, '').trim();
+    if (p.includes('instagram')) return `https://instagram.com/${handle}`;
+    if (p.includes('youtube')) return `https://youtube.com/@${handle}`;
+    if (p.includes('facebook')) return `https://facebook.com/${handle}`;
+    if (p.includes('twitter') || p.includes('x')) return `https://x.com/${handle}`;
+    if (p.includes('tiktok')) return `https://tiktok.com/@${handle}`;
+    if (p.includes('linkedin')) return `https://linkedin.com/in/${handle}`;
+    return sm?.url || '#';
+  }
+
+  getPlatformLabel(sm: any): string {
+    return String(sm?.platform || 'Platform');
+  }
+
+  getPriceLabel(item: any): string {
+    const key = String(item?.name || '').trim();
+    if (!key) return 'Rate';
+    return this.pricingLabelMap[key] || item?.label || key;
+  }
+
+  onContactClick(): void {
+    this.showContact = true;
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('photographer-contact');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  stripProtocol(url: string): string {
+    return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  }
+
+  onImgError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    if (!img.src.endsWith('assets/default-profile.png')) {
+      img.src = 'assets/default-profile.png';
+    }
+  }
+
+  private normalizeImageUrl(url?: string | null): string {
+    if (!url) return '';
+    if (url.startsWith('/assets/') || url.startsWith('/assets')) {
+      const api = environment.apiBaseUrl || '';
+      const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
+      return backend ? backend + url : url;
+    }
+    return url;
+  }
+
+  constructor(
+    private route: ActivatedRoute,
+    private config: ConfigService,
+    private session: SessionService,
+    private cd: ChangeDetectorRef,
+    private titleService: Title,
+    private meta: Meta,
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {}
+
+  ngOnInit(): void {
+    this.config.getPricingOptions().subscribe({
+      next: (options: any[]) => {
+        const list = Array.isArray(options) ? options : [];
+        this.pricingLabelMap = list.reduce((acc: Record<string, string>, option: any) => {
+          const key = String(option?.key || '').trim();
+          const label = String(option?.label || '').trim();
+          if (key && label) {
+            acc[key] = label;
+          }
+          return acc;
+        }, {});
+        if (!Object.keys(this.pricingLabelMap).length) {
+          this.pricingLabelMap = { ...this.fallbackPricingLabelMap };
+        }
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.pricingLabelMap = { ...this.fallbackPricingLabelMap };
+      },
+    });
+
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      this.photographer = null;
+      this.error = '';
+      this.loading = true;
+      if (!id) {
+        this.error = 'No photographer specified.';
+        this.loading = false;
+        this.setDefaultMetadata();
+        this.cd.detectChanges();
+        return;
+      }
+
+      this.config.getPhotographerById(id).subscribe({
+        next: (data) => {
+          if (!data) {
+            this.photographer = null;
+            this.error = 'Photographer not found.';
+            this.setDefaultMetadata();
+          } else {
+            this.photographer = data;
+            this.updateMetadata(data);
+          }
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.error = 'Could not load photographer profile.';
+          this.loading = false;
+          this.setDefaultMetadata();
+          this.cd.detectChanges();
+        }
+      });
+    });
+  }
+
+  private updateMetadata(photographer: any): void {
+    const name = String(photographer?.name || '').trim() || 'Photographer';
+    const skills = Array.isArray(photographer?.skills) ? photographer.skills.slice(0, 3).join(', ') : '';
+    const title = `${name} | Photographer | TrendStarz`;
+    const description = `Discover ${name}${skills ? ` (${skills})` : ''} on TrendStarz. View skills, pricing, equipment, and verified social presence.`;
+    const canonical = `https://trendstarz.in/photographer/${photographer?._id || ''}`;
+
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'index, follow' });
+    this.meta.updateTag({ property: 'og:type', content: 'profile' });
+    this.meta.updateTag({ property: 'og:title', content: title });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:url', content: canonical });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: title });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.updateCanonical(canonical);
+
+    if (isPlatformBrowser(this.platformId)) {
+      (window as any).dataLayer = (window as any).dataLayer || [];
+      (window as any).gtag?.('config', 'G-5912TSJYW5', {
+        page_title: title,
+        page_path: `/photographer/${photographer?._id || ''}`,
+        photographer_name: name,
+        photographer_skills: skills,
+      });
+    }
+  }
+
+  private setDefaultMetadata(): void {
+    const title = 'Photographer Profile | TrendStarz';
+    const description = 'View photographer and videographer profile details on TrendStarz.';
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+  }
+
+  private updateCanonical(href: string): void {
+    let canonical = this.document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = this.document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', href);
+  }
+}

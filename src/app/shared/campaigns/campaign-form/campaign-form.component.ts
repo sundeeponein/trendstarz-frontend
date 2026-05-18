@@ -44,6 +44,7 @@ export class CampaignFormComponent implements OnInit {
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
   @Input() hasPremium: boolean = false;
+  @Input() creatorRole: 'brand' | 'photographer' = 'brand';
   @Output() save = new EventEmitter<Partial<Campaign> & { inviteInfluencerIds?: string[] }>();
   @Output() cancel = new EventEmitter<void>();
   form!: FormGroup;
@@ -270,6 +271,33 @@ export class CampaignFormComponent implements OnInit {
   }
 
   get isEdit(): boolean { return this.mode === 'edit'; }
+
+  get isPhotographerCreator(): boolean {
+    return this.creatorRole === 'photographer';
+  }
+
+  get formTitleNoun(): string {
+    return this.isPhotographerCreator ? 'Collaboration Request' : 'Campaign';
+  }
+
+  getCampaignTypeOptions(): Array<{ value: string; label: string; premiumOnly?: boolean }> {
+    if (this.isPhotographerCreator) {
+      return [
+        { value: 'paid_collab', label: 'Paid Shoot' },
+        { value: 'product', label: 'Barter / Product Shoot', premiumOnly: true },
+        { value: 'invite_location', label: 'Event Coverage', premiumOnly: true },
+        { value: 'portfolio_collab', label: 'Portfolio Collaboration' },
+        { value: 'reel_collab', label: 'Reel Collaboration' },
+        { value: 'creative_project', label: 'Creative Project' },
+      ];
+    }
+
+    return [
+      { value: 'paid_collab', label: 'Paid Collab' },
+      { value: 'product', label: 'Product Collab', premiumOnly: true },
+      { value: 'invite_location', label: 'Invite to Location', premiumOnly: true },
+    ];
+  }
 
   get isEditingForReview(): boolean {
     const s = String(this.campaign?.status || '').toLowerCase();

@@ -39,6 +39,7 @@ export class AdminPlansComponent implements OnInit {
   }
   influencerPlans: Plan[] = [];
   brandPlans: Plan[] = [];
+  photographerPlans: Plan[] = [];
 
   // Master feature/limit lists for each user type
   readonly masterFeatures: { [k: string]: { key: string; label: string }[] } = {
@@ -61,6 +62,14 @@ export class AdminPlansComponent implements OnInit {
       { key: 'canWriteReview', label: 'Write reviews for influencers' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
     ],
+    PHOTOGRAPHER: [
+      { key: 'publicProfileListing', label: 'Public profile listing' },
+      { key: 'socialMediaVisibility', label: 'Show social media links' },
+      { key: 'contactVisibility', label: 'Contact details visible to brands' },
+      { key: 'priorityListing', label: 'Priority search ranking' },
+      { key: 'canWriteReview', label: 'Write reviews for brands' },
+      { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+    ],
   };
 
   readonly masterOffers: { [k: string]: { key: string; label: string }[] } = {
@@ -72,11 +81,15 @@ export class AdminPlansComponent implements OnInit {
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
       { key: 'discountOnBrandPro', label: 'Discount on Brand Pro plan (%)' },
     ],
+    PHOTOGRAPHER: [
+      { key: 'trialPeriodDays', label: 'Trial period (days)' },
+      { key: 'discountOnPhotographerPro', label: 'Discount on Photographer Pro plan (%)' },
+    ],
   };
 
   getMergedOffers(): { key: string; label: string; value: number }[] {
     if (!this.editingPlan) return [];
-    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND';
+    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
     const master = this.masterOffers[type] || [];
     return master.map(m => {
       const found = (this.editingPlan!.offers ?? []).find((o: any) => o.key === m.key);
@@ -91,7 +104,7 @@ export class AdminPlansComponent implements OnInit {
     if (idx >= 0) {
       this.editingPlan.offers[idx].value = value;
     } else {
-      const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND'] || [];
+      const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
       const m = master.find(o => o.key === key);
       if (m) this.editingPlan.offers.push({ ...m, value });
     }
@@ -110,12 +123,18 @@ export class AdminPlansComponent implements OnInit {
       { key: 'maxTeamSeats', label: 'Team seat' },
       { key: 'analytics', label: 'Analytics' },
     ],
+    PHOTOGRAPHER: [
+      { key: 'maxProductImages', label: 'Images' },
+      { key: 'maxActiveCampaigns', label: 'Active campaign' },
+      { key: 'maxInvitesPerCampaign', label: 'Invites received / month' },
+      { key: 'maxInviteOptions', label: 'Invite options' },
+    ],
   };
 
   // Merge plan features/limits with master list for UI
   getMergedFeatures(): { key: string; label: string; value: boolean }[] {
     if (!this.editingPlan) return [];
-    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND';
+    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
     const master = this.masterFeatures[type] || [];
     return master.map(m => {
       const found = this.editingPlan!.features.find(f => f.key === m.key);
@@ -124,7 +143,7 @@ export class AdminPlansComponent implements OnInit {
   }
   getMergedLimits(): { key: string; label: string; value: number }[] {
     if (!this.editingPlan) return [];
-    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND';
+    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
     const master = this.masterLimits[type] || [];
     return master.map(m => {
       const found = this.editingPlan!.limits.find(l => l.key === m.key);
@@ -147,6 +166,7 @@ export class AdminPlansComponent implements OnInit {
           this.plans = res.plans;
           this.influencerPlans = res.plans.filter(p => p.userType === 'INFLUENCER');
           this.brandPlans = res.plans.filter(p => p.userType === 'BRAND');
+          this.photographerPlans = res.plans.filter(p => p.userType === 'PHOTOGRAPHER');
         } else {
           this.error = res.message || 'Failed to load from config';
         }
@@ -167,9 +187,9 @@ export class AdminPlansComponent implements OnInit {
   editingPlan: Plan | null = null;
   isCreating = false;
   showTypeSelector = false;
-  newPlanType: 'INFLUENCER' | 'BRAND' | null = null;
+  newPlanType: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER' | null = null;
 
-  readonly userTypes = ['INFLUENCER', 'BRAND'];
+  readonly userTypes = ['INFLUENCER', 'BRAND', 'PHOTOGRAPHER'];
 
   constructor(private plansService: PlansService) {}
 
@@ -185,6 +205,7 @@ export class AdminPlansComponent implements OnInit {
         this.plans = plans;
         this.influencerPlans = plans.filter(p => p.userType === 'INFLUENCER');
         this.brandPlans = plans.filter(p => p.userType === 'BRAND');
+        this.photographerPlans = plans.filter(p => p.userType === 'PHOTOGRAPHER');
         this.loading = false;
       },
       error: (err) => {
@@ -203,7 +224,7 @@ export class AdminPlansComponent implements OnInit {
     this.editingPlan = null;
   }
 
-  selectNewPlanType(type: 'INFLUENCER' | 'BRAND') {
+  selectNewPlanType(type: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER') {
     this.showTypeSelector = false;
     this.isCreating = true;
     this.newPlanType = type;
@@ -258,6 +279,30 @@ export class AdminPlansComponent implements OnInit {
         isActive: true,
         sortOrder: 1,
       };
+    } else if (type === 'PHOTOGRAPHER') {
+      this.editingPlan = {
+        name: 'Pro',
+        userType: 'PHOTOGRAPHER',
+        price: { monthly: 399, quarterly: 999, yearly: 2999 },
+        features: [
+          { key: 'publicProfileListing', label: 'Public profile listing', value: true },
+          { key: 'socialMediaVisibility', label: 'Show social media links', value: true },
+          { key: 'contactVisibility', label: 'Contact details visible to brands', value: true },
+          { key: 'priorityListing', label: 'Priority search ranking', value: true },
+          { key: 'canWriteReview', label: 'Write reviews for brands', value: true },
+          { key: 'canReadReviews', label: 'View influencer & brand reviews', value: true },
+        ],
+        limits: [
+          { key: 'maxProductImages', label: 'Images', value: 10 },
+          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'maxInvitesPerCampaign', label: 'Invites received / month', value: 10 },
+          { key: 'maxInviteOptions', label: 'Invite options', value: 10 },
+        ],
+        policies: { imageRetentionDaysAfterExpiry: 45 },
+        highlight: true,
+        isActive: true,
+        sortOrder: 1,
+      };
     }
     if (this.editingPlan) {
       this.syncContactVisibilityFeature(this.editingPlan);
@@ -280,7 +325,7 @@ export class AdminPlansComponent implements OnInit {
 
   onUserTypeChange() {
     if (!this.editingPlan) return;
-    if (this.editingPlan.userType === 'BRAND') {
+    if (this.editingPlan.userType === 'BRAND' || this.editingPlan.userType === 'PHOTOGRAPHER') {
       // Ensure maxProductImages exists
       if (!this.editingPlan.limits.some(l => l.key === 'maxProductImages')) {
         this.editingPlan.limits.push({ key: 'maxProductImages', label: 'Product images', value: 10 });
@@ -357,7 +402,7 @@ export class AdminPlansComponent implements OnInit {
     if (idx >= 0) {
       this.editingPlan.features[idx].value = !this.editingPlan.features[idx].value;
     } else {
-      const master = this.masterFeatures[this.editingPlan.userType as 'INFLUENCER' | 'BRAND'] || [];
+      const master = this.masterFeatures[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
       const m = master.find((f: any) => f.key === key);
       if (m) this.editingPlan.features.push({ ...m, value: true });
     }
@@ -369,7 +414,7 @@ export class AdminPlansComponent implements OnInit {
     if (idx >= 0) {
       this.editingPlan.limits[idx].value = value;
     } else {
-      const master = this.masterLimits[this.editingPlan.userType as 'INFLUENCER' | 'BRAND'] || [];
+      const master = this.masterLimits[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
       const m = master.find((l: any) => l.key === key);
       if (m) this.editingPlan.limits.push({ ...m, value });
     }

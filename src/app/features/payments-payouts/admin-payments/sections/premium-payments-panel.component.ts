@@ -21,7 +21,7 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   approvedPayments: PremiumPayment[] = [];
   rejectedPayments: PremiumPayment[] = [];
 
-  activeTab: 'influencer' | 'brand' = 'influencer';
+  activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   statusTab: 'pending' | 'approved' | 'rejected' = 'pending';
   loading = false;
 
@@ -185,13 +185,15 @@ export class PremiumPaymentsPanelComponent implements OnInit {
     return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
 
-  setTab(tab: 'influencer' | 'brand') {
+  setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
     this.statusTab = 'pending';
   }
 
-  private get currentUserType(): 'Influencer' | 'Brand' {
-    return this.activeTab === 'influencer' ? 'Influencer' : 'Brand';
+  private get currentUserType(): 'Influencer' | 'Brand' | 'Photographer' {
+    if (this.activeTab === 'brand') return 'Brand';
+    if (this.activeTab === 'photographer') return 'Photographer';
+    return 'Influencer';
   }
 
   get filteredPayments(): PremiumPayment[] {

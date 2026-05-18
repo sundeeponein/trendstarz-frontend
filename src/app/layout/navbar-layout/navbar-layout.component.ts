@@ -23,6 +23,17 @@ export class NavbarLayoutComponent implements OnDestroy {
   notifications: any[] = [];
   unreadNotificationCount = 0;
   private readonly subs = new Subscription();
+  private readonly commissionBadgeMap: Record<string, string> = {
+    early_access_creator: 'Early Access',
+    partner_creator: 'Partner',
+    internal_test_creator: 'Internal/Test',
+    early_access_brand: 'Early Access',
+    partner_brand: 'Partner',
+    internal_test_brand: 'Internal/Test',
+    launch_partner: 'Partner',
+    zero_commission_creator: 'Early Access',
+    zero_commission_brand: 'Early Access',
+  };
 
   private setMobileMenuState(open: boolean) {
     this.mobileMenuOpen = open;
@@ -60,6 +71,30 @@ export class NavbarLayoutComponent implements OnDestroy {
     if (this.user?.role === 'influencer') return 'Search brands';
     return 'Search influencers';
   }
+
+  get commissionBadgeLabel(): string {
+    const badge = String(this.user?.commissionBadge || '').trim();
+    if (badge && this.commissionBadgeMap[badge]) return this.commissionBadgeMap[badge];
+    const tags = Array.isArray(this.user?.adminTags) ? this.user.adminTags : [];
+    const tag = tags.find((value: any) => {
+      const normalized = String(value || '').trim();
+      return !!normalized && (this.commissionBadgeMap[normalized] || ['Early Access', 'Partner', 'Internal/Test'].includes(normalized));
+    });
+    if (!tag) return '';
+    const normalized = String(tag || '').trim();
+    return this.commissionBadgeMap[normalized] || normalized;
+  }
+
+  get hasCommissionBadge(): boolean {
+    return !!this.commissionBadgeLabel;
+  }
+
+  get commissionBadgeClass(): string {
+    const label = this.commissionBadgeLabel.toLowerCase();
+    if (label.includes('partner')) return 'commission-badge--partner';
+    if (label.includes('internal')) return 'commission-badge--internal';
+    return 'commission-badge--early';
+  }
   ngOnInit() {
     // Sync isPremium from the live profile API into the session
     // so the navbar always reflects the correct plan status without requiring re-login
@@ -67,7 +102,9 @@ export class NavbarLayoutComponent implements OnDestroy {
     if (user) {
       const profileCall = user.role === 'brand'
         ? this.config.getBrandProfileById()
-        : this.config.getInfluencerProfileById();
+        : user.role === 'photographer'
+          ? this.config.getPhotographerProfileById()
+          : this.config.getInfluencerProfileById();
       profileCall.subscribe((profile: any) => {
         if (profile) {
           const updated = {
@@ -78,6 +115,9 @@ export class NavbarLayoutComponent implements OnDestroy {
             brandLogo: profile.brandLogo || this.session.getUser()?.brandLogo,
             name: profile.name || this.session.getUser()?.name,
             brandName: profile.brandName || this.session.getUser()?.brandName,
+            profileImage: profile.profileImage || this.session.getUser()?.profileImage,
+            adminTags: profile.adminTags || this.session.getUser()?.adminTags || [],
+            commissionBadge: profile.commissionBadge || this.session.getUser()?.commissionBadge || null,
           };
           this.session.setUser(updated);
           this.cdr.detectChanges();

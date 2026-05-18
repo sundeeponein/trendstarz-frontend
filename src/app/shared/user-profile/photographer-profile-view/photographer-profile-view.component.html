@@ -1,0 +1,126 @@
+<div class="photographer-profile-wrapper">
+  <a class="back-link" routerLink="/search">
+    <i class="bi bi-chevron-left"></i> Back to search
+  </a>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status"></div>
+    <p class="mt-2 text-muted">Loading profile...</p>
+  </div>
+
+  <div *ngIf="error" class="text-center py-5 text-danger">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && photographer" class="photographer-profile">
+    <div class="hero-card">
+      <div class="hero-main">
+        <img [src]="displayImage" (error)="onImgError($event)" alt="Photographer photo" class="hero-avatar" />
+        <div class="hero-copy">
+          <h1 class="hero-name">{{ photographer.name }}</h1>
+          <div class="hero-tags" *ngIf="displayTags.length">
+            <span
+              *ngFor="let tag of displayTags"
+              class="hero-tag badge rounded-pill"
+              [ngClass]="tagBadgeClass(tag)">
+              {{ tag }}
+            </span>
+          </div>
+          <div class="hero-trust-row" *ngIf="isTrendstarzVerified || photographer.isPremium">
+            <i class="bi bi-patch-check-fill hero-trust-icon" *ngIf="photographer.isPremium" title="Premium"></i>
+            <span class="hero-trust-text" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
+          </div>
+          <p class="hero-location"><i class="bi bi-geo-alt"></i> {{ locationLabel }}</p>
+          <p class="hero-summary" *ngIf="photographer.portfolio">
+            Portfolio: <a [href]="photographer.portfolio" target="_blank" rel="noopener noreferrer">{{ stripProtocol(photographer.portfolio) }}</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-box">
+          <span class="stat-value">{{ getSkillChips().length }}</span>
+          <span class="stat-label">Skills</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-value">{{ totalPricingEnabled }}</span>
+          <span class="stat-label">Pricing options</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-value">{{ socialPlatforms.length }}</span>
+          <span class="stat-label">Platforms</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-main">
+        <section class="info-card" *ngIf="getSkillChips().length">
+          <h3>Skills</h3>
+          <div class="chip-row">
+            <span class="chip" *ngFor="let skill of getSkillChips()">{{ skill }}</span>
+          </div>
+        </section>
+
+        <section class="info-card" *ngIf="enabledPricing.length">
+          <h3>Pricing</h3>
+          <div class="pricing-list">
+            <div class="pricing-row" *ngFor="let item of enabledPricing">
+              <span class="pricing-name">{{ getPriceLabel(item) }}</span>
+              <span class="pricing-value">₹{{ item.price | number }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="info-card" *ngIf="getEquipmentChips().length">
+          <h3>Equipment</h3>
+          <div class="chip-row">
+            <span class="chip chip--muted" *ngFor="let eq of getEquipmentChips()">{{ eq }}</span>
+          </div>
+        </section>
+
+        <section class="info-card" *ngIf="galleryImages.length">
+          <h3>Portfolio Images</h3>
+          <div class="gallery-grid">
+            <img *ngFor="let imageUrl of galleryImages" [src]="imageUrl" (error)="onImgError($event)" alt="Photographer gallery" class="gallery-image" />
+          </div>
+        </section>
+
+        <section class="info-card" *ngIf="socialPlatforms.length">
+          <h3>Social Platforms</h3>
+          <div class="social-list">
+            <a *ngFor="let sm of socialPlatforms" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-item">
+              <i [class]="getSocialIcon(sm.platform)"></i>
+              <div>
+                <strong>{{ getPlatformLabel(sm) }}</strong>
+                <div class="social-handle">@{{ sm.handle }}</div>
+              </div>
+              <span class="social-tier" *ngIf="sm.tier">{{ sm.tier }}</span>
+            </a>
+          </div>
+        </section>
+      </div>
+
+      <aside class="content-side">
+        <section class="side-card">
+          <h3>Location</h3>
+          <p>{{ locationLabel }}</p>
+        </section>
+
+        <section class="side-card" *ngIf="isLoggedIn">
+          <h3>Viewer</h3>
+          <p *ngIf="isBrandViewer">Brand account</p>
+          <p *ngIf="isInfluencerViewer">Influencer account</p>
+          <p *ngIf="isPhotographerViewer">Photographer account</p>
+          <button type="button" class="btn btn-primary w-100" (click)="onContactClick()">View contact info</button>
+        </section>
+
+        <section id="photographer-contact" class="side-card" *ngIf="showContact && isLoggedIn">
+          <h3>Contact & Trust</h3>
+          <p *ngIf="photographer.contact?.whatsapp">WhatsApp enabled</p>
+          <p *ngIf="photographer.contact?.email">Email enabled</p>
+          <p *ngIf="photographer.contact?.call">Phone call enabled</p>
+          <p *ngIf="!photographer.contact?.whatsapp && !photographer.contact?.email && !photographer.contact?.call">No contact methods shared.</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>

@@ -6,6 +6,22 @@ import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { buildDefaultUserTagVisibilityOptions } from '../../../shared/constants/user-tag-options.constants';
+
+const DEFAULT_EQUIPMENT_OPTIONS = [
+  { name: 'Sony', visible: true },
+  { name: 'Canon', visible: true },
+  { name: 'DJI', visible: true },
+  { name: 'iPhone Creator', visible: true },
+];
+
+const DEFAULT_PRICING_OPTIONS = [
+  { key: 'Starting Price', label: 'Starting Price', visible: true },
+  { key: 'Per Reel', label: 'Per Reel', visible: true },
+  { key: 'Per Shoot', label: 'Per Shoot', visible: true },
+  { key: 'Hourly', label: 'Hourly', visible: true },
+  { key: 'Equipment', label: 'Equipment Rental', visible: true },
+];
 
 @Component({
   selector: 'app-admin-management',
@@ -19,21 +35,81 @@ export class AdminManagementComponent implements OnInit {
     return this.config.districts.findIndex((d: any) => d._id === dist._id);
   }
   activeTab: string = 'campaigns';
+  categoriesRoleTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
+  userTagsRoleTab: 'influencer' | 'brand' | 'photographer' | 'commission' = 'influencer';
   config: any = {
     socialMediaPlatforms: [],
     categories: [],
+    equipmentOptions: [],
+    pricingOptions: [],
     locations: [],
     districts: [],
     languages: [],
-    tiers: []
+    tiers: [],
+    userTags: buildDefaultUserTagVisibilityOptions(),
   };
 
   districtFilterState: string = '';
+
+  get filteredCategories(): any[] {
+    const role = this.categoriesRoleTab;
+    return (this.config.categories || []).filter((cat: any) => {
+      const r = String(cat?.role || '').toLowerCase();
+      return r === role || r === 'both' || !r;
+    });
+  }
 
   get filteredDistricts(): any[] {
     const all = (this.config.districts || []).map((d: any, i: number) => ({ ...d, _origIndex: i }));
     if (!this.districtFilterState) return all;
     return all.filter((d: any) => d.state === this.districtFilterState);
+  }
+
+  setCategoriesRoleTab(role: 'influencer' | 'brand' | 'photographer') {
+    this.categoriesRoleTab = role;
+  }
+
+  setUserTagsRoleTab(role: 'influencer' | 'brand' | 'photographer' | 'commission') {
+    this.userTagsRoleTab = role;
+  }
+
+  private normalizeUserTagList(list: unknown, fallback: Array<{ name: string; visible: boolean }>) {
+    if (!Array.isArray(list)) {
+      return fallback.map((item: any) => ({ ...item }));
+    }
+    const normalized = list
+      .map((item: any) => {
+        if (typeof item === 'string') {
+          const name = item.trim();
+          return name ? { name, visible: true } : null;
+        }
+        if (item && typeof item === 'object') {
+          const name = String(item.name || '').trim();
+          if (!name) return null;
+          return { name, visible: item.visible !== false };
+        }
+        return null;
+      })
+      .filter((item: any) => !!item);
+
+    return normalized.length ? normalized : fallback.map((item: any) => ({ ...item }));
+  }
+
+  private getDefaultUserTags() {
+    return buildDefaultUserTagVisibilityOptions();
+  }
+
+  get filteredUserTags(): Array<{ name: string; visible: boolean }> {
+    const list = this.config?.userTags?.[this.userTagsRoleTab];
+    return Array.isArray(list) ? list : [];
+  }
+
+  getCategoryIndex(cat: any): number {
+    return this.config.categories.findIndex((c: any) => c._id === cat._id);
+  }
+
+  getUserTagIndex(tag: any): number {
+    return this.filteredUserTags.findIndex((t: any) => t.name === tag.name);
   }
 
   settings = {
@@ -44,6 +120,7 @@ export class AdminManagementComponent implements OnInit {
     brandRequireEmailVerified: true,
     brandRequireMobileVerified: false,
     campaignApprovalMode: 'manual',
+    collaborationApprovalMode: 'manual',
     // Admin-managed support contact (shown on campaign-management page banner).
     // Can be toggled off entirely via supportContactEnabled. Stays useful even
     // after Razorpay automation lands — repurposed as "Need help?" channel.
@@ -78,6 +155,7 @@ export class AdminManagementComponent implements OnInit {
   earlyAccessNormalizeRunning = false;
   earlyAccessNormalizeMessage = '';
   earlyAccessAdvancedOpen = false;
+  showVisibilityConfirmModal = false;
 
   commissionCounts = {
     influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
@@ -126,6 +204,7 @@ export class AdminManagementComponent implements OnInit {
         this.settings.brandRequireEmailVerified = !!data?.brandRequireEmailVerified;
         this.settings.brandRequireMobileVerified = !!data?.brandRequireMobileVerified;
         this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
+        this.settings.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
         this.settings.supportContactEmail = data?.supportContactEmail || 'support@trendstarz.in';
         this.settings.supportContactPhone = data?.supportContactPhone || '';
@@ -150,6 +229,10 @@ export class AdminManagementComponent implements OnInit {
 
   onCampaignApprovalModeToggle(isAutoLive: boolean) {
     this.settings.campaignApprovalMode = isAutoLive ? 'auto_live' : 'manual';
+  }
+
+  onCollaborationApprovalModeToggle(isAutoLive: boolean) {
+    this.settings.collaborationApprovalMode = isAutoLive ? 'auto_live' : 'manual';
   }
 
   saveSettings() {
@@ -216,6 +299,20 @@ export class AdminManagementComponent implements OnInit {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
+    this.http.get(baseUrl + '/equipment-options').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
+        .map((item: any) => ({ ...item, visible: item.visible !== false }));
+    }, () => {
+      this.config.equipmentOptions = DEFAULT_EQUIPMENT_OPTIONS.map((item: any) => ({ ...item }));
+    });
+    this.http.get(baseUrl + '/pricing-options').subscribe((res: any) => {
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
+        .map((item: any) => ({ ...item, visible: item.visible !== false }));
+    }, () => {
+      this.config.pricingOptions = DEFAULT_PRICING_OPTIONS.map((item: any) => ({ ...item }));
+    });
     this.http.get(baseUrl + '/states').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
@@ -232,7 +329,32 @@ export class AdminManagementComponent implements OnInit {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
+
+    this.loadUserTagsConfig();
   }
+
+  loadUserTagsConfig() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/user-tags-config`, headers).subscribe({
+      next: (res) => {
+        const data = res?.data ?? res ?? {};
+        const defaults = this.getDefaultUserTags();
+        this.config.userTags = {
+          influencer: this.normalizeUserTagList(data?.influencer, defaults.influencer),
+          brand: this.normalizeUserTagList(data?.brand, defaults.brand),
+          photographer: this.normalizeUserTagList(data?.photographer, defaults.photographer),
+          commission: this.normalizeUserTagList(data?.commission, defaults.commission),
+        };
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.config.userTags = this.getDefaultUserTags();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
 
   toggleVisible(type: string, idx: number, subIdx?: number) {
     // Only update local state, do not persist yet
@@ -245,6 +367,12 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'categories') {
       const cat = this.config.categories[idx];
       cat.visible = !cat.visible;
+    } else if (type === 'equipmentOptions') {
+      const eq = this.config.equipmentOptions[idx];
+      eq.visible = !eq.visible;
+    } else if (type === 'pricingOptions') {
+      const pricing = this.config.pricingOptions[idx];
+      pricing.visible = !pricing.visible;
     } else if (type === 'languages') {
       const lang = this.config.languages[idx];
       lang.visible = !lang.visible;
@@ -254,7 +382,25 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'district') {
       const district = this.config.districts[idx];
       district.visible = !district.visible;
+    } else if (type === 'userTags') {
+      const tag = this.filteredUserTags[idx];
+      if (tag) {
+        tag.visible = !tag.visible;
+      }
     }
+  }
+
+  requestVisibilitySaveConfirmation() {
+    this.showVisibilityConfirmModal = true;
+  }
+
+  cancelVisibilitySaveConfirmation() {
+    this.showVisibilityConfirmModal = false;
+  }
+
+  confirmVisibilitySave() {
+    this.showVisibilityConfirmModal = false;
+    this.saveAllVisibility();
   }
 
   saveAllVisibility() {
@@ -317,6 +463,29 @@ export class AdminManagementComponent implements OnInit {
           });
         };
         break;
+      case 'userTags':
+        payload = {
+          userTags: {
+            influencer: (this.config.userTags?.influencer || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+            brand: (this.config.userTags?.brand || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+            photographer: (this.config.userTags?.photographer || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+            commission: (this.config.userTags?.commission || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+          },
+        };
+        reloadFn = () => this.loadUserTagsConfig();
+        break;
       default:
         // fallback to all
         payload = {
@@ -325,7 +494,25 @@ export class AdminManagementComponent implements OnInit {
           categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
           languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
           states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
-          districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
+          districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible })),
+          userTags: {
+            influencer: (this.config.userTags?.influencer || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+            brand: (this.config.userTags?.brand || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+            photographer: (this.config.userTags?.photographer || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+            commission: (this.config.userTags?.commission || []).map((t: any) => ({
+              name: String(t?.name || '').trim(),
+              visible: t?.visible !== false,
+            })).filter((t: any) => !!t.name),
+          },
         };
         reloadFn = () => this.loadConfig();
     }

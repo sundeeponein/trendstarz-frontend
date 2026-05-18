@@ -1,0 +1,78 @@
+.pcf-modal {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.pcf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8ecf4;
+}
+
+.pcf-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pcf-form {
+  padding: 16px 20px 20px;
+}
+
+.pcf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pcf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pcf-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2a3f;
+}
+
+.pcf-full {
+  grid-column: 1 / -1;
+}
+
+.pcf-chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pcf-chip {
+  border: 1px solid #cdd5e3;
+  background: #f7f9fc;
+  color: #22304a;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.pcf-chip.active {
+  background: #ff6b2c;
+  color: #fff;
+  border-color: #ff6b2c;
+}
+
+.pcf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .pcf-grid {
+    grid-template-columns: 1fr;
+  }
+}

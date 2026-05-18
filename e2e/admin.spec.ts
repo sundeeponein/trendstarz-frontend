@@ -73,26 +73,39 @@ test.describe('Admin Dashboard', () => {
 
   test('renders dashboard heading and both stat cards', async ({ page }) => {
     await expect(page.locator('h2')).toContainText('Admin Dashboard');
-    await expect(page.locator('.influencer-card')).toBeVisible();
-    await expect(page.locator('.brand-card')).toBeVisible();
+    await expect(page.locator('.stats-strip .stat-card')).toHaveCount(5);
+    await expect(page.locator('.stats-strip .stat-card').first()).toBeVisible();
   });
 
   test('shows correct influencer stats', async ({ page }) => {
-    const card = page.locator('.influencer-card');
-    // 2 total, 1 accepted should be "Activated", 1 pending, 1 premium
-    // (deleted are filtered out from count; none are deleted here so count = 2)
-    await expect(card.locator('.badge.bg-primary.fs-5')).toContainText('2');
-    await expect(card.locator('.badge.bg-success')).toContainText('1');
-    await expect(card.locator('.badge.bg-warning')).toContainText('1');
-    await expect(card.locator('.badge.bg-info').first()).toContainText('1');
+    const totalCard = page
+      .locator('.stats-strip .stat-card')
+      .filter({ has: page.locator('.stat-title', { hasText: 'Total' }) })
+      .first();
+    await expect(totalCard.locator('.stat-total')).toHaveText('4');
+    const splitVals = totalCard.locator('.stat-split-values span');
+    await expect(splitVals.nth(0)).toHaveText('2');
+    await expect(splitVals.nth(1)).toHaveText('2');
   });
 
   test('shows correct brand stats', async ({ page }) => {
-    const card = page.locator('.brand-card');
-    await expect(card.locator('.badge.bg-primary.fs-5')).toContainText('2');
-    await expect(card.locator('.badge.bg-success')).toContainText('1');
-    await expect(card.locator('.badge.bg-warning')).toContainText('1');
-    await expect(card.locator('.badge.bg-info').first()).toContainText('1');
+    const pendingCard = page
+      .locator('.stats-strip .stat-card')
+      .filter({ has: page.locator('.stat-title', { hasText: 'Pending' }) })
+      .first();
+    await expect(pendingCard.locator('.stat-total')).toHaveText('2');
+    const pendingSplit = pendingCard.locator('.stat-split-values span');
+    await expect(pendingSplit.nth(0)).toHaveText('1');
+    await expect(pendingSplit.nth(1)).toHaveText('1');
+
+    const verifiedCard = page
+      .locator('.stats-strip .stat-card')
+      .filter({ has: page.locator('.stat-title', { hasText: 'Verified' }) })
+      .first();
+    await expect(verifiedCard.locator('.stat-total')).toHaveText('2');
+    const verifiedSplit = verifiedCard.locator('.stat-split-values span');
+    await expect(verifiedSplit.nth(0)).toHaveText('1');
+    await expect(verifiedSplit.nth(1)).toHaveText('1');
   });
 });
 
