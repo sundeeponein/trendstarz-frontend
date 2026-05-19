@@ -3,6 +3,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
 import { SupportBannerComponent } from '../../shared/support-banner/support-banner.component';
@@ -32,6 +33,7 @@ type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 export class CampaignManagementComponent implements OnInit, OnDestroy {
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
+  private completionEventsTracked = new Set<string>();
     // Reload campaigns from backend (used after create/update)
     loadCampaigns() {
       this.loading = true;
@@ -501,6 +503,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   constructor(
     private config: ConfigService,
     private session: SessionService,
+    private analytics: AnalyticsService,
     private cd: ChangeDetectorRef,
     private toast: ToastService,
     private router: Router,
@@ -553,6 +556,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.config.getMyInvites().subscribe({
         next: (invites: any[]) => {
           this.myInvites = invites;
+          this.trackCompletionFromInviteStatuses(invites);
           this.myInvitesLoading = false;
           this.cd.detectChanges();
         },
@@ -680,6 +684,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.config.getMyInvites().subscribe({
       next: (invites: any[]) => {
         this.myInvites = invites;
+        this.trackCompletionFromInviteStatuses(invites);
         this.myInvitesLoading = false;
         this.cd.detectChanges();
       },
@@ -1144,6 +1149,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       error: () => { this.invitesLoading = false; this.cd.detectChanges(); }
     });
     this.loadInviteRecipients();
+    const hints = this.getInviteCategoryHints();
+    this.analytics.trackCampaignInviteSuggestionsApplied({
+      campaignId: campaign._id,
+      targetRole: 'influencer',
+      campaignLocation: campaign?.targetState || campaign?.venueState,
+      categoriesMatched: hints.length,
+    });
   }
 
   closeInvitePanel() {
@@ -1171,6 +1183,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         });
     request$.subscribe({
       next: () => {
+        this.analytics.trackCampaignInviteSent({
+          campaignId: this.invitePanelCampaign!._id!,
+          recipientId: influencer._id,
+          recipientType: this.inviteTargetRole,
+          recipientLocation: influencer?.location?.state || undefined,
+        });
         this.config.getInvitesByCampaign(this.invitePanelCampaign!._id!).subscribe({
           next: (invites: any[]) => {
             this.sendingInviteIds.delete(influencer._id);
@@ -2204,6 +2222,20 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.myInvites = this.myInvites.map(i =>
           i._id === inviteId ? { ...i, status } : i
         );
+        if (status === 'accepted') {
+          const campaignId = String(invite?.campaignId?._id || invite?.campaignId || '');
+          if (campaignId) {
+            const key = `invitation_accepted:${inviteId}`;
+            if (!this.completionEventsTracked.has(key)) {
+              this.analytics.trackCampaignCompleted({
+                campaignId,
+                creatorCount: 1,
+                completionStage: 'invitation_accepted',
+              });
+              this.completionEventsTracked.add(key);
+            }
+          }
+        }
         if (this.invitePreview?._id === inviteId) {
           this.invitePreview = { ...this.invitePreview, status };
         }
@@ -2216,6 +2248,26 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       }
     });
+  }
+
+  private trackCompletionFromInviteStatuses(invites: any[]): void {
+    for (const inv of Array.isArray(invites) ? invites : []) {
+      const inviteId = String(inv?._id || '');
+      const campaignId = String(inv?.campaignId?._id || inv?.campaignId || '');
+      const status = String(inv?.status || '').toLowerCase();
+      if (!inviteId || !campaignId) continue;
+
+      if (status === 'payment_confirmed' || status === 'approved' || status === 'completed') {
+        const key = `payment_settled:${inviteId}`;
+        if (this.completionEventsTracked.has(key)) continue;
+        this.analytics.trackCampaignCompleted({
+          campaignId,
+          creatorCount: 1,
+          completionStage: 'payment_settled',
+        });
+        this.completionEventsTracked.add(key);
+      }
+    }
   }
 
   getInviteQualifyingPlatforms(inv: any): string[] {

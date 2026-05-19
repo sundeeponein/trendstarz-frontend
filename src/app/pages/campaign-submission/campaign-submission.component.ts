@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { environment } from '../../../environments/environment';
 import { CampaignStatusBarComponent } from '../../shared/campaign-status-bar/campaign-status-bar.component';
+import { AnalyticsService } from '../../core/analytics.service';
 
 type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 
@@ -19,6 +20,7 @@ type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 })
 export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   inviteId = '';
+  campaignId = '';
   campaignTitle = '';
   brandName = '';
   inviteStatus = '';
@@ -77,6 +79,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private config: ConfigService,
+    private analytics: AnalyticsService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
   ) {}
@@ -104,6 +107,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             this.startCountdown();
           }
           const campaign = res?.campaign;
+          this.campaignId = String(campaign?._id || campaign?.id || '');
           this.acceptedPlatform = String(res?.invite?.selectedPlatform || '').toLowerCase().trim();
           this.acceptedContentType = String(res?.invite?.selectedContentType || '').toLowerCase().trim();
           if (campaign) {
@@ -365,6 +369,14 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
     this.config.submitCampaignPost(this.inviteId, payload).subscribe({
       next: () => {
+        const campaignId = String(this.campaignId || this.route.snapshot.queryParamMap.get('campaignId') || this.existingSubmission?.campaignId || '');
+        if (campaignId) {
+          this.analytics.trackCampaignCompleted({
+            campaignId,
+            creatorCount: 1,
+            completionStage: 'content_delivered',
+          });
+        }
         this.submitted = true;
         this.submitting = false;
         this.cdr.markForCheck();
