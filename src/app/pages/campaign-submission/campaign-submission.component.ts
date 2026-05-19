@@ -375,6 +375,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             campaignId,
             creatorCount: 1,
             completionStage: 'content_delivered',
+            inviteId: this.inviteId,
           });
         }
         this.submitted = true;

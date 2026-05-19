@@ -2231,6 +2231,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
                 campaignId,
                 creatorCount: 1,
                 completionStage: 'invitation_accepted',
+                inviteId,
               });
               this.completionEventsTracked.add(key);
             }
@@ -2264,6 +2265,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           campaignId,
           creatorCount: 1,
           completionStage: 'payment_settled',
+          inviteId,
         });
         this.completionEventsTracked.add(key);
       }
