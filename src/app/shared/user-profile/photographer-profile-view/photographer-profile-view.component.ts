@@ -271,6 +271,7 @@ export class PhotographerProfileViewComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       (window as any).dataLayer = (window as any).dataLayer || [];
       (window as any).gtag?.('config', 'G-5912TSJYW5', {
+        send_page_view: false,
         page_title: title,
         page_path: `/photographer/${photographer?._id || ''}`,
         photographer_name: name,

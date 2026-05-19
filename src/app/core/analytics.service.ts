@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SessionService } from './session.service';
+import { environment } from '../../environments/environment';
 
 export interface AnalyticsEvent {
   eventType: string;
@@ -23,7 +24,43 @@ export class AnalyticsService implements OnDestroy {
   private readonly BUFFER_SIZE = 20;
   private flushTimer?: number;
   private readonly FLUSH_INTERVAL_MS = 30000; // 30 seconds
-  private readonly ANALYTICS_ENDPOINT = '/api/analytics/events';
+  private readonly ANALYTICS_ENDPOINT = `${environment.apiBaseUrl}/analytics/events`;
+
+  private readonly blockedPathPrefixes = ['/admin'];
+  private readonly publicExactPaths = new Set([
+    '/',
+    '/welcome',
+    '/search',
+    '/features',
+    '/features/influencers',
+    '/features/brands',
+    '/how-it-works',
+    '/how-it-works/influencers',
+    '/how-it-works/brands',
+    '/privacy-policy',
+    '/terms-and-conditions',
+    '/refund-policy',
+    '/contact',
+    '/register-influencer',
+    '/register-brand',
+    '/register-photographer',
+    '/login',
+    '/auth/login',
+    '/auth',
+    '/verify-email',
+    '/forgot-password',
+    '/reset-password',
+  ]);
+
+  private readonly publicPrefixPaths = [
+    '/influencer/',
+    '/brand/',
+    '/photographer/',
+    '/campaigns',
+    '/campaign-pay/',
+    '/campaign-payment/',
+    '/campaign-submission/',
+  ];
 
   constructor(private session: SessionService, private http: HttpClient) {
     this.initializeLifecycle();
@@ -141,11 +178,13 @@ export class AnalyticsService implements OnDestroy {
     campaignId: string;
     creatorCount: number;
     completionStage: 'invitation_accepted' | 'content_delivered' | 'payment_settled';
+    inviteId?: string;
   }): void {
     const eventData = {
       campaignId: context.campaignId,
       creatorCount: context.creatorCount,
       completionStage: context.completionStage,
+      inviteId: context.inviteId || null,
     };
     this.logEvent('campaign_completed', eventData);
     this.sendToGA4('campaign_completed', eventData);
@@ -153,9 +192,29 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * Track SPA page views for public/user-facing pages only.
+   */
+  trackPageView(rawUrl: string, pageTitle?: string): void {
+    const path = this.normalizePath(rawUrl);
+    if (!this.shouldTrackPath(path)) return;
+    if (!this.shouldTrackPublicPageView(path)) return;
+
+    const eventData = {
+      page_path: path,
+      page_location: this.getAbsoluteUrl(path),
+      page_title: pageTitle || (typeof document !== 'undefined' ? document.title : undefined),
+    };
+
+    this.logEvent('page_view', { pagePath: path });
+    this.sendToGA4('page_view', eventData);
+  }
+
+  /**
    * Send event to Google Analytics 4 (gtag).
    */
   private sendToGA4(eventName: string, eventData: Record<string, any>): void {
+    if (!this.shouldTrackCurrentPath()) return;
+
     if (typeof window !== 'undefined' && window.gtag) {
       try {
         window.gtag('event', eventName, {
@@ -174,6 +233,8 @@ export class AnalyticsService implements OnDestroy {
    * Send event to Microsoft Clarity.
    */
   private sendToClarity(eventName: string, eventData: Record<string, any>): void {
+    if (!this.shouldTrackCurrentPath()) return;
+
     if (typeof window !== 'undefined' && window.clarity) {
       try {
         window.clarity('set', eventName, JSON.stringify(eventData));
@@ -254,5 +315,30 @@ export class AnalyticsService implements OnDestroy {
         }
       });
     }
+  }
+
+  private shouldTrackCurrentPath(): boolean {
+    if (typeof window === 'undefined') return true;
+    return this.shouldTrackPath(this.normalizePath(window.location.pathname || '/'));
+  }
+
+  private shouldTrackPath(path: string): boolean {
+    return !this.blockedPathPrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  }
+
+  private shouldTrackPublicPageView(path: string): boolean {
+    if (this.publicExactPaths.has(path)) return true;
+    return this.publicPrefixPaths.some((prefix) => path === prefix || path.startsWith(prefix));
+  }
+
+  private normalizePath(url: string): string {
+    const withoutQuery = String(url || '/').split('?')[0].split('#')[0] || '/';
+    if (withoutQuery === '/') return '/';
+    return withoutQuery.endsWith('/') ? withoutQuery.slice(0, -1) : withoutQuery;
+  }
+
+  private getAbsoluteUrl(path: string): string {
+    if (typeof window === 'undefined') return path;
+    return `${window.location.origin}${path}`;
   }
 }

@@ -6,6 +6,7 @@ import { filter } from 'rxjs';
 import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
 import { PushNotificationService } from './core/push-notification.service';
+import { AnalyticsService } from './core/analytics.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
@@ -26,6 +27,7 @@ export class App implements OnInit {
     private router: Router,
     private warmup: WarmupService,
     private pushService: PushNotificationService,
+    private analytics: AnalyticsService,
     private titleService: Title,
     private meta: Meta,
     @Inject(DOCUMENT) private document: Document,
@@ -35,6 +37,7 @@ export class App implements OnInit {
   ngOnInit() {
     this.session.loadUserFromStorage();
     this.setupSeo();
+    this.setupAnalyticsTracking();
 
     if (isPlatformBrowser(this.platformId)) {
       this.session.user$.subscribe((user) => {
@@ -53,6 +56,19 @@ export class App implements OnInit {
         setTimeout(() => this._initPush(role), 1200);
       });
     }
+  }
+
+  private setupAnalyticsTracking(): void {
+    const getCurrentPath = () => this.router.url || '/';
+
+    // Track initial app load pageview.
+    this.analytics.trackPageView(getCurrentPath());
+
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.analytics.trackPageView(getCurrentPath());
+      });
   }
 
   private setupSeo(): void {
