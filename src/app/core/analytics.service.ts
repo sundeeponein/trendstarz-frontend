@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SessionService } from './session.service';
+import { environment } from '../../environments/environment';
 
 export interface AnalyticsEvent {
   eventType: string;
@@ -23,7 +24,7 @@ export class AnalyticsService implements OnDestroy {
   private readonly BUFFER_SIZE = 20;
   private flushTimer?: number;
   private readonly FLUSH_INTERVAL_MS = 30000; // 30 seconds
-  private readonly ANALYTICS_ENDPOINT = '/api/analytics/events';
+  private readonly ANALYTICS_ENDPOINT = `${environment.apiBaseUrl}/analytics/events`;
 
   constructor(private session: SessionService, private http: HttpClient) {
     this.initializeLifecycle();
@@ -141,11 +142,13 @@ export class AnalyticsService implements OnDestroy {
     campaignId: string;
     creatorCount: number;
     completionStage: 'invitation_accepted' | 'content_delivered' | 'payment_settled';
+    inviteId?: string;
   }): void {
     const eventData = {
       campaignId: context.campaignId,
       creatorCount: context.creatorCount,
       completionStage: context.completionStage,
+      inviteId: context.inviteId || null,
     };
     this.logEvent('campaign_completed', eventData);
     this.sendToGA4('campaign_completed', eventData);
