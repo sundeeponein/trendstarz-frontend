@@ -11,7 +11,6 @@ export const routes: Routes = [
 		children: [
 			{ path: '', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'welcome', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
-			{ path: 'auth/login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
 			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
 			{ path: 'features', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
 			{ path: 'features/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
@@ -69,6 +68,7 @@ export const routes: Routes = [
 		component: NoNavbarLayoutComponent,
 		children: [
 			{ path: 'login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
+			{ path: 'auth/login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
 			{ path: '', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
 		],
 	},

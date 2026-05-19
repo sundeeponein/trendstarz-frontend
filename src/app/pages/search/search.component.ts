@@ -128,10 +128,41 @@ export class SearchComponent implements OnInit {
     if (this.isInfluencerMode) {
       const count = this.filteredInfluencers.length;
       const suffix = this.selectedCount > 0 ? ` · ${this.selectedCount} selected` : '';
+      if (this.isInfluencerSmartDiscoveryActive) {
+        return `Recommended creators near ${this.viewerLocationLabel} · ${count} results${suffix}`;
+      }
       return `Showing ${count} creators matching your criteria${suffix}`;
     }
-    if (this.isPhotographerMode) return `Showing ${this.filteredPhotographers.length} photographers matching your criteria`;
+    if (this.isPhotographerMode) {
+      if (this.isPhotographerSmartDiscoveryActive) {
+        return `Recommended photographers near ${this.viewerLocationLabel} · ${this.filteredPhotographers.length} results`;
+      }
+      return `Showing ${this.filteredPhotographers.length} photographers matching your criteria`;
+    }
     return `Showing ${this.filteredBrands.length} brands matching your criteria`;
+  }
+
+  get isInfluencerSmartDiscoveryActive(): boolean {
+    return this.isInfluencerMode && !this.infFilters.location && !!this.viewerStateNormalized;
+  }
+
+  get isPhotographerSmartDiscoveryActive(): boolean {
+    return this.isPhotographerMode && !this.photographerFilters.location && !!this.viewerStateNormalized;
+  }
+
+  get viewerLocationLabel(): string {
+    if (this.viewerDistrictNormalized && this.viewerStateNormalized) {
+      return `${this.currentUser?.location?.district || 'your district'}, ${this.currentUser?.location?.state || 'your state'}`;
+    }
+    return this.currentUser?.location?.state || 'your area';
+  }
+
+  private get viewerStateNormalized(): string {
+    return this.normalizeLocationValue(this.currentUser?.location?.state);
+  }
+
+  private get viewerDistrictNormalized(): string {
+    return this.normalizeLocationValue(this.currentUser?.location?.district);
   }
 
   get activeKeyword(): string {
@@ -300,7 +331,15 @@ export class SearchComponent implements OnInit {
   fetchInfluencers() {
     this.influencersLoading = true;
     this.influencersError = '';
-    this.config.getInfluencers({ lite: true, limit: 60 }).subscribe({
+    this.config
+      .getInfluencers({
+        lite: true,
+        limit: 120,
+        viewerState: this.currentUser?.location?.state || '',
+        viewerDistrict: this.currentUser?.location?.district || '',
+        smartLocationPriority: !this.infFilters.location,
+      })
+      .subscribe({
       next: (data: any) => {
         const arr = Array.isArray(data) ? data : (data?.data ?? []);
         this.allInfluencers = arr;
@@ -314,7 +353,7 @@ export class SearchComponent implements OnInit {
         this.influencersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       }
-    });
+      });
   }
 
   fetchBrands() {
@@ -382,7 +421,7 @@ export class SearchComponent implements OnInit {
 
   applyInfluencerFilters() {
     const f = this.infFilters;
-    this.filteredInfluencers = this.allInfluencers.filter(u => {
+    const filtered = this.allInfluencers.filter(u => {
       const kw = f.keyword.trim().toLowerCase();
       if (kw) {
         const name = (u.name || u.fullname || '').toLowerCase();
@@ -401,6 +440,9 @@ export class SearchComponent implements OnInit {
       }
       return true;
     });
+    this.filteredInfluencers = f.location
+      ? filtered
+      : this.sortBySmartLocationPriority(filtered);
   }
 
   private getInfluencerAgeRange(influencer: any): string {
@@ -454,7 +496,14 @@ export class SearchComponent implements OnInit {
   fetchPhotographers() {
     this.photographersLoading = true;
     this.photographersError = '';
-    this.config.getPhotographers({ limit: 60 }).subscribe({
+    this.config
+      .getPhotographers({
+        limit: 120,
+        viewerState: this.currentUser?.location?.state || '',
+        viewerDistrict: this.currentUser?.location?.district || '',
+        smartLocationPriority: !this.photographerFilters.location,
+      })
+      .subscribe({
       next: (data: any[]) => {
         this.allPhotographers = Array.isArray(data) ? data : [];
         this.buildPhotographerOptions(this.allPhotographers);
@@ -467,7 +516,7 @@ export class SearchComponent implements OnInit {
         this.photographersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       }
-    });
+      });
   }
 
   buildPhotographerOptions(data: any[]) {
@@ -483,7 +532,7 @@ export class SearchComponent implements OnInit {
 
   applyPhotographerFilters() {
     const f = this.photographerFilters;
-    this.filteredPhotographers = this.allPhotographers.filter(p => {
+    const filtered = this.allPhotographers.filter(p => {
       const kw = f.keyword.trim().toLowerCase();
       if (kw) {
         const name = (p.name || '').toLowerCase();
@@ -493,6 +542,42 @@ export class SearchComponent implements OnInit {
       if (f.skill && !(p.skills || []).includes(f.skill)) return false;
       if (f.location && p.location?.state !== f.location) return false;
       return true;
+    });
+    this.filteredPhotographers = f.location
+      ? filtered
+      : this.sortBySmartLocationPriority(filtered);
+  }
+
+  private normalizeLocationValue(value: unknown): string {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  private getLocationPriorityScore(entity: any): number {
+    const viewerState = this.viewerStateNormalized;
+    const viewerDistrict = this.viewerDistrictNormalized;
+    if (!viewerState) return 0;
+
+    const entityState = this.normalizeLocationValue(entity?.location?.state);
+    const entityDistrict = this.normalizeLocationValue(entity?.location?.district);
+
+    if (viewerDistrict && entityDistrict && viewerDistrict === entityDistrict) return 100;
+    if (entityState && entityState === viewerState) return 70;
+    return 30;
+  }
+
+  private getTopFollowersCount(entity: any): number {
+    const socials = Array.isArray(entity?.socialMedia) ? entity.socialMedia : [];
+    return socials.reduce((max: number, sm: any) => {
+      const followers = Number(sm?.followersCount || 0);
+      return followers > max ? followers : max;
+    }, 0);
+  }
+
+  private sortBySmartLocationPriority<T extends any>(rows: T[]): T[] {
+    return [...rows].sort((a: any, b: any) => {
+      const locationDiff = this.getLocationPriorityScore(b) - this.getLocationPriorityScore(a);
+      if (locationDiff !== 0) return locationDiff;
+      return this.getTopFollowersCount(b) - this.getTopFollowersCount(a);
     });
   }
 

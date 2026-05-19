@@ -46,7 +46,8 @@ export class SessionService {
 
   setToken(token: string, rememberMe = false) {
     if (!this.isBrowser()) return;
-    if (rememberMe) {
+    const shouldPersist = rememberMe || this.prefersPersistentSession();
+    if (shouldPersist) {
       localStorage.setItem(SessionService.TOKEN_KEY, token);
       localStorage.setItem(SessionService.LOGIN_TIME_KEY, String(Date.now()));
       sessionStorage.removeItem(SessionService.TOKEN_KEY);
@@ -83,28 +84,39 @@ export class SessionService {
   }
 
   loadUserFromStorage() {
+    if (!this.isBrowser()) {
+      this.userSubject.next(null);
+      return;
+    }
+
+    const token = this.getToken();
+    if (!token || token === 'undefined' || token === '' || this.isSessionExpired()) {
+      // Prevent stale "logged in" UI when only user info remains in localStorage.
+      this.clearSession();
+      return;
+    }
+
     let user = this.getUser();
     if (!user) {
       // Try to decode user from JWT token if present
-      const token = this.getToken();
-      if (token && token !== 'undefined' && token !== '') {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          // Use standard JWT fields or your custom fields
-          user = {
-            id: payload.userId || payload.id,
-            email: payload.email,
-            role: payload.role,
-            name: payload.name || 'Admin',
-            // Add more fields if needed
-          };
-          this.setUser(user); // Save to localStorage and update subject
-        } catch (e) {
-          // If decoding fails, just set user to null
-          user = null;
-        }
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        // Use standard JWT fields or your custom fields
+        user = {
+          id: payload.userId || payload.id,
+          email: payload.email,
+          role: payload.role,
+          name: payload.name || 'Admin',
+          // Add more fields if needed
+        };
+        this.setUser(user); // Save to localStorage and update subject
+      } catch {
+        // Corrupt token/user state: clear and force fresh login.
+        this.clearSession();
+        return;
       }
     }
+
     this.userSubject.next(user);
   }
 
