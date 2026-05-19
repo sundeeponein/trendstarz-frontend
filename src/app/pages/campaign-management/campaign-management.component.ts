@@ -201,10 +201,87 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get filteredInviteRecipients(): any[] {
     const kw = this.influencerSearch.trim().toLowerCase();
-    return this.inviteRecipients.filter(inf => {
+    const filtered = this.inviteRecipients.filter(inf => {
       if (!kw) return true;
       return (inf.name || inf.fullname || inf.fullName || '').toLowerCase().includes(kw);
     });
+
+    return [...filtered].sort((a, b) => this.getInviteSuggestionScore(b) - this.getInviteSuggestionScore(a));
+  }
+
+  private normalizeLocationValue(value: unknown): string {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  private getInviteLocationContext(): { state: string; district: string } {
+    const campaign: any = this.invitePanelCampaign || {};
+    const user = this.session.getUser() || {};
+
+    const district =
+      campaign?.targetDistrict ||
+      campaign?.venueDistrict ||
+      user?.location?.district ||
+      '';
+    const state =
+      campaign?.targetState ||
+      campaign?.venueState ||
+      user?.location?.state ||
+      '';
+
+    return {
+      district: this.normalizeLocationValue(district),
+      state: this.normalizeLocationValue(state),
+    };
+  }
+
+  private getInviteCategoryHints(): string[] {
+    const campaign: any = this.invitePanelCampaign || {};
+    const raw = Array.isArray(campaign?.categories) ? campaign.categories : [];
+    return raw
+      .map((v: any) => String(v || '').trim().toLowerCase())
+      .filter((v: string) => !!v);
+  }
+
+  private getInviteLocationScore(candidate: any): number {
+    const context = this.getInviteLocationContext();
+    if (!context.state) return 0;
+
+    const candidateState = this.normalizeLocationValue(candidate?.location?.state);
+    const candidateDistrict = this.normalizeLocationValue(candidate?.location?.district);
+    if (context.district && candidateDistrict && context.district === candidateDistrict) return 100;
+    if (candidateState && candidateState === context.state) return 70;
+    return 30;
+  }
+
+  private getInviteRelevanceScore(candidate: any): number {
+    const hints = this.getInviteCategoryHints();
+    if (!hints.length) return 0;
+
+    const corpus = this.inviteTargetRole === 'photographer'
+      ? (Array.isArray(candidate?.skills) ? candidate.skills : [])
+      : (Array.isArray(candidate?.categories) ? candidate.categories : []);
+
+    const normalized = corpus
+      .map((v: any) => String(v || '').trim().toLowerCase())
+      .filter((v: string) => !!v);
+
+    const hasMatch = hints.some((hint) => normalized.includes(hint));
+    return hasMatch ? 25 : 0;
+  }
+
+  private getInviteTopFollowersCount(candidate: any): number {
+    const socials = Array.isArray(candidate?.socialMedia) ? candidate.socialMedia : [];
+    return socials.reduce((max: number, sm: any) => {
+      const followers = Number(sm?.followersCount || 0);
+      return followers > max ? followers : max;
+    }, 0);
+  }
+
+  private getInviteSuggestionScore(candidate: any): number {
+    const location = this.getInviteLocationScore(candidate);
+    const relevance = this.getInviteRelevanceScore(candidate);
+    const followersBoost = Math.min(this.getInviteTopFollowersCount(candidate), 1000000) / 1000000;
+    return location + relevance + followersBoost;
   }
 
   toggleInfluencerSelect(id: string) {
