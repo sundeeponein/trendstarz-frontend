@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
@@ -21,6 +22,7 @@ export class SearchComponent implements OnInit {
   private readonly tierOrder = TIER_ORDER;
   private influencerRoleCategoryOptions: string[] = [];
   private brandRoleCategoryOptions: string[] = [];
+  private lastSmartDiscoverySignature: Partial<Record<'influencer' | 'photographer', string>> = {};
 
   activeTab: 'influencers' | 'brands' | 'photographers' = 'influencers';
 
@@ -210,6 +212,7 @@ export class SearchComponent implements OnInit {
   constructor(
     private config: ConfigService,
     private session: SessionService,
+    private analytics: AnalyticsService,
     private cd: ChangeDetectorRef,
     public router: Router,
     @Inject(PLATFORM_ID) platformId: Object
@@ -301,11 +304,23 @@ export class SearchComponent implements OnInit {
   onLocationChange(value: string) {
     if (this.isPhotographerMode) {
       this.photographerFilters.location = value;
+      if (value) {
+        this.analytics.trackManualLocationFilterApplied({
+          mode: 'photographer',
+          selectedLocation: value,
+        });
+      }
       this.applyPhotographerFilters();
       return;
     }
     if (this.isInfluencerMode) {
       this.infFilters.location = value;
+      if (value) {
+        this.analytics.trackManualLocationFilterApplied({
+          mode: 'influencer',
+          selectedLocation: value,
+        });
+      }
       this.applyInfluencerFilters();
       return;
     }
@@ -345,6 +360,7 @@ export class SearchComponent implements OnInit {
         this.allInfluencers = arr;
         this.buildInfluencerOptions(arr);
         this.applyInfluencerFilters();
+        this.trackSmartDiscoveryIfApplicable('influencer', this.filteredInfluencers.length);
         this.influencersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       },
@@ -504,10 +520,12 @@ export class SearchComponent implements OnInit {
         smartLocationPriority: !this.photographerFilters.location,
       })
       .subscribe({
-      next: (data: any[]) => {
-        this.allPhotographers = Array.isArray(data) ? data : [];
+      next: (data: any) => {
+        const arr = Array.isArray(data) ? data : (data?.data ?? []);
+        this.allPhotographers = arr;
         this.buildPhotographerOptions(this.allPhotographers);
         this.applyPhotographerFilters();
+        this.trackSmartDiscoveryIfApplicable('photographer', this.filteredPhotographers.length);
         this.photographersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       },
@@ -579,6 +597,28 @@ export class SearchComponent implements OnInit {
       if (locationDiff !== 0) return locationDiff;
       return this.getTopFollowersCount(b) - this.getTopFollowersCount(a);
     });
+  }
+
+  private trackSmartDiscoveryIfApplicable(
+    mode: 'influencer' | 'photographer',
+    resultCount: number,
+  ): void {
+    const hasManualLocation =
+      mode === 'influencer'
+        ? !!this.infFilters.location
+        : !!this.photographerFilters.location;
+    if (hasManualLocation || !this.viewerStateNormalized) return;
+
+    const signature = `${this.viewerStateNormalized}|${this.viewerDistrictNormalized}|${resultCount}`;
+    if (this.lastSmartDiscoverySignature[mode] === signature) return;
+
+    this.analytics.trackSmartDiscoveryApplied({
+      mode,
+      viewerState: this.currentUser?.location?.state || undefined,
+      viewerDistrict: this.currentUser?.location?.district || undefined,
+      resultCount,
+    });
+    this.lastSmartDiscoverySignature[mode] = signature;
   }
 
   clearPhotographerFilters() {
