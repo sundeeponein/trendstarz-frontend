@@ -420,11 +420,27 @@ export class ConfigService {
     return (Array.isArray(items) ? items : []).filter((item: T) => item?.showInFrontend !== false);
   }
 
-  getInfluencers(options?: { page?: number; limit?: number; lite?: boolean }): Observable<any[]> {
+  getInfluencers(options?: {
+    page?: number;
+    limit?: number;
+    lite?: boolean;
+    state?: string;
+    district?: string;
+    viewerState?: string;
+    viewerDistrict?: string;
+    smartLocationPriority?: boolean;
+  }): Observable<any[]> {
     const params: string[] = [];
     if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
     if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
     if (typeof options?.lite === 'boolean') params.push(`lite=${options.lite ? '1' : '0'}`);
+    if (options?.state) params.push(`state=${encodeURIComponent(options.state)}`);
+    if (options?.district) params.push(`district=${encodeURIComponent(options.district)}`);
+    if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
+    if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
+    if (typeof options?.smartLocationPriority === 'boolean') {
+      params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
+    }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/influencers${qs}`).pipe(
       map((res) => {
@@ -450,12 +466,25 @@ export class ConfigService {
     );
   }
 
-  getPhotographers(options?: { limit?: number; skill?: string; location?: string; keyword?: string }): Observable<any[]> {
+  getPhotographers(options?: {
+    limit?: number;
+    skill?: string;
+    location?: string;
+    keyword?: string;
+    viewerState?: string;
+    viewerDistrict?: string;
+    smartLocationPriority?: boolean;
+  }): Observable<any[]> {
     const params: string[] = [];
     if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
     if (options?.skill) params.push(`skill=${encodeURIComponent(options.skill)}`);
     if (options?.location) params.push(`location=${encodeURIComponent(options.location)}`);
     if (options?.keyword) params.push(`keyword=${encodeURIComponent(options.keyword)}`);
+    if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
+    if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
+    if (typeof options?.smartLocationPriority === 'boolean') {
+      params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
+    }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/photographers${qs}`).pipe(
       map((res) => {

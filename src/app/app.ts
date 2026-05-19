@@ -19,6 +19,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 })
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
+  private lastPushSubscriptionKey: string | null = null;
 
   constructor(
     private session: SessionService,
@@ -36,8 +37,21 @@ export class App implements OnInit {
     this.setupSeo();
 
     if (isPlatformBrowser(this.platformId)) {
-      // Request push permission once after the user is settled (non-blocking)
-      setTimeout(() => this._initPush(), 5000);
+      this.session.user$.subscribe((user) => {
+        if (!user) {
+          this.lastPushSubscriptionKey = null;
+          return;
+        }
+
+        const role = this.normalizeRole((user as any).role);
+        const identity = String((user as any).id || (user as any)._id || (user as any).email || role);
+        const key = `${role}:${identity}`;
+        if (this.lastPushSubscriptionKey === key) return;
+        this.lastPushSubscriptionKey = key;
+
+        // Defer slightly so login/navigation settles before asking notification permission.
+        setTimeout(() => this._initPush(role), 1200);
+      });
     }
   }
 
@@ -210,12 +224,20 @@ export class App implements OnInit {
     };
   }
 
-  private async _initPush(): Promise<void> {
+  private normalizeRole(role: any): 'brand' | 'influencer' | 'photographer' | 'admin' {
+    const value = String(role || '').toLowerCase().trim();
+    if (value === 'brand') return 'brand';
+    if (value === 'admin') return 'admin';
+    if (value === 'photographer' || value === 'videographer' || value === 'photovideographer') return 'photographer';
+    return 'influencer';
+  }
+
+  private async _initPush(role?: 'brand' | 'influencer' | 'photographer' | 'admin'): Promise<void> {
     try {
       const user = this.session.getUser();
       if (!user) return; // only subscribe logged-in users
-      const role = (user as any).role ?? 'influencer';
-      await this.pushService.requestSubscription(role);
+      const resolvedRole = role ?? this.normalizeRole((user as any).role);
+      await this.pushService.requestSubscription(resolvedRole);
     } catch { /* silent — push is optional */ }
   }
 }

@@ -291,11 +291,14 @@ export class AdminManagementComponent implements OnInit {
 
   loadConfig() {
     const baseUrl = environment.apiBaseUrl;
-    this.http.get(baseUrl + '/social-media').subscribe((res: any) => {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+    this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/categories').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
@@ -313,19 +316,19 @@ export class AdminManagementComponent implements OnInit {
     }, () => {
       this.config.pricingOptions = DEFAULT_PRICING_OPTIONS.map((item: any) => ({ ...item }));
     });
-    this.http.get(baseUrl + '/states').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/states', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
     });
-    this.http.get(baseUrl + '/languages').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/languages', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.languages = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/tiers').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/districts').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
@@ -414,7 +417,7 @@ export class AdminManagementComponent implements OnInit {
       case 'tiers':
         payload = { tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/tiers').subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -423,7 +426,7 @@ export class AdminManagementComponent implements OnInit {
       case 'socialMedia':
         payload = { socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/social-media').subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -432,7 +435,7 @@ export class AdminManagementComponent implements OnInit {
       case 'categories':
         payload = { categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/categories').subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -441,7 +444,7 @@ export class AdminManagementComponent implements OnInit {
       case 'languages':
         payload = { languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/languages').subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/languages', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.languages = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -453,11 +456,11 @@ export class AdminManagementComponent implements OnInit {
           districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
         };
         reloadFn = () => {
-          this.http.get(baseUrl + '/states').subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/states', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
           });
-          this.http.get(baseUrl + '/districts').subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });

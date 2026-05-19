@@ -23,7 +23,7 @@ export class PushNotificationService implements OnDestroy {
    * Fetch VAPID public key, subscribe the browser to push, and POST the
    * subscription object to the backend so it can send notifications later.
    */
-  async requestSubscription(userRole: 'brand' | 'influencer' | 'admin' = 'influencer'): Promise<boolean> {
+  async requestSubscription(userRole: 'brand' | 'influencer' | 'photographer' | 'admin' = 'influencer'): Promise<boolean> {
     if (!this.swPush.isEnabled) return false;
 
     try {
