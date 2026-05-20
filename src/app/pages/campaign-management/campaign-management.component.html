@@ -125,6 +125,7 @@
   <!-- Campaign payment modal (brand-facing) -->
   <app-campaign-payment
     [campaignId]="paymentCampaignId"
+    [initialTab]="paymentInitialTab"
     [visible]="paymentModalVisible"
     (visibleChange)="onPaymentVisibleChange($event)">
   </app-campaign-payment>
@@ -490,8 +491,8 @@
               </button>
               <button class="btn-pay btn btn-outline-success" (click)="openPayment(c._id)"
                 *ngIf="c.campaignType === 'paid_collab' && c.status !== 'completed'"
-                [disabled]="getExpandInvitesByStatus(c, 'accepted') === 0"
-                [title]="getExpandInvitesByStatus(c, 'accepted') === 0 ? 'All accepted influencers have already been paid' : 'Record Payment'">
+                [disabled]="!canOpenPaymentForCampaign(c)"
+                [title]="isCampaignPaymentVerificationPending(c) ? 'Payment verification pending. Wait for verification or new accepted influencer.' : (getExpandInvitesByStatus(c, 'accepted') === 0 ? 'All accepted influencers have already been paid' : 'Record Payment')">
                 <i class="bi bi-wallet2"></i> Payment
               </button>
             </div>
@@ -524,14 +525,14 @@
             </div>
 
             <!-- Paid collab: payment nudge when accepted influencers are waiting -->
-            <div class="pay-now-nudge" *ngIf="c.campaignType === 'paid_collab' && getExpandInvitesByStatus(c, 'accepted') > 0">
+            <div class="pay-now-nudge" *ngIf="c.campaignType === 'paid_collab' && getExpandInvitesByStatus(c, 'accepted') > 0 && !isCampaignPaymentVerificationPending(c)">
               <div class="pay-now-nudge-icon"><i class="bi bi-wallet2-fill"></i></div>
               <div class="pay-now-nudge-text">
                 <strong>{{ getExpandInvitesByStatus(c, 'accepted') }}
                   influencer{{ getExpandInvitesByStatus(c, 'accepted') === 1 ? ' has' : 's have' }} accepted</strong>
                 — Pay TrendStarZ to confirm the collaboration and let them begin creating content.
               </div>
-              <button class="btn-pay-now" (click)="openPayment(c._id)">
+              <button class="btn-pay-now" (click)="openPayment(c._id)" [disabled]="!canOpenPaymentForCampaign(c)">
                 <i class="bi bi-credit-card-fill"></i> Pay Now
               </button>
             </div>
@@ -539,15 +540,16 @@
             <!-- Paid collab: payment proof submitted, verification in progress -->
             <div class="pay-now-nudge pay-now-nudge--verify"
                  *ngIf="c.campaignType === 'paid_collab'
-                        && getExpandInvitesByStatus(c, 'accepted') === 0
-                        && getExpandInvitesByStatus(c, 'payment_confirmed') === 0
-                        && getExpandAcceptedOrBeyond(c) > 0">
+                  && (isCampaignPaymentVerificationPending(c)
+                    || (getExpandInvitesByStatus(c, 'accepted') === 0
+                      && getExpandInvitesByStatus(c, 'payment_confirmed') === 0
+                      && getExpandAcceptedOrBeyond(c) > 0))">
               <div class="pay-now-nudge-icon"><i class="bi bi-clock-history"></i></div>
               <div class="pay-now-nudge-text">
                 <strong>Payment verification in progress</strong>
                 — Our team will confirm within 6–10 hours. Influencers will be notified.
               </div>
-              <button class="btn-pay-now btn-pay-now--secondary" (click)="openPayment(c._id)">
+              <button class="btn-pay-now btn-pay-now--secondary" (click)="openPayment(c._id, true, 'status')">
                 <i class="bi bi-eye"></i> View Status
               </button>
             </div>

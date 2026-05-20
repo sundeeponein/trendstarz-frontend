@@ -45,6 +45,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           this.campaigns = campaigns;
           this.loading = false;
           this.cd.detectChanges();
+          this.refreshCampaignPaymentStatuses();
           this.loadAllInvites();
         },
         error: () => {
@@ -135,9 +136,58 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     // Payment modal state
     paymentModalVisible = false;
     paymentCampaignId: string | null = null;
+    paymentInitialTab: 'summary' | 'pay' | 'status' = 'summary';
+    campaignCollectionStatusById = new Map<string, string>();
 
-    openPayment(campaignId?: string | null) {
+    private refreshCampaignPaymentStatuses(): void {
+      const paidCampaignIds = (this.campaigns || [])
+        .filter((c: any) => String(c?.campaignType || '').toLowerCase() === 'paid_collab')
+        .map((c: any) => String(c?._id || ''))
+        .filter(Boolean);
+
+      paidCampaignIds.forEach((campaignId) => {
+        this.config.getCampaignTransactionStatus(campaignId).subscribe({
+          next: (rows: any[]) => {
+            const txs = Array.isArray(rows) ? rows : [];
+            const primary = txs[0] || null;
+            const status = String(primary?.collectionStatus || 'awaiting_payment').toLowerCase();
+            this.campaignCollectionStatusById.set(campaignId, status);
+            this.cd.detectChanges();
+          },
+          error: () => {
+            this.campaignCollectionStatusById.set(campaignId, 'awaiting_payment');
+            this.cd.detectChanges();
+          }
+        });
+      });
+    }
+
+    isCampaignPaymentVerificationPending(campaign: Campaign | null | undefined): boolean {
+      const id = String(campaign?._id || '');
+      if (!id) return false;
+      const status = String(this.campaignCollectionStatusById.get(id) || '').toLowerCase();
+      return status === 'proof_submitted';
+    }
+
+    canOpenPaymentForCampaign(campaign: Campaign | null | undefined): boolean {
+      if (!campaign) return false;
+      if (String((campaign as any).campaignType || '').toLowerCase() !== 'paid_collab') return false;
+      if (this.isCampaignPaymentVerificationPending(campaign)) return false;
+      return this.getExpandInvitesByStatus(campaign, 'accepted') > 0;
+    }
+
+    openPayment(
+      campaignId?: string | null,
+      allowWhenVerificationPending = false,
+      openTab: 'summary' | 'pay' | 'status' = 'summary',
+    ) {
       if (!campaignId) return;
+      const status = String(this.campaignCollectionStatusById.get(String(campaignId)) || '').toLowerCase();
+      if (status === 'proof_submitted' && !allowWhenVerificationPending) {
+        this.toast.success('Payment verification is already in progress.');
+        return;
+      }
+      this.paymentInitialTab = openTab;
       this.paymentCampaignId = campaignId;
       this.paymentModalVisible = true;
       this.cd.detectChanges();
@@ -145,7 +195,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
     onPaymentVisibleChange(v: boolean) {
       this.paymentModalVisible = v;
-      if (!v) this.paymentCampaignId = null;
+      if (!v) {
+        this.paymentCampaignId = null;
+        this.paymentInitialTab = 'summary';
+        this.refreshCampaignPaymentStatuses();
+      }
     }
 
 
@@ -652,6 +706,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
               this.campaignLoadError = '';
               this.loading = false;
               this.cd.detectChanges();
+              this.refreshCampaignPaymentStatuses();
               this.loadAllInvites();
             },
             error: () => {
@@ -699,6 +754,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
               this.campaignLoadError = '';
               this.loading = false;
               this.cd.detectChanges();
+              this.refreshCampaignPaymentStatuses();
               // Load invites for all campaigns after campaigns are loaded
               this.loadAllInvites();
             },
@@ -1861,6 +1917,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   isAcceptanceClosed(c: Campaign): boolean {
+    const acceptanceDeadlineRaw = (c as any)?.acceptanceDeadline;
+    if (acceptanceDeadlineRaw) {
+      const acceptanceDeadline = new Date(acceptanceDeadlineRaw);
+      if (!Number.isNaN(acceptanceDeadline.getTime()) && acceptanceDeadline.getTime() > Date.now()) {
+        return false;
+      }
+    }
     const threshold = this.getAcceptanceCloseThreshold(c);
     if (!threshold) return false;
     return this.getCardAcceptedCount(c) >= threshold;
@@ -1875,6 +1938,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   isInvitePanelAcceptanceClosed(): boolean {
     const c = this.invitePanelCampaign;
     if (!c) return false;
+    const acceptanceDeadlineRaw = (c as any)?.acceptanceDeadline;
+    if (acceptanceDeadlineRaw) {
+      const acceptanceDeadline = new Date(acceptanceDeadlineRaw);
+      if (!Number.isNaN(acceptanceDeadline.getTime()) && acceptanceDeadline.getTime() > Date.now()) {
+        return false;
+      }
+    }
     const threshold = this.getAcceptanceCloseThreshold(c);
     if (!threshold) return false;
     return this.getAcceptedRowsCount(this.invites) >= threshold;
