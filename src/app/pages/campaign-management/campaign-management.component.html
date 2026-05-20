@@ -943,8 +943,8 @@
     </div>
 
     <div class="drawer-target-switch">
-      <button class="drawer-target-pill" [class.active]="inviteTargetRole === 'influencer'" type="button" (click)="switchInviteTarget('influencer')">Influencers</button>
-      <button class="drawer-target-pill" [class.active]="inviteTargetRole === 'photographer'" type="button" (click)="switchInviteTarget('photographer')">Photographers</button>
+      <button class="drawer-target-pill" *ngIf="showInfluencerInviteTargetTab" [class.active]="inviteTargetRole === 'influencer'" type="button" (click)="switchInviteTarget('influencer')">Influencers</button>
+      <button class="drawer-target-pill" *ngIf="showPhotographerInviteTargetTab" [class.active]="inviteTargetRole === 'photographer'" type="button" (click)="switchInviteTarget('photographer')">Photographers</button>
     </div>
 
     <!-- Quota banner -->
@@ -973,7 +973,7 @@
     <div class="drawer-tabs">
       <button class="drawer-tab" [class.active]="inviteTab === 'invited'" (click)="inviteTab = 'invited'">
         Invited
-        <span class="dtab-count">{{ invites.length }}</span>
+        <span class="dtab-count">{{ filteredInvitesByRole.length }}</span>
       </button>
       <button class="drawer-tab" [class.active]="inviteTab === 'search'" (click)="inviteTab = 'search'"
         *ngIf="invitePanelCampaign?.campaignMode !== 'tier_filtered_open'">
@@ -989,7 +989,7 @@
 
       <div *ngIf="!invitesLoading">
         <!-- Bucket summary chips -->
-        <div class="invite-buckets" *ngIf="invites.length > 0">
+        <div class="invite-buckets" *ngIf="filteredInvitesByRole.length > 0">
           <span class="bucket-chip bucket-accepted" *ngIf="getBucketCount('accepted_unlocked') > 0">
             <i class="bi bi-check-circle-fill"></i>
             {{ getBucketCount('accepted_unlocked') }} Accepted &amp; Unlocked
@@ -1012,8 +1012,8 @@
           </span>
         </div>
 
-        <div class="invited-list" *ngIf="invites.length > 0">
-          <div class="invited-row" *ngFor="let inv of invites">
+          <div class="invited-list" *ngIf="filteredInvitesByRole.length > 0">
+          <div class="invited-row" *ngFor="let inv of filteredInvitesByRole">
             <app-user-avatar
               [name]="inv.influencerId?.name || inv.influencerId?.username || 'Influencer'"
               [src]="getInfluencerAvatar(inv.influencerId)"
@@ -1134,7 +1134,7 @@
             </div>
           </div>
         </div>
-        <div class="drawer-empty" *ngIf="invites.length === 0">
+        <div class="drawer-empty" *ngIf="filteredInvitesByRole.length === 0">
           <i class="bi bi-people"></i>
             <p>No {{ inviteTargetPluralLabel.toLowerCase() }} invited yet. Use <strong>Find &amp; Invite {{ inviteTargetPluralLabel }}</strong> to get started.</p>
         </div>
