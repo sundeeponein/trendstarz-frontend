@@ -1,0 +1,100 @@
+
+> frontend@0.0.0 build
+> ng build --configuration production
+
+❯ Building...
+✔ Building...
+Browser bundles     
+Initial chunk files  | Names                               |  Raw size | Estimated transfer size
+styles-DTY2TVQ2.css  | styles                              | 264.75 kB |                29.79 kB
+chunk-372Z6ZVE.js    | -                                   | 184.16 kB |                54.65 kB
+main-RYS7WELN.js     | main                                | 146.92 kB |                22.47 kB
+chunk-QXQE5N7O.js    | -                                   |  83.76 kB |                20.78 kB
+chunk-L3DAV2TZ.js    | -                                   |  62.24 kB |                17.18 kB
+chunk-LRWZGE3D.js    | -                                   |  50.56 kB |                 9.91 kB
+chunk-LNCJZMTI.js    | -                                   |  18.21 kB |                 3.43 kB
+chunk-TAR3FGG6.js    | -                                   |  13.83 kB |                 4.36 kB
+chunk-K3XMGU7P.js    | -                                   |  11.31 kB |                 3.34 kB
+chunk-CCN2SJSZ.js    | -                                   |   5.34 kB |                 1.68 kB
+chunk-HRN2X6ZR.js    | -                                   |   2.58 kB |               886 bytes
+chunk-S32GPSIK.js    | -                                   |   1.22 kB |               556 bytes
+chunk-PQFMY7FT.js    | -                                   | 887 bytes |               887 bytes
+chunk-Z6ZN4GR4.js    | -                                   | 665 bytes |               665 bytes
+chunk-63D4GRZQ.js    | -                                   | 624 bytes |               624 bytes
+chunk-I7Z3LC7I.js    | -                                   | 590 bytes |               590 bytes
+chunk-JPTO7IT5.js    | -                                   | 392 bytes |               392 bytes
+chunk-DDEYEMYS.js    | -                                   | 290 bytes |               290 bytes
+chunk-M6HMTV2Z.js    | -                                   | 287 bytes |               287 bytes
+
+                     | Initial total                       | 848.62 kB |               172.77 kB
+
+Lazy chunk files     | Names                               |  Raw size | Estimated transfer size
+chunk-6VUX3VRB.js    | campaign-management-component       | 304.69 kB |                51.87 kB
+chunk-FXKTTSZB.js    | -                                   | 112.90 kB |                22.91 kB
+chunk-T7R5JOWX.js    | influencer-profile-component        |  99.56 kB |                19.97 kB
+chunk-PCDF6ID3.js    | influencer-registration-component   |  92.11 kB |                18.64 kB
+chunk-GBGEKML5.js    | brand-profile-component             |  84.45 kB |                17.23 kB
+chunk-VTPWEJFA.js    | brand-registration-component        |  83.55 kB |                17.13 kB
+chunk-4STBJDF4.js    | admin-management-component          |  80.53 kB |                13.89 kB
+chunk-YWAHCZMY.js    | admin-payments-component            |  71.78 kB |                10.72 kB
+chunk-P57CF5EX.js    | admin-user-table-component          |  66.16 kB |                11.74 kB
+chunk-52QKNIPE.js    | photographer-registration-component |  62.38 kB |                12.81 kB
+chunk-FARMQQ56.js    | brand-profile-view-component        |  60.94 kB |                12.39 kB
+chunk-YMF47PR6.js    | influencer-dashboard-component      |  59.25 kB |                12.72 kB
+chunk-RXEBNI4S.js    | influencer-profile-view-component   |  57.73 kB |                11.12 kB
+chunk-ZNGWTXZE.js    | -                                   |  54.75 kB |                18.92 kB
+chunk-7MAXLDWU.js    | search-component                    |  47.98 kB |                10.01 kB
+...and 40 more lazy chunks files. Use "--verbose" to show all the files.
+
+
+Server bundles      
+Initial chunk files  | Names                               |  Raw size
+server.mjs           | server                              | 814.14 kB |                        
+main.server.mjs      | main.server                         | 592.64 kB |                        
+polyfills.server.mjs | polyfills.server                    | 233.73 kB |                        
+chunk-FOKWZ33D.mjs   | -                                   | 183.10 kB |                        
+chunk-PG5S2IUJ.mjs   | -                                   |  83.83 kB |                        
+chunk-RVKXLLQE.mjs   | -                                   |  61.86 kB |                        
+chunk-DIRDR2ZI.mjs   | -                                   |  50.63 kB |                        
+chunk-ZCVKKHY5.mjs   | -                                   |  18.24 kB |                        
+chunk-L3CSOYYN.mjs   | -                                   |  14.11 kB |                        
+chunk-WMT473VU.mjs   | -                                   |  11.38 kB |                        
+chunk-X3XMITM2.mjs   | -                                   |   5.41 kB |                        
+chunk-WNGYQOIJ.mjs   | -                                   |   2.62 kB |                        
+chunk-BBJ2OP3G.mjs   | -                                   |   1.34 kB |                        
+chunk-F7NLTVJO.mjs   | -                                   |   1.26 kB |                        
+chunk-T55IDOPT.mjs   | -                                   | 976 bytes |                        
+chunk-RNKH4RCX.mjs   | -                                   | 920 bytes |                        
+chunk-BC2BMZA3.mjs   | -                                   | 698 bytes |                        
+chunk-ICVBSIUS.mjs   | -                                   | 658 bytes |                        
+chunk-NMJWQVPH.mjs   | -                                   | 626 bytes |                        
+chunk-ZV3KEFU7.mjs   | -                                   | 426 bytes |                        
+chunk-4GKASS3I.mjs   | -                                   | 325 bytes |                        
+chunk-USYHETVY.mjs   | -                                   | 320 bytes |                        
+
+Lazy chunk files     | Names                               |  Raw size
+chunk-PGYI2QXM.mjs   | campaign-management-component       | 304.77 kB |                        
+chunk-P7OLOO5T.mjs   | -                                   | 112.97 kB |                        
+chunk-STHHRSNH.mjs   | influencer-profile-component        |  99.65 kB |                        
+chunk-7KE24OY5.mjs   | influencer-registration-component   |  92.20 kB |                        
+chunk-B64GG7OV.mjs   | brand-profile-component             |  84.53 kB |                        
+chunk-KML25UAC.mjs   | brand-registration-component        |  83.63 kB |                        
+chunk-36PD47QZ.mjs   | admin-management-component          |  80.60 kB |                        
+chunk-VKLK4TKD.mjs   | admin-payments-component            |  71.85 kB |                        
+chunk-WA5ZZQ4C.mjs   | admin-user-table-component          |  66.23 kB |                        
+chunk-YVZCOZAJ.mjs   | photographer-registration-component |  62.45 kB |                        
+chunk-D2O2KOON.mjs   | brand-profile-view-component        |  61.02 kB |                        
+chunk-R5DPYFXT.mjs   | influencer-dashboard-component      |  59.33 kB |                        
+chunk-23HAJPMQ.mjs   | influencer-profile-view-component   |  57.80 kB |                        
+chunk-OWAYI457.mjs   | -                                   |  54.81 kB |                        
+chunk-SKFKYBNJ.mjs   | search-component                    |  48.05 kB |                        
+...and 42 more lazy chunks files. Use "--verbose" to show all the files.
+
+Prerendered 12 static routes.
+Application bundle generation complete. [50.581 seconds] - 2026-05-20T18:04:28.434Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/pages/campaign-management/campaign-management.component.scss exceeded maximum budget. Budget 50.00 kB was not met by 2.98 kB with a total of 52.98 kB.[0m
+
+
+Output location: /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/dist/frontend
+
