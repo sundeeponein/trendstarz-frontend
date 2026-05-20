@@ -339,6 +339,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get invitePanelLockedTargetRole(): 'influencer' | 'photographer' | null {
     const campaign: any = this.invitePanelCampaign || {};
+    if (!this.isInfluencerView && !this.isPhotographerView) {
+      // Brand users can invite only influencers from campaign management.
+      return 'influencer';
+    }
+    const ownerType = String(campaign?.ownerType || '').trim().toLowerCase();
+    if (ownerType === 'brand') {
+      // Brand campaigns invite influencers only.
+      return 'influencer';
+    }
     const explicit = String(
       campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || ''
     ).trim().toLowerCase();
