@@ -319,6 +319,47 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.campaigns.filter(c => this.getCampaignTabStatus(c) === status).length;
   }
 
+  get filteredInvitesByRole(): any[] {
+    return this.invites.filter(invite => {
+      if (this.inviteTargetRole === 'influencer') {
+        // Some invites may have role or type field, fallback to presence of influencerId
+        return (
+          (invite.role && String(invite.role).toLowerCase() === 'influencer') ||
+          !!invite.influencerId
+        );
+      } else if (this.inviteTargetRole === 'photographer') {
+        return (
+          (invite.role && String(invite.role).toLowerCase() === 'photographer') ||
+          !!invite.photographerId
+        );
+      }
+      return false;
+    });
+  }
+
+  get invitePanelLockedTargetRole(): 'influencer' | 'photographer' | null {
+    const campaign: any = this.invitePanelCampaign || {};
+    const explicit = String(
+      campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || ''
+    ).trim().toLowerCase();
+    if (explicit === 'influencer' || explicit === 'photographer') {
+      return explicit;
+    }
+    const creatorRole = String(campaign?.createdByRole || '').trim().toLowerCase();
+    if (creatorRole === 'photographer') {
+      return 'influencer';
+    }
+    return null;
+  }
+
+  get showInfluencerInviteTargetTab(): boolean {
+    return this.invitePanelLockedTargetRole !== 'photographer';
+  }
+
+  get showPhotographerInviteTargetTab(): boolean {
+    return this.invitePanelLockedTargetRole !== 'influencer';
+  }
+
   private getCampaignTabStatus(campaign: Campaign): TabStatus {
     const status = String(campaign?.status || '').trim().toLowerCase();
     const hasStartedWork = (this.campaignInvitesMap.get(String(campaign?._id || '')) || []).some((invite: any) => {
@@ -410,6 +451,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   switchInviteTarget(role: 'influencer' | 'photographer') {
+    const lockedRole = this.invitePanelLockedTargetRole;
+    if (lockedRole && role !== lockedRole) return;
     if (this.inviteTargetRole === role) return;
     this.inviteTargetRole = role;
     this.influencerSearch = '';
@@ -1134,7 +1177,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.invitePanelCampaign = campaign;
     this.invitePanelOpen = true;
     this.inviteTab = 'invited';
-    this.inviteTargetRole = 'influencer';
+    this.inviteTargetRole = this.invitePanelLockedTargetRole || 'influencer';
     this.invitesLoading = true;
     this.invites = [];
     this.config.getInvitesByCampaign(campaign._id!).subscribe({
