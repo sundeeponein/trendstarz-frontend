@@ -128,17 +128,36 @@ export class CampaignReviewComponent implements OnInit {
     if (this.campaignApprovalStatusFilter === 'all') {
       return this.allCampaignApprovals;
     }
-    return this.allCampaignApprovals.filter((campaign) => String(campaign?.status || '').toLowerCase() === this.campaignApprovalStatusFilter);
+    return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, this.campaignApprovalStatusFilter));
+  }
+
+  private matchesStatusFilter(
+    campaign: any,
+    filter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all',
+  ): boolean {
+    if (filter === 'all') return true;
+    return this.normalizeReviewStatus(campaign?.status) === filter;
+  }
+
+  private normalizeReviewStatus(status: unknown): 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' | 'draft' | 'completed' | 'unknown' {
+    const normalized = String(status || '').trim().toLowerCase();
+    if (!normalized) return 'unknown';
+    if (normalized === 'pending_review' || normalized === 'pending') return 'pending_review';
+    if (normalized === 'needs_changes' || normalized === 'needschange' || normalized === 'changes_requested') return 'needs_changes';
+    if (normalized === 'rejected' || normalized === 'reject') return 'rejected';
+    if (normalized === 'active' || normalized === 'approved' || normalized === 'live') return 'active';
+    if (normalized === 'draft') return 'draft';
+    if (normalized === 'completed') return 'completed';
+    if (normalized === 'all') return 'all';
+    return 'unknown';
   }
 
   private isPendingCampaign(campaign: any): boolean {
-    const status = String(campaign?.status || '').toLowerCase();
-    return status === 'pending_review' || status === 'pending';
+    return this.normalizeReviewStatus(campaign?.status) === 'pending_review';
   }
 
   private isActiveCampaign(campaign: any): boolean {
-    const status = String(campaign?.status || '').toLowerCase();
-    return status === 'active';
+    return this.normalizeReviewStatus(campaign?.status) === 'active';
   }
 
   private hasInfluencerProgress(campaign: any): boolean {
@@ -177,7 +196,7 @@ export class CampaignReviewComponent implements OnInit {
 
   getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all'): number {
     if (status === 'all') return this.allCampaignApprovals.length;
-    return this.allCampaignApprovals.filter((campaign) => String(campaign?.status || '').toLowerCase() === status).length;
+    return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, status)).length;
   }
 
   onCampaignApprovalFilterChange() {
@@ -367,8 +386,8 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   campaignStatusLabel(status: string): string {
-    const normalized = String(status || '').toLowerCase();
-    if (normalized === 'pending_review' || normalized === 'pending') return 'Pending Review';
+    const normalized = this.normalizeReviewStatus(status);
+    if (normalized === 'pending_review') return 'Pending Review';
     if (normalized === 'needs_changes') return 'Needs Changes';
     if (normalized === 'active') return 'Approved / Live';
     if (normalized === 'rejected') return 'Rejected';
