@@ -20,6 +20,7 @@ type Tab = 'summary' | 'pay' | 'status';
 export class CampaignPaymentComponent implements OnInit, OnChanges {
   @Input() campaignId?: string | null = null;
   @Input() visible = false;
+  @Input() initialTab: Tab = 'summary';
   @Output() visibleChange = new EventEmitter<boolean>();
 
   loading = false;
@@ -78,7 +79,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     this.paymentProofUrl = '';
     this.paymentProofPreview = null;
     this.statusTransactions = [];
-    this.activeTab = 'summary';
+    this.activeTab = this.initialTab || 'summary';
   }
 
   setTab(t: Tab) { this.activeTab = t; }

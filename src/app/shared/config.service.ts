@@ -705,6 +705,18 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
   }
 
+  getCampaignTransactionStatus(campaignId: string): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-transactions/campaign/${campaignId}/status`).pipe(
+      map(res => {
+        const d = this.extractData<any>(res);
+        if (Array.isArray(d)) return d;
+        if (Array.isArray(res?.data)) return res.data;
+        return [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   deleteCampaign(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/campaigns/${id}`);
   }
