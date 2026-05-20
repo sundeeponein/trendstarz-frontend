@@ -62,6 +62,13 @@ async function mockAdminRoutes(page: Page) {
   });
 }
 
+test.describe('Admin Route Protection', () => {
+  test('redirects unauthenticated users from admin dashboard to login', async ({ page }) => {
+    await page.goto('/admin/admin-dashboard');
+    await expect(page).toHaveURL(/\/auth\/login(\?|$)/);
+  });
+});
+
 // ──────────────── Admin Dashboard ─────────────────────────────
 test.describe('Admin Dashboard', () => {
   test.beforeEach(async ({ page }) => {

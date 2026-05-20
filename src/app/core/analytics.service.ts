@@ -25,6 +25,7 @@ export class AnalyticsService implements OnDestroy {
   private flushTimer?: number;
   private readonly FLUSH_INTERVAL_MS = 30000; // 30 seconds
   private readonly ANALYTICS_ENDPOINT = `${environment.apiBaseUrl}/analytics/events`;
+  private readonly GA_MEASUREMENT_ID = 'G-5912TSJYW5';
 
   private readonly blockedPathPrefixes = ['/admin'];
   private readonly publicExactPaths = new Set([
@@ -196,6 +197,7 @@ export class AnalyticsService implements OnDestroy {
    */
   trackPageView(rawUrl: string, pageTitle?: string): void {
     const path = this.normalizePath(rawUrl);
+    this.updateGlobalAnalyticsDisableFlag(path);
     if (!this.shouldTrackPath(path)) return;
     if (!this.shouldTrackPublicPageView(path)) return;
 
@@ -340,5 +342,12 @@ export class AnalyticsService implements OnDestroy {
   private getAbsoluteUrl(path: string): string {
     if (typeof window === 'undefined') return path;
     return `${window.location.origin}${path}`;
+  }
+
+  private updateGlobalAnalyticsDisableFlag(path: string): void {
+    if (typeof window === 'undefined') return;
+
+    const isInternalPath = !this.shouldTrackPath(path);
+    (window as any)[`ga-disable-${this.GA_MEASUREMENT_ID}`] = isInternalPath;
   }
 }

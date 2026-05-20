@@ -25,6 +25,19 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
 
+  <script>
+    (function () {
+      var path = (window.location && window.location.pathname) || '/';
+      var internalPrefixes = ['/admin', '/brand-dashboard', '/influencer-dashboard', '/photographer-dashboard'];
+      var isInternal = internalPrefixes.some(function (prefix) {
+        return path === prefix || path.indexOf(prefix + '/') === 0;
+      });
+      if (isInternal) {
+        window['ga-disable-G-5912TSJYW5'] = true;
+      }
+    })();
+  </script>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-5912TSJYW5"></script>
   <script>
