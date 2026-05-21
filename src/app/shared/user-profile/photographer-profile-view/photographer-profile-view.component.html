@@ -16,6 +16,7 @@
         <img [src]="displayImage" (error)="onImgError($event)" alt="Photographer photo" class="hero-avatar" />
         <div class="hero-copy">
           <h1 class="hero-name">{{ photographer.name }}</h1>
+          <p class="hero-username" *ngIf="displayUsername">@{{ displayUsername }}</p>
           <div class="hero-tags" *ngIf="displayTags.length">
             <span
               *ngFor="let tag of displayTags"

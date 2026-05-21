@@ -1,216 +1,343 @@
-<div class="profile-shell">
-  <div class="profile-wrap">
+<div class="registration-shell">
+  <div class="registration-wrap">
+    <main class="content-panel">
 
-    <div *ngIf="loading" class="loading-state">Loading profile...</div>
+      <div *ngIf="loading" class="text-center py-5 text-muted">Loading profile...</div>
 
-    <ng-container *ngIf="!loading">
-      <h1 class="page-title">My Profile</h1>
-      <p class="page-subtitle">Update your Photographer / Videographer profile.</p>
+      <ng-container *ngIf="!loading">
 
-      <div *ngIf="commissionAccessTags.length" class="alert alert-info mb-4">
-        <strong>Access Badge:</strong>
-        <span class="badge rounded-pill bg-primary ms-2 me-2" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
-      </div>
-
-      <form [formGroup]="form" (ngSubmit)="onSave()">
-
-        <!-- Profile Photo -->
-        <div class="section-card">
-          <h3>Profile Photo</h3>
-          <div class="profile-upload-block">
-            <div class="profile-upload-box" [class.has-image]="profileImagePreview" (click)="profileFileInput.click()">
-              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile" class="profile-upload-preview" />
-              <ng-container *ngIf="!profileImagePreview">
-                <span class="upload-icon">📷</span>
-                <span class="upload-label">Upload photo</span>
-              </ng-container>
-              <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" *ngIf="profileImagePreview" (click)="removeProfileImage()">Remove</button>
-          </div>
-        </div>
-
-        <!-- Basic Info -->
-        <div class="section-card">
-          <h3>Basic Info</h3>
-          <div class="field-grid">
-            <div class="field-block">
-              <label>Full Name *</label>
-              <input formControlName="name" type="text" class="form-control" />
-            </div>
-            <div class="field-block">
-              <label>Mobile Number *</label>
-              <input formControlName="phoneNumber" type="tel" class="form-control" />
-            </div>
-            <div class="field-block">
-              <label>Date of Birth</label>
-              <input formControlName="dateOfBirth" type="date" class="form-control" />
-            </div>
-            <div class="field-block">
-              <label>Gender</label>
-              <select formControlName="gender" class="form-select">
-                <option value="">Prefer not to say</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Non-binary">Non-binary</option>
-              </select>
-            </div>
-            <div class="field-block">
-              <label>Portfolio / Website</label>
-              <input formControlName="portfolio" type="url" class="form-control" placeholder="https://yourportfolio.com" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Location -->
-        <div class="section-card" formGroupName="location">
-          <h3>Location</h3>
-          <div class="field-grid">
-            <div class="field-block">
-              <label>State</label>
-              <select formControlName="state" class="form-select">
-                <option value="">Select state</option>
-                <option *ngFor="let s of states" [value]="s._id || s.name">{{ s.name }}</option>
-              </select>
-            </div>
-            <div class="field-block">
-              <label>District</label>
-              <select formControlName="district" class="form-select">
-                <option value="">Select district</option>
-                <option *ngFor="let d of districts" [value]="d._id || d.name">{{ d.name }}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Skills -->
-        <div class="section-card">
-          <h3>Skills / Specialties</h3>
-          <div class="chip-list">
-            <button type="button" class="chip" *ngFor="let skill of skillOptions"
-              [class.chip--selected]="isSkillSelected(skill)"
-              (click)="toggleSkill(skill)">
-              {{ skill }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Pricing -->
-        <div class="section-card mt-1">
-          <h3>Content &amp; Starting Rates</h3>
-          <p class="field-hint">Check the services you offer and set your rate.</p>
-          <div class="pricing-rows">
-            <div class="pricing-row" *ngFor="let p of pricingOptions">
-              <label class="pricing-check-label">
-                <input type="checkbox" [(ngModel)]="pricingState[p.key].enabled" [ngModelOptions]="{standalone: true}" />
-                <span>{{ p.label }}</span>
-              </label>
-              <div class="pricing-input-wrap" *ngIf="pricingState[p.key].enabled">
-                <span class="currency-symbol">₹</span>
-                <input type="number" min="0" class="form-control pricing-input"
-                  [(ngModel)]="pricingState[p.key].price"
-                  [ngModelOptions]="{standalone: true}"
-                  placeholder="0" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Equipment -->
-        <div class="section-card">
-          <h3>Equipment</h3>
-          <div class="chip-list">
-            <button type="button" class="chip" *ngFor="let eq of equipmentOptions"
-              [class.chip--selected]="isEquipmentSelected(eq)"
-              (click)="toggleEquipment(eq)">
-              {{ eq }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Social Platforms -->
-        <div class="section-card">
-          <h3>Social Platforms <span class="text-muted" style="font-size:0.8rem;font-weight:400;">(for trust)</span></h3>
-          <p class="field-hint">Add at least one so clients can verify you before hiring.</p>
-          <div class="platform-cards">
-            <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
-              <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
-              <span class="platform-name">{{ platform.name }}</span>
-            </div>
-          </div>
-
-          <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
-            <div class="platform-tab-strip">
-              <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
-                [class.platform-tab--active]="activePlatformTab === platform._id"
-                (click)="activePlatformTab = platform._id">
-                <i [class]="platform.icon"></i> {{ platform.name }}
-              </button>
-              <div class="platform-tab-spacer"></div>
-              <button type="button" class="tab-remove" *ngIf="activePlatformTab"
-                (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
-                <i class="bi bi-x-lg"></i> Remove
-              </button>
-            </div>
-
-            <ng-container *ngIf="activePlatformTab">
-              <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2">
-                <div class="platform-details-header">
-                  <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
-                  <span class="platform-name">{{ platform.name }}</span>
-                  <button type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
-                </div>
-
-                <div class="platform-details-body">
-                  <div class="field-grid">
-                    <div class="field-block">
-                      <label>{{ platform.handleLabel || 'Handle' }}</label>
-                      <input type="text" class="form-control" [(ngModel)]="platformForms[platform._id].handle"
-                      [ngModelOptions]="{standalone: true}"
-                      (blur)="stripAtSign(platform._id)" placeholder="@yourhandle" />
-                      <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                        [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                        target="_blank" rel="noopener noreferrer" class="verify-profile-link">
-                        <i class="bi bi-box-arrow-up-right"></i> Verify profile
-                      </a>
-                    </div>
-                    <div class="field-block">
-                      <label>{{ platform.followersLabel || 'Followers' }}</label>
-                      <input type="number" min="0" class="form-control" [(ngModel)]="platformForms[platform._id].followersCount"
-                        [ngModelOptions]="{standalone: true}" placeholder="0" />
-                    </div>
-                    <div class="field-block">
-                      <label>Tier</label>
-                      <select class="form-select" [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}">
-                        <option value="">Select tier</option>
-                        <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </ng-container>
-          </div>
-        </div>
-
-        <!-- Contact Preferences -->
-        <div class="section-card" formGroupName="contact">
-          <h3>Contact Preferences</h3>
-          <div class="contact-checks">
-            <label class="contact-check-item"><input type="checkbox" formControlName="whatsapp" /> WhatsApp</label>
-            <label class="contact-check-item"><input type="checkbox" formControlName="email" /> Email</label>
-            <label class="contact-check-item"><input type="checkbox" formControlName="call" /> Phone Call</label>
-          </div>
-        </div>
-
-        <div class="save-bar">
-          <button type="submit" class="btn btn-primary btn-lg" [disabled]="saving || uploadingImage">
-            {{ saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Profile' }}
+        <div class="reg-tab-strip">
+          <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 1" [class.reg-tab--done]="step1Complete" (click)="goToStep(1)">
+            <span class="reg-tab-icon">{{ step1Complete ? '✓' : '1' }}</span>
+            <span class="reg-tab-label">Profile</span>
+          </button>
+          <div class="reg-tab-line" [class.reg-tab-line--done]="step1Complete"></div>
+          <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 2" [class.reg-tab--done]="step2Complete" (click)="goToStep(2)">
+            <span class="reg-tab-icon">{{ step2Complete ? '✓' : '2' }}</span>
+            <span class="reg-tab-label">Social Media</span>
+          </button>
+          <div class="reg-tab-line" [class.reg-tab-line--done]="step2Complete"></div>
+          <button type="button" class="reg-tab" [class.reg-tab--active]="currentStep === 3" [class.reg-tab--done]="step3Complete" (click)="goToStep(3)">
+            <span class="reg-tab-icon">{{ step3Complete ? '✓' : '3' }}</span>
+            <span class="reg-tab-label">Plan</span>
           </button>
         </div>
 
-      </form>
-    </ng-container>
+        <div *ngIf="!phoneVerified" class="alert alert-warning mb-4">
+          <strong><i class="bi bi-hourglass-split me-1"></i>Mobile verification pending.</strong>
+          Mobile verification is manually reviewed within 24-48 hours.
+          <span *ngIf="verificationCallNumber"> Expected call-from number: <strong>{{ verificationCallNumber }}</strong>.</span>
+          Please ensure your mobile number is valid and reachable.
+        </div>
+
+        <div *ngIf="commissionAccessTags.length" class="alert alert-info mb-4">
+          <strong>Access Badge:</strong>
+          <span class="badge rounded-pill bg-primary ms-2 me-2" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSave()">
+
+          <section class="form-card" *ngIf="currentStep === 1">
+            <h2>Profile</h2>
+            <p class="section-subtitle">Update your core account and contact details.</p>
+
+            <div class="field-block profile-upload-block">
+              <label>
+                Profile Photo
+              </label>
+              <div class="profile-upload-box" [class.has-image]="profileImagePreview" [class.clickable]="isEditMode" (click)="isEditMode && profileFileInput.click()">
+                <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile" class="profile-upload-preview" />
+                <ng-container *ngIf="!profileImagePreview">
+                  <span class="profile-upload-icon">📷</span>
+                  <span class="profile-upload-label">Upload photo</span>
+                  <span class="profile-upload-hint">JPG, PNG up to 1 MB</span>
+                </ng-container>
+                <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview && isEditMode" (click)="removeProfileImage()">Remove</button>
+            </div>
+
+            <div class="field-grid">
+              <div class="field-block">
+                <label>Full Name <span class="text-danger">*</span></label>
+                <input formControlName="name" type="text" class="form-control" />
+              </div>
+              <div class="field-block">
+                <label>Username <span class="text-danger">*</span>
+                  <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> - used in your profile link</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/photographer/</span>
+                  <input formControlName="username" type="text" class="form-control" />
+                </div>
+              </div>
+              <div class="field-block">
+                <label>Mobile Number <span class="text-danger">*</span></label>
+                <input formControlName="phoneNumber" type="tel" class="form-control" />
+              </div>
+              <div class="field-block">
+                <label>Date of Birth</label>
+                <input formControlName="dateOfBirth" type="date" class="form-control" />
+              </div>
+              <div class="field-block">
+                <label>Gender <span class="text-muted">(Optional)</span></label>
+                <select formControlName="gender" class="form-control">
+                  <option value="">Prefer not to say</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
+                </select>
+              </div>
+              <div class="field-block">
+                <label>Portfolio / Website</label>
+                <input formControlName="portfolio" type="url" class="form-control" placeholder="https://yourportfolio.com" />
+              </div>
+            </div>
+
+            <div class="field-block full-width payout-block mt-3" formGroupName="payout">
+              <h3 class="payout-heading">
+                <i class="bi bi-bank2"></i>
+                Payout details
+                <small>Where you receive your campaign earnings</small>
+              </h3>
+              <div class="field-grid">
+                <div class="field-block">
+                  <label>UPI ID</label>
+                  <input formControlName="upiId" type="text" class="form-control" placeholder="e.g. yourname@upi" />
+                </div>
+                <div class="field-block">
+                  <label>Mobile (GPay / PhonePe)</label>
+                  <input formControlName="mobile" type="tel" class="form-control" placeholder="10-digit mobile number" />
+                </div>
+                <div class="field-block full-width">
+                  <label>Account holder name</label>
+                  <input formControlName="accountHolderName" type="text" class="form-control" placeholder="Name on UPI / bank account" />
+                </div>
+              </div>
+              <p class="payout-hint">Admin will use these details to send your earnings. You can also confirm or update this information when accepting a campaign.</p>
+            </div>
+
+            <div class="actions-row dual">
+              <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
+              <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+              <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true">Reset Password</button>
+              <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+            </div>
+          </section>
+
+          <section class="form-card" *ngIf="currentStep === 2">
+            <h2>Social Media</h2>
+            <p class="section-subtitle">Manage your location, skills, pricing and social platforms.</p>
+
+            <div class="field-grid" formGroupName="location">
+              <div class="field-block">
+                <label>State <span class="text-danger">*</span></label>
+                <select formControlName="state" class="form-control">
+                  <option value="">Select your state</option>
+                  <option *ngFor="let s of states" [value]="s._id || s.name">{{ s.name }}</option>
+                </select>
+              </div>
+              <div class="field-block">
+                <label>District <span class="text-danger">*</span></label>
+                <select formControlName="district" class="form-control">
+                  <option value="">Select your district</option>
+                  <option *ngFor="let d of districts" [value]="d._id || d.name">{{ d.name }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-block mt-3">
+              <label>Skills / Specialties</label>
+              <div class="chip-list">
+                <button type="button" class="chip" *ngFor="let skill of skillOptions"
+                  [class.chip--selected]="isSkillSelected(skill)"
+                  [disabled]="!isEditMode"
+                  (click)="toggleSkill(skill)">
+                  {{ skill }}
+                </button>
+              </div>
+            </div>
+
+            <div class="field-block mt-3">
+              <label>Content &amp; Starting Rates</label>
+              <p class="section-subtitle mb-2">Check the services you offer and set your rate.</p>
+              <div class="pricing-rows">
+                <div class="pricing-row" *ngFor="let p of pricingOptions">
+                  <label class="pricing-check-label">
+                    <input type="checkbox" [(ngModel)]="pricingState[p.key].enabled" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
+                    <span>{{ p.label }}</span>
+                  </label>
+                  <div class="pricing-input-wrap" *ngIf="pricingState[p.key].enabled">
+                    <span class="currency-symbol">₹</span>
+                    <input type="number" min="0" class="form-control pricing-input"
+                      [(ngModel)]="pricingState[p.key].price"
+                      [ngModelOptions]="{standalone: true}"
+                      [disabled]="!isEditMode"
+                      placeholder="0" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-block mt-3">
+              <label>Equipment</label>
+              <div class="chip-list">
+                <button type="button" class="chip" *ngFor="let eq of equipmentOptions"
+                  [class.chip--selected]="isEquipmentSelected(eq)"
+                  [disabled]="!isEditMode"
+                  (click)="toggleEquipment(eq)">
+                  {{ eq }}
+                </button>
+              </div>
+            </div>
+
+            <div class="field-block mt-3">
+              <label>Social Platforms <span class="text-muted" style="font-size:0.8rem;font-weight:400;">(for trust)</span></label>
+              <p class="section-subtitle mb-2">Add at least one so clients can verify you before hiring.</p>
+              <div class="platform-cards">
+                <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" [class.disabled]="!isEditMode" (click)="togglePlatform(platform)">
+                  <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                  <span class="platform-name">{{ platform.name }}</span>
+                </div>
+              </div>
+
+              <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
+                <div class="platform-tab-strip">
+                  <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
+                    [class.platform-tab--active]="activePlatformTab === platform._id"
+                    (click)="activePlatformTab = platform._id">
+                    <i [class]="platform.icon"></i> {{ platform.name }}
+                  </button>
+                  <div class="platform-tab-spacer"></div>
+                  <button type="button" class="tab-remove" *ngIf="activePlatformTab && isEditMode"
+                    (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
+                    <i class="bi bi-x-lg"></i> Remove
+                  </button>
+                </div>
+
+                <ng-container *ngIf="activePlatformTab">
+                  <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2">
+                    <div class="platform-details-header">
+                      <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+                      <span class="platform-name">{{ platform.name }}</span>
+                      <button type="button" class="close-btn" *ngIf="isEditMode" (click)="removePlatformCard(platform)">&times;</button>
+                    </div>
+
+                    <div class="platform-details-body">
+                      <div class="field-grid">
+                        <div class="field-block">
+                          <label>{{ platform.handleLabel || 'Handle' }}</label>
+                          <input type="text" class="form-control" [(ngModel)]="platformForms[platform._id].handle"
+                            [ngModelOptions]="{standalone: true}"
+                            [disabled]="!isEditMode"
+                            (blur)="stripAtSign(platform._id)" placeholder="@yourhandle" />
+                          <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                            [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
+                            target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+                            <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                          </a>
+                        </div>
+                        <div class="field-block">
+                          <label>Tier</label>
+                          <select class="form-select" [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode">
+                            <option value="">Select tier</option>
+                            <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+
+            <div class="actions-row dual mt-3">
+              <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+              <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
+              <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+              <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true">Reset Password</button>
+              <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
+            </div>
+          </section>
+
+          <section class="form-card" *ngIf="currentStep === 3">
+            <h2>Plan</h2>
+            <p class="section-subtitle">Manage your plan, pricing and contact channels.</p>
+
+            <div class="plan-info-banner">
+              <i class="bi bi-info-circle"></i>
+              Choose a plan to unlock more features and visibility to brands.
+            </div>
+
+            <div class="plan-cards">
+              <div class="plan-card" [class.selected]="selectedPlan === 'free'" (click)="selectPlan('free')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Starter</span>
+                  <span class="plan-card-price free">Free</span>
+                </div>
+                <div class="plan-card-desc">Public profile, Basic visibility, Apply to campaigns</div>
+              </div>
+              <div class="plan-card" [class.selected]="selectedPlan === 'premium'" (click)="selectPlan('premium')">
+                <div class="plan-card-top">
+                  <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-price premium">₹{{ premiumMonthlyPrice }}/mo</span>
+                </div>
+                <div class="plan-card-desc">Top placement, analytics, priority invites</div>
+              </div>
+            </div>
+
+            <div class="field-grid mt-3">
+              <div class="field-block full-width">
+                <label>Starting Price</label>
+                <input type="number" class="form-control" [ngModel]="getStartingPrice()" (ngModelChange)="setStartingPrice($event)" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" />
+                <div class="form-text mt-1" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
+              </div>
+
+              <div class="field-block full-width" formGroupName="contact">
+                <label class="contact-section-label">HOW TO CONTACT YOU?</label>
+                <div class="text-muted mt-1" style="font-size:0.9em;">
+                  Contact details are shared only with brands in campaign flow after acceptance.
+                  <br>
+                  <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+                </div>
+                <div class="contact-cards">
+                  <label class="contact-card" [class.selected]="form.get('contact.whatsapp')?.value">
+                    <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!isContactEditable()" />
+                    <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
+                    <span class="contact-card-label">WhatsApp</span>
+                  </label>
+                  <label class="contact-card" [class.selected]="form.get('contact.email')?.value">
+                    <input type="checkbox" formControlName="email" hidden [disabled]="!isContactEditable()" />
+                    <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
+                    <span class="contact-card-label">Email</span>
+                  </label>
+                  <label class="contact-card" [class.selected]="form.get('contact.call')?.value">
+                    <input type="checkbox" formControlName="call" hidden [disabled]="!isContactEditable()" />
+                    <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
+                    <span class="contact-card-label">Call</span>
+                  </label>
+                </div>
+                <div *ngIf="selectedPlan !== 'premium'" class="text-muted mt-1">Contact options are only available for Premium users.</div>
+              </div>
+            </div>
+
+            <div class="actions-row dual">
+              <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
+              <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
+              <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
+              <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true">Reset Password</button>
+              <a class="btn btn-outline-secondary" routerLink="/upgrade-premium">Upgrade Plan</a>
+              <button type="submit" *ngIf="isEditMode" class="btn btn-primary" [disabled]="saving || uploadingImage">
+                {{ saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Profile' }}
+              </button>
+            </div>
+          </section>
+
+          <app-reset-password-modal [(visible)]="showResetPasswordModal"></app-reset-password-modal>
+
+        </form>
+      </ng-container>
+
+    </main>
   </div>
 </div>

@@ -45,22 +45,22 @@
 
           <div class="field-grid">
             <div class="field-block">
-              <label>Brand Name</label>
+              <label>Brand Name <span class="text-danger">*</span></label>
               <input formControlName="brandName" type="text" class="form-control" />
               <div *ngIf="submitted && registrationForm.get('brandName')?.invalid" class="text-danger mt-1">Brand name is required.</div>
             </div>
             <div class="field-block">
-              <label>Brand Username
+              <label>Brand Username <span class="text-danger">*</span>
                 <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> — used in your profile link</span>
               </label>
               <div class="input-group">
                 <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/brand/</span>
-                <input formControlName="brandUsername" type="text" class="form-control" [readonly]="!isEditMode" />
+                <input formControlName="brandUsername" type="text" class="form-control" />
               </div>
               <div *ngIf="submitted && registrationForm.get('brandUsername')?.invalid" class="text-danger mt-1">Valid brand username is required.</div>
             </div>
             <div class="field-block">
-              <label>Email</label>
+              <label>Email <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
                 <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
@@ -68,12 +68,12 @@
               <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
             </div>
             <div class="field-block">
-              <label>Contact Person Name</label>
+              <label>Contact Person Name <span class="text-danger">*</span></label>
               <input formControlName="contactPersonName" type="text" class="form-control" />
               <div *ngIf="submitted && registrationForm.get('contactPersonName')?.invalid" class="text-danger mt-1">Contact person name is required.</div>
             </div>
             <div class="field-block">
-              <label>Phone Number</label>
+              <label>Phone Number <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 0.5em;">
                 <input formControlName="phoneNumber" type="text" class="form-control" />
                 <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
@@ -108,14 +108,6 @@
                 <option value="201-500">201-500</option>
                 <option value="500+">500+</option>
               </select>
-            </div>
-            <div class="field-block">
-              <label>Starting Price</label>
-              <div class="input-group">
-                <span class="input-group-text">₹</span>
-                <input formControlName="promotionalPrice" type="number" min="0" class="form-control" placeholder="500" />
-              </div>
-              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
             </div>
             <div class="field-block full-width">
               <label>Category / Industry <span class="text-danger">*</span></label>
@@ -207,7 +199,7 @@
 
           <div class="field-grid">
             <div class="field-block" formGroupName="location">
-              <label>State</label>
+              <label>State <span class="text-danger">*</span></label>
               <select formControlName="state" class="form-control">
                 <option value="" disabled>Select your state</option>
                 <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
@@ -216,7 +208,7 @@
             </div>
 
             <div class="field-block" formGroupName="location">
-              <label>District</label>
+              <label>District <span class="text-danger">*</span></label>
               <select formControlName="district" class="form-control">
                 <option value="" disabled>Select your district</option>
                 <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
@@ -225,7 +217,7 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Languages</label>
+              <label>Languages <span class="text-danger">*</span></label>
               <div class="chip-list">
                 <ng-container *ngIf="isEditMode; else viewLanguages">
                   <div
@@ -413,6 +405,15 @@
           </ng-template>
 
           <div class="field-grid mt-3">
+            <div class="field-block full-width">
+              <label>Starting Price</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input formControlName="promotionalPrice" type="number" min="0" class="form-control" placeholder="500" />
+              </div>
+              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
+            </div>
+
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">

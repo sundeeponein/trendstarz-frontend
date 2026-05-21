@@ -93,6 +93,10 @@ export class PhotographerProfileViewComponent implements OnInit {
     return [name, ...parts].filter(Boolean).join(' · ');
   }
 
+  get displayUsername(): string {
+    return String(this.photographer?.username || this.photographer?.userName || '').trim();
+  }
+
   get totalPricingEnabled(): number {
     return (this.photographer?.pricing || []).filter((p: any) => p?.enabled).length;
   }

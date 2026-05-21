@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize, timeout } from 'rxjs/operators';
 import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { DashboardService } from '../../services/dashboard.service';
@@ -309,7 +310,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       return;
     }
     const options = this.getInviteContentTypeOptions(invite);
-    const chosen = this.selectedContentTypes[inviteId];
+    let chosen = this.selectedContentTypes[inviteId];
+    if (status === 'accepted' && options.length === 1 && !chosen) {
+      chosen = options[0].key;
+      this.selectedContentTypes[inviteId] = chosen;
+    }
     if (status === 'accepted' && options.length > 0 && !chosen) {
       this.error = 'Please select what you will create for this campaign.';
       return;
@@ -317,22 +322,24 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
     const payout = status === 'accepted' ? this.selectedPayouts[inviteId] : undefined;
     this.responding = inviteId;
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).subscribe({
+    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
+      timeout(20000),
+      finalize(() => {
+        this.responding = null;
+        this.cdr.markForCheck();
+      }),
+    ).subscribe({
       next: () => {
         // update in-place — no full reload
         this.invites = this.invites.filter(i => i._id !== inviteId);
         if (this.selectedInvite?._id === inviteId) {
           this.selectedInvite = null;
         }
-        this.responding = null;
         this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
         this.loadAttentionCounts();
-        this.cdr.markForCheck();
       },
       error: (err: any) => {
-        this.responding = null;
         this.toast.error(err?.error?.message || 'Failed to respond to invite.');
-        this.cdr.markForCheck();
       }
     });
   }

@@ -80,6 +80,8 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       const user = this.getCurrentUser();
       if (user?.role === 'brand') {
         this.selectedRole = 'brand';
+      } else if (user?.role === 'photographer') {
+        this.selectedRole = 'photographer';
       } else {
         this.selectedRole = 'influencer';
       }
@@ -166,7 +168,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.discountLabel = this.selectedPlan?.discountLabel || '';
     if (!this.selectedPlan || !this.selectedPlan.offers) return;
     // Robust: check both discount keys for both roles
-    let discountKeys = ["discountOnBrandPro", "discountOnInfluencerPro"];
+    const discountKeys = ["discountOnBrandPro", "discountOnInfluencerPro", "discountOnPhotographerPro"];
     let offer = this.selectedPlan.offers.find((o: any) => discountKeys.includes(o.key) && o.value > 0);
     if (offer) {
       this.planDiscountPercent = offer.value;
@@ -320,7 +322,11 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     const token = this.getToken();
     if (!token) { this.upgradeError = 'Not logged in.'; this.upgrading = false; return; }
     const user = this.getCurrentUser();
-    const userType = user?.role === 'brand' ? 'Brand' : 'Influencer';
+    const userType = user?.role === 'brand'
+      ? 'Brand'
+      : user?.role === 'photographer'
+        ? 'Photographer'
+        : 'Influencer';
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http
       .post(
@@ -373,7 +379,8 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   private getToken(): string | null {
-    return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') : null;
+    if (!isPlatformBrowser(this.platformId)) return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
 
   private getCurrentUser(): any {
@@ -385,7 +392,15 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   public goToProfile() {
     if (!isPlatformBrowser(this.platformId)) return;
     const user = this.getCurrentUser();
-    this.router.navigate([user?.role === 'brand' ? '/brand-profile' : '/influencer-profile']);
+    if (user?.role === 'brand') {
+      this.router.navigate(['/brand-profile']);
+      return;
+    }
+    if (user?.role === 'photographer') {
+      this.router.navigate(['/photographer-profile']);
+      return;
+    }
+    this.router.navigate(['/influencer-profile']);
   }
 }
 

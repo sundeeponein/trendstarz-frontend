@@ -12,6 +12,7 @@ export class PhotographerUserCardComponent {
   @Input() profileImage = '';
   @Input() profileImages: any[] = [];
   @Input() name = '';
+  @Input() username = '';
   @Input() location: any = {};
   @Input() skills: string[] = [];
   @Input() pricing: any[] = [];
