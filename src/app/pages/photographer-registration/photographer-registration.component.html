@@ -26,7 +26,7 @@
           <!-- ── STEP 1: Basics ── -->
           <section class="form-card" *ngIf="currentStep === 1">
             <h2>Profile</h2>
-            <p class="section-subtitle">Set up your core profile and account details.</p>
+            <p class="section-subtitle">Set up your account basics to start your creator journey.</p>
 
             <!-- Profile Photo -->
             <div class="field-block profile-upload-block">
@@ -48,6 +48,19 @@
                 <label>Full Name <span class="text-danger">*</span></label>
                 <input formControlName="name" type="text" class="form-control" />
                 <div *ngIf="submitted && form.get('name')?.invalid" class="text-danger mt-1">Name is required.</div>
+              </div>
+
+              <!-- Username -->
+              <div class="field-block">
+                <label>Username <span class="text-danger">*</span>
+                  <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> - used in your profile link</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/photographer/</span>
+                  <input formControlName="username" type="text" class="form-control" placeholder="yourhandle" />
+                </div>
+                <div *ngIf="submitted && form.get('username')?.invalid && !duplicateUsernameError" class="text-danger mt-1">Username is required and can only contain letters, numbers, hyphens (-), and underscores (_).</div>
+                <div *ngIf="duplicateUsernameError" class="text-danger mt-1">{{ duplicateUsernameError }}</div>
               </div>
 
               <!-- Email -->
@@ -154,7 +167,7 @@
           <!-- ── STEP 2: Skills, Pricing & Social ── -->
           <section class="form-card" *ngIf="currentStep === 2">
             <h2>Social Media</h2>
-            <p class="section-subtitle">Add your discovery, pricing and platform details.</p>
+            <p class="section-subtitle">Manage your social channels and discovery filters.</p>
 
             <!-- Skills chips -->
             <div class="field-block">
@@ -327,16 +340,16 @@
                   <span class="plan-card-name">Starter</span>
                   <span class="plan-card-price free">Free</span>
                 </div>
-                <div class="plan-card-desc">Basic discovery, profile listing and campaign visibility.</div>
+                <div class="plan-card-desc">Public profile, Basic visibility, Apply to campaigns</div>
               </div>
 
               <div class="plan-card" [class.selected]="form.get('paymentOption')?.value === 'premium'"
                 (click)="form.get('paymentOption')?.setValue('premium')">
                 <div class="plan-card-top">
-                  <span class="plan-card-name">Pro Photographer <span class="plan-star">⭐</span></span>
+                  <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
                   <span class="plan-card-price premium">₹{{ premiumMonthlyPrice }}/mo</span>
                 </div>
-                <div class="plan-card-desc">Priority listing, higher trust visibility and premium campaign opportunities.</div>
+                <div class="plan-card-desc">Top placement, analytics, priority invites</div>
               </div>
             </div>
 
@@ -344,8 +357,8 @@
               <div class="premium-cta-content">
                 <span class="premium-cta-icon">🌟</span>
                 <div>
-                  <strong>Upgrade to Pro Photographer</strong>
-                  <p class="text-muted mb-0" style="font-size:0.9em;">After registration, log in to complete your premium upgrade.</p>
+                  <strong>Upgrade to Premium</strong>
+                  <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, and priority listing.</p>
                 </div>
               </div>
               <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>

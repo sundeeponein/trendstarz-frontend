@@ -91,9 +91,22 @@ export class PhotographerProfileComponent implements OnInit {
       .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
   }
 
+  private slugifyUsername(username: string): string {
+    return username
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
   ngOnInit() {
     this.form = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
+      username: [{ value: '', disabled: true }],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
       dateOfBirth: [{ value: '', disabled: true }],
       gender: [{ value: '', disabled: true }],
@@ -118,6 +131,12 @@ export class PhotographerProfileComponent implements OnInit {
 
     this.form.valueChanges.subscribe(() => this.refreshStepCompletion());
     this.form.statusChanges.subscribe(() => this.refreshStepCompletion());
+
+    // Keep username synced from Full Name during profile edit (influencer-style behavior).
+    this.form.get('name')?.valueChanges.subscribe((name: string) => {
+      if (!this.isEditMode) return;
+      this.form.get('username')?.setValue(this.slugifyUsername(name || ''), { emitEvent: false });
+    });
 
     this.form.get('location.state')?.valueChanges.subscribe(stateId => {
       if (stateId) {
@@ -177,6 +196,7 @@ export class PhotographerProfileComponent implements OnInit {
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({
           name: profile.name || '',
+          username: profile.username || '',
           phoneNumber: profile.phoneNumber || '',
           dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : '',
           gender: profile.gender || '',
@@ -479,6 +499,7 @@ export class PhotographerProfileComponent implements OnInit {
   enableEdit(): void {
     this.isEditMode = true;
     this.form.enable({ emitEvent: false });
+    this.form.get('username')?.disable({ emitEvent: false });
     this.originalFormValue = this.form.getRawValue();
     this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
     this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
@@ -506,7 +527,7 @@ export class PhotographerProfileComponent implements OnInit {
 
   onSave() {
     if (!this.isEditMode || this.form.invalid || this.saving) return;
-    const v = this.form.value;
+    const v = this.form.getRawValue();
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
       .map(p => ({ name: p.key, enabled: true, price: Number(this.pricingState[p.key].price) || 0 }));
@@ -531,6 +552,7 @@ export class PhotographerProfileComponent implements OnInit {
 
     const payload: any = {
       ...v,
+      username: this.form.get('username')?.value || '',
       pricing: pricingArr,
       socialMedia,
       payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
