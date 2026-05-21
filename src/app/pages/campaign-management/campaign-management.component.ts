@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize, timeout } from 'rxjs/operators';
 import { Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { AnalyticsService } from '../../core/analytics.service';
@@ -2329,7 +2330,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
     // Require content type selection if campaign has options
     const options = this.getInviteContentTypeOptions(invite);
-    const chosen = this.selectedInviteContentType[inviteId];
+    let chosen = this.selectedInviteContentType[inviteId];
+    if (status === 'accepted' && options.length === 1 && !chosen) {
+      chosen = options[0].key;
+      this.selectedInviteContentType[inviteId] = chosen;
+    }
     if (status === 'accepted' && options.length > 0 && !chosen) {
       this.showError('Please select what you will create for this campaign.');
       return;
@@ -2338,9 +2343,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
     // mark as actioning and call
     this.actioningInviteIds.add(inviteId);
-    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).subscribe({
-      next: () => {
+    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
+      timeout(20000),
+      finalize(() => {
         this.actioningInviteIds.delete(inviteId);
+        this.cd.detectChanges();
+      }),
+    ).subscribe({
+      next: () => {
         this.myInvites = this.myInvites.map(i =>
           i._id === inviteId ? { ...i, status } : i
         );
@@ -2363,12 +2373,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           this.invitePreview = { ...this.invitePreview, status };
         }
         this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
-        this.cd.detectChanges();
       },
       error: (err: any) => {
-        this.actioningInviteIds.delete(inviteId);
         this.toast.error(err?.error?.message || 'Failed to respond to invite.');
-        this.cd.detectChanges();
       }
     });
   }
