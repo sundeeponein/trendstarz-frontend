@@ -183,12 +183,24 @@ test('collaboration paid_collab: verification pending disables Pay button but Vi
 
   await page.goto('/campaigns');
   await seedCollabState(page, paidCollab, invites);
+  await page.evaluate((campaignId) => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return;
+    const comp = ng.getComponent(el);
+    try {
+      comp.campaignCollectionStatusById.set(campaignId, 'proof_submitted');
+      comp.cd?.detectChanges?.();
+    } catch {
+      // ignore
+    }
+  }, paidCollab._id);
 
   const payBtn = page.locator('.ccard-actions .btn-pay').first();
   await expect(payBtn).toBeVisible({ timeout: 10000 });
   await expect(payBtn).toBeDisabled();
 
-  const viewStatusBtn = page.locator('.pay-now-nudge--verify .btn-pay-now--secondary').first();
+  const viewStatusBtn = page.getByRole('button', { name: /View Status/i }).first();
   await expect(viewStatusBtn).toBeVisible({ timeout: 10000 });
   await viewStatusBtn.click({ force: true });
 

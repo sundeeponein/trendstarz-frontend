@@ -150,6 +150,13 @@ test.describe('Influencer Profile', () => {
         comp.cd?.detectChanges?.();
       } catch (e) {}
     }, step);
+    await page.waitForFunction((targetStep) => {
+      const el = document.querySelector('app-influencer-registration');
+      const ng = (window as any).ng;
+      if (!el || !ng) return false;
+      const comp = ng.getComponent(el);
+      return comp?.currentStep === targetStep;
+    }, step, { timeout: 10000 });
   }
 
   test('renders step 1 — Basic Details with profile data', async ({ page }) => {
@@ -211,16 +218,19 @@ test.describe('Influencer Profile', () => {
     // Enable edit first and wait for confirmation
     await page.click('button:has-text("Edit Profile")');
     await expect(page.locator('button:has-text("Cancel Edit")')).toBeVisible({ timeout: 5000 });
-    await forceProfileStep(page, 3);
-    await page.locator('h2:has-text("Plan")').first().waitFor({ timeout: 10000 });
+    const planTab = page.locator('.reg-tab:has-text("Plan"), .step-item:has-text("Plan")').first();
+    await planTab.waitFor({ state: 'visible', timeout: 5000 });
+    await planTab.click();
+    await page.locator('button[type="submit"]:has-text("Save Profile")').first().waitFor({ timeout: 10000 });
     await expect(page.locator('button[type="submit"]:has-text("Save Profile")')).toBeVisible({ timeout: 10000 });
   });
 
   test('save profile sends PATCH request', async ({ page }) => {
     await page.click('button:has-text("Edit Profile")');
     await expect(page.locator('button:has-text("Cancel Edit")')).toBeVisible({ timeout: 5000 });
-    await forceProfileStep(page, 3);
-    await page.locator('h2:has-text("Plan")').waitFor({ timeout: 10000 });
+    const planTab = page.locator('.reg-tab:has-text("Plan"), .step-item:has-text("Plan")').first();
+    await planTab.waitFor({ state: 'visible', timeout: 5000 });
+    await planTab.click();
     // Ensure Save button present before waiting for network
     const saveBtn = page.locator('button[type="submit"]:has-text("Save Profile")');
     await saveBtn.waitFor({ state: 'visible', timeout: 10000 });

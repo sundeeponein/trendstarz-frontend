@@ -4,6 +4,7 @@
   </div>
   <div class="card-body">
     <h3 class="card-name">{{ name || '—' }}</h3>
+    <p class="card-username" *ngIf="username">@{{ username }}</p>
     <div class="card-trust-row">
       <i class="bi bi-patch-check-fill card-trust-icon" *ngIf="isPremium" title="Verified"></i>
       <span class="card-trust-text" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>

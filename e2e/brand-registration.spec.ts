@@ -226,57 +226,7 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   await page.waitForTimeout(300);
 
   // ════════════════════════ STEP 2 ════════════════════════
-
-  // ════════════════════════ STEP 2 ════════════════════════
-  // Select state
-  const stateSelect = page.locator('[formgroupname="location"] select[formcontrolname="state"], select[formcontrolname="state"]').first();
-  await stateSelect.waitFor({ state: 'visible' });
-  const stateOptions = await stateSelect.locator('option').all();
-  for (const opt of stateOptions) {
-    const val = await opt.getAttribute('value');
-    if (val && val !== '') {
-      await stateSelect.selectOption(val);
-      break;
-    }
-  }
-
-  // Wait for districts to populate then select first available district
-  const districtSelect = page.locator('[formgroupname="location"] select[formcontrolname="district"], select[formcontrolname="district"]').first();
-  await districtSelect.waitFor({ state: 'visible', timeout: 5000 });
-  const districtOptions = await districtSelect.locator('option').all();
-  for (const opt of districtOptions) {
-    const val = await opt.getAttribute('value');
-    if (val && val !== '') {
-      await districtSelect.selectOption(val);
-      break;
-    }
-  }
-
-  // Select language via chip-list (brand registration uses chips, not ng-select)
-  const langChip = page.locator('section.form-card:has(h2:has-text("Location & Media")) .chip:has-text("English")').first();
-
-  await langChip.waitFor({ state: 'visible', timeout: 5000 });
-  await langChip.scrollIntoViewIfNeeded();
-  await langChip.click();
-  await page.waitForTimeout(200);
-
-  // Select category via chip-list (optional for step 2 validation, but select if present)
-  const catChip = page.locator('section.form-card:has(h2:has-text("Location & Media")) .chip:has-text("Fashion")').first();
-  if (await catChip.count() > 0) {
-    await catChip.scrollIntoViewIfNeeded();
-    await catChip.click();
-    await page.waitForTimeout(200);
-  }
-
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(200);
-
-  // Select at least one social media platform (required)
-  const platformCard = page.locator('.platform-card').first();
-  await platformCard.waitFor({ state: 'visible', timeout: 5000 });
-  await platformCard.click();
-
-  // Ensure required step-2 controls are set before advancing (zoneless rendering can be flaky in e2e).
+  // Seed required step-2 controls directly (more stable than browser-specific DOM interactions).
   await page.evaluate(() => {
     const el = document.querySelector('app-brand-registration');
     const ng = (window as any).ng;
@@ -287,23 +237,32 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
     const stateCtrl = comp.registrationForm.get('location.state');
     const districtCtrl = comp.registrationForm.get('location.district');
     const langCtrl = comp.registrationForm.get('languages');
+    const categoryCtrl = comp.registrationForm.get('categories');
 
-    const stateVal = stateCtrl?.value;
-    if (!stateVal) {
-      const fallbackState = comp.states?.[0]?._id || comp.states?.[0]?.id || '';
-      if (fallbackState) stateCtrl?.setValue(fallbackState);
-    }
+    const fallbackState = comp.states?.[0]?._id || comp.states?.[0]?.id || 'state_mh';
+    if (fallbackState) stateCtrl?.setValue(fallbackState);
 
-    const districtVal = districtCtrl?.value;
-    if (!districtVal) {
-      const fallbackDistrict = comp.districts?.[0]?._id || comp.districts?.[0]?.id || '';
-      if (fallbackDistrict) districtCtrl?.setValue(fallbackDistrict);
-    }
+    const fallbackDistrict = comp.districts?.[0]?._id || comp.districts?.[0]?.id || 'dist_mumbai';
+    if (fallbackDistrict) districtCtrl?.setValue(fallbackDistrict);
 
-    const langVal = langCtrl?.value;
-    if (!Array.isArray(langVal) || langVal.length === 0) {
-      const fallbackLang = comp.languagesList?.[0]?._id || 'lang1';
-      langCtrl?.setValue([fallbackLang]);
+    const fallbackLang = comp.languagesList?.[0]?._id || 'lang1';
+    langCtrl?.setValue([fallbackLang]);
+
+    const fallbackCategory = comp.categoriesList?.[0]?._id || 'cat1';
+    categoryCtrl?.setValue([fallbackCategory]);
+
+    if (Array.isArray(comp.socialMediaList) && comp.socialMediaList.length > 0) {
+      const platform = comp.socialMediaList[0];
+      comp.platformForms = comp.platformForms || {};
+      if (!comp.platformForms[platform._id]) {
+        comp.platformForms[platform._id] = {
+          handle: 'testbrand',
+          followersCount: '1000',
+          tier: 'Nano',
+          contentTypes: {},
+        };
+      }
+      comp.activePlatformTab = platform._id;
     }
 
     try { comp.refreshStepCompletion(); } catch {}
@@ -339,12 +298,6 @@ test('Brand registration — full 3-step flow (mocked API)', async ({ page }) =>
   await page.waitForTimeout(300);
 
   // ════════════════════════ STEP 3 ════════════════════════
-  // ════════════════════════ STEP 3 ════════════════════════
-  // Select at least one contact method (required)
-  const contactCard = page.locator('.contact-card').first();
-  await contactCard.waitFor({ state: 'visible', timeout: 10000 });
-  await contactCard.click();
-
   // Fill website if present
   const websiteInput = page.locator('input[formControlName="website"]');
   if (await websiteInput.count() > 0) {

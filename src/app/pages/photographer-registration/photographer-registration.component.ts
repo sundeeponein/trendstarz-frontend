@@ -73,6 +73,7 @@ export class PhotographerRegistrationComponent implements OnInit {
 
   duplicateEmailError = '';
   duplicatePhoneError = '';
+  duplicateUsernameError = '';
   showPassword = false;
   showConfirmPassword = false;
   premiumMonthlyPrice = 399;
@@ -89,6 +90,18 @@ export class PhotographerRegistrationComponent implements OnInit {
     return getPasswordChecks(this.form?.get('password')?.value || '');
   }
 
+  private slugifyUsername(username: string): string {
+    return username
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
@@ -99,6 +112,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   ngOnInit() {
     this.form = this.fb.group({
       name: ['', Validators.required],
+      username: ['', [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', Validators.required],
       dateOfBirth: [''],
@@ -114,10 +128,34 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: ['free', Validators.required],
       skills: [[]],
       equipment: [[]],
+      contact: this.fb.group({
+        whatsapp: [false],
+        email: [false],
+        call: [false],
+      }),
     }, { validators: [passwordMatchValidator] });
 
     this.form.get('email')?.valueChanges.subscribe(() => { this.duplicateEmailError = ''; });
     this.form.get('phoneNumber')?.valueChanges.subscribe(() => { this.duplicatePhoneError = ''; });
+    this.form.get('username')?.valueChanges.subscribe(value => {
+      if (typeof value === 'string' && value.includes(' ')) {
+        const sanitized = value.replace(/\s+/g, '-');
+        this.form.get('username')?.setValue(sanitized, { emitEvent: false });
+      }
+      this.duplicateUsernameError = '';
+    });
+
+    // Auto-generate username from full name unless user edits username manually.
+    this.form.get('name')?.valueChanges.subscribe((name: string) => {
+      const usernameCtrl = this.form.get('username');
+      if (usernameCtrl && !usernameCtrl.dirty) {
+        const slug = this.slugifyUsername(name || '');
+        usernameCtrl.setValue(slug, { emitEvent: false });
+        usernameCtrl.markAsTouched();
+      }
+      this.duplicateUsernameError = '';
+    });
+
     this.form.get('location.state')?.valueChanges.subscribe(stateId => {
       this.form.get('location.district')?.setValue('');
       this.districts = [];
@@ -369,7 +407,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   nextStep() {
     if (this.currentStep === 1) {
       this.submitted = true;
-      const step1Fields = ['name', 'email', 'phoneNumber', 'password', 'confirmPassword', 'location'];
+      const step1Fields = ['name', 'username', 'email', 'phoneNumber', 'password', 'confirmPassword', 'location'];
       const hasErrors = step1Fields.some(f => this.form.get(f)?.invalid);
       const pwMismatch = this.form.errors?.['passwordMismatch'];
       if (hasErrors || pwMismatch) return;
@@ -397,6 +435,10 @@ export class PhotographerRegistrationComponent implements OnInit {
 
   isPremiumPlan(): boolean {
     return this.form.get('paymentOption')?.value === 'premium';
+  }
+
+  isContactEditable(): boolean {
+    return this.isPremiumPlan();
   }
 
   onSubmit() {
@@ -446,8 +488,12 @@ export class PhotographerRegistrationComponent implements OnInit {
       };
     });
 
+    const stateObj = this.states.find((s: any) => s._id === v.location?.state);
+    const districtObj = this.districts.find((d: any) => d._id === v.location?.district);
+
     const payload = {
       name: v.name,
+      username: this.slugifyUsername(v.username || v.name || ''),
       email: v.email,
       phoneNumber: v.phoneNumber,
       dateOfBirth: v.dateOfBirth || null,
@@ -455,10 +501,14 @@ export class PhotographerRegistrationComponent implements OnInit {
       portfolio: v.portfolio || '',
       password: v.password,
       confirmPassword: v.confirmPassword,
-      location: v.location,
+      location: {
+        state: stateObj ? stateObj.name : v.location?.state,
+        district: districtObj ? districtObj.name : v.location?.district,
+      },
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],
+      contact: v.contact || { whatsapp: false, email: false, call: false },
       pricing: pricingArr,
       socialMedia,
       profileImages: [
@@ -489,6 +539,10 @@ export class PhotographerRegistrationComponent implements OnInit {
         }
         if (body?.duplicateFields?.includes('phoneNumber')) {
           this.duplicatePhoneError = 'This phone number is already registered.';
+          this.currentStep = 1;
+        }
+        if (body?.duplicateFields?.includes('username')) {
+          this.duplicateUsernameError = 'This username is already taken.';
           this.currentStep = 1;
         }
         this.registrationError = body?.message || 'Registration failed. Please try again.';

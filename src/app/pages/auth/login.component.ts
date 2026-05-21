@@ -70,9 +70,11 @@ export class LoginComponent {
         if (res.user) {
           this.session.setUser(res.user);
         }
-        if (res.userType === 'admin') {
+        const userType = String(res.userType || res.user?.role || '').toLowerCase();
+
+        if (userType === 'admin') {
           this.router.navigate(['/admin']);
-        } else if (res.userType === 'brand') {
+        } else if (userType === 'brand') {
           this.configService.getBrandProfileById().subscribe({
             next: (profile: any) => {
               // Merge profile into session user
@@ -86,8 +88,10 @@ export class LoginComponent {
               this.router.navigate(['/brand-dashboard']);
             }
           });
-        } else if (res.userType === 'influencer') {
+        } else if (userType === 'influencer') {
           this.router.navigate(['/influencer-dashboard']);
+        } else if (userType === 'photographer') {
+          this.router.navigate(['/photographer-dashboard']);
         } else {
           this.router.navigate(['/']);
         }

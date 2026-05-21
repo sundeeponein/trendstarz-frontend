@@ -1,10 +1,7 @@
-
-
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PlansService, Plan, PlanFeature, PlanLimit, PlanOffer } from '../../../shared/plans.service';
+import { PlansService, Plan } from '../../../shared/plans.service';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 @Component({
@@ -14,34 +11,15 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
   templateUrl: './admin-plans.component.html',
   styleUrls: ['./admin-plans.component.scss'],
 })
-
 export class AdminPlansComponent implements OnInit {
-  // Confirmation dialog state
   confirmDialogOpen = false;
   confirmDialogMessage = '';
   confirmDialogAction: (() => void) | null = null;
 
-  showConfirm(message: string, action: () => void) {
-    this.confirmDialogMessage = message;
-    this.confirmDialogAction = action;
-    this.confirmDialogOpen = true;
-  }
-
-  onConfirmDialogConfirm() {
-    if (this.confirmDialogAction) this.confirmDialogAction();
-    this.confirmDialogOpen = false;
-    this.confirmDialogAction = null;
-  }
-
-  onConfirmDialogCancel() {
-    this.confirmDialogOpen = false;
-    this.confirmDialogAction = null;
-  }
   influencerPlans: Plan[] = [];
   brandPlans: Plan[] = [];
   photographerPlans: Plan[] = [];
 
-  // Master feature/limit lists for each user type
   readonly masterFeatures: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'publicProfileListing', label: 'Public profile listing' },
@@ -63,10 +41,11 @@ export class AdminPlansComponent implements OnInit {
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
     ],
     PHOTOGRAPHER: [
-      { key: 'publicProfileListing', label: 'Public profile listing' },
+      { key: 'publicProfileListing', label: 'Public photographer profile' },
       { key: 'socialMediaVisibility', label: 'Show social media links' },
       { key: 'contactVisibility', label: 'Contact details visible to brands' },
       { key: 'priorityListing', label: 'Priority search ranking' },
+      { key: 'analyticsDashboard', label: 'Analytics dashboard' },
       { key: 'canWriteReview', label: 'Write reviews for brands' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
     ],
@@ -87,29 +66,6 @@ export class AdminPlansComponent implements OnInit {
     ],
   };
 
-  getMergedOffers(): { key: string; label: string; value: number }[] {
-    if (!this.editingPlan) return [];
-    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
-    const master = this.masterOffers[type] || [];
-    return master.map(m => {
-      const found = (this.editingPlan!.offers ?? []).find((o: any) => o.key === m.key);
-      return { ...m, value: found ? found.value : 0 };
-    });
-  }
-
-  setOfferValue(key: string, value: number) {
-    if (!this.editingPlan) return;
-    if (!this.editingPlan.offers) this.editingPlan.offers = [];
-    const idx = this.editingPlan.offers.findIndex(o => o.key === key);
-    if (idx >= 0) {
-      this.editingPlan.offers[idx].value = value;
-    } else {
-      const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
-      const m = master.find(o => o.key === key);
-      if (m) this.editingPlan.offers.push({ ...m, value });
-    }
-  }
-
   readonly masterLimits: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'maxProductImages', label: 'Product images' },
@@ -124,14 +80,48 @@ export class AdminPlansComponent implements OnInit {
       { key: 'analytics', label: 'Analytics' },
     ],
     PHOTOGRAPHER: [
-      { key: 'maxProductImages', label: 'Images' },
+      { key: 'maxPortfolioImages', label: 'Portfolio images' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites received / month' },
-      { key: 'maxInviteOptions', label: 'Invite options' },
+      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
+      { key: 'analytics', label: 'Analytics' },
     ],
   };
 
-  // Merge plan features/limits with master list for UI
+  plans: Plan[] = [];
+  loading = false;
+  error = '';
+  successMsg = '';
+
+  editingPlan: Plan | null = null;
+  isCreating = false;
+  showTypeSelector = false;
+  newPlanType: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER' | null = null;
+
+  readonly userTypes = ['INFLUENCER', 'BRAND', 'PHOTOGRAPHER'];
+
+  constructor(private plansService: PlansService) {}
+
+  ngOnInit() {
+    this.loadPlans();
+  }
+
+  showConfirm(message: string, action: () => void) {
+    this.confirmDialogMessage = message;
+    this.confirmDialogAction = action;
+    this.confirmDialogOpen = true;
+  }
+
+  onConfirmDialogConfirm() {
+    if (this.confirmDialogAction) this.confirmDialogAction();
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
+
+  onConfirmDialogCancel() {
+    this.confirmDialogOpen = false;
+    this.confirmDialogAction = null;
+  }
+
   getMergedFeatures(): { key: string; label: string; value: boolean }[] {
     if (!this.editingPlan) return [];
     const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
@@ -141,6 +131,7 @@ export class AdminPlansComponent implements OnInit {
       return { ...m, value: found ? found.value : false };
     });
   }
+
   getMergedLimits(): { key: string; label: string; value: number }[] {
     if (!this.editingPlan) return [];
     const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
@@ -151,8 +142,31 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
+  getMergedOffers(): { key: string; label: string; value: number }[] {
+    if (!this.editingPlan) return [];
+    const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
+    const master = this.masterOffers[type] || [];
+    return master.map(m => {
+      const found = (this.editingPlan!.offers ?? []).find(o => o.key === m.key);
+      return { ...m, value: found ? found.value : 0 };
+    });
+  }
+
+  setOfferValue(key: string, value: number) {
+    if (!this.editingPlan) return;
+    if (!this.editingPlan.offers) this.editingPlan.offers = [];
+    const idx = this.editingPlan.offers.findIndex(o => o.key === key);
+    if (idx >= 0) {
+      this.editingPlan.offers[idx].value = value;
+      return;
+    }
+    const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
+    const m = master.find(o => o.key === key);
+    if (m) this.editingPlan.offers.push({ ...m, value });
+  }
+
   private syncContactVisibilityFeature(_plan: Plan) {
-    // No-op retained for compatibility; admin now sets the boolean feature flag directly.
+    // No-op retained for compatibility.
   }
 
   loadFromConfig() {
@@ -178,24 +192,6 @@ export class AdminPlansComponent implements OnInit {
       },
     });
   }
-  plans: Plan[] = [];
-  loading = false;
-  error = '';
-  successMsg = '';
-
-  // Edit / create state
-  editingPlan: Plan | null = null;
-  isCreating = false;
-  showTypeSelector = false;
-  newPlanType: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER' | null = null;
-
-  readonly userTypes = ['INFLUENCER', 'BRAND', 'PHOTOGRAPHER'];
-
-  constructor(private plansService: PlansService) {}
-
-  ngOnInit() {
-    this.loadPlans();
-  }
 
   loadPlans() {
     this.loading = true;
@@ -215,7 +211,6 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
-
   startCreate() {
     this.loading = false;
     this.isCreating = false;
@@ -228,26 +223,20 @@ export class AdminPlansComponent implements OnInit {
     this.showTypeSelector = false;
     this.isCreating = true;
     this.newPlanType = type;
+
     if (type === 'INFLUENCER') {
       this.editingPlan = {
         name: 'Pro',
         userType: 'INFLUENCER',
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
-        features: [
-          { key: 'publicProfileListing', label: 'Public profile listing', value: true },
-          { key: 'socialMediaVisibility', label: 'Show social media links', value: true },
-          { key: 'contactVisibility', label: 'Contact details visible to brands', value: true },
-          { key: 'priorityListing', label: 'Priority search ranking', value: true },
-          { key: 'analyticsDashboard', label: 'Analytics dashboard', value: true },
-          { key: 'canWriteReview', label: 'Write reviews for brands', value: true },
-          { key: 'canReadReviews', label: 'View influencer & brand reviews', value: true },
-        ],
+        features: this.masterFeatures['INFLUENCER'].map(f => ({ ...f, value: true })),
         limits: [
           { key: 'maxProductImages', label: 'Product images', value: 20 },
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'maxInviteOptions', label: 'Invite options', value: 20 },
         ],
+        offers: this.masterOffers['INFLUENCER'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
         highlight: true,
         isActive: true,
@@ -258,52 +247,39 @@ export class AdminPlansComponent implements OnInit {
         name: 'Pro',
         userType: 'BRAND',
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
-        features: [
-          { key: 'browseInfluencerProfiles', label: 'Browse influencer profiles', value: true },
-          { key: 'viewSocialLinks', label: 'View public social links', value: true },
-          { key: 'viewContactDetails', label: 'View contact details', value: true },
-          { key: 'advancedSearchFilters', label: 'Advanced search & filters', value: true },
-          { key: 'campaignAnalyticsDashboard', label: 'Campaign analytics dashboard', value: true },
-          { key: 'bulkOutreachTools', label: 'Bulk outreach tools', value: true },
-          { key: 'canWriteReview', label: 'Write reviews for influencers', value: true },
-          { key: 'canReadReviews', label: 'View influencer & brand reviews', value: true },
-        ],
+        features: this.masterFeatures['BRAND'].map(f => ({ ...f, value: true })),
         limits: [
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 20 },
           { key: 'maxTeamSeats', label: 'Team seats', value: 5 },
           { key: 'analytics', label: 'Analytics', value: 1 },
         ],
+        offers: this.masterOffers['BRAND'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
         highlight: true,
         isActive: true,
         sortOrder: 1,
       };
-    } else if (type === 'PHOTOGRAPHER') {
+    } else {
       this.editingPlan = {
         name: 'Pro',
         userType: 'PHOTOGRAPHER',
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
-        features: [
-          { key: 'publicProfileListing', label: 'Public profile listing', value: true },
-          { key: 'socialMediaVisibility', label: 'Show social media links', value: true },
-          { key: 'contactVisibility', label: 'Contact details visible to brands', value: true },
-          { key: 'priorityListing', label: 'Priority search ranking', value: true },
-          { key: 'canWriteReview', label: 'Write reviews for brands', value: true },
-          { key: 'canReadReviews', label: 'View influencer & brand reviews', value: true },
-        ],
+        features: this.masterFeatures['PHOTOGRAPHER'].map(f => ({ ...f, value: true })),
         limits: [
-          { key: 'maxProductImages', label: 'Images', value: 10 },
+          { key: 'maxPortfolioImages', label: 'Portfolio images', value: 10 },
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
-          { key: 'maxInvitesPerCampaign', label: 'Invites received / month', value: 10 },
-          { key: 'maxInviteOptions', label: 'Invite options', value: 10 },
+          { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
+          { key: 'analytics', label: 'Analytics', value: 0 },
         ],
+        offers: this.masterOffers['PHOTOGRAPHER'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
         highlight: true,
         isActive: true,
         sortOrder: 1,
       };
     }
+
     if (this.editingPlan) {
       this.syncContactVisibilityFeature(this.editingPlan);
     }
@@ -312,7 +288,6 @@ export class AdminPlansComponent implements OnInit {
   startEdit(plan: Plan) {
     this.loading = false;
     this.isCreating = false;
-    // Deep clone to avoid mutating the list
     this.editingPlan = JSON.parse(JSON.stringify(plan));
     if (this.editingPlan) {
       this.syncContactVisibilityFeature(this.editingPlan);
@@ -320,20 +295,14 @@ export class AdminPlansComponent implements OnInit {
   }
 
   onContactVisibilityPolicyChange() {
-    // Deprecated: contactVisibility policy was removed. Kept as a no-op.
+    // Deprecated: kept as no-op.
   }
 
   onUserTypeChange() {
     if (!this.editingPlan) return;
-    if (this.editingPlan.userType === 'BRAND' || this.editingPlan.userType === 'PHOTOGRAPHER') {
-      // Ensure maxProductImages exists
-      if (!this.editingPlan.limits.some(l => l.key === 'maxProductImages')) {
-        this.editingPlan.limits.push({ key: 'maxProductImages', label: 'Product images', value: 10 });
-      }
-    } else {
-      // Remove maxProductImages for non-BRAND
-      this.editingPlan.limits = this.editingPlan.limits.filter(l => l.key !== 'maxProductImages');
-    }
+    this.editingPlan.features = this.getMergedFeatures();
+    this.editingPlan.limits = this.getMergedLimits();
+    this.editingPlan.offers = this.getMergedOffers();
   }
 
   cancelEdit() {
@@ -345,11 +314,10 @@ export class AdminPlansComponent implements OnInit {
 
   save() {
     if (!this.editingPlan) return;
+
     this.error = '';
     this.successMsg = '';
 
-    // Sync ALL master features/limits/offers so the full set is persisted to DB,
-    // not just the subset that was previously stored.
     this.editingPlan.features = this.getMergedFeatures();
     this.editingPlan.limits = this.getMergedLimits();
     this.editingPlan.offers = this.getMergedOffers();
@@ -368,17 +336,18 @@ export class AdminPlansComponent implements OnInit {
         },
         error: (err) => (this.error = err?.error?.message || 'Failed to save plan'),
       });
-    } else {
-      const id = this.editingPlan._id!;
-      this.plansService.adminUpdate(id, this.editingPlan).subscribe({
-        next: () => {
-          this.successMsg = 'Plan updated successfully';
-          this.editingPlan = null;
-          this.loadPlans();
-        },
-        error: (err) => (this.error = err?.error?.message || 'Failed to update plan'),
-      });
+      return;
     }
+
+    const id = this.editingPlan._id!;
+    this.plansService.adminUpdate(id, this.editingPlan).subscribe({
+      next: () => {
+        this.successMsg = 'Plan updated successfully';
+        this.editingPlan = null;
+        this.loadPlans();
+      },
+      error: (err) => (this.error = err?.error?.message || 'Failed to update plan'),
+    });
   }
 
   deletePlan(plan: Plan) {
@@ -392,7 +361,7 @@ export class AdminPlansComponent implements OnInit {
           },
           error: () => (this.error = 'Failed to delete plan'),
         });
-      }
+      },
     );
   }
 
@@ -401,11 +370,11 @@ export class AdminPlansComponent implements OnInit {
     const idx = this.editingPlan.features.findIndex(f => f.key === key);
     if (idx >= 0) {
       this.editingPlan.features[idx].value = !this.editingPlan.features[idx].value;
-    } else {
-      const master = this.masterFeatures[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
-      const m = master.find((f: any) => f.key === key);
-      if (m) this.editingPlan.features.push({ ...m, value: true });
+      return;
     }
+    const master = this.masterFeatures[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
+    const m = master.find(f => f.key === key);
+    if (m) this.editingPlan.features.push({ ...m, value: true });
   }
 
   setLimitValue(key: string, value: number) {
@@ -413,11 +382,11 @@ export class AdminPlansComponent implements OnInit {
     const idx = this.editingPlan.limits.findIndex(l => l.key === key);
     if (idx >= 0) {
       this.editingPlan.limits[idx].value = value;
-    } else {
-      const master = this.masterLimits[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
-      const m = master.find((l: any) => l.key === key);
-      if (m) this.editingPlan.limits.push({ ...m, value });
+      return;
     }
+    const master = this.masterLimits[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
+    const m = master.find(l => l.key === key);
+    if (m) this.editingPlan.limits.push({ ...m, value });
   }
 
   addFeature() {
