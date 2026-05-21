@@ -80,12 +80,12 @@
 
           <div class="field-grid">
             <div class="field-block">
-              <label>Name</label>
+              <label>Name <span class="text-danger">*</span></label>
               <input formControlName="name" type="text" class="form-control" />
               <div *ngIf="submitted && registrationForm.get('name')?.invalid" class="text-danger mt-1">Name is required.</div>
             </div>
             <div class="field-block">
-              <label>Username
+              <label>Username <span class="text-danger">*</span>
                 <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> — used in your profile link</span>
               </label>
               <div class="input-group">
@@ -95,7 +95,7 @@
               <div *ngIf="submitted && registrationForm.get('username')?.invalid" class="text-danger mt-1">Valid username is required.</div>
             </div>
             <div class="field-block">
-              <label>Phone Number</label>
+              <label>Phone Number <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 0.5em;">
                 <input formControlName="phoneNumber" type="text" class="form-control" />
                 <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
@@ -110,7 +110,7 @@
               </small>
             </div>
             <div class="field-block">
-              <label>Email</label>
+              <label>Email <span class="text-danger">*</span></label>
               <div class="email-row" style="display: flex; align-items: center; gap: 0.5em;">
                 <input formControlName="email" type="email" class="form-control" />
                 <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
@@ -119,7 +119,7 @@
             </div>
 
             <div class="field-block">
-              <label>Date of Birth</label>
+              <label>Date of Birth <span class="text-danger">*</span></label>
               <input formControlName="dateOfBirth" type="date" class="form-control" />
               <small class="text-muted mt-1">Used for safety checks and age-range matching. Your exact DOB is not shown publicly.</small>
               <div *ngIf="submitted && registrationForm.get('dateOfBirth')?.invalid" class="text-danger mt-1">Date of birth is required.</div>
@@ -182,7 +182,7 @@
 
           <div class="field-grid">
             <div class="field-block" formGroupName="location">
-              <label>State</label>
+              <label>State <span class="text-danger">*</span></label>
               <select formControlName="state" class="form-control">
                 <option value="" disabled>Select your state</option>
                 <option *ngFor="let state of states" [value]="state._id">{{ state.name }}</option>
@@ -191,7 +191,7 @@
             </div>
 
             <div class="field-block" formGroupName="location">
-              <label>District</label>
+              <label>District <span class="text-danger">*</span></label>
               <select formControlName="district" class="form-control">
                 <option value="" disabled>Select your district</option>
                 <option *ngFor="let district of districts" [value]="district._id">{{ district.name }}</option>
@@ -200,7 +200,7 @@
             </div>
 
             <div class="field-block">
-              <label>Languages</label>
+              <label>Languages <span class="text-danger">*</span></label>
               <div class="chip-list">
                 <ng-container *ngIf="isEditMode; else viewLanguages">
                   <div

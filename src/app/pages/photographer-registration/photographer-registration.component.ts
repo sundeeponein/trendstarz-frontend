@@ -407,7 +407,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   nextStep() {
     if (this.currentStep === 1) {
       this.submitted = true;
-      const step1Fields = ['name', 'email', 'phoneNumber', 'password', 'confirmPassword', 'location'];
+      const step1Fields = ['name', 'username', 'email', 'phoneNumber', 'password', 'confirmPassword', 'location'];
       const hasErrors = step1Fields.some(f => this.form.get(f)?.invalid);
       const pwMismatch = this.form.errors?.['passwordMismatch'];
       if (hasErrors || pwMismatch) return;
@@ -488,9 +488,12 @@ export class PhotographerRegistrationComponent implements OnInit {
       };
     });
 
+    const stateObj = this.states.find((s: any) => s._id === v.location?.state);
+    const districtObj = this.districts.find((d: any) => d._id === v.location?.district);
+
     const payload = {
       name: v.name,
-      username: v.username,
+      username: this.slugifyUsername(v.username || v.name || ''),
       email: v.email,
       phoneNumber: v.phoneNumber,
       dateOfBirth: v.dateOfBirth || null,
@@ -498,7 +501,10 @@ export class PhotographerRegistrationComponent implements OnInit {
       portfolio: v.portfolio || '',
       password: v.password,
       confirmPassword: v.confirmPassword,
-      location: v.location,
+      location: {
+        state: stateObj ? stateObj.name : v.location?.state,
+        district: districtObj ? districtObj.name : v.location?.district,
+      },
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],

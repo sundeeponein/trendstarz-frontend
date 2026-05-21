@@ -250,7 +250,7 @@ test('Photographer profile — view and edit (mocked API)', async ({ page }) => 
 
   // ────────────────────────────── Go to profile page
   await page.goto('/photographer-profile');
-  await page.waitForSelector('h1:has-text("My Profile")', {
+  await page.waitForSelector('input[formControlName="name"]', {
     state: 'visible',
     timeout: 30000,
   });
@@ -310,7 +310,7 @@ test('Photographer profile — commission badge display', async ({ page }) => {
   await mockPhotographerProfileRoutes(page);
 
   await page.goto('/photographer-profile');
-  await page.waitForSelector('h1:has-text("My Profile")', {
+  await page.waitForSelector('input[formControlName="name"]', {
     state: 'visible',
     timeout: 30000,
   });

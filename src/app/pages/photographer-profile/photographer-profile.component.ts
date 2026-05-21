@@ -103,10 +103,90 @@ export class PhotographerProfileComponent implements OnInit {
       .replace(/-+$/, '');
   }
 
+  private asText(value: any): string {
+    return String(value ?? '').trim();
+  }
+
+  private resolveStateValue(rawState: any): string {
+    const value = this.asText(rawState);
+    if (!value) return '';
+    const byId = this.states.find((s: any) => String(s?._id || '') === value);
+    if (byId) return String(byId._id || byId.name || value);
+    const byName = this.states.find((s: any) => this.asText(s?.name).toLowerCase() === value.toLowerCase());
+    if (byName) return String(byName._id || byName.name || value);
+    return value;
+  }
+
+  private getProfileImage(profile: any, sessionUser: any): { url: string; public_id: string } | null {
+    const firstProfileImage = profile?.profileImages?.[0] || sessionUser?.profileImages?.[0] || null;
+    const imgUrl =
+      this.asText(profile?.profileImage) ||
+      this.asText(firstProfileImage?.url) ||
+      this.asText(firstProfileImage?.secure_url) ||
+      this.asText(sessionUser?.profileImage);
+
+    if (!imgUrl) return null;
+    return {
+      url: imgUrl,
+      public_id:
+        this.asText(profile?.profileImagePublicId) ||
+        this.asText(firstProfileImage?.public_id) ||
+        this.asText(firstProfileImage?.publicId),
+    };
+  }
+
+  private syncLocationDisplay(): void {
+    const stateControl = this.form.get('location.state');
+    const districtControl = this.form.get('location.district');
+    if (!stateControl || !districtControl) return;
+
+    const currentState = this.asText(stateControl.value);
+    const currentDistrict = this.asText(districtControl.value);
+    if (!currentState) return;
+
+    const stateMatch = this.states.find(
+      (s: any) =>
+        this.asText(s?._id) === currentState ||
+        this.asText(s?.name).toLowerCase() === currentState.toLowerCase(),
+    );
+
+    if (!stateMatch && !this.states.some((s: any) => this.asText(s?._id) === currentState || this.asText(s?.name) === currentState)) {
+      this.states = [...this.states, { _id: currentState, name: currentState }];
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const stateId = this.asText(stateMatch?._id) || currentState;
+    const stateName = this.asText(stateMatch?.name) || currentState;
+    const canonicalState = stateId || stateName;
+    if (canonicalState && canonicalState !== currentState) {
+      stateControl.setValue(canonicalState, { emitEvent: false });
+    }
+
+    this.config.getDistricts(stateName, stateId).subscribe({
+      next: d => {
+        this.districts = Array.isArray(d) ? d : [];
+        const hasDistrict = this.districts.some(
+          (x: any) =>
+            this.asText(x?._id) === currentDistrict ||
+            this.asText(x?.name).toLowerCase() === currentDistrict.toLowerCase(),
+        );
+        if (currentDistrict && !hasDistrict) {
+          this.districts = [...this.districts, { _id: currentDistrict, name: currentDistrict }];
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.districts = currentDistrict ? [{ _id: currentDistrict, name: currentDistrict }] : [];
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   ngOnInit() {
     this.form = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
-      username: [{ value: '', disabled: true }],
+      username: [{ value: '', disabled: true }, [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
       dateOfBirth: [{ value: '', disabled: true }],
       gender: [{ value: '', disabled: true }],
@@ -150,7 +230,11 @@ export class PhotographerProfileComponent implements OnInit {
       }
     });
 
-    this.config.getStates().subscribe(data => { this.states = data; this.cdr.detectChanges(); });
+    this.config.getStates().subscribe(data => {
+      this.states = Array.isArray(data) ? data : [];
+      this.syncLocationDisplay();
+      this.cdr.detectChanges();
+    });
     this.config.getPhotographerCategories().subscribe((data: string[]) => {
       this.skillOptions = Array.isArray(data) ? data : [];
       this.cdr.detectChanges();
@@ -190,20 +274,24 @@ export class PhotographerProfileComponent implements OnInit {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http.get<any>(`${this.apiUrl}/users/photographers/me/profile`, { headers }).subscribe({
       next: (data) => {
-        const profile = data?.user ?? data?.profile ?? data?.data ?? data ?? {};
+        const sessionUser = this.session.getUser() || {};
+        const profile = data?.data?.user ?? data?.user ?? data?.profile ?? data?.data ?? data ?? {};
+        const username = this.asText(profile?.username) || this.asText(profile?.userName) || this.asText(sessionUser?.username) || this.asText(sessionUser?.userName);
+        const resolvedState = this.resolveStateValue(profile?.location?.state ?? profile?.state ?? sessionUser?.location?.state ?? sessionUser?.state);
+        const resolvedDistrict = this.asText(profile?.location?.district ?? profile?.district ?? sessionUser?.location?.district ?? sessionUser?.district);
         this.commissionAccessTags = this.extractCommissionAccessTags(profile?.adminTags);
-        this.phoneVerified = !!profile?.phoneVerified;
+        this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({
-          name: profile.name || '',
-          username: profile.username || '',
-          phoneNumber: profile.phoneNumber || '',
+          name: profile.name || sessionUser?.name || '',
+          username,
+          phoneNumber: profile.phoneNumber || sessionUser?.phoneNumber || '',
           dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : '',
           gender: profile.gender || '',
           portfolio: profile.portfolio || '',
           location: {
-            state: profile.location?.state || '',
-            district: profile.location?.district || '',
+            state: resolvedState,
+            district: resolvedDistrict,
           },
           skills: profile.skills || [],
           equipment: profile.equipment || [],
@@ -220,16 +308,7 @@ export class PhotographerProfileComponent implements OnInit {
         });
 
         this.selectedPlan = profile.isPremium ? 'premium' : 'free';
-
-        if (profile.location?.state) {
-          const selectedState = this.states.find((s: any) => s.name === profile.location.state);
-          const stateId = selectedState?._id || profile.location.state;
-          const stateName = selectedState?.name || profile.location.state;
-          this.config.getDistricts(stateName, stateId).subscribe({
-            next: d => { this.districts = Array.isArray(d) ? d : []; this.cdr.detectChanges(); },
-            error: () => { this.districts = []; },
-          });
-        }
+        this.syncLocationDisplay();
 
         // Pricing
         if (Array.isArray(profile.pricing)) {
@@ -269,13 +348,10 @@ export class PhotographerProfileComponent implements OnInit {
         }
 
         // Profile image
-        const imgUrl = profile.profileImage || profile.profileImages?.[0]?.url;
-        if (imgUrl) {
-          this.profileImagePreview = imgUrl;
-          this.profileImageData = {
-            url: imgUrl,
-            public_id: profile.profileImagePublicId || profile.profileImages?.[0]?.public_id || '',
-          };
+        const profileImage = this.getProfileImage(profile, sessionUser);
+        if (profileImage?.url) {
+          this.profileImagePreview = profileImage.url;
+          this.profileImageData = profileImage;
         }
 
         this.loading = false;
@@ -374,8 +450,9 @@ export class PhotographerProfileComponent implements OnInit {
   private computeStepComplete(step: 1 | 2 | 3): boolean {
     if (step === 1) {
       const name = String(this.form.get('name')?.value || '').trim();
+      const username = String(this.form.get('username')?.value || '').trim();
       const phone = String(this.form.get('phoneNumber')?.value || '').trim();
-      return !!name && !!phone;
+      return !!name && !!username && !!phone;
     }
     if (step === 2) {
       const state = String(this.form.get('location.state')?.value || '').trim();
@@ -499,7 +576,6 @@ export class PhotographerProfileComponent implements OnInit {
   enableEdit(): void {
     this.isEditMode = true;
     this.form.enable({ emitEvent: false });
-    this.form.get('username')?.disable({ emitEvent: false });
     this.originalFormValue = this.form.getRawValue();
     this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
     this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
@@ -528,6 +604,14 @@ export class PhotographerProfileComponent implements OnInit {
   onSave() {
     if (!this.isEditMode || this.form.invalid || this.saving) return;
     const v = this.form.getRawValue();
+    const stateValue = String(v?.location?.state || '').trim();
+    const districtValue = String(v?.location?.district || '').trim();
+    const stateObj = this.states.find(
+      (s: any) => String(s?._id || '').trim() === stateValue || String(s?.name || '').trim().toLowerCase() === stateValue.toLowerCase(),
+    );
+    const districtObj = this.districts.find(
+      (d: any) => String(d?._id || '').trim() === districtValue || String(d?.name || '').trim().toLowerCase() === districtValue.toLowerCase(),
+    );
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
       .map(p => ({ name: p.key, enabled: true, price: Number(this.pricingState[p.key].price) || 0 }));
@@ -552,7 +636,11 @@ export class PhotographerProfileComponent implements OnInit {
 
     const payload: any = {
       ...v,
-      username: this.form.get('username')?.value || '',
+      username: this.slugifyUsername(this.form.get('username')?.value || v?.name || ''),
+      location: {
+        state: stateObj ? stateObj.name : stateValue,
+        district: districtObj ? districtObj.name : districtValue,
+      },
       pricing: pricingArr,
       socialMedia,
       payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },

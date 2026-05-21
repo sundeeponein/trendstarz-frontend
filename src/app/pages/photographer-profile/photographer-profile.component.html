@@ -59,20 +59,20 @@
 
             <div class="field-grid">
               <div class="field-block">
-                <label>Full Name *</label>
+                <label>Full Name <span class="text-danger">*</span></label>
                 <input formControlName="name" type="text" class="form-control" />
               </div>
               <div class="field-block">
-                <label>Username
+                <label>Username <span class="text-danger">*</span>
                   <span class="text-muted" style="font-size:0.78rem;font-weight:400;"> - used in your profile link</span>
                 </label>
                 <div class="input-group">
                   <span class="input-group-text" style="font-size:0.82rem;color:#6b7280;">trendstarz.com/photographer/</span>
-                  <input formControlName="username" type="text" class="form-control" readonly />
+                  <input formControlName="username" type="text" class="form-control" />
                 </div>
               </div>
               <div class="field-block">
-                <label>Mobile Number *</label>
+                <label>Mobile Number <span class="text-danger">*</span></label>
                 <input formControlName="phoneNumber" type="tel" class="form-control" />
               </div>
               <div class="field-block">
@@ -131,16 +131,16 @@
 
             <div class="field-grid" formGroupName="location">
               <div class="field-block">
-                <label>State</label>
+                <label>State <span class="text-danger">*</span></label>
                 <select formControlName="state" class="form-control">
-                  <option value="">Select state</option>
+                  <option value="">Select your state</option>
                   <option *ngFor="let s of states" [value]="s._id || s.name">{{ s.name }}</option>
                 </select>
               </div>
               <div class="field-block">
-                <label>District</label>
+                <label>District <span class="text-danger">*</span></label>
                 <select formControlName="district" class="form-control">
-                  <option value="">Select district</option>
+                  <option value="">Select your district</option>
                   <option *ngFor="let d of districts" [value]="d._id || d.name">{{ d.name }}</option>
                 </select>
               </div>

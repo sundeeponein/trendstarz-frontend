@@ -150,18 +150,6 @@
               </select>
             </div>
 
-            <div class="field-block">
-              <label>Starting Price</label>
-              <div class="input-group">
-                <span class="input-group-text">₹</span>
-                <input formControlName="promotionalPrice" type="number" min="0" required class="form-control" placeholder="Enter your starting price" />
-              </div>
-              <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">
-                Starting price is required.
-              </div>
-              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
-            </div>
-
             <div class="field-block full-width">
               <label>Category / Industry <span class="text-danger">*</span></label>
               <div class="chip-list">
@@ -406,6 +394,18 @@
           </div>
 
           <div class="field-grid">
+            <div class="field-block full-width">
+              <label>Starting Price</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input formControlName="promotionalPrice" type="number" min="0" required class="form-control" placeholder="Enter your starting price" />
+              </div>
+              <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">
+                Starting price is required.
+              </div>
+              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
+            </div>
+
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">

@@ -902,6 +902,17 @@ export class InfluencerProfileComponent implements OnInit {
     return { valid: true };
   }
 
+  // Some browsers/libraries return Blob after compression; normalize it to File for FormData upload.
+  private normalizeUploadFile(candidate: File | Blob | null | undefined, fallbackName = 'profile-image.jpg'): File | null {
+    if (!candidate) return null;
+    if (candidate instanceof File) return candidate;
+    if (candidate instanceof Blob) {
+      const type = candidate.type || 'image/jpeg';
+      return new File([candidate], fallbackName, { type });
+    }
+    return null;
+  }
+
 
   // Only allow 1 image for now (can extend for premium)
   async onProfileImageFileChange(event: any) {
@@ -923,13 +934,18 @@ export class InfluencerProfileComponent implements OnInit {
         useWebWorker: true
       };
       const compressedFile = await imageCompression(file, options);
-      this.profileImageFile = compressedFile;
+      const uploadFile = this.normalizeUploadFile(compressedFile as File | Blob, file.name || 'profile-image.jpg');
+      if (!uploadFile) {
+        this.toast.error('Please select a valid image file.');
+        return;
+      }
+      this.profileImageFile = uploadFile;
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.profileImagePreview = e.target.result;
         this.refreshStepCompletion();
       };
-      reader.readAsDataURL(compressedFile);
+      reader.readAsDataURL(uploadFile);
     } catch (err) {
       this.toast.error('Image compression failed.');
       return;
@@ -1018,13 +1034,14 @@ export class InfluencerProfileComponent implements OnInit {
     // Handle Cloudinary upload for profile image if file selected
     let profileImages: { url: string, public_id: string }[] = [];
     if (this.profileImageFile) {
-      if (!(this.profileImageFile instanceof File)) {
+      const uploadFile = this.normalizeUploadFile(this.profileImageFile, this.profileImageFile.name || 'profile-image.jpg');
+      if (!uploadFile || !uploadFile.type || !uploadFile.type.startsWith('image/')) {
         this.registrationError = 'Invalid profile image file.';
         return;
       }
       try {
         const formData = new FormData();
-        formData.append('file', this.profileImageFile);
+        formData.append('file', uploadFile);
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
         const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
           method: 'POST',
