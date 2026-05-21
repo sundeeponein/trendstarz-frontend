@@ -114,6 +114,11 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: ['free', Validators.required],
       skills: [[]],
       equipment: [[]],
+      contact: this.fb.group({
+        whatsapp: [false],
+        email: [false],
+        call: [false],
+      }),
     }, { validators: [passwordMatchValidator] });
 
     this.form.get('email')?.valueChanges.subscribe(() => { this.duplicateEmailError = ''; });
@@ -399,6 +404,10 @@ export class PhotographerRegistrationComponent implements OnInit {
     return this.form.get('paymentOption')?.value === 'premium';
   }
 
+  isContactEditable(): boolean {
+    return this.isPremiumPlan();
+  }
+
   onSubmit() {
     this.submitted = true;
     if (this.form.invalid) return;
@@ -459,6 +468,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],
+      contact: v.contact || { whatsapp: false, email: false, call: false },
       pricing: pricingArr,
       socialMedia,
       profileImages: [

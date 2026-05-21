@@ -4,15 +4,17 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -35,6 +37,19 @@ export class PhotographerProfileComponent implements OnInit {
   saving = false;
   saved = false;
   errorMsg = '';
+  isEditMode = false;
+  currentStep: 1 | 2 | 3 = 1;
+  step1Complete = false;
+  step2Complete = false;
+  step3Complete = false;
+  selectedPlan: 'free' | 'premium' = 'free';
+  premiumMonthlyPrice = 399;
+  showResetPasswordModal = false;
+  private originalFormValue: any = null;
+  private originalPricingState: any = null;
+  private originalPlatformForms: any = null;
+  phoneVerified = false;
+  verificationCallNumber = '';
 
   states: any[] = [];
   districts: any[] = [];
@@ -78,23 +93,31 @@ export class PhotographerProfileComponent implements OnInit {
 
   ngOnInit() {
     this.form = this.fb.group({
-      name: ['', Validators.required],
-      phoneNumber: ['', Validators.required],
-      dateOfBirth: [''],
-      gender: [''],
-      portfolio: [''],
+      name: [{ value: '', disabled: true }, Validators.required],
+      phoneNumber: [{ value: '', disabled: true }, Validators.required],
+      dateOfBirth: [{ value: '', disabled: true }],
+      gender: [{ value: '', disabled: true }],
+      portfolio: [{ value: '', disabled: true }],
       location: this.fb.group({
-        state: [''],
-        district: [''],
+        state: [{ value: '', disabled: true }],
+        district: [{ value: '', disabled: true }],
       }),
-      skills: [[]],
-      equipment: [[]],
+      skills: [{ value: [], disabled: true }],
+      equipment: [{ value: [], disabled: true }],
       contact: this.fb.group({
-        whatsapp: [false],
-        email: [false],
-        call: [false],
+        whatsapp: [{ value: false, disabled: true }],
+        email: [{ value: false, disabled: true }],
+        call: [{ value: false, disabled: true }],
+      }),
+      payout: this.fb.group({
+        upiId: [{ value: '', disabled: true }],
+        mobile: [{ value: '', disabled: true }],
+        accountHolderName: [{ value: '', disabled: true }],
       }),
     });
+
+    this.form.valueChanges.subscribe(() => this.refreshStepCompletion());
+    this.form.statusChanges.subscribe(() => this.refreshStepCompletion());
 
     this.form.get('location.state')?.valueChanges.subscribe(stateId => {
       if (stateId) {
@@ -120,48 +143,68 @@ export class PhotographerProfileComponent implements OnInit {
         .filter((n: string) => !!n);
       this.cdr.detectChanges();
     });
-    this.config.getPricingOptions().subscribe((data: any[]) => {
-      const list = Array.isArray(data) ? data : [];
+    this.config.getTiers().subscribe(data => { this.tiers = Array.isArray(data) ? data : []; });
+
+    // Wait for both pricing options and social media before loading profile
+    // to avoid race condition where pricingState isn't ready when profile data arrives
+    forkJoin({
+      pricing: this.config.getPricingOptions(),
+      social: this.config.getSocialMedia(),
+    }).subscribe(({ pricing, social }) => {
+      const list = Array.isArray(pricing) ? pricing : [];
       this.pricingOptions = list.length ? list : this.fallbackPricing;
       this.pricingOptions.forEach(p => {
         this.pricingState[p.key] = { enabled: false, price: '' };
       });
+      this.socialMediaList = Array.isArray(social) ? social : [];
+      this.loadProfile();
       this.cdr.detectChanges();
     });
-    this.config.getSocialMedia().subscribe(data => { this.socialMediaList = data; this.loadProfile(); this.cdr.detectChanges(); });
-    this.config.getTiers().subscribe(data => { this.tiers = Array.isArray(data) ? data : []; });
   }
 
   private loadProfile() {
     const token = this.session.getToken();
-    if (!token) return;
+    if (!token) {
+      this.loading = false;
+      return;
+    }
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     this.http.get<any>(`${this.apiUrl}/users/photographers/me/profile`, { headers }).subscribe({
       next: (data) => {
-        this.commissionAccessTags = this.extractCommissionAccessTags(data?.adminTags);
+        const profile = data?.user ?? data?.profile ?? data?.data ?? data ?? {};
+        this.commissionAccessTags = this.extractCommissionAccessTags(profile?.adminTags);
+        this.phoneVerified = !!profile?.phoneVerified;
+        this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({
-          name: data.name || '',
-          phoneNumber: data.phoneNumber || '',
-          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().slice(0, 10) : '',
-          gender: data.gender || '',
-          portfolio: data.portfolio || '',
+          name: profile.name || '',
+          phoneNumber: profile.phoneNumber || '',
+          dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : '',
+          gender: profile.gender || '',
+          portfolio: profile.portfolio || '',
           location: {
-            state: data.location?.state || '',
-            district: data.location?.district || '',
+            state: profile.location?.state || '',
+            district: profile.location?.district || '',
           },
-          skills: data.skills || [],
-          equipment: data.equipment || [],
+          skills: profile.skills || [],
+          equipment: profile.equipment || [],
           contact: {
-            whatsapp: !!data.contact?.whatsapp,
-            email: !!data.contact?.email,
-            call: !!data.contact?.call,
+            whatsapp: !!profile.contact?.whatsapp,
+            email: !!profile.contact?.email,
+            call: !!profile.contact?.call,
+          },
+          payout: {
+            upiId: profile.payout?.upiId || '',
+            mobile: profile.payout?.mobile || '',
+            accountHolderName: profile.payout?.accountHolderName || '',
           },
         });
 
-        if (data.location?.state) {
-          const selectedState = this.states.find((s: any) => s.name === data.location.state);
-          const stateId = selectedState?._id || data.location.state;
-          const stateName = selectedState?.name || data.location.state;
+        this.selectedPlan = profile.isPremium ? 'premium' : 'free';
+
+        if (profile.location?.state) {
+          const selectedState = this.states.find((s: any) => s.name === profile.location.state);
+          const stateId = selectedState?._id || profile.location.state;
+          const stateName = selectedState?.name || profile.location.state;
           this.config.getDistricts(stateName, stateId).subscribe({
             next: d => { this.districts = Array.isArray(d) ? d : []; this.cdr.detectChanges(); },
             error: () => { this.districts = []; },
@@ -169,8 +212,8 @@ export class PhotographerProfileComponent implements OnInit {
         }
 
         // Pricing
-        if (Array.isArray(data.pricing)) {
-          data.pricing.forEach((p: any) => {
+        if (Array.isArray(profile.pricing)) {
+          profile.pricing.forEach((p: any) => {
             if (this.pricingState[p.name]) {
               this.pricingState[p.name].enabled = !!p.enabled;
               this.pricingState[p.name].price = p.price ? String(p.price) : '';
@@ -179,8 +222,8 @@ export class PhotographerProfileComponent implements OnInit {
         }
 
         // Social media
-        if (Array.isArray(data.socialMedia)) {
-          data.socialMedia.forEach((sm: any) => {
+        if (Array.isArray(profile.socialMedia)) {
+          profile.socialMedia.forEach((sm: any) => {
             const platform = this.socialMediaList.find(p => p.name === sm.platform || p._id === sm.platform);
             if (platform) {
               const contentTypesFromDb = Array.isArray(sm.contentTypes) ? sm.contentTypes : [];
@@ -206,16 +249,23 @@ export class PhotographerProfileComponent implements OnInit {
         }
 
         // Profile image
-        const imgUrl = data.profileImage || data.profileImages?.[0]?.url;
+        const imgUrl = profile.profileImage || profile.profileImages?.[0]?.url;
         if (imgUrl) {
           this.profileImagePreview = imgUrl;
           this.profileImageData = {
             url: imgUrl,
-            public_id: data.profileImagePublicId || data.profileImages?.[0]?.public_id || '',
+            public_id: profile.profileImagePublicId || profile.profileImages?.[0]?.public_id || '',
           };
         }
 
         this.loading = false;
+        this.isEditMode = false;
+        this.form.disable({ emitEvent: false });
+        // Snapshot originals for cancel
+        this.originalFormValue = this.form.getRawValue();
+        this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
+        this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.refreshStepCompletion();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -226,10 +276,12 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   toggleSkill(skill: string) {
+    if (!this.isEditMode) return;
     const arr: string[] = [...(this.form.get('skills')?.value || [])];
     const idx = arr.indexOf(skill);
     idx > -1 ? arr.splice(idx, 1) : arr.push(skill);
     this.form.get('skills')?.setValue(arr);
+    this.refreshStepCompletion();
   }
 
   isSkillSelected(skill: string): boolean {
@@ -237,10 +289,12 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   toggleEquipment(eq: string) {
+    if (!this.isEditMode) return;
     const arr: string[] = [...(this.form.get('equipment')?.value || [])];
     const idx = arr.indexOf(eq);
     idx > -1 ? arr.splice(idx, 1) : arr.push(eq);
     this.form.get('equipment')?.setValue(arr);
+    this.refreshStepCompletion();
   }
 
   isEquipmentSelected(eq: string): boolean {
@@ -257,6 +311,7 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   togglePlatform(platform: any) {
+    if (!this.isEditMode) return;
     if (this.isPlatformSelected(platform)) {
       this.removePlatformCard(platform);
     } else {
@@ -270,15 +325,100 @@ export class PhotographerProfileComponent implements OnInit {
       };
       this.activePlatformTab = platform._id;
     }
+    this.refreshStepCompletion();
     this.cdr.detectChanges();
   }
 
   removePlatformCard(platform: any) {
+    if (!this.isEditMode) return;
     delete this.platformForms[platform._id];
     if (this.activePlatformTab === platform._id) {
       const remaining = this.selectedPlatforms();
       this.activePlatformTab = remaining.length ? remaining[0]._id : null;
     }
+    this.refreshStepCompletion();
+  }
+
+  refreshStepCompletion() {
+    if (!this.isEditMode) {
+      this.step1Complete = this.currentStep > 1;
+      this.step2Complete = this.currentStep > 2;
+      this.step3Complete = false;
+      return;
+    }
+    this.step1Complete = this.computeStepComplete(1);
+    this.step2Complete = this.computeStepComplete(2);
+    this.step3Complete = this.computeStepComplete(3);
+  }
+
+  private computeStepComplete(step: 1 | 2 | 3): boolean {
+    if (step === 1) {
+      const name = String(this.form.get('name')?.value || '').trim();
+      const phone = String(this.form.get('phoneNumber')?.value || '').trim();
+      return !!name && !!phone;
+    }
+    if (step === 2) {
+      const state = String(this.form.get('location.state')?.value || '').trim();
+      const district = String(this.form.get('location.district')?.value || '').trim();
+      const hasSkills = Array.isArray(this.form.get('skills')?.value) && this.form.get('skills')?.value.length > 0;
+      return !!(state || district || hasSkills || this.selectedPlatforms().length);
+    }
+    if (this.selectedPlan !== 'premium') return this.step1Complete && this.step2Complete;
+    const c = this.form.get('contact')?.value || {};
+    return this.step1Complete && this.step2Complete && !!(c.whatsapp || c.email || c.call);
+  }
+
+  isContactEditable(): boolean {
+    return this.isEditMode && this.selectedPlan === 'premium';
+  }
+
+  selectPlan(plan: 'free' | 'premium') {
+    if (!this.isEditMode) return;
+    this.selectedPlan = plan;
+    if (plan !== 'premium') {
+      this.form.patchValue({
+        contact: { whatsapp: false, email: false, call: false },
+      }, { emitEvent: false });
+    }
+    this.refreshStepCompletion();
+  }
+
+  getStartingPrice(): string {
+    return this.pricingState['Starting Price']?.price || '';
+  }
+
+  setStartingPrice(value: string) {
+    if (!this.pricingState['Starting Price']) {
+      this.pricingState['Starting Price'] = { enabled: true, price: '' };
+    }
+    this.pricingState['Starting Price'].enabled = true;
+    this.pricingState['Starting Price'].price = value;
+  }
+
+  goToStep(step: 1 | 2 | 3) {
+    if (this.isEditMode && step > this.currentStep && !this.validateCurrentStep()) return;
+    this.currentStep = step;
+    this.refreshStepCompletion();
+  }
+
+  nextStep() {
+    if (this.isEditMode && !this.validateCurrentStep()) return;
+    this.currentStep = Math.min(3, this.currentStep + 1) as 1 | 2 | 3;
+    this.refreshStepCompletion();
+  }
+
+  prevStep() {
+    this.currentStep = Math.max(1, this.currentStep - 1) as 1 | 2 | 3;
+    this.refreshStepCompletion();
+  }
+
+  private validateCurrentStep(): boolean {
+    if (this.currentStep !== 1) return true;
+    const name = this.form.get('name');
+    const phone = this.form.get('phoneNumber');
+    name?.markAsTouched();
+    phone?.markAsTouched();
+    return !!name?.valid && !!phone?.valid;
   }
 
   selectedPlatforms(): any[] {
@@ -336,8 +476,36 @@ export class PhotographerProfileComponent implements OnInit {
     this.profileImageData = null;
   }
 
+  enableEdit(): void {
+    this.isEditMode = true;
+    this.form.enable({ emitEvent: false });
+    this.originalFormValue = this.form.getRawValue();
+    this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
+    this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+    this.refreshStepCompletion();
+    this.cdr.detectChanges();
+  }
+
+  cancelEdit(): void {
+    this.isEditMode = false;
+    if (this.originalFormValue) {
+      this.form.reset(this.originalFormValue, { emitEvent: false });
+    }
+    if (this.originalPricingState) {
+      this.pricingState = JSON.parse(JSON.stringify(this.originalPricingState));
+    }
+    if (this.originalPlatformForms) {
+      this.platformForms = JSON.parse(JSON.stringify(this.originalPlatformForms));
+      const platforms = this.selectedPlatforms();
+      this.activePlatformTab = platforms.length ? platforms[0]._id : null;
+    }
+    this.form.disable({ emitEvent: false });
+    this.refreshStepCompletion();
+    this.cdr.detectChanges();
+  }
+
   onSave() {
-    if (this.form.invalid || this.saving) return;
+    if (!this.isEditMode || this.form.invalid || this.saving) return;
     const v = this.form.value;
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
@@ -365,6 +533,7 @@ export class PhotographerProfileComponent implements OnInit {
       ...v,
       pricing: pricingArr,
       socialMedia,
+      payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
     };
     if (this.profileImageData) {
       payload.profileImage = this.profileImageData.url;
@@ -379,6 +548,12 @@ export class PhotographerProfileComponent implements OnInit {
       next: () => {
         this.saving = false;
         this.saved = true;
+        this.isEditMode = false;
+        this.form.disable({ emitEvent: false });
+        this.originalFormValue = this.form.getRawValue();
+        this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
+        this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.refreshStepCompletion();
         this.toast.success('Profile saved!');
         setTimeout(() => { this.saved = false; this.cdr.detectChanges(); }, 3000);
         this.cdr.detectChanges();
