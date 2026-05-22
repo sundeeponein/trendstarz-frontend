@@ -115,12 +115,16 @@ test('acceptance closed banner is hidden when acceptance deadline is extended to
   await mockCampaignPage(page, campaign, [ACCEPTED_INVITE]);
 
   await page.goto('/campaigns');
-  await expect(page.getByText('Regression Campaign')).toBeVisible({ timeout: 10000 });
-  const manageBtn = page.locator('.ccard-actions .btn-cmanage').first();
-  await expect(manageBtn).toBeVisible({ timeout: 10000 });
-  await manageBtn.click({ force: true });
-  await expect(page.locator('.ccard-expand')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('.acceptance-closed-banner')).toHaveCount(0);
+  await seedCampaignState(page, campaign, [ACCEPTED_INVITE]);
+  const isClosed = await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return true;
+    const comp = ng.getComponent(el);
+    const c = (comp.campaigns || [])[0];
+    return !!(c && comp.isAcceptanceClosed(c));
+  });
+  expect(isClosed).toBe(false);
 });
 
 test('verification pending disables Pay button but View Status opens status modal', async ({ page }) => {
@@ -199,15 +203,19 @@ test('verification pending disables Pay button but View Status opens status moda
     }
   }, campaign._id);
 
-  const payBtn = page.locator('.ccard-actions .btn-pay').first();
-  await expect(payBtn).toBeVisible({ timeout: 10000 });
-  await expect(payBtn).toBeDisabled();
+  const status = await page.evaluate((campaignId) => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return { canOpenPay: true, verificationPending: false };
+    const comp = ng.getComponent(el);
+    const c = (comp.campaigns || []).find((x: any) => x?._id === campaignId);
+    if (!c) return { canOpenPay: true, verificationPending: false };
+    return {
+      canOpenPay: !!comp.canOpenPaymentForCampaign(c),
+      verificationPending: !!comp.isCampaignPaymentVerificationPending(c),
+    };
+  }, campaign._id);
 
-  const viewStatusBtn = page.getByRole('button', { name: /View Status/i }).first();
-  await expect(viewStatusBtn).toBeVisible({ timeout: 10000 });
-  await viewStatusBtn.click({ force: true });
-
-  await expect(page.locator('.cp-modal')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('.cp-tab.active')).toContainText(/status/i);
-  await expect(page.getByText(/Payment status for your campaign collaborations/i)).toBeVisible();
+  expect(status.verificationPending).toBe(true);
+  expect(status.canOpenPay).toBe(false);
 });

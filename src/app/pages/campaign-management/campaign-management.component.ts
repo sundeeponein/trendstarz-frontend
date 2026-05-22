@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angula
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize, timeout } from 'rxjs/operators';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -23,6 +23,7 @@ import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
+type PhotographerWorkspaceView = 'campaign_requests' | 'collaborations';
 
 @Component({
   selector: 'app-campaign-management',
@@ -69,6 +70,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** True when an influencer is viewing — switches to read-only open-campaigns mode */
   isInfluencerView = false;
   isPhotographerView = false;
+  photographerWorkspaceView: PhotographerWorkspaceView = 'campaign_requests';
+  photographerBrandInvites: any[] = [];
+  photographerBrandInvitesLoading = false;
+  photographerInvitePostDates: Record<string, string> = {};
+  photographerRespondingInviteIds = new Set<string>();
+  photographerInviteTab: 'pending' | 'accepted' | 'declined' | 'completed' = 'pending';
 
   activeTab: TabStatus = 'active';
   pageSize = 10;
@@ -205,7 +212,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
 
   get invitedIds(): Set<string> {
-    return new Set(this.invites.map(i => String(i.influencerId?._id || i.influencerId)));
+    if (this.inviteTargetRole === 'photographer') {
+      return new Set(
+        this.filteredInvitesByRole
+          .map((i: any) => String(i?.photographerId?._id || i?.photographerId || i?.influencerId?._id || i?.influencerId || ''))
+          .filter(Boolean),
+      );
+    }
+    return new Set(
+      this.filteredInvitesByRole
+        .map((i: any) => String(i?.influencerId?._id || i?.influencerId || ''))
+        .filter(Boolean),
+    );
   }
 
   get inviteTargetSingularLabel(): string {
@@ -220,6 +238,84 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.inviteTargetRole === 'photographer'
       ? 'Search photographers by name...'
       : 'Search influencers by name...';
+  }
+
+  get pageTitle(): string {
+    if (this.isInfluencerView) return 'Campaign Requests';
+    if (this.isPhotographerView) {
+      return this.isPhotographerCampaignRequestsView
+        ? 'Campaign Requests'
+        : 'Collaborations';
+    }
+    return 'Campaign Requests';
+  }
+
+  get pageSubtitle(): string {
+    if (this.isInfluencerView) {
+      return 'Browse active campaign requests from brands and creators.';
+    }
+    if (this.isPhotographerView) {
+      return this.isPhotographerCampaignRequestsView
+        ? 'View and respond to campaign requests sent by brands.'
+        : 'Create and manage collaborations you send to influencers.';
+    }
+    return 'Create campaign requests for influencers or creative requirements for photographers.';
+  }
+
+  get createButtonLabel(): string {
+    if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) return 'Quota full';
+    if (this.isPhotographerView) return 'Create Collaboration';
+    return 'Create Campaign Request';
+  }
+
+  get isPhotographerCampaignRequestsView(): boolean {
+    return this.isPhotographerView && this.photographerWorkspaceView === 'campaign_requests';
+  }
+
+  get isPhotographerCollaborationsView(): boolean {
+    return this.isPhotographerView && this.photographerWorkspaceView === 'collaborations';
+  }
+
+  get showCollaborationsWorkspace(): boolean {
+    if (!this.isPhotographerView) return true;
+    return this.isPhotographerCollaborationsView;
+  }
+
+  get totalRequestsLabel(): string {
+    if (this.isPhotographerView) {
+      return this.isPhotographerCampaignRequestsView
+        ? 'Total Campaign Requests'
+        : 'Total Collaborations';
+    }
+    return 'Total Campaigns';
+  }
+
+  get totalBudgetLabel(): string {
+    if (this.isPhotographerView) {
+      return this.isPhotographerCampaignRequestsView
+        ? 'Campaign Request Value'
+        : 'Total Project Value';
+    }
+    return 'Total Budget';
+  }
+
+  private normalizePhotographerWorkspaceView(value: unknown): PhotographerWorkspaceView {
+    return String(value || '').trim().toLowerCase() === 'collaborations'
+      ? 'collaborations'
+      : 'campaign_requests';
+  }
+
+  switchPhotographerWorkspace(view: PhotographerWorkspaceView) {
+    if (!this.isPhotographerView) return;
+    this.photographerWorkspaceView = view;
+    this.currentPage = 1;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    this.cd.detectChanges();
   }
 
   get inviteRecipients(): any[] {
@@ -392,28 +488,144 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  isPhotographerInvite(invite: any): boolean {
+    const role = String(invite?.role || invite?.recipientRole || invite?.campaignId?.inviteRecipientRole || invite?.campaignId?.recipientRole || '').trim().toLowerCase();
+    if (role === 'photographer') return true;
+    if (role === 'influencer') return false;
+    if (this.inviteTargetRole === 'photographer') return true;
+    return !!invite?.photographerId && !invite?.influencerId;
+  }
+
+  isPhotographerInviteForCampaign(invite: any, campaign: any): boolean {
+    const role = String(invite?.role || invite?.recipientRole || campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || invite?.campaignId?.inviteRecipientRole || invite?.campaignId?.recipientRole || '').trim().toLowerCase();
+    if (role === 'photographer') return true;
+    if (role === 'influencer') return false;
+    const campaignRole = this.resolveCampaignInviteTargetRole(campaign);
+    if (campaignRole === 'photographer') return true;
+    return this.isPhotographerInvite(invite);
+  }
+
+  getInviteRecipient(invite: any): any {
+    if (!invite) return null;
+    if (this.isPhotographerInvite(invite)) {
+      return invite?.photographerId || invite?.influencerId || null;
+    }
+    return invite?.influencerId || invite?.photographerId || null;
+  }
+
+  getInviteRecipientName(invite: any): string {
+    const recipient = this.getInviteRecipient(invite);
+    return recipient?.name || recipient?.fullName || recipient?.fullname || recipient?.username
+      || (this.isPhotographerInvite(invite) ? 'Photographer' : 'Influencer');
+  }
+
+  getInviteRecipientAvatar(invite: any): string {
+    return this.getInfluencerAvatar(this.getInviteRecipient(invite));
+  }
+
+  getInviteRecipientUsername(invite: any): string {
+    const recipient = this.getInviteRecipient(invite);
+    return String(recipient?.username || '').trim();
+  }
+
+  isInviteRecipientPremium(invite: any): boolean {
+    if (this.isPhotographerInvite(invite)) return false;
+    return this.isInfluencerPremium(this.getInviteRecipient(invite));
+  }
+
+  getInviteRecipientTier(invite: any): string {
+    if (this.isPhotographerInvite(invite)) return '';
+    return this.getInfluencerTier(this.getInviteRecipient(invite));
+  }
+
+  getInviteRecipientSocialTags(invite: any, campaign: any, max: number = 3): Array<{ platform: string; tier: string }> {
+    if (this.isPhotographerInvite(invite)) return [];
+    const recipient = this.getInviteRecipient(invite);
+    return this.getInviteRelevantSocialTags({ ...invite, influencerId: recipient }, campaign, max);
+  }
+
+  getCampaignInviteRecipient(invite: any, campaign: any): any {
+    if (!invite) return null;
+    if (this.isPhotographerInviteForCampaign(invite, campaign)) {
+      return invite?.photographerId || invite?.influencerId || null;
+    }
+    return invite?.influencerId || invite?.photographerId || null;
+  }
+
+  getCampaignInviteRecipientName(invite: any, campaign: any): string {
+    const recipient = this.getCampaignInviteRecipient(invite, campaign);
+    return recipient?.name || recipient?.fullName || recipient?.fullname || recipient?.username
+      || (this.isPhotographerInviteForCampaign(invite, campaign) ? 'Photographer' : 'Influencer');
+  }
+
+  getCampaignInviteRecipientAvatar(invite: any, campaign: any): string {
+    return this.getInfluencerAvatar(this.getCampaignInviteRecipient(invite, campaign));
+  }
+
+  getCampaignInviteRecipientUsername(invite: any, campaign: any): string {
+    const recipient = this.getCampaignInviteRecipient(invite, campaign);
+    return String(recipient?.username || '').trim();
+  }
+
+  getCampaignInviteRecipientTier(invite: any, campaign: any): string {
+    if (this.isPhotographerInviteForCampaign(invite, campaign)) return '';
+    return this.getInfluencerTier(this.getCampaignInviteRecipient(invite, campaign));
+  }
+
+  getCampaignInviteRecipientSocialTags(invite: any, campaign: any, max: number = 3): Array<{ platform: string; tier: string }> {
+    if (this.isPhotographerInviteForCampaign(invite, campaign)) return [];
+    const recipient = this.getCampaignInviteRecipient(invite, campaign);
+    return this.getInviteRelevantSocialTags({ ...invite, influencerId: recipient }, campaign, max);
+  }
+
+  private inferInviteTargetRoleFromInvites(invites: any[]): 'influencer' | 'photographer' | null {
+    if (!Array.isArray(invites) || invites.length === 0) return null;
+    const photographerRows = invites.filter((invite: any) => this.isPhotographerInvite(invite)).length;
+    const influencerRows = invites.length - photographerRows;
+    if (photographerRows > 0 && photographerRows >= influencerRows) return 'photographer';
+    if (influencerRows > 0) return 'influencer';
+    return null;
+  }
+
+  private resolveCampaignInviteTargetRole(campaign: any): 'influencer' | 'photographer' {
+    const explicit = String(
+      campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+    ).trim().toLowerCase();
+    if (explicit === 'photographer') return 'photographer';
+    if (explicit === 'influencer') return 'influencer';
+
+    const requestKind = String(campaign?.requestKind || '').trim().toLowerCase();
+    if (requestKind === 'creative_requirement') return 'photographer';
+    if (requestKind === 'photographer_collaboration') return 'influencer';
+
+    const campaignId = String(campaign?._id || '').trim();
+    const mappedInvites = campaignId ? (this.campaignInvitesMap.get(campaignId) || []) : [];
+    const inferredFromMappedInvites = this.inferInviteTargetRoleFromInvites(mappedInvites);
+    if (inferredFromMappedInvites) return inferredFromMappedInvites;
+
+    const inferredFromCampaignInvites = this.inferInviteTargetRoleFromInvites((campaign as any)?.invites || []);
+    if (inferredFromCampaignInvites) return inferredFromCampaignInvites;
+
+    const ownerType = String(campaign?.ownerType || '').trim().toLowerCase();
+    if (ownerType === 'photographer') return 'influencer';
+
+    const creatorRole = String(campaign?.createdByRole || '').trim().toLowerCase();
+    if (creatorRole === 'photographer') return 'influencer';
+
+    return 'influencer';
+  }
+
+  getCampaignInviteTargetSingularLabel(campaign: any): string {
+    return this.resolveCampaignInviteTargetRole(campaign) === 'photographer' ? 'Photographer' : 'Influencer';
+  }
+
+  getCampaignInviteTargetPluralLabel(campaign: any): string {
+    return this.resolveCampaignInviteTargetRole(campaign) === 'photographer' ? 'Photographers' : 'Influencers';
+  }
+
   get invitePanelLockedTargetRole(): 'influencer' | 'photographer' | null {
     const campaign: any = this.invitePanelCampaign || {};
-    if (!this.isInfluencerView && !this.isPhotographerView) {
-      // Brand users can invite only influencers from campaign management.
-      return 'influencer';
-    }
-    const ownerType = String(campaign?.ownerType || '').trim().toLowerCase();
-    if (ownerType === 'brand') {
-      // Brand campaigns invite influencers only.
-      return 'influencer';
-    }
-    const explicit = String(
-      campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || ''
-    ).trim().toLowerCase();
-    if (explicit === 'influencer' || explicit === 'photographer') {
-      return explicit;
-    }
-    const creatorRole = String(campaign?.createdByRole || '').trim().toLowerCase();
-    if (creatorRole === 'photographer') {
-      return 'influencer';
-    }
-    return null;
+    return this.resolveCampaignInviteTargetRole(campaign);
   }
 
   get showInfluencerInviteTargetTab(): boolean {
@@ -614,6 +826,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     private cd: ChangeDetectorRef,
     private toast: ToastService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   private visibilityChangeHandler: (() => void) | null = null;
@@ -628,6 +841,19 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const user = this.session.getUser();
     this.isInfluencerView = user?.role === 'influencer';
     this.isPhotographerView = user?.role === 'photographer';
+    if (this.isPhotographerView) {
+      this.photographerWorkspaceView = this.normalizePhotographerWorkspaceView(
+        this.route.snapshot.queryParamMap.get('view'),
+      );
+      this.route.queryParamMap.subscribe((params) => {
+        const nextView = this.normalizePhotographerWorkspaceView(params.get('view'));
+        if (this.photographerWorkspaceView !== nextView) {
+          this.photographerWorkspaceView = nextView;
+          this.currentPage = 1;
+          this.cd.detectChanges();
+        }
+      });
+    }
 
     if (this.isInfluencerView) {
       // Auto-refresh invites when user returns to this tab (browser only)
@@ -688,6 +914,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         }
       });
     } else if (this.isPhotographerView) {
+      this.loadPhotographerBrandInvites();
       // Photographer: fetch profile first, then load owned collaboration requests
       this.loading = true;
       this.config.getPhotographerProfileById().subscribe({
@@ -695,6 +922,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           const owner = profile?.data?.photographer || profile?.photographer || profile;
           this.brandId = owner?._id || owner?.id || '';
           this.brandName = owner?.name || 'Photographer';
+          this.defaultPayout = {
+            upiId: owner?.payout?.upiId || '',
+            mobile: owner?.payout?.mobile || owner?.phoneNumber || '',
+            accountHolderName: owner?.payout?.accountHolderName || owner?.name || '',
+          };
           if (!this.brandId) {
             this.campaignLoadError = 'No photographer profile found. Please complete your profile first.';
             this.loading = false;
@@ -775,6 +1007,214 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  loadPhotographerBrandInvites() {
+    if (!this.isPhotographerView) return;
+    this.photographerBrandInvitesLoading = true;
+    this.config.getMyPhotographerInvites().subscribe({
+      next: (invites: any[]) => {
+        this.photographerBrandInvites = Array.isArray(invites) ? invites : [];
+        this.photographerBrandInvitesLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.photographerBrandInvites = [];
+        this.photographerBrandInvitesLoading = false;
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  get photographerPendingBrandInvitesCount(): number {
+    return this.photographerBrandInvites.filter((inv: any) => {
+      const status = String(inv?.status || '').toLowerCase();
+      return status === 'pending' || status === 'invited';
+    }).length;
+  }
+
+  get photographerBrandInvitesPending(): any[] {
+    return this.photographerBrandInvites.filter((invite: any) => {
+      const status = String(invite?.status || '').toLowerCase();
+      return status === 'pending' || status === 'invited';
+    });
+  }
+
+  get photographerBrandInvitesAccepted(): any[] {
+    return this.photographerBrandInvites.filter((invite: any) =>
+      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(
+        String(invite?.status || '').toLowerCase(),
+      ),
+    );
+  }
+
+  get photographerBrandInvitesDeclined(): any[] {
+    return this.photographerBrandInvites.filter((invite: any) =>
+      ['declined', 'withdrawn'].includes(String(invite?.status || '').toLowerCase()),
+    );
+  }
+
+  get photographerBrandInvitesCompleted(): any[] {
+    return this.photographerBrandInvites.filter((invite: any) =>
+      ['completed', 'approved', 'disputed'].includes(String(invite?.status || '').toLowerCase()),
+    );
+  }
+
+  get photographerBrandInvitesFiltered(): any[] {
+    if (this.photographerInviteTab === 'accepted') return this.photographerBrandInvitesAccepted;
+    if (this.photographerInviteTab === 'declined') return this.photographerBrandInvitesDeclined;
+    if (this.photographerInviteTab === 'completed') return this.photographerBrandInvitesCompleted;
+    return this.photographerBrandInvitesPending;
+  }
+
+  get photographerLatestBrandInvites(): any[] {
+    return [...this.photographerBrandInvites]
+      .sort((a: any, b: any) => {
+        const at = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+        const bt = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+        return bt - at;
+      })
+      .slice(0, 4);
+  }
+
+  getBrandInviteStatusLabel(status: string): string {
+    const s = String(status || '').toLowerCase();
+    if (s === 'pending' || s === 'invited') return 'Pending';
+    if (s === 'accepted') return 'Accepted';
+    if (s === 'declined') return 'Declined';
+    if (s === 'withdrawn') return 'Withdrawn';
+    if (s === 'completed' || s === 'approved') return 'Completed';
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Pending';
+  }
+
+  canPhotographerRespondInvite(invite: any): boolean {
+    const s = String(invite?.status || '').toLowerCase();
+    return s === 'pending' || s === 'invited';
+  }
+
+  respondToPhotographerBrandInvite(invite: any, status: 'accepted' | 'declined') {
+    const inviteId = String(invite?._id || '');
+    if (!inviteId || this.photographerRespondingInviteIds.has(inviteId)) return;
+
+    const selectedPostDate =
+      status === 'accepted' ? this.photographerInvitePostDates[inviteId] : undefined;
+
+    if (status === 'accepted' && !selectedPostDate) {
+      this.showError('Please select a post date before accepting this request.');
+      return;
+    }
+
+    if (
+      status === 'accepted' &&
+      selectedPostDate &&
+      !this.isSelectedDateValid(invite, selectedPostDate)
+    ) {
+      this.showError('Selected post date must be between campaign start and end dates.');
+      return;
+    }
+
+    this.photographerRespondingInviteIds.add(inviteId);
+    this.cd.detectChanges();
+
+    this.config.respondToInvite(inviteId, status, selectedPostDate).pipe(
+      finalize(() => {
+        this.photographerRespondingInviteIds.delete(inviteId);
+        this.cd.detectChanges();
+      }),
+    ).subscribe({
+      next: () => {
+        this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
+          String(row?._id || '') === inviteId ? { ...row, status } : row,
+        );
+        this.toast.success(
+          status === 'accepted'
+            ? 'Brand request accepted.'
+            : 'Brand request declined.',
+        );
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.message || 'Failed to respond to request.');
+      },
+    });
+  }
+
+  onPhotographerCardAccept(payload: InviteAcceptPayload) {
+    if (payload.postDate) {
+      this.selectedInvitePostDates[payload.inviteId] = payload.postDate;
+    }
+    if (payload.platform && payload.contentType) {
+      this.selectedInviteContentType[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
+    }
+    if (payload.payout) {
+      this.selectedInvitePayouts[payload.inviteId] = {
+        upiId: payload.payout.upiId || '',
+        mobile: payload.payout.mobile || '',
+        accountHolderName: payload.payout.accountHolderName || '',
+      };
+    }
+    this.respondToPhotographerInviteById(payload.inviteId, 'accepted');
+  }
+
+  onPhotographerCardDecline(payload: InviteDeclinePayload) {
+    this.respondToPhotographerInviteById(payload.inviteId, 'declined');
+  }
+
+  onPhotographerCardPostDateChange(inviteId: string, value: string) {
+    this.selectedInvitePostDates[inviteId] = value;
+  }
+
+  onPhotographerCardContentTypeChange(inviteId: string, key: string) {
+    this.selectedInviteContentType[inviteId] = key;
+  }
+
+  private respondToPhotographerInviteById(inviteId: string, status: 'accepted' | 'declined') {
+    const invite = this.photographerBrandInvites.find((item: any) => item?._id === inviteId);
+    if (!invite) {
+      this.showError('Invite not found. Please refresh and try again.');
+      return;
+    }
+
+    const selectedPostDate = status === 'accepted' ? this.selectedInvitePostDates[inviteId] : undefined;
+    if (status === 'accepted' && !selectedPostDate) {
+      this.showError('Please select a post date before accepting this invite.');
+      return;
+    }
+    if (status === 'accepted' && selectedPostDate && !this.isSelectedDateValid(invite, selectedPostDate)) {
+      this.showError('Selected post date must be between campaign start and end dates.');
+      return;
+    }
+
+    let chosen = this.selectedInviteContentType[inviteId];
+    const options = this.getInviteContentTypeOptions(invite);
+    if (status === 'accepted' && options.length === 1 && !chosen) {
+      chosen = options[0].key;
+      this.selectedInviteContentType[inviteId] = chosen;
+    }
+    if (status === 'accepted' && options.length > 0 && !chosen) {
+      this.showError('Please select what you will create for this campaign.');
+      return;
+    }
+
+    const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
+    const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
+    this.photographerRespondingInviteIds.add(inviteId);
+    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
+      timeout(20000),
+      finalize(() => {
+        this.photographerRespondingInviteIds.delete(inviteId);
+        this.cd.detectChanges();
+      }),
+    ).subscribe({
+      next: () => {
+        this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
+          row._id === inviteId ? { ...row, status } : row,
+        );
+        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
+      },
+    });
   }
 
   ngOnDestroy() {
@@ -892,6 +1332,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }) {
     const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = data;
     const recipientRole: 'influencer' | 'photographer' = inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer';
+    const campaignPayload = {
+      ...campaignData,
+      inviteRecipientRole: recipientRole,
+    };
     const inviteIds = (Array.isArray(inviteRecipientIds) && inviteRecipientIds.length > 0)
       ? inviteRecipientIds
       : (Array.isArray(inviteInfluencerIds) ? inviteInfluencerIds : []);
@@ -927,7 +1371,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (this.formMode === 'edit' && this.editingCampaign?._id) {
       // Capture id before closeForm() nullifies editingCampaign
       const editingId = this.editingCampaign._id;
-      this.config.updateCampaign(editingId, { ...campaignData, brandId: validBrandId }).subscribe({
+      this.config.updateCampaign(editingId, { ...campaignPayload, brandId: validBrandId }).subscribe({
         next: (updated: Campaign | null) => {
           this.campaigns = this.campaigns.map(c => {
             if (!c || !c._id) return c;
@@ -1011,7 +1455,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      const payload: any = { ...campaignData, brandId: validBrandId };
+      const payload: any = { ...campaignPayload, brandId: validBrandId };
       // debug: creating campaign payload
       // Basic required fields check
       if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId) {
@@ -1252,6 +1696,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         if (campaign._id) {
           this.campaignInvitesMap.set(campaign._id, invites);
         }
+        const inferredRole = this.inferInviteTargetRoleFromInvites(invites);
+        if (inferredRole) {
+          this.inviteTargetRole = inferredRole;
+        }
         this.invitesLoading = false;
         this.cd.detectChanges();
       },
@@ -1261,7 +1709,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const hints = this.getInviteCategoryHints();
     this.analytics.trackCampaignInviteSuggestionsApplied({
       campaignId: campaign._id,
-      targetRole: 'influencer',
+      targetRole: this.inviteTargetRole,
       campaignLocation: campaign?.targetState || campaign?.venueState,
       categoriesMatched: hints.length,
     });
