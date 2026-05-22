@@ -6,19 +6,27 @@ import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { ResolvePlatformPipe } from '../../../shared/pipes/resolve-platform.pipe';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, ResolvePlatformPipe, AdminConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, AdminConfirmDialogComponent],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
   filtersExpanded = true;
+  searchQuery = '';
+  currentPage = 1;
+  readonly pageSize = 8;
+
+  showUserDetailsModal = false;
+  selectedUser: any = null;
+  selectedUserType: 'influencer' | 'brand' | 'photographer' | null = null;
+  selectedUserInternalNotes = '';
+
   private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
   influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
   brandBadgeOptions = [...this.defaultUserTagOptions.brand];
@@ -78,6 +86,215 @@ export class AdminUserTableComponent implements OnInit {
     if (img && typeof img === 'object' && img.url) return img.url;
     if (typeof img === 'string' && img) return img;
     return 'assets/default-profile-brands.png';
+  }
+
+  getUserAvatar(user: any, userType: 'influencer' | 'brand' | 'photographer'): string {
+    return userType === 'brand' ? this.getBrandLogo(user) : this.getProfileImage(user);
+  }
+
+  getUserDisplayName(user: any): string {
+    return user?.brandName || user?.name || '-';
+  }
+
+  getUserHandle(user: any): string {
+    const handle = user?.username || user?.brandUsername || user?.userName || user?.brand_username;
+    return handle ? `@${handle}` : '-';
+  }
+
+  getUserCategoryList(user: any): string[] {
+    if (Array.isArray(user?.categories) && user.categories.length) return user.categories;
+    if (Array.isArray(user?.skills) && user.skills.length) return user.skills;
+    return [];
+  }
+
+  getUserStateLabel(user: any): string {
+    const district = user?.location?.district || '';
+    const state = user?.location?.state || '';
+    if (district && state) return `${district} | ${state}`;
+    return district || state || '-';
+  }
+
+  getUserStartingPrice(user: any): string {
+    const value = user?.promotionalPrice ?? user?.price ?? user?.pricing?.startingFrom;
+    if (value === null || value === undefined || value === '') return '-';
+    return `Rs ${value} / post`;
+  }
+
+  getUserSocialReach(user: any): number | null {
+    const candidates = [
+      user?.socialReach,
+      user?.totalSocialReach,
+      user?.audienceReach,
+      user?.reach,
+      user?.reachCount,
+      user?.metrics?.socialReach,
+      user?.profileStats?.socialReach,
+    ];
+    for (const value of candidates) {
+      const parsed = this.parseCountValue(value);
+      if (parsed > 0) return parsed;
+    }
+    return null;
+  }
+
+  private parseCountValue(value: any): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/[^\d.]/g, '');
+      if (!cleaned) return 0;
+      const parsed = Number(cleaned);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  }
+
+  getUserLanguages(user: any): string {
+    if (!Array.isArray(user?.languages) || !user.languages.length) return '-';
+    return user.languages.join(', ');
+  }
+
+  getUserCategoriesLabel(user: any): string {
+    const list = this.getUserCategoryList(user);
+    return list.length ? list.join(', ') : '-';
+  }
+
+  getUserProfileTraffic(user: any): { impressions: number; clicks: number } {
+    return {
+      impressions: Number(user?.profileTraffic?.impressions ?? 0),
+      clicks: Number(user?.profileTraffic?.clicks ?? 0),
+    };
+  }
+
+  getUserVerificationStatus(user: any): string {
+    return String(user?.verificationStatus || 'not_submitted');
+  }
+
+  hasVerificationDocuments(user: any): boolean {
+    return Array.isArray(user?.verificationDocuments) && user.verificationDocuments.length > 0;
+  }
+
+  getUserPaymentMethodLabel(user: any): string {
+    const method = String(user?.latestPayment?.paymentMethod || '').toLowerCase();
+    if (method === 'upi') return 'UPI';
+    if (method === 'qr') return 'QR Code';
+    if (user?.isPremium && (!method || method === 'admin')) {
+      const duration = this.getPremiumDurationLabel(user?.premiumDuration);
+      return duration ? `Admin Granted (${duration})` : 'Admin Granted';
+    }
+    return '-';
+  }
+
+  getUserPremiumLabel(user: any): string {
+    if (!user?.isPremium) return 'Free';
+    const period = this.getPremiumPeriod(user);
+    if (period?.end) return `Premium till ${period.end.toLocaleDateString('en-IN')}`;
+    return 'Premium';
+  }
+
+  getSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string }> {
+    if (!Array.isArray(user?.socialMedia)) return [];
+    return user.socialMedia
+      .map((sm: any) => {
+        const platform = this.resolveSocialPlatform(sm);
+        const href = this.resolveSocialHref(sm, platform);
+        const followers = this.parseCountValue(sm?.followersCount);
+        if (!href) return null;
+        const rawHandle = String(sm?.handle || '').trim().replace(/^@/, '');
+        const label = this.getSocialLabel(platform);
+        return {
+          href,
+          icon: this.getSocialIcon(platform),
+          label,
+          shortLabel: this.getSocialShortLabel(platform),
+          handle: rawHandle ? `@${rawHandle}` : '-',
+          followers,
+        };
+      })
+        .filter((item: any): item is { href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string } => !!item);
+  }
+
+  getTableSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string }> {
+    return this.getSocialMediaItems(user).slice(0, 3);
+  }
+
+  getTierValue(user: any): 'premium' | 'free' {
+    return user?.isPremium ? 'premium' : 'free';
+  }
+
+  onTierSelectChange(
+    user: any,
+    userType: 'influencer' | 'brand' | 'photographer',
+    value: 'premium' | 'free' | string,
+  ): void {
+    if (!user?._id) return;
+    const normalized = value === 'premium' ? 'premium' : 'free';
+    if (normalized === 'premium' && !user.isPremium) {
+      this.openPremiumModal(user._id, userType);
+      return;
+    }
+    if (normalized === 'free' && user.isPremium) {
+      this.setPremium(user._id, false, userType);
+    }
+  }
+
+  private resolveSocialPlatform(sm: any): string {
+    const explicit = String(sm?.platform || sm?.type || sm?.channel || '').toLowerCase();
+    const link = String(sm?.url || '').toLowerCase();
+    if (explicit.includes('insta') || link.includes('instagram.com')) return 'instagram';
+    if (explicit.includes('youtube') || link.includes('youtube.com') || link.includes('youtu.be')) return 'youtube';
+    if (explicit.includes('facebook') || link.includes('facebook.com')) return 'facebook';
+    if (explicit.includes('twitter') || explicit === 'x' || link.includes('x.com') || link.includes('twitter.com')) return 'x';
+    if (explicit.includes('linkedin') || link.includes('linkedin.com')) return 'linkedin';
+    return 'social';
+  }
+
+  private resolveSocialHref(sm: any, platform: string): string {
+    const rawUrl = String(sm?.url || '').trim();
+    if (rawUrl) {
+      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) return rawUrl;
+      return `https://${rawUrl}`;
+    }
+    const rawHandle = String(sm?.handle || '').trim().replace(/^@/, '');
+    if (!rawHandle) return '';
+    if (platform === 'instagram') return `https://instagram.com/${rawHandle}`;
+    if (platform === 'youtube') return `https://youtube.com/${rawHandle}`;
+    if (platform === 'facebook') return `https://facebook.com/${rawHandle}`;
+    if (platform === 'x') return `https://x.com/${rawHandle}`;
+    if (platform === 'linkedin') return `https://linkedin.com/in/${rawHandle}`;
+    return `https://${rawHandle}`;
+  }
+
+  private getSocialIcon(platform: string): string {
+    if (platform === 'instagram') return 'bi-instagram';
+    if (platform === 'youtube') return 'bi-youtube';
+    if (platform === 'facebook') return 'bi-facebook';
+    if (platform === 'x') return 'bi-twitter-x';
+    if (platform === 'linkedin') return 'bi-linkedin';
+    return 'bi-link-45deg';
+  }
+
+  private getSocialLabel(platform: string): string {
+    if (platform === 'instagram') return 'Instagram';
+    if (platform === 'youtube') return 'YouTube';
+    if (platform === 'facebook') return 'Facebook';
+    if (platform === 'x') return 'X';
+    if (platform === 'linkedin') return 'LinkedIn';
+    return 'Social';
+  }
+
+  private getSocialShortLabel(platform: string): string {
+    if (platform === 'instagram') return 'IG';
+    if (platform === 'youtube') return 'YT';
+    if (platform === 'facebook') return 'FB';
+    if (platform === 'x') return 'X';
+    if (platform === 'linkedin') return 'IN';
+    return 'SM';
+  }
+
+  getRoleTitle(): string {
+    if (this.activeTab === 'influencer') return 'Influencers';
+    if (this.activeTab === 'brand') return 'Brands';
+    return 'Photographers';
   }
 
   getSignupSource(user: any): string {
@@ -456,6 +673,11 @@ export class AdminUserTableComponent implements OnInit {
 
   onFilterChange(userType: 'influencer' | 'brand' | 'photographer') {
     this.applyFilters(userType);
+    this.currentPage = 1;
+  }
+
+  onSearchQueryChange(): void {
+    this.currentPage = 1;
   }
 
   private getFiltersForType(userType: 'influencer' | 'brand' | 'photographer') {
@@ -590,6 +812,120 @@ export class AdminUserTableComponent implements OnInit {
       this.photographerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
     }
     this.applyFilters(userType);
+    this.currentPage = 1;
+  }
+
+  getActiveUsers(): any[] {
+    if (this.activeTab === 'influencer') return this.filteredInfluencers;
+    if (this.activeTab === 'brand') return this.filteredBrands;
+    return this.filteredPhotographers;
+  }
+
+  private matchesSearch(user: any): boolean {
+    const query = this.searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    const text = [
+      user?._id,
+      user?.name,
+      user?.brandName,
+      user?.username,
+      user?.brandUsername,
+      user?.email,
+      user?.phoneNumber,
+      user?.location?.district,
+      user?.location?.state,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return text.includes(query);
+  }
+
+  getVisibleUsers(): any[] {
+    return this.getActiveUsers().filter((user) => this.matchesSearch(user));
+  }
+
+  getPagedUsers(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.getVisibleUsers().slice(start, start + this.pageSize);
+  }
+
+  getTotalVisibleUsers(): number {
+    return this.getVisibleUsers().length;
+  }
+
+  hasPreviousPage(): boolean {
+    return this.currentPage > 1;
+  }
+
+  hasNextPage(): boolean {
+    return this.currentPage * this.pageSize < this.getTotalVisibleUsers();
+  }
+
+  goToPreviousPage(): void {
+    if (!this.hasPreviousPage()) return;
+    this.currentPage -= 1;
+  }
+
+  goToNextPage(): void {
+    if (!this.hasNextPage()) return;
+    this.currentPage += 1;
+  }
+
+  openUserDetails(user: any): void {
+    this.selectedUser = user;
+    this.selectedUserType = this.activeTab;
+    this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
+    this.showUserDetailsModal = true;
+  }
+
+  closeUserDetailsModal(): void {
+    this.showUserDetailsModal = false;
+    this.selectedUser = null;
+    this.selectedUserType = null;
+    this.selectedUserInternalNotes = '';
+  }
+
+  onUserDetailsBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement)?.classList?.contains('modal')) {
+      this.closeUserDetailsModal();
+    }
+  }
+
+  getSelectedUserStatus(): string {
+    if (!this.selectedUser?.status) return '-';
+    return String(this.selectedUser.status);
+  }
+
+  toggleSelectedEmailVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const nextValue = !this.isEmailVerified(this.selectedUser);
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isEmailVerified', nextValue);
+    this.selectedUser.isEmailVerified = nextValue;
+  }
+
+  toggleSelectedMobileVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const nextValue = !this.isMobileVerified(this.selectedUser);
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isMobileVerified', nextValue);
+    this.selectedUser.isMobileVerified = nextValue;
+  }
+
+  saveSelectedUserNotes(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    const payload = {
+      action: this.selectedUser?.verificationStatus || 'pending',
+      notes: this.selectedUserInternalNotes,
+    };
+    this.http
+      .patch(`${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/verification`, payload, this.getAuthHeaders())
+      .pipe(catchError(() => of(null)))
+      .subscribe((res: any) => {
+        if (!res) return;
+        this.selectedUser.verificationAdminNotes = this.selectedUserInternalNotes;
+      });
   }
 
   getTagOptions(userType: 'influencer' | 'brand' | 'photographer'): string[] {
@@ -753,6 +1089,7 @@ export class AdminUserTableComponent implements OnInit {
 
   setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
+    this.currentPage = 1;
     // Reset modal state when switching tabs to avoid blank screen
     this.showPremiumModal = false;
     this.premiumUserId = null;
