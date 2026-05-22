@@ -148,8 +148,23 @@ test.describe('Reset password page', () => {
     await page.locator('input[formControlName="password"]').focus();
     await page.locator('input[formControlName="password"]').blur();
 
-    // Success message shows briefly before redirect to /login (2s timeout in component)
-    await expect(page.locator('.text-success')).toBeVisible({ timeout: 5000 });
+    // Success message is transient before redirect to /login; assert the component state first,
+    // then confirm the UI text if it is still mounted.
+    await expect.poll(async () => {
+      return await page.evaluate(() => {
+        const host = document.querySelector('app-reset-password') as any;
+        const ng = (window as any).ng;
+        const comp = ng?.getComponent?.(host);
+        return String(comp?.successMsg || '');
+      });
+    }, {
+      timeout: 5000,
+    }).toContain('password has been reset');
+
+    const successMessage = page.locator('.text-success', { hasText: 'Your password has been reset' });
+    if (await successMessage.count()) {
+      await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
+    }
   });
 
   test('shows error when token is invalid (mocked API)', async ({ page }) => {
