@@ -384,23 +384,82 @@ export class BrandProfileViewComponent implements OnInit {
     canonical.setAttribute('href', href);
   }
 
-  onCreateCampaign(data: Partial<Campaign>) {
+  onCreateCampaign(data: Partial<Campaign> & {
+    inviteInfluencerIds?: string[];
+    inviteRecipientIds?: string[];
+    inviteRecipientRole?: 'influencer' | 'photographer';
+  }) {
     const brandId = this.brand?._id;
     if (!brandId) return;
-    const payload: any = { ...data, brandId };
+    const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = data as any;
+    const recipientRole: 'influencer' | 'photographer' = inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer';
+    const inviteIds = (Array.isArray(inviteRecipientIds) && inviteRecipientIds.length > 0)
+      ? inviteRecipientIds
+      : (Array.isArray(inviteInfluencerIds) ? inviteInfluencerIds : []);
+    const payload: any = {
+      ...campaignData,
+      brandId,
+      inviteRecipientRole: recipientRole,
+    };
     this.config.createCampaign(payload).subscribe({
       next: (created: Campaign) => {
-        this.campaigns = [...this.campaigns, created];
-        this.cd.detectChanges();
+        const applyLocalUpdate = () => {
+          this.campaigns = [...this.campaigns, created];
+          this.cd.detectChanges();
+        };
+
+        const validIds = inviteIds.filter((id: string) => !!id);
+        if (!created?._id || validIds.length === 0) {
+          applyLocalUpdate();
+          return;
+        }
+
+        const request$ = recipientRole === 'photographer'
+          ? this.config.invitePhotographers(created._id, validIds)
+          : this.config.inviteInfluencers(created._id, validIds);
+        request$.subscribe({
+          next: () => applyLocalUpdate(),
+          error: () => applyLocalUpdate(),
+        });
       }
     });
   }
 
-  onEditCampaign(event: { id: string; data: Partial<Campaign> }) {
-    this.config.updateCampaign(event.id, event.data).subscribe({
+  onEditCampaign(event: { id: string; data: Partial<Campaign> & {
+    inviteInfluencerIds?: string[];
+    inviteRecipientIds?: string[];
+    inviteRecipientRole?: 'influencer' | 'photographer';
+  } }) {
+    const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = (event?.data || {}) as any;
+    const recipientRole: 'influencer' | 'photographer' = inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer';
+    const inviteIds = (Array.isArray(inviteRecipientIds) && inviteRecipientIds.length > 0)
+      ? inviteRecipientIds
+      : (Array.isArray(inviteInfluencerIds) ? inviteInfluencerIds : []);
+    const updatePayload: any = {
+      ...campaignData,
+      inviteRecipientRole: recipientRole,
+    };
+
+    this.config.updateCampaign(event.id, updatePayload).subscribe({
       next: (updated: Campaign) => {
-        this.campaigns = this.campaigns.map(c => c._id === event.id ? { ...c, ...updated } : c);
-        this.cd.detectChanges();
+        const applyLocalUpdate = () => {
+          this.campaigns = this.campaigns.map(c => c._id === event.id ? { ...c, ...updated } : c);
+          this.cd.detectChanges();
+        };
+
+        const validIds = inviteIds.filter((id: string) => !!id);
+        if (!event?.id || validIds.length === 0) {
+          applyLocalUpdate();
+          return;
+        }
+
+        const request$ = recipientRole === 'photographer'
+          ? this.config.invitePhotographers(event.id, validIds)
+          : this.config.inviteInfluencers(event.id, validIds);
+        request$.subscribe({
+          next: () => applyLocalUpdate(),
+          error: () => applyLocalUpdate(),
+        });
       }
     });
   }
