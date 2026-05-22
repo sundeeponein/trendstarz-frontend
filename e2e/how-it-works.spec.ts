@@ -44,9 +44,16 @@ test.describe('How it Works page', () => {
 
   test('logged in influencer sees activation section and campaigns CTA', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('token', 'dummy.token.value');
+      const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const payload = btoa(JSON.stringify({ role: 'influencer', userId: 'inf_1', exp: Math.floor(Date.now() / 1000) + 3600 }))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      localStorage.setItem('token', `${header}.${payload}.`);
+      localStorage.setItem('userRole', 'influencer');
+      localStorage.setItem('loginTimestamp', Date.now().toString());
       localStorage.setItem('user', JSON.stringify({
-        id: 'inf_1',
+        _id: 'inf_1',
         role: 'influencer',
         name: 'Test Influencer',
         email: 'inf@test.com',
@@ -72,9 +79,16 @@ test.describe('How it Works page', () => {
 
   test('logged in brand sees activation section and create campaign CTA', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('token', 'dummy.token.value');
+      const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const payload = btoa(JSON.stringify({ role: 'brand', userId: 'brand_1', exp: Math.floor(Date.now() / 1000) + 3600 }))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      localStorage.setItem('token', `${header}.${payload}.`);
+      localStorage.setItem('userRole', 'brand');
+      localStorage.setItem('loginTimestamp', Date.now().toString());
       localStorage.setItem('user', JSON.stringify({
-        id: 'brand_1',
+        _id: 'brand_1',
         role: 'brand',
         brandName: 'Test Brand',
         email: 'brand@test.com',

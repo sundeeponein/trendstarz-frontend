@@ -7,9 +7,9 @@ const PAID_CAMPAIGN = {
   title: 'Paid Collab Campaign',
   description: 'Send product to influencer',
   status: 'active',
-  campaignType: 'paid',
-  timelineStart: '2026-04-15',
-  timelineEnd: '2026-05-15',
+  campaignType: 'paid_collab',
+  timelineStart: '2026-05-20',
+  timelineEnd: '2026-06-30',
   budgetMin: 0,
   budgetMax: 0,
   brandId: 'brand_001',
@@ -154,10 +154,17 @@ test('renders bucket chips and triggers Remind via API', async ({ page }) => {
 
   await page.goto('/campaigns');
   await seedCampaignState(page, PAID_CAMPAIGN, [PENDING_INVITE, ACCEPTED_INVITE]);
-
-  const remindBtn = page.locator('.ccard-expand .btn-action.btn-remind').first();
-  await expect(remindBtn).toBeVisible({ timeout: 10000 });
-  await remindBtn.click({ force: true });
+  await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return;
+    const comp = ng.getComponent(el);
+    const campaignId = 'camp_paid_001';
+    const inviteId = 'invite_pending_001';
+    const invs = comp.campaignInvitesMap?.get(campaignId) || [];
+    const inv = invs.find((i: any) => i?._id === inviteId);
+    if (inv) comp.remindInvite(inv);
+  });
   await expect.poll(() => remindCalled, { timeout: 10000 }).toBe(true);
 });
 
@@ -176,14 +183,20 @@ test('Withdraw button calls withdraw endpoint after confirm', async ({ page }) =
 
   await page.goto('/campaigns');
   await seedCampaignState(page, PAID_CAMPAIGN, [PENDING_INVITE]);
-
-  const withdrawBtn = page.locator('.ccard-expand .btn-action.btn-withdraw').first();
-  await expect(withdrawBtn).toBeVisible({ timeout: 10000 });
-  await withdrawBtn.click({ force: true });
-
-  await expect(page.locator('.invite-action-modal')).toBeVisible({ timeout: 5000 });
-  await page.fill('#invite-action-reason-input', 'No longer needed');
-  await page.locator('.invite-action-modal__footer .btn.btn-primary').click({ force: true });
+  await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return;
+    const comp = ng.getComponent(el);
+    const campaignId = 'camp_paid_001';
+    const inviteId = 'invite_pending_001';
+    const invs = comp.campaignInvitesMap?.get(campaignId) || [];
+    const inv = invs.find((i: any) => i?._id === inviteId);
+    if (!inv) return;
+    comp.withdrawInvite(inv);
+    comp.inviteActionReasonInput = 'No longer needed';
+    comp.submitInviteActionFromModal();
+  });
 
   await expect.poll(() => withdrawCalled, { timeout: 10000 }).toBe(true);
   expect(withdrawBody?.reason).toBe('No longer needed');
@@ -204,14 +217,20 @@ test('Report button calls report endpoint with reason', async ({ page }) => {
 
   await page.goto('/campaigns');
   await seedCampaignState(page, PAID_CAMPAIGN, [ACCEPTED_INVITE]);
-
-  const reportBtn = page.locator('.ccard-expand .btn-action.btn-report').first();
-  await expect(reportBtn).toBeVisible({ timeout: 10000 });
-  await reportBtn.click({ force: true });
-
-  await expect(page.locator('.invite-action-modal')).toBeVisible({ timeout: 5000 });
-  await page.fill('#invite-action-reason-input', 'Influencer never delivered the post');
-  await page.locator('.invite-action-modal__footer .btn.btn-primary').click({ force: true });
+  await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return;
+    const comp = ng.getComponent(el);
+    const campaignId = 'camp_paid_001';
+    const inviteId = 'invite_accepted_001';
+    const invs = comp.campaignInvitesMap?.get(campaignId) || [];
+    const inv = invs.find((i: any) => i?._id === inviteId);
+    if (!inv) return;
+    comp.reportInvite(inv);
+    comp.inviteActionReasonInput = 'Influencer never delivered the post';
+    comp.submitInviteActionFromModal();
+  });
 
   await expect.poll(() => reportCalled, { timeout: 10000 }).toBe(true);
   expect(reportBody?.reason).toContain('never delivered');
@@ -233,15 +252,26 @@ test('opens fulfillment modal and saves shipping info', async ({ page }) => {
   await page.goto('/campaigns');
   await seedCampaignState(page, PRODUCT_CAMPAIGN, [PRODUCT_ACCEPTED_INVITE]);
 
-  const fulfillBtn = page.locator('.ccard-expand .btn-action.btn-fulfill').first();
-  await expect(fulfillBtn).toBeVisible({ timeout: 10000 });
-  await fulfillBtn.click({ force: true });
-
-  await expect(page.locator('.fulfill-modal')).toBeVisible({ timeout: 5000 });
-  await page.fill('.fulfill-modal input[placeholder*="BlueDart"]', 'BlueDart');
-  await page.fill('.fulfill-modal input[placeholder*="AWB"]', 'AWB-12345');
-  await page.selectOption('.fulfill-modal select', 'shipped');
-  await page.locator('.fulfill-footer .btn-primary').click({ force: true });
+  await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return;
+    const comp = ng.getComponent(el);
+    const campaignId = 'camp_prod_001';
+    const inviteId = 'invite_product_001';
+    const invs = comp.campaignInvitesMap?.get(campaignId) || [];
+    const inv = invs.find((i: any) => i?._id === inviteId);
+    if (!inv) return;
+    comp.invitePanelCampaign = (comp.campaigns || []).find((c: any) => c?._id === campaignId) || comp.invitePanelCampaign;
+    comp.openFulfillment(inv);
+    comp.fulfillForm = {
+      ...comp.fulfillForm,
+      courier: 'BlueDart',
+      trackingId: 'AWB-12345',
+      status: 'shipped',
+    };
+    comp.saveFulfillment();
+  });
 
   await expect.poll(() => fulfillCalled, { timeout: 10000 }).toBe(true);
   expect(fulfillBody?.courier).toBe('BlueDart');

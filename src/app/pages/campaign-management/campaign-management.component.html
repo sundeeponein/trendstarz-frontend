@@ -119,7 +119,7 @@
   <!-- Loading -->
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>
-    <p class="mt-2 text-muted">Loading {{ isPhotographerView ? 'collaboration requests' : 'campaigns' }}...</p>
+    <p class="mt-2 text-muted">Loading {{ isPhotographerView ? (isPhotographerCampaignRequestsView ? 'campaign requests' : 'collaborations') : 'campaigns' }}...</p>
   </div>
 
   <!-- Campaign payment modal (brand-facing) -->
@@ -133,6 +133,120 @@
   <div *ngIf="!loading">
     <div *ngIf="campaignLoadError" class="text-center py-5 text-danger">
       <i class="bi bi-exclamation-triangle"></i> {{ campaignLoadError }}
+    </div>
+
+    <div class="my-invites-section" *ngIf="isPhotographerCampaignRequestsView">
+      <div class="my-invites-header">
+        <div class="inbox-title-group">
+          <h2 class="my-invites-title">
+            <i class="bi bi-inbox-fill"></i> Inbox
+          </h2>
+          <span class="inbox-subtitle">Your campaign invitations</span>
+        </div>
+        <div class="inbox-header-actions">
+          <span class="pending-badge" *ngIf="photographerPendingBrandInvitesCount > 0">
+            {{ photographerPendingBrandInvitesCount }} pending
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            title="Refresh invites"
+            [disabled]="photographerBrandInvitesLoading"
+            (click)="loadPhotographerBrandInvites()"
+          >
+            <i class="bi bi-arrow-clockwise" [class.spin]="photographerBrandInvitesLoading"></i>
+          </button>
+          <button
+            type="button"
+            class="flow-info-trigger border-0"
+            title="How campaigns work — full flow guide"
+            (click)="flowHelp.openCampaignFlowDiagram()"
+          >
+            <i class="bi bi-info-circle"></i>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="photographerBrandInvitesLoading" class="invite-skeleton-list">
+        <div class="invite-skeleton" *ngFor="let _ of [1,2,3]">
+          <div class="skel-row">
+            <div class="skel-avatar"></div>
+            <div class="skel-lines">
+              <div class="skel-line skel-line--short"></div>
+              <div class="skel-line skel-line--long"></div>
+              <div class="skel-line skel-line--medium"></div>
+            </div>
+            <div class="skel-badge"></div>
+          </div>
+          <div class="skel-detail-row">
+            <div class="skel-detail"></div>
+            <div class="skel-detail"></div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!photographerBrandInvitesLoading">
+        <ng-container *ngIf="photographerBrandInvites.length > 0">
+          <div class="invite-tabs-shell mobile-scroll-shell">
+            <div class="pill-tabs invite-tabs-row mobile-scroll-row">
+              <button class="pill-tab" [class.active]="photographerInviteTab === 'pending'" (click)="photographerInviteTab = 'pending'">
+                Pending
+                <span class="pill-tab-badge badge-pending" *ngIf="photographerBrandInvitesPending.length > 0">{{ photographerBrandInvitesPending.length }}</span>
+              </button>
+              <button class="pill-tab" [class.active]="photographerInviteTab === 'accepted'" (click)="photographerInviteTab = 'accepted'">
+                Accepted
+                <span class="pill-tab-badge badge-accepted" *ngIf="photographerBrandInvitesAccepted.length > 0">{{ photographerBrandInvitesAccepted.length }}</span>
+              </button>
+              <button class="pill-tab" [class.active]="photographerInviteTab === 'completed'" (click)="photographerInviteTab = 'completed'">
+                Completed
+                <span class="pill-tab-badge badge-completed" *ngIf="photographerBrandInvitesCompleted.length > 0">{{ photographerBrandInvitesCompleted.length }}</span>
+              </button>
+              <button class="pill-tab" [class.active]="photographerInviteTab === 'declined'" (click)="photographerInviteTab = 'declined'">
+                Declined
+                <span class="pill-tab-badge badge-declined" *ngIf="photographerBrandInvitesDeclined.length > 0">{{ photographerBrandInvitesDeclined.length }}</span>
+              </button>
+            </div>
+            <div class="invite-tabs-mobile-hint mobile-scroll-hint">
+              <i class="bi bi-arrow-left-right"></i>
+              Swipe left or right to see more tabs
+            </div>
+          </div>
+
+          <div class="invite-list" *ngIf="photographerBrandInvitesFiltered.length > 0">
+            <ng-container *ngFor="let inv of photographerBrandInvitesFiltered">
+              <app-campaign-invite-card
+                [invite]="inv"
+                [busy]="photographerRespondingInviteIds.has(inv._id)"
+                [qualifyingPlatforms]="null"
+                [influencerSocialMedia]="[]"
+                [initialPostDate]="selectedInvitePostDates[inv._id]"
+                [initialContentTypeKey]="selectedInviteContentType[inv._id]"
+                [initialPayout]="defaultPayout"
+                (postDateChange)="onPhotographerCardPostDateChange(inv._id, $event)"
+                (contentTypeChange)="onPhotographerCardContentTypeChange(inv._id, $event)"
+                (accept)="onPhotographerCardAccept($event)"
+                (decline)="onPhotographerCardDecline($event)"
+                (view)="openInvitePreview(inv)"
+                (validationError)="showError($event)">
+              </app-campaign-invite-card>
+            </ng-container>
+          </div>
+
+          <div class="empty-invites" *ngIf="photographerBrandInvitesFiltered.length === 0">
+            <i class="bi bi-inbox"></i>
+            <p *ngIf="photographerInviteTab === 'pending'">No pending invites.</p>
+            <p *ngIf="photographerInviteTab === 'accepted'">No active campaigns right now.</p>
+            <p *ngIf="photographerInviteTab === 'declined'">No declined invites.</p>
+            <p *ngIf="photographerInviteTab === 'completed'">No completed campaigns yet.</p>
+          </div>
+        </ng-container>
+
+        <div class="empty-invites empty-invites--first" *ngIf="photographerBrandInvites.length === 0">
+          <i class="bi bi-envelope-open"></i>
+          <p class="empty-invites__title">No invites yet</p>
+          <p class="empty-invites__sub">Brands will invite you here when they want to work with you on a campaign.</p>
+        </div>
+      </div>
     </div>
 
     <!-- ───── INBOX (influencer view) ───── -->
@@ -277,8 +391,8 @@
     </div>
     <div class="cm-header">
       <div>
-        <h1 class="cm-title">{{ isInfluencerView ? 'Open Campaigns' : (isPhotographerView ? 'Collaboration Requests' : 'Campaign Management') }}</h1>
-        <p class="cm-subtitle">{{ isInfluencerView ? 'Browse active campaigns from brands looking for creators like you.' : (isPhotographerView ? 'Create and manage shoot opportunities for creators and influencers.' : 'Monitor performance and manage your brand partnerships.') }}</p>
+        <h1 class="cm-title">{{ pageTitle }}</h1>
+        <p class="cm-subtitle">{{ pageSubtitle }}</p>
       </div>
       <div>
 
@@ -289,7 +403,7 @@
           {{ summaryActiveCampaigns }} / {{ maxActiveCampaigns }} active
         </span>
       </div>
-      <div class="cm-header-actions" *ngIf="!isInfluencerView">
+      <div class="cm-header-actions" *ngIf="!isInfluencerView && showCollaborationsWorkspace">
         <button
           class="btn-flow-guide"
           type="button"
@@ -300,9 +414,9 @@
         </button>
         <button class="btn btn-create" (click)="openCreateForm()"
                 [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns"
-                [title]="summaryActiveCampaigns >= maxActiveCampaigns ? (isPhotographerView ? 'Active request quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.' : 'Active-campaign quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.') : (isPhotographerView ? 'Create a new collaboration request' : 'Create a new campaign')">
+                [title]="summaryActiveCampaigns >= maxActiveCampaigns ? (isPhotographerView ? 'Active collaboration quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.' : 'Active request quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.') : (isPhotographerView ? 'Create a new collaboration' : 'Create a new campaign request')">
           <i class="bi bi-plus-circle-fill"></i>
-          {{ summaryActiveCampaigns >= maxActiveCampaigns ? 'Quota full' : (isPhotographerView ? 'Create Collaboration Request' : 'New Campaign') }}
+          {{ createButtonLabel }}
         </button>
       </div>
     </div>
@@ -321,13 +435,13 @@
     <!-- Admin-managed support banner. Shown only to brands. -->
     <!-- General "Need help?" contact channel — email / phone / WhatsApp set by admin in Support tab. -->
     <!-- Campaign payments now go through the in-app UPI/QR flow (campaign-payment modal). -->
-    <app-support-banner *ngIf="!isInfluencerView"></app-support-banner>
+    <app-support-banner *ngIf="!isInfluencerView && showCollaborationsWorkspace"></app-support-banner>
 
     <!-- Summary stats (brand only) -->
-    <div class="cm-summary-cards" *ngIf="!isInfluencerView">
+    <div class="cm-summary-cards" *ngIf="!isInfluencerView && showCollaborationsWorkspace">
       <div class="cm-stat-card">
         <span class="stat-value">{{ summaryTotalCampaigns }}</span>
-        <span class="stat-label">Total Campaigns</span>
+        <span class="stat-label">{{ totalRequestsLabel }}</span>
         <span class="stat-sub">{{ summaryActiveCampaigns }} active now</span>
       </div>
       <div class="cm-stat-card">
@@ -337,7 +451,7 @@
       </div>
       <div class="cm-stat-card">
         <span class="stat-value">{{ summaryTotalBudget }}</span>
-        <span class="stat-label">Total Budget</span>
+        <span class="stat-label">{{ totalBudgetLabel }}</span>
         <span class="stat-sub">across all campaigns</span>
       </div>
       <div class="cm-stat-card">
@@ -348,7 +462,7 @@
     </div>
 
     <!-- Tabs (brand only) -->
-    <div class="cm-tabs-shell mobile-scroll-shell" *ngIf="!isInfluencerView">
+    <div class="cm-tabs-shell mobile-scroll-shell" *ngIf="!isInfluencerView && showCollaborationsWorkspace">
       <div class="cm-tabs mobile-scroll-row">
         <button
           *ngFor="let tab of tabs"
@@ -367,7 +481,7 @@
     </div>
 
     <!-- Campaign cards -->
-    <div class="campaign-cards" *ngIf="pagedCampaigns.length; else emptyState">
+    <div class="campaign-cards" *ngIf="showCollaborationsWorkspace && pagedCampaigns.length; else emptyState">
       <div class="campaign-card"
            *ngFor="let c of pagedCampaigns"
            [class.is-expanded]="expandedCampaignId === c._id"
@@ -429,10 +543,10 @@
                   <app-user-avatar
                     *ngFor="let inv of getCardInvitePreview(c)"
                     class="avatar-pip"
-                    [name]="inv.influencerId?.name || ''"
-                    [src]="getInfluencerAvatar(inv.influencerId)"
+                    [name]="getInviteRecipientName(inv)"
+                    [src]="getInviteRecipientAvatar(inv)"
                     [size]="24"
-                    [title]="inv.influencerId?.name || ''"
+                    [title]="getInviteRecipientName(inv)"
                   ></app-user-avatar>
                 </div>
                 <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
@@ -585,7 +699,7 @@
             <!-- Invited recipients list -->
             <div class="expand-inf-list" *ngIf="getExpandVisibleInvites(c).length > 0">
               <div class="expand-inf-heading-row">
-                <p class="expand-inf-heading">Invited {{ inviteTargetPluralLabel }}</p>
+                <p class="expand-inf-heading">Invited {{ getCampaignInviteTargetPluralLabel(c) }}</p>
                 <button class="tier-info-trigger" type="button" (click)="tierInfo.open(); $event.stopPropagation()">
                   <i class="bi bi-info-circle"></i> Tier info
                 </button>
@@ -595,21 +709,21 @@
                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
                      [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
                   <app-user-avatar
-                    [name]="inv.influencerId?.name || ''"
-                    [src]="getInfluencerAvatar(inv.influencerId)"
+                    [name]="getCampaignInviteRecipientName(inv, c)"
+                    [src]="getCampaignInviteRecipientAvatar(inv, c)"
                     [size]="36"
                   ></app-user-avatar>
                   <div class="expand-inf-info">
                     <div class="expand-inf-name-row">
-                      <span class="expand-inf-name">{{ inv.influencerId?.name || inviteTargetSingularLabel }}</span>
-                      <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
-                      <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">
-                        {{ getInfluencerTier(inv.influencerId) }}
+                      <span class="expand-inf-name">{{ getCampaignInviteRecipientName(inv, c) || getCampaignInviteTargetSingularLabel(c) }}</span>
+                      <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="!getCampaignInviteRecipientTier(inv, c) && !isPhotographerInviteForCampaign(inv, c) && isInviteRecipientPremium(inv)" title="Verified Premium"></i>
+                      <span class="tier-badge-mini" *ngIf="getCampaignInviteRecipientTier(inv, c)">
+                        {{ getCampaignInviteRecipientTier(inv, c) }}
                       </span>
                     </div>
-                    <span class="expand-inf-user" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</span>
-                    <div class="expand-inf-socials" *ngIf="getInviteRelevantSocialTags(inv, c).length">
-                      <span class="expand-inf-social-chip" *ngFor="let sm of getInviteRelevantSocialTags(inv, c, 3)">
+                    <span class="expand-inf-user" *ngIf="getCampaignInviteRecipientUsername(inv, c)">@{{ getCampaignInviteRecipientUsername(inv, c) }}</span>
+                    <div class="expand-inf-socials" *ngIf="getCampaignInviteRecipientSocialTags(inv, c).length">
+                      <span class="expand-inf-social-chip" *ngFor="let sm of getCampaignInviteRecipientSocialTags(inv, c, 3)">
                         {{ sm.platform }} · {{ sm.tier }}
                       </span>
                     </div>
@@ -640,14 +754,14 @@
                   <!-- Contact unlock (expand panel) -->
                   <ng-container *ngIf="isUnlockableStatus(inv.status)">
                     <div class="contact-reveal" *ngIf="inv.unlocked">
-                      <a class="contact-chip" *ngIf="inv.influencerId?.email" [href]="'mailto:' + inv.influencerId.email">
-                        <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
+                      <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.email" [href]="'mailto:' + getInviteRecipient(inv)?.email">
+                        <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
                       </a>
-                      <a class="contact-chip" *ngIf="inv.influencerId?.phoneNumber" [href]="'tel:' + inv.influencerId.phoneNumber">
-                        <i class="bi bi-telephone-fill"></i> {{ inv.influencerId.phoneNumber }}
+                      <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.phoneNumber" [href]="'tel:' + getInviteRecipient(inv)?.phoneNumber">
+                        <i class="bi bi-telephone-fill"></i> {{ getInviteRecipient(inv)?.phoneNumber }}
                       </a>
-                      <a class="contact-chip" *ngIf="getWhatsappLink(inv.influencerId?.phoneNumber)"
-                         [href]="getWhatsappLink(inv.influencerId?.phoneNumber)!"
+                      <a class="contact-chip" *ngIf="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)"
+                         [href]="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)!"
                          target="_blank"
                          rel="noopener noreferrer">
                         <i class="bi bi-whatsapp"></i> WhatsApp
@@ -797,10 +911,10 @@
             </div>
             <div class="expand-empty-inf" *ngIf="getExpandVisibleInvites(c).length === 0">
               <ng-container *ngIf="c.campaignMode === 'tier_filtered_open'; else emptyInvitesDefault">
-                No accepted tier-matching {{ inviteTargetPluralLabel.toLowerCase() }} yet.
+                No accepted tier-matching {{ getCampaignInviteTargetPluralLabel(c).toLowerCase() }} yet.
               </ng-container>
               <ng-template #emptyInvitesDefault>
-                No {{ inviteTargetPluralLabel.toLowerCase() }} invited yet. Use the <strong>Invite</strong> button to get started.
+                No {{ getCampaignInviteTargetPluralLabel(c).toLowerCase() }} invited yet. Use the <strong>Invite</strong> button to get started.
               </ng-template>
             </div>
 
@@ -893,9 +1007,10 @@
     <ng-template #emptyState>
       <div class="cm-empty">
         <i class="bi bi-megaphone"></i>
-        <p *ngIf="!isInfluencerView">No {{ activeTab }} campaigns yet.</p>
+        <p *ngIf="!isInfluencerView && showCollaborationsWorkspace">No {{ activeTab }} campaigns yet.</p>
+        <p *ngIf="isPhotographerCampaignRequestsView">No campaign requests yet.</p>
         <p *ngIf="isInfluencerView">No open campaigns available right now. Check back soon!</p>
-        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">{{ isPhotographerView ? 'Create your first collaboration request' : 'Create your first campaign' }}</button>
+        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView && showCollaborationsWorkspace" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">{{ isPhotographerView ? 'Create your first collaboration' : 'Create your first campaign' }}</button>
           <div *ngIf="showUpgradeBanner && planLimitError" class="upgrade-banner">
             <app-upgrade-banner [message]="planLimitError"></app-upgrade-banner>
           </div>
@@ -903,9 +1018,9 @@
     </ng-template>
 
     <!-- Pagination -->
-    <div class="cm-pagination" *ngIf="filtered.length > 0">
+    <div class="cm-pagination" *ngIf="showCollaborationsWorkspace && filtered.length > 0">
       <span class="page-info">
-        Showing {{ showingFrom }} of {{ filtered.length }} {{ activeTab }} {{ isPhotographerView ? 'collaboration requests' : 'campaigns' }}
+        Showing {{ showingFrom }} of {{ filtered.length }} {{ activeTab }} {{ isPhotographerView ? 'collaborations' : 'campaigns' }}
       </span>
       <div class="page-controls">
         <button class="page-btn" [disabled]="currentPage === 1" (click)="prevPage()">
@@ -922,7 +1037,7 @@
 
     <!-- Campaign Form Modal (brand & photographer) -->
   <app-campaign-form
-    *ngIf="showForm && !isInfluencerView"
+    *ngIf="showForm && !isInfluencerView && showCollaborationsWorkspace"
     [mode]="formMode"
     [campaign]="editingCampaign"
     [hasPremium]="!!planCapabilities?.hasPremium"
@@ -1017,20 +1132,20 @@
           <div class="invited-list" *ngIf="filteredInvitesByRole.length > 0">
           <div class="invited-row" *ngFor="let inv of filteredInvitesByRole">
             <app-user-avatar
-              [name]="inv.influencerId?.name || inv.influencerId?.username || 'Influencer'"
-              [src]="getInfluencerAvatar(inv.influencerId)"
+              [name]="getCampaignInviteRecipientName(inv, invitePanelCampaign)"
+              [src]="getCampaignInviteRecipientAvatar(inv, invitePanelCampaign)"
               [size]="44"
             ></app-user-avatar>
             <div class="invited-info">
-              <p class="invited-name">{{ inv.influencerId?.name || 'Influencer' }}
-                <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="isInfluencerPremium(inv.influencerId)" title="Verified Premium"></i>
+              <p class="invited-name">{{ getCampaignInviteRecipientName(inv, invitePanelCampaign) || inviteTargetSingularLabel }}
+                <i class="bi bi-patch-check-fill expand-inf-verified" *ngIf="!isPhotographerInviteForCampaign(inv, invitePanelCampaign) && isInviteRecipientPremium(inv)" title="Verified Premium"></i>
               </p>
-              <p class="invited-username" *ngIf="inv.influencerId?.username">@{{ inv.influencerId.username }}</p>
+              <p class="invited-username" *ngIf="getCampaignInviteRecipientUsername(inv, invitePanelCampaign)">@{{ getCampaignInviteRecipientUsername(inv, invitePanelCampaign) }}</p>
               <div class="invited-badges">
-                <span class="tier-badge-mini" *ngIf="getInfluencerTier(inv.influencerId)">{{ getInfluencerTier(inv.influencerId) }}</span>
+                <span class="tier-badge-mini" *ngIf="getCampaignInviteRecipientTier(inv, invitePanelCampaign)">{{ getCampaignInviteRecipientTier(inv, invitePanelCampaign) }}</span>
               </div>
-              <div class="invited-socials" *ngIf="getInviteRelevantSocialTags(inv, invitePanelCampaign).length">
-                <span class="invited-social-chip" *ngFor="let sm of getInviteRelevantSocialTags(inv, invitePanelCampaign, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
+              <div class="invited-socials" *ngIf="getCampaignInviteRecipientSocialTags(inv, invitePanelCampaign).length">
+                <span class="invited-social-chip" *ngFor="let sm of getCampaignInviteRecipientSocialTags(inv, invitePanelCampaign, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
               </div>
               <!-- Reminder count + due-date hint -->
               <div class="invite-meta-line" *ngIf="inv.remindersSent > 0 || inv.dueDate || inv.selectedPostDate">
@@ -1055,16 +1170,16 @@
               </span>
               <!-- Contact reveal for unlocked invites -->
               <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && inv.unlocked">
-                <a class="contact-chip" *ngIf="inv.influencerId?.email"
-                   [href]="'mailto:' + inv.influencerId.email">
-                  <i class="bi bi-envelope-fill"></i> {{ inv.influencerId.email }}
+                <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.email"
+                   [href]="'mailto:' + getInviteRecipient(inv)?.email">
+                  <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
                 </a>
-                <a class="contact-chip" *ngIf="inv.influencerId?.phoneNumber"
-                   [href]="'tel:' + inv.influencerId.phoneNumber">
-                  <i class="bi bi-telephone-fill"></i> {{ inv.influencerId.phoneNumber }}
+                <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.phoneNumber"
+                   [href]="'tel:' + getInviteRecipient(inv)?.phoneNumber">
+                  <i class="bi bi-telephone-fill"></i> {{ getInviteRecipient(inv)?.phoneNumber }}
                 </a>
-                <a class="contact-chip" *ngIf="getWhatsappLink(inv.influencerId?.phoneNumber)"
-                   [href]="getWhatsappLink(inv.influencerId?.phoneNumber)!"
+                <a class="contact-chip" *ngIf="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)"
+                   [href]="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)!"
                    target="_blank"
                    rel="noopener noreferrer">
                   <i class="bi bi-whatsapp"></i> WhatsApp
@@ -1167,7 +1282,7 @@
       <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
       <div class="invite-limit-note" *ngIf="inviteSlotsLimit">
-        Invited {{ invites.length }} / {{ inviteSlotsLimit }} influencers
+        Invited {{ invites.length }} / {{ inviteSlotsLimit }} {{ inviteTargetPluralLabel.toLowerCase() }}
         <span *ngIf="inviteSlotsRemaining <= 0">. Limit reached for this campaign.</span>
         <button class="tier-info-trigger" type="button" (click)="tierInfo.open()">
           <i class="bi bi-info-circle"></i> Tier info

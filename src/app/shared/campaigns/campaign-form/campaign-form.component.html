@@ -36,7 +36,7 @@
           <i class="bi bi-check-lg" *ngIf="currentStep > 1"></i>
           <span *ngIf="currentStep <= 1">1</span>
         </div>
-        <span class="step-label">{{ isPhotographerCreator ? 'Collaboration details' : 'Campaign details' }}</span>
+        <span class="step-label">{{ detailsStepLabel }}</span>
       </div>
       <div class="step-line" [class.done]="currentStep > 1"></div>
       <div class="wizard-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2"
@@ -45,12 +45,12 @@
           <i class="bi bi-check-lg" *ngIf="currentStep > 2"></i>
           <span *ngIf="currentStep <= 2">2</span>
         </div>
-        <span class="step-label">Requirements</span>
+        <span class="step-label">{{ requirementsStepLabel }}</span>
       </div>
       <div class="step-line" [class.done]="currentStep > 2"></div>
       <div class="wizard-step" [class.active]="currentStep === 3">
         <div class="step-circle"><span>3</span></div>
-        <span class="step-label">Invite {{ isPhotographerCreator ? 'influencers' : 'recipients' }}</span>
+        <span class="step-label">{{ inviteStepLabel }}</span>
       </div>
     </div>
 
@@ -61,7 +61,7 @@
       <div class="form-body">
 
         <div class="field-group">
-          <label class="field-label">Collaboration Type <span class="required">*</span> <i class="bi bi-info-circle" title="What is each collaboration type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
+          <label class="field-label">{{ campaignTypeFieldLabel }} <span class="required">*</span> <i class="bi bi-info-circle" title="What is each collaboration type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
             <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="!hasPremium && !!opt.premiumOnly">
               {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}
@@ -87,7 +87,7 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">{{ isPhotographerCreator ? 'Collaboration access mode' : 'Campaign access mode' }} <span class="required">*</span></label>
+          <label class="field-label">{{ campaignModeFieldLabel }} <span class="required">*</span></label>
           <select formControlName="campaignMode" class="field-input">
             <option value="invite_only">🔒 Invite only — you pick &amp; invite creators</option>
             <option value="tier_filtered_open" *ngIf="!isInvitingPhotographers">🌐 Open to all (with filters) — creators apply</option>
@@ -110,7 +110,7 @@
           </select>
           <p class="field-sublabel" *ngIf="isInvitingPhotographers">
             <i class="bi bi-info-circle"></i>
-            Photo/Videographer flow is invite-only. Open apply mode is disabled for this recipient type.
+            Creative Requirement flow is invite-only. Open apply mode is disabled for this recipient type.
           </p>
         </div>
 
@@ -725,6 +725,17 @@
             </button>
           </div>
 
+          <div class="invite-summary invite-summary--compact" *ngIf="isEdit && campaignInvites.length > 0">
+            <div>
+              Already invited: <strong>{{ campaignInvites.length }}</strong>
+            </div>
+            <div class="invite-summary-list">
+              <span class="invite-summary-pill" *ngFor="let inv of campaignInvites">
+                {{ getInviteRecipientName(inv) }}
+              </span>
+            </div>
+          </div>
+
           <div class="trust-note-list">
             <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
           </div>
@@ -739,16 +750,16 @@
               *ngFor="let inf of filteredInfluencers"
               [class.inf-row--selected]="selectedInfluencerIds.has(inf._id)"
               [class.inf-row--invited]="isInfluencerInvited(inf)"
-              [class.inf-row--disabled]="!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers()"
+              [class.inf-row--disabled]="isInfluencerInvited(inf) || (!selectedInfluencerIds.has(inf._id) && !canSelectMoreInfluencers())"
               (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(inf._id) || canSelectMoreInfluencers()) && toggleInfluencerSelect(inf._id)">
               <app-user-avatar
-                [name]="inf.fullName || inf.name || inf.username || ''"
+                [name]="getInviteRecipientName({ photographerId: inf, recipientRole: inviteRecipientRole }) || inf.fullName || inf.name || inf.username || ''"
                 [src]="getInfluencerAvatar(inf)"
                 [size]="44"
               ></app-user-avatar>
               <div class="inf-info">
                   <p class="inf-name">
-                   {{ inf.fullName || inf.name || inviteRecipientLabelSingular }}
+                   {{ getInviteRecipientName({ photographerId: inf, recipientRole: inviteRecipientRole }) || inf.fullName || inf.name || inviteRecipientLabelSingular }}
                    <i class="bi bi-patch-check-fill" *ngIf="inf.isPremium" title="Verified Premium"
                      style="color:#22c55e;font-size:0.85rem;vertical-align:middle;margin-left:3px;"></i>
                   </p>
