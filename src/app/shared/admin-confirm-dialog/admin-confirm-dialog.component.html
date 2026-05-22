@@ -1,6 +1,6 @@
-<div class="modal-backdrop show" *ngIf="open" (click)="onCancel()"></div>
+<div class="modal-backdrop show admin-confirm-backdrop" *ngIf="open" (click)="onCancel()"></div>
 
-<div class="modal d-block" *ngIf="open" tabindex="-1" (click)="onCancel()">
+<div class="modal d-block admin-confirm-modal" *ngIf="open" tabindex="-1" (click)="onCancel()">
   <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
     <div class="modal-content ts-modal">
       <div class="dialog-content">
