@@ -60,7 +60,7 @@
           <th>User Identity</th>
           <th>Contact Details</th>
           <th>Social Media</th>
-          <th>Tier</th>
+          <th>Subscription</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -104,13 +104,13 @@
           </td>
           <td>
             <div class="row-actions">
-              <button class="icon-action success" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
+              <button class="btn btn-outline-success border-0" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
                 <i class="bi bi-check-circle"></i>
               </button>
-              <button class="icon-action danger" (click)="declineUser(user._id)" title="Decline">
+              <button class="btn btn-outline-danger border-0" (click)="declineUser(user._id)" title="Decline">
                 <i class="bi bi-x-circle"></i>
               </button>
-              <button class="icon-action info" (click)="openUserDetails(user)" title="View Details">
+              <button class="btn btn-outline-info border-0" (click)="openUserDetails(user)" title="View Details">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -213,7 +213,7 @@
                    [title]="social.label"
                    class="social-link">
                   <i class="bi" [ngClass]="social.icon"></i>
-                  <span class="social-name">{{ social.label }}</span>
+                  <!-- <span class="social-name">{{ social.label }}</span> -->
                   <span>{{ social.handle }}</span>
                   <span *ngIf="social.followers">({{ social.followers | number }})</span>
                 </a>
@@ -312,15 +312,15 @@
       </div>
 
       <div class="modal-footer details-actions border-0">
-        <button class="btn btn-success btn-sm" (click)="acceptUser(selectedUser._id); closeUserDetailsModal()" [disabled]="selectedUser.status === 'accepted'" title="Accept">
+        <button class="btn btn-success btn-sm" (click)="acceptUser(selectedUser._id)" [disabled]="selectedUser.status === 'accepted'" title="Accept">
           <i class="bi bi-check-circle-fill"></i>
           Accept
         </button>
-        <button class="btn btn-warning btn-sm" (click)="declineUser(selectedUser._id); closeUserDetailsModal()" title="Decline">
+        <button class="btn btn-warning btn-sm" (click)="declineUser(selectedUser._id)" title="Decline">
           <i class="bi bi-x-circle-fill"></i>
           Decline
         </button>
-        <button class="btn btn-danger btn-sm" (click)="deleteUser(selectedUser._id); closeUserDetailsModal()" title="Delete">
+        <button class="btn btn-danger btn-sm" (click)="deleteUser(selectedUser._id)" title="Delete">
           <i class="bi bi-trash-fill"></i>
           Delete
         </button>
@@ -330,7 +330,7 @@
         <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedUser.isPremium" (click)="setPremium(selectedUser._id, false, selectedUserType || activeTab)">
           Set Free
         </button>
-        <button class="btn btn-outline-info btn-sm" (click)="openTagModal(selectedUser, selectedUserType || activeTab); closeUserDetailsModal()">
+        <button class="btn btn-outline-info btn-sm" (click)="openTagModal(selectedUser, selectedUserType || activeTab)">
           Edit Tags
         </button>
       </div>

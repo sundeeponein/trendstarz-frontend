@@ -144,7 +144,7 @@
 
 .table-social-list {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 6px;
 }
 
@@ -208,37 +208,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.icon-action {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: 1px solid #d3d9e4;
-  background: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #475569;
-}
-
-.icon-action.success {
-  color: #15803d;
-  border-color: #84cc16;
-}
-
-.icon-action.danger {
-  color: #c2410c;
-  border-color: #fdba74;
-}
-
-.icon-action.info {
-  color: #334155;
-  border-color: #cbd5e1;
-}
-
-.icon-action:disabled {
-  opacity: 0.5;
 }
 
 .view-link {

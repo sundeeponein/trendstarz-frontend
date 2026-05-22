@@ -471,6 +471,7 @@ export class AdminUserTableComponent implements OnInit {
         this.influencers = users;
         this.applyFilters('influencer');
         this.updateAllFilterOptions();
+        this.refreshSelectedUserFromLists();
         this.isLoading = false;
         this.cd.detectChanges();
       });
@@ -483,6 +484,7 @@ export class AdminUserTableComponent implements OnInit {
         this.brands = users;
         this.applyFilters('brand');
         this.updateAllFilterOptions();
+        this.refreshSelectedUserFromLists();
         this.isLoading = false;
         this.cd.detectChanges();
       });
@@ -495,9 +497,29 @@ export class AdminUserTableComponent implements OnInit {
         this.photographers = users;
         this.applyFilters('photographer');
         this.updateAllFilterOptions();
+        this.refreshSelectedUserFromLists();
         this.isLoading = false;
         this.cd.detectChanges();
       });
+  }
+
+  private getUsersByType(userType: 'influencer' | 'brand' | 'photographer'): any[] {
+    if (userType === 'influencer') return this.influencers;
+    if (userType === 'brand') return this.brands;
+    return this.photographers;
+  }
+
+  private refreshSelectedUserFromLists(): void {
+    if (!this.showUserDetailsModal || !this.selectedUser || !this.selectedUserType) return;
+    const selectedId = String(this.selectedUser?._id || '');
+    if (!selectedId) return;
+    const latest = this.getUsersByType(this.selectedUserType).find((u: any) => String(u?._id || '') === selectedId);
+    if (!latest) {
+      this.closeUserDetailsModal();
+      return;
+    }
+    this.selectedUser = latest;
+    this.selectedUserInternalNotes = String(latest?.verificationAdminNotes || this.selectedUserInternalNotes || '');
   }
 
   updateAllFilterOptions() {
@@ -901,14 +923,12 @@ export class AdminUserTableComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isEmailVerified(this.selectedUser);
     this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isEmailVerified', nextValue);
-    this.selectedUser.isEmailVerified = nextValue;
   }
 
   toggleSelectedMobileVerification(): void {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isMobileVerified(this.selectedUser);
     this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isMobileVerified', nextValue);
-    this.selectedUser.isMobileVerified = nextValue;
   }
 
   saveSelectedUserNotes(): void {

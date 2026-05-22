@@ -1,5 +1,17 @@
 // Backdrop uses global .ts-modal-backdrop — src/app/shared/styles/_modal-overlay.scss
 
+.admin-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000 !important;
+}
+
+.admin-confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3010 !important;
+}
+
 .dialog-content {
   position: relative;
   background: #181c23;
