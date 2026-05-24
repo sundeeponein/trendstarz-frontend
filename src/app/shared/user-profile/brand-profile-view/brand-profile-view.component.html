@@ -1,4 +1,7 @@
-<div class="brand-profile-wrapper">
+<div class="brand-profile-wrapper profile-page-wrapper">
+  <a class="back-link" routerLink="/search">
+    <i class="bi bi-chevron-left"></i> Back to search
+  </a>
   <!-- Loading / Error states -->
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>
@@ -45,31 +48,51 @@
     </div>
 
     <!-- Contact details (toggled, logged-in only) -->
-    <div *ngIf="showContact && isLoggedIn && canViewContactDetails" class="contact-cards">
-      <div class="contact-card" *ngIf="brand.contact?.whatsapp">
-        <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
-        <span class="contact-card-label">WhatsApp</span>
+    <div *ngIf="showContact && isLoggedIn && canViewContactDetails" class="contact-info-card">
+      <h6 class="section-label">Contact Info</h6>
+
+      <div class="contact-row" *ngIf="brand.contact?.whatsapp">
+        <span class="contact-icon-wrap ci--whatsapp"><i class="bi bi-whatsapp"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-lbl">WhatsApp</span>
+          <span class="contact-field-val">+91 {{ brand.phoneNumber }}</span>
+        </div>
       </div>
-      <div class="contact-card" *ngIf="brand.contact?.email">
-        <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
-        <span class="contact-card-label">{{ brand.email }}</span>
+
+      <div class="contact-row" *ngIf="brand.contact?.email">
+        <span class="contact-icon-wrap ci--email"><i class="bi bi-envelope"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-lbl">Email</span>
+          <span class="contact-field-val">{{ brand.email }}</span>
+        </div>
         <span *ngIf="brand.isEmailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
       </div>
-      <div class="contact-card" *ngIf="brand.contact?.call">
-        <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
-        <span class="contact-card-label">{{ brand.phoneNumber }}</span>
+
+      <div class="contact-row" *ngIf="brand.contact?.call">
+        <span class="contact-icon-wrap ci--phone"><i class="bi bi-telephone"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-lbl">Phone / Call</span>
+          <span class="contact-field-val">+91 {{ brand.phoneNumber }}</span>
+        </div>
         <span *ngIf="brand.isMobileVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.2em; vertical-align: middle; margin-left: 0.25em;">✔️</span>
       </div>
-      <div class="contact-card" *ngIf="brand.website">
-        <span class="contact-card-icon website"><i class="bi bi-globe2"></i></span>
-        <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="contact-card-label">{{ stripProtocol(brand.website) }}</a>
+
+      <div class="contact-row" *ngIf="brand.website">
+        <span class="contact-icon-wrap ci--website"><i class="bi bi-globe2"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-lbl">Website</span>
+          <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="contact-field-val">{{ stripProtocol(brand.website) }}</a>
+        </div>
       </div>
     </div>
 
-    <div *ngIf="showContact && isLoggedIn && !canViewContactDetails" class="contact-cards">
-      <div class="contact-card">
-        <span class="contact-card-icon website"><i class="bi bi-lock-fill"></i></span>
-        <span class="contact-card-label">Contact unlocks automatically when campaign reaches required stage. For issues, contact admin at support@trendstarz.in.</span>
+    <div *ngIf="showContact && isLoggedIn && !canViewContactDetails" class="contact-info-card">
+      <h6 class="section-label">Contact Info</h6>
+      <div class="contact-row">
+        <span class="contact-icon-wrap ci--website"><i class="bi bi-lock-fill"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-upgrade">Contact unlocks automatically when campaign reaches required stage. For issues, contact admin at support@trendstarz.in.</span>
+        </div>
       </div>
     </div>
 
@@ -138,40 +161,40 @@
           <h3 class="section-title">Details</h3>
           <div class="details-list">
             <div class="detail-row" *ngIf="brand.paymentOption">
-              <span class="detail-label">Payment Option</span>
-              <span class="detail-value">
+              <span class="detail-key">Payment Option</span>
+              <span class="detail-val">
                 <span *ngIf="brand.paymentOption === 'free'">Free (Contact/Social hidden)</span>
                 <span *ngIf="brand.paymentOption === 'premium'">Premium (Contact/Social visible)</span>
               </span>
             </div>
             <div class="detail-row" *ngIf="brand.website">
-              <span class="detail-label">Website</span>
-              <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="detail-value link-val">{{ stripProtocol(brand.website) }}</a>
+              <span class="detail-key">Website</span>
+              <a [href]="brand.website" target="_blank" rel="noopener noreferrer" class="detail-val link-val">{{ stripProtocol(brand.website) }}</a>
             </div>
             <div class="detail-row" *ngIf="brand.languages?.length">
-              <span class="detail-label">Languages</span>
-              <span class="detail-value">{{ brand.languages.join(', ') }}</span>
+              <span class="detail-key">Languages</span>
+              <span class="detail-val">{{ brand.languages.join(', ') }}</span>
             </div>
             <div class="detail-row" *ngIf="brand.promotionalPrice">
-              <span class="detail-label">Advertising Price</span>
-              <span class="detail-value price-val">₹{{ brand.promotionalPrice }}</span>
+              <span class="detail-key">Advertising Price</span>
+              <span class="detail-val detail-val--price">₹{{ brand.promotionalPrice }}</span>
             </div>
             <div class="detail-row" *ngIf="brand.foundedYear">
-              <span class="detail-label">Founded</span>
-              <span class="detail-value">{{ brand.foundedYear }}</span>
+              <span class="detail-key">Founded</span>
+              <span class="detail-val">{{ brand.foundedYear }}</span>
             </div>
             <div class="detail-row" *ngIf="displayCompanySize">
-              <span class="detail-label">Company Size</span>
-              <span class="detail-value">{{ displayCompanySize }}</span>
+              <span class="detail-key">Company Size</span>
+              <span class="detail-val">{{ displayCompanySize }}</span>
             </div>
             <div class="detail-row" *ngIf="brand.googleMapAddress">
-              <span class="detail-label">Address</span>
-              <span class="detail-value">{{ brand.googleMapAddress }}</span>
+              <span class="detail-key">Address</span>
+              <span class="detail-val">{{ brand.googleMapAddress }}</span>
             </div>
             <div class="detail-row" *ngIf="brand.categories?.length">
-              <span class="detail-label">Categories</span>
-              <span class="detail-value">
-                <span *ngFor="let cat of brand.categories" class="cat-chip">{{ cat }}</span>
+              <span class="detail-key">Categories</span>
+              <span class="detail-val">
+                <span *ngFor="let cat of brand.categories" class="chip chip--accent">{{ cat }}</span>
               </span>
             </div>
           </div>

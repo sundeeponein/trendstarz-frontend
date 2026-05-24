@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
-import { switchMap } from 'rxjs/operators';
 import { Campaign } from '../../campaigns/campaign.model';
 import { CampaignListComponent } from '../../campaigns/campaign-list/campaign-list.component';
 import { CampaignCardComponent } from '../../campaigns/campaign-card/campaign-card.component';
@@ -254,77 +253,63 @@ export class BrandProfileViewComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.paramMap
-      .pipe(
-        switchMap(params => {
-          const brandName = params.get('brandName');
-          this.brand = null;
-          this.error = '';
-          this.loading = true;
-          if (brandName) {
-            return this.config.getBrandByName(brandName);
-          } else {
-            this.error = 'No brand specified';
-            this.loading = false;
-            this.cd.detectChanges();
-            return [];
-          }
-        })
-      )
-      .subscribe({
-        next: (data: any) => {
-          if (!data) {
-            this.error = 'Brand not found.';
-            this.brand = null;
-            this.setDefaultMetadata();
-          } else {
-            this.brand = data;
-            this.updateMetadata(data);
-            const routeBrandName = this.route.snapshot.paramMap.get('brandName');
-            if (routeBrandName) {
-              this.config.trackBrandProfileImpression(routeBrandName).subscribe({
-                next: () => {},
-                error: () => {}
-              });
+    this.route.data.subscribe(({ brand }) => {
+      const routeBrandName = this.route.snapshot.paramMap.get('brandName') || this.route.parent?.snapshot.paramMap.get('brandName');
+      this.brand = null;
+      this.error = '';
+      this.loading = true;
+
+      if (!routeBrandName) {
+        this.error = 'No brand specified';
+        this.setDefaultMetadata();
+        this.loading = false;
+        this.cd.detectChanges();
+        return;
+      }
+
+      const data = brand || null;
+      if (!data) {
+        this.error = 'Brand not found.';
+        this.brand = null;
+        this.setDefaultMetadata();
+      } else {
+        this.brand = data;
+        this.updateMetadata(data);
+        this.config.trackBrandProfileImpression(routeBrandName).subscribe({
+          next: () => {},
+          error: () => {}
+        });
+        this.checkOwnership(data);
+        // Fetch campaigns for this brand
+        const brandName = data.brandName || data.brandUsername || data.name;
+        if (brandName) {
+          this.config.getCampaignsByBrandName(brandName).subscribe({
+            next: (campaigns: any[]) => {
+              this.campaigns = campaigns;
+              this.cd.detectChanges();
             }
-            this.checkOwnership(data);
-            // Fetch campaigns for this brand
-            const brandName = data.brandName || data.brandUsername || data.name;
-            if (brandName) {
-              this.config.getCampaignsByBrandName(brandName).subscribe({
-                next: (campaigns: any[]) => {
-                  this.campaigns = campaigns;
-                  this.cd.detectChanges();
-                }
-              });
-            }
-            // Influencer premium: find their completed invite with this brand
-            if (this.isInfluencerViewer && this.isProViewer) {
-              this.config.getMyInvites().subscribe({
-                next: (invites: any[]) => {
-                  const done = invites.find(
-                    (inv: any) => inv.status === 'completed'
-                      && (String(inv.brandId?._id || inv.brandId) === String(data._id)
-                        || String(inv.brandId?._id || inv.brandId) === (data.brandUsername || ''))
-                  );
-                  this.completedInviteId = done?._id || null;
-                  this.cd.detectChanges();
-                },
-                error: () => {}
-              });
-            }
-          }
-          this.loading = false;
-          this.cd.detectChanges();
-        },
-        error: (err: any) => {
-          console.error('Brand API error:', err);
-          this.error = 'Could not load brand profile.';
-          this.setDefaultMetadata();
-          this.loading = false;
-          this.cd.detectChanges();
+          });
         }
-      });
+        // Influencer premium: find their completed invite with this brand
+        if (this.isInfluencerViewer && this.isProViewer) {
+          this.config.getMyInvites().subscribe({
+            next: (invites: any[]) => {
+              const done = invites.find(
+                (inv: any) => inv.status === 'completed'
+                  && (String(inv.brandId?._id || inv.brandId) === String(data._id)
+                    || String(inv.brandId?._id || inv.brandId) === (data.brandUsername || ''))
+              );
+              this.completedInviteId = done?._id || null;
+              this.cd.detectChanges();
+            },
+            error: () => {}
+          });
+        }
+      }
+
+      this.loading = false;
+      this.cd.detectChanges();
+    });
   }
 
   private checkOwnership(brand: any) {

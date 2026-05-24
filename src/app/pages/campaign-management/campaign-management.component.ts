@@ -844,7 +844,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get myBrandCount(): number { return this.myInvites.filter(i => !this.isCollabInvite(i)).length; }
   /** Returns true if this invite was sent by a photographer/creator (collaboration), not a brand */
   isCollabInvite(inv: any): boolean {
-    return (inv?.brandId?.role === 'photographer') || (inv?.campaignId?.createdByRole === 'photographer');
+    const ownerRole = String(
+      inv?.campaignId?.ownerType || inv?.campaignId?.createdByRole || inv?.brandId?.role || '',
+    ).trim().toLowerCase();
+    const requestKind = String(inv?.campaignId?.requestKind || '').trim().toLowerCase();
+    return ownerRole === 'photographer'
+      || ownerRole === 'videographer'
+      || requestKind === 'photographer_collaboration'
+      || requestKind === 'videographer_collaboration';
   }
 
   private isCollaborationCampaign(campaign: any): boolean {

@@ -502,6 +502,13 @@ export class ConfigService {
     );
   }
 
+  getPhotographerByUsername(username: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/photographers/username/${encodeURIComponent(username)}`).pipe(
+      map((res) => this.extractData<any>(res)),
+      catchError(() => of(null))
+    );
+  }
+
   updateBrandImages(id: string, images: { brandLogo?: any[]; products?: any[] }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
   }

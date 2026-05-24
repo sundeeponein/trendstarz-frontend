@@ -211,46 +211,39 @@ export class InfluencerProfileViewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      const username = params.get('username');
+    this.route.data.subscribe(({ influencer }) => {
+      const username = this.route.snapshot.paramMap.get('username') || this.route.parent?.snapshot.paramMap.get('username') || '';
       this.influencer = null;
       this.error = '';
       this.loading = true;
-      if (username) {
-        this.config.getInfluencerByUsername(username).subscribe({
-          next: (data) => {
-            this.influencer = data || null;
-            if (!data) {
-              this.error = 'Influencer not found.';
-              this.setDefaultMetadata();
-            }
-            if (data) {
-              this.updateMetadata(data);
-              this.config.trackInfluencerProfileImpression(username).subscribe({
-                next: () => {},
-                error: () => {}
-              });
-            }
-            this.loading = false;
-            this.cd.detectChanges();
-            // Brand: try to find a completed invite to enable review button
-            if (data && this.isBrandViewer && this.isProViewer) {
-              this.loadCompletedInvite(data._id);
-            }
-          },
-          error: () => {
-            this.error = 'Could not load influencer profile.';
-            this.loading = false;
-            this.setDefaultMetadata();
-            this.cd.detectChanges();
-          }
-        });
-      } else {
+
+      if (!username) {
         this.error = 'No influencer username provided.';
         this.loading = false;
         this.setDefaultMetadata();
         this.cd.detectChanges();
+        return;
       }
+
+      const data = influencer || null;
+      this.influencer = data;
+      if (!data) {
+        this.error = 'Influencer not found.';
+        this.setDefaultMetadata();
+      } else {
+        this.updateMetadata(data);
+        this.config.trackInfluencerProfileImpression(username).subscribe({
+          next: () => {},
+          error: () => {}
+        });
+        // Brand: try to find a completed invite to enable review button
+        if (this.isBrandViewer && this.isProViewer) {
+          this.loadCompletedInvite(data._id);
+        }
+      }
+
+      this.loading = false;
+      this.cd.detectChanges();
     });
   }
 

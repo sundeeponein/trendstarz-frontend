@@ -6,7 +6,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
 import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
-import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
+import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
 import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../shared/components/faq-accordion/faq-accordion.component';
 import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';

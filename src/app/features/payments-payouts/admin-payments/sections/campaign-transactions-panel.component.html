@@ -87,7 +87,7 @@
           <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)">
             Reject
           </button>
-          <button class="btn btn-warning btn-sm me-1" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" (click)="openPayoutModal(tx)">
+          <button class="btn btn-warning btn-sm me-1" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" [disabled]="!canMarkPaid(tx)" (click)="openPayoutModal(tx)">
             Mark Paid
           </button>
           <!-- Dispute resolve button -->
@@ -193,13 +193,27 @@
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="closePayoutModal()">Cancel</button>
-      <button class="btn-reject-confirm" [disabled]="!payoutForm.payoutUtr.trim() || uploadingProof" (click)="markTransactionPaid()">
+      <button class="btn-reject-confirm" [disabled]="!payoutForm.payoutUtr.trim() || uploadingProof" (click)="requestMarkTransactionPaid()">
         {{ uploadingProof ? 'Uploading…' : 'Confirm Paid' }}
       </button>
     </div>
     </div><!-- /.modal-content payout -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<div class="modal-backdrop show" *ngIf="markPaidConfirmOpen" style="z-index: 2055;" (click)="onMarkPaidConfirmCancel()"></div>
+<div class="modal d-block" *ngIf="markPaidConfirmOpen" tabindex="-1" style="z-index: 2060;" (click)="onMarkPaidConfirmCancel()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
+      <h2>Confirm Payout</h2>
+      <p class="modal-info">{{ markPaidConfirmMessage }}</p>
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="onMarkPaidConfirmCancel()">Cancel</button>
+        <button class="btn-reject-confirm" (click)="onMarkPaidConfirm()">Yes, Mark Paid</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-backdrop show" *ngIf="showProofModal" (click)="closeProofPreview()"></div>
 <div class="modal d-block" *ngIf="showProofModal" tabindex="-1" (click)="closeProofPreview()">

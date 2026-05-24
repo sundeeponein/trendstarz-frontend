@@ -188,7 +188,40 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private isCollabInvite(inv: any): boolean {
-    return (inv?.brandId?.role === 'photographer') || (inv?.campaignId?.createdByRole === 'photographer');
+    const ownerRole = String(
+      inv?.campaignId?.ownerType || inv?.campaignId?.createdByRole || inv?.brandId?.role || '',
+    ).trim().toLowerCase();
+    const requestKind = String(inv?.campaignId?.requestKind || '').trim().toLowerCase();
+    return ownerRole === 'photographer'
+      || ownerRole === 'videographer'
+      || requestKind === 'photographer_collaboration'
+      || requestKind === 'videographer_collaboration';
+  }
+
+  private mapInviteToDashboardStatus(inviteStatus: string): string {
+    const status = String(inviteStatus || '').toLowerCase();
+    if (status === 'pending' || status === 'invited') return 'pending_review';
+    if (status === 'accepted' || status === 'payment_confirmed' || status === 'working' || status === 'submitted') return 'active';
+    if (status === 'completed' || status === 'approved') return 'completed';
+    if (status === 'declined' || status === 'withdrawn') return 'rejected';
+    return status || 'pending_review';
+  }
+
+  private normalizeCollaborationRequest(inv: any): any {
+    const campaign = inv?.campaignId || {};
+    return {
+      _id: campaign?._id || inv?._id,
+      title: campaign?.title || '(untitled)',
+      description: campaign?.description || '',
+      categories: Array.isArray(campaign?.categories) ? campaign.categories : [],
+      timelineStart: campaign?.timelineStart || campaign?.startDate || null,
+      timelineEnd: campaign?.timelineEnd || campaign?.endDate || null,
+      pricePerInfluencer: campaign?.pricePerInfluencer || 0,
+      maxInfluencers: campaign?.maxInfluencers || 0,
+      status: this.mapInviteToDashboardStatus(inv?.status),
+      updatedAt: inv?.updatedAt || campaign?.updatedAt || inv?.createdAt || campaign?.createdAt || null,
+      createdAt: inv?.createdAt || campaign?.createdAt || null,
+    };
   }
 
   loadCampaignInvites() {
@@ -208,14 +241,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   loadCollaborationRequests() {
-    this.config.getAllCampaigns('active', 'collaboration').subscribe({
+    this.config.getMyInvites('collaboration').subscribe({
       next: (rows: any[]) => {
         const all = Array.isArray(rows) ? rows : [];
         this.collaborationRequests = all
-          .filter((c: any) => {
-            const status = String(c?.status || '').toLowerCase();
-            return status !== 'completed';
+          .filter((inv: any) => {
+            const status = String(inv?.status || '').toLowerCase();
+            return status !== 'completed' && status !== 'approved' && status !== 'declined' && status !== 'withdrawn';
           })
+          .map((inv: any) => this.normalizeCollaborationRequest(inv))
           .sort((a: any, b: any) => {
             const at = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
             const bt = new Date(b?.updatedAt || b?.createdAt || 0).getTime();

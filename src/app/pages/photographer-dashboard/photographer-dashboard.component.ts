@@ -187,7 +187,12 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   }
 
   onViewPublicProfile(): void {
+    const username = String(this.photographer?.username || '').trim();
     const id = this.photographer?._id;
+    if (username) {
+      this.router.navigate(['/photographer', username]);
+      return;
+    }
     if (id) {
       this.router.navigate(['/photographer', id]);
     }

@@ -1,20 +1,19 @@
-import { Route } from '@angular/router';
+import { Route, ActivatedRouteSnapshot } from '@angular/router';
 import { inject } from '@angular/core';
 import { BrandProfileViewComponent } from './brand-profile-view.component';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { ConfigService } from '../../config.service';
+import { firstValueFrom } from 'rxjs';
 
 export default [
   {
     path: '',
     component: BrandProfileViewComponent,
     resolve: {
-      brand: async (route: any) => {
-        const http = inject(HttpClient);
-        const id = route.paramMap.get('id');
-        if (!id) return null;
-        // Adjust API endpoint as needed
-        return http.get(`${environment.apiBaseUrl}/users/brand/${id}`).toPromise();
+      brand: async (route: ActivatedRouteSnapshot) => {
+        const config = inject(ConfigService);
+        const brandName = route.paramMap.get('brandName') || route.parent?.paramMap.get('brandName');
+        if (!brandName) return null;
+        return firstValueFrom(config.getBrandByName(brandName));
       }
     }
   }
