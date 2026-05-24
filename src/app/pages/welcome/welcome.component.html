@@ -131,16 +131,13 @@
       </div>
     </div>
   </section>
-  
 
-  <section class="cta-strip py-5 text-center">
+  <section class="faq-strip py-5" aria-label="Frequently Asked Questions">
     <div class="container py-4">
-      <h2>Ready to Scale Your Brand?</h2>
-      <p>Join thousands of brands that use Trendstarz to discover and manage high-performing influencer campaigns.</p>
-      <div class="d-flex justify-content-center flex-wrap gap-3 mt-3">
-        <button class="btn btn-primary" (click)="router.navigate(['/register-brand'])" type="button">Get Started Today</button>
-        <button class="btn btn-outline-dark" (click)="router.navigate(['/login'])" type="button">Book a Demo</button>
-      </div>
+      <ng-container
+        [ngComponentOutlet]="faqAccordionComponent"
+        [ngComponentOutletInputs]="faqAccordionInputs">
+      </ng-container>
     </div>
   </section>
 </div>

@@ -83,8 +83,8 @@ export class CampaignFormComponent implements OnInit {
   };
 
   readonly DESCRIPTION_MODE_EXAMPLES: Record<string, string> = {
-    invite_only: `Access mode note:\n• Invite only: you will manually shortlist and invite creators in Step 3.`,
-    tier_filtered_open: `Access mode note:\n• Open to all (with filters): eligible creators can discover and apply; you review applications from dashboard.`,
+    invite_only: `Access mode note:\n• Invite only: you will manually shortlist and invite recipients in Step 3.`,
+    tier_filtered_open: `Access mode note:\n• Open to all (with filters): eligible influencers can discover and apply; you review applications in Campaigns.`,
   };
 
   readonly SPECIAL_INSTRUCTIONS_EXAMPLES: Record<string, string> = {
@@ -94,7 +94,7 @@ export class CampaignFormComponent implements OnInit {
   };
 
   readonly SPECIAL_INSTRUCTIONS_MODE_EXAMPLES: Record<string, string> = {
-    invite_only: `Mode: Invite only\n• Manually shortlist and invite creators in Step 3\n• Keep acceptance criteria explicit to avoid back-and-forth\n• Mention expected response timeline from invited creators`,
+    invite_only: `Mode: Invite only\n• Manually shortlist and invite recipients in Step 3\n• Keep acceptance criteria explicit to avoid back-and-forth\n• Mention expected response timeline from invited recipients`,
     tier_filtered_open: `Mode: Open to all (with filters)\n• Mention minimum tier and optional location constraints\n• Clarify that eligible creators apply and you'll review applicants\n• Add how quickly applications will be reviewed`,
   };
 

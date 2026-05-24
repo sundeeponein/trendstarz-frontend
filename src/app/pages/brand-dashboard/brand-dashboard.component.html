@@ -2,8 +2,16 @@
     {{ error }}
   </div>
 <div class="cm-page brand-dashboard p-4">
-  <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Influencer' }}</h1>
-  <div class="welcome-subtitle mb-4">Here is what is happening with your brand campaigns today.</div>
+    <div class="dashboard-welcome-bar mb-4">
+      <div class="dashboard-welcome-left">
+        <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Influencer' }}</h1>
+        <div class="welcome-subtitle">Here is what is happening with your brand campaigns today.</div>
+      </div>
+      <div class="dashboard-welcome-right account-meta-card">
+        <div><strong>First Registered:</strong> {{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</div>
+        <div><strong>Last Login:</strong> {{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</div>
+      </div>
+    </div>
 
   <!-- Alert Cards Row -->
   <div class="row mb-4 gx-3">

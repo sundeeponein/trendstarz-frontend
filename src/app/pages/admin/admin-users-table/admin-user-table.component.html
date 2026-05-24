@@ -190,6 +190,16 @@
             <label>Signup Source</label>
             <div>{{ getSignupSource(selectedUser) }}</div>
           </div>
+          <div>
+            <label>First Registered</label>
+            <div>
+              {{ (selectedUser.firstRegisteredAt || selectedUser.createdAt) ? ((selectedUser.firstRegisteredAt || selectedUser.createdAt) | date:'medium') : '-' }}
+            </div>
+          </div>
+          <div>
+            <label>Last Login</label>
+            <div>{{ selectedUser.lastLoginAt ? (selectedUser.lastLoginAt | date:'medium') : '-' }}</div>
+          </div>
         </div>
 
         <div class="details-section">

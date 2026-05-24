@@ -1,6 +1,14 @@
 <div class="cm-page photographer-dashboard p-4">
-  <h1 class="welcome-title mb-1">Welcome, {{ photographer?.name || 'Photographer' }}</h1>
-  <div class="welcome-subtitle mb-4">Your portfolio, trust signals, and discovery stats live here.</div>
+  <div class="dashboard-welcome-bar mb-4">
+    <div class="dashboard-welcome-left">
+      <h1 class="welcome-title mb-1">Welcome, {{ photographer?.name || 'Photographer' }}</h1>
+      <div class="welcome-subtitle">Your portfolio, trust signals, and discovery stats live here.</div>
+    </div>
+    <div class="dashboard-welcome-right account-meta-card" *ngIf="photographer">
+      <div><strong>First Registered:</strong> {{ (photographer.firstRegisteredAt || photographer.createdAt) ? ((photographer.firstRegisteredAt || photographer.createdAt) | date:'medium') : '-' }}</div>
+      <div><strong>Last Login:</strong> {{ photographer.lastLoginAt ? (photographer.lastLoginAt | date:'medium') : '-' }}</div>
+    </div>
+  </div>
 
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>

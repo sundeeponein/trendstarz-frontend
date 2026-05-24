@@ -4,6 +4,32 @@
   min-height: 100%;
 }
 
+.dashboard-welcome-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-welcome-left {
+  min-width: 0;
+}
+
+.dashboard-welcome-right {
+  flex: 0 0 auto;
+  min-width: 320px;
+}
+
+.account-meta-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  padding: 0.75rem 1rem;
+  color: #374151;
+  display: grid;
+  gap: 0.3rem;
+}
+
 .profile-traffic-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -114,6 +140,15 @@
 }
 
 @media (max-width: 768px) {
+  .dashboard-welcome-bar {
+    flex-direction: column;
+  }
+
+  .dashboard-welcome-right {
+    width: 100%;
+    min-width: 0;
+  }
+
   .profile-traffic-grid {
     grid-template-columns: 1fr;
   }

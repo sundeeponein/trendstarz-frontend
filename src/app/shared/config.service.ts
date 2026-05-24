@@ -610,9 +610,12 @@ export class ConfigService {
   }
 
   // ── Campaign endpoints ──────────────────────
-  /** Fetch all campaigns (optionally filter by status) — used for influencer browse view */
-  getAllCampaigns(status?: string): Observable<any[]> {
-    const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+  /** Fetch all campaigns (optionally filter by status/scope) — used for influencer browse view */
+  getAllCampaigns(status?: string, scope?: 'campaign' | 'collaboration'): Observable<any[]> {
+    const params: string[] = [];
+    if (status) params.push(`status=${encodeURIComponent(status)}`);
+    if (scope) params.push(`scope=${encodeURIComponent(scope)}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/campaigns${qs}`).pipe(
       map(res => {
         const d = this.extractData<any>(res);
@@ -752,8 +755,9 @@ export class ConfigService {
     );
   }
 
-  getMyInvites(): Observable<any[]> {
-    return this.http.get<any>(`${this.apiUrl}/campaign-invites/influencer`).pipe(
+  getMyInvites(scope?: 'campaign' | 'collaboration'): Observable<any[]> {
+    const qs = scope ? `?scope=${encodeURIComponent(scope)}` : '';
+    return this.http.get<any>(`${this.apiUrl}/campaign-invites/influencer${qs}`).pipe(
       map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
       catchError(() => of([]))
     );

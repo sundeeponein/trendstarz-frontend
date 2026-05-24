@@ -37,6 +37,8 @@ export class InfluencerProfileComponent implements OnInit {
   verificationStatusDisplay = 'not_submitted';
   verificationAdminNotesDisplay = '';
   commissionAccessTags: string[] = [];
+  firstRegisteredAt: string | null = null;
+  lastLoginAt: string | null = null;
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -454,6 +456,8 @@ export class InfluencerProfileComponent implements OnInit {
           this.emailVerified = !!profile.isEmailVerified;
           this.phoneVerified = !!profile.isMobileVerified;
           this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
+          this.firstRegisteredAt = profile.firstRegisteredAt || profile.createdAt || null;
+          this.lastLoginAt = profile.lastLoginAt || null;
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
           // Map state name to ID
@@ -1158,6 +1162,8 @@ export class InfluencerProfileComponent implements OnInit {
             this.emailVerified = !!profile.isEmailVerified;
             this.phoneVerified = !!profile.isMobileVerified;
             this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
+            this.firstRegisteredAt = profile.firstRegisteredAt || profile.createdAt || null;
+            this.lastLoginAt = profile.lastLoginAt || null;
             this.showEmailVerificationPrompt = !this.emailVerified;
             const stateId = (this.states || []).find((s: any) => s.name === profile.location?.state)?.['_id'] || '';
             const languageIds = (profile.languages || []).map((name: string) =>

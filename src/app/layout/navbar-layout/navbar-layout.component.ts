@@ -82,6 +82,16 @@ export class NavbarLayoutComponent implements OnDestroy {
     return this.router.url.startsWith('/campaigns') && this.router.url.includes('view=collaborations');
   }
 
+  get isInfluencerCampaignsNavActive(): boolean {
+    if (this.user?.role !== 'influencer') return false;
+    return this.router.url.startsWith('/campaigns') && !this.router.url.includes('tab=collaborations');
+  }
+
+  get isInfluencerCollaborationsNavActive(): boolean {
+    if (this.user?.role !== 'influencer') return false;
+    return this.router.url.startsWith('/campaigns') && this.router.url.includes('tab=collaborations');
+  }
+
   get commissionBadgeLabel(): string {
     const badge = String(this.user?.commissionBadge || '').trim();
     if (badge && this.commissionBadgeMap[badge]) return this.commissionBadgeMap[badge];

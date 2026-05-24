@@ -1,0 +1,47 @@
+<section class="faq-shell" aria-label="Frequently Asked Questions">
+  <div class="faq-header text-center">
+    <h2 class="faq-title mb-0">{{ heading }}</h2>
+  </div>
+
+  <div class="faq-accordion mt-5" id="trendstarzFaqAccordion">
+    <div class="faq-item" *ngFor="let item of items; let i = index">
+      <h3 class="faq-item-header" [id]="'faqHeading' + i">
+        <button
+          class="faq-toggle"
+          type="button"
+          [class.is-open]="activeIndex === i"
+          [attr.aria-expanded]="activeIndex === i"
+          [attr.aria-controls]="'faqBody' + i"
+          (click)="toggle(i)">
+          <span class="faq-question-wrap">
+            <span class="faq-question">{{ item.question }}</span>
+            <span class="status-pill" *ngIf="item.label">{{ item.label }}</span>
+          </span>
+          <span class="faq-chevron" aria-hidden="true"></span>
+        </button>
+      </h3>
+      <div
+        class="faq-collapse collapse"
+        [class.show]="activeIndex === i"
+        [id]="'faqBody' + i"
+        [attr.aria-labelledby]="'faqHeading' + i"
+        data-bs-parent="#trendstarzFaqAccordion">
+        <div class="faq-body">
+          {{ item.answer }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="faq-cta text-center mt-5">
+    <h3 *ngIf="ctaHeading">{{ ctaHeading }}</h3>
+    <div class="d-flex justify-content-center flex-wrap gap-3" [class.mt-4]="ctaHeading">
+      <a
+        *ngFor="let button of ctaButtons"
+        [routerLink]="button.route"
+        [class]="button.className || 'btn btn-outline-light'">
+        {{ button.label }}
+      </a>
+    </div>
+  </div>
+</section>

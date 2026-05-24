@@ -12,6 +12,7 @@ export const routes: Routes = [
 			{ path: '', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'welcome', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
+			{ path: 'faqs', loadComponent: () => import('./pages/faqs/faqs.component').then(m => m.FaqsComponent) },
 			{ path: 'features', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
 			{ path: 'features/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
 			{ path: 'features/brands', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'brand' } },

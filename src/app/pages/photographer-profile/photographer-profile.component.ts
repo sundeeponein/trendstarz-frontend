@@ -71,6 +71,8 @@ export class PhotographerProfileComponent implements OnInit {
   profileImageData: { url: string; public_id: string } | null = null;
   uploadingImage = false;
   commissionAccessTags: string[] = [];
+  firstRegisteredAt: string | null = null;
+  lastLoginAt: string | null = null;
 
   private apiUrl = environment.apiBaseUrl || '/api';
 
@@ -280,6 +282,8 @@ export class PhotographerProfileComponent implements OnInit {
         const resolvedState = this.resolveStateValue(profile?.location?.state ?? profile?.state ?? sessionUser?.location?.state ?? sessionUser?.state);
         const resolvedDistrict = this.asText(profile?.location?.district ?? profile?.district ?? sessionUser?.location?.district ?? sessionUser?.district);
         this.commissionAccessTags = this.extractCommissionAccessTags(profile?.adminTags);
+        this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
+        this.lastLoginAt = profile?.lastLoginAt || null;
         this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({

@@ -7,6 +7,32 @@
   &--purple { background: #805ad5; }
 }
 
+.dashboard-welcome-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-welcome-left {
+  min-width: 0;
+}
+
+.dashboard-welcome-right {
+  flex: 0 0 auto;
+  min-width: 320px;
+}
+
+.account-meta-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  padding: 0.75rem 1rem;
+  color: #374151;
+  display: grid;
+  gap: 0.3rem;
+}
+
 // ── Chips ──
 .chip {
   display: inline-block;
@@ -256,6 +282,17 @@
   transition: opacity 0.15s, transform 0.1s;
 
   &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@media (max-width: 991px) {
+  .dashboard-welcome-bar {
+    flex-direction: column;
+  }
+
+  .dashboard-welcome-right {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .btn-accept {
