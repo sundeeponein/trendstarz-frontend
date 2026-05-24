@@ -35,6 +35,9 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   showTxPayoutModal = false;
   showProofModal = false;
   showDisputeModal = false;
+  // Compatibility stubs for occasional stale Angular template diagnostics.
+  markPaidConfirmOpen = false;
+  markPaidConfirmMessage = '';
   selectedTx: CampaignTransaction | null = null;
   txRejectReason = '';
   disputeNotes = '';
@@ -212,6 +215,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   }
 
   openPayoutModal(tx: CampaignTransaction) {
+    if (!this.canMarkPaid(tx)) return;
     this.selectedTx = tx;
     const recipient: any = (tx as any).recipient || {};
     this.payoutForm = {
@@ -226,11 +230,35 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     this.showTxPayoutModal = true;
   }
 
+  canMarkPaid(tx: CampaignTransaction): boolean {
+    const collectionOk = tx.collectionStatus === 'verified';
+    const payoutPending = tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing';
+    const notVerifiedTab = this.transactionStatus !== 'verified';
+    return collectionOk && payoutPending && notVerifiedTab;
+  }
+
   closePayoutModal() {
     this.showTxPayoutModal = false;
+    this.markPaidConfirmOpen = false;
     this.selectedTx = null;
     this.payoutProofFile = null;
     this.payoutProofPreview = null;
+  }
+
+  requestMarkTransactionPaid() {
+    if (!this.selectedTx || !this.payoutForm.payoutUtr.trim() || this.uploadingProof) return;
+    const payoutAmount = this.ui.formatPaise(this.selectedTx.recipientPayout || 0);
+    this.markPaidConfirmMessage = `Confirm payout of ${payoutAmount}? Please verify UTR and recipient UPI before continuing.`;
+    this.markPaidConfirmOpen = true;
+  }
+
+  onMarkPaidConfirmCancel() {
+    this.markPaidConfirmOpen = false;
+  }
+
+  onMarkPaidConfirm() {
+    this.markPaidConfirmOpen = false;
+    this.markTransactionPaid();
   }
 
   onPayoutFileSelected(ev: Event) {

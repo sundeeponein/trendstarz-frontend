@@ -133,6 +133,10 @@ export class App implements OnInit {
         title: 'Search Influencers & Brands | TrendStarz',
         description: 'Discover influencers and brands on TrendStarz by category, platform, and audience fit.',
       },
+      '/faqs': {
+        title: 'Frequently Asked Questions | TrendStarz',
+        description: 'Search answers about TrendStarz accounts, collaborations, campaigns, payments, and future features.',
+      },
       '/features': {
         title: 'How TrendStarz Works for Brands & Influencers',
         description: 'See how TrendStarz helps influencers and brands collaborate with transparent workflows.',

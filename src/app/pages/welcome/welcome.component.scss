@@ -255,6 +255,15 @@
   background: #260055;
 }
 
+.faq-strip {
+  background: #f4f5f7;
+  color: #101727;
+}
+
+.faq-strip .container {
+  max-width: 1060px;
+}
+
 .example-item {
   border-left: 3px solid #ff6b2b;
   background: rgba(255, 255, 255, 0.16);
@@ -309,21 +318,6 @@
   background: #ef6a22;
   color: #fff;
   border-color: #ef6a22;
-}
-
-.cta-strip {
-  background: #f4f5f7;
-}
-
-.cta-strip h2 {
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  font-weight: 800;
-}
-
-.cta-strip p {
-  max-width: 760px;
-  margin: 0 auto;
-  color: #5b6782;
 }
 
 @media (max-width: 991px) {

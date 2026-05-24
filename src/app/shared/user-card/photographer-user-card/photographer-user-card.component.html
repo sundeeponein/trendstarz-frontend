@@ -1,64 +1,33 @@
-<div class="photographer-card">
-  <div class="card-avatar">
-    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="avatar-img" />
-  </div>
-  <div class="card-body">
-    <h3 class="card-name">{{ name || '—' }}</h3>
-    <p class="card-username" *ngIf="username">@{{ username }}</p>
-    <div class="card-trust-row">
-      <i class="bi bi-patch-check-fill card-trust-icon" *ngIf="isPremium" title="Verified"></i>
-      <span class="card-trust-text" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
-    </div>
+<div class="photographer-card" (click)="onViewProfileClick($event)">
+  <div class="photographer-card__img-wrap">
+    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" />
 
-    <!-- Admin badges on image are used on the card body as compact labels as well -->
-    <div class="card-tags" *ngIf="displayTags.length">
+    <div class="photographer-card__img-tags" *ngIf="displayTags.length">
       <span
         *ngFor="let tag of displayTags"
-        class="card-tag badge rounded-pill"
+        class="photographer-card__img-tag badge rounded-pill"
         [ngClass]="tagBadgeClass(tag)">
         {{ tag }}
       </span>
     </div>
+  </div>
 
-    <p class="card-location">
+  <div class="photographer-card__body">
+    <div class="photographer-card__name">
+      {{ name || '—' }}
+      <i class="bi bi-patch-check-fill photographer-card__verified" *ngIf="isPremium" title="Verified"></i>
+      <span class="photographer-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
+    </div>
+
+    <div class="photographer-card__category-row">
+      <div class="photographer-card__category">{{ displayCategory }}</div>
+      <div class="photographer-card__welcome-price" *ngIf="startingPrice !== null">
+        ₹{{ startingPrice | number:'1.0-0' }}
+      </div>
+    </div>
+
+    <div class="photographer-card__location" *ngIf="location?.state || location?.district">
       <i class="bi bi-geo-alt"></i> {{ displayLocation }}
-    </p>
-
-    <!-- Skills -->
-    <div class="card-skills" *ngIf="displaySkills.length">
-      <span class="skill-chip" *ngFor="let s of displaySkills">{{ s }}</span>
-      <span class="skill-chip skill-chip--more" *ngIf="(skills || []).length > 3">+{{ (skills || []).length - 3 }}</span>
     </div>
-
-    <!-- Equipment tags -->
-    <div class="card-equipment" *ngIf="equipment && equipment.length">
-      <span class="equip-tag" *ngFor="let eq of equipment">{{ eq }}</span>
-    </div>
-
-    <!-- Starting price -->
-    <div class="card-price" *ngIf="startingPrice !== null">
-      <i class="bi bi-currency-rupee"></i>
-      <span>Starting ₹{{ startingPrice | number }}</span>
-    </div>
-
-    <!-- Social platforms indicator -->
-    <div class="card-platforms" *ngIf="platforms.length">
-      <span class="platform-dot" *ngFor="let p of platforms" [title]="p">
-        <i class="bi" [class.bi-instagram]="p.includes('instagram')"
-           [class.bi-youtube]="p.includes('youtube')"
-           [class.bi-facebook]="p.includes('facebook')"
-           [class.bi-twitter-x]="p.includes('x') || p.includes('twitter')"
-           [class.bi-link-45deg]="!p.includes('instagram') && !p.includes('youtube') && !p.includes('facebook') && !p.includes('x') && !p.includes('twitter')"></i>
-      </span>
-    </div>
-
-    <!-- Portfolio link -->
-    <a *ngIf="portfolio" [href]="portfolio" target="_blank" rel="noopener noreferrer" class="portfolio-link">
-      <i class="bi bi-box-arrow-up-right"></i> Portfolio
-    </a>
-
-    <button type="button" class="view-profile-btn" (click)="onViewProfileClick($event)">
-      View Profile
-    </button>
   </div>
 </div>

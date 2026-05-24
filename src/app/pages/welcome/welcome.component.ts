@@ -6,7 +6,9 @@ import { Router, NavigationEnd } from '@angular/router';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
 import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
-import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
+import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
+import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../shared/components/faq-accordion/faq-accordion.component';
+import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
@@ -23,6 +25,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly showBrandCampaignMetaOnWelcome = false;
 
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
+  readonly faqAccordionComponent = FaqAccordionComponent;
   readonly builtForAudiencesInputs = {
     heading: 'Built For Every Industry',
     subheading: 'Tailored influencer marketing solutions for your niche.',
@@ -73,6 +76,23 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       focus: 'Performance-focused UGC'
     }
   ];
+
+  readonly homepageFaqs: FaqAccordionItem[] = TRENDSTARZ_FAQ_ITEMS.slice(0, 5);
+
+  readonly faqCtaButtons: FaqCtaButton[] = [
+    { label: 'More FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
+  ];
+
+  get faqAccordionInputs() {
+    return {
+      heading: 'Frequently Asked Questions',
+      items: this.homepageFaqs,
+      showSchema: true,
+      schemaId: 'trendstarz-home-faq-schema',
+      ctaHeading: '',
+      ctaButtons: this.faqCtaButtons,
+    };
+  }
 
   private routerSubscription: any;
   influencers: any[] = [];

@@ -28,6 +28,8 @@ import { ToastService } from '../../shared/toast/toast.service';
 export class BrandProfileComponent implements OnInit {
   premiumMonthlyPrice = 999;
   commissionAccessTags: string[] = [];
+  firstRegisteredAt: string | null = null;
+  lastLoginAt: string | null = null;
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -448,6 +450,8 @@ export class BrandProfileComponent implements OnInit {
           this.emailVerified = !!profile?.isEmailVerified;
           this.phoneVerified = !!profile?.isMobileVerified;
           this.commissionAccessTags = this.extractCommissionAccessTags(profile?.adminTags);
+          this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
+          this.lastLoginAt = profile?.lastLoginAt || null;
           this.showEmailVerificationPrompt = !this.emailVerified;
           this.cd.detectChanges();
 

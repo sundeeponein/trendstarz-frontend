@@ -6,7 +6,7 @@ import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
-import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-profile/influencer-user-card.component';
+import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { CampaignInfluencer } from '../../shared/campaigns/campaign.model';
@@ -108,7 +108,7 @@ export class SearchComponent implements OnInit {
 
   /** Which tabs are available per role */
   get showInfluencerTab(): boolean { return this.isBrandUser || this.isPhotographerUser || this.isGuestUser; }
-  get showPhotographersTab(): boolean { return this.isBrandUser || this.isInfluencerUser; }
+  get showPhotographersTab(): boolean { return this.isBrandUser || this.isInfluencerUser || this.isGuestUser; }
   get showBrandsTab(): boolean { return false; /* brands hidden from public discovery */ }
 
   get defaultTab(): 'influencers' | 'photographers' {
@@ -429,7 +429,12 @@ export class SearchComponent implements OnInit {
   }
 
   viewPhotographerProfile(photographer: any) {
+    const username = String(photographer?.username || '').trim();
     const id = photographer?._id;
+    if (username) {
+      this.router.navigate(['/photographer', username]);
+      return;
+    }
     if (id) {
       this.router.navigate(['/photographer', id]);
     }

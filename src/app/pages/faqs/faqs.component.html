@@ -1,0 +1,49 @@
+<section class="faqs-page py-5">
+  <div class="container py-4">
+    <div class="faqs-hero text-center mb-4">
+      <p class="eyebrow mb-2">Support</p>
+      <h1 class="page-title mb-3">Frequently Asked Questions</h1>
+      <p class="page-subtitle mb-0">
+        Search answers about accounts, campaigns, collaborations, and what comes next on TrendStarz.
+      </p>
+    </div>
+
+    <div class="search-wrap mb-4">
+      <label for="faqSearch" class="form-label fw-semibold mb-2">Search FAQs</label>
+      <div class="input-group input-group-lg">
+        <span class="input-group-text">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          id="faqSearch"
+          type="search"
+          class="form-control faq-search"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Search by question, answer, or label"
+          aria-label="Search FAQs" />
+      </div>
+      <div class="search-meta mt-2">
+        Showing {{ filteredFaqs().length }} of {{ allFaqs.length }} questions
+      </div>
+    </div>
+
+    <ng-container *ngIf="filteredFaqs().length > 0; else noResults">
+      <app-faq-accordion
+        [heading]="'Frequently Asked Questions'"
+        [items]="filteredFaqs()"
+        [schemaItems]="allFaqs"
+        [showSchema]="true"
+        [schemaId]="'trendstarz-faq-page-schema'"
+        [ctaButtons]="ctaButtons">
+      </app-faq-accordion>
+    </ng-container>
+
+    <ng-template #noResults>
+      <div class="no-results text-center">
+        <h3>No FAQs matched your search.</h3>
+        <p>Try a different keyword or clear the search box.</p>
+      </div>
+    </ng-template>
+  </div>
+</section>

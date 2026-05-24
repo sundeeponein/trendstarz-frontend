@@ -52,6 +52,24 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
 
+  get firstRegisteredAtDisplay(): string | null {
+    const dashboardBrand = this.dashboard?.brand || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return (
+      dashboardBrand.firstRegisteredAt ||
+      dashboardBrand.createdAt ||
+      sessionUser.firstRegisteredAt ||
+      sessionUser.createdAt ||
+      null
+    );
+  }
+
+  get lastLoginAtDisplay(): string | null {
+    const dashboardBrand = this.dashboard?.brand || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return dashboardBrand.lastLoginAt || sessionUser.lastLoginAt || null;
+  }
+
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
   constructor(

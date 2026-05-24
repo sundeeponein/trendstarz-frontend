@@ -25,7 +25,7 @@ export class InfluencerUserCardComponent {
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
   @Input() promotionalPrice?: number;
-  @Input() showWelcomeStartingPrice = false;
+  @Input() showWelcomeStartingPrice = true;
   @Input() engagementRate?: number | string;
   /** Show the "+ Campaign" button — pass true for brand users */
   @Input() showCampaignBtn = false;

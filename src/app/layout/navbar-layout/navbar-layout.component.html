@@ -20,8 +20,14 @@
       <!-- <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         {{ searchLabel }}
       </a> -->
-      <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
+      <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand'" class="nav-tab">
         Campaigns
+      </a>
+      <a routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }" *ngIf="user?.role === 'influencer'" class="nav-tab" [class.active]="isInfluencerCampaignsNavActive">
+        Campaigns
+      </a>
+      <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" *ngIf="user?.role === 'influencer'" class="nav-tab" [class.active]="isInfluencerCollaborationsNavActive">
+        Collaborations
       </a>
       <a routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }" *ngIf="user?.role === 'photographer'" class="nav-tab" [class.active]="isPhotographerCampaignsNavActive">
         Campaigns
@@ -104,6 +110,8 @@
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
             <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-profile">Profile</a></li>
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
+            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }">Campaigns</a></li>
+            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }">Collaborations</a></li>
             <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }">Campaigns</a></li>
             <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }">Collaborations</a></li>
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/transactions">Transactions</a></li>
@@ -185,7 +193,9 @@
         <a *ngIf="user?.role === 'brand'" routerLink="/brand-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a *ngIf="user?.role === 'influencer'" routerLink="/influencer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a *ngIf="user?.role === 'photographer'" routerLink="/photographer-dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
-        <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
+        <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
+        <a routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }" *ngIf="user?.role === 'influencer'" class="mobile-link" [class.active]="isInfluencerCampaignsNavActive" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
+        <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" *ngIf="user?.role === 'influencer'" class="mobile-link" [class.active]="isInfluencerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCampaignsNavActive" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
         <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>

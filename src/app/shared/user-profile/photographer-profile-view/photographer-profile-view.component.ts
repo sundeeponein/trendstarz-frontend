@@ -1,9 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
+import { VisibilityService } from '../../../core/visibility.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -29,7 +30,19 @@ export class PhotographerProfileViewComponent implements OnInit {
   };
 
   get isLoggedIn(): boolean {
-    return !!this.session.getUser();
+    return this.visibility.isLoggedIn();
+  }
+
+  get isProViewer(): boolean {
+    return this.visibility.isPro();
+  }
+
+  get isFreeViewer(): boolean {
+    return this.visibility.isFree();
+  }
+
+  get isGuestViewer(): boolean {
+    return this.visibility.isGuest();
   }
 
   get isBrandViewer(): boolean {
@@ -45,6 +58,10 @@ export class PhotographerProfileViewComponent implements OnInit {
   get isPhotographerViewer(): boolean {
     const role = String(this.session.getUser()?.role || '').toLowerCase();
     return role === 'photographer';
+  }
+
+  get canViewContactDetails(): boolean {
+    return !!this.photographer && this.photographer.contactRestricted !== true;
   }
 
   get displayImage(): string {
@@ -136,6 +153,7 @@ export class PhotographerProfileViewComponent implements OnInit {
   getSocialUrl(sm: any): string {
     const p = String(sm?.platform || '').toLowerCase();
     const handle = String(sm?.handle || '').replace(/^@+/, '').trim();
+    if (!handle) return sm?.url || '#';
     if (p.includes('instagram')) return `https://instagram.com/${handle}`;
     if (p.includes('youtube')) return `https://youtube.com/@${handle}`;
     if (p.includes('facebook')) return `https://facebook.com/${handle}`;
@@ -143,6 +161,16 @@ export class PhotographerProfileViewComponent implements OnInit {
     if (p.includes('tiktok')) return `https://tiktok.com/@${handle}`;
     if (p.includes('linkedin')) return `https://linkedin.com/in/${handle}`;
     return sm?.url || '#';
+  }
+
+  getMainSocialLink(): string {
+    const first = this.socialPlatforms[0];
+    return first ? this.getSocialUrl(first) : '#';
+  }
+
+  getPrimaryTier(): string {
+    const tier = String(this.socialPlatforms[0]?.tier || '').trim();
+    return tier ? tier.toUpperCase() : '';
   }
 
   getPlatformLabel(sm: any): string {
@@ -186,8 +214,10 @@ export class PhotographerProfileViewComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private config: ConfigService,
     private session: SessionService,
+    private visibility: VisibilityService,
     private cd: ChangeDetectorRef,
     private titleService: Title,
     private meta: Meta,
@@ -217,12 +247,13 @@ export class PhotographerProfileViewComponent implements OnInit {
       },
     });
 
-    this.route.paramMap.subscribe(params => {
-      const id = params.get('id');
+    this.route.data.subscribe(({ photographer }) => {
+      const username = this.route.snapshot.paramMap.get('username') || this.route.parent?.snapshot.paramMap.get('username') || '';
       this.photographer = null;
       this.error = '';
       this.loading = true;
-      if (!id) {
+
+      if (!username) {
         this.error = 'No photographer specified.';
         this.loading = false;
         this.setDefaultMetadata();
@@ -230,26 +261,18 @@ export class PhotographerProfileViewComponent implements OnInit {
         return;
       }
 
-      this.config.getPhotographerById(id).subscribe({
-        next: (data) => {
-          if (!data) {
-            this.photographer = null;
-            this.error = 'Photographer not found.';
-            this.setDefaultMetadata();
-          } else {
-            this.photographer = data;
-            this.updateMetadata(data);
-          }
-          this.loading = false;
-          this.cd.detectChanges();
-        },
-        error: () => {
-          this.error = 'Could not load photographer profile.';
-          this.loading = false;
-          this.setDefaultMetadata();
-          this.cd.detectChanges();
-        }
-      });
+      const data = photographer || null;
+      if (!data) {
+        this.photographer = null;
+        this.error = 'Photographer not found.';
+        this.setDefaultMetadata();
+      } else {
+        this.photographer = data;
+        this.updateMetadata(data);
+        this.ensureCanonicalProfileUrl(data, username);
+      }
+      this.loading = false;
+      this.cd.detectChanges();
     });
   }
 
@@ -258,7 +281,8 @@ export class PhotographerProfileViewComponent implements OnInit {
     const skills = Array.isArray(photographer?.skills) ? photographer.skills.slice(0, 3).join(', ') : '';
     const title = `${name} | Photographer | TrendStarz`;
     const description = `Discover ${name}${skills ? ` (${skills})` : ''} on TrendStarz. View skills, pricing, equipment, and verified social presence.`;
-    const canonical = `https://trendstarz.in/photographer/${photographer?._id || ''}`;
+    const canonicalKey = String(photographer?.username || photographer?._id || '').trim();
+    const canonical = `https://trendstarz.in/photographer/${canonicalKey}`;
 
     this.titleService.setTitle(title);
     this.meta.updateTag({ name: 'description', content: description });
@@ -277,7 +301,7 @@ export class PhotographerProfileViewComponent implements OnInit {
       (window as any).gtag?.('config', 'G-5912TSJYW5', {
         send_page_view: false,
         page_title: title,
-        page_path: `/photographer/${photographer?._id || ''}`,
+        page_path: `/photographer/${canonicalKey}`,
         photographer_name: name,
         photographer_skills: skills,
       });
@@ -300,5 +324,12 @@ export class PhotographerProfileViewComponent implements OnInit {
       this.document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', href);
+  }
+
+  private ensureCanonicalProfileUrl(photographer: any, requestedKey: string): void {
+    const username = String(photographer?.username || '').trim();
+    if (!username) return;
+    if (String(requestedKey || '').trim() === username) return;
+    this.router.navigate(['/photographer', username], { replaceUrl: true });
   }
 }

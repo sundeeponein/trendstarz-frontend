@@ -22,7 +22,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
   invites: any[] = [];
-  postedCollaborations: any[] = [];
+  collaborationRequests: any[] = [];
   activeCampaigns: any[] = [];
   completedCampaigns: any[] = [];
   loading = true;
@@ -59,6 +59,24 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
   emailBannerDismissed = false;
   verificationCallNumber = '';
+
+  get firstRegisteredAtDisplay(): string | null {
+    const dashboardUser = this.dashboard?.user || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return (
+      dashboardUser.firstRegisteredAt ||
+      dashboardUser.createdAt ||
+      sessionUser.firstRegisteredAt ||
+      sessionUser.createdAt ||
+      null
+    );
+  }
+
+  get lastLoginAtDisplay(): string | null {
+    const dashboardUser = this.dashboard?.user || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return dashboardUser.lastLoginAt || sessionUser.lastLoginAt || null;
+  }
 
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
@@ -145,9 +163,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           const data = res.data || {};
           this.dashboard = data;
-          // Primary source: dashboard payload. Fallback: direct influencer invites endpoint.
-          this.invites = Array.isArray(data.invites?.newInvites) ? data.invites.newInvites : [];
-          this.loadPostedCollaborations(String(data?.user?._id || this.session.getUser()?._id || ''));
+          // Always load scoped inbox/open lists so campaigns and collaborations stay separated.
+          this.loadCampaignInvites();
+          this.loadCollaborationRequests();
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];
           const user = data.user || {};
@@ -155,18 +173,6 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.loadPaymentHistory();
           this.loadAttentionCounts();
-
-          if (this.invites.length === 0) {
-            this.dashboardService.getMyInvites().subscribe({
-              next: (rows: any[]) => {
-                this.invites = (rows || []).filter((i: any) => i.status === 'pending' || i.status === 'invited');
-                this.cdr.detectChanges();
-              },
-              error: () => {
-                this.cdr.detectChanges();
-              }
-            });
-          }
 
           this.cdr.detectChanges();
         }, 0);
@@ -181,19 +187,69 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadPostedCollaborations(ownerId: string) {
-    if (!ownerId) {
-      this.postedCollaborations = [];
-      return;
-    }
-    this.config.getCampaignsByBrandId(ownerId).subscribe({
+  private isCollabInvite(inv: any): boolean {
+    const ownerRole = String(
+      inv?.campaignId?.ownerType || inv?.campaignId?.createdByRole || inv?.brandId?.role || '',
+    ).trim().toLowerCase();
+    const requestKind = String(inv?.campaignId?.requestKind || '').trim().toLowerCase();
+    return ownerRole === 'photographer'
+      || ownerRole === 'videographer'
+      || requestKind === 'photographer_collaboration'
+      || requestKind === 'videographer_collaboration';
+  }
+
+  private mapInviteToDashboardStatus(inviteStatus: string): string {
+    const status = String(inviteStatus || '').toLowerCase();
+    if (status === 'pending' || status === 'invited') return 'pending_review';
+    if (status === 'accepted' || status === 'payment_confirmed' || status === 'working' || status === 'submitted') return 'active';
+    if (status === 'completed' || status === 'approved') return 'completed';
+    if (status === 'declined' || status === 'withdrawn') return 'rejected';
+    return status || 'pending_review';
+  }
+
+  private normalizeCollaborationRequest(inv: any): any {
+    const campaign = inv?.campaignId || {};
+    return {
+      _id: campaign?._id || inv?._id,
+      title: campaign?.title || '(untitled)',
+      description: campaign?.description || '',
+      categories: Array.isArray(campaign?.categories) ? campaign.categories : [],
+      timelineStart: campaign?.timelineStart || campaign?.startDate || null,
+      timelineEnd: campaign?.timelineEnd || campaign?.endDate || null,
+      pricePerInfluencer: campaign?.pricePerInfluencer || 0,
+      maxInfluencers: campaign?.maxInfluencers || 0,
+      status: this.mapInviteToDashboardStatus(inv?.status),
+      updatedAt: inv?.updatedAt || campaign?.updatedAt || inv?.createdAt || campaign?.createdAt || null,
+      createdAt: inv?.createdAt || campaign?.createdAt || null,
+    };
+  }
+
+  loadCampaignInvites() {
+    this.config.getMyInvites('campaign').subscribe({
+      next: (rows: any[]) => {
+        this.invites = (rows || []).filter((i: any) => {
+          const status = String(i?.status || '').toLowerCase();
+          return (status === 'pending' || status === 'invited') && !this.isCollabInvite(i);
+        });
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.invites = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  loadCollaborationRequests() {
+    this.config.getMyInvites('collaboration').subscribe({
       next: (rows: any[]) => {
         const all = Array.isArray(rows) ? rows : [];
-        this.postedCollaborations = all
-          .filter((c: any) => {
-            const status = String(c?.status || '').toLowerCase();
-            return status !== 'completed';
+        this.collaborationRequests = all
+          .filter((inv: any) => {
+            const status = String(inv?.status || '').toLowerCase();
+            return status !== 'completed' && status !== 'approved' && status !== 'declined' && status !== 'withdrawn';
           })
+          .map((inv: any) => this.normalizeCollaborationRequest(inv))
           .sort((a: any, b: any) => {
             const at = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
             const bt = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
@@ -203,14 +259,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.postedCollaborations = [];
+        this.collaborationRequests = [];
         this.cdr.markForCheck();
       },
     });
   }
 
-  openCampaignManagement() {
-    this.router.navigate(['/campaigns']);
+  openCampaignManagement(tab: 'campaigns' | 'collaborations' = 'campaigns') {
+    this.router.navigate(['/campaigns'], { queryParams: { tab } });
   }
 
   loadAttentionCounts() {
@@ -629,19 +685,19 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return Array.isArray(this.invites) ? this.invites.length : 0;
   }
 
-  get postedRequestsCount(): number {
-    return Array.isArray(this.postedCollaborations) ? this.postedCollaborations.length : 0;
+  get collaborationRequestsCount(): number {
+    return Array.isArray(this.collaborationRequests) ? this.collaborationRequests.length : 0;
   }
 
-  get postedRequestsPendingReviewCount(): number {
-    return (this.postedCollaborations || []).filter((c: any) => {
+  get collaborationRequestsPendingReviewCount(): number {
+    return (this.collaborationRequests || []).filter((c: any) => {
       const status = String(c?.status || '').toLowerCase();
       return status === 'pending' || status === 'pending_review';
     }).length;
   }
 
-  get postedRequestsActiveCount(): number {
-    return (this.postedCollaborations || []).filter((c: any) => String(c?.status || '').toLowerCase() === 'active').length;
+  get collaborationRequestsActiveCount(): number {
+    return (this.collaborationRequests || []).filter((c: any) => String(c?.status || '').toLowerCase() === 'active').length;
   }
 
   get canViewProfileTraffic(): boolean {

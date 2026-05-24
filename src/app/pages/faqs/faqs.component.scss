@@ -1,0 +1,140 @@
+.faqs-page {
+  background: #f4f5f7;
+  color: #101727;
+  min-height: calc(100vh - 120px);
+}
+
+.faqs-page .container {
+  max-width: 1120px;
+}
+
+.faqs-hero {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #f0641c;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.page-title {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.page-subtitle {
+  color: #6a768f;
+  font-size: 1.02rem;
+}
+
+.search-wrap {
+  max-width: 920px;
+  margin: 0 auto 1.75rem;
+}
+
+.faq-search {
+  background: #ffffff;
+  color: #101727;
+  border-color: #dce3ee;
+  box-shadow: none;
+}
+
+.faq-search::placeholder {
+  color: #7d889f;
+}
+
+.faq-search:focus {
+  background: #ffffff;
+  color: #101727;
+  border-color: #f0641c;
+  box-shadow: 0 0 0 0.2rem rgba(240, 100, 28, 0.08);
+}
+
+.input-group-text {
+  background: #ffffff !important;
+  border-color: #dce3ee !important;
+  color: #7d889f !important;
+}
+
+.search-meta {
+  color: #6a768f;
+  font-size: 0.9rem;
+}
+
+.no-results {
+  border: 1px solid #dce3ee;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 2rem;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.no-results h3 {
+  color: #101727;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.no-results p {
+  color: #6a768f;
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .faqs-page {
+    min-height: auto;
+  }
+
+  .faqs-page .container {
+    padding-top: 1.1rem !important;
+    padding-bottom: 1.4rem !important;
+  }
+
+  .faqs-hero {
+    margin-bottom: 1rem !important;
+  }
+
+  .page-title {
+    font-size: clamp(1.5rem, 8vw, 2rem);
+    margin-bottom: 0.65rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .search-wrap {
+    margin-bottom: 1rem;
+  }
+
+  .search-wrap .form-label {
+    font-size: 0.86rem;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .search-wrap .input-group.input-group-lg > .form-control,
+  .search-wrap .input-group.input-group-lg > .input-group-text {
+    font-size: 0.92rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .search-meta {
+    font-size: 0.82rem;
+  }
+
+  .no-results {
+    padding: 1.15rem;
+    border-radius: 12px;
+  }
+
+  .no-results h3 {
+    font-size: 1.05rem;
+  }
+}

@@ -1,20 +1,20 @@
 import { Route, ActivatedRouteSnapshot } from '@angular/router';
 import { inject } from '@angular/core';
-import { InfluencerProfileViewComponent } from './influencer-profile-view.component';
-import { ConfigService } from '../../config.service';
 import { firstValueFrom } from 'rxjs';
+import { PhotographerProfileViewComponent } from './photographer-profile-view.component';
+import { ConfigService } from '../../config.service';
 
 export default [
   {
     path: '',
-    component: InfluencerProfileViewComponent,
+    component: PhotographerProfileViewComponent,
     resolve: {
-      influencer: async (route: ActivatedRouteSnapshot) => {
+      photographer: async (route: ActivatedRouteSnapshot) => {
         const config = inject(ConfigService);
         const username = route.paramMap.get('username') || route.parent?.paramMap.get('username');
         if (!username) return null;
-        return firstValueFrom(config.getInfluencerByUsername(username));
-      }
-    }
-  }
+        return firstValueFrom(config.getPhotographerByUsername(username));
+      },
+    },
+  },
 ] as Route[];

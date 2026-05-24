@@ -24,6 +24,7 @@ import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 type PhotographerWorkspaceView = 'campaign_requests' | 'collaborations';
+type InfluencerWorkspaceTab = 'campaigns' | 'collaborations';
 
 @Component({
   selector: 'app-campaign-management',
@@ -70,6 +71,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** True when an influencer is viewing — switches to read-only open-campaigns mode */
   isInfluencerView = false;
   isPhotographerView = false;
+  influencerWorkspaceTab: InfluencerWorkspaceTab = 'campaigns';
   photographerWorkspaceView: PhotographerWorkspaceView = 'campaign_requests';
   photographerBrandInvites: any[] = [];
   photographerBrandInvitesLoading = false;
@@ -241,7 +243,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get pageTitle(): string {
-    if (this.isInfluencerView) return 'Campaign Requests';
+    if (this.isInfluencerView) {
+      return this.isInfluencerCollaborationsView ? 'Collaborations' : 'Campaign Requests';
+    }
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
         ? 'Campaign Requests'
@@ -252,7 +256,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get pageSubtitle(): string {
     if (this.isInfluencerView) {
-      return 'Browse active campaign requests from brands and creators.';
+      return this.isInfluencerCollaborationsView
+        ? 'Browse active collaboration requests from photographers and videographers.'
+        : 'Browse active campaign requests from brands.';
     }
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
@@ -270,6 +276,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get isPhotographerCampaignRequestsView(): boolean {
     return this.isPhotographerView && this.photographerWorkspaceView === 'campaign_requests';
+  }
+
+  get isInfluencerCampaignsView(): boolean {
+    return this.isInfluencerView && this.influencerWorkspaceTab === 'campaigns';
+  }
+
+  get isInfluencerCollaborationsView(): boolean {
+    return this.isInfluencerView && this.influencerWorkspaceTab === 'collaborations';
   }
 
   get isPhotographerCollaborationsView(): boolean {
@@ -303,6 +317,50 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return String(value || '').trim().toLowerCase() === 'collaborations'
       ? 'collaborations'
       : 'campaign_requests';
+  }
+
+  private normalizeInfluencerWorkspaceTab(value: unknown): InfluencerWorkspaceTab {
+    return String(value || '').trim().toLowerCase() === 'collaborations'
+      ? 'collaborations'
+      : 'campaigns';
+  }
+
+  private getInfluencerApiScope(): 'campaign' | 'collaboration' {
+    return this.isInfluencerCollaborationsView ? 'collaboration' : 'campaign';
+  }
+
+  private loadInfluencerWorkspaceData() {
+    const scope = this.getInfluencerApiScope();
+    this.myInvitesLoading = true;
+    this.loading = true;
+
+    this.config.getMyInvites(scope).subscribe({
+      next: (invites: any[]) => {
+        this.myInvites = invites;
+        this.trackCompletionFromInviteStatuses(invites);
+        this.myInvitesLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.myInvitesLoading = false;
+        this.cd.detectChanges();
+      }
+    });
+
+    this.config.getAllCampaigns('active', scope).subscribe({
+      next: (campaigns: Campaign[]) => {
+        this.campaigns = campaigns || [];
+        this.campaignLoadError = '';
+        this.loading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.campaigns = [];
+        this.campaignLoadError = 'Failed to load open campaigns.';
+        this.loading = false;
+        this.cd.detectChanges();
+      }
+    });
   }
 
   switchPhotographerWorkspace(view: PhotographerWorkspaceView) {
@@ -773,6 +831,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
   /** Invites filtered by type chip (all / brand / collab) */
   get myInvitesTyped(): any[] {
+    if (this.isInfluencerView) {
+      return this.myInvites.filter((i) => this.isInfluencerCollaborationsView ? this.isCollabInvite(i) : !this.isCollabInvite(i));
+    }
     if (this.myInviteTypeFilter === 'brand') return this.myInvites.filter(i => !this.isCollabInvite(i));
     if (this.myInviteTypeFilter === 'collab') return this.myInvites.filter(i => this.isCollabInvite(i));
     return this.myInvites;
@@ -783,7 +844,41 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get myBrandCount(): number { return this.myInvites.filter(i => !this.isCollabInvite(i)).length; }
   /** Returns true if this invite was sent by a photographer/creator (collaboration), not a brand */
   isCollabInvite(inv: any): boolean {
-    return (inv?.brandId?.role === 'photographer') || (inv?.campaignId?.createdByRole === 'photographer');
+    const ownerRole = String(
+      inv?.campaignId?.ownerType || inv?.campaignId?.createdByRole || inv?.brandId?.role || '',
+    ).trim().toLowerCase();
+    const requestKind = String(inv?.campaignId?.requestKind || '').trim().toLowerCase();
+    return ownerRole === 'photographer'
+      || ownerRole === 'videographer'
+      || requestKind === 'photographer_collaboration'
+      || requestKind === 'videographer_collaboration';
+  }
+
+  private isCollaborationCampaign(campaign: any): boolean {
+    const roleCandidates = [
+      campaign?.createdByRole,
+      campaign?.ownerType,
+      campaign?.brandId?.role,
+      campaign?.campaignOwnerRole,
+      campaign?.creatorRole,
+    ]
+      .map((v: any) => String(v || '').trim().toLowerCase())
+      .filter(Boolean);
+
+    if (roleCandidates.some((role: string) => role === 'photographer' || role === 'videographer')) {
+      return true;
+    }
+
+    const kind = String(campaign?.requestKind || '').trim().toLowerCase();
+    if (kind === 'photographer_collaboration' || kind === 'videographer_collaboration') {
+      return true;
+    }
+
+    return false;
+  }
+
+  private isBrandCampaign(campaign: any): boolean {
+    return !this.isCollaborationCampaign(campaign);
   }
   /** Human-readable type label for an invite card */
   getInviteTypeLabel(inv: any): string {
@@ -803,6 +898,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get openCampaignsForInfluencer(): any[] {
     const applied = this.myInvitedCampaignIds;
     return this.campaigns.filter(c => {
+      const visibleByScope = this.isInfluencerCollaborationsView
+        ? this.isCollaborationCampaign(c)
+        : this.isBrandCampaign(c);
+      if (!visibleByScope) return false;
+
       if (applied.has(String(c._id || ''))) return false;
       // Non-tier campaigns are visible to all influencers (unless applied)
       if ((c as any)?.campaignMode !== 'tier_filtered_open') return true;
@@ -856,6 +956,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
     if (this.isInfluencerView) {
+      this.route.queryParamMap.subscribe((params) => {
+        const tab = this.normalizeInfluencerWorkspaceTab(params.get('tab'));
+        this.influencerWorkspaceTab = tab;
+        this.myInviteTypeFilter = tab === 'collaborations' ? 'collab' : 'brand';
+        this.currentPage = 1;
+        this.loadInfluencerWorkspaceData();
+        this.cd.detectChanges();
+      });
+
       // Auto-refresh invites when user returns to this tab (browser only)
       if (typeof document !== 'undefined') {
         this.visibilityChangeHandler = () => {
@@ -886,33 +995,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         },
         error: () => { /* non-fatal */ },
       });
-      this.config.getMyInvites().subscribe({
-        next: (invites: any[]) => {
-          this.myInvites = invites;
-          this.trackCompletionFromInviteStatuses(invites);
-          this.myInvitesLoading = false;
-          this.cd.detectChanges();
-        },
-        error: () => {
-          this.myInvitesLoading = false;
-          this.cd.detectChanges();
-        }
-      });
-
-      this.config.getAllCampaigns('active').subscribe({
-        next: (campaigns: Campaign[]) => {
-          this.campaigns = campaigns || [];
-          this.campaignLoadError = '';
-          this.loading = false;
-          this.cd.detectChanges();
-        },
-        error: () => {
-          this.campaigns = [];
-          this.campaignLoadError = 'Failed to load open campaigns.';
-          this.loading = false;
-          this.cd.detectChanges();
-        }
-      });
+      // Data loading is handled by the query-param subscriber above,
+      // so Campaigns and Collaborations always use server-side scoped data.
     } else if (this.isPhotographerView) {
       this.loadPhotographerBrandInvites();
       // Photographer: fetch profile first, then load owned collaboration requests
@@ -1230,7 +1314,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (!token) return;
     this.myInvitesLoading = true;
     this.cd.detectChanges();
-    this.config.getMyInvites().subscribe({
+    this.config.getMyInvites(this.getInfluencerApiScope()).subscribe({
       next: (invites: any[]) => {
         this.myInvites = invites;
         this.trackCompletionFromInviteStatuses(invites);

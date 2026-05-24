@@ -43,6 +43,10 @@ export class PhotographerUserCardComponent {
     return (this.skills || []).slice(0, 3);
   }
 
+  get displayCategory(): string {
+    return this.displaySkills[0] || '—';
+  }
+
   get displayTags(): string[] {
     const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
     return Array.isArray(this.adminTags)
