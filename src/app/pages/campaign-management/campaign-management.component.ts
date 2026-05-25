@@ -2154,10 +2154,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   private contactPreference(invite: any, recipient: any, key: 'email' | 'call' | 'whatsapp'): boolean | null {
-    const snap = this.asBoolean(invite?.acceptedContact?.[key]);
-    if (snap !== null) return snap;
-    if (!recipient) return null;
-    return this.asBoolean(recipient?.contact?.[key]);
+    // If the invite has a snapshot (captured at acceptance time), use it as the authoritative source.
+    if (invite?.acceptedContactSnapshotAt) {
+      return this.asBoolean(invite?.acceptedContact?.[key]);
+    }
+    // No snapshot means this is a pre-feature invite — default to true so all
+    // verified contact methods are shown regardless of the current profile state.
+    return true;
   }
 
   canShowRecipientEmail(invite: any): boolean {
