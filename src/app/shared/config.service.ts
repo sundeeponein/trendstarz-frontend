@@ -166,24 +166,39 @@ export class ConfigService {
   getAppSettings(): Observable<{
     preApproveInfluencers: boolean; influencerRequireEmailVerified: boolean; influencerRequireMobileVerified: boolean;
     preApproveBrands: boolean; brandRequireEmailVerified: boolean; brandRequireMobileVerified: boolean;
+    showSearchLink: boolean;
+    showRegisterInfluencerLink: boolean;
+    showRegisterBrandLink: boolean;
+    showRegisterPhotographerLink: boolean;
   }> {
     return this.http.get<any>(`${this.apiUrl}/auth/app-settings`).pipe(
-      map(res => ({
-        preApproveInfluencers: !!res?.preApproveInfluencers,
-        influencerRequireEmailVerified: res?.influencerRequireEmailVerified !== false,
-        influencerRequireMobileVerified: !!res?.influencerRequireMobileVerified,
-        preApproveBrands: !!res?.preApproveBrands,
-        brandRequireEmailVerified: res?.brandRequireEmailVerified !== false,
-        brandRequireMobileVerified: !!res?.brandRequireMobileVerified,
-        platformFeeEnabled: !!res?.platformFeeEnabled,
-        platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : undefined,
-        gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : undefined,
-        paymentUpiId: res?.paymentUpiId || 'trendstarzin@kotak',
-      })),
+      map(res => {
+        const data = res?.data ?? res ?? {};
+        return {
+          preApproveInfluencers: !!data?.preApproveInfluencers,
+          influencerRequireEmailVerified: data?.influencerRequireEmailVerified !== false,
+          influencerRequireMobileVerified: !!data?.influencerRequireMobileVerified,
+          preApproveBrands: !!data?.preApproveBrands,
+          brandRequireEmailVerified: data?.brandRequireEmailVerified !== false,
+          brandRequireMobileVerified: !!data?.brandRequireMobileVerified,
+          platformFeeEnabled: !!data?.platformFeeEnabled,
+          platformFeePercent: typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : undefined,
+          gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
+          paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
+          showSearchLink: data?.showSearchLink !== false,
+          showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
+          showRegisterBrandLink: data?.showRegisterBrandLink !== false,
+          showRegisterPhotographerLink: data?.showRegisterPhotographerLink !== false,
+        };
+      }),
       catchError(() => of({
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
-        platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak'
+        platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak',
+        showSearchLink: true,
+        showRegisterInfluencerLink: true,
+        showRegisterBrandLink: true,
+        showRegisterPhotographerLink: true,
       }))
     );
   }

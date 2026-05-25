@@ -376,6 +376,31 @@
               [(ngModel)]="settings.verificationCallNumber" />
             <small class="text-light-emphasis">Shown below the Mobile Number field on registration &amp; profile forms. Leave blank to hide the hint.</small>
           </div>
+
+          <hr />
+
+          <h5 class="mb-3">Navbar Link Visibility</h5>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showSearchLink"
+              [(ngModel)]="settings.showSearchLink" />
+            <label class="form-check-label" for="showSearchLink">Show Search link</label>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showRegisterInfluencerLink"
+              [(ngModel)]="settings.showRegisterInfluencerLink" />
+            <label class="form-check-label" for="showRegisterInfluencerLink">Show Register as Influencer link</label>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showRegisterBrandLink"
+              [(ngModel)]="settings.showRegisterBrandLink" />
+            <label class="form-check-label" for="showRegisterBrandLink">Show Register as Brand link</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="showRegisterPhotographerLink"
+              [(ngModel)]="settings.showRegisterPhotographerLink" />
+            <label class="form-check-label" for="showRegisterPhotographerLink">Show Register as Photographer link</label>
+          </div>
+          <small class="text-light-emphasis d-block mb-2">Changes here affect both desktop and mobile navbar links, and corresponding routes.</small>
         </div>
 
         <div class="col-12 col-xl-5 settings-row">

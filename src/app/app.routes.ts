@@ -3,6 +3,7 @@ import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.comp
 import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { authGuard } from './core/auth.guard';
+import { guestOnlyGuard, nonAdminSearchGuard } from './core/public-route.guard';
 
 export const routes: Routes = [
   	{
@@ -11,7 +12,7 @@ export const routes: Routes = [
 		children: [
 			{ path: '', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'welcome', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
-			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
+			{ path: 'search', canActivate: [nonAdminSearchGuard], loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
 			{ path: 'faqs', loadComponent: () => import('./pages/faqs/faqs.component').then(m => m.FaqsComponent) },
 			{ path: 'features', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
 			{ path: 'features/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
@@ -25,9 +26,9 @@ export const routes: Routes = [
 			{ path: 'refund-policy', loadComponent: () => import('./legal/refund-policy/refund-policy.component').then(m => m.RefundPolicyComponent) },
 			{ path: 'contact', loadComponent: () => import('./legal/contact/contact.component').then(m => m.ContactComponent) },
 			// user/brand/influencer pages
-			{ path: 'register-influencer', loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },
-			{ path: 'register-brand', loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
-			{ path: 'register-photographer', loadComponent: () => import('./pages/photographer-registration/photographer-registration.component').then(m => m.PhotographerRegistrationComponent) },
+			{ path: 'register-influencer', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },
+			{ path: 'register-brand', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
+			{ path: 'register-photographer', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/photographer-registration/photographer-registration.component').then(m => m.PhotographerRegistrationComponent) },
 			{ path: 'influencer-profile', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
 			{ path: 'influencer/:username', loadChildren: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.route').then(m => m.default) },
 			{ path: 'brand-profile', canActivate: [authGuard], loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },

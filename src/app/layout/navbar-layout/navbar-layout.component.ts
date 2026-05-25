@@ -34,6 +34,24 @@ export class NavbarLayoutComponent implements OnDestroy {
     zero_commission_creator: 'Early Access',
     zero_commission_brand: 'Early Access',
   };
+  private appLinkVisibility = {
+    showSearchLink: true,
+    showRegisterInfluencerLink: true,
+    showRegisterBrandLink: true,
+    showRegisterPhotographerLink: true,
+  };
+
+  private loadAppLinkVisibility(): void {
+    this.config.getAppSettings().subscribe((settings: any) => {
+      this.appLinkVisibility = {
+        showSearchLink: settings?.showSearchLink !== false,
+        showRegisterInfluencerLink: settings?.showRegisterInfluencerLink !== false,
+        showRegisterBrandLink: settings?.showRegisterBrandLink !== false,
+        showRegisterPhotographerLink: settings?.showRegisterPhotographerLink !== false,
+      };
+      this.cdr.detectChanges();
+    });
+  }
 
   private setMobileMenuState(open: boolean) {
     this.mobileMenuOpen = open;
@@ -62,8 +80,28 @@ export class NavbarLayoutComponent implements OnDestroy {
     return 'Search';
   }
 
+  get isAdminUser(): boolean {
+    return String(this.user?.role || '').toLowerCase() === 'admin';
+  }
+
   get showSearchLink(): boolean {
-    return true;
+    return !this.isAdminUser && this.appLinkVisibility.showSearchLink;
+  }
+
+  get showRegisterLinks(): boolean {
+    return !this.user;
+  }
+
+  get showRegisterInfluencerLink(): boolean {
+    return this.showRegisterLinks && this.appLinkVisibility.showRegisterInfluencerLink;
+  }
+
+  get showRegisterBrandLink(): boolean {
+    return this.showRegisterLinks && this.appLinkVisibility.showRegisterBrandLink;
+  }
+
+  get showRegisterPhotographerLink(): boolean {
+    return this.showRegisterLinks && this.appLinkVisibility.showRegisterPhotographerLink;
   }
 
   get searchTooltip(): string {
@@ -116,6 +154,8 @@ export class NavbarLayoutComponent implements OnDestroy {
     return 'commission-badge--early';
   }
   ngOnInit() {
+    this.loadAppLinkVisibility();
+
     // Sync isPremium from the live profile API into the session
     // so the navbar always reflects the correct plan status without requiring re-login
     const user = this.session.getUser();
@@ -184,6 +224,7 @@ export class NavbarLayoutComponent implements OnDestroy {
     this.subs.add(
       this.session.user$.subscribe(user => {
         this.user = user;
+        this.loadAppLinkVisibility();
         if (!user) {
           this.notificationsOpen = false;
           this.notifications = [];

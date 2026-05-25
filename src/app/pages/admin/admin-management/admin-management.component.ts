@@ -140,6 +140,10 @@ export class AdminManagementComponent implements OnInit {
     earlyAccessCommissionPercent: 0,
     partnerCommissionPercent: 0,
     internalTestCommissionPercent: 0,
+    showSearchLink: true,
+    showRegisterInfluencerLink: true,
+    showRegisterBrandLink: true,
+    showRegisterPhotographerLink: true,
   };
   settingsSaving = false;
   settingsSaved = false;
@@ -221,6 +225,10 @@ export class AdminManagementComponent implements OnInit {
           this.settings.earlyAccessCommissionPercent = typeof data?.earlyAccessCommissionPercent === 'number' ? data.earlyAccessCommissionPercent : 0;
           this.settings.partnerCommissionPercent = typeof data?.partnerCommissionPercent === 'number' ? data.partnerCommissionPercent : 2;
           this.settings.internalTestCommissionPercent = typeof data?.internalTestCommissionPercent === 'number' ? data.internalTestCommissionPercent : 0;
+          this.settings.showSearchLink = data?.showSearchLink !== false;
+          this.settings.showRegisterInfluencerLink = data?.showRegisterInfluencerLink !== false;
+          this.settings.showRegisterBrandLink = data?.showRegisterBrandLink !== false;
+          this.settings.showRegisterPhotographerLink = data?.showRegisterPhotographerLink !== false;
         this.cdr.detectChanges();
       },
       error: () => {}

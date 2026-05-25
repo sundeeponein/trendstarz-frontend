@@ -17,9 +17,9 @@
         Dashboard
       </a>
       <!-- will active on in 30days so dont remove this code  -->
-      <!-- <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+      <a *ngIf="showSearchLink" routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         {{ searchLabel }}
-      </a> -->
+      </a>
       <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand'" class="nav-tab">
         Campaigns
       </a>
@@ -41,16 +41,16 @@
       <a routerLink="/features" routerLinkActive="active" class="nav-tab">
         Features
       </a>
-      <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
+      <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="showRegisterInfluencerLink" class="nav-tab">
         Register as Influencer
       </a>
-      <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="nav-tab">
+      <a routerLink="/register-brand" routerLinkActive="active" *ngIf="showRegisterBrandLink" class="nav-tab">
         Register as Brand
       </a>
 
-      <!-- <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
+      <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="showRegisterPhotographerLink" class="nav-tab">
         Register as Photographer
-      </a> -->
+      </a>
     </div>
 
     <div class="navbar-actions">
@@ -198,12 +198,12 @@
         <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" *ngIf="user?.role === 'influencer'" class="mobile-link" [class.active]="isInfluencerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCampaignsNavActive" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
-        <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
+        <a *ngIf="showSearchLink" routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/features" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>Features</span></a>
-        <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
-        <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
-        <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
+        <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
+        <a routerLink="/register-brand" routerLinkActive="active" *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
+        <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
       </div>
 
       <div class="mobile-upgrade" *ngIf="user && !user?.isPremium">

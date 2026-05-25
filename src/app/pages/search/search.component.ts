@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { AnalyticsService } from '../../core/analytics.service';
@@ -214,6 +214,7 @@ export class SearchComponent implements OnInit {
     private session: SessionService,
     private analytics: AnalyticsService,
     private cd: ChangeDetectorRef,
+    private route: ActivatedRoute,
     public router: Router,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
@@ -223,7 +224,8 @@ export class SearchComponent implements OnInit {
   ngOnInit(): void {
     if (!this.isBrowser) return;
     this.loadRoleCategoryOptions();
-    this.activeTab = this.defaultTab;
+    const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
+    this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
     if (this.activeTab === 'influencers') {
       this.fetchInfluencers();
     } else if (this.activeTab === 'photographers') {
@@ -274,6 +276,10 @@ export class SearchComponent implements OnInit {
       this.fetchBrands();
     }
     setTimeout(() => this.cd.detectChanges(), 0);
+  }
+
+  private isValidTab(tab: string | null): tab is 'influencers' | 'brands' | 'photographers' {
+    return tab === 'influencers' || tab === 'brands' || tab === 'photographers';
   }
 
   onKeywordChange(value: string) {
