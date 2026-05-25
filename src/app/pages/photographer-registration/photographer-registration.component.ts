@@ -216,6 +216,88 @@ export class PhotographerRegistrationComponent implements OnInit {
     return (this.form.get('equipment')?.value || []).includes(eq);
   }
 
+  onEmailBlur(): void {
+    const emailCtrl = this.form.get('email');
+    const email = String(emailCtrl?.value || '').trim();
+
+    this.duplicateEmailError = '';
+    if (!emailCtrl || !email || emailCtrl.hasError('email')) {
+      this.clearDuplicateError(emailCtrl);
+      return;
+    }
+
+    this.config
+      .checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        email,
+      })
+      .subscribe((result) => {
+        if (result?.email) {
+          this.duplicateEmailError = 'This email is already registered.';
+          emailCtrl.setErrors({ ...(emailCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(emailCtrl);
+      });
+  }
+
+  onPhoneBlur(): void {
+    const phoneCtrl = this.form.get('phoneNumber');
+    const phoneNumber = String(phoneCtrl?.value || '').trim();
+
+    this.duplicatePhoneError = '';
+    if (!phoneCtrl || !phoneNumber) {
+      this.clearDuplicateError(phoneCtrl);
+      return;
+    }
+
+    this.config
+      .checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        phoneNumber,
+      })
+      .subscribe((result) => {
+        if (result?.phoneNumber) {
+          this.duplicatePhoneError = 'This phone number is already registered.';
+          phoneCtrl.setErrors({ ...(phoneCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(phoneCtrl);
+      });
+  }
+
+  onPhoneNumberBlur(): void {
+    const phoneCtrl = this.form.get('phoneNumber');
+    const phoneNumber = String(phoneCtrl?.value || '').trim();
+
+    this.duplicatePhoneError = '';
+    if (!phoneCtrl || !phoneNumber || phoneCtrl.hasError('required')) {
+      this.clearDuplicateError(phoneCtrl);
+      return;
+    }
+
+    this.config
+      .checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        phoneNumber,
+      })
+      .subscribe((result) => {
+        if (result?.phoneNumber) {
+          this.duplicatePhoneError = 'This phone number is already registered.';
+          phoneCtrl.setErrors({ ...(phoneCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(phoneCtrl);
+      });
+  }
+
+  private clearDuplicateError(control: AbstractControl | null): void {
+    if (!control?.errors?.['duplicate']) return;
+    const next = { ...(control.errors || {}) } as Record<string, any>;
+    delete next['duplicate'];
+    control.setErrors(Object.keys(next).length ? next : null);
+  }
+
   // Social platform helpers
   isPlatformSelected(platform: any): boolean {
     return !!this.platformForms[platform._id];

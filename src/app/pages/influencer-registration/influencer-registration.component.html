@@ -101,12 +101,12 @@
               </label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" />
+                  <input formControlName="phoneNumber" type="text" class="form-control" required placeholder="Enter 10-digit number" (blur)="onPhoneNumberBlur()" />
               </div>
-              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
               <small *ngIf="verificationCallNumber" class="text-muted mt-1">
                 You may receive a verification call from our team.
               </small>
+              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
             </div>
 
             <div class="field-block">
@@ -115,7 +115,7 @@
               </label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" />
+                <input formControlName="email" type="email" class="form-control" required placeholder="example@mail.com" (blur)="onEmailBlur()" />
               </div>
               <small class="text-muted mt-1">A verification link will be sent after successful registration.</small>
               <div *ngIf="emailVerificationSent && !emailVerified" class="text-success mt-1">Verification link sent to your email.</div>

@@ -120,23 +120,6 @@ export class AdminUserTableComponent implements OnInit {
     return `Rs ${value} / post`;
   }
 
-  getUserSocialReach(user: any): number | null {
-    const candidates = [
-      user?.socialReach,
-      user?.totalSocialReach,
-      user?.audienceReach,
-      user?.reach,
-      user?.reachCount,
-      user?.metrics?.socialReach,
-      user?.profileStats?.socialReach,
-    ];
-    for (const value of candidates) {
-      const parsed = this.parseCountValue(value);
-      if (parsed > 0) return parsed;
-    }
-    return null;
-  }
-
   private parseCountValue(value: any): number {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
     if (typeof value === 'string') {

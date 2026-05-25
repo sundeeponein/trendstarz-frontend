@@ -178,15 +178,16 @@
             <div>{{ getUserStateLabel(selectedUser) }}</div>
           </div>
           <div>
-            <label>Starting Price</label>
-            <div class="price">{{ getUserStartingPrice(selectedUser) }}</div>
+            <label>Date of Birth</label>
+            <div>{{ selectedUser.dateOfBirth ? (selectedUser.dateOfBirth | date:'mediumDate') : '-' }}</div>
           </div>
           <div>
-            <label>Social Reach</label>
-            <div *ngIf="getUserSocialReach(selectedUser) as reachValue; else noReachValue">{{ reachValue | number }} Total</div>
-            <ng-template #noReachValue>
-              <div>-</div>
-            </ng-template>
+            <label>Gender</label>
+            <div>{{ selectedUser.gender ? (selectedUser.gender | titlecase) : '-' }}</div>
+          </div>
+          <div>
+            <label>Starting Price</label>
+            <div class="price">{{ getUserStartingPrice(selectedUser) }}</div>
           </div>
           <div>
             <label>Signup Source</label>
