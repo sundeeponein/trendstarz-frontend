@@ -356,9 +356,9 @@
           </div>
         </div>
         <span *ngIf="c.inviteStatus === 'accepted'" class="badge rounded-pill bg-success ms-2">Accepted</span>
-        <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Payment Confirmed</span>
+        <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Collaboration Confirmed</span>
         <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">In Progress</span>
-        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Work Submitted</span>
+        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Submitted</span>
         <span *ngIf="c.inviteStatus === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
       </div>
       <div class="active-camp-meta mt-2">
@@ -374,14 +374,14 @@
       <!-- Payment confirmed: start work prompt -->
       <div class="payment-confirmed-row mt-2" *ngIf="c.inviteStatus === 'payment_confirmed'">
         <i class="bi bi-check-circle-fill"></i>
-        <span>Payment confirmed! Begin creating your content.</span>
+        <span>Collaboration confirmed! Begin creating your content.</span>
       </div>
       <!-- Submit/view CTA: hide only when awaiting payment for paid_collab -->
       <div class="submit-post-cta mt-2"
            *ngIf="!(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
         <button class="btn-submit-post" (click)="goToSubmit(c); $event.stopPropagation()">
           <i class="bi" [class.bi-eye-fill]="c.inviteStatus === 'submitted'" [class.bi-send-fill]="c.inviteStatus !== 'submitted'"></i>
-          {{ c.inviteStatus === 'submitted' ? 'View submitted proof' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your proof of work' : 'Submit your post') }}
+          {{ c.inviteStatus === 'submitted' ? 'View / Edit Submission' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your post URL' : 'Submit your post') }}
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">

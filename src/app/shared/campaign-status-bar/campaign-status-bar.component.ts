@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 const STEPS = [
   { key: 'pending',           label: 'Invited' },
   { key: 'accepted',          label: 'Accepted' },
-  { key: 'payment_confirmed', label: 'Payment Confirmed' },
+  { key: 'payment_confirmed', label: 'Collaboration Confirmed' },
   { key: 'working',           label: 'Working' },
   { key: 'submitted',         label: 'Submitted' },
   { key: 'completed',         label: 'Completed' },

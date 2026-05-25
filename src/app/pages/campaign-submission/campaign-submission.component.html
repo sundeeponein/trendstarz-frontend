@@ -51,7 +51,12 @@
     <!-- Read-only notice when campaign is completed/approved -->
     <div *ngIf="isReadOnly" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
       <i class="bi bi-check-circle-fill" style="color:#22c55e"></i>
-      This campaign has been <strong>{{ inviteStatus }}</strong>. Your submission is locked and cannot be edited.
+      This campaign has been {{ inviteStatus }}. Your submission is locked and cannot be edited.
+    </div>
+
+    <div *ngIf="isAwaitingPaymentConfirmation" class="alert-info mb-3" style="border-left: 4px solid #3b82f6; background: #eff6ff; color: #1e3a8a;">
+      <i class="bi bi-clock-history" style="color:#3b82f6"></i>
+      Payment verification is in progress. You can start work after status changes to <strong>Collaboration Confirmed</strong>.
     </div>
 
     <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
@@ -126,14 +131,14 @@
     </div>
 
     <!-- Campaign platform hint -->
-    <div *ngIf="!isReadOnly && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
+    <div *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
       <i class="bi bi-info-circle"></i>
       Campaign platforms: <strong>{{ campaignPlatforms.join(', ') }}</strong>.
       Only relevant post types are shown below.
     </div>
 
     <!-- Special instructions (editing only) -->
-    <div *ngIf="!isReadOnly && specialInstructions" class="alert-info alert-info--instructions mb-3">
+    <div *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation && specialInstructions" class="alert-info alert-info--instructions mb-3">
       <i class="bi bi-chat-left-text"></i>
       <div class="alert-info__content">
         <strong>Brand instructions</strong>
@@ -145,7 +150,7 @@
     <!-- Error -->
     <div *ngIf="error" class="alert-error">{{ error }}</div>
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
-    <div class="form-section" *ngIf="!isReadOnly">
+    <div class="form-section" *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation">
       <div class="section-heading">
         <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
         <ng-container *ngIf="isLocationCampaign">Content details</ng-container>
@@ -191,7 +196,7 @@
         </div>
       </div>
 
-      <!-- Caption -->
+      <!-- MVP: hide caption field initially
       <div class="field-group">
         <label class="field-label">Caption used <span class="opt">(optional)</span></label>
         <textarea
@@ -202,18 +207,13 @@
           [placeholder]="isLocationCampaign ? 'What caption did you write about your visit?' : 'What caption did you write for this post?'"
         ></textarea>
       </div>
+      -->
     </div>
 
     <!-- ─── SECTION 2: Proof ─────────────────────────── -->
-    <div class="form-section" *ngIf="!isReadOnly">
-      <div class="section-heading">
-        Proof
-        <span class="opt" style="font-size:0.82rem; font-weight:400; margin-left:6px;">
-          (recommended — helps verify your post and speeds up payment)
-        </span>
-      </div>
+    <!-- <div class="form-section" *ngIf="!isReadOnly">
+      <div class="section-heading">Post Screenshot (Optional)</div>
 
-      <!-- Screenshot tip for location campaigns -->
       <div *ngIf="isLocationCampaign" class="alert-info mb-3">
         <i class="bi bi-camera-fill"></i>
         For location campaigns, upload a screenshot of your published content (story, reel, or post) from the venue.
@@ -245,12 +245,11 @@
           </button>
         </label>
       </div>
-    </div>
+    </div> -->
 
-    <!-- ─── SECTION 3: Stats ─────────────────────────── -->
+    <!-- MVP: hide Insights Unlock Timer and Add Performance Stats initially
     <div class="form-section" *ngIf="!isReadOnly">
 
-      <!-- Insights locked: 24h window hasn't passed yet -->
       <div class="insights-lock-banner" *ngIf="insightsLocked">
         <i class="bi bi-clock-history"></i>
         <div>
@@ -308,13 +307,14 @@
         </div>
       </div>
     </div>
+    -->
 
     <!-- Submit -->
-    <div class="form-actions" *ngIf="!isReadOnly">
-      <div *ngIf="!postScreenshotUrl && postUrl.trim()" class="screenshot-nudge">
+    <div class="form-actions" *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation">
+      <!-- <div *ngIf="!postScreenshotUrl && postUrl.trim()" class="screenshot-nudge">
         <i class="bi bi-info-circle"></i>
         Adding a screenshot helps the brand verify your post faster — but you can submit without one.
-      </div>
+      </div> -->
       <button
         class="btn-submit"
         [disabled]="!canSubmit() || submitting || screenshotUploading"

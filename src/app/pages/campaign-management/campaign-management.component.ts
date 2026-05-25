@@ -34,6 +34,7 @@ type InfluencerWorkspaceTab = 'campaigns' | 'collaborations';
   styleUrls: ['./campaign-management.component.scss']
 })
 export class CampaignManagementComponent implements OnInit, OnDestroy {
+  private static readonly SUBMISSION_APPROVAL_WAIT_MS = 24 * 60 * 60 * 1000;
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
   private completionEventsTracked = new Set<string>();
@@ -136,6 +137,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   submissionDisputeReason: { [inviteId: string]: string } = {};
   reviewLoading = new Set<string>();
   expandedSubmissionIds = new Set<string>();
+  private submissionApprovalTicker: ReturnType<typeof setInterval> | null = null;
   showUpgradeBanner: boolean = false;
   planLimitError: string = '';
   upgradeBannerMessage: string = '';
@@ -149,6 +151,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     paymentInitialTab: 'summary' | 'pay' | 'status' = 'summary';
     campaignCollectionStatusById = new Map<string, string>();
 
+    private deriveCampaignCollectionStatus(rows: any[]): string {
+      const statuses = (Array.isArray(rows) ? rows : [])
+        .map((row: any) => String(row?.collectionStatus || '').toLowerCase())
+        .filter(Boolean);
+
+      if (statuses.includes('verified')) return 'verified';
+      if (statuses.includes('proof_submitted')) return 'proof_submitted';
+      if (statuses.includes('awaiting_payment')) return 'awaiting_payment';
+      if (statuses.includes('failed')) return 'failed';
+      return 'awaiting_payment';
+    }
+
     private refreshCampaignPaymentStatuses(): void {
       const paidCampaignIds = (this.campaigns || [])
         .filter((c: any) => String(c?.campaignType || '').toLowerCase() === 'paid_collab')
@@ -158,9 +172,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       paidCampaignIds.forEach((campaignId) => {
         this.config.getCampaignTransactionStatus(campaignId).subscribe({
           next: (rows: any[]) => {
-            const txs = Array.isArray(rows) ? rows : [];
-            const primary = txs[0] || null;
-            const status = String(primary?.collectionStatus || 'awaiting_payment').toLowerCase();
+            const status = this.deriveCampaignCollectionStatus(rows);
             this.campaignCollectionStatusById.set(campaignId, status);
             this.cd.detectChanges();
           },
@@ -937,6 +949,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.submissionApprovalTicker = setInterval(() => {
+      this.cd.detectChanges();
+    }, 60000);
+
     const token = this.getToken();
     const user = this.session.getUser();
     this.isInfluencerView = user?.role === 'influencer';
@@ -1302,6 +1318,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.submissionApprovalTicker) {
+      clearInterval(this.submissionApprovalTicker);
+      this.submissionApprovalTicker = null;
+    }
     if (this.visibilityChangeHandler && typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
       this.visibilityChangeHandler = null;
@@ -2078,6 +2098,108 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return `https://wa.me/${withCountry}`;
   }
 
+  getInviteRecipientPhone(invite: any): string {
+    const recipient = this.getInviteRecipient(invite) || {};
+    const candidates = [
+      recipient?.phoneNumber,
+      recipient?.phone,
+      recipient?.mobile,
+      recipient?.mobileNumber,
+      recipient?.contactNumber,
+    ];
+    for (const value of candidates) {
+      const phone = String(value || '').trim();
+      if (phone) return phone;
+    }
+    return '';
+  }
+
+  private asBoolean(value: any): boolean | null {
+    if (value === true) return true;
+    if (value === false) return false;
+    if (value == null) return null;
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+      return null;
+    }
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', '1', 'yes', 'y'].includes(normalized)) return true;
+      if (['false', '0', 'no', 'n'].includes(normalized)) return false;
+    }
+    return null;
+  }
+
+  private mobileVerificationState(recipient: any): boolean | null {
+    if (!recipient) return null;
+    const mobileFlag =
+      this.asBoolean(recipient?.isMobileVerified) ??
+      this.asBoolean(recipient?.mobileVerified) ??
+      this.asBoolean(recipient?.phoneVerified) ??
+      this.asBoolean(recipient?.isPhoneVerified);
+    if (mobileFlag === true) return true;
+    if (mobileFlag === false) return false;
+    return null;
+  }
+
+  private emailVerificationState(recipient: any): boolean | null {
+    if (!recipient) return null;
+    const emailFlag =
+      this.asBoolean(recipient?.isEmailVerified) ??
+      this.asBoolean(recipient?.emailVerified);
+    if (emailFlag === true) return true;
+    if (emailFlag === false) return false;
+    return null;
+  }
+
+  private contactPreference(invite: any, recipient: any, key: 'email' | 'call' | 'whatsapp'): boolean | null {
+    const snap = this.asBoolean(invite?.acceptedContact?.[key]);
+    if (snap !== null) return snap;
+    if (!recipient) return null;
+    return this.asBoolean(recipient?.contact?.[key]);
+  }
+
+  canShowRecipientEmail(invite: any): boolean {
+    const recipient = this.getInviteRecipient(invite);
+    if (!recipient?.email) return false;
+    const pref = this.contactPreference(invite, recipient, 'email');
+    if (pref === false) return false;
+    const verified = this.emailVerificationState(recipient);
+    if (pref === true) {
+      // If verification state is missing in payload, do not hide explicitly selected method.
+      return verified !== false;
+    }
+    if (verified !== null) return verified;
+    return true;
+  }
+
+  canShowRecipientCall(invite: any): boolean {
+    const recipient = this.getInviteRecipient(invite);
+    const phone = this.getInviteRecipientPhone(invite);
+    if (!phone) return false;
+    const pref = this.contactPreference(invite, recipient, 'call');
+    if (pref === false) return false;
+    const verified = this.mobileVerificationState(recipient);
+    if (pref === true) {
+      return verified !== false;
+    }
+    return verified === true;
+  }
+
+  canShowRecipientWhatsapp(invite: any): boolean {
+    const recipient = this.getInviteRecipient(invite);
+    const phone = this.getInviteRecipientPhone(invite);
+    if (!this.getWhatsappLink(phone)) return false;
+    const pref = this.contactPreference(invite, recipient, 'whatsapp');
+    if (pref === false) return false;
+    const verified = this.mobileVerificationState(recipient);
+    if (pref === true) {
+      return verified !== false;
+    }
+    return verified === true;
+  }
+
   /** Brand-side: trigger contact unlock for an accepted invite. */
   unlockInviteContact(inv: any): void {
     if (!inv?._id || this.unlockingInviteIds.has(inv._id)) return;
@@ -2535,9 +2657,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       pending: 'Applied · Pending',
       invited: 'Invited',
       accepted: campaignType === 'paid_collab' ? 'Awaiting Payment' : 'Accepted',
-      payment_confirmed: 'Payment Confirmed',
+      payment_confirmed: 'Collaboration Confirmed',
       working: 'In Progress',
-      submitted: 'Work Submitted',
+      submitted: 'Submitted',
       approved: 'Approved',
       completed: 'Completed',
       declined: 'Declined',
@@ -3075,6 +3197,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   reviewSubmission(inviteId: string, campaignId: string, action: 'approve' | 'dispute') {
+    const submission = (this.campaignSubmissionsMap.get(campaignId) || []).find(
+      (sub: any) => String(sub?.inviteId || '') === String(inviteId || ''),
+    ) || null;
+
+    if (action === 'approve' && !this.canApproveSubmission(submission)) {
+      this.toast.error(this.getSubmissionApprovalLockMessage(submission));
+      return;
+    }
+
     if (this.reviewLoading.has(inviteId)) return;
     this.reviewLoading.add(inviteId);
     const payload: any = { action };
@@ -3175,9 +3306,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       pending:           'Applied',
       invited:           'Invited',
       accepted:          'Accepted',
-      payment_confirmed: 'Payment Confirmed',
+      payment_confirmed: 'Collaboration Confirmed',
       working:           'In Progress',
-      submitted:         'Work Submitted',
+      submitted:         'Submitted',
       approved:          'Approved',
       completed:         'Completed',
       declined:          'Declined',
@@ -3185,6 +3316,72 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       disputed:          'Disputed',
     };
     return map[status] || status;
+  }
+
+  private getSubmissionApprovalAnchorMs(submission: any): number | null {
+    if (!submission) return null;
+    const candidates = [
+      submission?.submittedAt,
+      submission?.updatedAt,
+      submission?.createdAt,
+    ];
+    for (const value of candidates) {
+      if (!value) continue;
+      const ms = new Date(value).getTime();
+      if (!Number.isNaN(ms)) return ms;
+    }
+    return null;
+  }
+
+  getSubmissionApprovalUnlockAt(submission: any): Date | null {
+    const anchorMs = this.getSubmissionApprovalAnchorMs(submission);
+    if (anchorMs == null) return null;
+    return new Date(anchorMs + CampaignManagementComponent.SUBMISSION_APPROVAL_WAIT_MS);
+  }
+
+  canApproveSubmission(submission: any): boolean {
+    if (!submission || String(submission?.status || '').toLowerCase() !== 'submitted') return false;
+    const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
+    if (!unlockAt) return false;
+    return Date.now() >= unlockAt.getTime();
+  }
+
+  getSubmissionApprovalWaitText(submission: any): string {
+    const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
+    if (!unlockAt) return 'after 24 hours from submission';
+
+    const remainingMs = unlockAt.getTime() - Date.now();
+    if (remainingMs <= 0) return 'now';
+
+    const totalMinutes = Math.ceil(remainingMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours <= 0) return `in ${minutes}m`;
+    if (minutes === 0) return `in ${hours}h`;
+    return `in ${hours}h ${minutes}m`;
+  }
+
+  getSubmissionApprovalUnlockAtText(submission: any): string {
+    const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
+    if (!unlockAt) return 'unlock time unavailable';
+    return unlockAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  getSubmissionApprovalLockMessage(submission: any): string {
+    const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
+    if (!unlockAt) {
+      return 'Mark Completed unlocks 24 hours after influencer submission.';
+    }
+    const waitText = this.getSubmissionApprovalWaitText(submission);
+    if (waitText === 'now') return 'Mark Completed is now available. Please try again.';
+    return `Mark Completed unlocks ${waitText} (at ${this.getSubmissionApprovalUnlockAtText(submission)}).`;
   }
 
   isExpandLoading(c: Campaign): boolean {

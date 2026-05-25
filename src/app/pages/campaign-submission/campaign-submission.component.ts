@@ -309,15 +309,19 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   get isReadOnly(): boolean {
-    return ['completed', 'approved', 'disputed'].includes(this.inviteStatus);
+    return ['submitted', 'completed', 'approved', 'disputed'].includes(this.inviteStatus);
+  }
+
+  get isAwaitingPaymentConfirmation(): boolean {
+    return this.campaignType === 'paid_collab' && this.inviteStatus === 'accepted';
   }
 
   get inviteStatusLabel(): string {
     const map: Record<string, string> = {
       accepted:          'Accepted',
-      payment_confirmed: 'Payment Confirmed',
+      payment_confirmed: 'Collaboration Confirmed',
       working:           'In Progress',
-      submitted:         'Work Submitted',
+      submitted:         'Submitted',
       approved:          'Approved',
       completed:         'Completed',
       disputed:          'Disputed',
@@ -326,7 +330,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   canSubmit(): boolean {
-    if (this.isReadOnly) return false;
+    if (this.isReadOnly || this.isAwaitingPaymentConfirmation) return false;
     // Location campaigns: postUrl still required, screenshot is optional
     if (this.isLocationCampaign) return !!this.postUrl.trim();
     // Paid/product campaigns: postUrl required; screenshot strongly recommended but optional
@@ -335,7 +339,13 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   submit() {
     if (!this.canSubmit()) {
-      this.error = 'Post URL and screenshot are required.';
+      if (this.isReadOnly) {
+        this.error = 'Submission is locked after posting and cannot be edited.';
+      } else if (this.isAwaitingPaymentConfirmation) {
+        this.error = 'Payment verification is still in progress. You can start work after collaboration is confirmed.';
+      } else {
+        this.error = 'Post URL is required.';
+      }
       return;
     }
     this.submitting = true;

@@ -653,11 +653,7 @@
 
             <!-- Paid collab: payment proof submitted, verification in progress -->
             <div class="pay-now-nudge pay-now-nudge--verify"
-                 *ngIf="c.campaignType === 'paid_collab'
-                  && (isCampaignPaymentVerificationPending(c)
-                    || (getExpandInvitesByStatus(c, 'accepted') === 0
-                      && getExpandInvitesByStatus(c, 'payment_confirmed') === 0
-                      && getExpandAcceptedOrBeyond(c) > 0))">
+                 *ngIf="c.campaignType === 'paid_collab' && isCampaignPaymentVerificationPending(c)">
               <div class="pay-now-nudge-icon"><i class="bi bi-clock-history"></i></div>
               <div class="pay-now-nudge-text">
                 <strong>Payment verification in progress</strong>
@@ -754,16 +750,17 @@
                   <!-- Contact unlock (expand panel) -->
                   <ng-container *ngIf="isUnlockableStatus(inv.status)">
                     <div class="contact-reveal" *ngIf="inv.unlocked">
-                      <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.email" [href]="'mailto:' + getInviteRecipient(inv)?.email">
+                      <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)" [href]="'mailto:' + getInviteRecipient(inv)?.email" (click)="$event.stopPropagation()">
                         <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
                       </a>
-                      <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.phoneNumber" [href]="'tel:' + getInviteRecipient(inv)?.phoneNumber">
-                        <i class="bi bi-telephone-fill"></i> {{ getInviteRecipient(inv)?.phoneNumber }}
+                      <a class="contact-chip" *ngIf="canShowRecipientCall(inv)" [href]="'tel:' + getInviteRecipientPhone(inv)" (click)="$event.stopPropagation()">
+                        <i class="bi bi-telephone-fill"></i> {{ getInviteRecipientPhone(inv) }}
                       </a>
-                      <a class="contact-chip" *ngIf="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)"
-                         [href]="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)!"
+                      <a class="contact-chip" *ngIf="canShowRecipientWhatsapp(inv)"
+                         [href]="getWhatsappLink(getInviteRecipientPhone(inv))!"
                          target="_blank"
-                         rel="noopener noreferrer">
+                         rel="noopener noreferrer"
+                         (click)="$event.stopPropagation()">
                         <i class="bi bi-whatsapp"></i> WhatsApp
                       </a>
                     </div>
@@ -887,7 +884,9 @@
                       <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for recipient..."
                         [(ngModel)]="submissionFeedback[sub.inviteId]"></textarea>
                       <div class="sub-review-actions">
-                        <button class="btn-sub-approve" [disabled]="reviewLoading.has(sub.inviteId)"
+                        <button class="btn-sub-approve"
+                          [disabled]="reviewLoading.has(sub.inviteId) || !canApproveSubmission(sub)"
+                          [title]="!canApproveSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : ''"
                           (click)="reviewSubmission(sub.inviteId, c._id, 'approve')">
                           <i class="bi bi-check-circle"></i> Mark Completed
                         </button>
@@ -895,6 +894,10 @@
                           (click)="reviewSubmission(sub.inviteId, c._id, 'dispute')">
                           <i class="bi bi-flag"></i> Raise Issue
                         </button>
+                      </div>
+                      <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub)">
+                        <i class="bi bi-clock-history"></i>
+                        Mark Completed unlocks {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
                       </div>
                     </div>
 
@@ -1170,18 +1173,21 @@
               </span>
               <!-- Contact reveal for unlocked invites -->
               <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && inv.unlocked">
-                <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.email"
-                   [href]="'mailto:' + getInviteRecipient(inv)?.email">
+                 <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)"
+                   [href]="'mailto:' + getInviteRecipient(inv)?.email"
+                   (click)="$event.stopPropagation()">
                   <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
                 </a>
-                <a class="contact-chip" *ngIf="getInviteRecipient(inv)?.phoneNumber"
-                   [href]="'tel:' + getInviteRecipient(inv)?.phoneNumber">
-                  <i class="bi bi-telephone-fill"></i> {{ getInviteRecipient(inv)?.phoneNumber }}
+                 <a class="contact-chip" *ngIf="canShowRecipientCall(inv)"
+                   [href]="'tel:' + getInviteRecipientPhone(inv)"
+                   (click)="$event.stopPropagation()">
+                  <i class="bi bi-telephone-fill"></i> {{ getInviteRecipientPhone(inv) }}
                 </a>
-                <a class="contact-chip" *ngIf="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)"
-                   [href]="getWhatsappLink(getInviteRecipient(inv)?.phoneNumber)!"
+                 <a class="contact-chip" *ngIf="canShowRecipientWhatsapp(inv)"
+                   [href]="getWhatsappLink(getInviteRecipientPhone(inv))!"
                    target="_blank"
-                   rel="noopener noreferrer">
+                   rel="noopener noreferrer"
+                   (click)="$event.stopPropagation()">
                   <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>
               </div>
