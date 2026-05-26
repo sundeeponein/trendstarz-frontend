@@ -152,11 +152,12 @@
           <label class="field-label">{{ shootLocationTypeLabel }} <span class="required">*</span></label>
           <select formControlName="shootLocationType" class="field-input">
             <option value="">{{ shootLocationTypePlaceholder }}</option>
-            <option *ngFor="let opt of SHOOT_LOCATION_TYPES" [value]="opt.value">{{ opt.label }}</option>
+            <option *ngFor="let opt of shootLocationTypeOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
           <span class="field-error" *ngIf="f['shootLocationType'].touched && f['shootLocationType'].invalid">Location type is required</span>
 
-          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">{{ shootLocationAddressLabel }} <span class="required">*</span></label>
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote' && !isInvitingPhotographers">{{ shootLocationAddressLabel }} <span class="required">*</span></label>
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote' && isInvitingPhotographers">Venue details <span class="required">*</span></label>
           <ng-container *ngIf="f['shootLocationType'].value !== 'remote' && isInvitingPhotographers; else singleShootAddressInput">
             <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
             <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Venue address" />

@@ -266,13 +266,17 @@ export class CampaignFormComponent implements OnInit {
   readonly PHOTOGRAPHER_DELIVERABLES = [
     'Raw Footage', 'Edited Reels', 'Photos', 'Cinematic Video', 'Shorts',
   ];
-  readonly SHOOT_LOCATION_TYPES = [
+  readonly SHOOT_LOCATION_TYPES_BRAND_TO_PHOTOGRAPHER = [
+    { value: 'client_location', label: 'At brand location' },
+    { value: 'pickup_point', label: 'At event venue' },
+    { value: 'outdoor', label: 'Outdoor location' },
+    { value: 'indoor', label: 'Studio arranged by brand' },
+  ];
+  readonly SHOOT_LOCATION_TYPES_PHOTOGRAPHER_TO_INFLUENCER = [
     { value: 'studio', label: 'At photographer studio' },
-    { value: 'indoor', label: 'Indoor shoot location' },
-    { value: 'outdoor', label: 'Outdoor shoot location' },
-    { value: 'client_location', label: 'At brand/client location' },
-    { value: 'pickup_point', label: 'Pickup / collection point' },
-    { value: 'remote', label: 'Remote — no in-person shoot' },
+    { value: 'outdoor', label: 'Outdoor location' },
+    { value: 'client_location', label: 'Client location' },
+    { value: 'pickup_point', label: 'Event venue' },
   ];
   selectedPhotographerServices: string[] = [];
   selectedPhotographerPricing: string[] = [];
@@ -533,6 +537,16 @@ export class CampaignFormComponent implements OnInit {
       return 'Select shoot location type';
     }
     return 'Select on-site location type';
+  }
+
+  get shootLocationTypeOptions(): Array<{ value: string; label: string }> {
+    if (this.isInvitingPhotographers) {
+      return this.SHOOT_LOCATION_TYPES_BRAND_TO_PHOTOGRAPHER;
+    }
+    if (this.isPhotographerCreator) {
+      return this.SHOOT_LOCATION_TYPES_PHOTOGRAPHER_TO_INFLUENCER;
+    }
+    return this.SHOOT_LOCATION_TYPES_BRAND_TO_PHOTOGRAPHER;
   }
 
   /** Role-aware label for the shoot-location *address* textarea. */
