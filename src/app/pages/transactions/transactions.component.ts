@@ -40,12 +40,14 @@ export class TransactionsComponent implements OnInit {
   }
 
   get isInfluencer(): boolean { return this.role === 'influencer'; }
+  get isPhotographer(): boolean { return this.role === 'photographer'; }
   get isBrand(): boolean { return this.role === 'brand'; }
+  get isRecipient(): boolean { return this.isInfluencer || this.isPhotographer; }
 
   /** Tabs labelling by role */
   get pendingLabel(): string { return 'Pending'; }
   get completedLabel(): string {
-    return this.isInfluencer ? 'Received' : 'Paid Out';
+    return this.isRecipient ? 'Received' : 'Paid Out';
   }
 
   get totalRecordsCount(): number {
@@ -54,8 +56,8 @@ export class TransactionsComponent implements OnInit {
 
   get pendingTab(): any[] {
     return this.transactions.filter(tx => {
-      if (this.isInfluencer) {
-        // influencer is the recipient; pending = collection verified but payout not yet paid
+      if (this.isRecipient) {
+        // recipient is influencer/photographer; pending = collection verified but payout not yet paid
         return tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing'
           || (tx.collectionStatus !== 'verified' && tx.payoutStatus !== 'paid');
       }
@@ -66,7 +68,7 @@ export class TransactionsComponent implements OnInit {
 
   get completedTab(): any[] {
     return this.transactions.filter(tx => {
-      if (this.isInfluencer) {
+      if (this.isRecipient) {
         return tx.payoutStatus === 'paid';
       }
       // brand: collection verified (payment confirmed / accepted by admin)
@@ -100,12 +102,12 @@ export class TransactionsComponent implements OnInit {
   }
 
   private computeSummary(rows: any[]) {
-    if (this.isInfluencer) {
+    if (this.isRecipient) {
       this.summary.totalEarned = rows
-        .filter(r => r.payoutStatus === 'paid' && r.recipientRole === 'influencer')
+        .filter(r => r.payoutStatus === 'paid' && (r.recipientRole === 'influencer' || r.recipientRole === 'photographer'))
         .reduce((s, r) => s + Number(r.recipientPayout || 0), 0);
       this.summary.totalPending = rows
-        .filter(r => (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') && r.recipientRole === 'influencer')
+        .filter(r => (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') && (r.recipientRole === 'influencer' || r.recipientRole === 'photographer'))
         .reduce((s, r) => s + Number(r.recipientPayout || 0), 0);
     } else {
       this.summary.totalPaid = rows
@@ -133,7 +135,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   statusLabel(tx: any): string {
-    if (this.isInfluencer) {
+    if (this.isRecipient) {
       if (tx.payoutStatus === 'paid') return 'Received';
       if (tx.payoutStatus === 'processing') return 'Processing';
       if (tx.collectionStatus === 'verified') return 'Awaiting Payout';
@@ -158,17 +160,17 @@ export class TransactionsComponent implements OnInit {
 
   /** Amount shown from the current user's perspective */
   amountDisplay(tx: any): string {
-    if (this.isInfluencer) return '+' + this.formatPaise(tx.recipientPayout);
+    if (this.isRecipient) return '+' + this.formatPaise(tx.recipientPayout);
     return '-' + this.formatPaise(tx.payerTotal);
   }
 
   groupAmountDisplay(group: { totalAmount: number }): string {
-    return (this.isInfluencer ? '+' : '-') + this.formatPaise(group.totalAmount);
+    return (this.isRecipient ? '+' : '-') + this.formatPaise(group.totalAmount);
   }
 
   groupPartyLabel(group: { count: number; partyNames: string[]; primary: any }): string {
-    if (this.isInfluencer) return group.primary?.otherPartyName || '';
-    if (group.count > 1) return `${group.count} influencers`;
+    if (this.isRecipient) return group.primary?.otherPartyName || '';
+    if (group.count > 1) return `${group.count} recipients`;
     return group.partyNames[0] || group.primary?.otherPartyName || '';
   }
 
@@ -181,7 +183,7 @@ export class TransactionsComponent implements OnInit {
 
     for (const tx of rows) {
       const key = this.groupKey(tx);
-      const amount = this.isInfluencer ? Number(tx.recipientPayout || 0) : Number(tx.payerTotal || 0);
+      const amount = this.isRecipient ? Number(tx.recipientPayout || 0) : Number(tx.payerTotal || 0);
       const fee = Number(tx.platformFee || 0);
 
       if (!groups.has(key)) {
@@ -237,7 +239,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   influencerAmountDisplay(tx: any): string {
-    if (this.isInfluencer) return '+' + this.formatPaise(tx.recipientPayout);
+    if (this.isRecipient) return '+' + this.formatPaise(tx.recipientPayout);
     return this.formatPaise(tx.recipientPayout);
   }
 }

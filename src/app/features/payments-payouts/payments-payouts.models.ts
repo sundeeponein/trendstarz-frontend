@@ -4,9 +4,9 @@ export interface CampaignTransaction {
   inviteId?: string;
   transactionType: 'paid_collab' | 'pay_to_join';
   direction: 'brand_to_influencer' | 'influencer_to_brand';
-  payerRole: 'brand' | 'influencer';
+  payerRole: 'brand' | 'influencer' | 'photographer';
   payerId?: string;
-  recipientRole: 'brand' | 'influencer';
+  recipientRole: 'brand' | 'influencer' | 'photographer';
   recipientId?: string;
   agreedAmount: number;
   platformFee: number;
@@ -39,7 +39,7 @@ export interface CampaignTransaction {
   /** Recipient profile snapshot enriched by listForAdmin (admin view only). */
   recipient?: {
     id?: string;
-    role?: 'brand' | 'influencer';
+    role?: 'brand' | 'influencer' | 'photographer';
     name?: string;
     email?: string;
     mobile?: string;
@@ -51,7 +51,7 @@ export interface CampaignTransaction {
   /** Payer profile snapshot enriched by listForAdmin (admin view only). */
   payer?: {
     id?: string;
-    role?: 'brand' | 'influencer';
+    role?: 'brand' | 'influencer' | 'photographer';
     name?: string;
     email?: string;
     mobile?: string;
