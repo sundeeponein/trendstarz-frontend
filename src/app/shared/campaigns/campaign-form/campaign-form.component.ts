@@ -11,6 +11,7 @@ import { CampaignGuideModalService, CampaignGuideContent } from '../../component
 import { CampaignGuideModalComponent } from '../../components/campaign-guide-modal/campaign-guide-modal.component';
 import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 import { ToastService } from '../../toast/toast.service';
+import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
 
 
 
@@ -271,6 +272,7 @@ export class CampaignFormComponent implements OnInit {
     { value: 'outdoor', label: 'Outdoor shoot location' },
     { value: 'client_location', label: 'At brand/client location' },
     { value: 'pickup_point', label: 'Pickup / collection point' },
+    { value: 'remote', label: 'Remote — no in-person shoot' },
   ];
   selectedPhotographerServices: string[] = [];
   selectedPhotographerPricing: string[] = [];
@@ -364,6 +366,11 @@ export class CampaignFormComponent implements OnInit {
       this.applyCampaignTypeValidators(t);
     });
     this.form.get('productPaymentMode')?.valueChanges.subscribe(() => {
+      this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
+    });
+    // Remote shoots (creative_project) skip the address requirement \u2014 re-run validators
+    // whenever the shoot location type changes.
+    this.form.get('shootLocationType')?.valueChanges.subscribe(() => {
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     });
 
@@ -497,6 +504,41 @@ export class CampaignFormComponent implements OnInit {
   get campaignTypeFieldLabel(): string {
     if (this.isPhotographerCreator) return 'Collaboration Type';
     return this.isInvitingPhotographers ? 'Requirement Type' : 'Campaign Type';
+  }
+
+  /**
+   * Role-aware label for the shoot-location *type* dropdown. The underlying
+   * form control name (`shootLocationType`) is photographer-centric; the
+   * label is neutralised for non-photographer flows.
+   */
+  get shootLocationTypeLabel(): string {
+    if (this.isInvitingPhotographers) return 'Shoot location type';
+    if (this.isPhotographerCreator) return 'Shoot location type';
+    return 'On-site location type';
+  }
+
+  /** Role-aware placeholder for the shoot-location *type* dropdown. */
+  get shootLocationTypePlaceholder(): string {
+    if (this.isInvitingPhotographers || this.isPhotographerCreator) {
+      return 'Select shoot location type';
+    }
+    return 'Select on-site location type';
+  }
+
+  /** Role-aware label for the shoot-location *address* textarea. */
+  get shootLocationAddressLabel(): string {
+    if (this.isInvitingPhotographers || this.isPhotographerCreator) {
+      return 'Shoot location address';
+    }
+    return 'On-site / meeting point address';
+  }
+
+  /** Role-aware required-error label for the shoot-location address. */
+  get shootLocationAddressErrorLabel(): string {
+    if (this.isInvitingPhotographers || this.isPhotographerCreator) {
+      return 'Shoot address is required';
+    }
+    return 'On-site address is required';
   }
 
   get campaignModeFieldLabel(): string {
@@ -712,39 +754,45 @@ export class CampaignFormComponent implements OnInit {
   }
 
   private applyCampaignTypeValidators(type: string): void {
-    const isLocation = type === 'invite_location';
-    const isPayToJoin = type === 'pay_to_join';
-    const isPaid = type === 'paid_collab';
-    const isProduct = type === 'product';
+    // Build the shared context — single source of truth for what's required.
+    const ctx: CampaignRequiredFieldsCtx = {
+      campaignType: type,
+      ownerType: this.isPhotographerCreator ? 'photographer' : 'brand',
+      inviteRecipientRole: this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer',
+      productPaymentMode: String(this.form.get('productPaymentMode')?.value || 'product_only'),
+      shootLocationType: String(this.form.get('shootLocationType')?.value || ''),
+    };
+    const required = new Set(getRequiredFields(ctx));
 
-    // Price per influencer: required only for paid_collab and pay_to_join
-    const priceValidators = (isPaid || isPayToJoin) ? [Validators.required, Validators.min(1)] : [];
-    this.form.get('pricePerInfluencer')?.setValidators(priceValidators);
+    // Extra per-field constraints (min length / min value) layered on top of
+    // the shared required flag.
+    const extra: Record<string, any[]> = {
+      pricePerInfluencer: [Validators.min(1)],
+      venueAddress: [Validators.minLength(5)],
+      inviteBenefits: [Validators.minLength(3)],
+      payToJoinBenefits: [Validators.minLength(5)],
+      productDescription: [Validators.minLength(3)],
+      productPaymentAmount: [Validators.min(1)],
+      shootLocationAddress: [Validators.minLength(3)],
+    };
 
-    this.form.get('venueAddress')?.setValidators(isLocation ? [Validators.required, Validators.minLength(5)] : []);
-    this.form.get('venueState')?.setValidators(isLocation ? [Validators.required] : []);
-    this.form.get('venueDistrict')?.setValidators(isLocation ? [Validators.required] : []);
-    this.form.get('venueCity')?.setValidators(isLocation ? [Validators.required] : []);
-    this.form.get('inviteBenefits')?.setValidators(isLocation ? [Validators.required, Validators.minLength(3)] : []);
-    this.form.get('payToJoinBenefits')?.setValidators(isPayToJoin ? [Validators.required, Validators.minLength(5)] : []);
-    // Shoot location: required for photographer-led collabs, and for brand→photographer invites when
-    // requirement type is Paid Collab or Invite to Location (NOT Product Collab — product ships to photographer).
-    const needsShootLocation = this.isPhotographerCreator || (this.isInvitingPhotographers && (isPaid || isLocation));
-    this.form.get('shootLocationType')?.setValidators(needsShootLocation ? [Validators.required] : []);
-    this.form.get('shootLocationAddress')?.setValidators(needsShootLocation ? [Validators.required, Validators.minLength(3)] : []);
+    const managedFields = [
+      'pricePerInfluencer',
+      'venueAddress', 'venueState', 'venueDistrict', 'venueCity', 'inviteBenefits',
+      'payToJoinBenefits',
+      'productDescription', 'productPaymentAmount',
+      'shootLocationType', 'shootLocationAddress',
+    ];
 
-    // Product: description required; productValue optional
-    this.form.get('productDescription')?.setValidators(isProduct ? [Validators.required, Validators.minLength(3)] : []);
-
-    // Product cash amount required only when product + product_plus_payment
-    const mode = String(this.form.get('productPaymentMode')?.value || 'product_only');
-    const needsProductCash = isProduct && mode === 'product_plus_payment';
-    this.form.get('productPaymentAmount')?.setValidators(needsProductCash ? [Validators.required, Validators.min(1)] : []);
-
-    [
-      'pricePerInfluencer', 'venueAddress', 'venueState', 'venueDistrict', 'venueCity', 'inviteBenefits',
-      'payToJoinBenefits', 'productDescription', 'productPaymentAmount', 'shootLocationType', 'shootLocationAddress'
-    ].forEach(name => this.form.get(name)?.updateValueAndValidity({ emitEvent: false }));
+    for (const name of managedFields) {
+      const control = this.form.get(name);
+      if (!control) continue;
+      const validators = [] as any[];
+      if (required.has(name)) validators.push(Validators.required);
+      if (extra[name]) validators.push(...extra[name]);
+      control.setValidators(validators);
+      control.updateValueAndValidity({ emitEvent: false });
+    }
 
     this.cd.markForCheck();
   }

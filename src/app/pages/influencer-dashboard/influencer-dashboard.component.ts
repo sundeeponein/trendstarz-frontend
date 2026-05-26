@@ -11,13 +11,15 @@ import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
+import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -89,6 +91,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private plansService: PlansService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
+    private shippingModal: ShippingAddressModalService,
   ) {}
 
   ngOnInit() {
@@ -377,27 +380,55 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
     const payout = status === 'accepted' ? this.selectedPayouts[inviteId] : undefined;
-    this.responding = inviteId;
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
-      timeout(20000),
-      finalize(() => {
-        this.responding = null;
-        this.cdr.markForCheck();
-      }),
-    ).subscribe({
-      next: () => {
-        // update in-place — no full reload
-        this.invites = this.invites.filter(i => i._id !== inviteId);
-        if (this.selectedInvite?._id === inviteId) {
-          this.selectedInvite = null;
+
+    const finish = (shippingAddress?: ShippingAddress) => {
+      this.responding = inviteId;
+      this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout, shippingAddress).pipe(
+        timeout(20000),
+        finalize(() => {
+          this.responding = null;
+          this.cdr.markForCheck();
+        }),
+      ).subscribe({
+        next: () => {
+          // update in-place — no full reload
+          this.invites = this.invites.filter(i => i._id !== inviteId);
+          if (this.selectedInvite?._id === inviteId) {
+            this.selectedInvite = null;
+          }
+          this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+          this.loadAttentionCounts();
+        },
+        error: (err: any) => {
+          this.toast.error(err?.error?.message || 'Failed to respond to invite.');
         }
-        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
-        this.loadAttentionCounts();
-      },
-      error: (err: any) => {
-        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
-      }
-    });
+      });
+    };
+
+    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+      const campaign = invite?.campaignId || {};
+      this.shippingModal.prompt({
+        campaignTitle: campaign?.title || campaign?.name || 'Product collab',
+        productLabel: campaign?.productDescription
+          || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
+      }).then((address) => {
+        if (!address) {
+          this.toast.error('Shipping address is required to accept this product collab.');
+          return;
+        }
+        finish(address);
+      });
+      return;
+    }
+
+    finish();
+  }
+
+  /** Returns true when invite is a brand product collab requiring shipping. */
+  private inviteRequiresShippingAddress(invite: any): boolean {
+    const campaign = invite?.campaignId;
+    if (!campaign || typeof campaign !== 'object') return false;
+    return campaign.campaignType === 'product' && campaign.productShippingRequired === true;
   }
 
   /** Returns enabled content type options for an invite's campaign */

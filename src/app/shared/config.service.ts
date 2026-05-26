@@ -814,6 +814,11 @@ export class ConfigService {
     selectedPlatform?: string,
     selectedContentType?: string,
     payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
+    shippingAddress?: {
+      contactName?: string; contactMobile?: string;
+      line1?: string; line2?: string;
+      city?: string; state?: string; pincode?: string; landmark?: string;
+    },
   ): Observable<any> {
     const body: any = { status };
     if (selectedPostDate) body.selectedPostDate = selectedPostDate;
@@ -821,6 +826,9 @@ export class ConfigService {
     if (selectedContentType) body.selectedContentType = selectedContentType;
     if (payout && (payout.upiId || payout.mobile || payout.accountHolderName)) {
       body.payout = payout;
+    }
+    if (shippingAddress && (shippingAddress.line1 || shippingAddress.pincode)) {
+      body.shippingAddress = shippingAddress;
     }
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, body);
   }

@@ -283,7 +283,7 @@
       </div>
 
       <!-- Type filter chips (only show when there are invites of both types) -->
-      <div class="inbox-type-filter" *ngIf="!myInvitesLoading && myInvites.length > 0 && !isInfluencerView">
+      <div class="inbox-type-filter" *ngIf="!myInvitesLoading && myInvites.length > 0 && isInfluencerView">
         <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'all'" (click)="myInviteTypeFilter = 'all'">
           All
           <span class="itc-count">{{ myInvites.length }}</span>
@@ -1531,3 +1531,4 @@
   </div><!-- /.modal -->
 
 </div>
+<app-shipping-address-modal></app-shipping-address-modal>

@@ -20,6 +20,8 @@ import { UserAvatarComponent } from '../../shared/components/user-avatar/user-av
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { FlowHelpModalService } from '../../shared/components/flow-help-modal/flow-help-modal.service';
 import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
+import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
+import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -29,7 +31,7 @@ type InfluencerWorkspaceTab = 'campaigns' | 'collaborations';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -144,6 +146,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     invitePanelSuccessMessage: string = '';
     protected tierInfo = inject(TierInfoService);
     protected flowHelp = inject(FlowHelpModalService);
+    private shippingModal = inject(ShippingAddressModalService);
 
     // Payment modal state
     paymentModalVisible = false;
@@ -843,9 +846,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
   /** Invites filtered by type chip (all / brand / collab) */
   get myInvitesTyped(): any[] {
-    if (this.isInfluencerView) {
-      return this.myInvites.filter((i) => this.isInfluencerCollaborationsView ? this.isCollabInvite(i) : !this.isCollabInvite(i));
-    }
     if (this.myInviteTypeFilter === 'brand') return this.myInvites.filter(i => !this.isCollabInvite(i));
     if (this.myInviteTypeFilter === 'collab') return this.myInvites.filter(i => this.isCollabInvite(i));
     return this.myInvites;
@@ -975,7 +975,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.route.queryParamMap.subscribe((params) => {
         const tab = this.normalizeInfluencerWorkspaceTab(params.get('tab'));
         this.influencerWorkspaceTab = tab;
-        this.myInviteTypeFilter = tab === 'collaborations' ? 'collab' : 'brand';
+        this.myInviteTypeFilter = tab === 'collaborations' ? 'collab' : 'all';
         this.currentPage = 1;
         this.loadInfluencerWorkspaceData();
         this.cd.detectChanges();
@@ -1213,29 +1213,44 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.photographerRespondingInviteIds.add(inviteId);
-    this.cd.detectChanges();
+    const finish = (shippingAddress?: ShippingAddress) => {
+      this.photographerRespondingInviteIds.add(inviteId);
+      this.cd.detectChanges();
 
-    this.config.respondToInvite(inviteId, status, selectedPostDate).pipe(
-      finalize(() => {
-        this.photographerRespondingInviteIds.delete(inviteId);
-        this.cd.detectChanges();
-      }),
-    ).subscribe({
-      next: () => {
-        this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
-          String(row?._id || '') === inviteId ? { ...row, status } : row,
-        );
-        this.toast.success(
-          status === 'accepted'
-            ? 'Brand request accepted.'
-            : 'Brand request declined.',
-        );
-      },
-      error: (err: any) => {
-        this.toast.error(err?.error?.message || 'Failed to respond to request.');
-      },
-    });
+      this.config.respondToInvite(inviteId, status, selectedPostDate, undefined, undefined, undefined, shippingAddress).pipe(
+        finalize(() => {
+          this.photographerRespondingInviteIds.delete(inviteId);
+          this.cd.detectChanges();
+        }),
+      ).subscribe({
+        next: () => {
+          this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
+            String(row?._id || '') === inviteId ? { ...row, status } : row,
+          );
+          this.toast.success(
+            status === 'accepted'
+              ? 'Brand request accepted.'
+              : 'Brand request declined.',
+          );
+        },
+        error: (err: any) => {
+          this.toast.error(err?.error?.message || 'Failed to respond to request.');
+        },
+      });
+    };
+
+    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+      this.promptShippingAddressForInvite(invite).then((address) => {
+        if (!address) {
+          this.toast.error('Shipping address is required to accept this product collab.');
+          return;
+        }
+        finish(address);
+      });
+      return;
+    }
+
+    finish();
   }
 
   onPhotographerCardAccept(payload: InviteAcceptPayload) {
@@ -1297,23 +1312,55 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
     const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
-    this.photographerRespondingInviteIds.add(inviteId);
-    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
-      timeout(20000),
-      finalize(() => {
-        this.photographerRespondingInviteIds.delete(inviteId);
-        this.cd.detectChanges();
-      }),
-    ).subscribe({
-      next: () => {
-        this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
-          row._id === inviteId ? { ...row, status } : row,
-        );
-        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
-      },
-      error: (err: any) => {
-        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
-      },
+
+    const finish = (shippingAddress?: ShippingAddress) => {
+      this.photographerRespondingInviteIds.add(inviteId);
+      this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout, shippingAddress).pipe(
+        timeout(20000),
+        finalize(() => {
+          this.photographerRespondingInviteIds.delete(inviteId);
+          this.cd.detectChanges();
+        }),
+      ).subscribe({
+        next: () => {
+          this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
+            row._id === inviteId ? { ...row, status } : row,
+          );
+          this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+        },
+        error: (err: any) => {
+          this.toast.error(err?.error?.message || 'Failed to respond to invite.');
+        },
+      });
+    };
+
+    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+      this.promptShippingAddressForInvite(invite).then((address) => {
+        if (!address) {
+          this.toast.error('Shipping address is required to accept this product collab.');
+          return;
+        }
+        finish(address);
+      });
+      return;
+    }
+
+    finish();
+  }
+
+  /** True when invite is a brand product collab requiring shipping. */
+  private inviteRequiresShippingAddress(invite: any): boolean {
+    const campaign = invite?.campaignId;
+    if (!campaign || typeof campaign !== 'object') return false;
+    return campaign.campaignType === 'product' && campaign.productShippingRequired === true;
+  }
+
+  private promptShippingAddressForInvite(invite: any): Promise<ShippingAddress | null> {
+    const campaign = invite?.campaignId || {};
+    return this.shippingModal.prompt({
+      campaignTitle: campaign?.title || campaign?.name || 'Product collab',
+      productLabel: campaign?.productDescription
+        || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
     });
   }
 
@@ -2998,43 +3045,59 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
     const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
-    // mark as actioning and call
-    this.actioningInviteIds.add(inviteId);
-    this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
-      timeout(20000),
-      finalize(() => {
-        this.actioningInviteIds.delete(inviteId);
-        this.cd.detectChanges();
-      }),
-    ).subscribe({
-      next: () => {
-        this.myInvites = this.myInvites.map(i =>
-          i._id === inviteId ? { ...i, status } : i
-        );
-        if (status === 'accepted') {
-          const campaignId = String(invite?.campaignId?._id || invite?.campaignId || '');
-          if (campaignId) {
-            const key = `invitation_accepted:${inviteId}`;
-            if (!this.completionEventsTracked.has(key)) {
-              this.analytics.trackCampaignCompleted({
-                campaignId,
-                creatorCount: 1,
-                completionStage: 'invitation_accepted',
-                inviteId,
-              });
-              this.completionEventsTracked.add(key);
+
+    const finish = (shippingAddress?: ShippingAddress) => {
+      // mark as actioning and call
+      this.actioningInviteIds.add(inviteId);
+      this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout, shippingAddress).pipe(
+        timeout(20000),
+        finalize(() => {
+          this.actioningInviteIds.delete(inviteId);
+          this.cd.detectChanges();
+        }),
+      ).subscribe({
+        next: () => {
+          this.myInvites = this.myInvites.map(i =>
+            i._id === inviteId ? { ...i, status } : i
+          );
+          if (status === 'accepted') {
+            const campaignId = String(invite?.campaignId?._id || invite?.campaignId || '');
+            if (campaignId) {
+              const key = `invitation_accepted:${inviteId}`;
+              if (!this.completionEventsTracked.has(key)) {
+                this.analytics.trackCampaignCompleted({
+                  campaignId,
+                  creatorCount: 1,
+                  completionStage: 'invitation_accepted',
+                  inviteId,
+                });
+                this.completionEventsTracked.add(key);
+              }
             }
           }
+          if (this.invitePreview?._id === inviteId) {
+            this.invitePreview = { ...this.invitePreview, status };
+          }
+          this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+        },
+        error: (err: any) => {
+          this.toast.error(err?.error?.message || 'Failed to respond to invite.');
         }
-        if (this.invitePreview?._id === inviteId) {
-          this.invitePreview = { ...this.invitePreview, status };
+      });
+    };
+
+    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+      this.promptShippingAddressForInvite(invite).then((address) => {
+        if (!address) {
+          this.toast.error('Shipping address is required to accept this product collab.');
+          return;
         }
-        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
-      },
-      error: (err: any) => {
-        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
-      }
-    });
+        finish(address);
+      });
+      return;
+    }
+
+    finish();
   }
 
   private trackCompletionFromInviteStatuses(invites: any[]): void {

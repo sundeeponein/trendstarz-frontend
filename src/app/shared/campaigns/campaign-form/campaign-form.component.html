@@ -149,23 +149,23 @@
         </div>
 
         <div class="field-group" *ngIf="showShootLocationBlock">
-          <label class="field-label">Shoot location type <span class="required">*</span></label>
+          <label class="field-label">{{ shootLocationTypeLabel }} <span class="required">*</span></label>
           <select formControlName="shootLocationType" class="field-input">
-            <option value="">Select shoot location type</option>
+            <option value="">{{ shootLocationTypePlaceholder }}</option>
             <option *ngFor="let opt of SHOOT_LOCATION_TYPES" [value]="opt.value">{{ opt.label }}</option>
           </select>
           <span class="field-error" *ngIf="f['shootLocationType'].touched && f['shootLocationType'].invalid">Location type is required</span>
 
-          <label class="field-label mt-2">Shoot address / meeting point <span class="required">*</span></label>
-          <textarea formControlName="shootLocationAddress" class="field-textarea" rows="2"
-                    [placeholder]="isInvitingPhotographers ? 'Studio address, store, venue or exact shoot location for the photographer' : 'Studio address, meetup point, or exact shoot location for influencer'"></textarea>
-          <span class="field-error" *ngIf="f['shootLocationAddress'].touched && f['shootLocationAddress'].invalid">Shoot address is required</span>
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">{{ shootLocationAddressLabel }} <span class="required">*</span></label>
+          <textarea *ngIf="f['shootLocationType'].value !== 'remote'" formControlName="shootLocationAddress" class="field-textarea" rows="2"
+                    [placeholder]="isInvitingPhotographers ? 'Studio address, store, venue or exact shoot location for the photographer' : 'Studio address, meetup point, or exact on-site address for the creator'"></textarea>
+          <span class="field-error" *ngIf="f['shootLocationType'].value !== 'remote' && f['shootLocationAddress'].touched && f['shootLocationAddress'].invalid">{{ shootLocationAddressErrorLabel }}</span>
 
-          <label class="field-label mt-2">Google Maps link <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-          <input type="url" formControlName="shootLocationMapUrl" class="field-input" placeholder="https://maps.google.com/..." />
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">Google Maps link <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <input *ngIf="f['shootLocationType'].value !== 'remote'" type="url" formControlName="shootLocationMapUrl" class="field-input" placeholder="https://maps.google.com/..." />
 
-          <label class="field-label mt-2">Pickup / indoor-outdoor notes <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-          <textarea formControlName="shootLocationNotes" class="field-textarea" rows="2"
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">Pickup / indoor-outdoor notes <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <textarea *ngIf="f['shootLocationType'].value !== 'remote'" formControlName="shootLocationNotes" class="field-textarea" rows="2"
                     placeholder="Example: Indoor studio setup available, product pickup at front desk, parking details"></textarea>
           <p class="field-sublabel" *ngIf="isInvitingPhotographers && f['campaignType'].value === 'paid_collab'">
             <i class="bi bi-geo-alt"></i> The photographer will travel to this shoot location on the agreed date(s). Make sure the address and any access notes (parking, entry, contact person) are clear before publishing.
@@ -184,8 +184,11 @@
           <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'invite_location'">
             <i class="bi bi-geo-alt"></i> Enter the <strong>event / venue address</strong> the influencer will visit for the coverage shoot.
           </p>
-          <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'creative_project'">
-            <i class="bi bi-geo-alt"></i> For an in-person shoot, enter the location the influencer will visit. If the project is remote / virtual, type <strong>"Remote — no in-person shoot"</strong> in the address field.
+          <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'creative_project' && f['shootLocationType'].value !== 'remote'">
+            <i class="bi bi-geo-alt"></i> For an in-person shoot, enter the location the influencer will visit. If the project is remote / virtual, select <strong>“Remote — no in-person shoot”</strong> from the dropdown above.
+          </p>
+          <p class="field-sublabel" *ngIf="f['shootLocationType'].value === 'remote'">
+            <i class="bi bi-laptop"></i> <strong>Remote project.</strong> No physical shoot location is needed — the influencer will deliver content remotely (voiceover, screen recording, edits-only, etc.).
           </p>
 
           <p class="field-sublabel">
