@@ -183,7 +183,10 @@
             <span class="contact-icon-wrap ci--email"><i class="bi bi-envelope"></i></span>
             <div class="contact-content">
               <span class="contact-field-lbl">Email</span>
-              <span class="contact-field-val" *ngIf="canViewContactDetails && photographer.email && photographer.contact?.email">{{ photographer.email }}</span>
+              <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && photographer.email && photographer.contact?.email">
+                {{ photographer.email }}
+                <i class="bi bi-patch-check-fill contact-verified" *ngIf="isEmailVerified" title="Email verified"></i>
+              </span>
               <span class="contact-field-blur" *ngIf="!canViewContactDetails || !photographer.contact?.email">••••••••••</span>
             </div>
           </div>
@@ -191,7 +194,10 @@
             <span class="contact-icon-wrap ci--phone"><i class="bi bi-telephone"></i></span>
             <div class="contact-content">
               <span class="contact-field-lbl">Phone / Call</span>
-              <span class="contact-field-val" *ngIf="canViewContactDetails && photographer.phoneNumber && photographer.contact?.call">+91 {{ photographer.phoneNumber }}</span>
+              <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && photographer.phoneNumber && photographer.contact?.call">
+                +91 {{ photographer.phoneNumber }}
+                <i class="bi bi-patch-check-fill contact-verified" *ngIf="isPhoneVerified" title="Mobile verified"></i>
+              </span>
               <span class="contact-field-blur" *ngIf="!canViewContactDetails || !photographer.contact?.call">••••••••••</span>
             </div>
           </div>

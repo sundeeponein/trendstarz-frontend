@@ -60,6 +60,14 @@ export class InfluencerProfileViewComponent implements OnInit {
     return !!this.influencer && this.influencer.contactRestricted !== true;
   }
 
+  get isPhoneVerified(): boolean {
+    return !!(this.influencer?.phoneVerified ?? this.influencer?.isMobileVerified);
+  }
+
+  get isEmailVerified(): boolean {
+    return !!(this.influencer?.emailVerified ?? this.influencer?.isEmailVerified);
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }

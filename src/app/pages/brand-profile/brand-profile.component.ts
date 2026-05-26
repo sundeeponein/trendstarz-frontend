@@ -110,6 +110,7 @@ export class BrandProfileComponent implements OnInit {
   verificationCallNumber = '';
 
   emailVerified: boolean = false;
+  emailEditRequested: boolean = false;
   showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
@@ -713,6 +714,7 @@ export class BrandProfileComponent implements OnInit {
   enableEdit(): void {
     this.isEditMode = true;
     this.registrationForm.enable({ emitEvent: false });
+    this.emailEditRequested = !this.emailVerified;
     this.refreshStepCompletion();
     this.ensureDistrictsForCurrentState();
   // Password fields are disabled and removed from the form
@@ -733,6 +735,7 @@ export class BrandProfileComponent implements OnInit {
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
@@ -1038,6 +1041,9 @@ export class BrandProfileComponent implements OnInit {
     this.registrationError = '';
     this.registrationSuccess = false;
     const raw = this.registrationForm.getRawValue();
+    const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    const currentEmail = String(raw?.email || '').trim().toLowerCase();
+    const emailChanged = !!currentEmail && previousEmail !== currentEmail;
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
     let districtObj = this.districts.find(d => d._id === raw.location.district);
@@ -1117,6 +1123,14 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        if (emailChanged) {
+          this.emailVerified = false;
+          this.showEmailVerificationPrompt = true;
+          this.emailEditRequested = true;
+          this.resendEmailVerification();
+        } else {
+          this.emailEditRequested = false;
+        }
         this.submitted = false;
         // Ensure districts loaded for the saved state so the view shows district name
         const stateVal = this.registrationForm.get('location.state')?.value;
@@ -1132,6 +1146,11 @@ export class BrandProfileComponent implements OnInit {
         this.submitted = false;
       }
     });
+  }
+
+  requestEmailEdit(): void {
+    if (!this.isEditMode) return;
+    this.emailEditRequested = true;
   }
   
 }

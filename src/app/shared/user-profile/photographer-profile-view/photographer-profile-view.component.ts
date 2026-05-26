@@ -64,6 +64,14 @@ export class PhotographerProfileViewComponent implements OnInit {
     return !!this.photographer && this.photographer.contactRestricted !== true;
   }
 
+  get isPhoneVerified(): boolean {
+    return !!(this.photographer?.phoneVerified ?? this.photographer?.isMobileVerified);
+  }
+
+  get isEmailVerified(): boolean {
+    return !!(this.photographer?.emailVerified ?? this.photographer?.isEmailVerified);
+  }
+
   get displayImage(): string {
     const imageUrl = this.photographer?.profileImage || this.photographer?.profileImages?.[0]?.url;
     return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';

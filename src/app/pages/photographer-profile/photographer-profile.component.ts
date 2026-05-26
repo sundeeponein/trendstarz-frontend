@@ -52,6 +52,12 @@ export class PhotographerProfileComponent implements OnInit {
   private originalPricingState: any = null;
   private originalPlatformForms: any = null;
   phoneVerified = false;
+  emailVerified = false;
+  emailEditRequested = false;
+  showEmailVerificationPrompt = false;
+  resendingEmailVerification = false;
+  resendEmailVerificationSuccess = false;
+  resendEmailVerificationError: string | null = null;
   verificationCallNumber = '';
 
   states: any[] = [];
@@ -253,6 +259,7 @@ export class PhotographerProfileComponent implements OnInit {
       name: [{ value: '', disabled: true }, Validators.required],
       username: [{ value: '', disabled: true }, [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
+      email: [{ value: '', disabled: true }, [Validators.email]],
       dateOfBirth: [{ value: '', disabled: true }],
       gender: [{ value: '', disabled: true }],
       portfolio: [{ value: '', disabled: true }],
@@ -348,11 +355,14 @@ export class PhotographerProfileComponent implements OnInit {
         this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
         this.lastLoginAt = profile?.lastLoginAt || null;
         this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
+        this.emailVerified = !!(profile?.emailVerified ?? profile?.isEmailVerified ?? sessionUser?.emailVerified ?? sessionUser?.isEmailVerified);
+        this.showEmailVerificationPrompt = !this.emailVerified;
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({
           name: profile.name || sessionUser?.name || '',
           username,
           phoneNumber: profile.phoneNumber || sessionUser?.phoneNumber || '',
+          email: profile.email || sessionUser?.email || '',
           dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : '',
           gender: profile.gender || '',
           portfolio: profile.portfolio || '',
@@ -730,6 +740,7 @@ export class PhotographerProfileComponent implements OnInit {
   enableEdit(): void {
     this.isEditMode = true;
     this.form.enable({ emitEvent: false });
+    this.emailEditRequested = !this.emailVerified;
     this.originalFormValue = this.form.getRawValue();
     this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
     this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
@@ -741,6 +752,7 @@ export class PhotographerProfileComponent implements OnInit {
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.form.reset(this.originalFormValue, { emitEvent: false });
     }
@@ -763,6 +775,9 @@ export class PhotographerProfileComponent implements OnInit {
   onSave() {
     if (!this.isEditMode || this.form.invalid || this.saving) return;
     const v = this.form.getRawValue();
+    const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    const currentEmail = String(v?.email || '').trim().toLowerCase();
+    const emailChanged = !!currentEmail && previousEmail !== currentEmail;
     const stateValue = String(v?.location?.state || '').trim();
     const districtValue = String(v?.location?.district || '').trim();
     const stateObj = this.states.find(
@@ -831,6 +846,14 @@ export class PhotographerProfileComponent implements OnInit {
         this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
         this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
         this.galleryUploadWarning = '';
+        if (emailChanged) {
+          this.emailVerified = false;
+          this.showEmailVerificationPrompt = true;
+          this.emailEditRequested = true;
+          this.resendEmailVerification();
+        } else {
+          this.emailEditRequested = false;
+        }
         this.refreshStepCompletion();
         this.toast.success('Profile saved!');
         setTimeout(() => { this.saved = false; this.cdr.detectChanges(); }, 3000);
@@ -840,6 +863,32 @@ export class PhotographerProfileComponent implements OnInit {
         this.saving = false;
         this.toast.error(err?.error?.message || 'Failed to save profile.');
         this.cdr.detectChanges();
+      },
+    });
+  }
+
+  requestEmailEdit(): void {
+    if (!this.isEditMode) return;
+    this.emailEditRequested = true;
+  }
+
+  resendEmailVerification(): void {
+    const email = String(this.form.get('email')?.value || '').trim();
+    if (!email) {
+      this.resendEmailVerificationError = 'Please enter a valid email first.';
+      return;
+    }
+    this.resendingEmailVerification = true;
+    this.resendEmailVerificationSuccess = false;
+    this.resendEmailVerificationError = null;
+    this.config.sendEmailVerificationLink(email).subscribe({
+      next: () => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationSuccess = true;
+      },
+      error: (err: any) => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationError = err?.error?.message || 'Failed to resend verification email.';
       },
     });
   }

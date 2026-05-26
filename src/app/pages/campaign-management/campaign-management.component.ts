@@ -3195,7 +3195,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const submissions = this.campaignSubmissionsMap.get(c._id!) || [];
     return submissions.find(
       s => String(s.inviteId) === String(inv._id) ||
-           String(s.influencerId?._id || s.influencerId) === String(inv.influencerId?._id || inv.influencerId)
+           String(s.influencerId?._id || s.influencerId) === String(inv.influencerId?._id || inv.influencerId) ||
+           String(s.recipientId?._id || s.recipientId) === String(inv.influencerId?._id || inv.influencerId)
     ) || null;
   }
 
@@ -3286,6 +3287,29 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       if (!relevant.length) return false;
       return relevant.some((sm: any) => ORDER.indexOf(String(sm?.tier || '').trim()) === reqIdx);
     });
+  }
+
+  private isWorkedInviteStatus(status: string): boolean {
+    return [
+      'accepted',
+      'payment_confirmed',
+      'working',
+      'submitted',
+      'approved',
+      'completed',
+      'disputed',
+    ].includes(String(status || '').toLowerCase());
+  }
+
+  getCompletedWorkedInvites(c: Campaign): any[] {
+    return this.getExpandVisibleInvites(c).filter((inv: any) => this.isWorkedInviteStatus(inv?.status));
+  }
+
+  getExpandDisplayInvites(c: Campaign): any[] {
+    if (String(c?.status || '').toLowerCase() === 'completed') {
+      return this.getCompletedWorkedInvites(c);
+    }
+    return this.getExpandVisibleInvites(c);
   }
 
   getExpandInvitesByStatus(c: Campaign, status: string): number {

@@ -272,7 +272,10 @@
           <span class="contact-icon-wrap ci--email"><i class="bi bi-envelope"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Email</span>
-            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.email">{{ influencer.email }}</span>
+            <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && influencer.email">
+              {{ influencer.email }}
+              <i class="bi bi-patch-check-fill contact-verified" *ngIf="isEmailVerified" title="Email verified"></i>
+            </span>
             <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.email">••••••••••</span>
           </div>
         </div>
@@ -282,7 +285,10 @@
           <span class="contact-icon-wrap ci--phone"><i class="bi bi-telephone"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Phone / Call</span>
-            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.phoneNumber">+91 {{ influencer.phoneNumber }}</span>
+            <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && influencer.phoneNumber">
+              +91 {{ influencer.phoneNumber }}
+              <i class="bi bi-patch-check-fill contact-verified" *ngIf="isPhoneVerified" title="Mobile verified"></i>
+            </span>
             <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.phoneNumber">••••••••••</span>
           </div>
         </div>

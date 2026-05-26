@@ -384,6 +384,17 @@
   color: #e8612d;
 }
 
+.contact-field-val--with-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contact-verified {
+  color: #22c55e;
+  font-size: 0.86rem;
+}
+
 .contact-field-blur {
   font-size: 0.85rem;
   color: #bbb;

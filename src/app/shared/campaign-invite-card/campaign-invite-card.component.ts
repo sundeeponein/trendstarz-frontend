@@ -104,7 +104,28 @@ export class CampaignInviteCardComponent {
 
   get inviteId(): string { return this.invite?._id || ''; }
   get status(): string { return (this.invite?.status || 'pending').toLowerCase(); }
-  get isActionable(): boolean { return this.status === 'pending' || this.status === 'invited'; }
+  private get isActionableStatus(): boolean {
+    return this.status === 'pending' || this.status === 'invited';
+  }
+  get acceptanceDeadline(): string {
+    return String(this.campaign?.acceptanceDeadline || this.invite?.acceptanceDeadline || '').trim();
+  }
+  get hasAcceptanceDeadline(): boolean {
+    const deadline = this.acceptanceDeadline;
+    if (!deadline) return false;
+    return !Number.isNaN(new Date(deadline).getTime());
+  }
+  get isAcceptanceExpired(): boolean {
+    if (!this.isActionableStatus || !this.hasAcceptanceDeadline) return false;
+    return Date.now() > new Date(this.acceptanceDeadline).getTime();
+  }
+  get isActionable(): boolean { return this.isActionableStatus && !this.isAcceptanceExpired; }
+  get showMissedAcceptance(): boolean { return this.isActionableStatus && this.isAcceptanceExpired; }
+  get missedAcceptanceText(): string {
+    return this.isCollabInvite
+      ? 'You have missed the collaboration invitation.'
+      : 'You have missed the campaign invitation.';
+  }
 
   // ── Unlock state (mirrors brand-side unlocked flag) ─────────────
   get isUnlocked(): boolean { return !!this.invite?.unlocked; }
@@ -142,6 +163,7 @@ export class CampaignInviteCardComponent {
   get showReminderBadge(): boolean {
     const count = Number(this.invite?.remindersSent || 0);
     if (count <= 0) return false;
+    if (this.showMissedAcceptance) return false;
     return ['pending', 'invited', 'accepted', 'payment_confirmed', 'working'].includes(this.status);
   }
   get reminderCount(): number { return Number(this.invite?.remindersSent || 0); }
@@ -639,6 +661,10 @@ export class CampaignInviteCardComponent {
   onAccept(ev: Event) {
     ev.stopPropagation();
     if (!this.inviteId) return;
+    if (this.showMissedAcceptance) {
+      this.validationError.emit(this.missedAcceptanceText);
+      return;
+    }
     if (!this.postDate) {
       this.validationError.emit('Please select a posting date before accepting.');
       return;
@@ -693,6 +719,10 @@ export class CampaignInviteCardComponent {
   onDecline(ev: Event) {
     ev.stopPropagation();
     if (!this.inviteId) return;
+    if (this.showMissedAcceptance) {
+      this.validationError.emit(this.missedAcceptanceText);
+      return;
+    }
     this.decline.emit({ inviteId: this.inviteId });
   }
 

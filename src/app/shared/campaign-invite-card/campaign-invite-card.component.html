@@ -191,6 +191,9 @@
   </div>
 
   <div class="invite-card__actions" *ngIf="!isActionable" (click)="onActionsClick($event)">
+    <p class="inv-missed-note mb-0" *ngIf="showMissedAcceptance">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ missedAcceptanceText }}
+    </p>
     <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted' && !showPaymentAwaited">
       <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
     </p>

@@ -593,8 +593,7 @@
               {{ isExpired(c) && c.status === 'active' ? 'EXPIRED' : (c.status | uppercase) }}
             </span>
             <div class="ccard-actions" *ngIf="!isInfluencerView">
-              <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)"
-                [disabled]="c.status === 'completed'">
+              <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)">
                 Manage <i class="bi bi-chevron-down"></i>
               </button>
               <button class="btn-invite" (click)="openInvitePanel(c)"
@@ -693,14 +692,19 @@
             </div>
 
             <!-- Invited recipients list -->
-            <div class="expand-inf-list" *ngIf="getExpandVisibleInvites(c).length > 0">
+            <div class="completed-worked-note" *ngIf="c.status === 'completed'">
+              <i class="bi bi-stars"></i>
+              Showing recipients who accepted/worked on this {{ isPhotographerView ? 'collaboration' : 'campaign' }}.
+            </div>
+
+            <div class="expand-inf-list" *ngIf="getExpandDisplayInvites(c).length > 0">
               <div class="expand-inf-heading-row">
-                <p class="expand-inf-heading">Invited {{ getCampaignInviteTargetPluralLabel(c) }}</p>
+                <p class="expand-inf-heading">{{ c.status === 'completed' ? 'Worked ' : 'Invited ' }}{{ getCampaignInviteTargetPluralLabel(c) }}</p>
                 <button class="tier-info-trigger" type="button" (click)="tierInfo.open(); $event.stopPropagation()">
                   <i class="bi bi-info-circle"></i> Tier info
                 </button>
               </div>
-              <ng-container *ngFor="let inv of getExpandVisibleInvites(c)">
+              <ng-container *ngFor="let inv of getExpandDisplayInvites(c)">
                 <!-- Recipient row -->
                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
                      [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
@@ -729,6 +733,15 @@
                     <small class="expand-post-date" *ngIf="inv.selectedPlatform">
                       <i class="bi bi-broadcast"></i> Posts on <strong>{{ inv.selectedPlatform }}</strong>
                     </small>
+                    <div class="submission-summary" *ngIf="c.status === 'completed' && getSubmissionForInvite(c, inv) as workedSub">
+                      <span>
+                        <i class="bi bi-camera-reels"></i>
+                        {{ getPostTypeLabel(workedSub.postPlatform, workedSub.postType) }} submitted
+                      </span>
+                      <a *ngIf="workedSub.postUrl" [href]="workedSub.postUrl" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
+                        View post
+                      </a>
+                    </div>
                   </div>
                   <span class="inv-status" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) }}</span>
                   <span class="inv-closed-chip"
@@ -912,12 +925,17 @@
                 </ng-container>
               </ng-container>
             </div>
-            <div class="expand-empty-inf" *ngIf="getExpandVisibleInvites(c).length === 0">
+            <div class="expand-empty-inf" *ngIf="getExpandDisplayInvites(c).length === 0">
               <ng-container *ngIf="c.campaignMode === 'tier_filtered_open'; else emptyInvitesDefault">
                 No accepted tier-matching {{ getCampaignInviteTargetPluralLabel(c).toLowerCase() }} yet.
               </ng-container>
               <ng-template #emptyInvitesDefault>
-                No {{ getCampaignInviteTargetPluralLabel(c).toLowerCase() }} invited yet. Use the <strong>Invite</strong> button to get started.
+                <ng-container *ngIf="c.status === 'completed'; else defaultInviteEmptyState">
+                  No worked {{ getCampaignInviteTargetPluralLabel(c).toLowerCase() }} found yet.
+                </ng-container>
+                <ng-template #defaultInviteEmptyState>
+                  No {{ getCampaignInviteTargetPluralLabel(c).toLowerCase() }} invited yet. Use the <strong>Invite</strong> button to get started.
+                </ng-template>
               </ng-template>
             </div>
 

@@ -194,6 +194,7 @@ export class InfluencerProfileComponent implements OnInit {
   verificationCallNumber = '';
 
   emailVerified: boolean = false;
+  emailEditRequested: boolean = false;
   showEmailVerificationPrompt: boolean = false;
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
@@ -809,6 +810,7 @@ export class InfluencerProfileComponent implements OnInit {
     await this.fetchAndPatchProfile();
   this.isEditMode = true;
   this.registrationForm.enable({ emitEvent: false });
+  this.emailEditRequested = !this.emailVerified;
   // Enable username for editing
   this.registrationForm.get('username')?.enable({ emitEvent: false });
   // Keep password fields disabled for security
@@ -819,6 +821,7 @@ export class InfluencerProfileComponent implements OnInit {
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
@@ -984,6 +987,9 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationSuccess = false;
     this.registrationSuccessMessage = '';
     const raw = this.registrationForm.getRawValue();
+    const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    const currentEmail = String(raw?.email || '').trim().toLowerCase();
+    const emailChanged = !!currentEmail && previousEmail !== currentEmail;
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
       return;
@@ -1138,6 +1144,14 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
+        if (emailChanged) {
+          this.emailVerified = false;
+          this.showEmailVerificationPrompt = true;
+          this.emailEditRequested = true;
+          this.resendEmailVerification();
+        } else {
+          this.emailEditRequested = false;
+        }
         this.fetchAndPatchProfile().catch(() => {});
       },
       error: err => {
@@ -1146,6 +1160,11 @@ export class InfluencerProfileComponent implements OnInit {
         console.error('[PATCH error]', err);
       }
     });
+  }
+
+  requestEmailEdit(): void {
+    if (!this.isEditMode) return;
+    this.emailEditRequested = true;
   }
 
   async fetchAndPatchProfile(): Promise<void> {

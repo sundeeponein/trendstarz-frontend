@@ -62,10 +62,13 @@
             <div class="field-block">
               <label>Email <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
+                <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" [readonly]="isEditMode && emailVerified && !emailEditRequested" />
                 <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
+                <span *ngIf="!emailVerified" class="verified-icon" title="Email verification pending" style="color: #f59e0b; font-size: 1.2em;"><i class="bi bi-hourglass-split"></i></span>
+                <button type="button" class="btn btn-link p-0" *ngIf="isEditMode && emailVerified && !emailEditRequested" (click)="requestEmailEdit()">Edit</button>
               </div>
               <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
+              <small *ngIf="!emailVerified" class="text-muted d-block mt-1">🟡 Pending verification. Please verify the latest email address.</small>
             </div>
             <div class="field-block">
               <label>Contact Person Name <span class="text-danger">*</span></label>
@@ -75,11 +78,12 @@
             <div class="field-block">
               <label>Phone Number <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 0.5em;">
-                <input formControlName="phoneNumber" type="text" class="form-control" />
+                <input formControlName="phoneNumber" type="text" class="form-control" [readonly]="isEditMode && phoneVerified" />
                 <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
                 <span *ngIf="!phoneVerified" class="verified-icon" title="Mobile verification pending" style="color: #f59e0b; font-size: 1.2em;"><i class="bi bi-hourglass-split"></i></span>
               </div>
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
+              <small *ngIf="phoneVerified" class="text-muted d-block mt-1">✅ Verified by TrendStarz Team. To change verified mobile number, contact support.</small>
               <small *ngIf="verificationCallNumber && !phoneVerified" class="text-muted mt-1">
                 You may receive a verification call from our team.
               </small>
