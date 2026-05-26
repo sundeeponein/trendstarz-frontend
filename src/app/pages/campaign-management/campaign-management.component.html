@@ -973,6 +973,19 @@
                 <button class="btn-expand-edit" (click)="extendTimeline(c)">
                   <i class="bi bi-pencil"></i> Edit
                 </button>
+                <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
+                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                </button>
+              </ng-container>
+
+              <!-- Pending review (still editable before approval) -->
+              <ng-container *ngIf="c.status === 'pending_review'">
+                <button class="btn-expand-primary" (click)="extendTimeline(c)">
+                  <i class="bi bi-pencil"></i> Edit campaign
+                </button>
+                <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
+                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                </button>
               </ng-container>
 
               <!-- Draft (brand created, never submitted) -->

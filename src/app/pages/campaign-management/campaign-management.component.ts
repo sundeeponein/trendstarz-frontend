@@ -1753,13 +1753,49 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.closeForm();
   }
 
+  canDeletePendingCampaign(campaign: Campaign): boolean {
+    if (!campaign?._id) return false;
+    const status = String(campaign.status || '').toLowerCase();
+    if (status !== 'pending' && status !== 'pending_review') return false;
+
+    const invites = this.campaignInvitesMap.get(campaign._id) || [];
+    if (!invites.length) return true;
+
+    // Allow delete only when there is no active/accepted work in this request.
+    return invites.every((invite: any) => {
+      const inviteStatus = String(invite?.status || '').toLowerCase();
+      return ['pending', 'invited', 'declined', 'withdrawn'].includes(inviteStatus);
+    });
+  }
+
   onDelete(campaign: Campaign) {
     if (!campaign._id) return;
+    if (!this.canDeletePendingCampaign(campaign)) {
+      this.toast.error('Only pending or in-review campaigns without accepted work can be deleted.');
+      return;
+    }
+
+    const noun = this.isPhotographerView ? 'collaboration' : 'campaign';
+    const confirmed = typeof window === 'undefined'
+      ? true
+      : window.confirm(`Delete this ${noun}? This action cannot be undone.`);
+    if (!confirmed) return;
+
     this.config.deleteCampaign(campaign._id).subscribe({
       next: () => {
         this.campaigns = this.campaigns.filter(c => c._id !== campaign._id);
+        this.campaignInvitesMap.delete(campaign._id!);
+        if (this.expandedCampaignId === campaign._id) {
+          this.expandedCampaignId = null;
+        }
+        this.toast.success(`${noun.charAt(0).toUpperCase() + noun.slice(1)} deleted.`);
         this.cd.detectChanges();
-      }
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || `Failed to delete ${noun}.`;
+        this.toast.error(msg);
+        this.cd.detectChanges();
+      },
     });
   }
 

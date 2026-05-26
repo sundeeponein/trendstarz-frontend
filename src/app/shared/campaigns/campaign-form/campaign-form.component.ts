@@ -993,13 +993,19 @@ export class CampaignFormComponent implements OnInit {
 
 
   // ── Invite recipients (step 3) ───────────────────────────────
+  getRecipientId(recipient: any): string {
+    return String(recipient?._id || recipient?.id || '').trim();
+  }
+
   loadInviteRecipients() {
     if (this.inviteRecipientRole === 'photographer' && !this.isPhotographerCreator) {
       if (this.allPhotographers.length > 0) return;
       this.photographersLoading = true;
       this.config.getPhotographers().subscribe({
         next: (data: any[]) => {
-          this.allPhotographers = Array.isArray(data) ? data : [];
+          this.allPhotographers = (Array.isArray(data) ? data : [])
+            .map((p: any) => ({ ...p, _id: p?._id || p?.id || '' }))
+            .filter((p: any) => !!String(p?._id || '').trim());
           this.photographersLoading = false;
           this.cd.detectChanges();
         },
@@ -1012,7 +1018,9 @@ export class CampaignFormComponent implements OnInit {
     this.influencersLoading = true;
     this.config.getInfluencers().subscribe({
       next: (data: any[]) => {
-        this.allInfluencers = Array.isArray(data) ? data : [];
+        this.allInfluencers = (Array.isArray(data) ? data : [])
+          .map((p: any) => ({ ...p, _id: p?._id || p?.id || '' }))
+          .filter((p: any) => !!String(p?._id || '').trim());
         this.influencersLoading = false;
         this.cd.detectChanges();
       },
@@ -1213,6 +1221,10 @@ export class CampaignFormComponent implements OnInit {
 
 
   toggleInfluencerSelect(id: string) {
+    if (!id) {
+      this.toast.error(`Unable to identify this ${this.inviteRecipientLabelSingular.toLowerCase()}. Please refresh and try again.`);
+      return;
+    }
     const max = Number(this.f['maxInfluencers']?.value || 0);
     this.selectionLimitError = '';
     if (this.selectedInfluencerIds.has(id)) {
@@ -1331,10 +1343,14 @@ export class CampaignFormComponent implements OnInit {
     const isTierOpen = v.campaignMode === 'tier_filtered_open';
     const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
     const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
+    const keepPendingReview = this.isEdit && originalStatus === 'pending_review';
+    const keepPending = this.isEdit && originalStatus === 'pending';
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
-      status: (isTierOpen || isResubmit) ? 'pending_review' : 'draft',
+      status: (isTierOpen || isResubmit || keepPendingReview)
+        ? 'pending_review'
+        : (keepPending ? 'pending' : 'draft'),
       deliverables: this.isPhotographerCreator
         ? this.selectedPhotographerDeliverables
         : this.parseDeliverables(v.deliverablesText),
@@ -1457,7 +1473,7 @@ export class CampaignFormComponent implements OnInit {
       const status = String(i?.status || '').toLowerCase();
       if (status === 'declined') return false;
       const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
-      return inviteInfId === String(inf?._id || '');
+      return inviteInfId === this.getRecipientId(inf);
     });
   }
 }
