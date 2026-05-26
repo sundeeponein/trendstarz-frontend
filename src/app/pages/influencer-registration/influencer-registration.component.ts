@@ -209,6 +209,11 @@ export class InfluencerRegistrationComponent implements OnInit {
   profileImageFile: File | null = null;
   // Cached upload result so we don't re-upload (and orphan the previous upload) on retry.
   uploadedProfileImage: { url: string; public_id: string } | null = null;
+  galleryImagesPreview: string[] = [];
+  galleryImagesData: { url: string; public_id: string }[] = [];
+  galleryUploadWarning = '';
+  freeTotalImageLimit = 3;
+  premiumTotalImageLimit = 10;
   languagesList: any[] = [];
   categoriesList: any[] = [];
   districts: any[] = [];
@@ -357,6 +362,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforcePlatformLimit();
+      this.enforceGalleryLimit();
       this.refreshStepCompletion();
     });
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
@@ -366,7 +372,19 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
+      const freePlan = plans.find((plan) => (plan?.price?.monthly ?? 0) === 0);
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+
+      const resolveImageLimit = (plan: Plan | undefined, fallback: number): number => {
+        if (!plan?.limits?.length) return fallback;
+        const hit = plan.limits.find((limit) => String(limit?.key || '').trim() === 'maxProductImages');
+        const value = Number(hit?.value);
+        return Number.isFinite(value) && value > 0 ? value : fallback;
+      };
+
+      this.freeTotalImageLimit = resolveImageLimit(freePlan, this.freeTotalImageLimit);
+      this.premiumTotalImageLimit = resolveImageLimit(paidPlan, this.premiumTotalImageLimit);
+
       if (!paidPlan) return;
 
       const monthly = paidPlan?.price?.monthly ?? 0;
@@ -419,6 +437,20 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   isPremiumPlan(): boolean {
     return this.registrationForm?.get('paymentOption')?.value === 'premium';
+  }
+
+  get selectedTotalImageLimit(): number {
+    return this.isPremiumPlan() ? this.premiumTotalImageLimit : this.freeTotalImageLimit;
+  }
+
+  get maxGalleryImages(): number {
+    return Math.max(0, this.selectedTotalImageLimit - 1);
+  }
+
+  private enforceGalleryLimit(): void {
+    if (this.galleryImagesData.length <= this.maxGalleryImages) return;
+    this.galleryImagesData = this.galleryImagesData.slice(0, this.maxGalleryImages);
+    this.galleryImagesPreview = this.galleryImagesPreview.slice(0, this.maxGalleryImages);
   }
 
   private computeStepComplete(step: number): boolean {
@@ -784,6 +816,79 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null; this.refreshStepCompletion();
   }
 
+  async onGalleryImagesChange(event: Event) {
+    const files = Array.from((event.target as HTMLInputElement).files || []);
+    if (!files.length) return;
+
+    const remainingSlots = this.maxGalleryImages - this.galleryImagesData.length;
+    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
+    if (!selectedFiles.length) return;
+
+    let failedUploads = 0;
+
+    for (const file of selectedFiles) {
+      if (!file.type.startsWith('image/')) {
+        failedUploads += 1;
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const preview = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e.target?.result || ''));
+        reader.onerror = () => reject(new Error('preview_failed'));
+        reader.readAsDataURL(file);
+      }).catch(() => '');
+
+      if (!preview) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const fd = new FormData();
+      fd.append('file', file, file.name || 'gallery.jpg');
+      fd.append('folder', 'influencer_profile_images');
+
+      const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
+        this.configService.uploadImage(fd).subscribe({
+          next: (res: any) => {
+            if (res?.url && res?.public_id) {
+              resolve({ url: res.url, public_id: res.public_id });
+              return;
+            }
+            resolve(null);
+          },
+          error: () => resolve(null),
+        });
+      });
+
+      if (!uploaded) {
+        failedUploads += 1;
+        continue;
+      }
+
+      this.galleryImagesPreview.push(preview);
+      this.galleryImagesData.push(uploaded);
+      this.cdr.detectChanges();
+    }
+
+    this.galleryUploadWarning = failedUploads
+      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+      : '';
+
+    this.cdr.detectChanges();
+  }
+
+  removeGalleryImage(index: number) {
+    if (index < 0 || index >= this.galleryImagesData.length) return;
+    this.galleryImagesPreview.splice(index, 1);
+    this.galleryImagesData.splice(index, 1);
+    this.galleryUploadWarning = '';
+  }
+
   async onSubmit() {
     if (this.isSubmitting) return;
     this.submitted = true;
@@ -861,7 +966,12 @@ export class InfluencerRegistrationComponent implements OnInit {
       expertiseArea: raw.expertiseArea || '',
       verificationDocuments: this.verificationDocuments,
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
-      socialMedia, profileImages: imageUploadResult ? [imageUploadResult] : [], contact: raw.contact
+      socialMedia,
+      profileImages: [
+        ...(imageUploadResult ? [imageUploadResult] : []),
+        ...this.galleryImagesData,
+      ],
+      contact: raw.contact
     };
     if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
       payload.signupAttribution = this.signupAttribution;
@@ -873,6 +983,7 @@ export class InfluencerRegistrationComponent implements OnInit {
           this.pendingVerificationEmail = raw.email;
           this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;
           this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null;
+          this.galleryImagesPreview = []; this.galleryImagesData = []; this.galleryUploadWarning = '';
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;
           // Reset the form first (fires valueChanges which may clear registrationSuccess if set),
           // then on next microtask mark success and run CD — ensures the success modal renders.

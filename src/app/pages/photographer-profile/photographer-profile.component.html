@@ -44,6 +44,9 @@
             <div class="field-block profile-upload-block">
               <label>
                 Profile Photo
+                <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openProfilePhotoGuidelines()" title="View photo guidelines">
+                  <i class="bi bi-info-circle"></i>
+                </button>
               </label>
               <div class="profile-upload-box" [class.has-image]="profileImagePreview" [class.clickable]="isEditMode" (click)="isEditMode && profileFileInput.click()">
                 <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile" class="profile-upload-preview" />
@@ -192,6 +195,42 @@
             </div>
 
             <div class="field-block mt-3">
+              <label>
+                Photoshoot Gallery <span class="text-muted" style="font-size:0.78rem;">(optional, up to {{ maxPhotoshootImages }} images)</span>
+                <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openGalleryImageGuidelines()" title="View gallery image guidelines">
+                  <i class="bi bi-info-circle"></i>
+                </button>
+              </label>
+              <div class="gallery-upload-wrap">
+                <label class="gallery-upload-cta" for="photographerProfileGalleryInput" [class.disabled]="!isEditMode">
+                  <i class="bi bi-images"></i>
+                  <span>Add photoshoot images</span>
+                </label>
+                <input
+                  id="photographerProfileGalleryInput"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  [disabled]="!isEditMode"
+                  (change)="onPhotoshootImagesChange($event)"
+                />
+                <div class="text-muted" style="font-size:0.84rem;">Use this to showcase past shoots on your public profile. Total limit is {{ totalImageLimit }} images: 1 profile + up to {{ maxPhotoshootImages }} gallery images (based on your plan).</div>
+              </div>
+
+              <div class="gallery-preview-grid" *ngIf="photoshootImagesPreview.length">
+                <div class="gallery-preview-card" *ngFor="let img of photoshootImagesPreview; let i = index">
+                  <img [src]="img" alt="Photoshoot preview" class="gallery-preview-image" />
+                  <button type="button" class="gallery-remove-btn" *ngIf="isEditMode" (click)="removePhotoshootImage(i)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="galleryUploadWarning" class="alert alert-warning mt-2 mb-0">{{ galleryUploadWarning }}</div>
+            </div>
+
+            <div class="field-block mt-3">
               <label>Social Platforms <span class="text-muted" style="font-size:0.8rem;font-weight:400;">(for trust)</span></label>
               <p class="section-subtitle mb-2">Add at least one so clients can verify you before hiring.</p>
               <div class="platform-cards">
@@ -270,14 +309,14 @@
             </div>
 
             <div class="plan-cards">
-              <div class="plan-card" [class.selected]="selectedPlan === 'free'" (click)="selectPlan('free')">
+              <div class="plan-card" [class.selected]="selectedPlan === 'free'">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Starter</span>
                   <span class="plan-card-price free">Free</span>
                 </div>
                 <div class="plan-card-desc">Public profile, Basic visibility, Apply to campaigns</div>
               </div>
-              <div class="plan-card" [class.selected]="selectedPlan === 'premium'" (click)="selectPlan('premium')">
+              <div class="plan-card" [class.selected]="selectedPlan === 'premium'">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
                   <span class="plan-card-price premium">₹{{ premiumMonthlyPrice }}/mo</span>
@@ -317,7 +356,7 @@
                     <span class="contact-card-label">Call</span>
                   </label>
                 </div>
-                <div *ngIf="selectedPlan !== 'premium'" class="text-muted mt-1">Contact options are only available for Premium users.</div>
+                <div *ngIf="!hasContactVisibility" class="text-muted mt-1">Contact options are available only when enabled by your active plan.</div>
               </div>
             </div>
 

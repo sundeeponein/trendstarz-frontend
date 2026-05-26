@@ -34,7 +34,7 @@
     <!-- Campaign stage chip -->
     <div class="stage-chip-row mb-3">
       <span class="stage-chip"
-            [class.stage-accepted]="inviteStatus === 'accepted' || inviteStatus === 'working'"
+            [class.stage-accepted]="inviteStatus === 'accepted' || inviteStatus === 'payment_confirmed' || inviteStatus === 'working'"
             [class.stage-submitted]="inviteStatus === 'submitted'"
             [class.stage-completed]="inviteStatus === 'completed' || inviteStatus === 'approved'"
             [class.stage-disputed]="inviteStatus === 'disputed'">
@@ -42,7 +42,7 @@
            [class.bi-hourglass-split]="inviteStatus === 'submitted'"
            [class.bi-check-circle-fill]="inviteStatus === 'completed' || inviteStatus === 'approved'"
            [class.bi-exclamation-triangle-fill]="inviteStatus === 'disputed'"
-           [class.bi-calendar-check]="inviteStatus === 'accepted' || inviteStatus === 'working'"></i>
+           [class.bi-calendar-check]="inviteStatus === 'accepted' || inviteStatus === 'payment_confirmed' || inviteStatus === 'working'"></i>
         Campaign stage: <strong>{{ inviteStatusLabel }}</strong>
       </span>
     </div>

@@ -80,7 +80,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly homepageFaqs: FaqAccordionItem[] = TRENDSTARZ_FAQ_ITEMS.slice(0, 5);
 
   readonly faqCtaButtons: FaqCtaButton[] = [
-    { label: 'More FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
+    // { label: 'More FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
   ];
 
   get faqAccordionInputs() {

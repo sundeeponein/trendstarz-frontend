@@ -274,7 +274,9 @@
               </div>
             </div>
             <button type="button" class="add-social-btn mt-2" (click)="addProductImage()" [disabled]="!canAddProductImage()">+ Add Product Image</button>
-            <div *ngIf="!isPremiumPlan()" class="text-muted mt-1" style="font-size:0.82rem">Free users can add one product image. Upgrade to premium for multiple.</div>
+            <div class="text-muted mt-1" style="font-size:0.82rem">
+              Selected plan supports up to {{ selectedProductImageLimit }} product image{{ selectedProductImageLimit > 1 ? 's' : '' }}.
+            </div>
             <div *ngIf="step2Attempted && !hasAtLeastOneProductImage()" class="text-danger mt-1">At least one company/product image is required.</div>
           </div>
 

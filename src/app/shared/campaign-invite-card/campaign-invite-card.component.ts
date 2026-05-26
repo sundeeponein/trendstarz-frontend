@@ -64,7 +64,7 @@ export class CampaignInviteCardComponent {
   @Output() validationError = new EventEmitter<string>();
   /** Emits when the influencer clicks "Submit your post" */
   @Output() submitPost = new EventEmitter<void>();
-  /** Emits when the influencer clicks "View / Edit Submission" */
+  /** Emits when the influencer clicks "View Submission" */
   @Output() viewSubmission = new EventEmitter<void>();
 
   postDate = '';
@@ -134,7 +134,7 @@ export class CampaignInviteCardComponent {
     if (s === 'accepted' && this.campaignTypeKey !== 'paid_collab') return true;
     return false;
   }
-  /** Show view/edit submission button */
+  /** Show view submission button */
   get showViewSubmission(): boolean {
     return ['submitted', 'completed', 'approved', 'disputed'].includes(this.status);
   }

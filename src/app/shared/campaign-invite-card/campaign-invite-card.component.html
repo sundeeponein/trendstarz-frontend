@@ -267,11 +267,11 @@
       {{ status === 'payment_confirmed' ? 'Submit proof of work' : 'Submit your post' }}
     </button>
 
-    <!-- View / Edit submission button -->
+    <!-- View submission button -->
     <button class="inv-cta-btn inv-cta-btn--view" *ngIf="showViewSubmission"
             type="button" (click)="viewSubmission.emit()">
       <i class="bi bi-eye-fill"></i>
-      {{ status === 'submitted' ? 'View / Edit Submission' : 'View Submission' }}
+      View Submission
     </button>
 
   </div>

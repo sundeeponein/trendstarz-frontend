@@ -4,7 +4,7 @@ import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
-import { PlansService, Plan } from '../../shared/plans.service';
+import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
 import { of, forkJoin, firstValueFrom } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
@@ -217,6 +217,7 @@ export class BrandProfileComponent implements OnInit {
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isPremium = false;
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
   showChangePasswordModal = false;
 
   // --- Social Media Platform UI ---
@@ -229,6 +230,16 @@ export class BrandProfileComponent implements OnInit {
   productImagesPreview: (string | null)[] = [];
   productImagesFiles: ({ url: string, public_id: string } | null)[] = [];
   // ...existing code...
+
+  get maxProductImagesAllowed(): number {
+    const capValue = Number(this.plansService.getLimitValue(this.planCaps, 'maxProductImages'));
+    if (Number.isFinite(capValue) && capValue > 0) return capValue;
+    return this.isPremium ? 5 : 1;
+  }
+
+  get hasPremiumPlan(): boolean {
+    return !!this.planCaps?.hasPremium;
+  }
 
   openChangePasswordModal() {
     this.showChangePasswordModal = true;
@@ -356,6 +367,11 @@ export class BrandProfileComponent implements OnInit {
 
   ngOnInit() {
     this.loadPremiumMonthlyPrice();
+    this.plansService.getMyCapabilities().subscribe((caps) => {
+      this.planCaps = caps;
+      this.isPremium = !!caps?.hasPremium;
+      this.cd.detectChanges();
+    });
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
     });
@@ -870,8 +886,7 @@ export class BrandProfileComponent implements OnInit {
   }
 
   addProductImage() {
-    const maxImages = this.isPremium ? 5 : 1;
-    if (this.productImagesFormArray.length < maxImages) {
+    if (this.productImagesFormArray.length < this.maxProductImagesAllowed) {
       this.productImagesFormArray.push(this.fb.control('', Validators.required));
     }
   }
@@ -903,7 +918,6 @@ export class BrandProfileComponent implements OnInit {
 
     if (step === 2) {
       return !!(
-        this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
@@ -969,7 +983,7 @@ export class BrandProfileComponent implements OnInit {
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return required.every((path) => this.registrationForm.get(path)?.valid);
     }

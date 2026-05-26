@@ -9,6 +9,8 @@ import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -43,6 +45,7 @@ export class PhotographerProfileComponent implements OnInit {
   step2Complete = false;
   step3Complete = false;
   selectedPlan: 'free' | 'premium' = 'free';
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
   premiumMonthlyPrice = 399;
   showResetPasswordModal = false;
   private originalFormValue: any = null;
@@ -70,6 +73,12 @@ export class PhotographerProfileComponent implements OnInit {
   profileImagePreview = '';
   profileImageData: { url: string; public_id: string } | null = null;
   uploadingImage = false;
+  photoshootImagesPreview: string[] = [];
+  photoshootImagesData: { url: string; public_id: string }[] = [];
+  galleryUploadWarning = '';
+  readonly MAX_PHOTOSHOOT_IMAGES = 2;
+  private originalPhotoshootImagesPreview: string[] = [];
+  private originalPhotoshootImagesData: { url: string; public_id: string }[] = [];
   commissionAccessTags: string[] = [];
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
@@ -79,11 +88,52 @@ export class PhotographerProfileComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
+    private plansService: PlansService,
     private session: SessionService,
     private toast: ToastService,
     private http: HttpClient,
+    private guidelinesService: ImageGuidelinesService,
     private cdr: ChangeDetectorRef,
   ) {}
+
+  openProfilePhotoGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
+  openGalleryImageGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('PHOTOGRAPHER').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (!paidPlan) return;
+      const monthly = Number(paidPlan?.price?.monthly || 0);
+      if (monthly > 0) this.premiumMonthlyPrice = monthly;
+    });
+  }
+
+  get totalImageLimit(): number {
+    const fromPortfolio = Number(this.plansService.getLimitValue(this.planCaps, 'maxPortfolioImages'));
+    if (Number.isFinite(fromPortfolio) && fromPortfolio > 0) return fromPortfolio;
+    const fromFallback = Number(this.plansService.getLimitValue(this.planCaps, 'maxProductImages'));
+    if (Number.isFinite(fromFallback) && fromFallback > 0) return fromFallback;
+    return 3;
+  }
+
+  get maxPhotoshootImages(): number {
+    return Math.max(0, this.totalImageLimit - 1);
+  }
+
+  private enforceGalleryLimit(): void {
+    if (this.photoshootImagesData.length <= this.maxPhotoshootImages) return;
+    this.photoshootImagesData = this.photoshootImagesData.slice(0, this.maxPhotoshootImages);
+    this.photoshootImagesPreview = this.photoshootImagesPreview.slice(0, this.maxPhotoshootImages);
+  }
+
+  get hasContactVisibility(): boolean {
+    return this.plansService.getFeatureValue(this.planCaps, 'contactVisibility');
+  }
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -186,6 +236,19 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadPremiumMonthlyPrice();
+    this.plansService.getMyCapabilities().subscribe((caps) => {
+      this.planCaps = caps;
+      this.selectedPlan = caps?.hasPremium ? 'premium' : 'free';
+      this.enforceGalleryLimit();
+      if (this.form && !this.hasContactVisibility) {
+        this.form.patchValue({
+          contact: { whatsapp: false, email: false, call: false },
+        }, { emitEvent: false });
+      }
+      this.cdr.detectChanges();
+    });
+
     this.form = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
       username: [{ value: '', disabled: true }, [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
@@ -311,7 +374,7 @@ export class PhotographerProfileComponent implements OnInit {
           },
         });
 
-        this.selectedPlan = profile.isPremium ? 'premium' : 'free';
+        this.selectedPlan = this.planCaps?.hasPremium ? 'premium' : (profile.isPremium ? 'premium' : 'free');
         this.syncLocationDisplay();
 
         // Pricing
@@ -358,6 +421,20 @@ export class PhotographerProfileComponent implements OnInit {
           this.profileImageData = profileImage;
         }
 
+        const sourceImages = Array.isArray(profile?.profileImages)
+          ? profile.profileImages
+          : Array.isArray(sessionUser?.profileImages)
+            ? sessionUser.profileImages
+            : [];
+        const gallerySource = sourceImages.slice(1).filter((img: any) => !!img?.url);
+        this.photoshootImagesData = gallerySource.map((img: any) => ({
+          url: String(img.url),
+          public_id: String(img.public_id || img.publicId || ''),
+        }));
+        this.photoshootImagesPreview = this.photoshootImagesData.map((img) => img.url);
+        this.enforceGalleryLimit();
+        this.galleryUploadWarning = '';
+
         this.loading = false;
         this.isEditMode = false;
         this.form.disable({ emitEvent: false });
@@ -365,6 +442,8 @@ export class PhotographerProfileComponent implements OnInit {
         this.originalFormValue = this.form.getRawValue();
         this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
+        this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
         this.refreshStepCompletion();
         this.cdr.detectChanges();
       },
@@ -464,23 +543,18 @@ export class PhotographerProfileComponent implements OnInit {
       const hasSkills = Array.isArray(this.form.get('skills')?.value) && this.form.get('skills')?.value.length > 0;
       return !!(state || district || hasSkills || this.selectedPlatforms().length);
     }
-    if (this.selectedPlan !== 'premium') return this.step1Complete && this.step2Complete;
+    if (!this.hasContactVisibility) return this.step1Complete && this.step2Complete;
     const c = this.form.get('contact')?.value || {};
     return this.step1Complete && this.step2Complete && !!(c.whatsapp || c.email || c.call);
   }
 
   isContactEditable(): boolean {
-    return this.isEditMode && this.selectedPlan === 'premium';
+    return this.isEditMode && this.hasContactVisibility;
   }
 
   selectPlan(plan: 'free' | 'premium') {
-    if (!this.isEditMode) return;
-    this.selectedPlan = plan;
-    if (plan !== 'premium') {
-      this.form.patchValue({
-        contact: { whatsapp: false, email: false, call: false },
-      }, { emitEvent: false });
-    }
+    // Profile plan state is admin/payment managed; cards are informational here.
+    this.selectedPlan = this.planCaps?.hasPremium ? 'premium' : 'free';
     this.refreshStepCompletion();
   }
 
@@ -577,12 +651,90 @@ export class PhotographerProfileComponent implements OnInit {
     this.profileImageData = null;
   }
 
+  async onPhotoshootImagesChange(event: Event) {
+    if (!this.isEditMode) return;
+
+    const files = Array.from((event.target as HTMLInputElement).files || []);
+    if (!files.length) return;
+
+    const remainingSlots = this.maxPhotoshootImages - this.photoshootImagesData.length;
+    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
+    if (!selectedFiles.length) return;
+
+    let failedUploads = 0;
+
+    for (const file of selectedFiles) {
+      if (!file.type.startsWith('image/')) {
+        failedUploads += 1;
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const preview = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e.target?.result || ''));
+        reader.onerror = () => reject(new Error('preview_failed'));
+        reader.readAsDataURL(file);
+      }).catch(() => '');
+
+      if (!preview) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'photographer_profiles');
+
+      const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
+        this.config.uploadImage(formData).subscribe({
+          next: (res: any) => {
+            if (res?.url && res?.public_id) {
+              resolve({ url: res.url, public_id: res.public_id });
+              return;
+            }
+            resolve(null);
+          },
+          error: () => resolve(null),
+        });
+      });
+
+      if (!uploaded) {
+        failedUploads += 1;
+        continue;
+      }
+
+      this.photoshootImagesPreview.push(preview);
+      this.photoshootImagesData.push(uploaded);
+      this.cdr.detectChanges();
+    }
+
+    this.galleryUploadWarning = failedUploads
+      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+      : '';
+
+    this.cdr.detectChanges();
+  }
+
+  removePhotoshootImage(index: number) {
+    if (!this.isEditMode) return;
+    if (index < 0 || index >= this.photoshootImagesData.length) return;
+    this.photoshootImagesPreview.splice(index, 1);
+    this.photoshootImagesData.splice(index, 1);
+    this.galleryUploadWarning = '';
+  }
+
   enableEdit(): void {
     this.isEditMode = true;
     this.form.enable({ emitEvent: false });
     this.originalFormValue = this.form.getRawValue();
     this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
     this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+    this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
+    this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
     this.refreshStepCompletion();
     this.cdr.detectChanges();
   }
@@ -600,6 +752,9 @@ export class PhotographerProfileComponent implements OnInit {
       const platforms = this.selectedPlatforms();
       this.activePlatformTab = platforms.length ? platforms[0]._id : null;
     }
+    this.photoshootImagesPreview = [...this.originalPhotoshootImagesPreview];
+    this.photoshootImagesData = this.originalPhotoshootImagesData.map((img) => ({ ...img }));
+    this.galleryUploadWarning = '';
     this.form.disable({ emitEvent: false });
     this.refreshStepCompletion();
     this.cdr.detectChanges();
@@ -649,10 +804,16 @@ export class PhotographerProfileComponent implements OnInit {
       socialMedia,
       payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
     };
+    const profileImages = [
+      ...(this.profileImageData ? [this.profileImageData] : []),
+      ...this.photoshootImagesData,
+    ];
+    if (profileImages.length) {
+      payload.profileImages = profileImages;
+    }
     if (this.profileImageData) {
       payload.profileImage = this.profileImageData.url;
       payload.profileImagePublicId = this.profileImageData.public_id;
-      payload.profileImages = [this.profileImageData];
     }
 
     const token = this.session.getToken();
@@ -667,6 +828,9 @@ export class PhotographerProfileComponent implements OnInit {
         this.originalFormValue = this.form.getRawValue();
         this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
+        this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
+        this.galleryUploadWarning = '';
         this.refreshStepCompletion();
         this.toast.success('Profile saved!');
         setTimeout(() => { this.saved = false; this.cdr.detectChanges(); }, 3000);

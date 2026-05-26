@@ -25,7 +25,12 @@
 
           <!-- ── STEP 1: Basics ── -->
           <section class="form-card" *ngIf="currentStep === 1">
-            <h2>Profile</h2>
+            <h2 class="d-flex align-items-center justify-content-between">
+              <span>Profile</span>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="openProfilePhotoGuidelines()" title="View profile photo guidelines">
+                <i class="bi bi-info-circle me-1"></i>Guidelines
+              </button>
+            </h2>
             <p class="section-subtitle">Set up your account basics to start your creator journey.</p>
 
             <!-- Profile Photo -->
@@ -219,7 +224,12 @@
 
             <!-- Photoshoot Gallery -->
             <div class="field-block mt-3">
-              <label>Photoshoot Gallery <span class="text-muted" style="font-size:0.78rem;">(optional, up to {{ MAX_PHOTOSHOOT_IMAGES }} images)</span></label>
+              <label>
+                Photoshoot Gallery <span class="text-muted" style="font-size:0.78rem;">(optional, up to {{ maxPhotoshootImages }} images)</span>
+                <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openGalleryImageGuidelines()" title="View gallery image guidelines">
+                  <i class="bi bi-info-circle"></i>
+                </button>
+              </label>
               <div class="gallery-upload-wrap">
                 <label class="gallery-upload-cta" for="photoshootGalleryInput">
                   <i class="bi bi-images"></i>
@@ -233,7 +243,7 @@
                   hidden
                   (change)="onPhotoshootImagesChange($event)"
                 />
-                <div class="text-muted" style="font-size:0.84rem;">Use this to showcase past shoots on your public profile.</div>
+                <div class="text-muted" style="font-size:0.84rem;">Use this to showcase past shoots on your public profile. Total limit is {{ selectedTotalImageLimit }} images: 1 profile + up to {{ maxPhotoshootImages }} gallery images (based on selected plan).</div>
               </div>
 
               <div class="gallery-preview-grid" *ngIf="photoshootImagesPreview.length">
@@ -401,7 +411,7 @@
                     <span class="contact-card-label">Call</span>
                   </label>
                 </div>
-                <div *ngIf="!isPremiumPlan()" class="text-muted mt-1">Contact options are only available for Premium users.</div>
+                <div *ngIf="!isContactEditable()" class="text-muted mt-1">Contact options are available based on your selected plan capabilities.</div>
               </div>
             </div>
 

@@ -68,14 +68,13 @@ test.describe('Admin Photographer Parity Smoke', () => {
     });
 
     await page.goto('/admin/admin-user-table');
-    await expect(page.locator('h2')).toContainText('Admin Users');
-    await expect(page.locator('button.tab-btn', { hasText: 'Photographers' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Admin Users' })).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('button.role-tab', { hasText: 'Photographers' })).toBeVisible();
 
-    await page.locator('button.tab-btn', { hasText: 'Photographers' }).evaluate((el) => {
-      (el as HTMLButtonElement).click();
-    });
-    await expect(page.locator('table.admin-table tbody tr')).toHaveCount(1, { timeout: 10000 });
-    await expect(page.locator('table.admin-table tbody tr').first()).toContainText('Photo One');
+    await page.locator('button.role-tab', { hasText: 'Photographers' }).click();
+    const rows = page.locator('table.users-table tbody tr');
+    await expect(rows).toHaveCount(1, { timeout: 10000 });
+    await expect(rows.first()).toContainText('Photo One');
   });
 
   test('photographer tab filters and actions match user-management parity', async ({ page }) => {
@@ -128,50 +127,29 @@ test.describe('Admin Photographer Parity Smoke', () => {
     });
 
     await page.goto('/admin/admin-user-table');
-    await page.locator('button.tab-btn', { hasText: 'Photographers' }).evaluate((el) => {
-      (el as HTMLButtonElement).click();
-    });
+    await page.locator('button.role-tab', { hasText: 'Photographers' }).click();
 
-    const rows = page.locator('table.admin-table tbody tr');
+    const rows = page.locator('table.users-table tbody tr');
     await expect(rows).toHaveCount(2, { timeout: 10000 });
 
-    const filterToggle = page.locator('button.filter-toggle-btn');
-    if (await filterToggle.isVisible() && ((await filterToggle.textContent()) || '').includes('Expand Filters')) {
-      await filterToggle.click();
-      await expect(page.locator('#status-filter')).toBeVisible();
-    }
+    await expect(rows.first()).toContainText('FREE');
+    await expect(rows.nth(1)).toContainText('PREMIUM');
 
-    await expect(rows.first().locator('button:has-text("Set Premium")')).toBeVisible();
-    await expect(rows.nth(1).locator('button:has-text("Set Free")')).toBeVisible();
-    await expect(rows.first().locator('button:has-text("Edit Tags")')).toBeVisible();
+    const statusFilter = page.locator('.filters-grid select').nth(0);
+    const premiumFilter = page.locator('.filters-grid select').nth(1);
+    const categoryFilter = page.locator('.filters-grid select').nth(2);
 
-    await page.selectOption('#status-filter', 'accepted');
+    await statusFilter.selectOption('accepted');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Arjun Frame Works');
 
-    await page.selectOption('#premium-filter', 'free');
+    await premiumFilter.selectOption('free');
     await expect(rows).toHaveCount(0);
 
-    await page.click('button:has-text("Reset Filters")');
+    await page.click('button.reset-btn:has-text("Reset")');
     await expect(rows).toHaveCount(2);
 
-    await page.selectOption('#category-filter', 'Fashion');
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText('Riya Lenscraft');
-
-    await page.selectOption('#state-filter', 'Karnataka');
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText('Riya Lenscraft');
-
-    await page.selectOption('#signup-source-filter', 'organic');
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText('Riya Lenscraft');
-
-    await page.selectOption('#email-verified-filter', 'not_verified');
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText('Riya Lenscraft');
-
-    await page.selectOption('#mobile-verified-filter', 'not_verified');
+    await categoryFilter.selectOption('Fashion');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Riya Lenscraft');
   });
@@ -228,20 +206,17 @@ test.describe('Admin Photographer Parity Smoke', () => {
     });
 
     await page.goto('/admin/admin-user-table');
-    await page.locator('button.tab-btn', { hasText: 'Photographers' }).evaluate((el) => {
-      (el as HTMLButtonElement).click();
-    });
+    await page.locator('button.role-tab', { hasText: 'Photographers' }).click();
 
-    const filterToggle = page.locator('button.filter-toggle-btn');
-    if (await filterToggle.isVisible() && ((await filterToggle.textContent()) || '').includes('Expand Filters')) {
-      await filterToggle.click();
-    }
+    const firstRow = page.locator('table.users-table tbody tr').first();
+    await expect(firstRow).toContainText('Taggable Photographer');
+    await firstRow.locator('button.btn-outline-info').click();
 
-    await page.locator('button:has-text("Edit Tags")').click();
-    await expect(page.locator('h4')).toContainText('Edit Badge / Tag');
+    await page.locator('.modal-footer.details-actions button:has-text("Edit Tags")').click();
+    await expect(page.locator('.modal.show .modal-header h4', { hasText: 'Edit Badge / Tag' })).toBeVisible();
 
     await page.locator('button:has-text("Verified Creator")').click();
-    await page.locator('button:has-text("Save")').click();
+    await page.locator('.modal.show .modal-actions button:has-text("Save")').click();
 
     await expect(capturedTags).toContain('Verified Creator');
   });

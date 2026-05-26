@@ -360,16 +360,14 @@
           </ng-container>
           <ng-template #planSelectCards>
             <div class="plan-cards">
-              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
-                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('free')">
+              <div class="plan-card" [class.selected]="!hasPremiumPlan">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Starter</span>
                   <span class="plan-card-price free">Free</span>
                 </div>
                 <div class="plan-card-desc">Basic visibility, Post campaigns</div>
               </div>
-              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
-                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('premium')">
+              <div class="plan-card" [class.selected]="hasPremiumPlan">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
                   <span class="plan-card-price premium">
@@ -392,7 +390,7 @@
             </div>
 
             <!-- Premium upgrade CTA -->
-            <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
+            <div *ngIf="!latestPendingPayment && !hasPremiumPlan" class="premium-upgrade-cta mt-2">
               <div class="premium-cta-content">
                 <span class="premium-cta-icon">🌟</span>
                 <div>

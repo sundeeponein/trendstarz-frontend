@@ -381,7 +381,7 @@
            *ngIf="!(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
         <button class="btn-submit-post" (click)="goToSubmit(c); $event.stopPropagation()">
           <i class="bi" [class.bi-eye-fill]="c.inviteStatus === 'submitted'" [class.bi-send-fill]="c.inviteStatus !== 'submitted'"></i>
-          {{ c.inviteStatus === 'submitted' ? 'View / Edit Submission' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your post URL' : 'Submit your post') }}
+          {{ c.inviteStatus === 'submitted' ? 'View Submission' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your post URL' : 'Submit your post') }}
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">

@@ -35,7 +35,8 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   styleUrls: ['./brand-registration.component.scss'],
 })
 export class BrandRegistrationComponent implements OnInit {
-  readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
+  freeProductImageLimit = 1;
+  premiumProductImageLimit = 5;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
   readonly MAX_IMAGE_SIZE_MB = 5; // reject images larger than this before attempting compression/upload
   readonly currentYear = new Date().getFullYear();
@@ -294,7 +295,19 @@ export class BrandRegistrationComponent implements OnInit {
 
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('BRAND').subscribe((plans) => {
+      const freePlan = plans.find((plan) => (plan?.price?.monthly ?? 0) === 0);
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+
+      const resolveImageLimit = (plan: Plan | undefined, fallback: number): number => {
+        if (!plan?.limits?.length) return fallback;
+        const hit = plan.limits.find((limit) => String(limit?.key || '').trim() === 'maxProductImages');
+        const value = Number(hit?.value);
+        return Number.isFinite(value) && value > 0 ? value : fallback;
+      };
+
+      this.freeProductImageLimit = resolveImageLimit(freePlan, this.freeProductImageLimit);
+      this.premiumProductImageLimit = resolveImageLimit(paidPlan, this.premiumProductImageLimit);
+
       if (!paidPlan) return;
 
       const monthly = paidPlan?.price?.monthly ?? 0;
@@ -358,8 +371,12 @@ export class BrandRegistrationComponent implements OnInit {
     return this.registrationForm.get('paymentOption')?.value === 'premium';
   }
 
+  get selectedProductImageLimit(): number {
+    return this.isPremiumPlan() ? this.premiumProductImageLimit : this.freeProductImageLimit;
+  }
+
   canAddProductImage(): boolean {
-    return this.isPremiumPlan() || this.productImagesFiles.length < this.FREE_PRODUCT_IMAGE_LIMIT;
+    return this.productImagesFiles.length < this.selectedProductImageLimit;
   }
 
   hasAtLeastOneProductImage(): boolean {
@@ -367,12 +384,9 @@ export class BrandRegistrationComponent implements OnInit {
   }
 
   private enforceProductImageLimit() {
-    if (this.isPremiumPlan()) {
-      return;
-    }
-    if (this.productImagesFiles.length > this.FREE_PRODUCT_IMAGE_LIMIT) {
-      this.productImagesFiles = this.productImagesFiles.slice(0, this.FREE_PRODUCT_IMAGE_LIMIT);
-      this.productImagesPreview = this.productImagesPreview.slice(0, this.FREE_PRODUCT_IMAGE_LIMIT);
+    if (this.productImagesFiles.length > this.selectedProductImageLimit) {
+      this.productImagesFiles = this.productImagesFiles.slice(0, this.selectedProductImageLimit);
+      this.productImagesPreview = this.productImagesPreview.slice(0, this.selectedProductImageLimit);
     }
   }
 

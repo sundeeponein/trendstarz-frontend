@@ -61,7 +61,8 @@ export const FREE_CAPABILITIES: PlanCapabilities = {
     { key: 'priorityListing', label: 'Priority Listing in Search', value: false },
   ],
   limits: [
-    { key: 'maxImages', label: 'Max Images Upload', value: 2 },
+    { key: 'maxProductImages', label: 'Profile images', value: 3 },
+    { key: 'maxPortfolioImages', label: 'Portfolio images', value: 3 },
     { key: 'maxCampaigns', label: 'Max Campaigns', value: 1 },
   ],
   policies: { imageRetentionDaysAfterExpiry: 45 },

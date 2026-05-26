@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
+import { PlansService, Plan } from '../../shared/plans.service';
 
 export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   const pw = group.get('password')?.value;
@@ -69,7 +71,10 @@ export class PhotographerRegistrationComponent implements OnInit {
   uploadingImage = false;
   photoshootImagesPreview: string[] = [];
   photoshootImagesData: { url: string; public_id: string }[] = [];
-  readonly MAX_PHOTOSHOOT_IMAGES = 10;
+  freeTotalImageLimit = 3;
+  premiumTotalImageLimit = 10;
+  freeContactVisible = false;
+  premiumContactVisible = true;
 
   duplicateEmailError = '';
   duplicatePhoneError = '';
@@ -105,11 +110,54 @@ export class PhotographerRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
+    private plansService: PlansService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private guidelinesService: ImageGuidelinesService,
   ) {}
 
+  openProfilePhotoGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
+  openGalleryImageGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
+  private loadPlanConfig(): void {
+    this.plansService.getActivePlans('PHOTOGRAPHER').subscribe((plans) => {
+      const freePlan = plans.find((plan) => (plan?.price?.monthly ?? 0) === 0);
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+
+      const resolveImageLimit = (plan: Plan | undefined, fallback: number): number => {
+        if (!plan?.limits?.length) return fallback;
+        const hit = plan.limits.find((limit) => String(limit?.key || '').trim() === 'maxPortfolioImages');
+        const value = Number(hit?.value);
+        return Number.isFinite(value) && value > 0 ? value : fallback;
+      };
+
+      const resolveContactVisibility = (plan: Plan | undefined, fallback: boolean): boolean => {
+        if (!plan?.features?.length) return fallback;
+        const hit = plan.features.find((feature) => String(feature?.key || '').trim() === 'contactVisibility');
+        return typeof hit?.value === 'boolean' ? hit.value : fallback;
+      };
+
+      this.freeTotalImageLimit = resolveImageLimit(freePlan, this.freeTotalImageLimit);
+      this.premiumTotalImageLimit = resolveImageLimit(paidPlan, this.premiumTotalImageLimit);
+      this.freeContactVisible = resolveContactVisibility(freePlan, this.freeContactVisible);
+      this.premiumContactVisible = resolveContactVisibility(paidPlan, this.premiumContactVisible);
+
+      if (paidPlan) {
+        const monthly = Number(paidPlan?.price?.monthly || 0);
+        if (monthly > 0) this.premiumMonthlyPrice = monthly;
+      }
+
+      this.cdr.detectChanges();
+    });
+  }
+
   ngOnInit() {
+    this.loadPlanConfig();
     this.form = this.fb.group({
       name: ['', Validators.required],
       username: ['', [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
@@ -168,6 +216,16 @@ export class PhotographerRegistrationComponent implements OnInit {
           error: () => { this.districts = []; },
         });
       }
+    });
+
+    this.form.get('paymentOption')?.valueChanges.subscribe(() => {
+      this.enforceGalleryLimit();
+      if (!this.isContactEditable()) {
+        this.form.patchValue({
+          contact: { whatsapp: false, email: false, call: false },
+        }, { emitEvent: false });
+      }
+      this.cdr.detectChanges();
     });
 
     this.config.getStates().subscribe(data => { this.states = data; this.cdr.detectChanges(); });
@@ -411,7 +469,7 @@ export class PhotographerRegistrationComponent implements OnInit {
     const files = Array.from((event.target as HTMLInputElement).files || []);
     if (!files.length) return;
 
-    const remainingSlots = this.MAX_PHOTOSHOOT_IMAGES - this.photoshootImagesData.length;
+    const remainingSlots = this.maxPhotoshootImages - this.photoshootImagesData.length;
     const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
     if (!selectedFiles.length) return;
 
@@ -519,8 +577,22 @@ export class PhotographerRegistrationComponent implements OnInit {
     return this.form.get('paymentOption')?.value === 'premium';
   }
 
+  get selectedTotalImageLimit(): number {
+    return this.isPremiumPlan() ? this.premiumTotalImageLimit : this.freeTotalImageLimit;
+  }
+
+  get maxPhotoshootImages(): number {
+    return Math.max(0, this.selectedTotalImageLimit - 1);
+  }
+
+  private enforceGalleryLimit(): void {
+    if (this.photoshootImagesData.length <= this.maxPhotoshootImages) return;
+    this.photoshootImagesData = this.photoshootImagesData.slice(0, this.maxPhotoshootImages);
+    this.photoshootImagesPreview = this.photoshootImagesPreview.slice(0, this.maxPhotoshootImages);
+  }
+
   isContactEditable(): boolean {
-    return this.isPremiumPlan();
+    return this.isPremiumPlan() ? this.premiumContactVisible : this.freeContactVisible;
   }
 
   onSubmit() {
@@ -590,7 +662,9 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],
-      contact: v.contact || { whatsapp: false, email: false, call: false },
+      contact: this.isContactEditable()
+        ? (v.contact || { whatsapp: false, email: false, call: false })
+        : { whatsapp: false, email: false, call: false },
       pricing: pricingArr,
       socialMedia,
       profileImages: [

@@ -296,6 +296,7 @@ export class InfluencerProfileComponent implements OnInit {
   get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxProductImages'); }
   get currentImageCount(): number { return this.profileImagesFormArray?.length ?? 0; }
   get imageUploadAllowed(): boolean { return this.currentImageCount < this.maxImages; }
+  get hasPremiumPlan(): boolean { return !!this.planCaps?.hasPremium; }
   registrationSuccess = false;
   registrationError = '';
   registrationSuccessMessage = '';
@@ -648,7 +649,6 @@ export class InfluencerProfileComponent implements OnInit {
 
     if (step === 2) {
       return !!(
-        this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
@@ -710,7 +710,7 @@ export class InfluencerProfileComponent implements OnInit {
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const isProfessional = !!this.registrationForm.get('professionalStatus')?.value;
       if (isProfessional) {
