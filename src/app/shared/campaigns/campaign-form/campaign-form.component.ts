@@ -331,11 +331,11 @@ export class CampaignFormComponent implements OnInit {
       shootLocationMapUrl: [(this.campaign as any)?.shootLocationMapUrl || ''],
       shootLocationNotes: [(this.campaign as any)?.shootLocationNotes || ''],
       venueName: [(this.campaign as any)?.venueName || ''],
-      venueAddress: [(this.campaign as any)?.venueAddress || ''],
+      venueAddress: [(this.campaign as any)?.venueAddress || (this.campaign as any)?.shootLocationAddress || ''],
       venueCity: [(this.campaign as any)?.venueCity || ''],
       venueDistrict: [(this.campaign as any)?.venueDistrict || ''],
       venueState: [(this.campaign as any)?.venueState || ''],
-      venueGoogleMapUrl: [(this.campaign as any)?.venueGoogleMapUrl || ''],
+      venueGoogleMapUrl: [(this.campaign as any)?.venueGoogleMapUrl || (this.campaign as any)?.shootLocationMapUrl || ''],
       payToJoinBenefits: [(this.campaign as any)?.payToJoinBenefits || ''],
       payToJoinInstructions: [(this.campaign as any)?.payToJoinInstructions || ''],
       productValue: [this.getInitialProductValue()],
@@ -423,6 +423,16 @@ export class CampaignFormComponent implements OnInit {
     this.form.get('targetState')?.valueChanges.subscribe((stateName: string) => {
       this.form.get('targetDistrict')?.setValue('', { emitEvent: false });
       this.loadTargetDistrictsFor(stateName);
+    });
+
+    this.form.get('venueAddress')?.valueChanges.subscribe((value: string) => {
+      if (!this.isInvitingPhotographers) return;
+      this.form.get('shootLocationAddress')?.setValue(value || '', { emitEvent: false });
+    });
+
+    this.form.get('venueGoogleMapUrl')?.valueChanges.subscribe((value: string) => {
+      if (!this.isInvitingPhotographers) return;
+      this.form.get('shootLocationMapUrl')?.setValue(value || '', { emitEvent: false });
     });
 
     if (this.campaign?.image?.url) {
@@ -705,6 +715,9 @@ export class CampaignFormComponent implements OnInit {
   // ── Stepper helpers ──────────────────────────────────────────
   step1Valid(): boolean {
     const isLocation = this.selectedCampaignType === 'invite_location';
+    const needsStructuredVenueAddress = this.isInvitingPhotographers
+      && this.showShootLocationBlock
+      && this.f['shootLocationType'].value !== 'remote';
     const photographerLocationValid = !this.isPhotographerCreator || (
       this.f['shootLocationType'].valid && this.f['shootLocationAddress'].valid
     );
@@ -715,6 +728,9 @@ export class CampaignFormComponent implements OnInit {
       this.f['timelineStart'].value &&
       this.f['timelineEnd'].value &&
       photographerLocationValid &&
+      (!needsStructuredVenueAddress || (
+        this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid
+      )) &&
       (!isLocation || (this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid && this.f['inviteBenefits'].valid)) &&
       !this.form.errors?.['invalidDateRange']
     );
@@ -789,6 +805,12 @@ export class CampaignFormComponent implements OnInit {
       if (!control) continue;
       const validators = [] as any[];
       if (required.has(name)) validators.push(Validators.required);
+      const needsStructuredVenueAddress = this.isInvitingPhotographers
+        && this.showShootLocationBlock
+        && String(this.form.get('shootLocationType')?.value || '') !== 'remote';
+      if (needsStructuredVenueAddress && ['venueAddress', 'venueState', 'venueDistrict', 'venueCity'].includes(name)) {
+        validators.push(Validators.required);
+      }
       if (extra[name]) validators.push(...extra[name]);
       control.setValidators(validators);
       control.updateValueAndValidity({ emitEvent: false });
@@ -839,7 +861,19 @@ export class CampaignFormComponent implements OnInit {
       payload.shootLocationMapUrl = undefined;
       payload.shootLocationNotes = undefined;
     }
-    if (t !== 'invite_location') {
+    if (this.isInvitingPhotographers && (t === 'paid_collab' || t === 'invite_location')) {
+      const addrParts = [payload.venueAddress, payload.venueCity, payload.venueDistrict, payload.venueState]
+        .map((v: any) => String(v || '').trim())
+        .filter(Boolean);
+      if (addrParts.length) {
+        payload.shootLocationAddress = addrParts.join(', ');
+      }
+      if (!payload.shootLocationMapUrl && payload.venueGoogleMapUrl) {
+        payload.shootLocationMapUrl = payload.venueGoogleMapUrl;
+      }
+    }
+
+    if (!(t === 'invite_location' || (this.isInvitingPhotographers && t === 'paid_collab'))) {
       payload.venueName = undefined;
       payload.venueAddress = undefined;
       payload.venueCity = undefined;

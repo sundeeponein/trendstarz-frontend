@@ -276,12 +276,12 @@
                 <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
                   [class.platform-tab--active]="activePlatformTab === platform._id"
                   (click)="activePlatformTab = platform._id">
-                  <i [class]="platform.icon"></i> {{ platform.name }}
+                  <i [class]="platform.icon"></i> <span>{{ platform.name }}</span>
                 </button>
                 <div class="platform-tab-spacer"></div>
                 <button type="button" class="tab-remove" *ngIf="activePlatformTab"
                   (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
-                  <i class="bi bi-x-lg"></i> Remove
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
 

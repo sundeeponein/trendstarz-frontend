@@ -157,12 +157,44 @@
           <span class="field-error" *ngIf="f['shootLocationType'].touched && f['shootLocationType'].invalid">Location type is required</span>
 
           <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">{{ shootLocationAddressLabel }} <span class="required">*</span></label>
-          <textarea *ngIf="f['shootLocationType'].value !== 'remote'" formControlName="shootLocationAddress" class="field-textarea" rows="2"
-                    [placeholder]="isInvitingPhotographers ? 'Studio address, store, venue or exact shoot location for the photographer' : 'Studio address, meetup point, or exact on-site address for the creator'"></textarea>
-          <span class="field-error" *ngIf="f['shootLocationType'].value !== 'remote' && f['shootLocationAddress'].touched && f['shootLocationAddress'].invalid">{{ shootLocationAddressErrorLabel }}</span>
+          <ng-container *ngIf="f['shootLocationType'].value !== 'remote' && isInvitingPhotographers; else singleShootAddressInput">
+            <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
+            <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Venue address" />
+            <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Venue address is required</span>
+
+            <div class="field-row mt-2">
+              <div class="field-group half">
+                <select formControlName="venueState" class="field-input">
+                  <option value="">Select state</option>
+                  <option *ngFor="let s of states" [value]="s.name">{{ s.name }}</option>
+                </select>
+                <span class="field-error" *ngIf="f['venueState'].touched && f['venueState'].invalid">State is required</span>
+              </div>
+              <div class="field-group half">
+                <select formControlName="venueDistrict" class="field-input" [disabled]="!f['venueState'].value || !districts.length">
+                  <option value="">{{ f['venueState'].value ? (districts.length ? 'Select district' : 'Loading districts...') : 'Select state first' }}</option>
+                  <option *ngFor="let d of districts" [value]="d.name">{{ d.name }}</option>
+                </select>
+                <span class="field-error" *ngIf="f['venueDistrict'].touched && f['venueDistrict'].invalid">District is required</span>
+              </div>
+            </div>
+
+            <div class="field-row mt-2">
+              <div class="field-group half">
+                <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
+                <span class="field-error" *ngIf="f['venueCity'].touched && f['venueCity'].invalid">City is required</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-template #singleShootAddressInput>
+            <textarea *ngIf="f['shootLocationType'].value !== 'remote'" formControlName="shootLocationAddress" class="field-textarea" rows="2"
+                      [placeholder]="isInvitingPhotographers ? 'Studio address, store, venue or exact shoot location for the photographer' : 'Studio address, meetup point, or exact on-site address for the creator'"></textarea>
+            <span class="field-error" *ngIf="f['shootLocationType'].value !== 'remote' && f['shootLocationAddress'].touched && f['shootLocationAddress'].invalid">{{ shootLocationAddressErrorLabel }}</span>
+          </ng-template>
 
           <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">Google Maps link <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-          <input *ngIf="f['shootLocationType'].value !== 'remote'" type="url" formControlName="shootLocationMapUrl" class="field-input" placeholder="https://maps.google.com/..." />
+          <input *ngIf="f['shootLocationType'].value !== 'remote'" type="url" [formControlName]="isInvitingPhotographers ? 'venueGoogleMapUrl' : 'shootLocationMapUrl'" class="field-input" placeholder="https://maps.google.com/..." />
 
           <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote'">Pickup / indoor-outdoor notes <span class="text-muted" style="font-weight:400;">(optional)</span></label>
           <textarea *ngIf="f['shootLocationType'].value !== 'remote'" formControlName="shootLocationNotes" class="field-textarea" rows="2"
@@ -212,7 +244,7 @@
 
         
 
-        <div class="field-group" *ngIf="selectedCampaignType === 'invite_location'">
+        <div class="field-group" *ngIf="selectedCampaignType === 'invite_location' && !isInvitingPhotographers">
           <label class="field-label">Venue details <span class="required">*</span></label>
           <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
           <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Venue address" />
@@ -479,7 +511,7 @@
             <div class="platform-tab-spacer"></div>
             <button type="button" class="pdc-remove tab-remove"
                     (click)="togglePlatform({name: activePlatformTab})" title="Remove platform">
-              <i class="bi bi-x-lg"></i> Remove
+              <i class="bi bi-x-lg"></i>
             </button>
           </div>
 

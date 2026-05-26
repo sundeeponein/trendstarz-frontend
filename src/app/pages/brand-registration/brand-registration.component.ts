@@ -178,9 +178,8 @@ export class BrandRegistrationComponent implements OnInit {
       website: [''],
       foundedYear: [''],
       companySize: [''],
-      promotionalPrice: ['', [Validators.required, Validators.min(0)]],
       googleMapAddress: [''],
-      description: [''],
+      description: ['', Validators.required],
 
       contact: this.fb.group({
         whatsapp: [false],
@@ -694,6 +693,7 @@ export class BrandRegistrationComponent implements OnInit {
         f.get('email')?.valid &&
         f.get('phoneNumber')?.valid &&
         f.get('categories')?.valid &&
+        f.get('description')?.valid &&
         f.get('password')?.valid &&
         f.get('confirmPassword')?.valid &&
         !f.errors?.['passwordMismatch'] &&
@@ -756,7 +756,7 @@ export class BrandRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'password', 'confirmPassword'];
+      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'description', 'password', 'confirmPassword'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       this.submitted = true;
 
@@ -1050,7 +1050,6 @@ export class BrandRegistrationComponent implements OnInit {
     const payload: any = {
       ...raw,
       foundedYear: raw.foundedYear ? Number(raw.foundedYear) : undefined,
-      promotionalPrice: Number(raw.promotionalPrice) || 0,
       location: {
         state: stateObj ? stateObj.name : raw.location.state,
         district: districtObj ? districtObj.name : raw.location.district,
@@ -1090,7 +1089,6 @@ export class BrandRegistrationComponent implements OnInit {
         // under zoneless change detection.
         this.registrationForm.reset({
           paymentOption: 'free',
-          promotionalPrice: '',
           contact: { whatsapp: false, email: false, call: false }
         });
         this.refreshStepCompletion();

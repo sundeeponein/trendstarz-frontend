@@ -425,11 +425,16 @@
 
 @media (max-width:786px) {
   .platform-card {
-    width: 100px;
-    min-height: 90px;
+    width: 60px;
+    min-height: 60px;
 
-    .platform-icon { font-size: 1.2rem; }
+    .platform-icon { font-size: 1.3rem; }
     .platform-name {display: none;}
-    .platform-total { font-size: 0.72rem; font-weight: 700; color: #f55b0a; }
+  }
+  
+  .platform-tab-strip {
+    span {
+      display: none;
+    }
   }
 }

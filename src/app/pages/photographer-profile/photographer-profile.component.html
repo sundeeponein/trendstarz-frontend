@@ -270,12 +270,12 @@
                   <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
                     [class.platform-tab--active]="activePlatformTab === platform._id"
                     (click)="activePlatformTab = platform._id">
-                    <i [class]="platform.icon"></i> {{ platform.name }}
+                    <i [class]="platform.icon"></i> <span>{{ platform.name }}</span>
                   </button>
                   <div class="platform-tab-spacer"></div>
                   <button type="button" class="tab-remove" *ngIf="activePlatformTab && isEditMode"
                     (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
-                    <i class="bi bi-x-lg"></i> Remove
+                    <i class="bi bi-x-lg"></i>
                   </button>
                 </div>
 
@@ -352,8 +352,9 @@
 
             <div class="field-grid mt-3">
               <div class="field-block full-width">
-                <label>Starting Price</label>
+                <label>Starting Price <span class="text-danger">*</span></label>
                 <input type="number" class="form-control" [ngModel]="getStartingPrice()" (ngModelChange)="setStartingPrice($event)" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" />
+                <div *ngIf="startingPriceRequiredError" class="text-danger mt-1">Starting price is required.</div>
                 <div class="form-text mt-1" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
               </div>
 

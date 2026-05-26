@@ -171,8 +171,9 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Brand Description</label>
+              <label>Brand Description <span class="text-danger">*</span></label>
               <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell influencers about your brand..."></textarea>
+              <div *ngIf="submitted && registrationForm.get('description')?.invalid" class="text-danger mt-1">Brand description is required.</div>
             </div>
 
             <div class="field-block">
@@ -282,7 +283,7 @@
 
           <!-- Social Media — optional, for brand trust -->
           <div class="social-media-section mt-3">
-            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — helps build trust with influencers)</span></h3>
+            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — Adding social links helps trust your brand profile.)</span></h3>
             <div class="subtitle">Add your social handles so influencers can verify your brand.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
@@ -295,12 +296,12 @@
               <div class="platform-tab-strip">
                 <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
                   [class.platform-tab--active]="activePlatformTab === platform._id" (click)="activePlatformTab = platform._id">
-                  <i [class]="platform.icon"></i> {{ platform.name }}
+                  <i [class]="platform.icon"></i> <span>{{ platform.name }}</span>
                 </button>
                 <div class="platform-tab-spacer"></div>
                 <button type="button" class="tab-remove" *ngIf="activePlatformTab"
                   (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
-                  <i class="bi bi-x-lg"></i> Remove
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
 
@@ -398,18 +399,6 @@
           </div>
 
           <div class="field-grid">
-            <div class="field-block full-width">
-              <label>Starting Price</label>
-              <div class="input-group">
-                <span class="input-group-text">₹</span>
-                <input formControlName="promotionalPrice" type="number" min="0" required class="form-control" placeholder="Enter your starting price" />
-              </div>
-              <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">
-                Starting price is required.
-              </div>
-              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
-            </div>
-
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">

@@ -381,7 +381,7 @@
                   (click)="activePlatformTab = platform._id"
                 >
                   <i [class]="platform.icon"></i>
-                  {{ platform.name }}
+                  <span>{{ platform.name }}</span>
                   <!-- <span class="tab-total" *ngIf="getPlatformTotal(platform) > 0">₹{{ getPlatformTotal(platform) }}</span> -->
                 </button>
                 <div class="platform-tab-spacer"></div>
@@ -392,7 +392,7 @@
                   (click)="removePlatformCard(getPlatformById(activePlatformTab))"
                   title="Remove platform"
                 >
-                  <i class="bi bi-x-lg"></i> Remove
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
 

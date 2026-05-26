@@ -1031,7 +1031,7 @@
         <p *ngIf="!isInfluencerView && showCollaborationsWorkspace">No {{ activeTab }} campaigns yet.</p>
         <p *ngIf="isPhotographerCampaignRequestsView">No campaign requests yet.</p>
         <p *ngIf="isInfluencerView">No open campaigns available right now. Check back soon!</p>
-        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView && showCollaborationsWorkspace" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">{{ isPhotographerView ? 'Create your first collaboration' : 'Create your first campaign' }}</button>
+        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="!isInfluencerView && showCollaborationsWorkspace" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">{{ isPhotographerView ? 'Create your collaboration' : 'Create your campaign' }}</button>
           <div *ngIf="showUpgradeBanner && planLimitError" class="upgrade-banner">
             <app-upgrade-banner [message]="planLimitError"></app-upgrade-banner>
           </div>

@@ -48,6 +48,7 @@ export class PhotographerProfileComponent implements OnInit {
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   premiumMonthlyPrice = 399;
   showResetPasswordModal = false;
+  startingPriceRequiredError = false;
   private originalFormValue: any = null;
   private originalPricingState: any = null;
   private originalPlatformForms: any = null;
@@ -589,6 +590,9 @@ export class PhotographerProfileComponent implements OnInit {
     }
     this.pricingState['Starting Price'].enabled = true;
     this.pricingState['Starting Price'].price = value;
+    if (String(value ?? '').trim()) {
+      this.startingPriceRequiredError = false;
+    }
   }
 
   goToStep(step: 1 | 2 | 3) {
@@ -757,6 +761,7 @@ export class PhotographerProfileComponent implements OnInit {
 
   enableEdit(): void {
     this.isEditMode = true;
+    this.startingPriceRequiredError = false;
     this.form.enable({ emitEvent: false });
     this.emailEditRequested = !this.emailVerified;
     this.originalFormValue = this.form.getRawValue();
@@ -770,6 +775,7 @@ export class PhotographerProfileComponent implements OnInit {
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.startingPriceRequiredError = false;
     this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.form.reset(this.originalFormValue, { emitEvent: false });
@@ -792,6 +798,13 @@ export class PhotographerProfileComponent implements OnInit {
 
   onSave() {
     if (!this.isEditMode || this.form.invalid || this.saving) return;
+    const startingPriceInput = String(this.getStartingPrice() ?? '').trim();
+    if (!startingPriceInput) {
+      this.startingPriceRequiredError = true;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.startingPriceRequiredError = false;
     const v = this.form.getRawValue();
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(v?.email || '').trim().toLowerCase();
@@ -807,6 +820,18 @@ export class PhotographerProfileComponent implements OnInit {
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
       .map(p => ({ name: p.key, enabled: true, price: Number(this.pricingState[p.key].price) || 0 }));
+    const normalizedStartingPrice = Number(startingPriceInput) || 0;
+    const startingPriceIndex = pricingArr.findIndex((entry: any) => String(entry?.name || '').trim() === 'Starting Price');
+    if (startingPriceIndex > -1) {
+      pricingArr[startingPriceIndex].enabled = true;
+      pricingArr[startingPriceIndex].price = normalizedStartingPrice;
+    } else {
+      pricingArr.unshift({
+        name: 'Starting Price',
+        enabled: true,
+        price: normalizedStartingPrice,
+      });
+    }
 
     const socialMedia = this.selectedPlatforms().map(p => {
       const pf = this.platformForms[p._id];

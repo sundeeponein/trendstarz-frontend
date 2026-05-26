@@ -401,9 +401,8 @@ export class BrandProfileComponent implements OnInit {
       website: [''],
       foundedYear: [''],
       companySize: [''],
-      promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
-      description: [''],
+      description: ['', Validators.required],
       brandLogo: this.fb.array([]),
       products: this.fb.array([]),
       productImages: this.fb.array([]),
@@ -513,7 +512,6 @@ export class BrandProfileComponent implements OnInit {
             website: profile.website || '',
             foundedYear: profile.foundedYear || '',
             companySize: profile.companySize || '',
-            promotionalPrice: Number(profile.promotionalPrice ?? 500),
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
             description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false },
@@ -915,6 +913,8 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('brandUsername')?.valid &&
         this.registrationForm.get('email')?.valid &&
         this.registrationForm.get('phoneNumber')?.valid &&
+        this.registrationForm.get('categories')?.valid &&
+        this.registrationForm.get('description')?.valid &&
         this.hasBrandLogo()
       );
     }
@@ -924,7 +924,6 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
-        this.registrationForm.get('categories')?.valid &&
         true /* social media optional */
       );
     }
@@ -979,14 +978,14 @@ export class BrandProfileComponent implements OnInit {
     this.submitted = true;
 
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber'];
+      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'description'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return fields.every((path) => this.registrationForm.get(path)?.valid) && this.hasBrandLogo();
     }
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return required.every((path) => this.registrationForm.get(path)?.valid);
     }
@@ -1094,7 +1093,6 @@ export class BrandProfileComponent implements OnInit {
     const payload: any = {
   ...raw,
   foundedYear: raw.foundedYear ? Number(raw.foundedYear) : undefined,
-  promotionalPrice: Number(raw.promotionalPrice) || 0,
   location,
   languages: languageNames,
   categories: categoryNames,
