@@ -176,11 +176,20 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   private getProfileImage(profile: any, sessionUser: any): { url: string; public_id: string } | null {
+    const getImageUrl = (entry: any): string => {
+      if (!entry) return '';
+      if (typeof entry === 'string') return this.asText(entry);
+      return this.asText(entry?.url) || this.asText(entry?.secure_url);
+    };
+    const getImagePublicId = (entry: any): string => {
+      if (!entry || typeof entry === 'string') return '';
+      return this.asText(entry?.public_id) || this.asText(entry?.publicId);
+    };
+
     const firstProfileImage = profile?.profileImages?.[0] || sessionUser?.profileImages?.[0] || null;
     const imgUrl =
       this.asText(profile?.profileImage) ||
-      this.asText(firstProfileImage?.url) ||
-      this.asText(firstProfileImage?.secure_url) ||
+      getImageUrl(firstProfileImage) ||
       this.asText(sessionUser?.profileImage);
 
     if (!imgUrl) return null;
@@ -188,8 +197,7 @@ export class PhotographerProfileComponent implements OnInit {
       url: imgUrl,
       public_id:
         this.asText(profile?.profileImagePublicId) ||
-        this.asText(firstProfileImage?.public_id) ||
-        this.asText(firstProfileImage?.publicId),
+        getImagePublicId(firstProfileImage),
     };
   }
 
@@ -224,12 +232,18 @@ export class PhotographerProfileComponent implements OnInit {
     this.config.getDistricts(stateName, stateId).subscribe({
       next: d => {
         this.districts = Array.isArray(d) ? d : [];
-        const hasDistrict = this.districts.some(
+        const matchedDistrict = this.districts.find(
           (x: any) =>
             this.asText(x?._id) === currentDistrict ||
             this.asText(x?.name).toLowerCase() === currentDistrict.toLowerCase(),
         );
-        if (currentDistrict && !hasDistrict) {
+        if (currentDistrict && matchedDistrict) {
+          const canonicalDistrict = this.asText(matchedDistrict?._id) || this.asText(matchedDistrict?.name);
+          if (canonicalDistrict && canonicalDistrict !== currentDistrict) {
+            districtControl.setValue(canonicalDistrict, { emitEvent: false });
+          }
+        }
+        if (currentDistrict && !matchedDistrict) {
           this.districts = [...this.districts, { _id: currentDistrict, name: currentDistrict }];
         }
         this.cdr.detectChanges();
@@ -247,11 +261,8 @@ export class PhotographerProfileComponent implements OnInit {
       this.planCaps = caps;
       this.selectedPlan = caps?.hasPremium ? 'premium' : 'free';
       this.enforceGalleryLimit();
-      if (this.form && !this.hasContactVisibility) {
-        this.form.patchValue({
-          contact: { whatsapp: false, email: false, call: false },
-        }, { emitEvent: false });
-      }
+      // Keep saved contact preferences visible even if the current plan
+      // does not allow editing them.
       this.cdr.detectChanges();
     });
 
@@ -648,6 +659,13 @@ export class PhotographerProfileComponent implements OnInit {
     formData.append('folder', 'photographer_profiles');
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {
+        if (!res?.url || !res?.public_id) {
+          this.uploadingImage = false;
+          this.profileImagePreview = '';
+          this.toast.error('Image upload failed. Please try again.');
+          this.cdr.detectChanges();
+          return;
+        }
         this.profileImageData = { url: res.url, public_id: res.public_id };
         this.uploadingImage = false;
         this.cdr.detectChanges();

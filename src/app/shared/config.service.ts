@@ -160,7 +160,16 @@ export class ConfigService {
   }
 
   uploadImage(formData: FormData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/upload-image`, formData);
+    return this.http.post<any>(`${this.apiUrl}/auth/upload-image`, formData).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res) || res || {};
+        return {
+          ...data,
+          url: data?.url || data?.secure_url || '',
+          public_id: data?.public_id || data?.publicId || '',
+        };
+      }),
+    );
   }
 
   getAppSettings(): Observable<{

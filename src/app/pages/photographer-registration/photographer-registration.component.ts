@@ -452,6 +452,13 @@ export class PhotographerRegistrationComponent implements OnInit {
     formData.append('folder', 'photographer_profiles');
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {
+        if (!res?.url || !res?.public_id) {
+          this.uploadingImage = false;
+          this.profileImagePreview = '';
+          this.registrationError = 'Image upload failed. Please try again.';
+          this.cdr.detectChanges();
+          return;
+        }
         this.profileImageData = { url: res.url, public_id: res.public_id };
         this.uploadingImage = false;
         this.cdr.detectChanges();

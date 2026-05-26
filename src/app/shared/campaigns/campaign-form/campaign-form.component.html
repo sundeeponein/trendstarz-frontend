@@ -136,26 +136,19 @@
             <button
               type="button"
               class="btn-use-template"
-              *ngIf="DESCRIPTION_TEMPLATES[selectedCampaignType]"
-              (click)="applyDescriptionTemplate()"
-              title="Fill with a recommended template for this campaign type">
-              <i class="bi bi-file-earmark-text"></i> Use template
+              (click)="openDescriptionGuide()"
+              title="Open guidelines and example briefs for this campaign type">
+              <i class="bi bi-question-circle"></i> View guide &amp; examples
             </button>
           </div>
           <textarea formControlName="description" class="field-textarea" rows="5"
                     placeholder="Describe campaign objectives and expectations..."></textarea>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Paid Collab brief, including deliverables, timeline, and payment details. [You can fully edit it based on your campaign.]
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Product Collab brief, including product details and content expectations. [You can customize product details and expectations.]
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Use template</strong> to load a ready-made Event/Location brief, including venue details, timing, and attendance expectations. [You can edit venue, timing, and requirements.]
+          <p class="field-sublabel">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> to see ready-made briefs you can read and copy-paste. Deliverables, timeline and payment are captured in the structured fields below.
           </p>
         </div>
 
-        <div class="field-group" *ngIf="isPhotographerCreator">
+        <div class="field-group" *ngIf="showShootLocationBlock">
           <label class="field-label">Shoot location type <span class="required">*</span></label>
           <select formControlName="shootLocationType" class="field-input">
             <option value="">Select shoot location type</option>
@@ -165,7 +158,7 @@
 
           <label class="field-label mt-2">Shoot address / meeting point <span class="required">*</span></label>
           <textarea formControlName="shootLocationAddress" class="field-textarea" rows="2"
-                    placeholder="Studio address, meetup point, or exact shoot location for influencer"></textarea>
+                    [placeholder]="isInvitingPhotographers ? 'Studio address, store, venue or exact shoot location for the photographer' : 'Studio address, meetup point, or exact shoot location for influencer'"></textarea>
           <span class="field-error" *ngIf="f['shootLocationAddress'].touched && f['shootLocationAddress'].invalid">Shoot address is required</span>
 
           <label class="field-label mt-2">Google Maps link <span class="text-muted" style="font-weight:400;">(optional)</span></label>
@@ -174,8 +167,36 @@
           <label class="field-label mt-2">Pickup / indoor-outdoor notes <span class="text-muted" style="font-weight:400;">(optional)</span></label>
           <textarea formControlName="shootLocationNotes" class="field-textarea" rows="2"
                     placeholder="Example: Indoor studio setup available, product pickup at front desk, parking details"></textarea>
+          <p class="field-sublabel" *ngIf="isInvitingPhotographers && f['campaignType'].value === 'paid_collab'">
+            <i class="bi bi-geo-alt"></i> The photographer will travel to this shoot location on the agreed date(s). Make sure the address and any access notes (parking, entry, contact person) are clear before publishing.
+          </p>
+          <p class="field-sublabel" *ngIf="isInvitingPhotographers && f['campaignType'].value === 'invite_location'">
+            <i class="bi bi-geo-alt"></i> This is the venue/event/store the photographer will visit for on-site content creation.
+          </p>
+
+          <!-- Photographer → Influencer helper copy (photographer-led collabs) -->
+          <p class="field-sublabel" *ngIf="isPhotographerCreator && (f['campaignType'].value === 'paid_collab' || f['campaignType'].value === 'portfolio_collab' || f['campaignType'].value === 'reel_collab')">
+            <i class="bi bi-geo-alt"></i> This is where the <strong>influencer will travel to</strong> for the shoot. Include parking, entry instructions and an on-site contact person.
+          </p>
+          <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'product'">
+            <i class="bi bi-geo-alt"></i> The influencer will travel to <strong>your studio / shoot setup</strong> for the shoot. The product itself is the compensation — no cash payment unless you have agreed otherwise.
+          </p>
+          <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'invite_location'">
+            <i class="bi bi-geo-alt"></i> Enter the <strong>event / venue address</strong> the influencer will visit for the coverage shoot.
+          </p>
+          <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'creative_project'">
+            <i class="bi bi-geo-alt"></i> For an in-person shoot, enter the location the influencer will visit. If the project is remote / virtual, type <strong>"Remote — no in-person shoot"</strong> in the address field.
+          </p>
+
           <p class="field-sublabel">
-            <i class="bi bi-info-circle"></i> This location information is shown to influencers before they accept the collaboration.
+            <i class="bi bi-info-circle"></i> This location information is shown to {{ shootLocationAudienceLabel }}s before they accept the collaboration.
+          </p>
+        </div>
+
+        <!-- Product Collab + brand→photographer: explicit “no shoot location” note -->
+        <div class="field-group" *ngIf="isInvitingPhotographers && f['campaignType'].value === 'product'">
+          <p class="field-sublabel">
+            <i class="bi bi-box-seam"></i> <strong>No shoot location needed.</strong> For a Product Collab, the product is shipped to the photographer's own studio/setup — they shoot it there. The photographer's shipping address is collected on acceptance.
           </p>
         </div>
 
@@ -358,11 +379,14 @@
               <input type="radio" formControlName="productPaymentMode" value="product_plus_payment" hidden /> Product + Paid Collaboration
             </label>
           </div>
-          <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_only'">
+          <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_only' && !isInvitingPhotographers">
             <i class="bi bi-info-circle"></i> Influencer receives the product only — no cash payment involved.
           </p>
+          <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_only' && isInvitingPhotographers">
+            <i class="bi bi-info-circle"></i> <strong>Product Collab</strong> — You send a free product to the creator in exchange for a professional shoot / honest review content. No cash payment — the product itself is the compensation. Best for unboxing edits, product photography, and lifestyle integrations.
+          </p>
           <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_plus_payment'">
-            <i class="bi bi-info-circle"></i> In addition to the product, influencer will receive a cash payment.
+            <i class="bi bi-info-circle"></i> In addition to the product, {{ isInvitingPhotographers ? 'the creator' : 'influencer' }} will receive a cash payment.
           </p>
           <div class="field-group mt-2" *ngIf="f['productPaymentMode'].value === 'product_plus_payment'">
             <label class="field-label">Cash component per influencer (₹) <span class="required">*</span></label>
@@ -375,6 +399,12 @@
             <button type="button" class="chip" [class.chip--selected]="f['productShippingRequired'].value === true" (click)="form.patchValue({ productShippingRequired: true })">Yes</button>
             <button type="button" class="chip" [class.chip--selected]="f['productShippingRequired'].value === false" (click)="form.patchValue({ productShippingRequired: false })">No</button>
           </div>
+          <p class="field-sublabel" *ngIf="f['productShippingRequired'].value === true">
+            <i class="bi bi-truck"></i> Shipping address will be collected from the {{ isInvitingPhotographers ? 'creator' : 'influencer' }} after they accept your invite — you do not need to enter it here.
+          </p>
+          <p class="field-sublabel" *ngIf="f['productShippingRequired'].value === false">
+            <i class="bi bi-geo-alt"></i> No shipping — product will be handed over in person or no physical product is involved.
+          </p>
         </div>
 
         <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
@@ -568,25 +598,15 @@
             <button
               type="button"
               class="btn-use-template"
-              *ngIf="getSpecialInstructionsExample()"
-              (click)="applySpecialInstructionsExample()"
-              title="Fill with an example brief based on selected type and access mode">
-              <i class="bi bi-list-check"></i> Example
+              (click)="openSpecialInstructionsGuide()"
+              title="Open dos, don'ts and must-include guidance for this campaign type">
+              <i class="bi bi-question-circle"></i> View guide &amp; examples
             </button>
           </div>
           <textarea [formControl]="$any(form.get('specialInstructions'))" class="field-textarea" rows="4"
                     placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab' && f['campaignMode'].value === 'invite_only'">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load a ready-made set of dos, don'ts, and must-include instructions for Paid Collab. Edit freely to match your brand.
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab' && f['campaignMode'].value === 'tier_filtered_open'">
-            <i class="bi bi-lightbulb"></i> Tip: Open mode example includes clear eligibility filters and application review criteria.
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load product collab guidelines — what to show, what to avoid, and mandatory disclosures.
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>Example</strong> to load location visit instructions — pre-visit, on-site, and post-visit guidelines.
+          <p class="field-sublabel">
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> for ready-made dos, don'ts and must-include points you can copy-paste and edit.
           </p>
         </div>
 
@@ -830,3 +850,5 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<app-campaign-guide-modal></app-campaign-guide-modal>

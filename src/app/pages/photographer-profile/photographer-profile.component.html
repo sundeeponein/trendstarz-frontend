@@ -360,9 +360,9 @@
               <div class="field-block full-width" formGroupName="contact">
                 <label class="contact-section-label">HOW TO CONTACT YOU?</label>
                 <div class="text-muted mt-1" style="font-size:0.9em;">
-                  Contact details are shared only with brands in campaign flow after acceptance.
+                  Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
                   <br>
-                  <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+                  <span style="color: #dc2626; font-weight: 500;">⚠️ Only verified email/mobile are shown when unlocked. Unverified contact can reduce campaign opportunities.</span>
                 </div>
                 <div class="contact-cards">
                   <label class="contact-card" [class.selected]="form.get('contact.whatsapp')?.value">
@@ -390,7 +390,7 @@
               <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
               <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
               <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true">Reset Password</button>
-              <a class="btn btn-outline-secondary" routerLink="/upgrade-premium">Upgrade Plan</a>
+              <!-- <a class="btn btn-outline-secondary" routerLink="/upgrade-premium">Upgrade Plan</a> -->
               <button type="submit" *ngIf="isEditMode" class="btn btn-primary" [disabled]="saving || uploadingImage">
                 {{ saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Profile' }}
               </button>

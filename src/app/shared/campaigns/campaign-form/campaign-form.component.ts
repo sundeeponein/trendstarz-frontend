@@ -7,6 +7,8 @@ import { environment } from '../../../../environments/environment';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
 import { TierInfoService } from '../../components/tier-info-modal/tier-info.service';
 import { FlowHelpModalService } from '../../components/flow-help-modal/flow-help-modal.service';
+import { CampaignGuideModalService, CampaignGuideContent } from '../../components/campaign-guide-modal/campaign-guide-modal.service';
+import { CampaignGuideModalComponent } from '../../components/campaign-guide-modal/campaign-guide-modal.component';
 import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 import { ToastService } from '../../toast/toast.service';
 
@@ -15,7 +17,7 @@ import { ToastService } from '../../toast/toast.service';
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
@@ -98,13 +100,6 @@ export class CampaignFormComponent implements OnInit {
     tier_filtered_open: `Mode: Open to all (with filters)\n• Mention minimum tier and optional location constraints\n• Clarify that eligible creators apply and you'll review applicants\n• Add how quickly applications will be reviewed`,
   };
 
-  applySpecialInstructionsExample(): void {
-    const example = this.getSpecialInstructionsExample();
-    if (example) {
-      this.form.patchValue({ specialInstructions: example });
-    }
-  }
-
   getSpecialInstructionsExample(): string {
     const typeKey = this.selectedCampaignType;
     const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
@@ -114,40 +109,150 @@ export class CampaignFormComponent implements OnInit {
     return base || mode;
   }
 
-  private readonly AUTO_NOTE_SEP = '\n\n---\n';
-  private readonly AUTO_NOTES: Record<string, string> = {
-    product_only: 'Note: This is a product-based collaboration. No monetary payment is included.',
-    product_plus_payment: 'Note: This collaboration includes product + payment.',
-    invite_location: 'Note: Only influencers who attend the location will be eligible for collaboration benefits.',
-  };
-
-  applyDescriptionTemplate(): void {
-    const template = this.DESCRIPTION_TEMPLATES[this.selectedCampaignType];
+  /**
+   * Opens a popup with guideline + copyable example brief based on the
+   * currently selected campaign type and invite-recipient role. The user can
+   * copy individual sections (or all) and paste into the description field.
+   */
+  openDescriptionGuide(): void {
+    const type = this.selectedCampaignType;
+    const invitingPhotographers = this.isInvitingPhotographers;
+    const audience = invitingPhotographers ? 'photo/videographers' : 'influencers';
+    const audienceSingular = invitingPhotographers ? 'creator' : 'influencer';
     const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
     const modeNote = this.DESCRIPTION_MODE_EXAMPLES[modeKey] || '';
-    const mergedTemplate = template && modeNote ? `${template}\n\n${modeNote}` : (template || modeNote);
-    if (mergedTemplate) {
-      this.form.patchValue({ description: mergedTemplate });
-      if (this.selectedCampaignType === 'product') {
-        this.syncDescriptionCollabNote(String(this.f['productPaymentMode'].value || 'product_only'));
-      } else if (this.selectedCampaignType === 'invite_location') {
-        this.syncDescriptionCollabNote('invite_location');
-      }
+
+    const content: CampaignGuideContent = {
+      title: 'Campaign description — guide & examples',
+      subtitle: `Read the points below and copy any block into your description. Tailored for ${audience}.`,
+      sections: [],
+    };
+
+    if (type === 'paid_collab') {
+      content.sections.push({
+        heading: 'What to cover in your description',
+        variant: 'tip',
+        copyable: false,
+        body: `• Goal of the collaboration (launch, awareness, conversions)\n• What the ${audienceSingular} will create (format, length)\n• Tone and creative direction (do/don't)\n• Any platform / hashtag / CTA requirements\n\nDeliverables, timeline and payment are captured in the form fields below — you do not need to repeat them in the description.`,
+      });
+      content.sections.push({
+        heading: invitingPhotographers ? 'Sample brief (Paid creative requirement)' : 'Sample brief (Paid collaboration)',
+        body: invitingPhotographers
+          ? `What we expect:\n• 1 short-form video (Reel / Short) showcasing the product\n• Highlight key features in your own style\n• Maintain a natural, audience-friendly tone\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Vertical 9:16 format preferred\n• Mention brand handle & provided hashtags\n• Include CTA: "Check link in bio / visit our page"`
+          : `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"`,
+      });
+      content.sections.push({
+        heading: 'Important notes',
+        body: `• Content should be original and not reused from past posts\n• Brand reserves the right to request minor edits before posting\n• No offensive or misleading content`,
+      });
+    } else if (type === 'product') {
+      const paymentMode = String(this.f['productPaymentMode']?.value || 'product_only');
+      content.sections.push({
+        heading: invitingPhotographers ? 'What "Product Collab" means for photo/videographers' : 'What "Product Collab" means',
+        variant: 'tip',
+        copyable: false,
+        body: invitingPhotographers
+          ? `Product Collab — You send a free product to the creator in exchange for a professional shoot / honest review content. No cash payment — the product itself is the compensation. Best suited for unboxing edits, product photography, lifestyle integrations and review reels.`
+          : `Product Collab — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.`,
+      });
+      content.sections.push({
+        heading: 'Sample brief (Product collaboration)',
+        body: invitingPhotographers
+          ? `We are offering a product-based creative requirement where photo/videographers receive our product to produce shoot content.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your shoot address after acceptance\n\nWhat we expect:\n• 1 Reel / Short Video OR a photo set featuring the product\n• Showcase product styling, detailing, real usage\n• Provide raw + edited deliverables as agreed`
+          : `We are offering a product-based collaboration where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging`,
+      });
+      content.sections.push({
+        heading: 'Important notes',
+        body: paymentMode === 'product_only'
+          ? `• ${invitingPhotographers ? 'No monetary payment is involved — the product is the compensation' : 'No monetary payment is involved in this collaboration'}\n• Content should be original and not reused\n• Brand may request minor edits before posting`
+          : `• In addition to the product, a cash component will be paid as per the campaign budget\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
+      });
+      content.sections.push({
+        heading: 'Shipping address',
+        variant: 'info',
+        copyable: false,
+        body: `If "Product shipping required" is set to Yes, the accepted ${audienceSingular} will be asked to confirm their delivery address after accepting your invite. You do not need to collect it here.`,
+      });
+    } else if (type === 'invite_location') {
+      content.sections.push({
+        heading: 'What to cover',
+        variant: 'tip',
+        copyable: false,
+        body: `• Venue / location and exact date + time window\n• What is provided on-site (access, food, services)\n• Expected coverage (stories, reel, post)\n• Tagging and hashtag requirements`,
+      });
+      content.sections.push({
+        heading: 'Sample brief (Invite to location)',
+        body: `We are inviting ${audience} to attend an exclusive on-location experience at our venue and create engaging content around it.\n\nEvent Details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content\n• Capture ambience, product/service and overall vibe`,
+      });
+      content.sections.push({
+        heading: 'Important notes',
+        body: `• This is an invite-only collaboration (no product shipping)\n• ${invitingPhotographers ? 'Creators' : 'Influencers'} must confirm availability before acceptance\n• Only ${audience} who attend the location will be eligible for collaboration benefits`,
+      });
+    } else {
+      content.sections.push({
+        heading: 'Tips for writing a clear description',
+        variant: 'tip',
+        copyable: false,
+        body: `• State the goal of the collaboration\n• Describe the content you expect (format, tone)\n• Mention any platform / hashtag / CTA requirements\n• Deliverables, timeline and payment go in the fields below — no need to repeat here.`,
+      });
     }
+
+    if (modeNote) {
+      content.sections.push({
+        heading: 'Access mode',
+        variant: 'info',
+        copyable: false,
+        body: modeNote,
+      });
+    }
+
+    this.guideModal.open(content);
   }
 
-  private syncDescriptionCollabNote(mode: string): void {
-    if (this.selectedCampaignType !== 'product' && this.selectedCampaignType !== 'invite_location') return;
-    const ctrl = this.form.get('description');
-    if (!ctrl) return;
-    let desc: string = ctrl.value || '';
-    // Strip any existing auto-note
-    const sepIdx = desc.indexOf(this.AUTO_NOTE_SEP);
-    if (sepIdx !== -1) desc = desc.substring(0, sepIdx);
-    desc = desc.trimEnd();
-    const note = this.AUTO_NOTES[mode];
-    if (note) desc += this.AUTO_NOTE_SEP + note;
-    ctrl.setValue(desc, { emitEvent: false });
+  /**
+   * Opens a popup with dos, don'ts and must-include guidance for the
+   * "Special instructions / brief" field, tailored to campaign type, access
+   * mode and recipient role.
+   */
+  openSpecialInstructionsGuide(): void {
+    const type = this.selectedCampaignType;
+    const invitingPhotographers = this.isInvitingPhotographers;
+    const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
+    const audienceSingular = invitingPhotographers ? 'creator' : 'influencer';
+
+    const content: CampaignGuideContent = {
+      title: 'Special instructions — guide & examples',
+      subtitle: `Use these dos, don'ts and must-include points as a starting point for your brief. Copy any block and edit to match your brand.`,
+      sections: [],
+    };
+
+    const typeExample = this.SPECIAL_INSTRUCTIONS_EXAMPLES[type];
+    if (typeExample) {
+      content.sections.push({
+        heading: type === 'invite_location' ? 'Visit instructions (Dos / Don\'ts)' : 'Dos, Don\'ts and Must-include',
+        body: invitingPhotographers
+          ? typeExample.replace(/influencer/gi, audienceSingular)
+          : typeExample,
+      });
+    } else {
+      content.sections.push({
+        heading: 'General brief structure',
+        variant: 'tip',
+        copyable: false,
+        body: `Dos:\n• ...\n\nDon'ts:\n• ...\n\nMust include:\n• ...`,
+      });
+    }
+
+    const modeExample = this.SPECIAL_INSTRUCTIONS_MODE_EXAMPLES[modeKey];
+    if (modeExample) {
+      content.sections.push({
+        heading: 'Access-mode specific notes',
+        variant: 'info',
+        body: modeExample,
+      });
+    }
+
+    this.guideModal.open(content);
   }
   // ── Photographer-specific ────────────────────────────────────
   readonly PHOTOGRAPHER_SERVICES = [
@@ -183,6 +288,7 @@ export class CampaignFormComponent implements OnInit {
   platformsList: any[] = [];
   protected tierInfo = inject(TierInfoService);
   protected flowHelp = inject(FlowHelpModalService);
+  protected guideModal = inject(CampaignGuideModalService);
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
@@ -257,8 +363,7 @@ export class CampaignFormComponent implements OnInit {
       }
       this.applyCampaignTypeValidators(t);
     });
-    this.form.get('productPaymentMode')?.valueChanges.subscribe((mode: string) => {
-      this.syncDescriptionCollabNote(mode);
+    this.form.get('productPaymentMode')?.valueChanges.subscribe(() => {
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     });
 
@@ -268,6 +373,8 @@ export class CampaignFormComponent implements OnInit {
       if (!this.isPhotographerCreator && this.inviteRecipientRole === 'photographer') {
         this.form.patchValue({ campaignMode: 'invite_only' }, { emitEvent: false });
       }
+      // Recipient change can flip whether shoot-location is required (brand→photographer needs it for paid/location).
+      this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
       this.selectedInfluencerIds.clear();
       this.selectionLimitError = '';
       this.loadRecipientCategories();
@@ -349,6 +456,23 @@ export class CampaignFormComponent implements OnInit {
 
   get isPhotographerCreator(): boolean {
     return this.creatorRole === 'photographer';
+  }
+
+  /**
+   * Whether the shoot-location block should be shown.
+   * - Photographer-led collabs: always (photographer specifies their studio/site).
+   * - Brand → Photographer invites: only for Paid Collab and Invite to Location
+   *   (Product Collab ships product TO the photographer's studio — no shoot site needed).
+   */
+  get showShootLocationBlock(): boolean {
+    if (this.isPhotographerCreator) return true;
+    if (!this.isInvitingPhotographers) return false;
+    const type = String(this.form?.get('campaignType')?.value || '');
+    return type === 'paid_collab' || type === 'invite_location';
+  }
+
+  get shootLocationAudienceLabel(): string {
+    return this.isInvitingPhotographers ? 'photographer' : 'influencer';
   }
 
   get formTitleNoun(): string {
@@ -603,8 +727,11 @@ export class CampaignFormComponent implements OnInit {
     this.form.get('venueCity')?.setValidators(isLocation ? [Validators.required] : []);
     this.form.get('inviteBenefits')?.setValidators(isLocation ? [Validators.required, Validators.minLength(3)] : []);
     this.form.get('payToJoinBenefits')?.setValidators(isPayToJoin ? [Validators.required, Validators.minLength(5)] : []);
-    this.form.get('shootLocationType')?.setValidators(this.isPhotographerCreator ? [Validators.required] : []);
-    this.form.get('shootLocationAddress')?.setValidators(this.isPhotographerCreator ? [Validators.required, Validators.minLength(3)] : []);
+    // Shoot location: required for photographer-led collabs, and for brand→photographer invites when
+    // requirement type is Paid Collab or Invite to Location (NOT Product Collab — product ships to photographer).
+    const needsShootLocation = this.isPhotographerCreator || (this.isInvitingPhotographers && (isPaid || isLocation));
+    this.form.get('shootLocationType')?.setValidators(needsShootLocation ? [Validators.required] : []);
+    this.form.get('shootLocationAddress')?.setValidators(needsShootLocation ? [Validators.required, Validators.minLength(3)] : []);
 
     // Product: description required; productValue optional
     this.form.get('productDescription')?.setValidators(isProduct ? [Validators.required, Validators.minLength(3)] : []);
@@ -654,7 +781,11 @@ export class CampaignFormComponent implements OnInit {
 
   private sanitizeCampaignTypeFields(payload: any): any {
     const t = String(payload?.campaignType || '');
-    if (!this.isPhotographerCreator) {
+    // Preserve shoot-location fields for photographer-led collabs, and for brand→photographer invites
+    // where the requirement type is Paid Collab or Invite to Location. Strip for everything else.
+    const keepShootLocation = this.isPhotographerCreator
+      || (this.isInvitingPhotographers && (t === 'paid_collab' || t === 'invite_location'));
+    if (!keepShootLocation) {
       payload.shootLocationType = undefined;
       payload.shootLocationAddress = undefined;
       payload.shootLocationMapUrl = undefined;

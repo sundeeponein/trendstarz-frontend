@@ -16,8 +16,14 @@
           </div>
 
           <div class="pcf-field pcf-full">
-            <label>Description *</label>
+            <div class="pcf-label-row">
+              <label>Description *</label>
+              <button type="button" class="pcf-guide-btn" (click)="openDescriptionGuide()" title="Open guidelines and example briefs">
+                <i class="bi bi-question-circle"></i> View guide &amp; examples
+              </button>
+            </div>
             <textarea class="form-control" rows="4" formControlName="description" placeholder="Describe your shoot objective, expectations, and what creators should know."></textarea>
+            <small class="text-muted">Click <strong>View guide &amp; examples</strong> for ready-made briefs you can copy and edit. Budget, deliverables and platforms are captured in the structured fields below.</small>
           </div>
 
           <div class="pcf-field">
@@ -184,7 +190,12 @@
           </div>
 
           <div class="pcf-field pcf-full">
-            <label>Additional Instructions</label>
+            <div class="pcf-label-row">
+              <label>Additional Instructions</label>
+              <button type="button" class="pcf-guide-btn" (click)="openSpecialInstructionsGuide()" title="Open dos, don'ts and must-include guidance">
+                <i class="bi bi-question-circle"></i> View guide &amp; examples
+              </button>
+            </div>
             <textarea class="form-control" rows="3" formControlName="specialInstructions" placeholder="Any special notes for creators"></textarea>
           </div>
         </div>
@@ -197,3 +208,5 @@
     </div>
   </div>
 </div>
+
+<app-campaign-guide-modal></app-campaign-guide-modal>

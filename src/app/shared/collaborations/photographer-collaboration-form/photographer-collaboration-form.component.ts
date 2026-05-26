@@ -1,13 +1,15 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Campaign } from '../../campaigns/campaign.model';
 import { ConfigService } from '../../config.service';
+import { CampaignGuideModalService, CampaignGuideContent } from '../../components/campaign-guide-modal/campaign-guide-modal.service';
+import { CampaignGuideModalComponent } from '../../components/campaign-guide-modal/campaign-guide-modal.component';
 
 @Component({
   selector: 'app-photographer-collaboration-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CampaignGuideModalComponent],
   templateUrl: './photographer-collaboration-form.component.html',
   styleUrls: [
     './photographer-collaboration-form.component.scss',
@@ -50,6 +52,8 @@ export class PhotographerCollaborationFormComponent implements OnInit {
   selectedDeliverables: string[] = [];
   selectedPlatforms: string[] = [];
   submitAttempted = false;
+
+  protected guideModal = inject(CampaignGuideModalService);
 
   constructor(
     private readonly fb: FormBuilder,
@@ -287,5 +291,82 @@ export class PhotographerCollaborationFormComponent implements OnInit {
     const paise = Number(value || 0);
     if (!Number.isFinite(paise) || paise <= 0) return null;
     return Math.floor(paise / 100);
+  }
+
+  /** Opens a guide popup with example descriptions for the selected collaboration type. */
+  openDescriptionGuide(): void {
+    const type = String(this.form?.get('collaborationType')?.value || 'paid_collab');
+    const compensation = String(this.form?.get('compensationModel')?.value || 'paid');
+
+    const content: CampaignGuideContent = {
+      title: 'Collaboration description — guide & examples',
+      subtitle: 'Read the points below and copy any block into your description.',
+      sections: [
+        {
+          heading: 'What to cover',
+          variant: 'tip',
+          copyable: false,
+          body: `• Goal of the shoot / collaboration\n• Type of content (Reel, Photo set, YouTube video, etc.)\n• Location, indoor/outdoor and any access requirements\n• Look & feel, references or moodboard cues\n• Deliverable formats (raw + edited, aspect ratios)\n\nBudget, max creators and platforms are captured in the structured fields below — you do not need to repeat them in the description.`,
+        },
+      ],
+    };
+
+    if (type === 'paid_collab') {
+      content.sections.push({
+        heading: 'Sample brief — Paid shoot',
+        body: `What we are planning:\n• A short-form Reel + 4 edited stills with a creator\n• Look: lifestyle, natural daylight, urban backdrop\n• Duration on set: ~3 hours\n\nWhat we expect:\n• 1 final Reel (15–30s, 9:16) with smooth cuts and color grade\n• 4 edited stills (high-res, no aggressive filters)\n• Raw files shared via Drive within 3 days\n\nLogistics:\n• Shoot location, props and styling will be provided\n• Travel within city limits is included; outside-city to be discussed`,
+      });
+    } else if (type === 'product') {
+      content.sections.push({
+        heading: 'Sample brief — Barter / Product shoot',
+        body: `What you'll receive:\n• Free product worth ₹XXXX to feature in the shoot\n• Delivered to your shoot address after acceptance\n\nWhat we expect:\n• 1 Reel + 3 edited stills showcasing the product\n• Highlight key features, styling and real usage\n• Provide raw + edited deliverables as agreed\n\nImportant:\n• ${compensation === 'paid' ? 'In addition to the product, a cash component will be paid as per the agreed budget.' : 'This is a barter shoot — no cash payment. The product is the compensation.'}`,
+      });
+    } else if (type === 'reel_collab') {
+      content.sections.push({
+        heading: 'Sample brief — Reel collaboration',
+        body: `Concept:\n• A collaborative Reel co-created with the creator\n• Trend / theme: [describe]\n• Tone: [fun / aesthetic / informative / story-driven]\n\nWhat we expect:\n• 1 finished Reel (15–45s, 9:16)\n• Posted as a Collab post (both accounts as co-authors)\n• Insights shared after 7 days`,
+      });
+    } else if (type === 'youtube_video') {
+      content.sections.push({
+        heading: 'Sample brief — YouTube video',
+        body: `What we are planning:\n• A YouTube video segment / feature\n• Duration: [3–8 mins] | Format: [vlog / tutorial / review]\n\nWhat we expect:\n• 1 fully edited YouTube video\n• 1 vertical short cut (≤60s)\n• Thumbnail asset (optional)\n• Source files delivered within 5 days`,
+      });
+    } else if (type === 'portfolio_collab') {
+      content.sections.push({
+        heading: 'Sample brief — Portfolio collaboration',
+        body: `What we are planning:\n• A mutual portfolio shoot — both sides retain usage rights\n• Theme / look: [describe]\n• Location: [studio / outdoor / venue]\n\nWhat we expect:\n• 1 Reel + curated stills set\n• Edited deliverables suitable for both portfolios\n• Credits on both sides when posted`,
+      });
+    } else if (type === 'invite_location') {
+      content.sections.push({
+        heading: 'Sample brief — Event coverage',
+        body: `Event details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat we expect:\n• Coverage Reel (30–60s) capturing highlights\n• Curated stills set (people, ambience, key moments)\n• Live stories during the event (preferred)\n\nLogistics:\n• Entry passes will be arranged on confirmation\n• Bring required equipment; basic lighting available on-site`,
+      });
+    } else {
+      content.sections.push({
+        heading: 'Sample brief — Creative project',
+        body: `Concept:\n• Describe the creative idea in 2–3 lines\n• References / moodboard links\n• Look, tone and final deliverable formats\n\nWhat we expect:\n• Clear list of final deliverables\n• Turnaround timeline after shoot`,
+      });
+    }
+
+    this.guideModal.open(content);
+  }
+
+  /** Opens a guide popup with dos / don'ts for the "Additional Instructions" field. */
+  openSpecialInstructionsGuide(): void {
+    this.guideModal.open({
+      title: 'Additional instructions — guide & examples',
+      subtitle: `Use these dos, don'ts and must-include points as a starting point. Copy any block and edit to match your shoot.`,
+      sections: [
+        {
+          heading: 'Dos, Don\'ts and Must-include',
+          body: `Dos:\n• Confirm shoot date, time and location at least 24 hours in advance\n• Carry primary + backup equipment (lenses, batteries, cards)\n• Follow agreed look/feel and reference moodboard\n• Share preview frames on set for quick approvals\n\nDon'ts:\n• Do not reuse any of these deliverables for other clients without consent\n• Do not over-process colours beyond agreed look\n• Do not bring external crew without prior approval\n\nMust include:\n• Raw + edited files delivered on time\n• Backup of all files retained for 30 days\n• Credit tag when posting on personal handles`,
+        },
+        {
+          heading: 'Access-mode tip',
+          variant: 'info',
+          body: `Open to all: clearly mention minimum portfolio expectations and turnaround.\nInvite only: keep acceptance criteria explicit (style, location, availability).`,
+        },
+      ],
+    });
   }
 }

@@ -73,7 +73,12 @@ export class PhotographerProfileViewComponent implements OnInit {
   }
 
   get displayImage(): string {
-    const imageUrl = this.photographer?.profileImage || this.photographer?.profileImages?.[0]?.url;
+    const firstImage = this.photographer?.profileImages?.[0];
+    const firstImageUrl =
+      typeof firstImage === 'string'
+        ? firstImage
+        : (firstImage?.url || firstImage?.secure_url || '');
+    const imageUrl = this.photographer?.profileImage || firstImageUrl;
     return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';
   }
   
