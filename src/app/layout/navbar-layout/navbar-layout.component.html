@@ -35,9 +35,9 @@
       <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="nav-tab" [class.active]="isPhotographerCollaborationsNavActive">
         Collaborations
       </a>
-      <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
+      <!-- <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Transactions
-      </a>
+      </a> -->
       <a routerLink="/features" routerLinkActive="active" class="nav-tab">
         Features
       </a>
@@ -90,9 +90,6 @@
           Login
         </a>
 
-        <span class="badge rounded-pill bg-success d-none d-md-block" *ngIf="user && user.isPremium">Pro plan</span>
-        <span class="badge rounded-pill bg-secondary d-none d-md-block" *ngIf="user && !user.isPremium">Free plan</span>
-        <span class="badge rounded-pill d-none d-md-inline-flex commission-badge" *ngIf="user && hasCommissionBadge" [ngClass]="commissionBadgeClass">{{ commissionBadgeLabel }}</span>
 
         <div class="profile-dropdown d-none d-md-block" *ngIf="user">
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
@@ -104,19 +101,36 @@
             </span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
-            <li><span class="dropdown-header">{{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : user.email) }}</span></li>
+            <li>
+              <span class="dropdown-header">{{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : user.email) }}</span>
+            </li>
             <li><hr class="dropdown-divider"></li>
+            <!-- plans subscription and Badgs given by admin -->
+            <li class="dropdown-item">
+              <span class="ml-3 badge rounded-pill bg-success d-none d-md-block d-md-inline-flex" *ngIf="user && user.isPremium">Pro</span>
+              <!-- <span class="badge rounded-pill bg-secondary d-none d-md-block d-md-inline-flex" *ngIf="user && !user.isPremium">Free plan</span> -->
+              <span class="badge rounded-pill d-none d-md-inline-flex commission-badge" *ngIf="user && hasCommissionBadge" [ngClass]="commissionBadgeClass">{{ commissionBadgeLabel }}</span>
+            </li>
+            <!-- influencers visible links -->
             <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/influencer-profile">Profile</a></li>
+            <!-- <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }">Campaigns</a></li> -->
+            <!-- <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }">Collaborations</a></li> -->
+            
+            <!-- Brands visible links -->
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-profile">Profile</a></li>
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
-            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }">Campaigns</a></li>
-            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }">Collaborations</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }">Campaigns</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }">Collaborations</a></li>
+
+            <!-- photographer visible links -->
+            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-profile">Profile</a></li>
+            <!-- <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-dashboard">Dashboard</a></li> -->
+            <!-- <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }">Campaigns</a></li> -->
+            <!-- <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }">Collaborations</a></li> -->
+            
+            <!-- influencer & brand visible links -->
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/transactions">Transactions</a></li>
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/payment-history">Subscription History</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-dashboard">Dashboard</a></li>
+            
+            <!-- Admin visible links -->
             <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Admin Panel</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
