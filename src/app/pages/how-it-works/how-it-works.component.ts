@@ -18,7 +18,7 @@ type UserRole = 'influencer' | 'brand' | 'admin' | 'guest';
 export class HowItWorksComponent implements OnDestroy {
   user: any = null;
   role: UserRole = 'guest';
-  audienceMode: 'all' | 'influencer' | 'brand' = 'all';
+  audienceMode: 'all' | 'influencer' | 'brand' | 'photographer' = 'all';
   routeBasePath = '/how-it-works';
   routeSource = 'how-it-works';
 
@@ -34,6 +34,11 @@ export class HowItWorksComponent implements OnDestroy {
   brandSignupParams = {
     source: this.routeSource,
     audience: 'brand',
+  };
+
+  photographerSignupParams = {
+    source: this.routeSource,
+    audience: 'photographer',
   };
 
   influencerCampaignParams = {
@@ -82,8 +87,14 @@ export class HowItWorksComponent implements OnDestroy {
 
   private resolveAudience(
     audience: unknown,
-  ): 'all' | 'influencer' | 'brand' {
-    if (audience === 'influencer' || audience === 'brand') return audience;
+  ): 'all' | 'influencer' | 'brand' | 'photographer' {
+    if (
+      audience === 'influencer' ||
+      audience === 'brand' ||
+      audience === 'photographer'
+    ) {
+      return audience;
+    }
     return 'all';
   }
 

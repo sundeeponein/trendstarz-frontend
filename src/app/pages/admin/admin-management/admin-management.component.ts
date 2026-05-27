@@ -23,6 +23,15 @@ const DEFAULT_PRICING_OPTIONS = [
   { key: 'Equipment', label: 'Equipment Rental', visible: true },
 ];
 
+const DEFAULT_SOCIAL_MEDIA_NAMES = [
+  'Instagram',
+  'YouTube',
+  'Facebook',
+  'TikTok',
+  'X / Twitter',
+  'LinkedIn',
+];
+
 @Component({
   selector: 'app-admin-management',
   standalone: true,
@@ -99,6 +108,20 @@ export class AdminManagementComponent implements OnInit {
     return buildDefaultUserTagVisibilityOptions();
   }
 
+  private normalizeSocialMediaPlatforms(list: unknown): any[] {
+    const data = Array.isArray(list) ? list : [];
+    return data.map((item: any, index: number) => {
+      const label = [item?.name, item?.socialMedia, item?.platform, item?.label, item?.title]
+        .find((value: unknown) => typeof value === 'string' && value.trim());
+
+      return {
+        ...item,
+        visible: !!item?.showInFrontend,
+        displayName: label || DEFAULT_SOCIAL_MEDIA_NAMES[index] || `Platform ${index + 1}`,
+      };
+    });
+  }
+
   get filteredUserTags(): Array<{ name: string; visible: boolean }> {
     const list = this.config?.userTags?.[this.userTagsRoleTab];
     return Array.isArray(list) ? list : [];
@@ -119,6 +142,8 @@ export class AdminManagementComponent implements OnInit {
     preApproveBrands: false,
     brandRequireEmailVerified: true,
     brandRequireMobileVerified: false,
+    pendingUserAutoDeleteEnabled: false,
+    pendingUserAutoDeleteDays: 45,
     campaignApprovalMode: 'manual',
     collaborationApprovalMode: 'manual',
     // Admin-managed support contact (shown on campaign-management page banner).
@@ -159,7 +184,11 @@ export class AdminManagementComponent implements OnInit {
   earlyAccessNormalizeRunning = false;
   earlyAccessNormalizeMessage = '';
   earlyAccessAdvancedOpen = false;
+  pendingUserAutoDeleteLastRunAt: string | null = null;
+  pendingUserAutoDeleteLastRunCount = 0;
+  pendingUserAutoDeleteLastRunBy = '';
   showVisibilityConfirmModal = false;
+  private visibilitySnapshot: any = null;
 
   commissionCounts = {
     influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
@@ -185,7 +214,37 @@ export class AdminManagementComponent implements OnInit {
   }
 
   setTab(tab: string) {
+    this.visibilitySnapshot = null;
     this.activeTab = tab;
+  }
+
+  private ensureVisibilitySnapshot() {
+    if (this.visibilitySnapshot) return;
+    this.visibilitySnapshot = JSON.parse(JSON.stringify({
+      socialMediaPlatforms: this.config.socialMediaPlatforms,
+      categories: this.config.categories,
+      equipmentOptions: this.config.equipmentOptions,
+      pricingOptions: this.config.pricingOptions,
+      locations: this.config.locations,
+      districts: this.config.districts,
+      languages: this.config.languages,
+      tiers: this.config.tiers,
+      userTags: this.config.userTags,
+    }));
+  }
+
+  private restoreVisibilitySnapshot() {
+    if (!this.visibilitySnapshot) return;
+    this.config.socialMediaPlatforms = this.visibilitySnapshot.socialMediaPlatforms || [];
+    this.config.categories = this.visibilitySnapshot.categories || [];
+    this.config.equipmentOptions = this.visibilitySnapshot.equipmentOptions || [];
+    this.config.pricingOptions = this.visibilitySnapshot.pricingOptions || [];
+    this.config.locations = this.visibilitySnapshot.locations || [];
+    this.config.districts = this.visibilitySnapshot.districts || [];
+    this.config.languages = this.visibilitySnapshot.languages || [];
+    this.config.tiers = this.visibilitySnapshot.tiers || [];
+    this.config.userTags = this.visibilitySnapshot.userTags || this.getDefaultUserTags();
+    this.cdr.detectChanges();
   }
 
   private getToken(): string | null {
@@ -207,6 +266,17 @@ export class AdminManagementComponent implements OnInit {
         this.settings.preApproveBrands = !!data?.preApproveBrands;
         this.settings.brandRequireEmailVerified = !!data?.brandRequireEmailVerified;
         this.settings.brandRequireMobileVerified = !!data?.brandRequireMobileVerified;
+        this.settings.pendingUserAutoDeleteEnabled = data?.pendingUserAutoDeleteEnabled === true;
+        this.settings.pendingUserAutoDeleteDays =
+          typeof data?.pendingUserAutoDeleteDays === 'number' && data.pendingUserAutoDeleteDays > 0
+            ? Math.floor(data.pendingUserAutoDeleteDays)
+            : 45;
+        this.pendingUserAutoDeleteLastRunAt = data?.pendingUserAutoDeleteLastRunAt || null;
+        this.pendingUserAutoDeleteLastRunCount =
+          typeof data?.pendingUserAutoDeleteLastRunCount === 'number'
+            ? data.pendingUserAutoDeleteLastRunCount
+            : 0;
+        this.pendingUserAutoDeleteLastRunBy = String(data?.pendingUserAutoDeleteLastRunBy || '');
         this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
@@ -304,20 +374,20 @@ export class AdminManagementComponent implements OnInit {
 
     this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
-      this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+      this.config.socialMediaPlatforms = this.normalizeSocialMediaPlatforms(data);
     });
     this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/equipment-options').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/equipment-options', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
         .map((item: any) => ({ ...item, visible: item.visible !== false }));
     }, () => {
       this.config.equipmentOptions = DEFAULT_EQUIPMENT_OPTIONS.map((item: any) => ({ ...item }));
     });
-    this.http.get(baseUrl + '/pricing-options').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/pricing-options', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
         .map((item: any) => ({ ...item, visible: item.visible !== false }));
@@ -369,6 +439,8 @@ export class AdminManagementComponent implements OnInit {
 
   toggleVisible(type: string, idx: number, subIdx?: number) {
     // Only update local state, do not persist yet
+    this.ensureVisibilitySnapshot();
+
     if (type === 'tiers') {
       const tier = this.config.tiers[idx];
       tier.visible = !tier.visible;
@@ -407,6 +479,8 @@ export class AdminManagementComponent implements OnInit {
 
   cancelVisibilitySaveConfirmation() {
     this.showVisibilityConfirmModal = false;
+    this.restoreVisibilitySnapshot();
+    this.visibilitySnapshot = null;
   }
 
   confirmVisibilitySave() {
@@ -436,16 +510,37 @@ export class AdminManagementComponent implements OnInit {
         reloadFn = () => {
           this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
-            this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+            this.config.socialMediaPlatforms = this.normalizeSocialMediaPlatforms(data);
           });
         };
         break;
       case 'categories':
-        payload = { categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })) };
+        payload = {
+          categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
+          equipmentOptions: this.config.equipmentOptions.map((e: any) => ({
+            name: String(e?.name || '').trim(),
+            visible: e?.visible !== false,
+          })).filter((e: any) => !!e.name),
+          pricingOptions: this.config.pricingOptions.map((p: any) => ({
+            key: String(p?.key || p?.label || '').trim(),
+            label: String(p?.label || p?.key || '').trim(),
+            visible: p?.visible !== false,
+          })).filter((p: any) => !!p.key),
+        };
         reloadFn = () => {
           this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+          });
+          this.http.get(baseUrl + '/admin/equipment-options', headers).subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
+              .map((item: any) => ({ ...item, visible: item.visible !== false }));
+          });
+          this.http.get(baseUrl + '/admin/pricing-options', headers).subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
+              .map((item: any) => ({ ...item, visible: item.visible !== false }));
           });
         };
         break;
@@ -506,6 +601,15 @@ export class AdminManagementComponent implements OnInit {
           languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
           states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
           districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible })),
+          equipmentOptions: this.config.equipmentOptions.map((e: any) => ({
+            name: String(e?.name || '').trim(),
+            visible: e?.visible !== false,
+          })).filter((e: any) => !!e.name),
+          pricingOptions: this.config.pricingOptions.map((p: any) => ({
+            key: String(p?.key || p?.label || '').trim(),
+            label: String(p?.label || p?.key || '').trim(),
+            visible: p?.visible !== false,
+          })).filter((p: any) => !!p.key),
           userTags: {
             influencer: (this.config.userTags?.influencer || []).map((t: any) => ({
               name: String(t?.name || '').trim(),
@@ -534,6 +638,7 @@ export class AdminManagementComponent implements OnInit {
       .subscribe({
         next: () => {
           alert('Visibility updated successfully!');
+          this.visibilitySnapshot = null;
           reloadFn();
         },
         error: (err) => {

@@ -38,18 +38,21 @@
       <!-- <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Transactions
       </a> -->
-      <a routerLink="/features" routerLinkActive="active" class="nav-tab">
-        Features
+      <a routerLink="/how-it-works" routerLinkActive="active" class="nav-tab">
+        How It Works
+      </a>
+      <a routerLink="/" fragment="why-trendstarz" class="nav-tab">
+        Why TrendStarz
       </a>
       <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="showRegisterInfluencerLink" class="nav-tab">
-        Register as Influencer
+        Join as Influencer
       </a>
       <a routerLink="/register-brand" routerLinkActive="active" *ngIf="showRegisterBrandLink" class="nav-tab">
-        Register as Brand
+        Join as Brand
       </a>
 
       <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="showRegisterPhotographerLink" class="nav-tab">
-        Register as Photographer
+        Join as Photographer
       </a>
     </div>
 
@@ -214,7 +217,8 @@
         <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
         <a *ngIf="showSearchLink" routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer' || user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
-        <a routerLink="/features" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>Features</span></a>
+        <a routerLink="/how-it-works" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>How It Works</span></a>
+        <a routerLink="/" fragment="why-trendstarz" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
         <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
         <a routerLink="/register-brand" routerLinkActive="active" *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
         <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>

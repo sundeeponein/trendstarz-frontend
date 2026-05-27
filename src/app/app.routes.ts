@@ -17,9 +17,11 @@ export const routes: Routes = [
 			{ path: 'features', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
 			{ path: 'features/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
 			{ path: 'features/brands', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'brand' } },
+			{ path: 'features/photographers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'photographer' } },
 			{ path: 'how-it-works', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
 			{ path: 'how-it-works/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
 			{ path: 'how-it-works/brands', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'brand' } },
+			{ path: 'how-it-works/photographers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'photographer' } },
 			// static pages legal
 			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
 			{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },

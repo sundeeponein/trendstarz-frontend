@@ -15,8 +15,8 @@ export interface BuiltForAudienceItem {
   styleUrls: ['./built-for-audiences.component.scss'],
 })
 export class BuiltForAudiencesComponent {
-  @Input() heading = 'Built For Every Industry';
-  @Input() subheading = 'Tailored influencer marketing solutions for your niche.';
+  @Input() heading = 'Platform Features';
+  @Input() subheading = 'Tools and collaboration solutions built for creators and brands.';
 
   @Input() items: BuiltForAudienceItem[] = [
     { icon: 'bi-person', title: 'Fashion Brands', subtitle: 'Apparel & Accessories' },

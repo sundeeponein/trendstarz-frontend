@@ -5,6 +5,7 @@
   --line: #e8e7f4;
   --influencer: #ff7a18;
   --brand: #008e8e;
+  --photographer: #4f46e5;
   --halo: linear-gradient(120deg, #fff1e5, #ecf8f8);
 
   font-family: 'Space Grotesk', 'Sora', 'Segoe UI', sans-serif;
@@ -185,6 +186,11 @@ h1 {
 
 .brand-cta {
   background: var(--brand);
+  color: #fff;
+}
+
+.photographer-cta {
+  background: var(--photographer);
   color: #fff;
 }
 

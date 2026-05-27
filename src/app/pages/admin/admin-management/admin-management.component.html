@@ -109,7 +109,7 @@
     <h2>Manage Social Media Platforms</h2>
     <ul class="list-group mb-3">
       <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let sm of config.socialMediaPlatforms; let i = index">
-        {{ sm.name }}
+        {{ sm.displayName }}
         <div class="form-check form-switch d-inline-block ms-2">
           <input class="form-check-input" type="checkbox" role="switch"
             id="switchSM{{i}}"
@@ -586,6 +586,60 @@
                 {{ settings.brandRequireMobileVerified ? 'Yes' : 'No' }}
               </label>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong>Pending User Auto-Delete</strong>
+            <p>
+              Soft-delete unapproved users automatically after a configured number of days from registration.
+              This marks users as deleted; media retention and purge follow existing cleanup policy.
+            </p>
+          </div>
+          <div class="form-check form-switch settings-toggle">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="pendingUserAutoDeleteEnabled"
+              [(ngModel)]="settings.pendingUserAutoDeleteEnabled"
+            >
+            <label class="form-check-label" for="pendingUserAutoDeleteEnabled">
+              {{ settings.pendingUserAutoDeleteEnabled ? 'On' : 'Off' }}
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Delete pending users after</span>
+            <div style="max-width: 220px;">
+              <input
+                class="form-control form-control-sm"
+                type="number"
+                min="1"
+                max="3650"
+                [(ngModel)]="settings.pendingUserAutoDeleteDays"
+                [disabled]="!settings.pendingUserAutoDeleteEnabled"
+              >
+              <small class="text-light-emphasis d-block mt-1">Days from first registration (or created date fallback).</small>
+            </div>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUserAutoDeleteLastRunAt; else pendingDeleteNeverRun">
+                {{ pendingUserAutoDeleteLastRunAt | date:'medium' }}
+                - Deleted {{ pendingUserAutoDeleteLastRunCount }} user(s)
+                <span *ngIf="pendingUserAutoDeleteLastRunBy"> by {{ pendingUserAutoDeleteLastRunBy }}</span>
+              </ng-container>
+              <ng-template #pendingDeleteNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
           </div>
         </div>
       </div>

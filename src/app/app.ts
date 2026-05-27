@@ -153,6 +153,10 @@ export class App implements OnInit {
         title: 'How TrendStarz Works for Brands',
         description: 'Learn how brands can find verified creators and run campaigns with confidence.',
       },
+      '/how-it-works/photographers': {
+        title: 'How TrendStarz Works for Photographers',
+        description: 'Learn how photographers can receive collaboration requests, confirm deliverables, and complete shoots on TrendStarz.',
+      },
       '/features/influencers': {
         title: 'How TrendStarz Works for Influencers',
         description: 'Learn how influencers can build profiles, set rates, and get discovered by brands.',
@@ -160,6 +164,10 @@ export class App implements OnInit {
       '/features/brands': {
         title: 'How TrendStarz Works for Brands',
         description: 'Learn how brands can find verified creators and run campaigns with confidence.',
+      },
+      '/features/photographers': {
+        title: 'How TrendStarz Works for Photographers',
+        description: 'Learn how photographers can receive collaboration requests, confirm deliverables, and complete shoots on TrendStarz.',
       },
       '/register-influencer': {
         title: 'Influencer Registration | TrendStarz',

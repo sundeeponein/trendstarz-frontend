@@ -18,11 +18,12 @@
       <a [routerLink]="routeBasePath" class="audience-pill" [class.active]="audienceMode === 'all'">All</a>
       <a [routerLink]="routeBasePath + '/influencers'" class="audience-pill" [class.active]="audienceMode === 'influencer'">Influencers</a>
       <a [routerLink]="routeBasePath + '/brands'" class="audience-pill" [class.active]="audienceMode === 'brand'">Brands</a>
+      <a [routerLink]="routeBasePath + '/photographers'" class="audience-pill" [class.active]="audienceMode === 'photographer'">Photographers</a>
     </div>
   </header>
 
   <div class="journey-grid" *ngIf="role === 'guest' || role === 'admin'">
-    <article class="journey influencer-journey" *ngIf="audienceMode !== 'brand'">
+    <article class="journey influencer-journey" *ngIf="audienceMode === 'all' || audienceMode === 'influencer'">
       <p class="journey-tag">Influencers</p>
       <h2>Get Brand Deals Without Chasing DMs</h2>
       <p class="journey-sub">Join TrendStarz and start receiving paid collaboration offers.</p>
@@ -60,7 +61,7 @@
       </button>
     </article>
 
-    <article class="journey brand-journey" *ngIf="audienceMode !== 'influencer'">
+    <article class="journey brand-journey" *ngIf="audienceMode === 'all' || audienceMode === 'brand'">
       <p class="journey-tag">Brands</p>
       <h2>Find the Right Influencers for Your Brand</h2>
       <p class="journey-sub">Launch campaigns and collaborate with verified creators.</p>
@@ -92,6 +93,43 @@
       </div>
 
       <a routerLink="/register-brand" [queryParams]="brandSignupParams" class="cta brand-cta">Start Your First Campaign</a>
+      <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
+        <i class="bi bi-diagram-3"></i> How Campaigns Work
+      </button>
+    </article>
+
+    <article class="journey photographer-journey" *ngIf="audienceMode === 'all' || audienceMode === 'photographer'">
+      <p class="journey-tag">Photographers</p>
+      <h2>Get Photography Collaborations with Clear Deliverables</h2>
+      <p class="journey-sub">Join as a photographer and receive collaboration requests from brands and creators.</p>
+
+      <ol class="steps">
+        <li>
+          <h3>Create Your Photography Profile</h3>
+          <p>Add portfolio, equipment, pricing options, and your preferred shoot categories.</p>
+        </li>
+        <li>
+          <h3>Receive Collaboration Requests</h3>
+          <p>See campaign and collaboration requests matched to your skills and location.</p>
+        </li>
+        <li>
+          <h3>Accept and Deliver Shoots</h3>
+          <p>Finalize scope, complete shoots, and submit deliverables through a tracked workflow.</p>
+        </li>
+      </ol>
+
+      <div class="benefit-box">
+        <h4>Why Photographers Join TrendStarz</h4>
+        <ul>
+          <li>Consistent collaboration opportunities</li>
+          <li>Clear project scope before accepting</li>
+          <li>Structured timeline and deliverables</li>
+          <li>Portfolio-first discovery for better fit</li>
+          <li>Simple communication and tracking</li>
+        </ul>
+      </div>
+
+      <a routerLink="/register-photographer" [queryParams]="photographerSignupParams" class="cta photographer-cta">Start Getting Photography Leads</a>
       <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
         <i class="bi bi-diagram-3"></i> How Campaigns Work
       </button>

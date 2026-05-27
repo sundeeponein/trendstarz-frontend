@@ -27,8 +27,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
   readonly faqAccordionComponent = FaqAccordionComponent;
   readonly builtForAudiencesInputs = {
-    heading: 'Built For Every Industry',
-    subheading: 'Tailored influencer marketing solutions for your niche.',
+    heading: 'Platform Features',
+    subheading: 'Tools and collaboration solutions built for creators and brands.',
     items: [
       { icon: 'bi-person', title: 'Fashion Brands', subtitle: 'Apparel & Accessories' },
       { icon: 'bi-geo-alt', title: 'Restaurants', subtitle: 'Food & Dining' },
