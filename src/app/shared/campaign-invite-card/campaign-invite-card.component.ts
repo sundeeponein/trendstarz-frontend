@@ -100,7 +100,19 @@ export class CampaignInviteCardComponent {
 
   // ── Data accessors ─────────────────────────────────────────────
   private get campaign(): any { return this.invite?.campaign || this.invite?.campaignId || {}; }
-  private get brand(): any { return this.invite?.brand || this.invite?.brandId || {}; }
+  private get brand(): any {
+    const fromInviteBrand = this.toObject(this.invite?.brand);
+    const fromInviteBrandId = this.toObject(this.invite?.brandId);
+    const fromCampaignBrand = this.toObject(this.campaign?.brand);
+    const fromCampaignBrandId = this.toObject(this.campaign?.brandId);
+
+    return {
+      ...fromCampaignBrandId,
+      ...fromCampaignBrand,
+      ...fromInviteBrandId,
+      ...fromInviteBrand,
+    };
+  }
 
   get inviteId(): string { return this.invite?._id || ''; }
   get status(): string { return (this.invite?.status || 'pending').toLowerCase(); }
@@ -593,8 +605,21 @@ export class CampaignInviteCardComponent {
   get brandInitial(): string { return (this.brandName || '?')[0].toUpperCase(); }
 
   /** Brand contact details — only populated by backend when invite.unlocked === true */
-  get brandEmail(): string { return this.brand?.email || ''; }
-  get brandPhone(): string { return this.brand?.phoneNumber || ''; }
+  get brandEmail(): string {
+    return this.firstNonEmptyString([
+      this.brand?.email,
+      this.brand?.contactEmail,
+      this.brand?.emailAddress,
+    ]);
+  }
+  get brandPhone(): string {
+    return this.firstNonEmptyString([
+      this.brand?.phoneNumber,
+      this.brand?.mobile,
+      this.brand?.contactMobile,
+      this.brand?.phone,
+    ]);
+  }
   get brandLogo(): string | null {
     const b = this.brand;
     let url: string | null = null;
@@ -639,6 +664,22 @@ export class CampaignInviteCardComponent {
       return backend ? backend + url : url;
     }
     return url;
+  }
+
+  private toObject(value: any): Record<string, any> {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value;
+    }
+    return {};
+  }
+
+  private firstNonEmptyString(values: any[]): string {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
   }
 
   // ── Event handlers ─────────────────────────────────────────
