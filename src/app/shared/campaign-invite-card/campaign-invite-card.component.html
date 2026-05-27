@@ -61,9 +61,12 @@
     <div class="invite-brief__label"><i class="bi bi-geo-alt"></i> Venue</div>
     <div class="invite-brief__text">
       <div *ngIf="venueShortText"><strong>{{ venueShortText }}</strong></div>
-      <div *ngIf="venueFullAddress">{{ venueFullAddress }}</div>
+      <div class="text-muted" *ngIf="!canRevealExactVenueDetails && venuePreviewText">
+        Exact venue unlocks after brand contact unlock.
+      </div>
+      <div *ngIf="canRevealExactVenueDetails && venueFullAddress">{{ venueFullAddress }}</div>
       <div *ngIf="inviteBenefits" class="mt-1"><i class="bi bi-stars"></i> {{ inviteBenefits }}</div>
-      <a *ngIf="venueMapUrl"
+      <a *ngIf="canRevealExactVenueDetails && venueMapUrl"
          class="d-inline-flex align-items-center gap-1 mt-1"
          [href]="venueMapUrl" target="_blank" rel="noopener noreferrer"
          (click)="$event.stopPropagation()">
@@ -77,9 +80,12 @@
     <div class="invite-brief__label"><i class="bi bi-camera-reels"></i> Shoot location</div>
     <div class="invite-brief__text">
       <div *ngIf="shootLocationTypeLabel"><strong>{{ shootLocationTypeLabel }}</strong></div>
-      <div *ngIf="shootLocationAddress">{{ shootLocationAddress }}</div>
+      <div class="text-muted" *ngIf="!canRevealExactShootLocation && shootLocationAddress">
+        Exact shoot location unlocks after contact unlock.
+      </div>
+      <div *ngIf="canRevealExactShootLocation && shootLocationAddress">{{ shootLocationAddress }}</div>
       <div *ngIf="shootLocationNotes" class="mt-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
-      <a *ngIf="shootLocationMapUrl"
+      <a *ngIf="canRevealExactShootLocation && shootLocationMapUrl"
          class="d-inline-flex align-items-center gap-1 mt-1"
          [href]="shootLocationMapUrl" target="_blank" rel="noopener noreferrer"
          (click)="$event.stopPropagation()">

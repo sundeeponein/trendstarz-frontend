@@ -296,9 +296,20 @@ export class CampaignInviteCardComponent {
     return 'bi-tag-fill';
   }
 
+  get canRevealExactVenueDetails(): boolean {
+    return !this.isInviteLocation || this.isUnlocked;
+  }
+
   get venueShortText(): string {
     const c = this.campaign || {};
-    const parts = [c.venueName, c.venueCity, c.venueDistrict, c.venueState].filter((p: string) => !!p);
+    const parts = this.canRevealExactVenueDetails
+      ? [c.venueName, c.venueCity, c.venueDistrict, c.venueState]
+      : [c.venueCity, c.venueDistrict, c.venueState];
+    return parts.filter((p: string) => !!p).join(', ');
+  }
+  get venuePreviewText(): string {
+    const c = this.campaign || {};
+    const parts = [c.venueCity, c.venueDistrict, c.venueState].filter((p: string) => !!p);
     return parts.join(', ');
   }
   get venueFullAddress(): string {
@@ -333,6 +344,9 @@ export class CampaignInviteCardComponent {
   }
   get hasShootLocationDetails(): boolean {
     return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
+  }
+  get canRevealExactShootLocation(): boolean {
+    return this.isUnlocked;
   }
 
   get payToJoinFeeText(): string {
