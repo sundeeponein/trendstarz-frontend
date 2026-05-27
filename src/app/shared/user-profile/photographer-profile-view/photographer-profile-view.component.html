@@ -36,7 +36,18 @@
         </p>
 
         <div class="profile-actions" *ngIf="isLoggedIn">
-          <a class="btn-follow" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+          <a
+            class="btn-follow"
+            [href]="getMainSocialLink()"
+            [attr.target]="hasMainSocialLink ? '_blank' : null"
+            [attr.rel]="hasMainSocialLink ? 'noopener noreferrer' : null"
+            [class.btn-follow--disabled]="!hasMainSocialLink"
+            (click)="!hasMainSocialLink && $event.preventDefault(); onFollowClick()"
+          >Follow</a>
+        </div>
+
+        <div class="detail-locked" *ngIf="isLoggedIn && !canOpenSocialProfiles">
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
         </div>
 
         <div class="stats-row">
@@ -118,17 +129,31 @@
         </div>
       </div>
 
-      <div class="info-card" *ngIf="socialPlatforms.length">
+      <div class="info-card" *ngIf="socialPlatforms.length || photographer.socialMediaRestricted">
         <h5 class="section-label">SOCIAL PLATFORMS</h5>
+        <div class="detail-locked mb-2" *ngIf="photographer.socialMediaRestricted">
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
+        </div>
         <div class="social-list">
-          <a *ngFor="let sm of socialPlatforms" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-item">
-            <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
-            <div>
-              <strong>{{ getPlatformLabel(sm) }}</strong>
-              <div class="social-handle" *ngIf="sm.handle">&#64;{{ sm.handle }}</div>
-            </div>
-            <span class="social-tier" *ngIf="sm.tier">{{ sm.tier }}</span>
-          </a>
+          <ng-container *ngIf="canOpenSocialProfiles; else lockedSocialRows">
+            <a *ngFor="let sm of socialPlatforms" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-item" (click)="onPlatformClick(sm)">
+              <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
+              <div>
+                <strong>{{ getPlatformLabel(sm) }}</strong>
+                <div class="social-handle" *ngIf="sm.handle">&#64;{{ sm.handle }}</div>
+              </div>
+              <span class="social-tier" *ngIf="sm.tier">{{ sm.tier }}</span>
+            </a>
+          </ng-container>
+          <ng-template #lockedSocialRows>
+            <span *ngFor="let sm of socialPlatforms" class="social-item">
+              <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
+              <div>
+                <strong>{{ getPlatformLabel(sm) }}</strong>
+                <div class="social-handle"><i class="bi bi-lock-fill"></i> Hidden on free plan</div>
+              </div>
+            </span>
+          </ng-template>
         </div>
       </div>
     </div>

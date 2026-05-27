@@ -41,9 +41,19 @@
           [attr.target]="hasFollowLink ? '_blank' : null"
           [attr.rel]="hasFollowLink ? 'noopener noreferrer' : null"
           [class.btn-follow--disabled]="!hasFollowLink"
-          (click)="!hasFollowLink && $event.preventDefault()"
+          (click)="!hasFollowLink && $event.preventDefault(); onFollowClick()"
         >Follow</a>
         <!-- <button class="btn btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
+      </div>
+    </div>
+
+    <div class="contact-info-card" *ngIf="isLoggedIn && !canOpenSocialProfiles">
+      <h6 class="section-label">Social Profiles Locked</h6>
+      <div class="contact-row">
+        <span class="contact-icon-wrap ci--website"><i class="bi bi-lock-fill"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-upgrade">Upgrade to Premium to open creator social profiles and send collaboration invites.</span>
+        </div>
       </div>
     </div>
 
@@ -200,15 +210,16 @@
           </div>
 
           <!-- Social links (clickable only for premium viewers) -->
-          <div *ngIf="brand.socialMedia?.length" class="social-links">
+          <div *ngIf="brand.socialMedia?.length || brand.socialMediaRestricted" class="social-links">
+            <div class="contact-field-upgrade mb-2" *ngIf="brand.socialMediaRestricted">
+              <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
+            </div>
             <ng-container *ngFor="let sm of brand.socialMedia">
-              <!-- Premium: clickable link with tier -->
-              <a *ngIf="isProViewer" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill">
+              <a *ngIf="canOpenSocialProfiles" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill" (click)="onPlatformClick(sm)">
                 <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
                 <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
               </a>
-              <!-- Non-premium: click disabled, no href -->
-              <span *ngIf="!isProViewer" class="social-pill social-pill--locked" title="Upgrade to Pro to view social platforms">
+              <span *ngIf="!canOpenSocialProfiles" class="social-pill social-pill--locked" title="Upgrade to Premium to view social platforms">
                 <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
                 <i class="bi bi-lock-fill social-lock-icon"></i>
               </span>

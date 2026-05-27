@@ -10,6 +10,7 @@ import { CampaignCardComponent } from '../../campaigns/campaign-card/campaign-ca
 import { CampaignDetailModalComponent } from '../../campaign-detail-modal/campaign-detail-modal.component';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
+import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -216,6 +217,7 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   getMainSocialLink(): string {
+    if (!this.canOpenSocialProfiles) return '#';
     if (this.brand?.socialMedia?.length) {
       return this.getSocialUrl(this.brand.socialMedia[0]);
     }
@@ -226,6 +228,32 @@ export class BrandProfileViewComponent implements OnInit {
 
   get hasFollowLink(): boolean {
     return this.getMainSocialLink() !== '#';
+  }
+
+  get canOpenSocialProfiles(): boolean {
+    return !!this.brand && this.brand.socialMediaRestricted !== true;
+  }
+
+  onFollowClick(): void {
+    const first = this.brand?.socialMedia?.[0] || null;
+    this.trackSocialClick(first, this.getMainSocialLink(), 'brand_profile_follow');
+  }
+
+  onPlatformClick(sm: any): void {
+    this.trackSocialClick(sm, this.getSocialUrl(sm), 'brand_profile_platform');
+  }
+
+  private trackSocialClick(sm: any, url: string, source: string): void {
+    if (!this.isLoggedIn || !this.canOpenSocialProfiles || !this.brand?._id) return;
+    if (!url || url === '#') return;
+    const platform = String(sm?.platform || 'website').trim() || 'website';
+    this.socialClickTracker.track({
+      targetUserId: String(this.brand._id),
+      targetRole: 'brand',
+      platform,
+      url,
+      source,
+    });
   }
 
   get displayCompanySize(): string {
@@ -244,6 +272,7 @@ export class BrandProfileViewComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private config: ConfigService,
+    private socialClickTracker: SocialClickTrackerService,
     private session: SessionService,
     private cd: ChangeDetectorRef,
     private titleService: Title,

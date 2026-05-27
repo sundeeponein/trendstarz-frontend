@@ -29,5 +29,10 @@
     <div class="photographer-card__location" *ngIf="location?.state || location?.district">
       <i class="bi bi-geo-alt"></i> {{ displayLocation }}
     </div>
+
+    <div class="photographer-card__contact" *ngIf="showSocialLockHint">
+      <i class="bi bi-lock-fill photographer-card__contact-icon"></i>
+      <span>Social profiles locked on free plan</span>
+    </div>
   </div>
 </div>

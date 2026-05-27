@@ -158,6 +158,7 @@
         [selected]="isInfluencerSelected(influencer)"
         [isProViewer]="isProView"
         [contactRestricted]="influencer.contactRestricted !== false"
+        [socialMediaRestricted]="influencer.socialMediaRestricted === true"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
         (createCampaignClick)="createCampaignForOne(influencer)"
         (toggleSelect)="toggleInfluencerSelection(influencer)">
@@ -204,6 +205,7 @@
         [showCampaignBtn]="isBrandUser"
         [isProViewer]="isProView"
         [contactRestricted]="brand.contactRestricted !== false"
+        [socialMediaRestricted]="brand.socialMediaRestricted === true"
         (viewProfileClick)="viewBrandProfile(brand)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-brand-user-card>
@@ -242,6 +244,7 @@
         [isPremium]="p.isPremium || false"
         [verifiedByTrendStarz]="p.verifiedByTrendStarz || false"
         [verificationStatus]="p.verificationStatus || 'not_submitted'"
+        [socialMediaRestricted]="p.socialMediaRestricted === true"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
     </div>

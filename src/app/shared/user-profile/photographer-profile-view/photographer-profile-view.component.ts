@@ -5,6 +5,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
 import { VisibilityService } from '../../../core/visibility.service';
+import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -139,6 +140,14 @@ export class PhotographerProfileViewComponent implements OnInit {
     return Array.isArray(this.photographer?.socialMedia) ? this.photographer.socialMedia : [];
   }
 
+  get canOpenSocialProfiles(): boolean {
+    return !!this.photographer && this.photographer.socialMediaRestricted !== true;
+  }
+
+  get hasMainSocialLink(): boolean {
+    return this.getMainSocialLink() !== '#';
+  }
+
   get locationLabel(): string {
     const parts = [this.photographer?.location?.district, this.photographer?.location?.state].filter(Boolean);
     return parts.join(', ') || '—';
@@ -177,8 +186,31 @@ export class PhotographerProfileViewComponent implements OnInit {
   }
 
   getMainSocialLink(): string {
+    if (!this.canOpenSocialProfiles) return '#';
     const first = this.socialPlatforms[0];
     return first ? this.getSocialUrl(first) : '#';
+  }
+
+  onFollowClick(): void {
+    const first = this.socialPlatforms[0] || null;
+    this.trackSocialClick(first, this.getMainSocialLink(), 'photographer_profile_follow');
+  }
+
+  onPlatformClick(sm: any): void {
+    this.trackSocialClick(sm, this.getSocialUrl(sm), 'photographer_profile_platform');
+  }
+
+  private trackSocialClick(sm: any, url: string, source: string): void {
+    if (!this.isLoggedIn || !this.canOpenSocialProfiles || !this.photographer?._id) return;
+    if (!url || url === '#') return;
+    const platform = String(sm?.platform || 'website').trim() || 'website';
+    this.socialClickTracker.track({
+      targetUserId: String(this.photographer._id),
+      targetRole: 'photographer',
+      platform,
+      url,
+      source,
+    });
   }
 
   getPrimaryTier(): string {
@@ -229,6 +261,7 @@ export class PhotographerProfileViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private config: ConfigService,
+    private socialClickTracker: SocialClickTrackerService,
     private session: SessionService,
     private visibility: VisibilityService,
     private cd: ChangeDetectorRef,

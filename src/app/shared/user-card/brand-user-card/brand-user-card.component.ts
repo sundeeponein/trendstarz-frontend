@@ -33,6 +33,8 @@ export class BrandUserCardComponent {
   @Input() isProViewer = false;
   /** Backend-driven visibility guard for contact details */
   @Input() contactRestricted = true;
+  /** Backend-driven visibility guard for social profile links */
+  @Input() socialMediaRestricted = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
@@ -94,5 +96,9 @@ export class BrandUserCardComponent {
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
     return count.toString();
+  }
+
+  get showSocialLockHint(): boolean {
+    return this.socialMediaRestricted === true;
   }
 }

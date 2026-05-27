@@ -29,6 +29,8 @@ export class AdminPlansComponent implements OnInit {
       { key: 'analyticsDashboard', label: 'Analytics dashboard' },
       { key: 'canWriteReview', label: 'Write reviews for brands' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+      { key: 'canInviteUsers', label: 'Can invite users' },
+      { key: 'canViewAnalytics', label: 'Can view analytics' },
     ],
     BRAND: [
       { key: 'browseInfluencerProfiles', label: 'Browse influencer profiles' },
@@ -39,6 +41,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'bulkOutreachTools', label: 'Bulk outreach tools' },
       { key: 'canWriteReview', label: 'Write reviews for influencers' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+      { key: 'canInviteUsers', label: 'Can invite users' },
+      { key: 'canViewAnalytics', label: 'Can view analytics' },
+      { key: 'featuredBadge', label: 'Featured badge' },
     ],
     PHOTOGRAPHER: [
       { key: 'publicProfileListing', label: 'Public photographer profile' },
@@ -48,6 +53,8 @@ export class AdminPlansComponent implements OnInit {
       { key: 'analyticsDashboard', label: 'Analytics dashboard' },
       { key: 'canWriteReview', label: 'Write reviews for brands' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+      { key: 'canInviteUsers', label: 'Can invite users' },
+      { key: 'canViewAnalytics', label: 'Can view analytics' },
     ],
   };
 
@@ -68,22 +75,31 @@ export class AdminPlansComponent implements OnInit {
 
   readonly masterLimits: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
+      { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
+      { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxProductImages', label: 'Product images' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
       { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
       { key: 'maxInviteOptions', label: 'Invite options' },
+      { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
     BRAND: [
+      { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
+      { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
       { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
       { key: 'maxTeamSeats', label: 'Team seat' },
       { key: 'analytics', label: 'Analytics' },
+      { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
     PHOTOGRAPHER: [
+      { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
+      { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxPortfolioImages', label: 'Portfolio images' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
       { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
       { key: 'analytics', label: 'Analytics' },
+      { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
   };
 
@@ -231,10 +247,13 @@ export class AdminPlansComponent implements OnInit {
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
         features: this.masterFeatures['INFLUENCER'].map(f => ({ ...f, value: true })),
         limits: [
+          { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 300 },
+          { key: 'dailySearchLimit', label: 'Daily searches', value: 150 },
           { key: 'maxProductImages', label: 'Product images', value: 20 },
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'maxInviteOptions', label: 'Invite options', value: 20 },
+          { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 20 },
         ],
         offers: this.masterOffers['INFLUENCER'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
@@ -249,10 +268,13 @@ export class AdminPlansComponent implements OnInit {
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
         features: this.masterFeatures['BRAND'].map(f => ({ ...f, value: true })),
         limits: [
+          { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 500 },
+          { key: 'dailySearchLimit', label: 'Daily searches', value: 250 },
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 20 },
           { key: 'maxTeamSeats', label: 'Team seats', value: 5 },
           { key: 'analytics', label: 'Analytics', value: 1 },
+          { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 30 },
         ],
         offers: this.masterOffers['BRAND'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
@@ -267,10 +289,13 @@ export class AdminPlansComponent implements OnInit {
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
         features: this.masterFeatures['PHOTOGRAPHER'].map(f => ({ ...f, value: true })),
         limits: [
+          { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 300 },
+          { key: 'dailySearchLimit', label: 'Daily searches', value: 150 },
           { key: 'maxPortfolioImages', label: 'Portfolio images', value: 10 },
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'analytics', label: 'Analytics', value: 0 },
+          { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 20 },
         ],
         offers: this.masterOffers['PHOTOGRAPHER'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },

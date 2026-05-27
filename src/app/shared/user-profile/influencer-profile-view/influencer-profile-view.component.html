@@ -44,8 +44,20 @@
         </p>
 
         <div class="profile-actions">
-          <a class="btn-follow" *ngIf="isLoggedIn" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+          <a
+            class="btn-follow"
+            *ngIf="isLoggedIn"
+            [href]="getMainSocialLink()"
+            [attr.target]="hasMainSocialLink ? '_blank' : null"
+            [attr.rel]="hasMainSocialLink ? 'noopener noreferrer' : null"
+            [class.btn-follow--disabled]="!hasMainSocialLink"
+            (click)="!hasMainSocialLink && $event.preventDefault(); onFollowClick()"
+          >Follow</a>
           <!-- <button type="button" class="btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
+        </div>
+
+        <div class="detail-locked" *ngIf="isLoggedIn && !canOpenSocialProfiles">
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
         </div>
 
         <!-- Stats row -->
@@ -155,10 +167,14 @@
       </div>
 
       <!-- Social Platforms & Pricing -->
-      <div class="info-card" *ngIf="influencer.socialMedia?.length">
+      <div class="info-card" *ngIf="influencer.socialMedia?.length || influencer.socialMediaRestricted">
         <div class="pricing-card-header">
           <h5 class="section-label mb-0">SOCIAL PLATFORMS & PRICING</h5>
           <span class="per-type-label">per<br>content<br>type</span>
+        </div>
+
+        <div class="detail-locked mb-2" *ngIf="influencer.socialMediaRestricted">
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
         </div>
 
         <div *ngFor="let sm of influencer.socialMedia; let last = last"
@@ -181,15 +197,17 @@
 
           <!-- Handle (clickable) -->
           <div class="platform-handle-row" *ngIf="sm.handle">
-            <a *ngIf="getSocialUrl(sm); else handleText"
+            <a *ngIf="canOpenSocialProfiles && getSocialUrl(sm); else handleText"
                [href]="getSocialUrl(sm)"
                target="_blank"
                rel="noopener noreferrer"
+              (click)="onPlatformClick(sm)"
                class="platform-handle-link">
               <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
             </a>
             <ng-template #handleText>
-              <span class="platform-handle-text">&#64;{{ sm.handle }}</span>
+              <span class="platform-handle-text" *ngIf="canOpenSocialProfiles">&#64;{{ sm.handle }}</span>
+              <span class="detail-locked" *ngIf="!canOpenSocialProfiles"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
             </ng-template>
           </div>
 

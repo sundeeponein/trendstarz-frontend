@@ -23,6 +23,7 @@ export class PhotographerUserCardComponent {
   @Input() isPremium = false;
   @Input() verifiedByTrendStarz = false;
   @Input() verificationStatus = 'not_submitted';
+  @Input() socialMediaRestricted = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
 
@@ -80,5 +81,9 @@ export class PhotographerUserCardComponent {
   onViewProfileClick(event: Event) {
     event.stopPropagation();
     this.viewProfileClick.emit();
+  }
+
+  get showSocialLockHint(): boolean {
+    return this.socialMediaRestricted === true;
   }
 }

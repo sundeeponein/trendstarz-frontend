@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SessionService } from '../../../core/session.service';
 import { VisibilityService } from '../../../core/visibility.service';
+import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
 import { environment } from '../../../../environments/environment';
@@ -58,6 +59,14 @@ export class InfluencerProfileViewComponent implements OnInit {
 
   get canViewContactDetails(): boolean {
     return !!this.influencer && this.influencer.contactRestricted !== true;
+  }
+
+  get canOpenSocialProfiles(): boolean {
+    return !!this.influencer && this.influencer.socialMediaRestricted !== true;
+  }
+
+  get hasMainSocialLink(): boolean {
+    return this.getMainSocialLink() !== '#';
   }
 
   get isPhoneVerified(): boolean {
@@ -172,6 +181,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   getMainSocialLink(): string {
+    if (!this.canOpenSocialProfiles) return '#';
     if (this.influencer?.socialMedia?.length) {
       return this.getSocialUrl(this.influencer.socialMedia[0]);
     }
@@ -206,12 +216,35 @@ export class InfluencerProfileViewComponent implements OnInit {
     }
   }
 
+  onFollowClick(): void {
+    const first = this.influencer?.socialMedia?.[0] || null;
+    this.trackSocialClick(first, this.getMainSocialLink(), 'influencer_profile_follow');
+  }
+
+  onPlatformClick(sm: any): void {
+    this.trackSocialClick(sm, this.getSocialUrl(sm), 'influencer_profile_platform');
+  }
+
+  private trackSocialClick(sm: any, url: string, source: string): void {
+    if (!this.isLoggedIn || !this.canOpenSocialProfiles || !this.influencer?._id) return;
+    if (!url || url === '#') return;
+    const platform = String(sm?.platform || 'website').trim() || 'website';
+    this.socialClickTracker.track({
+      targetUserId: String(this.influencer._id),
+      targetRole: 'influencer',
+      platform,
+      url,
+      source,
+    });
+  }
+
   constructor(
     private route: ActivatedRoute,
     private config: ConfigService,
     private cd: ChangeDetectorRef,
     private session: SessionService,
     private visibility: VisibilityService,
+    private socialClickTracker: SocialClickTrackerService,
     private titleService: Title,
     private meta: Meta,
     @Inject(DOCUMENT) private document: Document,

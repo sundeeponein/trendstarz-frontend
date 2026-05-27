@@ -38,6 +38,8 @@ export class InfluencerUserCardComponent {
   @Input() isProViewer = false;
   /** Backend-driven visibility guard for contact details */
   @Input() contactRestricted = true;
+  /** Backend-driven visibility guard for social profile links */
+  @Input() socialMediaRestricted = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
@@ -76,6 +78,10 @@ export class InfluencerUserCardComponent {
 
   get isTrendstarzVerified(): boolean {
     return this.verifiedByTrendStarz || this.verificationStatus === 'approved';
+  }
+
+  get showSocialLockHint(): boolean {
+    return this.socialMediaRestricted === true;
   }
 
   /** Tier of the first social handle the user added (entry order). */

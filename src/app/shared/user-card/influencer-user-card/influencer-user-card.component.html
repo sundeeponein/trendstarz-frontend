@@ -48,6 +48,11 @@
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
     </div>
 
+    <div class="inf-card__contact" *ngIf="showSocialLockHint">
+      <i class="bi bi-lock-fill inf-card__contact-icon"></i>
+      <span>Social profiles locked on free plan</span>
+    </div>
+
     <!-- Stats row -->
     <!-- <div class="inf-card__stats">
       <div class="inf-card__stat">
