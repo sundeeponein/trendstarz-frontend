@@ -141,12 +141,22 @@ export class CampaignInviteCardComponent {
 
   // ── Unlock state (mirrors brand-side unlocked flag) ─────────────
   get isUnlocked(): boolean { return !!this.invite?.unlocked; }
-  /** Show "Waiting for brand to unlock contact" once accepted but not unlocked. */
+  /** Show confirmation wait-state once accepted but not unlocked. */
   get showWaitingUnlock(): boolean {
     const s = this.status;
     if (this.isUnlocked) return false;
     if (s === 'accepted' && this.campaignTypeKey === 'paid_collab') return false;
     return ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(s);
+  }
+
+  get waitingUnlockText(): string {
+    if (this.campaignTypeKey === 'paid_collab') {
+      return 'Secure collaboration access in progress';
+    }
+    if (this.campaignTypeKey === 'invite_location') {
+      return 'Collaboration confirmation in progress';
+    }
+    return 'Unlock shoot coordination in progress';
   }
 
   // ── Payment-flow CTA logic ──────────────────────────────────────
@@ -335,6 +345,13 @@ export class CampaignInviteCardComponent {
   }
   get shootLocationAddress(): string {
     return String(this.campaign?.shootLocationAddress || '').trim();
+  }
+  get shootLocationPreviewText(): string {
+    const c = this.campaign || {};
+    return [c.venueCity, c.venueDistrict, c.venueState]
+      .map((p: any) => String(p || '').trim())
+      .filter(Boolean)
+      .join(', ');
   }
   get shootLocationMapUrl(): string {
     return String(this.campaign?.shootLocationMapUrl || '').trim();

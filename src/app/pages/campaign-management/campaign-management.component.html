@@ -757,8 +757,8 @@
                   <button class="inv-pay-chip" type="button"
                     *ngIf="inv.status === 'accepted' && c.campaignType === 'paid_collab' && !inv.unlocked"
                     (click)="openPayment(c._id); $event.stopPropagation()"
-                    title="Click to pay and unlock contact">
-                    <i class="bi bi-lock-fill"></i> Awaiting your payment
+                    title="Confirm collaboration payment">
+                    <i class="bi bi-lock-fill"></i> Confirm Collaboration
                   </button>
                   <!-- Contact unlock (expand panel) -->
                   <ng-container *ngIf="isUnlockableStatus(inv.status)">
@@ -782,7 +782,7 @@
                               [disabled]="unlockingInviteIds.has(inv._id)"
                               (click)="unlockInviteContact(inv); $event.stopPropagation()">
                         <i class="bi bi-unlock-fill"></i>
-                        {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock contact' }}
+                        {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
                       </button>
                     </div>
                   </ng-container>
@@ -1226,8 +1226,8 @@
               <button class="inv-pay-chip" type="button"
                       *ngIf="inv.status === 'accepted' && invitePanelCampaign?.campaignType === 'paid_collab' && !inv.unlocked"
                       (click)="openPayment(invitePanelCampaign?._id)"
-                      title="Click to pay and unlock contact">
-                <i class="bi bi-lock-fill"></i> Awaiting your payment
+                      title="Confirm collaboration payment">
+                <i class="bi bi-lock-fill"></i> Confirm Collaboration
               </button>
                     <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !inv.unlocked && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted')">
                 <button class="btn-unlock-contact"
@@ -1235,10 +1235,10 @@
                         [disabled]="unlockingInviteIds.has(inv._id)"
                         (click)="unlockInviteContact(inv)">
                   <i class="bi bi-unlock-fill"></i>
-                  {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock contact' }}
+                  {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
                 </button>
                 <small class="locked-hint">
-                  <i class="bi bi-lock-fill"></i> Contact hidden until you unlock
+                  <i class="bi bi-lock-fill"></i> Contact and venue details unlock after confirmation
                 </small>
               </div>
               <!-- Brand actions row -->

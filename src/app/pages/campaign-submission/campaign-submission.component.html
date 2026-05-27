@@ -59,6 +59,11 @@
       Payment verification is in progress. You can start work after status changes to <strong>Collaboration Confirmed</strong>.
     </div>
 
+    <div *ngIf="isCollaborationConfirmedWaitingStart" class="alert-info mb-3" style="border-left: 4px solid #10b981; background: #ecfdf5; color: #065f46;">
+      <i class="bi bi-check-circle-fill" style="color:#10b981"></i>
+      Collaboration Confirmed. Post submission will be enabled when campaign stage moves to <strong>Working</strong>.
+    </div>
+
     <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
       <div class="summary-header">
         <div class="summary-title">Submitted details</div>
@@ -131,14 +136,14 @@
     </div>
 
     <!-- Campaign platform hint -->
-    <div *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
+    <div *ngIf="canEditSubmissionForm && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
       <i class="bi bi-info-circle"></i>
       Campaign platforms: <strong>{{ campaignPlatforms.join(', ') }}</strong>.
       Only relevant post types are shown below.
     </div>
 
     <!-- Special instructions (editing only) -->
-    <div *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation && specialInstructions" class="alert-info alert-info--instructions mb-3">
+    <div *ngIf="canEditSubmissionForm && specialInstructions" class="alert-info alert-info--instructions mb-3">
       <i class="bi bi-chat-left-text"></i>
       <div class="alert-info__content">
         <strong>Brand instructions</strong>
@@ -150,7 +155,7 @@
     <!-- Error -->
     <div *ngIf="error" class="alert-error">{{ error }}</div>
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
-    <div class="form-section" *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation">
+    <div class="form-section" *ngIf="canEditSubmissionForm">
       <div class="section-heading">
         <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
         <ng-container *ngIf="isLocationCampaign">Content details</ng-container>
@@ -310,7 +315,7 @@
     -->
 
     <!-- Submit -->
-    <div class="form-actions" *ngIf="!isReadOnly && !isAwaitingPaymentConfirmation">
+    <div class="form-actions" *ngIf="canEditSubmissionForm">
       <!-- <div *ngIf="!postScreenshotUrl && postUrl.trim()" class="screenshot-nudge">
         <i class="bi bi-info-circle"></i>
         Adding a screenshot helps the brand verify your post faster — but you can submit without one.

@@ -29,7 +29,6 @@ export class PhotographerCollaborationFormComponent implements OnInit {
     { value: 'paid_collab', label: 'Paid Shoot' },
     { value: 'product', label: 'Barter / Product Shoot', premiumOnly: true },
     { value: 'reel_collab', label: 'Reel Collaboration' },
-    { value: 'youtube_video', label: 'YouTube Video' },
     { value: 'portfolio_collab', label: 'Portfolio Collaboration' },
     { value: 'invite_location', label: 'Event Coverage', premiumOnly: true },
     { value: 'creative_project', label: 'Creative Project' },

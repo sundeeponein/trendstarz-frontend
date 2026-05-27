@@ -429,7 +429,7 @@ export class FlowHelpModalService {
         }
       ],
       brandUxLabels: [
-        { label: 'Pay to confirm collaboration', color: 'orange' },
+        { label: 'Confirm collaboration', color: 'orange' },
         { label: 'Waiting for submission', color: 'blue' },
         { label: 'Review content', color: 'blue' },
         { label: 'Approved', color: 'green' },

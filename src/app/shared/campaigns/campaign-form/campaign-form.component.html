@@ -156,12 +156,19 @@
           </select>
           <span class="field-error" *ngIf="f['shootLocationType'].touched && f['shootLocationType'].invalid">Location type is required</span>
 
-          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote' && !isInvitingPhotographers">{{ shootLocationAddressLabel }} <span class="required">*</span></label>
-          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote' && isInvitingPhotographers">Venue details <span class="required">*</span></label>
-          <ng-container *ngIf="f['shootLocationType'].value !== 'remote' && isInvitingPhotographers; else singleShootAddressInput">
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote' && !useStructuredVenueFields">{{ shootLocationAddressLabel }} <span class="required">*</span></label>
+          <label class="field-label mt-2" *ngIf="f['shootLocationType'].value !== 'remote' && useStructuredVenueFields">Venue details <span class="required">*</span></label>
+          <ng-container *ngIf="f['shootLocationType'].value !== 'remote' && useStructuredVenueFields; else singleShootAddressInput">
             <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
-            <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Venue address" />
-            <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Venue address is required</span>
+            <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Shoot area / locality" />
+            <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Shoot area / locality is required</span>
+
+            <div class="field-row mt-2">
+              <div class="field-group half">
+                <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
+                <span class="field-error" *ngIf="f['venueCity'].touched && f['venueCity'].invalid">City is required</span>
+              </div>
+            </div>
 
             <div class="field-row mt-2">
               <div class="field-group half">
@@ -173,17 +180,10 @@
               </div>
               <div class="field-group half">
                 <select formControlName="venueDistrict" class="field-input" [disabled]="!f['venueState'].value || !districts.length">
-                  <option value="">{{ f['venueState'].value ? (districts.length ? 'Select district' : 'Loading districts...') : 'Select state first' }}</option>
+                  <option value="">{{ f['venueState'].value ? (districts.length ? 'Select district' : 'Loading districts...') : 'Select district' }}</option>
                   <option *ngFor="let d of districts" [value]="d.name">{{ d.name }}</option>
                 </select>
                 <span class="field-error" *ngIf="f['venueDistrict'].touched && f['venueDistrict'].invalid">District is required</span>
-              </div>
-            </div>
-
-            <div class="field-row mt-2">
-              <div class="field-group half">
-                <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
-                <span class="field-error" *ngIf="f['venueCity'].touched && f['venueCity'].invalid">City is required</span>
               </div>
             </div>
           </ng-container>
@@ -215,7 +215,7 @@
             <i class="bi bi-geo-alt"></i> The influencer will travel to <strong>your studio / shoot setup</strong> for the shoot. The product itself is the compensation — no cash payment unless you have agreed otherwise.
           </p>
           <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'invite_location'">
-            <i class="bi bi-geo-alt"></i> Enter the <strong>event / venue address</strong> the influencer will visit for the coverage shoot.
+            <i class="bi bi-geo-alt"></i> Enter the <strong>event area / locality</strong> the influencer will visit for the coverage shoot.
           </p>
           <p class="field-sublabel" *ngIf="isPhotographerCreator && f['campaignType'].value === 'creative_project' && f['shootLocationType'].value !== 'remote'">
             <i class="bi bi-geo-alt"></i> For an in-person shoot, enter the location the influencer will visit. If the project is remote / virtual, select <strong>“Remote — no in-person shoot”</strong> from the dropdown above.
@@ -225,7 +225,7 @@
           </p>
 
           <p class="field-sublabel">
-            <i class="bi bi-info-circle"></i> This location information is shown to {{ shootLocationAudienceLabel }}s before they accept the collaboration.
+            <i class="bi bi-info-circle"></i> Before acceptance, only area/locality is shown. Exact venue details are shared after collaboration confirmation.
           </p>
         </div>
 
@@ -245,11 +245,17 @@
 
         
 
-        <div class="field-group" *ngIf="selectedCampaignType === 'invite_location' && !isInvitingPhotographers">
+        <div class="field-group" *ngIf="selectedCampaignType === 'invite_location' && !isInvitingPhotographers && !isPhotographerCreator">
           <label class="field-label">Venue details <span class="required">*</span></label>
           <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
-          <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Venue address" />
-          <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Venue address is required</span>
+          <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Collaboration area / locality" />
+          <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Collaboration area / locality is required</span>
+          <div class="field-row mt-2">
+            <div class="field-group half">
+              <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
+              <span class="field-error" *ngIf="f['venueCity'].touched && f['venueCity'].invalid">City is required</span>
+            </div>
+          </div>
           <div class="field-row mt-2">
             <div class="field-group half">
               <select formControlName="venueState" class="field-input">
@@ -260,16 +266,10 @@
             </div>
             <div class="field-group half">
               <select formControlName="venueDistrict" class="field-input" [disabled]="!f['venueState'].value || !districts.length">
-                <option value="">{{ f['venueState'].value ? (districts.length ? 'Select district' : 'Loading districts...') : 'Select state first' }}</option>
+                <option value="">{{ f['venueState'].value ? (districts.length ? 'Select district' : 'Loading districts...') : 'Select district' }}</option>
                 <option *ngFor="let d of districts" [value]="d.name">{{ d.name }}</option>
               </select>
               <span class="field-error" *ngIf="f['venueDistrict'].touched && f['venueDistrict'].invalid">District is required</span>
-            </div>
-          </div>
-          <div class="field-row mt-2">
-            <div class="field-group half">
-              <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
-              <span class="field-error" *ngIf="f['venueCity'].touched && f['venueCity'].invalid">City is required</span>
             </div>
           </div>
           <input type="url" formControlName="venueGoogleMapUrl" class="field-input mt-2" placeholder="Google Maps link (optional)" />

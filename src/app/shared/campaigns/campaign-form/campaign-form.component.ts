@@ -82,7 +82,7 @@ export class CampaignFormComponent implements OnInit {
   readonly DESCRIPTION_TEMPLATES: Record<string, string> = {
     paid_collab: `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"\n\nDeliverables:\n• 1 Reel + optional Story (if agreed)\n• Share insights (views, reach, engagement) after posting\n\nTimeline:\n• Content to be posted within 5–7 days / on selected date Range days after product delivery / brief approval\n\nPayment:\n• Fixed payment: ₹XXXX (as agreed)\n• Payment will be processed after content submission/approval\n\nImportant Notes:\n• Content should be original and not reused from past posts\n• Brand reserves the right to request minor edits before posting\n• No offensive or misleading content`,
     product: `We are offering a product-based collaboration where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging\n\nContent Guidelines:\n• Platform: Instagram / YouTube Shorts (as selected)\n• Tag our brand account & use provided hashtags\n• Mention this is a collaboration (#gifted / #collab)\n\nDeliverables:\n• 1 Reel OR Post (based on your selection)\n• Optional Story (if comfortable)\n\nTimeline:\n• Post within 5–7 days / on selected date Range, after receiving the product\n\nImportant Notes:\n• No monetary payment is involved in this collaboration\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
-    invite_location: `We are inviting influencers to attend an exclusive on-location experience at our venue and create engaging content around it.\n\nEvent Details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only collaboration (no product shipping)\n• Influencers must confirm availability before acceptance\n• If unable to attend after accepting, inform in advance\n• Only influencers who attend the location will be eligible for collaboration benefits`,
+    invite_location: `We are inviting influencers to attend an exclusive on-location experience and create engaging content around it.\n\nEvent Details:\n• 📍 Area/Locality: [City / Locality]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only collaboration (no product shipping)\n• Influencers must confirm availability before acceptance\n• Exact venue details unlock after collaboration confirmation\n• Only influencers who attend the location will be eligible for collaboration benefits`,
   };
 
   readonly DESCRIPTION_MODE_EXAMPLES: Record<string, string> = {
@@ -179,11 +179,11 @@ export class CampaignFormComponent implements OnInit {
         heading: 'What to cover',
         variant: 'tip',
         copyable: false,
-        body: `• Venue / location and exact date + time window\n• What is provided on-site (access, food, services)\n• Expected coverage (stories, reel, post)\n• Tagging and hashtag requirements`,
+        body: `• Area / locality and date + time window\n• What is provided on-site (access, food, services)\n• Expected coverage (stories, reel, post)\n• Tagging and hashtag requirements`,
       });
       content.sections.push({
         heading: 'Sample brief (Invite to location)',
-        body: `We are inviting ${audience} to attend an exclusive on-location experience at our venue and create engaging content around it.\n\nEvent Details:\n• 📍 Location: [Venue / Address]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content\n• Capture ambience, product/service and overall vibe`,
+        body: `We are inviting ${audience} to attend an exclusive on-location experience and create engaging content around it.\n\nEvent Details:\n• 📍 Area / Locality: [City / Locality]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content\n• Capture ambience, product/service and overall vibe`,
       });
       content.sections.push({
         heading: 'Important notes',
@@ -430,12 +430,12 @@ export class CampaignFormComponent implements OnInit {
     });
 
     this.form.get('venueAddress')?.valueChanges.subscribe((value: string) => {
-      if (!this.isInvitingPhotographers) return;
+      if (!(this.isInvitingPhotographers || this.isPhotographerCreator)) return;
       this.form.get('shootLocationAddress')?.setValue(value || '', { emitEvent: false });
     });
 
     this.form.get('venueGoogleMapUrl')?.valueChanges.subscribe((value: string) => {
-      if (!this.isInvitingPhotographers) return;
+      if (!(this.isInvitingPhotographers || this.isPhotographerCreator)) return;
       this.form.get('shootLocationMapUrl')?.setValue(value || '', { emitEvent: false });
     });
 
@@ -490,6 +490,12 @@ export class CampaignFormComponent implements OnInit {
     if (!this.isInvitingPhotographers) return false;
     const type = String(this.form?.get('campaignType')?.value || '');
     return type === 'paid_collab' || type === 'invite_location';
+  }
+
+  get useStructuredVenueFields(): boolean {
+    return this.showShootLocationBlock
+      && String(this.form?.get('shootLocationType')?.value || '') !== 'remote'
+      && (this.isInvitingPhotographers || this.isPhotographerCreator);
   }
 
   get shootLocationAudienceLabel(): string {
@@ -552,17 +558,17 @@ export class CampaignFormComponent implements OnInit {
   /** Role-aware label for the shoot-location *address* textarea. */
   get shootLocationAddressLabel(): string {
     if (this.isInvitingPhotographers || this.isPhotographerCreator) {
-      return 'Shoot location address';
+      return 'Shoot area / locality';
     }
-    return 'On-site / meeting point address';
+    return 'On-site / meeting area';
   }
 
   /** Role-aware required-error label for the shoot-location address. */
   get shootLocationAddressErrorLabel(): string {
     if (this.isInvitingPhotographers || this.isPhotographerCreator) {
-      return 'Shoot address is required';
+      return 'Shoot area / locality is required';
     }
-    return 'On-site address is required';
+    return 'On-site area is required';
   }
 
   get campaignModeFieldLabel(): string {
@@ -729,12 +735,8 @@ export class CampaignFormComponent implements OnInit {
   // ── Stepper helpers ──────────────────────────────────────────
   step1Valid(): boolean {
     const isLocation = this.selectedCampaignType === 'invite_location';
-    const needsStructuredVenueAddress = this.isInvitingPhotographers
-      && this.showShootLocationBlock
-      && this.f['shootLocationType'].value !== 'remote';
-    const photographerLocationValid = !this.isPhotographerCreator || (
-      this.f['shootLocationType'].valid && this.f['shootLocationAddress'].valid
-    );
+    const needsStructuredVenueAddress = this.useStructuredVenueFields;
+    const photographerLocationValid = !this.isPhotographerCreator || this.f['shootLocationType'].valid;
     return !!(
       this.f['title'].valid &&
       this.f['campaignType'].valid &&
@@ -819,9 +821,7 @@ export class CampaignFormComponent implements OnInit {
       if (!control) continue;
       const validators = [] as any[];
       if (required.has(name)) validators.push(Validators.required);
-      const needsStructuredVenueAddress = this.isInvitingPhotographers
-        && this.showShootLocationBlock
-        && String(this.form.get('shootLocationType')?.value || '') !== 'remote';
+      const needsStructuredVenueAddress = this.useStructuredVenueFields;
       if (needsStructuredVenueAddress && ['venueAddress', 'venueState', 'venueDistrict', 'venueCity'].includes(name)) {
         validators.push(Validators.required);
       }
@@ -875,7 +875,7 @@ export class CampaignFormComponent implements OnInit {
       payload.shootLocationMapUrl = undefined;
       payload.shootLocationNotes = undefined;
     }
-    if (this.isInvitingPhotographers && (t === 'paid_collab' || t === 'invite_location')) {
+    if ((this.isInvitingPhotographers || this.isPhotographerCreator) && this.useStructuredVenueFields) {
       const addrParts = [payload.venueAddress, payload.venueCity, payload.venueDistrict, payload.venueState]
         .map((v: any) => String(v || '').trim())
         .filter(Boolean);
@@ -887,7 +887,7 @@ export class CampaignFormComponent implements OnInit {
       }
     }
 
-    if (!(t === 'invite_location' || (this.isInvitingPhotographers && t === 'paid_collab'))) {
+    if (!(t === 'invite_location' || this.useStructuredVenueFields)) {
       payload.venueName = undefined;
       payload.venueAddress = undefined;
       payload.venueCity = undefined;

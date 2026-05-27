@@ -9,7 +9,14 @@ export interface Campaign {
   brandId: string;
   title: string;
   description?: string;
-  campaignType?: 'paid_collab' | 'product' | 'invite_location' | 'pay_to_join';
+  campaignType?:
+    | 'paid_collab'
+    | 'product'
+    | 'invite_location'
+    | 'pay_to_join'
+    | 'portfolio_collab'
+    | 'reel_collab'
+    | 'creative_project';
   campaignMode?: 'invite_only' | 'tier_filtered_open';
   image?: { url: string; public_id: string };
   status:

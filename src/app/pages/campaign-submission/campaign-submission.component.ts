@@ -62,6 +62,15 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return this.campaignType === 'invite_location';
   }
 
+  private normalizeSubmissionStatus(rawStatus: string): string {
+    const s = String(rawStatus || '').toLowerCase().trim();
+    // For non-paid campaigns, acceptance means collaboration is confirmed.
+    if (s === 'accepted' && this.campaignType !== 'paid_collab') {
+      return 'payment_confirmed';
+    }
+    return s;
+  }
+
   screenshotUploading = false;
   insightsUploading = false;
   submitting = false;
@@ -95,10 +104,6 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     if (this.inviteId) {
       this.config.getInviteWithCampaign(this.inviteId).subscribe({
         next: (res: any) => {
-          // Sync real invite status from backend (overrides query param)
-          if (res?.invite?.status) {
-            this.inviteStatus = res.invite.status;
-          }
           if (res?.invite?.selectedPostDate) {
             this.selectedPostDate = new Date(res.invite.selectedPostDate);
           }
@@ -112,6 +117,12 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
           this.acceptedContentType = String(res?.invite?.selectedContentType || '').toLowerCase().trim();
           if (campaign) {
             this.campaignType = campaign.campaignType || '';
+            // Sync real invite status from backend (overrides query param)
+            // after campaign type is known so non-paid acceptance can be
+            // represented as collaboration-confirmed on this page.
+            if (res?.invite?.status) {
+              this.inviteStatus = this.normalizeSubmissionStatus(res.invite.status);
+            }
             // Collect platforms from socialMedia (enabled content types)
             this.campaignSocialMedia = campaign.socialMedia || [];
             this.campaignPlatforms = this.campaignSocialMedia
@@ -316,6 +327,14 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return this.campaignType === 'paid_collab' && this.inviteStatus === 'accepted';
   }
 
+  get isCollaborationConfirmedWaitingStart(): boolean {
+    return this.inviteStatus === 'payment_confirmed';
+  }
+
+  get canEditSubmissionForm(): boolean {
+    return !this.isReadOnly && this.inviteStatus === 'working';
+  }
+
   get inviteStatusLabel(): string {
     const map: Record<string, string> = {
       accepted:          'Accepted',
@@ -330,7 +349,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   canSubmit(): boolean {
-    if (this.isReadOnly || this.isAwaitingPaymentConfirmation) return false;
+    if (!this.canEditSubmissionForm) return false;
     // Location campaigns: postUrl still required, screenshot is optional
     if (this.isLocationCampaign) return !!this.postUrl.trim();
     // Paid/product campaigns: postUrl required; screenshot strongly recommended but optional
@@ -341,6 +360,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     if (!this.canSubmit()) {
       if (this.isReadOnly) {
         this.error = 'Submission is locked after posting and cannot be edited.';
+      } else if (this.isCollaborationConfirmedWaitingStart) {
+        this.error = 'Collaboration is confirmed. Submission opens when status moves to Working.';
       } else if (this.isAwaitingPaymentConfirmation) {
         this.error = 'Payment verification is still in progress. You can start work after collaboration is confirmed.';
       } else {
