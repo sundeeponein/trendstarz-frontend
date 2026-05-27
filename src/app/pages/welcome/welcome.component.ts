@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd } from '@angular/router';
-import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { HeroSliderBannerComponent, HeroSliderBannerSlide } from '../../shared/hero-slider-banner/hero-slider-banner.component';
 import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
@@ -11,6 +11,7 @@ import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../sha
 import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
 
 @Component({
   selector: 'app-welcome',
@@ -25,6 +26,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly showBrandCampaignMetaOnWelcome = false;
 
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
+  readonly heroSliderBannerComponent = HeroSliderBannerComponent;
   readonly faqAccordionComponent = FaqAccordionComponent;
   readonly builtForAudiencesInputs = {
     heading: 'Platform Features',
@@ -94,7 +96,95 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     };
   }
 
+  get heroSliderBannerInputs() {
+    return {
+      slides: this.heroSlides,
+      showTextLink: false,
+      ariaLabel: 'TrendStarz Hero Slides',
+      badge: 'Next-Gen Influencer'
+    };
+  }
+
   private routerSubscription: any;
+
+  readonly heroSlides: HeroSliderBannerSlide[] = [
+    {
+      heading: 'Plan Powerful Brand Stories',
+      highlightText: 'Connect brands with creators, photographers and campaign talent.',
+      description: 'Launch influencer campaigns, collaborate with creators and grow your brand visibility across India.',
+      primaryLabel: 'Join as Brand',
+      primaryRoute: '/register-brand',
+      secondaryLabel: 'Explore Creators',
+      secondaryRoute: '/search',
+      textLinkLabel: 'How It Works',
+      textLinkRoute: '/how-it-works',
+      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageAlt: 'Brand campaign collaboration workspace',
+      imagePrompt: 'Modern creator economy campaign meeting with influencers, photographers, videographers and brand managers collaborating in a stylish startup workspace. Fashion and beauty products, laptops, cameras, campaign moodboards, cinematic lighting, premium realistic photography.',
+      imagePosition: 'center center'
+    },
+    {
+      heading: 'Get Paid Brand Collaborations',
+      highlightText: 'Build your creator profile and receive relevant campaign offers.',
+      description: 'Join brands looking for fashion, lifestyle, food, beauty and local content creators across India.',
+      primaryLabel: 'Join as Influencer',
+      primaryRoute: '/register-influencer',
+      secondaryLabel: 'Browse Campaigns',
+      secondaryRoute: '/campaigns',
+      textLinkLabel: 'How It Works',
+      textLinkRoute: '/how-it-works',
+      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageAlt: 'Influencer creating content in a studio',
+      imagePrompt: 'Indian influencer creating Instagram reels in a modern content studio with DSLR camera, ring light, beauty products, fashion accessories and social media setup. Realistic photography, cinematic lighting, premium creator workspace.',
+      imagePosition: 'center 30%'
+    },
+    {
+      heading: 'Create Content That Brands Need',
+      highlightText: 'Work with creators and brands on real campaigns.',
+      description: 'Showcase your photography and videography skills while collaborating on fashion, food and lifestyle campaigns.',
+      primaryLabel: 'Join as Photographer',
+      primaryRoute: '/register-photographer',
+      secondaryLabel: 'Explore Opportunities',
+      secondaryRoute: '/campaigns',
+      textLinkLabel: 'How It Works',
+      textLinkRoute: '/how-it-works/photographers',
+      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageAlt: 'Photographer and videographer shooting creator content',
+      imagePrompt: 'Professional photographer and videographer shooting influencer campaign content in a modern creative studio with cameras, lighting equipment, reels setup and editing workstation. Realistic cinematic creator economy photography.',
+      imagePosition: 'center 42%'
+    },
+    {
+      heading: 'Promote Your Business with Creators',
+      highlightText: 'Reach local audiences through influencer collaborations.',
+      description: 'Restaurants, startups, fashion labels and local businesses can discover creators and launch campaigns faster.',
+      primaryLabel: 'Start Brand Campaign',
+      primaryRoute: '/register-brand',
+      secondaryLabel: 'Find Creators',
+      secondaryRoute: '/search',
+      textLinkLabel: 'How It Works',
+      textLinkRoute: '/how-it-works',
+      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageAlt: 'Local business owners and creators collaborating',
+      imagePrompt: 'Local business owners collaborating with influencers and content creators for social media marketing campaigns in a modern workspace. Food, fashion and startup branding visuals with creator economy atmosphere.',
+      imagePosition: 'center 52%'
+    },
+    {
+      heading: "India's Creator Collaboration Platform",
+      highlightText: 'Creators. Brands. Campaigns. One platform.',
+      description: 'Manage collaborations, discover talent and grow your creator network with TrendStarz.',
+      primaryLabel: 'Get Started',
+      primaryRoute: '/register-brand',
+      secondaryLabel: 'How It Works',
+      secondaryRoute: '/how-it-works',
+      textLinkLabel: 'How It Works',
+      textLinkRoute: '/how-it-works',
+      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageAlt: 'Creator economy teams collaborating in a startup workspace',
+      imagePrompt: 'Diverse creator economy ecosystem featuring influencers, photographers, videographers and brand teams collaborating together in a premium startup workspace. Modern social media marketing environment with laptops, cameras and campaign planning.',
+      imagePosition: 'center center'
+    }
+  ];
+
   influencers: any[] = [];
   allInfluencers: any[] = [];
   brands: any[] = [];
