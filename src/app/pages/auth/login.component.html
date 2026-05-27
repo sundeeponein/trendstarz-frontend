@@ -1,30 +1,43 @@
-<div class="login-shell container-fluid p-0">
-  <div class="row g-0 min-vh-100">
-    <div class="col-12 col-lg-6 visual-panel d-flex flex-column">
-      <div class="brand-strip d-flex align-items-center">
-        <a routerLink="/"><img src="assets/logo-trendstarz-logo-text.png" alt="Trendstarz" class="brand-logo" /></a>
-      </div>
-      <div class="visual-copy mt-auto">
-        <h1>Elevate your digital presence.</h1>
+<div class="login-shell">
+  <div class="login-main">
+    <aside class="visual-panel">
+      <a routerLink="/" class="brand-mark">TrendstarZ</a>
+
+      <div class="visual-copy">
+        <span class="trust-chip">Trusted by Creators and Brands</span>
+        <h1>
+          Connect. <span>Collaborate.</span><br />
+          Grow.
+        </h1>
         <p>Join thousands of brands and creators building the next generation of digital marketing.</p>
-        <div class="d-flex flex-wrap gap-2 mt-3">
-          <span class="badge rounded-pill text-bg-light text-white">Verified Creators</span>
-          <span class="badge rounded-pill text-bg-light text-white">Premium Brands</span>
+
+        <div class="visual-badges">
+          <span>Verified Creators</span>
+          <span>Premium Brands</span>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <div class="col-12 col-lg-6 form-panel d-flex align-items-center justify-content-center">
-      <div class="form-wrap w-100">
-        <h2 class="mb-2">Welcome back</h2>
-        <p class="text-muted mb-4">Please enter your details to sign in.</p>
+    <section class="form-panel">
+      <!-- <div class="panel-top-actions">
+        <a routerLink="/login" class="ghost-link">Sign in</a>
+        <a routerLink="/register-brand" class="register-pill">Register</a>
+      </div> -->
+
+      <div class="form-wrap">
+        <h2>Welcome back</h2>
+        <p class="sub">Please enter your details to sign in.</p>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
           <div class="mb-3">
             <label class="form-label">Email Address</label>
-            <input formControlName="email" type="email" class="form-control"
-                   [class.is-invalid]="submitted && loginForm.get('email')?.invalid"
-                   placeholder="name@company.com" />
+            <input
+              formControlName="email"
+              type="email"
+              class="form-control"
+              [class.is-invalid]="submitted && loginForm.get('email')?.invalid"
+              placeholder="name@company.com"
+            />
             <div *ngIf="submitted && loginForm.get('email')?.invalid" class="field-hint">
               <i class="bi bi-exclamation-circle"></i>
               Please enter a valid email address.
@@ -34,13 +47,16 @@
           <div class="mb-2">
             <div class="d-flex justify-content-between align-items-center">
               <label class="form-label mb-1">Password</label>
-              <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
             </div>
+
             <div class="password-wrap">
-              <input formControlName="password" [type]="showPassword ? 'text' : 'password'"
-                     class="form-control"
-                     [class.is-invalid]="submitted && loginForm.get('password')?.invalid"
-                     placeholder="Enter password" />
+              <input
+                formControlName="password"
+                [type]="showPassword ? 'text' : 'password'"
+                class="form-control"
+                [class.is-invalid]="submitted && loginForm.get('password')?.invalid"
+                placeholder="Enter password"
+              />
               <button
                 type="button"
                 class="password-toggle"
@@ -50,30 +66,46 @@
                 <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
               </button>
             </div>
+
             <div *ngIf="submitted && loginForm.get('password')?.invalid" class="field-hint">
               <i class="bi bi-exclamation-circle"></i>
               Please enter your password.
             </div>
           </div>
 
-          <div class="form-check my-3 text-black-50">
-            <input id="remember" formControlName="rememberMe" class="form-check-input" type="checkbox" />
-            <label for="remember" class="form-check-label"><small>Remember me</small></label>
+          <div class="form-check remember-row d-flex justify-content-between ">
+            <div>
+              <input id="remember" formControlName="rememberMe" class="form-check-input" type="checkbox" />
+              <label for="remember" class="form-check-label"><small>Remember me</small></label>
+            </div>
+
+            <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100 btn-signin">Sign In</button>
+          <button type="submit" class="btn-signin">Sign In</button>
         </form>
 
-        <div class="divider my-4"><span>Don&apos;t have an account?</span></div>
+        <div class="divider"><span>Don&apos;t have an account?</span></div>
 
-        <div class="d-grid gap-2 d-sm-flex">
-          <a class="btn btn-outline-secondary flex-fill" routerLink="/register-influencer">Register as Influencer</a>
-          <a class="btn btn-outline-secondary flex-fill" routerLink="/register-brand">Register as Brand</a>
+        <h6 class="text-center text-black">Join Now</h6>
+        <div class="join-actions">
+          <a class="btn-outline" routerLink="/register-influencer">Influencer</a>
+          <a class="btn-outline" routerLink="/register-brand">Brand</a>
+          <a class="btn-outline" routerLink="/register-photographer">Photo/Videographers</a>
         </div>
-
-
-      <app-footer></app-footer>
       </div>
-    </div>
+    </section>
   </div>
+
+  <footer class="login-footer">
+    <div class="footer-brand">TrendstarZ</div>
+    <nav class="footer-links">
+      <a routerLink="/privacy-policy">Privacy Policy</a>
+      <a routerLink="/terms-and-conditions">Terms &amp; Conditions</a>
+      <a routerLink="/refund-policy">Refund Policy</a>
+      <a routerLink="/faqs">FAQs</a>
+      <a routerLink="/contact">Contact</a>
+    </nav>
+    <div class="footer-copy">© 2026 TrendstarZ. All rights reserved.</div>
+  </footer>
 </div>

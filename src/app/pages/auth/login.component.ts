@@ -11,13 +11,11 @@ import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
-import { FooterComponent } from '../../shared/footer/footer.component';
-
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, FooterComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
