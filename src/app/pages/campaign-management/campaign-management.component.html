@@ -575,7 +575,10 @@
                 </div>
                 <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
                 <span class="ccard-stat-sub" *ngIf="isAcceptanceClosed(c)">
-                  Acceptance closed at {{ getAcceptanceCloseThreshold(c) }} accepted
+                  Auto closed at {{ getAcceptanceCloseThreshold(c) }} accepted participants
+                </span>
+                <span class="ccard-stat-sub" *ngIf="!isAcceptanceClosed(c) && isMinimumParticipantsReached(c)">
+                  Ready: minimum {{ getMinimumParticipantsRequired(c) }} participants reached
                 </span>
               </ng-container>
               <!-- Influencer view: show own application status -->
@@ -615,6 +618,11 @@
           <div class="ccard-right">
             <span class="status-badge" [ngClass]="isExpired(c) && c.status === 'active' ? 'expired' : c.status">
               {{ isExpired(c) && c.status === 'active' ? 'EXPIRED' : (c.status | uppercase) }}
+            </span>
+            <span class="status-badge ready"
+                  *ngIf="!isInfluencerBrowseMode && c.status === 'active' && isMinimumParticipantsReached(c)"
+                  title="Minimum participants reached. Campaign remains open until max participants is reached.">
+              READY
             </span>
             <div class="ccard-actions" *ngIf="!isInfluencerBrowseMode">
               <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)">
@@ -689,9 +697,17 @@
 
             <div class="acceptance-closed-banner" *ngIf="isAcceptanceClosed(c)">
               <i class="bi bi-check2-circle"></i>
-              Acceptance closed: {{ getAcceptanceCloseThreshold(c) }} accepted reached.
+              Acceptance closed: max {{ getAcceptanceCloseThreshold(c) }} accepted participants reached.
               <span *ngIf="getAcceptanceBlockedPendingCount(c) > 0">
                 {{ getAcceptanceBlockedPendingCount(c) }} pending invite{{ getAcceptanceBlockedPendingCount(c) === 1 ? '' : 's' }} can no longer accept.
+              </span>
+            </div>
+
+            <div class="acceptance-ready-banner" *ngIf="!isAcceptanceClosed(c) && isMinimumParticipantsReached(c)">
+              <i class="bi bi-check-circle"></i>
+              Ready: minimum {{ getMinimumParticipantsRequired(c) }} participants reached.
+              <span>
+                Still accepting until max {{ getAcceptanceCloseThreshold(c) }} is reached.
               </span>
             </div>
 
@@ -823,7 +839,7 @@
                             type="button"
                             *ngIf="canRemind(inv)"
                             [disabled]="actioningInviteIds.has(inv._id) || isRemindBlockedByClosure(inv, c)"
-                            [title]="isRemindBlockedByClosure(inv, c) ? 'Campaign closed — minimum accepted reached' : 'Send a reminder (max 1 / 24h)'"
+                          [title]="isRemindBlockedByClosure(inv, c) ? 'Campaign closed — maximum accepted participants reached' : 'Send a reminder (max 1 / 24h)'"
                             (click)="remindInvite(inv)">
                       <i class="bi bi-bell"></i> Remind
                     </button>
@@ -1141,9 +1157,18 @@
     <div class="acceptance-closed-banner"
          *ngIf="invitePanelCampaign && isInvitePanelAcceptanceClosed()">
       <i class="bi bi-check2-circle"></i>
-      Acceptance closed at {{ getAcceptanceCloseThreshold(invitePanelCampaign) }} accepted.
+      Acceptance closed at {{ getAcceptanceCloseThreshold(invitePanelCampaign) }} accepted participants.
       <span *ngIf="getInvitePanelBlockedPendingCount() > 0">
         {{ getInvitePanelBlockedPendingCount() }} pending invite{{ getInvitePanelBlockedPendingCount() === 1 ? '' : 's' }} are now closed.
+      </span>
+    </div>
+
+    <div class="acceptance-ready-banner"
+         *ngIf="invitePanelCampaign && !isInvitePanelAcceptanceClosed() && isInvitePanelMinimumReached()">
+      <i class="bi bi-check-circle"></i>
+      Ready: minimum {{ getMinimumParticipantsRequired(invitePanelCampaign) }} participants reached.
+      <span>
+        Still accepting until max {{ getAcceptanceCloseThreshold(invitePanelCampaign) }} is reached.
       </span>
     </div>
 
@@ -1274,7 +1299,7 @@
                         type="button"
                         *ngIf="canRemind(inv)"
                         [disabled]="actioningInviteIds.has(inv._id) || isRemindBlockedInPanel(inv)"
-                        [title]="isRemindBlockedInPanel(inv) ? 'Campaign closed — minimum accepted reached' : 'Send a reminder (max 1 / 24h)'"
+                  [title]="isRemindBlockedInPanel(inv) ? 'Campaign closed — maximum accepted participants reached' : 'Send a reminder (max 1 / 24h)'"
                         (click)="remindInvite(inv)">
                   <i class="bi bi-bell"></i> Remind
                 </button>

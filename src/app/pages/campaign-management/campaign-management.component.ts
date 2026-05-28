@@ -3034,9 +3034,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getAcceptanceCloseThreshold(c: Campaign): number {
-    const min = Number((c as any)?.minInfluencers || 0);
     const max = Number((c as any)?.maxInfluencers || 0);
-    return min > 0 ? min : max;
+    return max;
+  }
+
+  getMinimumParticipantsRequired(c: Campaign): number {
+    const min = Number((c as any)?.minInfluencers || 0);
+    return min > 0 ? min : 1;
   }
 
   private getAcceptedRowsCount(rows: any[]): number {
@@ -3065,6 +3069,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.getCardAcceptedCount(c) >= threshold;
   }
 
+  isMinimumParticipantsReached(c: Campaign): boolean {
+    if (!c) return false;
+    const min = this.getMinimumParticipantsRequired(c);
+    if (!min) return false;
+    return this.getCardAcceptedCount(c) >= min && !this.isAcceptanceClosed(c);
+  }
+
   getAcceptanceBlockedPendingCount(c: Campaign): number {
     const rows = this.campaignInvitesMap.get(c._id!) || [];
     const pendingStatuses = new Set(['pending', 'invited']);
@@ -3084,6 +3095,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const threshold = this.getAcceptanceCloseThreshold(c);
     if (!threshold) return false;
     return this.getAcceptedRowsCount(this.invites) >= threshold;
+  }
+
+  isInvitePanelMinimumReached(): boolean {
+    const c = this.invitePanelCampaign;
+    if (!c) return false;
+    const min = this.getMinimumParticipantsRequired(c);
+    if (!min) return false;
+    return this.getAcceptedRowsCount(this.invites) >= min && !this.isInvitePanelAcceptanceClosed();
   }
 
   isPendingInviteStatus(status: string): boolean {

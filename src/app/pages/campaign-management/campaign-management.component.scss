@@ -832,6 +832,30 @@
   }
 }
 
+.acceptance-ready-banner {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #ffd591;
+  background: #fff7e6;
+  color: #ad6800;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+
+  i {
+    font-size: 0.95rem;
+    color: #d48806;
+  }
+
+  span {
+    font-weight: 500;
+    color: #ad6800;
+  }
+}
+
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);   opacity: 1; }
@@ -2376,6 +2400,13 @@
   background: #fff0f0;
   color: #e53e3e;
   border: 1px solid #ffd5cc;
+}
+
+.status-badge.ready {
+  background: #fff7e6;
+  color: #ad6800;
+  border: 1px solid #ffd591;
+  font-weight: 800;
 }
 
 .btn-cmanage {

@@ -87,13 +87,18 @@
             <small class="text-danger" *ngIf="paidBudgetInvalid">Budget is required for paid collaborations.</small>
           </div>
 
-          <div class="pcf-field">
-            <label>Min Accepted *</label>
+          <div class="pcf-field" *ngIf="shouldShowMinimumParticipantsField">
+            <label>Minimum participants required <span class="text-muted" style="font-weight:400;">(optional)</span></label>
             <input class="form-control" type="number" min="1" formControlName="minInfluencers" />
           </div>
 
+          <div class="pcf-field" *ngIf="!shouldShowMinimumParticipantsField">
+            <label>Minimum participants required</label>
+            <div class="form-control" style="display:flex; align-items:center;">1 (default)</div>
+          </div>
+
           <div class="pcf-field">
-            <label>Max Creators *</label>
+            <label>Max participants *</label>
             <input class="form-control" type="number" min="1" formControlName="maxInfluencers" />
           </div>
 
@@ -146,7 +151,7 @@
           </div>
 
           <div class="pcf-field pcf-full" *ngIf="minMaxInvalid">
-            <small class="text-danger">Min accepted creators cannot be greater than max creators.</small>
+            <small class="text-danger">Minimum participants cannot be greater than max participants.</small>
           </div>
 
           <div class="pcf-field pcf-full" *ngIf="ageRangeInvalid">

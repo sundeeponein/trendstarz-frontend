@@ -64,7 +64,7 @@ export class PhotographerCollaborationFormComponent implements OnInit {
       targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
       maxInfluencers: [(this.campaign as any)?.maxInfluencers || 5, [Validators.required, Validators.min(1)]],
-      minInfluencers: [(this.campaign as any)?.minInfluencers || 1, [Validators.required, Validators.min(1)]],
+      minInfluencers: [(this.campaign as any)?.minInfluencers || 1, [Validators.min(1)]],
       duration: [''],
       indoorOutdoor: [''],
       compensationModel: ['paid', Validators.required],
@@ -104,7 +104,11 @@ export class PhotographerCollaborationFormComponent implements OnInit {
       this.loadDistricts(stateName);
     });
 
+    this.form.get('campaignMode')?.valueChanges.subscribe(() => this.normalizeMinParticipantsField());
+    this.form.get('maxInfluencers')?.valueChanges.subscribe(() => this.normalizeMinParticipantsField());
+
     this.loadCollaborationTypeConfigs();
+    this.normalizeMinParticipantsField();
   }
 
   private loadCollaborationTypeConfigs(): void {
@@ -182,7 +186,37 @@ export class PhotographerCollaborationFormComponent implements OnInit {
     if (!showError) return false;
     const min = Number(minCtrl?.value || 0);
     const max = Number(maxCtrl?.value || 0);
+    if (!min) return false;
     return min > max;
+  }
+
+  get shouldShowMinimumParticipantsField(): boolean {
+    const mode = String(this.form?.get('campaignMode')?.value || 'invite_only');
+    const max = Number(this.form?.get('maxInfluencers')?.value || 0);
+    return mode === 'tier_filtered_open' || max > 1;
+  }
+
+  get minimumParticipantsDisplayValue(): number {
+    const min = Number(this.form?.get('minInfluencers')?.value || 0);
+    return min > 0 ? min : 1;
+  }
+
+  private normalizeMinParticipantsField(): void {
+    if (!this.form) return;
+    const minCtrl = this.form.get('minInfluencers');
+    const max = Number(this.form.get('maxInfluencers')?.value || 0);
+    const min = Number(minCtrl?.value || 0);
+    if (!this.shouldShowMinimumParticipantsField) {
+      minCtrl?.setValue(1, { emitEvent: false });
+      return;
+    }
+    if (!min || min < 1) {
+      minCtrl?.setValue(1, { emitEvent: false });
+      return;
+    }
+    if (max > 0 && min > max) {
+      minCtrl?.setValue(max, { emitEvent: false });
+    }
   }
 
   get ageRangeInvalid(): boolean {
@@ -272,7 +306,7 @@ export class PhotographerCollaborationFormComponent implements OnInit {
     if (!this.selectedPlatforms.length) return;
     if (!this.selectedDeliverables.length) return;
     if (this.timelineInvalid) return;
-    if (Number(v.minInfluencers || 0) > Number(v.maxInfluencers || 0)) return;
+    if (v.minInfluencers && Number(v.minInfluencers || 0) > Number(v.maxInfluencers || 0)) return;
     if (v.ageMin && v.ageMax && Number(v.ageMin) > Number(v.ageMax)) return;
 
     const isPaid = v.compensationModel === 'paid';
@@ -309,7 +343,7 @@ export class PhotographerCollaborationFormComponent implements OnInit {
       minInfluencerTier: v.minInfluencerTier || undefined,
       minFollowerCount: v.minFollowers ? Number(v.minFollowers) : undefined,
       maxInfluencers: Number(v.maxInfluencers || 0),
-      minInfluencers: Number(v.minInfluencers || 0),
+      minInfluencers: Number(v.minInfluencers || 1),
       pricePerInfluencer: isPaid ? Math.round(rawPrice * 100) : undefined,
       targetState: v.targetState || undefined,
       targetCities: v.targetDistrict ? [String(v.targetDistrict)] : [],

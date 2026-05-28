@@ -333,8 +333,8 @@ export class CampaignFormComponent implements OnInit {
       pricePerInfluencer: [this.getInitialPricePerInfluencer(), [Validators.required, Validators.min(1)]],
       maxInfluencers: [(this.campaign as any)?.maxInfluencers || null, [Validators.required, Validators.min(1)]],
       minInfluencers: [
-        (this.campaign as any)?.minInfluencers || (this.campaign as any)?.maxInfluencers || null,
-        [Validators.required, Validators.min(1)],
+        (this.campaign as any)?.minInfluencers || 1,
+        [Validators.min(1)],
       ],
       acceptanceDeadline: [this.formatDateTimeLocal((this.campaign as any)?.acceptanceDeadline)],
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
@@ -453,6 +453,14 @@ export class CampaignFormComponent implements OnInit {
       this.loadTargetDistrictsFor(stateName);
     });
 
+    this.form.get('campaignMode')?.valueChanges.subscribe(() => {
+      this.normalizeMinParticipantsField();
+    });
+
+    this.form.get('maxInfluencers')?.valueChanges.subscribe(() => {
+      this.normalizeMinParticipantsField();
+    });
+
     this.form.get('venueAddress')?.valueChanges.subscribe((value: string) => {
       if (!(this.isInvitingPhotographers || this.isPhotographerCreator)) return;
       this.form.get('shootLocationAddress')?.setValue(value || '', { emitEvent: false });
@@ -494,6 +502,8 @@ export class CampaignFormComponent implements OnInit {
       this.platformsList = Array.isArray(data) ? data : [];
       this.cd.detectChanges();
     });
+
+    this.normalizeMinParticipantsField();
 
   }
 
@@ -792,11 +802,40 @@ export class CampaignFormComponent implements OnInit {
   };
 
   private minMaxInfluencerValidator = (group: FormGroup) => {
-    const min = Number(group.get('minInfluencers')?.value || 0);
+    const rawMin = group.get('minInfluencers')?.value;
+    const min = Number(rawMin || 0);
     const max = Number(group.get('maxInfluencers')?.value || 0);
-    if (!min || !max) return null;
+    if (!rawMin || !max) return null;
     return min <= max ? null : { invalidMinMaxInfluencers: true };
   };
+
+  get shouldShowMinimumParticipantsField(): boolean {
+    const mode = String(this.f['campaignMode']?.value || 'invite_only');
+    const max = Number(this.f['maxInfluencers']?.value || 0);
+    return mode === 'tier_filtered_open' || max > 1;
+  }
+
+  get minimumParticipantsDisplayValue(): number {
+    const min = Number(this.f['minInfluencers']?.value || 0);
+    return min > 0 ? min : 1;
+  }
+
+  private normalizeMinParticipantsField(): void {
+    if (!this.form) return;
+    const max = Number(this.f['maxInfluencers']?.value || 0);
+    const min = Number(this.f['minInfluencers']?.value || 0);
+    if (!this.shouldShowMinimumParticipantsField) {
+      this.f['minInfluencers']?.setValue(1, { emitEvent: false });
+      return;
+    }
+    if (!min || min < 1) {
+      this.f['minInfluencers']?.setValue(1, { emitEvent: false });
+      return;
+    }
+    if (max > 0 && min > max) {
+      this.f['minInfluencers']?.setValue(max, { emitEvent: false });
+    }
+  }
 
   private readCurrentBrandName(): string {
     if (typeof window === 'undefined') return '';
@@ -921,8 +960,6 @@ export class CampaignFormComponent implements OnInit {
         priceValid &&
         this.f['maxInfluencers'].valid &&
         this.f['maxInfluencers'].value > 0 &&
-        this.f['minInfluencers'].valid &&
-        this.f['minInfluencers'].value > 0 &&
         !this.form.errors?.['invalidMinMaxInfluencers'] &&
         this.selectedPhotographerServices.length > 0 &&
         this.selectedPhotographerDeliverables.length > 0
@@ -934,8 +971,6 @@ export class CampaignFormComponent implements OnInit {
       priceValid &&
       this.f['maxInfluencers'].valid &&
       this.f['maxInfluencers'].value > 0 &&
-      this.f['minInfluencers'].valid &&
-      this.f['minInfluencers'].value > 0 &&
       !this.form.errors?.['invalidMinMaxInfluencers'] &&
       this.selectedCategories.length > 0 &&
       (this.isInvitingPhotographers || this.platformDeliverables.length > 0)
@@ -1514,6 +1549,7 @@ export class CampaignFormComponent implements OnInit {
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
+      minInfluencers: Number(v.minInfluencers || 1),
       status: (isTierOpen || isResubmit || keepPendingReview)
         ? 'pending_review'
         : (keepPending ? 'pending' : 'draft'),
@@ -1565,6 +1601,7 @@ export class CampaignFormComponent implements OnInit {
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
+      minInfluencers: Number(v.minInfluencers || 1),
       status: 'pending_review',
       deliverables: this.parseDeliverables(v.deliverablesText),
     };
