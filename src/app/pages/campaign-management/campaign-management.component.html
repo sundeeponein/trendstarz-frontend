@@ -1074,6 +1074,8 @@
     *ngIf="showForm && !isInfluencerView && showCollaborationsWorkspace"
     [mode]="formMode"
     [campaign]="editingCampaign"
+    [preSelectedInfluencers]="searchPrefilledRecipients"
+    [preSelectedRecipientRole]="searchPrefilledRecipientRole"
     [hasPremium]="!!planCapabilities?.hasPremium"
     [creatorRole]="isPhotographerView ? 'photographer' : 'brand'"
     (save)="onFormSave($event)"

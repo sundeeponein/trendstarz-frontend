@@ -53,6 +53,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           this.cd.detectChanges();
           this.refreshCampaignPaymentStatuses();
           this.loadAllInvites();
+          this.consumeSearchPrefillIfReady();
         },
         error: () => {
           this.campaigns = [];
@@ -107,6 +108,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   bulkSending = false;
   inviteError = '';
   unlockingInviteIds = new Set<string>();
+  searchPrefilledRecipients: { id: string; name: string; username?: string }[] = [];
+  searchPrefilledRecipientRole: 'influencer' | 'photographer' = 'influencer';
+  private pendingSearchPrefill = false;
 
   // ── Slice D/E: brand actions + fulfillment state ─────────────
   actioningInviteIds = new Set<string>();
@@ -225,6 +229,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.paymentInitialTab = 'summary';
         this.refreshCampaignPaymentStatuses();
       }
+    }
+
+    private consumeSearchPrefillIfReady(): void {
+      if (!this.pendingSearchPrefill || this.isInfluencerView) return;
+      this.pendingSearchPrefill = false;
+      this.openCreateForm();
     }
 
 
@@ -953,6 +963,24 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.cd.detectChanges();
     }, 60000);
 
+    const navigationState = typeof history !== 'undefined' ? history.state : null;
+    const prefilledRecipients = Array.isArray(navigationState?.searchPrefilledRecipients)
+      ? navigationState.searchPrefilledRecipients
+      : [];
+    if (prefilledRecipients.length > 0) {
+      this.searchPrefilledRecipients = prefilledRecipients
+        .map((recipient: any) => ({
+          id: String(recipient?.id || ''),
+          name: String(recipient?.name || recipient?.fullname || recipient?.fullName || ''),
+          username: String(recipient?.username || ''),
+        }))
+        .filter((recipient: any) => !!recipient.id);
+      this.searchPrefilledRecipientRole = navigationState?.searchPrefilledRecipientRole === 'photographer'
+        ? 'photographer'
+        : 'influencer';
+      this.pendingSearchPrefill = true;
+    }
+
     const token = this.getToken();
     const user = this.session.getUser();
     this.isInfluencerView = user?.role === 'influencer';
@@ -1041,6 +1069,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
               this.cd.detectChanges();
               this.refreshCampaignPaymentStatuses();
               this.loadAllInvites();
+              this.consumeSearchPrefillIfReady();
             },
             error: () => {
               this.campaigns = [];
@@ -1090,6 +1119,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
               this.refreshCampaignPaymentStatuses();
               // Load invites for all campaigns after campaigns are loaded
               this.loadAllInvites();
+              this.consumeSearchPrefillIfReady();
             },
             error: (err) => {
               this.campaigns = [];

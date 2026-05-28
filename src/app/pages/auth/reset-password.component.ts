@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-reset-password',
@@ -22,6 +23,7 @@ export class ResetPasswordComponent {
   token = '';
   showPassword = false;
   showConfirmPassword = false;
+  invalidOrMissingToken = false;
 
   constructor(
     private fb: FormBuilder,
@@ -33,7 +35,22 @@ export class ResetPasswordComponent {
       password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordsMatchValidator });
-    this.token = this.route.snapshot.queryParamMap.get('token') || '';
+    this.token = this.resolveTokenFromUrl();
+    this.invalidOrMissingToken = !this.token;
+    if (this.invalidOrMissingToken) {
+      this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+    }
+  }
+
+  private resolveTokenFromUrl(): string {
+    const fromQuery = String(this.route.snapshot.queryParamMap.get('token') || '').trim();
+    if (fromQuery) return fromQuery;
+
+    if (typeof window === 'undefined') return '';
+    const hash = String(window.location.hash || '').replace(/^#/, '');
+    if (!hash) return '';
+    const params = new URLSearchParams(hash.startsWith('?') ? hash.slice(1) : hash);
+    return String(params.get('token') || '').trim();
   }
 
   get passwordChecks() {
@@ -57,18 +74,25 @@ export class ResetPasswordComponent {
     this.submitted = true;
     this.successMsg = '';
     this.errorMsg = '';
-    if (this.resetForm.invalid || !this.token) return;
+    if (!this.token) {
+      this.invalidOrMissingToken = true;
+      this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+      return;
+    }
+    if (this.resetForm.invalid) return;
     this.loading = true;
     const password = this.resetForm.get('password')?.value;
-    this.configService.resetPassword(this.token, password).subscribe({
+    this.configService.resetPassword(this.token, password).pipe(
+      finalize(() => {
+        this.loading = false;
+      }),
+    ).subscribe({
       next: () => {
         this.successMsg = 'Your password has been reset. You can now log in.';
-        this.loading = false;
         setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error: (err: any) => {
         this.errorMsg = err?.error?.message || 'Failed to reset password. Please try again.';
-        this.loading = false;
       }
     });
   }

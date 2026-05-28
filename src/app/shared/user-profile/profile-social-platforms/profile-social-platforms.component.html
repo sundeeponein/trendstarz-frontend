@@ -1,0 +1,122 @@
+<div [ngSwitch]="variant" class="profile-social-platforms">
+  <ng-container *ngSwitchCase="'influencer'">
+    <div class="info-card profile-social-platforms__card" *ngIf="hasPlatforms || locked">
+      <div class="pricing-card-header">
+        <h5 class="section-label mb-0">{{ title }}</h5>
+        <span class="per-type-label">per<br>content<br>type</span>
+      </div>
+
+      <div class="detail-locked mb-2" *ngIf="locked">
+        <i class="bi bi-lock-fill"></i> {{ lockedMessage }}
+      </div>
+
+      <div *ngFor="let sm of platforms; let last = last" class="platform-section" [class.platform-section--last]="last">
+        <div class="platform-header-row">
+          <span class="platform-icon-circle">
+            <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
+          </span>
+          <span class="eng-badge" *ngIf="showEngagement && sm.engagementRate && isProViewer">
+            {{ sm.engagementRate }}%<br><small>eng.</small>
+          </span>
+          <div class="platform-followers-block">
+            <strong>{{ sm.tier || '—' }}</strong>
+            <span>tier</span>
+          </div>
+        </div>
+
+        <div class="platform-handle-row" *ngIf="sm.handle">
+          <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else handleText"
+             [href]="getSocialUrl(sm)"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="platform-handle-link"
+             (click)="emitPlatformClick(sm, $event)">
+            <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
+          </a>
+          <ng-template #handleText>
+            <span class="platform-handle-text" *ngIf="canOpen">&#64;{{ sm.handle }}</span>
+            <span class="detail-locked" *ngIf="!canOpen"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
+          </ng-template>
+        </div>
+
+        <ng-container *ngIf="showContentTypes && getContentTypes(sm).length">
+          <div class="content-rates-label">Content &amp; Starting Rates</div>
+          <div *ngFor="let ct of getContentTypes(sm)" class="ct-row">
+            <span class="ct-name">{{ ct.name }}</span>
+            <span class="ct-price" *ngIf="isProViewer">₹{{ ct.price }}</span>
+            <span class="ct-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+          </div>
+          <div class="ct-row ct-row--total">
+            <strong class="ct-name">Total package</strong>
+            <strong class="ct-price ct-price--total" *ngIf="isProViewer">₹{{ getSmTotal(sm) }}</strong>
+            <span class="ct-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngSwitchCase="'photographer'">
+    <div class="info-card profile-social-platforms__card" *ngIf="hasPlatforms || locked">
+      <h5 class="section-label">{{ title }}</h5>
+      <div class="detail-locked mb-2" *ngIf="locked">
+        <i class="bi bi-lock-fill"></i> {{ lockedMessage }}
+      </div>
+      <div class="social-list">
+        <ng-container *ngIf="canOpen; else lockedRows">
+          <a *ngFor="let sm of platforms"
+             [href]="getSocialUrl(sm)"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="social-item"
+             (click)="emitPlatformClick(sm, $event)">
+            <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
+            <div>
+              <strong>{{ getSocialLabel(sm) }}</strong>
+              <div class="social-handle" *ngIf="sm.handle">&#64;{{ sm.handle }}</div>
+            </div>
+          </a>
+        </ng-container>
+        <ng-template #lockedRows>
+          <span *ngFor="let sm of platforms" class="social-item">
+            <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
+            <div>
+              <strong>{{ getSocialLabel(sm) }}</strong>
+              <div class="social-handle"><i class="bi bi-lock-fill"></i> Hidden on free plan</div>
+            </div>
+          </span>
+        </ng-template>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngSwitchDefault>
+    <div class="info-card profile-social-platforms__card" *ngIf="hasPlatforms || locked">
+      <h5 class="section-label">{{ title }}</h5>
+      <div class="detail-locked mb-2" *ngIf="locked">
+        <i class="bi bi-lock-fill"></i> {{ lockedMessage }}
+      </div>
+      <div class="social-links">
+        <ng-container *ngFor="let sm of platforms">
+          <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else lockedPill"
+             [href]="getSocialUrl(sm)"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="social-pill"
+             (click)="emitPlatformClick(sm, $event)">
+            <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
+            {{ getSocialLabel(sm) }}
+            <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
+          </a>
+          <ng-template #lockedPill>
+            <span class="social-pill social-pill--locked" title="Upgrade to Premium to view social platforms">
+              <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
+              {{ getSocialLabel(sm) }}
+              <i class="bi bi-lock-fill social-lock-icon"></i>
+            </span>
+          </ng-template>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</div>

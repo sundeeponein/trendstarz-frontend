@@ -167,72 +167,18 @@
       </div>
 
       <!-- Social Platforms & Pricing -->
-      <div class="info-card" *ngIf="influencer.socialMedia?.length || influencer.socialMediaRestricted">
-        <div class="pricing-card-header">
-          <h5 class="section-label mb-0">SOCIAL PLATFORMS & PRICING</h5>
-          <span class="per-type-label">per<br>content<br>type</span>
-        </div>
-
-        <div class="detail-locked mb-2" *ngIf="influencer.socialMediaRestricted">
-          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
-        </div>
-
-        <div *ngFor="let sm of influencer.socialMedia; let last = last"
-             class="platform-section"
-             [class.platform-section--last]="last">
-
-          <!-- Platform header row -->
-          <div class="platform-header-row">
-            <span class="platform-icon-circle">
-              <i [class]="getSocialIcon(sm)"></i>
-            </span>
-            <span class="eng-badge" *ngIf="sm.engagementRate && isProViewer">
-              {{ sm.engagementRate }}%<br><small>eng.</small>
-            </span>
-            <div class="platform-followers-block">
-              <strong>{{ sm.tier || '—' }}</strong>
-              <span>tier</span>
-            </div>
-          </div>
-
-          <!-- Handle (clickable) -->
-          <div class="platform-handle-row" *ngIf="sm.handle">
-            <a *ngIf="canOpenSocialProfiles && getSocialUrl(sm); else handleText"
-               [href]="getSocialUrl(sm)"
-               target="_blank"
-               rel="noopener noreferrer"
-              (click)="onPlatformClick(sm)"
-               class="platform-handle-link">
-              <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
-            </a>
-            <ng-template #handleText>
-              <span class="platform-handle-text" *ngIf="canOpenSocialProfiles">&#64;{{ sm.handle }}</span>
-              <span class="detail-locked" *ngIf="!canOpenSocialProfiles"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
-            </ng-template>
-          </div>
-
-          <!-- Content type rows -->
-          <ng-container *ngIf="sm.contentTypes?.length">
-            <div class="content-rates-label">Content &amp; Starting Rates</div>
-            <div *ngFor="let ct of sm.contentTypes" class="ct-row">
-              <span class="ct-name">{{ ct.name }}</span>
-              <span class="ct-price" *ngIf="isProViewer">₹{{ ct.price }}</span>
-              <span class="ct-locked" *ngIf="!isProViewer">
-                <i class="bi bi-lock-fill"></i> Pro only
-              </span>
-            </div>
-            <!-- Total package -->
-            <div class="ct-row ct-row--total">
-              <strong class="ct-name">Total package</strong>
-              <strong class="ct-price ct-price--total" *ngIf="isProViewer">₹{{ getSmTotal(sm) }}</strong>
-              <span class="ct-locked" *ngIf="!isProViewer">
-                <i class="bi bi-lock-fill"></i> Pro only
-              </span>
-            </div>
-          </ng-container>
-
-        </div>
-      </div>
+      <app-profile-social-platforms
+        title="SOCIAL PLATFORMS & PRICING"
+        variant="influencer"
+        [platforms]="influencer.socialMedia || []"
+        [locked]="!!influencer.socialMediaRestricted"
+        lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+        [canOpen]="canOpenSocialProfiles"
+        [isProViewer]="isProViewer"
+        [showEngagement]="true"
+        [showContentTypes]="true"
+        (platformClick)="onPlatformClick($event)"
+      ></app-profile-social-platforms>
 
     </div>
 

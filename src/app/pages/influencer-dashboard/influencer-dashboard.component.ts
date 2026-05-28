@@ -13,6 +13,7 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
 import { ToastService } from '../../shared/toast/toast.service';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
+import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -61,6 +62,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
   emailBannerDismissed = false;
   verificationCallNumber = '';
+  usageSummary: UsageSummary | null = null;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardUser = this.dashboard?.user || {};
@@ -89,6 +91,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private session: SessionService,
     private config: ConfigService,
     private plansService: PlansService,
+    private monetizationApi: MonetizationApiService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private shippingModal: ShippingAddressModalService,
@@ -97,6 +100,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;
+    });
+    this.monetizationApi.getMyUsage().subscribe({
+      next: (res) => {
+        this.usageSummary = res?.usage || null;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.usageSummary = null;
+      },
     });
 
     if (typeof window !== 'undefined') {

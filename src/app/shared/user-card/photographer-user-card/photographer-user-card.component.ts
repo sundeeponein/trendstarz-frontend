@@ -24,6 +24,7 @@ export class PhotographerUserCardComponent {
   @Input() verifiedByTrendStarz = false;
   @Input() verificationStatus = 'not_submitted';
   @Input() socialMediaRestricted = false;
+  @Input() profileViewDisabled = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
 
@@ -80,6 +81,9 @@ export class PhotographerUserCardComponent {
 
   onViewProfileClick(event: Event) {
     event.stopPropagation();
+    if (this.profileViewDisabled) {
+      return;
+    }
     this.viewProfileClick.emit();
   }
 

@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 
 @Component({
   selector: 'app-photographer-dashboard',
@@ -27,6 +28,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     lastImpressionAt: '',
     lastClickAt: '',
   };
+  usageSummary: UsageSummary | null = null;
   private loadedOnce = false;
 
   private readonly userSub = new Subscription();
@@ -34,6 +36,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private readonly session: SessionService,
     private readonly config: ConfigService,
+    private readonly monetizationApi: MonetizationApiService,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
   ) {}
@@ -42,6 +45,16 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     if (!this.session.getUser()) {
       this.session.loadUserFromStorage();
     }
+
+    this.monetizationApi.getMyUsage().subscribe({
+      next: (res) => {
+        this.usageSummary = res?.usage || null;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.usageSummary = null;
+      },
+    });
 
     this.userSub.add(
       this.session.user$.subscribe((user) => {

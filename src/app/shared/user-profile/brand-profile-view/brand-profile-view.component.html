@@ -210,21 +210,15 @@
           </div>
 
           <!-- Social links (clickable only for premium viewers) -->
-          <div *ngIf="brand.socialMedia?.length || brand.socialMediaRestricted" class="social-links">
-            <div class="contact-field-upgrade mb-2" *ngIf="brand.socialMediaRestricted">
-              <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
-            </div>
-            <ng-container *ngFor="let sm of brand.socialMedia">
-              <a *ngIf="canOpenSocialProfiles" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill" (click)="onPlatformClick(sm)">
-                <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
-                <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
-              </a>
-              <span *ngIf="!canOpenSocialProfiles" class="social-pill social-pill--locked" title="Upgrade to Premium to view social platforms">
-                <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
-                <i class="bi bi-lock-fill social-lock-icon"></i>
-              </span>
-            </ng-container>
-          </div>
+          <app-profile-social-platforms
+            title="SOCIAL PLATFORMS"
+            variant="brand"
+            [platforms]="brand.socialMedia || []"
+            [locked]="!!brand.socialMediaRestricted"
+            lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+            [canOpen]="canOpenSocialProfiles"
+            (platformClick)="onPlatformClick($event)"
+          ></app-profile-social-platforms>
         </div>
       </div>
 

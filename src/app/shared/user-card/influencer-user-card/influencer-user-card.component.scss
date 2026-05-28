@@ -3,52 +3,8 @@
 @include card.user-card-base('.inf-card', 2px);
 
 .inf-card {
-  &--selected {
-    border-color: #ff6b35;
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.18), 0 8px 24px rgba(255, 107, 53, 0.12);
-  }
-
-  &__select-btn {
-    position: absolute;
-    top: 0.6rem;
-    left: 0.6rem;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 2;
-
-    i {
-      font-size: 0.9rem;
-      color: #aaa;
-      transition: color 0.2s;
-    }
-
-    &--checked {
-      background: #ff6b35;
-      border-color: #ff6b35;
-      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
-
-      i {
-        color: #fff;
-      }
-    }
-
-    &:hover:not(#{&}--checked) {
-      background: #fff;
-      border-color: #ff6b35;
-
-      i {
-        color: #ff6b35;
-      }
-    }
+  &--locked {
+    cursor: not-allowed;
   }
 
   &__ts-verified {

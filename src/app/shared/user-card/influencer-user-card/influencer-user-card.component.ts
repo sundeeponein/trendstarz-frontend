@@ -29,10 +29,6 @@ export class InfluencerUserCardComponent {
   @Input() engagementRate?: number | string;
   /** Show the "+ Campaign" button — pass true for brand users */
   @Input() showCampaignBtn = false;
-  /** Enables selection mode (shows checkbox corner) */
-  @Input() selectable = false;
-  /** Whether this card is currently selected */
-  @Input() selected = false;
 
   /** Whether the viewer has a Pro subscription (controls visible details) */
   @Input() isProViewer = false;
@@ -40,11 +36,11 @@ export class InfluencerUserCardComponent {
   @Input() contactRestricted = true;
   /** Backend-driven visibility guard for social profile links */
   @Input() socialMediaRestricted = false;
+  /** Disable opening profile view (used for restricted free-plan visibility). */
+  @Input() profileViewDisabled = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
-  /** Emitted when the card's selection checkbox is toggled */
-  @Output() toggleSelect = new EventEmitter<void>();
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
@@ -125,5 +121,13 @@ export class InfluencerUserCardComponent {
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
     return count.toString();
+  }
+
+  onViewProfileClick(event: Event): void {
+    if (this.profileViewDisabled) {
+      event.stopPropagation();
+      return;
+    }
+    this.viewProfileClick.emit();
   }
 }

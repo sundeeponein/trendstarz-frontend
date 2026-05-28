@@ -153,6 +153,31 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * Track profile card click behavior from Search results, including
+   * whether navigation was allowed or blocked by plan restrictions.
+   */
+  trackSearchProfileCardClick(context: {
+    targetRole: 'influencer' | 'photographer' | 'brand';
+    outcome: 'allowed' | 'blocked';
+    targetId?: string;
+    targetUsername?: string;
+  }): void {
+    const viewer = this.session.getUser();
+    const viewerTier = viewer ? (viewer.isPremium ? 'pro' : 'free') : 'guest';
+    const eventData = {
+      targetRole: context.targetRole,
+      outcome: context.outcome,
+      targetId: context.targetId || null,
+      targetUsername: context.targetUsername || null,
+      viewerTier,
+      viewerRole: String(viewer?.role || '').toLowerCase() || 'guest',
+    };
+    this.logEvent('search_profile_card_click', eventData);
+    this.sendToGA4('search_profile_card_click', eventData);
+    this.sendToClarity('search_profile_card_click', eventData);
+  }
+
+  /**
    * Track campaign invite sent event (for end-to-end campaign flow metrics).
    */
   trackCampaignInviteSent(context: {

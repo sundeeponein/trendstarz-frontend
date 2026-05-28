@@ -10,12 +10,13 @@ import { VisibilityService } from '../../../core/visibility.service';
 import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
+import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-influencer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent],
+  imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: ['./influencer-profile-view.component.scss']
 })
@@ -252,7 +253,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.data.subscribe(({ influencer }) => {
+    this.route.paramMap.subscribe(() => {
       const username = this.route.snapshot.paramMap.get('username') || this.route.parent?.snapshot.paramMap.get('username') || '';
       this.influencer = null;
       this.error = '';
@@ -266,25 +267,33 @@ export class InfluencerProfileViewComponent implements OnInit {
         return;
       }
 
-      const data = influencer || null;
-      this.influencer = data;
-      if (!data) {
-        this.error = 'Influencer not found.';
-        this.setDefaultMetadata();
-      } else {
-        this.updateMetadata(data);
-        this.config.trackInfluencerProfileImpression(username).subscribe({
-          next: () => {},
-          error: () => {}
-        });
-        // Brand: try to find a completed invite to enable review button
-        if (this.isBrandViewer && this.isProViewer) {
-          this.loadCompletedInvite(data._id);
-        }
-      }
-
-      this.loading = false;
-      this.cd.detectChanges();
+      this.config.getInfluencerByUsername(username).subscribe({
+        next: (data: any) => {
+          this.influencer = data || null;
+          if (!this.influencer) {
+            this.error = 'Influencer not found.';
+            this.setDefaultMetadata();
+          } else {
+            this.updateMetadata(this.influencer);
+            this.config.trackInfluencerProfileImpression(username).subscribe({
+              next: () => {},
+              error: () => {}
+            });
+            if (this.isBrandViewer && this.isProViewer) {
+              this.loadCompletedInvite(this.influencer._id);
+            }
+          }
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.influencer = null;
+          this.error = 'Influencer not found.';
+          this.setDefaultMetadata();
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+      });
     });
   }
 

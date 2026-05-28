@@ -5,11 +5,11 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { AnalyticsService } from '../../core/analytics.service';
+import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
-import { CampaignInfluencer } from '../../shared/campaigns/campaign.model';
 
 @Component({
   selector: 'app-search',
@@ -43,9 +43,7 @@ export class SearchComponent implements OnInit {
   influencersError = '';
   brandsError = '';
   photographersError = '';
-
-  // Selection state (brand users: pick influencers for a campaign)
-  private selectedSet = new Set<string>();
+  usageSummary: UsageSummary | null = null;
 
   // Filter options (populated from data)
   categoryOptions: string[] = [];
@@ -120,6 +118,22 @@ export class SearchComponent implements OnInit {
   get isBrandMode(): boolean { return this.activeTab === 'brands'; }
   get isPhotographerMode(): boolean { return this.activeTab === 'photographers'; }
 
+  get showUsageSummary(): boolean {
+    return !this.isGuestUser && !!this.usageSummary;
+  }
+
+  get usageProfileViewsText(): string {
+    const used = Number(this.usageSummary?.profileViews?.used || 0);
+    const limit = Number(this.usageSummary?.profileViews?.limit || 0);
+    return `${used}/${limit}`;
+  }
+
+  get usageSearchesText(): string {
+    const used = Number(this.usageSummary?.search?.used || 0);
+    const limit = Number(this.usageSummary?.search?.limit || 0);
+    return `${used}/${limit}`;
+  }
+
   get pageTitle(): string {
     if (this.isInfluencerMode) return 'Discover Influencers';
     if (this.isPhotographerMode) return 'Discover Photographers & Videographers';
@@ -129,11 +143,10 @@ export class SearchComponent implements OnInit {
   get pageSubtitle(): string {
     if (this.isInfluencerMode) {
       const count = this.filteredInfluencers.length;
-      const suffix = this.selectedCount > 0 ? ` · ${this.selectedCount} selected` : '';
       if (this.isInfluencerSmartDiscoveryActive) {
-        return `Recommended creators near ${this.viewerLocationLabel} · ${count} results${suffix}`;
+        return `Recommended creators near ${this.viewerLocationLabel} · ${count} results`;
       }
-      return `Showing ${count} creators matching your criteria${suffix}`;
+      return `Showing ${count} creators matching your criteria`;
     }
     if (this.isPhotographerMode) {
       if (this.isPhotographerSmartDiscoveryActive) {
@@ -213,6 +226,7 @@ export class SearchComponent implements OnInit {
     private config: ConfigService,
     private session: SessionService,
     private analytics: AnalyticsService,
+    private monetizationApi: MonetizationApiService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     public router: Router,
@@ -223,6 +237,9 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
+    if (!this.isGuestUser) {
+      this.loadUsageSummary();
+    }
     this.loadRoleCategoryOptions();
     const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
     this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
@@ -233,6 +250,57 @@ export class SearchComponent implements OnInit {
     } else {
       this.fetchBrands();
     }
+  }
+
+  private loadUsageSummary(): void {
+    this.monetizationApi.getMyUsage().subscribe({
+      next: (res) => {
+        this.usageSummary = res?.usage || null;
+        setTimeout(() => this.cd.detectChanges(), 0);
+      },
+      error: () => {
+        this.usageSummary = null;
+        setTimeout(() => this.cd.detectChanges(), 0);
+      },
+    });
+  }
+
+  private mergeSearchUsage(usage: any): void {
+    if (!usage || this.isGuestUser) return;
+    const searchUsage = usage?.search || usage;
+    if (!searchUsage) return;
+    const previous = this.usageSummary;
+    this.usageSummary = {
+      day: String(previous?.day || searchUsage?.day || ''),
+      search: {
+        used: Number(searchUsage?.used || 0),
+        limit: Number(searchUsage?.limit || 0),
+        remaining: Number(searchUsage?.remaining || 0),
+      },
+      profileViews: {
+        used: Number(previous?.profileViews?.used || 0),
+        limit: Number(previous?.profileViews?.limit || 0),
+        remaining: Number(previous?.profileViews?.remaining || 0),
+      },
+    };
+  }
+
+  private incrementProfileViewUsage(): void {
+    if (!this.usageSummary || this.isGuestUser) return;
+    const current = this.usageSummary.profileViews;
+    const used = Number(current?.used || 0);
+    const limit = Number(current?.limit || 0);
+    const nextUsed = limit > 0 ? Math.min(used + 1, limit) : used + 1;
+    const nextRemaining = limit > 0 ? Math.max(limit - nextUsed, 0) : Math.max(Number(current?.remaining || 0) - 1, 0);
+
+    this.usageSummary = {
+      ...this.usageSummary,
+      profileViews: {
+        used: nextUsed,
+        limit,
+        remaining: nextRemaining,
+      },
+    };
   }
 
   private loadRoleCategoryOptions(): void {
@@ -353,7 +421,7 @@ export class SearchComponent implements OnInit {
     this.influencersLoading = true;
     this.influencersError = '';
     this.config
-      .getInfluencers({
+      .getInfluencersSearchResponse({
         lite: true,
         limit: 120,
         viewerState: this.currentUser?.location?.state || '',
@@ -363,6 +431,7 @@ export class SearchComponent implements OnInit {
       .subscribe({
       next: (data: any) => {
         const arr = Array.isArray(data) ? data : (data?.data ?? []);
+        this.mergeSearchUsage(data?.usage);
         this.allInfluencers = arr;
         this.buildInfluencerOptions(arr);
         this.applyInfluencerFilters();
@@ -370,8 +439,8 @@ export class SearchComponent implements OnInit {
         this.influencersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       },
-      error: () => {
-        this.influencersError = 'Failed to load influencers.';
+      error: (err: any) => {
+        this.influencersError = err?.error?.message || 'Failed to load influencers.';
         this.influencersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       }
@@ -435,15 +504,36 @@ export class SearchComponent implements OnInit {
   }
 
   viewPhotographerProfile(photographer: any) {
+    if (this.isPhotographerProfileViewDisabled(photographer)) {
+      this.analytics.trackSearchProfileCardClick({
+        targetRole: 'photographer',
+        outcome: 'blocked',
+        targetId: String(photographer?._id || ''),
+        targetUsername: String(photographer?.username || ''),
+      });
+      return;
+    }
+    this.analytics.trackSearchProfileCardClick({
+      targetRole: 'photographer',
+      outcome: 'allowed',
+      targetId: String(photographer?._id || ''),
+      targetUsername: String(photographer?.username || ''),
+    });
     const username = String(photographer?.username || '').trim();
     const id = photographer?._id;
     if (username) {
+      this.incrementProfileViewUsage();
       this.router.navigate(['/photographer', username]);
       return;
     }
     if (id) {
+      this.incrementProfileViewUsage();
       this.router.navigate(['/photographer', id]);
     }
+  }
+
+  isPhotographerProfileViewDisabled(photographer: any): boolean {
+    return this.isGuestUser || (this.isBrandUser && this.isFreeUser);
   }
 
   applyInfluencerFilters() {
@@ -524,7 +614,7 @@ export class SearchComponent implements OnInit {
     this.photographersLoading = true;
     this.photographersError = '';
     this.config
-      .getPhotographers({
+      .getPhotographersSearchResponse({
         limit: 120,
         viewerState: this.currentUser?.location?.state || '',
         viewerDistrict: this.currentUser?.location?.district || '',
@@ -533,6 +623,7 @@ export class SearchComponent implements OnInit {
       .subscribe({
       next: (data: any) => {
         const arr = Array.isArray(data) ? data : (data?.data ?? []);
+        this.mergeSearchUsage(data?.usage);
         this.allPhotographers = arr;
         this.buildPhotographerOptions(this.allPhotographers);
         this.applyPhotographerFilters();
@@ -540,8 +631,8 @@ export class SearchComponent implements OnInit {
         this.photographersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       },
-      error: () => {
-        this.photographersError = 'Failed to load photographers.';
+      error: (err: any) => {
+        this.photographersError = err?.error?.message || 'Failed to load photographers.';
         this.photographersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       }
@@ -638,14 +729,38 @@ export class SearchComponent implements OnInit {
   }
 
   viewInfluencerProfile(influencer: any) {
-    const username = influencer.username || influencer._id;
-    if (username) {
-      this.config.trackInfluencerProfileClick(username).subscribe({
+    if (this.isInfluencerProfileViewDisabled(influencer)) {
+      this.analytics.trackSearchProfileCardClick({
+        targetRole: 'influencer',
+        outcome: 'blocked',
+        targetId: String(influencer?._id || ''),
+        targetUsername: String(influencer?.username || ''),
+      });
+      return;
+    }
+    this.analytics.trackSearchProfileCardClick({
+      targetRole: 'influencer',
+      outcome: 'allowed',
+      targetId: String(influencer?._id || ''),
+      targetUsername: String(influencer?.username || ''),
+    });
+    const username = String(influencer?.username || '').trim();
+    const id = String(influencer?._id || '').trim();
+    const profileKey = username || id;
+
+    if (profileKey) {
+      this.config.trackInfluencerProfileClick(profileKey).subscribe({
         next: () => {},
         error: () => {}
       });
+      this.incrementProfileViewUsage();
+      this.router.navigate(['/influencer', profileKey]);
+      return;
     }
-    this.router.navigate(['/influencer', username]);
+  }
+
+  isInfluencerProfileViewDisabled(influencer: any): boolean {
+    return this.isGuestUser || (this.isBrandUser && this.isFreeUser);
   }
 
   private slugify(value: string): string {
@@ -659,6 +774,12 @@ export class SearchComponent implements OnInit {
   }
 
   viewBrandProfile(brand: any) {
+    this.analytics.trackSearchProfileCardClick({
+      targetRole: 'brand',
+      outcome: 'allowed',
+      targetId: String(brand?._id || ''),
+      targetUsername: String(brand?.brandUsername || brand?.brandName || ''),
+    });
     const rawName = brand.brandName || brand._id;
     const brandSlug = brand.brandName ? this.slugify(brand.brandName) : rawName;
     if (brandSlug) {
@@ -667,6 +788,7 @@ export class SearchComponent implements OnInit {
         error: () => {}
       });
     }
+    this.incrementProfileViewUsage();
     this.router.navigate(['/brand', brandSlug]);
   }
 
@@ -676,38 +798,6 @@ export class SearchComponent implements OnInit {
       if (brand.brandLogo[0]?.url) return brand.brandLogo[0].url;
     }
     return '';
-  }
-
-  // ── Influencer selection (brand flow) ─────────────────────────
-
-  toggleInfluencerSelection(influencer: any) {
-    const id = influencer._id;
-    if (this.selectedSet.has(id)) {
-      this.selectedSet.delete(id);
-    } else {
-      this.selectedSet.add(id);
-    }
-  }
-
-  isInfluencerSelected(influencer: any): boolean {
-    return this.selectedSet.has(influencer._id);
-  }
-
-  get selectedInfluencersList(): CampaignInfluencer[] {
-    return this.allInfluencers
-      .filter(i => this.selectedSet.has(i._id))
-      .map(i => ({ id: i._id, name: i.name || i.fullname || '', username: i.username }));
-  }
-
-  get selectedCount(): number { return this.selectedSet.size; }
-
-  clearSelection() { this.selectedSet.clear(); }
-
-  /** Called when brand selects a single card's "+ Campaign" button — navigates to campaigns page */
-  createCampaignForOne(influencer: any) {
-    this.selectedSet.clear();
-    this.selectedSet.add(influencer._id);
-    this.router.navigate(['/campaigns']);
   }
 
   getEngagementRate(influencer: any): string {

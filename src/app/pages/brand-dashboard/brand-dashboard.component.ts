@@ -10,6 +10,7 @@ import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -51,6 +52,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
+  usageSummary: UsageSummary | null = null;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardBrand = this.dashboard?.brand || {};
@@ -78,6 +80,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     private session: SessionService,
     private config: ConfigService,
     private plansService: PlansService,
+    private monetizationApi: MonetizationApiService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
   ) {}
@@ -85,6 +88,15 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
         this.plansService.getMyCapabilities().subscribe((caps) => {
           this.planCaps = caps;
+        });
+        this.monetizationApi.getMyUsage().subscribe({
+          next: (res) => {
+            this.usageSummary = res?.usage || null;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.usageSummary = null;
+          },
         });
 
         // Ensure user is loaded from storage on direct load/refresh

@@ -46,6 +46,7 @@ export class CampaignFormComponent implements OnInit {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
+  @Input() preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
   @Input() hasPremium: boolean = false;
   @Input() creatorRole: 'brand' | 'photographer' = 'brand';
   @Output() save = new EventEmitter<Partial<Campaign> & {
@@ -361,7 +362,15 @@ export class CampaignFormComponent implements OnInit {
     this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     this.inviteRecipientRole = this.isPhotographerCreator
       ? 'influencer'
-      : (String(this.f['inviteRecipientRole']?.value || 'influencer') === 'photographer' ? 'photographer' : 'influencer');
+      : (this.preSelectedRecipientRole || (String(this.f['inviteRecipientRole']?.value || 'influencer') === 'photographer' ? 'photographer' : 'influencer'));
+    if (!this.isPhotographerCreator && this.preSelectedRecipientRole) {
+      this.form.get('inviteRecipientRole')?.setValue(this.preSelectedRecipientRole, { emitEvent: false });
+    }
+    this.selectedInfluencerIds = new Set(
+      (this.preSelectedInfluencers || [])
+        .map((recipient) => String(recipient?.id || ''))
+        .filter(Boolean),
+    );
     this.loadCampaignTypeConfigs();
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
     if (!this.hasPremium && this.isPremiumOnlyType(String(this.f['campaignType']?.value || ''))) {

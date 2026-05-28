@@ -472,7 +472,7 @@ export class ConfigService {
     return (Array.isArray(items) ? items : []).filter((item: T) => item?.showInFrontend !== false);
   }
 
-  getInfluencers(options?: {
+  getInfluencersSearchResponse(options?: {
     page?: number;
     limit?: number;
     lite?: boolean;
@@ -481,7 +481,7 @@ export class ConfigService {
     viewerState?: string;
     viewerDistrict?: string;
     smartLocationPriority?: boolean;
-  }): Observable<any[]> {
+  }): Observable<any> {
     const params: string[] = [];
     if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
     if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
@@ -495,10 +495,22 @@ export class ConfigService {
     }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/influencers${qs}`).pipe(
-      map((res) => {
-        const data = this.extractData<any>(res);
-        return (data?.data || data || []) as any[];
-      }),
+      map((res) => this.extractData<any>(res) || res || {})
+    );
+  }
+
+  getInfluencers(options?: {
+    page?: number;
+    limit?: number;
+    lite?: boolean;
+    state?: string;
+    district?: string;
+    viewerState?: string;
+    viewerDistrict?: string;
+    smartLocationPriority?: boolean;
+  }): Observable<any[]> {
+    return this.getInfluencersSearchResponse(options).pipe(
+      map((data) => (data?.data || data || []) as any[]),
       catchError(() => of([]))
     );
   }
@@ -527,6 +539,21 @@ export class ConfigService {
     viewerDistrict?: string;
     smartLocationPriority?: boolean;
   }): Observable<any[]> {
+    return this.getPhotographersSearchResponse(options).pipe(
+      map((data) => (Array.isArray(data) ? data : (data?.data || [])) as any[]),
+      catchError(() => of([]))
+    );
+  }
+
+  getPhotographersSearchResponse(options?: {
+    limit?: number;
+    skill?: string;
+    location?: string;
+    keyword?: string;
+    viewerState?: string;
+    viewerDistrict?: string;
+    smartLocationPriority?: boolean;
+  }): Observable<any> {
     const params: string[] = [];
     if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
     if (options?.skill) params.push(`skill=${encodeURIComponent(options.skill)}`);
@@ -539,11 +566,7 @@ export class ConfigService {
     }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/photographers${qs}`).pipe(
-      map((res) => {
-        const data = this.extractData<any>(res);
-        return (Array.isArray(data) ? data : (data?.data || [])) as any[];
-      }),
-      catchError(() => of([]))
+      map((res) => this.extractData<any>(res) || res || {})
     );
   }
 

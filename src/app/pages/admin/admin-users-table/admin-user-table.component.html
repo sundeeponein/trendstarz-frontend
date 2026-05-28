@@ -9,12 +9,12 @@
 
 <div class="admin-users-page">
   <div class="row">
-    <div class="admin-users-header col-6">
+    <div class="admin-users-header col-8">
       <h4>Admin Users</h4>
       <small>Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
     </div>
 
-    <div class="role-tabs col-6" role="tablist" aria-label="User Roles">
+    <div class="role-tabs col-4" role="tablist" aria-label="User Roles">
       <button class="role-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
       <button class="role-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
       <button class="role-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>

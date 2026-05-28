@@ -27,6 +27,27 @@
     margin: 0 0 0.25rem;
   }
 
+  .page-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .page-usage {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+    color: #475569;
+
+    strong {
+      color: #1a1a2e;
+      font-weight: 700;
+    }
+  }
+
   .page-subtitle {
     color: #6c757d;
     font-size: 0.9rem;

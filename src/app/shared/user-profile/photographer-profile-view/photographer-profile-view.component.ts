@@ -6,12 +6,13 @@ import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
 import { VisibilityService } from '../../../core/visibility.service';
 import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
+import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-photographer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ProfileSocialPlatformsComponent],
   templateUrl: './photographer-profile-view.component.html',
   styleUrls: ['./photographer-profile-view.component.scss']
 })
@@ -293,7 +294,7 @@ export class PhotographerProfileViewComponent implements OnInit {
       },
     });
 
-    this.route.data.subscribe(({ photographer }) => {
+    this.route.paramMap.subscribe(() => {
       const username = this.route.snapshot.paramMap.get('username') || this.route.parent?.snapshot.paramMap.get('username') || '';
       this.photographer = null;
       this.error = '';
@@ -307,18 +308,28 @@ export class PhotographerProfileViewComponent implements OnInit {
         return;
       }
 
-      const data = photographer || null;
-      if (!data) {
-        this.photographer = null;
-        this.error = 'Photographer not found.';
-        this.setDefaultMetadata();
-      } else {
-        this.photographer = data;
-        this.updateMetadata(data);
-        this.ensureCanonicalProfileUrl(data, username);
-      }
-      this.loading = false;
-      this.cd.detectChanges();
+      this.config.getPhotographerByUsername(username).subscribe({
+        next: (data: any) => {
+          if (!data) {
+            this.photographer = null;
+            this.error = 'Photographer not found.';
+            this.setDefaultMetadata();
+          } else {
+            this.photographer = data;
+            this.updateMetadata(data);
+            this.ensureCanonicalProfileUrl(data, username);
+          }
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.photographer = null;
+          this.error = 'Photographer not found.';
+          this.setDefaultMetadata();
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+      });
     });
   }
 

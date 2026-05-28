@@ -1,0 +1,253 @@
+@use '../../styles/social-platform' as *;
+
+.profile-social-platforms {
+  .profile-social-platforms__card {
+    margin-top: 0;
+  }
+}
+
+.pricing-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.per-type-label {
+  font-size: 0.68rem;
+  color: #7a7a8e;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.platform-section {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+
+  &--last {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.platform-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.platform-handle-row {
+  margin: -4px 0 12px 50px;
+  font-size: 0.92rem;
+}
+
+.platform-handle-link {
+  color: #e8612d;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  word-break: break-all;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  i { font-size: 0.85em; }
+}
+
+.platform-handle-text {
+  color: #7a7a8e;
+  word-break: break-all;
+}
+
+.content-rates-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #1a1a2e;
+  text-transform: uppercase;
+  margin: 6px 0 8px;
+}
+
+.platform-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  i {
+    font-size: 1.2rem;
+    color: #e8612d;
+  }
+}
+
+.eng-badge {
+  background: #fff;
+  border: 1.5px solid #22c55e;
+  color: #22c55e;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+
+  small {
+    font-size: 0.65rem;
+    font-weight: 500;
+  }
+}
+
+.platform-followers-block {
+  display: flex;
+  flex-direction: column;
+
+  strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a2e;
+  }
+
+  span {
+    font-size: 0.72rem;
+    color: #7a7a8e;
+  }
+}
+
+.ct-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #f6f6f6;
+
+  &--total {
+    border-bottom: none;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+}
+
+.ct-name {
+  font-size: 0.88rem;
+  color: #1a1a2e;
+}
+
+.ct-price {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1a1a2e;
+
+  &--total {
+    color: #e8612d;
+    font-size: 0.95rem;
+  }
+}
+
+.ct-locked {
+  font-size: 0.78rem;
+  color: #7a7a8e;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  i { font-size: 0.72rem; }
+}
+
+.social-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.social-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.75rem 0.85rem;
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.social-icon-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.social-handle {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.social-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.social-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #eee;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #1a1a2e;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  i { color: #e8612d; font-size: 1rem; }
+
+  &:hover {
+    border-color: #e8612d;
+    background: #fff5f0;
+  }
+
+  &--locked {
+    cursor: default;
+    opacity: 0.65;
+
+    &:hover {
+      border-color: #eee;
+      background: transparent;
+    }
+  }
+}
+
+.social-tier-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e8612d;
+  background: #fff5f0;
+  border-radius: 8px;
+  padding: 1px 7px;
+  margin-left: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.social-lock-icon {
+  font-size: 0.75rem;
+  color: #aaa;
+}

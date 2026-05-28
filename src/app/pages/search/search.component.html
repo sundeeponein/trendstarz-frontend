@@ -4,9 +4,15 @@
   <div class="page-header">
     <div class="header-content">
       <div class="header-text">
-        <h1 class="page-title">
-          {{ pageTitle }}
-        </h1>
+        <div class="page-title-row">
+          <h1 class="page-title">
+            {{ pageTitle }}
+          </h1>
+          <div class="page-usage" *ngIf="showUsageSummary">
+            <span>Daily profile views: <strong>{{ usageProfileViewsText }}</strong></span>
+            <span>Daily searches: <strong>{{ usageSearchesText }}</strong></span>
+          </div>
+        </div>
         <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading) || (isPhotographerMode && !photographersLoading)">
           {{ pageSubtitle }}
         </p>
@@ -154,14 +160,12 @@
         [promotionalPrice]="influencer.promotionalPrice"
         [engagementRate]="getEngagementRate(influencer)"
         [showCampaignBtn]="isBrandUser"
-        [selectable]="isBrandUser"
-        [selected]="isInfluencerSelected(influencer)"
         [isProViewer]="isProView"
         [contactRestricted]="influencer.contactRestricted !== false"
         [socialMediaRestricted]="influencer.socialMediaRestricted === true"
+        [profileViewDisabled]="isInfluencerProfileViewDisabled(influencer)"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
-        (createCampaignClick)="createCampaignForOne(influencer)"
-        (toggleSelect)="toggleInfluencerSelection(influencer)">
+        (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-influencer-user-card>
     </div>
   </div>
@@ -245,26 +249,10 @@
         [verifiedByTrendStarz]="p.verifiedByTrendStarz || false"
         [verificationStatus]="p.verificationStatus || 'not_submitted'"
         [socialMediaRestricted]="p.socialMediaRestricted === true"
+        [profileViewDisabled]="isPhotographerProfileViewDisabled(p)"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
     </div>
   </div>
-
-  <!-- ───── FLOATING SELECTION TRAY (brand users) ───── -->
-  <div class="selection-tray" *ngIf="isBrandUser && selectedCount > 0">
-    <div class="selection-tray__info">
-      <i class="bi bi-people-fill"></i>
-      <span><strong>{{ selectedCount }}</strong> influencer{{ selectedCount > 1 ? 's' : '' }} selected</span>
-    </div>
-    <div class="selection-tray__actions">
-      <button class="tray-btn tray-btn--ghost" (click)="clearSelection()">
-        <i class="bi bi-x-lg"></i> Clear
-      </button>
-      <button class="tray-btn tray-btn--primary" (click)="router.navigate(['/campaigns'])">
-        <i class="bi bi-send-fill"></i> Go to Create Campaign
-      </button>
-    </div>
-  </div>
-
 
 </div>

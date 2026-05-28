@@ -32,11 +32,6 @@
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
     </div>
 
-    <div class="brand-card__contact" *ngIf="showSocialLockHint">
-      <i class="bi bi-lock-fill brand-card__contact-icon"></i>
-      <span>Social profiles locked on free plan</span>
-    </div>
-
     <div class="brand-card__meta" *ngIf="showWelcomeCampaignMeta && welcomeCampaignStatus">
       <span>{{ welcomeCampaignMetaLabel }}</span>
       <span class="brand-card__live-pill">{{ welcomeCampaignStatus }}</span>

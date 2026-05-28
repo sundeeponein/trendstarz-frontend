@@ -1,18 +1,12 @@
-<div class="inf-card" [class.inf-card--selected]="selected" (click)="viewProfileClick.emit()">
+<div
+  class="inf-card"
+  [class.inf-card--locked]="profileViewDisabled"
+  [attr.aria-disabled]="profileViewDisabled"
+  [title]="profileViewDisabled ? 'Upgrade to Pro to open this profile' : null"
+  (click)="onViewProfileClick($event)">
   <!-- Image + overlays -->
   <div class="inf-card__img-wrap">
     <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" />
-
-    <!-- Selection checkbox (brand mode) -->
-    <button
-      *ngIf="selectable"
-      class="inf-card__select-btn"
-      [class.inf-card__select-btn--checked]="selected"
-      (click)="toggleSelect.emit(); $event.stopPropagation()"
-      [title]="selected ? 'Deselect' : 'Select'"
-      type="button">
-      <i class="bi" [class.bi-check2]="selected" [class.bi-circle]="!selected"></i>
-    </button>
 
     <!-- Admin badges on image -->
     <div class="inf-card__img-tags" *ngIf="displayTags.length">
@@ -46,11 +40,6 @@
     <div class="inf-card__location" *ngIf="location?.state">
       <i class="bi bi-geo-alt"></i>
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
-    </div>
-
-    <div class="inf-card__contact" *ngIf="showSocialLockHint">
-      <i class="bi bi-lock-fill inf-card__contact-icon"></i>
-      <span>Social profiles locked on free plan</span>
     </div>
 
     <!-- Stats row -->

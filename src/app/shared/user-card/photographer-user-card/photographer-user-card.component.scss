@@ -3,6 +3,10 @@
 @include card.user-card-base('.photographer-card', 2px);
 
 .photographer-card {
+  &--locked {
+    cursor: not-allowed;
+  }
+
   &__name {
     font-size: 1rem;
     font-weight: 700;
