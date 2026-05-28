@@ -29,8 +29,8 @@
           <div class="pcf-field">
             <label>Collaboration Type *</label>
             <select class="form-select" formControlName="collaborationType">
-              <option *ngFor="let type of collaborationTypes" [value]="type.value" [disabled]="!hasPremium && !!type.premiumOnly">
-                {{ type.label }}{{ (!hasPremium && !!type.premiumOnly) ? ' (Premium)' : '' }}
+              <option *ngFor="let type of collaborationTypes" [value]="type.value" [disabled]="type.enabled === false || (!hasPremium && !!type.premiumOnly)">
+                {{ type.label }}{{ (!hasPremium && !!type.premiumOnly) ? ' (Premium)' : '' }}{{ (type.enabled === false) ? ' (Unavailable)' : '' }}
               </option>
             </select>
           </div>

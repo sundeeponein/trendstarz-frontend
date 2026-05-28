@@ -60,11 +60,25 @@
     <form [formGroup]="form" *ngIf="currentStep === 1">
       <div class="form-body">
 
+
+
+        <div class="field-group" *ngIf="!isPhotographerCreator">
+          <label class="field-label">Who do you want to invite? <span class="required">*</span></label>
+          <select formControlName="inviteRecipientRole" class="field-input">
+            <option value="influencer">Influencers</option>
+            <option value="photographer">Photo/Videographers</option>
+          </select>
+          <p class="field-sublabel" *ngIf="isInvitingPhotographers && f['campaignMode'].value === 'invite_only'">
+            <i class="bi bi-info-circle"></i>
+            Invite-only mode: you manually shortlist and invite photographers in Step 3.
+          </p>
+        </div>
+
         <div class="field-group">
           <label class="field-label">{{ campaignTypeFieldLabel }} <span class="required">*</span> <i class="bi bi-info-circle" title="What is each collaboration type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
-            <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="!hasPremium && !!opt.premiumOnly">
-              {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}
+            <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="opt.enabled === false || (!hasPremium && !!opt.premiumOnly)">
+              {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}{{ (opt.enabled === false) ? ' (Unavailable)' : '' }}
             </option>
           </select>
           <p class="field-sublabel premium-lock-hint" *ngIf="!hasPremium">
@@ -90,27 +104,15 @@
           <label class="field-label">{{ campaignModeFieldLabel }} <span class="required">*</span></label>
           <select formControlName="campaignMode" class="field-input">
             <option value="invite_only">🔒 Invite only — you pick &amp; invite creators</option>
-            <option value="tier_filtered_open" *ngIf="!isInvitingPhotographers">🌐 Open to all (with filters) — creators apply</option>
+            <option value="tier_filtered_open">🌐 Open to all (with filters) — creators apply</option>
           </select>
           <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
             <i class="bi bi-person-check"></i>
             You manually select and invite specific {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} in Step 3.
           </p>
-          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open' && !isInvitingPhotographers">
+          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
             <i class="bi bi-globe2"></i>
             Eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} matching your minimum tier (and optional location) can discover and apply. You review applicants from the dashboard.
-          </p>
-        </div>
-
-        <div class="field-group" *ngIf="!isPhotographerCreator">
-          <label class="field-label">Who do you want to invite? <span class="required">*</span></label>
-          <select formControlName="inviteRecipientRole" class="field-input">
-            <option value="influencer">Influencers</option>
-            <option value="photographer">Photo/Videographers</option>
-          </select>
-          <p class="field-sublabel" *ngIf="isInvitingPhotographers">
-            <i class="bi bi-info-circle"></i>
-            Creative Requirement flow is invite-only. Open apply mode is disabled for this recipient type.
           </p>
         </div>
 
@@ -593,7 +595,7 @@
         </ng-container>
 
         <!-- ── Minimum tier ── -->
-        <div class="field-group" *ngIf="!isInvitingPhotographers">
+        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
           <label class="field-label">
             Minimum tier
             <i class="bi bi-info-circle" title="View tier info" style="cursor:pointer;margin-left:6px;" (click)="tierInfo.open()"></i>
@@ -605,7 +607,7 @@
         </div>
 
         <!-- ── Location targeting (only for tier_filtered_open) ── -->
-        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open' && !isInvitingPhotographers">
+        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
           <label class="field-label">Target location <span class="text-muted" style="font-weight:400;">(optional)</span></label>
           <p class="field-sublabel" style="margin-bottom:8px;">
             <i class="bi bi-geo-alt"></i>

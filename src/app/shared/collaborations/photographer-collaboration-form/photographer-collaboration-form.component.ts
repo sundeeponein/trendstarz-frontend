@@ -25,14 +25,7 @@ export class PhotographerCollaborationFormComponent implements OnInit {
 
   form!: FormGroup;
 
-  collaborationTypes: Array<{ value: string; label: string; premiumOnly?: boolean }> = [
-    { value: 'paid_collab', label: 'Paid Shoot' },
-    { value: 'product', label: 'Barter / Product Shoot', premiumOnly: true },
-    { value: 'reel_collab', label: 'Reel Collaboration' },
-    { value: 'portfolio_collab', label: 'Portfolio Collaboration' },
-    { value: 'invite_location', label: 'Event Coverage', premiumOnly: true },
-    { value: 'creative_project', label: 'Creative Project' },
-  ];
+  collaborationTypes: Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> = [];
 
   accessModes: Array<{ value: string; label: string }> = [
     { value: 'tier_filtered_open', label: 'Open to All' },
@@ -110,6 +103,64 @@ export class PhotographerCollaborationFormComponent implements OnInit {
       this.form.get('targetDistrict')?.setValue('');
       this.loadDistricts(stateName);
     });
+
+    this.loadCollaborationTypeConfigs();
+  }
+
+  private loadCollaborationTypeConfigs(): void {
+    this.config.getCampaignTypeConfigs().subscribe({
+      next: (items) => {
+        const selected = String(this.form?.get('collaborationType')?.value || '').trim();
+        const source = (Array.isArray(items) ? items : [])
+          .filter((item: any) => String(item?.ownerType || '') === 'photographer')
+          .sort((a: any, b: any) => Number(a?.sortOrder || 0) - Number(b?.sortOrder || 0));
+
+        if (!source.length) {
+          this.collaborationTypes = this.buildSyntheticCollaborationTypes(selected);
+          return;
+        }
+
+        const enabledItems = source.filter((item: any) => item?.enabled !== false);
+        const selectedDisabledItem = source.find((item: any) => item?.key === selected && item?.enabled === false);
+        const finalItems = selectedDisabledItem ? [...enabledItems, selectedDisabledItem] : enabledItems;
+
+        this.collaborationTypes = finalItems.map((item: any) => ({
+          value: String(item?.key || '').trim(),
+          label: String(item?.label || '').trim(),
+          premiumOnly: item?.premiumOnly === true,
+          enabled: item?.enabled !== false,
+        })).filter((item: any) => !!item.value && !!item.label);
+
+        const canUseSelected = this.collaborationTypes.some((opt) =>
+          opt.value === selected && opt.enabled !== false && (this.hasPremium || !opt.premiumOnly),
+        );
+        if (!canUseSelected && this.collaborationTypes.length) {
+          const fallback = this.collaborationTypes.find((opt) =>
+            opt.enabled !== false && (this.hasPremium || !opt.premiumOnly),
+          ) || this.collaborationTypes[0];
+          this.form.patchValue({ collaborationType: fallback.value }, { emitEvent: false });
+        }
+      },
+      error: () => {
+        const selected = String(this.form?.get('collaborationType')?.value || '').trim();
+        this.collaborationTypes = this.buildSyntheticCollaborationTypes(selected);
+      },
+    });
+  }
+
+  private buildSyntheticCollaborationTypes(
+    selected: string,
+  ): Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> {
+    const key = String(selected || '').trim();
+    if (!key) return [];
+    const label = key === 'paid_collab'
+      ? 'Paid Shoot'
+      : key
+        .split('_')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    return [{ value: key, label, premiumOnly: false, enabled: true }];
   }
 
   get isEdit(): boolean {

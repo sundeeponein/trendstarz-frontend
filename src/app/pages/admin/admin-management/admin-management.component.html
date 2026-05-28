@@ -1008,6 +1008,157 @@
       </div>
     </div>
 
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Requirement Types (Brand → Influencer/Photographer)</strong>
+          <p>Control which requirement types are visible and whether they are free or premium-only.</p>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm settings-reset-btn" (click)="resetCampaignTypeConfigs()">
+          Reset defaults
+        </button>
+      </div>
+
+      <p *ngIf="campaignTypeResetMessage" class="text-success mb-3">{{ campaignTypeResetMessage }}</p>
+
+      <div class="table-responsive campaign-type-table-wrap">
+        <table class="table table-sm align-middle mb-0 campaign-type-table">
+          <thead>
+            <tr>
+              <th>Requirement Type</th>
+              <th>Order</th>
+              <th>Enabled</th>
+              <th>Premium only</th>
+              <th>Free Users</th>
+              <th>Premium Users</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of brandCampaignTypeConfigs">
+              <td>{{ item.label }}</td>
+              <td>
+                <div class="campaign-type-order-controls">
+                  <input
+                    type="number"
+                    class="form-control form-control-sm campaign-order-input"
+                    min="1"
+                    [(ngModel)]="item.sortOrder"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onCampaignTypeSortOrderChange('brand', item)"
+                  />
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Requirement type order controls">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('brand', item, -1)"
+                      [disabled]="!canMoveCampaignType('brand', item, -1)"
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('brand', item, 1)"
+                      [disabled]="!canMoveCampaignType('brand', item, 1)"
+                    >
+                      Down
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td>
+                <span class="campaign-type-badge" [ngClass]="item.premiumOnly ? 'is-no' : 'is-yes'">
+                  {{ item.premiumOnly ? 'No' : 'Yes' }}
+                </span>
+              </td>
+              <td>
+                <span class="campaign-type-badge is-yes">Yes</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Collaboration Types (Photographer → Influencer)</strong>
+          <p>Control visibility and premium lock for photographer-led collaboration types.</p>
+        </div>
+      </div>
+
+      <div class="table-responsive campaign-type-table-wrap">
+        <table class="table table-sm align-middle mb-0 campaign-type-table">
+          <thead>
+            <tr>
+              <th>Collaboration Type</th>
+              <th>Order</th>
+              <th>Enabled</th>
+              <th>Premium only</th>
+              <th>Free Users</th>
+              <th>Premium Users</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of photographerCampaignTypeConfigs">
+              <td>{{ item.label }}</td>
+              <td>
+                <div class="campaign-type-order-controls">
+                  <input
+                    type="number"
+                    class="form-control form-control-sm campaign-order-input"
+                    min="1"
+                    [(ngModel)]="item.sortOrder"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onCampaignTypeSortOrderChange('photographer', item)"
+                  />
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Collaboration type order controls">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('photographer', item, -1)"
+                      [disabled]="!canMoveCampaignType('photographer', item, -1)"
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('photographer', item, 1)"
+                      [disabled]="!canMoveCampaignType('photographer', item, 1)"
+                    >
+                      Down
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td>
+                <span class="campaign-type-badge" [ngClass]="item.premiumOnly ? 'is-no' : 'is-yes'">
+                  {{ item.premiumOnly ? 'No' : 'Yes' }}
+                </span>
+              </td>
+              <td>
+                <span class="campaign-type-badge is-yes">Yes</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="settings-actions p-0 mt-3">
       <button class="btn btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
         {{ settingsSaving ? 'Saving…' : 'Save Settings' }}

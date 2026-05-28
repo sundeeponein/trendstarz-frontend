@@ -292,6 +292,14 @@ export class CampaignFormComponent implements OnInit {
   activePlatformTab = '';
   platformDeliverables: { platform: string; contentTypes: { name: string; enabled: boolean; price: number | null }[] }[] = [];
   platformsList: any[] = [];
+  campaignTypeConfigs: Array<{
+    key: string;
+    label: string;
+    ownerType: 'brand' | 'photographer';
+    enabled: boolean;
+    premiumOnly: boolean;
+    sortOrder: number;
+  }> = [];
   protected tierInfo = inject(TierInfoService);
   protected flowHelp = inject(FlowHelpModalService);
   protected guideModal = inject(CampaignGuideModalService);
@@ -354,17 +362,16 @@ export class CampaignFormComponent implements OnInit {
     this.inviteRecipientRole = this.isPhotographerCreator
       ? 'influencer'
       : (String(this.f['inviteRecipientRole']?.value || 'influencer') === 'photographer' ? 'photographer' : 'influencer');
+    this.loadCampaignTypeConfigs();
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
     if (!this.hasPremium && this.isPremiumOnlyType(String(this.f['campaignType']?.value || ''))) {
-      this.form.patchValue({ campaignType: 'paid_collab' }, { emitEvent: false });
-      this.applyCampaignTypeValidators('paid_collab');
+      this.ensureCampaignTypeSelection();
     }
     this.form.get('campaignType')?.valueChanges.subscribe((type: string) => {
       const t = String(type || '');
       if (!this.hasPremium && this.isPremiumOnlyType(t)) {
         // Block selection at the form level (UI also disables the option, but be defensive)
-        this.form.patchValue({ campaignType: 'paid_collab' }, { emitEvent: false });
-        this.applyCampaignTypeValidators('paid_collab');
+        this.ensureCampaignTypeSelection();
         return;
       }
       this.applyCampaignTypeValidators(t);
@@ -381,9 +388,6 @@ export class CampaignFormComponent implements OnInit {
     this.form.get('inviteRecipientRole')?.valueChanges.subscribe((role: string) => {
       const normalized: 'influencer' | 'photographer' = role === 'photographer' ? 'photographer' : 'influencer';
       this.inviteRecipientRole = this.isPhotographerCreator ? 'influencer' : normalized;
-      if (!this.isPhotographerCreator && this.inviteRecipientRole === 'photographer') {
-        this.form.patchValue({ campaignMode: 'invite_only' }, { emitEvent: false });
-      }
       // Recipient change can flip whether shoot-location is required (brand→photographer needs it for paid/location).
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
       this.selectedInfluencerIds.clear();
@@ -625,23 +629,82 @@ export class CampaignFormComponent implements OnInit {
     });
   }
 
-  getCampaignTypeOptions(): Array<{ value: string; label: string; premiumOnly?: boolean }> {
-    if (this.isPhotographerCreator) {
-      return [
-        { value: 'paid_collab', label: 'Paid Shoot' },
-        { value: 'product', label: 'Barter / Product Shoot', premiumOnly: true },
-        { value: 'invite_location', label: 'Event Coverage', premiumOnly: true },
-        { value: 'portfolio_collab', label: 'Portfolio Collaboration' },
-        { value: 'reel_collab', label: 'Reel Collaboration' },
-        { value: 'creative_project', label: 'Creative Project' },
-      ];
+  private loadCampaignTypeConfigs(): void {
+    this.config.getCampaignTypeConfigs().subscribe({
+      next: (items) => {
+        this.campaignTypeConfigs = Array.isArray(items) ? items : [];
+        this.ensureCampaignTypeSelection();
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.campaignTypeConfigs = [];
+        this.ensureCampaignTypeSelection();
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  private buildSyntheticCampaignTypeOption(
+    ownerType: 'brand' | 'photographer',
+    type: string,
+  ): { value: string; label: string; premiumOnly?: boolean; enabled?: boolean } | null {
+    const key = String(type || '').trim();
+    if (!key) return null;
+
+    const defaultLabel = key
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+
+    return {
+      value: key,
+      label: ownerType === 'photographer' && key === 'paid_collab' ? 'Paid Shoot' : defaultLabel,
+      premiumOnly: false,
+      enabled: true,
+    };
+  }
+
+  private ensureCampaignTypeSelection(): void {
+    const selected = String(this.f['campaignType']?.value || '').trim();
+    const options = this.getCampaignTypeOptions();
+    if (!options.length) return;
+
+    const isSelectable = (opt: { premiumOnly?: boolean; enabled?: boolean }) =>
+      opt.enabled !== false && (this.hasPremium || !opt.premiumOnly);
+
+    const selectedOption = options.find((opt) => opt.value === selected);
+    if (selectedOption && isSelectable(selectedOption)) return;
+
+    const fallback = options.find((opt) => isSelectable(opt)) || options[0];
+    if (!fallback) return;
+
+    this.form.patchValue({ campaignType: fallback.value }, { emitEvent: false });
+    this.applyCampaignTypeValidators(String(fallback.value || ''));
+  }
+
+  getCampaignTypeOptions(): Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> {
+    const ownerType: 'brand' | 'photographer' = this.isPhotographerCreator ? 'photographer' : 'brand';
+    const selected = String(this.form?.get('campaignType')?.value || '').trim();
+    const source = (this.campaignTypeConfigs || [])
+      .filter((item) => item.ownerType === ownerType)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+
+    if (!source.length) {
+      const fallback = this.buildSyntheticCampaignTypeOption(ownerType, selected);
+      return fallback ? [fallback] : [];
     }
 
-    return [
-      { value: 'paid_collab', label: 'Paid Collab' },
-      { value: 'product', label: 'Product Collab', premiumOnly: true },
-      { value: 'invite_location', label: 'Invite to Location', premiumOnly: true },
-    ];
+    const enabledItems = source.filter((item) => item.enabled !== false);
+    const selectedDisabledItem = source.find((item) => item.key === selected && item.enabled === false);
+    const finalItems = selectedDisabledItem ? [...enabledItems, selectedDisabledItem] : enabledItems;
+
+    return finalItems.map((item) => ({
+      value: item.key,
+      label: item.label,
+      premiumOnly: item.premiumOnly === true,
+      enabled: item.enabled !== false,
+    }));
   }
 
   get isEditingForReview(): boolean {
@@ -782,7 +845,12 @@ export class CampaignFormComponent implements OnInit {
   }
 
   isPremiumOnlyType(type: string): boolean {
-    return type === 'product' || type === 'invite_location';
+    const t = String(type || '').trim();
+    if (!t) return false;
+    const ownerType: 'brand' | 'photographer' = this.isPhotographerCreator ? 'photographer' : 'brand';
+    const source = this.campaignTypeConfigs || [];
+    const config = source.find((item) => item.ownerType === ownerType && item.key === t);
+    return !!config?.premiumOnly;
   }
 
   private applyCampaignTypeValidators(type: string): void {

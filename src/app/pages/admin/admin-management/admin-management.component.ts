@@ -32,6 +32,15 @@ const DEFAULT_SOCIAL_MEDIA_NAMES = [
   'LinkedIn',
 ];
 
+type CampaignTypeConfigItem = {
+  key: string;
+  label: string;
+  ownerType: 'brand' | 'photographer';
+  enabled: boolean;
+  premiumOnly: boolean;
+  sortOrder: number;
+};
+
 @Component({
   selector: 'app-admin-management',
   standalone: true,
@@ -122,9 +131,105 @@ export class AdminManagementComponent implements OnInit {
     });
   }
 
+  private normalizeCampaignTypeConfigs(list: unknown, fallbackList: CampaignTypeConfigItem[] = []): CampaignTypeConfigItem[] {
+    const source = Array.isArray(list) ? list : fallbackList;
+    const out: CampaignTypeConfigItem[] = [];
+    const seen = new Set<string>();
+
+    for (const raw of source) {
+      if (!raw || typeof raw !== 'object') continue;
+      const ownerType: 'brand' | 'photographer' = String((raw as any).ownerType || 'brand') === 'photographer'
+        ? 'photographer'
+        : 'brand';
+      const key = String((raw as any).key || '').trim();
+      if (!key) continue;
+
+      const dedupeKey = `${ownerType}:${key}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+
+      const fallback = fallbackList.find((item) => item.ownerType === ownerType && item.key === key);
+      out.push({
+        key,
+        ownerType,
+        label: String((raw as any).label || fallback?.label || key).trim(),
+        enabled: (raw as any).enabled !== false,
+        premiumOnly: (raw as any).premiumOnly === true,
+        sortOrder: Number.isFinite(Number((raw as any).sortOrder))
+          ? Number((raw as any).sortOrder)
+          : Number(fallback?.sortOrder || 999),
+      });
+    }
+
+    for (const fallback of fallbackList) {
+      const dedupeKey = `${fallback.ownerType}:${fallback.key}`;
+      if (!seen.has(dedupeKey)) out.push({ ...fallback });
+    }
+
+    return out.sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }
+
   get filteredUserTags(): Array<{ name: string; visible: boolean }> {
     const list = this.config?.userTags?.[this.userTagsRoleTab];
     return Array.isArray(list) ? list : [];
+  }
+
+  get brandCampaignTypeConfigs(): CampaignTypeConfigItem[] {
+    return (this.settings.campaignTypeConfigs || [])
+      .filter((item: CampaignTypeConfigItem) => item.ownerType === 'brand')
+      .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder);
+  }
+
+  get photographerCampaignTypeConfigs(): CampaignTypeConfigItem[] {
+    return (this.settings.campaignTypeConfigs || [])
+      .filter((item: CampaignTypeConfigItem) => item.ownerType === 'photographer')
+      .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder);
+  }
+
+  canMoveCampaignType(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem, direction: -1 | 1): boolean {
+    const list = this.getCampaignTypeConfigsForOwner(ownerType);
+    const index = list.findIndex((entry) => entry.key === item.key);
+    if (index < 0) return false;
+    const nextIndex = index + direction;
+    return nextIndex >= 0 && nextIndex < list.length;
+  }
+
+  moveCampaignType(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem, direction: -1 | 1): void {
+    const list = this.getCampaignTypeConfigsForOwner(ownerType);
+    const index = list.findIndex((entry) => entry.key === item.key);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= list.length) return;
+
+    const [moved] = list.splice(index, 1);
+    list.splice(nextIndex, 0, moved);
+    this.applyCampaignTypeOrder(ownerType, list);
+  }
+
+  onCampaignTypeSortOrderChange(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem): void {
+    const normalizedValue = Number.isFinite(Number(item.sortOrder))
+      ? Math.max(1, Math.round(Number(item.sortOrder)))
+      : 999;
+    item.sortOrder = normalizedValue;
+
+    const list = this.getCampaignTypeConfigsForOwner(ownerType)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+    this.applyCampaignTypeOrder(ownerType, list);
+  }
+
+  private getCampaignTypeConfigsForOwner(ownerType: 'brand' | 'photographer'): CampaignTypeConfigItem[] {
+    return (this.settings.campaignTypeConfigs || [])
+      .filter((item: CampaignTypeConfigItem) => item.ownerType === ownerType)
+      .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }
+
+  private applyCampaignTypeOrder(ownerType: 'brand' | 'photographer', orderedItems: CampaignTypeConfigItem[]): void {
+    const orderMap = new Map(orderedItems.map((item, index) => [item.key, (index + 1) * 10]));
+    this.settings.campaignTypeConfigs = (this.settings.campaignTypeConfigs || []).map((item: CampaignTypeConfigItem) => {
+      if (item.ownerType !== ownerType) return item;
+      const nextSortOrder = orderMap.get(item.key);
+      return nextSortOrder == null ? item : { ...item, sortOrder: nextSortOrder };
+    });
+    this.cdr.detectChanges();
   }
 
   getCategoryIndex(cat: any): number {
@@ -169,6 +274,7 @@ export class AdminManagementComponent implements OnInit {
     showRegisterInfluencerLink: true,
     showRegisterBrandLink: true,
     showRegisterPhotographerLink: true,
+    campaignTypeConfigs: [] as CampaignTypeConfigItem[],
   };
   settingsSaving = false;
   settingsSaved = false;
@@ -187,6 +293,8 @@ export class AdminManagementComponent implements OnInit {
   pendingUserAutoDeleteLastRunAt: string | null = null;
   pendingUserAutoDeleteLastRunCount = 0;
   pendingUserAutoDeleteLastRunBy = '';
+  campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
+  campaignTypeResetMessage = '';
   showVisibilityConfirmModal = false;
   private visibilitySnapshot: any = null;
 
@@ -299,6 +407,11 @@ export class AdminManagementComponent implements OnInit {
           this.settings.showRegisterInfluencerLink = data?.showRegisterInfluencerLink !== false;
           this.settings.showRegisterBrandLink = data?.showRegisterBrandLink !== false;
           this.settings.showRegisterPhotographerLink = data?.showRegisterPhotographerLink !== false;
+          this.campaignTypeConfigDefaults = this.normalizeCampaignTypeConfigs(data?.campaignTypeConfigDefaults);
+          this.settings.campaignTypeConfigs = this.normalizeCampaignTypeConfigs(
+            data?.campaignTypeConfigs,
+            this.campaignTypeConfigDefaults,
+          );
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -311,6 +424,16 @@ export class AdminManagementComponent implements OnInit {
 
   onCollaborationApprovalModeToggle(isAutoLive: boolean) {
     this.settings.collaborationApprovalMode = isAutoLive ? 'auto_live' : 'manual';
+  }
+
+  resetCampaignTypeConfigs(): void {
+    this.settings.campaignTypeConfigs = this.campaignTypeConfigDefaults.map((item) => ({ ...item }));
+    this.campaignTypeResetMessage = 'Campaign and collaboration type rules restored to the default baseline. Save Settings to persist them.';
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.campaignTypeResetMessage = '';
+      this.cdr.detectChanges();
+    }, 4000);
   }
 
   saveSettings() {

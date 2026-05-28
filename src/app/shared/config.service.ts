@@ -65,6 +65,34 @@ export class ConfigService {
       );
   }
 
+  getCampaignTypeConfigs(): Observable<Array<{
+    key: string;
+    label: string;
+    ownerType: 'brand' | 'photographer';
+    enabled: boolean;
+    premiumOnly: boolean;
+    sortOrder: number;
+  }>> {
+    return this.http.get<any>(`${this.apiUrl}/public/campaign-type-configs`).pipe(
+      map((res) => {
+        const data = res?.data ?? res ?? {};
+        const items = Array.isArray(data?.items) ? data.items : [];
+        return items
+          .map((item: any) => ({
+            key: String(item?.key || '').trim(),
+            label: String(item?.label || '').trim(),
+            ownerType: String(item?.ownerType || 'brand') === 'photographer' ? 'photographer' : 'brand',
+            enabled: item?.enabled !== false,
+            premiumOnly: item?.premiumOnly === true,
+            sortOrder: Number.isFinite(Number(item?.sortOrder)) ? Number(item.sortOrder) : 999,
+          }))
+          .filter((item: any) => !!item.key && !!item.label)
+          .sort((a: any, b: any) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+      }),
+      catchError(() => of([])),
+    );
+  }
+
   // Check if username exists (for async validation)
   checkUsernameExists(username: string) {
     return this.http.get<{ exists: boolean }>(`${this.apiUrl}/users/check-username/${encodeURIComponent(username)}`)
