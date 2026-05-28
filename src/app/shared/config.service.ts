@@ -481,6 +481,8 @@ export class ConfigService {
     viewerState?: string;
     viewerDistrict?: string;
     smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
   }): Observable<any> {
     const params: string[] = [];
     if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
@@ -492,6 +494,12 @@ export class ConfigService {
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
       params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
+    }
+    if (typeof options?.countSearch === 'boolean') {
+      params.push(`countSearch=${options.countSearch ? '1' : '0'}`);
+    }
+    if (options?.countReason) {
+      params.push(`countReason=${encodeURIComponent(options.countReason)}`);
     }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/influencers${qs}`).pipe(
@@ -508,6 +516,8 @@ export class ConfigService {
     viewerState?: string;
     viewerDistrict?: string;
     smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
   }): Observable<any[]> {
     return this.getInfluencersSearchResponse(options).pipe(
       map((data) => (data?.data || data || []) as any[]),
@@ -531,6 +541,7 @@ export class ConfigService {
   }
 
   getPhotographers(options?: {
+    page?: number;
     limit?: number;
     skill?: string;
     location?: string;
@@ -538,6 +549,8 @@ export class ConfigService {
     viewerState?: string;
     viewerDistrict?: string;
     smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
   }): Observable<any[]> {
     return this.getPhotographersSearchResponse(options).pipe(
       map((data) => (Array.isArray(data) ? data : (data?.data || [])) as any[]),
@@ -546,6 +559,7 @@ export class ConfigService {
   }
 
   getPhotographersSearchResponse(options?: {
+    page?: number;
     limit?: number;
     skill?: string;
     location?: string;
@@ -553,8 +567,11 @@ export class ConfigService {
     viewerState?: string;
     viewerDistrict?: string;
     smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
   }): Observable<any> {
     const params: string[] = [];
+    if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
     if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
     if (options?.skill) params.push(`skill=${encodeURIComponent(options.skill)}`);
     if (options?.location) params.push(`location=${encodeURIComponent(options.location)}`);
@@ -563,6 +580,12 @@ export class ConfigService {
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
       params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
+    }
+    if (typeof options?.countSearch === 'boolean') {
+      params.push(`countSearch=${options.countSearch ? '1' : '0'}`);
+    }
+    if (options?.countReason) {
+      params.push(`countReason=${encodeURIComponent(options.countReason)}`);
     }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/photographers${qs}`).pipe(

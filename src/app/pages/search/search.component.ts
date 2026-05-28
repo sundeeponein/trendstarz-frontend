@@ -23,6 +23,7 @@ export class SearchComponent implements OnInit {
   private influencerRoleCategoryOptions: string[] = [];
   private brandRoleCategoryOptions: string[] = [];
   private lastSmartDiscoverySignature: Partial<Record<'influencer' | 'photographer', string>> = {};
+  private keywordSearchDebounce: any = null;
 
   activeTab: 'influencers' | 'brands' | 'photographers' = 'influencers';
 
@@ -244,9 +245,9 @@ export class SearchComponent implements OnInit {
     const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
     this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
     if (this.activeTab === 'influencers') {
-      this.fetchInfluencers();
+      this.fetchInfluencers({ countSearch: false });
     } else if (this.activeTab === 'photographers') {
-      this.fetchPhotographers();
+      this.fetchPhotographers({ countSearch: false });
     } else {
       this.fetchBrands();
     }
@@ -337,9 +338,9 @@ export class SearchComponent implements OnInit {
     this.activeTab = tab;
     this.router.navigate([], { queryParams: { tab }, queryParamsHandling: 'merge', replaceUrl: true });
     if (tab === 'influencers' && this.allInfluencers.length === 0 && !this.influencersLoading) {
-      this.fetchInfluencers();
+      this.fetchInfluencers({ countSearch: false });
     } else if (tab === 'photographers' && this.allPhotographers.length === 0 && !this.photographersLoading) {
-      this.fetchPhotographers();
+      this.fetchPhotographers({ countSearch: false });
     } else if (tab === 'brands' && this.allBrands.length === 0 && !this.brandsLoading) {
       this.fetchBrands();
     }
@@ -354,11 +355,13 @@ export class SearchComponent implements OnInit {
     if (this.isPhotographerMode) {
       this.photographerFilters.keyword = value;
       this.applyPhotographerFilters();
+      this.triggerSearchFetch('query', 450);
       return;
     }
     if (this.isInfluencerMode) {
       this.infFilters.keyword = value;
       this.applyInfluencerFilters();
+      this.triggerSearchFetch('query', 450);
       return;
     }
     this.brandFilters.keyword = value;
@@ -369,6 +372,7 @@ export class SearchComponent implements OnInit {
     if (this.isInfluencerMode) {
       this.infFilters.category = value;
       this.applyInfluencerFilters();
+      this.triggerSearchFetch('filter');
       return;
     }
     this.brandFilters.category = value;
@@ -385,6 +389,7 @@ export class SearchComponent implements OnInit {
         });
       }
       this.applyPhotographerFilters();
+      this.triggerSearchFetch('filter');
       return;
     }
     if (this.isInfluencerMode) {
@@ -396,6 +401,7 @@ export class SearchComponent implements OnInit {
         });
       }
       this.applyInfluencerFilters();
+      this.triggerSearchFetch('filter');
       return;
     }
     this.brandFilters.location = value;
@@ -406,27 +412,61 @@ export class SearchComponent implements OnInit {
     if (!this.isInfluencerMode) return;
     this.infFilters.ageRange = value;
     this.applyInfluencerFilters();
+    this.triggerSearchFetch('filter');
   }
 
   clearActiveFilters() {
-    if (this.isPhotographerMode) { this.clearPhotographerFilters(); return; }
+    if (this.isPhotographerMode) { this.clearPhotographerFilters(true); return; }
     if (this.isInfluencerMode) {
-      this.clearInfluencerFilters();
+      this.clearInfluencerFilters(true);
       return;
     }
     this.clearBrandFilters();
   }
 
-  fetchInfluencers() {
+  private triggerSearchFetch(reason: 'query' | 'filter' | 'pagination', debounceMs = 0): void {
+    const run = () => {
+      const countSearch = !this.isGuestUser;
+      if (this.isInfluencerMode) {
+        this.fetchInfluencers({ countSearch, countReason: reason });
+      } else if (this.isPhotographerMode) {
+        this.fetchPhotographers({ countSearch, countReason: reason });
+      }
+    };
+
+    if (this.keywordSearchDebounce) {
+      clearTimeout(this.keywordSearchDebounce);
+      this.keywordSearchDebounce = null;
+    }
+
+    if (debounceMs > 0) {
+      this.keywordSearchDebounce = setTimeout(() => {
+        run();
+      }, debounceMs);
+      return;
+    }
+
+    run();
+  }
+
+  fetchInfluencers(options?: {
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
+    page?: number;
+    limit?: number;
+  }) {
     this.influencersLoading = true;
     this.influencersError = '';
     this.config
       .getInfluencersSearchResponse({
         lite: true,
-        limit: 120,
+        page: typeof options?.page === 'number' ? options.page : 1,
+        limit: typeof options?.limit === 'number' ? options.limit : 120,
         viewerState: this.currentUser?.location?.state || '',
         viewerDistrict: this.currentUser?.location?.district || '',
         smartLocationPriority: !this.infFilters.location,
+        countSearch: !!options?.countSearch,
+        countReason: options?.countReason,
       })
       .subscribe({
       next: (data: any) => {
@@ -600,9 +640,12 @@ export class SearchComponent implements OnInit {
     });
   }
 
-  clearInfluencerFilters() {
+  clearInfluencerFilters(countSearch = false) {
     this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0 };
     this.applyInfluencerFilters();
+    if (countSearch) {
+      this.fetchInfluencers({ countSearch: !this.isGuestUser, countReason: 'filter' });
+    }
   }
 
   clearBrandFilters() {
@@ -610,15 +653,23 @@ export class SearchComponent implements OnInit {
     this.applyBrandFilters();
   }
 
-  fetchPhotographers() {
+  fetchPhotographers(options?: {
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
+    page?: number;
+    limit?: number;
+  }) {
     this.photographersLoading = true;
     this.photographersError = '';
     this.config
       .getPhotographersSearchResponse({
-        limit: 120,
+        page: typeof options?.page === 'number' ? options.page : 1,
+        limit: typeof options?.limit === 'number' ? options.limit : 120,
         viewerState: this.currentUser?.location?.state || '',
         viewerDistrict: this.currentUser?.location?.district || '',
         smartLocationPriority: !this.photographerFilters.location,
+        countSearch: !!options?.countSearch,
+        countReason: options?.countReason,
       })
       .subscribe({
       next: (data: any) => {
@@ -723,9 +774,12 @@ export class SearchComponent implements OnInit {
     this.lastSmartDiscoverySignature[mode] = signature;
   }
 
-  clearPhotographerFilters() {
+  clearPhotographerFilters(countSearch = false) {
     this.photographerFilters = { keyword: '', skill: '', location: '' };
     this.applyPhotographerFilters();
+    if (countSearch) {
+      this.fetchPhotographers({ countSearch: !this.isGuestUser, countReason: 'filter' });
+    }
   }
 
   viewInfluencerProfile(influencer: any) {

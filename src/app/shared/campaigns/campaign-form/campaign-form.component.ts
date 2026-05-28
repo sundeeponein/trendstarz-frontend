@@ -48,7 +48,8 @@ export class CampaignFormComponent implements OnInit {
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
   @Input() preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
   @Input() hasPremium: boolean = false;
-  @Input() creatorRole: 'brand' | 'photographer' = 'brand';
+  @Input() creatorRole: 'brand' | 'photographer' | 'influencer' = 'brand';
+  @Input() saving = false;
   @Output() save = new EventEmitter<Partial<Campaign> & {
     inviteInfluencerIds?: string[];
     inviteRecipientIds?: string[];
@@ -320,7 +321,11 @@ export class CampaignFormComponent implements OnInit {
       deliverablesText: [Array.isArray((this.campaign as any)?.deliverables) ? (this.campaign as any).deliverables.join('\n') : ''],
       campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
       inviteRecipientRole: [
-        this.isPhotographerCreator ? 'influencer' : ((this.campaign as any)?.inviteRecipientRole || 'influencer'),
+        this.isPhotographerCreator
+          ? 'influencer'
+          : this.isInfluencerCreator
+            ? 'photographer'
+            : ((this.campaign as any)?.inviteRecipientRole || 'influencer'),
         [Validators.required],
       ],
       campaignMode: [(this.campaign as any)?.campaignMode || 'invite_only', [Validators.required]],
@@ -362,8 +367,10 @@ export class CampaignFormComponent implements OnInit {
     this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     this.inviteRecipientRole = this.isPhotographerCreator
       ? 'influencer'
-      : (this.preSelectedRecipientRole || (String(this.f['inviteRecipientRole']?.value || 'influencer') === 'photographer' ? 'photographer' : 'influencer'));
-    if (!this.isPhotographerCreator && this.preSelectedRecipientRole) {
+      : this.isInfluencerCreator
+        ? 'photographer'
+        : (this.preSelectedRecipientRole || (String(this.f['inviteRecipientRole']?.value || 'influencer') === 'photographer' ? 'photographer' : 'influencer'));
+    if (!this.hasFixedInviteRecipientRole && this.preSelectedRecipientRole) {
       this.form.get('inviteRecipientRole')?.setValue(this.preSelectedRecipientRole, { emitEvent: false });
     }
     this.selectedInfluencerIds = new Set(
@@ -396,7 +403,11 @@ export class CampaignFormComponent implements OnInit {
 
     this.form.get('inviteRecipientRole')?.valueChanges.subscribe((role: string) => {
       const normalized: 'influencer' | 'photographer' = role === 'photographer' ? 'photographer' : 'influencer';
-      this.inviteRecipientRole = this.isPhotographerCreator ? 'influencer' : normalized;
+      this.inviteRecipientRole = this.isPhotographerCreator
+        ? 'influencer'
+        : this.isInfluencerCreator
+          ? 'photographer'
+          : normalized;
       // Recipient change can flip whether shoot-location is required (brand→photographer needs it for paid/location).
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
       this.selectedInfluencerIds.clear();
@@ -456,25 +467,25 @@ export class CampaignFormComponent implements OnInit {
       this.imagePreview = this.campaign.image.url;
     }
 
-    // If editing, fetch current invites for this campaign
-    if (this.isEdit && this.campaign?._id) {
-      this.fetchCampaignInvites();
+    // Pre-populate selection chips for edit mode from the current object.
+    if (this.campaign) {
+      this.hydrateSelectionStateFromCampaign(this.campaign as any);
     }
 
-    // Pre-populate multi-selects when editing
-    if (this.campaign) {
-      this.selectedCategories = [...(this.campaign.categories || [])];
-      const existingSocialMedia = (this.campaign as any).socialMedia;
-      if (Array.isArray(existingSocialMedia) && existingSocialMedia.length) {
-        this.platformDeliverables = existingSocialMedia.map((sm: any) => ({
-          platform: sm.platform,
-          contentTypes: (sm.contentTypes || []).map((ct: any) => ({
-            name: ct.name, enabled: ct.enabled ?? false, price: ct.price ?? null
-          }))
-        }));
-        this.selectedPlatforms = this.platformDeliverables.map(pd => pd.platform);
-        this.activePlatformTab = this.selectedPlatforms[0] || '';
-      }
+    // If editing, fetch current invites and a full campaign snapshot by id.
+    // Some list views provide partial objects, which can miss required chip selections.
+    if (this.isEdit && this.campaign?._id) {
+      this.fetchCampaignInvites();
+      this.config.getCampaignById(this.campaign._id).subscribe({
+        next: (fullCampaign: any) => {
+          if (!fullCampaign || !fullCampaign._id) return;
+          this.hydrateSelectionStateFromCampaign(fullCampaign);
+          this.cd.detectChanges();
+        },
+        error: () => {
+          // Non-blocking: initial campaign input is still used.
+        },
+      });
     }
 
     this.loadRecipientCategories();
@@ -490,6 +501,14 @@ export class CampaignFormComponent implements OnInit {
 
   get isPhotographerCreator(): boolean {
     return this.creatorRole === 'photographer';
+  }
+
+  get isInfluencerCreator(): boolean {
+    return this.creatorRole === 'influencer';
+  }
+
+  get hasFixedInviteRecipientRole(): boolean {
+    return this.isPhotographerCreator || this.isInfluencerCreator;
   }
 
   /**
@@ -802,6 +821,76 @@ export class CampaignFormComponent implements OnInit {
       .map((item) => item.trim())
       .filter(Boolean)
       .slice(0, 12);
+  }
+
+  private asStringArray(value: any): string[] {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item: any) => {
+        if (typeof item === 'string') return item.trim();
+        if (item && typeof item === 'object') {
+          return String(item?.name || item?.label || item?.key || item?.pricingType || '').trim();
+        }
+        return '';
+      })
+      .filter((item: string) => !!item);
+  }
+
+  private toRupeesFromPaise(value: any): number | null {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    // Persisted values are usually paise; keep small values as-is to avoid
+    // accidental conversion when legacy rows already store rupees.
+    return n >= 1000 ? Math.round(n / 100) : n;
+  }
+
+  private hydrateSelectionStateFromCampaign(campaign: any): void {
+    if (!campaign || typeof campaign !== 'object') return;
+
+    const categories = this.asStringArray(campaign.categories);
+    const deliverables = this.asStringArray(campaign.deliverables);
+
+    if (this.isPhotographerCreator) {
+      this.selectedPhotographerServices = [...categories];
+      this.selectedPhotographerDeliverables = [...deliverables];
+
+      const pricingRows = Array.isArray(campaign.platforms) ? campaign.platforms : [];
+      const pricingNames: string[] = [];
+      const pricingMap: { [key: string]: number | null } = {};
+
+      for (const row of pricingRows) {
+        if (typeof row === 'string') {
+          const name = row.trim();
+          if (name) pricingNames.push(name);
+          continue;
+        }
+        if (row && typeof row === 'object') {
+          const name = String(row?.pricingType || row?.name || row?.label || '').trim();
+          if (!name) continue;
+          pricingNames.push(name);
+          const rupees = this.toRupeesFromPaise(row?.price);
+          if (rupees !== null) pricingMap[name] = rupees;
+        }
+      }
+
+      this.selectedPhotographerPricing = Array.from(new Set(pricingNames));
+      this.photographerPricingPrices = { ...pricingMap };
+    } else {
+      this.selectedCategories = [...categories];
+      const existingSocialMedia = campaign.socialMedia;
+      if (Array.isArray(existingSocialMedia) && existingSocialMedia.length) {
+        this.platformDeliverables = existingSocialMedia.map((sm: any) => ({
+          platform: sm.platform,
+          contentTypes: (sm.contentTypes || []).map((ct: any) => ({
+            name: ct.name,
+            enabled: ct.enabled ?? false,
+            price: ct.price ?? null,
+          })),
+        }));
+        this.selectedPlatforms = this.platformDeliverables.map((pd) => pd.platform);
+        this.activePlatformTab = this.selectedPlatforms[0] || '';
+      }
+    }
   }
 
   // ── Stepper helpers ──────────────────────────────────────────

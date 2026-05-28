@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize, timeout } from 'rxjs/operators';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
+import { PlansService } from '../../shared/plans.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
@@ -27,6 +28,7 @@ type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 type PhotographerWorkspaceView = 'campaign_requests' | 'collaborations';
 type InfluencerWorkspaceTab = 'campaigns' | 'collaborations';
+type CollaborationSubview = 'invited' | 'created';
 
 @Component({
   selector: 'app-campaign-management',
@@ -44,7 +46,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     loadCampaigns() {
       this.loading = true;
       const request$ = this.isInfluencerView
-        ? this.config.getAllCampaigns('active')
+        ? ((this.isInfluencerCollaborationsView && this.influencerCollabSubview === 'created' && this.brandId)
+            ? this.config.getCampaignsByBrandId(this.brandId)
+            : this.config.getAllCampaigns('active', this.getInfluencerApiScope()))
         : this.config.getCampaignsByBrandId(this.brandId);
       request$.subscribe({
         next: (campaigns: Campaign[]) => {
@@ -76,7 +80,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   isInfluencerView = false;
   isPhotographerView = false;
   influencerWorkspaceTab: InfluencerWorkspaceTab = 'campaigns';
+  influencerCollabSubview: CollaborationSubview = 'invited';
   photographerWorkspaceView: PhotographerWorkspaceView = 'campaign_requests';
+  photographerCollabSubview: CollaborationSubview = 'created';
   photographerBrandInvites: any[] = [];
   photographerBrandInvitesLoading = false;
   photographerInvitePostDates: Record<string, string> = {};
@@ -88,6 +94,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   currentPage = 1;
 
   showForm = false;
+  formSaving = false;
   formMode: 'create' | 'edit' = 'create';
   editingCampaign: Campaign | null = null;
 
@@ -295,6 +302,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get createButtonLabel(): string {
     if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) return 'Quota full';
+    if (this.isInfluencerCollaborationsView) return 'Create Collaboration';
     if (this.isPhotographerView) return 'Create Collaboration';
     return 'Create Campaign Request';
   }
@@ -318,6 +326,121 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get showCollaborationsWorkspace(): boolean {
     if (!this.isPhotographerView) return true;
     return this.isPhotographerCollaborationsView;
+  }
+
+  get canCreateCollaborations(): boolean {
+    if (!this.showCollaborationsWorkspace) return false;
+    if (this.isInfluencerCollaborationsView) return this.influencerCollabSubview === 'created';
+    if (this.isPhotographerCollaborationsView) return this.photographerCollabSubview === 'created';
+    if (!this.isInfluencerView) return true;
+    return this.isInfluencerCollaborationsView;
+  }
+
+  get showInfluencerInboxSection(): boolean {
+    if (!this.isInfluencerView) return false;
+    if (!this.isInfluencerCollaborationsView) return true;
+    return this.influencerCollabSubview === 'invited';
+  }
+
+  get isInfluencerBrowseMode(): boolean {
+    return this.isInfluencerView && !(
+      this.isInfluencerCollaborationsView && this.influencerCollabSubview === 'created'
+    );
+  }
+
+  get showOwnerWorkspaceBoard(): boolean {
+    if (this.isPhotographerCollaborationsView && this.photographerCollabSubview === 'invited') {
+      return false;
+    }
+    if (this.isInfluencerCollaborationsView && this.influencerCollabSubview === 'invited') {
+      return false;
+    }
+    return !this.isInfluencerBrowseMode;
+  }
+
+  get showActiveQuotaChip(): boolean {
+    if (this.maxActiveCampaigns <= 0) return false;
+    if (this.isInfluencerCollaborationsView) return true;
+    return !this.isInfluencerBrowseMode;
+  }
+
+  get quotaEntityPluralLabel(): string {
+    return (this.isPhotographerView || this.isInfluencerCollaborationsView) ? 'collaborations' : 'campaigns';
+  }
+
+  get quotaEntitySingularLabel(): string {
+    return (this.isPhotographerView || this.isInfluencerCollaborationsView) ? 'collaboration' : 'campaign';
+  }
+
+  get quotaChipTitle(): string {
+    return `Active ${this.quotaEntityPluralLabel} used`;
+  }
+
+  private isApprovalPendingInviteReason(reason: string): boolean {
+    const normalized = String(reason || '').trim().toLowerCase();
+    return normalized.includes('awaiting admin approval')
+      || normalized.includes('invite after it is approved')
+      || normalized.includes('still under admin review');
+  }
+
+  private areAllInviteFailuresApprovalPending(
+    failures: { influencerId?: string; photographerId?: string; reason: string }[],
+  ): boolean {
+    return failures.length > 0 && failures.every((f) => this.isApprovalPendingInviteReason(f.reason));
+  }
+
+  private focusPendingTabIfUnderReview(status: unknown): void {
+    const normalized = String(status || '').trim().toLowerCase();
+    if (normalized === 'pending' || normalized === 'pending_review') {
+      this.activeTab = 'pending';
+    }
+  }
+
+  private getSubmitSuccessMessage(status: unknown, invitesSent = false): string {
+    const normalized = String(status || '').trim().toLowerCase();
+    const noun = this.quotaEntitySingularLabel;
+    const title = noun.charAt(0).toUpperCase() + noun.slice(1);
+    if (normalized === 'pending' || normalized === 'pending_review') {
+      return invitesSent
+        ? `${title} submitted for review and invites sent. Check Pending tab.`
+        : `${title} submitted for review. Check Pending tab.`;
+    }
+    return invitesSent
+      ? `${title} created and invites sent!`
+      : `${title} created successfully!`;
+  }
+
+  get influencerInboxSubtitle(): string {
+    return this.isInfluencerCollaborationsView
+      ? 'Received collaboration invitations'
+      : 'Received campaign invitations';
+  }
+
+  get influencerInboxEmptySubtitle(): string {
+    if (this.isInfluencerCollaborationsView) {
+      return 'Browse open collaborations below — creators (influencers/photographers) will invite you here for collaboration.';
+    }
+    return 'Browse open campaigns below — brands will invite you here for campaign requests.';
+  }
+
+  get showPhotographerInboxSection(): boolean {
+    if (this.isPhotographerCampaignRequestsView) return true;
+    if (!this.isPhotographerCollaborationsView) return false;
+    return this.photographerCollabSubview === 'invited';
+  }
+
+  get photographerInboxSubtitle(): string {
+    if (this.isPhotographerCampaignRequestsView) {
+      return 'Received campaign invitations from brands';
+    }
+    return 'Received collaboration invitations';
+  }
+
+  get photographerInboxEmptySubtitle(): string {
+    if (this.isPhotographerCampaignRequestsView) {
+      return 'Brands will invite you here when they want to work with you on a campaign.';
+    }
+    return 'Influencers will invite you here for collaboration.';
   }
 
   get totalRequestsLabel(): string {
@@ -354,6 +477,71 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.isInfluencerCollaborationsView ? 'collaboration' : 'campaign';
   }
 
+  private getCampaignOwnerId(campaign: any): string {
+    const owner = campaign?.brandId;
+    if (owner && typeof owner === 'object') {
+      return String(owner?._id || owner?.id || '').trim();
+    }
+    return String(owner || '').trim();
+  }
+
+  private getCampaignMapKey(campaignOrId: any): string {
+    if (campaignOrId && typeof campaignOrId === 'object') {
+      return String(campaignOrId?._id || campaignOrId?.id || '').trim();
+    }
+    return String(campaignOrId || '').trim();
+  }
+
+  isCampaignOwnedByCurrentUser(campaign: any): boolean {
+    const currentUserId = String(this.brandId || '').trim();
+    if (!currentUserId) return false;
+    return this.getCampaignOwnerId(campaign) === currentUserId;
+  }
+
+  private loadInfluencerOwnedCampaignInvitesForAwareness() {
+    if (!this.isInfluencerView) return;
+    const ownedCampaigns = (this.campaigns || []).filter((campaign: any) =>
+      this.isCampaignOwnedByCurrentUser(campaign) && !!campaign?._id,
+    );
+    for (const campaign of ownedCampaigns) {
+      const campaignId = String(campaign._id || '').trim();
+      if (!campaignId || this.campaignInvitesMap.has(campaignId)) continue;
+      this.config.getInvitesByCampaign(campaignId).subscribe({
+        next: (invites: any[]) => {
+          this.campaignInvitesMap.set(campaignId, Array.isArray(invites) ? invites : []);
+          this.cd.detectChanges();
+        },
+        error: () => {
+          // non-blocking: awareness counters can still render from loaded maps
+        },
+      });
+    }
+  }
+
+  get influencerCreatedCampaignsCount(): number {
+    if (!this.isInfluencerView) return 0;
+    return (this.campaigns || []).filter((campaign: any) =>
+      this.isCampaignOwnedByCurrentUser(campaign),
+    ).length;
+  }
+
+  get influencerReceivedInvitesCount(): number {
+    if (!this.isInfluencerView) return 0;
+    return this.myInvites.length;
+  }
+
+  get influencerSentInvitesCount(): number {
+    if (!this.isInfluencerView) return 0;
+    let total = 0;
+    for (const campaign of this.campaigns || []) {
+      if (!this.isCampaignOwnedByCurrentUser(campaign)) continue;
+      const campaignId = String((campaign as any)?._id || '').trim();
+      if (!campaignId) continue;
+      total += (this.campaignInvitesMap.get(campaignId) || []).length;
+    }
+    return total;
+  }
+
   private loadInfluencerWorkspaceData() {
     const scope = this.getInfluencerApiScope();
     this.myInvitesLoading = true;
@@ -372,9 +560,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.config.getAllCampaigns('active', scope).subscribe({
+    const campaignRequest$ = (this.isInfluencerCollaborationsView && this.influencerCollabSubview === 'created' && this.brandId)
+      ? this.config.getCampaignsByBrandId(this.brandId)
+      : this.config.getAllCampaigns('active', scope);
+
+    campaignRequest$.subscribe({
       next: (campaigns: Campaign[]) => {
         this.campaigns = campaigns || [];
+        this.loadInfluencerOwnedCampaignInvitesForAwareness();
         this.campaignLoadError = '';
         this.loading = false;
         this.cd.detectChanges();
@@ -924,6 +1117,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         ? this.isCollaborationCampaign(c)
         : this.isBrandCampaign(c);
       if (!visibleByScope) return false;
+      if (this.isCampaignOwnedByCurrentUser(c)) return false;
 
       if (applied.has(String(c._id || ''))) return false;
       // Non-tier campaigns are visible to all influencers (unless applied)
@@ -943,6 +1137,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   constructor(
     private config: ConfigService,
+    private plans: PlansService,
     private session: SessionService,
     private analytics: AnalyticsService,
     private cd: ChangeDetectorRef,
@@ -956,6 +1151,45 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
+  private getCurrentRequesterId(): string {
+    const user = this.session.getUser() || {};
+    return String(user?.userId || user?._id || user?.id || '').trim();
+  }
+
+  private applyPlanLimits(limits: any[]): void {
+    const rows = Array.isArray(limits) ? limits : [];
+    const maxActive = Number(rows.find((l: any) => String(l?.key || '') === 'maxActiveCampaigns')?.value);
+    if (Number.isFinite(maxActive) && maxActive > 0) {
+      this.maxActiveCampaigns = maxActive;
+    }
+  }
+
+  private syncPlanCapabilities(): void {
+    this.plans.getMyCapabilities().subscribe({
+      next: (caps: any) => {
+        if (!caps || typeof caps !== 'object') return;
+        // Keep backward compatibility with places that read `plan` while
+        // still exposing canonical `hasPremium` from plans API.
+        this.planCapabilities = {
+          ...this.planCapabilities,
+          ...caps,
+          plan: caps?.hasPremium ? 'premium' : 'free',
+        };
+        this.applyPlanLimits(caps?.limits || []);
+        this.cd.detectChanges();
+      },
+      error: () => {
+        // Non-fatal. Profile payload fallback still applies.
+      },
+    });
+  }
+
+  private get isPremiumPlan(): boolean {
+    return !!this.planCapabilities?.hasPremium
+      || this.planCapabilities?.plan === 'premium'
+      || this.planCapabilities?.plan === 'pro';
   }
 
   ngOnInit() {
@@ -982,9 +1216,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
     const token = this.getToken();
+    const requesterId = this.getCurrentRequesterId();
     const user = this.session.getUser();
-    this.isInfluencerView = user?.role === 'influencer';
-    this.isPhotographerView = user?.role === 'photographer';
+    const userRole = String(user?.role || '').trim().toLowerCase();
+    this.isInfluencerView = userRole === 'influencer';
+    this.isPhotographerView = userRole === 'photographer' || userRole === 'videographer';
+    this.syncPlanCapabilities();
     if (this.isPhotographerView) {
       this.photographerWorkspaceView = this.normalizePhotographerWorkspaceView(
         this.route.snapshot.queryParamMap.get('view'),
@@ -1026,6 +1263,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       // accept card can prefill UPI / mobile / account holder name.
       this.config.getInfluencerProfileById().subscribe({
         next: (profile: any) => {
+          const owner = profile?.data?.influencer || profile?.influencer || profile;
+          this.brandId = requesterId || owner?._id || owner?.id || '';
+          this.brandName = owner?.name || 'Influencer';
+          if (owner?.planCapabilities) {
+            this.planCapabilities = owner.planCapabilities;
+            this.applyPlanLimits(owner.planCapabilities.limits || []);
+          }
           this.defaultPayout = {
             upiId: profile?.payout?.upiId || '',
             mobile: profile?.payout?.mobile || profile?.phoneNumber || '',
@@ -1048,8 +1292,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.config.getPhotographerProfileById().subscribe({
         next: (profile: any) => {
           const owner = profile?.data?.photographer || profile?.photographer || profile;
-          this.brandId = owner?._id || owner?.id || '';
+          this.brandId = requesterId || owner?._id || owner?.id || '';
           this.brandName = owner?.name || 'Photographer';
+          if (owner?.planCapabilities) {
+            this.planCapabilities = owner.planCapabilities;
+            this.applyPlanLimits(owner.planCapabilities.limits || []);
+          }
           this.defaultPayout = {
             upiId: owner?.payout?.upiId || '',
             mobile: owner?.payout?.mobile || owner?.phoneNumber || '',
@@ -1092,12 +1340,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         next: (profile: any) => {
           // debug: raw brand profile response
           const brand = profile?.data?.brand || profile?.brand || profile;
-          this.brandId = brand?._id || brand?.id || '';
+          this.brandId = requesterId || brand?._id || brand?.id || '';
           this.brandName = brand?.brandName || brand?.name || '';
           // Set plan capabilities and maxActiveCampaigns here
           if (brand?.planCapabilities) {
             this.planCapabilities = brand.planCapabilities;
-            this.maxActiveCampaigns = brand.planCapabilities.limits?.find((l: any) => l.key === 'maxActiveCampaigns')?.value ?? 1;
+            this.applyPlanLimits(brand.planCapabilities.limits || []);
           }
           this.cd.detectChanges();
           // Now load campaigns for this brand
@@ -1168,6 +1416,47 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       const status = String(invite?.status || '').toLowerCase();
       return status === 'pending' || status === 'invited';
     });
+  }
+
+  get photographerInboxInvites(): any[] {
+    if (this.isPhotographerCollaborationsView) {
+      return this.photographerBrandInvites.filter((invite: any) => this.isCollabInvite(invite));
+    }
+    return this.photographerBrandInvites;
+  }
+
+  get photographerInboxInvitesPending(): any[] {
+    return this.photographerInboxInvites.filter((invite: any) => {
+      const status = String(invite?.status || '').toLowerCase();
+      return status === 'pending' || status === 'invited';
+    });
+  }
+
+  get photographerInboxInvitesAccepted(): any[] {
+    return this.photographerInboxInvites.filter((invite: any) =>
+      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(
+        String(invite?.status || '').toLowerCase(),
+      ),
+    );
+  }
+
+  get photographerInboxInvitesDeclined(): any[] {
+    return this.photographerInboxInvites.filter((invite: any) =>
+      ['declined', 'withdrawn'].includes(String(invite?.status || '').toLowerCase()),
+    );
+  }
+
+  get photographerInboxInvitesCompleted(): any[] {
+    return this.photographerInboxInvites.filter((invite: any) =>
+      ['completed', 'approved', 'disputed'].includes(String(invite?.status || '').toLowerCase()),
+    );
+  }
+
+  get photographerInboxInvitesFiltered(): any[] {
+    if (this.photographerInviteTab === 'accepted') return this.photographerInboxInvitesAccepted;
+    if (this.photographerInviteTab === 'declined') return this.photographerInboxInvitesDeclined;
+    if (this.photographerInviteTab === 'completed') return this.photographerInboxInvitesCompleted;
+    return this.photographerInboxInvitesPending;
   }
 
   get photographerBrandInvitesAccepted(): any[] {
@@ -1426,7 +1715,17 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get filtered(): Campaign[] {
-    if (this.isInfluencerView) return this.openCampaignsForInfluencer;
+    if (this.isInfluencerView) {
+      if (this.isInfluencerCollaborationsView && this.influencerCollabSubview === 'created') {
+        return this.campaigns.filter((campaign: any) =>
+          this.isCollaborationCampaign(campaign) && this.isCampaignOwnedByCurrentUser(campaign),
+        );
+      }
+      return this.openCampaignsForInfluencer;
+    }
+    if (this.isPhotographerCollaborationsView && this.photographerCollabSubview === 'invited') {
+      return [];
+    }
     return this.campaigns.filter(c => this.getCampaignTabStatus(c) === this.activeTab);
   }
 
@@ -1463,13 +1762,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   openCreateForm() {
     if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) {
       // Determine if user is premium or free
-      const isPremium = this.planCapabilities?.plan === 'premium' || this.planCapabilities?.plan === 'pro';
+      const isPremium = this.isPremiumPlan;
       if (isPremium) {
-        this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} campaigns used.`;
+        this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} ${this.quotaEntityPluralLabel} used.`;
         this.planLimitError = '';
       } else {
         this.upgradeBannerMessage = '';
-        this.planLimitError = `Free plan limit reached: Only ${this.maxActiveCampaigns} active campaign(s) allowed. Upgrade for more.`;
+        this.planLimitError = `Free plan limit reached: Only ${this.maxActiveCampaigns} active ${this.quotaEntityPluralLabel} allowed. Upgrade for more.`;
       }
       this.showUpgradeBanner = true;
       return;
@@ -1483,13 +1782,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     // Always refresh brand profile before editing
     const ownerProfile$ = this.isPhotographerView
       ? this.config.getPhotographerProfileById()
-      : this.config.getBrandProfileById();
+      : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
     ownerProfile$.subscribe({
         next: (profile: any) => {
         const owner = this.isPhotographerView
           ? (profile?.data?.photographer || profile?.photographer || profile)
-          : (profile?.data?.brand || profile?.brand || profile);
-        this.brandId = owner?._id || owner?.id || owner?.brandUsername || '';
+          : (this.isInfluencerView
+            ? (profile?.data?.influencer || profile?.influencer || profile)
+            : (profile?.data?.brand || profile?.brand || profile));
+        this.brandId = this.getCurrentRequesterId() || owner?._id || owner?.id || owner?.brandUsername || '';
         this.brandName = owner?.brandName || owner?.name || '';
         this.editingCampaign = campaign;
         this.formMode = 'edit';
@@ -1512,7 +1813,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     inviteRecipientRole?: 'influencer' | 'photographer';
   }) {
     const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = data;
-    const recipientRole: 'influencer' | 'photographer' = inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer';
+    const recipientRole: 'influencer' | 'photographer' = this.isInfluencerCollaborationsView
+      ? 'photographer'
+      : (inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer');
     const campaignPayload = {
       ...campaignData,
       inviteRecipientRole: recipientRole,
@@ -1535,13 +1838,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       // Attempt to reload brand profile and update state
       const ownerProfile$ = this.isPhotographerView
         ? this.config.getPhotographerProfileById()
-        : this.config.getBrandProfileById();
+        : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
       ownerProfile$.subscribe({
         next: (profile: any) => {
           const owner = this.isPhotographerView
             ? (profile?.data?.photographer || profile?.photographer || profile)
-            : (profile?.data?.brand || profile?.brand || profile);
-          this.brandId = owner?._id || owner?.id || '';
+            : (this.isInfluencerView
+              ? (profile?.data?.influencer || profile?.influencer || profile)
+              : (profile?.data?.brand || profile?.brand || profile));
+          this.brandId = this.getCurrentRequesterId() || owner?._id || owner?.id || '';
           this.brandName = owner?.brandName || owner?.name || '';
           this.cd.detectChanges();
         }
@@ -1550,6 +1855,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
     if (this.formMode === 'edit' && this.editingCampaign?._id) {
+      this.formSaving = true;
       // Capture id before closeForm() nullifies editingCampaign
       const editingId = this.editingCampaign._id;
       this.config.updateCampaign(editingId, { ...campaignPayload, brandId: validBrandId }).subscribe({
@@ -1563,6 +1869,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
               return c;
             }
           });
+          this.focusPendingTabIfUnderReview((updated as any)?.status || campaignPayload?.status);
           // If there are recipients to invite, send invites and update state before closing form
           if (inviteIds && inviteIds.length > 0) {
             const validIds = inviteIds.filter(id => !!id);
@@ -1579,12 +1886,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
                       this.campaignInvitesMap.set(editingId, invites);
                       this.invites = invites;
                       this.cd.detectChanges();
-                      if (failures.length === 0) {
-                        this.toastMessage = 'Invites sent successfully!';
-                        this.toast.success('Invites sent successfully!');
+                      if (sentCount > 0 && failures.length === 0) {
+                        const msg = this.getSubmitSuccessMessage((updated as any)?.status || campaignPayload?.status, true);
+                        this.toastMessage = msg;
+                        this.toast.success(msg);
                         this.showSuccessToast = true;
                         setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-                      } else {
+                      } else if (sentCount > 0 && failures.length > 0) {
                         const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
                         const msg = sentCount > 0
                           ? `${sentCount} invite(s) sent, ${failures.length} failed: ${reasons}`
@@ -1593,7 +1901,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
                         if (sentCount > 0) this.toast.success(msg); else this.toast.error(msg);
                         this.showErrorToast = true;
                         setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 7000);
+                      } else if (failures.length > 0) {
+                        const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
+                        const msg = `No invites were sent: ${reasons}`;
+                        this.toastMessage = msg;
+                        this.toast.error(msg);
+                        this.showErrorToast = true;
+                        setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 7000);
+                      } else {
+                        const msg = 'No invites were sent. Please select recipients and try again.';
+                        this.toastMessage = msg;
+                        this.toast.error(msg);
+                        this.showErrorToast = true;
+                        setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
                       }
+                      this.loadCampaigns();
                       this.closeForm();
                     },
                     error: () => {
@@ -1621,19 +1943,27 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           this.cd.detectChanges();
           const ownerProfile$ = this.isPhotographerView
             ? this.config.getPhotographerProfileById()
-            : this.config.getBrandProfileById();
+            : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
           ownerProfile$.subscribe({
             next: (profile: any) => {
               const owner = this.isPhotographerView
                 ? (profile?.data?.photographer || profile?.photographer || profile)
-                : (profile?.data?.brand || profile?.brand || profile);
-              this.brandId = owner?._id || owner?.id || '';
+                : (this.isInfluencerView
+                  ? (profile?.data?.influencer || profile?.influencer || profile)
+                  : (profile?.data?.brand || profile?.brand || profile));
+              this.brandId = this.getCurrentRequesterId() || owner?._id || owner?.id || '';
               this.brandName = owner?.brandName || owner?.name || '';
               this.cd.detectChanges();
             }
           });
           this.closeForm();
-        }
+        },
+        error: (err: any) => {
+          const msg = err?.error?.message || err?.message || 'Failed to update collaboration.';
+          this.formSaving = false;
+          this.toast.error(msg);
+          this.cd.detectChanges();
+        },
       });
     } else {
       const payload: any = { ...campaignPayload, brandId: validBrandId };
@@ -1643,18 +1973,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.showError('Please fill all required fields (title, timeline, brand).');
         return;
       }
+      this.formSaving = true;
       this.config.createCampaign(payload).subscribe({
         next: (created: Campaign) => {
           // Refresh brand profile in background (non-blocking)
           const ownerProfile$ = this.isPhotographerView
             ? this.config.getPhotographerProfileById()
-            : this.config.getBrandProfileById();
+            : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
           ownerProfile$.subscribe({
             next: (profile: any) => {
               const owner = this.isPhotographerView
                 ? (profile?.data?.photographer || profile?.photographer || profile)
-                : (profile?.data?.brand || profile?.brand || profile);
-              this.brandId = owner?._id || owner?.id || owner?.brandUsername || '';
+                : (this.isInfluencerView
+                  ? (profile?.data?.influencer || profile?.influencer || profile)
+                  : (profile?.data?.brand || profile?.brand || profile));
+              this.brandId = this.getCurrentRequesterId() || owner?._id || owner?.id || owner?.brandUsername || '';
               this.brandName = owner?.brandName || owner?.name || '';
               this.cd.detectChanges();
             }
@@ -1665,8 +1998,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             // debug: inviting recipients after campaign creation
             if (validIds.length === 0) {
               this.loadCampaigns();
-              this.toastMessage = 'Campaign created successfully!';
-              this.toast.success('Campaign created successfully!');
+              this.focusPendingTabIfUnderReview(created?.status || payload?.status);
+              const msg = this.getSubmitSuccessMessage(created?.status || payload?.status, false);
+              this.toastMessage = msg;
+              this.toast.success(msg);
               this.showSuccessToast = true;
               this.cd.detectChanges();
               setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
@@ -1694,27 +2029,42 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
                       }
                       // Reload campaigns AFTER invites are set so loadAllInvites sees them in the map
                       this.loadCampaigns();
-                      if (failures.length === 0) {
-                        this.toastMessage = 'Campaign created and invites sent!';
-                        this.toast.success('Campaign created and invites sent!');
+                      this.focusPendingTabIfUnderReview(created?.status || payload?.status);
+                      if (sentCount > 0 && failures.length === 0) {
+                        const msg = this.getSubmitSuccessMessage(created?.status || payload?.status, true);
+                        this.toastMessage = msg;
+                        this.toast.success(msg);
                         this.showSuccessToast = true;
                         this.cd.detectChanges();
                         setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
                       } else {
                         const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
+                        const approvalPendingOnly = this.areAllInviteFailuresApprovalPending(failures);
                         const msg = sentCount > 0
                           ? `Campaign created. ${sentCount} invite(s) sent, ${failures.length} failed: ${reasons}`
-                          : `Campaign created, but no invites were sent: ${reasons}`;
+                          : (approvalPendingOnly
+                            ? 'Campaign created successfully. Invites will be available after admin approval.'
+                            : `Campaign created, but no invites were sent: ${reasons}`);
                         this.toastMessage = msg;
-                        if (sentCount > 0) this.toast.success(msg); else this.toast.error(msg);
-                        this.showErrorToast = true;
+                        if (sentCount > 0 || approvalPendingOnly) {
+                          this.toast.success(msg);
+                          this.showSuccessToast = true;
+                        } else {
+                          this.toast.error(msg);
+                          this.showErrorToast = true;
+                        }
                         this.cd.detectChanges();
-                        setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 7000);
+                        setTimeout(() => {
+                          this.showSuccessToast = false;
+                          this.showErrorToast = false;
+                          this.cd.detectChanges();
+                        }, 7000);
                       }
                       this.closeForm();
                     },
                     error: () => {
                       this.loadCampaigns();
+                      this.focusPendingTabIfUnderReview(created?.status || payload?.status);
                       this.toastMessage = 'Campaign created, but failed to fetch invites.';
                       this.showErrorToast = true;
                       this.cd.detectChanges();
@@ -1726,6 +2076,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
                 error: (err) => {
                   console.error('[Invite API error]', err);
                   this.loadCampaigns();
+                  this.focusPendingTabIfUnderReview(created?.status || payload?.status);
                   this.toastMessage = 'Campaign created, but failed to send invites.';
                   this.showErrorToast = true;
                   this.cd.detectChanges();
@@ -1736,8 +2087,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             }
           } else {
             this.loadCampaigns();
-            this.toastMessage = 'Campaign created successfully!';
-            this.toast.success('Campaign created successfully!');
+            this.focusPendingTabIfUnderReview(created?.status || payload?.status);
+            const msg = this.getSubmitSuccessMessage(created?.status || payload?.status, false);
+            this.toastMessage = msg;
+            this.toast.success(msg);
             this.showSuccessToast = true;
             this.cd.detectChanges();
             setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
@@ -1757,9 +2110,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             toastMsg = 'Failed to create campaign. Please check your input and try again.';
           }
           if (err?.error?.message && err.error.message.includes('Plan limit')) {
-            const isPremium = this.planCapabilities?.plan === 'premium' || this.planCapabilities?.plan === 'pro';
+            const isPremium = this.isPremiumPlan;
             if (isPremium) {
-              this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} campaigns used.`;
+              this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} ${this.quotaEntityPluralLabel} used.`;
               this.planLimitError = '';
             } else {
               this.upgradeBannerMessage = '';
@@ -1773,6 +2126,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           }
           this.toastMessage = toastMsg;
           this.toast.error(toastMsg);
+          this.formSaving = false;
           this.showErrorToast = true;
           // debug: showing error toast message (hidden for CI cleanliness)
           this.cd.detectChanges();
@@ -1780,7 +2134,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         }
       });
     }
-    this.closeForm();
   }
 
   canDeletePendingCampaign(campaign: Campaign): boolean {
@@ -1830,6 +2183,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   closeForm() {
+    this.formSaving = false;
     this.showForm = false;
     this.editingCampaign = null;
     this.cd.detectChanges();
@@ -2187,7 +2541,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getCardInvitedCount(c: Campaign): number {
-    return this.campaignInvitesMap.get(c._id!) ? this.campaignInvitesMap.get(c._id!)!.length : 0;
+    const key = this.getCampaignMapKey(c);
+    if (!key) return 0;
+    return this.campaignInvitesMap.get(key)?.length || 0;
   }
 
   /** Has the campaign reached its `maxInfluencers` invite quota? */
@@ -2404,14 +2760,23 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   canWithdraw(inv: any): boolean {
-    return inv?.status === 'pending';
+    // Allow removal of pending/invited/accepted invites.
+    // Once the creator has started working (payment_confirmed, working, submitted, etc.) it is locked.
+    const removableStatuses = new Set(['pending', 'invited', 'accepted']);
+    return removableStatuses.has(inv?.status);
+  }
+
+  /** Returns a context-appropriate title for the withdraw/remove button. */
+  getWithdrawTitle(inv: any): string {
+    if (inv?.status === 'accepted') {
+      return 'Remove this accepted creator (they have not started working yet)';
+    }
+    return 'Withdraw this pending invite';
   }
 
   canDeclineAccepted(inv: any, campaign?: any): boolean {
-    if (!inv) return false;
-    if (inv.status !== 'accepted') return false;
-    // Show decline only before payment for paid_collab campaigns.
-    return String(campaign?.campaignType || '').toLowerCase() === 'paid_collab';
+    // Covered by canWithdraw — always return false to avoid duplicate button.
+    return false;
   }
 
   canReport(inv: any): boolean {
@@ -2736,20 +3101,24 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   getCardPendingCount(c: Campaign): number {
     // Count both 'pending' and legacy 'invited' statuses
-    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => i.status === 'pending' || i.status === 'invited').length;
+    const key = this.getCampaignMapKey(c);
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => i.status === 'pending' || i.status === 'invited').length;
   }
 
   getCardSubmittedCount(c: Campaign): number {
-    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => i.status === 'submitted').length;
+    const key = this.getCampaignMapKey(c);
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => i.status === 'submitted').length;
   }
 
   getCardCompletedCount(c: Campaign): number {
-    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => i.status === 'completed').length;
+    const key = this.getCampaignMapKey(c);
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => i.status === 'completed').length;
   }
 
   getCardInvitePreview(c: Campaign): any[] {
     // Always return the first 3 invites, even if influencerId is not fully populated
-    const invites = (this.campaignInvitesMap.get(c._id!) || []);
+    const key = this.getCampaignMapKey(c);
+    const invites = (this.campaignInvitesMap.get(key) || []);
     return invites.slice(0, 3);
   }
 
@@ -3366,7 +3735,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getExpandInvites(c: Campaign): any[] {
-    return this.campaignInvitesMap.get(c._id!) || [];
+    const key = this.getCampaignMapKey(c);
+    return this.campaignInvitesMap.get(key) || [];
   }
 
   /** In tier-filtered mode, show only accepted/relevant influencer rows in expanded list. */
@@ -3646,7 +4016,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   // ── Summary stats ─────────────────────────────────────────────
 
   get summaryTotalCampaigns(): number { return this.campaigns.length; }
-  get summaryActiveCampaigns(): number { return this.getCount('active'); }
+  get summaryActiveCampaigns(): number {
+    if (!this.isInfluencerView) return this.getCount('active');
+    return this.campaigns.filter((campaign) =>
+      this.isCampaignOwnedByCurrentUser(campaign) && this.getCampaignTabStatus(campaign) === 'active',
+    ).length;
+  }
 
   get summaryTotalBudget(): string {
     const total = this.campaigns.reduce((sum, c) => sum + (c.budgetMax || c.budgetMin || 0), 0);

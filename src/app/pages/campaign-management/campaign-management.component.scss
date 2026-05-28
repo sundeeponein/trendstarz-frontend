@@ -1422,9 +1422,7 @@
 }
 
 /* ── My Invites section (influencer) ─── */
-.my-invites-section {
-  margin-bottom: 8px;
-}
+
 
 .my-invites-header {
   display: flex;
@@ -2061,6 +2059,13 @@
   @media (max-width: 540px) { grid-template-columns: 1fr 1fr; }
 }
 
+.cm-summary-cards--influencer {
+  grid-template-columns: repeat(3, 1fr);
+
+  @media (max-width: 900px) { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 540px) { grid-template-columns: 1fr; }
+}
+
 .cm-stat-card {
   background: #fff;
   border: 1.5px solid $border;
@@ -2232,6 +2237,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 130px;
+}
+
+.ccard-owner-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #12623a;
+  background: #e9f9f0;
+  border: 1px solid #b7efd0;
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
 }
 
 .ccard-tags {
@@ -3335,6 +3351,22 @@
   &.btn-withdraw { color: #6c757d; }
   &.btn-report   { color: #b3261e; border-color: rgba(179, 38, 30, 0.25); &:hover:not(:disabled) { background: rgba(179, 38, 30, 0.08); } }
   &.btn-fulfill  { color: #1a8f61; border-color: rgba(26, 143, 97, 0.25); &:hover:not(:disabled) { background: rgba(26, 143, 97, 0.08); } }
+}
+
+.invite-locked-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6c757d;
+  background: rgba(108, 117, 125, 0.1);
+  border: 1px solid rgba(108, 117, 125, 0.25);
+  border-radius: 12px;
+  cursor: default;
+  user-select: none;
+  i { font-size: 0.68rem; }
 }
 
 /* Fulfillment modal */

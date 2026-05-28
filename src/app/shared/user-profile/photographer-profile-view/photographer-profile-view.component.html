@@ -123,7 +123,7 @@
         <div class="pricing-list">
           <div class="pricing-row" *ngFor="let item of enabledPricing">
             <span class="pricing-name">{{ getPriceLabel(item) }}</span>
-            <span class="pricing-value" *ngIf="isProViewer">₹{{ item.price | number }}</span>
+            <span class="pricing-value text-black" *ngIf="isProViewer">₹{{ item.price | number }}</span>
             <span class="pricing-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
           </div>
         </div>
@@ -131,11 +131,14 @@
 
       <app-profile-social-platforms
         title="SOCIAL PLATFORMS"
-        variant="photographer"
+        variant="influencer"
         [platforms]="socialPlatforms"
         [locked]="!!photographer.socialMediaRestricted"
         lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
         [canOpen]="canOpenSocialProfiles"
+        [isProViewer]="isProViewer"
+        [showEngagement]="false"
+        [showContentTypes]="false"
         (platformClick)="onPlatformClick($event)"
       ></app-profile-social-platforms>
     </div>
@@ -225,7 +228,7 @@
       </div>
 
       <div class="insights-card">
-        <div class="insights-badge-wrap"><span class="insights-badge"><i class="bi bi-star-fill"></i> Premium insights</span></div>
+        <div class="insights-badge-wrap"><span class="insights-badge"><i class="bi bi-star-fill"></i> Premium insights - coming soon</span></div>
         <ng-container *ngIf="!isProViewer">
           <p class="insights-tease">Unlock detailed pricing, equipment insights, and performance indicators.</p>
           <div class="insights-blur-row"></div>

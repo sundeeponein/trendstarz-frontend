@@ -2,8 +2,8 @@
   <ng-container *ngSwitchCase="'influencer'">
     <div class="info-card profile-social-platforms__card" *ngIf="hasPlatforms || locked">
       <div class="pricing-card-header">
-        <h5 class="section-label mb-0">{{ title }}</h5>
-        <span class="per-type-label">per<br>content<br>type</span>
+        <h5 class="section-label mb-0 text-black">{{ title }}</h5>
+        <span class="per-type-label" *ngIf="showContentTypes">Per content type</span>
       </div>
 
       <div class="detail-locked mb-2" *ngIf="locked">
@@ -19,8 +19,8 @@
             {{ sm.engagementRate }}%<br><small>eng.</small>
           </span>
           <div class="platform-followers-block">
-            <strong>{{ sm.tier || '—' }}</strong>
-            <span>tier</span>
+            <strong>{{ sm.tier || getSocialLabel(sm) }}</strong>
+            <span>{{ sm.tier ? 'tier' : 'platform' }}</span>
           </div>
         </div>
 
