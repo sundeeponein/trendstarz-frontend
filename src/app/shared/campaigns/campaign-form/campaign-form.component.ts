@@ -75,11 +75,14 @@ export class CampaignFormComponent implements OnInit {
   currentStep = 1;
   platformsTouched = false;
   categoriesTouched = false;
-  trustLabels = [
-    'You pay only for accepted influencers',
-    'Payment secured by TrendStarz',
-    'Released after campaign approval',
-  ];
+  get trustLabels(): string[] {
+    const recipient = this.inviteRecipientLabelPlural.toLowerCase();
+    return [
+      `You pay only for accepted ${recipient}`,
+      'Payment secured by TrendStarz',
+      'Released after campaign approval',
+    ];
+  }
 
   readonly DESCRIPTION_TEMPLATES: Record<string, string> = {
     paid_collab: `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"\n\nDeliverables:\n• 1 Reel + optional Story (if agreed)\n• Share insights (views, reach, engagement) after posting\n\nTimeline:\n• Content to be posted within 5–7 days / on selected date Range days after product delivery / brief approval\n\nPayment:\n• Fixed payment: ₹XXXX (as agreed)\n• Payment will be processed after content submission/approval\n\nImportant Notes:\n• Content should be original and not reused from past posts\n• Brand reserves the right to request minor edits before posting\n• No offensive or misleading content`,
@@ -754,6 +757,33 @@ export class CampaignFormComponent implements OnInit {
     return String(this.f['campaignType']?.value || 'paid_collab');
   }
 
+  get isInviteLocationInfluencerFlow(): boolean {
+    return this.selectedCampaignType === 'invite_location' && !this.isPhotographerCreator && !this.isInvitingPhotographers;
+  }
+
+  get selectedContentTypePricesRupees(): number[] {
+    return (this.platformDeliverables || [])
+      .flatMap((pd) => (pd?.contentTypes || []))
+      .filter((ct: any) => !!ct?.enabled && Number(ct?.price || 0) > 0)
+      .map((ct: any) => Number(ct.price || 0));
+  }
+
+  get hasSelectedContentTypePricing(): boolean {
+    return this.selectedContentTypePricesRupees.length > 0;
+  }
+
+  get selectedContentTypeMinPriceRupees(): number {
+    const prices = this.selectedContentTypePricesRupees;
+    if (!prices.length) return 0;
+    return Math.min(...prices);
+  }
+
+  get selectedContentTypeMaxPriceRupees(): number {
+    const prices = this.selectedContentTypePricesRupees;
+    if (!prices.length) return 0;
+    return Math.max(...prices);
+  }
+
   getTierOptionLabel(tier: string): string {
     const normalized = normalizeTierLabel(tier);
     const key = normalized.toLowerCase();
@@ -763,9 +793,13 @@ export class CampaignFormComponent implements OnInit {
   }
 
   get estimatedBudgetRupees(): number {
-    const price = Number(this.f['pricePerInfluencer']?.value || 0);
     const maxInf = Number(this.f['maxInfluencers']?.value || 0);
+    const price = Number(this.f['pricePerInfluencer']?.value || 0);
     return price * maxInf;
+  }
+
+  get inviteOnlyPotentialPayoutRupees(): number {
+    return this.takenSlotsCount * Number(this.f['pricePerInfluencer']?.value || 0);
   }
 
   private getInitialPricePerInfluencer(): number | null {
@@ -953,6 +987,13 @@ export class CampaignFormComponent implements OnInit {
   }
 
   step2Valid(): boolean {
+    const requiredControls = ['pricePerInfluencer', 'maxInfluencers', 'payToJoinBenefits', 'productDescription', 'productPaymentAmount'];
+    const hasMissingRequiredControl = requiredControls.some((name) => {
+      const control = this.form.get(name);
+      return !!control && control.hasValidator(Validators.required) && control.invalid;
+    });
+    if (hasMissingRequiredControl) return false;
+
     if (this.isPhotographerCreator) {
       const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join';
       const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
@@ -965,7 +1006,7 @@ export class CampaignFormComponent implements OnInit {
         this.selectedPhotographerDeliverables.length > 0
       );
     }
-    const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join';
+    const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join' || this.selectedCampaignType === 'invite_location';
     const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
     return !!(
       priceValid &&
@@ -975,6 +1016,54 @@ export class CampaignFormComponent implements OnInit {
       this.selectedCategories.length > 0 &&
       (this.isInvitingPhotographers || this.platformDeliverables.length > 0)
     );
+  }
+
+  step2BlockingReason(): string {
+    if (this.step2Valid()) return '';
+
+    const fieldMessages: Array<{ name: string; message: string }> = [
+      {
+        name: 'pricePerInfluencer',
+        message: this.selectedCampaignType === 'pay_to_join'
+          ? 'Enter a valid join fee per participant.'
+          : 'Enter a valid payment per participant.',
+      },
+      { name: 'maxInfluencers', message: 'Enter max participants (at least 1).' },
+      { name: 'payToJoinBenefits', message: 'Add pay-to-join benefits.' },
+      { name: 'productDescription', message: 'Add product details.' },
+      { name: 'productPaymentAmount', message: 'Enter product cash component amount.' },
+    ];
+
+    for (const field of fieldMessages) {
+      const control = this.form.get(field.name);
+      if (control?.hasValidator(Validators.required) && control.invalid) {
+        return field.message;
+      }
+    }
+
+    if (this.form.errors?.['invalidMinMaxInfluencers']) {
+      return 'Minimum participants cannot be greater than max participants.';
+    }
+
+    if (this.isPhotographerCreator) {
+      if (this.selectedPhotographerServices.length === 0) {
+        return 'Select at least one service.';
+      }
+      if (this.selectedPhotographerDeliverables.length === 0) {
+        return 'Select at least one deliverable.';
+      }
+      return 'Complete all mandatory fields to continue.';
+    }
+
+    if (this.selectedCategories.length === 0) {
+      return `Select at least one target ${this.inviteRecipientLabelSingular.toLowerCase()} category.`;
+    }
+
+    if (!this.isInvitingPhotographers && this.platformDeliverables.length === 0) {
+      return 'Select at least one platform.';
+    }
+
+    return 'Complete all mandatory fields to continue.';
   }
 
   isPremiumOnlyType(type: string): boolean {

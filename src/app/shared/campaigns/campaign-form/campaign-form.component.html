@@ -350,10 +350,10 @@
     <form [formGroup]="form" *ngIf="currentStep === 2">
       <div class="form-body">
 
-        <div class="field-row" *ngIf="selectedCampaignType === 'paid_collab' || selectedCampaignType === 'pay_to_join'">
+        <div class="field-row" *ngIf="selectedCampaignType === 'paid_collab' || selectedCampaignType === 'pay_to_join' || selectedCampaignType === 'invite_location'">
           <div class="field-group half">
             <label class="field-label">
-              {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per influencer (₹)' : (isPhotographerCreator ? 'Collaboration Budget (₹)' : 'Campaign Budget (₹)') }}
+              {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per participant (₹)' : 'Payment per participant (₹)' }}
               <span class="required">*</span>
             </label>
             <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 3000" min="1" />
@@ -368,15 +368,16 @@
 
         <div class="field-row" *ngIf="shouldShowMinimumParticipantsField">
           <div class="field-group half">
-            <label class="field-label">Minimum participants required <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <label class="field-label">Min participants required <span class="text-muted" style="font-weight:400;">(optional)</span></label>
             <input type="number" formControlName="minInfluencers" class="field-input" placeholder="e.g. 1" min="1" />
             <span class="field-error" *ngIf="f['minInfluencers'].touched && f['minInfluencers'].invalid">Enter at least 1</span>
           </div>
           <div class="field-group half">
             <label class="field-label">Close rule preview</label>
             <div class="field-input" style="display:flex; align-items:center; min-height:44px;">
-              Ready at {{ minimumParticipantsDisplayValue }} • Auto closes at {{ f['maxInfluencers'].value || 0 }} accepted participants
+              Ready at {{ minimumParticipantsDisplayValue }} • Auto closes at {{ f['maxInfluencers'].value || 0 }}
             </div>
+            <small class="field-sublabel"> accepted participants</small>
           </div>
         </div>
 
@@ -394,7 +395,7 @@
           Prices are negotiable. Influencers can accept or send counter offers.
         </p>
 
-        <div class="field-row" *ngIf="selectedCampaignType === 'product' || selectedCampaignType === 'invite_location'">
+        <div class="field-row" *ngIf="selectedCampaignType === 'product'">
           <div class="field-group half">
             <label class="field-label">Max participants <span class="required">*</span></label>
             <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
@@ -450,8 +451,10 @@
           </p>
         </div>
 
+
+
         <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
-          <span>{{ selectedCampaignType === 'pay_to_join' ? 'Estimated join amount:' : 'Estimated budget:' }}</span>
+          <span>{{ selectedCampaignType === 'pay_to_join' ? 'Max potential join amount:' : 'Max potential payout (if max participants accept):' }}</span>
           <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
         </div>
 
@@ -532,7 +535,7 @@
                   <span class="ct-name">{{ ct.name }}</span>
                 </label>
                 <div class="ct-price-wrap"
-                     *ngIf="!(selectedCampaignType === 'product' && f['productPaymentMode'].value === 'product_only')"
+                     *ngIf="!(selectedCampaignType === 'product' && f['productPaymentMode'].value === 'product_only') && selectedCampaignType !== 'invite_location'"
                      [class.ct-price-wrap--disabled]="!ct.enabled">
                   <span class="ct-rupee">₹</span>
                   <input type="number"
@@ -664,11 +667,14 @@
         <button type="button" class="btn btn-back" (click)="prevStep()">
           <i class="bi bi-arrow-left"></i> Back
         </button>
-        <button type="button" class="btn btn-next" (click)="nextStep()">
+        <button type="button" class="btn btn-next" [disabled]="!step2Valid()" (click)="nextStep()">
           {{ f['campaignMode'].value === 'tier_filtered_open' ? 'Next — Review &amp; Publish' : ('Next — Invite ' + inviteRecipientLabelPlural) }}
           <i class="bi bi-arrow-right"></i>
         </button>
       </div>
+      <p class="field-sublabel" *ngIf="!step2Valid()" style="margin-top:8px;">
+        <i class="bi bi-info-circle"></i> {{ step2BlockingReason() }}
+      </p>
     </form>
 
     <!-- ══════════════════════════════════════════
@@ -739,13 +745,26 @@
         <ng-template #inviteOnlyStep3>
 
           <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
-            <div *ngIf="f['pricePerInfluencer'].value">Price per influencer: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
+            <div *ngIf="isInviteLocationInfluencerFlow && hasSelectedContentTypePricing">
+              Payment per participant:
+              <strong>
+                <ng-container *ngIf="selectedContentTypeMinPriceRupees === selectedContentTypeMaxPriceRupees; else summaryRange">
+                  ₹{{ selectedContentTypeMaxPriceRupees | number:'1.0-0' }}
+                </ng-container>
+                <ng-template #summaryRange>
+                  ₹{{ selectedContentTypeMinPriceRupees | number:'1.0-0' }} - ₹{{ selectedContentTypeMaxPriceRupees | number:'1.0-0' }}
+                </ng-template>
+              </strong>
+            </div>
+            <div *ngIf="!isInviteLocationInfluencerFlow && f['pricePerInfluencer'].value">Payment per participant: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
             <div>
               Invited: <strong>{{ invitedCount }}</strong>
               <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
               &nbsp;/ <strong>{{ f['maxInfluencers'].value }}</strong>
             </div>
-            <div *ngIf="f['pricePerInfluencer'].value">Estimated total: <strong>₹{{ (takenSlotsCount * (f['pricePerInfluencer'].value || 0)) | number:'1.0-0' }}</strong></div>
+            <div *ngIf="(isInviteLocationInfluencerFlow && hasSelectedContentTypePricing) || f['pricePerInfluencer'].value">
+              Potential payout (invited + selected): <strong>₹{{ inviteOnlyPotentialPayoutRupees | number:'1.0-0' }}</strong>
+            </div>
           </div>
 
           <p class="field-error" *ngIf="selectionLimitError">

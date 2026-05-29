@@ -62,7 +62,10 @@
     <div class="invite-brief__text">
       <div *ngIf="venueShortText"><strong>{{ venueShortText }}</strong></div>
       <div class="text-muted" *ngIf="!canRevealExactVenueDetails && venuePreviewText">
-        Exact venue unlocks after brand contact unlock.
+        Exact venue unlocks after brand payment confirmation and contact unlock.
+      </div>
+      <div class="text-muted" *ngIf="!canRevealExactVenueDetails && venueMapUrl">
+        <i class="bi bi-lock-fill"></i> Map link unlocks after payment confirmation.
       </div>
       <div *ngIf="canRevealExactVenueDetails && venueFullAddress">{{ venueFullAddress }}</div>
       <div *ngIf="inviteBenefits" class="mt-1"><i class="bi bi-stars"></i> {{ inviteBenefits }}</div>
@@ -82,7 +85,10 @@
       <div *ngIf="shootLocationTypeLabel"><strong>{{ shootLocationTypeLabel }}</strong></div>
       <div class="text-muted" *ngIf="!canRevealExactShootLocation && shootLocationAddress">
         <span *ngIf="shootLocationPreviewText"><strong>Area:</strong> {{ shootLocationPreviewText }}<br></span>
-        Exact shoot location unlocks after contact unlock.
+        Exact shoot location unlocks after brand payment confirmation and contact unlock.
+      </div>
+      <div class="text-muted" *ngIf="!canRevealExactShootLocation && shootLocationMapUrl">
+        <i class="bi bi-lock-fill"></i> Map link unlocks after payment confirmation.
       </div>
       <div *ngIf="canRevealExactShootLocation && shootLocationAddress">{{ shootLocationAddress }}</div>
       <div *ngIf="shootLocationNotes" class="mt-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
@@ -212,7 +218,7 @@
       <i class="bi bi-unlock-fill"></i> Unlock Contact &amp; Venue Details ready
     </p>
     <!-- Brand contact details for invite_location campaigns (shown once unlocked) -->
-    <div class="inv-brand-contact" *ngIf="isUnlocked && campaignTypeKey === 'invite_location'">
+    <div class="inv-brand-contact" *ngIf="canRevealBrandContact && campaignTypeKey === 'invite_location'">
       <span class="inv-brand-contact__label"><i class="bi bi-person-lines-fill"></i> Brand contact</span>
       <a class="contact-chip" *ngIf="brandEmail" [href]="'mailto:' + brandEmail" (click)="$event.stopPropagation()">
         <i class="bi bi-envelope-fill"></i> {{ brandEmail }}

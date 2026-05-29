@@ -77,6 +77,79 @@
           </div>
       </div>
 
+      <div class="cdm-section" *ngIf="adminReview">
+        <div class="cdm-section-label">INVITED PARTICIPANTS & PROGRESS</div>
+        <div class="cdm-status-legend">
+          <span class="cdm-status-legend__label">Legend:</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-accepted">Accepted</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-submitted">Submitted</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-working">Working</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-pending">Pending</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-withdrawn">Withdrawn / Rejected</span>
+        </div>
+        <div class="cdm-meta-row mb-2" *ngIf="hasAdminInviteProgress && adminInviteProgressSummary.length">
+          <span class="cdm-pill cdm-pill--invite-summary" *ngFor="let item of adminInviteProgressSummary">
+            {{ item.label }}: {{ item.count }}
+          </span>
+        </div>
+        <div class="cdm-status-filter-row" *ngIf="hasAdminInviteProgress && adminInviteFilterOptions.length > 1">
+          <button
+            type="button"
+            class="cdm-status-filter-btn"
+            *ngFor="let option of adminInviteFilterOptions"
+            [class.cdm-status-filter-btn--active]="adminInviteStatusFilter === option.key"
+            (click)="setAdminInviteStatusFilter(option.key)">
+            {{ option.label }} ({{ option.count }})
+          </button>
+        </div>
+        <div class="cdm-note" *ngIf="hasAdminInviteProgress && adminInviteFilterOptions.length > 1">
+          Actionable = Accepted, Payment Confirmed, Working, Submitted.
+        </div>
+        <div class="cdm-invite-progress-list">
+          <div class="cdm-invite-progress-empty" *ngIf="adminInviteProgressLoading">
+            Loading invited participants...
+          </div>
+          <div class="cdm-invite-progress-empty" *ngIf="!adminInviteProgressLoading && !hasAdminInviteProgress">
+            No invited participants yet.
+          </div>
+          <div class="cdm-invite-progress-item" *ngFor="let item of filteredAdminInviteProgress">
+            <div class="cdm-invite-progress-main">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <app-user-avatar
+                  [name]="item.participantName || (adminInviteParticipantRoleLabel(item.participantRole) + ' Participant')"
+                  [src]="item.participantAvatar || ''"
+                  [size]="38"
+                ></app-user-avatar>
+                <div>
+                  <div class="cdm-invite-progress-name">{{ item.participantName || (adminInviteParticipantRoleLabel(item.participantRole) + ' Participant') }}</div>
+                  <div class="cdm-invite-progress-meta" *ngIf="item.participantUsername">@{{ item.participantUsername }}</div>
+                  <div class="cdm-invite-progress-meta">
+                    {{ adminInviteParticipantRoleLabel(item.participantRole) }}
+                    <span *ngIf="item.participantEmail">• {{ item.participantEmail }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cdm-invite-progress-meta" *ngIf="item.acceptedAt || item.selectedPostDate">
+                <span *ngIf="item.acceptedAt">Accepted: {{ item.acceptedAt | date:'mediumDate' }}</span>
+                <span *ngIf="item.acceptedAt && item.selectedPostDate">•</span>
+                <span *ngIf="item.selectedPostDate">Post date: {{ item.selectedPostDate | date:'mediumDate' }}</span>
+              </div>
+            </div>
+            <div class="cdm-invite-progress-side">
+              <span class="cdm-pill cdm-pill--invite-status" [ngClass]="'cdm-pill--invite-status-' + adminInviteStatusKey(item.status)">
+                {{ adminInviteStatusLabel(item.status) }}
+              </span>
+              <div class="cdm-invite-progress-date" *ngIf="item.updatedAt">
+                {{ item.updatedAt | date:'medium' }}
+              </div>
+            </div>
+          </div>
+          <div class="cdm-invite-progress-empty" *ngIf="!adminInviteProgressLoading && filteredAdminInviteProgress.length === 0">
+            No participants for selected status.
+          </div>
+        </div>
+      </div>
+
       <!-- Campaign type -->
       <div class="cdm-section" *ngIf="campaignTypeLabel">
         <div class="cdm-meta-row">
@@ -90,12 +163,18 @@
       <div class="cdm-section" *ngIf="isInviteLocation && hasVenueDetails">
         <div class="cdm-section-label">VENUE DETAILS</div>
         <div class="cdm-brief-box">
-          <div *ngIf="venueName" class="mb-1"><strong>{{ venueName }}</strong></div>
-          <div *ngIf="venueAddress" class="mb-1">
+          <div *ngIf="canRevealExactVenueDetails && venueName" class="mb-1"><strong>{{ venueName }}</strong></div>
+          <div *ngIf="canRevealExactVenueDetails && venueAddress" class="mb-1">
             <i class="bi bi-geo-alt"></i> {{ venueAddress }}
           </div>
-          <div *ngIf="venueCityState" class="mb-1">{{ venueCityState }}</div>
-          <a *ngIf="venueMapUrl"
+          <div *ngIf="venuePreviewText" class="mb-1">{{ venuePreviewText }}</div>
+          <div *ngIf="!canRevealExactVenueDetails && venuePreviewText" class="text-muted mt-1">
+            Exact venue unlocks after payment confirmation.
+          </div>
+          <div *ngIf="!canRevealExactVenueDetails && venueMapUrl" class="text-muted mt-1">
+            <i class="bi bi-lock-fill"></i> Map link unlocks after payment confirmation.
+          </div>
+          <a *ngIf="canRevealExactVenueDetails && venueMapUrl"
              class="d-inline-flex align-items-center gap-1 mt-2"
              [href]="venueMapUrl"
              target="_blank"
@@ -109,11 +188,16 @@
         <div class="cdm-section-label">SHOOT LOCATION</div>
         <div class="cdm-brief-box">
           <div *ngIf="shootLocationTypeLabel" class="mb-1"><strong>{{ shootLocationTypeLabel }}</strong></div>
-          <div *ngIf="shootLocationAddress" class="mb-1">
+          <div *ngIf="canRevealExactShootLocation && shootLocationAddress" class="mb-1">
             <i class="bi bi-geo-alt"></i> {{ shootLocationAddress }}
           </div>
-          <div *ngIf="shootLocationNotes" class="mb-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
-          <a *ngIf="shootLocationMapUrl"
+          <div *ngIf="!canRevealExactShootLocation && venuePreviewText" class="text-muted mb-1">Area: {{ venuePreviewText }}</div>
+          <div *ngIf="!canRevealExactShootLocation && shootLocationAddress" class="text-muted mb-1">Exact shoot location unlocks after payment confirmation.</div>
+          <div *ngIf="!canRevealExactShootLocation && shootLocationMapUrl" class="text-muted mb-1">
+            <i class="bi bi-lock-fill"></i> Map link unlocks after payment confirmation.
+          </div>
+          <div *ngIf="canRevealExactShootLocation && shootLocationNotes" class="mb-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
+          <a *ngIf="canRevealExactShootLocation && shootLocationMapUrl"
              class="d-inline-flex align-items-center gap-1 mt-2"
              [href]="shootLocationMapUrl"
              target="_blank"

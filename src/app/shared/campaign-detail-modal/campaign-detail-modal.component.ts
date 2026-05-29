@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { UserAvatarComponent } from '../components/user-avatar/user-avatar.component';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -26,11 +27,11 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-detail-modal',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent],
   templateUrl: './campaign-detail-modal.component.html',
   styleUrls: ['./campaign-detail-modal.component.scss']
 })
-export class CampaignDetailModalComponent {
+export class CampaignDetailModalComponent implements OnChanges {
   @Input() invite: any;
   @Input() visible = false;
   // Optional: platform/tier that the current influencer qualifies with for this campaign
@@ -39,6 +40,7 @@ export class CampaignDetailModalComponent {
   @Input() showDateInput = true;
   @Input() busy = false;
   @Input() adminReview = false;
+  @Input() adminInviteProgressLoading = false;
   @Input() adminCanApprove = true;
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
@@ -59,9 +61,18 @@ export class CampaignDetailModalComponent {
 
   postDate = '';
   selectedContentTypeKey = '';
+  adminInviteStatusFilter = 'all';
   toastError = '';
   private toastTimer: any;
   // Previously used to delay pointer-events; removed now that modal mounts immediately.
+
+  constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['invite'] || changes['adminInviteProgressLoading'] || changes['visible']) {
+      this.cdr.detectChanges();
+    }
+  }
 
   private get campaign(): any {
     return this.invite?.campaign || this.invite?.campaignId || {};
@@ -134,6 +145,20 @@ export class CampaignDetailModalComponent {
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
 
+  get isUnlocked(): boolean { return !!this.invite?.unlocked; }
+
+  private get isLocationPaymentConfirmed(): boolean {
+    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.statusKey);
+  }
+
+  get canRevealExactVenueDetails(): boolean {
+    return this.isUnlocked && this.isLocationPaymentConfirmed;
+  }
+
+  get canRevealExactShootLocation(): boolean {
+    return this.isUnlocked && this.isLocationPaymentConfirmed;
+  }
+
   get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
 
   get productDescription(): string { return (this.campaign?.productDescription || '').trim(); }
@@ -169,6 +194,14 @@ export class CampaignDetailModalComponent {
   get venueCityState(): string {
     const parts = [this.venueCity, this.venueDistrict, this.venueState].filter(Boolean);
     return parts.join(', ');
+  }
+  get venueDistrictState(): string {
+    const parts = [this.venueDistrict, this.venueState].filter(Boolean);
+    if (parts.length) return parts.join(', ');
+    return this.venueCityState;
+  }
+  get venuePreviewText(): string {
+    return this.venueDistrictState;
   }
   get hasVenueDetails(): boolean {
     return !!(this.venueName || this.venueAddress || this.venueCity || this.venueDistrict || this.venueState || this.venueMapUrl);
@@ -380,6 +413,104 @@ export class CampaignDetailModalComponent {
     return (this.campaign?.minInfluencerTier || '').trim();
   }
 
+  get adminInviteProgress(): any[] {
+    if (!this.adminReview) return [];
+    const rows = this.campaign?.inviteProgress;
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  get hasAdminInviteProgress(): boolean {
+    return this.adminInviteProgress.length > 0;
+  }
+
+  get filteredAdminInviteProgress(): any[] {
+    if (this.adminInviteStatusFilter === 'all') return this.adminInviteProgress;
+    if (this.adminInviteStatusFilter === 'actionable') {
+      const actionable = new Set(['accepted', 'payment_confirmed', 'working', 'submitted']);
+      return this.adminInviteProgress.filter((row) => actionable.has(this.adminInviteStatusKey(row?.status)));
+    }
+    return this.adminInviteProgress.filter(
+      (row) => this.adminInviteStatusKey(row?.status) === this.adminInviteStatusFilter,
+    );
+  }
+
+  get adminInviteProgressSummary(): Array<{ key: string; label: string; count: number }> {
+    const counts = new Map<string, number>();
+    for (const row of this.adminInviteProgress) {
+      const key = this.adminInviteStatusKey(row?.status);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const order = [
+      'pending',
+      'invited',
+      'accepted',
+      'working',
+      'submitted',
+      'completed',
+      'withdrawn',
+      'declined',
+      'rejected',
+      'disputed',
+      'payment_confirmed',
+      'other',
+    ];
+    return order
+      .filter((k) => counts.has(k))
+      .map((key) => ({
+        key,
+        label: this.adminInviteStatusLabel(key),
+        count: counts.get(key) || 0,
+      }));
+  }
+
+  get adminInviteFilterOptions(): Array<{ key: string; label: string; count: number }> {
+    const actionable = new Set(['accepted', 'payment_confirmed', 'working', 'submitted']);
+    const actionableCount = this.adminInviteProgress.filter((row) =>
+      actionable.has(this.adminInviteStatusKey(row?.status)),
+    ).length;
+    const options = [{ key: 'all', label: 'All', count: this.adminInviteProgress.length }];
+    if (actionableCount > 0) {
+      options.push({ key: 'actionable', label: 'Actionable', count: actionableCount });
+    }
+    options.push(...this.adminInviteProgressSummary);
+    return options;
+  }
+
+  setAdminInviteStatusFilter(status: string): void {
+    this.adminInviteStatusFilter = String(status || 'all').trim().toLowerCase() || 'all';
+  }
+
+  adminInviteStatusKey(status: unknown): string {
+    const key = String(status || '').trim().toLowerCase();
+    if (!key) return 'pending';
+    return key;
+  }
+
+  adminInviteStatusLabel(status: unknown): string {
+    const key = this.adminInviteStatusKey(status);
+    const labels: Record<string, string> = {
+      pending: 'Pending',
+      invited: 'Invited',
+      accepted: 'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working: 'Working',
+      submitted: 'Submitted',
+      completed: 'Completed',
+      withdrawn: 'Withdrawn',
+      declined: 'Declined',
+      rejected: 'Rejected',
+      disputed: 'Disputed',
+      other: 'Other',
+    };
+    return labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  adminInviteParticipantRoleLabel(role: unknown): string {
+    const normalized = String(role || '').trim().toLowerCase();
+    if (normalized === 'photographer') return 'Photographer';
+    return 'Influencer';
+  }
+
   get checklistPlatformText(): string {
     const selected = this.selectedContentTypeOption;
     if (selected?.platform) return this.platformLabel(selected.platform);
@@ -409,12 +540,23 @@ export class CampaignDetailModalComponent {
 
   get checklistLocationText(): string {
     if (this.hasShootLocationDetails) {
-      const parts = [this.shootLocationTypeLabel, this.shootLocationAddress].filter(Boolean);
-      return parts.join(' - ');
+      const base = this.shootLocationTypeLabel || 'Shoot location';
+      if (this.canRevealExactShootLocation) {
+        const parts = [base, this.shootLocationAddress].filter(Boolean);
+        return parts.join(' - ');
+      }
+      const area = this.venuePreviewText || [
+        String(this.campaign?.targetDistrict || '').trim(),
+        String(this.campaign?.targetState || '').trim(),
+      ].filter(Boolean).join(', ');
+      return area ? `${base} - ${area}` : base;
     }
     if (this.hasVenueDetails) {
-      const venueParts = [this.venueName, this.venueAddress, this.venueCityState].filter(Boolean);
-      return venueParts.join(' - ') || 'Venue details provided';
+      if (this.canRevealExactVenueDetails) {
+        const venueParts = [this.venueName, this.venueAddress, this.venueCityState].filter(Boolean);
+        return venueParts.join(' - ') || 'Venue details provided';
+      }
+      return this.venuePreviewText || 'Venue details unlock after payment confirmation';
     }
     const state = String(this.campaign?.targetState || '').trim();
     const district = String(this.campaign?.targetDistrict || '').trim();

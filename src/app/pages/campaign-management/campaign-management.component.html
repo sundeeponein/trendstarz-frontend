@@ -202,6 +202,9 @@
           <span class="pending-badge" *ngIf="photographerInboxInvitesPending.length > 0">
             {{ photographerInboxInvitesPending.length }} pending
           </span>
+          <span class="missed-badge" *ngIf="photographerInboxInvitesMissed.length > 0">
+            {{ photographerInboxInvitesMissed.length }} expired
+          </span>
           <button
             type="button"
             class="btn btn-sm btn-outline-secondary"
@@ -248,6 +251,10 @@
                 Pending
                 <span class="pill-tab-badge badge-pending" *ngIf="photographerInboxInvitesPending.length > 0">{{ photographerInboxInvitesPending.length }}</span>
               </button>
+              <button class="pill-tab" [class.active]="photographerInviteTab === 'missed'" (click)="photographerInviteTab = 'missed'">
+                Expired / Missed
+                <span class="pill-tab-badge badge-declined" *ngIf="photographerInboxInvitesMissed.length > 0">{{ photographerInboxInvitesMissed.length }}</span>
+              </button>
               <button class="pill-tab" [class.active]="photographerInviteTab === 'accepted'" (click)="photographerInviteTab = 'accepted'">
                 Accepted
                 <span class="pill-tab-badge badge-accepted" *ngIf="photographerInboxInvitesAccepted.length > 0">{{ photographerInboxInvitesAccepted.length }}</span>
@@ -290,6 +297,7 @@
           <div class="empty-invites" *ngIf="photographerInboxInvitesFiltered.length === 0">
             <i class="bi bi-inbox"></i>
             <p *ngIf="photographerInviteTab === 'pending'">No pending invites.</p>
+            <p *ngIf="photographerInviteTab === 'missed'">No missed invites.</p>
             <p *ngIf="photographerInviteTab === 'accepted'">No active campaigns right now.</p>
             <p *ngIf="photographerInviteTab === 'declined'">No declined invites.</p>
             <p *ngIf="photographerInviteTab === 'completed'">No completed campaigns yet.</p>
@@ -316,6 +324,9 @@
         <div class="inbox-header-actions">
           <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
             {{ getPendingInviteCount() }} pending
+          </span>
+          <span class="missed-badge" *ngIf="myInvitesMissed.length > 0">
+            {{ myInvitesMissed.length }} expired
           </span>
           <button
             type="button"
@@ -383,6 +394,10 @@
                 Pending
                 <span class="pill-tab-badge badge-pending" *ngIf="myInvitesPending.length > 0">{{ myInvitesPending.length }}</span>
               </button>
+              <button class="pill-tab" [class.active]="myInviteTab === 'missed'" (click)="myInviteTab = 'missed'">
+                Expired / Missed
+                <span class="pill-tab-badge badge-declined" *ngIf="myInvitesMissed.length > 0">{{ myInvitesMissed.length }}</span>
+              </button>
               <button class="pill-tab" [class.active]="myInviteTab === 'accepted'" (click)="myInviteTab = 'accepted'">
                 Accepted
                 <span class="pill-tab-badge badge-accepted" *ngIf="myInvitesAccepted.length > 0">{{ myInvitesAccepted.length }}</span>
@@ -427,6 +442,7 @@
           <div class="empty-invites" *ngIf="myInvitesFiltered.length === 0">
             <i class="bi bi-inbox"></i>
             <p *ngIf="myInviteTab === 'pending'">No pending invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
+            <p *ngIf="myInviteTab === 'missed'">No missed invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
             <p *ngIf="myInviteTab === 'accepted'">No active campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} right now.</p>
             <p *ngIf="myInviteTab === 'declined'">No declined invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
             <p *ngIf="myInviteTab === 'completed'">No completed campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} yet.</p>
@@ -567,10 +583,10 @@
                   <app-user-avatar
                     *ngFor="let inv of getCardInvitePreview(c)"
                     class="avatar-pip"
-                    [name]="getInviteRecipientName(inv)"
-                    [src]="getInviteRecipientAvatar(inv)"
+                    [name]="getCampaignInviteRecipientName(inv, c)"
+                    [src]="getCampaignInviteRecipientAvatar(inv, c)"
                     [size]="24"
-                    [title]="getInviteRecipientName(inv)"
+                    [title]="getCampaignInviteRecipientName(inv, c)"
                   ></app-user-avatar>
                 </div>
                 <span class="ccard-stat-sub" *ngIf="getCardInvitedCount(c) === 0">No invites yet</span>
@@ -802,7 +818,7 @@
                   </button>
                   <!-- Contact unlock (expand panel) -->
                   <ng-container *ngIf="isUnlockableStatus(inv.status)">
-                    <div class="contact-reveal" *ngIf="inv.unlocked">
+                    <div class="contact-reveal" *ngIf="canRevealInviteContact(inv)">
                       <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)" [href]="'mailto:' + getInviteRecipient(inv)?.email" (click)="$event.stopPropagation()">
                         <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
                       </a>
@@ -817,13 +833,17 @@
                         <i class="bi bi-whatsapp"></i> WhatsApp
                       </a>
                     </div>
-                    <div class="contact-locked" *ngIf="!inv.unlocked && !(c.campaignType === 'paid_collab' && inv.status === 'accepted')">
+                    <div class="contact-locked" *ngIf="!canRevealInviteContact(inv) && !(c.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
                       <button class="btn-unlock-contact" type="button"
+                              *ngIf="!inv.unlocked"
                               [disabled]="unlockingInviteIds.has(inv._id)"
                               (click)="unlockInviteContact(inv); $event.stopPropagation()">
                         <i class="bi bi-unlock-fill"></i>
                         {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
                       </button>
+                      <small class="locked-hint" *ngIf="inv.unlocked && !canRevealInviteContact(inv)">
+                        <i class="bi bi-lock-fill"></i> Contact details unlock after payment confirmation.
+                      </small>
                     </div>
                   </ng-container>
                   <!-- View Post toggle button -->
@@ -1115,8 +1135,8 @@
     [mode]="formMode"
     [campaign]="editingCampaign"
     [saving]="formSaving"
-    [preSelectedInfluencers]="searchPrefilledRecipients"
-    [preSelectedRecipientRole]="searchPrefilledRecipientRole"
+    [preSelectedInfluencers]="formMode === 'create' ? searchPrefilledRecipients : []"
+    [preSelectedRecipientRole]="formMode === 'create' ? searchPrefilledRecipientRole : null"
     [hasPremium]="!!planCapabilities?.hasPremium"
     [creatorRole]="isPhotographerView ? 'photographer' : (isInfluencerView ? 'influencer' : 'brand')"
     (save)="onFormSave($event)"
@@ -1255,7 +1275,7 @@
                 <i class="bi bi-slash-circle"></i> Closed
               </span>
               <!-- Contact reveal for unlocked invites -->
-              <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && inv.unlocked">
+              <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && canRevealInviteContact(inv)">
                  <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)"
                    [href]="'mailto:' + getInviteRecipient(inv)?.email"
                    (click)="$event.stopPropagation()">
@@ -1281,16 +1301,18 @@
                       title="Confirm collaboration payment">
                 <i class="bi bi-lock-fill"></i> Confirm Collaboration
               </button>
-                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !inv.unlocked && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted')">
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv) && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
                 <button class="btn-unlock-contact"
                         type="button"
+                        *ngIf="!inv.unlocked"
                         [disabled]="unlockingInviteIds.has(inv._id)"
                         (click)="unlockInviteContact(inv)">
                   <i class="bi bi-unlock-fill"></i>
                   {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
                 </button>
                 <small class="locked-hint">
-                  <i class="bi bi-lock-fill"></i> Contact and venue details unlock after confirmation
+                  <i class="bi bi-lock-fill"></i>
+                  {{ inv.unlocked ? 'Contact and venue details unlock after payment confirmation' : 'Contact and venue details unlock after confirmation' }}
                 </small>
               </div>
               <!-- Brand actions row -->

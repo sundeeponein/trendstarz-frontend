@@ -1687,6 +1687,16 @@
   letter-spacing: 0.3px;
 }
 
+.missed-badge {
+  background: #b91c1c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
 .invite-cards-list {
   display: flex;
   flex-direction: column;

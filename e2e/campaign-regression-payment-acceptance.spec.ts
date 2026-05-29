@@ -219,3 +219,73 @@ test('verification pending disables Pay button but View Status opens status moda
   expect(status.verificationPending).toBe(true);
   expect(status.canOpenPay).toBe(false);
 });
+
+test('brand contact reveal requires payment_confirmed even when invite is unlocked', async ({ page }) => {
+  const campaign = {
+    ...BASE_CAMPAIGN,
+    _id: 'camp_contact_gate_001',
+    campaignType: 'product',
+  };
+  const acceptedUnlocked = [{
+    ...ACCEPTED_INVITE,
+    _id: 'invite_contact_acc_001',
+    campaignId: campaign._id,
+    status: 'accepted',
+    unlocked: true,
+  }];
+  const paidUnlocked = [{
+    ...ACCEPTED_INVITE,
+    _id: 'invite_contact_paid_001',
+    campaignId: campaign._id,
+    status: 'payment_confirmed',
+    unlocked: true,
+  }];
+
+  await setBrandAuth(page);
+  await mockCommonRoutes(page);
+  await mockCampaignPage(page, campaign, acceptedUnlocked);
+
+  await page.goto('/campaigns');
+  await seedCampaignState(page, campaign, acceptedUnlocked);
+
+  const acceptedVisible = await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return true;
+    const comp = ng.getComponent(el);
+    const inv = (comp.invites || [])[0];
+    if (!inv) return true;
+    return !!comp.canRevealInviteContact(inv);
+  });
+  expect(acceptedVisible).toBe(false);
+
+  await seedCampaignState(page, campaign, paidUnlocked);
+  const paidVisible = await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return false;
+    const comp = ng.getComponent(el);
+    const inv = (comp.invites || [])[0];
+    if (!inv) return false;
+    return !!comp.canRevealInviteContact(inv);
+  });
+  expect(paidVisible).toBe(true);
+
+  await seedCampaignState(page, campaign, [{
+    ...ACCEPTED_INVITE,
+    _id: 'invite_contact_approved_001',
+    campaignId: campaign._id,
+    status: 'approved',
+    unlocked: true,
+  }]);
+  const approvedVisible = await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return false;
+    const comp = ng.getComponent(el);
+    const inv = (comp.invites || [])[0];
+    if (!inv) return false;
+    return !!comp.isUnlockableStatus(inv.status) && !!comp.canRevealInviteContact(inv);
+  });
+  expect(approvedVisible).toBe(true);
+});

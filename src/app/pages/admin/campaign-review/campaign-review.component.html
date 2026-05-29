@@ -59,12 +59,21 @@
     <div *ngIf="campaignApprovalsError" class="text-danger">{{ campaignApprovalsError }}</div>
 
     <div class="table-scroll-wrapper" *ngIf="!campaignApprovalsLoading && !campaignApprovalsError">
+      <div class="participant-legend">
+        <span class="participant-legend__label">Legend:</span>
+        <span class="participant-chip participant-chip--accepted">Accepted</span>
+        <span class="participant-chip participant-chip--submitted">Submitted</span>
+        <span class="participant-chip participant-chip--working">Working</span>
+        <span class="participant-chip participant-chip--pending">Pending</span>
+        <span class="participant-chip participant-chip--withdrawn">Withdrawn / Rejected</span>
+      </div>
       <table class="table table-hover align-middle admin-table campaign-review-table">
         <thead>
           <tr>
             <th>Campaign</th>
             <th>Brand</th>
             <th>Status</th>
+            <th>Participants</th>
             <th>Budget</th>
             <th>Updated</th>
             <th>Actions</th>
@@ -86,6 +95,20 @@
               <div>{{ campaignStatusLabel(c.status) }}</div>
               <div class="small campaign-note-preview" *ngIf="c.moderationNote">
                 <i class="bi bi-chat-square-text"></i> {{ c.moderationNote }}
+              </div>
+            </td>
+            <td>
+              <div class="participant-metrics-text">Invited: <strong>{{ c.inviteCount || 0 }}</strong></div>
+              <div class="participant-chip-row" *ngIf="getParticipantStatusChips(c).length > 0">
+                <span
+                  class="participant-chip"
+                  *ngFor="let chip of getParticipantStatusChips(c)"
+                  [ngClass]="'participant-chip--' + chip.key">
+                  {{ chip.label }} {{ chip.count }}
+                </span>
+              </div>
+              <div class="participant-metrics-text participant-metrics-text--muted">
+                Accepted: <strong>{{ getAcceptedInviteCount(c) }}</strong> · Progressed: <strong>{{ getProgressedInviteCount(c) }}</strong>
               </div>
             </td>
             <td>₹{{ ((c.budgetMin || 0) > 0 ? c.budgetMin : (c.pricePerInfluencer || 0) / 100) | number:'1.0-0' }}</td>
@@ -122,7 +145,7 @@
             </td>
           </tr>
           <tr *ngIf="campaignApprovals.length === 0">
-            <td colspan="6" class="text-center text-muted">No campaigns found for selected status.</td>
+            <td colspan="7" class="text-center text-muted">No campaigns found for selected status.</td>
           </tr>
         </tbody>
       </table>
@@ -130,12 +153,13 @@
   </div>
 
 <app-campaign-detail-modal
-  *ngIf="selectedCampaignInvite"
-  [invite]="selectedCampaignInvite"
-  [visible]="!!selectedCampaignInvite"
+  *ngIf="selectedCampaignPreviewInvite"
+  [invite]="selectedCampaignPreviewInvite"
+  [visible]="!!selectedCampaignPreviewInvite"
   [showDateInput]="false"
   [busy]="moderatingCampaignId === selectedCampaign?._id"
-  [adminReview]="selectedCampaignCanModerate"
+  [adminReview]="true"
+  [adminInviteProgressLoading]="selectedCampaignInviteProgressLoading"
   [adminCanApprove]="selectedCampaignCanApprove"
   [adminCanRequestChanges]="selectedCampaignCanRequestChanges"
   [adminCanReject]="selectedCampaignCanReject"

@@ -177,6 +177,21 @@
   margin-bottom: 10px;
 }
 
+.cdm-status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -2px 0 10px;
+}
+
+.cdm-status-legend__label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #374151;
+  margin-right: 2px;
+}
+
 .cdm-note {
   font-size: 0.78rem;
   color: #6b7280;
@@ -275,6 +290,127 @@
     background: #fff1e6;
     color: #b34a00;
   }
+
+  &--invite-summary {
+    background: #eef2ff;
+    color: #3730a3;
+  }
+
+  &--invite-status {
+    font-size: 0.74rem;
+    padding: 4px 10px;
+  }
+
+  &--invite-status-pending,
+  &--invite-status-invited {
+    background: #fff7ed;
+    color: #9a3412;
+  }
+
+  &--invite-status-accepted,
+  &--invite-status-payment_confirmed,
+  &--invite-status-working {
+    background: #ecfeff;
+    color: #155e75;
+  }
+
+  &--invite-status-submitted {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  &--invite-status-completed {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  &--invite-status-withdrawn,
+  &--invite-status-declined,
+  &--invite-status-rejected,
+  &--invite-status-disputed {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}
+
+.cdm-invite-progress-list {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cdm-status-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cdm-status-filter-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.2;
+
+  &--active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+}
+
+.cdm-invite-progress-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.cdm-invite-progress-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.cdm-invite-progress-name {
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.25;
+}
+
+.cdm-invite-progress-meta {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.cdm-invite-progress-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.cdm-invite-progress-date {
+  font-size: 0.72rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.cdm-invite-progress-empty {
+  padding: 12px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.82rem;
 }
 
 /* Platform pills */

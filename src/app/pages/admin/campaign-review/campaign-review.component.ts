@@ -3,6 +3,7 @@ import { CommonModule, isPlatformServer } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
+import { catchError, map, of, forkJoin, Observable } from 'rxjs';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
@@ -35,6 +36,8 @@ export class CampaignReviewComponent implements OnInit {
   campaignApprovalMode: 'manual' | 'auto_live' = 'manual';
   collaborationApprovalMode: 'manual' | 'auto_live' = 'manual';
   selectedCampaign: any | null = null;
+  selectedCampaignPreviewInvite: any | null = null;
+  selectedCampaignInviteProgressLoading = false;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
@@ -314,12 +317,264 @@ export class CampaignReviewComponent implements OnInit {
     this.moderateCampaign(campaign, this.moderationAction, note);
   }
 
+  private mapInviteRowsToProgress(invites: any[], campaign?: any): any[] {
+    const rows = Array.isArray(invites) ? invites : [];
+    return rows
+      .map((invite: any) => {
+        const campaignRecipientRole = String(
+          campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+        ).trim().toLowerCase();
+        const participantRole = String(
+          invite?.recipientRole
+            || invite?.role
+            || invite?.campaignId?.inviteRecipientRole
+            || invite?.campaignId?.recipientRole
+            || campaignRecipientRole
+            || (invite?.photographerId && !invite?.influencerId ? 'photographer' : 'influencer'),
+        ).toLowerCase() === 'photographer'
+          ? 'photographer'
+          : 'influencer';
+        const recipientCandidate = participantRole === 'photographer'
+          ? (invite?.photographerId ?? invite?.influencerId ?? null)
+          : (invite?.influencerId ?? invite?.photographerId ?? null);
+        const recipient = recipientCandidate && typeof recipientCandidate === 'object'
+          ? recipientCandidate
+          : null;
+        const participantIdRaw = participantRole === 'photographer'
+          ? (recipient?._id || invite?.photographerId || invite?.influencerId || '')
+          : (recipient?._id || invite?.influencerId || invite?.photographerId || '');
+        const participantName = String(
+          recipient?.name || recipient?.fullName || recipient?.fullname || recipient?.username || '',
+        ).trim() || (participantRole === 'photographer' ? 'Photographer' : 'Influencer');
+        return {
+          inviteId: String(invite?._id || ''),
+          participantId: String(participantIdRaw || ''),
+          participantRole,
+          participantName,
+          participantAvatar: this.resolveParticipantAvatar(recipient),
+          participantUsername: this.resolveParticipantUsername(recipient),
+          participantEmail: String(recipient?.email || '').trim() || null,
+          status: String(invite?.status || 'pending').toLowerCase(),
+          selectedPostDate: invite?.selectedPostDate || null,
+          acceptedAt: invite?.acceptedAt || null,
+          updatedAt: invite?.updatedAt || invite?.createdAt || null,
+        };
+      })
+      .sort((a: any, b: any) => {
+        const ta = new Date(a?.updatedAt || 0).getTime();
+        const tb = new Date(b?.updatedAt || 0).getTime();
+        return tb - ta;
+      });
+  }
+
+  private previewInviteProgressNeedsRefresh(campaign: any): boolean {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    if (!rows.length) return true;
+    return rows.some((row: any) => {
+      const role = String(row?.participantRole || '').trim().toLowerCase();
+      const name = String(row?.participantName || '').trim().toLowerCase();
+      const avatar = String(row?.participantAvatar || '').trim();
+      const username = String(row?.participantUsername || '').trim();
+      return !role
+        || name === ''
+        || name === 'influencer'
+        || (name !== 'photographer' && !avatar)
+        || !username
+        || (this.isPhotographerTargetCampaign(campaign) && role !== 'photographer');
+    });
+  }
+
+  private isPhotographerTargetCampaign(campaign: any): boolean {
+    const explicitRole = String(
+      campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+    ).trim().toLowerCase();
+    if (explicitRole === 'photographer') return true;
+    if (explicitRole === 'influencer') return false;
+
+    const requestKind = String(campaign?.requestKind || '').trim().toLowerCase();
+    if (requestKind === 'creative_requirement') return true;
+    if (requestKind === 'photographer_collaboration') return false;
+
+    return String(campaign?.ownerType || '').trim().toLowerCase() !== 'photographer';
+  }
+
+  private resolveParticipantAvatar(recipient: any): string | null {
+    if (!recipient || typeof recipient !== 'object') return null;
+    const candidates: string[] = [];
+    if (Array.isArray(recipient?.profileImages) && recipient.profileImages.length > 0) {
+      if (typeof recipient.profileImages[0]?.url === 'string') {
+        candidates.push(recipient.profileImages[0].url);
+      }
+      if (typeof recipient.profileImages[0] === 'string') {
+        candidates.push(recipient.profileImages[0]);
+      }
+    }
+    if (typeof recipient?.profileImage === 'string') candidates.push(recipient.profileImage);
+    if (typeof recipient?.profilePicture === 'string') candidates.push(recipient.profilePicture);
+    if (typeof recipient?.avatar === 'string') candidates.push(recipient.avatar);
+
+    const apiBase = String(environment.apiBaseUrl || '').trim();
+    const backendBase = apiBase.replace(/\/api\/?$/, '');
+    for (const raw of candidates) {
+      const value = String(raw || '').trim();
+      if (!value) continue;
+      if (/^https?:\/\//i.test(value)) return value;
+      if (value.startsWith('/assets/')) {
+        return backendBase ? `${backendBase}${value}` : value;
+      }
+      return value;
+    }
+    return null;
+  }
+
+  private resolveParticipantUsername(recipient: any): string | null {
+    if (!recipient || typeof recipient !== 'object') return null;
+    const username = String(recipient?.username || recipient?.userName || '').trim();
+    return username || null;
+  }
+
+  private fetchInvitesByCampaign(campaignId: string) {
+    return this.http.get<any>(
+      `${environment.apiBaseUrl}/campaign-invites/campaign/${encodeURIComponent(campaignId)}`,
+      this.getAuthHeaders(),
+    );
+  }
+
+  private unwrapParticipantProfile(role: 'influencer' | 'photographer', response: any): any | null {
+    const payload = response?.data ?? response;
+    if (!payload || typeof payload !== 'object') return null;
+    if (role === 'photographer') {
+      return payload?.photographer || payload?.data?.photographer || payload;
+    }
+    return payload?.influencer || payload?.data?.influencer || payload;
+  }
+
+  private fetchParticipantProfile(role: 'influencer' | 'photographer', id: string): Observable<any | null> {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId) return of(null);
+    const path = role === 'photographer'
+      ? `${environment.apiBaseUrl}/users/photographers/${encodeURIComponent(normalizedId)}`
+      : `${environment.apiBaseUrl}/users/influencers/${encodeURIComponent(normalizedId)}`;
+    return this.http.get<any>(path, this.getAuthHeaders()).pipe(
+      map((res) => this.unwrapParticipantProfile(role, res)),
+      catchError(() => of(null)),
+    );
+  }
+
+  private enrichInviteRowsWithProfiles(invites: any[], campaign?: any): Observable<any[]> {
+    const rows = Array.isArray(invites) ? invites : [];
+    if (!rows.length) return of([]);
+
+    const requests = rows.map((invite: any) => {
+      const campaignRecipientRole = String(
+        campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+      ).trim().toLowerCase();
+      const participantRole: 'influencer' | 'photographer' = String(
+        invite?.recipientRole
+          || invite?.role
+          || invite?.campaignId?.inviteRecipientRole
+          || invite?.campaignId?.recipientRole
+          || campaignRecipientRole
+          || (invite?.photographerId && !invite?.influencerId ? 'photographer' : 'influencer'),
+      ).toLowerCase() === 'photographer'
+        ? 'photographer'
+        : 'influencer';
+
+      const directRecipient = participantRole === 'photographer'
+        ? (invite?.photographerId ?? invite?.influencerId ?? null)
+        : (invite?.influencerId ?? invite?.photographerId ?? null);
+      if (directRecipient && typeof directRecipient === 'object') {
+        return of(invite);
+      }
+
+      const participantId = String(directRecipient || '').trim();
+      if (!participantId) return of(invite);
+
+      return this.fetchParticipantProfile(participantRole, participantId).pipe(
+        map((profile) => {
+          if (!profile) return invite;
+          return participantRole === 'photographer'
+            ? { ...invite, photographerId: profile, recipientRole: 'photographer' }
+            : { ...invite, influencerId: profile, recipientRole: 'influencer' };
+        }),
+      );
+    });
+
+    return forkJoin(requests);
+  }
+
   openCampaignPreview(campaign: any) {
     this.selectedCampaign = campaign;
+    this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(campaign);
+    const campaignId = String(campaign?._id || '').trim();
+    if (!campaignId || !this.previewInviteProgressNeedsRefresh(campaign)) {
+      this.selectedCampaignInviteProgressLoading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.selectedCampaignInviteProgressLoading = true;
+    this.selectedCampaign = {
+      ...campaign,
+      inviteProgress: [],
+    };
+    this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(this.selectedCampaign);
+    this.cdr.detectChanges();
+
+    this.fetchInvitesByCampaign(campaignId).subscribe({
+      next: (res: any) => {
+        if (!this.selectedCampaign || String(this.selectedCampaign?._id || '') !== campaignId) {
+          return;
+        }
+        const payload = res?.data ?? res;
+        const invites = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+        this.enrichInviteRowsWithProfiles(invites, this.selectedCampaign).subscribe({
+          next: (resolvedInvites: any[]) => {
+            if (!this.selectedCampaign || String(this.selectedCampaign?._id || '') !== campaignId) {
+              return;
+            }
+            const mapped = this.mapInviteRowsToProgress(resolvedInvites, this.selectedCampaign);
+            this.selectedCampaign = {
+              ...this.selectedCampaign,
+              inviteProgress: mapped,
+              inviteCount: Number(this.selectedCampaign?.inviteCount || mapped.length || 0),
+            };
+            this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(this.selectedCampaign);
+            this.selectedCampaignInviteProgressLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.selectedCampaignInviteProgressLoading = false;
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.selectedCampaignInviteProgressLoading = false;
+        // Keep existing preview state when legacy invite fetch fails.
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   closeCampaignPreview() {
     this.selectedCampaign = null;
+    this.selectedCampaignPreviewInvite = null;
+    this.selectedCampaignInviteProgressLoading = false;
+  }
+
+  private buildSelectedCampaignInvite(campaign: any): any | null {
+    if (!campaign) return null;
+    return {
+      _id: campaign._id || 'campaign-review',
+      status: campaign.status || 'pending_review',
+      campaign,
+      brand: campaign.brand || campaign.brandId || null,
+    };
   }
 
   campaignPreviewTitle(campaign: any): string {
@@ -359,16 +614,6 @@ export class CampaignReviewComponent implements OnInit {
     return campaign?.campaignType || 'Campaign';
   }
 
-  get selectedCampaignInvite(): any | null {
-    if (!this.selectedCampaign) return null;
-    return {
-      _id: this.selectedCampaign._id || 'campaign-review',
-      status: this.selectedCampaign.status || 'pending_review',
-      campaign: this.selectedCampaign,
-      brand: this.selectedCampaign.brand || this.selectedCampaign.brandId || null,
-    };
-  }
-
   get selectedCampaignCanModerate(): boolean {
     return this.canModerateCampaign(this.selectedCampaign);
   }
@@ -395,5 +640,61 @@ export class CampaignReviewComponent implements OnInit {
     if (normalized === 'draft') return 'Draft';
     if (normalized === 'completed') return 'Completed';
     return status || 'Unknown';
+  }
+
+  getAcceptedInviteCount(campaign: any): number {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    return rows.filter((row: any) => String(row?.status || '').toLowerCase() === 'accepted').length;
+  }
+
+  getProgressedInviteCount(campaign: any): number {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    const progressed = new Set([
+      'accepted',
+      'payment_confirmed',
+      'working',
+      'submitted',
+      'completed',
+      'approved',
+      'disputed',
+    ]);
+    return rows.filter((row: any) => progressed.has(String(row?.status || '').toLowerCase())).length;
+  }
+
+  getParticipantStatusChips(campaign: any): Array<{ key: string; label: string; count: number }> {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const key = String(row?.status || 'pending').trim().toLowerCase() || 'pending';
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+
+    const order = ['accepted', 'submitted', 'working', 'payment_confirmed', 'pending', 'invited', 'withdrawn', 'declined', 'rejected', 'completed', 'disputed'];
+    return order
+      .filter((key) => counts.has(key))
+      .slice(0, 4)
+      .map((key) => ({
+        key,
+        label: this.campaignInviteStatusLabel(key),
+        count: counts.get(key) || 0,
+      }));
+  }
+
+  private campaignInviteStatusLabel(status: string): string {
+    const key = String(status || '').trim().toLowerCase();
+    const map: Record<string, string> = {
+      pending: 'Pending',
+      invited: 'Invited',
+      accepted: 'Accepted',
+      payment_confirmed: 'Payment Confirmed',
+      working: 'Working',
+      submitted: 'Submitted',
+      completed: 'Completed',
+      withdrawn: 'Withdrawn',
+      declined: 'Declined',
+      rejected: 'Rejected',
+      disputed: 'Disputed',
+    };
+    return map[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 }

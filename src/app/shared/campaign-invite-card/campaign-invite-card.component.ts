@@ -264,6 +264,10 @@ export class CampaignInviteCardComponent {
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
 
+  private get isLocationPaymentConfirmed(): boolean {
+    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.status);
+  }
+
   get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
 
   get productDescription(): string { return (this.campaign?.productDescription || '').trim(); }
@@ -307,19 +311,27 @@ export class CampaignInviteCardComponent {
   }
 
   get canRevealExactVenueDetails(): boolean {
-    return !this.isInviteLocation || this.isUnlocked;
+    return !this.isInviteLocation || (this.isUnlocked && this.isLocationPaymentConfirmed);
   }
 
   get venueShortText(): string {
     const c = this.campaign || {};
     const parts = this.canRevealExactVenueDetails
       ? [c.venueName, c.venueCity, c.venueDistrict, c.venueState]
-      : [c.venueCity, c.venueDistrict, c.venueState];
+      : [c.venueDistrict, c.venueState];
     return parts.filter((p: string) => !!p).join(', ');
   }
   get venuePreviewText(): string {
     const c = this.campaign || {};
-    const parts = [c.venueCity, c.venueDistrict, c.venueState].filter((p: string) => !!p);
+    const parts = [c.venueDistrict, c.venueState]
+      .map((p: any) => String(p || '').trim())
+      .filter(Boolean);
+    if (!parts.length) {
+      const fallback = [c.venueCity, c.venueDistrict, c.venueState]
+        .map((p: any) => String(p || '').trim())
+        .filter(Boolean);
+      return fallback.join(', ');
+    }
     return parts.join(', ');
   }
   get venueFullAddress(): string {
@@ -348,7 +360,7 @@ export class CampaignInviteCardComponent {
   }
   get shootLocationPreviewText(): string {
     const c = this.campaign || {};
-    return [c.venueCity, c.venueDistrict, c.venueState]
+    return [c.venueDistrict, c.venueState]
       .map((p: any) => String(p || '').trim())
       .filter(Boolean)
       .join(', ');
@@ -363,7 +375,11 @@ export class CampaignInviteCardComponent {
     return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
   }
   get canRevealExactShootLocation(): boolean {
-    return this.isUnlocked;
+    return this.isUnlocked && this.isLocationPaymentConfirmed;
+  }
+
+  get canRevealBrandContact(): boolean {
+    return this.isUnlocked && this.isLocationPaymentConfirmed;
   }
 
   get payToJoinFeeText(): string {
