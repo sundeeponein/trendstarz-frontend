@@ -784,7 +784,10 @@
                       </span>
                     </div>
                     <small class="expand-post-date" *ngIf="inv.selectedPostDate">
-                      <i class="bi bi-calendar-check"></i> Posts {{ inv.selectedPostDate | date:'MMM d' }}
+                      <i class="bi bi-calendar-check"></i> {{ getParticipantDateLabel(c) }}: {{ inv.selectedPostDate | date:'MMM d' }}
+                    </small>
+                    <small class="expand-post-date expand-post-date--visited" *ngIf="hasVisitedStatus(inv, c)">
+                      <i class="bi bi-check-circle-fill"></i> {{ getVisitedStatusText(inv) }}
                     </small>
                     <small class="expand-post-date" *ngIf="inv.selectedPlatform">
                       <i class="bi bi-broadcast"></i> Posts on <strong>{{ inv.selectedPlatform }}</strong>
@@ -853,7 +856,7 @@
                         <i class="bi bi-whatsapp"></i> WhatsApp
                       </a>
                     </div>
-                    <div class="contact-locked" *ngIf="!canRevealInviteContact(inv) && !(c.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv) && !(c.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
                       <button class="btn-unlock-contact" type="button"
                               *ngIf="!inv.unlocked"
                               [disabled]="unlockingInviteIds.has(inv._id)"
@@ -862,7 +865,8 @@
                         {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
                       </button>
                       <small class="locked-hint" *ngIf="inv.unlocked && !canRevealInviteContact(inv)">
-                        <i class="bi bi-lock-fill"></i> Contact details unlock after payment confirmation.
+                        <i class="bi bi-lock-fill"></i>
+                        {{ c.campaignType === 'invite_location' ? 'Contact details unlock after acceptance.' : 'Contact details unlock after payment confirmation.' }}
                       </small>
                     </div>
                   </ng-container>
@@ -905,13 +909,24 @@
                             title="Report no-show / non-delivery / dispute">
                       <i class="bi bi-flag-fill"></i> Report
                     </button>
+                    <button class="btn-action btn-visit"
+                            type="button"
+                            *ngIf="canMarkVisited(inv, c)"
+                            [disabled]="actioningInviteIds.has(inv._id)"
+                            (click)="openVisitConfirmModal(inv, c); $event.stopPropagation()"
+                            title="Mark participant as visited">
+                      <i class="bi bi-check2-circle"></i>
+                      Mark as Visited
+                    </button>
+                    <span class="visit-status-chip" *ngIf="hasVisitedStatus(inv, c)">
+                      <i class="bi bi-check-circle-fill"></i> {{ getVisitedStatusText(inv) }}
+                    </span>
                     <button class="btn-action btn-fulfill"
                             type="button"
                             *ngIf="canManageFulfillment(inv, c)"
                             (click)="openFulfillment(inv)"
                             [title]="getFulfillmentLabel(c)">
                       <i class="bi bi-truck" *ngIf="c.campaignType === 'product'"></i>
-                      <i class="bi bi-geo-alt-fill" *ngIf="c.campaignType === 'invite_location'"></i>
                       {{ getFulfillmentLabel(c) }}
                     </button>
                   </div>
@@ -1274,13 +1289,17 @@
                 <span class="invited-social-chip" *ngFor="let sm of getCampaignInviteRecipientSocialTags(inv, invitePanelCampaign, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
               </div>
               <!-- Reminder count + due-date hint -->
-              <div class="invite-meta-line" *ngIf="inv.remindersSent > 0 || inv.dueDate || inv.selectedPostDate">
+              <div class="invite-meta-line" *ngIf="inv.remindersSent > 0 || inv.dueDate || inv.selectedPostDate || hasVisitedStatus(inv, invitePanelCampaign)">
                 <small *ngIf="inv.remindersSent > 0">
                   <i class="bi bi-bell-fill"></i> Reminded {{ inv.remindersSent }}×
                 </small>
                 <small *ngIf="inv.selectedPostDate">
                   <i class="bi bi-calendar-check"></i>
-                  Posts: {{ inv.selectedPostDate | date:'MMM d' }}
+                  {{ getParticipantDateLabel(invitePanelCampaign) }}: {{ inv.selectedPostDate | date:'MMM d' }}
+                </small>
+                <small *ngIf="hasVisitedStatus(inv, invitePanelCampaign)">
+                  <i class="bi bi-check-circle-fill"></i>
+                  {{ getVisitedStatusText(inv) }}
                 </small>
                 <small *ngIf="inv.dueDate" [class.overdue]="isOverdue(inv)">
                   <i class="bi bi-calendar-event"></i>
@@ -1352,7 +1371,9 @@
                 </button>
                 <small class="locked-hint">
                   <i class="bi bi-lock-fill"></i>
-                  {{ inv.unlocked ? 'Contact and venue details unlock after payment confirmation' : 'Contact and venue details unlock after confirmation' }}
+                  {{ inv.unlocked
+                    ? (invitePanelCampaign?.campaignType === 'invite_location' ? 'Contact details unlock after acceptance.' : 'Contact and venue details unlock after payment confirmation.')
+                    : (invitePanelCampaign?.campaignType === 'invite_location' ? 'Unlock contact to coordinate the visit.' : 'Contact and venue details unlock after confirmation.') }}
                 </small>
               </div>
               <!-- Brand actions row -->
@@ -1387,13 +1408,24 @@
                         title="Report no-show / non-delivery / dispute">
                   <i class="bi bi-flag-fill"></i> Report
                 </button>
+                <button class="btn-action btn-visit"
+                        type="button"
+                        *ngIf="canMarkVisited(inv, invitePanelCampaign)"
+                        [disabled]="actioningInviteIds.has(inv._id)"
+                        (click)="openVisitConfirmModal(inv, invitePanelCampaign); $event.stopPropagation()"
+                        title="Mark participant as visited">
+                  <i class="bi bi-check2-circle"></i>
+                  Mark as Visited
+                </button>
+                <span class="visit-status-chip" *ngIf="hasVisitedStatus(inv, invitePanelCampaign)">
+                  <i class="bi bi-check-circle-fill"></i> {{ getVisitedStatusText(inv) }}
+                </span>
                 <button class="btn-action btn-fulfill"
                         type="button"
                         *ngIf="canManageFulfillment(inv, invitePanelCampaign)"
                         (click)="openFulfillment(inv)"
                         [title]="getFulfillmentLabel(invitePanelCampaign)">
                   <i class="bi bi-truck" *ngIf="invitePanelCampaign?.campaignType === 'product'"></i>
-                  <i class="bi bi-geo-alt-fill" *ngIf="invitePanelCampaign?.campaignType === 'invite_location'"></i>
                   {{ getFulfillmentLabel(invitePanelCampaign) }}
                 </button>
               </div>
@@ -1521,6 +1553,43 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
+
+  <div class="modal-backdrop show"
+       *ngIf="visitConfirmModalOpen"
+       (click)="!isVisitConfirmSubmitting && closeVisitConfirmModal()"></div>
+  <div class="modal d-block"
+       *ngIf="visitConfirmModalOpen"
+       tabindex="-1"
+       (click)="!isVisitConfirmSubmitting && closeVisitConfirmModal()">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content ts-modal invite-action-modal visit-confirm-modal">
+        <div class="invite-action-modal__header">
+          <h4>Confirm Visit</h4>
+          <button class="drawer-close"
+                  type="button"
+                  [disabled]="isVisitConfirmSubmitting"
+                  (click)="closeVisitConfirmModal()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="invite-action-modal__body">
+          <p class="invite-action-modal__help">Confirm that this participant has arrived at the collaboration location?</p>
+        </div>
+        <div class="invite-action-modal__footer">
+          <button class="btn btn-outline-secondary"
+                  type="button"
+                  [disabled]="isVisitConfirmSubmitting"
+                  (click)="closeVisitConfirmModal()">Cancel</button>
+          <button class="btn btn-primary"
+                  type="button"
+                  [disabled]="isVisitConfirmSubmitting"
+                  (click)="confirmParticipantVisited()">
+            {{ isVisitConfirmSubmitting ? 'Saving...' : 'Confirm' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ─── Revised Counter Modal (brand sends revised amount) ─── -->
   <div class="modal-backdrop show"

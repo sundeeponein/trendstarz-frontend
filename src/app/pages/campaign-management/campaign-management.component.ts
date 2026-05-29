@@ -144,6 +144,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   revisedCounterModalCampaign: any = null;
   revisedCounterAmountInput = '';
   revisedCounterModalError = '';
+  visitConfirmModalOpen = false;
+  visitConfirmInvite: any = null;
+  visitConfirmCampaign: Campaign | null = null;
   fulfillModalOpen = false;
   fulfillInvite: any = null;
   fulfillForm: {
@@ -2733,8 +2736,23 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(String(status));
   }
 
+  private isLocationCampaign(inv: any): boolean {
+    const campaignType = String(
+      inv?.campaign?.campaignType ||
+      inv?.campaignId?.campaignType ||
+      this.invitePanelCampaign?.campaignType ||
+      ''
+    ).toLowerCase();
+    return campaignType === 'invite_location' || campaignType === 'product';
+  }
+
   canRevealInviteContact(inv: any): boolean {
-    return !!inv?.unlocked && this.isContactPaymentConfirmedStatus(String(inv?.status || ''));
+    if (!inv?.unlocked) return false;
+    if (this.isLocationCampaign(inv)) {
+      // Location/event campaigns: contact revealed once accepted
+      return ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(String(inv?.status || ''));
+    }
+    return this.isContactPaymentConfirmedStatus(String(inv?.status || ''));
   }
 
   /** Build a WhatsApp deep-link from a phone number. */
@@ -3117,9 +3135,104 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   canManageFulfillment(inv: any, campaign: any): boolean {
     if (!inv || !campaign) return false;
     const t = campaign.campaignType;
-    if (t !== 'product' && t !== 'invite_location') return false;
+    if (t !== 'product') return false;
     // Must have a working/accepted relationship
     return ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed'].includes(inv.status);
+  }
+
+  canMarkVisited(inv: any, campaign: any): boolean {
+    if (!inv || !campaign || campaign.campaignType !== 'invite_location') return false;
+    const status = String(inv?.locationVisit?.status || '').toLowerCase();
+    if (status === 'checked_in') return false;
+    return ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed'].includes(String(inv?.status || '').toLowerCase());
+  }
+
+  hasVisitedStatus(inv: any, campaign: any): boolean {
+    return !!inv && campaign?.campaignType === 'invite_location' && String(inv?.locationVisit?.status || '').toLowerCase() === 'checked_in';
+  }
+
+  getParticipantDateLabel(campaign: any): string {
+    return campaign?.campaignType === 'invite_location' ? 'Visit Date' : 'Posts';
+  }
+
+  getVisitedStatusText(inv: any): string {
+    const checkedInAt = inv?.locationVisit?.checkedInAt;
+    if (!checkedInAt) return 'Visited';
+    const time = new Date(checkedInAt).toLocaleTimeString('en-IN', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return `Visited at ${time}`;
+  }
+
+  openVisitConfirmModal(inv: any, campaign: Campaign | null | undefined): void {
+    if (!inv?._id || !campaign || this.actioningInviteIds.has(inv._id)) return;
+    this.visitConfirmInvite = inv;
+    this.visitConfirmCampaign = campaign;
+    this.visitConfirmModalOpen = true;
+    this.cd.detectChanges();
+  }
+
+  closeVisitConfirmModal(): void {
+    if (this.isVisitConfirmSubmitting) return;
+    this.visitConfirmModalOpen = false;
+    this.visitConfirmInvite = null;
+    this.visitConfirmCampaign = null;
+    this.cd.detectChanges();
+  }
+
+  get isVisitConfirmSubmitting(): boolean {
+    return !!this.visitConfirmInvite?._id && this.actioningInviteIds.has(this.visitConfirmInvite._id);
+  }
+
+  private syncInviteLocationVisitState(inviteId: string, locationVisit: any, campaign?: Campaign | null): void {
+    const applyUpdate = (row: any) =>
+      String(row?._id || '') === inviteId ? { ...row, locationVisit } : row;
+
+    if (campaign?._id) {
+      const key = String(campaign._id);
+      const rows = this.campaignInvitesMap.get(key);
+      if (rows) this.campaignInvitesMap.set(key, rows.map(applyUpdate));
+      if (Array.isArray((campaign as any).invites)) {
+        (campaign as any).invites = (campaign as any).invites.map(applyUpdate);
+      }
+    }
+    if (Array.isArray(this.invites)) {
+      this.invites = this.invites.map(applyUpdate);
+    }
+    if (this.fulfillInvite && String(this.fulfillInvite?._id || '') === inviteId) {
+      this.fulfillInvite = { ...this.fulfillInvite, locationVisit };
+    }
+    if (this.visitConfirmInvite && String(this.visitConfirmInvite?._id || '') === inviteId) {
+      this.visitConfirmInvite = { ...this.visitConfirmInvite, locationVisit };
+    }
+  }
+
+  confirmParticipantVisited(): void {
+    const inv = this.visitConfirmInvite;
+    const campaign = this.visitConfirmCampaign;
+    if (!inv?._id || !campaign || this.isVisitConfirmSubmitting) return;
+    this.actioningInviteIds.add(inv._id);
+    this.cd.detectChanges();
+    this.config.updateInviteCheckIn(inv._id, {
+      status: 'checked_in',
+      checkedInAt: new Date().toISOString(),
+    }).subscribe({
+      next: (data: any) => {
+        const locationVisit = data?.locationVisit || { ...(inv.locationVisit || {}), status: 'checked_in', checkedInAt: new Date().toISOString() };
+        this.syncInviteLocationVisitState(String(inv._id), locationVisit, campaign);
+        this.actioningInviteIds.delete(inv._id);
+        this.closeVisitConfirmModal();
+        this.toast.success('Participant marked as visited.');
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.actioningInviteIds.delete(inv._id);
+        this.toast.error(err?.error?.message || 'Failed to mark participant as visited.');
+        this.cd.detectChanges();
+      },
+    });
   }
 
   getFulfillmentLabel(campaign: any): string {

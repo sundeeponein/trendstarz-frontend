@@ -2651,6 +2651,11 @@
   margin-top: 3px;
   display: block;
   i { margin-right: 3px; color: #6c6f8a; }
+
+  &--visited {
+    color: #15803d;
+    i { color: #16a34a; }
+  }
 }
 
 .expand-empty-inf {
@@ -3370,6 +3375,19 @@
   margin-top: 6px;
 }
 
+.visit-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #166534;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: 999px;
+}
+
 .counter-offer-actions {
   display: flex;
   flex-direction: column;
@@ -3410,9 +3428,14 @@
   &.btn-withdraw { color: #6c757d; }
   &.btn-report   { color: #b3261e; border-color: rgba(179, 38, 30, 0.25); &:hover:not(:disabled) { background: rgba(179, 38, 30, 0.08); } }
   &.btn-fulfill  { color: #1a8f61; border-color: rgba(26, 143, 97, 0.25); &:hover:not(:disabled) { background: rgba(26, 143, 97, 0.08); } }
+  &.btn-visit { color: #166534; border-color: rgba(22, 101, 52, 0.22); &:hover:not(:disabled) { background: rgba(34, 197, 94, 0.12); } }
   &.btn-counter-accept { color: #14532d; border-color: rgba(20, 83, 45, 0.22); &:hover:not(:disabled) { background: rgba(34, 197, 94, 0.12); } }
   &.btn-counter-revise { color: #1e3a8a; border-color: rgba(30, 58, 138, 0.24); &:hover:not(:disabled) { background: rgba(59, 130, 246, 0.12); } }
   &.btn-counter-decline { color: #9f1239; border-color: rgba(190, 24, 93, 0.22); &:hover:not(:disabled) { background: rgba(244, 63, 94, 0.1); } }
+}
+
+.visit-confirm-modal {
+  width: min(460px, 92vw);
 }
 
 .invite-locked-chip {
