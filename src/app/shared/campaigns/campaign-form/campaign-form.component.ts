@@ -757,8 +757,61 @@ export class CampaignFormComponent implements OnInit {
     return String(this.f['campaignType']?.value || 'paid_collab');
   }
 
-  get isInviteLocationInfluencerFlow(): boolean {
-    return this.selectedCampaignType === 'invite_location' && !this.isPhotographerCreator && !this.isInvitingPhotographers;
+  get isBrandToInfluencerFlow(): boolean {
+    return !this.isPhotographerCreator && !this.isInvitingPhotographers;
+  }
+
+  get isPerContentPricingFlow(): boolean {
+    if (this.isBrandToInfluencerFlow && this.selectedCampaignType === 'paid_collab') {
+      return true;
+    }
+    if (this.isPhotographerCreator && this.selectedCampaignType === 'reel_collab') {
+      return true;
+    }
+    return false;
+  }
+
+  get shouldShowPlatformSelection(): boolean {
+    if (this.isInvitingPhotographers) return false;
+    if (this.isPhotographerCreator) return this.selectedCampaignType === 'reel_collab';
+    return true;
+  }
+
+  get shouldRequireFlatPricePerParticipant(): boolean {
+    const t = this.selectedCampaignType;
+    if (t === 'pay_to_join' || t === 'invite_location') return true;
+    if (this.isPhotographerCreator) {
+      return t === 'paid_collab' || t === 'creative_project';
+    }
+    return this.isInvitingPhotographers && t === 'paid_collab';
+  }
+
+  get shouldShowFlatPricePerParticipantField(): boolean {
+    if (this.shouldRequireFlatPricePerParticipant) return true;
+    return this.isPhotographerCreator && this.selectedCampaignType === 'portfolio_collab';
+  }
+
+  get isFlatPricePerParticipantOptional(): boolean {
+    return this.isPhotographerCreator && this.selectedCampaignType === 'portfolio_collab';
+  }
+
+  get enabledContentTypesCount(): number {
+    return (this.platformDeliverables || [])
+      .flatMap((pd) => (pd?.contentTypes || []))
+      .filter((ct: any) => !!ct?.enabled)
+      .length;
+  }
+
+  get hasEnabledContentTypes(): boolean {
+    return this.enabledContentTypesCount > 0;
+  }
+
+  get hasValidEnabledContentTypePricing(): boolean {
+    const enabled = (this.platformDeliverables || [])
+      .flatMap((pd) => (pd?.contentTypes || []))
+      .filter((ct: any) => !!ct?.enabled);
+    if (!enabled.length) return false;
+    return enabled.every((ct: any) => Number(ct?.price || 0) > 0);
   }
 
   get selectedContentTypePricesRupees(): number[] {
@@ -794,11 +847,19 @@ export class CampaignFormComponent implements OnInit {
 
   get estimatedBudgetRupees(): number {
     const maxInf = Number(this.f['maxInfluencers']?.value || 0);
+    if (this.isPerContentPricingFlow && this.hasSelectedContentTypePricing) {
+      // Recipient picks one enabled content type during acceptance.
+      // Max potential payout uses the highest enabled content-type price.
+      return this.selectedContentTypeMaxPriceRupees * maxInf;
+    }
     const price = Number(this.f['pricePerInfluencer']?.value || 0);
     return price * maxInf;
   }
 
   get inviteOnlyPotentialPayoutRupees(): number {
+    if (this.isPerContentPricingFlow && this.hasSelectedContentTypePricing) {
+      return this.takenSlotsCount * this.selectedContentTypeMaxPriceRupees;
+    }
     return this.takenSlotsCount * Number(this.f['pricePerInfluencer']?.value || 0);
   }
 
@@ -995,26 +1056,35 @@ export class CampaignFormComponent implements OnInit {
     if (hasMissingRequiredControl) return false;
 
     if (this.isPhotographerCreator) {
-      const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join';
-      const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
+      const priceValid = !this.shouldRequireFlatPricePerParticipant
+        || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
+      const platformValid = !this.shouldShowPlatformSelection
+        || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes);
+      const perContentPriceValid = !this.isPerContentPricingFlow || this.hasValidEnabledContentTypePricing;
       return !!(
         priceValid &&
         this.f['maxInfluencers'].valid &&
         this.f['maxInfluencers'].value > 0 &&
         !this.form.errors?.['invalidMinMaxInfluencers'] &&
+        platformValid &&
+        perContentPriceValid &&
         this.selectedPhotographerServices.length > 0 &&
         this.selectedPhotographerDeliverables.length > 0
       );
     }
-    const isPaid = this.selectedCampaignType === 'paid_collab' || this.selectedCampaignType === 'pay_to_join' || this.selectedCampaignType === 'invite_location';
-    const priceValid = !isPaid || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
+    const priceValid = !this.shouldRequireFlatPricePerParticipant
+      || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
+    const platformValid = !this.shouldShowPlatformSelection
+      || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes);
+    const perContentPriceValid = !this.isPerContentPricingFlow || this.hasValidEnabledContentTypePricing;
     return !!(
       priceValid &&
       this.f['maxInfluencers'].valid &&
       this.f['maxInfluencers'].value > 0 &&
       !this.form.errors?.['invalidMinMaxInfluencers'] &&
       this.selectedCategories.length > 0 &&
-      (this.isInvitingPhotographers || this.platformDeliverables.length > 0)
+      platformValid &&
+      perContentPriceValid
     );
   }
 
@@ -1046,6 +1116,15 @@ export class CampaignFormComponent implements OnInit {
     }
 
     if (this.isPhotographerCreator) {
+      if (this.shouldShowPlatformSelection && this.platformDeliverables.length === 0) {
+        return 'Select at least one platform.';
+      }
+      if (this.shouldShowPlatformSelection && !this.hasEnabledContentTypes) {
+        return 'Enable at least one content type.';
+      }
+      if (this.isPerContentPricingFlow && !this.hasValidEnabledContentTypePricing) {
+        return 'Enter a valid price for each enabled content type.';
+      }
       if (this.selectedPhotographerServices.length === 0) {
         return 'Select at least one service.';
       }
@@ -1059,8 +1138,14 @@ export class CampaignFormComponent implements OnInit {
       return `Select at least one target ${this.inviteRecipientLabelSingular.toLowerCase()} category.`;
     }
 
-    if (!this.isInvitingPhotographers && this.platformDeliverables.length === 0) {
+    if (this.shouldShowPlatformSelection && this.platformDeliverables.length === 0) {
       return 'Select at least one platform.';
+    }
+    if (this.shouldShowPlatformSelection && !this.hasEnabledContentTypes) {
+      return 'Enable at least one content type.';
+    }
+    if (this.isPerContentPricingFlow && !this.hasValidEnabledContentTypePricing) {
+      return 'Enter a valid price for each enabled content type.';
     }
 
     return 'Complete all mandatory fields to continue.';
@@ -1214,11 +1299,14 @@ export class CampaignFormComponent implements OnInit {
         }
       }
     }
-    // For non-paid types, do not send a 0 / null pricePerInfluencer (backend rejects 0)
-    if (t !== 'paid_collab' && t !== 'pay_to_join') {
-      if (!payload.pricePerInfluencer || Number(payload.pricePerInfluencer) <= 0) {
-        payload.pricePerInfluencer = undefined;
-      }
+    // Keep flat payout only for flows that use it. Per-content flows should not
+    // send pricePerInfluencer, so agreed amount resolves from selected content type.
+    const keepFlatPrice = this.shouldRequireFlatPricePerParticipant
+      || (this.isPhotographerCreator && t === 'portfolio_collab' && Number(payload.pricePerInfluencer || 0) > 0);
+    if (!keepFlatPrice) {
+      payload.pricePerInfluencer = undefined;
+    } else if (!payload.pricePerInfluencer || Number(payload.pricePerInfluencer) <= 0) {
+      payload.pricePerInfluencer = undefined;
     }
     return payload;
   }
@@ -1651,10 +1739,21 @@ export class CampaignFormComponent implements OnInit {
         ? this.selectedPhotographerServices
         : this.selectedCategories,
       platforms: this.isPhotographerCreator
-        ? this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) }))
+        ? (this.isPerContentPricingFlow
+            ? this.platformDeliverables.map(pd => pd.platform)
+            : this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) })))
         : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => pd.platform)),
       socialMedia: this.isPhotographerCreator
-        ? []
+        ? (this.isPerContentPricingFlow
+            ? this.platformDeliverables.map(pd => ({
+                platform: pd.platform,
+                contentTypes: pd.contentTypes.map(ct => ({
+                  name: ct.name,
+                  enabled: ct.enabled,
+                  price: ct.price
+                }))
+              }))
+            : [])
         : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => ({
             platform: pd.platform,
             contentTypes: pd.contentTypes.map(ct => ({
@@ -1715,10 +1814,21 @@ export class CampaignFormComponent implements OnInit {
         ? this.selectedPhotographerServices
         : this.selectedCategories,
       platforms: this.isPhotographerCreator
-        ? this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) }))
+        ? (this.isPerContentPricingFlow
+            ? this.platformDeliverables.map(pd => pd.platform)
+            : this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) })))
         : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => pd.platform)),
       socialMedia: this.isPhotographerCreator
-        ? []
+        ? (this.isPerContentPricingFlow
+            ? this.platformDeliverables.map(pd => ({
+                platform: pd.platform,
+                contentTypes: pd.contentTypes.map(ct => ({
+                  name: ct.name,
+                  enabled: ct.enabled,
+                  price: ct.price
+                }))
+              }))
+            : [])
         : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => ({
             platform: pd.platform,
             contentTypes: pd.contentTypes.map(ct => ({

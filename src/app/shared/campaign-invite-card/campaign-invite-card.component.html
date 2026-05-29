@@ -162,6 +162,12 @@
     <div class="inv-payout-hint-chip" *ngIf="selectedPayoutHint">
       <i class="bi bi-cash-coin"></i> {{ selectedPayoutHint }}
     </div>
+    <div class="inv-payout-hint-chip" *ngIf="revisedOfferHintText">
+      <i class="bi bi-arrow-left-right"></i> {{ revisedOfferHintText }}
+    </div>
+    <div class="inv-payout-hint-chip" *ngIf="counterDeclinedHintText">
+      <i class="bi bi-info-circle"></i> {{ counterDeclinedHintText }}
+    </div>
 
     <!-- Payout details (where to receive money) -->
     <div class="inv-payout" *ngIf="needsPayoutDetails">
@@ -189,6 +195,33 @@
         <small class="inv-payout-hint">Saved to your profile and used by admin to send your earnings.</small>
       </div>
     </div>
+
+    <div class="inv-counter" *ngIf="canSendCounterOffer">
+      <button type="button" class="btn-invite-action btn-counter-toggle" (click)="onToggleCounter($event)" [disabled]="busy" [attr.aria-busy]="busy">
+        <i class="bi bi-arrow-left-right"></i>
+        {{ counterEditing ? 'Cancel Counter' : 'Counter Offer' }}
+      </button>
+
+      <div class="inv-counter-form" *ngIf="counterEditing" (click)="onActionsClick($event)">
+        <label class="inv-counter-label">Your expected payout (₹)</label>
+        <input type="number" class="inv-counter-input" min="1" step="1"
+               [(ngModel)]="counterAmountInput"
+               placeholder="e.g. 3200" />
+        <textarea class="inv-counter-textarea" rows="2"
+                  [(ngModel)]="counterMessageInput"
+                  placeholder="Optional note for the creator..."></textarea>
+        <div class="inv-counter-hint" *ngIf="selectedPayoutHint">Offered: {{ selectedPayoutHint }}</div>
+        <div class="inv-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</div>
+        <button type="button" class="btn-invite-action btn-counter-send" (click)="onSendCounter($event)" [disabled]="busy || !hasValidCounterAmount" [attr.aria-busy]="busy">
+          <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending…</span>
+          <span *ngIf="!busy"><i class="bi bi-send"></i> Send Counter</span>
+        </button>
+      </div>
+    </div>
+
+    <small class="inv-counter-hint" *ngIf="isActionable && hasUsedCounterOffer">
+      Counter offer already used for this invite. You can now only accept or decline.
+    </small>
 
     <button type="button" class="btn-invite-action btn-accept" (click)="onAccept($event)" [disabled]="busy" [attr.aria-busy]="busy">
       <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Accepting…</span>

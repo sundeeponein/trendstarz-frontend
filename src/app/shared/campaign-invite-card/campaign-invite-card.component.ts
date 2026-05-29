@@ -15,6 +15,9 @@ export interface InviteAcceptPayload {
   platform?: string;
   contentType?: string;
   payout?: InvitePayoutDetails;
+  responseType?: 'accept' | 'counter';
+  counterAmount?: number;
+  counterMessage?: string;
 }
 
 export interface InviteDeclinePayload {
@@ -76,6 +79,9 @@ export class CampaignInviteCardComponent {
   payoutMobile = '';
   payoutName = '';
   payoutEditing = false;
+  counterEditing = false;
+  counterAmountInput: number | null = null;
+  counterMessageInput = '';
 
   togglePayoutEdit(ev?: Event) {
     if (ev) ev.stopPropagation();
@@ -116,8 +122,12 @@ export class CampaignInviteCardComponent {
 
   get inviteId(): string { return this.invite?._id || ''; }
   get status(): string { return (this.invite?.status || 'pending').toLowerCase(); }
+  get counterOfferStatus(): string {
+    return String(this.invite?.counterOffer?.status || '').toLowerCase();
+  }
   private get isActionableStatus(): boolean {
-    return this.status === 'pending' || this.status === 'invited';
+    if (this.status === 'pending' || this.status === 'invited') return true;
+    return this.status === 'counter_sent' && this.counterOfferStatus === 'brand_sent';
   }
   get acceptanceDeadline(): string {
     return String(this.campaign?.acceptanceDeadline || this.invite?.acceptanceDeadline || '').trim();
@@ -204,9 +214,13 @@ export class CampaignInviteCardComponent {
 
   get statusLabel(): string {
     const s = this.status;
+    if (s === 'counter_sent' && this.counterOfferStatus === 'brand_sent') {
+      return 'Revised offer received';
+    }
     const labels: Record<string, string> = {
       pending:           'Pending',
       invited:           'Invited',
+      counter_sent:      'Counter Sent',
       accepted:          this.campaignTypeKey === 'paid_collab' ? 'Awaiting payment' : 'Accepted',
       payment_confirmed: 'Collaboration Confirmed — start work',
       working:           'In progress',
@@ -228,6 +242,7 @@ export class CampaignInviteCardComponent {
       case 'disputed':          return 'bg-danger';
       case 'declined':
       case 'withdrawn':         return 'bg-secondary';
+      case 'counter_sent':      return 'bg-primary';
       case 'pending':
       case 'invited':
       default:                  return 'bg-info text-dark';
@@ -263,6 +278,54 @@ export class CampaignInviteCardComponent {
   get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
+
+  get isPerContentPricingFlow(): boolean {
+    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    if (this.campaignTypeKey === 'reel_collab') return true;
+    return this.campaignTypeKey === 'paid_collab' && ownerType !== 'photographer';
+  }
+
+  get offeredPayoutRupees(): number {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) return Number(selected.price || 0);
+    const paise = Number(this.campaign?.pricePerInfluencer || 0);
+    return paise > 0 ? Math.floor(paise / 100) : 0;
+  }
+
+  get hasValidCounterAmount(): boolean {
+    const amount = Number(this.counterAmountInput || 0);
+    return Number.isFinite(amount) && amount > 0;
+  }
+
+  get hasUsedCounterOffer(): boolean {
+    const status = String(this.invite?.counterOffer?.status || '').toLowerCase();
+    return status === 'sent' || status === 'brand_sent' || status === 'accepted' || status === 'declined';
+  }
+
+  get canSendCounterOffer(): boolean {
+    return this.isActionable && !this.hasUsedCounterOffer;
+  }
+
+  get counterHintText(): string {
+    if (!this.hasValidCounterAmount) return '';
+    return `Counter offer: ₹${Number(this.counterAmountInput || 0).toLocaleString('en-IN')}`;
+  }
+
+  get revisedOfferHintText(): string {
+    if (!(this.status === 'counter_sent' && this.counterOfferStatus === 'brand_sent')) return '';
+    const amount = Number(this.invite?.counterOffer?.requestedAmount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) return 'Brand sent a revised offer. You can accept or decline.';
+    return `Brand revised offer: ₹${amount.toLocaleString('en-IN')} (accept or decline)`;
+  }
+
+  get counterDeclinedHintText(): string {
+    if (!(this.isActionable && this.counterOfferStatus === 'declined')) return '';
+    const offeredAmount = Number(this.invite?.counterOffer?.offeredAmount || 0);
+    if (Number.isFinite(offeredAmount) && offeredAmount > 0) {
+      return `Your counter was declined. You can still accept original offer ₹${offeredAmount.toLocaleString('en-IN')} or decline this invite.`;
+    }
+    return 'Your counter was declined. You can still accept the original offer or decline this invite.';
+  }
 
   private get isLocationPaymentConfirmed(): boolean {
     return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.status);
@@ -801,6 +864,84 @@ export class CampaignInviteCardComponent {
       platform,
       contentType,
       payout,
+      responseType: 'accept',
+    });
+  }
+
+  onToggleCounter(ev: Event) {
+    ev.stopPropagation();
+    this.counterEditing = !this.counterEditing;
+    if (!this.counterEditing) {
+      this.counterAmountInput = null;
+      this.counterMessageInput = '';
+    }
+  }
+
+  onSendCounter(ev: Event) {
+    ev.stopPropagation();
+    if (!this.inviteId) return;
+    if (!this.canSendCounterOffer) {
+      this.validationError.emit('Only one counter offer is allowed for this invite. Please accept or decline.');
+      return;
+    }
+    if (this.showMissedAcceptance) {
+      this.validationError.emit(this.missedAcceptanceText);
+      return;
+    }
+    if (!this.postDate) {
+      this.validationError.emit('Please select a posting date before sending a counter offer.');
+      return;
+    }
+    if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
+      this.validationError.emit('Please select what you will create before sending a counter offer.');
+      return;
+    }
+    if (!this.hasValidCounterAmount) {
+      this.validationError.emit('Please enter a valid counter amount.');
+      return;
+    }
+    if (this.selectedContentTypeKey && !this.selectedContentTypeOption) {
+      this.validationError.emit(
+        this.lockedPlatform
+          ? `Please choose a content option only for ${this.platformLabel(this.lockedPlatform)}.`
+          : 'Please select a valid content option.',
+      );
+      return;
+    }
+
+    if (this.needsPayoutDetails) {
+      const upi = (this.payoutUpiId || '').trim();
+      const mobile = (this.payoutMobile || '').trim();
+      if (!upi && !mobile) {
+        this.payoutEditing = true;
+        this.validationError.emit(
+          'Please add a UPI ID or mobile number where you want to receive payment.',
+        );
+        return;
+      }
+    }
+
+    const [platform, contentType] = this.selectedContentTypeKey
+      ? this.selectedContentTypeKey.split('::')
+      : [undefined, undefined];
+
+    const payout: InvitePayoutDetails | undefined = this.needsPayoutDetails
+      ? {
+          upiId: (this.payoutUpiId || '').trim(),
+          mobile: (this.payoutMobile || '').trim(),
+          accountHolderName: (this.payoutName || '').trim(),
+        }
+      : undefined;
+
+    this.accept.emit({
+      inviteId: this.inviteId,
+      postDate: this.postDate || undefined,
+      platform,
+      contentType,
+      payout,
+      responseType: 'counter',
+      counterAmount: Number(this.counterAmountInput || 0),
+      counterMessage: String(this.counterMessageInput || '').trim() || undefined,
     });
   }
 

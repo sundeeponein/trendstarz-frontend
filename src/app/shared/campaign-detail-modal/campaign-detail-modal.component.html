@@ -132,7 +132,7 @@
               <div class="cdm-invite-progress-meta" *ngIf="item.acceptedAt || item.selectedPostDate">
                 <span *ngIf="item.acceptedAt">Accepted: {{ item.acceptedAt | date:'mediumDate' }}</span>
                 <span *ngIf="item.acceptedAt && item.selectedPostDate">•</span>
-                <span *ngIf="item.selectedPostDate">Post date: {{ item.selectedPostDate | date:'mediumDate' }}</span>
+                <span *ngIf="item.selectedPostDate">{{ dateHistoryLabel }}: {{ item.selectedPostDate | date:'mediumDate' }}</span>
               </div>
             </div>
             <div class="cdm-invite-progress-side">
@@ -299,7 +299,7 @@
           </li>
           <li>
             <i class="bi bi-check-circle-fill"></i>
-            <span>Posting window: {{ timelineText }}</span>
+            <span>{{ dateChecklistLabel }}: {{ timelineText }}</span>
           </li>
           <li>
             <i class="bi" [ngClass]="hasChecklistLocationInfo ? 'bi-check-circle-fill' : 'bi-info-circle'"></i>
@@ -375,7 +375,34 @@
                (ngModelChange)="toastError = ''"
                [min]="minPostDate"
                [max]="maxPostDate"
-               title="Select posting date" />
+               [title]="dateInputTitle" />
+        <button class="cdm-btn cdm-btn--secondary cdm-btn--counter"
+                *ngIf="canSendCounterOffer"
+                (click)="onToggleCounter()"
+                [disabled]="busy">
+          {{ counterEditing ? 'Cancel Counter' : 'Counter Offer' }}
+        </button>
+        <div class="cdm-counter-inline" *ngIf="counterEditing">
+          <input type="number"
+                 class="cdm-counter-input"
+                 min="1"
+                 step="1"
+                 [(ngModel)]="counterAmountInput"
+                 (ngModelChange)="toastError = ''"
+                 placeholder="Counter amount (₹)" />
+          <input type="text"
+                 class="cdm-counter-input"
+                 [(ngModel)]="counterMessageInput"
+                 (ngModelChange)="toastError = ''"
+                 placeholder="Optional note" />
+          <button class="cdm-btn cdm-btn--secondary"
+                  (click)="onSendCounter()"
+                  [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
+          <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
+        </div>
+        <span class="cdm-counter-hint" *ngIf="isPending && hasUsedCounterOffer">
+          Counter offer already used for this invite. You can now only accept or decline.
+        </span>
         <div class="cdm-inline-error" *ngIf="false"></div>
         <button class="cdm-btn cdm-btn--decline" (click)="onDecline()" [disabled]="busy">
           Decline

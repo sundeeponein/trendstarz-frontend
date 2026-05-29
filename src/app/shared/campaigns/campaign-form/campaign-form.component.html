@@ -350,15 +350,24 @@
     <form [formGroup]="form" *ngIf="currentStep === 2">
       <div class="form-body">
 
-        <div class="field-row" *ngIf="selectedCampaignType === 'paid_collab' || selectedCampaignType === 'pay_to_join' || selectedCampaignType === 'invite_location'">
+        <div class="field-row" *ngIf="shouldShowFlatPricePerParticipantField">
           <div class="field-group half">
             <label class="field-label">
               {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per participant (₹)' : 'Payment per participant (₹)' }}
-              <span class="required">*</span>
+              <span class="required" *ngIf="!isFlatPricePerParticipantOptional">*</span>
+              <span class="text-muted" style="font-weight:400;" *ngIf="isFlatPricePerParticipantOptional">(optional)</span>
             </label>
             <input type="number" formControlName="pricePerInfluencer" class="field-input" placeholder="e.g. 3000" min="1" />
             <span class="field-error" *ngIf="f['pricePerInfluencer'].touched && f['pricePerInfluencer'].invalid">Enter a value greater than 0</span>
           </div>
+          <div class="field-group half">
+            <label class="field-label">Max participants <span class="required">*</span></label>
+            <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
+            <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+          </div>
+        </div>
+
+        <div class="field-row" *ngIf="!shouldShowFlatPricePerParticipantField && selectedCampaignType !== 'product'">
           <div class="field-group half">
             <label class="field-label">Max participants <span class="required">*</span></label>
             <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
@@ -453,6 +462,18 @@
 
 
 
+        <div class="budget-preview" *ngIf="isPerContentPricingFlow && hasSelectedContentTypePricing">
+          <span>Payment per participant (from selected content type):</span>
+          <strong class="budget-preview__value">
+            <ng-container *ngIf="selectedContentTypeMinPriceRupees === selectedContentTypeMaxPriceRupees; else payoutRange">
+              ₹{{ selectedContentTypeMaxPriceRupees | number:'1.0-0' }}
+            </ng-container>
+            <ng-template #payoutRange>
+              ₹{{ selectedContentTypeMinPriceRupees | number:'1.0-0' }} - ₹{{ selectedContentTypeMaxPriceRupees | number:'1.0-0' }}
+            </ng-template>
+          </strong>
+        </div>
+
         <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
           <span>{{ selectedCampaignType === 'pay_to_join' ? 'Max potential join amount:' : 'Max potential payout (if max participants accept):' }}</span>
           <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
@@ -489,10 +510,12 @@
         </div>
 
         <!-- ── Platform multi-select ── -->
-        <div class="field-group" *ngIf="!isPhotographerCreator && !isInvitingPhotographers">
+        <div class="field-group" *ngIf="shouldShowPlatformSelection">
           <label class="field-label">Platforms <span class="required">*</span></label>
-          <p class="field-sublabel">Select one or more platforms. Then toggle deliverables and set a price for each.</p>
-          <p class="field-sublabel">Example: YT -> Reel 1500, Photo Post 1500. While accepting, influencer selects one enabled content output.</p>
+          <p class="field-sublabel" *ngIf="isPerContentPricingFlow">Select one or more platforms. Then toggle deliverables and set a price for each.</p>
+          <p class="field-sublabel" *ngIf="!isPerContentPricingFlow">Select one or more platforms. Then enable deliverables creators can choose while accepting.</p>
+          <p class="field-sublabel" *ngIf="isPerContentPricingFlow">Example: YT -> Shorts 1500, Video 7000. While accepting, influencer selects one enabled content output.</p>
+          <p class="field-sublabel" *ngIf="!isPerContentPricingFlow">Example: Enable Reel + Story. While accepting, influencer selects one enabled content output.</p>
           <div class="chip-list">
             <button type="button" class="chip chip--platform"
                     [class.chip--selected]="isPlatformSelected(p.name)"
@@ -505,7 +528,7 @@
         </div>
 
         <!-- ── Per-platform tabs ── -->
-        <div *ngIf="platformDeliverables.length > 0 && !isPhotographerCreator && !isInvitingPhotographers" class="platform-tabs-wrap">
+        <div *ngIf="platformDeliverables.length > 0 && shouldShowPlatformSelection" class="platform-tabs-wrap">
 
           <!-- Tab strip -->
           <div class="platform-tab-strip">
@@ -535,7 +558,7 @@
                   <span class="ct-name">{{ ct.name }}</span>
                 </label>
                 <div class="ct-price-wrap"
-                     *ngIf="!(selectedCampaignType === 'product' && f['productPaymentMode'].value === 'product_only') && selectedCampaignType !== 'invite_location'"
+                   *ngIf="isPerContentPricingFlow"
                      [class.ct-price-wrap--disabled]="!ct.enabled">
                   <span class="ct-rupee">₹</span>
                   <input type="number"
@@ -565,7 +588,7 @@
             <span class="field-error" *ngIf="selectedPhotographerServices.length === 0 && platformsTouched">Select at least one service</span>
           </div>
 
-          <div class="field-group">
+          <div class="field-group" *ngIf="!isPerContentPricingFlow">
             <label class="field-label">Pricing <span class="text-muted" style="font-weight:400;">(optional)</span></label>
             <div class="chip-list">
               <button type="button" class="chip"
@@ -576,7 +599,7 @@
           </div>
 
           <!-- Pricing inputs for selected options -->
-          <div class="field-group" *ngIf="selectedPhotographerPricing.length > 0">
+          <div class="field-group" *ngIf="!isPerContentPricingFlow && selectedPhotographerPricing.length > 0">
             <label class="field-label">Set prices for selected options</label>
             <div class="pricing-inputs-wrap">
               <div class="pricing-input-row" *ngFor="let p of selectedPhotographerPricing">
@@ -745,7 +768,7 @@
         <ng-template #inviteOnlyStep3>
 
           <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
-            <div *ngIf="isInviteLocationInfluencerFlow && hasSelectedContentTypePricing">
+            <div *ngIf="isPerContentPricingFlow && hasSelectedContentTypePricing">
               Payment per participant:
               <strong>
                 <ng-container *ngIf="selectedContentTypeMinPriceRupees === selectedContentTypeMaxPriceRupees; else summaryRange">
@@ -756,13 +779,13 @@
                 </ng-template>
               </strong>
             </div>
-            <div *ngIf="!isInviteLocationInfluencerFlow && f['pricePerInfluencer'].value">Payment per participant: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
+            <div *ngIf="!isPerContentPricingFlow && f['pricePerInfluencer'].value">Payment per participant: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
             <div>
               Invited: <strong>{{ invitedCount }}</strong>
               <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
               &nbsp;/ <strong>{{ f['maxInfluencers'].value }}</strong>
             </div>
-            <div *ngIf="(isInviteLocationInfluencerFlow && hasSelectedContentTypePricing) || f['pricePerInfluencer'].value">
+            <div *ngIf="(isPerContentPricingFlow && hasSelectedContentTypePricing) || (!isPerContentPricingFlow && f['pricePerInfluencer'].value)">
               Potential payout (invited + selected): <strong>₹{{ inviteOnlyPotentialPayoutRupees | number:'1.0-0' }}</strong>
             </div>
           </div>

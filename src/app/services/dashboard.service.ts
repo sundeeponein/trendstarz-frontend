@@ -26,10 +26,12 @@ export class DashboardService {
 
   respondToInvite(
     inviteId: string,
-    status: 'accepted' | 'declined',
+    status: 'accepted' | 'declined' | 'counter_sent',
     selectedPostDate?: string,
     selectedPlatform?: string,
     selectedContentType?: string,
+    counterAmount?: number,
+    counterMessage?: string,
     payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
     shippingAddress?: {
       contactName?: string; contactMobile?: string;
@@ -41,6 +43,8 @@ export class DashboardService {
     if (selectedPostDate) body.selectedPostDate = selectedPostDate;
     if (selectedPlatform) body.selectedPlatform = selectedPlatform;
     if (selectedContentType) body.selectedContentType = selectedContentType;
+    if (counterAmount && counterAmount > 0) body.counterAmount = counterAmount;
+    if (counterMessage) body.counterMessage = counterMessage;
     if (payout && (payout.upiId || payout.mobile || payout.accountHolderName)) {
       body.payout = payout;
     }
@@ -48,6 +52,18 @@ export class DashboardService {
       body.shippingAddress = shippingAddress;
     }
     return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, body);
+  }
+
+  respondToCounterOffer(
+    inviteId: string,
+    action: 'accept' | 'decline' | 'counter',
+    counterAmount?: number,
+    note?: string,
+  ): Observable<any> {
+    const body: any = { action };
+    if (counterAmount && counterAmount > 0) body.counterAmount = counterAmount;
+    if (note) body.note = note;
+    return this.http.patch(`${this.api}/campaign-invites/${inviteId}/counter/respond`, body);
   }
 
   getMyInvites(): Observable<any[]> {

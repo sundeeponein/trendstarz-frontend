@@ -139,6 +139,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   inviteActionModalMode: InviteActionReasonModalMode = 'withdraw';
   inviteActionReasonInput = '';
   inviteActionModalError = '';
+  revisedCounterModalOpen = false;
+  revisedCounterModalInvite: any = null;
+  revisedCounterModalCampaign: any = null;
+  revisedCounterAmountInput = '';
+  revisedCounterModalError = '';
   fulfillModalOpen = false;
   fulfillInvite: any = null;
   fulfillForm: {
@@ -1614,6 +1619,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getBrandInviteStatusLabel(status: string): string {
     const s = String(status || '').toLowerCase();
     if (s === 'pending' || s === 'invited') return 'Pending';
+    if (s === 'counter_sent') return 'Counter Sent';
     if (s === 'accepted') return 'Accepted';
     if (s === 'declined') return 'Declined';
     if (s === 'withdrawn') return 'Withdrawn';
@@ -1651,7 +1657,17 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.photographerRespondingInviteIds.add(inviteId);
       this.cd.detectChanges();
 
-      this.config.respondToInvite(inviteId, status, selectedPostDate, undefined, undefined, undefined, shippingAddress).pipe(
+      this.config.respondToInvite(
+        inviteId,
+        status,
+        selectedPostDate,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        shippingAddress,
+      ).pipe(
         finalize(() => {
           this.photographerRespondingInviteIds.delete(inviteId);
           this.cd.detectChanges();
@@ -1701,7 +1717,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         accountHolderName: payload.payout.accountHolderName || '',
       };
     }
-    this.respondToPhotographerInviteById(payload.inviteId, 'accepted');
+    this.respondToPhotographerInviteById(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
   }
 
   onPhotographerCardDecline(payload: InviteDeclinePayload) {
@@ -1716,40 +1737,59 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.selectedInviteContentType[inviteId] = key;
   }
 
-  private respondToPhotographerInviteById(inviteId: string, status: 'accepted' | 'declined') {
+  private respondToPhotographerInviteById(
+    inviteId: string,
+    status: 'accepted' | 'declined' | 'counter_sent',
+    counterAmount?: number,
+    counterMessage?: string,
+  ) {
     const invite = this.photographerBrandInvites.find((item: any) => item?._id === inviteId);
     if (!invite) {
       this.showError('Invite not found. Please refresh and try again.');
       return;
     }
 
-    const selectedPostDate = status === 'accepted' ? this.selectedInvitePostDates[inviteId] : undefined;
-    if (status === 'accepted' && !selectedPostDate) {
+    const selectedPostDate = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedInvitePostDates[inviteId]
+      : undefined;
+    if ((status === 'accepted' || status === 'counter_sent') && !selectedPostDate) {
       this.showError('Please select a post date before accepting this invite.');
       return;
     }
-    if (status === 'accepted' && selectedPostDate && !this.isSelectedDateValid(invite, selectedPostDate)) {
+    if ((status === 'accepted' || status === 'counter_sent') && selectedPostDate && !this.isSelectedDateValid(invite, selectedPostDate)) {
       this.showError('Selected post date must be between campaign start and end dates.');
       return;
     }
 
     let chosen = this.selectedInviteContentType[inviteId];
     const options = this.getInviteContentTypeOptions(invite);
-    if (status === 'accepted' && options.length === 1 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length === 1 && !chosen) {
       chosen = options[0].key;
       this.selectedInviteContentType[inviteId] = chosen;
     }
-    if (status === 'accepted' && options.length > 0 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length > 0 && !chosen) {
       this.showError('Please select what you will create for this campaign.');
       return;
     }
 
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
-    const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
+    const payout = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedInvitePayouts[inviteId]
+      : undefined;
 
     const finish = (shippingAddress?: ShippingAddress) => {
       this.photographerRespondingInviteIds.add(inviteId);
-      this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout, shippingAddress).pipe(
+      this.config.respondToInvite(
+        inviteId,
+        status,
+        selectedPostDate,
+        selPlatform,
+        selContentType,
+        counterAmount,
+        counterMessage,
+        payout,
+        shippingAddress,
+      ).pipe(
         timeout(20000),
         finalize(() => {
           this.photographerRespondingInviteIds.delete(inviteId);
@@ -1760,7 +1800,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           this.photographerBrandInvites = this.photographerBrandInvites.map((row: any) =>
             row._id === inviteId ? { ...row, status } : row,
           );
-          this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+          this.toast.success(
+            status === 'accepted'
+              ? 'Invite accepted!'
+              : status === 'counter_sent'
+                ? 'Counter offer sent!'
+                : 'Invite declined.',
+          );
         },
         error: (err: any) => {
           this.toast.error(err?.error?.message || 'Failed to respond to invite.');
@@ -1768,7 +1814,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       });
     };
 
-    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+    if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
       this.promptShippingAddressForInvite(invite).then((address) => {
         if (!address) {
           this.toast.error('Shipping address is required to accept this product collab.');
@@ -2866,6 +2912,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (s === 'completed') return 'completed';
     if (s === 'disputed' || inv.locationVisit?.status === 'no_show') return 'disputed';
     if (s === 'declined' || s === 'withdrawn') return 'declined';
+    if (s === 'counter_sent') return 'pending';
     if (s === 'pending') return 'pending';
     const accepted = ['accepted', 'payment_confirmed', 'working', 'submitted'];
     if (accepted.includes(s)) return inv.unlocked ? 'accepted_unlocked' : 'waiting_unlock';
@@ -2904,6 +2951,147 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     // Once the creator has started working (payment_confirmed, working, submitted, etc.) it is locked.
     const removableStatuses = new Set(['pending', 'invited', 'accepted']);
     return removableStatuses.has(inv?.status);
+  }
+
+  canRespondToCounter(inv: any): boolean {
+    const counterStatus = String(inv?.counterOffer?.status || '').toLowerCase();
+    return !!inv?._id
+      && inv?.status === 'counter_sent'
+      && counterStatus === 'sent'
+      && !this.actioningInviteIds.has(inv._id);
+  }
+
+  getCounterOfferSummary(inv: any): string {
+    const counter = inv?.counterOffer || {};
+    const amount = Number(counter.requestedAmount ?? counter.offeredAmount ?? 0);
+    const mode = String(counter.pricingMode || '').toLowerCase();
+    if (!amount || Number(amount) <= 0) return 'Counter amount received';
+    if (mode === 'deliverable_based') {
+      const platform = counter.selectedPlatform;
+      const contentType = counter.selectedContentType;
+      if (platform && contentType) {
+        return `Requested ${this.formatCounterInr(amount)} for ${platform} ${contentType}`;
+      }
+      return `Requested ${this.formatCounterInr(amount)} per content`;
+    }
+    return `Requested ${this.formatCounterInr(amount)} flat payout`;
+  }
+
+  private formatCounterInr(value: number): string {
+    const safe = Number(value);
+    if (!Number.isFinite(safe)) return '₹0';
+    return `₹${safe.toLocaleString('en-IN', {
+      maximumFractionDigits: 0,
+    })}`;
+  }
+
+  respondToInviteCounter(
+    inv: any,
+    action: 'accept' | 'decline' | 'counter',
+    campaign?: any,
+    revisedCounterAmount?: number,
+  ): void {
+    const inviteId = String(inv?._id || '');
+    if (!inviteId || this.actioningInviteIds.has(inviteId)) return;
+
+    if (action === 'counter' && !Number.isFinite(Number(revisedCounterAmount))) {
+      this.openRevisedCounterModal(inv, campaign);
+      return;
+    }
+    const normalizedRevisedCounterAmount = Number(revisedCounterAmount);
+    const hasRevisedCounterAmount = Number.isFinite(normalizedRevisedCounterAmount) && normalizedRevisedCounterAmount > 0;
+    const useRevisedCounterAmount = action === 'counter' && hasRevisedCounterAmount ? Math.round(normalizedRevisedCounterAmount) : undefined;
+    const isModalCounterSubmit = action === 'counter' && !!useRevisedCounterAmount;
+
+    this.actioningInviteIds.add(inviteId);
+    this.cd.detectChanges();
+
+    this.config.respondToCounterOffer(inviteId, action, useRevisedCounterAmount).pipe(
+      finalize(() => {
+        this.actioningInviteIds.delete(inviteId);
+        this.cd.detectChanges();
+      }),
+    ).subscribe({
+      next: (res: any) => {
+        const nextStatus = String(
+          res?.invite?.status || (action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'counter_sent'),
+        );
+        if (campaign?.invites && Array.isArray(campaign.invites)) {
+          campaign.invites = campaign.invites.map((row: any) =>
+            String(row?._id || '') === inviteId
+              ? { ...row, ...(res?.invite || {}), status: nextStatus }
+              : row,
+          );
+        }
+        if (this.invites && Array.isArray(this.invites)) {
+          this.invites = this.invites.map((row: any) =>
+            String(row?._id || '') === inviteId
+              ? { ...row, ...(res?.invite || {}), status: nextStatus }
+              : row,
+          );
+        }
+        if (isModalCounterSubmit) {
+          this.closeRevisedCounterModal();
+        }
+        this.toast.success(
+          action === 'accept'
+            ? 'Counter offer accepted.'
+            : action === 'decline'
+              ? 'Counter offer declined. Recipient can still accept original offer.'
+              : 'Revised counter sent.',
+        );
+      },
+      error: (err: any) => {
+        if (isModalCounterSubmit) {
+          this.revisedCounterModalError = err?.error?.message || 'Failed to send revised offer.';
+          this.cd.detectChanges();
+          return;
+        }
+        this.toast.error(err?.error?.message || 'Failed to respond to counter offer.');
+      },
+    });
+  }
+
+  get isRevisedCounterSubmitting(): boolean {
+    return !!this.revisedCounterModalInvite?._id && this.actioningInviteIds.has(this.revisedCounterModalInvite._id);
+  }
+
+  get revisedCounterCurrentRequestedAmount(): number {
+    const amount = Number(this.revisedCounterModalInvite?.counterOffer?.requestedAmount || 0);
+    return Number.isFinite(amount) && amount > 0 ? amount : 0;
+  }
+
+  openRevisedCounterModal(inv: any, campaign?: any): void {
+    if (!inv?._id || this.actioningInviteIds.has(inv._id)) return;
+    this.revisedCounterModalInvite = inv;
+    this.revisedCounterModalCampaign = campaign || null;
+    this.revisedCounterAmountInput = '';
+    this.revisedCounterModalError = '';
+    this.revisedCounterModalOpen = true;
+    this.cd.detectChanges();
+  }
+
+  closeRevisedCounterModal(): void {
+    if (this.isRevisedCounterSubmitting) return;
+    this.revisedCounterModalOpen = false;
+    this.revisedCounterModalInvite = null;
+    this.revisedCounterModalCampaign = null;
+    this.revisedCounterAmountInput = '';
+    this.revisedCounterModalError = '';
+    this.cd.detectChanges();
+  }
+
+  submitRevisedCounterFromModal(): void {
+    const inv = this.revisedCounterModalInvite;
+    if (!inv?._id || this.isRevisedCounterSubmitting) return;
+    const parsed = Number(String(this.revisedCounterAmountInput || '').trim());
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      this.revisedCounterModalError = 'Please enter a valid revised amount in rupees.';
+      this.cd.detectChanges();
+      return;
+    }
+    this.revisedCounterModalError = '';
+    this.respondToInviteCounter(inv, 'counter', this.revisedCounterModalCampaign, Math.round(parsed));
   }
 
   /** Returns a context-appropriate title for the withdraw/remove button. */
@@ -3300,6 +3488,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       pending: 'Applied · Pending',
       invited: 'Invited',
+      counter_sent: 'Counter Sent',
       accepted: campaignType === 'paid_collab' ? 'Awaiting Payment' : 'Accepted',
       payment_confirmed: 'Collaboration Confirmed',
       working: 'In Progress',
@@ -3316,6 +3505,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   myInviteStatusClass(status: string): string {
     if (['accepted', 'payment_confirmed', 'working', 'approved', 'completed'].includes(status)) return 'inf-status-accepted';
     if (['declined', 'withdrawn', 'disputed'].includes(status)) return 'inf-status-declined';
+    if (status === 'counter_sent') return 'inf-status-pending';
     if (status === 'submitted') return 'inf-status-submitted';
     return 'inf-status-pending';
   }
@@ -3569,7 +3759,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (payload.platform && payload.contentType) {
       this.selectedInviteContentType[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
     }
-    this.respondToMyInvite(payload.inviteId, 'accepted');
+    this.respondToMyInvite(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
     this.closeInvitePreview();
   }
 
@@ -3591,7 +3786,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         accountHolderName: payload.payout.accountHolderName || '',
       };
     }
-    this.respondToMyInvite(payload.inviteId, 'accepted');
+    this.respondToMyInvite(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
   }
 
   onCardDecline(payload: InviteDeclinePayload) {
@@ -3616,36 +3816,55 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }, 5000);
   }
 
-  respondToMyInvite(inviteId: string, status: 'accepted' | 'declined') {
+  respondToMyInvite(
+    inviteId: string,
+    status: 'accepted' | 'declined' | 'counter_sent',
+    counterAmount?: number,
+    counterMessage?: string,
+  ) {
     if (this.actioningInviteIds.has(inviteId)) return;
-    const selectedPostDate = status === 'accepted' ? this.selectedInvitePostDates[inviteId] : undefined;
-    if (status === 'accepted' && !selectedPostDate) {
+    const selectedPostDate = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedInvitePostDates[inviteId]
+      : undefined;
+    if ((status === 'accepted' || status === 'counter_sent') && !selectedPostDate) {
       this.showError('Please select a post date before accepting this invite.');
       return;
     }
     const invite = this.myInvites.find(i => i._id === inviteId) || this.invitePreview;
-    if (status === 'accepted' && invite && !this.isSelectedDateValid(invite, selectedPostDate!)) {
+    if ((status === 'accepted' || status === 'counter_sent') && invite && !this.isSelectedDateValid(invite, selectedPostDate!)) {
       this.showError('Selected post date must be between campaign start and end dates.');
       return;
     }
     // Require content type selection if campaign has options
     const options = this.getInviteContentTypeOptions(invite);
     let chosen = this.selectedInviteContentType[inviteId];
-    if (status === 'accepted' && options.length === 1 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length === 1 && !chosen) {
       chosen = options[0].key;
       this.selectedInviteContentType[inviteId] = chosen;
     }
-    if (status === 'accepted' && options.length > 0 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length > 0 && !chosen) {
       this.showError('Please select what you will create for this campaign.');
       return;
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
-    const payout = status === 'accepted' ? this.selectedInvitePayouts[inviteId] : undefined;
+    const payout = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedInvitePayouts[inviteId]
+      : undefined;
 
     const finish = (shippingAddress?: ShippingAddress) => {
       // mark as actioning and call
       this.actioningInviteIds.add(inviteId);
-      this.config.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout, shippingAddress).pipe(
+      this.config.respondToInvite(
+        inviteId,
+        status,
+        selectedPostDate,
+        selPlatform,
+        selContentType,
+        counterAmount,
+        counterMessage,
+        payout,
+        shippingAddress,
+      ).pipe(
         timeout(20000),
         finalize(() => {
           this.actioningInviteIds.delete(inviteId);
@@ -3674,7 +3893,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           if (this.invitePreview?._id === inviteId) {
             this.invitePreview = { ...this.invitePreview, status };
           }
-          this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+          this.toast.success(
+            status === 'accepted'
+              ? 'Invite accepted!'
+              : status === 'counter_sent'
+                ? 'Counter offer sent!'
+                : 'Invite declined.',
+          );
         },
         error: (err: any) => {
           this.toast.error(err?.error?.message || 'Failed to respond to invite.');
@@ -3682,7 +3907,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       });
     };
 
-    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+    if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
       this.promptShippingAddressForInvite(invite).then((address) => {
         if (!address) {
           this.toast.error('Shipping address is required to accept this product collab.');
@@ -3992,6 +4217,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       pending:           'Applied',
       invited:           'Invited',
+      counter_sent:      'Counter Received',
       accepted:          'Accepted',
       payment_confirmed: 'Collaboration Confirmed',
       working:           'In Progress',

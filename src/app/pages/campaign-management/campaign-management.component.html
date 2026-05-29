@@ -800,6 +800,26 @@
                     </div>
                   </div>
                   <span class="inv-status" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) }}</span>
+                  <div class="counter-offer-actions" *ngIf="canRespondToCounter(inv)">
+                    <small class="counter-offer-note">{{ getCounterOfferSummary(inv) }}</small>
+                    <div class="counter-offer-btns">
+                      <button class="btn-action btn-counter-accept" type="button"
+                              [disabled]="actioningInviteIds.has(inv._id)"
+                              (click)="respondToInviteCounter(inv, 'accept', c); $event.stopPropagation()">
+                        <i class="bi bi-check2-circle"></i> Accept Counter
+                      </button>
+                      <button class="btn-action btn-counter-revise" type="button"
+                              [disabled]="actioningInviteIds.has(inv._id)"
+                              (click)="respondToInviteCounter(inv, 'counter', c); $event.stopPropagation()">
+                        <i class="bi bi-arrow-left-right"></i> Send Revised Offer
+                      </button>
+                      <button class="btn-action btn-counter-decline" type="button"
+                              [disabled]="actioningInviteIds.has(inv._id)"
+                              (click)="respondToInviteCounter(inv, 'decline', c); $event.stopPropagation()">
+                        <i class="bi bi-x-circle"></i> Decline Counter
+                      </button>
+                    </div>
+                  </div>
                   <span class="inv-closed-chip"
                         *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">
                     <i class="bi bi-slash-circle"></i> Closed
@@ -1270,6 +1290,26 @@
             </div>
             <div class="invited-right">
               <span class="inv-status already-invited" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) | uppercase }}</span>
+              <div class="counter-offer-actions" *ngIf="canRespondToCounter(inv)">
+                <small class="counter-offer-note">{{ getCounterOfferSummary(inv) }}</small>
+                <div class="counter-offer-btns">
+                  <button class="btn-action btn-counter-accept" type="button"
+                          [disabled]="actioningInviteIds.has(inv._id)"
+                          (click)="respondToInviteCounter(inv, 'accept', invitePanelCampaign); $event.stopPropagation()">
+                    <i class="bi bi-check2-circle"></i> Accept Counter
+                  </button>
+                  <button class="btn-action btn-counter-revise" type="button"
+                          [disabled]="actioningInviteIds.has(inv._id)"
+                          (click)="respondToInviteCounter(inv, 'counter', invitePanelCampaign); $event.stopPropagation()">
+                    <i class="bi bi-arrow-left-right"></i> Send Revised Offer
+                  </button>
+                  <button class="btn-action btn-counter-decline" type="button"
+                          [disabled]="actioningInviteIds.has(inv._id)"
+                          (click)="respondToInviteCounter(inv, 'decline', invitePanelCampaign); $event.stopPropagation()">
+                    <i class="bi bi-x-circle"></i> Decline Counter
+                  </button>
+                </div>
+              </div>
               <span class="inv-closed-chip"
                     *ngIf="isInvitePanelAcceptanceClosed() && isPendingInviteStatus(inv.status)">
                 <i class="bi bi-slash-circle"></i> Closed
@@ -1481,6 +1521,58 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
+
+  <!-- ─── Revised Counter Modal (brand sends revised amount) ─── -->
+  <div class="modal-backdrop show"
+       *ngIf="revisedCounterModalOpen"
+       (click)="!isRevisedCounterSubmitting && closeRevisedCounterModal()"></div>
+  <div class="modal d-block"
+       *ngIf="revisedCounterModalOpen"
+       tabindex="-1"
+       (click)="!isRevisedCounterSubmitting && closeRevisedCounterModal()">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content ts-modal invite-action-modal revised-counter-modal">
+        <div class="invite-action-modal__header">
+          <h4>Send Revised Offer</h4>
+          <button class="drawer-close"
+                  type="button"
+                  [disabled]="isRevisedCounterSubmitting"
+                  (click)="closeRevisedCounterModal()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="invite-action-modal__body">
+          <p class="invite-action-modal__help" *ngIf="revisedCounterCurrentRequestedAmount > 0">
+            Recipient requested ₹{{ revisedCounterCurrentRequestedAmount | number:'1.0-0' }}. Enter your revised amount.
+          </p>
+          <label class="invite-action-modal__label" for="revised-counter-input">Revised amount (₹)</label>
+          <input id="revised-counter-input"
+                 class="revised-counter-input"
+                 type="number"
+                 min="1"
+                 step="1"
+                 [ngModel]="revisedCounterAmountInput"
+                 (ngModelChange)="revisedCounterAmountInput = $event; revisedCounterModalError = ''"
+                 placeholder="e.g. 3000" />
+          <div class="text-danger small" *ngIf="revisedCounterModalError">{{ revisedCounterModalError }}</div>
+        </div>
+
+        <div class="invite-action-modal__footer">
+          <button class="btn btn-outline-secondary"
+                  type="button"
+                  [disabled]="isRevisedCounterSubmitting"
+                  (click)="closeRevisedCounterModal()">Cancel</button>
+          <button class="btn btn-primary"
+                  type="button"
+                  [disabled]="isRevisedCounterSubmitting"
+                  (click)="submitRevisedCounterFromModal()">
+            {{ isRevisedCounterSubmitting ? 'Sending...' : 'Send Revised Offer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ─── Invite Action Modal (withdraw/decline/report) ─── -->
   <div class="modal-backdrop show"

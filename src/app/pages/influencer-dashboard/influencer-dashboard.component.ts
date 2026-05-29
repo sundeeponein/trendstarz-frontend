@@ -215,7 +215,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   private mapInviteToDashboardStatus(inviteStatus: string): string {
     const status = String(inviteStatus || '').toLowerCase();
-    if (status === 'pending' || status === 'invited') return 'pending_review';
+    if (status === 'pending' || status === 'invited' || status === 'counter_sent') return 'pending_review';
     if (status === 'accepted' || status === 'payment_confirmed' || status === 'working' || status === 'submitted') return 'active';
     if (status === 'completed' || status === 'approved') return 'completed';
     if (status === 'declined' || status === 'withdrawn') return 'rejected';
@@ -244,7 +244,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.invites = (rows || []).filter((i: any) => {
           const status = String(i?.status || '').toLowerCase();
-          return (status === 'pending' || status === 'invited') && !this.isCollabInvite(i);
+          return (status === 'pending' || status === 'invited' || status === 'counter_sent') && !this.isCollabInvite(i);
         });
         this.cdr.markForCheck();
       },
@@ -368,34 +368,53 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  respond(inviteId: string, status: 'accepted' | 'declined') {
+  respond(
+    inviteId: string,
+    status: 'accepted' | 'declined' | 'counter_sent',
+    counterAmount?: number,
+    counterMessage?: string,
+  ) {
     if (this.responding) return;
-    const selectedPostDate = status === 'accepted' ? this.selectedPostDates[inviteId] : undefined;
-    if (status === 'accepted' && !selectedPostDate) {
+    const selectedPostDate = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedPostDates[inviteId]
+      : undefined;
+    if ((status === 'accepted' || status === 'counter_sent') && !selectedPostDate) {
       this.error = 'Please choose a posting date before accepting invite.';
       return;
     }
     const invite = this.invites.find(i => i._id === inviteId) || this.selectedInvite;
-    if (status === 'accepted' && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
+    if ((status === 'accepted' || status === 'counter_sent') && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
       this.error = 'Posting date must be within campaign start and end dates.';
       return;
     }
     const options = this.getInviteContentTypeOptions(invite);
     let chosen = this.selectedContentTypes[inviteId];
-    if (status === 'accepted' && options.length === 1 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length === 1 && !chosen) {
       chosen = options[0].key;
       this.selectedContentTypes[inviteId] = chosen;
     }
-    if (status === 'accepted' && options.length > 0 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length > 0 && !chosen) {
       this.error = 'Please select what you will create for this campaign.';
       return;
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
-    const payout = status === 'accepted' ? this.selectedPayouts[inviteId] : undefined;
+    const payout = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedPayouts[inviteId]
+      : undefined;
 
     const finish = (shippingAddress?: ShippingAddress) => {
       this.responding = inviteId;
-      this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout, shippingAddress).pipe(
+      this.dashboardService.respondToInvite(
+        inviteId,
+        status,
+        selectedPostDate,
+        selPlatform,
+        selContentType,
+        counterAmount,
+        counterMessage,
+        payout,
+        shippingAddress,
+      ).pipe(
         timeout(20000),
         finalize(() => {
           this.responding = null;
@@ -408,7 +427,13 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           if (this.selectedInvite?._id === inviteId) {
             this.selectedInvite = null;
           }
-          this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
+          this.toast.success(
+            status === 'accepted'
+              ? 'Invite accepted!'
+              : status === 'counter_sent'
+                ? 'Counter offer sent!'
+                : 'Invite declined.',
+          );
           this.loadAttentionCounts();
         },
         error: (err: any) => {
@@ -417,7 +442,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       });
     };
 
-    if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
+    if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
       const campaign = invite?.campaignId || {};
       this.shippingModal.prompt({
         campaignTitle: campaign?.title || campaign?.name || 'Product collab',
@@ -511,12 +536,24 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  onModalAccept(payload: { inviteId: string; postDate?: string; platform?: string; contentType?: string }) {
+  onModalAccept(payload: InviteAcceptPayload) {
     if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
     if (payload.platform && payload.contentType) {
       this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
     }
-    this.respond(payload.inviteId, 'accepted');
+    if (payload.payout) {
+      this.selectedPayouts[payload.inviteId] = {
+        upiId: payload.payout.upiId || '',
+        mobile: payload.payout.mobile || '',
+        accountHolderName: payload.payout.accountHolderName || '',
+      };
+    }
+    this.respond(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
   }
 
   onModalDecline(payload: { inviteId: string }) {
@@ -532,13 +569,20 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
     if (payload.platform && payload.contentType) {
       this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
-    }    if (payload.payout) {
+    }
+    if (payload.payout) {
       this.selectedPayouts[payload.inviteId] = {
         upiId: payload.payout.upiId || '',
         mobile: payload.payout.mobile || '',
         accountHolderName: payload.payout.accountHolderName || '',
       };
-    }    this.respond(payload.inviteId, 'accepted');
+    }
+    this.respond(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
   }
 
   onCardDecline(payload: InviteDeclinePayload) {

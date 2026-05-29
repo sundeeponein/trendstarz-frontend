@@ -3370,6 +3370,24 @@
   margin-top: 6px;
 }
 
+.counter-offer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+}
+
+.counter-offer-note {
+  font-size: 0.7rem;
+  color: #475569;
+}
+
+.counter-offer-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .btn-action {
   display: inline-flex;
   align-items: center;
@@ -3392,6 +3410,9 @@
   &.btn-withdraw { color: #6c757d; }
   &.btn-report   { color: #b3261e; border-color: rgba(179, 38, 30, 0.25); &:hover:not(:disabled) { background: rgba(179, 38, 30, 0.08); } }
   &.btn-fulfill  { color: #1a8f61; border-color: rgba(26, 143, 97, 0.25); &:hover:not(:disabled) { background: rgba(26, 143, 97, 0.08); } }
+  &.btn-counter-accept { color: #14532d; border-color: rgba(20, 83, 45, 0.22); &:hover:not(:disabled) { background: rgba(34, 197, 94, 0.12); } }
+  &.btn-counter-revise { color: #1e3a8a; border-color: rgba(30, 58, 138, 0.24); &:hover:not(:disabled) { background: rgba(59, 130, 246, 0.12); } }
+  &.btn-counter-decline { color: #9f1239; border-color: rgba(190, 24, 93, 0.22); &:hover:not(:disabled) { background: rgba(244, 63, 94, 0.1); } }
 }
 
 .invite-locked-chip {
@@ -3492,6 +3513,26 @@
 /* Reusable invite action modal (withdraw / decline / report) */
 .invite-action-modal {
   width: min(520px, 92vw);
+}
+
+.revised-counter-modal {
+  width: min(480px, 92vw);
+}
+
+.revised-counter-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  color: $text-dark;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: $accent;
+    box-shadow: 0 0 0 2px rgba($accent, 0.15);
+  }
 }
 
 .invite-action-modal__header {

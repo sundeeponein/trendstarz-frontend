@@ -10,6 +10,9 @@ export interface CampaignAcceptPayload {
   postDate?: string;
   platform?: string;
   contentType?: string;
+  responseType?: 'accept' | 'counter';
+  counterAmount?: number;
+  counterMessage?: string;
 }
 
 export interface CampaignDeclinePayload {
@@ -61,6 +64,9 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   postDate = '';
   selectedContentTypeKey = '';
+  counterEditing = false;
+  counterAmountInput: number | null = null;
+  counterMessageInput = '';
   adminInviteStatusFilter = 'all';
   toastError = '';
   private toastTimer: any;
@@ -91,13 +97,36 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   get inviteId(): string { return this.invite?._id || ''; }
 
-  get isPending(): boolean { return this.invite?.status === 'pending'; }
+  get counterOfferStatus(): string {
+    return String(this.invite?.counterOffer?.status || '').toLowerCase();
+  }
+  get isPending(): boolean {
+    const s = String(this.invite?.status || '').toLowerCase();
+    return s === 'pending' || s === 'invited' || (s === 'counter_sent' && this.counterOfferStatus === 'brand_sent');
+  }
   get statusKey(): string { return (this.invite?.status || 'pending').toLowerCase(); }
 
   get statusFooterLabel(): string {
     const s = this.invite?.status;
-    if (!s || s === 'pending') return 'Pending Approval';
+    if (!s || s === 'pending' || s === 'invited') return 'Pending Approval';
+    if (s === 'counter_sent' && this.counterOfferStatus === 'brand_sent') return 'Revised Offer Pending';
     return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  get dateContextNoun(): 'posting' | 'visiting' {
+    return this.isInviteLocation ? 'visiting' : 'posting';
+  }
+
+  get dateInputTitle(): string {
+    return this.isInviteLocation ? 'Select visiting date' : 'Select posting date';
+  }
+
+  get dateChecklistLabel(): string {
+    return this.isInviteLocation ? 'Visiting window' : 'Posting window';
+  }
+
+  get dateHistoryLabel(): string {
+    return this.isInviteLocation ? 'Visit date' : 'Post date';
   }
 
   get campaignTitle(): string {
@@ -405,6 +434,25 @@ export class CampaignDetailModalComponent implements OnChanges {
     return this.yourPayoutText ? `Payout: ${this.yourPayoutText}` : '';
   }
 
+  get hasValidCounterAmount(): boolean {
+    const amount = Number(this.counterAmountInput || 0);
+    return Number.isFinite(amount) && amount > 0;
+  }
+
+  get hasUsedCounterOffer(): boolean {
+    const status = String(this.invite?.counterOffer?.status || '').toLowerCase();
+    return status === 'sent' || status === 'brand_sent' || status === 'accepted' || status === 'declined';
+  }
+
+  get canSendCounterOffer(): boolean {
+    return this.isPending && !this.hasUsedCounterOffer;
+  }
+
+  get counterHintText(): string {
+    if (!this.hasValidCounterAmount) return '';
+    return `Counter offer: ₹${Number(this.counterAmountInput || 0).toLocaleString('en-IN')}`;
+  }
+
   get specialInstructions(): string {
     return (this.campaign?.specialInstructions || '').trim();
   }
@@ -660,7 +708,7 @@ export class CampaignDetailModalComponent implements OnChanges {
   onAccept() {
     if (!this.inviteId) return;
     if (this.showDateInput && !this.postDate) {
-      this.showToastError('Please select a posting date before accepting.');
+      this.showToastError(`Please select a ${this.dateContextNoun} date before accepting.`);
       return;
     }
     if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
@@ -684,6 +732,57 @@ export class CampaignDetailModalComponent implements OnChanges {
       postDate: this.postDate || undefined,
       platform,
       contentType,
+      responseType: 'accept',
+    });
+  }
+
+  onToggleCounter() {
+    this.counterEditing = !this.counterEditing;
+    if (!this.counterEditing) {
+      this.counterAmountInput = null;
+      this.counterMessageInput = '';
+    }
+    this.toastError = '';
+  }
+
+  onSendCounter() {
+    if (!this.inviteId) return;
+    if (!this.canSendCounterOffer) {
+      this.showToastError('Counter offer already used for this invite. You can accept or decline.');
+      return;
+    }
+    if (this.showDateInput && !this.postDate) {
+      this.showToastError(`Please select a ${this.dateContextNoun} date before sending a counter offer.`);
+      return;
+    }
+    if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
+      this.showToastError('Please select a content type before sending a counter offer.');
+      return;
+    }
+    if (this.selectedContentTypeKey && !this.selectedContentTypeOption) {
+      this.showToastError(
+        this.lockedPlatform
+          ? `Please choose a content option only for ${this.platformLabel(this.lockedPlatform)}.`
+          : 'Please select a valid content type.'
+      );
+      return;
+    }
+    if (!this.hasValidCounterAmount) {
+      this.showToastError('Please enter a valid counter amount.');
+      return;
+    }
+    this.toastError = '';
+    const [platform, contentType] = this.selectedContentTypeKey
+      ? this.selectedContentTypeKey.split('::')
+      : [undefined, undefined];
+    this.accept.emit({
+      inviteId: this.inviteId,
+      postDate: this.postDate || undefined,
+      platform,
+      contentType,
+      responseType: 'counter',
+      counterAmount: Number(this.counterAmountInput || 0),
+      counterMessage: String(this.counterMessageInput || '').trim() || undefined,
     });
   }
 
