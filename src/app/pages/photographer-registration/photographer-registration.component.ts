@@ -8,6 +8,12 @@ import { passwordStrengthValidator, getPasswordChecks } from '../../shared/passw
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 
+export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
+  if (!control || !control.value) return { required: true };
+  const { whatsapp, email, call } = control.value;
+  return whatsapp || email || call ? null : { required: true };
+};
+
 export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   const pw = group.get('password')?.value;
   const cpw = group.get('confirmPassword')?.value;
@@ -152,6 +158,8 @@ export class PhotographerRegistrationComponent implements OnInit {
         if (monthly > 0) this.premiumMonthlyPrice = monthly;
       }
 
+      // Re-evaluate contact validation now that plan flags are loaded
+      if (this.form) this.updateContactValidation();
       this.cdr.detectChanges();
     });
   }
@@ -182,6 +190,9 @@ export class PhotographerRegistrationComponent implements OnInit {
         call: [false],
       }),
     }, { validators: [passwordMatchValidator] });
+
+    // Sync contact group validator with plan editability
+    this.updateContactValidation();
 
     this.form.get('email')?.valueChanges.subscribe(() => { this.duplicateEmailError = ''; });
     this.form.get('phoneNumber')?.valueChanges.subscribe(() => { this.duplicatePhoneError = ''; });
@@ -225,6 +236,7 @@ export class PhotographerRegistrationComponent implements OnInit {
           contact: { whatsapp: false, email: false, call: false },
         }, { emitEvent: false });
       }
+      this.updateContactValidation();
       this.cdr.detectChanges();
     });
 
@@ -557,7 +569,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       const step1Fields = ['name', 'username', 'email', 'phoneNumber', 'password', 'confirmPassword', 'location'];
       const hasErrors = step1Fields.some(f => this.form.get(f)?.invalid);
       const pwMismatch = this.form.errors?.['passwordMismatch'];
-      if (hasErrors || pwMismatch) return;
+      if (hasErrors || pwMismatch || !this.profileImagePreview) return;
       this.step1Complete = true;
       this.submitted = false;
       this.currentStep = 2;
@@ -602,9 +614,20 @@ export class PhotographerRegistrationComponent implements OnInit {
     return this.isPremiumPlan() ? this.premiumContactVisible : this.freeContactVisible;
   }
 
+  private updateContactValidation(): void {
+    const contactGroup = this.form.get('contact');
+    if (this.isContactEditable()) {
+      contactGroup?.setValidators(atLeastOneContactRequired);
+    } else {
+      contactGroup?.clearValidators();
+    }
+    contactGroup?.updateValueAndValidity({ emitEvent: false });
+  }
+
   onSubmit() {
     this.submitted = true;
     if (this.form.invalid) return;
+    if (!this.profileImagePreview) return;
     if (!this.platformsValid) return;
     this.step2Complete = true;
     this.step3Complete = true;

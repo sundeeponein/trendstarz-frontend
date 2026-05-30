@@ -45,6 +45,7 @@
                 <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
               </div>
               <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview" (click)="removeProfileImage()">Remove</button>
+              <div *ngIf="submitted && !profileImagePreview" class="text-danger mt-1">Profile photo is required.</div>
             </div>
 
             <div class="field-grid">
@@ -388,7 +389,7 @@
               </div>
 
               <div class="field-block full-width" formGroupName="contact">
-                <label class="contact-section-label">How to Contact you?</label>
+                <label class="contact-section-label">How to Contact you? <span *ngIf="isContactEditable()" class="text-danger">*</span></label>
                 <div class="text-muted mt-1" style="font-size:0.9em;">
                   Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
                   Email is shown only when email is verified. Call/WhatsApp are shown only when mobile is verified.
@@ -413,6 +414,7 @@
                   </label>
                 </div>
                 <div *ngIf="!isContactEditable()" class="text-muted mt-1">Contact options are available based on your selected plan capabilities.</div>
+                <div *ngIf="submitted && isContactEditable() && form.get('contact')?.invalid" class="text-danger mt-1">Please select at least one contact option.</div>
               </div>
             </div>
 
