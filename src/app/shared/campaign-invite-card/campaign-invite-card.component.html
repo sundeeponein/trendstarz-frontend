@@ -56,16 +56,16 @@
     </span>
   </div>
 
-  <!-- Venue summary (Invite to Location) -->
-  <div class="invite-venue" *ngIf="isInviteLocation && hasVenueDetails">
+  <!-- Venue summary -->
+  <div class="invite-venue" *ngIf="hasVenueDetails">
     <div class="invite-brief__label"><i class="bi bi-geo-alt"></i> Venue</div>
     <div class="invite-brief__text">
       <div *ngIf="venueShortText"><strong>{{ venueShortText }}</strong></div>
       <div class="text-muted" *ngIf="!canRevealExactVenueDetails && venuePreviewText">
-        Exact venue unlocks after brand payment confirmation and contact unlock.
+        Exact venue unlocks after accepted + brand unlock, or once payment is confirmed.
       </div>
       <div class="text-muted" *ngIf="!canRevealExactVenueDetails && venueMapUrl">
-        <i class="bi bi-lock-fill"></i> Map link unlocks after payment confirmation.
+        <i class="bi bi-lock-fill"></i> Map link unlocks after accepted + brand unlock, or payment confirmation.
       </div>
       <div *ngIf="canRevealExactVenueDetails && venueFullAddress">{{ venueFullAddress }}</div>
       <div *ngIf="inviteBenefits" class="mt-1"><i class="bi bi-stars"></i> {{ inviteBenefits }}</div>
@@ -88,7 +88,7 @@
         Exact shoot location unlocks after brand payment confirmation and contact unlock.
       </div>
       <div class="text-muted" *ngIf="!canRevealExactShootLocation && shootLocationMapUrl">
-        <i class="bi bi-lock-fill"></i> Map link unlocks after payment confirmation.
+        <i class="bi bi-lock-fill"></i> Map link unlocks after contact is unlocked by the brand.
       </div>
       <div *ngIf="canRevealExactShootLocation && shootLocationAddress">{{ shootLocationAddress }}</div>
       <div *ngIf="shootLocationNotes" class="mt-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
@@ -250,8 +250,8 @@
     <p class="inv-unlock-done mb-0" *ngIf="isUnlocked">
       <i class="bi bi-unlock-fill"></i> Unlock Contact &amp; Venue Details ready
     </p>
-    <!-- Brand contact details for invite_location campaigns (shown once unlocked) -->
-    <div class="inv-brand-contact" *ngIf="canRevealBrandContact && campaignTypeKey === 'invite_location'">
+    <!-- Brand contact details (shown once unlock rule is met) -->
+    <div class="inv-brand-contact" *ngIf="canRevealBrandContact">
       <span class="inv-brand-contact__label"><i class="bi bi-person-lines-fill"></i> Brand contact</span>
       <a class="contact-chip" *ngIf="brandEmail" [href]="'mailto:' + brandEmail" (click)="$event.stopPropagation()">
         <i class="bi bi-envelope-fill"></i> {{ brandEmail }}
@@ -260,7 +260,7 @@
         <i class="bi bi-telephone-fill"></i> {{ brandPhone }}
       </a>
       <span class="inv-brand-contact__hint" *ngIf="!brandEmail && !brandPhone">
-        Contact details will appear here once available.
+        Contact and location details become available after collaboration confirmation.
       </span>
     </div>
     <!-- Influencer-side: shipping info (product campaigns) -->

@@ -841,7 +841,7 @@
                   </button>
                   <!-- Contact unlock (expand panel) -->
                   <ng-container *ngIf="isUnlockableStatus(inv.status)">
-                    <div class="contact-reveal" *ngIf="canRevealInviteContact(inv)">
+                    <div class="contact-reveal" *ngIf="canRevealInviteContact(inv, c)">
                       <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)" [href]="'mailto:' + getInviteRecipient(inv)?.email" (click)="$event.stopPropagation()">
                         <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
                       </a>
@@ -856,7 +856,7 @@
                         <i class="bi bi-whatsapp"></i> WhatsApp
                       </a>
                     </div>
-                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv) && !(c.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv, c) && !(c.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
                       <button class="btn-unlock-contact" type="button"
                               *ngIf="!inv.unlocked"
                               [disabled]="unlockingInviteIds.has(inv._id)"
@@ -864,9 +864,9 @@
                         <i class="bi bi-unlock-fill"></i>
                         {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
                       </button>
-                      <small class="locked-hint" *ngIf="inv.unlocked && !canRevealInviteContact(inv)">
+                      <small class="locked-hint" *ngIf="inv.unlocked && !canRevealInviteContact(inv, c)">
                         <i class="bi bi-lock-fill"></i>
-                        {{ c.campaignType === 'invite_location' ? 'Contact details unlock after acceptance.' : 'Contact details unlock after payment confirmation.' }}
+                        Contact details unlock after accepted + sender unlock, or payment confirmation.
                       </small>
                     </div>
                   </ng-container>
@@ -911,7 +911,7 @@
                     </button>
                     <button class="btn-action btn-visit"
                             type="button"
-                            *ngIf="canMarkVisited(inv, c)"
+                            *ngIf="!isInfluencerView && !isPhotographerView && canMarkVisited(inv, c)"
                             [disabled]="actioningInviteIds.has(inv._id)"
                             (click)="openVisitConfirmModal(inv, c); $event.stopPropagation()"
                             title="Mark participant as visited">
@@ -1334,7 +1334,7 @@
                 <i class="bi bi-slash-circle"></i> Closed
               </span>
               <!-- Contact reveal for unlocked invites -->
-              <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && canRevealInviteContact(inv)">
+              <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && canRevealInviteContact(inv, invitePanelCampaign)">
                  <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)"
                    [href]="'mailto:' + getInviteRecipient(inv)?.email"
                    (click)="$event.stopPropagation()">
@@ -1360,7 +1360,7 @@
                       title="Confirm collaboration payment">
                 <i class="bi bi-lock-fill"></i> Confirm Collaboration
               </button>
-                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv) && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv, invitePanelCampaign) && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
                 <button class="btn-unlock-contact"
                         type="button"
                         *ngIf="!inv.unlocked"
@@ -1372,8 +1372,8 @@
                 <small class="locked-hint">
                   <i class="bi bi-lock-fill"></i>
                   {{ inv.unlocked
-                    ? (invitePanelCampaign?.campaignType === 'invite_location' ? 'Contact details unlock after acceptance.' : 'Contact and venue details unlock after payment confirmation.')
-                    : (invitePanelCampaign?.campaignType === 'invite_location' ? 'Unlock contact to coordinate the visit.' : 'Contact and venue details unlock after confirmation.') }}
+                    ? 'Contact and venue details unlock after accepted + sender unlock, or payment confirmation.'
+                    : 'Contact and location details become available after collaboration confirmation.' }}
                 </small>
               </div>
               <!-- Brand actions row -->
@@ -1410,7 +1410,7 @@
                 </button>
                 <button class="btn-action btn-visit"
                         type="button"
-                        *ngIf="canMarkVisited(inv, invitePanelCampaign)"
+                        *ngIf="!isInfluencerView && !isPhotographerView && canMarkVisited(inv, invitePanelCampaign)"
                         [disabled]="actioningInviteIds.has(inv._id)"
                         (click)="openVisitConfirmModal(inv, invitePanelCampaign); $event.stopPropagation()"
                         title="Mark participant as visited">

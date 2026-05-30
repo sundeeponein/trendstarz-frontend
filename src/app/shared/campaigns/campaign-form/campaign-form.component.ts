@@ -271,6 +271,15 @@ export class CampaignFormComponent implements OnInit {
   readonly PHOTOGRAPHER_DELIVERABLES = [
     'Raw Footage', 'Edited Reels', 'Photos', 'Cinematic Video', 'Shorts',
   ];
+  private readonly DEFAULT_PLATFORM_OPTIONS = [
+    { name: 'Instagram',   contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
+    { name: 'YouTube',     contentTypes: [{ name: 'Video', visible: true }, { name: 'Shorts', visible: true }, { name: 'Live', visible: true }] },
+    { name: 'X / Twitter', contentTypes: [{ name: 'Post', visible: true }, { name: 'Thread', visible: true }] },
+    { name: 'Facebook',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
+    { name: 'LinkedIn',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Article', visible: true }] },
+  ];
+  private campaignTypeOptionsCache: Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> = [];
+  private campaignTypeOptionsCacheKey = '';
   readonly SHOOT_LOCATION_TYPES_BRAND_TO_PHOTOGRAPHER = [
     { value: 'client_location', label: 'At brand location' },
     { value: 'pickup_point', label: 'At event venue' },
@@ -727,25 +736,38 @@ export class CampaignFormComponent implements OnInit {
   getCampaignTypeOptions(): Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> {
     const ownerType: 'brand' | 'photographer' = this.isPhotographerCreator ? 'photographer' : 'brand';
     const selected = String(this.form?.get('campaignType')?.value || '').trim();
+    const sourceForKey = (this.campaignTypeConfigs || [])
+      .filter((item) => item.ownerType === ownerType)
+      .map((item) => `${item.key}:${item.enabled !== false ? '1' : '0'}:${item.premiumOnly === true ? '1' : '0'}:${item.sortOrder}`)
+      .join('|');
+    const cacheKey = `${ownerType}::${selected}::${sourceForKey}`;
+    if (cacheKey === this.campaignTypeOptionsCacheKey && this.campaignTypeOptionsCache.length) {
+      return this.campaignTypeOptionsCache;
+    }
+
     const source = (this.campaignTypeConfigs || [])
       .filter((item) => item.ownerType === ownerType)
       .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
 
     if (!source.length) {
       const fallback = this.buildSyntheticCampaignTypeOption(ownerType, selected);
-      return fallback ? [fallback] : [];
+      this.campaignTypeOptionsCache = fallback ? [fallback] : [];
+      this.campaignTypeOptionsCacheKey = cacheKey;
+      return this.campaignTypeOptionsCache;
     }
 
     const enabledItems = source.filter((item) => item.enabled !== false);
     const selectedDisabledItem = source.find((item) => item.key === selected && item.enabled === false);
     const finalItems = selectedDisabledItem ? [...enabledItems, selectedDisabledItem] : enabledItems;
 
-    return finalItems.map((item) => ({
+    this.campaignTypeOptionsCache = finalItems.map((item) => ({
       value: item.key,
       label: item.label,
       premiumOnly: item.premiumOnly === true,
       enabled: item.enabled !== false,
     }));
+    this.campaignTypeOptionsCacheKey = cacheKey;
+    return this.campaignTypeOptionsCache;
   }
 
   get isEditingForReview(): boolean {
@@ -1205,7 +1227,6 @@ export class CampaignFormComponent implements OnInit {
       control.updateValueAndValidity({ emitEvent: false });
     }
 
-    this.cd.markForCheck();
   }
 
   private loadDistrictsFor(stateValue: string) {
@@ -1625,13 +1646,7 @@ export class CampaignFormComponent implements OnInit {
   // ── Platform multi-select ─────────────────────────────────────
   getPlatformOptions(): any[] {
     if (this.platformsList.length) return this.platformsList;
-    return [
-      { name: 'Instagram',   contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
-      { name: 'YouTube',     contentTypes: [{ name: 'Video', visible: true }, { name: 'Shorts', visible: true }, { name: 'Live', visible: true }] },
-      { name: 'X / Twitter', contentTypes: [{ name: 'Post', visible: true }, { name: 'Thread', visible: true }] },
-      { name: 'Facebook',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Reel', visible: true }, { name: 'Story', visible: true }, { name: 'Live', visible: true }] },
-      { name: 'LinkedIn',    contentTypes: [{ name: 'Post', visible: true }, { name: 'Article', visible: true }] },
-    ];
+    return this.DEFAULT_PLATFORM_OPTIONS;
   }
 
   isPlatformSelected(name: string): boolean {

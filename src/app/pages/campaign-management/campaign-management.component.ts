@@ -2736,23 +2736,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(String(status));
   }
 
-  private isLocationCampaign(inv: any): boolean {
+  private isLocationCampaign(inv: any, campaign?: any): boolean {
     const campaignType = String(
+      campaign?.campaignType ||
       inv?.campaign?.campaignType ||
       inv?.campaignId?.campaignType ||
       this.invitePanelCampaign?.campaignType ||
       ''
     ).toLowerCase();
-    return campaignType === 'invite_location' || campaignType === 'product';
+    return campaignType === 'invite_location';
   }
 
-  canRevealInviteContact(inv: any): boolean {
-    if (!inv?.unlocked) return false;
-    if (this.isLocationCampaign(inv)) {
-      // Location/event campaigns: contact revealed once accepted
-      return ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(String(inv?.status || ''));
-    }
-    return this.isContactPaymentConfirmedStatus(String(inv?.status || ''));
+  canRevealInviteContact(inv: any, campaign?: any): boolean {
+    const status = String(inv?.status || '');
+    if (this.isContactPaymentConfirmedStatus(status)) return true;
+    return !!inv?.unlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(status);
   }
 
   /** Build a WhatsApp deep-link from a phone number. */
@@ -4013,6 +4011,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
                 ? 'Counter offer sent!'
                 : 'Invite declined.',
           );
+          // Reload from server so tab counts, spinner state and card data reflect reality
+          this.reloadMyInvites();
         },
         error: (err: any) => {
           this.toast.error(err?.error?.message || 'Failed to respond to invite.');

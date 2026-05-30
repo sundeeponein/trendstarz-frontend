@@ -155,18 +155,12 @@ export class CampaignInviteCardComponent {
   get showWaitingUnlock(): boolean {
     const s = this.status;
     if (this.isUnlocked) return false;
-    if (s === 'accepted' && this.campaignTypeKey === 'paid_collab') return false;
-    return ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(s);
+    if (['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(s)) return false;
+    return s === 'accepted';
   }
 
   get waitingUnlockText(): string {
-    if (this.campaignTypeKey === 'paid_collab') {
-      return 'Secure collaboration access in progress';
-    }
-    if (this.campaignTypeKey === 'invite_location') {
-      return 'Collaboration confirmation in progress';
-    }
-    return 'Unlock shoot coordination in progress';
+    return 'Waiting for host confirmation to unlock coordination details.';
   }
 
   // ── Payment-flow CTA logic ──────────────────────────────────────
@@ -328,7 +322,12 @@ export class CampaignInviteCardComponent {
   }
 
   private get isLocationPaymentConfirmed(): boolean {
-    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.status);
+    const paymentConfirmedOrLater = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(this.status);
+    if (paymentConfirmedOrLater) return true;
+    // For invite_location, accepted + brand unlock is sufficient.
+    return this.isUnlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(this.status);
   }
 
   get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
@@ -374,7 +373,7 @@ export class CampaignInviteCardComponent {
   }
 
   get canRevealExactVenueDetails(): boolean {
-    return !this.isInviteLocation || (this.isUnlocked && this.isLocationPaymentConfirmed);
+    return this.isLocationPaymentConfirmed;
   }
 
   get venueShortText(): string {
@@ -438,11 +437,11 @@ export class CampaignInviteCardComponent {
     return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
   }
   get canRevealExactShootLocation(): boolean {
-    return this.isUnlocked && this.isLocationPaymentConfirmed;
+    return this.isLocationPaymentConfirmed;
   }
 
   get canRevealBrandContact(): boolean {
-    return this.isUnlocked && this.isLocationPaymentConfirmed;
+    return this.isLocationPaymentConfirmed;
   }
 
   get payToJoinFeeText(): string {

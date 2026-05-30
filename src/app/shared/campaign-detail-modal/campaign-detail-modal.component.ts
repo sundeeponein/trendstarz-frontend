@@ -177,15 +177,19 @@ export class CampaignDetailModalComponent implements OnChanges {
   get isUnlocked(): boolean { return !!this.invite?.unlocked; }
 
   private get isLocationPaymentConfirmed(): boolean {
-    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.statusKey);
+    const paymentConfirmedOrLater = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(this.statusKey);
+    if (paymentConfirmedOrLater) return true;
+    return this.isUnlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(this.statusKey);
   }
 
   get canRevealExactVenueDetails(): boolean {
-    return this.isUnlocked && this.isLocationPaymentConfirmed;
+    return this.isLocationPaymentConfirmed;
   }
 
   get canRevealExactShootLocation(): boolean {
-    return this.isUnlocked && this.isLocationPaymentConfirmed;
+    return this.isLocationPaymentConfirmed;
   }
 
   get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
