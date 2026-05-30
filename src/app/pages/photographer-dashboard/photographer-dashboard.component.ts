@@ -313,8 +313,10 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     const needsShipping = status === 'accepted' && campaignType === 'product_gifting';
 
     if (needsShipping) {
-      this.shippingModal.open().then(
-        (addr) => finish(addr),
+      this.shippingModal.prompt({
+        campaignTitle: invite?.campaignId?.title || invite?.title || '',
+      }).then(
+        (addr: ShippingAddress | null) => finish(addr),
         () => { this.responding = null; },
       );
     } else {
