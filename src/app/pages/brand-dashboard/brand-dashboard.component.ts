@@ -11,6 +11,7 @@ import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
+import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -18,7 +19,7 @@ import { MonetizationApiService, UsageSummary } from '../../services/monetizatio
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {

@@ -7,8 +7,7 @@
     <div class="dashboard-welcome-right account-meta-card" *ngIf="photographer">
       <div><strong>Registered on:</strong> {{ (photographer.firstRegisteredAt || photographer.createdAt) ? ((photographer.firstRegisteredAt || photographer.createdAt) | date:'medium') : '-' }}</div>
       <div><strong>Last Login:</strong> {{ photographer.lastLoginAt ? (photographer.lastLoginAt | date:'medium') : '-' }}</div>
-      <div *ngIf="usageSummary"><strong>Daily profile views:</strong> {{ usageSummary.profileViews.used }}/{{ usageSummary.profileViews.limit }}</div>
-      <div *ngIf="usageSummary"><strong>Daily searches:</strong> {{ usageSummary.search.used }}/{{ usageSummary.search.limit }}</div>
+      <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary>
     </div>
   </div>
 

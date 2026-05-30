@@ -12,11 +12,12 @@ import { DashboardService } from '../../services/dashboard.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
+import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })

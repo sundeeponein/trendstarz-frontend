@@ -10,11 +10,12 @@ import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
+import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, InfluencerUserCardComponent, BrandUserCardComponent, PhotographerUserCardComponent],
+  imports: [CommonModule, FormsModule, RouterModule, InfluencerUserCardComponent, BrandUserCardComponent, PhotographerUserCardComponent, UsageSummaryComponent],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss']
 })
@@ -121,18 +122,6 @@ export class SearchComponent implements OnInit {
 
   get showUsageSummary(): boolean {
     return !this.isGuestUser && !!this.usageSummary;
-  }
-
-  get usageProfileViewsText(): string {
-    const used = Number(this.usageSummary?.profileViews?.used || 0);
-    const limit = Number(this.usageSummary?.profileViews?.limit || 0);
-    return `${used}/${limit}`;
-  }
-
-  get usageSearchesText(): string {
-    const used = Number(this.usageSummary?.search?.used || 0);
-    const limit = Number(this.usageSummary?.search?.limit || 0);
-    return `${used}/${limit}`;
   }
 
   get pageTitle(): string {

@@ -14,13 +14,14 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
+import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;

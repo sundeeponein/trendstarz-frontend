@@ -9,8 +9,7 @@
             {{ pageTitle }}
           </h1>
           <div class="page-usage" *ngIf="showUsageSummary">
-            <span>Daily profile views: <strong>{{ usageProfileViewsText }}</strong></span>
-            <span>Daily searches: <strong>{{ usageSearchesText }}</strong></span>
+            <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary>
           </div>
         </div>
         <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading) || (isPhotographerMode && !photographersLoading)">
