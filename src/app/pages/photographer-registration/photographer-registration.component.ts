@@ -79,8 +79,6 @@ export class PhotographerRegistrationComponent implements OnInit {
   photoshootImagesData: { url: string; public_id: string }[] = [];
   freeTotalImageLimit = 3;
   premiumTotalImageLimit = 10;
-  freeContactVisible = false;
-  premiumContactVisible = true;
 
   duplicateEmailError = '';
   duplicatePhoneError = '';
@@ -142,24 +140,14 @@ export class PhotographerRegistrationComponent implements OnInit {
         return Number.isFinite(value) && value > 0 ? value : fallback;
       };
 
-      const resolveContactVisibility = (plan: Plan | undefined, fallback: boolean): boolean => {
-        if (!plan?.features?.length) return fallback;
-        const hit = plan.features.find((feature) => String(feature?.key || '').trim() === 'contactVisibility');
-        return typeof hit?.value === 'boolean' ? hit.value : fallback;
-      };
-
       this.freeTotalImageLimit = resolveImageLimit(freePlan, this.freeTotalImageLimit);
       this.premiumTotalImageLimit = resolveImageLimit(paidPlan, this.premiumTotalImageLimit);
-      this.freeContactVisible = resolveContactVisibility(freePlan, this.freeContactVisible);
-      this.premiumContactVisible = resolveContactVisibility(paidPlan, this.premiumContactVisible);
 
       if (paidPlan) {
         const monthly = Number(paidPlan?.price?.monthly || 0);
         if (monthly > 0) this.premiumMonthlyPrice = monthly;
       }
 
-      // Re-evaluate contact validation now that plan flags are loaded
-      if (this.form) this.updateContactValidation();
       this.cdr.detectChanges();
     });
   }
@@ -188,11 +176,8 @@ export class PhotographerRegistrationComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false],
-      }),
+      }, { validators: [atLeastOneContactRequired] }),
     }, { validators: [passwordMatchValidator] });
-
-    // Sync contact group validator with plan editability
-    this.updateContactValidation();
 
     this.form.get('email')?.valueChanges.subscribe(() => { this.duplicateEmailError = ''; });
     this.form.get('phoneNumber')?.valueChanges.subscribe(() => { this.duplicatePhoneError = ''; });
@@ -231,12 +216,6 @@ export class PhotographerRegistrationComponent implements OnInit {
 
     this.form.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforceGalleryLimit();
-      if (!this.isContactEditable()) {
-        this.form.patchValue({
-          contact: { whatsapp: false, email: false, call: false },
-        }, { emitEvent: false });
-      }
-      this.updateContactValidation();
       this.cdr.detectChanges();
     });
 
@@ -610,19 +589,7 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.photoshootImagesPreview = this.photoshootImagesPreview.slice(0, this.maxPhotoshootImages);
   }
 
-  isContactEditable(): boolean {
-    return this.isPremiumPlan() ? this.premiumContactVisible : this.freeContactVisible;
-  }
 
-  private updateContactValidation(): void {
-    const contactGroup = this.form.get('contact');
-    if (this.isContactEditable()) {
-      contactGroup?.setValidators(atLeastOneContactRequired);
-    } else {
-      contactGroup?.clearValidators();
-    }
-    contactGroup?.updateValueAndValidity({ emitEvent: false });
-  }
 
   onSubmit() {
     this.submitted = true;
@@ -692,9 +659,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],
-      contact: this.isContactEditable()
-        ? (v.contact || { whatsapp: false, email: false, call: false })
-        : { whatsapp: false, email: false, call: false },
+      contact: v.contact || { whatsapp: false, email: false, call: false },
       pricing: pricingArr,
       socialMedia,
       profileImages: [

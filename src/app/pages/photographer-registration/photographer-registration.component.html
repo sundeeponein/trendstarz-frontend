@@ -389,7 +389,7 @@
               </div>
 
               <div class="field-block full-width" formGroupName="contact">
-                <label class="contact-section-label">How to Contact you? <span *ngIf="isContactEditable()" class="text-danger">*</span></label>
+                <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
                 <div class="text-muted mt-1" style="font-size:0.9em;">
                   Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
                   Email is shown only when email is verified. Call/WhatsApp are shown only when mobile is verified.
@@ -398,23 +398,22 @@
                 </div>
                 <div class="contact-cards">
                   <label class="contact-card" [class.selected]="form.get('contact.whatsapp')?.value">
-                    <input type="checkbox" formControlName="whatsapp" hidden [disabled]="!isContactEditable()" />
+                    <input type="checkbox" formControlName="whatsapp" hidden />
                     <span class="contact-card-icon whatsapp"><i class="bi bi-whatsapp"></i></span>
                     <span class="contact-card-label">WhatsApp</span>
                   </label>
                   <label class="contact-card" [class.selected]="form.get('contact.email')?.value">
-                    <input type="checkbox" formControlName="email" hidden [disabled]="!isContactEditable()" />
+                    <input type="checkbox" formControlName="email" hidden />
                     <span class="contact-card-icon email"><i class="bi bi-envelope"></i></span>
                     <span class="contact-card-label">Email</span>
                   </label>
                   <label class="contact-card" [class.selected]="form.get('contact.call')?.value">
-                    <input type="checkbox" formControlName="call" hidden [disabled]="!isContactEditable()" />
+                    <input type="checkbox" formControlName="call" hidden />
                     <span class="contact-card-icon call"><i class="bi bi-telephone"></i></span>
                     <span class="contact-card-label">Call</span>
                   </label>
                 </div>
-                <div *ngIf="!isContactEditable()" class="text-muted mt-1">Contact options are available based on your selected plan capabilities.</div>
-                <div *ngIf="submitted && isContactEditable() && form.get('contact')?.invalid" class="text-danger mt-1">Please select at least one contact option.</div>
+                <div *ngIf="form.get('contact')?.invalid && form.get('contact')?.touched" class="text-danger mt-1">Please select at least one contact option.</div>
               </div>
             </div>
 
