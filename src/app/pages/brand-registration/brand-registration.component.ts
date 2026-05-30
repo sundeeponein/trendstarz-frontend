@@ -809,15 +809,17 @@ export class BrandRegistrationComponent implements OnInit {
 
     if (this.currentStep === 1) {
       this.isNextStepLoading = true;
+      let noConflicts = false;
       try {
-        const noConflicts = await this.validateStep1Uniqueness();
-        if (!noConflicts) {
-          this.currentStep = 1;
-          this.refreshStepCompletion();
-          return;
-        }
+        noConflicts = await this.validateStep1Uniqueness();
       } finally {
         this.isNextStepLoading = false;
+      }
+      if (!noConflicts) {
+        this.currentStep = 1;
+        this.refreshStepCompletion();
+        this.cd.detectChanges();
+        return;
       }
     }
 
@@ -830,6 +832,7 @@ export class BrandRegistrationComponent implements OnInit {
       }
       this.refreshStepCompletion();
       this.scrollToTop();
+      this.cd.detectChanges();
     }
   }
 
