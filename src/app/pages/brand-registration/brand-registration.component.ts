@@ -801,15 +801,23 @@ export class BrandRegistrationComponent implements OnInit {
     return false;
   }
 
+  isNextStepLoading = false;
+
   async nextStep() {
+    if (this.isNextStepLoading) return;
     if (!this.validateCurrentStep()) return;
 
     if (this.currentStep === 1) {
-      const noConflicts = await this.validateStep1Uniqueness();
-      if (!noConflicts) {
-        this.currentStep = 1;
-        this.refreshStepCompletion();
-        return;
+      this.isNextStepLoading = true;
+      try {
+        const noConflicts = await this.validateStep1Uniqueness();
+        if (!noConflicts) {
+          this.currentStep = 1;
+          this.refreshStepCompletion();
+          return;
+        }
+      } finally {
+        this.isNextStepLoading = false;
       }
     }
 

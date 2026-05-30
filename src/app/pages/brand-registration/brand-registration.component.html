@@ -209,7 +209,10 @@
           <div *ngIf="registrationError && currentStep === 1" class="text-danger fw-bold mt-2">{{ registrationError }}</div>
 
           <div class="actions-row">
-            <button type="button" class="btn btn-primary" (click)="nextStep()">Continue →</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="isNextStepLoading">
+              <span *ngIf="isNextStepLoading"><span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Checking...</span>
+              <span *ngIf="!isNextStepLoading">Continue →</span>
+            </button>
           </div>
         </section>
 
