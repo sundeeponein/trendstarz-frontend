@@ -817,6 +817,7 @@ export class InfluencerProfileComponent implements OnInit {
   this.registrationForm.get('password')?.disable();
   this.registrationForm.get('confirmPassword')?.disable();
   this.refreshStepCompletion();
+  this.cd.detectChanges();
   }
 
   cancelEdit(): void {
@@ -969,11 +970,17 @@ export class InfluencerProfileComponent implements OnInit {
 
   async onSubmit() {
     this.submitted = true;
+    this.cd.detectChanges();
 
     if (!this.isEditMode || this.registrationForm.invalid || (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url))) {
       if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
         this.registrationError = 'Profile image is required.';
+      } else if (this.registrationForm.invalid) {
+        this.registrationError = 'Please complete all required fields before saving.';
+        if (!this.computeStepComplete(1)) this.currentStep = 1;
+        else if (!this.computeStepComplete(2)) this.currentStep = 2;
       }
+      this.cd.detectChanges();
       return;
     }
     if (!this.arePlatformsValid()) {
@@ -1158,6 +1165,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationSuccessMessage = '';
         this.registrationError = 'Update failed. Please try again.';
         console.error('[PATCH error]', err);
+        this.cd.detectChanges();
       }
     });
   }

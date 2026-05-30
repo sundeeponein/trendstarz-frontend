@@ -714,6 +714,7 @@ export class BrandProfileComponent implements OnInit {
     this.registrationForm.enable({ emitEvent: false });
     this.emailEditRequested = !this.emailVerified;
     this.refreshStepCompletion();
+    this.cd.detectChanges();
     this.ensureDistrictsForCurrentState();
   // Password fields are disabled and removed from the form
   }
@@ -1026,10 +1027,16 @@ export class BrandProfileComponent implements OnInit {
 
   async onSubmit() {
     this.submitted = true;
+    this.cd.detectChanges();
     if (!this.isEditMode || this.registrationForm.invalid || !this.hasBrandLogo()) {
       if (!this.hasBrandLogo()) {
         this.registrationError = 'Brand logo is required.';
+      } else if (this.registrationForm.invalid) {
+        this.registrationError = 'Please complete all required fields before saving.';
+        if (!this.computeStepComplete(1)) this.currentStep = 1;
+        else if (!this.computeStepComplete(2)) this.currentStep = 2;
       }
+      this.cd.detectChanges();
       return;
     }
     if (!this.arePlatformsValid()) {
@@ -1121,6 +1128,7 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.cd.detectChanges();
         if (emailChanged) {
           this.emailVerified = false;
           this.showEmailVerificationPrompt = true;
@@ -1142,6 +1150,7 @@ export class BrandProfileComponent implements OnInit {
       error: err => {
         this.registrationError = 'Update failed. Please try again.';
         this.submitted = false;
+        this.cd.detectChanges();
       }
     });
   }
