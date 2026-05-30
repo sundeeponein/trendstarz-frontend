@@ -316,7 +316,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       this.shippingModal.prompt({
         campaignTitle: invite?.campaignId?.title || invite?.title || '',
       }).then(
-        (addr: ShippingAddress | null) => finish(addr),
+        (addr: ShippingAddress | null) => finish(addr ?? undefined),
         () => { this.responding = null; },
       );
     } else {
