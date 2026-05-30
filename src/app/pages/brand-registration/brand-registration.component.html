@@ -103,14 +103,8 @@
                 <input formControlName="email" type="email" class="form-control" placeholder="brand@email.com" (blur)="onEmailBlur()" />
               </div>
               <small class="text-muted mt-1">A verification link will be sent after successful registration.</small>
-              <div *ngIf="submitted && registrationForm.get('email')?.invalid && !duplicateEmailError" class="text-danger mt-1">Valid email is required.</div>
-              <div *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</div>
-            </div>
-
-            <div class="field-block">
-              <label>Contact Person Name <span class="text-danger">*</span></label>
-              <input formControlName="contactPersonName" type="text" class="form-control" placeholder="Primary contact person" />
-              <div *ngIf="submitted && registrationForm.get('contactPersonName')?.invalid" class="text-danger mt-1">Contact person name is required.</div>
+              <small *ngIf="submitted && registrationForm.get('email')?.invalid && !duplicateEmailError" class="text-danger mt-1">Valid email is required.</small>
+              <small *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</small>
             </div>
 
             <div class="field-block">
@@ -122,9 +116,17 @@
               <small *ngIf="verificationCallNumber" class="text-muted mt-1">
                 You may receive a verification call from our team.
               </small>
-              <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</div>
-              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
+              <small *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</small>
+              <small *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</small>
               
+            </div>
+
+
+
+            <div class="field-block">
+              <label>Contact Person Name <span class="text-danger">*</span></label>
+              <input formControlName="contactPersonName" type="text" class="form-control" placeholder="Primary contact person" />
+              <small *ngIf="submitted && registrationForm.get('contactPersonName')?.invalid" class="text-danger mt-1">Contact person name is required.</small>
             </div>
 
             <div class="field-block">
