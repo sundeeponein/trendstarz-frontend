@@ -1,6 +1,4 @@
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
@@ -295,7 +293,8 @@ export class InfluencerProfileComponent implements OnInit {
   // Plan capabilities
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxProductImages'); }
-  get currentImageCount(): number { return this.profileImagesFormArray?.length ?? 0; }
+  get maxGalleryImages(): number { return Math.max(0, this.maxImages - 1); }
+  get currentImageCount(): number { return 1 + this.galleryImagesData.length; }
   get imageUploadAllowed(): boolean { return this.currentImageCount < this.maxImages; }
   get hasPremiumPlan(): boolean { return !!this.planCaps?.hasPremium; }
   registrationSuccess = false;
@@ -309,6 +308,9 @@ export class InfluencerProfileComponent implements OnInit {
   protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
   profileImageFile: File | null = null;
+  galleryImagesPreview: string[] = [];
+  galleryImagesData: { url: string; public_id: string }[] = [];
+  galleryUploadWarning = '';
   readonly MAX_IMAGE_SIZE_MB = 5; // allow up to 5 MB before rejecting
   languagesList: any[] = [];
   categoriesList: any[] = [];
@@ -517,6 +519,10 @@ export class InfluencerProfileComponent implements OnInit {
           this.profileImagePreview = (profile.profileImages && profile.profileImages[0]?.url) ? this.normalizeImageUrl(profile.profileImages[0].url) : null;
           // Do not set profileImageFile to the remote image object — only File objects should be used for upload
           this.profileImageFile = null;
+          // Populate gallery images from index 1 onward
+          const gallerySource = (profile.profileImages || []).slice(1).filter((img: any) => !!img?.url);
+          this.galleryImagesData = gallerySource.map((img: any) => ({ url: img.url, public_id: img.public_id }));
+          this.galleryImagesPreview = gallerySource.map((img: any) => this.normalizeImageUrl(img.url) || img.url);
           // Patch socialMedia into platformForms
           this.platformForms = {};
           (profile.socialMedia || []).forEach((sm: any) => {
@@ -966,6 +972,52 @@ export class InfluencerProfileComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
+  async onGalleryImagesChange(event: Event) {
+    if (!this.isEditMode) return;
+    const files = Array.from((event.target as HTMLInputElement).files || []);
+    if (!files.length) return;
+    const remainingSlots = this.maxGalleryImages - this.galleryImagesData.length;
+    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
+    if (!selectedFiles.length) return;
+    let failedUploads = 0;
+    for (const file of selectedFiles) {
+      if (!file.type.startsWith('image/')) { failedUploads++; continue; }
+      if (file.size > 5 * 1024 * 1024) { failedUploads++; continue; }
+      const preview = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e.target?.result || ''));
+        reader.onerror = () => reject(new Error('preview_failed'));
+        reader.readAsDataURL(file);
+      }).catch(() => '');
+      if (!preview) { failedUploads++; continue; }
+      const fd = new FormData();
+      fd.append('file', file, file.name || 'gallery.jpg');
+      fd.append('folder', 'influencer_gallery_images');
+      try {
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
+        if (!resp.ok) { failedUploads++; continue; }
+        const data = await resp.json();
+        if (data?.url && data?.public_id) {
+          this.galleryImagesPreview.push(preview);
+          this.galleryImagesData.push({ url: data.url, public_id: data.public_id });
+          this.cd.detectChanges();
+        } else { failedUploads++; }
+      } catch { failedUploads++; }
+    }
+    this.galleryUploadWarning = failedUploads
+      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+      : '';
+    this.cd.detectChanges();
+  }
+
+  removeGalleryImage(index: number) {
+    if (!this.isEditMode) return;
+    this.galleryImagesPreview.splice(index, 1);
+    this.galleryImagesData.splice(index, 1);
+    this.galleryUploadWarning = '';
+    this.cd.detectChanges();
+  }
+
 
 
   async onSubmit() {
@@ -1059,18 +1111,19 @@ export class InfluencerProfileComponent implements OnInit {
       try {
         const formData = new FormData();
         formData.append('file', uploadFile);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        formData.append('folder', 'influencer_profile_images');
+        const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
           method: 'POST',
-          body: formData
+          body: formData,
         });
+        if (!response.ok) {
+          this.registrationError = 'Profile image upload failed.';
+          return;
+        }
         const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          // Always include all images present in the FormArray (old image)
-          profileImages = [
-            ...raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img),
-            { url: data.secure_url, public_id: data.public_id }
-          ];
+        if (data.url && data.public_id) {
+          // New profile image at index 0, keep gallery images
+          profileImages = [{ url: data.url, public_id: data.public_id }, ...this.galleryImagesData];
         } else {
           this.registrationError = 'Profile image upload failed.';
           return;
@@ -1080,8 +1133,9 @@ export class InfluencerProfileComponent implements OnInit {
         return;
       }
     } else if (raw.profileImages && Array.isArray(raw.profileImages) && raw.profileImages.length > 0) {
-      // If editing and image already exists, just send it as-is
-      profileImages = raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
+      // Keep existing profile image (index 0), combine with current gallery
+      const existingProfile = raw.profileImages.slice(0, 1).filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
+      profileImages = [...existingProfile, ...this.galleryImagesData];
     }
     const payload: any = {
       ...raw,

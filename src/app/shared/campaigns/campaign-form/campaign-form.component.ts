@@ -1871,11 +1871,14 @@ export class CampaignFormComponent implements OnInit {
   private async uploadToCloudinary(file: File): Promise<{ url: string; public_id: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', environment.cloudinaryUploadPreset);
+    formData.append('folder', 'campaign_images');
     const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${environment.cloudinaryCloudName}/image/upload`,
+      `${environment.apiBaseUrl}/auth/upload-image`,
       { method: 'POST', body: formData }
     );
+    if (!res.ok) {
+      throw new Error('Image upload failed');
+    }
     const data = await res.json();
     if (data.secure_url && data.public_id) {
       return { url: data.secure_url, public_id: data.public_id };

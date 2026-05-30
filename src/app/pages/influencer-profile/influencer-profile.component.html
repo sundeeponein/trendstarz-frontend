@@ -78,6 +78,31 @@
             <div *ngIf="submitted && !profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)" class="text-danger mt-1">Profile photo is required.</div>
           </div>
 
+          <!-- Gallery Images -->
+          <div class="field-block full-width mt-3" *ngIf="isEditMode || galleryImagesData.length > 0">
+            <label class="fw-semibold">
+              Gallery Images
+              <span class="text-muted" style="font-size:0.82rem;font-weight:400;"> (optional, up to {{ maxGalleryImages }} images)</span>
+            </label>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <div *ngFor="let preview of galleryImagesPreview; let i = index" class="position-relative" style="width:90px;height:90px;">
+                <img [src]="preview" alt="Gallery image" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;" />
+                <button *ngIf="isEditMode" type="button" (click)="removeGalleryImage(i)"
+                  class="btn btn-sm btn-danger position-absolute" style="top:2px;right:2px;padding:1px 5px;font-size:0.7rem;line-height:1.2;">✕</button>
+              </div>
+              <label *ngIf="isEditMode && galleryImagesData.length < maxGalleryImages"
+                class="d-flex align-items-center justify-content-center border rounded"
+                style="width:90px;height:90px;cursor:pointer;color:#6b7280;font-size:0.8rem;text-align:center;border-style:dashed!important;">
+                <span>＋ Add<br>image</span>
+                <input type="file" accept="image/*" multiple hidden (change)="onGalleryImagesChange($event)" />
+              </label>
+            </div>
+            <small class="text-muted d-block mt-1">
+              Total limit is {{ maxImages }} images: 1 profile + up to {{ maxGalleryImages }} gallery images (based on your plan).
+            </small>
+            <div *ngIf="galleryUploadWarning" class="text-warning mt-1" style="font-size:0.82rem">{{ galleryUploadWarning }}</div>
+          </div>
+
           <div class="field-grid">
             <div class="field-block">
               <label>Name <span class="text-danger">*</span></label>

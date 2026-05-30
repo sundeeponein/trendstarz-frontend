@@ -273,7 +273,7 @@ export class BrandProfileComponent implements OnInit {
       this.brandLogoFile = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'brand_logos');
+      formData.append('folder', 'brand_logo');
       const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
@@ -326,7 +326,7 @@ export class BrandProfileComponent implements OnInit {
       this.productImagesFiles[index] = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'brand_product_images');
+      formData.append('folder', 'brand_products');
       const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData

@@ -850,7 +850,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
       const fd = new FormData();
       fd.append('file', file, file.name || 'gallery.jpg');
-      fd.append('folder', 'influencer_profile_images');
+      fd.append('folder', 'influencer_gallery_images');
 
       const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
         this.configService.uploadImage(fd).subscribe({

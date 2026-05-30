@@ -497,7 +497,7 @@ export class PhotographerRegistrationComponent implements OnInit {
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('folder', 'photographer_profiles');
+      formData.append('folder', 'photographer_gallery');
 
       const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
         this.config.uploadImage(formData).subscribe({
