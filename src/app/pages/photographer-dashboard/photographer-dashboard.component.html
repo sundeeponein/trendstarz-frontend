@@ -127,7 +127,7 @@
       </div>
 
       <div class="brand-campaign-list" *ngIf="!brandInvitesLoading && brandInvites.length > 0">
-        <div class="brand-campaign-card" *ngFor="let inv of brandInvites">
+        <div class="brand-campaign-card" *ngFor="let inv of brandInvites" (click)="openDetail(inv)" style="cursor:pointer;">
           <div class="d-flex align-items-start justify-content-between gap-2">
             <div>
               <div class="brand-campaign-title">{{ inv.campaignId?.title || 'Campaign invite' }}</div>
@@ -139,7 +139,12 @@
                 {{ formatDate(inv.createdAt) }}
               </div>
             </div>
-            <span class="badge rounded-pill bg-warning text-dark">{{ inv.status || 'pending' | uppercase }}</span>
+            <div class="d-flex flex-column align-items-end gap-1">
+              <span class="badge rounded-pill bg-warning text-dark">{{ inv.status || 'pending' | uppercase }}</span>
+              <button class="btn btn-sm btn-outline-primary py-0 px-2" type="button" (click)="openDetail(inv); $event.stopPropagation()">
+                <i class="bi bi-eye"></i> View &amp; Respond
+              </button>
+            </div>
           </div>
           <div class="brand-campaign-desc" *ngIf="inv.campaignId?.description">
             {{ inv.campaignId.description | slice:0:120 }}{{ inv.campaignId?.description?.length > 120 ? '…' : '' }}
@@ -270,3 +275,15 @@
     </div>
   </ng-container>
 </div>
+
+<app-campaign-detail-modal
+  *ngIf="selectedInvite && selectedInviteManual"
+  [invite]="selectedInvite"
+  [visible]="!!selectedInvite"
+  [busy]="responding === selectedInvite._id"
+  (close)="closeDetail()"
+  (accept)="onModalAccept($event)"
+  (decline)="onModalDecline($event)"
+  (validationError)="onModalValidationError($event)"
+></app-campaign-detail-modal>
+<app-shipping-address-modal></app-shipping-address-modal>

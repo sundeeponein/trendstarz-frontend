@@ -2,14 +2,21 @@ import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { finalize, timeout } from 'rxjs/operators';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
+import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { InviteAcceptPayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
+import { DashboardService } from '../../services/dashboard.service';
+import { ToastService } from '../../shared/toast/toast.service';
+import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
+import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
@@ -31,6 +38,10 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   usageSummary: UsageSummary | null = null;
   private loadedOnce = false;
 
+  selectedInvite: any = null;
+  selectedInviteManual = false;
+  responding: string | null = null;
+
   private readonly userSub = new Subscription();
 
   constructor(
@@ -39,6 +50,9 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     private readonly monetizationApi: MonetizationApiService,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
+    private readonly dashboardService: DashboardService,
+    private readonly toast: ToastService,
+    private readonly shippingModal: ShippingAddressModalService,
   ) {}
 
   ngOnInit(): void {
@@ -217,5 +231,94 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   onOpenCampaigns(): void {
     this.router.navigate(['/campaigns']);
+  }
+
+  openDetail(invite: any): void {
+    this.selectedInvite = invite;
+    this.selectedInviteManual = true;
+    this.cdr.detectChanges();
+  }
+
+  closeDetail(): void {
+    this.selectedInvite = null;
+    this.selectedInviteManual = false;
+    this.cdr.detectChanges();
+  }
+
+  onModalAccept(payload: InviteAcceptPayload): void {
+    this.respond(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.postDate,
+      payload.counterAmount,
+      payload.counterMessage,
+    );
+  }
+
+  onModalDecline(payload: { inviteId: string }): void {
+    this.respond(payload.inviteId, 'declined');
+  }
+
+  onModalValidationError(_message: string): void {}
+
+  private respond(
+    inviteId: string,
+    status: 'accepted' | 'declined' | 'counter_sent',
+    selectedPostDate?: string,
+    counterAmount?: number,
+    counterMessage?: string,
+  ): void {
+    if (this.responding) return;
+
+    const finish = (shippingAddress?: ShippingAddress) => {
+      this.responding = inviteId;
+      this.dashboardService.respondToInvite(
+        inviteId,
+        status,
+        selectedPostDate,
+        undefined,
+        undefined,
+        counterAmount,
+        counterMessage,
+        undefined,
+        shippingAddress,
+      ).pipe(
+        timeout(20000),
+        finalize(() => {
+          this.responding = null;
+          this.cdr.detectChanges();
+        }),
+      ).subscribe({
+        next: () => {
+          this.brandInvites = this.brandInvites.filter(i => i._id !== inviteId);
+          if (this.selectedInvite?._id === inviteId) {
+            this.selectedInvite = null;
+            this.selectedInviteManual = false;
+          }
+          this.toast.success(
+            status === 'accepted' ? 'Invite accepted!' :
+            status === 'counter_sent' ? 'Counter offer sent!' : 'Invite declined.',
+          );
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          this.toast.error(err?.error?.message || 'Failed to respond to invite.');
+          this.cdr.detectChanges();
+        },
+      });
+    };
+
+    const invite = this.brandInvites.find(i => i._id === inviteId) || this.selectedInvite;
+    const campaignType = invite?.campaignId?.campaignType || invite?.campaignType || '';
+    const needsShipping = status === 'accepted' && campaignType === 'product_gifting';
+
+    if (needsShipping) {
+      this.shippingModal.open().then(
+        (addr) => finish(addr),
+        () => { this.responding = null; },
+      );
+    } else {
+      finish();
+    }
   }
 }
