@@ -1118,7 +1118,6 @@ export class BrandProfileComponent implements OnInit {
     delete payload.premiumDuration;
     delete payload.productImages;
     delete payload.googleMapAddress;
-    const token = this.getToken();
     this.configService.updateBrandProfile(payload).subscribe({
       next: () => {
         this.registrationSuccess = true;

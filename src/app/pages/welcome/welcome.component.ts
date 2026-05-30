@@ -293,7 +293,6 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.influencers = [];
     this.config.getInfluencers().subscribe({
       next: (data) => {
-        console.debug('WelcomeComponent.fetchInfluencers data', data);
         const influencerArray = Array.isArray(data)
           ? data
           : (data && Array.isArray((data as any).data) ? (data as any).data : []);
@@ -358,7 +357,6 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brandCampaignStatusMap = {};
     this.config.getBrands().subscribe({
       next: (data) => {
-        console.debug('WelcomeComponent.fetchBrands data', data);
         const brandArray = Array.isArray(data)
           ? data
           : (data && Array.isArray((data as any).data) ? (data as any).data : []);

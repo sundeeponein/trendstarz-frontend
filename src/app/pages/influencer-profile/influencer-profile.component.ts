@@ -1113,11 +1113,8 @@ export class InfluencerProfileComponent implements OnInit {
     delete payload.premiumEnd;
     delete payload.premiumStart;
     delete payload.premiumDuration;
-    // debug: payload prepared for PATCH
-    const token = this.getToken();
     this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
-        // debug: PATCH response received
         this.registrationSuccess = true;
         const payoutSummary = payload.payout?.upiId
           ? ` Payout saved: ${payload.payout.upiId}`
