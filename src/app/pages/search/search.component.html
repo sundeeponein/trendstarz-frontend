@@ -8,7 +8,7 @@
           <h1 class="page-title">
             {{ pageTitle }}
           </h1>
-          <div class="page-usage" *ngIf="showUsageSummary">
+          <div class="page-usage d-none" *ngIf="showUsageSummary">
             <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary>
           </div>
         </div>
