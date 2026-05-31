@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -14,7 +14,8 @@ import { environment } from '../../../../environments/environment';
   standalone: true,
   imports: [CommonModule, RouterModule, ProfileSocialPlatformsComponent],
   templateUrl: './photographer-profile-view.component.html',
-  styleUrls: ['./photographer-profile-view.component.scss']
+  styleUrls: ['./photographer-profile-view.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PhotographerProfileViewComponent implements OnInit {
   photographer: any = null;
@@ -81,7 +82,7 @@ export class PhotographerProfileViewComponent implements OnInit {
         ? firstImage
         : (firstImage?.url || firstImage?.secure_url || '');
     const imageUrl = this.photographer?.profileImage || firstImageUrl;
-    return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';
+    return this.normalizeImageUrl(imageUrl, 220, 220) || 'assets/default-profile.png';
   }
   
   get isTrendstarzVerified(): boolean {
@@ -111,6 +112,35 @@ export class PhotographerProfileViewComponent implements OnInit {
       .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url))
       .filter((url: string) => !!url);
     return Array.from(new Set<string>(normalized));
+  }
+
+  getGalleryImageSrc(imageUrl: string): string {
+    if (!imageUrl) return '';
+    return this.normalizeImageUrl(imageUrl, 240, 240);
+  }
+
+  getProfileSrcSet(): string {
+    const firstImage = this.photographer?.profileImages?.[0];
+    const firstImageUrl =
+      typeof firstImage === 'string'
+        ? firstImage
+        : (firstImage?.url || firstImage?.secure_url || '');
+    const imageUrl = this.photographer?.profileImage || firstImageUrl;
+    if (!imageUrl) return '';
+    const base = this.normalizeImageUrl(imageUrl);
+    if (!base.includes('res.cloudinary.com')) return '';
+    return [110, 220, 330]
+      .map((size) => `${this.normalizeImageUrl(imageUrl, size, size)} ${size}w`)
+      .join(', ');
+  }
+
+  getGallerySrcSet(imageUrl: string): string {
+    if (!imageUrl) return '';
+    const base = this.normalizeImageUrl(imageUrl);
+    if (!base.includes('res.cloudinary.com')) return '';
+    return [240, 360, 480]
+      .map((size) => `${this.normalizeImageUrl(imageUrl, size, size)} ${size}w`)
+      .join(', ');
   }
 
   get mainHeadline(): string {
@@ -248,14 +278,29 @@ export class PhotographerProfileViewComponent implements OnInit {
     }
   }
 
-  private normalizeImageUrl(url?: string | null): string {
+  private optimizeCloudinaryUrl(url: string, width?: number, height?: number): string {
+    if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
+    const [prefix, suffix] = url.split('/upload/');
+    if (!prefix || !suffix) return url;
+
+    const transforms = ['f_auto', 'q_auto', 'dpr_auto'];
+    if (typeof width === 'number' && width > 0) transforms.push(`w_${Math.round(width)}`);
+    if (typeof height === 'number' && height > 0) {
+      transforms.push(`h_${Math.round(height)}`);
+      transforms.push('c_fill');
+    }
+
+    return `${prefix}/upload/${transforms.join(',')}/${suffix}`;
+  }
+
+  private normalizeImageUrl(url?: string | null, width?: number, height?: number): string {
     if (!url) return '';
     if (url.startsWith('/assets/') || url.startsWith('/assets')) {
       const api = environment.apiBaseUrl || '';
       const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
       return backend ? backend + url : url;
     }
-    return url;
+    return this.optimizeCloudinaryUrl(url, width, height);
   }
 
   constructor(

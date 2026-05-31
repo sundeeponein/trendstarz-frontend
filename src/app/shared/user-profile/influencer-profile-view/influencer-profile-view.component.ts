@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -18,7 +18,8 @@ import { environment } from '../../../../environments/environment';
   standalone: true,
   imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
   templateUrl: './influencer-profile-view.component.html',
-  styleUrls: ['./influencer-profile-view.component.scss']
+  styleUrls: ['./influencer-profile-view.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InfluencerProfileViewComponent implements OnInit {
   influencer: any;
@@ -89,31 +90,65 @@ export class InfluencerProfileViewComponent implements OnInit {
     }
   }
 
-  private normalizeImageUrl(url?: string | null): string {
+  private optimizeCloudinaryUrl(url: string, width?: number, height?: number): string {
+    if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
+    const [prefix, suffix] = url.split('/upload/');
+    if (!prefix || !suffix) return url;
+
+    const transforms = ['f_auto', 'q_auto', 'dpr_auto'];
+    if (typeof width === 'number' && width > 0) transforms.push(`w_${Math.round(width)}`);
+    if (typeof height === 'number' && height > 0) {
+      transforms.push(`h_${Math.round(height)}`);
+      transforms.push('c_fill');
+    }
+
+    return `${prefix}/upload/${transforms.join(',')}/${suffix}`;
+  }
+
+  private normalizeImageUrl(url?: string | null, width?: number, height?: number): string {
     if (!url) return '';
     if (url.startsWith('/assets/') || url.startsWith('/assets')) {
       const api = environment.apiBaseUrl || '';
       const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
       return backend ? backend + url : url;
     }
-    return url;
+    return this.optimizeCloudinaryUrl(url, width, height);
   }
 
   get displayImage(): string {
     const imageUrl = this.influencer?.profileImage || this.influencer?.profileImages?.[0]?.url;
-    return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';
+    return this.normalizeImageUrl(imageUrl, 220, 220) || 'assets/default-profile.png';
   }
 
   get galleryImages(): string[] {
     const raw = Array.isArray(this.influencer?.profileImages) ? this.influencer.profileImages : [];
     const normalized = raw
-      .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url))
+      .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url, 720, 720))
       .filter((url: string) => !!url);
     const unique: string[] = Array.from(new Set<string>(normalized));
     if (!unique.length && this.displayImage && this.displayImage !== 'assets/default-profile.png') {
       unique.push(this.displayImage);
     }
     return unique;
+  }
+
+  getProfileSrcSet(): string {
+    const imageUrl = this.influencer?.profileImage || this.influencer?.profileImages?.[0]?.url;
+    if (!imageUrl) return '';
+    const base = this.normalizeImageUrl(imageUrl);
+    if (!base.includes('res.cloudinary.com')) return '';
+    return [110, 220, 330]
+      .map((size) => `${this.normalizeImageUrl(imageUrl, size, size)} ${size}w`)
+      .join(', ');
+  }
+
+  getGallerySrcSet(imageUrl: string): string {
+    if (!imageUrl) return '';
+    const base = this.normalizeImageUrl(imageUrl);
+    if (!base.includes('res.cloudinary.com')) return '';
+    return [240, 360, 480]
+      .map((size) => `${this.normalizeImageUrl(imageUrl, size, size)} ${size}w`)
+      .join(', ');
   }
 
   getTotalFollowers(): number {

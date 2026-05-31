@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://www.google-analytics.com" crossorigin>
   <link rel="preconnect" href="https://www.clarity.ms" crossorigin>
   <link rel="canonical" href="https://trendstarz.in/">
-  <link rel="icon" type="image/x-icon" href="favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
 
@@ -35,35 +35,64 @@
     (function () {
       var path = (window.location && window.location.pathname) || '/';
       var internalPrefixes = ['/admin', '/brand-dashboard', '/influencer-dashboard', '/photographer-dashboard'];
+      var publicProfilePrefixes = ['/influencer/', '/photographer/', '/brand/'];
+      var infoRoutePrefixes = ['/how-it-works', '/features'];
       var isInternal = internalPrefixes.some(function (prefix) {
         return path === prefix || path.indexOf(prefix + '/') === 0;
       });
+      var isPublicProfilePage = publicProfilePrefixes.some(function (prefix) {
+        return path.indexOf(prefix) === 0;
+      });
+      var isInfoRoute = infoRoutePrefixes.some(function (prefix) {
+        return path === prefix || path.indexOf(prefix + '/') === 0;
+      });
+      var skipThirdPartyForPerf = isPublicProfilePage || isInfoRoute;
+
+      window.__trendstarzPathFlags = {
+        isInternal: isInternal,
+        isPublicProfilePage: isPublicProfilePage,
+        isInfoRoute: isInfoRoute,
+        skipThirdPartyForPerf: skipThirdPartyForPerf,
+      };
+
       if (isInternal) {
         window['ga-disable-G-5912TSJYW5'] = true;
       }
     })();
   </script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5912TSJYW5"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+    (function () {
+      var flags = window.__trendstarzPathFlags || {};
+      if (flags.skipThirdPartyForPerf) return;
 
-    gtag('config', 'G-5912TSJYW5', { send_page_view: false });
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-5912TSJYW5';
+      document.head.appendChild(gaScript);
+
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-5912TSJYW5', { send_page_view: false });
+
+      window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+      var gtmScript = document.createElement('script');
+      gtmScript.async = true;
+      gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-N5XKJKRP';
+      document.head.appendChild(gtmScript);
+    })();
   </script>
-
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-N5XKJKRP');</script>
-  <!-- End Google Tag Manager -->
 
   <script type="text/javascript">
     (function () {
+      var flags = window.__trendstarzPathFlags || {};
+      var shouldSkipClarity = !!flags.skipThirdPartyForPerf;
+      if (shouldSkipClarity) {
+        return;
+      }
+
       function loadClarity() {
         if (window['__trendstarzClarityLoaded']) return;
         window['__trendstarzClarityLoaded'] = true;
@@ -89,10 +118,15 @@
 
 </head>
 <body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N5XKJKRP"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
+  <script>
+    (function () {
+      var flags = window.__trendstarzPathFlags || {};
+      if (flags.skipThirdPartyForPerf) return;
+      var fallback = document.createElement('noscript');
+      fallback.innerHTML = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N5XKJKRP" height="0" width="0" style="display:none;visibility:hidden"></iframe>';
+      document.body.insertBefore(fallback, document.body.firstChild);
+    })();
+  </script>
   <app-root></app-root>
 </body>
 </html>

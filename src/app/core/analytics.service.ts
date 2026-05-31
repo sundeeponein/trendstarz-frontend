@@ -26,6 +26,12 @@ export class AnalyticsService implements OnDestroy {
   private readonly FLUSH_INTERVAL_MS = 30000; // 30 seconds
   private readonly ANALYTICS_ENDPOINT = `${environment.apiBaseUrl}/analytics/events`;
   private readonly GA_MEASUREMENT_ID = 'G-5912TSJYW5';
+  private readonly onPageHide = () => this.flush();
+  private readonly onVisibilityChange = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      this.flush();
+    }
+  };
 
   private readonly blockedPathPrefixes = ['/admin'];
   private readonly publicExactPaths = new Set([
@@ -80,15 +86,19 @@ export class AnalyticsService implements OnDestroy {
         }
       }, this.FLUSH_INTERVAL_MS);
 
-      // Flush on page unload
-      window.addEventListener('beforeunload', () => this.flush());
-      window.addEventListener('unload', () => this.flush());
+      // Flush when tab is hidden or page is put in bfcache-friendly pagehide state.
+      window.addEventListener('pagehide', this.onPageHide);
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
     }
   }
 
   private cleanup(): void {
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pagehide', this.onPageHide);
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
     this.flush();
   }

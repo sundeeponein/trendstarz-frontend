@@ -21,7 +21,7 @@
       <!-- Profile card -->
       <div class="profile-card">
         <div class="profile-photo-wrap">
-          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
+          <img [src]="displayImage" [attr.srcset]="getProfileSrcSet()" sizes="110px" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
           <span class="pro-badge" *ngIf="influencer.isPremium">PRO</span>
         </div>
         <h2 class="profile-name">{{ influencer.name }}</h2>
@@ -153,36 +153,48 @@
         </p>
       </div>
 
-      <div class="info-card" *ngIf="galleryImages.length">
-        <h5 class="section-label">PROFILE IMAGES</h5>
-        <div class="profile-gallery-grid">
-          <img
-            *ngFor="let imageUrl of galleryImages"
-            [src]="imageUrl"
-            (error)="onImgError($event)"
-            alt="Influencer profile"
-            class="profile-gallery-image"
-            width="360"
-            height="360"
-            loading="lazy"
-            decoding="async"
-          />
+      @defer (on idle) {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PROFILE IMAGES</h5>
+          <div class="profile-gallery-grid">
+            <img
+              *ngFor="let imageUrl of galleryImages"
+              [src]="imageUrl"
+              (error)="onImgError($event)"
+              [attr.srcset]="getGallerySrcSet(imageUrl)"
+              sizes="(max-width: 768px) 44vw, 240px"
+              alt="Influencer profile"
+              class="profile-gallery-image"
+              width="360"
+              height="360"
+              loading="lazy"
+              fetchpriority="low"
+              decoding="async"
+            />
+          </div>
         </div>
-      </div>
+      } @placeholder {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PROFILE IMAGES</h5>
+          <p class="about-text text-muted mb-0">Loading images...</p>
+        </div>
+      }
 
       <!-- Social Platforms & Pricing -->
-      <app-profile-social-platforms
-        title="SOCIAL PLATFORMS & PRICING"
-        variant="influencer"
-        [platforms]="influencer.socialMedia || []"
-        [locked]="!!influencer.socialMediaRestricted"
-        lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
-        [canOpen]="canOpenSocialProfiles"
-        [isProViewer]="isProViewer"
-        [showEngagement]="true"
-        [showContentTypes]="true"
-        (platformClick)="onPlatformClick($event)"
-      ></app-profile-social-platforms>
+      @defer (on idle) {
+        <app-profile-social-platforms
+          title="SOCIAL PLATFORMS & PRICING"
+          variant="influencer"
+          [platforms]="influencer.socialMedia || []"
+          [locked]="!!influencer.socialMediaRestricted"
+          lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+          [canOpen]="canOpenSocialProfiles"
+          [isProViewer]="isProViewer"
+          [showEngagement]="true"
+          [showContentTypes]="true"
+          (platformClick)="onPlatformClick($event)"
+        ></app-profile-social-platforms>
+      }
 
     </div>
 
@@ -322,24 +334,26 @@
     </div>
 
     <!-- Reviews Section -->
-    <div class="reviews-wrapper" *ngIf="influencer">
-      <!-- Brand (premium) write review button -->
-      <div class="write-review-cta" *ngIf="isBrandViewer && isProViewer && completedInviteId">
-        <button class="btn-write-review" (click)="showWriteReview = true">
-          <i class="bi bi-pencil-square"></i> Write a Review
-        </button>
-      </div>
-      <div class="write-review-upgrade" *ngIf="isBrandViewer && !isProViewer">
-        <i class="bi bi-lock-fill"></i>
-        Upgrade to <strong>Pro</strong> to write reviews for influencers.
-      </div>
+    @defer (on idle) {
+      <div class="reviews-wrapper" *ngIf="influencer">
+        <!-- Brand (premium) write review button -->
+        <div class="write-review-cta" *ngIf="isBrandViewer && isProViewer && completedInviteId">
+          <button class="btn-write-review" (click)="showWriteReview = true">
+            <i class="bi bi-pencil-square"></i> Write a Review
+          </button>
+        </div>
+        <div class="write-review-upgrade" *ngIf="isBrandViewer && !isProViewer">
+          <i class="bi bi-lock-fill"></i>
+          Upgrade to <strong>Pro</strong> to write reviews for influencers.
+        </div>
 
-      <!-- Review list (shown to premium influencers and premium brands) -->
-      <app-review-list
-        [targetId]="influencer._id"
-        [canRead]="isProViewer"
-      ></app-review-list>
-    </div>
+        <!-- Review list (shown to premium influencers and premium brands) -->
+        <app-review-list
+          [targetId]="influencer._id"
+          [canRead]="isProViewer"
+        ></app-review-list>
+      </div>
+    }
 
     <!-- Write review modal -->
     <app-write-review

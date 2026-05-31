@@ -14,7 +14,7 @@
     <div class="left-col">
       <div class="profile-card">
         <div class="profile-photo-wrap">
-          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
+            <img [src]="displayImage" [attr.srcset]="getProfileSrcSet()" sizes="110px" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
           <span class="pro-badge" *ngIf="photographer.isPremium">PRO</span>
         </div>
 
@@ -111,36 +111,47 @@
         </p>
       </div>
 
-      <div class="info-card" *ngIf="galleryImages.length">
-        <h5 class="section-label">PORTFOLIO IMAGES</h5>
-        <div class="profile-gallery-grid">
-          <img *ngFor="let imageUrl of galleryImages" [src]="imageUrl" (error)="onImgError($event)" alt="Photographer profile" class="profile-gallery-image" width="360" height="360" loading="lazy" decoding="async" />
-        </div>
-      </div>
-
-      <div class="info-card" *ngIf="enabledPricing.length">
-        <h5 class="section-label">SERVICES & PRICING</h5>
-        <div class="pricing-list">
-          <div class="pricing-row" *ngFor="let item of enabledPricing">
-            <span class="pricing-name">{{ getPriceLabel(item) }}</span>
-            <span class="pricing-value text-black" *ngIf="isProViewer">₹{{ item.price | number }}</span>
-            <span class="pricing-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+      @defer (on idle) {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PORTFOLIO IMAGES</h5>
+          <div class="profile-gallery-grid">
+            <img *ngFor="let imageUrl of galleryImages" [src]="getGalleryImageSrc(imageUrl)" (error)="onImgError($event)" [attr.srcset]="getGallerySrcSet(imageUrl)" sizes="(max-width: 768px) 44vw, 240px" alt="Photographer profile" class="profile-gallery-image" width="360" height="360" loading="lazy" fetchpriority="low" decoding="async" />
           </div>
         </div>
-      </div>
+      } @placeholder {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PORTFOLIO IMAGES</h5>
+          <p class="about-text text-muted mb-0">Loading images...</p>
+        </div>
+      }
 
-      <app-profile-social-platforms
-        title="SOCIAL PLATFORMS"
-        variant="influencer"
-        [platforms]="socialPlatforms"
-        [locked]="!!photographer.socialMediaRestricted"
-        lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
-        [canOpen]="canOpenSocialProfiles"
-        [isProViewer]="isProViewer"
-        [showEngagement]="false"
-        [showContentTypes]="false"
-        (platformClick)="onPlatformClick($event)"
-      ></app-profile-social-platforms>
+      @defer (on idle) {
+        <div class="info-card" *ngIf="enabledPricing.length">
+          <h5 class="section-label">SERVICES & PRICING</h5>
+          <div class="pricing-list">
+            <div class="pricing-row" *ngFor="let item of enabledPricing">
+              <span class="pricing-name">{{ getPriceLabel(item) }}</span>
+              <span class="pricing-value text-black" *ngIf="isProViewer">₹{{ item.price | number }}</span>
+              <span class="pricing-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      @defer (on idle) {
+        <app-profile-social-platforms
+          title="SOCIAL PLATFORMS"
+          variant="influencer"
+          [platforms]="socialPlatforms"
+          [locked]="!!photographer.socialMediaRestricted"
+          lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+          [canOpen]="canOpenSocialProfiles"
+          [isProViewer]="isProViewer"
+          [showEngagement]="false"
+          [showContentTypes]="false"
+          (platformClick)="onPlatformClick($event)"
+        ></app-profile-social-platforms>
+      }
     </div>
 
     <div class="right-col">
