@@ -3,7 +3,7 @@
   <!-- ── Success Screen ───────────────────────────────── -->
   <div *ngIf="submitted" class="success-screen">
     <div class="success-icon"><i class="bi bi-check-circle-fill"></i></div>
-    <h2>Report Submitted!</h2>
+    <h2>Submitted For Review</h2>
     <p>The brand will review your post within 48 hours.</p>
     <button class="btn-orange" (click)="goBack()">Back to Dashboard</button>
   </div>
@@ -34,39 +34,36 @@
     <!-- Campaign stage chip -->
     <div class="stage-chip-row mb-3">
       <span class="stage-chip"
-            [class.stage-accepted]="inviteStatus === 'accepted' || inviteStatus === 'payment_confirmed' || inviteStatus === 'working'"
-            [class.stage-submitted]="inviteStatus === 'submitted'"
-            [class.stage-completed]="inviteStatus === 'completed' || inviteStatus === 'approved'"
-            [class.stage-disputed]="inviteStatus === 'disputed'">
-        <i class="bi"
-           [class.bi-hourglass-split]="inviteStatus === 'submitted'"
-           [class.bi-check-circle-fill]="inviteStatus === 'completed' || inviteStatus === 'approved'"
-           [class.bi-exclamation-triangle-fill]="inviteStatus === 'disputed'"
-           [class.bi-calendar-check]="inviteStatus === 'accepted' || inviteStatus === 'payment_confirmed' || inviteStatus === 'working'"></i>
+            [class.stage-working]="inviteStageKey === 'working'"
+            [class.stage-submitted]="inviteStageKey === 'submitted'"
+            [class.stage-under-review]="inviteStageKey === 'under_review'"
+            [class.stage-completed]="inviteStageKey === 'completed'"
+            [class.stage-payout-released]="inviteStageKey === 'payout_released'">
+        <i class="bi" [ngClass]="inviteStageIconClass"></i>
         Campaign stage: <strong>{{ inviteStatusLabel }}</strong>
       </span>
     </div>
 
 
-    <!-- Read-only notice when campaign is completed/approved -->
+    <!-- Read-only notice when campaign is completed/payout released -->
     <div *ngIf="isReadOnly" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
       <i class="bi bi-check-circle-fill" style="color:#22c55e"></i>
-      This campaign has been {{ inviteStatus }}. Your submission is locked and cannot be edited.
+      {{ readOnlyStatusMessage }}
     </div>
 
     <div *ngIf="isAwaitingPaymentConfirmation" class="alert-info mb-3" style="border-left: 4px solid #3b82f6; background: #eff6ff; color: #1e3a8a;">
       <i class="bi bi-clock-history" style="color:#3b82f6"></i>
-      Payment verification is in progress. You can start work after status changes to <strong>Collaboration Confirmed</strong>.
+      Payment verification is in progress. You can start work once the status moves to <strong>Working</strong>.
     </div>
 
     <div *ngIf="isCollaborationConfirmedWaitingStart" class="alert-info mb-3" style="border-left: 4px solid #10b981; background: #ecfdf5; color: #065f46;">
       <i class="bi bi-check-circle-fill" style="color:#10b981"></i>
-      Collaboration Confirmed. Post submission will be enabled when campaign stage moves to <strong>Working</strong>.
+      You are now in the <strong>Working</strong> stage. Submit your post URL below to continue.
     </div>
 
     <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
       <div class="summary-header">
-        <div class="summary-title">Submitted details</div>
+        <div class="summary-title">Shared details</div>
         <div class="summary-subtitle">What you shared for this campaign</div>
       </div>
 

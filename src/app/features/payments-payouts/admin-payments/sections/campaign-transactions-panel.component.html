@@ -65,7 +65,16 @@
       <tr *ngFor="let tx of visibleTransactions">
         <td>{{ ui.getTransactionLabel(tx.transactionType) }}</td>
         <td><code>{{ tx.campaignId }}</code></td>
-        <td>{{ tx.payerRole }} → {{ tx.recipientRole }}</td>
+        <td>
+          <div>
+            <strong>{{ partyName(tx, 'payer') }}</strong> ({{ tx.payerRole }})
+            <span>→</span>
+            <strong>{{ partyName(tx, 'recipient') }}</strong> ({{ tx.recipientRole }})
+          </div>
+          <div class="small text-muted">
+            Pay to: {{ payoutDestinationLabel(tx) }}
+          </div>
+        </td>
         <td class="col-amount">{{ ui.formatPaise(tx.payerTotal) }}</td>
         <td>{{ ui.formatPaise(tx.platformFee) }}</td>
         <td>{{ ui.formatPaise(tx.recipientPayout) }}</td>
@@ -75,9 +84,8 @@
         </td>
         <td>{{ ui.collectionStatusLabel(tx.collectionStatus) }}</td>
         <td>
-          {{ ui.payoutStatusLabel(tx.payoutStatus) }}
-          <span class="dispute-pill" *ngIf="tx.disputeStatus === 'open'">
-            <i class="bi bi-lock-fill"></i> Frozen
+          <span class="badge rounded-pill" [ngClass]="reviewFlowStatusClass(tx)">
+            {{ reviewFlowStatusLabel(tx) }}
           </span>
         </td>
         <td class="col-actions">
@@ -87,9 +95,16 @@
           <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)">
             Reject
           </button>
-          <button class="btn btn-warning btn-sm me-1" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" [disabled]="!canMarkPaid(tx)" (click)="openPayoutModal(tx)">
-            Mark Paid
+          <button class="btn btn-warning btn-sm me-1"
+                  *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && isManualSettlement(tx)"
+                  (click)="openPayoutModal(tx)"
+                  [disabled]="!canMarkPaid(tx)"
+                  [title]="canMarkPaid(tx) ? markPaidActionLabel(tx) : markPaidDisabledReason(tx)">
+            {{ markPaidActionLabel(tx) }}
           </button>
+          <span class="small text-muted d-block mb-1" *ngIf="!canMarkPaid(tx) && tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && (tx.gateway === 'razorpay' || tx.gateway === 'stripe')">
+            Auto settlement enabled
+          </span>
           <!-- Dispute resolve button -->
           <button class="btn btn-sm btn-dispute-resolve" *ngIf="tx.disputeStatus === 'open'" (click)="openDisputeModal(tx)">
             <i class="bi bi-shield-exclamation"></i> Resolve Dispute
@@ -128,6 +143,18 @@
     <h2>Mark Payout Paid</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Payout amount: <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      Invite status: <strong>{{ inviteStatusLabel(selectedTx) }}</strong> ·
+      Agreed payout: <strong>{{ agreedAmountSummary(selectedTx) }}</strong> ·
+      Unlock: <strong>{{ selectedTx.inviteSnapshot?.unlocked ? 'Unlocked' : 'Locked' }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      Offer trail: <strong>{{ offerTrailSummary(selectedTx) }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      Release mode: <strong>{{ settlementModeLabel(selectedTx) }}</strong> ·
+      Send to: <strong>{{ payoutDestinationLabel(selectedTx) }}</strong>
     </p>
     <div class="recipient-info" *ngIf="selectedTx?.recipient as r">
       <div class="ri-row"><i class="bi bi-person-circle"></i>

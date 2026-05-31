@@ -467,6 +467,7 @@ export class CampaignFormComponent implements OnInit {
 
     this.form.get('campaignMode')?.valueChanges.subscribe(() => {
       this.normalizeMinParticipantsField();
+      this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     });
 
     this.form.get('maxInfluencers')?.valueChanges.subscribe(() => {
@@ -1186,6 +1187,7 @@ export class CampaignFormComponent implements OnInit {
     // Build the shared context — single source of truth for what's required.
     const ctx: CampaignRequiredFieldsCtx = {
       campaignType: type,
+      campaignMode: String(this.f['campaignMode']?.value || 'invite_only'),
       ownerType: this.isPhotographerCreator ? 'photographer' : 'brand',
       inviteRecipientRole: this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer',
       productPaymentMode: String(this.form.get('productPaymentMode')?.value || 'product_only'),
@@ -1792,7 +1794,8 @@ export class CampaignFormComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    if (this.selectedInfluencerIds.size === 0) {
+    const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
+    if (!isOpenCampaign && this.selectedInfluencerIds.size === 0) {
       this.toast.error(`Please select at least one ${this.inviteRecipientLabelSingular.toLowerCase()} to invite.`);
       this.uploading = false;
       return;

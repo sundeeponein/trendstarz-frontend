@@ -321,6 +321,13 @@ export class CampaignReviewComponent implements OnInit {
     const rows = Array.isArray(invites) ? invites : [];
     return rows
       .map((invite: any) => {
+        const counter = invite?.counterOffer || {};
+        const campaignPricePaise = Number(
+          invite?.campaignId?.pricePerInfluencer
+          || campaign?.pricePerInfluencer
+          || campaign?.amount
+          || 0,
+        );
         const campaignRecipientRole = String(
           campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
         ).trim().toLowerCase();
@@ -358,6 +365,15 @@ export class CampaignReviewComponent implements OnInit {
           selectedPostDate: invite?.selectedPostDate || null,
           acceptedAt: invite?.acceptedAt || null,
           updatedAt: invite?.updatedAt || invite?.createdAt || null,
+          campaignAmountPaise: campaignPricePaise,
+          agreedAmount: Number(invite?.agreedAmount || 0),
+          agreedAmountPaise: Number(invite?.agreedAmountPaise || 0),
+          counterOfferStatus: String(counter?.status || '').toLowerCase(),
+          counterOfferedAmount: Number(counter?.offeredAmount || 0),
+          counterOfferedAmountPaise: Number(counter?.offeredAmountPaise || 0),
+          counterRequestedAmount: Number(counter?.requestedAmount || 0),
+          counterRequestedAmountPaise: Number(counter?.requestedAmountPaise || 0),
+          counterOffer: invite?.counterOffer || null,
         };
       })
       .sort((a: any, b: any) => {
@@ -669,7 +685,7 @@ export class CampaignReviewComponent implements OnInit {
       counts.set(key, (counts.get(key) || 0) + 1);
     }
 
-    const order = ['accepted', 'submitted', 'working', 'payment_confirmed', 'pending', 'invited', 'withdrawn', 'declined', 'rejected', 'completed', 'disputed'];
+    const order = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed', 'pending', 'invited', 'withdrawn', 'declined', 'rejected'];
     return order
       .filter((key) => counts.has(key))
       .slice(0, 4)
@@ -685,15 +701,16 @@ export class CampaignReviewComponent implements OnInit {
     const map: Record<string, string> = {
       pending: 'Pending',
       invited: 'Invited',
-      accepted: 'Accepted',
-      payment_confirmed: 'Payment Confirmed',
+      accepted: 'Working',
+      payment_confirmed: 'Working',
       working: 'Working',
-      submitted: 'Submitted',
+      submitted: 'Under Review',
       completed: 'Completed',
+      approved: 'Payout Released',
       withdrawn: 'Withdrawn',
       declined: 'Declined',
       rejected: 'Rejected',
-      disputed: 'Disputed',
+      disputed: 'Under Review',
     };
     return map[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }

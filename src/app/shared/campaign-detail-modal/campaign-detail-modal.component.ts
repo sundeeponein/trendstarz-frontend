@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { UserAvatarComponent } from '../components/user-avatar/user-avatar.component';
+import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -30,7 +31,7 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-detail-modal',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent, OfferTrailComponent],
   templateUrl: './campaign-detail-modal.component.html',
   styleUrls: ['./campaign-detail-modal.component.scss']
 })
@@ -66,7 +67,7 @@ export class CampaignDetailModalComponent implements OnChanges {
   selectedContentTypeKey = '';
   counterEditing = false;
   counterAmountInput: number | null = null;
-  counterMessageInput = '';
+  counterReasonInput = '';
   adminInviteStatusFilter = 'all';
   toastError = '';
   private toastTimer: any;
@@ -80,15 +81,37 @@ export class CampaignDetailModalComponent implements OnChanges {
     }
   }
 
-  private get campaign(): any {
+  get campaign(): any {
     return this.invite?.campaign || this.invite?.campaignId || {};
   }
   private get brand(): any {
     return this.invite?.brand || this.invite?.brandId || {};
   }
 
+  get campaignImageUrls(): string[] {
+    const c = this.campaign || {};
+    const candidates: unknown[] = [];
+    if (typeof c?.image?.url === 'string') candidates.push(c.image.url);
+    if (typeof c?.image === 'string') candidates.push(c.image);
+    if (Array.isArray(c?.images)) candidates.push(...c.images);
+    if (Array.isArray(c?.galleryImages)) candidates.push(...c.galleryImages);
+
+    const urls: string[] = [];
+    for (const item of candidates) {
+      if (typeof item === 'string' && item.trim()) {
+        urls.push(item.trim());
+        continue;
+      }
+      if (item && typeof item === 'object') {
+        const maybeUrl = String((item as any)?.url || (item as any)?.src || '').trim();
+        if (maybeUrl) urls.push(maybeUrl);
+      }
+    }
+    return Array.from(new Set(urls));
+  }
+
   get campaignImageUrl(): string {
-    return this.campaign?.image?.url || '';
+    return this.campaignImageUrls[0] || '';
   }
 
   onCampaignImgError(event: Event) {
@@ -275,6 +298,21 @@ export class CampaignDetailModalComponent implements OnChanges {
   }
 
   get yourPayoutText(): string {
+    const status = this.statusKey;
+    const acceptedOrLater = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(status);
+    if (acceptedOrLater) {
+      const agreedPaise = Number(this.invite?.agreedAmountPaise || 0);
+      const agreedRupees = Number(this.invite?.agreedAmount || 0);
+      if (agreedPaise > 0) {
+        const rupees = Math.floor(agreedPaise / 100);
+        return `₹${rupees.toLocaleString('en-IN')}`;
+      }
+      if (agreedRupees > 0) {
+        return `₹${agreedRupees.toLocaleString('en-IN')}`;
+      }
+    }
+
     const selected = this.selectedContentTypeOption;
     if (selected?.price) {
       return `₹${selected.price.toLocaleString('en-IN')}`;
@@ -342,6 +380,14 @@ export class CampaignDetailModalComponent implements OnChanges {
     }
     const legacy = this.campaign?.deliverables;
     return Array.isArray(legacy) ? legacy : [];
+  }
+
+  get deliverables(): string[] {
+    const raw = this.campaign?.deliverables;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item: unknown) => String(item || '').trim())
+      .filter(Boolean);
   }
 
 
@@ -452,10 +498,66 @@ export class CampaignDetailModalComponent implements OnChanges {
     return this.isPending && !this.hasUsedCounterOffer;
   }
 
+  get isPhotographerCollabFlow(): boolean {
+    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    const requestKind = String(this.campaign?.requestKind || '').toLowerCase();
+    const brandRole = String(this.brand?.role || '').toLowerCase();
+    return ownerType === 'photographer' || requestKind === 'photographer_collaboration' || brandRole === 'photographer';
+  }
+
+  get counterReasonOptions(): string[] {
+    if (this.isPhotographerCollabFlow) {
+      return [
+        'Travel effort',
+        'Editing effort',
+        'Equipment setup',
+        'Long shoot duration',
+        'Outdoor location effort',
+        'Additional revisions',
+      ];
+    }
+    if (this.campaignTypeKey === 'invite_location') {
+      return [
+        'Travel effort',
+        'Event duration',
+        'Equipment requirement',
+        'Outdoor shoot effort',
+        'Long shoot hours',
+        'Editing effort',
+        'Additional deliverables',
+      ];
+    }
+    return [
+      'Higher editing effort',
+      'Long-form content',
+      'Usage rights',
+      'Tight deadline',
+      'Additional revisions',
+      'Audience reach',
+      'Custom creative requirement',
+    ];
+  }
+
+  get selectedCounterReason(): string {
+    const reason = String(this.counterReasonInput || '').trim();
+    return this.counterReasonOptions.includes(reason) ? reason : '';
+  }
+
+  get counterReasonText(): string {
+    return String(this.invite?.counterOffer?.message || '').trim();
+  }
+
   get counterHintText(): string {
     if (!this.hasValidCounterAmount) return '';
     return `Counter offer: ₹${Number(this.counterAmountInput || 0).toLocaleString('en-IN')}`;
   }
+
+  private formatInr(value: number): string {
+    const safe = Number(value || 0);
+    if (!Number.isFinite(safe) || safe <= 0) return '₹0';
+    return `₹${safe.toLocaleString('en-IN')}`;
+  }
+
 
   get specialInstructions(): string {
     return (this.campaign?.specialInstructions || '').trim();
@@ -543,15 +645,16 @@ export class CampaignDetailModalComponent implements OnChanges {
     const labels: Record<string, string> = {
       pending: 'Pending',
       invited: 'Invited',
-      accepted: 'Accepted',
-      payment_confirmed: 'Payment Confirmed',
+      accepted: 'Working',
+      payment_confirmed: 'Working',
       working: 'Working',
-      submitted: 'Submitted',
+      submitted: 'Under Review',
       completed: 'Completed',
+      approved: 'Payout Released',
       withdrawn: 'Withdrawn',
       declined: 'Declined',
       rejected: 'Rejected',
-      disputed: 'Disputed',
+      disputed: 'Under Review',
       other: 'Other',
     };
     return labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -744,7 +847,7 @@ export class CampaignDetailModalComponent implements OnChanges {
     this.counterEditing = !this.counterEditing;
     if (!this.counterEditing) {
       this.counterAmountInput = null;
-      this.counterMessageInput = '';
+      this.counterReasonInput = '';
     }
     this.toastError = '';
   }
@@ -786,7 +889,7 @@ export class CampaignDetailModalComponent implements OnChanges {
       contentType,
       responseType: 'counter',
       counterAmount: Number(this.counterAmountInput || 0),
-      counterMessage: String(this.counterMessageInput || '').trim() || undefined,
+      counterMessage: this.selectedCounterReason || undefined,
     });
   }
 

@@ -56,6 +56,21 @@ export interface CampaignTransaction {
     email?: string;
     mobile?: string;
   };
+  inviteSnapshot?: {
+    id?: string;
+    status?: string;
+    unlocked?: boolean;
+    unlockType?: string;
+    agreedAmount?: number;
+    agreedAmountPaise?: number;
+    counterOfferStatus?: string;
+    counterOfferedAmount?: number;
+    counterOfferedAmountPaise?: number;
+    counterRequestedAmount?: number;
+    counterRequestedAmountPaise?: number;
+    counterResolvedAt?: string | null;
+    acceptedAt?: string | null;
+  } | null;
 }
 
 export interface TransactionSummary {

@@ -90,6 +90,22 @@
   display: block;
 }
 
+.cdm-campaign-gallery {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  background: #fff;
+  border-top: 1px solid #f2f2f2;
+}
+
+.cdm-campaign-gallery-image {
+  width: 72px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ececec;
+}
+
 /* Stat cards */
 .cdm-stats {
   display: grid;
@@ -610,6 +626,17 @@
 .cdm-counter-hint {
   font-size: 0.76rem;
   color: #6b7280;
+}
+
+.cdm-price-trace {
+  margin: -4px 0 16px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #e6edf8;
+  background: #f7fbff;
+  font-size: 0.84rem;
+  color: #334155;
+  font-weight: 600;
 }
 
 .cdm-btn {

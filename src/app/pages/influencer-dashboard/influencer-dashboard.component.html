@@ -123,7 +123,7 @@
         <div class="card attention-card disputed shadow-sm border-0">
           <div class="card-body py-3">
             <div class="display-6 fw-bold mb-1 text-danger">{{ attentionCounts.disputedAgainstMe }}</div>
-            <div class="text-muted">Disputed invites</div>
+            <div class="text-muted">Invites under review</div>
           </div>
         </div>
       </div>
@@ -142,14 +142,14 @@
           <div class="card-body py-3">
             <div class="display-6 fw-bold mb-1" [ngClass]="{
               'text-warning': stat.label === 'Invited',
-              'text-success': stat.label === 'Accepted',
-              'text-primary': stat.label === 'Submitted',
+              'text-success': stat.label === 'Working',
+              'text-primary': stat.label === 'Under Review',
               'text-dark': stat.label === 'Completed'
             }">{{ stat.value }}</div>
             <div class="text-muted">{{ stat.label }}</div>
             <span *ngIf="stat.label === 'Invited'" class="badge rounded-pill bg-warning text-dark">Invited</span>
-            <span *ngIf="stat.label === 'Accepted'" class="badge rounded-pill bg-success">Accepted</span>
-            <span *ngIf="stat.label === 'Submitted'" class="badge rounded-pill bg-info text-dark">Submitted</span>
+            <span *ngIf="stat.label === 'Working'" class="badge rounded-pill bg-success">Working</span>
+            <span *ngIf="stat.label === 'Under Review'" class="badge rounded-pill bg-warning text-dark">Under Review</span>
             <span *ngIf="stat.label === 'Completed'" class="badge rounded-pill bg-dark">Completed</span>
           </div>
         </div>
@@ -344,7 +344,7 @@
     <div *ngIf="activeCampaigns.length === 0" class="section-empty py-3">
       <div class="section-empty-icon"><i class="bi bi-rocket"></i></div>
       <div class="section-empty-title">No active work</div>
-      <div class="section-empty-desc">Projects you've accepted will appear here.</div>
+      <div class="section-empty-desc">Projects in your Working stage will appear here.</div>
     </div>
     <div *ngFor="let c of activeCampaigns" class="active-camp-card">
       <div class="d-flex align-items-start gap-2" (click)="openDetail({campaignId: c, inviteStatus: c.inviteStatus})">
@@ -356,10 +356,11 @@
             <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
           </div>
         </div>
-        <span *ngIf="c.inviteStatus === 'accepted'" class="badge rounded-pill bg-success ms-2">Accepted</span>
-        <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Collaboration Confirmed</span>
-        <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">In Progress</span>
-        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Submitted</span>
+        <span *ngIf="c.inviteStatus === 'accepted' && c.campaignType === 'paid_collab'" class="badge rounded-pill bg-warning text-dark ms-2">Confirmation Pending</span>
+        <span *ngIf="c.inviteStatus === 'accepted' && c.campaignType !== 'paid_collab'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
+        <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
+        <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
+        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-warning text-dark ms-2">Under Review</span>
         <span *ngIf="c.inviteStatus === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
       </div>
       <div class="active-camp-meta mt-2">
@@ -370,12 +371,12 @@
       <div class="payment-awaited-row mt-2"
            *ngIf="c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted'">
         <i class="bi bi-clock-history"></i>
-        <span>Awaiting brand confirmation to begin — you'll be notified once confirmed.</span>
+        <span>Waiting for host confirmation to unlock coordination details.</span>
       </div>
-      <!-- Payment confirmed: start work prompt -->
+      <!-- Working stage: start work prompt -->
       <div class="payment-confirmed-row mt-2" *ngIf="c.inviteStatus === 'payment_confirmed'">
         <i class="bi bi-check-circle-fill"></i>
-        <span>Collaboration confirmed! Begin creating your content.</span>
+        <span>You are ready to work. Begin creating your content.</span>
       </div>
       <!-- Submit/view CTA: hide only when awaiting payment for paid_collab -->
       <div class="submit-post-cta mt-2"
@@ -386,7 +387,7 @@
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">
-        <i class="bi bi-hourglass-split"></i> Post submitted — awaiting brand review
+        <i class="bi bi-hourglass-split"></i> Under review by the brand
       </div>
     </div>
     <div class="txn-see-all" *ngIf="activeCampaigns.length">
@@ -407,7 +408,7 @@
     <div *ngIf="completedCampaigns.length === 0" class="section-empty py-3">
       <div class="section-empty-icon"><i class="bi bi-check2-circle"></i></div>
       <div class="section-empty-title">No completed campaigns yet</div>
-      <div class="section-empty-desc">Campaigns approved by the brand will appear here.</div>
+      <div class="section-empty-desc">Campaigns in Completed or Payout Released will appear here.</div>
     </div>
     <div *ngFor="let c of completedCampaigns" class="active-camp-card completed">
       <div class="d-flex align-items-start gap-2" (click)="goToStats(c)">
@@ -419,8 +420,9 @@
             <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
           </div>
         </div>
-        <span *ngIf="c.inviteStatus === 'completed' || c.inviteStatus === 'approved'" class="badge rounded-pill bg-dark ms-2">Completed</span>
-        <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-danger ms-2">Disputed</span>
+        <span *ngIf="c.inviteStatus === 'completed'" class="badge rounded-pill bg-dark ms-2">Completed</span>
+        <span *ngIf="c.inviteStatus === 'approved'" class="badge rounded-pill bg-info text-dark ms-2">Payout Released</span>
+        <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-warning text-dark ms-2">Under Review</span>
       </div>
       <div class="active-camp-meta mt-2">
         <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>

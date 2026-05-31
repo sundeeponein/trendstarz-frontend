@@ -18,8 +18,8 @@
     <!-- Header -->
     <div class="ocp-header">
       <div class="ocp-thumb-wrap" [style.background]="getInitialsColor(openCampaignPreview.title)">
-        <img class="ocp-thumb" *ngIf="openCampaignPreview.image?.url" [src]="openCampaignPreview.image!.url" alt="" />
-        <div class="ocp-thumb-initials" *ngIf="!openCampaignPreview.image?.url">{{ getInfluencerInitials(openCampaignPreview.title) }}</div>
+        <img class="ocp-thumb" *ngIf="getCampaignPrimaryImage(openCampaignPreview)" [src]="getCampaignPrimaryImage(openCampaignPreview)!" alt="" />
+        <div class="ocp-thumb-initials" *ngIf="!getCampaignPrimaryImage(openCampaignPreview)">{{ getInfluencerInitials(openCampaignPreview.title) }}</div>
       </div>
       <div class="ocp-header-text">
         <h4 class="ocp-title">{{ openCampaignPreview.title }}</h4>
@@ -532,8 +532,8 @@
           <!-- LEFT: thumbnail + title + category tags -->
           <div class="ccard-left">
             <div class="ccard-thumb-wrap" [style.background]="getInitialsColor(c.title)">
-              <img class="ccard-thumb" *ngIf="c.image?.url" [src]="c.image!.url" (error)="onImgError($event)" alt="" />
-              <div class="ccard-thumb-initials" *ngIf="!c.image?.url">{{ getInfluencerInitials(c.title) }}</div>
+              <img class="ccard-thumb" *ngIf="getCampaignPrimaryImage(c)" [src]="getCampaignPrimaryImage(c)!" (error)="onImgError($event)" alt="" />
+              <div class="ccard-thumb-initials" *ngIf="!getCampaignPrimaryImage(c)">{{ getInfluencerInitials(c.title) }}</div>
             </div>
             <div class="ccard-title-wrap">
               <span class="ccard-title">{{ c.title }}</span>
@@ -762,8 +762,8 @@
               </div>
               <ng-container *ngFor="let inv of getExpandDisplayInvites(c)">
                 <!-- Recipient row -->
-                <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
-                     [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
+                 <div class="expand-inf-row" [class.has-submission]="getSubmissionForInvite(c, inv)"
+                   [class.submission-open]="getSubmissionForInvite(c, inv) && expandedSubmissionIds.has(inv._id)">
                   <app-user-avatar
                     [name]="getCampaignInviteRecipientName(inv, c)"
                     [src]="getCampaignInviteRecipientAvatar(inv, c)"
@@ -795,147 +795,142 @@
                     <div class="submission-summary" *ngIf="c.status === 'completed' && getSubmissionForInvite(c, inv) as workedSub">
                       <span>
                         <i class="bi bi-camera-reels"></i>
-                        {{ getPostTypeLabel(workedSub.postPlatform, workedSub.postType) }} submitted
+                        {{ getPostTypeLabel(workedSub.postPlatform, workedSub.postType) }} shared
                       </span>
                       <a *ngIf="workedSub.postUrl" [href]="workedSub.postUrl" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
                         View post
                       </a>
                     </div>
                   </div>
-                  <span class="inv-status" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) }}</span>
-                  <div class="counter-offer-actions" *ngIf="canRespondToCounter(inv)">
-                    <small class="counter-offer-note">{{ getCounterOfferSummary(inv) }}</small>
-                    <div class="counter-offer-btns">
-                      <button class="btn-action btn-counter-accept" type="button"
-                              [disabled]="actioningInviteIds.has(inv._id)"
-                              (click)="respondToInviteCounter(inv, 'accept', c); $event.stopPropagation()">
-                        <i class="bi bi-check2-circle"></i> Accept Counter
-                      </button>
-                      <button class="btn-action btn-counter-revise" type="button"
-                              [disabled]="actioningInviteIds.has(inv._id)"
-                              (click)="respondToInviteCounter(inv, 'counter', c); $event.stopPropagation()">
-                        <i class="bi bi-arrow-left-right"></i> Send Revised Offer
-                      </button>
-                      <button class="btn-action btn-counter-decline" type="button"
-                              [disabled]="actioningInviteIds.has(inv._id)"
-                              (click)="respondToInviteCounter(inv, 'decline', c); $event.stopPropagation()">
-                        <i class="bi bi-x-circle"></i> Decline Counter
-                      </button>
-                    </div>
-                  </div>
-                  <span class="inv-closed-chip"
-                        *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">
-                    <i class="bi bi-slash-circle"></i> Closed
-                  </span>
-                  <!-- Paid badge: payment was confirmed for this influencer -->
-                  <span class="inv-paid-badge"
-                    *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
-                    <i class="bi bi-check-circle-fill"></i> Paid
-                  </span>
-                  <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
-                  <button class="inv-pay-chip" type="button"
-                    *ngIf="inv.status === 'accepted' && c.campaignType === 'paid_collab' && !inv.unlocked"
-                    (click)="openPayment(c._id); $event.stopPropagation()"
-                    title="Confirm collaboration payment">
-                    <i class="bi bi-lock-fill"></i> Confirm Collaboration
-                  </button>
-                  <!-- Contact unlock (expand panel) -->
-                  <ng-container *ngIf="isUnlockableStatus(inv.status)">
-                    <div class="contact-reveal" *ngIf="canRevealInviteContact(inv, c)">
-                      <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)" [href]="'mailto:' + getInviteRecipient(inv)?.email" (click)="$event.stopPropagation()">
-                        <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
-                      </a>
-                      <a class="contact-chip" *ngIf="canShowRecipientCall(inv)" [href]="'tel:' + getInviteRecipientPhone(inv)" (click)="$event.stopPropagation()">
-                        <i class="bi bi-telephone-fill"></i> {{ getInviteRecipientPhone(inv) }}
-                      </a>
-                      <a class="contact-chip" *ngIf="canShowRecipientWhatsapp(inv)"
-                         [href]="getWhatsappLink(getInviteRecipientPhone(inv))!"
-                         target="_blank"
-                         rel="noopener noreferrer"
-                         (click)="$event.stopPropagation()">
-                        <i class="bi bi-whatsapp"></i> WhatsApp
-                      </a>
-                    </div>
-                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv, c) && !(c.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
-                      <button class="btn-unlock-contact" type="button"
-                              *ngIf="!inv.unlocked"
-                              [disabled]="unlockingInviteIds.has(inv._id)"
-                              (click)="unlockInviteContact(inv); $event.stopPropagation()">
-                        <i class="bi bi-unlock-fill"></i>
-                        {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
-                      </button>
-                      <small class="locked-hint" *ngIf="inv.unlocked && !canRevealInviteContact(inv, c)">
-                        <i class="bi bi-lock-fill"></i>
-                        Contact details unlock after accepted + sender unlock, or payment confirmation.
-                      </small>
-                    </div>
-                  </ng-container>
-                  <!-- View Post toggle button -->
-                  <button *ngIf="getSubmissionForInvite(c, inv)" class="btn-view-submission"
-                    (click)="toggleSubmission(inv._id); $event.stopPropagation()">
-                    <i class="bi" [ngClass]="expandedSubmissionIds.has(inv._id) ? 'bi-chevron-up' : 'bi-send-check'"></i>
-                    {{ expandedSubmissionIds.has(inv._id) ? 'Hide' : 'View Post' }}
-                  </button>
 
-                  <!-- Brand actions row (same as invite drawer) -->
-                  <div class="invite-actions" (click)="$event.stopPropagation()">
-                    <button class="btn-action btn-remind"
-                            type="button"
-                            *ngIf="canRemind(inv)"
-                            [disabled]="actioningInviteIds.has(inv._id) || isRemindBlockedByClosure(inv, c)"
-                          [title]="isRemindBlockedByClosure(inv, c) ? 'Campaign closed — maximum accepted participants reached' : 'Send a reminder (max 1 / 24h)'"
-                            (click)="remindInvite(inv)">
-                      <i class="bi bi-bell"></i> Remind
-                    </button>
-                    <button class="btn-action btn-withdraw"
-                            type="button"
-                            *ngIf="canWithdraw(inv)"
-                            [disabled]="actioningInviteIds.has(inv._id)"
-                            (click)="withdrawInvite(inv)"
-                            [title]="getWithdrawTitle(inv)">
-                      <i class="bi" [ngClass]="inv.status === 'accepted' ? 'bi-person-dash' : 'bi-x-circle'"></i>
-                      {{ inv.status === 'accepted' ? 'Remove' : 'Withdraw' }}
-                    </button>
-                    <span *ngIf="['payment_confirmed','working','submitted'].includes(inv.status)"
-                          class="invite-locked-chip"
-                          title="Creator has started working — cannot be replaced">
-                      <i class="bi bi-lock-fill"></i> In progress
+
+                  <div class="col-md-6">
+
+                    <span class="inv-status" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv) }}</span>
+                  
+                    <span class="inv-closed-chip"
+                          *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">
+                      <i class="bi bi-slash-circle"></i> Closed
                     </span>
-                    <button class="btn-action btn-report"
-                            type="button"
-                            *ngIf="canReport(inv)"
-                            [disabled]="actioningInviteIds.has(inv._id)"
-                            (click)="reportInvite(inv)"
-                            title="Report no-show / non-delivery / dispute">
-                      <i class="bi bi-flag-fill"></i> Report
-                    </button>
-                    <button class="btn-action btn-visit"
-                            type="button"
-                            *ngIf="!isInfluencerView && !isPhotographerView && canMarkVisited(inv, c)"
-                            [disabled]="actioningInviteIds.has(inv._id)"
-                            (click)="openVisitConfirmModal(inv, c); $event.stopPropagation()"
-                            title="Mark participant as visited">
-                      <i class="bi bi-check2-circle"></i>
-                      Mark as Visited
-                    </button>
-                    <span class="visit-status-chip" *ngIf="hasVisitedStatus(inv, c)">
-                      <i class="bi bi-check-circle-fill"></i> {{ getVisitedStatusText(inv) }}
+                    <!-- Paid badge: payment was confirmed for this influencer -->
+                    <span class="inv-paid-badge"
+                      *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
+                      <i class="bi bi-check-circle-fill"></i> Paid
                     </span>
-                    <button class="btn-action btn-fulfill"
-                            type="button"
-                            *ngIf="canManageFulfillment(inv, c)"
-                            (click)="openFulfillment(inv)"
-                            [title]="getFulfillmentLabel(c)">
-                      <i class="bi bi-truck" *ngIf="c.campaignType === 'product'"></i>
-                      {{ getFulfillmentLabel(c) }}
+                    <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
+                    <button class="inv-pay-chip" type="button"
+                      *ngIf="canShowConfirmCollaboration(inv, c)"
+                      (click)="openPayment(c._id); $event.stopPropagation()"
+                      title="Confirm collaboration payment">
+                      <i class="bi bi-lock-fill"></i> Confirm Collaboration
                     </button>
+                    <!-- Contact unlock (expand panel) -->
+                    <ng-container *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv))">
+                      <div class="contact-reveal" *ngIf="canRevealInviteContact(inv, c)">
+                        <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)" [href]="'mailto:' + getInviteRecipient(inv)?.email" (click)="$event.stopPropagation()">
+                          <i class="bi bi-envelope-fill"></i> {{ getInviteRecipient(inv)?.email }}
+                        </a>
+                        <a class="contact-chip" *ngIf="canShowRecipientCall(inv)" [href]="'tel:' + getInviteRecipientPhone(inv)" (click)="$event.stopPropagation()">
+                          <i class="bi bi-telephone-fill"></i> {{ getInviteRecipientPhone(inv) }}
+                        </a>
+                        <a class="contact-chip" *ngIf="canShowRecipientWhatsapp(inv)"
+                          [href]="getWhatsappLink(getInviteRecipientPhone(inv))!"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          (click)="$event.stopPropagation()">
+                          <i class="bi bi-whatsapp"></i> WhatsApp
+                        </a>
+                      </div>
+                      <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, c) && !canShowConfirmCollaboration(inv, c)">
+                        <button class="btn-unlock-contact" type="button"
+                                *ngIf="!inv.unlocked"
+                                [disabled]="unlockingInviteIds.has(inv._id)"
+                                (click)="unlockInviteContact(inv); $event.stopPropagation()">
+                          <i class="bi bi-unlock-fill"></i>
+                          {{ unlockingInviteIds.has(inv._id) ? 'Unlocking…' : 'Unlock Shoot Coordination' }}
+                        </button>
+                        <small class="locked-hint" *ngIf="inv.unlocked && !canRevealInviteContact(inv, c)">
+                          <i class="bi bi-lock-fill"></i>
+                          Contact details unlock after accepted + sender unlock, or payment confirmation.
+                        </small>
+                      </div>
+                    </ng-container>
+
+
+                    <ng-container *ngIf="shouldShowSubmissionToggle(c, inv)">
+                      <div class="submission-state-row">
+                        <button class="btn-view-submission" type="button"
+                          (click)="toggleSubmissionForInvite(c, inv); $event.stopPropagation()">
+                          <i class="bi" [ngClass]="expandedSubmissionIds.has(inv._id) ? 'bi-chevron-up' : 'bi-eye-fill'"></i>
+                          {{ expandedSubmissionIds.has(inv._id) ? 'Hide Post' : 'View Post' }}
+                        </button>
+                      </div>
+                    </ng-container>
+
+                    <!-- Brand actions row (same as invite drawer) -->
+                    <div class="invite-actions" (click)="$event.stopPropagation()">
+                      <button class="btn-action btn-remind"
+                              type="button"
+                              *ngIf="canRemind(inv)"
+                              [disabled]="actioningInviteIds.has(inv._id) || isRemindBlockedByClosure(inv, c)"
+                            [title]="isRemindBlockedByClosure(inv, c) ? 'Campaign closed — maximum accepted participants reached' : 'Send a reminder (max 1 / 24h)'"
+                              (click)="remindInvite(inv)">
+                        <i class="bi bi-bell"></i> Remind
+                      </button>
+                      <button class="btn-action btn-withdraw"
+                              type="button"
+                              *ngIf="canWithdraw(inv)"
+                              [disabled]="actioningInviteIds.has(inv._id)"
+                              (click)="withdrawInvite(inv)"
+                              [title]="getWithdrawTitle(inv)">
+                        <i class="bi" [ngClass]="inv.status === 'accepted' ? 'bi-person-dash' : 'bi-x-circle'"></i>
+                        {{ inv.status === 'accepted' ? 'Remove' : 'Withdraw' }}
+                      </button>
+                      <span *ngIf="['payment_confirmed','working'].includes(inv.status)"
+                            class="invite-locked-chip"
+                            title="Creator has started working — cannot be replaced">
+                        <i class="bi bi-lock-fill"></i> Working
+                      </span>
+                      <button class="btn-action btn-report"
+                              type="button"
+                              *ngIf="canReport(inv)"
+                              [disabled]="actioningInviteIds.has(inv._id)"
+                              (click)="reportInvite(inv)"
+                              title="Report no-show / non-delivery / dispute">
+                        <i class="bi bi-flag-fill"></i> Report
+                      </button>
+                      <button class="btn-action btn-visit"
+                              type="button"
+                              *ngIf="!isInfluencerView && !isPhotographerView && canMarkVisited(inv, c)"
+                              [disabled]="actioningInviteIds.has(inv._id)"
+                              (click)="openVisitConfirmModal(inv, c); $event.stopPropagation()"
+                              title="Mark participant as visited">
+                        <i class="bi bi-check2-circle"></i>
+                        Mark as Visited
+                      </button>
+                      <span class="visit-status-chip" *ngIf="hasVisitedStatus(inv, c)">
+                        <i class="bi bi-check-circle-fill"></i> {{ getVisitedStatusText(inv) }}
+                      </span>
+                      <button class="btn-action btn-fulfill"
+                              type="button"
+                              *ngIf="canManageFulfillment(inv, c)"
+                              (click)="openFulfillment(inv)"
+                              [title]="getFulfillmentLabel(c)">
+                        <i class="bi bi-truck" *ngIf="c.campaignType === 'product'"></i>
+                        {{ getFulfillmentLabel(c) }}
+                      </button>
+                    </div>
+
+                    <ng-container
+                      [ngTemplateOutlet]="hostCounterOfferActions"
+                      [ngTemplateOutletContext]="{ $implicit: inv, campaign: c }">
+                    </ng-container>
                   </div>
+                  
                 </div>
 
-                <!-- Inline submission panel (collapsible) -->
                 <ng-container *ngIf="getSubmissionForInvite(c, inv) as sub">
                   <div class="submission-inline" *ngIf="expandedSubmissionIds.has(inv._id)">
-
                     <!-- Platform/type tab bar -->
                     <div class="sub-tab-bar">
                       <span class="sub-tab active">
@@ -1003,19 +998,20 @@
                       </div>
                       <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub)">
                         <i class="bi bi-clock-history"></i>
-                        Mark Completed unlocks {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
+                        Review period active. Completion confirmation unlocks in {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
                       </div>
                     </div>
 
                     <div class="sub-completed-feedback" *ngIf="sub.status === 'approved'">
                       <i class="bi bi-check-circle-fill text-success"></i>
-                      Approved{{ sub.brandFeedback ? ': ' + sub.brandFeedback : '' }}
+                      Payout Released{{ sub.brandFeedback ? ': ' + sub.brandFeedback : '' }}
                     </div>
                     <div class="sub-disputed-reason" *ngIf="sub.status === 'disputed'">
-                      <i class="bi bi-exclamation-triangle"></i> Disputed: {{ sub.disputeReason || 'Quality issue' }}
+                      <i class="bi bi-exclamation-triangle"></i> Under Review: {{ sub.disputeReason || 'Quality issue' }}
                     </div>
                   </div>
                 </ng-container>
+
               </ng-container>
             </div>
             <div class="expand-empty-inf" *ngIf="getExpandDisplayInvites(c).length === 0">
@@ -1266,7 +1262,7 @@
           </span>
           <span class="bucket-chip bucket-disputed" *ngIf="getBucketCount('disputed') > 0">
             <i class="bi bi-exclamation-triangle-fill"></i>
-            {{ getBucketCount('disputed') }} No-show / Disputed
+            {{ getBucketCount('disputed') }} No-show / Under Review
           </span>
         </div>
 
@@ -1308,33 +1304,17 @@
               </div>
             </div>
             <div class="invited-right">
-              <span class="inv-status already-invited" [ngClass]="inv.status">{{ brandInviteStatusLabel(inv.status) | uppercase }}</span>
-              <div class="counter-offer-actions" *ngIf="canRespondToCounter(inv)">
-                <small class="counter-offer-note">{{ getCounterOfferSummary(inv) }}</small>
-                <div class="counter-offer-btns">
-                  <button class="btn-action btn-counter-accept" type="button"
-                          [disabled]="actioningInviteIds.has(inv._id)"
-                          (click)="respondToInviteCounter(inv, 'accept', invitePanelCampaign); $event.stopPropagation()">
-                    <i class="bi bi-check2-circle"></i> Accept Counter
-                  </button>
-                  <button class="btn-action btn-counter-revise" type="button"
-                          [disabled]="actioningInviteIds.has(inv._id)"
-                          (click)="respondToInviteCounter(inv, 'counter', invitePanelCampaign); $event.stopPropagation()">
-                    <i class="bi bi-arrow-left-right"></i> Send Revised Offer
-                  </button>
-                  <button class="btn-action btn-counter-decline" type="button"
-                          [disabled]="actioningInviteIds.has(inv._id)"
-                          (click)="respondToInviteCounter(inv, 'decline', invitePanelCampaign); $event.stopPropagation()">
-                    <i class="bi bi-x-circle"></i> Decline Counter
-                  </button>
-                </div>
-              </div>
+              <span class="inv-status already-invited" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv) | uppercase }}</span>
+              <ng-container
+                [ngTemplateOutlet]="hostCounterOfferActions"
+                [ngTemplateOutletContext]="{ $implicit: inv, campaign: invitePanelCampaign }">
+              </ng-container>
               <span class="inv-closed-chip"
                     *ngIf="isInvitePanelAcceptanceClosed() && isPendingInviteStatus(inv.status)">
                 <i class="bi bi-slash-circle"></i> Closed
               </span>
               <!-- Contact reveal for unlocked invites -->
-              <div class="contact-reveal" *ngIf="isUnlockableStatus(inv.status) && canRevealInviteContact(inv, invitePanelCampaign)">
+              <div class="contact-reveal" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && canRevealInviteContact(inv, invitePanelCampaign)">
                  <a class="contact-chip" *ngIf="canShowRecipientEmail(inv)"
                    [href]="'mailto:' + getInviteRecipient(inv)?.email"
                    (click)="$event.stopPropagation()">
@@ -1355,12 +1335,12 @@
               </div>
               <!-- Locked: prompt unlock -->
               <button class="inv-pay-chip" type="button"
-                      *ngIf="inv.status === 'accepted' && invitePanelCampaign?.campaignType === 'paid_collab' && !inv.unlocked"
+                      *ngIf="canShowConfirmCollaboration(inv, invitePanelCampaign)"
                       (click)="openPayment(invitePanelCampaign?._id)"
                       title="Confirm collaboration payment">
                 <i class="bi bi-lock-fill"></i> Confirm Collaboration
               </button>
-                    <div class="contact-locked" *ngIf="isUnlockableStatus(inv.status) && !canRevealInviteContact(inv, invitePanelCampaign) && !(invitePanelCampaign?.campaignType === 'paid_collab' && inv.status === 'accepted' && !inv.unlocked)">
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, invitePanelCampaign) && !canShowConfirmCollaboration(inv, invitePanelCampaign)">
                 <button class="btn-unlock-contact"
                         type="button"
                         *ngIf="!inv.unlocked"
@@ -1395,10 +1375,10 @@
                   <i class="bi" [ngClass]="inv.status === 'accepted' ? 'bi-person-dash' : 'bi-x-circle'"></i>
                   {{ inv.status === 'accepted' ? 'Remove' : 'Withdraw' }}
                 </button>
-                <span *ngIf="['payment_confirmed','working','submitted'].includes(inv.status)"
+                <span *ngIf="['payment_confirmed','working'].includes(inv.status)"
                       class="invite-locked-chip"
                       title="Creator has started working — cannot be replaced">
-                  <i class="bi bi-lock-fill"></i> In progress
+                  <i class="bi bi-lock-fill"></i> Working
                 </span>
                 <button class="btn-action btn-report"
                         type="button"
@@ -1777,4 +1757,17 @@
   </div><!-- /.modal -->
 
 </div>
+
+<ng-template #hostCounterOfferActions let-inv let-campaign="campaign">
+  <app-offer-trail
+    [source]="inv"
+    [campaignContext]="campaign"
+    mode="host"
+    [showActions]="canRespondToCounter(inv)"
+    [canRespond]="canRespondToCounter(inv)"
+    [busy]="actioningInviteIds.has(inv._id)"
+    (action)="respondToInviteCounter(inv, $event, campaign)">
+  </app-offer-trail>
+</ng-template>
+
 <app-shipping-address-modal></app-shipping-address-modal>

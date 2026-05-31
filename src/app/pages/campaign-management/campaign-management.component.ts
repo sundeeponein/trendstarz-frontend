@@ -23,6 +23,8 @@ import { FlowHelpModalService } from '../../shared/components/flow-help-modal/fl
 import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
+import { OfferTrailComponent } from '../../shared/offer-trail/offer-trail.component';
+import { buildAdminOfferTrailText } from '../../shared/offer-trail.util';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -33,12 +35,13 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
 export class CampaignManagementComponent implements OnInit, OnDestroy {
   private static readonly SUBMISSION_APPROVAL_WAIT_MS = 24 * 60 * 60 * 1000;
+  private static readonly REFRESH_TIMEOUT_MS = 10000;
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
   private completionEventsTracked = new Set<string>();
@@ -586,7 +589,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.myInvitesLoading = true;
     this.loading = true;
 
-    this.config.getMyInvites(scope).subscribe({
+    this.config.getMyInvites(scope).pipe(
+      timeout(CampaignManagementComponent.REFRESH_TIMEOUT_MS),
+    ).subscribe({
       next: (invites: any[]) => {
         this.myInvites = invites;
         this.trackCompletionFromInviteStatuses(invites);
@@ -594,6 +599,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       },
       error: () => {
+        this.myInvites = [];
         this.myInvitesLoading = false;
         this.cd.detectChanges();
       }
@@ -611,7 +617,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       ? this.config.getCampaignsByBrandId(ownerQueryId)
       : this.config.getAllCampaigns('active', scope);
 
-    campaignRequest$.subscribe({
+    campaignRequest$.pipe(
+      timeout(CampaignManagementComponent.REFRESH_TIMEOUT_MS),
+    ).subscribe({
       next: (campaigns: Campaign[]) => {
         this.campaigns = campaigns || [];
         this.loadInfluencerOwnedCampaignInvitesForAwareness();
@@ -621,7 +629,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.campaigns = [];
-        this.campaignLoadError = 'Failed to load open campaigns.';
+        this.campaignLoadError = 'Loading timed out. Please refresh and try again.';
         this.loading = false;
         this.cd.detectChanges();
       }
@@ -1042,7 +1050,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
     if (status === 'completed') return 'completed';
     if (status === 'active') return 'active';
-    if (status === 'pending' || status === 'pending_review') return 'pending';
+    if (status === 'pending' || status === 'pending_review') {
+      return hasStartedWork ? 'active' : 'pending';
+    }
     if (status === 'rejected' || status === 'needs_changes' || status === 'draft') {
       if (hasStartedWork || this.isExpired(campaign)) return 'completed';
     }
@@ -1172,9 +1182,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get myInvitesPending(): any[] {
-    return this.myInvitesTyped.filter((i) =>
-      (i.status === 'pending' || i.status === 'invited') && !this.isInviteMissed(i),
-    );
+    return this.myInvitesTyped.filter((i) => {
+      const status = String(i?.status || '').toLowerCase();
+      if (status === 'counter_sent') return true;
+      return (status === 'pending' || status === 'invited') && !this.isInviteMissed(i);
+    });
   }
   get myInvitesMissed(): any[] {
     return this.myInvitesTyped.filter((i) => this.isInviteMissed(i));
@@ -1292,7 +1304,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
   ) {}
 
-  private visibilityChangeHandler: (() => void) | null = null;
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
@@ -1407,16 +1418,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       });
 
-      // Auto-refresh invites when user returns to this tab (browser only)
-      if (typeof document !== 'undefined') {
-        this.visibilityChangeHandler = () => {
-          if (document.visibilityState === 'visible') {
-            this.reloadMyInvites();
-          }
-        };
-        document.addEventListener('visibilitychange', this.visibilityChangeHandler);
-      }
-
       // Influencer: load invites + open active campaigns
       this.myInvitesLoading = true;
       this.loading = true;
@@ -1503,7 +1504,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   loadPhotographerBrandInvites() {
     if (!this.isPhotographerView) return;
     this.photographerBrandInvitesLoading = true;
-    this.config.getMyPhotographerInvites().subscribe({
+    this.config.getMyPhotographerInvites().pipe(
+      timeout(CampaignManagementComponent.REFRESH_TIMEOUT_MS),
+    ).subscribe({
       next: (invites: any[]) => {
         this.photographerBrandInvites = Array.isArray(invites) ? invites : [];
         this.photographerBrandInvitesLoading = false;
@@ -1520,13 +1523,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get photographerPendingBrandInvitesCount(): number {
     return this.photographerBrandInvites.filter((inv: any) => {
       const status = String(inv?.status || '').toLowerCase();
-      return status === 'pending' || status === 'invited';
+      return status === 'pending' || status === 'invited' || status === 'counter_sent';
     }).length;
   }
 
   get photographerBrandInvitesPending(): any[] {
     return this.photographerBrandInvites.filter((invite: any) => {
       const status = String(invite?.status || '').toLowerCase();
+      if (status === 'counter_sent') return true;
       return (status === 'pending' || status === 'invited') && !this.isInviteMissed(invite);
     });
   }
@@ -1545,6 +1549,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get photographerInboxInvitesPending(): any[] {
     return this.photographerInboxInvites.filter((invite: any) => {
       const status = String(invite?.status || '').toLowerCase();
+      if (status === 'counter_sent') return true;
       return (status === 'pending' || status === 'invited') && !this.isInviteMissed(invite);
     });
   }
@@ -1623,10 +1628,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const s = String(status || '').toLowerCase();
     if (s === 'pending' || s === 'invited') return 'Pending';
     if (s === 'counter_sent') return 'Counter Sent';
-    if (s === 'accepted') return 'Accepted';
+    if (s === 'accepted' || s === 'payment_confirmed' || s === 'working') return 'Working';
+    if (s === 'submitted' || s === 'disputed') return 'Under Review';
     if (s === 'declined') return 'Declined';
     if (s === 'withdrawn') return 'Withdrawn';
-    if (s === 'completed' || s === 'approved') return 'Completed';
+    if (s === 'completed') return 'Completed';
+    if (s === 'approved') return 'Payout Released';
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Pending';
   }
 
@@ -1807,7 +1814,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             status === 'accepted'
               ? 'Invite accepted!'
               : status === 'counter_sent'
-                ? 'Counter offer sent!'
+                ? 'Price flow updated: counter sent.'
                 : 'Invite declined.',
           );
         },
@@ -1852,10 +1859,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       clearInterval(this.submissionApprovalTicker);
       this.submissionApprovalTicker = null;
     }
-    if (this.visibilityChangeHandler && typeof document !== 'undefined') {
-      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
-      this.visibilityChangeHandler = null;
-    }
   }
 
   reloadMyInvites() {
@@ -1864,7 +1867,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (!token) return;
     this.myInvitesLoading = true;
     this.cd.detectChanges();
-    this.config.getMyInvites(this.getInfluencerApiScope()).subscribe({
+    this.config.getMyInvites(this.getInfluencerApiScope()).pipe(
+      timeout(CampaignManagementComponent.REFRESH_TIMEOUT_MS),
+    ).subscribe({
       next: (invites: any[]) => {
         this.myInvites = invites;
         this.trackCompletionFromInviteStatuses(invites);
@@ -2687,6 +2692,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   timelineProgressText(c: Campaign): string {
+    const submitted = this.getCardSubmittedCount(c);
+    if (submitted > 0) {
+      return submitted === 1 ? '1 under review' : `${submitted} under review`;
+    }
+
+    const completed = this.getCardCompletedCount(c);
+    if (completed > 0) {
+      return completed === 1 ? '1 completed' : `${completed} completed`;
+    }
+
+    const acceptedOrBeyond = this.getCardAcceptedCount(c);
+    if (acceptedOrBeyond > 0) {
+      return 'Working';
+    }
+
     const pct = this.timelineProgress(c);
     if (pct === 0) return 'Not started';
     if (pct >= 100) return 'Completed';
@@ -2970,35 +2990,60 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   canRespondToCounter(inv: any): boolean {
+    const inviteStatus = this.getHostInviteEffectiveStatus(inv);
     const counterStatus = String(inv?.counterOffer?.status || '').toLowerCase();
+    const requestedAmount = Number(inv?.counterOffer?.requestedAmount || 0);
+    const unresolvedLegacyCounter =
+      inviteStatus === 'counter_sent' &&
+      requestedAmount > 0 &&
+      !inv?.counterOffer?.resolvedAt &&
+      (!counterStatus || counterStatus === 'accepted');
     return !!inv?._id
-      && inv?.status === 'counter_sent'
-      && counterStatus === 'sent'
+      && inviteStatus === 'counter_sent'
+      && (counterStatus === 'sent' || unresolvedLegacyCounter)
       && !this.actioningInviteIds.has(inv._id);
   }
 
-  getCounterOfferSummary(inv: any): string {
-    const counter = inv?.counterOffer || {};
-    const amount = Number(counter.requestedAmount ?? counter.offeredAmount ?? 0);
-    const mode = String(counter.pricingMode || '').toLowerCase();
-    if (!amount || Number(amount) <= 0) return 'Counter amount received';
-    if (mode === 'deliverable_based') {
-      const platform = counter.selectedPlatform;
-      const contentType = counter.selectedContentType;
-      if (platform && contentType) {
-        return `Requested ${this.formatCounterInr(amount)} for ${platform} ${contentType}`;
-      }
-      return `Requested ${this.formatCounterInr(amount)} per content`;
+  getHostInviteEffectiveStatus(inv: any): string {
+    const base = String(inv?.status || '').toLowerCase();
+    const counterStatus = String(inv?.counterOffer?.status || '').toLowerCase();
+    const requestedAmount = Number(inv?.counterOffer?.requestedAmount || 0);
+    const unresolvedLegacyCounter =
+      base === 'accepted' &&
+      requestedAmount > 0 &&
+      !inv?.counterOffer?.resolvedAt &&
+      (!counterStatus || counterStatus === 'accepted');
+
+    if (counterStatus === 'sent' || counterStatus === 'brand_sent' || unresolvedLegacyCounter) {
+      return 'counter_sent';
     }
-    return `Requested ${this.formatCounterInr(amount)} flat payout`;
+    return base;
   }
 
-  private formatCounterInr(value: number): string {
-    const safe = Number(value);
-    if (!Number.isFinite(safe)) return '₹0';
-    return `₹${safe.toLocaleString('en-IN', {
-      maximumFractionDigits: 0,
-    })}`;
+  canShowConfirmCollaboration(inv: any, campaign?: Campaign | null): boolean {
+    const campaignType = String((campaign as any)?.campaignType || '').toLowerCase();
+    if (campaignType !== 'paid_collab') return false;
+    if (this.getHostInviteEffectiveStatus(inv) !== 'accepted') return false;
+    if (!!inv?.unlocked) return false;
+    const counterStatus = String(inv?.counterOffer?.status || '').toLowerCase();
+    return counterStatus !== 'sent' && counterStatus !== 'brand_sent';
+  }
+
+  getCounterOfferSummary(inv: any, campaign?: any): string {
+    return buildAdminOfferTrailText({
+      ...inv,
+      campaign,
+      campaignAmountPaise: Number(
+        inv?.campaignAmountPaise
+        || campaign?.pricePerInfluencer
+        || campaign?.amount
+        || 0,
+      ),
+    });
+  }
+
+  shouldShowHostCounterSummary(inv: any, campaign?: any): boolean {
+    return this.getCounterOfferSummary(inv, campaign).length > 0;
   }
 
   respondToInviteCounter(
@@ -3053,7 +3098,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           action === 'accept'
             ? 'Counter offer accepted.'
             : action === 'decline'
-              ? 'Counter offer declined. Recipient can still accept original offer.'
+              ? 'Counter offer declined. Receiver can still accept initial price.'
               : 'Revised counter sent.',
         );
       },
@@ -3469,7 +3514,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   getCardAcceptedCount(c: Campaign): number {
     const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
-    return (this.campaignInvitesMap.get(c._id!) || []).filter((i: any) => activeStatuses.includes(i.status)).length;
+    return (this.campaignInvitesMap.get(c._id!) || [])
+      .filter((i: any) => activeStatuses.includes(this.getHostInviteEffectiveStatus(i))).length;
   }
 
   getAcceptanceCloseThreshold(c: Campaign): number {
@@ -3492,7 +3538,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       'approved',
       'disputed',
     ]);
-    return (rows || []).filter((r: any) => acceptedStatuses.has(String(r?.status || ''))).length;
+    return (rows || [])
+      .filter((r: any) => acceptedStatuses.has(this.getHostInviteEffectiveStatus(r))).length;
   }
 
   isAcceptanceClosed(c: Campaign): boolean {
@@ -3599,16 +3646,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       pending: 'Applied · Pending',
       invited: 'Invited',
-      counter_sent: 'Counter Sent',
-      accepted: campaignType === 'paid_collab' ? 'Awaiting Payment' : 'Accepted',
-      payment_confirmed: 'Collaboration Confirmed',
-      working: 'In Progress',
-      submitted: 'Submitted',
-      approved: 'Approved',
+      counter_sent: 'Confirmation Pending',
+      accepted: campaignType === 'paid_collab' ? 'Confirmation Pending' : 'Working',
+      payment_confirmed: 'Working',
+      working: 'Working',
+      submitted: 'Under Review',
+      approved: 'Payout Released',
       completed: 'Completed',
       declined: 'Declined',
       withdrawn: 'Withdrawn',
-      disputed: 'Disputed',
+      disputed: 'Under Review',
     };
     return map[status] || status;
   }
@@ -3622,9 +3669,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getPendingInviteCount(): number {
-    return this.myInvites.filter((i) =>
-      (i.status === 'pending' || i.status === 'invited') && !this.isInviteMissed(i),
-    ).length;
+    return this.myInvites.filter((i) => {
+      const status = String(i?.status || '').toLowerCase();
+      if (status === 'counter_sent') return true;
+      return (status === 'pending' || status === 'invited') && !this.isInviteMissed(i);
+    }).length;
   }
 
   // ── My Invites (influencer) ───────────────────────────────────
@@ -3654,6 +3703,34 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   openCampaignPreview: Campaign | null = null;
   openCampaignPreviewQualifyingPlatform: string | null = null;
   openCampaignPreviewQualifyingTier: string | null = null;
+
+  getCampaignImageUrls(campaign: any): string[] {
+    const c = campaign || {};
+    const candidates: unknown[] = [];
+
+    if (typeof c?.image?.url === 'string') candidates.push(c.image.url);
+    if (typeof c?.image === 'string') candidates.push(c.image);
+    if (Array.isArray(c?.images)) candidates.push(...c.images);
+    if (Array.isArray(c?.galleryImages)) candidates.push(...c.galleryImages);
+
+    const urls: string[] = [];
+    for (const item of candidates) {
+      if (typeof item === 'string' && item.trim()) {
+        urls.push(item.trim());
+        continue;
+      }
+      if (item && typeof item === 'object') {
+        const maybeUrl = String((item as any)?.url || (item as any)?.src || '').trim();
+        if (maybeUrl) urls.push(maybeUrl);
+      }
+    }
+    return Array.from(new Set(urls));
+  }
+
+  getCampaignPrimaryImage(campaign: any): string | null {
+    const urls = this.getCampaignImageUrls(campaign);
+    return urls.length ? urls[0] : null;
+  }
 
   openInvitePreview(inv: any) {
     this.invitePreview = inv;
@@ -4008,7 +4085,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             status === 'accepted'
               ? 'Invite accepted!'
               : status === 'counter_sent'
-                ? 'Counter offer sent!'
+                ? 'Price flow updated: counter sent.'
                 : 'Invite declined.',
           );
           // Reload from server so tab counts, spinner state and card data reflect reality
@@ -4246,6 +4323,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return rows.filter((inv: any) => {
       const status = String(inv?.status || '');
       const activeStatuses = new Set([
+        'counter_sent',
         'accepted',
         'payment_confirmed',
         'working',
@@ -4311,13 +4389,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getExpandInvitesByStatus(c: Campaign, status: string): number {
-    return this.getExpandInvites(c).filter((i: any) => i.status === status).length;
+    const wanted = String(status || '').toLowerCase();
+    return this.getExpandInvites(c)
+      .filter((i: any) => this.getHostInviteEffectiveStatus(i) === wanted).length;
   }
 
   /** Statuses that count as "accepted or beyond" for the mini stat chip */
   getExpandAcceptedOrBeyond(c: Campaign): number {
     const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
-    return this.getExpandInvites(c).filter((i: any) => activeStatuses.includes(i.status)).length;
+    return this.getExpandInvites(c)
+      .filter((i: any) => activeStatuses.includes(this.getHostInviteEffectiveStatus(i))).length;
   }
 
   /** Returns true when the invite has moved past accepted (payment made) */
@@ -4326,20 +4407,23 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   /** Human-readable invite status label for brand's view of an influencer */
-  brandInviteStatusLabel(status: string): string {
+  brandInviteStatusLabel(invOrStatus: any): string {
+    const status = typeof invOrStatus === 'string'
+      ? String(invOrStatus || '').toLowerCase()
+      : this.getHostInviteEffectiveStatus(invOrStatus);
     const map: Record<string, string> = {
       pending:           'Applied',
       invited:           'Invited',
       counter_sent:      'Counter Received',
-      accepted:          'Accepted',
-      payment_confirmed: 'Collaboration Confirmed',
-      working:           'In Progress',
-      submitted:         'Submitted',
-      approved:          'Approved',
+      accepted:          'Working',
+      payment_confirmed: 'Working',
+      working:           'Working',
+      submitted:         'Under Review',
+      approved:          'Payout Released',
       completed:         'Completed',
       declined:          'Declined',
       withdrawn:         'Withdrawn',
-      disputed:          'Disputed',
+      disputed:          'Under Review',
     };
     return map[status] || status;
   }
@@ -4403,11 +4487,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getSubmissionApprovalLockMessage(submission: any): string {
     const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
     if (!unlockAt) {
-      return 'Mark Completed unlocks 24 hours after influencer submission.';
+      return 'Review period active. Completion confirmation unlocks in 24 hours after influencer submission.';
     }
     const waitText = this.getSubmissionApprovalWaitText(submission);
     if (waitText === 'now') return 'Mark Completed is now available. Please try again.';
-    return `Mark Completed unlocks ${waitText} (at ${this.getSubmissionApprovalUnlockAtText(submission)}).`;
+    return `Review period active. Completion confirmation unlocks in ${waitText} (at ${this.getSubmissionApprovalUnlockAtText(submission)}).`;
   }
 
   isExpandLoading(c: Campaign): boolean {
@@ -4575,6 +4659,39 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   openScreenshot(url: string) {
     window.open(this.resolveImageUrl(url), '_blank', 'noopener');
+  }
+
+  shouldShowSubmissionToggle(c: Campaign, inv: any): boolean {
+    const status = this.getHostInviteEffectiveStatus(inv);
+    if (['submitted', 'approved', 'completed', 'disputed'].includes(status)) return true;
+    return !!this.getSubmissionForInvite(c, inv);
+  }
+
+  toggleSubmissionForInvite(c: Campaign, inv: any) {
+    const inviteId = String(inv?._id || '').trim();
+    const campaignId = String(c?._id || '').trim();
+    if (!inviteId || !campaignId) return;
+
+    if (this.getSubmissionForInvite(c, inv)) {
+      this.toggleSubmission(inviteId);
+      return;
+    }
+
+    this.config.getCampaignSubmissions(campaignId).subscribe({
+      next: (submissions: any[]) => {
+        const list = Array.isArray(submissions) ? submissions : [];
+        this.campaignSubmissionsMap.set(campaignId, list);
+        if (this.getSubmissionForInvite(c, inv)) {
+          this.toggleSubmission(inviteId);
+        } else {
+          this.toast.error('Submission details are still syncing. Please try again shortly.');
+        }
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.toast.error('Failed to load submitted post details. Please try again.');
+      }
+    });
   }
 
   toggleSubmission(inviteId: string) {

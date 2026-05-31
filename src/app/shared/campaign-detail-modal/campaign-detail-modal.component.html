@@ -36,6 +36,15 @@
       <!-- Campaign image -->
       <div class="cdm-campaign-image-wrap" *ngIf="campaignImageUrl">
         <img class="cdm-campaign-image" [src]="campaignImageUrl" (error)="onCampaignImgError($event)" alt="" />
+        <div class="cdm-campaign-gallery" *ngIf="campaignImageUrls.length > 1">
+          <img
+            class="cdm-campaign-gallery-image"
+            *ngFor="let img of campaignImageUrls.slice(1, 5)"
+            [src]="img"
+            (error)="onCampaignImgError($event)"
+            alt=""
+          />
+        </div>
       </div>
 
       <!-- Description -->
@@ -77,12 +86,19 @@
           </div>
       </div>
 
+        <app-offer-trail
+          *ngIf="!adminReview"
+          [source]="invite"
+          [campaignContext]="invite?.campaign || invite?.campaignId || {}"
+          mode="receiver">
+        </app-offer-trail>
+
       <div class="cdm-section" *ngIf="adminReview">
         <div class="cdm-section-label">INVITED PARTICIPANTS & PROGRESS</div>
         <div class="cdm-status-legend">
           <span class="cdm-status-legend__label">Legend:</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-accepted">Accepted</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-submitted">Submitted</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-accepted">Working</span>
+          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-submitted">Under Review</span>
           <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-working">Working</span>
           <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-pending">Pending</span>
           <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-withdrawn">Withdrawn / Rejected</span>
@@ -103,7 +119,7 @@
           </button>
         </div>
         <div class="cdm-note" *ngIf="hasAdminInviteProgress && adminInviteFilterOptions.length > 1">
-          Actionable = Accepted, Payment Confirmed, Working, Submitted.
+          Actionable = Working and Under Review stages.
         </div>
         <div class="cdm-invite-progress-list">
           <div class="cdm-invite-progress-empty" *ngIf="adminInviteProgressLoading">
@@ -130,10 +146,15 @@
                 </div>
               </div>
               <div class="cdm-invite-progress-meta" *ngIf="item.acceptedAt || item.selectedPostDate">
-                <span *ngIf="item.acceptedAt">Accepted: {{ item.acceptedAt | date:'mediumDate' }}</span>
-                <span *ngIf="item.acceptedAt && item.selectedPostDate">•</span>
+                <span *ngIf="item.acceptedAt">Working from: {{ item.acceptedAt | date:'mediumDate' }}</span>
+                <span *ngIf="item.acceptedAt && item.selectedPostDate">&nbsp;•&nbsp;</span>
                 <span *ngIf="item.selectedPostDate">{{ dateHistoryLabel }}: {{ item.selectedPostDate | date:'mediumDate' }}</span>
               </div>
+              <app-offer-trail
+                [source]="item"
+                [campaignContext]="invite?.campaign || invite?.campaignId || {}"
+                mode="admin">
+              </app-offer-trail>
             </div>
             <div class="cdm-invite-progress-side">
               <span class="cdm-pill cdm-pill--invite-status" [ngClass]="'cdm-pill--invite-status-' + adminInviteStatusKey(item.status)">
@@ -246,6 +267,14 @@
         <div class="cdm-section-label">SELECTED CONTENT OUTPUTS</div>
         <div class="cdm-meta-row">
           <span class="cdm-pill" *ngFor="let d of selectedOutputs">{{ d }}</span>
+        </div>
+      </div>
+
+      <!-- Host-entered deliverables -->
+      <div class="cdm-section" *ngIf="deliverables.length">
+        <div class="cdm-section-label">DELIVERABLES</div>
+        <div class="cdm-brief-box" style="white-space:pre-wrap;">
+          <div *ngFor="let item of deliverables">• {{ item }}</div>
         </div>
       </div>
 
@@ -390,16 +419,23 @@
                  [(ngModel)]="counterAmountInput"
                  (ngModelChange)="toastError = ''"
                  placeholder="Counter amount (₹)" />
-          <input type="text"
-                 class="cdm-counter-input"
-                 [(ngModel)]="counterMessageInput"
-                 (ngModelChange)="toastError = ''"
-                 placeholder="Optional note" />
+          <select class="cdm-counter-input"
+                  [(ngModel)]="counterReasonInput"
+                  (ngModelChange)="toastError = ''">
+            <option value="">Reason (optional)</option>
+            <option *ngFor="let reason of counterReasonOptions" [value]="reason">{{ reason }}</option>
+          </select>
           <button class="cdm-btn cdm-btn--secondary"
                   (click)="onSendCounter()"
                   [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
           <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
         </div>
+        <span class="cdm-counter-hint" *ngIf="counterEditing">
+          Comment/note text is reserved for future feature use.
+        </span>
+        <span class="cdm-counter-hint" *ngIf="counterReasonText && (statusKey === 'counter_sent' || statusKey === 'accepted' || statusKey === 'payment_confirmed' || statusKey === 'working' || statusKey === 'submitted' || statusKey === 'completed' || statusKey === 'disputed')">
+          Counter reason: {{ counterReasonText }}
+        </span>
         <span class="cdm-counter-hint" *ngIf="isPending && hasUsedCounterOffer">
           Counter offer already used for this invite. You can now only accept or decline.
         </span>

@@ -207,9 +207,13 @@
         <input type="number" class="inv-counter-input" min="1" step="1"
                [(ngModel)]="counterAmountInput"
                placeholder="e.g. 3200" />
-        <textarea class="inv-counter-textarea" rows="2"
-                  [(ngModel)]="counterMessageInput"
-                  placeholder="Optional note for the creator..."></textarea>
+        <label class="inv-counter-label">Reason (optional)</label>
+        <select class="inv-counter-input"
+                [(ngModel)]="counterReasonInput">
+          <option value="">Select reason</option>
+          <option *ngFor="let reason of counterReasonOptions" [value]="reason">{{ reason }}</option>
+        </select>
+        <small class="inv-counter-hint">Comment/note text is reserved for future feature use.</small>
         <div class="inv-counter-hint" *ngIf="selectedPayoutHint">Offered: {{ selectedPayoutHint }}</div>
         <div class="inv-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</div>
         <button type="button" class="btn-invite-action btn-counter-send" (click)="onSendCounter($event)" [disabled]="busy || !hasValidCounterAmount" [attr.aria-busy]="busy">
@@ -218,6 +222,19 @@
         </button>
       </div>
     </div>
+
+    <small class="inv-counter-hint counter-sent-summary" *ngIf="status === 'counter_sent' && counterSentAmountText">
+      <i class="bi bi-arrow-up-right-circle-fill"></i> Your counter offer: <strong>{{ counterSentAmountText }}</strong> — awaiting host response
+    </small>
+    <app-offer-trail
+      [source]="invite"
+      [campaignContext]="invite?.campaign || invite?.campaignId || {}"
+      mode="receiver"
+      receiverAppearance="inline">
+    </app-offer-trail>
+    <small class="inv-counter-hint" *ngIf="counterReasonText && (status === 'counter_sent' || status === 'accepted' || status === 'payment_confirmed' || status === 'working' || status === 'submitted' || status === 'completed' || status === 'disputed')">
+      Counter reason: {{ counterReasonText }}
+    </small>
 
     <small class="inv-counter-hint" *ngIf="isActionable && hasUsedCounterOffer">
       Counter offer already used for this invite. You can now only accept or decline.
@@ -237,11 +254,18 @@
   </div>
 
   <div class="invite-card__actions" *ngIf="!isActionable" (click)="onActionsClick($event)">
+    <app-offer-trail
+      [source]="invite"
+      [campaignContext]="invite?.campaign || invite?.campaignId || {}"
+      mode="receiver"
+      receiverAppearance="inline"
+      receiverIconClass="bi bi-arrow-left-right">
+    </app-offer-trail>
     <p class="inv-missed-note mb-0" *ngIf="showMissedAcceptance">
       <i class="bi bi-exclamation-circle-fill"></i> {{ missedAcceptanceText }}
     </p>
     <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted' && !showPaymentAwaited">
-      <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
+      <i class="bi bi-check-circle-fill"></i> You are ready to work
     </p>
     <!-- Influencer-side: contact-unlock state -->
     <p class="inv-unlock-waiting mb-0" *ngIf="showWaitingUnlock">
@@ -291,16 +315,10 @@
   <!-- ── Payment / Submission CTAs (influencer side) ── -->
   <div class="invite-card__cta-row" (click)="$event.stopPropagation()">
 
-    <!-- Paid collab awaiting brand payment -->
-    <div class="inv-cta-info inv-cta-info--warn" *ngIf="showPaymentAwaited">
-      <i class="bi bi-clock-history"></i>
-      Awaiting brand confirmation to begin — you'll be notified once confirmed.
-    </div>
-
-    <!-- Payment confirmed -->
+    <!-- Working stage -->
     <div class="inv-cta-info inv-cta-info--success" *ngIf="showPaymentConfirmed">
       <i class="bi bi-check-circle-fill"></i>
-      Payment secured! You can now begin creating your content.
+      You are ready to work. You can now begin creating your content.
     </div>
 
     <!-- Dispute open (payout frozen) -->
@@ -313,7 +331,7 @@
     <button class="inv-cta-btn inv-cta-btn--submit btn-submit-post" *ngIf="showSubmitCTA"
             type="button" (click)="submitPost.emit()">
       <i class="bi bi-send-fill"></i>
-      {{ status === 'payment_confirmed' ? 'Submit proof of work' : 'Submit your post' }}
+      {{ status === 'payment_confirmed' ? 'Start Work: Submit Post URL' : 'Submit your post URL' }}
     </button>
 
     <!-- View submission button -->

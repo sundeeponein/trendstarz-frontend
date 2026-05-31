@@ -298,7 +298,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
           }
           this.toast.success(
             status === 'accepted' ? 'Invite accepted!' :
-            status === 'counter_sent' ? 'Counter offer sent!' : 'Invite declined.',
+            status === 'counter_sent' ? 'Price flow updated: counter sent.' : 'Invite declined.',
           );
           this.cdr.detectChanges();
         },

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -35,7 +36,7 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-invite-card',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule],
+  imports: [CommonModule, DecimalPipe, FormsModule, OfferTrailComponent],
   templateUrl: './campaign-invite-card.component.html',
   styleUrls: ['./campaign-invite-card.component.scss'],
 })
@@ -81,7 +82,7 @@ export class CampaignInviteCardComponent {
   payoutEditing = false;
   counterEditing = false;
   counterAmountInput: number | null = null;
-  counterMessageInput = '';
+  counterReasonInput = '';
 
   togglePayoutEdit(ev?: Event) {
     if (ev) ev.stopPropagation();
@@ -156,7 +157,7 @@ export class CampaignInviteCardComponent {
     const s = this.status;
     if (this.isUnlocked) return false;
     if (['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(s)) return false;
-    return s === 'accepted';
+    return s === 'accepted' || s === 'counter_sent';
   }
 
   get waitingUnlockText(): string {
@@ -214,13 +215,14 @@ export class CampaignInviteCardComponent {
     const labels: Record<string, string> = {
       pending:           'Pending',
       invited:           'Invited',
-      counter_sent:      'Counter Sent',
-      accepted:          this.campaignTypeKey === 'paid_collab' ? 'Awaiting payment' : 'Accepted',
-      payment_confirmed: 'Collaboration Confirmed — start work',
-      working:           'In progress',
-      submitted:         'Submitted',
+      counter_sent:      'Confirmation Pending',
+      accepted:          this.campaignTypeKey === 'paid_collab' ? 'Confirmation Pending' : 'Working',
+      payment_confirmed: 'Working',
+      working:           'Working',
+      submitted:         'Under Review',
       completed:         'Completed',
-      disputed:          'Dispute open',
+      approved:          'Payout Released',
+      disputed:          'Under Review',
       withdrawn:         'Withdrawn',
       declined:          'Declined',
     };
@@ -229,11 +231,12 @@ export class CampaignInviteCardComponent {
   get statusBadgeClass(): string {
     switch (this.status) {
       case 'accepted':          return 'bg-warning text-dark';
-      case 'payment_confirmed': return 'bg-success';
+      case 'payment_confirmed': return 'bg-primary';
       case 'working':           return 'bg-primary';
-      case 'submitted':         return 'bg-info text-dark';
-      case 'completed':         return 'bg-purple text-white';
-      case 'disputed':          return 'bg-danger';
+      case 'submitted':         return 'bg-warning text-dark';
+      case 'completed':         return 'bg-success';
+      case 'approved':          return 'bg-info text-dark';
+      case 'disputed':          return 'bg-warning text-dark';
       case 'declined':
       case 'withdrawn':         return 'bg-secondary';
       case 'counter_sent':      return 'bg-primary';
@@ -300,6 +303,50 @@ export class CampaignInviteCardComponent {
     return this.isActionable && !this.hasUsedCounterOffer;
   }
 
+  get isPhotographerCollabFlow(): boolean {
+    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    const requestKind = String(this.campaign?.requestKind || '').toLowerCase();
+    return this.isCollabInvite || ownerType === 'photographer' || requestKind === 'photographer_collaboration';
+  }
+
+  get counterReasonOptions(): string[] {
+    if (this.isPhotographerCollabFlow) {
+      return [
+        'Travel effort',
+        'Editing effort',
+        'Equipment setup',
+        'Long shoot duration',
+        'Outdoor location effort',
+        'Additional revisions',
+      ];
+    }
+    if (this.campaignTypeKey === 'invite_location') {
+      return [
+        'Travel effort',
+        'Event duration',
+        'Equipment requirement',
+        'Outdoor shoot effort',
+        'Long shoot hours',
+        'Editing effort',
+        'Additional deliverables',
+      ];
+    }
+    return [
+      'Higher editing effort',
+      'Long-form content',
+      'Usage rights',
+      'Tight deadline',
+      'Additional revisions',
+      'Audience reach',
+      'Custom creative requirement',
+    ];
+  }
+
+  get selectedCounterReason(): string {
+    const reason = String(this.counterReasonInput || '').trim();
+    return this.counterReasonOptions.includes(reason) ? reason : '';
+  }
+
   get counterHintText(): string {
     if (!this.hasValidCounterAmount) return '';
     return `Counter offer: ₹${Number(this.counterAmountInput || 0).toLocaleString('en-IN')}`;
@@ -316,9 +363,19 @@ export class CampaignInviteCardComponent {
     if (!(this.isActionable && this.counterOfferStatus === 'declined')) return '';
     const offeredAmount = Number(this.invite?.counterOffer?.offeredAmount || 0);
     if (Number.isFinite(offeredAmount) && offeredAmount > 0) {
-      return `Your counter was declined. You can still accept original offer ₹${offeredAmount.toLocaleString('en-IN')} or decline this invite.`;
+      return `Your counter was declined. You can still accept initial price ₹${offeredAmount.toLocaleString('en-IN')} or decline this invite.`;
     }
-    return 'Your counter was declined. You can still accept the original offer or decline this invite.';
+    return 'Your counter was declined. You can still accept the initial price or decline this invite.';
+  }
+
+  get counterReasonText(): string {
+    return String(this.invite?.counterOffer?.message || '').trim();
+  }
+
+  get counterSentAmountText(): string {
+    if (this.status !== 'counter_sent') return '';
+    const amount = Number(this.invite?.counterOffer?.requestedAmount || 0);
+    return amount > 0 ? `₹${amount.toLocaleString('en-IN')}` : '';
   }
 
   private get isLocationPaymentConfirmed(): boolean {
@@ -457,6 +514,21 @@ export class CampaignInviteCardComponent {
   }
 
   get yourPayoutText(): string {
+    const status = this.status;
+    const acceptedOrLater = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(status);
+    if (acceptedOrLater) {
+      const agreedPaise = Number(this.invite?.agreedAmountPaise || 0);
+      const agreedRupees = Number(this.invite?.agreedAmount || 0);
+      if (agreedPaise > 0) {
+        const rupees = Math.floor(agreedPaise / 100);
+        return `₹${rupees.toLocaleString('en-IN')}`;
+      }
+      if (agreedRupees > 0) {
+        return `₹${agreedRupees.toLocaleString('en-IN')}`;
+      }
+    }
+
     const selected = this.selectedContentTypeOption;
     if (selected?.price) {
       return `₹${selected.price.toLocaleString('en-IN')}`;
@@ -872,7 +944,7 @@ export class CampaignInviteCardComponent {
     this.counterEditing = !this.counterEditing;
     if (!this.counterEditing) {
       this.counterAmountInput = null;
-      this.counterMessageInput = '';
+      this.counterReasonInput = '';
     }
   }
 
@@ -940,7 +1012,7 @@ export class CampaignInviteCardComponent {
       payout,
       responseType: 'counter',
       counterAmount: Number(this.counterAmountInput || 0),
-      counterMessage: String(this.counterMessageInput || '').trim() || undefined,
+      counterMessage: this.selectedCounterReason || undefined,
     });
   }
 

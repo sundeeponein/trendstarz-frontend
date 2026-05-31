@@ -1034,6 +1034,10 @@ export class ConfigService {
   }
 
   // ── Campaign Submission endpoints ───────────────
+  startInviteWork(inviteId: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/start-work`, {});
+  }
+
   submitCampaignPost(inviteId: string, data: {
     postUrl: string;
     postType?: string;

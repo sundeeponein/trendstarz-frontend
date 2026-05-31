@@ -2,12 +2,11 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 const STEPS = [
-  { key: 'pending',           label: 'Invited' },
-  { key: 'accepted',          label: 'Accepted' },
-  { key: 'payment_confirmed', label: 'Collaboration Confirmed' },
-  { key: 'working',           label: 'Working' },
-  { key: 'submitted',         label: 'Submitted' },
-  { key: 'completed',         label: 'Completed' },
+  { key: 'working',         label: 'Working' },
+  { key: 'submitted',       label: 'Submitted' },
+  { key: 'under_review',    label: 'Under Review' },
+  { key: 'completed',       label: 'Completed' },
+  { key: 'payout_released', label: 'Payout Released' },
 ];
 
 @Component({
@@ -18,11 +17,11 @@ const STEPS = [
     <div class="csb-wrapper">
       <ng-container *ngFor="let step of steps; let i = index">
         <div class="csb-step"
-          [class.active]="step.key === status"
+          [class.active]="step.key === currentStepKey"
           [class.done]="isDone(i)">
           <div class="csb-dot">
-            <i class="bi bi-check-lg" *ngIf="isDone(i) && step.key !== status"></i>
-            <span *ngIf="!isDone(i) || step.key === status">{{ i + 1 }}</span>
+            <i class="bi bi-check-lg" *ngIf="isDone(i) && step.key !== currentStepKey"></i>
+            <span *ngIf="!isDone(i) || step.key === currentStepKey">{{ i + 1 }}</span>
           </div>
           <div class="csb-label">{{ step.label }}</div>
         </div>
@@ -102,9 +101,24 @@ export class CampaignStatusBarComponent {
 
   steps = STEPS;
 
+  get currentStepKey(): string {
+    const normalized = String(this.status || '').toLowerCase().trim();
+    const stageMap: Record<string, string> = {
+      pending: 'working',
+      accepted: 'working',
+      payment_confirmed: 'working',
+      working: 'working',
+      submitted: 'under_review',
+      disputed: 'under_review',
+      completed: 'completed',
+      approved: 'payout_released',
+    };
+    return stageMap[normalized] || 'working';
+  }
+
   isDone(index: number): boolean {
-    const currentIndex = STEPS.findIndex(s => s.key === this.status);
-    if (this.status === 'disputed') return index < STEPS.length - 1;
+    const currentIndex = STEPS.findIndex(s => s.key === this.currentStepKey);
+    if (currentIndex < 0) return index === 0;
     return index <= currentIndex;
   }
 }

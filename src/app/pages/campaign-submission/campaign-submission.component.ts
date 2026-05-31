@@ -64,7 +64,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   private normalizeSubmissionStatus(rawStatus: string): string {
     const s = String(rawStatus || '').toLowerCase().trim();
-    // For non-paid campaigns, acceptance means collaboration is confirmed.
+    // For non-paid campaigns, acceptance maps directly to the Working stage.
     if (s === 'accepted' && this.campaignType !== 'paid_collab') {
       return 'payment_confirmed';
     }
@@ -82,6 +82,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   selectedPostDate: Date | null = null;
   insightsUnlocksAt: Date | null = null;
   insightsCountdown = '';
+  startingWork = false;
   private countdownInterval: any = null;
 
   constructor(
@@ -149,6 +150,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             }
             if (!this.postTypes.length) this.postTypes = [...this.allPostTypes];
             if (this.postTypes.length === 1) this.postType = this.postTypes[0].key;
+            this.tryStartWork();
             this.cdr.markForCheck();
           }
         },
@@ -327,25 +329,92 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return this.campaignType === 'paid_collab' && this.inviteStatus === 'accepted';
   }
 
-  get isCollaborationConfirmedWaitingStart(): boolean {
+  get isCollaborationConfirmedReady(): boolean {
     return this.inviteStatus === 'payment_confirmed';
   }
 
+  // Backward-compatible alias used by older template diagnostics/cache.
+  get isCollaborationConfirmedWaitingStart(): boolean {
+    return this.isCollaborationConfirmedReady;
+  }
+
   get canEditSubmissionForm(): boolean {
-    return !this.isReadOnly && this.inviteStatus === 'working';
+    return !this.isReadOnly && (this.inviteStatus === 'payment_confirmed' || this.inviteStatus === 'working');
+  }
+
+  private tryStartWork() {
+    if (!this.inviteId || this.startingWork) return;
+    if (this.inviteStatus !== 'payment_confirmed') return;
+
+    this.startingWork = true;
+    this.config.startInviteWork(this.inviteId).subscribe({
+      next: (res: any) => {
+        const rawStatus = String(res?.invite?.status || '').trim();
+        this.inviteStatus = rawStatus ? this.normalizeSubmissionStatus(rawStatus) : 'working';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.startingWork = false;
+      },
+      complete: () => {
+        this.startingWork = false;
+      }
+    });
   }
 
   get inviteStatusLabel(): string {
     const map: Record<string, string> = {
-      accepted:          'Accepted',
-      payment_confirmed: 'Collaboration Confirmed',
-      working:           'In Progress',
-      submitted:         'Submitted',
-      approved:          'Approved',
+      accepted:          'Working',
+      payment_confirmed: 'Working',
+      working:           'Working',
+      submitted:         'Under Review',
       completed:         'Completed',
-      disputed:          'Disputed',
+      approved:          'Payout Released',
+      disputed:          'Under Review',
     };
     return map[this.inviteStatus] || this.inviteStatus;
+  }
+
+  get inviteStageKey(): string {
+    const normalized = String(this.inviteStatus || '').toLowerCase().trim();
+    const stageMap: Record<string, string> = {
+      pending: 'working',
+      accepted: 'working',
+      payment_confirmed: 'working',
+      working: 'working',
+      submitted: 'under_review',
+      disputed: 'under_review',
+      completed: 'completed',
+      approved: 'payout_released',
+    };
+    return stageMap[normalized] || 'working';
+  }
+
+  get inviteStageIconClass(): string {
+    const iconMap: Record<string, string> = {
+      working: 'bi-play-circle-fill',
+      submitted: 'bi-send-check-fill',
+      under_review: 'bi-hourglass-split',
+      completed: 'bi-check-circle-fill',
+      payout_released: 'bi-cash-coin',
+    };
+    return iconMap[this.inviteStageKey] || 'bi-play-circle-fill';
+  }
+
+  get readOnlyStatusMessage(): string {
+    if (this.inviteStatus === 'submitted') {
+      return 'Your post is submitted and now under review. Your submission is locked and cannot be edited.';
+    }
+    if (this.inviteStatus === 'completed') {
+      return 'Review is complete. Your submission is locked and cannot be edited.';
+    }
+    if (this.inviteStatus === 'approved') {
+      return 'Payout has been released. Your submission is locked and cannot be edited.';
+    }
+    if (this.inviteStatus === 'disputed') {
+      return 'This submission is under review due to a dispute. Your submission is locked and cannot be edited.';
+    }
+    return `This campaign has been ${this.inviteStatus}. Your submission is locked and cannot be edited.`;
   }
 
   canSubmit(): boolean {
@@ -360,10 +429,10 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     if (!this.canSubmit()) {
       if (this.isReadOnly) {
         this.error = 'Submission is locked after posting and cannot be edited.';
-      } else if (this.isCollaborationConfirmedWaitingStart) {
-        this.error = 'Collaboration is confirmed. Submission opens when status moves to Working.';
+      } else if (this.isCollaborationConfirmedReady) {
+        this.error = 'You are in the Working stage. Add your post URL to submit your work.';
       } else if (this.isAwaitingPaymentConfirmation) {
-        this.error = 'Payment verification is still in progress. You can start work after collaboration is confirmed.';
+        this.error = 'Payment verification is still in progress. You can start work once the status moves to Working.';
       } else {
         this.error = 'Post URL is required.';
       }

@@ -7,6 +7,7 @@ import { environment } from '../../../../../environments/environment';
 import { PaymentsPayoutsApiService } from '../../payments-payouts-api.service';
 import { CampaignTransaction, TransactionSummary } from '../../payments-payouts.models';
 import { AdminPaymentsUiUtilsService } from '../admin-payments-ui-utils.service';
+import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
 
 @Component({
   selector: 'app-campaign-transactions-panel',
@@ -234,7 +235,140 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     const collectionOk = tx.collectionStatus === 'verified';
     const payoutPending = tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing';
     const notVerifiedTab = this.transactionStatus !== 'verified';
-    return collectionOk && payoutPending && notVerifiedTab;
+    return collectionOk
+      && payoutPending
+      && notVerifiedTab
+      && this.isInvitePayoutEligible(tx)
+      && this.isManualSettlement(tx);
+  }
+
+  markPaidDisabledReason(tx: CampaignTransaction): string {
+    if (!this.isManualSettlement(tx)) return 'Auto settlement handles payout.';
+    if (tx.collectionStatus !== 'verified') return 'Collection must be verified first.';
+    if (!(tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')) return 'Payout is not pending.';
+    if (this.transactionStatus === 'verified') return 'Switch to Pending Payout tab to release payout.';
+    if (!this.isInvitePayoutEligible(tx)) {
+      const status = this.inviteStatusLabel(tx);
+      return `Waiting for host review completion in Campaign Review. Current stage: ${status}.`;
+    }
+    return '';
+  }
+
+  settlementModeLabel(tx: CampaignTransaction): string {
+    const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
+    if (gateway === 'razorpay') return 'Auto (Razorpay)';
+    if (gateway === 'stripe') return 'Auto (Stripe)';
+    return 'Manual (UPI)';
+  }
+
+  reviewFlowStatusLabel(tx: CampaignTransaction): 'Review Pending' | 'Completed' {
+    if (tx.payoutStatus === 'paid') return 'Completed';
+    return this.isInvitePayoutEligible(tx) ? 'Completed' : 'Review Pending';
+  }
+
+  reviewFlowStatusClass(tx: CampaignTransaction): string {
+    return this.reviewFlowStatusLabel(tx) === 'Completed'
+      ? 'bg-success-subtle text-success-emphasis'
+      : 'bg-warning-subtle text-warning-emphasis';
+  }
+
+  releaseActionHint(tx: CampaignTransaction): string {
+    if (!this.isManualSettlement(tx)) {
+      return `Auto release via ${this.settlementModeLabel(tx)}.`;
+    }
+    return 'Admin must release payout manually.';
+  }
+
+  payoutDestinationLabel(tx: CampaignTransaction): string {
+    const r = tx.recipient;
+    if (!r) return 'Recipient profile missing';
+    const upi = String(r.payoutUpiId || '').trim();
+    const mobile = String(r.payoutMobile || r.mobile || '').trim();
+    if (upi) return `UPI: ${upi}`;
+    if (mobile) return `Mobile: ${mobile}`;
+    return 'No payout destination saved';
+  }
+
+  partyName(tx: CampaignTransaction, side: 'payer' | 'recipient'): string {
+    const party = side === 'payer' ? tx.payer : tx.recipient;
+    const role = side === 'payer' ? tx.payerRole : tx.recipientRole;
+    return String(party?.name || role || '').trim();
+  }
+
+  markPaidActionLabel(tx: CampaignTransaction): string {
+    const who = this.partyName(tx, 'recipient');
+    return who ? `Mark Paid to ${who}` : 'Mark Paid';
+  }
+
+  offerTrailSummary(tx: CampaignTransaction): string {
+    const inv = tx.inviteSnapshot;
+    if (!inv) return 'Offer trail unavailable';
+    return buildAdminOfferTrailText({
+      ...inv,
+      campaignAmountPaise: Number(
+        (tx as any)?.campaign?.pricePerInfluencer
+        || (tx as any)?.campaignAmountPaise
+        || 0,
+      ),
+      campaign: (tx as any)?.campaign || null,
+    });
+  }
+
+  inviteStatusLabel(tx: CampaignTransaction): string {
+    const status = String(tx.inviteSnapshot?.status || '').toLowerCase();
+    if (!status) return 'N/A';
+    const labels: Record<string, string> = {
+      accepted: 'Working',
+      payment_confirmed: 'Working',
+      working: 'Working',
+      submitted: 'Under Review',
+      completed: 'Completed',
+      approved: 'Payout Released',
+      counter_sent: 'Counter Sent',
+      pending: 'Pending',
+      invited: 'Invited',
+      declined: 'Declined',
+      disputed: 'Under Review',
+    };
+    return labels[status] || status.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+  }
+
+  payoutEligibilityHint(tx: CampaignTransaction): string {
+    const inv = tx.inviteSnapshot;
+    if (!inv?.status) return 'Invite status unavailable';
+    if (!this.isInvitePayoutEligible(tx)) {
+      return `Release blocked until host approves/completes review. Current stage: ${this.inviteStatusLabel(tx)}.`;
+    }
+    const unlockText = inv.unlocked ? 'Unlocked' : 'Locked';
+    return `Invite ${this.inviteStatusLabel(tx)} · ${unlockText}`;
+  }
+
+  unlockedOfferTrailSummary(tx: CampaignTransaction): string {
+    if (!tx.inviteSnapshot?.unlocked) return '';
+    return this.offerTrailSummary(tx);
+  }
+
+  agreedAmountSummary(tx: CampaignTransaction): string {
+    const paise = Number(tx.inviteSnapshot?.agreedAmountPaise || 0);
+    const rupees = Number(tx.inviteSnapshot?.agreedAmount || 0);
+    if (paise > 0) return this.ui.formatPaise(paise);
+    if (rupees > 0) return `₹${rupees.toLocaleString('en-IN')}`;
+    return this.ui.formatPaise(tx.recipientPayout || 0);
+  }
+
+  private isInvitePayoutEligible(tx: CampaignTransaction): boolean {
+    const workStatus = String(tx.workStatus || '').toLowerCase();
+    if (workStatus) {
+      return ['approved', 'completed'].includes(workStatus);
+    }
+    const status = String(tx.inviteSnapshot?.status || '').toLowerCase();
+    if (!status) return true;
+    return ['approved', 'completed'].includes(status);
+  }
+
+  isManualSettlement(tx: CampaignTransaction): boolean {
+    const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
+    return gateway === '' || gateway === 'manual_upi';
   }
 
   closePayoutModal() {

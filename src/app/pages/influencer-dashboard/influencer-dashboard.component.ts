@@ -432,7 +432,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
             status === 'accepted'
               ? 'Invite accepted!'
               : status === 'counter_sent'
-                ? 'Counter offer sent!'
+                ? 'Price flow updated: counter sent.'
                 : 'Invite declined.',
           );
           this.loadAttentionCounts();
@@ -739,8 +739,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   get stats() {
     return [
       { label: 'Invited', value: this.dashboard?.invites?.invited || 0 },
-      { label: 'Accepted', value: this.dashboard?.invites?.accepted || 0 },
-      { label: 'Submitted', value: this.dashboard?.invites?.submitted || 0 },
+      { label: 'Working', value: this.dashboard?.invites?.accepted || 0 },
+      { label: 'Under Review', value: this.dashboard?.invites?.submitted || 0 },
       { label: 'Completed', value: this.dashboard?.invites?.completed || 0 },
     ];
   }
