@@ -201,6 +201,10 @@ export class App implements OnInit {
         title: 'Brand Registration | TrendStarz',
         description: 'Join TrendStarz as a brand and discover verified influencers for your campaigns.',
       },
+      '/register-photographer': {
+        title: 'Photographer Registration | TrendStarz',
+        description: 'Join TrendStarz as a photographer and create your profile to find collaboration opportunities with brands and creators.',
+      },
       '/auth/login': {
         title: 'Login | TrendStarz',
         description: 'Login to your TrendStarz account to manage profile, campaigns, and collaborations.',

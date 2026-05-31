@@ -106,6 +106,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   private routerSubscription: any;
+  private marketplaceBootstrapScheduled = false;
+  private marketplaceBootstrapStarted = false;
 
   readonly heroSlides: HeroSliderBannerSlide[] = [
     {
@@ -267,16 +269,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
     ]);
     if (!this.isBrowser) return;
-    this.ngZone.run(() => {
-      this.fetchBrands();
-      this.fetchInfluencers();
-    });
+    this.scheduleMarketplaceBootstrap();
     this.routerSubscription = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects || event.url;
         if (url === '/welcome' || url === '/' || url.startsWith('/welcome?')) {
-          this.fetchInfluencers();
-          this.fetchBrands();
+          this.scheduleMarketplaceBootstrap();
         }
       }
     });
@@ -318,6 +316,47 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       }
     });
+  }
+
+  private scheduleMarketplaceBootstrap(): void {
+    if (!this.isBrowser || this.marketplaceBootstrapScheduled) {
+      return;
+    }
+
+    this.marketplaceBootstrapScheduled = true;
+    const browserWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+
+    const startBootstrap = () => {
+      if (this.marketplaceBootstrapStarted) {
+        return;
+      }
+
+      this.marketplaceBootstrapStarted = true;
+      this.ngZone.run(() => {
+        this.fetchBrands();
+        this.fetchInfluencers();
+      });
+    };
+
+    if (browserWindow.requestIdleCallback) {
+      browserWindow.requestIdleCallback(startBootstrap, { timeout: 4000 });
+      return;
+    }
+
+    if (document.readyState === 'complete') {
+      setTimeout(startBootstrap, 0);
+      return;
+    }
+
+    browserWindow.addEventListener(
+      'load',
+      () => {
+        setTimeout(startBootstrap, 0);
+      },
+      { once: true },
+    );
   }
 
   // Utility to slugify brand names for URLs
