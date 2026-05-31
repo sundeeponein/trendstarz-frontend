@@ -62,6 +62,14 @@ export class HeroSliderBannerComponent implements OnInit, OnDestroy {
     return this.slides[this.activeSlideIndex] || null;
   }
 
+  get activeImageLoading(): 'eager' | 'lazy' {
+    return this.activeSlideIndex === 0 ? 'eager' : 'lazy';
+  }
+
+  get activeImageFetchPriority(): 'high' | 'auto' {
+    return this.activeSlideIndex === 0 ? 'high' : 'auto';
+  }
+
   previousSlide(): void {
     if (!this.slides.length) return;
     this.activeSlideIndex = (this.activeSlideIndex - 1 + this.slides.length) % this.slides.length;

@@ -20,6 +20,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 })
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
+  private readonly homeHeroImagePath = 'assets/banner-trendstarz-1600.jpg';
   private lastPushSubscriptionKey: string | null = null;
 
   constructor(
@@ -95,6 +96,7 @@ export class App implements OnInit {
     this.meta.updateTag({ name: 'twitter:title', content: seo.ogTitle || seo.title });
     this.meta.updateTag({ name: 'twitter:description', content: seo.ogDescription || seo.description });
     this.updateCanonical(canonicalUrl);
+    this.updateHomeHeroPreload(normalizedPath);
   }
 
   private normalizePath(url: string): string {
@@ -111,6 +113,28 @@ export class App implements OnInit {
       this.document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', href);
+  }
+
+  private updateHomeHeroPreload(path: string): void {
+    const shouldPreload = path === '/' || path === '/welcome';
+    const selector = 'link[data-ts-home-hero-preload="true"]';
+    let preload = this.document.querySelector(selector) as HTMLLinkElement | null;
+
+    if (!shouldPreload) {
+      if (preload) preload.remove();
+      return;
+    }
+
+    if (!preload) {
+      preload = this.document.createElement('link');
+      preload.setAttribute('rel', 'preload');
+      preload.setAttribute('as', 'image');
+      preload.setAttribute('data-ts-home-hero-preload', 'true');
+      this.document.head.appendChild(preload);
+    }
+
+    preload.setAttribute('href', this.homeHeroImagePath);
+    preload.setAttribute('fetchpriority', 'high');
   }
 
   private getSeoForPath(path: string): {

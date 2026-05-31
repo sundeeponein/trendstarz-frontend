@@ -67,6 +67,9 @@
             <img
               [src]="slide.imageUrl"
               [alt]="slide.imageAlt"
+              [attr.loading]="activeImageLoading"
+              [attr.fetchpriority]="activeImageFetchPriority"
+              decoding="async"
               [style.object-position]="slide.imagePosition || 'center center'" />
             <figcaption class="hero-slider-media-caption">Slide {{ activeSlideIndex + 1 }} of {{ slides.length }}</figcaption>
           </figure>

@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
 @Component({
   selector: 'app-hero-banner',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NgOptimizedImage],
   templateUrl: './hero-banner.component.html',
   styleUrls: ['./hero-banner.component.scss']
 })
@@ -17,11 +17,12 @@ export class HeroBannerComponent {
   @Input() primaryLabel = 'Register as Brand';
   @Input() secondaryLabel = 'Join as Influencer';
   @Input() thirdLabel = '';
-  @Input() imageUrl = 'assets/banner-trendstarz.jpg';
+  @Input() imageUrl = 'assets/banner-trendstarz-1600.jpg';
   @Input() liveMetricText = '';
   @Input() primaryRoute = '/register-brand';
   @Input() secondaryRoute = '/register-influencer';
   @Input() thirdRoute = '/features';
+  @Input() imageAlt = 'TrendStarz hero image';
 
   // simple cache buster so changed images appear immediately during development
   cacheBuster = Date.now();

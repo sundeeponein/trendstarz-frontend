@@ -12,12 +12,20 @@
         </div>
       </div>
       <div class="col-12 col-lg-6">
-        <div class="hero-media" [style.background-image]="'url(' + imageUrl + ')'" role="img" aria-label="Hero image">
+        <div class="hero-media">
+          <img
+            class="hero-media-bg"
+            [ngSrc]="imageUrl"
+            [alt]="imageAlt"
+            width="1600"
+            height="900"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async" />
           <!-- <div class="live-metric" *ngIf="liveMetricText">
             <span class="dot"></span>
             <span>{{ liveMetricText }}</span>
           </div> -->
-          <img class="corner-thumb" [src]="imageUrl" alt="" aria-hidden="true" />
         </div>
       </div>
     </div>

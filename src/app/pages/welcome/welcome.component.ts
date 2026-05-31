@@ -118,7 +118,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       secondaryRoute: '/search',
       textLinkLabel: 'How It Works',
       textLinkRoute: '/how-it-works',
-      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageUrl: 'assets/banner-trendstarz-1600.jpg',
       imageAlt: 'Brand campaign collaboration workspace',
       imagePrompt: 'Modern creator economy campaign meeting with influencers, photographers, videographers and brand managers collaborating in a stylish startup workspace. Fashion and beauty products, laptops, cameras, campaign moodboards, cinematic lighting, premium realistic photography.',
       imagePosition: 'center center'
@@ -133,7 +133,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       secondaryRoute: '/campaigns',
       textLinkLabel: 'How It Works',
       textLinkRoute: '/how-it-works',
-      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageUrl: 'assets/banner-trendstarz-1600.jpg',
       imageAlt: 'Influencer creating content in a studio',
       imagePrompt: 'Indian influencer creating Instagram reels in a modern content studio with DSLR camera, ring light, beauty products, fashion accessories and social media setup. Realistic photography, cinematic lighting, premium creator workspace.',
       imagePosition: 'center 30%'
@@ -148,7 +148,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       secondaryRoute: '/campaigns',
       textLinkLabel: 'How It Works',
       textLinkRoute: '/how-it-works/photographers',
-      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageUrl: 'assets/banner-trendstarz-1600.jpg',
       imageAlt: 'Photographer and videographer shooting creator content',
       imagePrompt: 'Professional photographer and videographer shooting influencer campaign content in a modern creative studio with cameras, lighting equipment, reels setup and editing workstation. Realistic cinematic creator economy photography.',
       imagePosition: 'center 42%'
@@ -163,7 +163,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       secondaryRoute: '/search',
       textLinkLabel: 'How It Works',
       textLinkRoute: '/how-it-works',
-      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageUrl: 'assets/banner-trendstarz-1600.jpg',
       imageAlt: 'Local business owners and creators collaborating',
       imagePrompt: 'Local business owners collaborating with influencers and content creators for social media marketing campaigns in a modern workspace. Food, fashion and startup branding visuals with creator economy atmosphere.',
       imagePosition: 'center 52%'
@@ -178,7 +178,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       secondaryRoute: '/how-it-works',
       textLinkLabel: 'How It Works',
       textLinkRoute: '/how-it-works',
-      imageUrl: 'assets/banner-trendstarz.jpg',
+      imageUrl: 'assets/banner-trendstarz-1600.jpg',
       imageAlt: 'Creator economy teams collaborating in a startup workspace',
       imagePrompt: 'Diverse creator economy ecosystem featuring influencers, photographers, videographers and brand teams collaborating together in a premium startup workspace. Modern social media marketing environment with laptops, cameras and campaign planning.',
       imagePosition: 'center center'
