@@ -25,7 +25,7 @@ test.describe('Forgot password page', () => {
   test('shows validation error for invalid email format', async ({ page }) => {
     await page.fill('input[formControlName="email"]', 'not-an-email');
     await page.locator('input[formControlName="email"]').blur();
-    await expect(page.locator('.text-danger')).toBeVisible();
+    await expect(page.locator('button:has-text("Send Reset Link")')).toBeDisabled();
   });
 
   test('shows success message after submitting valid email (mocked API)', async ({ page }) => {
@@ -40,7 +40,7 @@ test.describe('Forgot password page', () => {
     await page.fill('input[formControlName="email"]', 'user@example.com');
     await page.click('button:has-text("Send Reset Link")');
 
-    await expect(page.locator('.text-success')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('If your email is registered and verified, a reset link has been sent.')).toBeVisible({ timeout: 5000 });
   });
 
   test('shows same success message when email is not registered (mocked API)', async ({ page }) => {
@@ -56,7 +56,7 @@ test.describe('Forgot password page', () => {
     await page.click('button:has-text("Send Reset Link")');
 
     // Component intentionally shows success message even on error (security best practice)
-    await expect(page.locator('.text-success')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('If your email is registered and verified, a reset link has been sent.')).toBeVisible({ timeout: 10000 });
   });
 
   test('Back to Login link navigates to /login', async ({ page }) => {
@@ -103,7 +103,7 @@ test.describe('Reset password page', () => {
     await page.fill('input[formControlName="password"]', 'Strong@1234');
     await page.fill('input[formControlName="confirmPassword"]', 'Different@9');
     await page.locator('input[formControlName="confirmPassword"]').blur();
-    await expect(page.locator('.text-danger')).toBeVisible();
+    await expect(page.locator('button:has-text("Reset Password")')).toBeDisabled();
   });
 
   test('password toggle works on both fields', async ({ page }) => {
@@ -190,6 +190,6 @@ test.describe('Reset password page', () => {
     await page.locator('input[formControlName="password"]').focus();
     await page.locator('input[formControlName="password"]').blur();
 
-    await expect(page.locator('.text-danger.text-center')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Invalid or expired token')).toBeVisible({ timeout: 10000 });
   });
 });

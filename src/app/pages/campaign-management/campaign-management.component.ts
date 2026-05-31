@@ -2769,8 +2769,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   canRevealInviteContact(inv: any, campaign?: any): boolean {
     const status = String(inv?.status || '');
-    if (this.isContactPaymentConfirmedStatus(status)) return true;
-    return !!inv?.unlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(status);
+    return this.isContactPaymentConfirmedStatus(status);
   }
 
   /** Build a WhatsApp deep-link from a phone number. */
