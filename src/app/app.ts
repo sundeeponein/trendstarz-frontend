@@ -237,6 +237,13 @@ export class App implements OnInit {
       };
     }
 
+    if (path.startsWith('/photographer/')) {
+      return {
+        title: 'Photographer Profile | TrendStarz',
+        description: 'View photographer and videographer profile details on TrendStarz.',
+      };
+    }
+
     const humanPath = path
       .replace(/^\//, '')
       .split('/')

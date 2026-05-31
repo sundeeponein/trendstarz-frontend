@@ -61,6 +61,7 @@ export const serverRoutes: ServerRoute[] = [
   // Dynamic profiles
   { path: 'influencer/:username', renderMode: RenderMode.Server },
   { path: 'brand/:brandName', renderMode: RenderMode.Server },
+  { path: 'photographer/:username', renderMode: RenderMode.Server },
 
   // Fallback
   { path: '**', renderMode: RenderMode.Client },
