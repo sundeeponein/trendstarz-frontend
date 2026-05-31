@@ -3,7 +3,7 @@
     <!-- Logo and Brand -->
     <div class="navbar-brand">
       <a routerLink="/admin/admin-dashboard" class="logo-link">
-        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
+        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" width="200" height="40" />
       </a>
     </div>
 
@@ -91,7 +91,9 @@
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
             <img [src]="adminUser.profileImage || 'assets/default-profile.png'" 
                  [alt]="adminUser.name" 
-                 class="profile-avatar" />
+               class="profile-avatar"
+               width="40"
+               height="40" />
           </button>
           <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
             <li><span class="dropdown-header">{{ adminUser.name }}</span></li>

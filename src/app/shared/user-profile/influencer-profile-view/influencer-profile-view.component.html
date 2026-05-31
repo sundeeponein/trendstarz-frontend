@@ -21,7 +21,7 @@
       <!-- Profile card -->
       <div class="profile-card">
         <div class="profile-photo-wrap">
-          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" />
+          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
           <span class="pro-badge" *ngIf="influencer.isPremium">PRO</span>
         </div>
         <h2 class="profile-name">{{ influencer.name }}</h2>
@@ -120,7 +120,7 @@
 
           <div class="detail-row" *ngIf="influencer.website">
             <span class="detail-key">Website</span>
-            <a class="detail-val" [href]="influencer.website" target="_blank" rel="noopener">
+            <a class="detail-val" [href]="influencer.website" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(influencer.website) }}
             </a>
           </div>
@@ -162,6 +162,10 @@
             (error)="onImgError($event)"
             alt="Influencer profile"
             class="profile-gallery-image"
+            width="360"
+            height="360"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       </div>
@@ -263,7 +267,7 @@
           <div class="contact-content">
             <span class="contact-field-lbl">Website</span>
             <a class="contact-field-val" *ngIf="canViewContactDetails && influencer.website"
-               [href]="influencer.website" target="_blank" rel="noopener">
+              [href]="influencer.website" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(influencer.website) }}
             </a>
             <span class="contact-field-upgrade" *ngIf="!canViewContactDetails || !influencer.website">

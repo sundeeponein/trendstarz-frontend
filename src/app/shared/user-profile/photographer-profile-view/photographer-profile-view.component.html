@@ -14,7 +14,7 @@
     <div class="left-col">
       <div class="profile-card">
         <div class="profile-photo-wrap">
-          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" />
+          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
           <span class="pro-badge" *ngIf="photographer.isPremium">PRO</span>
         </div>
 
@@ -114,7 +114,7 @@
       <div class="info-card" *ngIf="galleryImages.length">
         <h5 class="section-label">PORTFOLIO IMAGES</h5>
         <div class="profile-gallery-grid">
-          <img *ngFor="let imageUrl of galleryImages" [src]="imageUrl" (error)="onImgError($event)" alt="Photographer profile" class="profile-gallery-image" />
+          <img *ngFor="let imageUrl of galleryImages" [src]="imageUrl" (error)="onImgError($event)" alt="Photographer profile" class="profile-gallery-image" width="360" height="360" loading="lazy" decoding="async" />
         </div>
       </div>
 

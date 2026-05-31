@@ -2,7 +2,7 @@
   <div class="navbar-content d-flex justify-content-between w-100">
     <div class="navbar-brand">
       <a routerLink="/" class="logo-link">
-        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
+        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" width="200" height="40" />
       </a>
     </div>
 
@@ -98,7 +98,9 @@
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
             <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'"
                  [alt]="user.name || user.brandName || 'User'"
-                 class="profile-avatar" />
+                 class="profile-avatar"
+                 width="40"
+                 height="40" />
             <span class="profile-name">
               {{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : 'User') }}
             </span>
@@ -177,7 +179,7 @@
 
       <div class="mobile-user-card" *ngIf="user">
         <div class="mobile-user-meta-wrap">
-          <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" [alt]="displayName" class="mobile-avatar" />
+          <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" [alt]="displayName" class="mobile-avatar" width="100" height="100" />
         
           <div class="mobile-user-name-row">
             <div class="mobile-user-name">{{ displayName }}</div>
