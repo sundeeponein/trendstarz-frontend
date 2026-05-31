@@ -146,6 +146,17 @@
       [trustLabels]="['Secured by TrendstarZ', 'Premium activated within 24 hours of UTR verification']">
     </app-payment-checkout>
 
+    <div class="upgrade-actions" style="margin-top: 8px; margin-bottom: 12px;">
+      <button class="btn-upgrade" [disabled]="processingRazorpay" (click)="payByRazorpay()">
+        <span *ngIf="processingRazorpay" class="spinner"></span>
+        <span *ngIf="!processingRazorpay">Pay with Razorpay (Recommended)</span>
+        <span *ngIf="processingRazorpay">Opening Razorpay…</span>
+      </button>
+    </div>
+    <small class="text-muted" style="display:block;margin-bottom:12px;">
+      Instant verification via Razorpay. For 3-month duration, use manual UPI + UTR below.
+    </small>
+
     <!-- ── UTR confirmation (manual verification) ───────────── -->
     <div class="form-group">
       <label>UPI Transaction ID / UTR Number <span style="color:#dc2626">*</span></label>

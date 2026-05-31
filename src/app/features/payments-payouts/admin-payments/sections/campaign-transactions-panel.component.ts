@@ -17,6 +17,8 @@ import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
   styleUrls: ['../admin-payments.component.scss'],
 })
 export class CampaignTransactionsPanelComponent implements OnInit {
+  private static readonly PAYOUT_RELEASE_MIN_HOURS = 24;
+
   @Output() errorMessage = new EventEmitter<string>();
   @Output() successMessage = new EventEmitter<string>();
 
@@ -85,6 +87,34 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage.emit(err?.error?.message || 'Failed to run auto-approval');
+      },
+    });
+  }
+
+  runAutoPayoutSweep() {
+    const token = this.getToken();
+    if (!token) {
+      this.errorMessage.emit('Not authenticated');
+      return;
+    }
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.paymentsPayoutsApi.runAutoPayoutSweep(headers).subscribe({
+      next: (res) => {
+        if (res?.success === false) {
+          this.errorMessage.emit(res?.message || 'Auto payout is disabled.');
+          return;
+        }
+        const processed = Number(res?.processed || 0);
+        const queued = Number(res?.queued || 0);
+        const skipped = Number(res?.skipped || 0);
+        const failed = Number(res?.failed || 0);
+        this.successMessage.emit(
+          `Auto payout complete. Processed: ${processed}, Queued: ${queued}, Skipped: ${skipped}, Failed: ${failed}.`,
+        );
+        this.loadCampaignTransactions();
+      },
+      error: (err) => {
+        this.errorMessage.emit(err?.error?.message || 'Failed to run auto payout sweep');
       },
     });
   }
@@ -239,6 +269,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       && payoutPending
       && notVerifiedTab
       && this.isInvitePayoutEligible(tx)
+      && this.isPayoutHoldWindowOpen(tx)
       && this.isManualSettlement(tx);
   }
 
@@ -251,13 +282,17 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       const status = this.inviteStatusLabel(tx);
       return `Waiting for host review completion in Campaign Review. Current stage: ${status}.`;
     }
+    if (!this.isPayoutHoldWindowOpen(tx)) {
+      const unlockAt = this.getPayoutUnlockAt(tx);
+      if (!unlockAt) return 'Completion timestamp missing. Re-mark invite as completed, then retry payout.';
+      return `Payout opens after 24 hours from completion. Eligible at: ${unlockAt.toUTCString()}.`;
+    }
     return '';
   }
 
   settlementModeLabel(tx: CampaignTransaction): string {
     const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
     if (gateway === 'razorpay') return 'Auto (Razorpay)';
-    if (gateway === 'stripe') return 'Auto (Stripe)';
     return 'Manual (UPI)';
   }
 
@@ -339,8 +374,22 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     if (!this.isInvitePayoutEligible(tx)) {
       return `Release blocked until host approves/completes review. Current stage: ${this.inviteStatusLabel(tx)}.`;
     }
+    if (!this.isPayoutHoldWindowOpen(tx)) {
+      const unlockAt = this.getPayoutUnlockAt(tx);
+      if (!unlockAt) return 'Release blocked: completion timestamp missing.';
+      return `Release blocked until ${unlockAt.toUTCString()} (24h post completion).`;
+    }
     const unlockText = inv.unlocked ? 'Unlocked' : 'Locked';
     return `Invite ${this.inviteStatusLabel(tx)} · ${unlockText}`;
+  }
+
+  payoutWindowSummary(tx: CampaignTransaction): string {
+    const unlockAt = this.getPayoutUnlockAt(tx);
+    if (!unlockAt) return 'Payout window: completion timestamp missing.';
+    if (this.isPayoutHoldWindowOpen(tx)) {
+      return `Payout window: open (min ${CampaignTransactionsPanelComponent.PAYOUT_RELEASE_MIN_HOURS}h hold satisfied).`;
+    }
+    return `Payout window: opens at ${unlockAt.toUTCString()}.`;
   }
 
   unlockedOfferTrailSummary(tx: CampaignTransaction): string {
@@ -364,6 +413,27 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     const status = String(tx.inviteSnapshot?.status || '').toLowerCase();
     if (!status) return true;
     return ['approved', 'completed'].includes(status);
+  }
+
+  private getInviteCompletedAt(tx: CampaignTransaction): Date | null {
+    const raw = tx.inviteSnapshot?.completedAt || tx.inviteSnapshot?.updatedAt;
+    if (!raw) return null;
+    const dt = new Date(raw);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+
+  private getPayoutUnlockAt(tx: CampaignTransaction): Date | null {
+    const completedAt = this.getInviteCompletedAt(tx);
+    if (!completedAt) return null;
+    return new Date(
+      completedAt.getTime() + CampaignTransactionsPanelComponent.PAYOUT_RELEASE_MIN_HOURS * 60 * 60 * 1000,
+    );
+  }
+
+  private isPayoutHoldWindowOpen(tx: CampaignTransaction): boolean {
+    const unlockAt = this.getPayoutUnlockAt(tx);
+    if (!unlockAt) return false;
+    return Date.now() >= unlockAt.getTime();
   }
 
   isManualSettlement(tx: CampaignTransaction): boolean {

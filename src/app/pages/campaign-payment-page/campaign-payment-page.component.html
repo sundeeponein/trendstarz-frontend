@@ -34,7 +34,7 @@
         <i class="bi bi-receipt"></i> Summary
       </button>
       <button type="button" class="cmp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')">
-        <i class="bi bi-credit-card"></i> Pay via UPI
+        <i class="bi bi-credit-card"></i> Pay
       </button>
       <button type="button" class="cmp-tab" [class.active]="activeTab === 'status'" (click)="setTab('status')">
         <i class="bi bi-clock-history"></i> Status
@@ -67,6 +67,18 @@
       </div>
 
       <ng-container *ngIf="!successMessage">
+        <div class="cmp-actions" style="margin-bottom: 12px;">
+          <button type="button" class="btn btn-primary" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting">
+            <span *ngIf="processingRazorpay" class="cmp-spinner"></span>
+            <i class="bi bi-lightning-charge-fill" *ngIf="!processingRazorpay"></i>
+            {{ processingRazorpay ? 'Opening Razorpay…' : 'Pay with Razorpay (Recommended)' }}
+          </button>
+        </div>
+
+        <p class="cmp-upi-hint" style="margin-top: 0; margin-bottom: 12px;">
+          Prefer Razorpay for instant verification. Manual UPI + UTR is available below.
+        </p>
+
         <!-- UPI block -->
         <div class="cmp-upi-block">
           <div class="cmp-upi-label">

@@ -461,7 +461,7 @@ export class FlowHelpModalService {
         }
       ],
       disputeNote: 'Disputes freeze payment immediately. Admin / support team reviews evidence from both sides and releases to the winning party. Partial penalty support is a future feature.',
-      futureNote: 'Designed for future upgrade: Razorpay / Stripe replaces manual UPI for auto-capture. Auto-escrow and auto-payout slots in without schema changes.'
+      futureNote: 'Designed for future upgrade: Razorpay replaces manual UPI for auto-capture. Auto-escrow and auto-payout slots in without schema changes.'
     };
     this.isOpen = true;
   }

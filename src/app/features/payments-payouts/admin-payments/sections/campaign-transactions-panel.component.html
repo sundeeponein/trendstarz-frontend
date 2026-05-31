@@ -2,6 +2,9 @@
   <button class="btn btn-warning btn-sm" (click)="runAutoApproveStaleSubmissions()">
     Auto-approve stale (48h)
   </button>
+  <button class="btn btn-primary btn-sm ms-2" (click)="runAutoPayoutSweep()">
+    Run Auto Payout Sweep
+  </button>
 </div>
 
 <div class="tx-summary-grid">
@@ -87,6 +90,17 @@
           <span class="badge rounded-pill" [ngClass]="reviewFlowStatusClass(tx)">
             {{ reviewFlowStatusLabel(tx) }}
           </span>
+          <div class="small text-muted" *ngIf="tx.payoutGatewayProvider === 'razorpayx' && tx.payoutTransferStatus">
+            Gateway: {{ tx.payoutTransferStatus }}
+            <span *ngIf="tx.payoutTransferId">({{ tx.payoutTransferId }})</span>
+          </div>
+          <div class="small text-danger" *ngIf="tx.payoutFailureReason">
+            {{ tx.payoutFailureReason }}
+          </div>
+          <div class="small text-muted" *ngIf="tx.payoutRetryCount && tx.payoutRetryCount > 0">
+            Retries: {{ tx.payoutRetryCount }}
+            <span *ngIf="tx.payoutLastRetryAt">· Last: {{ ui.formatDateTime(tx.payoutLastRetryAt) }}</span>
+          </div>
         </td>
         <td class="col-actions">
           <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)">
@@ -102,7 +116,7 @@
                   [title]="canMarkPaid(tx) ? markPaidActionLabel(tx) : markPaidDisabledReason(tx)">
             {{ markPaidActionLabel(tx) }}
           </button>
-          <span class="small text-muted d-block mb-1" *ngIf="!canMarkPaid(tx) && tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && (tx.gateway === 'razorpay' || tx.gateway === 'stripe')">
+          <span class="small text-muted d-block mb-1" *ngIf="!canMarkPaid(tx) && tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && tx.gateway === 'razorpay'">
             Auto settlement enabled
           </span>
           <!-- Dispute resolve button -->
@@ -155,6 +169,9 @@
     <p class="modal-info" *ngIf="selectedTx">
       Release mode: <strong>{{ settlementModeLabel(selectedTx) }}</strong> ·
       Send to: <strong>{{ payoutDestinationLabel(selectedTx) }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      {{ payoutWindowSummary(selectedTx) }}
     </p>
     <div class="recipient-info" *ngIf="selectedTx?.recipient as r">
       <div class="ri-row"><i class="bi bi-person-circle"></i>

@@ -84,12 +84,16 @@
           <span class="detail-value">{{ getDurationLabel(payment.premiumDuration) }}</span>
         </div>
         <div class="payment-detail">
-          <span class="detail-label">Transaction ID</span>
-          <span class="detail-value"><code>{{ payment.transactionId }}</code></span>
+          <span class="detail-label">Reference</span>
+          <span class="detail-value"><code>{{ getReferenceLabel(payment) }}</code></span>
         </div>
         <div class="payment-detail">
-          <span class="detail-label">Method</span>
-          <span class="detail-value">{{ payment.paymentMethod === 'upi' ? 'UPI' : 'QR Code' }}</span>
+          <span class="detail-label">Payment Mode</span>
+          <span class="detail-value">{{ getModeLabel(payment) }}</span>
+        </div>
+        <div class="payment-detail">
+          <span class="detail-label">Gateway Status</span>
+          <span class="detail-value">{{ getGatewayStatusLabel(payment) }}</span>
         </div>
         <div class="payment-detail">
           <span class="detail-label">Submitted</span>

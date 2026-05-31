@@ -324,33 +324,6 @@
   &:disabled { background: #f8fafc; }
 }
 
-/* Stripe card element container */
-.stripe-card-element {
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0.8rem 1rem;
-  background: #fff;
-  transition: border-color 0.2s;
-  &:focus-within { border-color: #f97316; }
-}
-
-.stripe-note {
-  font-size: 0.78rem;
-  color: #64748b;
-  margin-top: 0.5rem;
-}
-
-/* Stripe / tab loading */
-.stripe-loading {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #64748b;
-  font-size: 0.9rem;
-  padding: 1.5rem 0;
-  justify-content: center;
-}
-
 /* UPI styles */
 .upi-instructions { margin-bottom: 1.25rem; }
 

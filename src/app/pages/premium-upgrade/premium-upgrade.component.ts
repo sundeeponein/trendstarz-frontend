@@ -17,9 +17,11 @@ import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { PaymentCheckoutComponent, BreakdownRow } from '../../shared/payment-checkout/payment-checkout.component';
+import { MonetizationApiService } from '../../services/monetization-api.service';
 
 
 
@@ -36,6 +38,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     selectedDuration: any = null;
     selectedRole: string = 'influencer';
     upgrading = false;
+    processingRazorpay = false;
     upgradeError = '';
     upiCopied = false;
     upiRef: string = '';
@@ -71,6 +74,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       private router: Router,
       private cdr: ChangeDetectorRef,
       private plansService: PlansService,
+      private monetizationApi: MonetizationApiService,
       @Inject(PLATFORM_ID) private platformId: object,
     ) {}
 
@@ -349,6 +353,93 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
       });
+  }
+
+  private async ensureRazorpayLoaded(): Promise<boolean> {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    if ((window as any).Razorpay) return true;
+
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Razorpay checkout script'));
+      document.body.appendChild(script);
+    });
+
+    return !!(window as any).Razorpay;
+  }
+
+  async payByRazorpay() {
+    if (!this.selectedPlan) {
+      this.upgradeError = 'Please select a plan first.';
+      return;
+    }
+    if (!this.selectedDurationKey || !['1m', '1y'].includes(this.selectedDurationKey)) {
+      this.upgradeError = 'Razorpay currently supports 1 Month and 1 Year in this flow. Use manual UPI for 3 Months.';
+      return;
+    }
+
+    this.processingRazorpay = true;
+    this.upgradeError = '';
+    try {
+      const billingCycle = this.selectedDurationKey === '1y' ? 'yearly' : 'monthly';
+      const orderRes = await firstValueFrom(
+        this.monetizationApi.createSubscriptionOrder(
+          String((this.selectedPlan as any)?._id || ''),
+          billingCycle,
+        ),
+      );
+      const order = orderRes?.order;
+      if (!order?.orderId || !order?.keyId) {
+        this.upgradeError = 'Failed to initialize Razorpay order.';
+        return;
+      }
+
+      const loaded = await this.ensureRazorpayLoaded();
+      if (!loaded) {
+        this.upgradeError = 'Failed to load Razorpay checkout.';
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const rz = new (window as any).Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'TrendstarZ',
+          description: 'Premium subscription',
+          order_id: order.orderId,
+          handler: async (resp: any) => {
+            try {
+              await firstValueFrom(
+                this.monetizationApi.verifyRazorpayPayment({
+                  orderId: resp?.razorpay_order_id,
+                  paymentId: resp?.razorpay_payment_id,
+                  signature: resp?.razorpay_signature,
+                  paymentType: 'subscription',
+                }),
+              );
+              this.onSuccess();
+              resolve();
+            } catch (e: any) {
+              reject(new Error(e?.error?.message || 'Payment verification failed'));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment cancelled.')),
+          },
+          theme: { color: '#f59e0b' },
+        });
+        rz.open();
+      });
+    } catch (err: any) {
+      this.upgradeError = err?.message || err?.error?.message || 'Razorpay payment failed. Please use manual UPI.';
+    } finally {
+      this.processingRazorpay = false;
+      this.cdr.detectChanges();
+    }
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

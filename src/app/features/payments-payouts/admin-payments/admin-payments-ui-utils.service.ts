@@ -80,4 +80,25 @@ export class AdminPaymentsUiUtilsService {
 
     return 'assets/default-profile.png';
   }
+
+  premiumPaymentModeLabel(payment: PremiumPayment): string {
+    if (payment.gatewayProvider === 'razorpay') return 'Razorpay';
+    return payment.paymentMethod === 'qr' ? 'Manual QR' : 'Manual UPI';
+  }
+
+  premiumPaymentGatewayStatus(payment: PremiumPayment): string {
+    if (payment.gatewayProvider === 'razorpay') {
+      const map: Record<string, string> = {
+        created: 'Order Created',
+        authorized: 'Authorized',
+        captured: 'Captured',
+        failed: 'Failed',
+        refunded: 'Refunded',
+      };
+      return map[String(payment.paymentStatus || '')] || 'In Progress';
+    }
+    if (payment.status === 'approved') return 'Admin Verified';
+    if (payment.status === 'rejected') return 'Rejected';
+    return 'Pending Admin Review';
+  }
 }

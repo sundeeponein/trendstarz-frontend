@@ -10,6 +10,8 @@ import { CampaignTransaction } from '../../features/payments-payouts/payments-pa
 
 type Tab = 'summary' | 'pay' | 'status';
 
+type RazorpayOrder = { orderId: string; amount: number; currency: string; keyId: string };
+
 @Component({
   selector: 'app-campaign-payment',
   standalone: true,
@@ -25,6 +27,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   loading = false;
   submitting = false;
+  processingRazorpay = false;
   error = '';
   successMessage = '';
   calculated: any = null;
@@ -263,6 +266,93 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
       this.error = err?.error?.message || err?.message || 'Failed to submit proof';
     } finally {
       this.submitting = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  private async ensureRazorpayLoaded(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    if ((window as any).Razorpay) return true;
+
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Razorpay checkout script'));
+      document.body.appendChild(script);
+    });
+
+    return !!(window as any).Razorpay;
+  }
+
+  async payWithRazorpay() {
+    if (!this.campaignId) return;
+    this.processingRazorpay = true;
+    this.error = '';
+
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+      if (!token) {
+        this.error = 'Not authenticated';
+        return;
+      }
+      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+      const orderRes = await firstValueFrom(
+        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers),
+      );
+      const order: RazorpayOrder | undefined = orderRes?.order;
+      if (!order?.orderId || !order?.keyId) {
+        this.error = 'Failed to initialize Razorpay order.';
+        return;
+      }
+
+      const loaded = await this.ensureRazorpayLoaded();
+      if (!loaded) {
+        this.error = 'Failed to load Razorpay checkout.';
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const rz = new (window as any).Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'TrendstarZ',
+          description: 'Campaign payment',
+          order_id: order.orderId,
+          handler: async (resp: any) => {
+            try {
+              await firstValueFrom(
+                this.txApi.verifyCampaignRazorpayPayment(
+                  this.campaignId!,
+                  {
+                    orderId: resp?.razorpay_order_id,
+                    paymentId: resp?.razorpay_payment_id,
+                    signature: resp?.razorpay_signature,
+                  },
+                  headers,
+                ),
+              );
+              this.successMessage = 'Razorpay payment verified. Influencers can now start work.';
+              await this.fetchStatus();
+              this.activeTab = 'status';
+              resolve();
+            } catch (e: any) {
+              reject(new Error(e?.error?.message || 'Payment verification failed'));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment cancelled.')),
+          },
+          theme: { color: '#f59e0b' },
+        });
+        rz.open();
+      });
+    } catch (err: any) {
+      this.error = err?.message || err?.error?.message || 'Razorpay payment failed';
+    } finally {
+      this.processingRazorpay = false;
       this.cd.markForCheck();
     }
   }

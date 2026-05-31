@@ -15,6 +15,7 @@ describe('CampaignTransactionsPanelComponent', () => {
       'rejectTransaction',
       'markPaid',
       'runAutoApproveStale',
+      'runAutoPayoutSweep',
     ]);
 
     serviceSpy.listTransactions.and.returnValue(
@@ -54,6 +55,9 @@ describe('CampaignTransactionsPanelComponent', () => {
     serviceSpy.rejectTransaction.and.returnValue(of({ success: true }));
     serviceSpy.markPaid.and.returnValue(of({ success: true }));
     serviceSpy.runAutoApproveStale.and.returnValue(of({ autoApprovedCount: 2 }));
+    serviceSpy.runAutoPayoutSweep.and.returnValue(
+      of({ success: true, processed: 1, queued: 1, skipped: 0, failed: 0 }),
+    );
 
     localStorage.setItem('token', 'token');
 
@@ -99,5 +103,19 @@ describe('CampaignTransactionsPanelComponent', () => {
 
     expect(serviceSpy.runAutoApproveStale).toHaveBeenCalled();
     expect(successSpy).toHaveBeenCalledWith('Auto-approval run complete. 2 submission(s) approved.');
+  });
+
+  it('runs auto payout sweep and emits summary message', () => {
+    const fixture = TestBed.createComponent(CampaignTransactionsPanelComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const successSpy = spyOn(component.successMessage, 'emit');
+
+    component.runAutoPayoutSweep();
+
+    expect(serviceSpy.runAutoPayoutSweep).toHaveBeenCalled();
+    expect(successSpy).toHaveBeenCalledWith(
+      'Auto payout complete. Processed: 1, Queued: 1, Skipped: 0, Failed: 0.',
+    );
   });
 });

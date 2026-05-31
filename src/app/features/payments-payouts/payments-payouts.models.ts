@@ -12,8 +12,12 @@ export interface CampaignTransaction {
   platformFee: number;
   payerTotal: number;
   recipientPayout: number;
-  /** Payment gateway. MVP = manual_upi. Future: razorpay, stripe. */
-  gateway?: 'manual_upi' | 'razorpay' | 'stripe';
+  /** Payment gateway. MVP = manual_upi. Future: razorpay. */
+  gateway?: 'manual_upi' | 'razorpay';
+  gatewayOrderId?: string;
+  gatewayPaymentId?: string;
+  gatewaySignature?: string;
+  gatewayVerifiedAt?: string;
   collectionStatus: 'awaiting_payment' | 'proof_submitted' | 'verified' | 'failed';
   /** frozen = disputed, payout on hold until admin resolves. */
   payoutStatus: 'pending' | 'processing' | 'paid' | 'skipped' | 'frozen';
@@ -32,6 +36,14 @@ export interface CampaignTransaction {
   paymentProofUrl?: string;
   payoutUpiId?: string;
   payoutUtr?: string;
+  payoutGatewayProvider?: 'manual_upi' | 'razorpayx';
+  payoutTransferId?: string;
+  payoutTransferStatus?: string;
+  payoutFailureReason?: string;
+  payoutRetryCount?: number;
+  payoutLastRetryAt?: string;
+  payoutInitiatedAt?: string;
+  payoutSettledAt?: string;
   createdAt: string;
   updatedAt?: string;
   collectedAt?: string;
@@ -70,6 +82,8 @@ export interface CampaignTransaction {
     counterRequestedAmountPaise?: number;
     counterResolvedAt?: string | null;
     acceptedAt?: string | null;
+    completedAt?: string | null;
+    updatedAt?: string | null;
   } | null;
 }
 
@@ -90,9 +104,14 @@ export interface PremiumPayment {
     email?: string;
   };
   transactionId: string;
+  orderId?: string;
+  paymentId?: string;
   amount: number;
   premiumDuration: '1m' | '3m' | '1y';
   paymentMethod: 'upi' | 'qr';
+  gatewayProvider?: 'manual_upi' | 'razorpay';
+  paymentStatus?: 'created' | 'authorized' | 'captured' | 'failed' | 'refunded';
+  purpose?: 'subscription' | 'invite_unlock' | 'campaign_payment';
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   approvedAt?: string;

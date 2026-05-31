@@ -23,7 +23,7 @@
       <i class="bi bi-receipt"></i> Summary
     </button>
     <button type="button" class="cp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')">
-      <i class="bi bi-credit-card"></i> Pay via UPI
+      <i class="bi bi-credit-card"></i> Pay
     </button>
     <button type="button" class="cp-tab" [class.active]="activeTab === 'status'" (click)="setTab('status')" *ngIf="hasSubmittedProof">
       <i class="bi bi-clock-history"></i> Status
@@ -99,7 +99,7 @@
       <div class="cp-actions">
         <button type="button" class="cp-btn cp-btn--secondary" (click)="close()">Cancel</button>
         <button type="button" class="cp-btn cp-btn--primary" (click)="setTab('pay')">
-          <i class="bi bi-credit-card"></i> Pay via UPI
+          <i class="bi bi-credit-card"></i> Pay Now
         </button>
       </div>
     </ng-container>
@@ -115,10 +115,23 @@
   <!-- ── PAY TAB ── -->
   <div class="cp-body" *ngIf="!loading && activeTab === 'pay'">
     <ng-container *ngIf="!successMessage; else successBlock">
+      <div class="cp-actions" style="margin-top: 0; margin-bottom: 14px;">
+        <button type="button" class="cp-btn cp-btn--primary" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting">
+          <span *ngIf="processingRazorpay" class="spinner-border spinner-border-sm"></span>
+          <i class="bi bi-lightning-charge-fill" *ngIf="!processingRazorpay"></i>
+          {{ processingRazorpay ? 'Opening Razorpay…' : 'Pay with Razorpay (Recommended)' }}
+        </button>
+      </div>
+
       <!-- Quick total reminder -->
       <div class="cp-quick-total" *ngIf="calculated">
         <span>Total to pay</span>
         <strong>{{ formatINR(totalToPay) }}</strong>
+      </div>
+
+      <div class="cp-field-note" style="margin-bottom: 10px;">
+        <i class="bi bi-info-circle"></i>
+        Prefer Razorpay for instant verification. Manual UPI + UTR remains available below.
       </div>
 
       <!-- ═══ UPI Payment block ═══ -->

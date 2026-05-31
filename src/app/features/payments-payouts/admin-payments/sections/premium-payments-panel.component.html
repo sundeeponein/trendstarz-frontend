@@ -30,8 +30,9 @@
         <th>User</th>
         <th>Amount</th>
         <th>Duration</th>
-        <th>Payment Method</th>
-        <th>Transaction ID</th>
+        <th>Payment Mode</th>
+        <th>Reference</th>
+        <th>Gateway Status</th>
         <th>Date</th>
         <th *ngIf="statusTab === 'rejected'">Reason</th>
         <th *ngIf="statusTab === 'pending'">Actions</th>
@@ -51,15 +52,12 @@
         </td>
         <td class="col-amount">₹{{ payment.amount }}</td>
         <td>{{ payment.premiumDuration }}</td>
+        <td>{{ ui.premiumPaymentModeLabel(payment) }}</td>
         <td>
-          <ng-container [ngSwitch]="payment.paymentMethod">
-            <span *ngSwitchCase="'admin'">Admin</span>
-            <span *ngSwitchCase="'qr'">QR Code</span>
-            <span *ngSwitchCase="'upi'">UPI</span>
-            <span *ngSwitchDefault>-</span>
-          </ng-container>
+          <code *ngIf="payment.gatewayProvider === 'razorpay'">{{ payment.paymentId || payment.orderId || payment.transactionId }}</code>
+          <code *ngIf="payment.gatewayProvider !== 'razorpay'">{{ payment.transactionId }}</code>
         </td>
-        <td><code>{{ payment.transactionId }}</code></td>
+        <td>{{ ui.premiumPaymentGatewayStatus(payment) }}</td>
         <td class="col-date">{{ ui.formatDateTime(statusTab === 'pending' ? payment.createdAt : (payment.approvedAt || payment.createdAt)) }}</td>
         <td *ngIf="statusTab === 'rejected'">{{ payment.approvalNotes || '-' }}</td>
         <td *ngIf="statusTab === 'pending'" class="col-actions">

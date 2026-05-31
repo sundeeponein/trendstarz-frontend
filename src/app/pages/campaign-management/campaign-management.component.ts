@@ -4463,12 +4463,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const remainingMs = unlockAt.getTime() - Date.now();
     if (remainingMs <= 0) return 'now';
 
-    const totalMinutes = Math.ceil(remainingMs / 60000);
+    const totalMinutes = Math.max(1, Math.floor(remainingMs / 60000));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    if (hours <= 0) return `in ${minutes}m`;
-    if (minutes === 0) return `in ${hours}h`;
-    return `in ${hours}h ${minutes}m`;
+    if (hours <= 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
   }
 
   getSubmissionApprovalUnlockAtText(submission: any): string {
