@@ -130,21 +130,25 @@
         <span class="inv-platform-lock-value">{{ platformLabel(lockedPlatform) }}</span>
       </div>
       <div class="inv-ct-row">
-        <span class="inv-ct-row-label">Create (choose one):</span>
-        <small class="text-muted d-block mb-2">
-          Host requested platforms matched to your profile are shown below.
-        </small>
-        <button *ngFor="let opt of availableContentTypeOptions"
-                type="button"
-                class="inv-ct-pill"
-                [class.selected]="selectedContentTypeKey === opt.key"
-                [class.disabled]="!isOptionSelectable(opt)"
-                [disabled]="!isOptionSelectable(opt)"
-                (click)="selectContentType(opt.key)">
-          <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-          {{ opt.label }}
-          <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-        </button>
+        <div>
+          <span class="inv-ct-row-label">Create (choose one):</span>
+          <small class="text-muted d-block mb-2">
+            Host requested platforms matched to your profile are shown below.
+          </small>
+        </div>
+        <div>
+          <button *ngFor="let opt of availableContentTypeOptions"
+                  type="button"
+                  class="inv-ct-pill mr-1"
+                  [class.selected]="selectedContentTypeKey === opt.key"
+                  [class.disabled]="!isOptionSelectable(opt)"
+                  [disabled]="!isOptionSelectable(opt)"
+                  (click)="selectContentType(opt.key)">
+            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+            {{ opt.label }}
+            <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+          </button>
+        </div>
         <div *ngIf="availableContentTypeOptions.length === 0 && displayContentTypeOptions.length > 0" class="text-muted small mt-1">
           No host-requested platforms match your profile yet. Open View Details to update your social platforms.
         </div>
