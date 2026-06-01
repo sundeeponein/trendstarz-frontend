@@ -178,7 +178,8 @@ export class CampaignDetailModalComponent implements OnChanges {
   }
   get isPending(): boolean {
     const s = String(this.invite?.status || '').toLowerCase();
-    return s === 'pending' || s === 'invited' || (s === 'counter_sent' && this.counterOfferStatus === 'brand_sent');
+    return (s === 'pending' || s === 'invited' || (s === 'counter_sent' && this.counterOfferStatus === 'brand_sent'))
+      && this.campaignStatus !== 'completed';
   }
   get statusKey(): string { return (this.invite?.status || 'pending').toLowerCase(); }
 

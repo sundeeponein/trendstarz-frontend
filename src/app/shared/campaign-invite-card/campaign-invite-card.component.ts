@@ -130,6 +130,10 @@ export class CampaignInviteCardComponent {
     if (this.status === 'pending' || this.status === 'invited') return true;
     return this.status === 'counter_sent' && this.counterOfferStatus === 'brand_sent';
   }
+  private get isCampaignClosed(): boolean {
+    const campaignStatus = String(this.campaign?.status || '').toLowerCase();
+    return campaignStatus === 'completed';
+  }
   get acceptanceDeadline(): string {
     return String(this.campaign?.acceptanceDeadline || this.invite?.acceptanceDeadline || '').trim();
   }
@@ -142,8 +146,8 @@ export class CampaignInviteCardComponent {
     if (!this.isActionableStatus || !this.hasAcceptanceDeadline) return false;
     return Date.now() > new Date(this.acceptanceDeadline).getTime();
   }
-  get isActionable(): boolean { return this.isActionableStatus && !this.isAcceptanceExpired; }
-  get showMissedAcceptance(): boolean { return this.isActionableStatus && this.isAcceptanceExpired; }
+  get isActionable(): boolean { return this.isActionableStatus && !this.isAcceptanceExpired && !this.isCampaignClosed; }
+  get showMissedAcceptance(): boolean { return this.isActionableStatus && this.isAcceptanceExpired && !this.isCampaignClosed; }
   get missedAcceptanceText(): string {
     return this.isCollabInvite
       ? 'You have missed the collaboration invitation.'
