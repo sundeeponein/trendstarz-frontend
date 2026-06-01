@@ -151,6 +151,8 @@ export type OfferTrailAction = 'accept' | 'counter' | 'decline';
         font-size: 0.84rem;
         color: #334155;
         font-weight: 600;
+        white-space: normal;
+        word-break: break-word;
       }
 
       .offer-trail-receiver--hidden {
@@ -159,10 +161,14 @@ export type OfferTrailAction = 'accept' | 'counter' | 'decline';
 
       .offer-trail-inline {
         display: inline-flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 5px;
         font-size: 0.75rem;
         color: #64748b;
+        white-space: normal;
+        word-break: break-word;
+        max-width: 100%;
       }
 
       .offer-trail-inline i {
