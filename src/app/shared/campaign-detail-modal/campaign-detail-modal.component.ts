@@ -515,6 +515,16 @@ export class CampaignDetailModalComponent implements OnChanges {
       : this.contentTypeOptions;
   }
 
+  get showHostRequestedPlatforms(): boolean {
+    return this.displayContentTypeOptions.length > 0;
+  }
+
+  get hostRequestedPlatformsNote(): string {
+    return this.isPending
+      ? 'Choose only one option before accepting.'
+      : 'These platforms were requested by the host for this campaign. Update your profile to receive more matching campaigns.';
+  }
+
   /** Options the signed-in user can actually select (has that platform in profile) */
   get availableContentTypeOptions(): ContentTypeOption[] {
     const opts = this.displayContentTypeOptions || [];

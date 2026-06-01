@@ -296,9 +296,9 @@
       </div>
 
       <!-- Campaign platform requirements -->
-      <div class="cdm-section" *ngIf="isPending && displayContentTypeOptions.length">
+      <div class="cdm-section" *ngIf="showHostRequestedPlatforms">
         <div class="cdm-section-label">REQUIRED PLATFORMS</div>
-        <div class="cdm-note">These are the platforms requested by the host for this campaign. Update your profile to receive more matching campaigns and collaborations.</div>
+        <div class="cdm-note">{{ hostRequestedPlatformsNote }}</div>
 
         <div *ngIf="availableContentTypeOptions.length">
           <div class="cdm-note mb-1">You already have these matching platforms:</div>
@@ -307,9 +307,9 @@
                     class="cdm-ct-pill"
                     *ngFor="let opt of availableContentTypeOptions"
                     [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
-                    [class.disabled]="!isOptionSelectable(opt)"
-                    [disabled]="!isOptionSelectable(opt)"
-                    (click)="selectedContentTypeKey = opt.key; toastError = ''">
+                    [class.disabled]="!isPending || !isOptionSelectable(opt)"
+                    [disabled]="!isPending || !isOptionSelectable(opt)"
+                    (click)="isPending && (selectedContentTypeKey = opt.key); toastError = ''">
               <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
               <span>{{ opt.label }}</span>
               <span class="cdm-has-platform">You have</span>
