@@ -516,6 +516,37 @@
   }
 }
 
+.cdm-has-platform {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fff4e6;
+  color: #b34a00;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.cdm-missing-pill {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #e6eef6;
+  color: #6b7280;
+}
+
+.cdm-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff4e8;
+  color: #9a4c18;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 /* Brand card */
 .cdm-brand-card {
   display: flex;

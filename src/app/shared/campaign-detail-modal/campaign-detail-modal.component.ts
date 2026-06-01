@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -73,7 +74,59 @@ export class CampaignDetailModalComponent implements OnChanges {
   private toastTimer: any;
   // Previously used to delay pointer-events; removed now that modal mounts immediately.
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef, private session: SessionService) {}
+
+  /** Platforms the signed-in user has in their profile (normalized set) */
+  private get userSocialPlatformKeySet(): Set<string> {
+    const set = new Set<string>();
+    try {
+      const user = this.session.getUser();
+      const candidates = (user?.socialMedia || user?.profile?.socialMedia || []);
+      if (Array.isArray(candidates)) {
+        for (const sm of candidates) {
+          const p = String((sm && (sm.platform || sm.name)) || '').trim().toLowerCase();
+          if (p) set.add(p);
+        }
+      }
+    } catch {
+      // ignore and return empty set
+    }
+    return set;
+  }
+
+  userHasPlatform(platform: string): boolean {
+    if (!platform) return false;
+    const set = this.userSocialPlatformKeySet;
+    if (!set.size) return false;
+    return set.has(this.normalized(platform));
+  }
+
+  get missingPlatforms(): Array<{ platform: string; label: string }> {
+    const c = this.campaign;
+    const src = Array.isArray(c?.socialMedia) && c.socialMedia.length ? c.socialMedia : (Array.isArray(c?.platforms) ? c.platforms.map((p: any) => ({ platform: p })) : []);
+    const list: string[] = (Array.isArray(src) ? src.map((r: any) => (typeof r === 'string' ? r : r.platform || r.name || '')).filter(Boolean) : []);
+    const unique = Array.from(new Set(list.map((p) => this.normalized(p))));
+    const missing: Array<{ platform: string; label: string }> = [];
+    for (const p of unique) {
+      if (!this.userHasPlatform(p)) {
+        missing.push({ platform: p, label: this.platformLabel(p) });
+      }
+    }
+    return missing;
+  }
+
+  get profileEditLink(): any[] {
+    try {
+      const user = this.session.getUser() || {};
+      const role = String(user.role || user.userType || '').toLowerCase();
+      if (role.includes('influencer')) return ['/influencer-profile'];
+      if (role.includes('photographer')) return ['/photographer-profile'];
+      if (role.includes('brand')) return ['/brand-profile'];
+    } catch {
+      // ignore
+    }
+    return ['/influencer-profile'];
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['invite'] || changes['adminInviteProgressLoading'] || changes['visible']) {
@@ -456,9 +509,21 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   /** UI options shown to influencer; for tier-locked invites we show only relevant platform choices. */
   get displayContentTypeOptions(): ContentTypeOption[] {
-    return this.lockedPlatform || this.qualifyingPlatformKeySet.size
+    const base = this.lockedPlatform || this.qualifyingPlatformKeySet.size
       ? this.selectableContentTypeOptions
       : this.contentTypeOptions;
+
+    // If viewing as a regular receiver (not admin), prefer to show only options
+    // for platforms the signed-in user actually has in their profile. If the
+    // user has no connected platforms stored, fall back to the base options.
+    if (!this.adminReview) {
+      const userSet = this.userSocialPlatformKeySet;
+      if (userSet.size) {
+        const filtered = base.filter((opt) => userSet.has(this.normalized(opt.platform)));
+        return filtered.length ? filtered : base;
+      }
+    }
+    return base;
   }
 
   private normalized(v: string): string {

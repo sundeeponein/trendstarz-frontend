@@ -295,6 +295,21 @@
         </div>
       </div>
 
+      <!-- Missing platforms for viewer (encourage adding/updating profile) -->
+      <div class="cdm-section" *ngIf="!adminReview && missingPlatforms.length">
+        <div class="cdm-section-label">PLATFORMS YOU DON'T HAVE</div>
+        <div class="cdm-note">Add or update these platforms in your profile to receive more offers.</div>
+        <div class="cdm-platform-list">
+          <button class="cdm-ct-pill disabled cdm-missing-pill" *ngFor="let m of missingPlatforms" disabled>
+            <i class="bi" [ngClass]="platformIcon(m.platform)"></i>
+            <span>{{ m.label }}</span>
+          </button>
+        </div>
+        <div class="mt-2">
+          <a [routerLink]="profileEditLink" (click)="onClose()" class="cdm-link-btn">Add / Update platforms</a>
+        </div>
+      </div>
+
       <!-- Content type options (when campaign offers choices on accept) -->
       <div class="cdm-section" *ngIf="isPending && contentTypeOptions.length">
         <div class="cdm-section-label">CHOOSE WHAT YOU'LL CREATE</div>
@@ -309,6 +324,7 @@
                   (click)="selectedContentTypeKey = opt.key; toastError = ''">
             <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
             <span>{{ opt.label }}</span>
+            <span class="cdm-has-platform" *ngIf="userHasPlatform(opt.platform)">You have</span>
             <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
           </button>
         </div>
