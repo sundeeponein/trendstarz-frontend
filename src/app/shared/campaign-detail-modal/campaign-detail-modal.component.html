@@ -284,63 +284,65 @@
         <div class="cdm-brief-box">{{ specialInstructions }}</div>
       </div>
 
-      <!-- Social platforms -->
-      <div class="cdm-section" *ngIf="platforms.length">
-        <div class="cdm-section-label">SOCIAL PLATFORMS</div>
-        <div class="cdm-platform-list">
-          <div class="cdm-platform-pill" *ngFor="let p of platforms">
-            <i class="bi" [ngClass]="platformIcon(p.platform)" [style.color]="platformColor(p.platform)"></i>
-            <span>{{ platformLabel(p.platform) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="cdm-section" *ngIf="hasMatchingPlatforms">
-        <div class="cdm-section-label">YOU MATCH</div>
-        <div class="cdm-platform-list">
-          <div class="cdm-platform-pill cdm-platform-pill--match" *ngFor="let p of matchingPlatforms">
-            <i class="bi" [ngClass]="platformIcon(p.platform)"></i>
-            <span>{{ platformLabel(p.platform) }}</span>
-            <span class="cdm-has-platform">You have</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Campaign platform requirements -->
-      <div class="cdm-section" *ngIf="showHostRequestedPlatforms">
-        <div class="cdm-section-label">REQUIRED PLATFORMS</div>
-        <div class="cdm-note">{{ hostRequestedPlatformsNote }}</div>
-
-        <div *ngIf="availableContentTypeOptions.length">
-          <div class="cdm-note mb-1">You already have these matching platforms from your profile:</div>
-          <div class="cdm-platform-list mb-2">
-            <button type="button"
-                    class="cdm-ct-pill"
-                    *ngFor="let opt of availableContentTypeOptions"
-                    [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
-                    [class.disabled]="!isPending || !isOptionSelectable(opt)"
-                    [disabled]="!isPending || !isOptionSelectable(opt)"
-                    (click)="isPending && (selectedContentTypeKey = opt.key); toastError = ''">
-              <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-              <span>{{ opt.label }}</span>
-              <span class="cdm-has-platform">You have</span>
-              <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-            </button>
-          </div>
-        </div>
-
-        <div *ngIf="unavailableContentTypeOptions.length">
-          <div class="cdm-note mb-1">These host-requested platforms do not exist in your profile yet. Update them to get more campaign and collaboration invites.</div>
+      <ng-container *ngIf="showInvitePlatformSections">
+        <!-- Social platforms (all campaign platforms without filtering) -->
+        <div class="cdm-section" *ngIf="allCampaignPlatforms.length">
+          <div class="cdm-section-label">SOCIAL PLATFORMS</div>
           <div class="cdm-platform-list">
-            <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
-              <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-              <span>{{ opt.label }}</span>
-              <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-            </button>
+            <div class="cdm-platform-pill" *ngFor="let p of allCampaignPlatforms">
+              <i class="bi" [ngClass]="platformIcon(p.platform)" [style.color]="platformColor(p.platform)"></i>
+              <span>{{ platformLabel(p.platform) }}</span>
+            </div>
           </div>
         </div>
 
+        <!-- You match (all campaign platforms with user matching status) -->
+        <div class="cdm-section" *ngIf="allCampaignPlatforms.length && !adminReview">
+          <div class="cdm-section-label">YOU MATCH</div>
+          <div class="cdm-platform-match-row">
+            <!-- Show each campaign platform with user's matching status -->
+            <div *ngFor="let platform of allCampaignPlatforms" 
+                 [ngClass]="userHasPlatform(platform.platform) ? 'cdm-platform-match-pill' : 'cdm-platform-missing-pill'">
+              <i class="bi" [ngClass]="platformIcon(platform.platform)" [style.color]="platformColor(platform.platform)"></i>
+              <span>{{ platformLabel(platform.platform) }}</span>
+              <span class="cdm-match-badge" [ngClass]="!userHasPlatform(platform.platform) ? 'cdm-match-badge--missing' : ''">
+                {{ userHasPlatform(platform.platform) ? 'You have' : 'Not Exist' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selectable content options (only for platforms user has) -->
+        <div class="cdm-section" *ngIf="availableContentTypeOptions.length || unavailableContentTypeOptions.length">
+          <div class="cdm-section-label">SELECT CONTENT TYPE</div>
+        <div class="cdm-note mb-2" *ngIf="isPending && availableContentTypeOptions.length">Choose the content type you can provide:</div>
+        
+        <!-- Selectable content types (user has these platforms) -->
+        <div class="cdm-ct-selection-row" *ngIf="availableContentTypeOptions.length">
+          <button type="button"
+                  class="cdm-ct-pill"
+                  *ngFor="let opt of availableContentTypeOptions"
+                  [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
+                  [class.disabled]="!isPending || !isOptionSelectable(opt)"
+                  [disabled]="!isPending || !isOptionSelectable(opt)"
+                  (click)="isPending && (selectedContentTypeKey = opt.key); toastError = ''">
+            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+            <span>{{ platformLabel(opt.platform) }} · {{ opt.contentType }}</span>
+            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+          </button>
+        </div>
+
+        <!-- Unavailable content types (user doesn't have these platforms) - shown as disabled -->
+        <div class="cdm-ct-selection-row" *ngIf="unavailableContentTypeOptions.length">
+          <div class="cdm-note mb-2" *ngIf="availableContentTypeOptions.length">Not available in your profile:</div>
+          <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
+            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+            <span>{{ platformLabel(opt.platform) }} · {{ opt.contentType }}</span>
+            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+          </button>
+        </div>
       </div>
+      </ng-container>
 
       <!-- What to do checklist (before accept) -->
       <div class="cdm-section" *ngIf="isPending">

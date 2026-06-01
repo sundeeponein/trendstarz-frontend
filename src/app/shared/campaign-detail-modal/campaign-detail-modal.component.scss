@@ -750,3 +750,64 @@
     background: #eef2ff;
   }
 }
+
+/* Platform match display for "YOU MATCH" section */
+.cdm-platform-match-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cdm-platform-match-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #ffd7b5;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #b34a00;
+
+  i { font-size: 1rem; }
+}
+
+.cdm-platform-missing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #f5f5f5;
+  border: 1px solid #d6d8de;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #9a9a9a;
+
+  i { font-size: 1rem; }
+}
+
+.cdm-match-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #fff4e6;
+  color: #ff6b1a;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  &--missing {
+    background: #e0e0e0;
+    color: #666;
+  }
+}
+
+/* Content type selection row */
+.cdm-ct-selection-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

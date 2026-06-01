@@ -251,6 +251,14 @@ export class CampaignDetailModalComponent implements OnChanges {
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
 
+  get isInviteCampaign(): boolean {
+    return !!this.invite || this.isInviteLocation || this.isPaidCollab || this.isProduct;
+  }
+
+  get showInvitePlatformSections(): boolean {
+    return this.isInviteCampaign && this.allCampaignPlatforms.length > 0;
+  }
+
   get isUnlocked(): boolean { return !!this.invite?.unlocked; }
 
   private get isLocationPaymentConfirmed(): boolean {
@@ -478,6 +486,20 @@ export class CampaignDetailModalComponent implements OnChanges {
     return [];
   }
 
+  /** All campaign platforms without any filtering (for display only) */
+  get allCampaignPlatforms(): { platform: string }[] {
+    const c = this.campaign;
+    if (Array.isArray(c?.socialMedia) && c.socialMedia.length) {
+      return c.socialMedia
+        .map((sm: any) => ({ platform: sm.platform || '' }))
+        .filter((p: { platform: string }) => p.platform);
+    }
+    if (Array.isArray(c?.platforms) && c.platforms.length) {
+      return c.platforms.map((p: string) => ({ platform: p }));
+    }
+    return [];
+  }
+
   get contentTypeOptions(): ContentTypeOption[] {
     const sm = this.campaign?.socialMedia;
     if (!Array.isArray(sm) || !sm.length) return [];
@@ -548,6 +570,20 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   get hasMatchingPlatforms(): boolean {
     return this.matchingPlatforms.length > 0;
+  }
+
+  /** List of unique platforms user has that match campaign */
+  get matchingPlatformsList(): string[] {
+    const seen = new Set<string>();
+    const platforms: string[] = [];
+    for (const p of this.matchingPlatforms) {
+      const norm = this.normalized(p.platform);
+      if (!seen.has(norm)) {
+        seen.add(norm);
+        platforms.push(p.platform);
+      }
+    }
+    return platforms;
   }
 
   /** Options present in campaign but user doesn't have the platform (show disabled) */
