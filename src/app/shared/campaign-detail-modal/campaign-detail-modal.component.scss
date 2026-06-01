@@ -141,6 +141,16 @@
   font-size: 1.05rem;
   font-weight: 700;
   color: #111827;
+  .cdm-brief-box {
+    border: 1px solid #e6e8eb;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px 20px;
+    color: #111827;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
   line-height: 1.25;
   word-break: break-word;
 }
@@ -149,6 +159,14 @@
   font-size: 0.78rem;
   color: #6b7280;
   margin-top: 2px;
+  .cdm-description {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: #111827;
+    background: #ffffff;
+    border-color: #e6e8eb;
+  }
 }
 
 /* Admin moderation note callout */
@@ -156,6 +174,13 @@
   margin: 0 0 18px;
   padding: 12px 14px;
   border-radius: 10px;
+  .cdm-section-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #374151;
+    margin-bottom: 12px;
+  }
   border: 1.5px solid #fbbf24;
   background: #fffbeb;
 
@@ -165,10 +190,23 @@
     letter-spacing: 0.07em;
     color: #92400e;
     margin-bottom: 6px;
+
+  /* Center admin action buttons like the reference design */
+  .cdm-footer--admin-centered {
+    justify-content: center;
+  }
+
+  .cdm-footer--admin-centered .cdm-footer-status {
+    display: none;
+  }
+
+  .cdm-footer--admin-centered .cdm-btn {
+    margin: 0 8px;
+  }
     display: flex;
     align-items: center;
     gap: 6px;
-
+      padding: 12px 30px; /* Enlarged accept button */
     i { font-size: 0.85rem; }
   }
 

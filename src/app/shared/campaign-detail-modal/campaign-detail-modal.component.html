@@ -377,7 +377,7 @@
     </div>
 
     <!-- Footer -->
-    <div class="cdm-footer">
+    <div class="cdm-footer" [ngClass]="{'cdm-footer--admin-centered': adminReview}">
       <span class="cdm-footer-status" [ngClass]="'cdm-footer-status--' + statusKey">
         <i class="bi bi-circle-fill"></i>
         {{ statusFooterLabel }}
