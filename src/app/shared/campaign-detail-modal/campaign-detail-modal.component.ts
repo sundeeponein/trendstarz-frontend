@@ -533,6 +533,22 @@ export class CampaignDetailModalComponent implements OnChanges {
     return opts.filter((opt) => userSet.has(this.normalized(opt.platform)));
   }
 
+  get matchingPlatforms(): { platform: string }[] {
+    const seen = new Set<string>();
+    return this.availableContentTypeOptions
+      .map((opt) => ({ platform: opt.platform }))
+      .filter((entry) => {
+        const key = this.normalized(entry.platform);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  get hasMatchingPlatforms(): boolean {
+    return this.matchingPlatforms.length > 0;
+  }
+
   /** Options present in campaign but user doesn't have the platform (show disabled) */
   get unavailableContentTypeOptions(): ContentTypeOption[] {
     const opts = this.displayContentTypeOptions || [];

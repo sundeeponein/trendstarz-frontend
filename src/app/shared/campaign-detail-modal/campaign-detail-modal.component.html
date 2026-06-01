@@ -295,13 +295,24 @@
         </div>
       </div>
 
+      <div class="cdm-section" *ngIf="hasMatchingPlatforms">
+        <div class="cdm-section-label">YOU MATCH</div>
+        <div class="cdm-platform-list">
+          <div class="cdm-platform-pill cdm-platform-pill--match" *ngFor="let p of matchingPlatforms">
+            <i class="bi" [ngClass]="platformIcon(p.platform)"></i>
+            <span>{{ platformLabel(p.platform) }}</span>
+            <span class="cdm-has-platform">You have</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Campaign platform requirements -->
       <div class="cdm-section" *ngIf="showHostRequestedPlatforms">
         <div class="cdm-section-label">REQUIRED PLATFORMS</div>
         <div class="cdm-note">{{ hostRequestedPlatformsNote }}</div>
 
         <div *ngIf="availableContentTypeOptions.length">
-          <div class="cdm-note mb-1">You already have these matching platforms:</div>
+          <div class="cdm-note mb-1">You already have these matching platforms from your profile:</div>
           <div class="cdm-platform-list mb-2">
             <button type="button"
                     class="cdm-ct-pill"
@@ -319,7 +330,7 @@
         </div>
 
         <div *ngIf="unavailableContentTypeOptions.length">
-          <div class="cdm-note mb-1">Missing from your profile — add these platforms to receive more campaigns and collaborations.</div>
+          <div class="cdm-note mb-1">These host-requested platforms do not exist in your profile yet. Update them to get more campaign and collaboration invites.</div>
           <div class="cdm-platform-list">
             <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
               <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>

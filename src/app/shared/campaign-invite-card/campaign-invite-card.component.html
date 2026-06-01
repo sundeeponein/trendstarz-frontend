@@ -131,6 +131,9 @@
       </div>
       <div class="inv-ct-row">
         <span class="inv-ct-row-label">Create (choose one):</span>
+        <small class="text-muted d-block mb-2">
+          Host requested platforms matched to your profile are shown below.
+        </small>
         <button *ngFor="let opt of availableContentTypeOptions"
                 type="button"
                 class="inv-ct-pill"
@@ -142,6 +145,9 @@
           {{ opt.label }}
           <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
         </button>
+        <div *ngIf="availableContentTypeOptions.length === 0 && displayContentTypeOptions.length > 0" class="text-muted small mt-1">
+          No host-requested platforms match your profile yet. Open View Details to update your social platforms.
+        </div>
       </div>
     </ng-container>
     
