@@ -208,16 +208,23 @@
       </button>
 
       <div class="inv-counter-form" *ngIf="counterEditing" (click)="onActionsClick($event)">
-        <label class="inv-counter-label">Your expected payout (₹)</label>
-        <input type="number" class="inv-counter-input" min="1" step="1"
-               [(ngModel)]="counterAmountInput"
-               placeholder="e.g. 3200" />
-        <label class="inv-counter-label">Reason (optional)</label>
-        <select class="inv-counter-input"
-                [(ngModel)]="counterReasonInput">
-          <option value="">Select reason</option>
-          <option *ngFor="let reason of counterReasonOptions" [value]="reason">{{ reason }}</option>
-        </select>
+        <div class="row">
+          <div class="col">
+            <label class="inv-counter-label">Your expected payout (₹)</label>
+            <input type="number" class="inv-counter-input" min="1" step="1"
+                  [(ngModel)]="counterAmountInput"
+                  placeholder="e.g. 3200" />
+          </div>
+          <div class="col">
+            <label class="inv-counter-label">Reason (optional)</label>
+            <select class="inv-counter-input"
+                    [(ngModel)]="counterReasonInput">
+              <option value="">Select reason</option>
+              <option *ngFor="let reason of counterReasonOptions" [value]="reason">{{ reason }}</option>
+            </select>
+          </div>
+        </div>
+        
         <small class="inv-counter-hint">Comment/note text is reserved for future feature use.</small>
         <div class="inv-counter-hint" *ngIf="selectedPayoutHint">Offered: {{ selectedPayoutHint }}</div>
         <div class="inv-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</div>

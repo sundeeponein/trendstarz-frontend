@@ -32,6 +32,7 @@ export class CampaignPaymentPageComponent implements OnInit {
   platformFeePercent = 0;
   gstPercent = 0;
 
+  calculatedPayment: any = null;
   utrNumber = '';
   submitting = false;
   processingRazorpay = false;
@@ -265,5 +266,13 @@ export class CampaignPaymentPageComponent implements OnInit {
 
   formatINR(paise: number | undefined | null): string {
     return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+
+  get upiQrUrl(): string {
+    const tx = this.primaryTx;
+    if (!tx || !tx.agreedAmount) return '';
+    const amount = Number(tx.agreedAmount || 0) / 100;
+    const upiString = `upi://pay?pa=${this.paymentUpiId}&pn=${encodeURIComponent(this.payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('TrendstarZ Campaign')}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiString)}`;
   }
 }

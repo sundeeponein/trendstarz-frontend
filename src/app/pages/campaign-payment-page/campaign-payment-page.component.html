@@ -79,8 +79,17 @@
           Prefer Razorpay for instant verification. Manual UPI + UTR is available below.
         </p>
 
-        <!-- UPI block -->
-        <div class="cmp-upi-block">
+        <!-- QR + UPI payment block -->
+        <div class="cmp-pay-grid">
+          <!-- QR Code section -->
+          <div class="cmp-qr-block" *ngIf="upiQrUrl">
+            <p class="cmp-section-title">Scan QR with any UPI app</p>
+            <img class="cmp-qr-img" [src]="upiQrUrl" alt="UPI QR code" />
+            <p class="cmp-qr-hint">GPay · PhonePe · Paytm · BHIM</p>
+          </div>
+
+          <!-- UPI ID section -->
+          <div class="cmp-upi-block">
           <div class="cmp-upi-label">
             <i class="bi bi-qr-code"></i> Pay to this UPI ID
           </div>
@@ -92,6 +101,7 @@
             </button>
           </div>
           <p class="cmp-upi-hint">Open any UPI app and pay to the ID above. Then enter the UTR below.</p>
+          </div>
         </div>
 
         <div class="cmp-error-msg" *ngIf="submitError">
