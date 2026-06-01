@@ -4411,7 +4411,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       ? String(invOrStatus || '').toLowerCase()
       : this.getHostInviteEffectiveStatus(invOrStatus);
     const map: Record<string, string> = {
-      pending:           'Applied',
+      pending:           'Pending',
       invited:           'Invited',
       counter_sent:      'Counter Received',
       accepted:          'Working',
