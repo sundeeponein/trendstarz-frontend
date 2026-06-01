@@ -295,35 +295,38 @@
         </div>
       </div>
 
-      <!-- Content type options (when campaign offers choices on accept) -->
+      <!-- Campaign platform requirements -->
       <div class="cdm-section" *ngIf="isPending && displayContentTypeOptions.length">
-        <div class="cdm-section-label">CHOOSE WHAT YOU'LL CREATE</div>
-        <div class="cdm-note">Choose only one option before accepting.</div>
+        <div class="cdm-section-label">REQUIRED PLATFORMS</div>
+        <div class="cdm-note">These are the platforms requested by the host for this campaign. Update your profile to receive more matching campaigns and collaborations.</div>
 
-        <!-- Available options (user has this platform) -->
-        <div class="cdm-platform-list mb-2" *ngIf="availableContentTypeOptions.length">
-          <button type="button"
-                  class="cdm-ct-pill"
-                  *ngFor="let opt of availableContentTypeOptions"
-                  [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
-                  [class.disabled]="!isOptionSelectable(opt)"
-                  [disabled]="!isOptionSelectable(opt)"
-                  (click)="selectedContentTypeKey = opt.key; toastError = ''">
-            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-            <span>{{ opt.label }}</span>
-            <span class="cdm-has-platform">You have</span>
-            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-          </button>
+        <div *ngIf="availableContentTypeOptions.length">
+          <div class="cdm-note mb-1">You already have these matching platforms:</div>
+          <div class="cdm-platform-list mb-2">
+            <button type="button"
+                    class="cdm-ct-pill"
+                    *ngFor="let opt of availableContentTypeOptions"
+                    [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
+                    [class.disabled]="!isOptionSelectable(opt)"
+                    [disabled]="!isOptionSelectable(opt)"
+                    (click)="selectedContentTypeKey = opt.key; toastError = ''">
+              <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+              <span>{{ opt.label }}</span>
+              <span class="cdm-has-platform">You have</span>
+              <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Unavailable options (user doesn't have platform) -->
-        <div class="cdm-platform-list" *ngIf="unavailableContentTypeOptions.length">
-          <div class="cdm-note mb-1">Host/brand preferred — update your social media handle &amp; tier to receive more campaigns.</div>
-          <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
-            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-            <span>{{ opt.label }}</span>
-            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-          </button>
+        <div *ngIf="unavailableContentTypeOptions.length">
+          <div class="cdm-note mb-1">Missing from your profile — add these platforms to receive more campaigns and collaborations.</div>
+          <div class="cdm-platform-list">
+            <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
+              <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+              <span>{{ opt.label }}</span>
+              <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+            </button>
+          </div>
         </div>
 
       </div>

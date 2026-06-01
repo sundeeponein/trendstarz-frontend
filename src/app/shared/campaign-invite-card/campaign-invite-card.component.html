@@ -120,11 +120,6 @@
   </div>
 
   <!-- Deliverables row -->
-  <div class="invite-card__deliverables" *ngIf="selectedOutputs.length">
-    <div class="deliverables-label">Selected outputs:</div>
-    <span *ngFor="let d of selectedOutputs" class="chip chip--deliv">{{ d }}</span>
-  </div>
-
   <!-- CTA buttons -->
   <div class="invite-card__actions" (click)="onActionsClick($event)" *ngIf="isActionable">
     
