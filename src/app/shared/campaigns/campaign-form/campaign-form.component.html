@@ -937,3 +937,14 @@
 </div><!-- /.modal -->
 
 <app-campaign-guide-modal></app-campaign-guide-modal>
+
+<app-confirm-dialog
+  [open]="confirmDialogOpen"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [confirmText]="confirmDialogConfirmText"
+  [cancelText]="confirmDialogCancelText"
+  [confirmVariant]="confirmDialogVariant"
+  (confirm)="onConfirmDialogConfirm()"
+  (cancel)="onConfirmDialogCancel()">
+</app-confirm-dialog>

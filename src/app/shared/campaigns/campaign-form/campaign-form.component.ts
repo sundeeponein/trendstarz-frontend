@@ -9,6 +9,7 @@ import { TierInfoService } from '../../components/tier-info-modal/tier-info.serv
 import { FlowHelpModalService } from '../../components/flow-help-modal/flow-help-modal.service';
 import { CampaignGuideModalService, CampaignGuideContent } from '../../components/campaign-guide-modal/campaign-guide-modal.service';
 import { CampaignGuideModalComponent } from '../../components/campaign-guide-modal/campaign-guide-modal.component';
+import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog.component';
 import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 import { ToastService } from '../../toast/toast.service';
 import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
@@ -18,7 +19,7 @@ import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-requir
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent, ConfirmDialogComponent],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
@@ -75,6 +76,14 @@ export class CampaignFormComponent implements OnInit {
   currentStep = 1;
   platformsTouched = false;
   categoriesTouched = false;
+  // Dialog state management
+  confirmDialogOpen = false;
+  confirmDialogTitle = '';
+  confirmDialogMessage = '';
+  confirmDialogConfirmText = 'Confirm';
+  confirmDialogCancelText = 'Cancel';
+  confirmDialogVariant: 'primary' | 'danger' | 'warning' = 'primary';
+  private confirmDialogCallback: (() => void) | null = null;
   get trustLabels(): string[] {
     const recipient = this.inviteRecipientLabelPlural.toLowerCase();
     return [
@@ -1820,13 +1829,21 @@ export class CampaignFormComponent implements OnInit {
         payload.image = await this.uploadToCloudinary(this.selectedFile);
       } catch {
         this.uploading = false;
+        this.showUploadFailureDialog();
         return;
       }
     } else if (this.isEdit && this.campaign?.image) {
       payload.image = this.campaign.image;
     }
     this.uploading = false;
-    this.save.emit({
+    this.save.emit(this.buildSavePayload(payload));
+    if (this.isEdit && this.campaign?._id) {
+      this.fetchCampaignInvites();
+    }
+  }
+
+  private buildSavePayload(payload: any) {
+    return {
       ...payload,
       categories: this.isPhotographerCreator
         ? this.selectedPhotographerServices
@@ -1865,10 +1882,7 @@ export class CampaignFormComponent implements OnInit {
         ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
         : undefined,
       inviteRecipientRole: this.isPhotographerCreator ? 'influencer' : (this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer'),
-    });
-    if (this.isEdit && this.campaign?._id) {
-      this.fetchCampaignInvites();
-    }
+    };
   }
 
   private async uploadToCloudinary(file: File): Promise<{ url: string; public_id: string }> {
@@ -1890,7 +1904,114 @@ export class CampaignFormComponent implements OnInit {
     throw new Error('Image upload failed');
   }
 
-  onCancel() { this.cancel.emit(); }
+  onCancel() {
+    if (this.shouldPromptSaveDraft()) {
+      this.confirmDialogTitle = 'Save Campaign as Draft?';
+      this.confirmDialogMessage = 'You have unsaved campaign changes. Save as a draft so you can continue later?';
+      this.confirmDialogConfirmText = 'Save as Draft';
+      this.confirmDialogCancelText = 'Discard';
+      this.confirmDialogVariant = 'primary';
+      this.confirmDialogCallback = () => this.saveDraftWithoutValidation();
+      this.confirmDialogOpen = true;
+      this.cd.detectChanges();
+    } else {
+      this.cancel.emit();
+    }
+  }
+
+  onConfirmDialogConfirm() {
+    this.confirmDialogOpen = false;
+    if (this.confirmDialogCallback) {
+      this.confirmDialogCallback();
+      this.confirmDialogCallback = null;
+    }
+  }
+
+  onConfirmDialogCancel() {
+    this.confirmDialogOpen = false;
+    // If this was a save-draft prompt on cancel, actually close now
+    if (this.confirmDialogCallback === this.saveDraftWithoutValidation) {
+      this.confirmDialogCallback = null;
+      this.cancel.emit();
+    }
+  }
+
+  private shouldPromptSaveDraft(): boolean {
+    if (!this.form) return false;
+    if (this.form.dirty) return true;
+    if (this.selectedFile) return true;
+    if (this.imagePreview) return true;
+    return false;
+  }
+
+  private saveDraftWithoutValidation() {
+    const v = this.form.value;
+    const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
+    const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
+    const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
+    const keepPendingReview = this.isEdit && originalStatus === 'pending_review';
+    const keepPending = this.isEdit && originalStatus === 'pending';
+    const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
+    const payload: any = {
+      ...v,
+      pricePerInfluencer: pricePerInfluencerPaise,
+      minInfluencers: Number(v.minInfluencers || 1),
+      status: (isOpenCampaign || isResubmit || keepPendingReview)
+        ? 'pending_review'
+        : (keepPending ? 'pending' : 'draft'),
+      deliverables: this.isPhotographerCreator
+        ? this.selectedPhotographerDeliverables
+        : this.parseDeliverables(v.deliverablesText),
+    };
+    payload.acceptanceDeadline = payload.acceptanceDeadline
+      ? new Date(payload.acceptanceDeadline).toISOString()
+      : undefined;
+    this.sanitizeCampaignTypeFields(payload);
+    payload.image = this.isEdit && this.campaign?.image ? this.campaign.image : undefined;
+    this.uploading = false;
+    this.toast.success('Campaign saved as draft. You can continue editing it later.');
+    this.save.emit(this.buildSavePayload(payload));
+  }
+
+  private showUploadFailureDialog() {
+    this.confirmDialogTitle = 'Image Upload Failed';
+    this.confirmDialogMessage = 'The image upload failed. Save this campaign as a draft so you can fix it later, or cancel to keep editing and remove/replace the image.';
+    this.confirmDialogConfirmText = 'Save as Draft';
+    this.confirmDialogCancelText = 'Keep Editing';
+    this.confirmDialogVariant = 'warning';
+    this.confirmDialogCallback = () => this.handleImageUploadFailure();
+    this.confirmDialogOpen = true;
+    this.cd.detectChanges();
+  }
+
+  private handleImageUploadFailure() {
+    const v = this.form.value;
+    const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
+    const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
+    const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
+    const keepPendingReview = this.isEdit && originalStatus === 'pending_review';
+    const keepPending = this.isEdit && originalStatus === 'pending';
+    const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
+    const payload: any = {
+      ...v,
+      pricePerInfluencer: pricePerInfluencerPaise,
+      minInfluencers: Number(v.minInfluencers || 1),
+      status: (isOpenCampaign || isResubmit || keepPendingReview)
+        ? 'pending_review'
+        : (keepPending ? 'pending' : 'draft'),
+      deliverables: this.isPhotographerCreator
+        ? this.selectedPhotographerDeliverables
+        : this.parseDeliverables(v.deliverablesText),
+    };
+    payload.acceptanceDeadline = payload.acceptanceDeadline
+      ? new Date(payload.acceptanceDeadline).toISOString()
+      : undefined;
+    this.sanitizeCampaignTypeFields(payload);
+    payload.image = this.isEdit && this.campaign?.image ? this.campaign.image : undefined;
+    this.uploading = false;
+    this.toast.warning('Campaign saved as draft so you can fix the image later.');
+    this.save.emit(this.buildSavePayload(payload));
+  }
 
   isInfluencerInvited(inf: any): boolean {
     return this.campaignInvites.some(i => {

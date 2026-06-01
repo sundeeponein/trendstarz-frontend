@@ -1,0 +1,94 @@
+.confirm-dialog-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-dialog-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-content {
+  padding: 1.5rem;
+}
+
+.dialog-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #212529;
+}
+
+.dialog-message {
+  font-size: 0.95rem;
+  color: #495057;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+
+  .btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &.btn-secondary {
+      background-color: #e9ecef;
+      color: #495057;
+      border-color: #dee2e6;
+
+      &:hover {
+        background-color: #dee2e6;
+      }
+    }
+
+    &.btn-primary {
+      background-color: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+
+      &:hover {
+        background-color: #0b5ed7;
+      }
+    }
+
+    &.btn-danger {
+      background-color: #dc3545;
+      color: white;
+      border-color: #dc3545;
+
+      &:hover {
+        background-color: #bb2d3b;
+      }
+    }
+
+    &.btn-warning {
+      background-color: #ffc107;
+      color: #212529;
+      border-color: #ffc107;
+
+      &:hover {
+        background-color: #ffb800;
+      }
+    }
+  }
+}
