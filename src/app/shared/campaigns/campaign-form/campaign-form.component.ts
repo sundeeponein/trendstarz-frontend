@@ -1883,8 +1883,9 @@ export class CampaignFormComponent implements OnInit {
       throw new Error('Image upload failed');
     }
     const data = await res.json();
-    if (data.secure_url && data.public_id) {
-      return { url: data.secure_url, public_id: data.public_id };
+    const payload = data?.data || data || {};
+    if ((payload.secure_url || payload.url) && payload.public_id) {
+      return { url: payload.secure_url || payload.url, public_id: payload.public_id };
     }
     throw new Error('Image upload failed');
   }
