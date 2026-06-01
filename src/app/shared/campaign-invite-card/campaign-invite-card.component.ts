@@ -863,6 +863,27 @@ export class CampaignInviteCardComponent {
     return '';
   }
 
+  /** Normalized set of platforms the influencer has in their profile (from input) */
+  private get influencerPlatformKeySet(): Set<string> {
+    const set = new Set<string>();
+    if (!Array.isArray(this.influencerSocialMedia)) return set;
+    for (const p of this.influencerSocialMedia) {
+      const name = String(p?.platform || '').trim().toLowerCase();
+      if (name) set.add(name);
+    }
+    return set;
+  }
+
+  /** Content type options the influencer actually has platforms for (shown on card) */
+  get availableContentTypeOptions(): ContentTypeOption[] {
+    const base = this.lockedPlatform || this.qualifyingPlatforms?.length
+      ? this.selectableContentTypeOptions
+      : this.contentTypeOptions;
+    const set = this.influencerPlatformKeySet;
+    if (!set.size) return base; // if no influencer profile platforms provided, show all
+    return base.filter((opt) => set.has((opt.platform || '').toLowerCase().trim()));
+  }
+
   // ── Event handlers ─────────────────────────────────────────
   onCardClick() { this.view.emit(this.invite); }
   onView(ev: Event) { ev.stopPropagation(); this.view.emit(this.invite); }

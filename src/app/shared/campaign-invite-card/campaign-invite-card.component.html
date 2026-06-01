@@ -136,7 +136,7 @@
       </div>
       <div class="inv-ct-row">
         <span class="inv-ct-row-label">Create (choose one):</span>
-        <button *ngFor="let opt of displayContentTypeOptions"
+        <button *ngFor="let opt of availableContentTypeOptions"
                 type="button"
                 class="inv-ct-pill"
                 [class.selected]="selectedContentTypeKey === opt.key"

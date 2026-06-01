@@ -295,39 +295,37 @@
         </div>
       </div>
 
-      <!-- Missing platforms for viewer (encourage adding/updating profile) -->
-      <div class="cdm-section" *ngIf="!adminReview && missingPlatforms.length">
-        <div class="cdm-section-label">PLATFORMS YOU DON'T HAVE</div>
-        <div class="cdm-note">Add or update these platforms in your profile to receive more offers.</div>
-        <div class="cdm-platform-list">
-          <button class="cdm-ct-pill disabled cdm-missing-pill" *ngFor="let m of missingPlatforms" disabled>
-            <i class="bi" [ngClass]="platformIcon(m.platform)"></i>
-            <span>{{ m.label }}</span>
-          </button>
-        </div>
-        <div class="mt-2">
-          <a [routerLink]="profileEditLink" (click)="onClose()" class="cdm-link-btn">Add / Update platforms</a>
-        </div>
-      </div>
-
       <!-- Content type options (when campaign offers choices on accept) -->
-      <div class="cdm-section" *ngIf="isPending && contentTypeOptions.length">
+      <div class="cdm-section" *ngIf="isPending && displayContentTypeOptions.length">
         <div class="cdm-section-label">CHOOSE WHAT YOU'LL CREATE</div>
         <div class="cdm-note">Choose only one option before accepting.</div>
-        <div class="cdm-platform-list">
+
+        <!-- Available options (user has this platform) -->
+        <div class="cdm-platform-list mb-2" *ngIf="availableContentTypeOptions.length">
           <button type="button"
                   class="cdm-ct-pill"
-                  *ngFor="let opt of displayContentTypeOptions"
+                  *ngFor="let opt of availableContentTypeOptions"
                   [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
                   [class.disabled]="!isOptionSelectable(opt)"
                   [disabled]="!isOptionSelectable(opt)"
                   (click)="selectedContentTypeKey = opt.key; toastError = ''">
             <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
             <span>{{ opt.label }}</span>
-            <span class="cdm-has-platform" *ngIf="userHasPlatform(opt.platform)">You have</span>
+            <span class="cdm-has-platform">You have</span>
             <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
           </button>
         </div>
+
+        <!-- Unavailable options (user doesn't have platform) -->
+        <div class="cdm-platform-list" *ngIf="unavailableContentTypeOptions.length">
+          <div class="cdm-note mb-1">Host/brand preferred — update your social media handle &amp; tier to receive more campaigns.</div>
+          <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
+            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+            <span>{{ opt.label }}</span>
+            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+          </button>
+        </div>
+
       </div>
 
       <!-- What to do checklist (before accept) -->

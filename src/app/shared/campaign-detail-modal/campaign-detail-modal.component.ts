@@ -509,21 +509,26 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   /** UI options shown to influencer; for tier-locked invites we show only relevant platform choices. */
   get displayContentTypeOptions(): ContentTypeOption[] {
-    const base = this.lockedPlatform || this.qualifyingPlatformKeySet.size
+    // Return campaign-provided options (respecting locked/qualifying constraints).
+    return this.lockedPlatform || this.qualifyingPlatformKeySet.size
       ? this.selectableContentTypeOptions
       : this.contentTypeOptions;
+  }
 
-    // If viewing as a regular receiver (not admin), prefer to show only options
-    // for platforms the signed-in user actually has in their profile. If the
-    // user has no connected platforms stored, fall back to the base options.
-    if (!this.adminReview) {
-      const userSet = this.userSocialPlatformKeySet;
-      if (userSet.size) {
-        const filtered = base.filter((opt) => userSet.has(this.normalized(opt.platform)));
-        return filtered.length ? filtered : base;
-      }
-    }
-    return base;
+  /** Options the signed-in user can actually select (has that platform in profile) */
+  get availableContentTypeOptions(): ContentTypeOption[] {
+    const opts = this.displayContentTypeOptions || [];
+    const userSet = this.userSocialPlatformKeySet;
+    if (!userSet.size) return opts; // if user has no platforms recorded, keep all selectable
+    return opts.filter((opt) => userSet.has(this.normalized(opt.platform)));
+  }
+
+  /** Options present in campaign but user doesn't have the platform (show disabled) */
+  get unavailableContentTypeOptions(): ContentTypeOption[] {
+    const opts = this.displayContentTypeOptions || [];
+    const userSet = this.userSocialPlatformKeySet;
+    if (!userSet.size) return [];
+    return opts.filter((opt) => !userSet.has(this.normalized(opt.platform)));
   }
 
   private normalized(v: string): string {
