@@ -232,6 +232,10 @@
 
   <div *ngIf="activeTab === 'location'">
     <h2>Manage States & Districts</h2>
+    <p class="text-muted mb-3">
+      Locations are seeded from the permanent admin config into MongoDB. Use these switches to control what appears in registration and location filters.
+      Toggling a state applies the same visibility to its districts; you can still fine-tune individual districts after.
+    </p>
     <div class="state-tabs mb-3">
       <button *ngFor="let state of config.locations; let i = index"
               class="btn btn-outline-light me-2 mb-2"

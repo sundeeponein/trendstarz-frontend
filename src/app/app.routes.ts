@@ -71,8 +71,8 @@ export const routes: Routes = [
 		path: '',
 		component: NoNavbarLayoutComponent,
 		children: [
-			{ path: 'login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
-			{ path: 'auth/login', loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
+			{ path: 'login', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
+			{ path: 'auth/login', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent) },
 			{ path: '', loadComponent: () => import('./pages/auth/auth-landing.component').then(m => m.AuthLandingComponent) },
 		],
 	},

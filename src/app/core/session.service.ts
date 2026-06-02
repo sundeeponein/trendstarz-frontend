@@ -44,17 +44,11 @@ export class SessionService {
     localStorage.removeItem(SessionService.LOGIN_TIME_KEY);
   }
 
-  setToken(token: string, rememberMe = false) {
+  setToken(token: string) {
     if (!this.isBrowser()) return;
-    const shouldPersist = rememberMe || this.prefersPersistentSession();
-    if (shouldPersist) {
-      localStorage.setItem(SessionService.TOKEN_KEY, token);
-      localStorage.setItem(SessionService.LOGIN_TIME_KEY, String(Date.now()));
-      sessionStorage.removeItem(SessionService.TOKEN_KEY);
-    } else {
-      this.clearRememberedSession();
-      sessionStorage.setItem(SessionService.TOKEN_KEY, token);
-    }
+    localStorage.setItem(SessionService.TOKEN_KEY, token);
+    localStorage.setItem(SessionService.LOGIN_TIME_KEY, String(Date.now()));
+    sessionStorage.removeItem(SessionService.TOKEN_KEY);
   }
 
   getToken(): string | null {

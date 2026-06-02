@@ -585,6 +585,11 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'state') {
       const state = this.config.locations[idx];
       state.visible = !state.visible;
+      this.config.districts
+        .filter((district: any) => String(district?.state || '').trim().toLowerCase() === String(state?.name || '').trim().toLowerCase())
+        .forEach((district: any) => {
+          district.visible = state.visible;
+        });
     } else if (type === 'district') {
       const district = this.config.districts[idx];
       district.visible = !district.visible;
