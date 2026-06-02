@@ -111,7 +111,7 @@
                 Accepted: <strong>{{ getAcceptedInviteCount(c) }}</strong> · Progressed: <strong>{{ getProgressedInviteCount(c) }}</strong>
               </div>
             </td>
-            <td>₹{{ ((c.budgetMin || 0) > 0 ? c.budgetMin : (c.pricePerInfluencer || 0) / 100) | number:'1.0-0' }}</td>
+            <td>{{ campaignPreviewBudget(c) }}</td>
             <td>{{ (c.updatedAt || c.createdAt) | date:'medium' }}</td>
             <td>
               <div class="d-flex gap-1 flex-wrap">

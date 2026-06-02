@@ -391,9 +391,35 @@ export class CampaignDetailModalComponent implements OnChanges {
     const c = this.campaign;
     const min = Number(c?.budgetMin ?? c?.budget ?? 0);
     const max = Number(c?.budgetMax ?? c?.budget ?? min);
-    if (!min && !max) return '';
-    if (min === max) return `₹${min.toLocaleString('en-IN')}`;
-    return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
+    if (min > 0 || max > 0) {
+      if (min > 0 && max > 0 && min !== max) return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
+      return `₹${(min || max).toLocaleString('en-IN')}`;
+    }
+
+    const paise = Number(c?.pricePerInfluencer || c?.estimatedBudget || c?.amount || 0);
+    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+
+    const inviteProgress = Array.isArray(c?.inviteProgress) ? c.inviteProgress : [];
+    for (const row of inviteProgress) {
+      const rowPaise = Number(
+        row?.agreedAmountPaise
+          || row?.campaignAmountPaise
+          || row?.counterOfferedAmountPaise
+          || row?.counterRequestedAmountPaise
+          || 0,
+      );
+      if (rowPaise > 0) return `₹${Math.floor(rowPaise / 100).toLocaleString('en-IN')}`;
+
+      const rowRupees = Number(
+        row?.agreedAmount
+          || row?.counterOfferedAmount
+          || row?.counterRequestedAmount
+          || 0,
+      );
+      if (rowRupees > 0) return `₹${rowRupees.toLocaleString('en-IN')}`;
+    }
+
+    return '';
   }
 
   private get timelineRange(): { start?: string; end?: string } {

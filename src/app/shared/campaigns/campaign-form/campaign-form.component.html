@@ -88,7 +88,7 @@
           <!-- Per-type explanation hints -->
           <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
             <i class="bi bi-cash-stack"></i>
-            <strong>Paid Collab</strong> — You pay the influencer a fixed fee to create and post content (Reel, Story, etc.). You review the submitted post and admin handles the payout. Best for awareness, launches, and product promotions.
+            <strong>Paid Collab</strong> — You pay the influencer a fixed fee to create and post content (Reel, Story, etc.). You review the submitted post. Best for awareness, launches, and product promotions.
           </p>
           <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
             <i class="bi bi-gift"></i>
@@ -226,9 +226,9 @@
             <i class="bi bi-laptop"></i> <strong>Remote project.</strong> No physical shoot location is needed — the influencer will deliver content remotely (voiceover, screen recording, edits-only, etc.).
           </p>
 
-          <p class="field-sublabel">
+          <!-- <p class="field-sublabel">
             <i class="bi bi-info-circle"></i> Before acceptance, only area/locality is shown. Exact venue details are shared after collaboration confirmation.
-          </p>
+          </p> -->
         </div>
 
         <!-- Product Collab + brand→photographer: explicit “no shoot location” note -->
@@ -242,7 +242,7 @@
           <label class="field-label">Deliverables</label>
           <textarea formControlName="deliverablesText" class="field-textarea" rows="3"
                     placeholder="Example: 1 Reel, 2 Stories, 1 Static post (one deliverable per line or comma-separated)"></textarea>
-          <p class="field-sublabel">This helps influencers understand exact expected output before applying.</p>
+          <p class="field-sublabel">This helps Influencers or Photo/Videographers understand exact expected output before applying.</p>
         </div>
 
         
@@ -364,6 +364,10 @@
             <label class="field-label">Max participants <span class="required">*</span></label>
             <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
             <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+            <p class="field-sublabel">
+              Campaign closes after {{ f['maxInfluencers'].value || 0 }} accepted participant{{ f['maxInfluencers'].value == 1 ? '' : 's' }}.
+              Invite sending follows your plan limit.
+            </p>
           </div>
         </div>
 
@@ -372,27 +376,16 @@
             <label class="field-label">Max participants <span class="required">*</span></label>
             <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
             <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+            <p class="field-sublabel">
+              Campaign closes after {{ f['maxInfluencers'].value || 0 }} accepted participant{{ f['maxInfluencers'].value == 1 ? '' : 's' }}.
+              Invite sending follows your plan limit.
+            </p>
           </div>
         </div>
 
-        <div class="field-row" *ngIf="shouldShowMinimumParticipantsField">
-          <div class="field-group half">
-            <label class="field-label">Min participants required <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-            <input type="number" formControlName="minInfluencers" class="field-input" placeholder="e.g. 1" min="1" />
-            <span class="field-error" *ngIf="f['minInfluencers'].touched && f['minInfluencers'].invalid">Enter at least 1</span>
-          </div>
-          <div class="field-group half">
-            <label class="field-label">Close rule preview</label>
-            <div class="field-input" style="display:flex; align-items:center; min-height:44px;">
-              Ready at {{ minimumParticipantsDisplayValue }} • Auto closes at {{ f['maxInfluencers'].value || 0 }}
-            </div>
-            <small class="field-sublabel"> accepted participants</small>
-          </div>
-        </div>
-
-        <p class="field-sublabel" *ngIf="!shouldShowMinimumParticipantsField">
+        <p class="field-sublabel">
           <i class="bi bi-info-circle"></i>
-          Minimum participants required is set to 1 for this setup.
+          Minimum participants required is set to 1.
         </p>
 
         <span class="field-error" *ngIf="(f['minInfluencers'].touched || f['maxInfluencers'].touched) && form.errors?.['invalidMinMaxInfluencers']">
@@ -409,6 +402,10 @@
             <label class="field-label">Max participants <span class="required">*</span></label>
             <input type="number" formControlName="maxInfluencers" class="field-input" placeholder="e.g. 5" min="1" />
             <span class="field-error" *ngIf="f['maxInfluencers'].touched && f['maxInfluencers'].invalid">Enter at least 1</span>
+            <p class="field-sublabel">
+              Campaign closes after {{ f['maxInfluencers'].value || 0 }} accepted participant{{ f['maxInfluencers'].value == 1 ? '' : 's' }}.
+              Invite sending follows your plan limit.
+            </p>
           </div>
         </div>
 
@@ -783,10 +780,11 @@
             <div>
               Invited: <strong>{{ invitedCount }}</strong>
               <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
-              &nbsp;/ <strong>{{ f['maxInfluencers'].value }}</strong>
+              &nbsp;/ <strong>{{ inviteSelectionLimit === -1 ? 'Unlimited' : inviteSelectionLimit }}</strong>
             </div>
+            <div>Accepted close target: <strong>{{ f['maxInfluencers'].value }}</strong></div>
             <div *ngIf="(isPerContentPricingFlow && hasSelectedContentTypePricing) || (!isPerContentPricingFlow && f['pricePerInfluencer'].value)">
-              Potential payout (invited + selected): <strong>₹{{ inviteOnlyPotentialPayoutRupees | number:'1.0-0' }}</strong>
+              Max payout after accepted slots: <strong>₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
             </div>
           </div>
 

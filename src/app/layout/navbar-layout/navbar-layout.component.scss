@@ -105,13 +105,14 @@
       cursor: pointer;
       color: #c7d2fe;
       display: block;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-      }
+      margin-bottom:5px;
 
       &.unread {
-        background: rgba(255, 107, 53, 0.14);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      &:hover {
+        background: rgba(255, 107, 53, 0.15);
       }
     }
 

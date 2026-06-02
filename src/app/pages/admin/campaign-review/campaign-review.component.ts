@@ -604,13 +604,74 @@ export class CampaignReviewComponent implements OnInit {
   campaignPreviewBudget(campaign: any): string {
     const min = Number(campaign?.budgetMin ?? campaign?.budget ?? 0);
     const max = Number(campaign?.budgetMax ?? campaign?.budget ?? min);
-    if (!min && !max) {
-      const perInfluencer = Number(campaign?.pricePerInfluencer || 0);
-      if (perInfluencer > 0) return `₹${Math.floor(perInfluencer / 100).toLocaleString('en-IN')}`;
-      return 'Not specified';
+    if (min > 0 || max > 0) {
+      if (min > 0 && max > 0 && min !== max) {
+        return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
+      }
+      return `₹${(min || max).toLocaleString('en-IN')}`;
     }
-    if (min === max) return `₹${min.toLocaleString('en-IN')}`;
-    return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
+
+    const paise = this.resolveCampaignBudgetPaise(campaign);
+    if (paise > 0) {
+      return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    }
+
+    const rupees = this.resolveCampaignBudgetRupees(campaign);
+    if (rupees > 0) {
+      return `₹${rupees.toLocaleString('en-IN')}`;
+    }
+
+    return 'Not specified';
+  }
+
+  private resolveCampaignBudgetPaise(campaign: any): number {
+    const candidates = [
+      campaign?.pricePerInfluencer,
+      campaign?.estimatedBudget,
+      campaign?.amount,
+      campaign?.agreedAmountPaise,
+    ];
+    for (const value of candidates) {
+      const amount = Number(value || 0);
+      if (amount > 0) return amount;
+    }
+
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    for (const row of rows) {
+      const amount = Number(
+        row?.agreedAmountPaise
+          || row?.campaignAmountPaise
+          || row?.counterOfferedAmountPaise
+          || row?.counterRequestedAmountPaise
+          || 0,
+      );
+      if (amount > 0) return amount;
+    }
+    return 0;
+  }
+
+  private resolveCampaignBudgetRupees(campaign: any): number {
+    const candidates = [
+      campaign?.agreedAmount,
+      campaign?.finalAmount,
+      campaign?.pricePerInfluencerRupees,
+    ];
+    for (const value of candidates) {
+      const amount = Number(value || 0);
+      if (amount > 0) return amount;
+    }
+
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    for (const row of rows) {
+      const amount = Number(
+        row?.agreedAmount
+          || row?.counterOfferedAmount
+          || row?.counterRequestedAmount
+          || 0,
+      );
+      if (amount > 0) return amount;
+    }
+    return 0;
   }
 
   campaignPreviewUpdated(campaign: any): string {

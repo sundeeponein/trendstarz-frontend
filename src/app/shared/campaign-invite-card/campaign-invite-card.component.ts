@@ -43,6 +43,7 @@ interface ContentTypeOption {
 export class CampaignInviteCardComponent {
   @Input() invite: any;
   @Input() busy = false;
+  @Input() showViewDetails = true;
   @Input() qualifyingPlatforms: string[] | null = null;
   @Input() influencerSocialMedia: Array<{ platform: string; tier: string }> | null = null;
   /** initial value for the post-date input (one-shot seed) */

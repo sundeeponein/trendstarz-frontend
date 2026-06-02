@@ -1175,10 +1175,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   isInviteMissed(invite: any): boolean {
     const status = String(invite?.status || '').toLowerCase();
+    if (this.isAutoClosedInvite(invite)) return true;
     if (status !== 'pending' && status !== 'invited') return false;
     const deadline = this.getInviteDeadline(invite);
     if (!deadline) return false;
     return Date.now() > deadline.getTime();
+  }
+
+  private isAutoClosedInvite(invite: any): boolean {
+    const status = String(invite?.status || '').toLowerCase();
+    if (status !== 'withdrawn') return false;
+    const reason = String(invite?.withdrawnReason || '').trim().toLowerCase();
+    return reason.includes('auto-closed');
   }
 
   get myInvitesPending(): any[] {
@@ -1197,7 +1205,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     );
   }
   get myInvitesDeclined(): any[] {
-    return this.myInvitesTyped.filter(i => i.status === 'declined' || i.status === 'withdrawn');
+    return this.myInvitesTyped.filter(i => {
+      const status = String(i?.status || '').toLowerCase();
+      return status === 'declined' || (status === 'withdrawn' && !this.isAutoClosedInvite(i));
+    });
   }
   get myInvitesCompleted(): any[] {
     return this.myInvitesTyped.filter(i =>
@@ -1568,7 +1579,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get photographerInboxInvitesDeclined(): any[] {
     return this.photographerInboxInvites.filter((invite: any) =>
-      ['declined', 'withdrawn'].includes(String(invite?.status || '').toLowerCase()),
+      String(invite?.status || '').toLowerCase() === 'declined' ||
+      (String(invite?.status || '').toLowerCase() === 'withdrawn' && !this.isAutoClosedInvite(invite)),
     );
   }
 
@@ -1596,7 +1608,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get photographerBrandInvitesDeclined(): any[] {
     return this.photographerBrandInvites.filter((invite: any) =>
-      ['declined', 'withdrawn'].includes(String(invite?.status || '').toLowerCase()),
+      String(invite?.status || '').toLowerCase() === 'declined' ||
+      (String(invite?.status || '').toLowerCase() === 'withdrawn' && !this.isAutoClosedInvite(invite)),
     );
   }
 

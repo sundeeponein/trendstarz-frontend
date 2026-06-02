@@ -13,6 +13,7 @@ import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog.comp
 import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 import { ToastService } from '../../toast/toast.service';
 import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
+import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.service';
 
 
 
@@ -39,9 +40,16 @@ export class CampaignFormComponent implements OnInit {
       return this.invitedCount + this.selectedInfluencerIds.size;
     }
 
+    get inviteSelectionLimit(): number {
+      const configured = this.plansService.getLimitValue(this.planCaps, 'maxInvitesPerCampaign');
+      if (configured === -1) return -1;
+      if (configured > 0) return configured;
+      return this.planCaps?.hasPremium || this.hasPremium ? 10 : 1;
+    }
+
     canSelectMoreInfluencers(): boolean {
-      const max = Number(this.f['maxInfluencers']?.value || 0);
-      return max === 0 || this.takenSlotsCount < max;
+      const max = this.inviteSelectionLimit;
+      return max === -1 || this.takenSlotsCount < max;
     }
   campaignInvites: any[] = [];
   @Input() mode: 'create' | 'edit' = 'create';
@@ -58,6 +66,7 @@ export class CampaignFormComponent implements OnInit {
   }>();
   @Output() cancel = new EventEmitter<void>();
   form!: FormGroup;
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
 
   // ── Step 3 invite recipients ─────────────────────────────────
   allInfluencers: any[] = [];
@@ -331,10 +340,20 @@ export class CampaignFormComponent implements OnInit {
     private config: ConfigService,
     private cd: ChangeDetectorRef,
     private toast: ToastService,
+    private plansService: PlansService,
   ) {}
 
   ngOnInit() {
     this.currentBrandName = this.readCurrentBrandName();
+    this.plansService.getMyCapabilities().subscribe({
+      next: (caps) => {
+        this.planCaps = caps || FREE_CAPABILITIES;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.planCaps = FREE_CAPABILITIES;
+      },
+    });
     this.form = this.fb.group({
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
       brandName: [this.currentBrandName],
@@ -937,9 +956,7 @@ export class CampaignFormComponent implements OnInit {
   };
 
   get shouldShowMinimumParticipantsField(): boolean {
-    const mode = String(this.f['campaignMode']?.value || 'invite_only');
-    const max = Number(this.f['maxInfluencers']?.value || 0);
-    return mode === 'tier_filtered_open' || max > 1;
+    return false;
   }
 
   get minimumParticipantsDisplayValue(): number {
@@ -949,19 +966,7 @@ export class CampaignFormComponent implements OnInit {
 
   private normalizeMinParticipantsField(): void {
     if (!this.form) return;
-    const max = Number(this.f['maxInfluencers']?.value || 0);
-    const min = Number(this.f['minInfluencers']?.value || 0);
-    if (!this.shouldShowMinimumParticipantsField) {
-      this.f['minInfluencers']?.setValue(1, { emitEvent: false });
-      return;
-    }
-    if (!min || min < 1) {
-      this.f['minInfluencers']?.setValue(1, { emitEvent: false });
-      return;
-    }
-    if (max > 0 && min > max) {
-      this.f['minInfluencers']?.setValue(max, { emitEvent: false });
-    }
+    this.f['minInfluencers']?.setValue(1, { emitEvent: false });
   }
 
   private readCurrentBrandName(): string {
@@ -1635,14 +1640,14 @@ export class CampaignFormComponent implements OnInit {
       this.toast.error(`Unable to identify this ${this.inviteRecipientLabelSingular.toLowerCase()}. Please refresh and try again.`);
       return;
     }
-    const max = Number(this.f['maxInfluencers']?.value || 0);
+    const max = this.inviteSelectionLimit;
     this.selectionLimitError = '';
     if (this.selectedInfluencerIds.has(id)) {
       this.selectedInfluencerIds.delete(id);
       return;
     }
-    if (max > 0 && this.takenSlotsCount >= max) {
-      this.selectionLimitError = `You can select up to ${max} ${this.inviteRecipientLabelPlural.toLowerCase()} only (already invited: ${this.invitedCount}).`;
+    if (max !== -1 && this.takenSlotsCount >= max) {
+      this.selectionLimitError = `Your plan allows up to ${max} invites per campaign (already invited: ${this.invitedCount}).`;
       this.toast.error(this.selectionLimitError);
       return;
     }
@@ -1876,10 +1881,10 @@ export class CampaignFormComponent implements OnInit {
         ? this.selectedPhotographerDeliverables
         : this.parseDeliverables(payload.deliverablesText ?? ''),
       inviteInfluencerIds: this.selectedInfluencerIds.size > 0
-        ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
+        ? Array.from(this.selectedInfluencerIds).slice(0, this.inviteSelectionLimit === -1 ? this.selectedInfluencerIds.size : this.inviteSelectionLimit)
         : undefined,
       inviteRecipientIds: this.selectedInfluencerIds.size > 0
-        ? Array.from(this.selectedInfluencerIds).slice(0, Number(this.f['maxInfluencers']?.value || this.selectedInfluencerIds.size))
+        ? Array.from(this.selectedInfluencerIds).slice(0, this.inviteSelectionLimit === -1 ? this.selectedInfluencerIds.size : this.inviteSelectionLimit)
         : undefined,
       inviteRecipientRole: this.isPhotographerCreator ? 'influencer' : (this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer'),
     };
@@ -2022,4 +2027,3 @@ export class CampaignFormComponent implements OnInit {
     });
   }
 }
-

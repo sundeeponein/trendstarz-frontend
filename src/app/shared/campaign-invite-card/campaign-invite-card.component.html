@@ -260,7 +260,7 @@
       <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing…</span>
       <span *ngIf="!busy"><i class="bi bi-x-lg"></i> Decline</span>
     </button>
-    <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
+    <button type="button" class="btn-invite-action btn-view ms-auto" *ngIf="showViewDetails" (click)="onView($event)">
       <i class="bi bi-eye"></i> View Details
     </button>
   </div>
@@ -319,7 +319,7 @@
         Visit scheduled: {{ locationVisit.scheduledAt | date:'MMM d, h:mm a' }}
       </span>
     </div>
-    <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
+    <button type="button" class="btn-invite-action btn-view ms-auto" *ngIf="showViewDetails" (click)="onView($event)">
       <i class="bi bi-eye"></i> View Details
     </button>
   </div>
