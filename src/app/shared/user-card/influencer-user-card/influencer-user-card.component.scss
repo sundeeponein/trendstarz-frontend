@@ -36,6 +36,27 @@
     white-space: nowrap;
   }
 
+  &__creator-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0 0 0.45rem;
+  }
+
+  &__creator-type {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    border: 1px solid #dbe3ee;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.18rem 0.45rem;
+  }
+
   &__stats {
     gap: 1.5rem;
     flex-wrap: nowrap;

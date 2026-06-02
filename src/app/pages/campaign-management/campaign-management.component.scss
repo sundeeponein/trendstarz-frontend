@@ -1035,6 +1035,77 @@
   }
 }
 
+.invite-smart-match {
+  border: 1px solid #e3e6f4;
+  background: #fbfcff;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 8px 0 10px;
+
+  small {
+    display: block;
+    color: #28a745;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+}
+
+.invite-smart-match__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+
+  strong {
+    font-size: 0.82rem;
+    color: $text-dark;
+  }
+
+  button {
+    border: 1px solid #d8deea;
+    background: #fff;
+    color: #4a4a62;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+.invite-smart-match__label {
+  display: block;
+  color: #4a4a62;
+  font-size: 0.74rem;
+  font-weight: 800;
+  margin: 8px 0 5px;
+}
+
+.invite-smart-radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.invite-smart-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid $border;
+  border-radius: 30px;
+  background: #fff;
+  color: $text-dark;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  input {
+    accent-color: $text-dark;
+  }
+}
+
 /* Each influencer row is now a <label> */
 .search-inf-row {
   cursor: pointer;

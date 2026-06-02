@@ -68,6 +68,7 @@
             [profileImage]="influencer.profileImage || influencer.profileImages?.[0]?.url || ''"
             [name]="influencer.name || influencer.fullname || ''"
             [influencerCategory]="influencer.influencerCategory || influencer.categories?.[0] || ''"
+            [creatorTypes]="influencer.creatorTypes || []"
             [isPremium]="influencer.isPremium || false"
             [promotionalPrice]="influencer.promotionalPrice"
             [showWelcomeStartingPrice]="true"

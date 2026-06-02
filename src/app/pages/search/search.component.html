@@ -32,7 +32,7 @@
         <i class="bi bi-people-fill"></i> Influencers
       </button>
       <button class="pill-tab" *ngIf="showPhotographersTab" [class.active]="activeTab === 'photographers'" (click)="setTab('photographers')">
-        <i class="bi bi-camera-fill"></i> Photographers
+        <i class="bi bi-camera-fill"></i> Photo/Videographers
       </button>
     </div>
   </div>
@@ -150,6 +150,7 @@
         [username]="influencer.username || ''"
         [categories]="influencer.categories || []"
         [influencerCategory]="influencer.influencerCategory || ''"
+        [creatorTypes]="influencer.creatorTypes || []"
         [verificationStatus]="influencer.verificationStatus || 'not_submitted'"
         [verifiedByTrendStarz]="!!influencer.verifiedByTrendStarz"
         [location]="influencer.location || {}"

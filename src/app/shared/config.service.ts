@@ -411,6 +411,35 @@ export class ConfigService {
     );
   }
 
+  getCollaborationAvailabilityOptions(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/collaboration-availability-options`).pipe(
+      map((res) => this.extractData<any>(res) || res || {})
+    );
+  }
+
+  getCreatorTypeOptions(): Observable<any[]> {
+    const normalize = (items: unknown) => (Array.isArray(items) ? items : [])
+      .map((item: any) => {
+        if (typeof item === 'string') return { name: item.trim(), visible: true };
+        return {
+          ...item,
+          name: String(item?.name || '').trim(),
+          visible: item?.visible !== false,
+        };
+      })
+      .filter((item: any) => !!item.name && item.visible !== false);
+
+    return this.http.get<any>(`${this.apiUrl}/creator-type-options`).pipe(
+      map((res) => normalize(this.extractData<any[]>(res) || res || [])),
+      catchError(() =>
+        this.getConfig().pipe(
+          map((cfg: any) => normalize(cfg?.creatorTypeOptions)),
+          catchError(() => of([])),
+        ),
+      ),
+    );
+  }
+
   getEquipmentOptions(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/equipment-options`).pipe(
       map((res) => this.extractData<any[]>(res) || []),
@@ -483,6 +512,7 @@ export class ConfigService {
     smartLocationPriority?: boolean;
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
+    creatorType?: string;
   }): Observable<any> {
     const params: string[] = [];
     if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
@@ -490,6 +520,7 @@ export class ConfigService {
     if (typeof options?.lite === 'boolean') params.push(`lite=${options.lite ? '1' : '0'}`);
     if (options?.state) params.push(`state=${encodeURIComponent(options.state)}`);
     if (options?.district) params.push(`district=${encodeURIComponent(options.district)}`);
+    if (options?.creatorType) params.push(`creatorType=${encodeURIComponent(options.creatorType)}`);
     if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
@@ -518,6 +549,7 @@ export class ConfigService {
     smartLocationPriority?: boolean;
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
+    creatorType?: string;
   }): Observable<any[]> {
     return this.getInfluencersSearchResponse(options).pipe(
       map((data) => (data?.data || data || []) as any[]),

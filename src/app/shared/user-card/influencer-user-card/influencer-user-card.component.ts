@@ -18,6 +18,7 @@ export class InfluencerUserCardComponent {
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
   @Input() influencerCategory = '';
+  @Input() creatorTypes: string[] = [];
   @Input() verificationStatus = 'not_submitted';
   @Input() verifiedByTrendStarz = false;
   @Input() location: any = {};
@@ -70,6 +71,13 @@ export class InfluencerUserCardComponent {
   get displayCategory(): string {
     if (String(this.influencerCategory || '').trim()) return this.influencerCategory;
     return this.categories?.[0] || '—';
+  }
+
+  get visibleCreatorTypes(): string[] {
+    return (Array.isArray(this.creatorTypes) ? this.creatorTypes : [])
+      .map((type) => String(type || '').trim())
+      .filter((type) => !!type)
+      .slice(0, 3);
   }
 
   get isTrendstarzVerified(): boolean {

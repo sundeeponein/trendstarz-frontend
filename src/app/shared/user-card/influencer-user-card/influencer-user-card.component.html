@@ -36,6 +36,10 @@
       </div>
     </div>
 
+    <div class="inf-card__creator-types" *ngIf="visibleCreatorTypes.length">
+      <span class="inf-card__creator-type" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
+    </div>
+
     <!-- Location -->
     <div class="inf-card__location" *ngIf="location?.state">
       <i class="bi bi-geo-alt"></i>

@@ -17,7 +17,7 @@
     <div class="role-tabs col-4" role="tablist" aria-label="User Roles">
       <button class="role-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
       <button class="role-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-      <button class="role-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
+      <button class="role-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
     </div>
   </div>
 
@@ -222,6 +222,14 @@
             <div>
               <label>Categories</label>
               <div>{{ getUserCategoriesLabel(selectedUser) }}</div>
+            </div>
+            <div *ngIf="(selectedUserType || activeTab) === 'influencer'">
+              <label>Creator Type / Specialty</label>
+              <div>{{ getUserCreatorTypesLabel(selectedUser) }}</div>
+            </div>
+            <div *ngIf="(selectedUserType || activeTab) === 'influencer'">
+              <label>Collaboration Availability</label>
+              <div>{{ getUserCollaborationAvailabilityLabel(selectedUser) }}</div>
             </div>
             <div>
               <label>Languages</label>

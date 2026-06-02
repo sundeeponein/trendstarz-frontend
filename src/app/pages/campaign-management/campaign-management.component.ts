@@ -122,6 +122,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   inviteTab: 'invited' | 'search' = 'invited';
   inviteTargetRole: 'influencer' | 'photographer' = 'influencer';
   influencerSearch = '';
+  inviteCreatorTypeFilter = '';
+  creatorTypeOptions: any[] = [];
+  collaborationAvailabilityOptions: any = {};
+  inviteLookingForCreatorTypes: string[] = [];
+  invitePreferredCreatorTypes: string[] = [];
+  invitePreferredCollaborationPreference = '';
+  inviteOpenCollaborationTypes: string[] = [];
   allInfluencersForInvite: any[] = [];
   allPhotographersForInvite: any[] = [];
   influencersForInviteLoading = false;
@@ -301,16 +308,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get inviteTargetSingularLabel(): string {
-    return this.inviteTargetRole === 'photographer' ? 'Photographer' : 'Influencer';
+    return this.inviteTargetRole === 'photographer' ? 'Photo/Videographer' : 'Influencer';
   }
 
   get inviteTargetPluralLabel(): string {
-    return this.inviteTargetRole === 'photographer' ? 'Photographers' : 'Influencers';
+    return this.inviteTargetRole === 'photographer' ? 'Photo/Videographers' : 'Influencers';
   }
 
   get inviteTargetSearchPlaceholder(): string {
     return this.inviteTargetRole === 'photographer'
-      ? 'Search photographers by name...'
+      ? 'Search photo/videographers by name...'
       : 'Search influencers by name...';
   }
 
@@ -655,6 +662,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       : this.allInfluencersForInvite;
   }
 
+  get inviteCollaborationPreferenceOptions(): any[] {
+    return this.collaborationAvailabilityOptions?.influencer?.preferences || [];
+  }
+
+  get inviteOpenCollaborationTypeOptions(): any[] {
+    return this.collaborationAvailabilityOptions?.influencer?.collaborationTypes || [];
+  }
+
   get selectableInfluencers(): any[] {
     return this.selectableInviteRecipients;
   }
@@ -683,9 +698,77 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.filteredInviteRecipients.filter(inf => !this.invitedIds.has(inf._id));
   }
 
+  toggleInviteSmartMatchValue(field: 'inviteLookingForCreatorTypes' | 'invitePreferredCreatorTypes' | 'inviteOpenCollaborationTypes', value: string): void {
+    const clean = String(value || '').trim();
+    if (!clean) return;
+    const list = [...this[field]];
+    const idx = list.indexOf(clean);
+    if (idx >= 0) list.splice(idx, 1);
+    else list.push(clean);
+    this[field] = list;
+    this.cd.detectChanges();
+  }
+
+  isInviteSmartMatchSelected(field: 'inviteLookingForCreatorTypes' | 'invitePreferredCreatorTypes' | 'inviteOpenCollaborationTypes', value: string): boolean {
+    return this[field].includes(String(value || '').trim());
+  }
+
+  clearInviteSmartMatchingFilters(): void {
+    this.inviteLookingForCreatorTypes = [];
+    this.invitePreferredCreatorTypes = [];
+    this.invitePreferredCollaborationPreference = '';
+    this.inviteOpenCollaborationTypes = [];
+  }
+
+  hasAnyInviteSmartMatchingFilter(): boolean {
+    return this.inviteLookingForCreatorTypes.length > 0 ||
+      this.invitePreferredCreatorTypes.length > 0 ||
+      !!this.invitePreferredCollaborationPreference ||
+      this.inviteOpenCollaborationTypes.length > 0;
+  }
+
+  private inviteValuesOverlap(source: any, selected: string[]): boolean {
+    if (!selected.length) return true;
+    const values = Array.isArray(source) ? source : [];
+    const normalized = new Set(values.map((item: any) => String(item || '').trim().toLowerCase()).filter(Boolean));
+    return selected.some(item => normalized.has(String(item || '').trim().toLowerCase()));
+  }
+
+  private matchesInviteSmartFilters(inf: any): boolean {
+    if (this.inviteTargetRole !== 'influencer' || !this.hasAnyInviteSmartMatchingFilter()) return true;
+    const creatorTypes = Array.isArray(inf?.creatorTypes) ? inf.creatorTypes : [];
+    const availability = inf?.collaborationAvailability || {};
+    if (this.inviteLookingForCreatorTypes.length && !this.inviteValuesOverlap(creatorTypes, this.inviteLookingForCreatorTypes)) return false;
+    if (this.invitePreferredCreatorTypes.length && !this.inviteValuesOverlap(creatorTypes, this.invitePreferredCreatorTypes)) return false;
+    if (this.inviteOpenCollaborationTypes.length && !this.inviteValuesOverlap(availability?.collaborationTypes, this.inviteOpenCollaborationTypes)) return false;
+    return true;
+  }
+
+  private getInviteSmartMatchScore(inf: any): number {
+    if (this.inviteTargetRole !== 'influencer') return 0;
+    const creatorTypes = Array.isArray(inf?.creatorTypes) ? inf.creatorTypes : [];
+    const availability = inf?.collaborationAvailability || {};
+    let score = 0;
+    if (this.inviteLookingForCreatorTypes.length && this.inviteValuesOverlap(creatorTypes, this.inviteLookingForCreatorTypes)) score += 30;
+    if (this.invitePreferredCreatorTypes.length && this.inviteValuesOverlap(creatorTypes, this.invitePreferredCreatorTypes)) score += 25;
+    if (this.inviteOpenCollaborationTypes.length && this.inviteValuesOverlap(availability?.collaborationTypes, this.inviteOpenCollaborationTypes)) score += 20;
+    if (
+      this.invitePreferredCollaborationPreference &&
+      String(availability?.preference || '').trim().toLowerCase() === this.invitePreferredCollaborationPreference.trim().toLowerCase()
+    ) {
+      score += 40;
+    }
+    return score;
+  }
+
   get filteredInviteRecipients(): any[] {
     const kw = this.influencerSearch.trim().toLowerCase();
     const filtered = this.inviteRecipients.filter(inf => {
+      if (this.inviteTargetRole === 'influencer' && this.inviteCreatorTypeFilter) {
+        const types = Array.isArray(inf?.creatorTypes) ? inf.creatorTypes : [];
+        if (!types.includes(this.inviteCreatorTypeFilter)) return false;
+      }
+      if (!this.matchesInviteSmartFilters(inf)) return false;
       if (!kw) return true;
       return (inf.name || inf.fullname || inf.fullName || '').toLowerCase().includes(kw);
     });
@@ -764,8 +847,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   private getInviteSuggestionScore(candidate: any): number {
     const location = this.getInviteLocationScore(candidate);
     const relevance = this.getInviteRelevanceScore(candidate);
+    const smartMatch = this.getInviteSmartMatchScore(candidate);
     const followersBoost = Math.min(this.getInviteTopFollowersCount(candidate), 1000000) / 1000000;
-    return location + relevance + followersBoost;
+    return location + relevance + smartMatch + followersBoost;
   }
 
   toggleInfluencerSelect(id: string) {
@@ -1021,11 +1105,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getCampaignInviteTargetSingularLabel(campaign: any): string {
-    return this.resolveCampaignInviteTargetRole(campaign) === 'photographer' ? 'Photographer' : 'Influencer';
+    return this.resolveCampaignInviteTargetRole(campaign) === 'photographer' ? 'Photo/Videographer' : 'Influencer';
   }
 
   getCampaignInviteTargetPluralLabel(campaign: any): string {
-    return this.resolveCampaignInviteTargetRole(campaign) === 'photographer' ? 'Photographers' : 'Influencers';
+    return this.resolveCampaignInviteTargetRole(campaign) === 'photographer' ? 'Photo/Videographers' : 'Influencers';
   }
 
   get invitePanelLockedTargetRole(): 'influencer' | 'photographer' | null {
@@ -1139,6 +1223,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (this.inviteTargetRole === role) return;
     this.inviteTargetRole = role;
     this.influencerSearch = '';
+    this.inviteCreatorTypeFilter = '';
+    this.clearInviteSmartMatchingFilters();
     this.selectedInfluencerIds.clear();
     this.inviteError = '';
     this.loadInviteRecipients(true);
@@ -1405,6 +1491,26 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.isInfluencerView = userRole === 'influencer';
     this.isPhotographerView = userRole === 'photographer' || userRole === 'videographer';
     this.syncPlanCapabilities();
+    this.config.getCreatorTypeOptions().subscribe({
+      next: (items: any[]) => {
+        this.creatorTypeOptions = Array.isArray(items) ? items : [];
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.creatorTypeOptions = [];
+        this.cd.detectChanges();
+      },
+    });
+    this.config.getCollaborationAvailabilityOptions().subscribe({
+      next: (options: any) => {
+        this.collaborationAvailabilityOptions = options || {};
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.collaborationAvailabilityOptions = {};
+        this.cd.detectChanges();
+      },
+    });
     if (this.isPhotographerView) {
       this.photographerWorkspaceView = this.normalizePhotographerWorkspaceView(
         this.route.snapshot.queryParamMap.get('view'),
@@ -2450,6 +2556,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.invitePanelOpen = true;
     this.inviteTab = 'invited';
     this.inviteTargetRole = this.invitePanelLockedTargetRole || 'influencer';
+    this.inviteCreatorTypeFilter = '';
+    this.clearInviteSmartMatchingFilters();
     this.invitesLoading = true;
     this.invites = [];
     this.config.getInvitesByCampaign(campaign._id!).subscribe({
@@ -2481,6 +2589,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.invitePanelOpen = false;
     this.invitePanelCampaign = null;
     this.influencerSearch = '';
+    this.inviteCreatorTypeFilter = '';
+    this.clearInviteSmartMatchingFilters();
     this.inviteError = '';
     this.selectedInfluencerIds.clear();
   }

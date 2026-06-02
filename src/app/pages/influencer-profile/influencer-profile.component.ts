@@ -15,11 +15,12 @@ import { ResetPasswordModalComponent } from '../../shared/components/reset-passw
 import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -46,7 +47,7 @@ export class InfluencerProfileComponent implements OnInit {
       .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
   }
 
-  toggleChip(field: 'languages' | 'categories', id: string): void {
+  toggleChip(field: 'languages' | 'categories' | 'creatorTypes', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
     const idx = arr.indexOf(id);
     if (idx > -1) {
@@ -304,6 +305,8 @@ export class InfluencerProfileComponent implements OnInit {
   states: any[] = [];
   districts: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
+  creatorTypeOptions: any[] = [];
   tiers: any[] = [];
   protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
@@ -373,11 +376,20 @@ export class InfluencerProfileComponent implements OnInit {
       promotionalPrice: [{ value: '', disabled: true }, Validators.required],
       languages: [{ value: [], disabled: true }, Validators.required],
       categories: [{ value: [], disabled: true }, Validators.required],
+      creatorTypes: [{ value: [], disabled: true }],
       profileImages: this.fb.array([]),
       contact: this.fb.group({
         whatsapp: [{ value: false, disabled: true }],
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }]
+      }),
+      collaborationAvailability: this.fb.group({
+        enabled: [{ value: false, disabled: true }],
+        collaborationTypes: [{ value: [], disabled: true }],
+        preference: [{ value: '', disabled: true }],
+        availableFor: [{ value: [], disabled: true }],
+        locations: [{ value: [], disabled: true }],
+        openToTravel: [{ value: false, disabled: true }],
       }),
       website: [{ value: '', disabled: true }],
       payout: this.fb.group({
@@ -438,7 +450,9 @@ export class InfluencerProfileComponent implements OnInit {
       tiers: this.configService.getTiers(),
       socialMedia: this.configService.getSocialMedia(),
       languages: this.configService.getLanguages(),
-      categories: this.configService.getCategories('influencer')
+      categories: this.configService.getCategories('influencer'),
+      collaborationAvailabilityOptions: this.configService.getCollaborationAvailabilityOptions(),
+      creatorTypeOptions: this.configService.getCreatorTypeOptions(),
     }).subscribe({
       next: (dropdownData) => {
         this.states = dropdownData.states || [];
@@ -447,6 +461,8 @@ export class InfluencerProfileComponent implements OnInit {
         this.socialMediaList = dropdownData.socialMedia || [];
         this.languagesList = dropdownData.languages || [];
         this.categoriesList = dropdownData.categories || [];
+        this.collaborationAvailabilityOptions = dropdownData.collaborationAvailabilityOptions || {};
+        this.creatorTypeOptions = dropdownData.creatorTypeOptions || [];
 
         // Now fetch influencer profile after dropdown data is loaded
         const token = this.getToken();
@@ -474,6 +490,9 @@ export class InfluencerProfileComponent implements OnInit {
           const categoryIds = (profile.categories || []).map((name: string) =>
             this.categoriesList.find(c => c.name === name)?._id
           ).filter(Boolean);
+          const creatorTypeIds = (profile.creatorTypes || []).map((name: string) =>
+            this.creatorTypeOptions.find((item: any) => item.name === name)?._id || name
+          ).filter(Boolean);
           // Load districts for the state, then patch form
             const patchForm = (districtId: string) => {
             this.registrationForm.patchValue({
@@ -495,7 +514,16 @@ export class InfluencerProfileComponent implements OnInit {
               promotionalPrice: profile.promotionalPrice || '',
               languages: languageIds,
             categories: categoryIds,
+            creatorTypes: creatorTypeIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false },
+            collaborationAvailability: profile.collaborationAvailability || {
+              enabled: false,
+              collaborationTypes: [],
+              preference: '',
+              availableFor: [],
+              locations: [],
+              openToTravel: false,
+            },
             website: profile.website || '',
             payout: {
               upiId: profile.payout?.upiId || '',
@@ -879,6 +907,12 @@ export class InfluencerProfileComponent implements OnInit {
       return found ? found.name : catId;
     }
 
+    getCreatorTypeName(typeId: string): string {
+      if (!this.creatorTypeOptions) return typeId;
+      const found = this.creatorTypeOptions.find((item: any) => item._id === typeId || item.name === typeId);
+      return found ? found.name : typeId;
+    }
+
     // Helper to map language ID to name safely for template
     getLanguageName(langId: string): string {
       if (!this.languagesList) return langId;
@@ -1084,6 +1118,10 @@ export class InfluencerProfileComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
+    const creatorTypeNames = (raw.creatorTypes || []).map((id: string) => {
+      const item = this.creatorTypeOptions.find((x: any) => x._id === id || x.name === id);
+      return item ? item.name : id;
+    }).filter((name: string) => !!String(name || '').trim());
     const influencerCategoryName = raw.influencerCategory
       ? (this.categoriesList.find((c: any) => c._id === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
@@ -1147,11 +1185,13 @@ export class InfluencerProfileComponent implements OnInit {
       promotionalPrice: raw.promotionalPrice,
       languages: languageNames,
       categories: categoryNames,
+      creatorTypes: creatorTypeNames,
       influencerCategory: influencerCategoryName,
       professionalStatus: !!raw.professionalStatus,
       expertiseArea: raw.expertiseArea || '',
       verificationDocuments: this.verificationDocuments,
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
+      collaborationAvailability: raw.collaborationAvailability,
       socialMedia,
       profileImages,
       contact: raw.contact,
@@ -1250,6 +1290,9 @@ export class InfluencerProfileComponent implements OnInit {
             const categoryIds = (profile.categories || []).map((name: string) =>
               (this.categoriesList || []).find((c: any) => c.name === name)?._id
             ).filter(Boolean);
+            const creatorTypeIds = (profile.creatorTypes || []).map((name: string) =>
+              (this.creatorTypeOptions || []).find((item: any) => item.name === name)?._id || name
+            ).filter(Boolean);
             const doPatch = (districtId: string) => {
               this.registrationForm.patchValue({
                 name: profile.name || '',
@@ -1269,7 +1312,16 @@ export class InfluencerProfileComponent implements OnInit {
                 location: { state: stateId, district: districtId },
                 languages: languageIds,
                 categories: categoryIds,
+                creatorTypes: creatorTypeIds,
                 contact: profile.contact || { whatsapp: false, email: false, call: false },
+                collaborationAvailability: profile.collaborationAvailability || {
+                  enabled: false,
+                  collaborationTypes: [],
+                  preference: '',
+                  availableFor: [],
+                  locations: [],
+                  openToTravel: false,
+                },
                 website: profile.website || '',
                 payout: {
                   upiId: profile.payout?.upiId || '',
@@ -1425,4 +1477,3 @@ export class InfluencerProfileComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 }
-

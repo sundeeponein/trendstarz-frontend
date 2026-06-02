@@ -284,6 +284,32 @@
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
+            <div class="field-block" *ngIf="creatorTypeOptions.length || registrationForm.get('creatorTypes')?.value?.length">
+              <label>Creator Type / Specialty <small class="text-muted">(Select if it matches your content style)</small></label>
+              <div class="chip-list">
+                <ng-container *ngIf="isEditMode; else viewCreatorTypes">
+                  <div
+                    *ngFor="let item of creatorTypeOptions"
+                    class="chip"
+                    [class.chip--selected]="registrationForm.get('creatorTypes')?.value?.includes(item._id || item.name)"
+                    (click)="toggleChip('creatorTypes', item._id || item.name)"
+                    tabindex="0"
+                    (keydown.enter)="toggleChip('creatorTypes', item._id || item.name)"
+                    (keydown.space)="toggleChip('creatorTypes', item._id || item.name)"
+                    [attr.aria-pressed]="registrationForm.get('creatorTypes')?.value?.includes(item._id || item.name)"
+                    role="button"
+                  >
+                    {{ item.name }}
+                  </div>
+                </ng-container>
+                <ng-template #viewCreatorTypes>
+                  <div *ngFor="let typeId of registrationForm.get('creatorTypes')?.value">
+                    <span class="chip chip--selected">{{ getCreatorTypeName(typeId) }}</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
           </div>
 
           <div class="card mt-2">
@@ -383,7 +409,7 @@
               </div>
 
               <ng-container *ngIf="activePlatformTab">
-                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2">
+                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2" [style.--platform-color]="platform.color">
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
                     <span class="platform-name">{{ platform.name }}</span>
@@ -427,6 +453,13 @@
             <div class="text-muted" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
             
           </div>
+
+          <app-collaboration-availability-form
+            [form]="$any(registrationForm.get('collaborationAvailability'))"
+            role="influencer"
+            [options]="collaborationAvailabilityOptions"
+            [readonly]="!isEditMode">
+          </app-collaboration-availability-form>
 
           <div *ngIf="step2Attempted && selectedPlatforms().length === 0" class="text-danger fw-bold mt-2">
             Please select at least one social platform.

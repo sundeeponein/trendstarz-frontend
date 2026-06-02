@@ -327,6 +327,12 @@
               Please add at least one social platform with handle and tier filled in.
             </div>
 
+            <app-collaboration-availability-form
+              [form]="$any(form.get('collaborationAvailability'))"
+              role="photographer"
+              [options]="collaborationAvailabilityOptions">
+            </app-collaboration-availability-form>
+
             <!-- Error -->
             <div *ngIf="registrationError" class="alert alert-danger mt-3">{{ registrationError }}</div>
 

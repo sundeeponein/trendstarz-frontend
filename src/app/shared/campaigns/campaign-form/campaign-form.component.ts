@@ -77,8 +77,15 @@ export class CampaignFormComponent implements OnInit {
   selectedInfluencerIds = new Set<string>();
   inviteRecipientRole: 'influencer' | 'photographer' = 'influencer';
   filterCategory = '';
+  filterCreatorType = '';
   filterTier = '';
   filterPlatform = '';
+  creatorTypeOptions: any[] = [];
+  collaborationAvailabilityOptions: any = {};
+  lookingForCreatorTypes: string[] = [];
+  preferredCreatorTypes: string[] = [];
+  preferredCollaborationPreference = '';
+  openCollaborationTypes: string[] = [];
   imagePreview: string | null = null;
   selectedFile: File | null = null;
   uploading = false;
@@ -452,6 +459,8 @@ export class CampaignFormComponent implements OnInit {
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
       this.selectedInfluencerIds.clear();
       this.selectionLimitError = '';
+      this.filterCreatorType = '';
+      this.clearSmartMatchingFilters();
       this.loadRecipientCategories();
       if (this.currentStep === 3) {
         this.loadInviteRecipients();
@@ -538,6 +547,27 @@ export class CampaignFormComponent implements OnInit {
     }
 
     this.loadRecipientCategories();
+    this.config.getCreatorTypeOptions().subscribe({
+      next: (items: any[]) => {
+        this.creatorTypeOptions = Array.isArray(items) ? items : [];
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.creatorTypeOptions = [];
+        this.cd.detectChanges();
+      },
+    });
+
+    this.config.getCollaborationAvailabilityOptions().subscribe({
+      next: (options: any) => {
+        this.collaborationAvailabilityOptions = options || {};
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.collaborationAvailabilityOptions = {};
+        this.cd.detectChanges();
+      },
+    });
 
     this.config.getSocialMedia().subscribe(data => {
       this.platformsList = Array.isArray(data) ? data : [];
@@ -671,6 +701,18 @@ export class CampaignFormComponent implements OnInit {
 
   get inviteCandidates(): any[] {
     return this.inviteRecipientRole === 'photographer' ? this.allPhotographers : this.allInfluencers;
+  }
+
+  get showInfluencerSmartMatching(): boolean {
+    return this.inviteRecipientRole === 'influencer';
+  }
+
+  get collaborationPreferenceOptions(): any[] {
+    return this.collaborationAvailabilityOptions?.influencer?.preferences || [];
+  }
+
+  get openCollaborationTypeOptions(): any[] {
+    return this.collaborationAvailabilityOptions?.influencer?.collaborationTypes || [];
   }
 
   get isInvitingPhotographers(): boolean {
@@ -1461,6 +1503,12 @@ export class CampaignFormComponent implements OnInit {
     if (this.filterCategory) {
       list = list.filter(inf => (inf.categories || inf.skills || []).includes(this.filterCategory));
     }
+    if (this.inviteRecipientRole === 'influencer' && this.filterCreatorType) {
+      list = list.filter(inf => (inf.creatorTypes || []).includes(this.filterCreatorType));
+    }
+    if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
+      list = list.filter(inf => this.creatorMatchesSmartFilters(inf));
+    }
     if (this.filterTier) {
       const activeTier = this.normalizeTierLabel(this.filterTier);
       list = list.filter(inf => this.getInfluencerTier(inf) === activeTier);
@@ -1471,6 +1519,13 @@ export class CampaignFormComponent implements OnInit {
           (s.platform || '').toLowerCase().includes(this.filterPlatform.toLowerCase())
         )
       );
+    }
+    if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
+      list = [...list].sort((a, b) => {
+        const scoreDiff = this.getSmartMatchScore(b) - this.getSmartMatchScore(a);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (Number(b?.isPremium) || 0) - (Number(a?.isPremium) || 0);
+      });
     }
     return list;
   }
@@ -1627,6 +1682,69 @@ export class CampaignFormComponent implements OnInit {
     const cats = new Set<string>();
     this.inviteCandidates.forEach(inf => ((inf.categories || inf.skills || []) as string[]).forEach((c: string) => cats.add(c)));
     return Array.from(cats).slice(0, 5);
+  }
+
+  toggleSmartMatchValue(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): void {
+    const clean = String(value || '').trim();
+    if (!clean) return;
+    const list = [...this[field]];
+    const idx = list.indexOf(clean);
+    if (idx >= 0) list.splice(idx, 1);
+    else list.push(clean);
+    this[field] = list;
+    this.cd.detectChanges();
+  }
+
+  isSmartMatchSelected(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): boolean {
+    return this[field].includes(String(value || '').trim());
+  }
+
+  clearSmartMatchingFilters(): void {
+    this.lookingForCreatorTypes = [];
+    this.preferredCreatorTypes = [];
+    this.preferredCollaborationPreference = '';
+    this.openCollaborationTypes = [];
+  }
+
+  hasAnySmartMatchingFilter(): boolean {
+    return this.lookingForCreatorTypes.length > 0 ||
+      this.preferredCreatorTypes.length > 0 ||
+      !!this.preferredCollaborationPreference ||
+      this.openCollaborationTypes.length > 0;
+  }
+
+  private valuesOverlap(source: any, selected: string[]): boolean {
+    if (!selected.length) return true;
+    const values = Array.isArray(source) ? source : [];
+    const normalized = new Set(values.map((item: any) => String(item || '').trim().toLowerCase()).filter(Boolean));
+    return selected.some(item => normalized.has(String(item || '').trim().toLowerCase()));
+  }
+
+  private creatorMatchesSmartFilters(inf: any): boolean {
+    if (!this.showInfluencerSmartMatching || !this.hasAnySmartMatchingFilter()) return true;
+    const creatorTypes = Array.isArray(inf?.creatorTypes) ? inf.creatorTypes : [];
+    const availability = inf?.collaborationAvailability || {};
+    if (this.lookingForCreatorTypes.length && !this.valuesOverlap(creatorTypes, this.lookingForCreatorTypes)) return false;
+    if (this.preferredCreatorTypes.length && !this.valuesOverlap(creatorTypes, this.preferredCreatorTypes)) return false;
+    if (this.openCollaborationTypes.length && !this.valuesOverlap(availability?.collaborationTypes, this.openCollaborationTypes)) return false;
+    return true;
+  }
+
+  private getSmartMatchScore(inf: any): number {
+    if (!this.showInfluencerSmartMatching) return 0;
+    const creatorTypes = Array.isArray(inf?.creatorTypes) ? inf.creatorTypes : [];
+    const availability = inf?.collaborationAvailability || {};
+    let score = 0;
+    if (this.valuesOverlap(creatorTypes, this.lookingForCreatorTypes)) score += this.lookingForCreatorTypes.length ? 30 : 0;
+    if (this.valuesOverlap(creatorTypes, this.preferredCreatorTypes)) score += this.preferredCreatorTypes.length ? 25 : 0;
+    if (this.valuesOverlap(availability?.collaborationTypes, this.openCollaborationTypes)) score += this.openCollaborationTypes.length ? 20 : 0;
+    if (
+      this.preferredCollaborationPreference &&
+      String(availability?.preference || '').trim().toLowerCase() === this.preferredCollaborationPreference.trim().toLowerCase()
+    ) {
+      score += 40;
+    }
+    return score;
   }
 
   switchInviteRecipientRole(role: 'influencer' | 'photographer') {

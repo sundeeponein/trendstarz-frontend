@@ -126,7 +126,7 @@ export class SearchComponent implements OnInit {
 
   get pageTitle(): string {
     if (this.isInfluencerMode) return 'Discover Influencers';
-    if (this.isPhotographerMode) return 'Discover Photographers & Videographers';
+    if (this.isPhotographerMode) return 'Discover Photo/Videographers';
     return 'Discover Brands';
   }
 
@@ -140,9 +140,9 @@ export class SearchComponent implements OnInit {
     }
     if (this.isPhotographerMode) {
       if (this.isPhotographerSmartDiscoveryActive) {
-        return `Recommended photographers near ${this.viewerLocationLabel} · ${this.filteredPhotographers.length} results`;
+        return `Recommended photo/videographers near ${this.viewerLocationLabel} · ${this.filteredPhotographers.length} results`;
       }
-      return `Showing ${this.filteredPhotographers.length} photographers matching your criteria`;
+      return `Showing ${this.filteredPhotographers.length} photo/videographers matching your criteria`;
     }
     return `Showing ${this.filteredBrands.length} brands matching your criteria`;
   }

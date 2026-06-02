@@ -108,6 +108,34 @@ export class AdminUserTableComponent implements OnInit {
     return [];
   }
 
+  getUserCreatorTypesLabel(user: any): string {
+    const values = Array.isArray(user?.creatorTypes) ? user.creatorTypes : [];
+    const cleaned = values.map((item: any) => String(item || '').trim()).filter((item: string) => !!item);
+    return cleaned.length ? cleaned.join(', ') : '-';
+  }
+
+  getUserCollaborationAvailabilityLabel(user: any): string {
+    const collab = user?.collaborationAvailability || {};
+    if (!collab || collab.enabled === false) return '-';
+    const parts: string[] = [];
+    if (Array.isArray(collab.collaborationTypes) && collab.collaborationTypes.length) {
+      parts.push(`Types: ${collab.collaborationTypes.join(', ')}`);
+    }
+    if (collab.preference) {
+      parts.push(`Preference: ${collab.preference}`);
+    }
+    if (Array.isArray(collab.availableFor) && collab.availableFor.length) {
+      parts.push(`Available for: ${collab.availableFor.join(', ')}`);
+    }
+    if (Array.isArray(collab.locations) && collab.locations.length) {
+      parts.push(`Locations: ${collab.locations.join(', ')}`);
+    }
+    if (collab.openToTravel) {
+      parts.push('Open to travel');
+    }
+    return parts.length ? parts.join(' | ') : 'Enabled';
+  }
+
   getUserStateLabel(user: any): string {
     const district = user?.location?.district || '';
     const state = user?.location?.state || '';
@@ -278,7 +306,7 @@ export class AdminUserTableComponent implements OnInit {
   getRoleTitle(): string {
     if (this.activeTab === 'influencer') return 'Influencers';
     if (this.activeTab === 'brand') return 'Brands';
-    return 'Photographers';
+    return 'Photo/Videographers';
   }
 
   getSignupSource(user: any): string {

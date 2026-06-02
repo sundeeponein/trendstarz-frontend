@@ -12,11 +12,12 @@ import { WriteReviewComponent } from '../../write-review/write-review.component'
 import { ReviewListComponent } from '../../review-list/review-list.component';
 import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
 import { environment } from '../../../../environments/environment';
+import { CollaborationAvailabilityViewComponent } from '../../collaboration-availability/collaboration-availability-view.component';
 
 @Component({
   selector: 'app-influencer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
+  imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent, CollaborationAvailabilityViewComponent],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: ['./influencer-profile-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -399,4 +400,3 @@ export class InfluencerProfileViewComponent implements OnInit {
     });
   }
 }
-

@@ -152,6 +152,10 @@
           (platformClick)="onPlatformClick($event)"
         ></app-profile-social-platforms>
       }
+
+      <app-collaboration-availability-view
+        [availability]="photographer.collaborationAvailability">
+      </app-collaboration-availability-view>
     </div>
 
     <div class="right-col">

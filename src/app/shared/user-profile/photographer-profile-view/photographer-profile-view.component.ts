@@ -8,11 +8,12 @@ import { VisibilityService } from '../../../core/visibility.service';
 import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
 import { environment } from '../../../../environments/environment';
+import { CollaborationAvailabilityViewComponent } from '../../collaboration-availability/collaboration-availability-view.component';
 
 @Component({
   selector: 'app-photographer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProfileSocialPlatformsComponent],
+  imports: [CommonModule, RouterModule, ProfileSocialPlatformsComponent, CollaborationAvailabilityViewComponent],
   templateUrl: './photographer-profile-view.component.html',
   styleUrls: ['./photographer-profile-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

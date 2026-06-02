@@ -16,6 +16,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -32,13 +33,13 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
-  // Toggle chip selection for languages/categories
-  toggleChip(field: 'languages' | 'categories', id: string): void {
+  // Toggle chip selection for languages/categories/creator type options
+  toggleChip(field: 'languages' | 'categories' | 'creatorTypes', id: string): void {
     const arr = this.registrationForm.get(field)?.value || [];
     const idx = arr.indexOf(id);
     if (idx > -1) {
@@ -203,6 +204,8 @@ export class InfluencerRegistrationComponent implements OnInit {
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
+  creatorTypeOptions: any[] = [];
   tiers: any[] = [];
   protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
@@ -275,10 +278,19 @@ export class InfluencerRegistrationComponent implements OnInit {
       promotionalPrice: ['', Validators.required],
       languages: [[], Validators.required],
       categories: [[], Validators.required],
+      creatorTypes: [[]],
       profileImages: this.fb.array([]),
       contact: this.fb.group({
         whatsapp: [false], email: [false], call: [false]
       }, { validators: [atLeastOneContactRequired] }),
+      collaborationAvailability: this.fb.group({
+        enabled: [false],
+        collaborationTypes: [[]],
+        preference: [''],
+        availableFor: [[]],
+        locations: [[]],
+        openToTravel: [false],
+      }),
       website: [''],
     }, { validators: [passwordMatchValidator] });
 
@@ -338,6 +350,14 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.tiers = Array.isArray(data) ? data : [];
     });
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
+    this.configService.getCollaborationAvailabilityOptions().subscribe(data => {
+      this.collaborationAvailabilityOptions = data || {};
+      this.cdr.detectChanges();
+    });
+    this.configService.getCreatorTypeOptions().subscribe(data => {
+      this.creatorTypeOptions = Array.isArray(data) ? data : [];
+      this.cdr.detectChanges();
+    });
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories('influencer').subscribe(data => {
       this.categoriesList = data;
@@ -915,6 +935,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     const districtObj = this.districts.find(d => d._id === raw.location.district);
     const languageNames = (raw.languages || []).map((id: string) => { const l = this.languagesList.find((x: any) => x._id === id); return l ? l.name : id; });
     const categoryNames = (raw.categories || []).map((id: string) => { const c = this.categoriesList.find((x: any) => x._id === id); return c ? c.name : id; });
+    const creatorTypeNames = (raw.creatorTypes || []).map((id: string) => {
+      const item = this.creatorTypeOptions.find((x: any) => x._id === id || x.name === id);
+      return item ? item.name : id;
+    }).filter((name: string) => !!String(name || '').trim());
     const influencerCategoryName = raw.influencerCategory
       ? (this.categoriesList.find((x: any) => x._id === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
@@ -961,11 +985,13 @@ export class InfluencerRegistrationComponent implements OnInit {
       ...raw,
       location: { state: stateObj ? stateObj.name : raw.location.state, district: districtObj ? districtObj.name : raw.location.district },
       languages: languageNames, categories: categoryNames,
+      creatorTypes: creatorTypeNames,
       influencerCategory: influencerCategoryName,
       professionalStatus: !!raw.professionalStatus,
       expertiseArea: raw.expertiseArea || '',
       verificationDocuments: this.verificationDocuments,
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
+      collaborationAvailability: raw.collaborationAvailability,
       socialMedia,
       profileImages: [
         ...(imageUploadResult ? [imageUploadResult] : []),

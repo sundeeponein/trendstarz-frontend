@@ -1191,7 +1191,7 @@
 
     <div class="drawer-target-switch">
       <button class="drawer-target-pill" *ngIf="showInfluencerInviteTargetTab" [class.active]="inviteTargetRole === 'influencer'" type="button" (click)="switchInviteTarget('influencer')">Influencers</button>
-      <button class="drawer-target-pill" *ngIf="showPhotographerInviteTargetTab" [class.active]="inviteTargetRole === 'photographer'" type="button" (click)="switchInviteTarget('photographer')">Photographers</button>
+      <button class="drawer-target-pill" *ngIf="showPhotographerInviteTargetTab" [class.active]="inviteTargetRole === 'photographer'" type="button" (click)="switchInviteTarget('photographer')">Photo/Videographers</button>
     </div>
 
     <!-- Quota banner -->
@@ -1442,6 +1442,56 @@
         </div>
       </div>
 
+      <div class="chip-list chip-list--sm mt-2" *ngIf="inviteTargetRole === 'influencer' && creatorTypeOptions.length">
+        <button type="button" class="chip chip--sm"
+          [class.chip--selected]="!inviteCreatorTypeFilter && !hasAnyInviteSmartMatchingFilter()"
+          (click)="inviteCreatorTypeFilter=''; clearInviteSmartMatchingFilters()">All Creator Types</button>
+        <button type="button" class="chip chip--sm"
+          *ngFor="let item of creatorTypeOptions"
+          [class.chip--selected]="inviteCreatorTypeFilter === item.name"
+          (click)="inviteCreatorTypeFilter = inviteCreatorTypeFilter === item.name ? '' : item.name">{{ item.name }}</button>
+      </div>
+
+      <div class="invite-smart-match" *ngIf="inviteTargetRole === 'influencer' && creatorTypeOptions.length">
+        <div class="invite-smart-match__head">
+          <strong>Smart Matching <span class="text-muted">(Optional)</span></strong>
+          <button type="button" *ngIf="hasAnyInviteSmartMatchingFilter()" (click)="clearInviteSmartMatchingFilters()">Clear</button>
+        </div>
+        <span class="invite-smart-match__label">Looking For a</span>
+        <div class="chip-list chip-list--sm">
+          <button type="button" class="chip chip--sm"
+            *ngFor="let item of creatorTypeOptions"
+            [class.chip--selected]="isInviteSmartMatchSelected('inviteLookingForCreatorTypes', item.name)"
+            (click)="toggleInviteSmartMatchValue('inviteLookingForCreatorTypes', item.name)">{{ item.name }}</button>
+        </div>
+        <span class="invite-smart-match__label">Preferred Creator Type</span>
+        <div class="chip-list chip-list--sm">
+          <button type="button" class="chip chip--sm"
+            *ngFor="let item of creatorTypeOptions"
+            [class.chip--selected]="isInviteSmartMatchSelected('invitePreferredCreatorTypes', item.name)"
+            (click)="toggleInviteSmartMatchValue('invitePreferredCreatorTypes', item.name)">{{ item.name }}</button>
+        </div>
+        <span class="invite-smart-match__label">Collaboration Preference</span>
+        <div class="invite-smart-radio-row">
+          <label class="invite-smart-radio" *ngFor="let item of inviteCollaborationPreferenceOptions">
+            <input type="radio"
+              name="invitePreferredCollaborationPreference"
+              [value]="item.name"
+              [(ngModel)]="invitePreferredCollaborationPreference"
+              [ngModelOptions]="{standalone: true}" />
+            <span>{{ item.name }}</span>
+          </label>
+        </div>
+        <span class="invite-smart-match__label">Open for Collaboration Types</span>
+        <div class="chip-list chip-list--sm">
+          <button type="button" class="chip chip--sm"
+            *ngFor="let item of inviteOpenCollaborationTypeOptions"
+            [class.chip--selected]="isInviteSmartMatchSelected('inviteOpenCollaborationTypes', item.name)"
+            (click)="toggleInviteSmartMatchValue('inviteOpenCollaborationTypes', item.name)">{{ item.name }}</button>
+        </div>
+        <small *ngIf="invitePreferredCollaborationPreference">Matching preference boosts ranking.</small>
+      </div>
+
       <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
       <div class="invite-limit-note" *ngIf="inviteSlotsLimit">
@@ -1487,6 +1537,7 @@
             <div class="invited-badges">
               <span class="tier-badge-mini" *ngIf="getInfluencerTier(inf)">{{ getInfluencerTier(inf) }}</span>
               <span class="invited-meta" *ngIf="inf.categories?.length">{{ inf.categories[0] }}</span>
+              <span class="invited-meta" *ngIf="inviteTargetRole === 'influencer' && inf.creatorTypes?.length">{{ inf.creatorTypes[0] }}</span>
             </div>
             <div class="invited-socials" *ngIf="getInfluencerSocialTags(inf).length">
               <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inf, 3)">{{ sm.platform }} · {{ sm.tier }}</span>

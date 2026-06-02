@@ -315,6 +315,13 @@
               </div>
             </div>
 
+            <app-collaboration-availability-form
+              [form]="$any(form.get('collaborationAvailability'))"
+              role="photographer"
+              [options]="collaborationAvailabilityOptions"
+              [readonly]="!isEditMode">
+            </app-collaboration-availability-form>
+
             <div class="actions-row dual mt-3">
               <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
               <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>

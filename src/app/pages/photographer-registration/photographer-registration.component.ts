@@ -7,6 +7,7 @@ import { ConfigService } from '../../shared/config.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -23,7 +24,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-photographer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent],
   templateUrl: './photographer-registration.component.html',
   styleUrls: ['./photographer-registration.component.scss'],
 })
@@ -56,6 +57,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   states: any[] = [];
   districts: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
 
   // Pricing state: { [key]: { enabled: boolean; price: string } }
   pricingState: { [key: string]: { enabled: boolean; price: string } } = {};
@@ -177,6 +179,13 @@ export class PhotographerRegistrationComponent implements OnInit {
         email: [false],
         call: [false],
       }, { validators: [atLeastOneContactRequired] }),
+      collaborationAvailability: this.fb.group({
+        enabled: [false],
+        availableFor: [[]],
+        preference: [''],
+        locations: [[]],
+        openToTravel: [false],
+      }),
     }, { validators: [passwordMatchValidator] });
 
     this.form.get('email')?.valueChanges.subscribe(() => { this.duplicateEmailError = ''; });
@@ -240,6 +249,10 @@ export class PhotographerRegistrationComponent implements OnInit {
       this.cdr.detectChanges();
     });
     this.config.getSocialMedia().subscribe(data => { this.socialMediaList = data; this.cdr.detectChanges(); });
+    this.config.getCollaborationAvailabilityOptions().subscribe(data => {
+      this.collaborationAvailabilityOptions = data || {};
+      this.cdr.detectChanges();
+    });
     this.config.getTiers().subscribe(data => { this.tiers = Array.isArray(data) ? data : []; });
   }
 
@@ -660,6 +673,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       skills: v.skills || [],
       equipment: v.equipment || [],
       contact: v.contact || { whatsapp: false, email: false, call: false },
+      collaborationAvailability: v.collaborationAvailability,
       pricing: pricingArr,
       socialMedia,
       profileImages: [

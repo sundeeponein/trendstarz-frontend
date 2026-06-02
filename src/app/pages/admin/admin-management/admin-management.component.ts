@@ -23,6 +23,16 @@ const DEFAULT_PRICING_OPTIONS = [
   { key: 'Equipment', label: 'Equipment Rental', visible: true },
 ];
 
+const DEFAULT_CREATOR_TYPE_OPTIONS = [
+  { name: 'UGC Creator', visible: true },
+  { name: 'Model', visible: true },
+  { name: 'Actor', visible: true },
+  { name: 'Host/Presenter', visible: true },
+  { name: 'Content Creator', visible: true },
+  { name: 'Lifestyle Creator', visible: true },
+  { name: 'Fashion Creator', visible: true },
+];
+
 const DEFAULT_SOCIAL_MEDIA_NAMES = [
   'Instagram',
   'YouTube',
@@ -41,6 +51,14 @@ type CampaignTypeConfigItem = {
   sortOrder: number;
 };
 
+type CollaborationAvailabilityRole = 'influencer' | 'photographer';
+
+type CollaborationAvailabilitySection = {
+  title: string;
+  role: CollaborationAvailabilityRole;
+  key: string;
+};
+
 @Component({
   selector: 'app-admin-management',
   standalone: true,
@@ -55,16 +73,28 @@ export class AdminManagementComponent implements OnInit {
   activeTab: string = 'campaigns';
   categoriesRoleTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   userTagsRoleTab: 'influencer' | 'brand' | 'photographer' | 'commission' = 'influencer';
+  collaborationAvailabilityRoleTab: CollaborationAvailabilityRole = 'influencer';
+  collaborationAvailabilitySections: CollaborationAvailabilitySection[] = [
+    { title: 'Collaboration Types', role: 'influencer', key: 'collaborationTypes' },
+    { title: 'Preferences', role: 'influencer', key: 'preferences' },
+    { title: 'Available For', role: 'influencer', key: 'availableFor' },
+    { title: 'Locations', role: 'influencer', key: 'locations' },
+    { title: 'Preferences', role: 'photographer', key: 'preferences' },
+    { title: 'Available For', role: 'photographer', key: 'availableFor' },
+    { title: 'Locations', role: 'photographer', key: 'locations' },
+  ];
   config: any = {
     socialMediaPlatforms: [],
     categories: [],
     equipmentOptions: [],
     pricingOptions: [],
+    creatorTypeOptions: [],
     locations: [],
     districts: [],
     languages: [],
     tiers: [],
     userTags: buildDefaultUserTagVisibilityOptions(),
+    collaborationAvailability: {},
   };
 
   districtFilterState: string = '';
@@ -89,6 +119,10 @@ export class AdminManagementComponent implements OnInit {
 
   setUserTagsRoleTab(role: 'influencer' | 'brand' | 'photographer' | 'commission') {
     this.userTagsRoleTab = role;
+  }
+
+  setCollaborationAvailabilityRoleTab(role: CollaborationAvailabilityRole) {
+    this.collaborationAvailabilityRoleTab = role;
   }
 
   private normalizeUserTagList(list: unknown, fallback: Array<{ name: string; visible: boolean }>) {
@@ -172,6 +206,10 @@ export class AdminManagementComponent implements OnInit {
   get filteredUserTags(): Array<{ name: string; visible: boolean }> {
     const list = this.config?.userTags?.[this.userTagsRoleTab];
     return Array.isArray(list) ? list : [];
+  }
+
+  get filteredCollaborationAvailabilitySections(): CollaborationAvailabilitySection[] {
+    return this.collaborationAvailabilitySections.filter((section) => section.role === this.collaborationAvailabilityRoleTab);
   }
 
   get brandCampaignTypeConfigs(): CampaignTypeConfigItem[] {
@@ -333,11 +371,13 @@ export class AdminManagementComponent implements OnInit {
       categories: this.config.categories,
       equipmentOptions: this.config.equipmentOptions,
       pricingOptions: this.config.pricingOptions,
+      creatorTypeOptions: this.config.creatorTypeOptions,
       locations: this.config.locations,
       districts: this.config.districts,
       languages: this.config.languages,
       tiers: this.config.tiers,
       userTags: this.config.userTags,
+      collaborationAvailability: this.config.collaborationAvailability,
     }));
   }
 
@@ -347,11 +387,13 @@ export class AdminManagementComponent implements OnInit {
     this.config.categories = this.visibilitySnapshot.categories || [];
     this.config.equipmentOptions = this.visibilitySnapshot.equipmentOptions || [];
     this.config.pricingOptions = this.visibilitySnapshot.pricingOptions || [];
+    this.config.creatorTypeOptions = this.visibilitySnapshot.creatorTypeOptions || [];
     this.config.locations = this.visibilitySnapshot.locations || [];
     this.config.districts = this.visibilitySnapshot.districts || [];
     this.config.languages = this.visibilitySnapshot.languages || [];
     this.config.tiers = this.visibilitySnapshot.tiers || [];
     this.config.userTags = this.visibilitySnapshot.userTags || this.getDefaultUserTags();
+    this.config.collaborationAvailability = this.visibilitySnapshot.collaborationAvailability || {};
     this.cdr.detectChanges();
   }
 
@@ -517,6 +559,7 @@ export class AdminManagementComponent implements OnInit {
     }, () => {
       this.config.pricingOptions = DEFAULT_PRICING_OPTIONS.map((item: any) => ({ ...item }));
     });
+    this.loadCreatorTypeOptionsConfig();
     this.http.get(baseUrl + '/admin/states', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
@@ -535,6 +578,22 @@ export class AdminManagementComponent implements OnInit {
     });
 
     this.loadUserTagsConfig();
+    this.loadCollaborationAvailabilityConfig();
+  }
+
+  loadCollaborationAvailabilityConfig() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/collaboration-availability-config`, headers).subscribe({
+      next: (res) => {
+        this.config.collaborationAvailability = res?.data ?? res ?? {};
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.config.collaborationAvailability = {};
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   loadUserTagsConfig() {
@@ -559,8 +618,25 @@ export class AdminManagementComponent implements OnInit {
     });
   }
 
+  loadCreatorTypeOptionsConfig() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/creator-type-options-config`, headers).subscribe({
+      next: (res) => {
+        const data = res?.data ?? res ?? [];
+        this.config.creatorTypeOptions = (Array.isArray(data) && data.length ? data : DEFAULT_CREATOR_TYPE_OPTIONS)
+          .map((item: any) => ({ ...item, visible: item.visible !== false }));
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.config.creatorTypeOptions = DEFAULT_CREATOR_TYPE_OPTIONS.map((item: any) => ({ ...item }));
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
-  toggleVisible(type: string, idx: number, subIdx?: number) {
+
+  toggleVisible(type: string, idx: number, subIdx?: any) {
     // Only update local state, do not persist yet
     this.ensureVisibilitySnapshot();
 
@@ -579,6 +655,9 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'pricingOptions') {
       const pricing = this.config.pricingOptions[idx];
       pricing.visible = !pricing.visible;
+    } else if (type === 'creatorTypeOptions') {
+      const item = this.config.creatorTypeOptions[idx];
+      item.visible = !item.visible;
     } else if (type === 'languages') {
       const lang = this.config.languages[idx];
       lang.visible = !lang.visible;
@@ -598,7 +677,14 @@ export class AdminManagementComponent implements OnInit {
       if (tag) {
         tag.visible = !tag.visible;
       }
+    } else if (type === 'collaborationOption') {
+      const item = this.getCollaborationOptionGroup(subIdx)?.[idx];
+      if (item) item.visible = !item.visible;
     }
+  }
+
+  getCollaborationOptionGroup(group: { role: CollaborationAvailabilityRole; key: string }): any[] {
+    return this.config.collaborationAvailability?.[group.role]?.[group.key] || [];
   }
 
   requestVisibilitySaveConfirmation() {
@@ -654,6 +740,10 @@ export class AdminManagementComponent implements OnInit {
             label: String(p?.label || p?.key || '').trim(),
             visible: p?.visible !== false,
           })).filter((p: any) => !!p.key),
+          creatorTypeOptions: this.config.creatorTypeOptions.map((item: any) => ({
+            name: String(item?.name || '').trim(),
+            visible: item?.visible !== false,
+          })).filter((item: any) => !!item.name),
         };
         reloadFn = () => {
           this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
@@ -670,6 +760,7 @@ export class AdminManagementComponent implements OnInit {
             this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
               .map((item: any) => ({ ...item, visible: item.visible !== false }));
           });
+          this.loadCreatorTypeOptionsConfig();
         };
         break;
       case 'languages':
@@ -720,6 +811,10 @@ export class AdminManagementComponent implements OnInit {
         };
         reloadFn = () => this.loadUserTagsConfig();
         break;
+      case 'collaborationAvailability':
+        payload = { collaborationAvailability: this.config.collaborationAvailability };
+        reloadFn = () => this.loadCollaborationAvailabilityConfig();
+        break;
       default:
         // fallback to all
         payload = {
@@ -738,6 +833,10 @@ export class AdminManagementComponent implements OnInit {
             label: String(p?.label || p?.key || '').trim(),
             visible: p?.visible !== false,
           })).filter((p: any) => !!p.key),
+          creatorTypeOptions: this.config.creatorTypeOptions.map((item: any) => ({
+            name: String(item?.name || '').trim(),
+            visible: item?.visible !== false,
+          })).filter((item: any) => !!item.name),
           userTags: {
             influencer: (this.config.userTags?.influencer || []).map((t: any) => ({
               name: String(t?.name || '').trim(),

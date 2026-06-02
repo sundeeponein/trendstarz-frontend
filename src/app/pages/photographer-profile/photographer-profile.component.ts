@@ -12,11 +12,12 @@ import { ResetPasswordModalComponent } from '../../shared/components/reset-passw
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { environment } from '../../../environments/environment';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -64,6 +65,7 @@ export class PhotographerProfileComponent implements OnInit {
   states: any[] = [];
   districts: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
   tiers: any[] = [];
 
   pricingState: { [key: string]: { enabled: boolean; price: string } } = {};
@@ -286,6 +288,13 @@ export class PhotographerProfileComponent implements OnInit {
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }],
       }),
+      collaborationAvailability: this.fb.group({
+        enabled: [{ value: false, disabled: true }],
+        availableFor: [{ value: [], disabled: true }],
+        preference: [{ value: '', disabled: true }],
+        locations: [{ value: [], disabled: true }],
+        openToTravel: [{ value: false, disabled: true }],
+      }),
       payout: this.fb.group({
         upiId: [{ value: '', disabled: true }],
         mobile: [{ value: '', disabled: true }],
@@ -337,13 +346,15 @@ export class PhotographerProfileComponent implements OnInit {
     forkJoin({
       pricing: this.config.getPricingOptions(),
       social: this.config.getSocialMedia(),
-    }).subscribe(({ pricing, social }) => {
+      collaborationAvailabilityOptions: this.config.getCollaborationAvailabilityOptions(),
+    }).subscribe(({ pricing, social, collaborationAvailabilityOptions }) => {
       const list = Array.isArray(pricing) ? pricing : [];
       this.pricingOptions = list.length ? list : this.fallbackPricing;
       this.pricingOptions.forEach(p => {
         this.pricingState[p.key] = { enabled: false, price: '' };
       });
       this.socialMediaList = Array.isArray(social) ? social : [];
+      this.collaborationAvailabilityOptions = collaborationAvailabilityOptions || {};
       this.loadProfile();
       this.cdr.detectChanges();
     });
@@ -388,6 +399,13 @@ export class PhotographerProfileComponent implements OnInit {
             whatsapp: !!profile.contact?.whatsapp,
             email: !!profile.contact?.email,
             call: !!profile.contact?.call,
+          },
+          collaborationAvailability: profile.collaborationAvailability || {
+            enabled: false,
+            availableFor: [],
+            preference: '',
+            locations: [],
+            openToTravel: false,
           },
           payout: {
             upiId: profile.payout?.upiId || '',
@@ -860,6 +878,7 @@ export class PhotographerProfileComponent implements OnInit {
       },
       pricing: pricingArr,
       socialMedia,
+      collaborationAvailability: v.collaborationAvailability,
       payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
     };
     const profileImages = [

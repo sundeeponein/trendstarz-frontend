@@ -15,6 +15,7 @@
     <button class="tab-chip" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social</button>
     <button class="tab-chip" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
     <button class="tab-chip" [class.active]="activeTab === 'userTags'" (click)="setTab('userTags')">User Tags</button>
+    <button class="tab-chip" [class.active]="activeTab === 'collaborationAvailability'" (click)="setTab('collaborationAvailability')">Collab Availability</button>
     <button class="tab-chip" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
     <button class="tab-chip" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-chip" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
@@ -131,7 +132,7 @@
     <div class="section-tabs mb-3" aria-label="Category role tabs">
       <button class="tab-chip" [class.active]="categoriesRoleTab === 'influencer'" (click)="setCategoriesRoleTab('influencer')">Influencer</button>
       <button class="tab-chip" [class.active]="categoriesRoleTab === 'brand'" (click)="setCategoriesRoleTab('brand')">Brand</button>
-      <button class="tab-chip" [class.active]="categoriesRoleTab === 'photographer'" (click)="setCategoriesRoleTab('photographer')">Photographer</button>
+      <button class="tab-chip" [class.active]="categoriesRoleTab === 'photographer'" (click)="setCategoriesRoleTab('photographer')">Photo/Videographer</button>
     </div>
 
     <ul class="list-group mb-3">
@@ -195,6 +196,28 @@
       </ng-template>
     </ng-container>
 
+    <ng-container *ngIf="categoriesRoleTab === 'influencer'">
+      <h3>Manage Creator Type / Specialty</h3>
+      <ul class="list-group mb-3" *ngIf="config.creatorTypeOptions?.length; else noCreatorTypeOptions">
+        <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let item of config.creatorTypeOptions; let i = index">
+          <span>{{ item.name }}</span>
+          <div class="form-check form-switch d-inline-block ms-2">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchCreatorType' + i"
+              [checked]="item.visible"
+              (change)="toggleVisible('creatorTypeOptions', i)"
+            >
+            <label class="form-check-label" [for]="'switchCreatorType' + i">
+              {{ item.visible ? 'Show' : 'Hide' }}
+            </label>
+          </div>
+        </li>
+      </ul>
+      <ng-template #noCreatorTypeOptions>
+        <p class="text-muted mb-3">No creator type options available.</p>
+      </ng-template>
+    </ng-container>
+
     <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
@@ -204,7 +227,7 @@
     <div class="section-tabs mb-3" aria-label="User tag role tabs">
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'influencer'" (click)="setUserTagsRoleTab('influencer')">Influencer</button>
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'brand'" (click)="setUserTagsRoleTab('brand')">Brand</button>
-      <button class="tab-chip" [class.active]="userTagsRoleTab === 'photographer'" (click)="setUserTagsRoleTab('photographer')">Photographer</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'photographer'" (click)="setUserTagsRoleTab('photographer')">Photo/Videographer</button>
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'commission'" (click)="setUserTagsRoleTab('commission')">Commission</button>
     </div>
 
@@ -273,6 +296,40 @@
         </li>
       </ul>
     </div>
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
+  </div>
+
+  <div *ngIf="activeTab === 'collaborationAvailability'">
+    <h2>Manage Collaboration Availability</h2>
+    <p class="text-muted mb-3">Control the options shown in influencer and photographer collaboration availability sections.</p>
+
+    <div class="section-tabs mb-3" aria-label="Collaboration availability role tabs">
+      <button class="tab-chip" [class.active]="collaborationAvailabilityRoleTab === 'influencer'" (click)="setCollaborationAvailabilityRoleTab('influencer')">Influencer</button>
+      <button class="tab-chip" [class.active]="collaborationAvailabilityRoleTab === 'photographer'" (click)="setCollaborationAvailabilityRoleTab('photographer')">Photo/Videographer</button>
+    </div>
+
+    <ng-container *ngFor="let section of filteredCollaborationAvailabilitySections">
+      <h5 class="mt-3">{{ section.title }}</h5>
+      <ul class="list-group mb-3" *ngIf="getCollaborationOptionGroup(section).length; else noCollaborationOptions">
+        <li class="list-group-item d-flex justify-content-between align-items-center"
+            *ngFor="let option of getCollaborationOptionGroup(section); let i = index">
+          {{ option.name }}
+          <div class="form-check form-switch d-inline-block ms-2">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchCollab' + section.role + section.key + i"
+              [checked]="option.visible"
+              (change)="toggleVisible('collaborationOption', i, section)">
+            <label class="form-check-label" [for]="'switchCollab' + section.role + section.key + i">
+              {{ option.visible ? 'Show' : 'Hide' }}
+            </label>
+          </div>
+        </li>
+      </ul>
+      <ng-template #noCollaborationOptions>
+        <p class="text-muted mb-3">No {{ section.title | lowercase }} options available.</p>
+      </ng-template>
+    </ng-container>
+
     <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 

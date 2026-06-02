@@ -38,6 +38,11 @@
             <span>{{ cat }}</span><span *ngIf="!last" class="cat-sep"> · </span>
           </ng-container>
         </p>
+        <div class="profile-tags" *ngIf="influencer.creatorTypes?.length">
+          <span class="profile-tag badge rounded-pill bg-light text-dark" *ngFor="let type of influencer.creatorTypes">
+            {{ type }}
+          </span>
+        </div>
         <p class="profile-location" *ngIf="influencer.location?.state">
           <i class="bi bi-geo-alt"></i>
           <ng-container *ngIf="influencer.location.district">{{ influencer.location.district }}, </ng-container>{{ influencer.location.state }}, India
@@ -195,6 +200,10 @@
           (platformClick)="onPlatformClick($event)"
         ></app-profile-social-platforms>
       }
+
+      <app-collaboration-availability-view
+        [availability]="influencer.collaborationAvailability">
+      </app-collaboration-availability-view>
 
     </div>
 
