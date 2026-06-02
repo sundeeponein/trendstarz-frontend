@@ -255,6 +255,14 @@ export class NavbarLayoutComponent implements OnDestroy {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('.profile-dropdown')) {
+      this.dropdownOpen = false;
+    }
+  }
+
   toggleMobileMenu() {
     this.setMobileMenuState(!this.mobileMenuOpen);
   }

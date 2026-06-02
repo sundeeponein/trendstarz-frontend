@@ -96,7 +96,7 @@
 
 
         <div class="profile-dropdown d-none d-md-block" *ngIf="user">
-          <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
+          <button class="profile-btn" (click)="toggleDropdown()" [attr.aria-expanded]="dropdownOpen">
             <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'"
                  [alt]="user.name || user.brandName || 'User'"
                  class="profile-avatar"
