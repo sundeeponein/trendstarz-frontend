@@ -26,6 +26,7 @@ export class AdminUserTableComponent implements OnInit {
   selectedUser: any = null;
   selectedUserType: 'influencer' | 'brand' | 'photographer' | null = null;
   selectedUserInternalNotes = '';
+  resendingEmailVerification = false;
 
   private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
   influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
@@ -881,6 +882,7 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUser = user;
     this.selectedUserType = this.activeTab;
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
+    this.resendingEmailVerification = false;
     this.showUserDetailsModal = true;
   }
 
@@ -889,6 +891,7 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUser = null;
     this.selectedUserType = null;
     this.selectedUserInternalNotes = '';
+    this.resendingEmailVerification = false;
   }
 
   onUserDetailsBackdropClick(event: MouseEvent): void {
@@ -906,6 +909,23 @@ export class AdminUserTableComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isEmailVerified(this.selectedUser);
     this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isEmailVerified', nextValue);
+  }
+
+  resendSelectedEmailVerification(): void {
+    const email = String(this.selectedUser?.email || '').trim();
+    if (!email || this.resendingEmailVerification) return;
+
+    this.resendingEmailVerification = true;
+    this.configService.sendEmailVerificationLink(email)
+      .pipe(catchError(err => {
+        alert('Error resending email verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        this.resendingEmailVerification = false;
+        if (!res) return;
+        alert(res?.message || 'Verification email resent.');
+      });
   }
 
   toggleSelectedMobileVerification(): void {

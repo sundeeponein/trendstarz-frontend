@@ -162,9 +162,20 @@
           <div>
             <label>Email Address (<small>{{ isEmailVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
             <div>{{ selectedUser.email || '-' }}</div>
-            <button class="btn btn-sm" [class.btn-outline-secondary]="isEmailVerified(selectedUser)" [class.btn-success]="!isEmailVerified(selectedUser)" (click)="toggleSelectedEmailVerification()">
-              {{ isEmailVerified(selectedUser) ? 'Unverify' : 'Verify' }}
-            </button>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+              <button class="btn btn-sm" [class.btn-outline-secondary]="isEmailVerified(selectedUser)" [class.btn-success]="!isEmailVerified(selectedUser)" (click)="toggleSelectedEmailVerification()">
+                {{ isEmailVerified(selectedUser) ? 'Unverify' : 'Verify' }}
+              </button>
+              <button
+                *ngIf="selectedUser.email && !isEmailVerified(selectedUser)"
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                [disabled]="resendingEmailVerification"
+                (click)="resendSelectedEmailVerification()">
+                <span *ngIf="resendingEmailVerification" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                {{ resendingEmailVerification ? 'Sending...' : 'Resend' }}
+              </button>
+            </div>
           </div>
           <div>
             <label>Phone Number (<small>{{ isMobileVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
