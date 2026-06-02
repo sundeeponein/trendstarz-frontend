@@ -276,7 +276,8 @@
     border-color: #a5f3fc;
   }
 
-  &--submitted {
+  &--submitted,
+  &--under_review {
     background: #eff6ff;
     color: #1d4ed8;
     border-color: #bfdbfe;

@@ -740,21 +740,33 @@ export class CampaignReviewComponent implements OnInit {
 
   getParticipantStatusChips(campaign: any): Array<{ key: string; label: string; count: number }> {
     const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
-    const counts = new Map<string, number>();
+    const counts = new Map<string, { key: string; label: string; count: number }>();
     for (const row of rows) {
-      const key = String(row?.status || 'pending').trim().toLowerCase() || 'pending';
-      counts.set(key, (counts.get(key) || 0) + 1);
+      const rawKey = String(row?.status || 'pending').trim().toLowerCase() || 'pending';
+      const chipKey = this.campaignInviteStatusChipKey(rawKey);
+      const label = this.campaignInviteStatusLabel(rawKey);
+      const existing = counts.get(chipKey);
+      counts.set(chipKey, {
+        key: chipKey,
+        label,
+        count: (existing?.count || 0) + 1,
+      });
     }
 
-    const order = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed', 'pending', 'invited', 'withdrawn', 'declined', 'rejected'];
+    const order = ['working', 'under_review', 'completed', 'approved', 'pending', 'withdrawn', 'declined', 'rejected'];
     return order
       .filter((key) => counts.has(key))
       .slice(0, 4)
-      .map((key) => ({
-        key,
-        label: this.campaignInviteStatusLabel(key),
-        count: counts.get(key) || 0,
-      }));
+      .map((key) => counts.get(key)!)
+      .filter((chip): chip is { key: string; label: string; count: number } => !!chip);
+  }
+
+  private campaignInviteStatusChipKey(status: string): string {
+    const key = String(status || '').trim().toLowerCase();
+    if (key === 'accepted' || key === 'payment_confirmed' || key === 'working') return 'working';
+    if (key === 'submitted' || key === 'disputed') return 'under_review';
+    if (key === 'pending' || key === 'invited' || key === 'counter_sent') return 'pending';
+    return key;
   }
 
   private campaignInviteStatusLabel(status: string): string {
@@ -762,6 +774,7 @@ export class CampaignReviewComponent implements OnInit {
     const map: Record<string, string> = {
       pending: 'Pending',
       invited: 'Invited',
+      counter_sent: 'Pending',
       accepted: 'Working',
       payment_confirmed: 'Working',
       working: 'Working',
