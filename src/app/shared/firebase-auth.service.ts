@@ -6,6 +6,7 @@ import {
   Auth,
   ConfirmationResult,
   RecaptchaVerifier,
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   getAuth,
   reload,
@@ -13,6 +14,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  verifyPasswordResetCode,
   type User,
 } from 'firebase/auth';
 import { firstValueFrom } from 'rxjs';
@@ -71,7 +73,33 @@ export class FirebaseAuthService {
   }
 
   async sendPasswordReset(email: string): Promise<void> {
-    await sendPasswordResetEmail(this.getFirebaseAuth(), email);
+    const canSend = await this.ensurePasswordResetUser(email);
+    if (!canSend) return;
+    const actionCodeSettings = isPlatformBrowser(this.platformId)
+      ? {
+          url: `${window.location.origin}/reset-password?firebaseReset=true`,
+          handleCodeInApp: true,
+        }
+      : undefined;
+    await sendPasswordResetEmail(this.getFirebaseAuth(), email, actionCodeSettings);
+  }
+
+  async verifyPasswordResetCode(oobCode: string): Promise<string> {
+    return verifyPasswordResetCode(this.getFirebaseAuth(), oobCode);
+  }
+
+  async completePasswordReset(oobCode: string, newPassword: string): Promise<any> {
+    const auth = this.getFirebaseAuth();
+    const email = await verifyPasswordResetCode(auth, oobCode);
+    await confirmPasswordReset(auth, oobCode, newPassword);
+    const credential = await signInWithEmailAndPassword(auth, email, newPassword);
+    const idToken = await credential.user.getIdToken(true);
+    return firstValueFrom(
+      this.http.post(`${environment.apiBaseUrl}/auth/firebase/complete-password-reset`, {
+        idToken,
+        newPassword,
+      }),
+    );
   }
 
   setupPhoneRecaptcha(containerId: string): RecaptchaVerifier {
@@ -122,5 +150,16 @@ export class FirebaseAuthService {
         type,
       }),
     );
+  }
+
+  private async ensurePasswordResetUser(email: string): Promise<boolean> {
+    try {
+      const result: any = await firstValueFrom(
+        this.http.post(`${environment.apiBaseUrl}/auth/firebase/ensure-password-reset-user`, { email }),
+      );
+      return result?.canSendFirebaseReset !== false;
+    } catch {
+      return true;
+    }
   }
 }
