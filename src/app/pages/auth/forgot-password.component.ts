@@ -38,7 +38,7 @@ export class ForgotPasswordComponent {
     this.firebaseAuth.sendPasswordReset(email)
       .catch(() => undefined)
       .finally(() => {
-        this.successMsg = 'If your email is registered, a reset link has been sent.';
+        this.successMsg = 'If your email is registered, you’ll receive a password reset link shortly. Please check your Inbox, Spam, or Promotions folder.';
         this.loading = false;
         this.forgotForm.reset();
         this.forgotForm.disable();
