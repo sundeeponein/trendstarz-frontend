@@ -13,6 +13,7 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { environment } from '../../../environments/environment';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 
 @Component({
   selector: 'app-photographer-profile',
@@ -60,6 +61,12 @@ export class PhotographerProfileComponent implements OnInit {
   resendingEmailVerification = false;
   resendEmailVerificationSuccess = false;
   resendEmailVerificationError: string | null = null;
+  showPhoneOtp = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  phoneVerifyError = '';
+  verifyingPhoneOtp = false;
+  phoneOtpError = '';
+  private firebasePhoneConfirmation: any = null;
   verificationCallNumber = '';
 
   states: any[] = [];
@@ -103,7 +110,54 @@ export class PhotographerProfileComponent implements OnInit {
     private http: HttpClient,
     private guidelinesService: ImageGuidelinesService,
     private cdr: ChangeDetectorRef,
+    private firebaseAuth: FirebaseAuthService,
   ) {}
+
+  private formatFirebasePhone(phone: string): string {
+    const value = String(phone || '').trim();
+    if (value.startsWith('+')) return value;
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10 ? `+91${digits}` : `+${digits}`;
+  }
+
+  sendPhoneOtp(): void {
+    void this.sendFirebasePhoneOtp();
+  }
+
+  private async sendFirebasePhoneOtp(): Promise<void> {
+    try {
+      const phone = this.formatFirebasePhone(this.form.get('phoneNumber')?.value);
+      this.firebasePhoneConfirmation = await this.firebaseAuth.sendPhoneOtp(phone, 'photographer-phone-recaptcha');
+      this.phoneVerifyError = '';
+      this.phoneOtpError = '';
+      this.showPhoneOtp = true;
+    } catch (error: any) {
+      this.phoneVerifyError = error?.message || 'Failed to send OTP';
+    }
+  }
+
+  confirmPhoneOtp(): void {
+    void this.confirmFirebasePhoneOtp();
+  }
+
+  private async confirmFirebasePhoneOtp(): Promise<void> {
+    if (!this.firebasePhoneConfirmation) {
+      this.phoneOtpError = 'Please request an OTP first.';
+      return;
+    }
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
+    try {
+      await this.firebaseAuth.confirmPhoneOtp(this.firebasePhoneConfirmation, this.phoneOtp.join(''));
+      this.phoneVerified = true;
+      this.showPhoneOtp = false;
+      this.phoneVerifyError = '';
+    } catch (error: any) {
+      this.phoneOtpError = error?.message || 'Invalid or expired OTP.';
+    } finally {
+      this.verifyingPhoneOtp = false;
+    }
+  }
 
   openProfilePhotoGuidelines(): void {
     this.guidelinesService.open('influencer');

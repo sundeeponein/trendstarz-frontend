@@ -90,6 +90,16 @@
               <small *ngIf="!phoneVerified" class="text-muted d-block mt-1">
                 Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.
               </small>
+              <div *ngIf="!phoneVerified" class="mt-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button>
+                <span *ngIf="phoneVerifyError" class="text-danger ms-2">{{ phoneVerifyError }}</span>
+                <div id="brand-phone-recaptcha"></div>
+                <div *ngIf="showPhoneOtp" class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                  <input *ngFor="let item of phoneOtp; let i = index" [(ngModel)]="phoneOtp[i]" [ngModelOptions]="{standalone: true}" maxlength="1" inputmode="numeric" class="form-control text-center" style="width:42px;" />
+                  <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify</button>
+                </div>
+                <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
+              </div>
             </div>
             <div class="field-block">
               <label>Website</label>

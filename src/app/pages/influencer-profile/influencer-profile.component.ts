@@ -16,6 +16,7 @@ import imageCompression from 'browser-image-compression';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -72,6 +73,7 @@ export class InfluencerProfileComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private guidelinesService: ImageGuidelinesService,
     private toast: ToastService,
+    private firebaseAuth: FirebaseAuthService,
   ) {}
 
   private getToken(): string | null {
@@ -203,6 +205,7 @@ export class InfluencerProfileComponent implements OnInit {
   verifyingPhoneOtp: boolean = false;
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
+  private firebasePhoneConfirmation: any = null;
 
 
   // Email verification resend state
@@ -248,23 +251,50 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   sendPhoneOtp() {
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    this.otpService.sendOtp('phone', phone).subscribe({
-      next: () => { this.phoneVerifyError = ''; },
-      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
-    });
-    this.phoneOtpError = '';
-    this.startPhoneOtpTimer();
+    void this.sendFirebasePhoneOtp();
   }
+
+  private formatFirebasePhone(phone: string): string {
+    const value = String(phone || '').trim();
+    if (value.startsWith('+')) return value;
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10 ? `+91${digits}` : `+${digits}`;
+  }
+
+  private async sendFirebasePhoneOtp(): Promise<void> {
+    try {
+      const phone = this.formatFirebasePhone(this.registrationForm.get('phoneNumber')?.value);
+      this.firebasePhoneConfirmation = await this.firebaseAuth.sendPhoneOtp(phone, 'influencer-phone-recaptcha');
+      this.phoneVerifyError = '';
+      this.phoneOtpError = '';
+      this.showPhoneOtp = true;
+      this.startPhoneOtpTimer();
+    } catch (error: any) {
+      this.phoneVerifyError = error?.message || 'Failed to send OTP';
+    }
+  }
+
   confirmPhoneOtp() {
+    void this.confirmFirebasePhoneOtp();
+  }
+
+  private async confirmFirebasePhoneOtp(): Promise<void> {
+    if (!this.firebasePhoneConfirmation) {
+      this.phoneOtpError = 'Please request an OTP first.';
+      return;
+    }
     this.verifyingPhoneOtp = true;
     this.phoneOtpError = '';
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    const otp = this.phoneOtp.join('');
-    this.otpService.verifyOtp('phone', phone, otp).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
-      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
-    });
+    try {
+      await this.firebaseAuth.confirmPhoneOtp(this.firebasePhoneConfirmation, this.phoneOtp.join(''));
+      this.phoneVerified = true;
+      this.showPhoneOtp = false;
+      this.phoneVerifyError = '';
+    } catch (error: any) {
+      this.phoneOtpError = error?.message || 'Invalid or expired OTP.';
+    } finally {
+      this.verifyingPhoneOtp = false;
+    }
   }
   sendEmailOtp() {
     const email = this.registrationForm.get('email')?.value;
