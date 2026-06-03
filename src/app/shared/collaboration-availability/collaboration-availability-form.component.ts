@@ -10,8 +10,8 @@ type AvailabilityRole = 'influencer' | 'photographer';
   imports: [CommonModule, ReactiveFormsModule],
   template: `
     <section class="ca-form" [formGroup]="form" *ngIf="form">
-      <h3 class="m-0">{{ role === 'influencer' ? 'Collaboration Availability' : 'Collaboration Availability' }} </h3> <small class="text-black mb-2">Improve your visibility and receive better collaboration invites from brands, photographers and agencies.</small>
-      <label class="ca-toggle">
+      <h3 class="m-0">{{ role === 'influencer' ? 'Collaboration Availability' : 'Collaboration Availability' }} </h3> <small class="text-black">Improve your visibility and receive better collaboration invites from brands, photographers and agencies.</small>
+      <label class="ca-toggle mt-4">
         <input type="checkbox" formControlName="enabled" [disabled]="readonly" />
         <span>{{ role === 'influencer' ? 'Open for Collaborations & Shoots' : 'Open for Collaborations' }}</span>
         <!-- <strong>Enable</strong> -->
@@ -39,23 +39,12 @@ type AvailabilityRole = 'influencer' | 'photographer';
           </div>
         </div>
 
-        <div class="ca-field" *ngIf="!readonly || optionsForField('locations', roleOptions.locations || []).length">
+        <div class="ca-field" *ngIf="!readonly || optionsForField('availableFor', roleOptions.availableFor || []).length">
           <label>Available For</label>
           <div class="ca-chip-row">
             <button type="button" class="ca-chip" *ngFor="let item of optionsForField('availableFor', roleOptions.availableFor || [])"
               [class.selected]="has('availableFor', item.name)" [disabled]="readonly"
               (click)="toggle('availableFor', item.name)">
-              {{ item.name }}
-            </button>
-          </div>
-        </div>
-
-        <div class="ca-field">
-          <label>Available Locations</label>
-          <div class="ca-chip-row">
-            <button type="button" class="ca-chip" *ngFor="let item of optionsForField('locations', roleOptions.locations || [])"
-              [class.selected]="has('locations', item.name)" [disabled]="readonly"
-              (click)="toggle('locations', item.name)">
               {{ item.name }}
             </button>
           </div>

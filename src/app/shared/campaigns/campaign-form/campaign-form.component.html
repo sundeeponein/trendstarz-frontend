@@ -330,7 +330,7 @@
           Acceptance deadline must be between campaign start and end dates.
         </span>
         <p class="field-sublabel">
-          Note: {{ inviteRecipientLabelPlural }} can only choose a posting date within your selected start and end dates when accepting invites.
+          Note: {{ inviteRecipientLabelPlural }} can only choose a posting/visit date within your selected start and end dates when accepting invites.
         </p>
 
         <p class="step-indicator">Step 1 of 3</p>
@@ -508,9 +508,10 @@
 
         <div class="field-group smart-match-panel" *ngIf="showInfluencerSmartMatching">
           <div class="field-label-row">
-            <label class="field-label">Looking For a  </label><p class="field-sublabel">Optional smart filters to target and search influencers based on your requirements.</p>
+            <label class="field-label">Looking For a  </label>
             <button type="button" class="smart-match-clear" *ngIf="hasAnySmartMatchingFilter()" (click)="clearSmartMatchingFilters()">Clear</button>
           </div>
+          <p class="field-sublabel">Optional smart filters to target and search influencers based on your requirements.</p>
           
           <div class="chip-list">
             <button type="button" class="chip"
@@ -555,6 +556,56 @@
 
           <p class="chip-hint" *ngIf="preferredCollaborationPreference">
             <i class="bi bi-stars"></i> Smart matching boosts creators with matching preference.
+          </p>
+        </div>
+
+        <div class="field-group smart-match-panel" *ngIf="showPhotographerSmartMatching">
+          <div class="field-label-row">
+            <label class="field-label">Preferred Creator Type</label>
+            <button type="button" class="smart-match-clear" *ngIf="hasAnyPhotographerSmartMatchingFilter()" (click)="clearPhotographerSmartMatchingFilters()">Clear</button>
+          </div>
+          <p class="field-sublabel">Helps match your requirement with suitable creators.</p>
+          <div class="chip-list">
+            <button type="button" class="chip"
+                    *ngFor="let item of photographerCreatorTypeOptions"
+                    [class.chip--selected]="isPhotographerSmartMatchSelected('photographerPreferredCreatorTypes', item)"
+                    (click)="togglePhotographerSmartMatchValue('photographerPreferredCreatorTypes', item)">
+              {{ item }}
+            </button>
+          </div>
+
+          <label class="field-label smart-match-subtitle">Collaboration Preference</label>
+          <div class="smart-radio-row">
+            <label class="smart-radio" *ngFor="let item of photographerCollaborationPreferenceOptions">
+              <input type="radio"
+                     name="photographerCollaborationPreference"
+                     [value]="item.name"
+                     [(ngModel)]="photographerCollaborationPreference"
+                     [ngModelOptions]="{standalone: true}" />
+              <span>{{ item.name }}</span>
+            </label>
+          </div>
+
+          <label class="field-label smart-match-subtitle">Equipment Preference</label>
+          <p class="field-sublabel">Used to prioritize creators with matching equipment and production capabilities.</p>
+          <div class="chip-list">
+            <button type="button" class="chip"
+                    *ngFor="let item of equipmentOptions"
+                    [class.chip--selected]="isPhotographerSmartMatchSelected('photographerEquipmentPreference', item.name)"
+                    (click)="togglePhotographerSmartMatchValue('photographerEquipmentPreference', item.name)">
+              {{ item.name }}
+            </button>
+          </div>
+
+          <!-- <label class="smart-check">
+            <input type="checkbox"
+                   [(ngModel)]="photographerOpenToTravelOnly"
+                   [ngModelOptions]="{standalone: true}" />
+            <span>Show creators open to travel</span>
+          </label> -->
+
+          <p class="chip-hint" *ngIf="photographerCollaborationPreference">
+            <i class="bi bi-stars"></i> Matching creator preferences boosts ranking.
           </p>
         </div>
 

@@ -127,9 +127,6 @@ export class AdminUserTableComponent implements OnInit {
     if (Array.isArray(collab.availableFor) && collab.availableFor.length) {
       parts.push(`Available for: ${collab.availableFor.join(', ')}`);
     }
-    if (Array.isArray(collab.locations) && collab.locations.length) {
-      parts.push(`Locations: ${collab.locations.join(', ')}`);
-    }
     if (collab.openToTravel) {
       parts.push('Open to travel');
     }

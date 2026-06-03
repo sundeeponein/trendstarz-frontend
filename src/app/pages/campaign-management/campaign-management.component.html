@@ -1492,6 +1492,49 @@
         <small *ngIf="invitePreferredCollaborationPreference">Matching preference boosts ranking.</small>
       </div>
 
+      <div class="invite-smart-match" *ngIf="inviteTargetRole === 'photographer'">
+        <div class="invite-smart-match__head">
+          <strong>Smart Matching <span class="text-muted">(Optional)</span></strong>
+          <button type="button" *ngIf="hasAnyInvitePhotographerSmartMatchingFilter()" (click)="clearInvitePhotographerSmartMatchingFilters()">Clear</button>
+        </div>
+        <span class="invite-smart-match__label">Preferred Creator Type</span>
+        <div class="chip-list chip-list--sm">
+          <button type="button" class="chip chip--sm"
+            *ngFor="let item of photographerCreatorTypeOptions"
+            [class.chip--selected]="isInvitePhotographerSmartMatchSelected('invitePhotographerPreferredCreatorTypes', item)"
+            (click)="toggleInvitePhotographerSmartMatchValue('invitePhotographerPreferredCreatorTypes', item)">{{ item }}</button>
+        </div>
+        <small>Helps match your requirement with suitable creators.</small>
+
+        <span class="invite-smart-match__label">Collaboration Preference</span>
+        <div class="invite-smart-radio-row">
+          <label class="invite-smart-radio" *ngFor="let item of invitePhotographerCollaborationPreferenceOptions">
+            <input type="radio"
+              name="invitePhotographerCollaborationPreference"
+              [value]="item.name"
+              [(ngModel)]="invitePhotographerCollaborationPreference"
+              [ngModelOptions]="{standalone: true}" />
+            <span>{{ item.name }}</span>
+          </label>
+        </div>
+
+        <span class="invite-smart-match__label">Equipment Preference</span>
+        <div class="chip-list chip-list--sm">
+          <button type="button" class="chip chip--sm"
+            *ngFor="let item of equipmentOptions"
+            [class.chip--selected]="isInvitePhotographerSmartMatchSelected('invitePhotographerEquipmentPreference', item.name)"
+            (click)="toggleInvitePhotographerSmartMatchValue('invitePhotographerEquipmentPreference', item.name)">{{ item.name }}</button>
+        </div>
+        <small>Only for filtering/search ranking.</small>
+
+        <label class="invite-smart-check">
+          <input type="checkbox"
+            [(ngModel)]="invitePhotographerOpenToTravelOnly"
+            [ngModelOptions]="{standalone: true}" />
+          <span>Show creators open to travel</span>
+        </label>
+      </div>
+
       <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
       <div class="invite-limit-note" *ngIf="inviteSlotsLimit">

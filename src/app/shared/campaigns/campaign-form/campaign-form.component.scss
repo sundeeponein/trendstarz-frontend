@@ -486,6 +486,22 @@ form {
   }
 }
 
+.smart-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: $text-dark;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 4px;
+
+  input {
+    width: 17px;
+    height: 17px;
+    accent-color: $text-dark;
+  }
+}
+
 /* ── Description label row with Use template button ── */
 .field-label-row {
   display: flex;

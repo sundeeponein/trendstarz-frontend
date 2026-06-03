@@ -26,6 +26,13 @@ import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.s
 })
 export class CampaignFormComponent implements OnInit {
   readonly tierOrder: readonly string[] = TIER_ORDER;
+  readonly photographerCreatorTypeOptions = [
+    'Reel Creator',
+    'Product Photographer',
+    'Cinematic Creator',
+    'Drone Creator',
+    'Editor',
+  ];
   currentBrandName = '';
     selectionLimitError = '';
 
@@ -86,6 +93,11 @@ export class CampaignFormComponent implements OnInit {
   preferredCreatorTypes: string[] = [];
   preferredCollaborationPreference = '';
   openCollaborationTypes: string[] = [];
+  photographerPreferredCreatorTypes: string[] = [];
+  photographerCollaborationPreference = '';
+  photographerEquipmentPreference: string[] = [];
+  photographerOpenToTravelOnly = false;
+  equipmentOptions: any[] = [];
   imagePreview: string | null = null;
   selectedFile: File | null = null;
   uploading = false;
@@ -461,6 +473,7 @@ export class CampaignFormComponent implements OnInit {
       this.selectionLimitError = '';
       this.filterCreatorType = '';
       this.clearSmartMatchingFilters();
+      this.clearPhotographerSmartMatchingFilters();
       this.loadRecipientCategories();
       if (this.currentStep === 3) {
         this.loadInviteRecipients();
@@ -565,6 +578,20 @@ export class CampaignFormComponent implements OnInit {
       },
       error: () => {
         this.collaborationAvailabilityOptions = {};
+        this.cd.detectChanges();
+      },
+    });
+
+    this.config.getEquipmentOptions().subscribe({
+      next: (items: any[]) => {
+        this.equipmentOptions = this.mergeOptionNames(
+          Array.isArray(items) ? items.map((item: any) => item?.name || item?.label || item) : [],
+          ['Sony', 'Canon', 'DJI Drone', 'Gimbal'],
+        ).map((name) => ({ name }));
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.equipmentOptions = ['Sony', 'Canon', 'DJI Drone', 'Gimbal'].map((name) => ({ name }));
         this.cd.detectChanges();
       },
     });
@@ -713,6 +740,14 @@ export class CampaignFormComponent implements OnInit {
 
   get openCollaborationTypeOptions(): any[] {
     return this.collaborationAvailabilityOptions?.influencer?.collaborationTypes || [];
+  }
+
+  get showPhotographerSmartMatching(): boolean {
+    return this.inviteRecipientRole === 'photographer';
+  }
+
+  get photographerCollaborationPreferenceOptions(): any[] {
+    return this.collaborationAvailabilityOptions?.photographer?.preferences || [];
   }
 
   get isInvitingPhotographers(): boolean {
@@ -1509,6 +1544,9 @@ export class CampaignFormComponent implements OnInit {
     if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
       list = list.filter(inf => this.creatorMatchesSmartFilters(inf));
     }
+    if (this.showPhotographerSmartMatching && this.hasAnyPhotographerSmartMatchingFilter()) {
+      list = list.filter(inf => this.photographerMatchesSmartFilters(inf));
+    }
     if (this.filterTier) {
       const activeTier = this.normalizeTierLabel(this.filterTier);
       list = list.filter(inf => this.getInfluencerTier(inf) === activeTier);
@@ -1523,6 +1561,12 @@ export class CampaignFormComponent implements OnInit {
     if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
       list = [...list].sort((a, b) => {
         const scoreDiff = this.getSmartMatchScore(b) - this.getSmartMatchScore(a);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (Number(b?.isPremium) || 0) - (Number(a?.isPremium) || 0);
+      });
+    } else if (this.showPhotographerSmartMatching && this.hasAnyPhotographerSmartMatchingFilter()) {
+      list = [...list].sort((a, b) => {
+        const scoreDiff = this.getPhotographerSmartMatchScore(b) - this.getPhotographerSmartMatchScore(a);
         if (scoreDiff !== 0) return scoreDiff;
         return (Number(b?.isPremium) || 0) - (Number(a?.isPremium) || 0);
       });
@@ -1684,6 +1728,19 @@ export class CampaignFormComponent implements OnInit {
     return Array.from(cats).slice(0, 5);
   }
 
+  private mergeOptionNames(source: any[], fallback: string[]): string[] {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    [...source, ...fallback].forEach((item: any) => {
+      const name = String(item || '').trim();
+      const key = name.toLowerCase();
+      if (!name || seen.has(key)) return;
+      seen.add(key);
+      out.push(name);
+    });
+    return out;
+  }
+
   toggleSmartMatchValue(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): void {
     const clean = String(value || '').trim();
     if (!clean) return;
@@ -1706,6 +1763,35 @@ export class CampaignFormComponent implements OnInit {
     this.openCollaborationTypes = [];
   }
 
+  togglePhotographerSmartMatchValue(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): void {
+    const clean = String(value || '').trim();
+    if (!clean) return;
+    const list = [...this[field]];
+    const idx = list.indexOf(clean);
+    if (idx >= 0) list.splice(idx, 1);
+    else list.push(clean);
+    this[field] = list;
+    this.cd.detectChanges();
+  }
+
+  isPhotographerSmartMatchSelected(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): boolean {
+    return this[field].includes(String(value || '').trim());
+  }
+
+  clearPhotographerSmartMatchingFilters(): void {
+    this.photographerPreferredCreatorTypes = [];
+    this.photographerCollaborationPreference = '';
+    this.photographerEquipmentPreference = [];
+    this.photographerOpenToTravelOnly = false;
+  }
+
+  hasAnyPhotographerSmartMatchingFilter(): boolean {
+    return this.photographerPreferredCreatorTypes.length > 0 ||
+      !!this.photographerCollaborationPreference ||
+      this.photographerEquipmentPreference.length > 0 ||
+      this.photographerOpenToTravelOnly;
+  }
+
   hasAnySmartMatchingFilter(): boolean {
     return this.lookingForCreatorTypes.length > 0 ||
       this.preferredCreatorTypes.length > 0 ||
@@ -1717,7 +1803,15 @@ export class CampaignFormComponent implements OnInit {
     if (!selected.length) return true;
     const values = Array.isArray(source) ? source : [];
     const normalized = new Set(values.map((item: any) => String(item || '').trim().toLowerCase()).filter(Boolean));
-    return selected.some(item => normalized.has(String(item || '').trim().toLowerCase()));
+    return selected.some(item => {
+      const selectedValue = String(item || '').trim().toLowerCase();
+      if (!selectedValue) return false;
+      return Array.from(normalized).some((value) =>
+        value === selectedValue ||
+        value.includes(selectedValue.replace(/\s+creator$/, '').replace(/\s+photographer$/, '')) ||
+        selectedValue.includes(value)
+      );
+    });
   }
 
   private creatorMatchesSmartFilters(inf: any): boolean {
@@ -1744,6 +1838,35 @@ export class CampaignFormComponent implements OnInit {
     ) {
       score += 40;
     }
+    return score;
+  }
+
+  private photographerMatchesSmartFilters(creator: any): boolean {
+    if (!this.showPhotographerSmartMatching || !this.hasAnyPhotographerSmartMatchingFilter()) return true;
+    const skills = Array.isArray(creator?.skills) ? creator.skills : [];
+    const equipment = Array.isArray(creator?.equipment) ? creator.equipment : [];
+    const availability = creator?.collaborationAvailability || {};
+    if (this.photographerPreferredCreatorTypes.length && !this.valuesOverlap(skills, this.photographerPreferredCreatorTypes)) return false;
+    if (this.photographerEquipmentPreference.length && !this.valuesOverlap(equipment, this.photographerEquipmentPreference)) return false;
+    if (this.photographerOpenToTravelOnly && availability?.openToTravel !== true) return false;
+    return true;
+  }
+
+  private getPhotographerSmartMatchScore(creator: any): number {
+    if (!this.showPhotographerSmartMatching) return 0;
+    const skills = Array.isArray(creator?.skills) ? creator.skills : [];
+    const equipment = Array.isArray(creator?.equipment) ? creator.equipment : [];
+    const availability = creator?.collaborationAvailability || {};
+    let score = 0;
+    if (this.photographerPreferredCreatorTypes.length && this.valuesOverlap(skills, this.photographerPreferredCreatorTypes)) score += 30;
+    if (this.photographerEquipmentPreference.length && this.valuesOverlap(equipment, this.photographerEquipmentPreference)) score += 20;
+    if (
+      this.photographerCollaborationPreference &&
+      String(availability?.preference || '').trim().toLowerCase() === this.photographerCollaborationPreference.trim().toLowerCase()
+    ) {
+      score += 40;
+    }
+    if (this.photographerOpenToTravelOnly && availability?.openToTravel === true) score += 25;
     return score;
   }
 

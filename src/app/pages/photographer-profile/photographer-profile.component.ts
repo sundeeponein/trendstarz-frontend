@@ -292,7 +292,6 @@ export class PhotographerProfileComponent implements OnInit {
         enabled: [{ value: false, disabled: true }],
         availableFor: [{ value: [], disabled: true }],
         preference: [{ value: '', disabled: true }],
-        locations: [{ value: [], disabled: true }],
         openToTravel: [{ value: false, disabled: true }],
       }),
       payout: this.fb.group({
@@ -404,7 +403,6 @@ export class PhotographerProfileComponent implements OnInit {
             enabled: false,
             availableFor: [],
             preference: '',
-            locations: [],
             openToTravel: false,
           },
           payout: {

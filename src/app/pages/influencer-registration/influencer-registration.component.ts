@@ -288,7 +288,6 @@ export class InfluencerRegistrationComponent implements OnInit {
         collaborationTypes: [[]],
         preference: [''],
         availableFor: [[]],
-        locations: [[]],
         openToTravel: [false],
       }),
       website: [''],

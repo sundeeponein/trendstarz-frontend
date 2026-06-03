@@ -78,10 +78,8 @@ export class AdminManagementComponent implements OnInit {
     { title: 'Collaboration Types', role: 'influencer', key: 'collaborationTypes' },
     { title: 'Preferences', role: 'influencer', key: 'preferences' },
     { title: 'Available For', role: 'influencer', key: 'availableFor' },
-    { title: 'Locations', role: 'influencer', key: 'locations' },
     { title: 'Preferences', role: 'photographer', key: 'preferences' },
     { title: 'Available For', role: 'photographer', key: 'availableFor' },
-    { title: 'Locations', role: 'photographer', key: 'locations' },
   ];
   config: any = {
     socialMediaPlatforms: [],

@@ -1106,6 +1106,22 @@
   }
 }
 
+.invite-smart-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: $text-dark;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-top: 8px;
+
+  input {
+    width: 16px;
+    height: 16px;
+    accent-color: $text-dark;
+  }
+}
+
 /* Each influencer row is now a <label> */
 .search-inf-row {
   cursor: pointer;

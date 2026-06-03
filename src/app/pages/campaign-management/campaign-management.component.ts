@@ -129,6 +129,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   invitePreferredCreatorTypes: string[] = [];
   invitePreferredCollaborationPreference = '';
   inviteOpenCollaborationTypes: string[] = [];
+  readonly photographerCreatorTypeOptions = [
+    'Reel Creator',
+    'Product Photographer',
+    'Cinematic Creator',
+    'Drone Creator',
+    'Editor',
+  ];
+  invitePhotographerPreferredCreatorTypes: string[] = [];
+  invitePhotographerCollaborationPreference = '';
+  invitePhotographerEquipmentPreference: string[] = [];
+  invitePhotographerOpenToTravelOnly = false;
+  equipmentOptions: any[] = [];
   allInfluencersForInvite: any[] = [];
   allPhotographersForInvite: any[] = [];
   influencersForInviteLoading = false;
@@ -670,6 +682,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.collaborationAvailabilityOptions?.influencer?.collaborationTypes || [];
   }
 
+  get invitePhotographerCollaborationPreferenceOptions(): any[] {
+    return this.collaborationAvailabilityOptions?.photographer?.preferences || [];
+  }
+
   get selectableInfluencers(): any[] {
     return this.selectableInviteRecipients;
   }
@@ -720,6 +736,48 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.inviteOpenCollaborationTypes = [];
   }
 
+  private mergeInviteOptionNames(source: any[], fallback: string[]): string[] {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    [...source, ...fallback].forEach((item: any) => {
+      const name = String(item || '').trim();
+      const key = name.toLowerCase();
+      if (!name || seen.has(key)) return;
+      seen.add(key);
+      out.push(name);
+    });
+    return out;
+  }
+
+  toggleInvitePhotographerSmartMatchValue(field: 'invitePhotographerPreferredCreatorTypes' | 'invitePhotographerEquipmentPreference', value: string): void {
+    const clean = String(value || '').trim();
+    if (!clean) return;
+    const list = [...this[field]];
+    const idx = list.indexOf(clean);
+    if (idx >= 0) list.splice(idx, 1);
+    else list.push(clean);
+    this[field] = list;
+    this.cd.detectChanges();
+  }
+
+  isInvitePhotographerSmartMatchSelected(field: 'invitePhotographerPreferredCreatorTypes' | 'invitePhotographerEquipmentPreference', value: string): boolean {
+    return this[field].includes(String(value || '').trim());
+  }
+
+  clearInvitePhotographerSmartMatchingFilters(): void {
+    this.invitePhotographerPreferredCreatorTypes = [];
+    this.invitePhotographerCollaborationPreference = '';
+    this.invitePhotographerEquipmentPreference = [];
+    this.invitePhotographerOpenToTravelOnly = false;
+  }
+
+  hasAnyInvitePhotographerSmartMatchingFilter(): boolean {
+    return this.invitePhotographerPreferredCreatorTypes.length > 0 ||
+      !!this.invitePhotographerCollaborationPreference ||
+      this.invitePhotographerEquipmentPreference.length > 0 ||
+      this.invitePhotographerOpenToTravelOnly;
+  }
+
   hasAnyInviteSmartMatchingFilter(): boolean {
     return this.inviteLookingForCreatorTypes.length > 0 ||
       this.invitePreferredCreatorTypes.length > 0 ||
@@ -731,7 +789,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (!selected.length) return true;
     const values = Array.isArray(source) ? source : [];
     const normalized = new Set(values.map((item: any) => String(item || '').trim().toLowerCase()).filter(Boolean));
-    return selected.some(item => normalized.has(String(item || '').trim().toLowerCase()));
+    return selected.some(item => {
+      const selectedValue = String(item || '').trim().toLowerCase();
+      if (!selectedValue) return false;
+      return Array.from(normalized).some((value) =>
+        value === selectedValue ||
+        value.includes(selectedValue.replace(/\s+creator$/, '').replace(/\s+photographer$/, '')) ||
+        selectedValue.includes(value)
+      );
+    });
   }
 
   private matchesInviteSmartFilters(inf: any): boolean {
@@ -761,6 +827,35 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return score;
   }
 
+  private matchesInvitePhotographerSmartFilters(creator: any): boolean {
+    if (this.inviteTargetRole !== 'photographer' || !this.hasAnyInvitePhotographerSmartMatchingFilter()) return true;
+    const skills = Array.isArray(creator?.skills) ? creator.skills : [];
+    const equipment = Array.isArray(creator?.equipment) ? creator.equipment : [];
+    const availability = creator?.collaborationAvailability || {};
+    if (this.invitePhotographerPreferredCreatorTypes.length && !this.inviteValuesOverlap(skills, this.invitePhotographerPreferredCreatorTypes)) return false;
+    if (this.invitePhotographerEquipmentPreference.length && !this.inviteValuesOverlap(equipment, this.invitePhotographerEquipmentPreference)) return false;
+    if (this.invitePhotographerOpenToTravelOnly && availability?.openToTravel !== true) return false;
+    return true;
+  }
+
+  private getInvitePhotographerSmartMatchScore(creator: any): number {
+    if (this.inviteTargetRole !== 'photographer') return 0;
+    const skills = Array.isArray(creator?.skills) ? creator.skills : [];
+    const equipment = Array.isArray(creator?.equipment) ? creator.equipment : [];
+    const availability = creator?.collaborationAvailability || {};
+    let score = 0;
+    if (this.invitePhotographerPreferredCreatorTypes.length && this.inviteValuesOverlap(skills, this.invitePhotographerPreferredCreatorTypes)) score += 30;
+    if (this.invitePhotographerEquipmentPreference.length && this.inviteValuesOverlap(equipment, this.invitePhotographerEquipmentPreference)) score += 20;
+    if (
+      this.invitePhotographerCollaborationPreference &&
+      String(availability?.preference || '').trim().toLowerCase() === this.invitePhotographerCollaborationPreference.trim().toLowerCase()
+    ) {
+      score += 40;
+    }
+    if (this.invitePhotographerOpenToTravelOnly && availability?.openToTravel === true) score += 25;
+    return score;
+  }
+
   get filteredInviteRecipients(): any[] {
     const kw = this.influencerSearch.trim().toLowerCase();
     const filtered = this.inviteRecipients.filter(inf => {
@@ -769,6 +864,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         if (!types.includes(this.inviteCreatorTypeFilter)) return false;
       }
       if (!this.matchesInviteSmartFilters(inf)) return false;
+      if (!this.matchesInvitePhotographerSmartFilters(inf)) return false;
       if (!kw) return true;
       return (inf.name || inf.fullname || inf.fullName || '').toLowerCase().includes(kw);
     });
@@ -848,8 +944,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const location = this.getInviteLocationScore(candidate);
     const relevance = this.getInviteRelevanceScore(candidate);
     const smartMatch = this.getInviteSmartMatchScore(candidate);
+    const photographerSmartMatch = this.getInvitePhotographerSmartMatchScore(candidate);
     const followersBoost = Math.min(this.getInviteTopFollowersCount(candidate), 1000000) / 1000000;
-    return location + relevance + smartMatch + followersBoost;
+    return location + relevance + smartMatch + photographerSmartMatch + followersBoost;
   }
 
   toggleInfluencerSelect(id: string) {
@@ -1225,6 +1322,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.influencerSearch = '';
     this.inviteCreatorTypeFilter = '';
     this.clearInviteSmartMatchingFilters();
+    this.clearInvitePhotographerSmartMatchingFilters();
     this.selectedInfluencerIds.clear();
     this.inviteError = '';
     this.loadInviteRecipients(true);
@@ -1508,6 +1606,19 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.collaborationAvailabilityOptions = {};
+        this.cd.detectChanges();
+      },
+    });
+    this.config.getEquipmentOptions().subscribe({
+      next: (items: any[]) => {
+        this.equipmentOptions = this.mergeInviteOptionNames(
+          Array.isArray(items) ? items.map((item: any) => item?.name || item?.label || item) : [],
+          ['Sony', 'Canon', 'DJI Drone', 'Gimbal'],
+        ).map((name) => ({ name }));
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.equipmentOptions = ['Sony', 'Canon', 'DJI Drone', 'Gimbal'].map((name) => ({ name }));
         this.cd.detectChanges();
       },
     });
@@ -2558,6 +2669,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.inviteTargetRole = this.invitePanelLockedTargetRole || 'influencer';
     this.inviteCreatorTypeFilter = '';
     this.clearInviteSmartMatchingFilters();
+    this.clearInvitePhotographerSmartMatchingFilters();
     this.invitesLoading = true;
     this.invites = [];
     this.config.getInvitesByCampaign(campaign._id!).subscribe({
@@ -2591,6 +2703,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.influencerSearch = '';
     this.inviteCreatorTypeFilter = '';
     this.clearInviteSmartMatchingFilters();
+    this.clearInvitePhotographerSmartMatchingFilters();
     this.inviteError = '';
     this.selectedInfluencerIds.clear();
   }

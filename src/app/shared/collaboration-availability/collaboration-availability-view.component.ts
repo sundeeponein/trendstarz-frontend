@@ -20,10 +20,6 @@ import { Component, Input } from '@angular/core';
         <strong>Available For</strong>
         <span *ngFor="let item of availability.availableFor">{{ item }}</span>
       </div>
-      <div class="ca-row" *ngIf="availability.locations?.length">
-        <strong>Locations</strong>
-        <span *ngFor="let item of availability.locations">{{ item }}</span>
-      </div>
       <div class="ca-row" *ngIf="availability.openToTravel">
         <strong>Travel</strong>
         <span>Open to Travel</span>

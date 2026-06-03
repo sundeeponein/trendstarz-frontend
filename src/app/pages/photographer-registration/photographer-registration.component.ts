@@ -183,7 +183,6 @@ export class PhotographerRegistrationComponent implements OnInit {
         enabled: [false],
         availableFor: [[]],
         preference: [''],
-        locations: [[]],
         openToTravel: [false],
       }),
     }, { validators: [passwordMatchValidator] });
