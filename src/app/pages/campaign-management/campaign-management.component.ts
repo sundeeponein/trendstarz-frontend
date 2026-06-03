@@ -1338,11 +1338,22 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   myInviteTypeFilter: 'all' | 'brand' | 'collab' = 'all';
 
   // ── Submit-post flow (influencer Accepted tab) ────────────────
+  private slugify(title: string): string {
+    return String(title || 'campaign')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'campaign';
+  }
+
   /** Navigate to the shared campaign-submission page — same as dashboard */
   navigateToSubmit(inv: any) {
+    const title = inv.campaignId?.title || inv.title || '';
     this.router.navigate(
-      ['/campaign-submission', inv._id],
-      { queryParams: { campaignTitle: inv.campaignId?.title || '', inviteStatus: inv.status } }
+      ['/campaign-submission', inv._id, this.slugify(title)],
+      { queryParams: { inviteStatus: inv.status } }
     );
   }
 

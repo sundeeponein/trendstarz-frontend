@@ -46,6 +46,7 @@ export const routes: Routes = [
 			{ path: 'transactions', canActivate: [authGuard], loadComponent: () => import('./pages/transactions/transactions.component').then(m => m.TransactionsComponent) },
 			// DASHBOARDS
 			{ path: 'influencer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-dashboard/influencer-dashboard.component').then(m => m.InfluencerDashboardComponent) },
+			{ path: 'campaign-submission/:inviteId/:slug', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-submission/campaign-submission.component').then(m => m.CampaignSubmissionComponent) },
 			{ path: 'campaign-submission/:inviteId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-submission/campaign-submission.component').then(m => m.CampaignSubmissionComponent) },
 			{ path: 'brand-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/brand-dashboard/brand-dashboard.component').then(m => m.BrandDashboardComponent) },
 		],

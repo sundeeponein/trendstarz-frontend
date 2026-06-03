@@ -26,6 +26,11 @@ import { FirebaseAuthService } from '../../shared/firebase-auth.service';
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  readonly maxCategories = 5;
+  readonly maxCreatorTypes = 3;
+  readonly maxCollaborationTypes = 3;
+  readonly maxAvailableFor = 2;
+  selectionLimitMessages: Partial<Record<'categories' | 'creatorTypes', string>> = {};
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -53,11 +58,40 @@ export class InfluencerProfileComponent implements OnInit {
     const idx = arr.indexOf(id);
     if (idx > -1) {
       arr.splice(idx, 1);
+      this.setSelectionLimitMessage(field, '');
     } else {
+      const max = this.maxForChipField(field);
+      if (max && arr.length >= max) {
+        this.setSelectionLimitMessage(field, `Maximum ${max} selections allowed`);
+        this.registrationForm.get(field)?.markAsTouched();
+        return;
+      }
       arr.push(id);
+      this.setSelectionLimitMessage(field, '');
     }
     this.registrationForm.get(field)?.setValue([...arr]);
     this.registrationForm.get(field)?.markAsTouched();
+  }
+
+  private setSelectionLimitMessage(
+    field: 'languages' | 'categories' | 'creatorTypes',
+    message: string,
+  ): void {
+    if (field === 'categories' || field === 'creatorTypes') {
+      this.selectionLimitMessages[field] = message;
+    }
+  }
+
+  private maxForChipField(field: 'languages' | 'categories' | 'creatorTypes'): number {
+    if (field === 'categories') return this.maxCategories;
+    if (field === 'creatorTypes') return this.maxCreatorTypes;
+    return 0;
+  }
+
+  isChipMaxed(field: 'languages' | 'categories' | 'creatorTypes', id: string): boolean {
+    const value = this.registrationForm.get(field)?.value || [];
+    const max = this.maxForChipField(field);
+    return max > 0 && !value.includes(id) && value.length >= max;
   }
 
   openProfilePhotoGuidelines(): void {

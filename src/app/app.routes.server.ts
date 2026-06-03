@@ -47,6 +47,7 @@ export const serverRoutes: ServerRoute[] = [
 
   // Dashboard routes — must be Client (need localStorage token)
   { path: 'influencer-dashboard', renderMode: RenderMode.Client },
+  { path: 'campaign-submission/:inviteId/:slug', renderMode: RenderMode.Client },
   { path: 'campaign-submission/:inviteId', renderMode: RenderMode.Client },
   { path: 'brand-dashboard', renderMode: RenderMode.Client },
   { path: 'logout', renderMode: RenderMode.Client },

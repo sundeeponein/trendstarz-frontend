@@ -98,6 +98,12 @@ export class CampaignFormComponent implements OnInit {
   photographerEquipmentPreference: string[] = [];
   photographerOpenToTravelOnly = false;
   equipmentOptions: any[] = [];
+  readonly maxInfluencerTargetCategories = 5;
+  readonly maxPhotographerTargetCategories = 3;
+  readonly maxCreatorTypeFilters = 3;
+  readonly maxCollaborationTypeFilters = 3;
+  categoryLimitMessage = '';
+  smartMatchLimitMessages: Partial<Record<'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes' | 'photographerPreferredCreatorTypes', string>> = {};
   imagePreview: string | null = null;
   selectedFile: File | null = null;
   uploading = false;
@@ -1455,10 +1461,53 @@ export class CampaignFormComponent implements OnInit {
   // ── Categories ───────────────────────────────────────────────
   toggleCategory(name: string) {
     const idx = this.selectedCategories.indexOf(name);
-    if (idx >= 0) this.selectedCategories.splice(idx, 1);
-    else this.selectedCategories.push(name);
+    if (idx >= 0) {
+      this.selectedCategories.splice(idx, 1);
+      this.categoryLimitMessage = '';
+    } else {
+      const max = this.maxTargetCategories;
+      if (this.selectedCategories.length >= max) {
+        this.categoryLimitMessage = `Maximum ${max} selections allowed`;
+        this.categoriesTouched = true;
+        return;
+      }
+      this.selectedCategories.push(name);
+      this.categoryLimitMessage = '';
+    }
   }
   isCategorySelected(name: string): boolean { return this.selectedCategories.includes(name); }
+  get maxTargetCategories(): number {
+    return this.inviteRecipientRole === 'photographer'
+      ? this.maxPhotographerTargetCategories
+      : this.maxInfluencerTargetCategories;
+  }
+  isCategoryMaxed(name: string): boolean {
+    return !this.isCategorySelected(name) && this.selectedCategories.length >= this.maxTargetCategories;
+  }
+
+  private cappedTargetCategories(): string[] {
+    const source = this.isPhotographerCreator
+      ? this.selectedPhotographerServices
+      : this.selectedCategories;
+    const limit = this.isPhotographerCreator
+      ? this.maxPhotographerTargetCategories
+      : this.maxTargetCategories;
+    return this.uniqueStrings(source).slice(0, limit);
+  }
+
+  private uniqueStrings(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const item of value) {
+      const text = String(item || '').trim();
+      const key = text.toLowerCase();
+      if (!text || seen.has(key)) continue;
+      seen.add(key);
+      out.push(text);
+    }
+    return out;
+  }
 
   // ── Photographer-specific toggles ────────────────────────────
   togglePhotographerService(s: string) {
@@ -1747,13 +1796,32 @@ export class CampaignFormComponent implements OnInit {
     const list = [...this[field]];
     const idx = list.indexOf(clean);
     if (idx >= 0) list.splice(idx, 1);
-    else list.push(clean);
+    else {
+      const max = this.maxForSmartMatchField(field);
+      if (max && list.length >= max) {
+        this.smartMatchLimitMessages[field] = `Maximum ${max} selections allowed`;
+        return;
+      }
+      list.push(clean);
+    }
     this[field] = list;
+    this.smartMatchLimitMessages[field] = '';
     this.cd.detectChanges();
   }
 
   isSmartMatchSelected(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): boolean {
     return this[field].includes(String(value || '').trim());
+  }
+
+  private maxForSmartMatchField(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes'): number {
+    return field === 'openCollaborationTypes'
+      ? this.maxCollaborationTypeFilters
+      : this.maxCreatorTypeFilters;
+  }
+
+  isSmartMatchMaxed(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): boolean {
+    const max = this.maxForSmartMatchField(field);
+    return max > 0 && !this.isSmartMatchSelected(field, value) && this[field].length >= max;
   }
 
   clearSmartMatchingFilters(): void {
@@ -1769,13 +1837,57 @@ export class CampaignFormComponent implements OnInit {
     const list = [...this[field]];
     const idx = list.indexOf(clean);
     if (idx >= 0) list.splice(idx, 1);
-    else list.push(clean);
+    else {
+      const max = field === 'photographerPreferredCreatorTypes' ? this.maxCreatorTypeFilters : 0;
+      if (max && list.length >= max) {
+        this.setSmartMatchLimitMessage(field, `Maximum ${max} selections allowed`);
+        return;
+      }
+      list.push(clean);
+    }
     this[field] = list;
+    if (field === 'photographerPreferredCreatorTypes') {
+      this.setSmartMatchLimitMessage(field, '');
+    }
     this.cd.detectChanges();
+  }
+
+  private setSmartMatchLimitMessage(
+    field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes' | 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference',
+    message: string,
+  ): void {
+    if (field !== 'photographerEquipmentPreference') {
+      this.smartMatchLimitMessages[field] = message;
+    }
   }
 
   isPhotographerSmartMatchSelected(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): boolean {
     return this[field].includes(String(value || '').trim());
+  }
+
+  isPhotographerSmartMatchMaxed(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): boolean {
+    if (field !== 'photographerPreferredCreatorTypes') return false;
+    return !this.isPhotographerSmartMatchSelected(field, value) && this[field].length >= this.maxCreatorTypeFilters;
+  }
+
+  clearInviteRecipientFilters(): void {
+    this.filterCategory = '';
+    this.filterCreatorType = '';
+    this.filterTier = '';
+    this.filterPlatform = '';
+    this.clearSmartMatchingFilters();
+    this.clearPhotographerSmartMatchingFilters();
+  }
+
+  hasInviteRecipientFilters(): boolean {
+    return !!(
+      this.filterCategory ||
+      this.filterCreatorType ||
+      this.filterTier ||
+      this.filterPlatform ||
+      this.hasAnySmartMatchingFilter() ||
+      this.hasAnyPhotographerSmartMatchingFilter()
+    );
   }
 
   clearPhotographerSmartMatchingFilters(): void {
@@ -2007,9 +2119,7 @@ export class CampaignFormComponent implements OnInit {
         : this.parseDeliverables(v.deliverablesText),
       targetCities: v.targetDistrict ? [v.targetDistrict] : [],
       targetDistrict: undefined,
-      categories: this.isPhotographerCreator
-        ? this.selectedPhotographerServices
-        : this.selectedCategories,
+      categories: this.cappedTargetCategories(),
       platforms: this.isPhotographerCreator
         ? (this.isPerContentPricingFlow
             ? this.platformDeliverables.map(pd => pd.platform)
@@ -2091,9 +2201,7 @@ export class CampaignFormComponent implements OnInit {
   private buildSavePayload(payload: any) {
     return {
       ...payload,
-      categories: this.isPhotographerCreator
-        ? this.selectedPhotographerServices
-        : this.selectedCategories,
+      categories: this.cappedTargetCategories(),
       platforms: this.isPhotographerCreator
         ? (this.isPerContentPricingFlow
             ? this.platformDeliverables.map(pd => pd.platform)

@@ -54,6 +54,9 @@ export class PhotographerRegistrationComponent implements OnInit {
   registrationSuccess = false;
   registrationError = '';
   galleryUploadWarning = '';
+  readonly maxSkills = 3;
+  readonly maxAvailableFor = 2;
+  skillLimitMessage = '';
 
   states: any[] = [];
   districts: any[] = [];
@@ -260,12 +263,28 @@ export class PhotographerRegistrationComponent implements OnInit {
   toggleSkill(skill: string) {
     const arr: string[] = [...(this.form.get('skills')?.value || [])];
     const idx = arr.indexOf(skill);
-    idx > -1 ? arr.splice(idx, 1) : arr.push(skill);
+    if (idx > -1) {
+      arr.splice(idx, 1);
+      this.skillLimitMessage = '';
+    } else {
+      if (arr.length >= this.maxSkills) {
+        this.skillLimitMessage = `Maximum ${this.maxSkills} selections allowed`;
+        this.form.get('skills')?.markAsTouched();
+        return;
+      }
+      arr.push(skill);
+      this.skillLimitMessage = '';
+    }
     this.form.get('skills')?.setValue(arr);
   }
 
   isSkillSelected(skill: string): boolean {
     return (this.form.get('skills')?.value || []).includes(skill);
+  }
+
+  isSkillMaxed(skill: string): boolean {
+    const value = this.form.get('skills')?.value || [];
+    return !value.includes(skill) && value.length >= this.maxSkills;
   }
 
   toggleEquipment(eq: string) {

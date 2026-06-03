@@ -75,3 +75,8 @@
 	justify-content: center;
 	cursor: pointer;
 }
+
+.chip--disabled:not(.chip--selected) {
+	opacity: 0.45;
+	cursor: not-allowed;
+}

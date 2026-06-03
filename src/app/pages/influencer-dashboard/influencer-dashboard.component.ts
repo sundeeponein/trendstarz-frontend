@@ -727,10 +727,24 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     window.location.href = '/influencer-profile';
   }
 
+  private slugify(title: string): string {
+    return String(title || 'campaign')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'campaign';
+  }
+
+  private campaignSubmissionRoute(inviteId: string, title: string): string[] {
+    return ['/campaign-submission', inviteId, this.slugify(title)];
+  }
+
   goToSubmit(campaign: any) {
-    this.router.navigate(['/campaign-submission', campaign.inviteId], {
+    const title = campaign.title || '';
+    this.router.navigate(this.campaignSubmissionRoute(campaign.inviteId, title), {
       queryParams: {
-        campaignTitle: campaign.title || '',
         inviteStatus: campaign.inviteStatus || 'working'
       }
     });
@@ -746,9 +760,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   goToStats(campaign: any) {
-    this.router.navigate(['/campaign-submission', campaign.inviteId], {
+    const title = campaign.title || '';
+    this.router.navigate(this.campaignSubmissionRoute(campaign.inviteId, title), {
       queryParams: {
-        campaignTitle: campaign.title || '',
         inviteStatus: campaign.inviteStatus || 'completed',
         statsOnly: 'true'
       }

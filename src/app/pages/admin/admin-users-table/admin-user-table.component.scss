@@ -325,6 +325,43 @@
   text-decoration: underline;
 }
 
+.rate-details {
+  grid-column: 1 / -1;
+}
+
+.rate-platform {
+  border: 1px solid #e5eaf2;
+  border-radius: 10px;
+  background: #fbfcfe;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.rate-platform-name {
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+.rate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid #edf1f6;
+  color: #334155;
+}
+
+.rate-row:first-of-type {
+  border-top: 0;
+}
+
+.rate-row strong {
+  color: #c04a03;
+  white-space: nowrap;
+}
+
 .traffic-row {
   display: inline-flex;
   gap: 14px;

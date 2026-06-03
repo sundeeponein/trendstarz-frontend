@@ -494,6 +494,7 @@
           <div class="chip-list">
             <button type="button" class="chip"
                     [class.chip--selected]="isCategorySelected(cat.name)"
+                    [class.chip--disabled]="isCategoryMaxed(cat.name)"
                     *ngFor="let cat of categoriesList"
                     (click)="toggleCategory(cat.name)">
               {{ cat.name }}
@@ -503,6 +504,7 @@
           <p class="chip-hint" *ngIf="selectedCategories.length > 0">
             <i class="bi bi-check-circle-fill"></i> Targeting: {{ selectedCategories.join(', ') }}
           </p>
+          <p class="field-error" *ngIf="categoryLimitMessage">{{ categoryLimitMessage }}</p>
           <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one target {{ inviteRecipientLabelSingular.toLowerCase() }} category</span>
         </div>
 
@@ -517,20 +519,24 @@
             <button type="button" class="chip"
                     *ngFor="let item of creatorTypeOptions"
                     [class.chip--selected]="isSmartMatchSelected('lookingForCreatorTypes', item.name)"
+                    [class.chip--disabled]="isSmartMatchMaxed('lookingForCreatorTypes', item.name)"
                     (click)="toggleSmartMatchValue('lookingForCreatorTypes', item.name)">
               {{ item.name }}
             </button>
           </div>
+          <p class="field-error" *ngIf="smartMatchLimitMessages.lookingForCreatorTypes">{{ smartMatchLimitMessages.lookingForCreatorTypes }}</p>
 
           <label class="field-label smart-match-subtitle">Preferred Creator Type</label>
           <div class="chip-list">
             <button type="button" class="chip"
                     *ngFor="let item of creatorTypeOptions"
                     [class.chip--selected]="isSmartMatchSelected('preferredCreatorTypes', item.name)"
+                    [class.chip--disabled]="isSmartMatchMaxed('preferredCreatorTypes', item.name)"
                     (click)="toggleSmartMatchValue('preferredCreatorTypes', item.name)">
               {{ item.name }}
             </button>
           </div>
+          <p class="field-error" *ngIf="smartMatchLimitMessages.preferredCreatorTypes">{{ smartMatchLimitMessages.preferredCreatorTypes }}</p>
 
           <label class="field-label smart-match-subtitle">Collaboration Preference</label>
           <div class="smart-radio-row">
@@ -549,10 +555,12 @@
             <button type="button" class="chip"
                     *ngFor="let item of openCollaborationTypeOptions"
                     [class.chip--selected]="isSmartMatchSelected('openCollaborationTypes', item.name)"
+                    [class.chip--disabled]="isSmartMatchMaxed('openCollaborationTypes', item.name)"
                     (click)="toggleSmartMatchValue('openCollaborationTypes', item.name)">
               {{ item.name }}
             </button>
           </div>
+          <p class="field-error" *ngIf="smartMatchLimitMessages.openCollaborationTypes">{{ smartMatchLimitMessages.openCollaborationTypes }}</p>
 
           <p class="chip-hint" *ngIf="preferredCollaborationPreference">
             <i class="bi bi-stars"></i> Smart matching boosts creators with matching preference.
@@ -569,10 +577,12 @@
             <button type="button" class="chip"
                     *ngFor="let item of photographerCreatorTypeOptions"
                     [class.chip--selected]="isPhotographerSmartMatchSelected('photographerPreferredCreatorTypes', item)"
+                    [class.chip--disabled]="isPhotographerSmartMatchMaxed('photographerPreferredCreatorTypes', item)"
                     (click)="togglePhotographerSmartMatchValue('photographerPreferredCreatorTypes', item)">
               {{ item }}
             </button>
           </div>
+          <p class="field-error" *ngIf="smartMatchLimitMessages.photographerPreferredCreatorTypes">{{ smartMatchLimitMessages.photographerPreferredCreatorTypes }}</p>
 
           <label class="field-label smart-match-subtitle">Collaboration Preference</label>
           <div class="smart-radio-row">
@@ -901,28 +911,53 @@
                    [placeholder]="'Search ' + inviteRecipientLabelPlural.toLowerCase() + ' by name, category, or location…'" />
           </div>
 
-          <div class="chip-list chip-list--sm">
-            <button type="button" class="chip chip--sm"
-              [class.chip--selected]="!filterCategory && !filterCreatorType && !filterTier && !filterPlatform && !hasAnySmartMatchingFilter()"
-              (click)="filterCategory=''; filterCreatorType=''; filterTier=''; filterPlatform=''; clearSmartMatchingFilters()">All</button>
-            <button type="button" class="chip chip--sm"
-                    *ngFor="let cat of getUniqueCategoryFilters()"
-                    [class.chip--selected]="filterCategory === cat"
-                    (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
-            <button type="button" class="chip chip--sm"
-                    *ngFor="let item of (inviteRecipientRole === 'influencer' ? creatorTypeOptions : [])"
-                    [class.chip--selected]="filterCreatorType === item.name"
-                    (click)="filterCreatorType = filterCreatorType === item.name ? '' : item.name">{{ item.name }}</button>
-            <button type="button" class="chip chip--sm"
-              *ngFor="let tier of getAvailableTierFilters()"
-              [class.chip--selected]="filterTier === tier"
-              (click)="filterTier = filterTier === tier ? '' : tier">{{ tier }}</button>
-            <button type="button" class="chip chip--sm"
-                    [class.chip--selected]="filterPlatform === 'instagram'"
-                    (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
-            <button type="button" class="chip chip--sm"
-                    [class.chip--selected]="filterPlatform === 'youtube'"
-                    (click)="filterPlatform = filterPlatform === 'youtube' ? '' : 'youtube'">YouTube</button>
+          <div class="recipient-filter-panel">
+            <div class="recipient-filter-panel__head">
+              <span>Filters</span>
+              <button type="button" class="smart-match-clear" *ngIf="hasInviteRecipientFilters()" (click)="clearInviteRecipientFilters()">Clear</button>
+            </div>
+
+            <div class="recipient-filter-group" *ngIf="getUniqueCategoryFilters().length">
+              <label>{{ inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories' }}</label>
+              <div class="chip-list chip-list--sm">
+                <button type="button" class="chip chip--sm"
+                        *ngFor="let cat of getUniqueCategoryFilters()"
+                        [class.chip--selected]="filterCategory === cat"
+                        (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
+              </div>
+            </div>
+
+            <div class="recipient-filter-group" *ngIf="inviteRecipientRole === 'influencer' && creatorTypeOptions.length">
+              <label>Creator Type / Specialty</label>
+              <div class="chip-list chip-list--sm">
+                <button type="button" class="chip chip--sm"
+                        *ngFor="let item of creatorTypeOptions"
+                        [class.chip--selected]="filterCreatorType === item.name"
+                        (click)="filterCreatorType = filterCreatorType === item.name ? '' : item.name">{{ item.name }}</button>
+              </div>
+            </div>
+
+            <div class="recipient-filter-group" *ngIf="getAvailableTierFilters().length">
+              <label>{{ inviteRecipientLabelSingular }} Tier</label>
+              <div class="chip-list chip-list--sm">
+                <button type="button" class="chip chip--sm"
+                        *ngFor="let tier of getAvailableTierFilters()"
+                        [class.chip--selected]="filterTier === tier"
+                        (click)="filterTier = filterTier === tier ? '' : tier">{{ tier }}</button>
+              </div>
+            </div>
+
+            <div class="recipient-filter-group">
+              <label>Platforms</label>
+              <div class="chip-list chip-list--sm">
+                <button type="button" class="chip chip--sm"
+                        [class.chip--selected]="filterPlatform === 'instagram'"
+                        (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
+                <button type="button" class="chip chip--sm"
+                        [class.chip--selected]="filterPlatform === 'youtube'"
+                        (click)="filterPlatform = filterPlatform === 'youtube' ? '' : 'youtube'">YouTube</button>
+              </div>
+            </div>
           </div>
 
           <div class="inf-sel-bar" *ngIf="selectedInfluencerIds.size > 0">

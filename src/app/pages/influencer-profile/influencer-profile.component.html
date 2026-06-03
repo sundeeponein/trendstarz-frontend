@@ -275,11 +275,13 @@
                     *ngFor="let cat of categoriesList"
                     class="chip"
                     [class.chip--selected]="registrationForm.get('categories')?.value?.includes(cat._id)"
+                    [class.chip--disabled]="isChipMaxed('categories', cat._id)"
                     (click)="toggleChip('categories', cat._id)"
                     tabindex="0"
                     (keydown.enter)="toggleChip('categories', cat._id)"
                     (keydown.space)="toggleChip('categories', cat._id)"
                     [attr.aria-pressed]="registrationForm.get('categories')?.value?.includes(cat._id)"
+                    [attr.aria-disabled]="isChipMaxed('categories', cat._id)"
                     role="button"
                   >
                     {{ cat.name }}
@@ -292,6 +294,7 @@
                 </ng-template>
               </div>
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
+              <div *ngIf="selectionLimitMessages.categories" class="text-warning mt-1">{{ selectionLimitMessages.categories }}</div>
             </div>
 
             <div class="field-block" *ngIf="creatorTypeOptions.length || registrationForm.get('creatorTypes')?.value?.length">
@@ -302,11 +305,13 @@
                     *ngFor="let item of creatorTypeOptions"
                     class="chip"
                     [class.chip--selected]="registrationForm.get('creatorTypes')?.value?.includes(item._id || item.name)"
+                    [class.chip--disabled]="isChipMaxed('creatorTypes', item._id || item.name)"
                     (click)="toggleChip('creatorTypes', item._id || item.name)"
                     tabindex="0"
                     (keydown.enter)="toggleChip('creatorTypes', item._id || item.name)"
                     (keydown.space)="toggleChip('creatorTypes', item._id || item.name)"
                     [attr.aria-pressed]="registrationForm.get('creatorTypes')?.value?.includes(item._id || item.name)"
+                    [attr.aria-disabled]="isChipMaxed('creatorTypes', item._id || item.name)"
                     role="button"
                   >
                     {{ item.name }}
@@ -318,6 +323,7 @@
                   </div>
                 </ng-template>
               </div>
+              <div *ngIf="selectionLimitMessages.creatorTypes" class="text-warning mt-1">{{ selectionLimitMessages.creatorTypes }}</div>
             </div>
 
           </div>
@@ -467,6 +473,8 @@
           <app-collaboration-availability-form
             [form]="$any(registrationForm.get('collaborationAvailability'))"
             role="influencer"
+            [maxCollaborationTypes]="maxCollaborationTypes"
+            [maxAvailableFor]="maxAvailableFor"
             [options]="collaborationAvailabilityOptions"
             [readonly]="!isEditMode">
           </app-collaboration-availability-form>

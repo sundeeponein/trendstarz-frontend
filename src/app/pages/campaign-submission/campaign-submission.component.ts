@@ -117,6 +117,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
           this.acceptedPlatform = String(res?.invite?.selectedPlatform || '').toLowerCase().trim();
           this.acceptedContentType = String(res?.invite?.selectedContentType || '').toLowerCase().trim();
           if (campaign) {
+            this.campaignTitle = campaign.title || campaign.campaignTitle || this.campaignTitle;
             this.campaignType = campaign.campaignType || '';
             // Sync real invite status from backend (overrides query param)
             // after campaign type is known so non-paid acceptance can be
@@ -443,8 +444,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
     const payload: any = {
       postUrl: this.postUrl.trim(),
-      postScreenshotUrl: this.postScreenshotUrl,
     };
+    if (this.postScreenshotUrl) payload.postScreenshotUrl = this.postScreenshotUrl;
 
     const submittedPlatform = this.normalizePlatformKey(this.detectPlatformFromUrl(payload.postUrl));
     const acceptedPlatform = this.normalizePlatformKey(this.acceptedPlatform);

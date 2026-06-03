@@ -151,3 +151,8 @@
 	border-radius: 0.5rem;
 	padding: 0.75rem;
 }
+
+.chip--disabled:not(.chip--selected) {
+	opacity: 0.45;
+	cursor: not-allowed;
+}

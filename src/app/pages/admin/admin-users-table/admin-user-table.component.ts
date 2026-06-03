@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
-import { timeout, catchError, finalize } from 'rxjs/operators';
+import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
@@ -26,7 +26,6 @@ export class AdminUserTableComponent implements OnInit {
   selectedUser: any = null;
   selectedUserType: 'influencer' | 'brand' | 'photographer' | null = null;
   selectedUserInternalNotes = '';
-  resendingEmailVerification = false;
 
   private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
   influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
@@ -144,6 +143,46 @@ export class AdminUserTableComponent implements OnInit {
     const value = user?.promotionalPrice ?? user?.price ?? user?.pricing?.startingFrom;
     if (value === null || value === undefined || value === '') return '-';
     return `Rs ${value} / post`;
+  }
+
+  getUserSocialRateGroups(user: any): Array<{ platform: string; items: Array<{ name: string; price: number }> }> {
+    const rows = Array.isArray(user?.socialMedia) ? user.socialMedia : [];
+    return rows
+      .map((sm: any) => {
+        const platform = this.getSocialLabel(this.resolveSocialPlatform(sm));
+        const items = (Array.isArray(sm?.contentTypes) ? sm.contentTypes : [])
+          .filter((ct: any) => this.isEnabledPricedItem(ct))
+          .map((ct: any) => ({
+            name: String(ct?.name || ct?.label || '').trim(),
+            price: Number(ct?.price) || 0,
+          }))
+          .filter((item: any) => item.name && item.price > 0);
+        return { platform, items };
+      })
+      .filter((group: any) => group.items.length > 0);
+  }
+
+  getUserServiceRates(user: any): Array<{ name: string; price: number }> {
+    const pricing = Array.isArray(user?.pricing) ? user.pricing : [];
+    return pricing
+      .filter((item: any) => this.isEnabledPricedItem(item))
+      .map((item: any) => ({
+        name: String(item?.name || item?.key || item?.label || '').trim(),
+        price: Number(item?.price) || 0,
+      }))
+      .filter((item: any) => item.name && item.price > 0);
+  }
+
+  hasUserRateDetails(user: any): boolean {
+    return this.getUserSocialRateGroups(user).length > 0 || this.getUserServiceRates(user).length > 0;
+  }
+
+  private isEnabledPricedItem(item: any): boolean {
+    const price = Number(item?.price);
+    if (!Number.isFinite(price) || price <= 0) return false;
+    if ('enabled' in item) return item.enabled === true;
+    if ('selected' in item) return item.selected === true;
+    return true;
   }
 
   private parseCountValue(value: any): number {
@@ -907,7 +946,6 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUser = user;
     this.selectedUserType = this.activeTab;
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
-    this.resendingEmailVerification = false;
     this.showUserDetailsModal = true;
   }
 
@@ -916,7 +954,6 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUser = null;
     this.selectedUserType = null;
     this.selectedUserInternalNotes = '';
-    this.resendingEmailVerification = false;
   }
 
   onUserDetailsBackdropClick(event: MouseEvent): void {
@@ -934,25 +971,6 @@ export class AdminUserTableComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isEmailVerified(this.selectedUser);
     this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isEmailVerified', nextValue);
-  }
-
-  resendSelectedEmailVerification(): void {
-    const email = String(this.selectedUser?.email || '').trim();
-    if (!email || this.resendingEmailVerification) return;
-
-    this.resendingEmailVerification = true;
-    this.configService.sendEmailVerificationLink(email)
-      .pipe(catchError(err => {
-        alert('Error resending email verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
-        return of(null);
-      }), finalize(() => {
-        this.resendingEmailVerification = false;
-        this.cd.detectChanges();
-      }))
-      .subscribe((res: any) => {
-        if (!res) return;
-        setTimeout(() => alert(res?.message || 'Verification email resent.'), 0);
-      });
   }
 
   toggleSelectedMobileVerification(): void {

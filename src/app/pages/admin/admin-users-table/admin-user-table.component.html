@@ -166,15 +166,6 @@
               <button class="btn btn-sm" [class.btn-outline-secondary]="isEmailVerified(selectedUser)" [class.btn-success]="!isEmailVerified(selectedUser)" (click)="toggleSelectedEmailVerification()">
                 {{ isEmailVerified(selectedUser) ? 'Unverify' : 'Verify' }}
               </button>
-              <button
-                *ngIf="selectedUser.email && !isEmailVerified(selectedUser)"
-                type="button"
-                class="btn btn-sm btn-outline-primary"
-                [disabled]="resendingEmailVerification"
-                (click)="resendSelectedEmailVerification()">
-                <span *ngIf="resendingEmailVerification" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                {{ resendingEmailVerification ? 'Sending...' : 'Resend' }}
-              </button>
             </div>
           </div>
           <div>
@@ -253,6 +244,23 @@
               <ng-template #noSocialLinks>
                 <div>-</div>
               </ng-template>
+            </div>
+            <div class="rate-details" *ngIf="hasUserRateDetails(selectedUser)">
+              <label>Content & Rates</label>
+              <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
+                <div class="rate-platform-name">{{ group.platform }}</div>
+                <div class="rate-row" *ngFor="let item of group.items">
+                  <span>{{ item.name }}</span>
+                  <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                </div>
+              </div>
+              <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
+                <div class="rate-platform-name">Service Rates</div>
+                <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
+                  <span>{{ item.name }}</span>
+                  <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                </div>
+              </div>
             </div>
             <div>
               <label>Profile Traffic</label>
