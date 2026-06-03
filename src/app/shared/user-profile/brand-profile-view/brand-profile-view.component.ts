@@ -13,6 +13,7 @@ import { ReviewListComponent } from '../../review-list/review-list.component';
 import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
 import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { environment } from '../../../../environments/environment';
+import { buildSocialProfileUrl } from '../../social-handle.util';
 
 @Component({
   selector: 'app-brand-profile-view',
@@ -198,15 +199,7 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   getSocialUrl(sm: any): string {
-    const p = (sm?.platform || '').toLowerCase();
-    const handle = sm?.handle || '';
-    if (p.includes('insta')) return 'https://instagram.com/' + handle;
-    if (p.includes('youtube')) return 'https://youtube.com/' + handle;
-    if (p.includes('face')) return 'https://facebook.com/' + handle;
-    if (p.includes('twitter') || p.includes('x')) return 'https://x.com/' + handle;
-    if (p.includes('tiktok')) return 'https://tiktok.com/@' + handle;
-    if (p.includes('linkedin')) return 'https://linkedin.com/in/' + handle;
-    return sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
   }
 
   tagBadgeClass(tag: string): string {

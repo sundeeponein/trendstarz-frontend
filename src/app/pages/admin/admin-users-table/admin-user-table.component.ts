@@ -8,6 +8,8 @@ import { timeout, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
+import { buildSocialProfileUrl, normalizeSocialHandle } from '../../../shared/social-handle.util';
+import { TIER_DESC_MAP } from '../../../shared/tiers.constants';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -239,7 +241,7 @@ export class AdminUserTableComponent implements OnInit {
     return 'Premium';
   }
 
-  getSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string }> {
+  getSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string; tierLabel: string }> {
     if (!Array.isArray(user?.socialMedia)) return [];
     return user.socialMedia
       .map((sm: any) => {
@@ -247,7 +249,7 @@ export class AdminUserTableComponent implements OnInit {
         const href = this.resolveSocialHref(sm, platform);
         const followers = this.parseCountValue(sm?.followersCount);
         if (!href) return null;
-        const rawHandle = String(sm?.handle || '').trim().replace(/^@/, '');
+        const rawHandle = normalizeSocialHandle(sm?.handle, platform);
         const label = this.getSocialLabel(platform);
         return {
           href,
@@ -256,12 +258,13 @@ export class AdminUserTableComponent implements OnInit {
           shortLabel: this.getSocialShortLabel(platform),
           handle: rawHandle ? `@${rawHandle}` : '-',
           followers,
+          tierLabel: this.getSocialTierLabel(sm),
         };
       })
-        .filter((item: any): item is { href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string } => !!item);
+        .filter((item: any): item is { href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string; tierLabel: string } => !!item);
   }
 
-  getTableSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string }> {
+  getTableSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string; tierLabel: string }> {
     return this.getSocialMediaItems(user).slice(0, 3);
   }
 
@@ -302,14 +305,14 @@ export class AdminUserTableComponent implements OnInit {
       if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) return rawUrl;
       return `https://${rawUrl}`;
     }
-    const rawHandle = String(sm?.handle || '').trim().replace(/^@/, '');
-    if (!rawHandle) return '';
-    if (platform === 'instagram') return `https://instagram.com/${rawHandle}`;
-    if (platform === 'youtube') return `https://youtube.com/${rawHandle}`;
-    if (platform === 'facebook') return `https://facebook.com/${rawHandle}`;
-    if (platform === 'x') return `https://x.com/${rawHandle}`;
-    if (platform === 'linkedin') return `https://linkedin.com/in/${rawHandle}`;
-    return `https://${rawHandle}`;
+    return buildSocialProfileUrl(platform, sm?.handle);
+  }
+
+  private getSocialTierLabel(sm: any): string {
+    const tier = String(sm?.tier || '').trim();
+    if (!tier) return '';
+    const desc = String(sm?.tierDesc || sm?.desc || TIER_DESC_MAP[tier.toLowerCase()] || '').trim();
+    return desc ? `${tier} (${desc})` : tier;
   }
 
   private getSocialIcon(platform: string): string {

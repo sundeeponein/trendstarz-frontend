@@ -18,6 +18,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -157,16 +158,18 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
+    return buildSocialProfileUrl(platformName, handle);
+  }
+
+  normalizePlatformHandle(platformId: string): void {
+    const pf = this.platformForms[platformId];
+    if (!pf) return;
+    pf.handle = normalizeSocialHandle(pf.handle, this.getPlatformById(platformId)?.name || '');
+    this.refreshStepCompletion();
+  }
+
+  getSocialHandleExample(platformName: string): string {
+    return socialHandleExample(platformName);
   }
 
   getTierOptionLabel(tier: any): string {
@@ -1138,7 +1141,7 @@ export class InfluencerProfileComponent implements OnInit {
       const pf = this.platformForms[platform._id];
       return {
         platform: platform.name,
-        handle: pf.handle,
+        handle: normalizeSocialHandle(pf.handle, platform.name),
         followersCount: Number(pf.followersCount) || 0,
         tier: pf.tier,
         contentTypes: Object.entries(pf.contentTypes)

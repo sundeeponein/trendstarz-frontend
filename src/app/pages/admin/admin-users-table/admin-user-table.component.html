@@ -236,7 +236,8 @@
                    [title]="social.label"
                    class="social-link">
                   <i class="bi" [ngClass]="social.icon"></i>
-                  <!-- <span class="social-name">{{ social.label }}</span> -->
+                  <span class="social-name">{{ social.label }}</span>
+                  <span *ngIf="social.tierLabel">{{ social.tierLabel }}</span>
                   <span>{{ social.handle }}</span>
                   <span *ngIf="social.followers">({{ social.followers | number }})</span>
                 </a>

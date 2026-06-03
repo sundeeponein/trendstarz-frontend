@@ -404,12 +404,13 @@
                   <div class="platform-details-body">
                     <div class="row">
                       <div class="col">
-                        <label>{{ platform.handleLabel || 'Handle' }}</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" (ngModelChange)="refreshStepCompletion()" />
+                        <label>{{ platform.name }} Username</label>
+                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" [placeholder]="getSocialHandleExample(platform.name)" (blur)="stripAtSign(platform._id)" (ngModelChange)="refreshStepCompletion()" />
+                        <small class="text-muted d-block mt-1">Enter only your username, not full profile URL. Example: {{ getSocialHandleExample(platform.name) }}</small>
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                            [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                            target="_blank" rel="noopener noreferrer" class="verify-profile-link">
-                          <i class="bi bi-box-arrow-up-right"></i> Verify profile
+                          <i class="bi bi-box-arrow-up-right"></i> Verify your {{platform.name}} profile
                         </a>
                       </div>
                       <div class="col">

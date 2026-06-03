@@ -10,6 +10,7 @@ import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -399,20 +400,15 @@ export class PhotographerRegistrationComponent implements OnInit {
 
   stripAtSign(platformId: string) {
     const pf = this.platformForms[platformId];
-    if (pf) pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
+    if (pf) pf.handle = normalizeSocialHandle(pf.handle, this.socialMediaList.find(p => p._id === platformId)?.name || '');
   }
 
   getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
+    return buildSocialProfileUrl(platformName, handle);
+  }
+
+  getSocialHandleExample(platformName: string): string {
+    return socialHandleExample(platformName);
   }
 
   get platformsValid(): boolean {
@@ -643,7 +639,7 @@ export class PhotographerRegistrationComponent implements OnInit {
         }));
       return {
         platform: p.name,
-        handle: (pf.handle || '').trim(),
+        handle: normalizeSocialHandle(pf.handle, p.name),
         tier: pf.tier || '',
         followersCount: Number(pf.followersCount) || 0,
         contentTypes,

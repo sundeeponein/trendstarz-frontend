@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { buildSocialProfileUrl } from '../../social-handle.util';
 
 export type ProfileSocialPlatformsVariant = 'brand' | 'photographer' | 'influencer';
 
@@ -50,16 +51,7 @@ export class ProfileSocialPlatformsComponent {
   }
 
   getSocialUrl(sm: any): string {
-    const p = String(sm?.platform || '').toLowerCase();
-    const handle = String(sm?.handle || '').replace(/^@+/, '').trim();
-    if (!handle) return sm?.url || '#';
-    if (p.includes('instagram')) return `https://instagram.com/${handle}`;
-    if (p.includes('youtube')) return `https://youtube.com/@${handle}`;
-    if (p.includes('facebook')) return `https://facebook.com/${handle}`;
-    if (p.includes('twitter') || p.includes('x')) return `https://x.com/${handle}`;
-    if (p.includes('tiktok')) return `https://tiktok.com/@${handle}`;
-    if (p.includes('linkedin')) return `https://linkedin.com/in/${handle}`;
-    return sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
   }
 
   getContentTypes(sm: any): any[] {
