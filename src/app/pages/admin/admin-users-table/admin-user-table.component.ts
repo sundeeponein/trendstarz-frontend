@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
-import { timeout, catchError } from 'rxjs/operators';
+import { timeout, catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
@@ -945,11 +945,13 @@ export class AdminUserTableComponent implements OnInit {
       .pipe(catchError(err => {
         alert('Error resending email verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
         return of(null);
+      }), finalize(() => {
+        this.resendingEmailVerification = false;
+        this.cd.detectChanges();
       }))
       .subscribe((res: any) => {
-        this.resendingEmailVerification = false;
         if (!res) return;
-        alert(res?.message || 'Verification email resent.');
+        setTimeout(() => alert(res?.message || 'Verification email resent.'), 0);
       });
   }
 
