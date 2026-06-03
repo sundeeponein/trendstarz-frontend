@@ -72,16 +72,36 @@ export class FirebaseAuthService {
     await sendEmailVerification(user);
   }
 
+  // async sendPasswordReset(email: string): Promise<void> {
+  //   const canSend = await this.ensurePasswordResetUser(email);
+  //   if (!canSend) return;
+  //   const actionCodeSettings = isPlatformBrowser(this.platformId)
+  //     ? {
+  //         url: `${window.location.origin}/reset-password?firebaseReset=true`,
+  //         // handleCodeInApp: true,
+  //       }
+  //     : undefined;
+  //   await sendPasswordResetEmail(this.getFirebaseAuth(), email, actionCodeSettings);
+  // }
+
   async sendPasswordReset(email: string): Promise<void> {
-    const canSend = await this.ensurePasswordResetUser(email);
+    const canSend =
+    await this.ensurePasswordResetUser(email);
+
     if (!canSend) return;
-    const actionCodeSettings = isPlatformBrowser(this.platformId)
-      ? {
-          url: `${window.location.origin}/reset-password?firebaseReset=true`,
-          handleCodeInApp: true,
-        }
-      : undefined;
-    await sendPasswordResetEmail(this.getFirebaseAuth(), email, actionCodeSettings);
+
+    const actionCodeSettings =
+      isPlatformBrowser(this.platformId)
+        ? {
+            url: `${window.location.origin}/login`
+          }
+        : undefined;
+
+    await sendPasswordResetEmail(
+      this.getFirebaseAuth(),
+      email,
+      actionCodeSettings
+    );
   }
 
   async verifyPasswordResetCode(oobCode: string): Promise<string> {
