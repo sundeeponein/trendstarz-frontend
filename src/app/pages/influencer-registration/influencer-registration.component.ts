@@ -17,6 +17,7 @@ import { TierInfoService } from '../../shared/components/tier-info-modal/tier-in
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -243,6 +244,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private guidelinesService: ImageGuidelinesService,
+    private firebaseAuth: FirebaseAuthService,
   ) {}
 
   ngOnInit(): void {
@@ -1004,6 +1006,9 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     this.configService.registerInfluencer(payload).subscribe({
       next: () => {
+        void this.firebaseAuth.sendVerificationEmail(raw.email, raw.password).catch((error) => {
+          this.emailVerificationError = error?.message || 'Failed to send Firebase verification email.';
+        });
         this.ngZone.run(() => {
           this.pendingVerificationEmail = raw.email;
           this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;

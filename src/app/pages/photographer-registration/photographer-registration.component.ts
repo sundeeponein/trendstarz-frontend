@@ -8,6 +8,7 @@ import { passwordStrengthValidator, getPasswordChecks } from '../../shared/passw
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -120,6 +121,7 @@ export class PhotographerRegistrationComponent implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private guidelinesService: ImageGuidelinesService,
+    private firebaseAuth: FirebaseAuthService,
   ) {}
 
   openProfilePhotoGuidelines(): void {
@@ -690,6 +692,9 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
       next: () => {
+        void this.firebaseAuth.sendVerificationEmail(v.email, v.password).catch((error) => {
+          this.registrationError = error?.message || 'Failed to send Firebase verification email.';
+        });
         this.submitting = false;
         this.registrationSuccess = true;
         this.cdr.detectChanges();

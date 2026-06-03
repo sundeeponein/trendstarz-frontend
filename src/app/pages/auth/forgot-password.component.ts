@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ConfigService } from '../../shared/config.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ export class ForgotPasswordComponent {
   successMsg = '';
   errorMsg = '';
 
-  constructor(private fb: FormBuilder, private configService: ConfigService) {
+  constructor(private fb: FormBuilder, private firebaseAuth: FirebaseAuthService) {
     this.forgotForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
     });
@@ -35,20 +35,13 @@ export class ForgotPasswordComponent {
     }
     this.loading = true;
     const email = this.forgotForm.get('email')?.value;
-    this.configService.sendForgotPasswordLink(email).subscribe({
-      next: () => {
-        this.successMsg = 'If your email is registered and verified, a reset link has been sent.';
+    this.firebaseAuth.sendPasswordReset(email)
+      .catch(() => undefined)
+      .finally(() => {
+        this.successMsg = 'If your email is registered, a reset link has been sent.';
         this.loading = false;
         this.forgotForm.reset();
         this.forgotForm.disable();
-      },
-      error: () => {
-        // For security, always show the same message even if backend returns error
-        this.successMsg = 'If your email is registered and verified, a reset link has been sent.';
-        this.loading = false;
-        this.forgotForm.reset();
-        this.forgotForm.disable();
-      }
-    });
+      });
   }
 }

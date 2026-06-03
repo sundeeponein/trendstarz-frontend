@@ -14,6 +14,7 @@ import { TierInfoService } from '../../shared/components/tier-info-modal/tier-in
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -143,6 +144,7 @@ export class BrandRegistrationComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     private guidelinesService: ImageGuidelinesService,
+    private firebaseAuth: FirebaseAuthService,
   ) {}
 
   ngOnInit() {
@@ -1080,6 +1082,9 @@ export class BrandRegistrationComponent implements OnInit {
 
     this.configService.registerBrand(payload).subscribe({
       next: () => {
+        void this.firebaseAuth.sendVerificationEmail(raw.email, raw.password).catch((error) => {
+          this.emailVerificationError = error?.message || 'Failed to send Firebase verification email.';
+        });
         this.pendingVerificationEmail = raw.email;
         this.showEmailVerificationPrompt = true;
         this.emailVerificationSent = true;
