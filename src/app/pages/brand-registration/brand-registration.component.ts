@@ -15,6 +15,7 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -31,7 +32,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })
@@ -46,15 +47,8 @@ export class BrandRegistrationComponent implements OnInit {
     (_, index) => this.currentYear - index,
   );
 
-  toggleChip(field: 'languages' | 'categories', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-    } else {
-      arr.push(id);
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  setChipValues(field: 'languages' | 'categories', values: string[]): void {
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
   }
 

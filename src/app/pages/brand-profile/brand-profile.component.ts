@@ -18,11 +18,12 @@ import { ResetPasswordModalComponent } from '../../shared/components/reset-passw
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 import { ToastService } from '../../shared/toast/toast.service';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -48,15 +49,9 @@ export class BrandProfileComponent implements OnInit {
   );
 
       
-  toggleChip(field: 'languages' | 'categories', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-    } else {
-      arr.push(id);
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  setChipValues(field: 'languages' | 'categories', values: string[]): void {
+    if (!this.isEditMode) return;
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
   }
 
@@ -719,25 +714,12 @@ export class BrandProfileComponent implements OnInit {
     };
   }
 
-  // Helper to map category ID to name safely for template
-      getCategoryName(catId: string): string {
-        if (!this.categoriesList) return catId;
-        const found = this.categoriesList.find((c: any) => c._id === catId);
-        return found ? found.name : catId;
-      }
-
       // Helper to map district ID to name safely for template
       getDistrictName(districtId: string): string {
         if (!this.districts) return districtId;
         const found = this.districts.find((d: any) => d._id === districtId);
         return found ? found.name : districtId;
       }
-    // Helper to map language ID to name safely for template
-    getLanguageName(langId: string): string {
-      if (!this.languagesList) return langId;
-      const found = this.languagesList.find((l: any) => l._id === langId);
-      return found ? found.name : langId;
-    }
 
   enableEdit(): void {
     this.isEditMode = true;

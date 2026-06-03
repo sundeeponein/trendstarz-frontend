@@ -185,17 +185,14 @@
             </div>
 
             <div class="field-block mt-3">
-              <label>Skills / Specialties</label>
-              <div class="chip-list">
-                <button type="button" class="chip" *ngFor="let skill of skillOptions"
-                  [class.chip--selected]="isSkillSelected(skill)"
-                  [class.chip--disabled]="isSkillMaxed(skill)"
-                  [disabled]="!isEditMode"
-                  (click)="toggleSkill(skill)">
-                  {{ skill }}
-                </button>
-              </div>
-              <div *ngIf="skillLimitMessage" class="text-warning mt-2">{{ skillLimitMessage }}</div>
+              <app-chip-selection-group
+                label="Skills / Specialties"
+                [options]="skillOptions"
+                [selected]="form.get('skills')?.value || []"
+                [max]="maxSkills"
+                [readonly]="!isEditMode"
+                (selectedChange)="setSkills($event)">
+              </app-chip-selection-group>
             </div>
 
             <div class="field-block mt-3">

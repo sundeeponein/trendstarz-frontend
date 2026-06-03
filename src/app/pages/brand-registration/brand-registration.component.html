@@ -155,20 +155,15 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Category / Industry <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <div
-                  *ngFor="let cat of categoriesList"
-                  class="chip"
-                  [class.chip--selected]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
-                  (click)="toggleChip('categories', cat._id)"
-                  tabindex="0"
-                  (keydown.enter)="toggleChip('categories', cat._id)"
-                  (keydown.space)="toggleChip('categories', cat._id)"
-                  [attr.aria-pressed]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
-                  role="button"
-                >{{ cat.name }}</div>
-              </div>
+              <app-chip-selection-group
+                label="Category / Industry"
+                [required]="true"
+                [options]="categoriesList"
+                [selected]="registrationForm.get('categories')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                (selectedChange)="setChipValues('categories', $event)">
+              </app-chip-selection-group>
               <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
@@ -243,20 +238,15 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Languages <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <div
-                  *ngFor="let lang of languagesList"
-                  class="chip"
-                  [class.chip--selected]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
-                  (click)="toggleChip('languages', lang._id)"
-                  tabindex="0"
-                  (keydown.enter)="toggleChip('languages', lang._id)"
-                  (keydown.space)="toggleChip('languages', lang._id)"
-                  [attr.aria-pressed]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
-                  role="button"
-                >{{ lang.name }}</div>
-              </div>
+              <app-chip-selection-group
+                label="Languages"
+                [required]="true"
+                [options]="languagesList"
+                [selected]="registrationForm.get('languages')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                (selectedChange)="setChipValues('languages', $event)">
+              </app-chip-selection-group>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
 

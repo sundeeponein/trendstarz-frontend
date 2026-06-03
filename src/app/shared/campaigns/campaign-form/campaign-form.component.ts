@@ -14,13 +14,14 @@ import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier
 import { ToastService } from '../../toast/toast.service';
 import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
 import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.service';
+import { ChipSelectionGroupComponent } from '../../chip-selection-group/chip-selection-group.component';
 
 
 
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent, ConfirmDialogComponent, ChipSelectionGroupComponent],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
@@ -102,8 +103,6 @@ export class CampaignFormComponent implements OnInit {
   readonly maxPhotographerTargetCategories = 3;
   readonly maxCreatorTypeFilters = 3;
   readonly maxCollaborationTypeFilters = 3;
-  categoryLimitMessage = '';
-  smartMatchLimitMessages: Partial<Record<'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes' | 'photographerPreferredCreatorTypes', string>> = {};
   imagePreview: string | null = null;
   selectedFile: File | null = null;
   uploading = false;
@@ -1459,32 +1458,17 @@ export class CampaignFormComponent implements OnInit {
   prevStep() { this.currentStep = Math.max(1, this.currentStep - 1); }
 
   // ── Categories ───────────────────────────────────────────────
-  toggleCategory(name: string) {
-    const idx = this.selectedCategories.indexOf(name);
-    if (idx >= 0) {
-      this.selectedCategories.splice(idx, 1);
-      this.categoryLimitMessage = '';
-    } else {
-      const max = this.maxTargetCategories;
-      if (this.selectedCategories.length >= max) {
-        this.categoryLimitMessage = `Maximum ${max} selections allowed`;
-        this.categoriesTouched = true;
-        return;
-      }
-      this.selectedCategories.push(name);
-      this.categoryLimitMessage = '';
-    }
+  setTargetCategories(values: string[]): void {
+    this.selectedCategories = this.uniqueStrings(values).slice(0, this.maxTargetCategories);
+    this.categoriesTouched = true;
+    this.cd.detectChanges();
   }
-  isCategorySelected(name: string): boolean { return this.selectedCategories.includes(name); }
+
   get maxTargetCategories(): number {
     return this.inviteRecipientRole === 'photographer'
       ? this.maxPhotographerTargetCategories
       : this.maxInfluencerTargetCategories;
   }
-  isCategoryMaxed(name: string): boolean {
-    return !this.isCategorySelected(name) && this.selectedCategories.length >= this.maxTargetCategories;
-  }
-
   private cappedTargetCategories(): string[] {
     const source = this.isPhotographerCreator
       ? this.selectedPhotographerServices
@@ -1790,38 +1774,16 @@ export class CampaignFormComponent implements OnInit {
     return out;
   }
 
-  toggleSmartMatchValue(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): void {
-    const clean = String(value || '').trim();
-    if (!clean) return;
-    const list = [...this[field]];
-    const idx = list.indexOf(clean);
-    if (idx >= 0) list.splice(idx, 1);
-    else {
-      const max = this.maxForSmartMatchField(field);
-      if (max && list.length >= max) {
-        this.smartMatchLimitMessages[field] = `Maximum ${max} selections allowed`;
-        return;
-      }
-      list.push(clean);
-    }
-    this[field] = list;
-    this.smartMatchLimitMessages[field] = '';
-    this.cd.detectChanges();
-  }
-
-  isSmartMatchSelected(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): boolean {
-    return this[field].includes(String(value || '').trim());
-  }
-
   private maxForSmartMatchField(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes'): number {
     return field === 'openCollaborationTypes'
       ? this.maxCollaborationTypeFilters
       : this.maxCreatorTypeFilters;
   }
 
-  isSmartMatchMaxed(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', value: string): boolean {
+  setSmartMatchValues(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', values: string[]): void {
     const max = this.maxForSmartMatchField(field);
-    return max > 0 && !this.isSmartMatchSelected(field, value) && this[field].length >= max;
+    this[field] = this.uniqueStrings(values).slice(0, max);
+    this.cd.detectChanges();
   }
 
   clearSmartMatchingFilters(): void {
@@ -1837,37 +1799,29 @@ export class CampaignFormComponent implements OnInit {
     const list = [...this[field]];
     const idx = list.indexOf(clean);
     if (idx >= 0) list.splice(idx, 1);
-    else {
-      const max = field === 'photographerPreferredCreatorTypes' ? this.maxCreatorTypeFilters : 0;
-      if (max && list.length >= max) {
-        this.setSmartMatchLimitMessage(field, `Maximum ${max} selections allowed`);
-        return;
-      }
-      list.push(clean);
-    }
+    else list.push(clean);
     this[field] = list;
-    if (field === 'photographerPreferredCreatorTypes') {
-      this.setSmartMatchLimitMessage(field, '');
-    }
     this.cd.detectChanges();
-  }
-
-  private setSmartMatchLimitMessage(
-    field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes' | 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference',
-    message: string,
-  ): void {
-    if (field !== 'photographerEquipmentPreference') {
-      this.smartMatchLimitMessages[field] = message;
-    }
   }
 
   isPhotographerSmartMatchSelected(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): boolean {
     return this[field].includes(String(value || '').trim());
   }
 
-  isPhotographerSmartMatchMaxed(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): boolean {
-    if (field !== 'photographerPreferredCreatorTypes') return false;
-    return !this.isPhotographerSmartMatchSelected(field, value) && this[field].length >= this.maxCreatorTypeFilters;
+  setPhotographerPreferredCreatorTypes(values: string[]): void {
+    this.photographerPreferredCreatorTypes = this.uniqueStrings(values).slice(0, this.maxCreatorTypeFilters);
+    this.cd.detectChanges();
+  }
+
+  setSingleFilter(field: 'filterCategory' | 'filterCreatorType' | 'filterTier' | 'filterPlatform', values: string[]): void {
+    this[field] = String(values?.[0] || '').trim();
+  }
+
+  get platformFilterOptions(): Array<{ value: string; name: string }> {
+    return [
+      { value: 'instagram', name: 'Instagram' },
+      { value: 'youtube', name: 'YouTube' },
+    ];
   }
 
   clearInviteRecipientFilters(): void {

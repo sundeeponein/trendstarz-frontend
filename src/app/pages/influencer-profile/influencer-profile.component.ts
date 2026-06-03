@@ -17,11 +17,12 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../s
 import { ToastService } from '../../shared/toast/toast.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -30,7 +31,6 @@ export class InfluencerProfileComponent implements OnInit {
   readonly maxCreatorTypes = 3;
   readonly maxCollaborationTypes = 3;
   readonly maxAvailableFor = 2;
-  selectionLimitMessages: Partial<Record<'categories' | 'creatorTypes', string>> = {};
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -53,45 +53,10 @@ export class InfluencerProfileComponent implements OnInit {
       .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
   }
 
-  toggleChip(field: 'languages' | 'categories' | 'creatorTypes', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-      this.setSelectionLimitMessage(field, '');
-    } else {
-      const max = this.maxForChipField(field);
-      if (max && arr.length >= max) {
-        this.setSelectionLimitMessage(field, `Maximum ${max} selections allowed`);
-        this.registrationForm.get(field)?.markAsTouched();
-        return;
-      }
-      arr.push(id);
-      this.setSelectionLimitMessage(field, '');
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  setChipValues(field: 'languages' | 'categories' | 'creatorTypes', values: string[]): void {
+    if (!this.isEditMode) return;
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
-  }
-
-  private setSelectionLimitMessage(
-    field: 'languages' | 'categories' | 'creatorTypes',
-    message: string,
-  ): void {
-    if (field === 'categories' || field === 'creatorTypes') {
-      this.selectionLimitMessages[field] = message;
-    }
-  }
-
-  private maxForChipField(field: 'languages' | 'categories' | 'creatorTypes'): number {
-    if (field === 'categories') return this.maxCategories;
-    if (field === 'creatorTypes') return this.maxCreatorTypes;
-    return 0;
-  }
-
-  isChipMaxed(field: 'languages' | 'categories' | 'creatorTypes', id: string): boolean {
-    const value = this.registrationForm.get(field)?.value || [];
-    const max = this.maxForChipField(field);
-    return max > 0 && !value.includes(id) && value.length >= max;
   }
 
   openProfilePhotoGuidelines(): void {
@@ -962,25 +927,6 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
 
-  // Helper to map category ID to name safely for template
-    getCategoryName(catId: string): string {
-      if (!this.categoriesList) return catId;
-      const found = this.categoriesList.find((c: any) => c._id === catId);
-      return found ? found.name : catId;
-    }
-
-    getCreatorTypeName(typeId: string): string {
-      if (!this.creatorTypeOptions) return typeId;
-      const found = this.creatorTypeOptions.find((item: any) => item._id === typeId || item.name === typeId);
-      return found ? found.name : typeId;
-    }
-
-    // Helper to map language ID to name safely for template
-    getLanguageName(langId: string): string {
-      if (!this.languagesList) return langId;
-      const found = this.languagesList.find((l: any) => l._id === langId);
-      return found ? found.name : langId;
-    }
       // Helper to map district ID to name safely for template
       getDistrictName(districtId: string): string {
         if (!this.districts) return districtId;

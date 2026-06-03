@@ -490,21 +490,20 @@
         <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}</p>
 
         <div class="field-group" *ngIf="!isPhotographerCreator">
-          <label class="field-label">Target {{ inviteRecipientLabelPlural }} Categories <span class="required">*</span></label>
-          <div class="chip-list">
-            <button type="button" class="chip"
-                    [class.chip--selected]="isCategorySelected(cat.name)"
-                    [class.chip--disabled]="isCategoryMaxed(cat.name)"
-                    *ngFor="let cat of categoriesList"
-                    (click)="toggleCategory(cat.name)">
-              {{ cat.name }}
-            </button>
-            <span class="chip-placeholder" *ngIf="categoriesList.length === 0">Loading {{ inviteRecipientLabelPlural.toLowerCase() }} categories…</span>
-          </div>
+          <app-chip-selection-group
+            [label]="'Target ' + inviteRecipientLabelPlural + ' Categories'"
+            [required]="true"
+            [options]="categoriesList"
+            [selected]="selectedCategories"
+            valueKey="name"
+            labelKey="name"
+            [max]="maxTargetCategories"
+            [emptyText]="'Loading ' + inviteRecipientLabelPlural.toLowerCase() + ' categories…'"
+            (selectedChange)="setTargetCategories($event)">
+          </app-chip-selection-group>
           <p class="chip-hint" *ngIf="selectedCategories.length > 0">
             <i class="bi bi-check-circle-fill"></i> Targeting: {{ selectedCategories.join(', ') }}
           </p>
-          <p class="field-error" *ngIf="categoryLimitMessage">{{ categoryLimitMessage }}</p>
           <span class="field-error" *ngIf="categoriesTouched && selectedCategories.length === 0">Select at least one target {{ inviteRecipientLabelSingular.toLowerCase() }} category</span>
         </div>
 
@@ -515,28 +514,24 @@
           </div>
           <p class="field-sublabel">Optional smart filters to target and search influencers based on your requirements.</p>
           
-          <div class="chip-list">
-            <button type="button" class="chip"
-                    *ngFor="let item of creatorTypeOptions"
-                    [class.chip--selected]="isSmartMatchSelected('lookingForCreatorTypes', item.name)"
-                    [class.chip--disabled]="isSmartMatchMaxed('lookingForCreatorTypes', item.name)"
-                    (click)="toggleSmartMatchValue('lookingForCreatorTypes', item.name)">
-              {{ item.name }}
-            </button>
-          </div>
-          <p class="field-error" *ngIf="smartMatchLimitMessages.lookingForCreatorTypes">{{ smartMatchLimitMessages.lookingForCreatorTypes }}</p>
+          <app-chip-selection-group
+            [options]="creatorTypeOptions"
+            [selected]="lookingForCreatorTypes"
+            valueKey="name"
+            labelKey="name"
+            [max]="maxCreatorTypeFilters"
+            (selectedChange)="setSmartMatchValues('lookingForCreatorTypes', $event)">
+          </app-chip-selection-group>
 
           <label class="field-label smart-match-subtitle">Preferred Creator Type</label>
-          <div class="chip-list">
-            <button type="button" class="chip"
-                    *ngFor="let item of creatorTypeOptions"
-                    [class.chip--selected]="isSmartMatchSelected('preferredCreatorTypes', item.name)"
-                    [class.chip--disabled]="isSmartMatchMaxed('preferredCreatorTypes', item.name)"
-                    (click)="toggleSmartMatchValue('preferredCreatorTypes', item.name)">
-              {{ item.name }}
-            </button>
-          </div>
-          <p class="field-error" *ngIf="smartMatchLimitMessages.preferredCreatorTypes">{{ smartMatchLimitMessages.preferredCreatorTypes }}</p>
+          <app-chip-selection-group
+            [options]="creatorTypeOptions"
+            [selected]="preferredCreatorTypes"
+            valueKey="name"
+            labelKey="name"
+            [max]="maxCreatorTypeFilters"
+            (selectedChange)="setSmartMatchValues('preferredCreatorTypes', $event)">
+          </app-chip-selection-group>
 
           <label class="field-label smart-match-subtitle">Collaboration Preference</label>
           <div class="smart-radio-row">
@@ -551,16 +546,14 @@
           </div>
 
           <label class="field-label smart-match-subtitle">Open for Collaboration Types</label>
-          <div class="chip-list">
-            <button type="button" class="chip"
-                    *ngFor="let item of openCollaborationTypeOptions"
-                    [class.chip--selected]="isSmartMatchSelected('openCollaborationTypes', item.name)"
-                    [class.chip--disabled]="isSmartMatchMaxed('openCollaborationTypes', item.name)"
-                    (click)="toggleSmartMatchValue('openCollaborationTypes', item.name)">
-              {{ item.name }}
-            </button>
-          </div>
-          <p class="field-error" *ngIf="smartMatchLimitMessages.openCollaborationTypes">{{ smartMatchLimitMessages.openCollaborationTypes }}</p>
+          <app-chip-selection-group
+            [options]="openCollaborationTypeOptions"
+            [selected]="openCollaborationTypes"
+            valueKey="name"
+            labelKey="name"
+            [max]="maxCollaborationTypeFilters"
+            (selectedChange)="setSmartMatchValues('openCollaborationTypes', $event)">
+          </app-chip-selection-group>
 
           <p class="chip-hint" *ngIf="preferredCollaborationPreference">
             <i class="bi bi-stars"></i> Smart matching boosts creators with matching preference.
@@ -573,16 +566,12 @@
             <button type="button" class="smart-match-clear" *ngIf="hasAnyPhotographerSmartMatchingFilter()" (click)="clearPhotographerSmartMatchingFilters()">Clear</button>
           </div>
           <p class="field-sublabel">Helps match your requirement with suitable creators.</p>
-          <div class="chip-list">
-            <button type="button" class="chip"
-                    *ngFor="let item of photographerCreatorTypeOptions"
-                    [class.chip--selected]="isPhotographerSmartMatchSelected('photographerPreferredCreatorTypes', item)"
-                    [class.chip--disabled]="isPhotographerSmartMatchMaxed('photographerPreferredCreatorTypes', item)"
-                    (click)="togglePhotographerSmartMatchValue('photographerPreferredCreatorTypes', item)">
-              {{ item }}
-            </button>
-          </div>
-          <p class="field-error" *ngIf="smartMatchLimitMessages.photographerPreferredCreatorTypes">{{ smartMatchLimitMessages.photographerPreferredCreatorTypes }}</p>
+          <app-chip-selection-group
+            [options]="photographerCreatorTypeOptions"
+            [selected]="photographerPreferredCreatorTypes"
+            [max]="maxCreatorTypeFilters"
+            (selectedChange)="setPhotographerPreferredCreatorTypes($event)">
+          </app-chip-selection-group>
 
           <label class="field-label smart-match-subtitle">Collaboration Preference</label>
           <div class="smart-radio-row">
@@ -918,45 +907,51 @@
             </div>
 
             <div class="recipient-filter-group" *ngIf="getUniqueCategoryFilters().length">
-              <label>{{ inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories' }}</label>
-              <div class="chip-list chip-list--sm">
-                <button type="button" class="chip chip--sm"
-                        *ngFor="let cat of getUniqueCategoryFilters()"
-                        [class.chip--selected]="filterCategory === cat"
-                        (click)="filterCategory = filterCategory === cat ? '' : cat">{{ cat }}</button>
-              </div>
+              <app-chip-selection-group
+                [label]="inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories'"
+                [options]="getUniqueCategoryFilters()"
+                [selected]="filterCategory ? [filterCategory] : []"
+                selectionMode="single"
+                [compact]="true"
+                (selectedChange)="setSingleFilter('filterCategory', $event)">
+              </app-chip-selection-group>
             </div>
 
             <div class="recipient-filter-group" *ngIf="inviteRecipientRole === 'influencer' && creatorTypeOptions.length">
-              <label>Creator Type / Specialty</label>
-              <div class="chip-list chip-list--sm">
-                <button type="button" class="chip chip--sm"
-                        *ngFor="let item of creatorTypeOptions"
-                        [class.chip--selected]="filterCreatorType === item.name"
-                        (click)="filterCreatorType = filterCreatorType === item.name ? '' : item.name">{{ item.name }}</button>
-              </div>
+              <app-chip-selection-group
+                label="Creator Type / Specialty"
+                [options]="creatorTypeOptions"
+                [selected]="filterCreatorType ? [filterCreatorType] : []"
+                valueKey="name"
+                labelKey="name"
+                selectionMode="single"
+                [compact]="true"
+                (selectedChange)="setSingleFilter('filterCreatorType', $event)">
+              </app-chip-selection-group>
             </div>
 
             <div class="recipient-filter-group" *ngIf="getAvailableTierFilters().length">
-              <label>{{ inviteRecipientLabelSingular }} Tier</label>
-              <div class="chip-list chip-list--sm">
-                <button type="button" class="chip chip--sm"
-                        *ngFor="let tier of getAvailableTierFilters()"
-                        [class.chip--selected]="filterTier === tier"
-                        (click)="filterTier = filterTier === tier ? '' : tier">{{ tier }}</button>
-              </div>
+              <app-chip-selection-group
+                [label]="inviteRecipientLabelSingular + ' Tier'"
+                [options]="getAvailableTierFilters()"
+                [selected]="filterTier ? [filterTier] : []"
+                selectionMode="single"
+                [compact]="true"
+                (selectedChange)="setSingleFilter('filterTier', $event)">
+              </app-chip-selection-group>
             </div>
 
             <div class="recipient-filter-group">
-              <label>Platforms</label>
-              <div class="chip-list chip-list--sm">
-                <button type="button" class="chip chip--sm"
-                        [class.chip--selected]="filterPlatform === 'instagram'"
-                        (click)="filterPlatform = filterPlatform === 'instagram' ? '' : 'instagram'">Instagram</button>
-                <button type="button" class="chip chip--sm"
-                        [class.chip--selected]="filterPlatform === 'youtube'"
-                        (click)="filterPlatform = filterPlatform === 'youtube' ? '' : 'youtube'">YouTube</button>
-              </div>
+              <app-chip-selection-group
+                label="Platforms"
+                [options]="platformFilterOptions"
+                [selected]="filterPlatform ? [filterPlatform] : []"
+                valueKey="value"
+                labelKey="name"
+                selectionMode="single"
+                [compact]="true"
+                (selectedChange)="setSingleFilter('filterPlatform', $event)">
+              </app-chip-selection-group>
             </div>
           </div>
 

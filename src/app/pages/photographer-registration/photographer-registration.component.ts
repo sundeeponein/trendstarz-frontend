@@ -9,6 +9,7 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -25,7 +26,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-photographer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent],
   templateUrl: './photographer-registration.component.html',
   styleUrls: ['./photographer-registration.component.scss'],
 })
@@ -56,7 +57,6 @@ export class PhotographerRegistrationComponent implements OnInit {
   galleryUploadWarning = '';
   readonly maxSkills = 3;
   readonly maxAvailableFor = 2;
-  skillLimitMessage = '';
 
   states: any[] = [];
   districts: any[] = [];
@@ -260,31 +260,9 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.config.getTiers().subscribe(data => { this.tiers = Array.isArray(data) ? data : []; });
   }
 
-  toggleSkill(skill: string) {
-    const arr: string[] = [...(this.form.get('skills')?.value || [])];
-    const idx = arr.indexOf(skill);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-      this.skillLimitMessage = '';
-    } else {
-      if (arr.length >= this.maxSkills) {
-        this.skillLimitMessage = `Maximum ${this.maxSkills} selections allowed`;
-        this.form.get('skills')?.markAsTouched();
-        return;
-      }
-      arr.push(skill);
-      this.skillLimitMessage = '';
-    }
-    this.form.get('skills')?.setValue(arr);
-  }
-
-  isSkillSelected(skill: string): boolean {
-    return (this.form.get('skills')?.value || []).includes(skill);
-  }
-
-  isSkillMaxed(skill: string): boolean {
-    const value = this.form.get('skills')?.value || [];
-    return !value.includes(skill) && value.length >= this.maxSkills;
+  setSkills(values: string[]): void {
+    this.form.get('skills')?.setValue(values);
+    this.form.get('skills')?.markAsTouched();
   }
 
   toggleEquipment(eq: string) {

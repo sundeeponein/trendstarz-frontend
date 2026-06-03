@@ -241,89 +241,46 @@
             </div>
 
             <div class="field-block">
-              <label>Languages <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <ng-container *ngIf="isEditMode; else viewLanguages">
-                  <div
-                    *ngFor="let lang of languagesList"
-                    class="chip"
-                    [class.chip--selected]="registrationForm.get('languages')?.value?.includes(lang._id)"
-                    (click)="toggleChip('languages', lang._id)"
-                    tabindex="0"
-                    (keydown.enter)="toggleChip('languages', lang._id)"
-                    (keydown.space)="toggleChip('languages', lang._id)"
-                    [attr.aria-pressed]="registrationForm.get('languages')?.value?.includes(lang._id)"
-                    role="button"
-                  >
-                    {{ lang.name }}
-                  </div>
-                </ng-container>
-                <ng-template #viewLanguages>
-                  <div *ngFor="let langId of registrationForm.get('languages')?.value">
-                    <span class="chip chip--selected">{{ getLanguageName(langId) }}</span>
-                  </div>
-                </ng-template>
-              </div>
+              <app-chip-selection-group
+                label="Languages"
+                [required]="true"
+                [options]="languagesList"
+                [selected]="registrationForm.get('languages')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                [readonly]="!isEditMode"
+                (selectedChange)="setChipValues('languages', $event)">
+              </app-chip-selection-group>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
 
             <div class="field-block">
-              <label>Content Categories <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <ng-container *ngIf="isEditMode; else viewCategories">
-                  <div
-                    *ngFor="let cat of categoriesList"
-                    class="chip"
-                    [class.chip--selected]="registrationForm.get('categories')?.value?.includes(cat._id)"
-                    [class.chip--disabled]="isChipMaxed('categories', cat._id)"
-                    (click)="toggleChip('categories', cat._id)"
-                    tabindex="0"
-                    (keydown.enter)="toggleChip('categories', cat._id)"
-                    (keydown.space)="toggleChip('categories', cat._id)"
-                    [attr.aria-pressed]="registrationForm.get('categories')?.value?.includes(cat._id)"
-                    [attr.aria-disabled]="isChipMaxed('categories', cat._id)"
-                    role="button"
-                  >
-                    {{ cat.name }}
-                  </div>
-                </ng-container>
-                <ng-template #viewCategories>
-                  <div *ngFor="let catId of registrationForm.get('categories')?.value">
-                    <span class="chip chip--selected">{{ getCategoryName(catId) }}</span>
-                  </div>
-                </ng-template>
-              </div>
+              <app-chip-selection-group
+                label="Content Categories"
+                [required]="true"
+                [options]="categoriesList"
+                [selected]="registrationForm.get('categories')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                [max]="maxCategories"
+                [readonly]="!isEditMode"
+                (selectedChange)="setChipValues('categories', $event)">
+              </app-chip-selection-group>
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
-              <div *ngIf="selectionLimitMessages.categories" class="text-warning mt-1">{{ selectionLimitMessages.categories }}</div>
             </div>
 
             <div class="field-block" *ngIf="creatorTypeOptions.length || registrationForm.get('creatorTypes')?.value?.length">
-              <label>Creator Type / Specialty <small class="text-muted">(Select if it matches your content style)</small></label>
-              <div class="chip-list">
-                <ng-container *ngIf="isEditMode; else viewCreatorTypes">
-                  <div
-                    *ngFor="let item of creatorTypeOptions"
-                    class="chip"
-                    [class.chip--selected]="registrationForm.get('creatorTypes')?.value?.includes(item._id || item.name)"
-                    [class.chip--disabled]="isChipMaxed('creatorTypes', item._id || item.name)"
-                    (click)="toggleChip('creatorTypes', item._id || item.name)"
-                    tabindex="0"
-                    (keydown.enter)="toggleChip('creatorTypes', item._id || item.name)"
-                    (keydown.space)="toggleChip('creatorTypes', item._id || item.name)"
-                    [attr.aria-pressed]="registrationForm.get('creatorTypes')?.value?.includes(item._id || item.name)"
-                    [attr.aria-disabled]="isChipMaxed('creatorTypes', item._id || item.name)"
-                    role="button"
-                  >
-                    {{ item.name }}
-                  </div>
-                </ng-container>
-                <ng-template #viewCreatorTypes>
-                  <div *ngFor="let typeId of registrationForm.get('creatorTypes')?.value">
-                    <span class="chip chip--selected">{{ getCreatorTypeName(typeId) }}</span>
-                  </div>
-                </ng-template>
-              </div>
-              <div *ngIf="selectionLimitMessages.creatorTypes" class="text-warning mt-1">{{ selectionLimitMessages.creatorTypes }}</div>
+              <app-chip-selection-group
+                label="Creator Type / Specialty"
+                sublabel="Select if it matches your content style"
+                [options]="creatorTypeOptions"
+                [selected]="registrationForm.get('creatorTypes')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                [max]="maxCreatorTypes"
+                [readonly]="!isEditMode"
+                (selectedChange)="setChipValues('creatorTypes', $event)">
+              </app-chip-selection-group>
             </div>
 
           </div>
