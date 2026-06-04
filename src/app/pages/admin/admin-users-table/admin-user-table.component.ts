@@ -22,7 +22,8 @@ export class AdminUserTableComponent implements OnInit {
   filtersExpanded = true;
   searchQuery = '';
   currentPage = 1;
-  readonly pageSize = 8;
+  pageSize = 100;
+  readonly pageSizeOptions = [25, 50, 100, 250, 500];
 
   showUserDetailsModal = false;
   selectedUser: any = null;
@@ -516,7 +517,9 @@ export class AdminUserTableComponent implements OnInit {
   fetchUsers() {
     this.isLoading = true;
     const headers = this.getAuthHeaders();
-    const influencerUrl = `${environment.apiBaseUrl}/admin/influencers${this.isDeletedTab() ? '?status=deleted' : ''}`;
+    const adminListParams = `limit=500`;
+    const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
+    const influencerUrl = `${environment.apiBaseUrl}/admin/influencers?${statusParam}${adminListParams}`;
     this.http.get<any>(influencerUrl, headers)
       .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
@@ -529,7 +532,7 @@ export class AdminUserTableComponent implements OnInit {
         this.cd.detectChanges();
       });
 
-    const brandUrl = `${environment.apiBaseUrl}/admin/brands${this.isDeletedTab() ? '?status=deleted' : ''}`;
+    const brandUrl = `${environment.apiBaseUrl}/admin/brands?${statusParam}${adminListParams}`;
     this.http.get<any>(brandUrl, headers)
       .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
@@ -542,7 +545,7 @@ export class AdminUserTableComponent implements OnInit {
         this.cd.detectChanges();
       });
 
-    const photographerUrl = `${environment.apiBaseUrl}/admin/photographers${this.isDeletedTab() ? '?status=deleted' : ''}`;
+    const photographerUrl = `${environment.apiBaseUrl}/admin/photographers?${statusParam}${adminListParams}`;
     this.http.get<any>(photographerUrl, headers)
       .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
@@ -955,6 +958,19 @@ export class AdminUserTableComponent implements OnInit {
 
   getTotalVisibleUsers(): number {
     return this.getVisibleUsers().length;
+  }
+
+  getVisibleRangeStart(): number {
+    return this.getTotalVisibleUsers() ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+  }
+
+  getVisibleRangeEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.getTotalVisibleUsers());
+  }
+
+  onPageSizeChange(value: string | number): void {
+    this.pageSize = Number(value) || 100;
+    this.currentPage = 1;
   }
 
   hasPreviousPage(): boolean {

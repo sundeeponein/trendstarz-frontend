@@ -230,6 +230,25 @@
   justify-content: space-between;
   background: #f3f5f9;
   color: #3f4757;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-size-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.page-size-control select {
+  min-width: 78px;
+  height: 38px;
+  border: 1px solid #aeb8c5;
+  border-radius: 10px;
+  background: #fff;
+  color: #243244;
+  padding: 0 10px;
 }
 
 .pager-buttons {

@@ -69,7 +69,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredInfluencers">
+        <tr *ngFor="let user of getPagedDeletedUsers()">
           <td>
             <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
@@ -105,7 +105,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredBrands">
+        <tr *ngFor="let user of getPagedDeletedUsers()">
           <td>
             <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-profile-brands.png')" alt="Logo" width="40" height="40" (error)="$any($event.target).src='assets/default-profile-brands.png'">
           </td>
@@ -155,7 +155,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredPhotographers">
+        <tr *ngFor="let user of getPagedDeletedUsers()">
           <td>
             <img [src]="user.profileImage || (user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png'))" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
@@ -170,5 +170,18 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="deleted-table-footer" *ngIf="getTotalVisibleUsers() > 0">
+    <div class="page-size-control">
+      <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page">
+        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+      </select>
+      <span>{{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalVisibleUsers() }} {{ getRoleTitle() }}</span>
+    </div>
+    <div class="pager-buttons">
+      <button (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()"><i class="bi bi-chevron-left"></i></button>
+      <button (click)="goToNextPage()" [disabled]="!hasNextPage()"><i class="bi bi-chevron-right"></i></button>
+    </div>
   </div>
 </div>

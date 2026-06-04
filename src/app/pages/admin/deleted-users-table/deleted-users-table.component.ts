@@ -44,6 +44,9 @@ export class DeletedUsersTableComponent implements OnInit {
   filteredPhotographers: any[] = [];
   activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   errorMessage: string | null = null;
+  currentPage = 1;
+  pageSize = 100;
+  readonly pageSizeOptions = [25, 50, 100, 250, 500];
 
   // Filter properties
   influencerFilters = {
@@ -116,7 +119,7 @@ export class DeletedUsersTableComponent implements OnInit {
       }
       return;
     }
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted&limit=500`, headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
@@ -136,7 +139,7 @@ export class DeletedUsersTableComponent implements OnInit {
           }
         }
       });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted&limit=500`, headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
@@ -155,7 +158,7 @@ export class DeletedUsersTableComponent implements OnInit {
           }
         }
       });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/photographers?status=deleted`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/photographers?status=deleted&limit=500`, headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
@@ -251,6 +254,7 @@ export class DeletedUsersTableComponent implements OnInit {
 
   onFilterChange(userType: 'influencer' | 'brand' | 'photographer') {
     this.applyFilters(userType);
+    this.currentPage = 1;
   }
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
@@ -262,11 +266,65 @@ export class DeletedUsersTableComponent implements OnInit {
       this.photographerFilters = { category: '', state: '' };
     }
     this.applyFilters(userType);
+    this.currentPage = 1;
   }
 
   setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
     this.applyFilters(tab);
+    this.currentPage = 1;
+  }
+
+  getVisibleDeletedUsers(): any[] {
+    if (this.activeTab === 'influencer') return this.filteredInfluencers || [];
+    if (this.activeTab === 'brand') return this.filteredBrands || [];
+    return this.filteredPhotographers || [];
+  }
+
+  getPagedDeletedUsers(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.getVisibleDeletedUsers().slice(start, start + this.pageSize);
+  }
+
+  getTotalVisibleUsers(): number {
+    return this.getVisibleDeletedUsers().length;
+  }
+
+  getVisibleRangeStart(): number {
+    return this.getTotalVisibleUsers() ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+  }
+
+  getVisibleRangeEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.getTotalVisibleUsers());
+  }
+
+  getRoleTitle(): string {
+    if (this.activeTab === 'influencer') return 'influencers';
+    if (this.activeTab === 'brand') return 'brands';
+    return 'photo/videographers';
+  }
+
+  onPageSizeChange(value: string | number): void {
+    this.pageSize = Number(value) || 100;
+    this.currentPage = 1;
+  }
+
+  hasPreviousPage(): boolean {
+    return this.currentPage > 1;
+  }
+
+  hasNextPage(): boolean {
+    return this.currentPage * this.pageSize < this.getTotalVisibleUsers();
+  }
+
+  goToPreviousPage(): void {
+    if (!this.hasPreviousPage()) return;
+    this.currentPage -= 1;
+  }
+
+  goToNextPage(): void {
+    if (!this.hasNextPage()) return;
+    this.currentPage += 1;
   }
 
   restoreUser(userId: string) {
