@@ -36,7 +36,7 @@
               type="email"
               class="form-control"
               [class.is-invalid]="submitted && loginForm.get('email')?.invalid"
-              placeholder="name@company.com"
+              placeholder="Enter your email address"
             />
             <div *ngIf="submitted && loginForm.get('email')?.invalid" class="field-hint">
               <i class="bi bi-exclamation-circle"></i>
