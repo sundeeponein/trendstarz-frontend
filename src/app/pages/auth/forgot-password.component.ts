@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ConfigService } from '../../shared/config.service';
 
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ export class ForgotPasswordComponent {
   successMsg = '';
   errorMsg = '';
 
-  constructor(private fb: FormBuilder, private firebaseAuth: FirebaseAuthService) {
+  constructor(private fb: FormBuilder, private configService: ConfigService) {
     this.forgotForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
     });
@@ -35,13 +35,19 @@ export class ForgotPasswordComponent {
     }
     this.loading = true;
     const email = this.forgotForm.get('email')?.value;
-    this.firebaseAuth.sendPasswordReset(email)
-      .catch(() => undefined)
-      .finally(() => {
+    this.configService.sendForgotPasswordLink(email).subscribe({
+      next: () => {
         this.successMsg = 'If your email is registered, you’ll receive a password reset link shortly. Please check your Inbox, Spam, or Promotions folder.';
         this.loading = false;
         this.forgotForm.reset();
         this.forgotForm.disable();
-      });
+      },
+      error: () => {
+        this.successMsg = 'If your email is registered, you’ll receive a password reset link shortly. Please check your Inbox, Spam, or Promotions folder.';
+        this.loading = false;
+        this.forgotForm.reset();
+        this.forgotForm.disable();
+      }
+    });
   }
 }

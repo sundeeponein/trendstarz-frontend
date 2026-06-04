@@ -40,7 +40,7 @@ test.describe('Forgot password page', () => {
     await page.fill('input[formControlName="email"]', 'user@example.com');
     await page.click('button:has-text("Send Reset Link")');
 
-    await expect(page.getByText('If your email is registered and verified, a reset link has been sent.')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('If your email is registered, you’ll receive a password reset link shortly.')).toBeVisible({ timeout: 5000 });
   });
 
   test('shows same success message when email is not registered (mocked API)', async ({ page }) => {
@@ -56,7 +56,7 @@ test.describe('Forgot password page', () => {
     await page.click('button:has-text("Send Reset Link")');
 
     // Component intentionally shows success message even on error (security best practice)
-    await expect(page.getByText('If your email is registered and verified, a reset link has been sent.')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('If your email is registered, you’ll receive a password reset link shortly.')).toBeVisible({ timeout: 10000 });
   });
 
   test('Back to Login link navigates to /login', async ({ page }) => {
