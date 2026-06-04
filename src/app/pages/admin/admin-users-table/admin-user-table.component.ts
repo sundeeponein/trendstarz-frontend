@@ -452,6 +452,8 @@ export class AdminUserTableComponent implements OnInit {
 
   // Holds an error message when profile/registration fetch fails
   registrationError: string | null = null;
+  firebaseImportMessage = '';
+  isImportingFirebaseInfluencers = false;
 
   isLoading: boolean = false;
 
@@ -550,6 +552,34 @@ export class AdminUserTableComponent implements OnInit {
         this.updateAllFilterOptions();
         this.refreshSelectedUserFromLists();
         this.isLoading = false;
+        this.cd.detectChanges();
+      });
+  }
+
+  importFirebaseInfluencers(): void {
+    this.firebaseImportMessage = '';
+    this.isImportingFirebaseInfluencers = true;
+    this.http
+      .post<any>(
+        `${environment.apiBaseUrl}/admin/firebase/import-missing-influencers`,
+        {},
+        this.getAuthHeaders(),
+      )
+      .pipe(
+        timeout(15000),
+        catchError((err) => {
+          const message = err?.error?.message || 'Firebase import failed.';
+          return of({ success: false, imported: 0, skipped: 0, message });
+        }),
+      )
+      .subscribe((result: any) => {
+        this.isImportingFirebaseInfluencers = false;
+        const imported = Number(result?.imported || 0);
+        const skipped = Number(result?.skipped || 0);
+        this.firebaseImportMessage = result?.success
+          ? `Firebase import complete. Imported ${imported}, skipped ${skipped}.`
+          : result?.message || 'Firebase import failed.';
+        this.fetchUsers();
         this.cd.detectChanges();
       });
   }

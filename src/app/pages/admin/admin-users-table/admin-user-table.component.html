@@ -52,6 +52,21 @@
       <i class="bi bi-sliders2"></i>
       Reset
     </button>
+
+    <button
+      class="reset-btn"
+      *ngIf="activeTab === 'influencer'"
+      (click)="importFirebaseInfluencers()"
+      [disabled]="isImportingFirebaseInfluencers"
+      title="Import Firebase Auth users that do not yet have MongoDB influencer profiles"
+    >
+      <i class="bi bi-cloud-download"></i>
+      {{ isImportingFirebaseInfluencers ? 'Importing...' : 'Import Firebase' }}
+    </button>
+  </div>
+
+  <div class="alert alert-info py-2" *ngIf="firebaseImportMessage">
+    {{ firebaseImportMessage }}
   </div>
 
   <div class="users-table-shell">
