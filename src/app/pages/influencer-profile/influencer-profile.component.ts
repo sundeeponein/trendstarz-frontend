@@ -134,12 +134,18 @@ export class InfluencerProfileComponent implements OnInit {
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim() || !this.hasSelectedPricedContentType(pf);
     });
   }
 
   arePlatformsValid(): boolean {
     return this.invalidPlatforms().length === 0;
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
   }
 
   getPlatformTotal(platform: any): number {

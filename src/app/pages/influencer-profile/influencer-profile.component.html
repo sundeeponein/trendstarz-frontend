@@ -554,7 +554,7 @@
 
           <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">{{ registrationSuccessMessage || 'Profile updated successfully.' }}</div>
           <div *ngIf="isEditMode && selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold my-3">
-            Please enter both Handle and Tier for every selected platform, or remove it.
+            Please enter username, tier, and select at least one content type with a starting rate for every selected platform, or remove it.
           </div>
           <div *ngIf="registrationError" class="text-danger fw-bold my-3">{{ registrationError }}</div>
 

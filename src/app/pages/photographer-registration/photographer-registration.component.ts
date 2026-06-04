@@ -54,6 +54,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   submitted = false;
   submitting = false;
   registrationSuccess = false;
+  registrationEmailSendFailed = false;
   registrationError = '';
   galleryUploadWarning = '';
   readonly maxSkills = 3;
@@ -416,8 +417,15 @@ export class PhotographerRegistrationComponent implements OnInit {
     if (selected.length === 0) return false;
     return selected.every(p => {
       const pf = this.platformForms[p._id];
-      return pf && (pf.handle || '').trim() && (pf.tier || '').trim();
+      return pf && (pf.handle || '').trim() && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
     });
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    if (!values.length) return true;
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
   }
 
   getTierOptionLabel(tier: any): string {
@@ -688,7 +696,8 @@ export class PhotographerRegistrationComponent implements OnInit {
         try {
           await this.firebaseAuth.sendVerificationEmail(v.email, v.password);
         } catch (error: any) {
-          this.registrationError = 'Registration completed, but we could not send the verification email. Your account has been created but is not yet activated. Please try Resend Verification Email, Forgot Password, or Contact Support.';
+          this.registrationError = '';
+          this.registrationEmailSendFailed = true;
           this.submitting = false;
           this.registrationSuccess = false;
           this.cdr.detectChanges();
@@ -696,6 +705,7 @@ export class PhotographerRegistrationComponent implements OnInit {
         }
         this.submitting = false;
         this.registrationSuccess = true;
+        this.registrationEmailSendFailed = false;
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -721,6 +731,11 @@ export class PhotographerRegistrationComponent implements OnInit {
 
   closeSuccessModal() {
     this.registrationSuccess = false;
+    this.router.navigate(['/auth/login']);
+  }
+
+  closeEmailSendFailedModal() {
+    this.registrationEmailSendFailed = false;
     this.router.navigate(['/auth/login']);
   }
 }

@@ -487,4 +487,29 @@
     </div>
   </div>
 
+  <div *ngIf="registrationEmailSendFailed" class="reg-success-modal-overlay">
+    <div class="reg-success-modal">
+      <button class="reg-success-close" (click)="closeEmailSendFailedModal()" aria-label="Close">&times;</button>
+      <div class="reg-success-icon" style="background:#f59e0b;">!</div>
+      <h3 class="reg-success-title">Registration Completed</h3>
+      <div class="reg-success-msg" style="text-align:left;">
+        <p>Registration completed.</p>
+        <p>Your account has been created, but we could not send the verification email at this time.</p>
+        <p>Your account is not yet activated.</p>
+        <p class="mb-1">Please:</p>
+        <ul>
+          <li>Check your Inbox, Spam and Promotions folders.</li>
+          <li>Try "Resend Verification Email".</li>
+          <li>Use "Forgot Password" to verify your email ownership and activate your account.</li>
+          <li>Contact Support if the issue continues.</li>
+        </ul>
+      </div>
+      <div class="reg-success-actions">
+        <a class="btn btn-primary" href="/forgot-password">Forgot Password</a>
+        <button class="btn btn-outline-secondary" (click)="closeEmailSendFailedModal()">Go to Login</button>
+        <a class="btn btn-outline-secondary" href="mailto:support.in">Contact Support</a>
+      </div>
+    </div>
+  </div>
+
 </div>

@@ -706,6 +706,22 @@ export class PhotographerProfileComponent implements OnInit {
     return socialHandleExample(platformName);
   }
 
+  get platformsValid(): boolean {
+    const selected = this.selectedPlatforms();
+    if (selected.length === 0) return false;
+    return selected.every((p: any) => {
+      const pf = this.platformForms[p._id];
+      return pf && (pf.handle || '').trim() && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
+    });
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    if (!values.length) return true;
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
+  }
+
   getTierOptionLabel(tier: any): string {
     const name = String(tier?.name || '').trim();
     const desc = String(tier?.desc || '').trim();
@@ -861,6 +877,11 @@ export class PhotographerProfileComponent implements OnInit {
 
   onSave() {
     if (!this.isEditMode || this.form.invalid || this.saving) return;
+    if (this.selectedPlatforms().length > 0 && !this.platformsValid) {
+      this.toast.error('Please select at least one content type and enter a starting rate.');
+      this.cdr.detectChanges();
+      return;
+    }
     const startingPriceInput = String(this.getStartingPrice() ?? '').trim();
     if (!startingPriceInput) {
       this.startingPriceRequiredError = true;

@@ -84,6 +84,7 @@ export class BrandRegistrationComponent implements OnInit {
   submitted = false;
   isSubmitting = false;
   registrationSuccess = false;
+  registrationEmailSendFailed = false;
   registrationError = '';
   preApproveActive = false;
   showPassword = false;
@@ -1078,8 +1079,9 @@ export class BrandRegistrationComponent implements OnInit {
           this.pendingVerificationEmail = raw.email;
           this.showEmailVerificationPrompt = true;
           this.emailVerificationSent = false;
-          this.emailVerificationError = 'Registration completed, but we could not send the verification email. Your account has been created but is not yet activated. Please try Resend Verification Email, Forgot Password, or Contact Support.';
-          this.registrationError = this.emailVerificationError;
+          this.emailVerificationError = 'Verification email could not be sent.';
+          this.registrationError = '';
+          this.registrationEmailSendFailed = true;
           this.isSubmitting = false;
           this.cd.detectChanges();
           return;
@@ -1109,6 +1111,7 @@ export class BrandRegistrationComponent implements OnInit {
         this.refreshStepCompletion();
         queueMicrotask(() => {
           this.registrationSuccess = true;
+          this.registrationEmailSendFailed = false;
           this.cd.detectChanges();
         });
       },
@@ -1191,5 +1194,14 @@ export class BrandRegistrationComponent implements OnInit {
     this.submitted = false;
     this.pendingVerificationEmail = '';
     window.location.href = '/';
+  }
+
+  closeEmailSendFailedModal() {
+    this.registrationEmailSendFailed = false;
+    this.brandLogoPreview = null;
+    this.brandLogoFile = null;
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/login';
   }
 }

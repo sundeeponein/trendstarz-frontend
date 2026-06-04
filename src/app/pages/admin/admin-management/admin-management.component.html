@@ -774,6 +774,39 @@
       <div class="col-12 settings-row row-expanded">
         <div class="settings-row-header">
           <div class="settings-info">
+            <strong>Firebase Email Verification Sync</strong>
+            <p>
+              Nightly safety sync: if Firebase says emailVerified is true but MongoDB is still false, MongoDB is updated and pending users are activated.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline-light" type="button" (click)="runFirebaseEmailSync()" [disabled]="firebaseEmailSyncRunning">
+            {{ firebaseEmailSyncRunning ? 'Syncing...' : 'Run One-Time Sync' }}
+          </button>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled/manual run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="firebaseEmailSyncLastRunAt; else firebaseEmailSyncNeverRun">
+                {{ firebaseEmailSyncLastRunAt | date:'medium' }}
+                - Updated {{ firebaseEmailSyncLastRunCount }} MongoDB user(s)
+              </ng-container>
+              <ng-template #firebaseEmailSyncNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item" *ngIf="firebaseEmailSyncMessage">
+            <span class="condition-name">Latest result</span>
+            <small class="text-light-emphasis">{{ firebaseEmailSyncMessage }}</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
             <strong>Early Access Assignment</strong>
             <p>Choose whether Early Access slots are assigned manually by admins or auto-filled to oldest eligible users.</p>
           </div>

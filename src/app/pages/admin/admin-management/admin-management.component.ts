@@ -333,6 +333,10 @@ export class AdminManagementComponent implements OnInit {
   pendingUnverifiedReport: any = null;
   pendingUnverifiedReportLastRunAt: string | null = null;
   pendingUnverifiedReportLastRunCount = 0;
+  firebaseEmailSyncRunning = false;
+  firebaseEmailSyncMessage = '';
+  firebaseEmailSyncLastRunAt: string | null = null;
+  firebaseEmailSyncLastRunCount = 0;
   campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
   campaignTypeResetMessage = '';
   showVisibilityConfirmModal = false;
@@ -435,6 +439,11 @@ export class AdminManagementComponent implements OnInit {
           typeof data?.pendingUnverifiedReportLastRunCount === 'number'
             ? data.pendingUnverifiedReportLastRunCount
             : 0;
+        this.firebaseEmailSyncLastRunAt = data?.firebaseEmailSyncLastRunAt || null;
+        this.firebaseEmailSyncLastRunCount =
+          typeof data?.firebaseEmailSyncLastRunCount === 'number'
+            ? data.firebaseEmailSyncLastRunCount
+            : 0;
         this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
@@ -482,6 +491,32 @@ export class AdminManagementComponent implements OnInit {
         },
         error: () => {
           this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  runFirebaseEmailSync() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.firebaseEmailSyncRunning = true;
+    this.firebaseEmailSyncMessage = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/firebase-email-sync/run`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.firebaseEmailSyncMessage = data?.skipped
+            ? `Sync skipped: ${data.reason || 'not available'}`
+            : `Firebase email sync complete. Updated ${data?.synced || 0} MongoDB user(s) from ${data?.firebaseVerified || 0} verified Firebase user(s).`;
+          this.firebaseEmailSyncRunning = false;
+          this.loadSettings();
+          this.loadPendingUnverifiedReport();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.firebaseEmailSyncMessage = err?.error?.message || 'Firebase email sync failed.';
+          this.firebaseEmailSyncRunning = false;
           this.cdr.detectChanges();
         },
       });

@@ -131,12 +131,18 @@ export class InfluencerRegistrationComponent implements OnInit {
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim() || !this.hasSelectedPricedContentType(pf);
     });
   }
 
   arePlatformsValid(): boolean {
     return this.invalidPlatforms().length === 0;
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
   }
 
   getPlatformTotal(platform: any): number {
@@ -185,6 +191,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   resendEmailVerificationError: string | null = null;
   pendingVerificationEmail = '';
   registrationSuccess = false;
+  registrationEmailSendFailed = false;
   registrationError = '';
   preApproveActive = false;
   showPassword = false;
@@ -1007,8 +1014,9 @@ export class InfluencerRegistrationComponent implements OnInit {
             this.pendingVerificationEmail = raw.email;
             this.showEmailVerificationPrompt = true;
             this.emailVerificationSent = false;
-            this.emailVerificationError = 'Registration completed, but we could not send the verification email. Your account has been created but is not yet activated. Please try Resend Verification Email, Forgot Password, or Contact Support.';
-            this.registrationError = this.emailVerificationError;
+            this.emailVerificationError = 'Verification email could not be sent.';
+            this.registrationError = '';
+            this.registrationEmailSendFailed = true;
             this.isSubmitting = false;
             this.cdr.detectChanges();
           });
@@ -1025,6 +1033,7 @@ export class InfluencerRegistrationComponent implements OnInit {
           this.registrationForm.reset();
           queueMicrotask(() => {
             this.registrationSuccess = true;
+            this.registrationEmailSendFailed = false;
             this.cdr.detectChanges();
           });
         });
@@ -1086,6 +1095,20 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.submitted = false;
     this.pendingVerificationEmail = '';
     window.location.href = '/';
+  }
+
+  closeEmailSendFailedModal() {
+    this.registrationEmailSendFailed = false;
+    this.registrationForm.reset();
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.verificationDocuments = [];
+    this.verificationUploadError = '';
+    this.verificationConsentError = '';
+    this.platformForms = {};
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/login';
   }
 
   toggleProfessionalOptional(): void {

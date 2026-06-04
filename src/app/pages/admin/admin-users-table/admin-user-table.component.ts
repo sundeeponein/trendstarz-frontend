@@ -185,7 +185,7 @@ export class AdminUserTableComponent implements OnInit {
     if (!Number.isFinite(price) || price <= 0) return false;
     if ('enabled' in item) return item.enabled === true;
     if ('selected' in item) return item.selected === true;
-    return true;
+    return false;
   }
 
   private parseCountValue(value: any): number {

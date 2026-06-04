@@ -55,7 +55,14 @@ export class ProfileSocialPlatformsComponent {
   }
 
   getContentTypes(sm: any): any[] {
-    return Array.isArray(sm?.contentTypes) ? sm.contentTypes : [];
+    if (!Array.isArray(sm?.contentTypes)) return [];
+    return sm.contentTypes.filter((ct: any) => {
+      const price = Number(ct?.price);
+      if (!Number.isFinite(price) || price <= 0) return false;
+      if ('enabled' in ct) return ct.enabled === true;
+      if ('selected' in ct) return ct.selected === true;
+      return false;
+    });
   }
 
   getSmTotal(sm: any): number {
