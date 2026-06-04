@@ -684,10 +684,16 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.registrationError = '';
     this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
-      next: () => {
-        void this.firebaseAuth.sendVerificationEmail(v.email, v.password).catch((error) => {
-          this.registrationError = error?.message || 'Failed to send Firebase verification email.';
-        });
+      next: async () => {
+        try {
+          await this.firebaseAuth.sendVerificationEmail(v.email, v.password);
+        } catch (error: any) {
+          this.registrationError = 'Registration completed, but we could not send the verification email. Your account has been created but is not yet activated. Please try Resend Verification Email, Forgot Password, or Contact Support.';
+          this.submitting = false;
+          this.registrationSuccess = false;
+          this.cdr.detectChanges();
+          return;
+        }
         this.submitting = false;
         this.registrationSuccess = true;
         this.cdr.detectChanges();

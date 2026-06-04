@@ -329,6 +329,10 @@ export class AdminManagementComponent implements OnInit {
   pendingUserAutoDeleteLastRunAt: string | null = null;
   pendingUserAutoDeleteLastRunCount = 0;
   pendingUserAutoDeleteLastRunBy = '';
+  pendingUnverifiedReportLoading = false;
+  pendingUnverifiedReport: any = null;
+  pendingUnverifiedReportLastRunAt: string | null = null;
+  pendingUnverifiedReportLastRunCount = 0;
   campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
   campaignTypeResetMessage = '';
   showVisibilityConfirmModal = false;
@@ -353,6 +357,7 @@ export class AdminManagementComponent implements OnInit {
     if (!this.isServer) {
       this.loadConfig();
       this.loadSettings();
+      this.loadPendingUnverifiedReport();
       this.loadCommissionCounts();
     }
   }
@@ -425,6 +430,11 @@ export class AdminManagementComponent implements OnInit {
             ? data.pendingUserAutoDeleteLastRunCount
             : 0;
         this.pendingUserAutoDeleteLastRunBy = String(data?.pendingUserAutoDeleteLastRunBy || '');
+        this.pendingUnverifiedReportLastRunAt = data?.pendingUnverifiedReportLastRunAt || null;
+        this.pendingUnverifiedReportLastRunCount =
+          typeof data?.pendingUnverifiedReportLastRunCount === 'number'
+            ? data.pendingUnverifiedReportLastRunCount
+            : 0;
         this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
@@ -456,6 +466,25 @@ export class AdminManagementComponent implements OnInit {
       },
       error: () => {}
     });
+  }
+
+  loadPendingUnverifiedReport() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUnverifiedReportLoading = true;
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-unverified-report?days=7&limit=25`, headers)
+      .subscribe({
+        next: (res) => {
+          this.pendingUnverifiedReport = res?.data ?? res;
+          this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   onCampaignApprovalModeToggle(isAutoLive: boolean) {

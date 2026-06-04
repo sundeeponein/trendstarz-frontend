@@ -1071,10 +1071,19 @@ export class BrandRegistrationComponent implements OnInit {
     delete payload.googleMapAddress;
 
     this.configService.registerBrand(payload).subscribe({
-      next: () => {
-        void this.firebaseAuth.sendVerificationEmail(raw.email, raw.password).catch((error) => {
-          this.emailVerificationError = error?.message || 'Failed to send Firebase verification email.';
-        });
+      next: async () => {
+        try {
+          await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
+        } catch (error: any) {
+          this.pendingVerificationEmail = raw.email;
+          this.showEmailVerificationPrompt = true;
+          this.emailVerificationSent = false;
+          this.emailVerificationError = 'Registration completed, but we could not send the verification email. Your account has been created but is not yet activated. Please try Resend Verification Email, Forgot Password, or Contact Support.';
+          this.registrationError = this.emailVerificationError;
+          this.isSubmitting = false;
+          this.cd.detectChanges();
+          return;
+        }
         this.pendingVerificationEmail = raw.email;
         this.showEmailVerificationPrompt = true;
         this.emailVerificationSent = true;

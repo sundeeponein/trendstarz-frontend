@@ -708,6 +708,72 @@
       <div class="col-12 settings-row row-expanded">
         <div class="settings-row-header">
           <div class="settings-info">
+            <strong>Pending Email Verification Report</strong>
+            <p>
+              Tracks users still pending with unverified email after 7 days. This is report-only and does not delete or modify users.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline-light" type="button" (click)="loadPendingUnverifiedReport()" [disabled]="pendingUnverifiedReportLoading">
+            {{ pendingUnverifiedReportLoading ? 'Refreshing...' : 'Refresh Report' }}
+          </button>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Current report</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUnverifiedReport; else pendingUnverifiedLoading">
+                {{ pendingUnverifiedReport.total || 0 }} user(s)
+                - Influencers {{ pendingUnverifiedReport.counts?.influencers || 0 }},
+                Brands {{ pendingUnverifiedReport.counts?.brands || 0 }},
+                Photo/Videographers {{ pendingUnverifiedReport.counts?.photographers || 0 }}
+              </ng-container>
+              <ng-template #pendingUnverifiedLoading>
+                {{ pendingUnverifiedReportLoading ? 'Loading...' : 'Not loaded yet.' }}
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUnverifiedReportLastRunAt; else pendingUnverifiedNeverRun">
+                {{ pendingUnverifiedReportLastRunAt | date:'medium' }}
+                - Found {{ pendingUnverifiedReportLastRunCount }} user(s)
+              </ng-container>
+              <ng-template #pendingUnverifiedNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3" *ngIf="pendingUnverifiedReport?.users?.length">
+          <table class="table table-sm table-dark align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Registered</th>
+                <th>First Login</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of pendingUnverifiedReport.users">
+                <td>{{ user.userType }}</td>
+                <td>{{ user.name || '-' }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ (user.firstRegisteredAt || user.createdAt) | date:'mediumDate' }}</td>
+                <td>{{ user.lastLoginAt ? (user.lastLoginAt | date:'medium') : 'Never' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
             <strong>Early Access Assignment</strong>
             <p>Choose whether Early Access slots are assigned manually by admins or auto-filled to oldest eligible users.</p>
           </div>
