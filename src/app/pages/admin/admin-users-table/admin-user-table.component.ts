@@ -23,7 +23,7 @@ export class AdminUserTableComponent implements OnInit {
   searchQuery = '';
   currentPage = 1;
   pageSize = 100;
-  readonly pageSizeOptions = [25, 50, 100, 250, 500];
+  readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
 
   showUserDetailsModal = false;
   selectedUser: any = null;
@@ -454,7 +454,7 @@ export class AdminUserTableComponent implements OnInit {
   // Holds an error message when profile/registration fetch fails
   registrationError: string | null = null;
   firebaseImportMessage = '';
-  isImportingFirebaseInfluencers = false;
+  isImportingFirebaseUsers = false;
 
   isLoading: boolean = false;
 
@@ -517,7 +517,7 @@ export class AdminUserTableComponent implements OnInit {
   fetchUsers() {
     this.isLoading = true;
     const headers = this.getAuthHeaders();
-    const adminListParams = `limit=500`;
+    const adminListParams = `limit=1000`;
     const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
     const influencerUrl = `${environment.apiBaseUrl}/admin/influencers?${statusParam}${adminListParams}`;
     this.http.get<any>(influencerUrl, headers)
@@ -559,12 +559,12 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
-  importFirebaseInfluencers(): void {
+  importFirebaseUsers(): void {
     this.firebaseImportMessage = '';
-    this.isImportingFirebaseInfluencers = true;
+    this.isImportingFirebaseUsers = true;
     this.http
       .post<any>(
-        `${environment.apiBaseUrl}/admin/firebase/import-missing-influencers`,
+        `${environment.apiBaseUrl}/admin/firebase/import-missing-users`,
         {},
         this.getAuthHeaders(),
       )
@@ -576,11 +576,17 @@ export class AdminUserTableComponent implements OnInit {
         }),
       )
       .subscribe((result: any) => {
-        this.isImportingFirebaseInfluencers = false;
+        this.isImportingFirebaseUsers = false;
         const imported = Number(result?.imported || 0);
         const skipped = Number(result?.skipped || 0);
+        const byType = result?.byType || {};
+        const importedSummary = [
+          `${Number(byType.influencer || 0)} influencers`,
+          `${Number(byType.brand || 0)} brands`,
+          `${Number(byType.photographer || 0)} photo/videographers`,
+        ].join(', ');
         this.firebaseImportMessage = result?.success
-          ? `Firebase import complete. Imported ${imported}, skipped ${skipped}.`
+          ? `User import complete. Imported ${imported} (${importedSummary}), skipped ${skipped}.`
           : result?.message || 'Firebase import failed.';
         this.fetchUsers();
         this.cd.detectChanges();
@@ -668,6 +674,22 @@ export class AdminUserTableComponent implements OnInit {
     this.signupSourcesArray = Array.from(signupSourceSet).sort();
   }
 
+  private getUserSortTime(user: any): number {
+    const directDate = user?.firstRegisteredAt || user?.createdAt || user?.updatedAt;
+    const parsedDate = directDate ? new Date(directDate).getTime() : 0;
+    if (Number.isFinite(parsedDate) && parsedDate > 0) return parsedDate;
+
+    const objectId = String(user?._id || '');
+    if (/^[a-fA-F0-9]{24}$/.test(objectId)) {
+      return parseInt(objectId.slice(0, 8), 16) * 1000;
+    }
+    return 0;
+  }
+
+  private sortNewestUsers(users: any[]): any[] {
+    return [...users].sort((a, b) => this.getUserSortTime(b) - this.getUserSortTime(a));
+  }
+
   applyFilters(userType: 'influencer' | 'brand' | 'photographer') {
     const filters = userType === 'influencer'
       ? this.influencerFilters
@@ -687,22 +709,13 @@ export class AdminUserTableComponent implements OnInit {
       filtered = filtered.filter(user => !user.isDeleted || user.isDeleted === false || user.isDeleted === 'false');
     }
     if (userType === 'influencer') {
-      this.filteredInfluencers = filtered.filter(user => this.matchesFilters(user, filters))
-      .sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
+      this.filteredInfluencers = this.sortNewestUsers(filtered.filter(user => this.matchesFilters(user, filters)));
       // debug: filtered influencers updated
     } else {
       if (userType === 'brand') {
-        this.filteredBrands = filtered.filter(user => this.matchesFilters(user, filters))
-        .sort((a, b) => {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
+        this.filteredBrands = this.sortNewestUsers(filtered.filter(user => this.matchesFilters(user, filters)));
       } else {
-        this.filteredPhotographers = filtered.filter(user => this.matchesFilters(user, filters))
-        .sort((a, b) => {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
+        this.filteredPhotographers = this.sortNewestUsers(filtered.filter(user => this.matchesFilters(user, filters)));
       }
     }
   }

@@ -14,6 +14,7 @@ import { TierInfoService } from '../../shared/components/tier-info-modal/tier-in
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
 
@@ -138,6 +139,7 @@ export class BrandRegistrationComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     private guidelinesService: ImageGuidelinesService,
+    private firebaseAuth: FirebaseAuthService,
   ) {}
 
   ngOnInit() {
@@ -1070,10 +1072,8 @@ export class BrandRegistrationComponent implements OnInit {
 
     this.configService.registerBrand(payload).subscribe({
       next: () => {
-        this.configService.sendEmailVerificationLink(raw.email).subscribe({
-          error: (error) => {
-            this.emailVerificationError = error?.error?.message || 'Failed to send verification email.';
-          },
+        void this.firebaseAuth.sendVerificationEmail(raw.email, raw.password).catch((error) => {
+          this.emailVerificationError = error?.message || 'Failed to send Firebase verification email.';
         });
         this.pendingVerificationEmail = raw.email;
         this.showEmailVerificationPrompt = true;

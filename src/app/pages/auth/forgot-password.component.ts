@@ -47,7 +47,7 @@ export class ForgotPasswordComponent {
         this.loading = false;
         this.forgotForm.reset();
         this.forgotForm.disable();
-      }
+      },
     });
   }
 }

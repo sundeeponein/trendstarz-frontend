@@ -22,6 +22,34 @@
   max-width: 540px;
 }
 
+.admin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-title-row h4 {
+  margin: 0;
+}
+
+.import-users-btn {
+  border: 1px solid #cfd6e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f2530;
+  min-height: 36px;
+  padding: 0 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.import-users-btn:disabled {
+  opacity: 0.6;
+}
+
 .role-tabs {
   margin-top: 22px;
   display: inline-flex;

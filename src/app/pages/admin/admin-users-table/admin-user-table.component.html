@@ -10,7 +10,18 @@
 <div class="admin-users-page">
   <div class="row">
     <div class="admin-users-header col-8">
-      <h4>Admin Users</h4>
+      <div class="admin-title-row">
+        <h4>Admin Users</h4>
+        <button
+          class="import-users-btn"
+          (click)="importFirebaseUsers()"
+          [disabled]="isImportingFirebaseUsers"
+          title="Import Firebase Auth users missing from MongoDB. Uses Firebase role claims when available; otherwise imports as pending influencers."
+        >
+          <i class="bi bi-cloud-download"></i>
+          {{ isImportingFirebaseUsers ? 'Importing...' : 'Import Users' }}
+        </button>
+      </div>
       <small>Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
     </div>
 
@@ -53,16 +64,6 @@
       Reset
     </button>
 
-    <button
-      class="reset-btn"
-      *ngIf="activeTab === 'influencer'"
-      (click)="importFirebaseInfluencers()"
-      [disabled]="isImportingFirebaseInfluencers"
-      title="Import Firebase Auth users that do not yet have MongoDB influencer profiles"
-    >
-      <i class="bi bi-cloud-download"></i>
-      {{ isImportingFirebaseInfluencers ? 'Importing...' : 'Import Firebase' }}
-    </button>
   </div>
 
   <div class="alert alert-info py-2" *ngIf="firebaseImportMessage">

@@ -69,7 +69,12 @@ export class FirebaseAuthService {
       const credential = await signInWithEmailAndPassword(auth, email, password);
       user = credential.user;
     }
-    await sendEmailVerification(user);
+    const actionCodeSettings = isPlatformBrowser(this.platformId)
+      ? {
+          url: `${window.location.origin}/verify-email?firebaseEmail=${encodeURIComponent(email)}`,
+        }
+      : undefined;
+    await sendEmailVerification(user, actionCodeSettings);
   }
 
   // async sendPasswordReset(email: string): Promise<void> {
@@ -93,7 +98,8 @@ export class FirebaseAuthService {
     const actionCodeSettings =
       isPlatformBrowser(this.platformId)
         ? {
-            url: `${window.location.origin}/login`
+            url: `${window.location.origin}/reset-password?firebaseReset=true`,
+            handleCodeInApp: true,
           }
         : undefined;
 

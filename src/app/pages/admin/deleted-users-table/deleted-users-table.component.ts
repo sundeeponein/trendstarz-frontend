@@ -46,7 +46,7 @@ export class DeletedUsersTableComponent implements OnInit {
   errorMessage: string | null = null;
   currentPage = 1;
   pageSize = 100;
-  readonly pageSizeOptions = [25, 50, 100, 250, 500];
+  readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
 
   // Filter properties
   influencerFilters = {
@@ -119,7 +119,7 @@ export class DeletedUsersTableComponent implements OnInit {
       }
       return;
     }
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted&limit=500`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted&limit=1000`, headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
@@ -139,7 +139,7 @@ export class DeletedUsersTableComponent implements OnInit {
           }
         }
       });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted&limit=500`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted&limit=1000`, headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
@@ -158,7 +158,7 @@ export class DeletedUsersTableComponent implements OnInit {
           }
         }
       });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/photographers?status=deleted&limit=500`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/photographers?status=deleted&limit=1000`, headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
@@ -216,6 +216,22 @@ export class DeletedUsersTableComponent implements OnInit {
     this.statesArray = Array.from(statesSet).sort();
   }
 
+  private getUserSortTime(user: any): number {
+    const directDate = user?.deletedAt || user?.firstRegisteredAt || user?.createdAt || user?.updatedAt;
+    const parsedDate = directDate ? new Date(directDate).getTime() : 0;
+    if (Number.isFinite(parsedDate) && parsedDate > 0) return parsedDate;
+
+    const objectId = String(user?._id || '');
+    if (/^[a-fA-F0-9]{24}$/.test(objectId)) {
+      return parseInt(objectId.slice(0, 8), 16) * 1000;
+    }
+    return 0;
+  }
+
+  private sortNewestUsers(users: any[]): any[] {
+    return [...users].sort((a, b) => this.getUserSortTime(b) - this.getUserSortTime(a));
+  }
+
   applyFilters(userType: 'influencer' | 'brand' | 'photographer') {
     const filters = userType === 'influencer'
       ? this.influencerFilters
@@ -228,9 +244,9 @@ export class DeletedUsersTableComponent implements OnInit {
         ? this.brands
         : this.photographers;
     
-    this.filteredInfluencers = userType === 'influencer' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredInfluencers;
-    this.filteredBrands = userType === 'brand' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredBrands;
-    this.filteredPhotographers = userType === 'photographer' ? source.filter(user => this.matchesFilters(user, filters)) : this.filteredPhotographers;
+    this.filteredInfluencers = userType === 'influencer' ? this.sortNewestUsers(source.filter(user => this.matchesFilters(user, filters))) : this.filteredInfluencers;
+    this.filteredBrands = userType === 'brand' ? this.sortNewestUsers(source.filter(user => this.matchesFilters(user, filters))) : this.filteredBrands;
+    this.filteredPhotographers = userType === 'photographer' ? this.sortNewestUsers(source.filter(user => this.matchesFilters(user, filters))) : this.filteredPhotographers;
   }
 
   matchesFilters(user: any, filters: any): boolean {
