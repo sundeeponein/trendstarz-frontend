@@ -308,9 +308,9 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     return 'Manual (UPI)';
   }
 
-  reviewFlowStatusLabel(tx: CampaignTransaction): 'Review Pending' | 'Payout Pending' | 'Paid Out' {
+  reviewFlowStatusLabel(tx: CampaignTransaction): 'Awaiting Host Completion' | 'Payout Pending' | 'Paid Out' {
     if (tx.payoutStatus === 'paid') return 'Paid Out';
-    return this.isInvitePayoutEligible(tx) ? 'Payout Pending' : 'Review Pending';
+    return this.isInvitePayoutEligible(tx) ? 'Payout Pending' : 'Awaiting Host Completion';
   }
 
   reviewFlowStatusClass(tx: CampaignTransaction): string {
