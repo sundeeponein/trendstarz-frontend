@@ -26,7 +26,8 @@
       <button
         *ngFor="let tab of statusTabs"
         type="button"
-        class="tab-btn"
+        class="tab-btn ts-status-tab"
+        [ngClass]="getReviewTabStatusClass(tab.key)"
         [class.active]="campaignApprovalStatusFilter === tab.key"
         (click)="setStatusTab(tab.key)"
       >
@@ -59,13 +60,13 @@
     <div *ngIf="campaignApprovalsError" class="text-danger">{{ campaignApprovalsError }}</div>
 
     <div class="table-scroll-wrapper" *ngIf="!campaignApprovalsLoading && !campaignApprovalsError">
-      <div class="participant-legend">
-        <span class="participant-legend__label">Legend:</span>
-        <span class="participant-chip participant-chip--accepted">Accepted</span>
-        <span class="participant-chip participant-chip--submitted">Submitted</span>
-        <span class="participant-chip participant-chip--working">Working</span>
-        <span class="participant-chip participant-chip--pending">Pending</span>
-        <span class="participant-chip participant-chip--withdrawn">Withdrawn / Rejected</span>
+      <div class="ts-status-legend review-status-legend">
+        <span class="ts-status-legend-label">Legend:</span>
+        <span class="ts-status-badge ts-status-accepted">Accepted</span>
+        <span class="ts-status-badge ts-status-submitted">Submitted</span>
+        <span class="ts-status-badge ts-status-working">Working</span>
+        <span class="ts-status-badge ts-status-pending">Pending</span>
+        <span class="ts-status-badge ts-status-rejected">Withdrawn / Rejected</span>
       </div>
       <table class="table table-hover align-middle admin-table campaign-review-table">
         <thead>
@@ -80,7 +81,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of campaignApprovals">
+          <tr *ngFor="let c of campaignApprovals" [ngClass]="getCampaignStatusRowClass(c)">
             <td>
               <button type="button" class="review-campaign-link" (click)="openCampaignPreview(c)">
                 <div class="fw-semibold">{{ c.title || 'Untitled campaign' }}</div>
@@ -92,7 +93,9 @@
               <div class="small text-secondary" *ngIf="c.brand?.email">{{ c.brand.email }}</div>
             </td>
             <td>
-              <div>{{ campaignStatusLabel(c.status) }}</div>
+              <span class="ts-status-badge" [ngClass]="getCampaignStatusBadgeClass(c.status)">
+                {{ campaignStatusLabel(c.status) }}
+              </span>
               <div class="small campaign-note-preview" *ngIf="c.moderationNote">
                 <i class="bi bi-chat-square-text"></i> {{ c.moderationNote }}
               </div>
@@ -101,9 +104,9 @@
               <div class="participant-metrics-text">Invited: <strong>{{ c.inviteCount || 0 }}</strong></div>
               <div class="participant-chip-row" *ngIf="getParticipantStatusChips(c).length > 0">
                 <span
-                  class="participant-chip"
+                  class="ts-status-badge"
                   *ngFor="let chip of getParticipantStatusChips(c)"
-                  [ngClass]="'participant-chip--' + chip.key">
+                  [ngClass]="getParticipantStatusBadgeClass(chip.key)">
                   {{ chip.label }} {{ chip.count }}
                 </span>
               </div>
@@ -113,7 +116,7 @@
             </td>
             <td>{{ campaignPreviewBudget(c) }}</td>
             <td>{{ (c.updatedAt || c.createdAt) | date:'medium' }}</td>
-            <td>
+            <td class="ts-status-action-cell">
               <div class="d-flex gap-1 flex-wrap">
                 <button
                   class="btn btn-outline-secondary btn-sm"

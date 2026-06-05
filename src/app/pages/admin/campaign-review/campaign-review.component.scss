@@ -180,21 +180,10 @@
   }
 }
 
-.participant-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+.review-status-legend {
   padding: 10px 12px;
   border-bottom: 1px solid #e5e7eb;
   background: #fff;
-}
-
-.participant-legend__label {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #374151;
-  margin-right: 4px;
 }
 
 .campaign-review-table {
@@ -255,55 +244,6 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 0.35rem;
-}
-
-.participant-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  line-height: 1;
-  border: 1px solid transparent;
-
-  &--accepted,
-  &--payment_confirmed,
-  &--working {
-    background: #ecfeff;
-    color: #155e75;
-    border-color: #a5f3fc;
-  }
-
-  &--submitted,
-  &--under_review {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
-  }
-
-  &--pending,
-  &--invited {
-    background: #fff7ed;
-    color: #9a3412;
-    border-color: #fed7aa;
-  }
-
-  &--withdrawn,
-  &--declined,
-  &--rejected,
-  &--disputed {
-    background: #fef2f2;
-    color: #b91c1c;
-    border-color: #fecaca;
-  }
-
-  &--completed {
-    background: #ecfdf5;
-    color: #047857;
-    border-color: #a7f3d0;
-  }
 }
 
 .moderation-modal {

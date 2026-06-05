@@ -124,19 +124,8 @@
   box-shadow: 0 6px 20px rgba(22, 33, 54, 0.08);
 }
 
-.status-legend {
+.admin-status-legend {
   margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: #4b5565;
-  font-size: 0.84rem;
-}
-
-.status-legend-label {
-  font-weight: 800;
-  color: #1f2530;
 }
 
 .users-table {
@@ -158,50 +147,6 @@
   padding: 14px 16px;
   border-top: 1px solid #edf0f5;
   vertical-align: middle;
-}
-
-.users-table tbody tr {
-  border-left: 3px solid transparent;
-}
-
-.users-table tbody tr.user-row--accepted {
-  border-left-color: #198754;
-}
-
-.users-table tbody tr.user-row--pending {
-  border-left-color: #ffc107;
-}
-
-.users-table tbody tr.user-row--rejected {
-  border-left-color: #dc3545;
-}
-
-.users-table tbody tr.user-row--deleted {
-  border-left-color: #6c757d;
-}
-
-.users-table tbody tr.user-row--other {
-  border-left-color: #0dcaf0;
-}
-
-.users-table tbody tr.user-row--accepted .action-cell {
-  background: #d1e7dd;
-}
-
-.users-table tbody tr.user-row--pending .action-cell {
-  background: #fff3cd;
-}
-
-.users-table tbody tr.user-row--rejected .action-cell {
-  background: #f8d7da;
-}
-
-.users-table tbody tr.user-row--deleted .action-cell {
-  background: #e2e3e5;
-}
-
-.users-table tbody tr.user-row--other .action-cell {
-  background: #cff4fc;
 }
 
 .avatar {
@@ -259,42 +204,6 @@
   background: #e5e7eb;
   border-radius: 999px;
   padding: 1px 6px;
-}
-
-.user-status-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.user-status-badge.status-accepted {
-  background: #d1e7dd;
-  color: #0f5132;
-}
-
-.user-status-badge.status-pending {
-  background: #fff3cd;
-  color: #664d03;
-}
-
-.user-status-badge.status-rejected {
-  background: #f8d7da;
-  color: #842029;
-}
-
-.user-status-badge.status-deleted {
-  background: #e2e3e5;
-  color: #41464b;
-}
-
-.user-status-badge.status-other {
-  background: #cff4fc;
-  color: #055160;
 }
 
 .tier-select {

@@ -124,11 +124,11 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getUserStatusBadgeClass(user: any): string {
-    return `status-${this.getUserStatusKey(user)}`;
+    return `ts-status-${this.getUserStatusKey(user)}`;
   }
 
   getUserStatusRowClass(user: any): string {
-    return `user-row--${this.getUserStatusKey(user)}`;
+    return `ts-status-row ts-status-row--${this.getUserStatusKey(user)}`;
   }
 
   getUserCategoryList(user: any): string[] {

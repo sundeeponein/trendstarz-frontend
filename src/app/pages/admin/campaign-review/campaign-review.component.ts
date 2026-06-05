@@ -720,6 +720,46 @@ export class CampaignReviewComponent implements OnInit {
     return status || 'Unknown';
   }
 
+  getReviewTabStatusClass(
+    status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all',
+  ): string {
+    if (status === 'all') return 'ts-status-tab--other';
+    return `ts-status-tab--${this.getCampaignStatusKey(status)}`;
+  }
+
+  getCampaignStatusBadgeClass(status: string): string {
+    return `ts-status-${this.getCampaignStatusKey(status)}`;
+  }
+
+  getCampaignStatusRowClass(campaign: any): string {
+    const key = this.getCampaignStatusKey(campaign?.status);
+    return `ts-status-row ts-status-row--${key}`;
+  }
+
+  getParticipantStatusBadgeClass(status: string): string {
+    return `ts-status-${this.getParticipantStatusKey(status)}`;
+  }
+
+  private getCampaignStatusKey(status: string): 'accepted' | 'pending' | 'rejected' | 'completed' | 'other' {
+    const normalized = this.normalizeReviewStatus(status);
+    if (normalized === 'active') return 'accepted';
+    if (normalized === 'completed') return 'completed';
+    if (normalized === 'pending_review' || normalized === 'needs_changes' || normalized === 'draft') return 'pending';
+    if (normalized === 'rejected') return 'rejected';
+    return 'other';
+  }
+
+  private getParticipantStatusKey(status: string): 'accepted' | 'submitted' | 'working' | 'pending' | 'rejected' | 'completed' | 'other' {
+    const key = String(status || '').trim().toLowerCase();
+    if (key === 'accepted' || key === 'approved') return 'accepted';
+    if (key === 'completed') return 'completed';
+    if (key === 'submitted' || key === 'under_review' || key === 'disputed') return 'submitted';
+    if (key === 'working' || key === 'payment_confirmed') return 'working';
+    if (key === 'pending' || key === 'invited' || key === 'counter_sent') return 'pending';
+    if (key === 'withdrawn' || key === 'declined' || key === 'rejected') return 'rejected';
+    return 'other';
+  }
+
   getAcceptedInviteCount(campaign: any): number {
     const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
     return rows.filter((row: any) => String(row?.status || '').toLowerCase() === 'accepted').length;
