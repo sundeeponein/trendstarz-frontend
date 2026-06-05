@@ -353,6 +353,25 @@
       View Submission
     </button>
 
+    <div class="inv-cta-info inv-cta-info--pending" *ngIf="showSubmissionReviewInfo">
+      <i class="bi bi-clock-history"></i>
+      <span>
+        Posted on {{ submissionPostedAtText }}. {{ submissionReviewMessage }}
+      </span>
+    </div>
+
+    <div class="inv-cta-info inv-cta-info--pending" *ngIf="showPayoutPendingInfo">
+      <i class="bi bi-clock-history"></i>
+      <span>
+        Post approved. {{ payoutPendingMessage }}
+      </span>
+    </div>
+
+    <div class="inv-cta-info inv-cta-info--success" *ngIf="showPayoutReleasedInfo">
+      <i class="bi bi-check-circle-fill"></i>
+      Payout released.
+    </div>
+
   </div>
 
 </div>

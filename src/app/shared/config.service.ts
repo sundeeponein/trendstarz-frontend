@@ -208,6 +208,7 @@ export class ConfigService {
     gstPercent?: number;
     paymentUpiId?: string;
     submissionApprovalWaitHours?: number;
+    submissionAutoCompleteGraceHours?: number;
     payoutReleaseWaitHours?: number;
     showSearchLink: boolean;
     showRegisterInfluencerLink: boolean;
@@ -229,6 +230,7 @@ export class ConfigService {
           gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
           paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
           submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
+          submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48,
           payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
           showSearchLink: data?.showSearchLink !== false,
           showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
@@ -241,6 +243,7 @@ export class ConfigService {
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
         platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak',
         submissionApprovalWaitHours: 24,
+        submissionAutoCompleteGraceHours: 48,
         payoutReleaseWaitHours: 24,
         showSearchLink: true,
         showRegisterInfluencerLink: true,

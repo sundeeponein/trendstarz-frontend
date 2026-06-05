@@ -71,12 +71,21 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return s;
   }
 
+  private resolveInviteDisplayStatus(invite: any): string {
+    if (String(invite?.payoutStatus || '').toLowerCase() === 'paid') {
+      return 'approved';
+    }
+    return this.normalizeSubmissionStatus(invite?.status || '');
+  }
+
   screenshotUploading = false;
   insightsUploading = false;
   submitting = false;
   submitted = false;
   error = '';
   existingSubmission: any = null;
+  submissionApprovalWaitHours = 24;
+  submissionAutoCompleteGraceHours = 48;
 
   // Insights timing lock
   selectedPostDate: Date | null = null;
@@ -84,6 +93,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   insightsCountdown = '';
   startingWork = false;
   private countdownInterval: any = null;
+  private reviewStatusInterval: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -100,6 +110,20 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     this.campaignTitle = nav.get('campaignTitle') || 'Campaign';
     this.brandName = nav.get('brandName') || '';
     this.inviteStatus = nav.get('inviteStatus') || 'working';
+
+    this.config.getAppSettings().subscribe({
+      next: (settings: any) => {
+        const submissionHours = Number(settings?.submissionApprovalWaitHours);
+        const autoCompleteHours = Number(settings?.submissionAutoCompleteGraceHours);
+        this.submissionApprovalWaitHours = Number.isFinite(submissionHours) && submissionHours >= 0 ? submissionHours : 24;
+        this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 48;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.submissionApprovalWaitHours = 24;
+        this.submissionAutoCompleteGraceHours = 48;
+      },
+    });
 
     // Load invite + campaign info, then existing submission
     if (this.inviteId) {
@@ -122,8 +146,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             // Sync real invite status from backend (overrides query param)
             // after campaign type is known so non-paid acceptance can be
             // represented as collaboration-confirmed on this page.
-            if (res?.invite?.status) {
-              this.inviteStatus = this.normalizeSubmissionStatus(res.invite.status);
+            if (res?.invite?.status || res?.invite?.payoutStatus) {
+              this.inviteStatus = this.resolveInviteDisplayStatus(res.invite);
             }
             // Collect platforms from socialMedia (enabled content types)
             this.campaignSocialMedia = campaign.socialMedia || [];
@@ -163,6 +187,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
           if (res?.submission) {
             this.existingSubmission = res.submission;
             this.prefillFromSubmission(res.submission);
+            this.startReviewStatusTicker();
           }
         },
         error: () => {}
@@ -404,10 +429,10 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   get readOnlyStatusMessage(): string {
     if (this.inviteStatus === 'submitted') {
-      return 'Your post is submitted and now under review. Your submission is locked and cannot be edited.';
+      return this.submissionReviewStatusMessage;
     }
     if (this.inviteStatus === 'completed') {
-      return 'Your post was approved. Payout is pending admin release.';
+      return 'Your post was approved. Payout is pending for release.';
     }
     if (this.inviteStatus === 'approved') {
       return 'Payout has been released. Your submission is locked and cannot be edited.';
@@ -416,6 +441,71 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       return 'This submission is under review due to a dispute. Your submission is locked and cannot be edited.';
     }
     return `This campaign has been ${this.inviteStatus}. Your submission is locked and cannot be edited.`;
+  }
+
+  get submissionPostedAt(): Date | null {
+    const candidates = [
+      this.existingSubmission?.submittedAt,
+      this.existingSubmission?.createdAt,
+      this.existingSubmission?.updatedAt,
+    ];
+    for (const value of candidates) {
+      if (!value) continue;
+      const dt = new Date(value);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+    return null;
+  }
+
+  get submissionPostedAtText(): string {
+    return this.formatDateTime(this.submissionPostedAt) || 'posted time unavailable';
+  }
+
+  get submissionReviewUnlockAt(): Date | null {
+    const postedAt = this.submissionPostedAt;
+    if (!postedAt) return null;
+    return new Date(postedAt.getTime() + this.submissionApprovalWaitHours * 60 * 60 * 1000);
+  }
+
+  get submissionAutoCompleteAt(): Date | null {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return null;
+    return new Date(unlockAt.getTime() + this.submissionAutoCompleteGraceHours * 60 * 60 * 1000);
+  }
+
+  get submissionReviewStatusMessage(): string {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) {
+      return 'Your post is submitted and now under review. Your submission is locked and cannot be edited.';
+    }
+    const waitText = this.formatRemainingMs(unlockAt.getTime() - Date.now());
+    const autoText = this.formatDateTime(this.submissionAutoCompleteAt) || 'auto-complete time unavailable';
+    if (waitText === 'now') {
+      return `Posted on ${this.submissionPostedAtText}. Host review is open. If the host does not mark completed or raise an issue, this will auto-complete at ${autoText}.`;
+    }
+    return `Posted on ${this.submissionPostedAtText}. Host can mark completed or raise an issue in ${waitText}. If no response, this will auto-complete at ${autoText}.`;
+  }
+
+  private formatDateTime(value: Date | null): string {
+    if (!value) return '';
+    return value.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  private formatRemainingMs(ms: number): string {
+    if (ms <= 0) return 'now';
+    const totalMinutes = Math.max(1, Math.floor(ms / 60000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours <= 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
   }
 
   canSubmit(): boolean {
@@ -497,6 +587,19 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.countdownInterval) clearInterval(this.countdownInterval);
+    if (this.reviewStatusInterval) clearInterval(this.reviewStatusInterval);
+  }
+
+  private startReviewStatusTicker() {
+    if (this.reviewStatusInterval) return;
+    this.reviewStatusInterval = setInterval(() => {
+      if (this.inviteStatus !== 'submitted') {
+        clearInterval(this.reviewStatusInterval);
+        this.reviewStatusInterval = null;
+        return;
+      }
+      this.cdr.markForCheck();
+    }, 60000);
   }
 
   // Returns true when insights (screenshot + metrics) are still locked

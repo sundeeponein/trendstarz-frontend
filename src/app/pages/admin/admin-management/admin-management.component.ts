@@ -302,6 +302,7 @@ export class AdminManagementComponent implements OnInit {
     platformFeePercent: 0,
     gstPercent: 0,
     submissionApprovalWaitHours: 24,
+    submissionAutoCompleteGraceHours: 48,
     payoutReleaseWaitHours: 24,
     earlyAccessAssignmentMode: 'manual',
     // Commission percentages for badge types (applicable when badge is assigned)
@@ -458,6 +459,7 @@ export class AdminManagementComponent implements OnInit {
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
+          this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
           this.earlyAccessLastRunAt = data?.earlyAccessLastRunAt || null;

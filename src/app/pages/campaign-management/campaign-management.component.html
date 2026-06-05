@@ -284,6 +284,9 @@
                 [initialPostDate]="selectedInvitePostDates[inv._id]"
                 [initialContentTypeKey]="selectedInviteContentType[inv._id]"
                 [initialPayout]="defaultPayout"
+                [submissionApprovalWaitHours]="submissionApprovalWaitHours"
+                [submissionAutoCompleteGraceHours]="submissionAutoCompleteGraceHours"
+                [payoutReleaseWaitHours]="payoutReleaseWaitHours"
                 [showViewDetails]="photographerInviteTab !== 'missed' && photographerInviteTab !== 'declined'"
                 (postDateChange)="onPhotographerCardPostDateChange(inv._id, $event)"
                 (contentTypeChange)="onPhotographerCardContentTypeChange(inv._id, $event)"
@@ -428,6 +431,9 @@
                 [initialPostDate]="selectedInvitePostDates[inv._id]"
                 [initialContentTypeKey]="selectedInviteContentType[inv._id]"
                 [initialPayout]="defaultPayout"
+                [submissionApprovalWaitHours]="submissionApprovalWaitHours"
+                [submissionAutoCompleteGraceHours]="submissionAutoCompleteGraceHours"
+                [payoutReleaseWaitHours]="payoutReleaseWaitHours"
                 [showViewDetails]="myInviteTab !== 'missed' && myInviteTab !== 'declined'"
                 (postDateChange)="onCardPostDateChange(inv._id, $event)"
                 (contentTypeChange)="onCardContentTypeChange(inv._id, $event)"
@@ -986,6 +992,36 @@
                     <div class="sub-review-area" *ngIf="sub.status === 'submitted'">
                       <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for recipient..."
                         [(ngModel)]="submissionFeedback[sub.inviteId]"></textarea>
+                      <div class="sub-dispute-form" *ngIf="canDisputeSubmission(sub)">
+                        <div class="sub-dispute-form__title">
+                          <i class="bi bi-flag"></i> Raise Issue
+                        </div>
+                        <select class="sub-dispute-field"
+                          [(ngModel)]="submissionDisputeIssueReason[sub.inviteId]">
+                          <option value="">Select issue reason *</option>
+                          <option *ngFor="let reason of submissionDisputeReasonOptions" [value]="reason">{{ reason }}</option>
+                        </select>
+                        <textarea class="sub-dispute-field" rows="3"
+                          placeholder="Describe the issue * (minimum 20 characters)"
+                          [(ngModel)]="submissionDisputeReason[sub.inviteId]"></textarea>
+                        <div class="sub-dispute-evidence">
+                          <label class="sub-dispute-upload">
+                            <i class="bi bi-paperclip"></i>
+                            <span>{{ submissionDisputeEvidenceUrl[sub.inviteId] ? 'Replace evidence screenshot' : 'Upload evidence screenshot (optional)' }}</span>
+                            <input type="file" accept="image/*"
+                              [disabled]="submissionDisputeEvidenceUploading.has(sub.inviteId)"
+                              (change)="onSubmissionDisputeEvidenceChange(sub.inviteId, $event)" />
+                          </label>
+                          <span class="sub-dispute-uploading" *ngIf="submissionDisputeEvidenceUploading.has(sub.inviteId)">
+                            Uploading...
+                          </span>
+                          <a *ngIf="submissionDisputeEvidenceUrl[sub.inviteId]"
+                            [href]="submissionDisputeEvidenceUrl[sub.inviteId]"
+                            target="_blank" rel="noopener">
+                            View evidence
+                          </a>
+                        </div>
+                      </div>
                       <div class="sub-review-actions">
                         <button class="btn-sub-approve"
                           [disabled]="reviewLoading.has(sub.inviteId) || !canApproveSubmission(sub)"
@@ -993,23 +1029,39 @@
                           (click)="reviewSubmission(sub.inviteId, c._id, 'approve')">
                           <i class="bi bi-check-circle"></i> Mark Completed
                         </button>
-                        <button class="btn-sub-dispute" [disabled]="reviewLoading.has(sub.inviteId)"
+                        <button class="btn-sub-dispute"
+                          [disabled]="reviewLoading.has(sub.inviteId) || !canDisputeSubmission(sub)"
+                          [title]="!canDisputeSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : 'Raise only for content mismatch, missing hashtags, or quality issues'"
                           (click)="reviewSubmission(sub.inviteId, c._id, 'dispute')">
-                          <i class="bi bi-flag"></i> Raise Issue
+                          <i class="bi bi-flag"></i> Submit Issue
                         </button>
                       </div>
-                      <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub)">
+                      <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub) && !isSubmissionAutoCompleteWindowExpired(sub)">
                         <i class="bi bi-clock-history"></i>
                         Review period active. Completion confirmation unlocks in {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
+                      </div>
+                      <div class="sub-metrics-empty" *ngIf="isSubmissionAutoCompleteWindowExpired(sub)">
+                        <i class="bi bi-check-circle"></i>
+                        Auto-complete window reached. This submission is being completed automatically.
+                      </div>
+                      <div class="sub-metrics-empty" *ngIf="canApproveSubmission(sub)">
+                        <i class="bi bi-clock-history"></i>
+                        Host review is open. If no action is taken, this will auto-complete at {{ getSubmissionAutoCompleteAtText(sub) }}.
                       </div>
                     </div>
 
                     <div class="sub-completed-feedback" *ngIf="sub.status === 'approved'">
                       <i class="bi bi-check-circle-fill text-success"></i>
-                      Post Approved{{ sub.brandFeedback ? ': ' + sub.brandFeedback : '' }}
+                      {{ sub.autoCompletedAt ? 'Auto Completed' : 'Post Approved' }}{{ sub.brandFeedback ? ': ' + sub.brandFeedback : '' }}
                     </div>
                     <div class="sub-disputed-reason" *ngIf="sub.status === 'disputed'">
-                      <i class="bi bi-exclamation-triangle"></i> Under Review: {{ sub.disputeReason || 'Quality issue' }}
+                      <i class="bi bi-exclamation-triangle"></i>
+                      <span>
+                        Under Review:
+                        <strong *ngIf="sub.disputeIssueReason">{{ sub.disputeIssueReason }}</strong>
+                        {{ sub.disputeReason || 'Quality issue' }}
+                        <a *ngIf="sub.disputeEvidenceUrl" [href]="sub.disputeEvidenceUrl" target="_blank" rel="noopener">View evidence</a>
+                      </span>
                     </div>
                   </div>
                 </ng-container>

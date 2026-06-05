@@ -17,7 +17,6 @@ import { TierInfoService } from '../../shared/components/tier-info-modal/tier-in
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
-import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
 
@@ -245,7 +244,6 @@ export class InfluencerRegistrationComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private guidelinesService: ImageGuidelinesService,
-    private firebaseAuth: FirebaseAuthService,
   ) {}
 
   ngOnInit(): void {
@@ -1008,13 +1006,16 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.registerInfluencer(payload).subscribe({
       next: async () => {
         try {
-          await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
+          await firstValueFrom(this.configService.sendEmailVerificationLink(raw.email));
         } catch (error: any) {
           this.ngZone.run(() => {
             this.pendingVerificationEmail = raw.email;
             this.showEmailVerificationPrompt = true;
             this.emailVerificationSent = false;
-            this.emailVerificationError = this.firebaseAuth.getFirebaseAuthErrorMessage(error);
+            this.emailVerificationError =
+              error?.error?.message ||
+              error?.message ||
+              'Verification email could not be sent.';
             this.registrationError = '';
             this.registrationEmailSendFailed = true;
             this.isSubmitting = false;

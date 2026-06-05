@@ -46,6 +46,9 @@ export class CampaignInviteCardComponent {
   @Input() showViewDetails = true;
   @Input() qualifyingPlatforms: string[] | null = null;
   @Input() influencerSocialMedia: Array<{ platform: string; tier: string }> | null = null;
+  @Input() submissionApprovalWaitHours = 24;
+  @Input() submissionAutoCompleteGraceHours = 48;
+  @Input() payoutReleaseWaitHours = 24;
   /** initial value for the post-date input (one-shot seed) */
   @Input() set initialPostDate(v: string | undefined) {
     if (v && !this.postDate) this.postDate = v;
@@ -191,6 +194,129 @@ export class CampaignInviteCardComponent {
   get showViewSubmission(): boolean {
     return ['submitted', 'completed', 'approved', 'disputed'].includes(this.status);
   }
+  get showSubmissionReviewInfo(): boolean {
+    return this.status === 'submitted';
+  }
+  get submissionPostedAt(): Date | null {
+    const candidates = [
+      this.invite?.latestSubmission?.submittedAt,
+      this.invite?.submission?.submittedAt,
+      this.invite?.submittedAt,
+      this.invite?.latestSubmission?.createdAt,
+      this.invite?.submission?.createdAt,
+      this.invite?.updatedAt,
+      this.invite?.createdAt,
+    ];
+    for (const value of candidates) {
+      if (!value) continue;
+      const dt = new Date(value);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+    return null;
+  }
+  get submissionPostedAtText(): string {
+    const postedAt = this.submissionPostedAt;
+    if (!postedAt) return 'posted time unavailable';
+    return postedAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get submissionReviewUnlockAt(): Date | null {
+    const postedAt = this.submissionPostedAt;
+    if (!postedAt) return null;
+    const hours = Number(this.submissionApprovalWaitHours);
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+    return new Date(postedAt.getTime() + safeHours * 60 * 60 * 1000);
+  }
+  get submissionReviewWaitText(): string {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return `after ${this.formatHoursLabel(this.submissionApprovalWaitHours)} from posting`;
+    const remainingMs = unlockAt.getTime() - Date.now();
+    if (remainingMs <= 0) return 'now';
+    return this.formatRemainingMs(remainingMs);
+  }
+  get submissionReviewUnlockAtText(): string {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return 'completion time unavailable';
+    return unlockAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get submissionAutoCompleteAt(): Date | null {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return null;
+    const hours = Number(this.submissionAutoCompleteGraceHours);
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 48;
+    return new Date(unlockAt.getTime() + safeHours * 60 * 60 * 1000);
+  }
+  get submissionAutoCompleteAtText(): string {
+    const autoAt = this.submissionAutoCompleteAt;
+    if (!autoAt) return 'auto-complete time unavailable';
+    return autoAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get submissionReviewMessage(): string {
+    const waitText = this.submissionReviewWaitText;
+    if (waitText === 'now') {
+      return `Host review window is open. If the host does not mark completed or raise an issue, this will auto-complete at ${this.submissionAutoCompleteAtText}.`;
+    }
+    return `Host can mark completed or raise an issue in ${waitText} (at ${this.submissionReviewUnlockAtText}). Auto-complete if no response by ${this.submissionAutoCompleteAtText}.`;
+  }
+  get showPayoutPendingInfo(): boolean {
+    return this.status === 'completed';
+  }
+  get showPayoutReleasedInfo(): boolean {
+    return this.status === 'approved';
+  }
+  get payoutReleaseUnlockAt(): Date | null {
+    const completedAt = this.inviteCompletedAt;
+    if (!completedAt) return null;
+    const hours = Number(this.payoutReleaseWaitHours);
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+    return new Date(completedAt.getTime() + safeHours * 60 * 60 * 1000);
+  }
+  get payoutReleaseWaitText(): string {
+    const unlockAt = this.payoutReleaseUnlockAt;
+    if (!unlockAt) return `after ${this.formatHoursLabel(this.payoutReleaseWaitHours)} from post approval`;
+    const remainingMs = unlockAt.getTime() - Date.now();
+    if (remainingMs <= 0) return 'now';
+    return this.formatRemainingMs(remainingMs);
+  }
+  get payoutReleaseUnlockAtText(): string {
+    const unlockAt = this.payoutReleaseUnlockAt;
+    if (!unlockAt) return 'release time unavailable';
+    return unlockAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get payoutPendingMessage(): string {
+    const waitText = this.payoutReleaseWaitText;
+    if (waitText === 'now') {
+      return 'Payout window is open. Waiting for admin release.';
+    }
+    return `Payout can be released in ${waitText} (at ${this.payoutReleaseUnlockAtText}).`;
+  }
   /** Reminder badge — only worth showing while invite still actionable. */
   get showReminderBadge(): boolean {
     const count = Number(this.invite?.remindersSent || 0);
@@ -199,6 +325,36 @@ export class CampaignInviteCardComponent {
     return ['pending', 'invited', 'accepted', 'payment_confirmed', 'working'].includes(this.status);
   }
   get reminderCount(): number { return Number(this.invite?.remindersSent || 0); }
+
+  private get inviteCompletedAt(): Date | null {
+    const candidates = [
+      this.invite?.completedAt,
+      this.invite?.approvedAt,
+      this.invite?.updatedAt,
+    ];
+    for (const value of candidates) {
+      if (!value) continue;
+      const dt = new Date(value);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+    return null;
+  }
+
+  private formatHoursLabel(hours: number): string {
+    const value = Number(hours);
+    if (!Number.isFinite(value)) return '24 hours';
+    if (value === 1) return '1 hour';
+    return `${value} hours`;
+  }
+
+  private formatRemainingMs(ms: number): string {
+    const totalMinutes = Math.max(1, Math.floor(ms / 60000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours <= 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  }
 
   // ── Brand-side fulfillment visibility (read-only on influencer card) ──
   get productFulfillment(): any { return this.invite?.productFulfillment || null; }

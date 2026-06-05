@@ -553,6 +553,12 @@
     border: 1px solid #a5d6a7;
   }
 
+  &--pending {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+
   &--dispute {
     background: #fff7ed;
     color: #9a3412;

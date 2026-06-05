@@ -488,17 +488,21 @@
               Control when hosts can mark submitted posts complete and when admin/auto payout can release funds.
             </p>
             <div class="row g-2 mb-2">
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-md-4">
                 <label class="form-label" style="font-size:0.9rem;">Host mark completed after (hours)</label>
                 <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.submissionApprovalWaitHours" />
               </div>
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Auto-complete if host silent after (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.submissionAutoCompleteGraceHours" />
+              </div>
+              <div class="col-12 col-md-4">
                 <label class="form-label" style="font-size:0.9rem;">Admin payout release after (hours)</label>
                 <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.payoutReleaseWaitHours" />
               </div>
             </div>
             <small class="text-light-emphasis d-block">
-              Use 0 for immediate release after the previous step is complete.
+              Auto-complete starts after the host mark-completed lock expires. Use 0 for immediate release after the previous step is complete.
             </small>
           </div>
 

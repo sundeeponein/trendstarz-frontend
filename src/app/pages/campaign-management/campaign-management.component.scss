@@ -3256,6 +3256,61 @@
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
+.sub-dispute-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0.55rem 0;
+  padding: 0.65rem;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff7f7;
+}
+
+.sub-dispute-form__title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #991b1b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.sub-dispute-field {
+  width: 100%;
+  border: 1px solid #fca5a5;
+  border-radius: 7px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  background: #fff;
+  color: #1f2937;
+}
+
+.sub-dispute-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.sub-dispute-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #b91c1c;
+  font-weight: 600;
+  cursor: pointer;
+
+  input {
+    display: none;
+  }
+}
+
+.sub-dispute-uploading {
+  color: #6b7280;
+}
+
 .sub-completed-feedback, .sub-disputed-reason {
   margin-top: 0.5rem;
   font-size: 0.82rem;

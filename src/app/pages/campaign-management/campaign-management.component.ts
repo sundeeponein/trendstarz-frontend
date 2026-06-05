@@ -42,6 +42,8 @@ type CollaborationSubview = 'invited' | 'created';
 export class CampaignManagementComponent implements OnInit, OnDestroy {
   private static readonly REFRESH_TIMEOUT_MS = 10000;
   submissionApprovalWaitHours = 24;
+  submissionAutoCompleteGraceHours = 48;
+  payoutReleaseWaitHours = 24;
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
   private completionEventsTracked = new Set<string>();
@@ -190,7 +192,19 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   expandInvitesLoading = new Set<string>();
   campaignSubmissionsMap = new Map<string, any[]>();
   submissionFeedback: { [inviteId: string]: string } = {};
+  submissionDisputeIssueReason: { [inviteId: string]: string } = {};
   submissionDisputeReason: { [inviteId: string]: string } = {};
+  submissionDisputeEvidenceUrl: { [inviteId: string]: string } = {};
+  submissionDisputeEvidenceUploading = new Set<string>();
+  readonly submissionDisputeReasonOptions = [
+    'Missing hashtag',
+    'Missing mention',
+    'Wrong platform',
+    'Wrong content type',
+    'Content removed',
+    'Wrong account',
+    'Other',
+  ];
   reviewLoading = new Set<string>();
   expandedSubmissionIds = new Set<string>();
   private submissionApprovalTicker: ReturnType<typeof setInterval> | null = null;
@@ -1572,12 +1586,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.config.getAppSettings().subscribe({
       next: (settings: any) => {
-        const hours = Number(settings?.submissionApprovalWaitHours);
-        this.submissionApprovalWaitHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+        const submissionHours = Number(settings?.submissionApprovalWaitHours);
+        const autoCompleteHours = Number(settings?.submissionAutoCompleteGraceHours);
+        const payoutHours = Number(settings?.payoutReleaseWaitHours);
+        this.submissionApprovalWaitHours = Number.isFinite(submissionHours) && submissionHours >= 0 ? submissionHours : 24;
+        this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 48;
+        this.payoutReleaseWaitHours = Number.isFinite(payoutHours) && payoutHours >= 0 ? payoutHours : 24;
         this.cd.detectChanges();
       },
       error: () => {
         this.submissionApprovalWaitHours = 24;
+        this.submissionAutoCompleteGraceHours = 48;
+        this.payoutReleaseWaitHours = 24;
       },
     });
 
@@ -4540,6 +4560,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.toast.error(this.getSubmissionApprovalLockMessage(submission));
       return;
     }
+    if (action === 'dispute' && !this.canDisputeSubmission(submission)) {
+      this.toast.error(this.getSubmissionApprovalLockMessage(submission));
+      return;
+    }
 
     if (this.reviewLoading.has(inviteId)) return;
     this.reviewLoading.add(inviteId);
@@ -4548,7 +4572,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       payload.feedback = this.submissionFeedback[inviteId];
     }
     if (action === 'dispute') {
-      payload.disputeReason = this.submissionDisputeReason[inviteId] || 'Quality does not meet requirements';
+      const issueReason = String(this.submissionDisputeIssueReason[inviteId] || '').trim();
+      const issueDescription = String(this.submissionDisputeReason[inviteId] || '').trim();
+      if (!issueReason) {
+        this.reviewLoading.delete(inviteId);
+        this.toast.error('Please select an issue reason.');
+        return;
+      }
+      if (issueDescription.length < 20) {
+        this.reviewLoading.delete(inviteId);
+        this.toast.error('Issue description must be at least 20 characters.');
+        return;
+      }
+      payload.disputeIssueReason = issueReason;
+      payload.disputeReason = issueDescription;
+      payload.disputeEvidenceUrl = this.submissionDisputeEvidenceUrl[inviteId] || '';
       payload.feedback = this.submissionFeedback[inviteId] || '';
     }
     this.config.reviewCampaignSubmission(inviteId, payload).subscribe({
@@ -4564,6 +4602,34 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         });
       },
       error: () => { this.reviewLoading.delete(inviteId); }
+    });
+  }
+
+  onSubmissionDisputeEvidenceChange(inviteId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+    this.submissionDisputeEvidenceUploading.add(inviteId);
+    this.config.uploadImage(formData).subscribe({
+      next: (res: any) => {
+        const url = res?.url || res?.secure_url || '';
+        if (!url) {
+          this.toast.error('Evidence upload failed. Please try again.');
+          return;
+        }
+        this.submissionDisputeEvidenceUrl[inviteId] = url;
+        this.toast.success('Evidence uploaded.');
+      },
+      error: () => {
+        this.toast.error('Evidence upload failed. Please try again.');
+      },
+      complete: () => {
+        this.submissionDisputeEvidenceUploading.delete(inviteId);
+        this.cd.detectChanges();
+      },
     });
   }
 
@@ -4706,11 +4772,22 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return new Date(anchorMs + this.submissionApprovalWaitHours * 60 * 60 * 1000);
   }
 
+  getSubmissionAutoCompleteAt(submission: any): Date | null {
+    const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
+    if (!unlockAt) return null;
+    return new Date(unlockAt.getTime() + this.submissionAutoCompleteGraceHours * 60 * 60 * 1000);
+  }
+
   canApproveSubmission(submission: any): boolean {
     if (!submission || String(submission?.status || '').toLowerCase() !== 'submitted') return false;
     const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
     if (!unlockAt) return false;
-    return Date.now() >= unlockAt.getTime();
+    const autoCompleteAt = this.getSubmissionAutoCompleteAt(submission);
+    return Date.now() >= unlockAt.getTime() && (!autoCompleteAt || Date.now() < autoCompleteAt.getTime());
+  }
+
+  canDisputeSubmission(submission: any): boolean {
+    return this.canApproveSubmission(submission);
   }
 
   getSubmissionApprovalWaitText(submission: any): string {
@@ -4747,8 +4824,29 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       return `Review period active. Completion confirmation unlocks in ${this.formatHoursLabel(this.submissionApprovalWaitHours)} after influencer submission.`;
     }
     const waitText = this.getSubmissionApprovalWaitText(submission);
-    if (waitText === 'now') return 'Mark Completed is now available. Please try again.';
+    if (this.isSubmissionAutoCompleteWindowExpired(submission)) {
+      return 'Auto-complete window reached. This submission is being completed automatically.';
+    }
+    if (waitText === 'now') return 'Mark Completed and Raise Issue are now available.';
     return `Review period active. Completion confirmation unlocks in ${waitText} (at ${this.getSubmissionApprovalUnlockAtText(submission)}).`;
+  }
+
+  isSubmissionAutoCompleteWindowExpired(submission: any): boolean {
+    const autoCompleteAt = this.getSubmissionAutoCompleteAt(submission);
+    return !!autoCompleteAt && Date.now() >= autoCompleteAt.getTime();
+  }
+
+  getSubmissionAutoCompleteAtText(submission: any): string {
+    const autoCompleteAt = this.getSubmissionAutoCompleteAt(submission);
+    if (!autoCompleteAt) return 'auto-complete time unavailable';
+    return autoCompleteAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
   }
 
   private formatHoursLabel(hours: number): string {
