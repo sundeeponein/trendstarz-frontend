@@ -104,6 +104,33 @@ export class AdminUserTableComponent implements OnInit {
     return handle ? `@${handle}` : '-';
   }
 
+  getUserStatusKey(user: any): 'accepted' | 'pending' | 'rejected' | 'deleted' | 'other' {
+    if (user?.isDeleted === true || String(user?.isDeleted || '').toLowerCase() === 'true') return 'deleted';
+    const status = String(user?.status || '').trim().toLowerCase();
+    if (['accepted', 'approved', 'active'].includes(status)) return 'accepted';
+    if (['pending', 'pending_verification', 'pending_review', 'new'].includes(status)) return 'pending';
+    if (['rejected', 'declined', 'blocked', 'suspended'].includes(status)) return 'rejected';
+    return 'other';
+  }
+
+  getUserStatusLabel(user: any): string {
+    const key = this.getUserStatusKey(user);
+    if (key === 'accepted') return 'Accepted';
+    if (key === 'pending') return 'Pending';
+    if (key === 'rejected') return 'Rejected';
+    if (key === 'deleted') return 'Deleted';
+    const raw = String(user?.status || '').trim();
+    return raw ? raw.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Unknown';
+  }
+
+  getUserStatusBadgeClass(user: any): string {
+    return `status-${this.getUserStatusKey(user)}`;
+  }
+
+  getUserStatusRowClass(user: any): string {
+    return `user-row--${this.getUserStatusKey(user)}`;
+  }
+
   getUserCategoryList(user: any): string[] {
     if (Array.isArray(user?.categories) && user.categories.length) return user.categories;
     if (Array.isArray(user?.skills) && user.skills.length) return user.skills;

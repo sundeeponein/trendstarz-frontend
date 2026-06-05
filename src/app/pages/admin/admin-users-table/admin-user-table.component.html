@@ -70,6 +70,15 @@
     {{ firebaseImportMessage }}
   </div>
 
+  <div class="status-legend" aria-label="User status legend">
+    <span class="status-legend-label">Status:</span>
+    <span class="user-status-badge status-accepted">Accepted</span>
+    <span class="user-status-badge status-pending">Pending</span>
+    <span class="user-status-badge status-rejected">Rejected / Declined</span>
+    <span class="user-status-badge status-deleted">Deleted</span>
+    <span class="user-status-badge status-other">Other</span>
+  </div>
+
   <div class="users-table-shell">
     <table class="users-table" *ngIf="getPagedUsers().length > 0; else emptyState">
       <thead>
@@ -83,7 +92,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of getPagedUsers()">
+        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)">
           <td>
             <img
               class="avatar"
@@ -93,7 +102,12 @@
             />
           </td>
           <td>
-            <div class="user-title">{{ getUserDisplayName(user) }}</div>
+            <div class="user-title">
+              {{ getUserDisplayName(user) }}
+              <span class="user-status-badge" [ngClass]="getUserStatusBadgeClass(user)">
+                {{ getUserStatusLabel(user) }}
+              </span>
+            </div>
             <div class="user-sub">{{ getUserHandle(user) }}</div>
           </td>
           <td>
@@ -120,7 +134,7 @@
               {{ getTierValue(user) === 'premium' ? 'PREMIUM' : 'FREE' }}
             </span>
           </td>
-          <td>
+          <td class="action-cell">
             <div class="row-actions">
               <button class="btn btn-outline-success border-0" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
                 <i class="bi bi-check-circle"></i>
