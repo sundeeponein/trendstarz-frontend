@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { buildSocialProfileUrl } from '../../social-handle.util';
+import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
 
 export type ProfileSocialPlatformsVariant = 'brand' | 'photographer' | 'influencer';
 
@@ -52,6 +52,10 @@ export class ProfileSocialPlatformsComponent {
 
   getSocialUrl(sm: any): string {
     return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
+  }
+
+  getSocialHandle(sm: any): string {
+    return normalizeSocialHandle(sm?.handle, sm?.platform || '') || normalizeSocialHandle(sm?.url, sm?.platform || '');
   }
 
   getContentTypes(sm: any): any[] {

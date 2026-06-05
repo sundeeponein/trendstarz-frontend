@@ -28,6 +28,33 @@ export function normalizeSocialHandle(value: unknown, platformName = ''): string
   return text.replace(/@/g, '').replace(/\s+/g, '');
 }
 
+export function socialHandleAllowedPattern(platformName = ''): RegExp {
+  const platform = String(platformName || '').toLowerCase();
+  if (platform.includes('youtube')) return /^[a-zA-Z0-9._@-]+$/;
+  if (platform.includes('linkedin')) return /^[a-zA-Z0-9-]+$/;
+  if (platform.includes('twitter') || platform === 'x') return /^[a-zA-Z0-9_]+$/;
+  if (platform.includes('instagram') || platform.includes('facebook')) return /^[a-zA-Z0-9._]+$/;
+  return /^[a-zA-Z0-9._-]+$/;
+}
+
+export function socialHandleAllowedCharacters(platformName = ''): string {
+  const platform = String(platformName || '').toLowerCase();
+  if (platform.includes('youtube')) return 'letters, numbers, dot (.), underscore (_), hyphen (-), and @';
+  if (platform.includes('linkedin')) return 'letters, numbers, and hyphen (-)';
+  if (platform.includes('twitter') || platform === 'x') return 'letters, numbers, and underscore (_)';
+  if (platform.includes('instagram') || platform.includes('facebook')) return 'letters, numbers, dot (.), and underscore (_)';
+  return 'letters, numbers, dot (.), underscore (_), and hyphen (-)';
+}
+
+export function validateSocialHandle(value: unknown, platformName = ''): string | null {
+  const clean = normalizeSocialHandle(value, platformName);
+  if (!clean) return 'Username is required.';
+  if (!socialHandleAllowedPattern(platformName).test(clean)) {
+    return `${platformName || 'Social'} username can only contain ${socialHandleAllowedCharacters(platformName)}.`;
+  }
+  return null;
+}
+
 export function buildSocialProfileUrl(platformName: string, handle: unknown): string {
   const clean = normalizeSocialHandle(handle, platformName);
   if (!clean) return '';

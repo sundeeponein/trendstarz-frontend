@@ -117,6 +117,7 @@ export class CampaignFormComponent implements OnInit {
   confirmDialogCancelText = 'Cancel';
   confirmDialogVariant: 'primary' | 'danger' | 'warning' = 'primary';
   private confirmDialogCallback: (() => void) | null = null;
+  private confirmDialogPurpose: 'save-draft-on-close' | 'upload-failure' | null = null;
   get trustLabels(): string[] {
     const recipient = this.inviteRecipientLabelPlural.toLowerCase();
     return [
@@ -2217,8 +2218,9 @@ export class CampaignFormComponent implements OnInit {
       this.confirmDialogTitle = 'Save Campaign as Draft?';
       this.confirmDialogMessage = 'You have unsaved campaign changes. Save as a draft so you can continue later?';
       this.confirmDialogConfirmText = 'Save as Draft';
-      this.confirmDialogCancelText = 'Discard';
+      this.confirmDialogCancelText = 'Dismiss';
       this.confirmDialogVariant = 'primary';
+      this.confirmDialogPurpose = 'save-draft-on-close';
       this.confirmDialogCallback = () => this.saveDraftWithoutValidation();
       this.confirmDialogOpen = true;
       this.cd.detectChanges();
@@ -2233,13 +2235,16 @@ export class CampaignFormComponent implements OnInit {
       this.confirmDialogCallback();
       this.confirmDialogCallback = null;
     }
+    this.confirmDialogPurpose = null;
   }
 
   onConfirmDialogCancel() {
+    const purpose = this.confirmDialogPurpose;
     this.confirmDialogOpen = false;
-    // If this was a save-draft prompt on cancel, actually close now
-    if (this.confirmDialogCallback === this.saveDraftWithoutValidation) {
-      this.confirmDialogCallback = null;
+    this.confirmDialogCallback = null;
+    this.confirmDialogPurpose = null;
+    // If this was a save-draft prompt on close, discard changes and close now.
+    if (purpose === 'save-draft-on-close') {
       this.cancel.emit();
     }
   }
@@ -2287,6 +2292,7 @@ export class CampaignFormComponent implements OnInit {
     this.confirmDialogConfirmText = 'Save as Draft';
     this.confirmDialogCancelText = 'Keep Editing';
     this.confirmDialogVariant = 'warning';
+    this.confirmDialogPurpose = 'upload-failure';
     this.confirmDialogCallback = () => this.handleImageUploadFailure();
     this.confirmDialogOpen = true;
     this.cd.detectChanges();

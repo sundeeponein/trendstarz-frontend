@@ -15,7 +15,7 @@ import { environment } from '../../../environments/environment';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
-import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 
 @Component({
   selector: 'app-photographer-profile',
@@ -42,6 +42,7 @@ export class PhotographerProfileComponent implements OnInit {
   loading = true;
   saving = false;
   saved = false;
+  submitted = false;
   errorMsg = '';
   isEditMode = false;
   currentStep: 1 | 2 | 3 = 1;
@@ -706,12 +707,18 @@ export class PhotographerProfileComponent implements OnInit {
     return socialHandleExample(platformName);
   }
 
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
+  }
+
   get platformsValid(): boolean {
     const selected = this.selectedPlatforms();
     if (selected.length === 0) return false;
     return selected.every((p: any) => {
       const pf = this.platformForms[p._id];
-      return pf && (pf.handle || '').trim() && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
+      return pf && !this.getSocialHandleError(p) && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
     });
   }
 
@@ -840,6 +847,7 @@ export class PhotographerProfileComponent implements OnInit {
 
   enableEdit(): void {
     this.isEditMode = true;
+    this.submitted = false;
     this.startingPriceRequiredError = false;
     this.form.enable({ emitEvent: false });
     this.emailEditRequested = !this.emailVerified;
@@ -854,6 +862,7 @@ export class PhotographerProfileComponent implements OnInit {
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.submitted = false;
     this.startingPriceRequiredError = false;
     this.emailEditRequested = false;
     if (this.originalFormValue) {
@@ -876,6 +885,7 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   onSave() {
+    this.submitted = true;
     if (!this.isEditMode || this.form.invalid || this.saving) return;
     if (this.selectedPlatforms().length > 0 && !this.platformsValid) {
       this.toast.error('Please select at least one content type and enter a starting rate.');
@@ -966,6 +976,7 @@ export class PhotographerProfileComponent implements OnInit {
       next: () => {
         this.saving = false;
         this.saved = true;
+        this.submitted = false;
         this.isEditMode = false;
         this.form.disable({ emitEvent: false });
         this.originalFormValue = this.form.getRawValue();

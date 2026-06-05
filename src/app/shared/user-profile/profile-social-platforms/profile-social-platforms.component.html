@@ -24,17 +24,17 @@
           </div>
         </div>
 
-        <div class="platform-handle-row" *ngIf="sm.handle">
+        <div class="platform-handle-row" *ngIf="getSocialHandle(sm) as handle">
           <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else handleText"
              [href]="getSocialUrl(sm)"
              target="_blank"
              rel="noopener noreferrer"
              class="platform-handle-link"
              (click)="emitPlatformClick(sm, $event)">
-            <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
+            <i class="bi bi-box-arrow-up-right"></i> &#64;{{ handle }}
           </a>
           <ng-template #handleText>
-            <span class="platform-handle-text" *ngIf="canOpen">&#64;{{ sm.handle }}</span>
+            <span class="platform-handle-text" *ngIf="canOpen">&#64;{{ handle }}</span>
             <span class="detail-locked" *ngIf="!canOpen"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
           </ng-template>
         </div>
@@ -73,7 +73,7 @@
             <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
             <div>
               <strong>{{ getSocialLabel(sm) }}</strong>
-              <div class="social-handle" *ngIf="sm.handle">&#64;{{ sm.handle }}</div>
+              <div class="social-handle" *ngIf="getSocialHandle(sm) as handle">&#64;{{ handle }}</div>
             </div>
           </a>
         </ng-container>

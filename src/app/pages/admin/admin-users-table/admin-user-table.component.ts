@@ -276,17 +276,20 @@ export class AdminUserTableComponent implements OnInit {
         const platform = this.resolveSocialPlatform(sm);
         const href = this.resolveSocialHref(sm, platform);
         const followers = this.parseCountValue(sm?.followersCount);
-        if (!href) return null;
-        const rawHandle = normalizeSocialHandle(sm?.handle, platform);
+        const rawHandle =
+          normalizeSocialHandle(sm?.handle, platform) ||
+          normalizeSocialHandle(sm?.url, platform);
         const label = this.getSocialLabel(platform);
+        const tierLabel = this.getSocialTierLabel(sm);
+        if (!href && !rawHandle && !tierLabel && platform === 'social') return null;
         return {
-          href,
+          href: href || '#',
           icon: this.getSocialIcon(platform),
           label,
           shortLabel: this.getSocialShortLabel(platform),
           handle: rawHandle ? `@${rawHandle}` : '-',
           followers,
-          tierLabel: this.getSocialTierLabel(sm),
+          tierLabel,
         };
       })
         .filter((item: any): item is { href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string; tierLabel: string } => !!item);

@@ -10,7 +10,7 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
-import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { firstValueFrom } from 'rxjs';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
@@ -413,12 +413,18 @@ export class PhotographerRegistrationComponent implements OnInit {
     return socialHandleExample(platformName);
   }
 
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
+  }
+
   get platformsValid(): boolean {
     const selected = this.selectedPlatforms();
     if (selected.length === 0) return false;
     return selected.every(p => {
       const pf = this.platformForms[p._id];
-      return pf && (pf.handle || '').trim() && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
+      return pf && !this.getSocialHandleError(p) && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
     });
   }
 

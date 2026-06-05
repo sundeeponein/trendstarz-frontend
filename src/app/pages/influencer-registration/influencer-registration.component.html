@@ -407,6 +407,7 @@
                         <label>{{ platform.name }} Username</label>
                         <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" [placeholder]="getSocialHandleExample(platform.name)" (blur)="stripAtSign(platform._id)" (ngModelChange)="refreshStepCompletion()" />
                         <small class="text-muted d-block mt-1">Enter only your username, not full profile URL. Example: {{ getSocialHandleExample(platform.name) }}</small>
+                        <div *ngIf="submitted && getSocialHandleError(platform)" class="text-danger mt-1">{{ getSocialHandleError(platform) }}</div>
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                            [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                            target="_blank" rel="noopener noreferrer" class="verify-profile-link">

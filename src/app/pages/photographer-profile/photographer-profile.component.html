@@ -305,6 +305,7 @@
                             [disabled]="!isEditMode"
                             (blur)="stripAtSign(platform._id)" [placeholder]="getSocialHandleExample(platform.name)" />
                           <small class="text-muted d-block mt-1" *ngIf="isEditMode">Enter only your username, not full profile URL. Example: {{ getSocialHandleExample(platform.name) }}</small>
+                          <div *ngIf="submitted && isEditMode && getSocialHandleError(platform)" class="text-danger mt-1">{{ getSocialHandleError(platform) }}</div>
                           <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                             [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                             target="_blank" rel="noopener noreferrer" class="verify-profile-link">

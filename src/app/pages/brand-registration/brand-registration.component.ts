@@ -16,7 +16,7 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
-import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample } from '../../shared/social-handle.util';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -540,7 +540,7 @@ export class BrandRegistrationComponent implements OnInit {
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !!this.getSocialHandleError(p) || !(pf.tier || '').trim();
     });
   }
 
@@ -576,6 +576,12 @@ export class BrandRegistrationComponent implements OnInit {
 
   getSocialHandleExample(platformName: string): string {
     return socialHandleExample(platformName);
+  }
+
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
   }
 
   addProductImage() {
