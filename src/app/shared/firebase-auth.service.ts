@@ -188,6 +188,28 @@ export class FirebaseAuthService {
     return this.verifyContactWithBackend(idToken, 'email');
   }
 
+  async syncEmailVerificationForLogin(email: string, password: string): Promise<boolean> {
+    if (!this.isConfigured()) return false;
+    const auth = this.getFirebaseAuth();
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const user = credential.user;
+    await reload(user);
+    if (!user.emailVerified) return false;
+    const idToken = await user.getIdToken(true);
+    await this.verifyContactWithBackend(idToken, 'email');
+    return true;
+  }
+
+  async getVerifiedLoginIdToken(email: string, password: string): Promise<string | null> {
+    if (!this.isConfigured()) return null;
+    const auth = this.getFirebaseAuth();
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const user = credential.user;
+    await reload(user);
+    if (!user.emailVerified) return null;
+    return user.getIdToken(true);
+  }
+
   async signOutFirebase(): Promise<void> {
     await signOut(this.getFirebaseAuth());
   }

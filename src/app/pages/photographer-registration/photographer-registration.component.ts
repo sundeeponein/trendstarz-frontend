@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
@@ -122,6 +123,7 @@ export class PhotographerRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
+    private firebaseAuth: FirebaseAuthService,
     private plansService: PlansService,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -693,11 +695,10 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.config.registerPhotographer(payload).subscribe({
       next: async () => {
         try {
-          await firstValueFrom(this.config.sendEmailVerificationLink(v.email));
+          await this.firebaseAuth.sendVerificationEmail(v.email, v.password);
         } catch (error: any) {
           this.registrationError =
-            error?.error?.message ||
-            error?.message ||
+            this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
             'Verification email could not be sent.';
           this.registrationEmailSendFailed = true;
           this.submitting = false;

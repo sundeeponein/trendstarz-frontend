@@ -9,6 +9,7 @@ import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
 
 
@@ -30,6 +31,7 @@ export class LoginComponent {
     private router: Router,
     private session: SessionService,
     private configService: ConfigService,
+    private firebaseAuth: FirebaseAuthService,
     private toast: ToastService,
   ) {
     this.loginForm = this.fb.group({
@@ -44,11 +46,25 @@ export class LoginComponent {
     });
   }
 
-  onSubmit() {
+  async onSubmit() {
     this.submitted = true;
     Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
     if (this.loginForm.invalid) return;
-    this.http.post(`${environment.apiBaseUrl}/auth/login`, this.loginForm.value)
+    const { email, password } = this.loginForm.value;
+    let firebaseIdToken: string | null = null;
+    try {
+      firebaseIdToken = await this.firebaseAuth.getVerifiedLoginIdToken(email, password);
+    } catch (error: any) {
+      const code = String(error?.code || '');
+      if (code !== 'auth/invalid-credential' && code !== 'auth/wrong-password' && code !== 'auth/user-not-found') {
+        this.toast.error(this.firebaseAuth.getFirebaseAuthErrorMessage(error));
+      }
+    }
+    const loginPayload = {
+      ...this.loginForm.value,
+      ...(firebaseIdToken ? { firebaseIdToken } : {}),
+    };
+    this.http.post(`${environment.apiBaseUrl}/auth/login`, loginPayload)
       .pipe(timeout(5000), catchError(err => {
         if (err?.error?.message?.includes('pending')) {
           this.toast.warning(

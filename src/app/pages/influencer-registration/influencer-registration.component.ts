@@ -8,6 +8,7 @@ import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, Validat
 import { map, debounceTime, first } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { OtpService } from '../../shared/otp.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { CommonModule } from '@angular/common';
@@ -238,6 +239,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private firebaseAuth: FirebaseAuthService,
     private ngZone: NgZone,
     private otpService: OtpService,
     private plansService: PlansService,
@@ -1006,15 +1008,14 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.configService.registerInfluencer(payload).subscribe({
       next: async () => {
         try {
-          await firstValueFrom(this.configService.sendEmailVerificationLink(raw.email));
+          await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
         } catch (error: any) {
           this.ngZone.run(() => {
             this.pendingVerificationEmail = raw.email;
             this.showEmailVerificationPrompt = true;
             this.emailVerificationSent = false;
             this.emailVerificationError =
-              error?.error?.message ||
-              error?.message ||
+              this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
               'Verification email could not be sent.';
             this.registrationError = '';
             this.registrationEmailSendFailed = true;
