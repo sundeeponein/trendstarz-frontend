@@ -696,7 +696,7 @@ export class PhotographerRegistrationComponent implements OnInit {
         try {
           await this.firebaseAuth.sendVerificationEmail(v.email, v.password);
         } catch (error: any) {
-          this.registrationError = '';
+          this.registrationError = this.firebaseAuth.getFirebaseAuthErrorMessage(error);
           this.registrationEmailSendFailed = true;
           this.submitting = false;
           this.registrationSuccess = false;

@@ -369,7 +369,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       payment_confirmed: 'Working',
       working:           'Working',
       submitted:         'Under Review',
-      completed:         'Completed',
+      completed:         'Post Approved',
       approved:          'Payout Released',
       disputed:          'Under Review',
     };
@@ -407,7 +407,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       return 'Your post is submitted and now under review. Your submission is locked and cannot be edited.';
     }
     if (this.inviteStatus === 'completed') {
-      return 'Review is complete. Your submission is locked and cannot be edited.';
+      return 'Your post was approved. Payout is pending admin release.';
     }
     if (this.inviteStatus === 'approved') {
       return 'Payout has been released. Your submission is locked and cannot be edited.';

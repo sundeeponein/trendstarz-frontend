@@ -1014,7 +1014,7 @@ export class InfluencerRegistrationComponent implements OnInit {
             this.pendingVerificationEmail = raw.email;
             this.showEmailVerificationPrompt = true;
             this.emailVerificationSent = false;
-            this.emailVerificationError = 'Verification email could not be sent.';
+            this.emailVerificationError = this.firebaseAuth.getFirebaseAuthErrorMessage(error);
             this.registrationError = '';
             this.registrationEmailSendFailed = true;
             this.isSubmitting = false;

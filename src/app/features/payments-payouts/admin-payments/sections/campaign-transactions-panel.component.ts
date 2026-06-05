@@ -8,6 +8,7 @@ import { PaymentsPayoutsApiService } from '../../payments-payouts-api.service';
 import { CampaignTransaction, TransactionSummary } from '../../payments-payouts.models';
 import { AdminPaymentsUiUtilsService } from '../admin-payments-ui-utils.service';
 import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
+import { ConfigService } from '../../../../shared/config.service';
 
 @Component({
   selector: 'app-campaign-transactions-panel',
@@ -17,7 +18,7 @@ import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
   styleUrls: ['../admin-payments.component.scss'],
 })
 export class CampaignTransactionsPanelComponent implements OnInit {
-  private static readonly PAYOUT_RELEASE_MIN_HOURS = 24;
+  payoutReleaseWaitHours = 24;
 
   @Output() errorMessage = new EventEmitter<string>();
   @Output() successMessage = new EventEmitter<string>();
@@ -58,6 +59,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   constructor(
     private paymentsPayoutsApi: PaymentsPayoutsApiService,
+    private config: ConfigService,
     public ui: AdminPaymentsUiUtilsService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
@@ -65,6 +67,16 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.config.getAppSettings().subscribe({
+      next: (settings: any) => {
+        const hours = Number(settings?.payoutReleaseWaitHours);
+        this.payoutReleaseWaitHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.payoutReleaseWaitHours = 24;
+      },
+    });
     this.loadCampaignTransactions();
   }
 
@@ -162,7 +174,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   private recomputeTransactionSummary(rows: CampaignTransaction[]) {
     const verified = rows.filter((r) => r.collectionStatus === 'verified');
     const paid = rows.filter((r) => r.payoutStatus === 'paid');
-    const payoutPending = rows.filter((r) => r.payoutStatus === 'pending');
+    const payoutPending = rows.filter((r) => r.payoutStatus === 'pending' || r.payoutStatus === 'processing');
 
     const collected = verified.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
     const fees = verified.reduce((sum, r) => sum + (r.platformFee || 0), 0);
@@ -285,7 +297,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     if (!this.isPayoutHoldWindowOpen(tx)) {
       const unlockAt = this.getPayoutUnlockAt(tx);
       if (!unlockAt) return 'Completion timestamp missing. Re-mark invite as completed, then retry payout.';
-      return `Payout opens after 24 hours from completion. Eligible at: ${unlockAt.toUTCString()}.`;
+      return `Payout opens after ${this.formatHoursLabel(this.payoutReleaseWaitHours)} from completion. Eligible at: ${unlockAt.toUTCString()}.`;
     }
     return '';
   }
@@ -296,15 +308,16 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     return 'Manual (UPI)';
   }
 
-  reviewFlowStatusLabel(tx: CampaignTransaction): 'Review Pending' | 'Completed' {
-    if (tx.payoutStatus === 'paid') return 'Completed';
-    return this.isInvitePayoutEligible(tx) ? 'Completed' : 'Review Pending';
+  reviewFlowStatusLabel(tx: CampaignTransaction): 'Review Pending' | 'Payout Pending' | 'Paid Out' {
+    if (tx.payoutStatus === 'paid') return 'Paid Out';
+    return this.isInvitePayoutEligible(tx) ? 'Payout Pending' : 'Review Pending';
   }
 
   reviewFlowStatusClass(tx: CampaignTransaction): string {
-    return this.reviewFlowStatusLabel(tx) === 'Completed'
-      ? 'bg-success-subtle text-success-emphasis'
-      : 'bg-warning-subtle text-warning-emphasis';
+    const label = this.reviewFlowStatusLabel(tx);
+    if (label === 'Paid Out') return 'bg-success-subtle text-success-emphasis';
+    if (label === 'Payout Pending') return 'bg-info-subtle text-info-emphasis';
+    return 'bg-warning-subtle text-warning-emphasis';
   }
 
   releaseActionHint(tx: CampaignTransaction): string {
@@ -357,7 +370,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       payment_confirmed: 'Working',
       working: 'Working',
       submitted: 'Under Review',
-      completed: 'Completed',
+      completed: 'Post Approved',
       approved: 'Payout Released',
       counter_sent: 'Counter Sent',
       pending: 'Pending',
@@ -377,7 +390,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     if (!this.isPayoutHoldWindowOpen(tx)) {
       const unlockAt = this.getPayoutUnlockAt(tx);
       if (!unlockAt) return 'Release blocked: completion timestamp missing.';
-      return `Release blocked until ${unlockAt.toUTCString()} (24h post completion).`;
+      return `Release blocked until ${unlockAt.toUTCString()} (${this.formatHoursLabel(this.payoutReleaseWaitHours)} post completion).`;
     }
     const unlockText = inv.unlocked ? 'Unlocked' : 'Locked';
     return `Invite ${this.inviteStatusLabel(tx)} · ${unlockText}`;
@@ -387,7 +400,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     const unlockAt = this.getPayoutUnlockAt(tx);
     if (!unlockAt) return 'Payout window: completion timestamp missing.';
     if (this.isPayoutHoldWindowOpen(tx)) {
-      return `Payout window: open (min ${CampaignTransactionsPanelComponent.PAYOUT_RELEASE_MIN_HOURS}h hold satisfied).`;
+      return `Payout window: open (min ${this.formatHoursLabel(this.payoutReleaseWaitHours)} hold satisfied).`;
     }
     return `Payout window: opens at ${unlockAt.toUTCString()}.`;
   }
@@ -426,7 +439,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     const completedAt = this.getInviteCompletedAt(tx);
     if (!completedAt) return null;
     return new Date(
-      completedAt.getTime() + CampaignTransactionsPanelComponent.PAYOUT_RELEASE_MIN_HOURS * 60 * 60 * 1000,
+      completedAt.getTime() + this.payoutReleaseWaitHours * 60 * 60 * 1000,
     );
   }
 
@@ -439,6 +452,13 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   isManualSettlement(tx: CampaignTransaction): boolean {
     const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
     return gateway === '' || gateway === 'manual_upi';
+  }
+
+  private formatHoursLabel(hours: number): string {
+    const value = Number(hours);
+    if (!Number.isFinite(value)) return '24 hours';
+    if (value === 1) return '1 hour';
+    return `${value} hours`;
   }
 
   closePayoutModal() {

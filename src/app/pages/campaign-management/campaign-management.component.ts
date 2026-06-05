@@ -40,8 +40,8 @@ type CollaborationSubview = 'invited' | 'created';
   styleUrls: ['./campaign-management.component.scss']
 })
 export class CampaignManagementComponent implements OnInit, OnDestroy {
-  private static readonly SUBMISSION_APPROVAL_WAIT_MS = 24 * 60 * 60 * 1000;
   private static readonly REFRESH_TIMEOUT_MS = 10000;
+  submissionApprovalWaitHours = 24;
       maxActiveCampaigns: number = 1;
       planCapabilities: any = null;
   private completionEventsTracked = new Set<string>();
@@ -1570,6 +1570,17 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.config.getAppSettings().subscribe({
+      next: (settings: any) => {
+        const hours = Number(settings?.submissionApprovalWaitHours);
+        this.submissionApprovalWaitHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.submissionApprovalWaitHours = 24;
+      },
+    });
+
     this.submissionApprovalTicker = setInterval(() => {
       this.cd.detectChanges();
     }, 60000);
@@ -1873,7 +1884,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (s === 'submitted' || s === 'disputed') return 'Under Review';
     if (s === 'declined') return 'Declined';
     if (s === 'withdrawn') return 'Withdrawn';
-    if (s === 'completed') return 'Completed';
+    if (s === 'completed') return 'Post Approved';
     if (s === 'approved') return 'Payout Released';
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Pending';
   }
@@ -3898,7 +3909,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       working: 'Working',
       submitted: 'Under Review',
       approved: 'Payout Released',
-      completed: 'Completed',
+      completed: 'Post Approved',
       declined: 'Declined',
       withdrawn: 'Withdrawn',
       disputed: 'Under Review',
@@ -4666,7 +4677,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       working:           'Working',
       submitted:         'Under Review',
       approved:          'Payout Released',
-      completed:         'Completed',
+      completed:         'Post Approved',
       declined:          'Declined',
       withdrawn:         'Withdrawn',
       disputed:          'Under Review',
@@ -4692,7 +4703,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getSubmissionApprovalUnlockAt(submission: any): Date | null {
     const anchorMs = this.getSubmissionApprovalAnchorMs(submission);
     if (anchorMs == null) return null;
-    return new Date(anchorMs + CampaignManagementComponent.SUBMISSION_APPROVAL_WAIT_MS);
+    return new Date(anchorMs + this.submissionApprovalWaitHours * 60 * 60 * 1000);
   }
 
   canApproveSubmission(submission: any): boolean {
@@ -4704,7 +4715,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   getSubmissionApprovalWaitText(submission: any): string {
     const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
-    if (!unlockAt) return 'after 24 hours from submission';
+    if (!unlockAt) return `after ${this.formatHoursLabel(this.submissionApprovalWaitHours)} from submission`;
 
     const remainingMs = unlockAt.getTime() - Date.now();
     if (remainingMs <= 0) return 'now';
@@ -4733,11 +4744,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getSubmissionApprovalLockMessage(submission: any): string {
     const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
     if (!unlockAt) {
-      return 'Review period active. Completion confirmation unlocks in 24 hours after influencer submission.';
+      return `Review period active. Completion confirmation unlocks in ${this.formatHoursLabel(this.submissionApprovalWaitHours)} after influencer submission.`;
     }
     const waitText = this.getSubmissionApprovalWaitText(submission);
     if (waitText === 'now') return 'Mark Completed is now available. Please try again.';
     return `Review period active. Completion confirmation unlocks in ${waitText} (at ${this.getSubmissionApprovalUnlockAtText(submission)}).`;
+  }
+
+  private formatHoursLabel(hours: number): string {
+    const value = Number(hours);
+    if (!Number.isFinite(value)) return '24 hours';
+    if (value === 1) return '1 hour';
+    return `${value} hours`;
   }
 
   isExpandLoading(c: Campaign): boolean {

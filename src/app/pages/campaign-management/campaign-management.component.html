@@ -1006,7 +1006,7 @@
 
                     <div class="sub-completed-feedback" *ngIf="sub.status === 'approved'">
                       <i class="bi bi-check-circle-fill text-success"></i>
-                      Payout Released{{ sub.brandFeedback ? ': ' + sub.brandFeedback : '' }}
+                      Post Approved{{ sub.brandFeedback ? ': ' + sub.brandFeedback : '' }}
                     </div>
                     <div class="sub-disputed-reason" *ngIf="sub.status === 'disputed'">
                       <i class="bi bi-exclamation-triangle"></i> Under Review: {{ sub.disputeReason || 'Quality issue' }}

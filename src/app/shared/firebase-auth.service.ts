@@ -38,6 +38,29 @@ export class FirebaseAuthService {
     return !!(config?.apiKey && config?.projectId && config?.appId);
   }
 
+  getFirebaseAuthErrorMessage(error: any): string {
+    const code = String(error?.code || '').trim();
+    if (code === 'auth/unauthorized-continue-uri') {
+      return 'Firebase rejected the verification link domain. Add the live domain to Firebase Auth authorized domains.';
+    }
+    if (code === 'auth/operation-not-allowed') {
+      return 'Firebase Email/Password sign-in is not enabled for this project.';
+    }
+    if (code === 'auth/too-many-requests') {
+      return 'Firebase temporarily blocked email sending because of too many requests. Please try again later.';
+    }
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+      return 'A Firebase account already exists for this email, but the password does not match. Please use Forgot Password.';
+    }
+    if (code === 'auth/email-already-in-use') {
+      return 'A Firebase account already exists for this email. Please use Forgot Password or resend verification from support.';
+    }
+    if (code) {
+      return `Firebase verification email failed (${code}).`;
+    }
+    return error?.message || 'Firebase verification email could not be sent.';
+  }
+
   private assertBrowser(): void {
     if (!isPlatformBrowser(this.platformId)) {
       throw new Error('Firebase Auth is only available in the browser.');

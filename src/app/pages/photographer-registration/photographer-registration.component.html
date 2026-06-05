@@ -486,6 +486,7 @@
               <li>Use "Forgot Password" to verify your email ownership and activate your account.</li>
               <li>Contact Support if the issue continues.</li>
             </ul>
+            <p *ngIf="registrationError" class="text-danger mb-0">{{ registrationError }}</p>
           </div>
           <div class="reg-success-actions">
             <a class="btn btn-primary" href="/forgot-password">Forgot Password</a>

@@ -203,6 +203,12 @@ export class ConfigService {
   getAppSettings(): Observable<{
     preApproveInfluencers: boolean; influencerRequireEmailVerified: boolean; influencerRequireMobileVerified: boolean;
     preApproveBrands: boolean; brandRequireEmailVerified: boolean; brandRequireMobileVerified: boolean;
+    platformFeeEnabled?: boolean;
+    platformFeePercent?: number;
+    gstPercent?: number;
+    paymentUpiId?: string;
+    submissionApprovalWaitHours?: number;
+    payoutReleaseWaitHours?: number;
     showSearchLink: boolean;
     showRegisterInfluencerLink: boolean;
     showRegisterBrandLink: boolean;
@@ -222,6 +228,8 @@ export class ConfigService {
           platformFeePercent: typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : undefined,
           gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
           paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
+          submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
+          payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
           showSearchLink: data?.showSearchLink !== false,
           showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
           showRegisterBrandLink: data?.showRegisterBrandLink !== false,
@@ -232,6 +240,8 @@ export class ConfigService {
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
         platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak',
+        submissionApprovalWaitHours: 24,
+        payoutReleaseWaitHours: 24,
         showSearchLink: true,
         showRegisterInfluencerLink: true,
         showRegisterBrandLink: true,
