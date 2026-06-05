@@ -419,13 +419,15 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   }
 
   private isInvitePayoutEligible(tx: CampaignTransaction): boolean {
-    const workStatus = String(tx.workStatus || '').toLowerCase();
-    if (workStatus) {
-      return ['approved', 'completed'].includes(workStatus);
-    }
     const status = String(tx.inviteSnapshot?.status || '').toLowerCase();
-    if (!status) return true;
-    return ['approved', 'completed'].includes(status);
+    if (['approved', 'completed'].includes(status)) return true;
+
+    const workStatus = String(tx.workStatus || '').toLowerCase();
+    if (['approved', 'completed'].includes(workStatus)) return true;
+
+    // Legacy/non-invite transactions may not have either status.
+    if (!status && !workStatus) return true;
+    return false;
   }
 
   private getInviteCompletedAt(tx: CampaignTransaction): Date | null {

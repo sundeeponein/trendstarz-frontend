@@ -814,10 +814,10 @@
                           *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">
                       <i class="bi bi-slash-circle"></i> Closed
                     </span>
-                    <!-- Paid badge: payment was confirmed for this influencer -->
+                    <!-- Payment badge: brand payment was verified for this recipient -->
                     <span class="inv-paid-badge"
                       *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
-                      <i class="bi bi-check-circle-fill"></i> Paid
+                      <i class="bi bi-check-circle-fill"></i> Payment Verified
                     </span>
                     <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
                     <button class="inv-pay-chip" type="button"
