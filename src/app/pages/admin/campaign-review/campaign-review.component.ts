@@ -17,16 +17,17 @@ import { ToastService } from '../../../shared/toast/toast.service';
 })
 export class CampaignReviewComponent implements OnInit {
   readonly statusTabs: Array<{
-    key: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all';
+    key: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all';
     label: string;
   }> = [
     { key: 'pending_review', label: 'Pending Review' },
     { key: 'needs_changes', label: 'Needs Changes' },
     { key: 'rejected', label: 'Rejected' },
     { key: 'active', label: 'Approved / Live' },
+    { key: 'completed', label: 'Completed' },
     { key: 'all', label: 'All' },
   ];
-  campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' = 'pending_review';
+  campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all' = 'pending_review';
   campaignFiltersExpanded = true;
   allCampaignApprovals: any[] = [];
   campaignApprovalsLoading = false;
@@ -136,7 +137,7 @@ export class CampaignReviewComponent implements OnInit {
 
   private matchesStatusFilter(
     campaign: any,
-    filter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all',
+    filter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all',
   ): boolean {
     if (filter === 'all') return true;
     return this.normalizeReviewStatus(campaign?.status) === filter;
@@ -192,12 +193,12 @@ export class CampaignReviewComponent implements OnInit {
     return this.canApproveCampaign(campaign) || this.canRequestChangesCampaign(campaign) || this.canRejectCampaign(campaign);
   }
 
-  setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all') {
+  setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all') {
     if (this.campaignApprovalStatusFilter === status) return;
     this.campaignApprovalStatusFilter = status;
   }
 
-  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all'): number {
+  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all'): number {
     if (status === 'all') return this.allCampaignApprovals.length;
     return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, status)).length;
   }
