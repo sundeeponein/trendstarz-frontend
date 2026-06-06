@@ -509,11 +509,11 @@
 
         <div class="field-group smart-match-panel" *ngIf="showInfluencerSmartMatching">
           <div class="field-label-row">
-            <label class="field-label">Looking For a  </label>
+            <label class="field-label">Looking For</label>
             <button type="button" class="smart-match-clear" *ngIf="hasAnySmartMatchingFilter()" (click)="clearSmartMatchingFilters()">Clear</button>
           </div>
           <p class="field-sublabel">Optional smart filters to target and search influencers based on your requirements.</p>
-          
+
           <app-chip-selection-group
             [options]="creatorTypeOptions"
             [selected]="lookingForCreatorTypes"
@@ -521,16 +521,6 @@
             labelKey="name"
             [max]="maxCreatorTypeFilters"
             (selectedChange)="setSmartMatchValues('lookingForCreatorTypes', $event)">
-          </app-chip-selection-group>
-
-          <label class="field-label smart-match-subtitle">Preferred Creator Type</label>
-          <app-chip-selection-group
-            [options]="creatorTypeOptions"
-            [selected]="preferredCreatorTypes"
-            valueKey="name"
-            labelKey="name"
-            [max]="maxCreatorTypeFilters"
-            (selectedChange)="setSmartMatchValues('preferredCreatorTypes', $event)">
           </app-chip-selection-group>
 
           <label class="field-label smart-match-subtitle">Collaboration Preference</label>
@@ -906,52 +896,38 @@
               <button type="button" class="smart-match-clear" *ngIf="hasInviteRecipientFilters()" (click)="clearInviteRecipientFilters()">Clear</button>
             </div>
 
-            <div class="recipient-filter-group" *ngIf="getUniqueCategoryFilters().length">
-              <app-chip-selection-group
-                [label]="inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories'"
-                [options]="getUniqueCategoryFilters()"
-                [selected]="filterCategory ? [filterCategory] : []"
-                selectionMode="single"
-                [compact]="true"
-                (selectedChange)="setSingleFilter('filterCategory', $event)">
-              </app-chip-selection-group>
-            </div>
+            <div class="recipient-filter-grid">
+              <div class="recipient-filter-group recipient-filter-field" *ngIf="getUniqueCategoryFilters().length">
+                <label>{{ inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories' }}</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterCategory" [ngModelOptions]="{standalone: true}">
+                  <option value="">All categories</option>
+                  <option *ngFor="let item of getUniqueCategoryFilters()" [value]="item">{{ item }}</option>
+                </select>
+              </div>
 
-            <div class="recipient-filter-group" *ngIf="inviteRecipientRole === 'influencer' && creatorTypeOptions.length">
-              <app-chip-selection-group
-                label="Creator Type / Specialty"
-                [options]="creatorTypeOptions"
-                [selected]="filterCreatorType ? [filterCreatorType] : []"
-                valueKey="name"
-                labelKey="name"
-                selectionMode="single"
-                [compact]="true"
-                (selectedChange)="setSingleFilter('filterCreatorType', $event)">
-              </app-chip-selection-group>
-            </div>
+              <div class="recipient-filter-group recipient-filter-field" *ngIf="inviteRecipientRole === 'influencer' && creatorTypeOptions.length">
+                <label>Creator Type / Specialty</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterCreatorType" [ngModelOptions]="{standalone: true}">
+                  <option value="">All creator types</option>
+                  <option *ngFor="let item of creatorTypeOptions" [value]="item.name">{{ item.name }}</option>
+                </select>
+              </div>
 
-            <div class="recipient-filter-group" *ngIf="getAvailableTierFilters().length">
-              <app-chip-selection-group
-                [label]="inviteRecipientLabelSingular + ' Tier'"
-                [options]="getAvailableTierFilters()"
-                [selected]="filterTier ? [filterTier] : []"
-                selectionMode="single"
-                [compact]="true"
-                (selectedChange)="setSingleFilter('filterTier', $event)">
-              </app-chip-selection-group>
-            </div>
+              <div class="recipient-filter-group recipient-filter-field" *ngIf="getAvailableTierFilters().length">
+                <label>{{ inviteRecipientLabelSingular }} Tier</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterTier" [ngModelOptions]="{standalone: true}">
+                  <option value="">All tiers</option>
+                  <option *ngFor="let item of getAvailableTierFilters()" [value]="item">{{ item }}</option>
+                </select>
+              </div>
 
-            <div class="recipient-filter-group">
-              <app-chip-selection-group
-                label="Platforms"
-                [options]="platformFilterOptions"
-                [selected]="filterPlatform ? [filterPlatform] : []"
-                valueKey="value"
-                labelKey="name"
-                selectionMode="single"
-                [compact]="true"
-                (selectedChange)="setSingleFilter('filterPlatform', $event)">
-              </app-chip-selection-group>
+              <div class="recipient-filter-group recipient-filter-field">
+                <label>Platforms</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterPlatform" [ngModelOptions]="{standalone: true}">
+                  <option value="">All platforms</option>
+                  <option *ngFor="let item of platformFilterOptions" [value]="item.value">{{ item.name }}</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1011,11 +987,19 @@
                 </p>
                 <div class="inf-tags">
                   <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
+                  <span class="inf-tag inf-tag--location" *ngIf="getLocationLabel(inf)"><i class="bi bi-geo-alt-fill"></i> {{ getLocationLabel(inf) }}</span>
                   <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
                   <span class="inf-tag inf-tag--cat" *ngFor="let type of (inf.creatorTypes || []).slice(0, 2)">{{ type }}</span>
                 </div>
               </div>
               <div class="inf-right">
+                <button
+                  type="button"
+                  class="inf-quick-btn"
+                  title="Quick view"
+                  (click)="openRecipientQuickView(inf); $event.stopPropagation()">
+                  <i class="bi bi-eye"></i>
+                </button>
                 <span class="inf-engagement" *ngIf="inf.avgEngagement">
                   Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
                 </span>
@@ -1033,6 +1017,46 @@
             <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
               <i class="bi bi-search"></i>
               <p>No {{ inviteRecipientLabelPlural.toLowerCase() }} match your filters.</p>
+            </div>
+          </div>
+
+          <div class="quick-view-backdrop" *ngIf="quickViewRecipient" (click)="closeRecipientQuickView()">
+            <div class="quick-view-modal" (click)="$event.stopPropagation()">
+              <button type="button" class="quick-view-close" (click)="closeRecipientQuickView()"><i class="bi bi-x-lg"></i></button>
+              <div class="quick-view-head">
+                <app-user-avatar
+                  [name]="getRecipientDisplayName(quickViewRecipient)"
+                  [src]="getInfluencerAvatar(quickViewRecipient)"
+                  [size]="56"
+                ></app-user-avatar>
+                <div>
+                  <h4>{{ getRecipientDisplayName(quickViewRecipient) }}</h4>
+                </div>
+              </div>
+
+              <div class="quick-view-section" *ngIf="getLocationLabel(quickViewRecipient)">
+                <span class="quick-view-label">Location</span>
+                <p class="quick-view-location">{{ getLocationLabel(quickViewRecipient) }}</p>
+              </div>
+
+              <div class="quick-view-section" *ngIf="getProfileBadges(quickViewRecipient).length">
+                <span class="quick-view-label">Badges</span>
+                <div class="quick-view-tags">
+                  <span class="inf-tag" *ngFor="let badge of getProfileBadges(quickViewRecipient)">{{ badge }}</span>
+                </div>
+              </div>
+
+              <div class="quick-view-section">
+                <span class="quick-view-label">Social media</span>
+                <div class="quick-view-locked" *ngIf="isRecipientSocialLocked(quickViewRecipient)">
+                  <i class="bi bi-lock-fill"></i>
+                  Social platform details are limited on the free plan. Premium unlocks full quick view based on your quota.
+                </div>
+                <div class="quick-view-tags" *ngIf="!isRecipientSocialLocked(quickViewRecipient)">
+                  <span class="inf-tag" *ngFor="let tag of getPlatformTags(quickViewRecipient)">{{ tag }}</span>
+                  <span class="chip-placeholder" *ngIf="getPlatformTags(quickViewRecipient).length === 0">No social platforms added.</span>
+                </div>
+              </div>
             </div>
           </div>
 

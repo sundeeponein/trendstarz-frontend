@@ -88,6 +88,7 @@ export class CampaignFormComponent implements OnInit {
   filterCreatorType = '';
   filterTier = '';
   filterPlatform = '';
+  quickViewRecipient: any | null = null;
   creatorTypeOptions: any[] = [];
   collaborationAvailabilityOptions: any = {};
   lookingForCreatorTypes: string[] = [];
@@ -1754,6 +1755,36 @@ export class CampaignFormComponent implements OnInit {
     });
 
     return normalized.slice(0, 2).map((x: any) => `${x.lbl} · ${x.tier}`);
+  }
+
+  getRecipientDisplayName(recipient: any): string {
+    return String(recipient?.fullName || recipient?.name || recipient?.username || this.inviteRecipientLabelSingular).trim();
+  }
+
+  getLocationLabel(recipient: any): string {
+    const location = recipient?.location || {};
+    return [location?.district, location?.state].map((part: any) => String(part || '').trim()).filter(Boolean).join(' | ');
+  }
+
+  getProfileBadges(recipient: any): string[] {
+    const badges = [
+      ...(Array.isArray(recipient?.categories) ? recipient.categories : []),
+      ...(Array.isArray(recipient?.skills) ? recipient.skills : []),
+      ...(Array.isArray(recipient?.creatorTypes) ? recipient.creatorTypes : []),
+    ];
+    return this.uniqueStrings(badges).slice(0, 8);
+  }
+
+  isRecipientSocialLocked(recipient: any): boolean {
+    return recipient?.socialMediaRestricted === true;
+  }
+
+  openRecipientQuickView(recipient: any): void {
+    this.quickViewRecipient = recipient;
+  }
+
+  closeRecipientQuickView(): void {
+    this.quickViewRecipient = null;
   }
 
   getUniqueCategoryFilters(): string[] {
