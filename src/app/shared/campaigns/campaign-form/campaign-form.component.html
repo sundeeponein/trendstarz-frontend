@@ -987,7 +987,6 @@
                 </p>
                 <div class="inf-tags">
                   <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
-                  <span class="inf-tag inf-tag--location" *ngIf="getLocationLabel(inf)"><i class="bi bi-geo-alt-fill"></i> {{ getLocationLabel(inf) }}</span>
                   <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
                   <span class="inf-tag inf-tag--cat" *ngFor="let type of (inf.creatorTypes || []).slice(0, 2)">{{ type }}</span>
                 </div>
@@ -1034,27 +1033,60 @@
                 </div>
               </div>
 
-              <div class="quick-view-section" *ngIf="getLocationLabel(quickViewRecipient)">
-                <span class="quick-view-label">Location</span>
-                <p class="quick-view-location">{{ getLocationLabel(quickViewRecipient) }}</p>
-              </div>
-
-              <div class="quick-view-section" *ngIf="getProfileBadges(quickViewRecipient).length">
-                <span class="quick-view-label">Badges</span>
+              <div class="quick-view-section" *ngIf="canViewProfileBadges(); else badgesLocked">
+                <span class="quick-view-label">Category / Type</span>
                 <div class="quick-view-tags">
                   <span class="inf-tag" *ngFor="let badge of getProfileBadges(quickViewRecipient)">{{ badge }}</span>
+                  <span class="chip-placeholder" *ngIf="getProfileBadges(quickViewRecipient).length === 0">No category or type added.</span>
                 </div>
               </div>
+              <ng-template #badgesLocked>
+                <div class="quick-view-section">
+                  <span class="quick-view-label">Category / Type</span>
+                  <div class="quick-view-locked">
+                    <i class="bi bi-lock-fill"></i>
+                    Upgrade your plan to view creator category and type details in this popup.
+                  </div>
+                </div>
+              </ng-template>
 
               <div class="quick-view-section">
                 <span class="quick-view-label">Social media</span>
-                <div class="quick-view-locked" *ngIf="isRecipientSocialLocked(quickViewRecipient)">
+                <div class="quick-view-locked" *ngIf="!canViewRecipientSocial(quickViewRecipient)">
                   <i class="bi bi-lock-fill"></i>
                   Social platform details are limited on the free plan. Premium unlocks full quick view based on your quota.
                 </div>
-                <div class="quick-view-tags" *ngIf="!isRecipientSocialLocked(quickViewRecipient)">
-                  <span class="inf-tag" *ngFor="let tag of getPlatformTags(quickViewRecipient)">{{ tag }}</span>
-                  <span class="chip-placeholder" *ngIf="getPlatformTags(quickViewRecipient).length === 0">No social platforms added.</span>
+                <div class="quick-view-platforms" *ngIf="canViewRecipientSocial(quickViewRecipient)">
+                  <div class="quick-view-platform" *ngFor="let sm of getRecipientSocialPlatforms(quickViewRecipient)">
+                    <div class="quick-view-platform__head">
+                      <span class="quick-view-platform__icon">
+                        <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
+                      </span>
+                      <div>
+                        <strong>{{ sm.tier || getSocialLabel(sm) }}</strong>
+                        <span>{{ sm.tier ? 'tier' : 'platform' }}</span>
+                      </div>
+                    </div>
+
+                    <a
+                      *ngIf="getSocialHandle(sm) as handle"
+                      class="quick-view-platform__handle"
+                      [href]="getSocialUrl(sm)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      (click)="$event.stopPropagation()">
+                      <i class="bi bi-box-arrow-up-right"></i> @{{ handle }}
+                    </a>
+
+                    <div class="quick-view-rates" *ngIf="getSocialContentTypes(sm).length">
+                      <span class="quick-view-rates__label">Content &amp; starting rates</span>
+                      <div class="quick-view-rate-row" *ngFor="let ct of getSocialContentTypes(sm)">
+                        <span>{{ ct.name }}</span>
+                        <strong>₹{{ ct.price | number:'1.0-0' }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="chip-placeholder" *ngIf="getRecipientSocialPlatforms(quickViewRecipient).length === 0">No social platforms added.</span>
                 </div>
               </div>
             </div>

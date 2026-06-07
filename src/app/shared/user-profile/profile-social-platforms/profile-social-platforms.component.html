@@ -22,22 +22,22 @@
             <strong>{{ sm.tier || getSocialLabel(sm) }}</strong>
             <span>{{ sm.tier ? 'tier' : 'platform' }}</span>
           </div>
+          <div class="platform-handle-row" *ngIf="getSocialHandle(sm) as handle">
+            <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else handleText"
+              [href]="getSocialUrl(sm)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="platform-handle-link"
+              (click)="emitPlatformClick(sm, $event)">
+              <i class="bi bi-box-arrow-up-right"></i> &#64;{{ handle }}
+            </a>
+            <ng-template #handleText>
+              <span class="platform-handle-text" *ngIf="canOpen">&#64;{{ handle }}</span>
+              <span class="detail-locked" *ngIf="!canOpen"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
+            </ng-template>
+          </div>
         </div>
 
-        <div class="platform-handle-row" *ngIf="getSocialHandle(sm) as handle">
-          <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else handleText"
-             [href]="getSocialUrl(sm)"
-             target="_blank"
-             rel="noopener noreferrer"
-             class="platform-handle-link"
-             (click)="emitPlatformClick(sm, $event)">
-            <i class="bi bi-box-arrow-up-right"></i> &#64;{{ handle }}
-          </a>
-          <ng-template #handleText>
-            <span class="platform-handle-text" *ngIf="canOpen">&#64;{{ handle }}</span>
-            <span class="detail-locked" *ngIf="!canOpen"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
-          </ng-template>
-        </div>
 
         <ng-container *ngIf="showContentTypes && getContentTypes(sm).length">
           <div class="content-rates-label">Content &amp; Starting Rates</div>
@@ -98,23 +98,34 @@
       </div>
       <div class="social-links">
         <ng-container *ngFor="let sm of platforms">
-          <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else lockedPill"
-             [href]="getSocialUrl(sm)"
-             target="_blank"
-             rel="noopener noreferrer"
-             class="social-pill"
-             (click)="emitPlatformClick(sm, $event)">
-            <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
-            {{ getSocialLabel(sm) }}
-            <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
-          </a>
-          <ng-template #lockedPill>
-            <span class="social-pill social-pill--locked" title="Upgrade to Premium to view social platforms">
+          <div class="social-platform-card">
+            <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else lockedPill"
+               [href]="getSocialUrl(sm)"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="social-pill"
+               (click)="emitPlatformClick(sm, $event)">
               <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
               {{ getSocialLabel(sm) }}
-              <i class="bi bi-lock-fill social-lock-icon"></i>
-            </span>
-          </ng-template>
+              <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
+            </a>
+            <ng-template #lockedPill>
+              <span class="social-pill social-pill--locked" title="Upgrade to Premium to view social platforms">
+                <i [class]="'bi ' + getSocialIcon(sm.platform)"></i>
+                {{ getSocialLabel(sm) }}
+                <i class="bi bi-lock-fill social-lock-icon"></i>
+              </span>
+            </ng-template>
+
+            <ng-container *ngIf="showContentTypes && getContentTypes(sm).length">
+              <div class="content-rates-label">Content &amp; Starting Rates</div>
+              <div *ngFor="let ct of getContentTypes(sm)" class="ct-row">
+                <span class="ct-name">{{ ct.name }}</span>
+                <span class="ct-price" *ngIf="isProViewer">₹{{ ct.price }}</span>
+                <span class="ct-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+              </div>
+            </ng-container>
+          </div>
         </ng-container>
       </div>
     </div>

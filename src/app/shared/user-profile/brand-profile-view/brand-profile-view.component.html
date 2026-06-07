@@ -217,6 +217,8 @@
             [locked]="!!brand.socialMediaRestricted"
             lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
             [canOpen]="canOpenSocialProfiles"
+            [isProViewer]="isProViewer"
+            [showContentTypes]="true"
             (platformClick)="onPlatformClick($event)"
           ></app-profile-social-platforms>
         </div>

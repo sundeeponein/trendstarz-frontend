@@ -65,7 +65,7 @@ export class ProfileSocialPlatformsComponent {
       if (!Number.isFinite(price) || price <= 0) return false;
       if ('enabled' in ct) return ct.enabled === true;
       if ('selected' in ct) return ct.selected === true;
-      return false;
+      return true;
     });
   }
 

@@ -216,10 +216,16 @@
 }
 
 .social-links {
-  display: flex;
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
   margin-top: 8px;
+}
+
+.social-platform-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
 }
 
 .social-pill {

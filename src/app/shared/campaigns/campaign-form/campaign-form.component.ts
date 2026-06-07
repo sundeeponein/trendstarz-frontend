@@ -15,6 +15,7 @@ import { ToastService } from '../../toast/toast.service';
 import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
 import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.service';
 import { ChipSelectionGroupComponent } from '../../chip-selection-group/chip-selection-group.component';
+import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
 
 
 
@@ -1775,8 +1776,63 @@ export class CampaignFormComponent implements OnInit {
     return this.uniqueStrings(badges).slice(0, 8);
   }
 
-  isRecipientSocialLocked(recipient: any): boolean {
-    return recipient?.socialMediaRestricted === true;
+  canViewProfileBadges(): boolean {
+    return this.hasPremium ||
+      this.planCaps?.hasPremium === true ||
+      this.plansService.getFeatureValue(this.planCaps, 'advancedSearchFilters');
+  }
+
+  canViewRecipientSocial(recipient: any): boolean {
+    if (recipient?.socialMediaRestricted === true) return false;
+    return this.hasPremium ||
+      this.planCaps?.hasPremium === true ||
+      this.plansService.getFeatureValue(this.planCaps, 'viewSocialLinks') ||
+      this.plansService.getFeatureValue(this.planCaps, 'socialMediaVisibility');
+  }
+
+  getRecipientSocialPlatforms(recipient: any): any[] {
+    return Array.isArray(recipient?.socialMedia) ? recipient.socialMedia : [];
+  }
+
+  getSocialIcon(platform: string): string {
+    const p = String(platform || '').toLowerCase();
+    if (p.includes('youtube')) return 'bi-youtube';
+    if (p.includes('instagram')) return 'bi-instagram';
+    if (p.includes('facebook')) return 'bi-facebook';
+    if (p.includes('twitter') || p.includes('x')) return 'bi-twitter-x';
+    if (p.includes('tiktok')) return 'bi-tiktok';
+    if (p.includes('linkedin')) return 'bi-linkedin';
+    return 'bi-globe';
+  }
+
+  getSocialLabel(sm: any): string {
+    const p = String(sm?.platform || '').toLowerCase();
+    if (p.includes('youtube')) return 'YouTube';
+    if (p.includes('instagram')) return 'Instagram';
+    if (p.includes('facebook')) return 'Facebook';
+    if (p.includes('twitter') || p.includes('x')) return 'Twitter';
+    if (p.includes('tiktok')) return 'TikTok';
+    if (p.includes('linkedin')) return 'LinkedIn';
+    return sm?.platform || 'Website';
+  }
+
+  getSocialUrl(sm: any): string {
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
+  }
+
+  getSocialHandle(sm: any): string {
+    return normalizeSocialHandle(sm?.handle, sm?.platform || '') || normalizeSocialHandle(sm?.url, sm?.platform || '');
+  }
+
+  getSocialContentTypes(sm: any): any[] {
+    if (!Array.isArray(sm?.contentTypes)) return [];
+    return sm.contentTypes.filter((ct: any) => {
+      const price = Number(ct?.price);
+      if (!Number.isFinite(price) || price <= 0) return false;
+      if ('enabled' in ct) return ct.enabled === true;
+      if ('selected' in ct) return ct.selected === true;
+      return true;
+    });
   }
 
   openRecipientQuickView(recipient: any): void {
