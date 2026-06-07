@@ -451,7 +451,12 @@
       <h3 class="reg-success-title">Successfully Registered!</h3>
 
       <!-- Free user message -->
-      <p *ngIf="!isPremiumPlan()" class="reg-success-msg">
+      <p *ngIf="!isPremiumPlan() && localAuthBypassEnabled" class="reg-success-msg">
+        Registration successful.<br>
+        Localhost mode: Firebase email verification was skipped.<br>
+        You can log in with this email and password.
+      </p>
+      <p *ngIf="!isPremiumPlan() && !localAuthBypassEnabled" class="reg-success-msg">
         Registration successful.<br>
         Please verify your email address to activate your account.<br>
         A verification link has been sent to your email.<br>

@@ -61,6 +61,10 @@ export class PhotographerRegistrationComponent implements OnInit {
   readonly maxSkills = 3;
   readonly maxAvailableFor = 2;
 
+  get localAuthBypassEnabled(): boolean {
+    return this.firebaseAuth.isLocalAuthBypassEnabled();
+  }
+
   states: any[] = [];
   districts: any[] = [];
   socialMediaList: any[] = [];
@@ -700,17 +704,19 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
       next: async () => {
-        try {
-          await this.firebaseAuth.sendVerificationEmail(v.email, v.password);
-        } catch (error: any) {
-          this.registrationError =
-            this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
-            'Verification email could not be sent.';
-          this.registrationEmailSendFailed = true;
-          this.submitting = false;
-          this.registrationSuccess = false;
-          this.cdr.detectChanges();
-          return;
+        if (!this.localAuthBypassEnabled) {
+          try {
+            await this.firebaseAuth.sendVerificationEmail(v.email, v.password);
+          } catch (error: any) {
+            this.registrationError =
+              this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
+              'Verification email could not be sent.';
+            this.registrationEmailSendFailed = true;
+            this.submitting = false;
+            this.registrationSuccess = false;
+            this.cdr.detectChanges();
+            return;
+          }
         }
         this.submitting = false;
         this.registrationSuccess = true;

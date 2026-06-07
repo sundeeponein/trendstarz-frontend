@@ -209,6 +209,10 @@ export class InfluencerRegistrationComponent implements OnInit {
   verificationConsentError = '';
   togglePasswordVisibility() { this.showPassword = !this.showPassword; }
   toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
+
+  get localAuthBypassEnabled(): boolean {
+    return this.firebaseAuth.isLocalAuthBypassEnabled();
+  }
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
@@ -1013,26 +1017,30 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     this.configService.registerInfluencer(payload).subscribe({
       next: async () => {
-        try {
-          await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
-        } catch (error: any) {
-          this.ngZone.run(() => {
-            this.pendingVerificationEmail = raw.email;
-            this.showEmailVerificationPrompt = true;
-            this.emailVerificationSent = false;
-            this.emailVerificationError =
-              this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
-              'Verification email could not be sent.';
-            this.registrationError = '';
-            this.registrationEmailSendFailed = true;
-            this.isSubmitting = false;
-            this.cdr.detectChanges();
-          });
-          return;
+        if (!this.localAuthBypassEnabled) {
+          try {
+            await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
+          } catch (error: any) {
+            this.ngZone.run(() => {
+              this.pendingVerificationEmail = raw.email;
+              this.showEmailVerificationPrompt = true;
+              this.emailVerificationSent = false;
+              this.emailVerificationError =
+                this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
+                'Verification email could not be sent.';
+              this.registrationError = '';
+              this.registrationEmailSendFailed = true;
+              this.isSubmitting = false;
+              this.cdr.detectChanges();
+            });
+            return;
+          }
         }
         this.ngZone.run(() => {
           this.pendingVerificationEmail = raw.email;
-          this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;
+          this.showEmailVerificationPrompt = !this.localAuthBypassEnabled;
+          this.emailVerificationSent = !this.localAuthBypassEnabled;
+          this.emailVerificationError = null;
           this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null;
           this.galleryImagesPreview = []; this.galleryImagesData = []; this.galleryUploadWarning = '';
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;

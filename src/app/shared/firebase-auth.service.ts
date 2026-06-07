@@ -38,6 +38,10 @@ export class FirebaseAuthService {
     return !!(config?.apiKey && config?.projectId && config?.appId);
   }
 
+  isLocalAuthBypassEnabled(): boolean {
+    return environment.production === false;
+  }
+
   getFirebaseAuthErrorMessage(error: any): string {
     const code = String(error?.code || '').trim();
     if (code === 'auth/unauthorized-continue-uri') {
@@ -82,6 +86,7 @@ export class FirebaseAuthService {
   }
 
   async sendVerificationEmail(email: string, password: string): Promise<void> {
+    if (this.isLocalAuthBypassEnabled()) return;
     const auth = this.getFirebaseAuth();
     let user: User;
     try {
@@ -201,6 +206,7 @@ export class FirebaseAuthService {
   }
 
   async getVerifiedLoginIdToken(email: string, password: string): Promise<string | null> {
+    if (this.isLocalAuthBypassEnabled()) return null;
     if (!this.isConfigured()) return null;
     const auth = this.getFirebaseAuth();
     const credential = await signInWithEmailAndPassword(auth, email, password);

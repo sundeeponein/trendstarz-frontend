@@ -92,6 +92,10 @@ export class BrandRegistrationComponent implements OnInit {
   togglePasswordVisibility() { this.showPassword = !this.showPassword; }
   toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
 
+  get localAuthBypassEnabled(): boolean {
+    return this.firebaseAuth.isLocalAuthBypassEnabled();
+  }
+
   emailVerificationSent: boolean = false;
   emailVerificationError: string | null = null;
   emailVerified: boolean = false;
@@ -1079,24 +1083,26 @@ export class BrandRegistrationComponent implements OnInit {
 
     this.configService.registerBrand(payload).subscribe({
       next: async () => {
-        try {
-          await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
-        } catch (error: any) {
-          this.pendingVerificationEmail = raw.email;
-          this.showEmailVerificationPrompt = true;
-          this.emailVerificationSent = false;
-          this.emailVerificationError =
-            this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
-            'Verification email could not be sent.';
-          this.registrationError = '';
-          this.registrationEmailSendFailed = true;
-          this.isSubmitting = false;
-          this.cd.detectChanges();
-          return;
+        if (!this.localAuthBypassEnabled) {
+          try {
+            await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
+          } catch (error: any) {
+            this.pendingVerificationEmail = raw.email;
+            this.showEmailVerificationPrompt = true;
+            this.emailVerificationSent = false;
+            this.emailVerificationError =
+              this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
+              'Verification email could not be sent.';
+            this.registrationError = '';
+            this.registrationEmailSendFailed = true;
+            this.isSubmitting = false;
+            this.cd.detectChanges();
+            return;
+          }
         }
         this.pendingVerificationEmail = raw.email;
-        this.showEmailVerificationPrompt = true;
-        this.emailVerificationSent = true;
+        this.showEmailVerificationPrompt = !this.localAuthBypassEnabled;
+        this.emailVerificationSent = !this.localAuthBypassEnabled;
         this.emailVerificationError = null;
         this.platformForms = {};
         this.activePlatformTab = null;

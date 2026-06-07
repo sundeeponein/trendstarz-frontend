@@ -456,7 +456,12 @@
           <button class="reg-success-close" (click)="closeSuccessModal()" aria-label="Close">&times;</button>
           <div class="reg-success-icon">&#10003;</div>
           <h3 class="reg-success-title">Successfully Registered!</h3>
-          <p class="reg-success-msg">
+          <p *ngIf="localAuthBypassEnabled" class="reg-success-msg">
+            Registration successful.<br>
+            Localhost mode: Firebase email verification was skipped.<br>
+            You can log in with this email and password.
+          </p>
+          <p *ngIf="!localAuthBypassEnabled" class="reg-success-msg">
             Registration successful.<br>
             Please verify your email address to activate your account.<br>
             A verification link has been sent to your email.<br>
