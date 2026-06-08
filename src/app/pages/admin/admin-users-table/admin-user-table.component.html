@@ -281,14 +281,13 @@
               <div class="social-list" *ngIf="getSocialMediaItems(selectedUser).length; else noSocialLinks">
                 <ng-container *ngFor="let social of getSocialMediaItems(selectedUser)">
                   <div
-                    target="_blank"
                     rel="noopener noreferrer"
                     [title]="social.label"
                     class="social-link w-100">
                     <i class="bi" [ngClass]="social.icon"></i>
                     <span class="social-name">{{ social.label }}</span>
                     <span *ngIf="social.tierLabel">{{ social.tierLabel }}</span>
-                    <a *ngIf="social.href !== '#'; else socialText"
+                    <a *ngIf="social.href !== '#'; else socialText" target="_blank"
                    [href]="social.href">{{ social.handle }}</a>
                     <span *ngIf="social.followers">({{ social.followers | number }})</span>
                   </div>
@@ -297,8 +296,8 @@
                       <i class="bi" [ngClass]="social.icon"></i>
                       <span class="social-name">{{ social.label }}</span>
                       <span *ngIf="social.tierLabel">{{ social.tierLabel }}</span>
-                      <a *ngIf="social.href !== '#'; else socialText"
-                    [href]="social.href">{{ social.handle }}</a>
+                      <a *ngIf="social.href !== '#'; else socialText" target="_blank"
+                      [href]="social.href">{{ social.handle }}</a>
                       <span *ngIf="social.followers">({{ social.followers | number }})</span>
                     </span>
                   </ng-template>
