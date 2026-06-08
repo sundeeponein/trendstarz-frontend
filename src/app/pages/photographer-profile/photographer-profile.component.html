@@ -93,7 +93,7 @@
                   Need urgent help? Call <a [href]="'tel:' + verificationCallNumber">{{ verificationCallNumber }}</a>
                 </small>
                 <div *ngIf="!phoneVerified" class="mt-2">
-                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button>
+                  <!-- <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button> -->
                   <span *ngIf="phoneVerifyError" class="text-danger ms-2">{{ phoneVerifyError }}</span>
                   <div id="photographer-phone-recaptcha"></div>
                   <div *ngIf="showPhoneOtp" class="d-flex align-items-center gap-2 flex-wrap mt-2">

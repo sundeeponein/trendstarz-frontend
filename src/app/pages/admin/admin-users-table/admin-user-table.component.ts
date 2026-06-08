@@ -376,7 +376,7 @@ export class AdminUserTableComponent implements OnInit {
   getRoleTitle(): string {
     if (this.activeTab === 'influencer') return 'Influencers';
     if (this.activeTab === 'brand') return 'Brands';
-    return 'Photo/Videographers';
+    return 'Photo/Video';
   }
 
   getSignupSource(user: any): string {

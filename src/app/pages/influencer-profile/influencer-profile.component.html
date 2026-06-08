@@ -137,7 +137,7 @@
                 Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.
               </small>
               <div *ngIf="!phoneVerified" class="mt-2">
-                <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button>
+                <!-- <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button> -->
                 <span *ngIf="phoneVerifyError" class="text-danger ms-2">{{ phoneVerifyError }}</span>
                 <div id="influencer-phone-recaptcha"></div>
                 <div *ngIf="showPhoneOtp" class="d-flex align-items-center gap-2 flex-wrap mt-2">
