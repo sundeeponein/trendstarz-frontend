@@ -70,13 +70,23 @@
     {{ firebaseImportMessage }}
   </div>
 
-  <div class="ts-status-legend admin-status-legend" aria-label="User status legend">
-    <span class="ts-status-legend-label">Status:</span>
-    <span class="ts-status-badge ts-status-accepted">Accepted</span>
-    <span class="ts-status-badge ts-status-pending">Pending</span>
-    <span class="ts-status-badge ts-status-rejected">Rejected / Declined</span>
-    <span class="ts-status-badge ts-status-deleted">Deleted</span>
-    <span class="ts-status-badge ts-status-other">Other</span>
+  <div class="row">
+    <div class="col-9 ts-status-legend admin-status-legend" aria-label="User status legend">
+      <span class="ts-status-legend-label">Status:</span>
+      <span class="ts-status-badge ts-status-accepted">Accepted</span>
+      <span class="ts-status-badge ts-status-pending">Pending</span>
+      <span class="ts-status-badge ts-status-rejected">Rejected / Declined</span>
+      <span class="ts-status-badge ts-status-deleted">Deleted</span>
+      <span class="ts-status-badge ts-status-other">Other</span>
+    </div>
+    <div class="table-footer col-3">
+      <div class="page-size-control">
+        <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page">
+          <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+        </select>
+        <span>{{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalVisibleUsers() }} {{ getRoleTitle().toLowerCase() }}</span>
+      </div>
+    </div>
   </div>
 
   <div class="users-table-shell">
