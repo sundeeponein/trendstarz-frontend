@@ -37,6 +37,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     lastClickAt: '',
   };
   usageSummary: UsageSummary | null = null;
+  verificationCallNumber = '';
   private loadedOnce = false;
 
   selectedInvite: any = null;
@@ -68,6 +69,16 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.usageSummary = null;
+      },
+    });
+
+    this.config.getSupportContact().subscribe({
+      next: (support) => {
+        this.verificationCallNumber = support?.verificationCallNumber || '';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.verificationCallNumber = '';
       },
     });
 
@@ -109,6 +120,16 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   get trafficCardTitle(): string {
     return this.photographer?.status === 'accepted' ? 'Profile traffic' : 'Profile traffic pending';
+  }
+
+  get isEmailVerified(): boolean {
+    const photographer = this.photographer || {};
+    return !!(photographer.isEmailVerified ?? photographer.emailVerified);
+  }
+
+  get isMobileVerified(): boolean {
+    const photographer = this.photographer || {};
+    return !!(photographer.isMobileVerified ?? photographer.mobileVerified ?? photographer.phoneVerified ?? photographer.isPhoneVerified);
   }
 
   loadDashboard(): void {
@@ -228,6 +249,17 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   onSearch(): void {
     this.router.navigate(['/search']);
+  }
+
+  onVerifyEmail(): void {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/verify-email?returnUrl=/photographer-dashboard';
+    }
+  }
+
+  onMobileVerificationHelp(): void {
+    const numberText = this.verificationCallNumber ? ` Team calls come from ${this.verificationCallNumber}.` : '';
+    this.toast.info(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
   }
 
   onOpenCampaigns(): void {
