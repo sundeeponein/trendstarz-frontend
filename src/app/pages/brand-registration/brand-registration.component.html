@@ -434,8 +434,8 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">← Back</button>
-            <button type="submit" class="btn btn-success fw-bold" [disabled]="isSubmitting">
-              {{ isSubmitting ? 'Registering...' : '🚀 Launch Your Brand' }}
+            <button type="submit" class="btn btn-success fw-bold" [disabled]="registrationForm.invalid || !brandLogoFile || isSubmitting">
+              {{ isSubmitting ? 'Registering...' : 'Launch Your Brand' }}
             </button>
           </div>
         </section>

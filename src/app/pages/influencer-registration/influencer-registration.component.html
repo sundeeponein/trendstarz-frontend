@@ -638,7 +638,9 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview || isSubmitting">{{ isSubmitting ? 'Registering...' : 'Complete Registration' }}</button>
+            <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview || isSubmitting">
+              {{ isSubmitting ? 'Registering...' : 'Complete Registration' }}
+            </button>
           </div>
         </section>
       </form>

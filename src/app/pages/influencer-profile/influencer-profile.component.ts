@@ -364,6 +364,7 @@ export class InfluencerProfileComponent implements OnInit {
   isEditMode = false;
   originalFormValue: any = null;
   submitted = false;
+  saving = false;
   usernameError: string = '';
   showChangePasswordModal = false;
 
@@ -1078,6 +1079,10 @@ export class InfluencerProfileComponent implements OnInit {
 
 
   async onSubmit() {
+    if (this.saving) {
+      return;
+    }
+
     this.submitted = true;
     this.cd.detectChanges();
 
@@ -1111,6 +1116,8 @@ export class InfluencerProfileComponent implements OnInit {
       return;
     }
     this.verificationConsentError = '';
+    this.saving = true;
+    this.cd.detectChanges();
     // Always slugify username before saving
     if (raw.username) {
       raw.username = this.slugifyUsername(raw.username);
@@ -1167,6 +1174,7 @@ export class InfluencerProfileComponent implements OnInit {
       const uploadFile = this.normalizeUploadFile(this.profileImageFile, this.profileImageFile.name || 'profile-image.jpg');
       if (!uploadFile || !uploadFile.type || !uploadFile.type.startsWith('image/')) {
         this.registrationError = 'Invalid profile image file.';
+        this.saving = false;
         return;
       }
       try {
@@ -1179,18 +1187,22 @@ export class InfluencerProfileComponent implements OnInit {
         });
         if (!response.ok) {
           this.registrationError = 'Profile image upload failed.';
+          this.saving = false;
           return;
         }
         const data = await response.json();
-        if (data.url && data.public_id) {
+        const uploaded = data?.data || data;
+        if (uploaded?.url && uploaded?.public_id) {
           // New profile image at index 0, keep gallery images
-          profileImages = [{ url: data.url, public_id: data.public_id }, ...this.galleryImagesData];
+          profileImages = [{ url: uploaded.url, public_id: uploaded.public_id }, ...this.galleryImagesData];
         } else {
           this.registrationError = 'Profile image upload failed.';
+          this.saving = false;
           return;
         }
       } catch (err) {
         this.registrationError = 'Profile image upload failed.';
+        this.saving = false;
         return;
       }
     } else if (raw.profileImages && Array.isArray(raw.profileImages) && raw.profileImages.length > 0) {
@@ -1232,6 +1244,7 @@ export class InfluencerProfileComponent implements OnInit {
     delete payload.premiumDuration;
     this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
+        this.saving = false;
         this.registrationSuccess = true;
         const payoutSummary = payload.payout?.upiId
           ? ` Payout saved: ${payload.payout.upiId}`
@@ -1276,6 +1289,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.fetchAndPatchProfile().catch(() => {});
       },
       error: err => {
+        this.saving = false;
         this.registrationSuccessMessage = '';
         this.registrationError = 'Update failed. Please try again.';
         console.error('[PATCH error]', err);

@@ -934,6 +934,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
 
     this.isSubmitting = true; this.registrationError = ''; this.registrationSuccess = false;
+    this.cdr.detectChanges();
     const raw = this.registrationForm.value;
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';

@@ -429,7 +429,9 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="submit" class="btn btn-primary" *ngIf="isEditMode">Save Profile</button>
+            <button type="submit" class="btn btn-primary" *ngIf="isEditMode" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Save Profile' }}
+            </button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Enable Edit</button>
           </div>
         </section>

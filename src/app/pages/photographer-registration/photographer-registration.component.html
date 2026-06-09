@@ -441,7 +441,7 @@
 
             <div class="actions-row dual">
               <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !profileImagePreview || submitting">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !profileImagePreview || uploadingImage || submitting">
                 {{ submitting ? 'Registering...' : 'Complete Registration' }}
               </button>
             </div>

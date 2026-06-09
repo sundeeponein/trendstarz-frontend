@@ -993,6 +993,7 @@ export class BrandRegistrationComponent implements OnInit {
     this.registrationError = '';
     this.registrationSuccess = false;
     this.isSubmitting = true;
+    this.cd.detectChanges();
 
     const raw = this.registrationForm.value;
     // Auto-generate username from brandName if not set
