@@ -863,6 +863,16 @@ export class AdminUserTableComponent implements OnInit {
     return !!user?.isMobileVerified;
   }
 
+  getDisplayPhoneNumber(user: any): string {
+    const raw = String(user?.phoneNumber || '').trim();
+    if (!raw) return '-';
+    const lower = raw.toLowerCase();
+    if (lower.startsWith('firebase:') || lower.startsWith('pending-mobile:')) {
+      return '-';
+    }
+    return raw;
+  }
+
   updateContactVerification(
     user: any,
     userType: 'influencer' | 'brand' | 'photographer',
@@ -980,7 +990,7 @@ export class AdminUserTableComponent implements OnInit {
       user?.username,
       user?.brandUsername,
       user?.email,
-      user?.phoneNumber,
+      this.getDisplayPhoneNumber(user) !== '-' ? this.getDisplayPhoneNumber(user) : '',
       user?.location?.district,
       user?.location?.state,
     ]

@@ -127,7 +127,7 @@
           </td>
           <td>
             <div>{{ user.email || '-' }}</div>
-            <div class="user-sub">{{ user.phoneNumber || '-' }}</div>
+            <div class="user-sub">{{ getDisplayPhoneNumber(user) }}</div>
           </td>
           <td>
             <div class="table-social-list" *ngIf="getTableSocialMediaItems(user).length; else noTableSocial">
@@ -220,7 +220,7 @@
           </div>
           <div>
             <label>Phone Number (<small>{{ isMobileVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
-            <div>{{ selectedUser.phoneNumber || '-' }}</div>
+            <div>{{ getDisplayPhoneNumber(selectedUser) }}</div>
             <button class="btn btn-sm" [class.btn-outline-secondary]="isMobileVerified(selectedUser)" [class.btn-success]="!isMobileVerified(selectedUser)" (click)="toggleSelectedMobileVerification()">
               {{ isMobileVerified(selectedUser) ? 'Unverify' : 'Verify' }}
             </button>
