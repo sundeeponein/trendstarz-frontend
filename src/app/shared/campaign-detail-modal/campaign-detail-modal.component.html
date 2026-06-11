@@ -93,6 +93,21 @@
           mode="receiver">
         </app-offer-trail>
 
+      <div class="cdm-section cdm-admin-setup" *ngIf="adminReview">
+        <div class="cdm-section-label">CAMPAIGN / COLLAB SETUP</div>
+        <div class="cdm-admin-setup-grid">
+          <div class="cdm-admin-setup-card">
+            <span>Type</span>
+            <strong>{{ campaignTypeLabel || 'Not specified' }}</strong>
+          </div>
+          <div class="cdm-admin-setup-card">
+            <span>Campaign access mode</span>
+            <strong>{{ campaignAccessModeLabel }}</strong>
+            <small *ngIf="campaignAccessDetailText">{{ campaignAccessDetailText }}</small>
+          </div>
+        </div>
+      </div>
+
       <div class="cdm-section" *ngIf="adminReview">
         <div class="cdm-section-label">INVITED PARTICIPANTS & PROGRESS</div>
         <div class="cdm-status-legend">

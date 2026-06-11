@@ -239,7 +239,7 @@ export class CampaignDetailModalComponent implements OnChanges {
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
       paid_collab: 'Paid Collab',
-      product: 'Product / Barter',
+      product: 'Product Collab',
       invite_location: 'Invite to Location',
       pay_to_join: 'Pay to Join',
     };
@@ -724,6 +724,27 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   get minInfluencerTier(): string {
     return (this.campaign?.minInfluencerTier || '').trim();
+  }
+
+  get campaignAccessModeLabel(): string {
+    return this.campaign?.campaignMode === 'tier_filtered_open' ? 'Open to all' : 'Invite only';
+  }
+
+  get campaignAccessDetailText(): string {
+    const details: string[] = [];
+    if (this.campaign?.campaignMode === 'tier_filtered_open') {
+      if (this.minInfluencerTier) details.push(`Tier: ${this.minInfluencerTier}`);
+      const location = [
+        String(this.campaign?.targetDistrict || this.campaign?.venueDistrict || '').trim(),
+        String(this.campaign?.targetState || this.campaign?.venueState || '').trim(),
+      ].filter(Boolean).join(', ');
+      if (location) details.push(`Location: ${location}`);
+      const categories = Array.isArray(this.campaign?.categories)
+        ? this.campaign.categories.map((item: any) => String(item || '').trim()).filter(Boolean)
+        : [];
+      if (categories.length) details.push(`Categories: ${categories.join(', ')}`);
+    }
+    return details.join(' | ');
   }
 
   get adminInviteProgress(): any[] {

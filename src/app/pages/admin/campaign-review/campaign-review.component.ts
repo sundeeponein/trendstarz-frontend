@@ -689,7 +689,35 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   campaignPreviewType(campaign: any): string {
-    return campaign?.campaignType || 'Campaign';
+    const key = String(campaign?.campaignType || '').trim().toLowerCase();
+    const labels: Record<string, string> = {
+      paid_collab: 'Paid Collab',
+      product: 'Product Collab',
+      invite_location: 'Invite to Location',
+      pay_to_join: 'Pay to Join',
+    };
+    return labels[key] || campaign?.campaignType || 'Campaign';
+  }
+
+  campaignAccessModeLabel(campaign: any): string {
+    return campaign?.campaignMode === 'tier_filtered_open' ? 'Open to all' : 'Invite only';
+  }
+
+  campaignAccessDetailText(campaign: any): string {
+    if (campaign?.campaignMode !== 'tier_filtered_open') return '';
+    const details: string[] = [];
+    const minTier = String(campaign?.minInfluencerTier || '').trim();
+    if (minTier) details.push(`Tier: ${minTier}`);
+    const location = [
+      String(campaign?.targetDistrict || campaign?.venueDistrict || '').trim(),
+      String(campaign?.targetState || campaign?.venueState || '').trim(),
+    ].filter(Boolean).join(', ');
+    if (location) details.push(`Location: ${location}`);
+    const categories = Array.isArray(campaign?.categories)
+      ? campaign.categories.map((item: any) => String(item || '').trim()).filter(Boolean)
+      : [];
+    if (categories.length) details.push(`Categories: ${categories.join(', ')}`);
+    return details.join(' | ');
   }
 
   get selectedCampaignCanModerate(): boolean {

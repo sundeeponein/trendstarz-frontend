@@ -86,7 +86,11 @@
               <button type="button" class="review-campaign-link" (click)="openCampaignPreview(c)">
                 <div class="fw-semibold">{{ c.title || 'Untitled campaign' }}</div>
               </button>
-              <div class="small text-secondary" *ngIf="c.campaignType">{{ c.campaignType }}</div>
+              <div class="campaign-list-meta">
+                <span>{{ campaignPreviewType(c) }}</span>
+                <span>{{ campaignAccessModeLabel(c) }}</span>
+                <span *ngIf="campaignAccessDetailText(c)">{{ campaignAccessDetailText(c) }}</span>
+              </div>
             </td>
             <td>
               <div>{{ c.brand?.brandName || '-' }}</div>
