@@ -56,6 +56,11 @@
         </div>
         <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Go to profile</a>
         <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+        <!-- <app-profile-review-summary
+          [detail]="profileVerificationDashboard"
+          [loading]="profileVerificationLoading"
+          profileRoute="/influencer-profile"
+        /> -->
       </div>
     </div>
   </div>

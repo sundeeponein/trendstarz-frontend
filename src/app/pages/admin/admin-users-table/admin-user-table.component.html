@@ -107,7 +107,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)">
+        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)" (click)="openUserDetails(user)">
           <td>
             <img
               class="avatar"
@@ -151,13 +151,13 @@
           </td>
           <td class="ts-status-action-cell">
             <div class="row-actions">
-              <button class="btn btn-outline-success border-0" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
+              <button class="btn btn-outline-success border-0" (click)="$event.stopPropagation(); acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
                 <i class="bi bi-check-circle"></i>
               </button>
-              <button class="btn btn-outline-danger border-0" (click)="declineUser(user._id)" title="Decline">
+              <button class="btn btn-outline-danger border-0" (click)="$event.stopPropagation(); declineUser(user._id)" title="Decline">
                 <i class="bi bi-x-circle"></i>
               </button>
-              <button class="btn btn-outline-info border-0" (click)="openUserDetails(user)" title="View Details">
+              <button class="btn btn-outline-info border-0" (click)="$event.stopPropagation(); openUserDetails(user)" title="View Details">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -167,7 +167,7 @@
     </table>
 
     <ng-template #emptyState>
-      <div class="empty-state">No users found for current filters.</div>
+      <div class="empty-state">{{ isLoading ? 'Loading users...' : 'No users found for current filters.' }}</div>
     </ng-template>
 
     <div class="table-footer">
@@ -208,6 +208,20 @@
       </div>
 
       <div class="modal-body pt-2">
+        <div class="verification-summary-card">
+          <app-profile-review-panel
+            [detail]="selectedProfileVerification"
+            [loading]="selectedProfileVerificationLoading"
+            [editable]="true"
+            [showHeader]="false"
+            [showAddFlag]="false"
+            [notes]="selectedUserInternalNotes"
+            (notesChange)="selectedUserInternalNotes = $event"
+            (updateFlag)="updateSelectedProfileFlag($event.flag, $event.status)"
+            (action)="takeSelectedProfileAction($event)"
+          />
+        </div>
+
         <div class="details-grid">
           <div>
             <label>Email Address (<small>{{ isEmailVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>

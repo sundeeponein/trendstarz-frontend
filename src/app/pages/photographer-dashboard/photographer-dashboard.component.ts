@@ -13,11 +13,16 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent,],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
@@ -38,6 +43,8 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   };
   usageSummary: UsageSummary | null = null;
   verificationCallNumber = '';
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
   private loadedOnce = false;
 
   selectedInvite: any = null;
@@ -55,6 +62,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     private readonly dashboardService: DashboardService,
     private readonly toast: ToastService,
     private readonly shippingModal: ShippingAddressModalService,
+    private readonly profileVerification: ProfileVerificationService,
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +79,8 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.usageSummary = null;
       },
     });
+
+    this.loadProfileVerificationDashboard();
 
     this.config.getSupportContact().subscribe({
       next: (support) => {
@@ -94,6 +104,21 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.loadDashboard();
       }),
     );
+  }
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
   }
 
   ngOnDestroy(): void {

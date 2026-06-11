@@ -44,6 +44,7 @@ export class DeletedUsersTableComponent implements OnInit {
   filteredPhotographers: any[] = [];
   activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   errorMessage: string | null = null;
+  isLoading = false;
   currentPage = 1;
   pageSize = 100;
   readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
@@ -73,7 +74,7 @@ export class DeletedUsersTableComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.fetchDeletedUsers();
+    this.fetchDeletedUsers(this.activeTab);
     // Listen for user-deleted-refresh event to auto-refresh deleted users (only in browser)
     if (typeof window !== 'undefined') {
       window.addEventListener('user-deleted-refresh', this.handleUserDeletedRefresh);
@@ -87,7 +88,7 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   handleUserDeletedRefresh = () => {
-    this.fetchDeletedUsers();
+    this.fetchDeletedUsers(this.activeTab);
   }
 
   private dispatchAdminRefresh(eventName: string) {
@@ -106,7 +107,33 @@ export class DeletedUsersTableComponent implements OnInit {
     this.updateAllFilterOptions();
   }
 
-  fetchDeletedUsers() {
+  private getDeletedAdminListUrl(userType: 'influencer' | 'brand' | 'photographer'): string {
+    const endpoint =
+      userType === 'influencer'
+        ? 'influencers'
+        : userType === 'brand'
+          ? 'brands'
+          : 'photographers';
+    return `${environment.apiBaseUrl}/admin/${endpoint}?status=deleted&limit=1000`;
+  }
+
+  private setDeletedUsersByType(userType: 'influencer' | 'brand' | 'photographer', users: any[]): void {
+    if (userType === 'influencer') {
+      this.influencers = users;
+    } else if (userType === 'brand') {
+      this.brands = users;
+    } else {
+      this.photographers = users;
+    }
+  }
+
+  private getDeletedUsersByType(userType: 'influencer' | 'brand' | 'photographer'): any[] {
+    if (userType === 'influencer') return this.influencers;
+    if (userType === 'brand') return this.brands;
+    return this.photographers;
+  }
+
+  fetchDeletedUsers(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     let token = '';
     if (typeof window !== 'undefined' && window.localStorage) {
       token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
@@ -119,99 +146,47 @@ export class DeletedUsersTableComponent implements OnInit {
       }
       return;
     }
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/influencers?status=deleted&limit=1000`, headers)
+    this.isLoading = true;
+    this.http.get<any>(this.getDeletedAdminListUrl(userType), headers)
       .subscribe({
         next: (res: any) => {
           const users = Array.isArray(res) ? res : (res?.data || []);
-          // debug: deleted influencers received
-          this.influencers = users;
-          this.applyFilters('influencer');
-          this.updateAllFilterOptions();
+          this.errorMessage = null;
+          this.setDeletedUsersByType(userType, users);
+          this.applyFilters(userType);
+          this.updateAllFilterOptions(userType);
+          this.isLoading = false;
         },
         error: (err) => {
+          this.isLoading = false;
           if (err.status === 401) {
             this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
             if (typeof window !== 'undefined') {
               setTimeout(() => { window.location.href = '/login'; }, 1500);
             }
           } else {
-            this.errorMessage = 'Failed to fetch deleted influencers.';
-          }
-        }
-      });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/brands?status=deleted&limit=1000`, headers)
-      .subscribe({
-        next: (res: any) => {
-          const users = Array.isArray(res) ? res : (res?.data || []);
-          this.brands = users;
-          this.applyFilters('brand');
-          this.updateAllFilterOptions();
-        },
-        error: (err) => {
-          if (err.status === 401) {
-            this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
-            if (typeof window !== 'undefined') {
-              setTimeout(() => { window.location.href = '/login'; }, 1500);
-            }
-          } else {
-            this.errorMessage = 'Failed to fetch deleted brands.';
-          }
-        }
-      });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/photographers?status=deleted&limit=1000`, headers)
-      .subscribe({
-        next: (res: any) => {
-          const users = Array.isArray(res) ? res : (res?.data || []);
-          this.photographers = users;
-          this.applyFilters('photographer');
-          this.updateAllFilterOptions();
-        },
-        error: (err) => {
-          if (err.status === 401) {
-            this.errorMessage = 'Session expired or unauthorized. Redirecting to login...';
-            if (typeof window !== 'undefined') {
-              setTimeout(() => { window.location.href = '/login'; }, 1500);
-            }
-          } else {
-            this.errorMessage = 'Failed to fetch deleted photographers.';
+            this.errorMessage = `Failed to fetch deleted ${this.getRoleTitleForType(userType)}.`;
           }
         }
       });
   }
 
-  updateAllFilterOptions() {
+  updateAllFilterOptions(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     const categoriesSet = new Set<string>();
     const statesSet = new Set<string>();
-    
-    // Collect from all deleted influencers
-    this.influencers.forEach(user => {
-      if (user.categories && Array.isArray(user.categories)) {
-        user.categories.forEach((cat: string) => categoriesSet.add(cat));
-      }
-      if (user.location?.state) {
-        statesSet.add(user.location.state);
-      }
-    });
-    
-    // Collect from all deleted brands
-    this.brands.forEach(user => {
-      if (user.categories && Array.isArray(user.categories)) {
-        user.categories.forEach((cat: string) => categoriesSet.add(cat));
-      }
+
+    this.getDeletedUsersByType(userType).forEach(user => {
+      const categories = Array.isArray(user.categories)
+        ? user.categories
+        : Array.isArray(user.skills)
+          ? user.skills
+          : [];
+      categories.forEach((cat: string) => categoriesSet.add(cat));
       if (user.location?.state) {
         statesSet.add(user.location.state);
       }
     });
 
-    this.photographers.forEach(user => {
-      if (user.skills && Array.isArray(user.skills)) {
-        user.skills.forEach((cat: string) => categoriesSet.add(cat));
-      }
-      if (user.location?.state) {
-        statesSet.add(user.location.state);
-      }
-    });
-    
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
   }
@@ -247,6 +222,21 @@ export class DeletedUsersTableComponent implements OnInit {
     this.filteredInfluencers = userType === 'influencer' ? this.sortNewestUsers(source.filter(user => this.matchesFilters(user, filters))) : this.filteredInfluencers;
     this.filteredBrands = userType === 'brand' ? this.sortNewestUsers(source.filter(user => this.matchesFilters(user, filters))) : this.filteredBrands;
     this.filteredPhotographers = userType === 'photographer' ? this.sortNewestUsers(source.filter(user => this.matchesFilters(user, filters))) : this.filteredPhotographers;
+  }
+
+  private getFiltersForType(userType: 'influencer' | 'brand' | 'photographer') {
+    if (userType === 'influencer') return this.influencerFilters;
+    if (userType === 'brand') return this.brandFilters;
+    return this.photographerFilters;
+  }
+
+  getActiveFilterValue(field: 'category' | 'state'): string {
+    return this.getFiltersForType(this.activeTab)[field] || '';
+  }
+
+  setActiveFilterValue(field: 'category' | 'state', value: string): void {
+    this.getFiltersForType(this.activeTab)[field] = value;
+    this.onFilterChange(this.activeTab);
   }
 
   matchesFilters(user: any, filters: any): boolean {
@@ -287,8 +277,14 @@ export class DeletedUsersTableComponent implements OnInit {
 
   setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
-    this.applyFilters(tab);
     this.currentPage = 1;
+    this.fetchDeletedUsers(tab);
+  }
+
+  private getRoleTitleForType(userType: 'influencer' | 'brand' | 'photographer'): string {
+    if (userType === 'influencer') return 'influencers';
+    if (userType === 'brand') return 'brands';
+    return 'photo/videographers';
   }
 
   getVisibleDeletedUsers(): any[] {

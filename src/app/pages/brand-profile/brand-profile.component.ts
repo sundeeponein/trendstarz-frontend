@@ -20,6 +20,11 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 
 @Component({
   selector: 'app-brand-registration',
@@ -33,6 +38,8 @@ export class BrandProfileComponent implements OnInit {
   commissionAccessTags: string[] = [];
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -77,7 +84,23 @@ export class BrandProfileComponent implements OnInit {
     private guidelinesService: ImageGuidelinesService,
     private toast: ToastService,
     private firebaseAuth: FirebaseAuthService,
+    private profileVerification: ProfileVerificationService,
   ) {}
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
 
   private showValidationMessage(message: string): void {
     this.registrationError = message;
@@ -394,6 +417,7 @@ export class BrandProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;

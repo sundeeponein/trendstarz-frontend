@@ -136,6 +136,12 @@ export class AdminDashboardComponent implements OnInit {
     this.selectedRoleTab = role;
   }
 
+  private isDeletedUser(user: any): boolean {
+    const isDeleted = String(user?.isDeleted || '').toLowerCase() === 'true';
+    const status = String(user?.status || '').trim().toLowerCase();
+    return user?.isDeleted === true || isDeleted || status === 'deleted';
+  }
+
   private buildDerivedData() {
     const combined = [
       ...this.allInfluencers.map(u => ({
@@ -172,9 +178,9 @@ export class AdminDashboardComponent implements OnInit {
     this.premiumTotal = this.influencerPremium + this.brandPremium + this.photographerPremium;
 
     // --- Verification queue ---
-    const activeInf = this.allInfluencers.filter(u => (u.status || '').toLowerCase() !== 'deleted');
-    const activeBrand = this.allBrands.filter(u => (u.status || '').toLowerCase() !== 'deleted');
-    const activePhotographer = this.allPhotographers.filter(u => (u.status || '').toLowerCase() !== 'deleted');
+    const activeInf = this.allInfluencers.filter(u => !this.isDeletedUser(u));
+    const activeBrand = this.allBrands.filter(u => !this.isDeletedUser(u));
+    const activePhotographer = this.allPhotographers.filter(u => !this.isDeletedUser(u));
 
     this.suspiciousFlaggedInfluencers = activeInf.filter((u: any) => this.isSuspiciousOrFlagged(u)).length;
     this.suspiciousFlaggedBrands = activeBrand.filter((u: any) => this.isSuspiciousOrFlagged(u)).length;
@@ -233,12 +239,12 @@ export class AdminDashboardComponent implements OnInit {
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allInfluencers = all;
-          const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
+          const filtered = all.filter((u: any) => !this.isDeletedUser(u));
           this.influencerCount = filtered.length;
           this.influencerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
           this.influencerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
           this.influencerPremium = filtered.filter((u: any) => !!u.isPremium).length;
-          this.influencerDeleted = all.filter((u: any) => (u.status || '').toLowerCase() === 'deleted').length;
+          this.influencerDeleted = all.filter((u: any) => this.isDeletedUser(u)).length;
           this.onFetchDone();
         },
         error: (err) => {
@@ -254,12 +260,12 @@ export class AdminDashboardComponent implements OnInit {
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allBrands = all;
-          const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
+          const filtered = all.filter((u: any) => !this.isDeletedUser(u));
           this.brandCount = filtered.length;
           this.brandActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
           this.brandPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
           this.brandPremium = filtered.filter((u: any) => !!u.isPremium).length;
-          this.brandDeleted = all.filter((u: any) => (u.status || '').toLowerCase() === 'deleted').length;
+          this.brandDeleted = all.filter((u: any) => this.isDeletedUser(u)).length;
           this.onFetchDone();
         },
         error: (err) => {
@@ -275,12 +281,12 @@ export class AdminDashboardComponent implements OnInit {
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allPhotographers = all;
-          const filtered = all.filter((u: any) => (u.status || '').toLowerCase() !== 'deleted');
+          const filtered = all.filter((u: any) => !this.isDeletedUser(u));
           this.photographerCount = filtered.length;
           this.photographerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
           this.photographerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
           this.photographerPremium = filtered.filter((u: any) => !!u.isPremium).length;
-          this.photographerDeleted = all.filter((u: any) => (u.status || '').toLowerCase() === 'deleted').length;
+          this.photographerDeleted = all.filter((u: any) => this.isDeletedUser(u)).length;
           this.onFetchDone();
         },
         error: (err) => {

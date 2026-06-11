@@ -16,11 +16,16 @@ import { CollaborationAvailabilityFormComponent } from '../../shared/collaborati
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent,],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -103,6 +108,8 @@ export class PhotographerProfileComponent implements OnInit {
   commissionAccessTags: string[] = [];
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
 
   private apiUrl = environment.apiBaseUrl || '/api';
 
@@ -116,7 +123,23 @@ export class PhotographerProfileComponent implements OnInit {
     private guidelinesService: ImageGuidelinesService,
     private cdr: ChangeDetectorRef,
     private firebaseAuth: FirebaseAuthService,
+    private profileVerification: ProfileVerificationService,
   ) {}
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
 
   private formatFirebasePhone(phone: string): string {
     const value = String(phone || '').trim();
@@ -318,6 +341,7 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;

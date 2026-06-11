@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
@@ -10,11 +11,17 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../../shared/social-handle.util';
 import { TIER_DESC_MAP } from '../../../shared/tiers.constants';
+import {
+  ProfileFlag,
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../../services/profile-verification.service';
+import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdminConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdminConfirmDialogComponent, ProfileReviewPanelComponent],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
@@ -29,6 +36,8 @@ export class AdminUserTableComponent implements OnInit {
   selectedUser: any = null;
   selectedUserType: 'influencer' | 'brand' | 'photographer' | null = null;
   selectedUserInternalNotes = '';
+  selectedProfileVerification: ProfileVerificationDashboard | null = null;
+  selectedProfileVerificationLoading = false;
 
   private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
   influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
@@ -72,7 +81,7 @@ export class AdminUserTableComponent implements OnInit {
     this.confirmDialogAction = null;
   }
   private readonly handleUserRestoredRefresh = () => {
-    this.fetchUsers();
+    this.fetchUsers(this.activeTab);
   };
 
   getProfileImage(user: any): string {
@@ -105,7 +114,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getUserStatusKey(user: any): 'accepted' | 'pending' | 'rejected' | 'deleted' | 'other' {
-    if (user?.isDeleted === true || String(user?.isDeleted || '').toLowerCase() === 'true') return 'deleted';
+    if (this.isDeletedUser(user)) return 'deleted';
     const status = String(user?.status || '').trim().toLowerCase();
     if (['accepted', 'approved', 'active'].includes(status)) return 'accepted';
     if (['pending', 'pending_verification', 'pending_review', 'new'].includes(status)) return 'pending';
@@ -129,6 +138,12 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserStatusRowClass(user: any): string {
     return `ts-status-row ts-status-row--${this.getUserStatusKey(user)}`;
+  }
+
+  private isDeletedUser(user: any): boolean {
+    const isDeleted = String(user?.isDeleted || '').toLowerCase() === 'true';
+    const status = String(user?.status || '').trim().toLowerCase();
+    return user?.isDeleted === true || isDeleted || status === 'deleted';
   }
 
   getUserCategoryList(user: any): string[] {
@@ -488,7 +503,12 @@ export class AdminUserTableComponent implements OnInit {
 
   isLoading: boolean = false;
 
-  constructor(private http: HttpClient, private configService: ConfigService, private cd: ChangeDetectorRef) {}
+  constructor(
+    private http: HttpClient,
+    private configService: ConfigService,
+    private cd: ChangeDetectorRef,
+    private profileVerification: ProfileVerificationService,
+  ) {}
 
   ngOnInit() {
     if (typeof window !== 'undefined') {
@@ -544,45 +564,37 @@ export class AdminUserTableComponent implements OnInit {
   }
 
 
-  fetchUsers() {
+  private getAdminListUrl(userType: 'influencer' | 'brand' | 'photographer'): string {
+    const endpoint =
+      userType === 'influencer'
+        ? 'influencers'
+        : userType === 'brand'
+          ? 'brands'
+          : 'photographers';
+    const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
+    return `${environment.apiBaseUrl}/admin/${endpoint}?${statusParam}limit=1000`;
+  }
+
+  private setUsersByType(userType: 'influencer' | 'brand' | 'photographer', users: any[]): void {
+    if (userType === 'influencer') {
+      this.influencers = users;
+    } else if (userType === 'brand') {
+      this.brands = users;
+    } else {
+      this.photographers = users;
+    }
+  }
+
+  fetchUsers(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     this.isLoading = true;
     const headers = this.getAuthHeaders();
-    const adminListParams = `limit=1000`;
-    const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
-    const influencerUrl = `${environment.apiBaseUrl}/admin/influencers?${statusParam}${adminListParams}`;
-    this.http.get<any>(influencerUrl, headers)
+    this.http.get<any>(this.getAdminListUrl(userType), headers)
       .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
         const users = Array.isArray(res) ? res : (res?.data || []);
-        this.influencers = users;
-        this.applyFilters('influencer');
-        this.updateAllFilterOptions();
-        this.refreshSelectedUserFromLists();
-        this.isLoading = false;
-        this.cd.detectChanges();
-      });
-
-    const brandUrl = `${environment.apiBaseUrl}/admin/brands?${statusParam}${adminListParams}`;
-    this.http.get<any>(brandUrl, headers)
-      .pipe(timeout(5000), catchError(() => of([])))
-      .subscribe((res: any) => {
-        const users = Array.isArray(res) ? res : (res?.data || []);
-        this.brands = users;
-        this.applyFilters('brand');
-        this.updateAllFilterOptions();
-        this.refreshSelectedUserFromLists();
-        this.isLoading = false;
-        this.cd.detectChanges();
-      });
-
-    const photographerUrl = `${environment.apiBaseUrl}/admin/photographers?${statusParam}${adminListParams}`;
-    this.http.get<any>(photographerUrl, headers)
-      .pipe(timeout(5000), catchError(() => of([])))
-      .subscribe((res: any) => {
-        const users = Array.isArray(res) ? res : (res?.data || []);
-        this.photographers = users;
-        this.applyFilters('photographer');
-        this.updateAllFilterOptions();
+        this.setUsersByType(userType, users);
+        this.applyFilters(userType);
+        this.updateAllFilterOptions(userType);
         this.refreshSelectedUserFromLists();
         this.isLoading = false;
         this.cd.detectChanges();
@@ -642,34 +654,19 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = String(latest?.verificationAdminNotes || this.selectedUserInternalNotes || '');
   }
 
-  updateAllFilterOptions() {
+  updateAllFilterOptions(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     const categoriesSet = new Set<string>();
     const statesSet = new Set<string>();
     const statusSet = new Set<string>();
     const signupSourceSet = new Set<string>();
-    
-    // Collect from all influencers
-    this.influencers.forEach(user => {
-      if (user.categories && Array.isArray(user.categories)) {
-        user.categories.forEach((cat: string) => categoriesSet.add(cat));
-      }
-      if (user.location?.state) {
-        statesSet.add(user.location.state);
-      }
-      if (user.status) {
-        statusSet.add(user.status);
-      }
-      const signupSource = this.getSignupSourceFilterValue(user);
-      if (signupSource) {
-        signupSourceSet.add(signupSource);
-      }
-    });
-    
-    // Collect from all brands
-    this.brands.forEach(user => {
-      if (user.categories && Array.isArray(user.categories)) {
-        user.categories.forEach((cat: string) => categoriesSet.add(cat));
-      }
+
+    this.getUsersByType(userType).forEach(user => {
+      const categories = Array.isArray(user.categories)
+        ? user.categories
+        : Array.isArray(user.skills)
+          ? user.skills
+          : [];
+      categories.forEach((cat: string) => categoriesSet.add(cat));
       if (user.location?.state) {
         statesSet.add(user.location.state);
       }
@@ -682,22 +679,6 @@ export class AdminUserTableComponent implements OnInit {
       }
     });
 
-    this.photographers.forEach(user => {
-      if (user.skills && Array.isArray(user.skills)) {
-        user.skills.forEach((cat: string) => categoriesSet.add(cat));
-      }
-      if (user.location?.state) {
-        statesSet.add(user.location.state);
-      }
-      if (user.status) {
-        statusSet.add(user.status);
-      }
-      const signupSource = this.getSignupSourceFilterValue(user);
-      if (signupSource) {
-        signupSourceSet.add(signupSource);
-      }
-    });
-    
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
     this.statusArray = Array.from(statusSet).sort();
@@ -734,9 +715,9 @@ export class AdminUserTableComponent implements OnInit {
     // If on User Management tab, show only non-deleted users. If on Deleted Users tab, show only deleted users.
     let filtered = source;
     if (this.isDeletedTab()) {
-      filtered = filtered.filter(user => user.isDeleted === true || user.isDeleted === 'true');
+      filtered = filtered.filter(user => this.isDeletedUser(user));
     } else {
-      filtered = filtered.filter(user => !user.isDeleted || user.isDeleted === false || user.isDeleted === 'false');
+      filtered = filtered.filter(user => !this.isDeletedUser(user));
     }
     if (userType === 'influencer') {
       this.filteredInfluencers = this.sortNewestUsers(filtered.filter(user => this.matchesFilters(user, filters)));
@@ -898,6 +879,16 @@ export class AdminUserTableComponent implements OnInit {
         .subscribe((res: any) => {
           if (!res) return;
           user[field] = value;
+          if (field === 'isEmailVerified') {
+            user.emailVerified = value;
+            user.emailVerifiedAt = value ? (user.emailVerifiedAt || new Date().toISOString()) : null;
+          }
+          if (field === 'isMobileVerified') {
+            user.mobileVerified = value;
+            user.mobileVerifiedAt = value ? (user.mobileVerifiedAt || new Date().toISOString()) : null;
+            user.mobileVerificationMethod = value ? (user.mobileVerificationMethod || 'Manual') : '';
+          }
+          this.loadSelectedProfileVerification();
           this.fetchUsers();
         });
     });
@@ -1049,6 +1040,7 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserType = this.activeTab;
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
     this.showUserDetailsModal = true;
+    this.loadSelectedProfileVerification();
   }
 
   closeUserDetailsModal(): void {
@@ -1056,6 +1048,8 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUser = null;
     this.selectedUserType = null;
     this.selectedUserInternalNotes = '';
+    this.selectedProfileVerification = null;
+    this.selectedProfileVerificationLoading = false;
   }
 
   onUserDetailsBackdropClick(event: MouseEvent): void {
@@ -1067,6 +1061,157 @@ export class AdminUserTableComponent implements OnInit {
   getSelectedUserStatus(): string {
     if (!this.selectedUser?.status) return '-';
     return String(this.selectedUser.status);
+  }
+
+  getAdminUserType(userType: 'influencer' | 'brand' | 'photographer' | null): 'Influencer' | 'Brand' | 'Photographer' {
+    if (userType === 'brand') return 'Brand';
+    if (userType === 'photographer') return 'Photographer';
+    return 'Influencer';
+  }
+
+  loadSelectedProfileVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    this.selectedProfileVerificationLoading = true;
+    this.selectedProfileVerification = null;
+    this.profileVerification
+      .getModerationDetail(this.getAdminUserType(this.selectedUserType), userId)
+      .pipe(catchError(() => of(null)))
+      .subscribe((detail: ProfileVerificationDashboard | null) => {
+        this.selectedProfileVerification = detail;
+        this.selectedProfileVerificationLoading = false;
+        this.cd.detectChanges();
+      });
+  }
+
+  getProfileVerificationScore(): number {
+    return Number(this.selectedProfileVerification?.profileQualityScore ?? this.selectedUser?.profileQualityScore ?? 100);
+  }
+
+  getProfileCompletionScore(): number {
+    return Number(this.selectedProfileVerification?.profileCompletion ?? this.selectedUser?.profileCompletion ?? 0);
+  }
+
+  getVerificationDashboardStatus(): string {
+    return String(this.selectedProfileVerification?.verificationStatus || this.selectedUser?.verificationDashboardStatus || 'Draft');
+  }
+
+  getVerificationChecks(): Record<string, any> {
+    return this.selectedProfileVerification?.verificationChecks || {};
+  }
+
+  getVerificationBadges(): Array<{ label: string; verified: boolean }> {
+    const badges = this.selectedProfileVerification?.verificationBadges;
+    if (Array.isArray(badges) && badges.length) return badges;
+    return [
+      { label: 'Email Verified', verified: this.isEmailVerified(this.selectedUser) },
+      { label: 'Mobile Verified', verified: this.isMobileVerified(this.selectedUser) },
+      { label: 'Identity Verified', verified: !!(this.selectedUser?.identityVerified || this.selectedUser?.identityConfirmed) },
+      { label: 'Location Verified', verified: !!this.selectedUser?.locationVerified },
+      { label: 'Social Verified', verified: !!(this.selectedUser?.socialVerified || this.selectedUser?.socialProfilesReviewed) },
+      { label: 'Payment Verified', verified: !!this.selectedUser?.paymentVerified },
+    ];
+  }
+
+  getOpenVerificationFlags(): any[] {
+    return this.selectedProfileVerification?.actionRequired || [];
+  }
+
+  getVerificationIssueText(flag: any): string {
+    return String(flag?.message || flag?.flagCode || 'Profile issue');
+  }
+
+  getProfileEditRoute(): string {
+    if ((this.selectedUserType || this.activeTab) === 'brand') return '/brand-profile';
+    if ((this.selectedUserType || this.activeTab) === 'photographer') return '/photographer-profile';
+    return '/influencer-profile';
+  }
+
+  setVerificationCheck(field: string, value: boolean): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    this.profileVerification
+      .updateChecks(this.getAdminUserType(this.selectedUserType), userId, { [field]: value })
+      .pipe(catchError((err) => {
+        alert('Error updating verification check: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((detail: ProfileVerificationDashboard | null) => {
+        if (!detail) return;
+        this.selectedProfileVerification = detail;
+        const checks = detail.verificationChecks || {};
+        this.selectedUser = {
+          ...this.selectedUser,
+          verificationCallCompleted: !!checks['verificationCallCompleted'],
+          identityVerified: !!checks['identityVerified'],
+          identityConfirmed: !!checks['identityVerified'],
+          locationVerified: !!checks['locationVerified'],
+          socialVerified: !!checks['socialVerified'],
+          socialProfilesReviewed: !!checks['socialVerified'],
+          paymentVerified: !!checks['paymentVerified'],
+          panVerified: !!checks['panVerified'],
+          profileCompletion: detail.profileCompletion,
+          profileQualityScore: detail.profileQualityScore,
+          verificationDashboardStatus: detail.verificationStatus,
+        };
+        this.fetchUsers();
+        this.cd.detectChanges();
+      });
+  }
+
+  private syncSelectedUserFromProfileReview(detail: ProfileVerificationDashboard): void {
+    const checks = detail.verificationChecks || {};
+    this.selectedUser = {
+      ...this.selectedUser,
+      verificationCallCompleted: !!checks['verificationCallCompleted'],
+      identityVerified: !!checks['identityVerified'],
+      identityConfirmed: !!checks['identityVerified'],
+      locationVerified: !!checks['locationVerified'],
+      socialVerified: !!checks['socialVerified'],
+      socialProfilesReviewed: !!checks['socialVerified'],
+      paymentVerified: !!checks['paymentVerified'],
+      panVerified: !!checks['panVerified'],
+      profileCompletion: detail.profileCompletion,
+      profileQualityScore: detail.profileQualityScore,
+      verificationDashboardStatus: detail.verificationStatus,
+      verificationAdminNotes: this.selectedUserInternalNotes,
+    };
+  }
+
+  takeSelectedProfileAction(action: string): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    this.profileVerification
+      .action(this.getAdminUserType(this.selectedUserType), userId, action, this.selectedUserInternalNotes)
+      .pipe(catchError((err) => {
+        alert('Profile review action failed: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((detail: ProfileVerificationDashboard | null) => {
+        if (!detail) return;
+        this.selectedProfileVerification = detail;
+        this.syncSelectedUserFromProfileReview(detail);
+        this.fetchUsers(this.selectedUserType || this.activeTab);
+        this.cd.detectChanges();
+      });
+  }
+
+  updateSelectedProfileFlag(flag: ProfileFlag, status: 'Resolved' | 'Ignored'): void {
+    const flagId = flag?._id || flag?.id;
+    if (!flagId) return;
+    this.profileVerification
+      .updateFlag(flagId, { status, reviewNotes: this.selectedUserInternalNotes })
+      .pipe(catchError((err) => {
+        alert('Profile flag update failed: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res) => {
+        if (!res) return;
+        this.loadSelectedProfileVerification();
+      });
   }
 
   toggleSelectedEmailVerification(): void {
@@ -1265,8 +1410,7 @@ export class AdminUserTableComponent implements OnInit {
     this.premiumUserId = null;
     this.premiumDuration = '';
     this.premiumType = null;
-    // Always refetch users when switching tabs (especially for Deleted Users view)
-    this.fetchUsers();
+    this.fetchUsers(tab);
   }
 
   getAuthHeaders() {
