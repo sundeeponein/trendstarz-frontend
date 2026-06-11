@@ -25,8 +25,8 @@
           <div class="filter-item">
             <label>Category</label>
             <select id="category-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
-                    (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('category')"
+                    (change)="setActiveFilterValue('category', $any($event.target).value)">
               <option value="">All Categories</option>
               <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
             </select>
@@ -36,8 +36,8 @@
           <div class="filter-item">
             <label>State</label>
             <select id="state-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
-                    (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
+                    [ngModel]="getActiveFilterValue('state')"
+                    (change)="setActiveFilterValue('state', $any($event.target).value)">
               <option value="">All States</option>
               <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
             </select>
@@ -54,7 +54,7 @@
   <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'influencer'">
     <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
-      <p>No Data</p>
+      <p>{{ isLoading ? 'Loading users...' : 'No Data' }}</p>
     </div>
     <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table  table-striped">
       <thead class="sticky-top bg-white" style="z-index: 1;">
@@ -92,7 +92,7 @@
   <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'brand'">
     <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
-      <p>No Data</p>
+      <p>{{ isLoading ? 'Loading users...' : 'No Data' }}</p>
     </div>
     <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
       <thead class="sticky-top bg-white" style="z-index: 1;">
@@ -144,7 +144,7 @@
   <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'photographer'">
     <div *ngIf="!filteredPhotographers || filteredPhotographers.length === 0" class="no-data-message">
-      <p>No Data</p>
+      <p>{{ isLoading ? 'Loading users...' : 'No Data' }}</p>
     </div>
     <table *ngIf="filteredPhotographers && filteredPhotographers.length > 0" class="table table-hover admin-table">
       <thead class="sticky-top bg-white" style="z-index: 1;">

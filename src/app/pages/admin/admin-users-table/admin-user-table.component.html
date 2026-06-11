@@ -107,7 +107,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)">
+        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)" (click)="openUserDetails(user)">
           <td>
             <img
               class="avatar"
@@ -151,13 +151,13 @@
           </td>
           <td class="ts-status-action-cell">
             <div class="row-actions">
-              <button class="btn btn-outline-success border-0" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
+              <button class="btn btn-outline-success border-0" (click)="$event.stopPropagation(); acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
                 <i class="bi bi-check-circle"></i>
               </button>
-              <button class="btn btn-outline-danger border-0" (click)="declineUser(user._id)" title="Decline">
+              <button class="btn btn-outline-danger border-0" (click)="$event.stopPropagation(); declineUser(user._id)" title="Decline">
                 <i class="bi bi-x-circle"></i>
               </button>
-              <button class="btn btn-outline-info border-0" (click)="openUserDetails(user)" title="View Details">
+              <button class="btn btn-outline-info border-0" (click)="$event.stopPropagation(); openUserDetails(user)" title="View Details">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -167,7 +167,7 @@
     </table>
 
     <ng-template #emptyState>
-      <div class="empty-state">No users found for current filters.</div>
+      <div class="empty-state">{{ isLoading ? 'Loading users...' : 'No users found for current filters.' }}</div>
     </ng-template>
 
     <div class="table-footer">
@@ -209,94 +209,17 @@
 
       <div class="modal-body pt-2">
         <div class="verification-summary-card">
-          <div class="verification-summary-head">
-            <div>
-              <label>Profile Detailed Status</label>
-              <h5>{{ getVerificationDashboardStatus() }}</h5>
-            </div>
-            <a
-              class="verify-profile-link"
-              routerLink="/admin/profile-moderation"
-              [queryParams]="{ userType: getAdminUserType(selectedUserType), userId: selectedUser._id }"
-              (click)="closeUserDetailsModal()"
-            >
-              <i class="bi bi-shield-check"></i>
-              Review profile
-            </a>
-          </div>
-
-          <div class="verification-score-grid">
-            <div class="verification-score-box">
-              <span>Profile Completion</span>
-              <strong>{{ getProfileCompletionScore() }}%</strong>
-              <div class="mini-meter"><i [style.width.%]="getProfileCompletionScore()"></i></div>
-            </div>
-            <div class="verification-score-box">
-              <span>Quality Score</span>
-              <strong>{{ getProfileVerificationScore() }}/100</strong>
-              <div class="mini-meter quality"><i [style.width.%]="getProfileVerificationScore()"></i></div>
-            </div>
-          </div>
-
-          <div class="verification-badges">
-            <span
-              class="verification-badge"
-              *ngFor="let badge of getVerificationBadges()"
-              [class.ok]="badge.verified"
-              [class.pending]="!badge.verified"
-            >
-              <i class="bi" [ngClass]="badge.verified ? 'bi-check-circle-fill' : 'bi-hourglass-split'"></i>
-              {{ badge.label }}
-            </span>
-          </div>
-
-          <div class="verification-admin-grid">
-            <button type="button"
-                    [class.done]="getVerificationChecks()['verificationCallCompleted']"
-                    (click)="setVerificationCheck('verificationCallCompleted', !getVerificationChecks()['verificationCallCompleted'])">
-              <i class="bi" [ngClass]="getVerificationChecks()['verificationCallCompleted'] ? 'bi-check-circle-fill' : 'bi-telephone'"></i>
-              Call Completed
-            </button>
-            <button type="button"
-                    [class.done]="getVerificationChecks()['identityVerified']"
-                    (click)="setVerificationCheck('identityVerified', !getVerificationChecks()['identityVerified'])">
-              <i class="bi" [ngClass]="getVerificationChecks()['identityVerified'] ? 'bi-check-circle-fill' : 'bi-person-vcard'"></i>
-              Identity Confirmed
-            </button>
-            <button type="button"
-                    [class.done]="getVerificationChecks()['locationVerified']"
-                    (click)="setVerificationCheck('locationVerified', !getVerificationChecks()['locationVerified'])">
-              <i class="bi" [ngClass]="getVerificationChecks()['locationVerified'] ? 'bi-check-circle-fill' : 'bi-geo-alt'"></i>
-              Location Verified
-            </button>
-            <button type="button"
-                    [class.done]="getVerificationChecks()['socialVerified']"
-                    (click)="setVerificationCheck('socialVerified', !getVerificationChecks()['socialVerified'])">
-              <i class="bi" [ngClass]="getVerificationChecks()['socialVerified'] ? 'bi-check-circle-fill' : 'bi-share'"></i>
-              Social Reviewed
-            </button>
-            <button type="button"
-                    [class.done]="getVerificationChecks()['paymentVerified']"
-                    (click)="setVerificationCheck('paymentVerified', !getVerificationChecks()['paymentVerified'])">
-              <i class="bi" [ngClass]="getVerificationChecks()['paymentVerified'] ? 'bi-check-circle-fill' : 'bi-wallet2'"></i>
-              Payment Verified
-            </button>
-          </div>
-
-          <div class="profile-review-issues" *ngIf="getOpenVerificationFlags().length">
-            <strong><i class="bi bi-exclamation-triangle"></i> Action Required</strong>
-            <ul>
-              <li *ngFor="let flag of getOpenVerificationFlags()">{{ getVerificationIssueText(flag) }}</li>
-            </ul>
-          </div>
-          <div class="profile-review-issues empty" *ngIf="!getOpenVerificationFlags().length && !selectedProfileVerificationLoading">
-            <i class="bi bi-patch-check-fill"></i>
-            No open profile review issues.
-          </div>
-          <div class="profile-review-issues empty" *ngIf="selectedProfileVerificationLoading">
-            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-            Loading verification status...
-          </div>
+          <app-profile-review-panel
+            [detail]="selectedProfileVerification"
+            [loading]="selectedProfileVerificationLoading"
+            [editable]="true"
+            [showHeader]="false"
+            [showAddFlag]="false"
+            [notes]="selectedUserInternalNotes"
+            (notesChange)="selectedUserInternalNotes = $event"
+            (updateFlag)="updateSelectedProfileFlag($event.flag, $event.status)"
+            (action)="takeSelectedProfileAction($event)"
+          />
         </div>
 
         <div class="details-grid">

@@ -12,6 +12,11 @@ import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/
 import { ToastService } from '../../shared/toast/toast.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -54,6 +59,8 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
   usageSummary: UsageSummary | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardBrand = this.dashboard?.brand || {};
@@ -89,9 +96,11 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     private monetizationApi: MonetizationApiService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
+    private profileVerification: ProfileVerificationService,
   ) {}
 
   ngOnInit(): void {
+        this.loadProfileVerificationDashboard();
         this.plansService.getMyCapabilities().subscribe((caps) => {
           this.planCaps = caps;
         });
@@ -149,6 +158,21 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     });
     // Removed router event subscription to prevent infinite reloads
     // Load categories/states for filters (implement as needed)
+  }
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
   }
 
   ngOnDestroy(): void {

@@ -12,14 +12,16 @@ import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-o
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../../shared/social-handle.util';
 import { TIER_DESC_MAP } from '../../../shared/tiers.constants';
 import {
+  ProfileFlag,
   ProfileVerificationDashboard,
   ProfileVerificationService,
 } from '../../../services/profile-verification.service';
+import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AdminConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdminConfirmDialogComponent, ProfileReviewPanelComponent],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
@@ -79,7 +81,7 @@ export class AdminUserTableComponent implements OnInit {
     this.confirmDialogAction = null;
   }
   private readonly handleUserRestoredRefresh = () => {
-    this.fetchUsers();
+    this.fetchUsers(this.activeTab);
   };
 
   getProfileImage(user: any): string {
@@ -112,7 +114,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getUserStatusKey(user: any): 'accepted' | 'pending' | 'rejected' | 'deleted' | 'other' {
-    if (user?.isDeleted === true || String(user?.isDeleted || '').toLowerCase() === 'true') return 'deleted';
+    if (this.isDeletedUser(user)) return 'deleted';
     const status = String(user?.status || '').trim().toLowerCase();
     if (['accepted', 'approved', 'active'].includes(status)) return 'accepted';
     if (['pending', 'pending_verification', 'pending_review', 'new'].includes(status)) return 'pending';
@@ -136,6 +138,12 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserStatusRowClass(user: any): string {
     return `ts-status-row ts-status-row--${this.getUserStatusKey(user)}`;
+  }
+
+  private isDeletedUser(user: any): boolean {
+    const isDeleted = String(user?.isDeleted || '').toLowerCase() === 'true';
+    const status = String(user?.status || '').trim().toLowerCase();
+    return user?.isDeleted === true || isDeleted || status === 'deleted';
   }
 
   getUserCategoryList(user: any): string[] {
@@ -556,45 +564,37 @@ export class AdminUserTableComponent implements OnInit {
   }
 
 
-  fetchUsers() {
+  private getAdminListUrl(userType: 'influencer' | 'brand' | 'photographer'): string {
+    const endpoint =
+      userType === 'influencer'
+        ? 'influencers'
+        : userType === 'brand'
+          ? 'brands'
+          : 'photographers';
+    const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
+    return `${environment.apiBaseUrl}/admin/${endpoint}?${statusParam}limit=1000`;
+  }
+
+  private setUsersByType(userType: 'influencer' | 'brand' | 'photographer', users: any[]): void {
+    if (userType === 'influencer') {
+      this.influencers = users;
+    } else if (userType === 'brand') {
+      this.brands = users;
+    } else {
+      this.photographers = users;
+    }
+  }
+
+  fetchUsers(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     this.isLoading = true;
     const headers = this.getAuthHeaders();
-    const adminListParams = `limit=1000`;
-    const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
-    const influencerUrl = `${environment.apiBaseUrl}/admin/influencers?${statusParam}${adminListParams}`;
-    this.http.get<any>(influencerUrl, headers)
+    this.http.get<any>(this.getAdminListUrl(userType), headers)
       .pipe(timeout(5000), catchError(() => of([])))
       .subscribe((res: any) => {
         const users = Array.isArray(res) ? res : (res?.data || []);
-        this.influencers = users;
-        this.applyFilters('influencer');
-        this.updateAllFilterOptions();
-        this.refreshSelectedUserFromLists();
-        this.isLoading = false;
-        this.cd.detectChanges();
-      });
-
-    const brandUrl = `${environment.apiBaseUrl}/admin/brands?${statusParam}${adminListParams}`;
-    this.http.get<any>(brandUrl, headers)
-      .pipe(timeout(5000), catchError(() => of([])))
-      .subscribe((res: any) => {
-        const users = Array.isArray(res) ? res : (res?.data || []);
-        this.brands = users;
-        this.applyFilters('brand');
-        this.updateAllFilterOptions();
-        this.refreshSelectedUserFromLists();
-        this.isLoading = false;
-        this.cd.detectChanges();
-      });
-
-    const photographerUrl = `${environment.apiBaseUrl}/admin/photographers?${statusParam}${adminListParams}`;
-    this.http.get<any>(photographerUrl, headers)
-      .pipe(timeout(5000), catchError(() => of([])))
-      .subscribe((res: any) => {
-        const users = Array.isArray(res) ? res : (res?.data || []);
-        this.photographers = users;
-        this.applyFilters('photographer');
-        this.updateAllFilterOptions();
+        this.setUsersByType(userType, users);
+        this.applyFilters(userType);
+        this.updateAllFilterOptions(userType);
         this.refreshSelectedUserFromLists();
         this.isLoading = false;
         this.cd.detectChanges();
@@ -654,34 +654,19 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = String(latest?.verificationAdminNotes || this.selectedUserInternalNotes || '');
   }
 
-  updateAllFilterOptions() {
+  updateAllFilterOptions(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     const categoriesSet = new Set<string>();
     const statesSet = new Set<string>();
     const statusSet = new Set<string>();
     const signupSourceSet = new Set<string>();
-    
-    // Collect from all influencers
-    this.influencers.forEach(user => {
-      if (user.categories && Array.isArray(user.categories)) {
-        user.categories.forEach((cat: string) => categoriesSet.add(cat));
-      }
-      if (user.location?.state) {
-        statesSet.add(user.location.state);
-      }
-      if (user.status) {
-        statusSet.add(user.status);
-      }
-      const signupSource = this.getSignupSourceFilterValue(user);
-      if (signupSource) {
-        signupSourceSet.add(signupSource);
-      }
-    });
-    
-    // Collect from all brands
-    this.brands.forEach(user => {
-      if (user.categories && Array.isArray(user.categories)) {
-        user.categories.forEach((cat: string) => categoriesSet.add(cat));
-      }
+
+    this.getUsersByType(userType).forEach(user => {
+      const categories = Array.isArray(user.categories)
+        ? user.categories
+        : Array.isArray(user.skills)
+          ? user.skills
+          : [];
+      categories.forEach((cat: string) => categoriesSet.add(cat));
       if (user.location?.state) {
         statesSet.add(user.location.state);
       }
@@ -694,22 +679,6 @@ export class AdminUserTableComponent implements OnInit {
       }
     });
 
-    this.photographers.forEach(user => {
-      if (user.skills && Array.isArray(user.skills)) {
-        user.skills.forEach((cat: string) => categoriesSet.add(cat));
-      }
-      if (user.location?.state) {
-        statesSet.add(user.location.state);
-      }
-      if (user.status) {
-        statusSet.add(user.status);
-      }
-      const signupSource = this.getSignupSourceFilterValue(user);
-      if (signupSource) {
-        signupSourceSet.add(signupSource);
-      }
-    });
-    
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
     this.statusArray = Array.from(statusSet).sort();
@@ -746,9 +715,9 @@ export class AdminUserTableComponent implements OnInit {
     // If on User Management tab, show only non-deleted users. If on Deleted Users tab, show only deleted users.
     let filtered = source;
     if (this.isDeletedTab()) {
-      filtered = filtered.filter(user => user.isDeleted === true || user.isDeleted === 'true');
+      filtered = filtered.filter(user => this.isDeletedUser(user));
     } else {
-      filtered = filtered.filter(user => !user.isDeleted || user.isDeleted === false || user.isDeleted === 'false');
+      filtered = filtered.filter(user => !this.isDeletedUser(user));
     }
     if (userType === 'influencer') {
       this.filteredInfluencers = this.sortNewestUsers(filtered.filter(user => this.matchesFilters(user, filters)));
@@ -1192,6 +1161,59 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
+  private syncSelectedUserFromProfileReview(detail: ProfileVerificationDashboard): void {
+    const checks = detail.verificationChecks || {};
+    this.selectedUser = {
+      ...this.selectedUser,
+      verificationCallCompleted: !!checks['verificationCallCompleted'],
+      identityVerified: !!checks['identityVerified'],
+      identityConfirmed: !!checks['identityVerified'],
+      locationVerified: !!checks['locationVerified'],
+      socialVerified: !!checks['socialVerified'],
+      socialProfilesReviewed: !!checks['socialVerified'],
+      paymentVerified: !!checks['paymentVerified'],
+      panVerified: !!checks['panVerified'],
+      profileCompletion: detail.profileCompletion,
+      profileQualityScore: detail.profileQualityScore,
+      verificationDashboardStatus: detail.verificationStatus,
+      verificationAdminNotes: this.selectedUserInternalNotes,
+    };
+  }
+
+  takeSelectedProfileAction(action: string): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    this.profileVerification
+      .action(this.getAdminUserType(this.selectedUserType), userId, action, this.selectedUserInternalNotes)
+      .pipe(catchError((err) => {
+        alert('Profile review action failed: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((detail: ProfileVerificationDashboard | null) => {
+        if (!detail) return;
+        this.selectedProfileVerification = detail;
+        this.syncSelectedUserFromProfileReview(detail);
+        this.fetchUsers(this.selectedUserType || this.activeTab);
+        this.cd.detectChanges();
+      });
+  }
+
+  updateSelectedProfileFlag(flag: ProfileFlag, status: 'Resolved' | 'Ignored'): void {
+    const flagId = flag?._id || flag?.id;
+    if (!flagId) return;
+    this.profileVerification
+      .updateFlag(flagId, { status, reviewNotes: this.selectedUserInternalNotes })
+      .pipe(catchError((err) => {
+        alert('Profile flag update failed: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res) => {
+        if (!res) return;
+        this.loadSelectedProfileVerification();
+      });
+  }
+
   toggleSelectedEmailVerification(): void {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isEmailVerified(this.selectedUser);
@@ -1388,8 +1410,7 @@ export class AdminUserTableComponent implements OnInit {
     this.premiumUserId = null;
     this.premiumDuration = '';
     this.premiumType = null;
-    // Always refetch users when switching tabs (especially for Deleted Users view)
-    this.fetchUsers();
+    this.fetchUsers(tab);
   }
 
   getAuthHeaders() {

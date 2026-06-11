@@ -55,8 +55,8 @@ import { ProfileFlagsComponent } from '../../shared/profile-verification/profile
 
         <section class="actions-panel" *ngIf="data.actionRequired.length">
           <div>
-            <h2>Fix and Resubmit</h2>
-            <p>Update the open items in your profile, then send it back for review.</p>
+            <h2>Submit Updated Profile</h2>
+            <p>After fixing the open items, send your profile back to the admin review queue.</p>
           </div>
           <div class="action-links">
             <a [routerLink]="profileRoute()">
@@ -65,7 +65,7 @@ import { ProfileFlagsComponent } from '../../shared/profile-verification/profile
             </a>
             <button type="button" [disabled]="submitting()" (click)="resubmit()">
               <i class="bi bi-send"></i>
-              {{ submitting() ? 'Submitting...' : 'Resubmit' }}
+              {{ submitting() ? 'Submitting...' : 'Submit for review' }}
             </button>
           </div>
         </section>

@@ -15,6 +15,11 @@ import { ShippingAddressModalComponent } from '../../shared/components/shipping-
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -64,6 +69,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   emailBannerDismissed = false;
   verificationCallNumber = '';
   usageSummary: UsageSummary | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardUser = this.dashboard?.user || {};
@@ -101,9 +108,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private shippingModal: ShippingAddressModalService,
+    private profileVerification: ProfileVerificationService,
   ) {}
 
   ngOnInit() {
+    this.loadProfileVerificationDashboard();
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;
     });
@@ -169,6 +178,21 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       }
     });
     // Removed router event subscription to prevent infinite reloads
+  }
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
   }
 
   ngOnDestroy(): void {

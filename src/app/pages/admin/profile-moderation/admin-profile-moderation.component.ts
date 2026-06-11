@@ -7,8 +7,7 @@ import {
   ProfileVerificationDashboard,
   ProfileVerificationService,
 } from '../../../services/profile-verification.service';
-import { VerificationStatusComponent } from '../../../shared/profile-verification/verification-status.component';
-import { ProfileFlagsComponent } from '../../../shared/profile-verification/profile-flags.component';
+import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 import { FlagManagementDialogComponent } from './flag-management-dialog.component';
 
 @Component({
@@ -17,8 +16,7 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
   imports: [
     CommonModule,
     FormsModule,
-    VerificationStatusComponent,
-    ProfileFlagsComponent,
+    ProfileReviewPanelComponent,
     FlagManagementDialogComponent,
   ],
   template: `
@@ -79,44 +77,16 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
         </section>
 
         <section class="detail-panel" *ngIf="selectedDetail() as detail">
-          <div class="detail-header">
-            <div>
-              <p class="eyebrow">{{ detail.userType }}</p>
-              <h2>{{ detail.displayName }}</h2>
-            </div>
-            <span class="status-chip">{{ detail.verificationStatus }}</span>
-          </div>
-
-          <app-verification-status
-            [completion]="detail.profileCompletion"
-            [qualityScore]="detail.profileQualityScore"
-            [qualityLabel]="detail.profileQualityLabel"
-            [status]="detail.verificationStatus"
-            [checklist]="detail.checklist"
-          />
-
-          <app-profile-flags
-            title="Open Flags"
-            [flags]="detail.actionRequired"
+          <app-profile-review-panel
+            [detail]="detail"
             [editable]="true"
-            [showAdd]="true"
+            [showAddFlag]="true"
+            [notes]="notes"
+            (notesChange)="notes = $event"
             (addFlag)="flagDialogOpen.set(true)"
             (updateFlag)="updateFlag($event.flag, $event.status)"
+            (action)="takeAction($event)"
           />
-
-          <div class="notes">
-            <label>
-              Review notes
-              <textarea rows="3" [(ngModel)]="notes"></textarea>
-            </label>
-          </div>
-
-          <div class="actions">
-            <button type="button" class="approve" (click)="takeAction('approve')">Approve</button>
-            <button type="button" class="warning" (click)="takeAction('approve_warning')">Approve with warning</button>
-            <button type="button" class="changes" (click)="takeAction('request_changes')">Request changes</button>
-            <button type="button" class="reject" (click)="takeAction('reject')">Reject</button>
-          </div>
         </section>
 
         <section class="detail-panel placeholder" *ngIf="!selectedDetail()">
