@@ -286,6 +286,49 @@
   gap: 8px;
 }
 
+.cdm-admin-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cdm-admin-setup-card {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px 14px;
+
+  span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  strong {
+    display: block;
+    color: #111827;
+    font-size: 0.95rem;
+  }
+
+  small {
+    display: block;
+    color: #4b5563;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cdm-admin-setup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .cdm-brief-box {
   border: 1px solid #f2dfcc;
   background: #fff8f0;

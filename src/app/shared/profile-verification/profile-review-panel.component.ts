@@ -60,7 +60,7 @@ import { VerificationStatusComponent } from './verification-status.component';
           (updateFlag)="updateFlag.emit($event)"
         />
 
-        <div class="notes" *ngIf="editable">
+        <div class="notes" *ngIf="editable && showNotes">
           <label>
             Review notes
             <textarea
@@ -218,6 +218,7 @@ export class ProfileReviewPanelComponent {
   @Input() showHeader = true;
   @Input() showEligibility = false;
   @Input() showAddFlag = false;
+  @Input() showNotes = true;
   @Input() compact = false;
   @Input() notes = '';
 

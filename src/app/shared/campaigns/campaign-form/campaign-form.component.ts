@@ -1564,7 +1564,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   get filteredInfluencers(): any[] {
-    let list = this.inviteCandidates;
+    let list = this.inviteCandidates.filter((recipient) => this.isCampaignVerifiedRecipient(recipient));
     // Hide already-invited creators for influencer campaigns, but keep invited photographers visible in edit mode.
     if (this.campaignInvites?.length && this.inviteRecipientRole !== 'photographer') {
       list = list.filter(inf => !this.isInfluencerInvited(inf));
@@ -1579,7 +1579,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       );
     }
     if (this.filterCategory) {
-      list = list.filter(inf => (inf.categories || inf.skills || []).includes(this.filterCategory));
+      list = list.filter(inf => this.recipientHasExactCategory(inf, this.filterCategory));
     }
     if (this.inviteRecipientRole === 'influencer' && this.filterCreatorType) {
       list = list.filter(inf => (inf.creatorTypes || []).includes(this.filterCreatorType));
@@ -1678,7 +1678,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
   getAvailableTierFilters(): string[] {
     const found = new Set<string>();
-    this.allInfluencers.forEach(inf => {
+    this.inviteCandidates.filter((recipient) => this.isCampaignVerifiedRecipient(recipient)).forEach(inf => {
       const t = this.getInfluencerTier(inf);
       if (t) found.add(t);
     });
@@ -1852,8 +1852,36 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
   getUniqueCategoryFilters(): string[] {
     const cats = new Set<string>();
-    this.inviteCandidates.forEach(inf => ((inf.categories || inf.skills || []) as string[]).forEach((c: string) => cats.add(c)));
+    this.inviteCandidates
+      .filter((recipient) => this.isCampaignVerifiedRecipient(recipient))
+      .forEach(inf => this.getRecipientCategoryValues(inf).forEach((c: string) => cats.add(c)));
     return Array.from(cats).slice(0, 5);
+  }
+
+  private isCampaignVerifiedRecipient(recipient: any): boolean {
+    return recipient?.isEmailVerified === true && recipient?.isMobileVerified === true;
+  }
+
+  private getRecipientCategoryValues(recipient: any): string[] {
+    const values = [
+      ...(Array.isArray(recipient?.categories) ? recipient.categories : []),
+      ...(Array.isArray(recipient?.skills) ? recipient.skills : []),
+    ];
+    const seen = new Set<string>();
+    return values
+      .map((item: any) => String(item || '').trim())
+      .filter((item: string) => {
+        const key = item.toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  private recipientHasExactCategory(recipient: any, category: string): boolean {
+    const selected = String(category || '').trim().toLowerCase();
+    if (!selected) return true;
+    return this.getRecipientCategoryValues(recipient).some((item) => item.toLowerCase() === selected);
   }
 
   private mergeOptionNames(source: any[], fallback: string[]): string[] {
