@@ -179,6 +179,21 @@
   font-size: 0.9rem;
 }
 
+.contact-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.contact-verified-icon {
+  color: #15803d;
+  font-size: 0.92rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
 .table-social-list {
   display: flex;
   flex-direction: row;
