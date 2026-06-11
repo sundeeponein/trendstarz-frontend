@@ -235,6 +235,7 @@ export class BrandProfileComponent implements OnInit {
   registrationSuccess = false;
   registrationError = '';
   submitted = false;
+  saving = false;
   registrationForm!: FormGroup;
   states: any[] = [];
   districts: any[] = [];
@@ -1040,6 +1041,10 @@ export class BrandProfileComponent implements OnInit {
   }
 
   async onSubmit() {
+    if (this.saving) {
+      return;
+    }
+
     this.submitted = true;
     this.cd.detectChanges();
     if (!this.isEditMode || this.registrationForm.invalid || !this.hasBrandLogo()) {
@@ -1060,6 +1065,8 @@ export class BrandProfileComponent implements OnInit {
     }
     this.registrationError = '';
     this.registrationSuccess = false;
+    this.saving = true;
+    this.cd.detectChanges();
     const raw = this.registrationForm.getRawValue();
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(raw?.email || '').trim().toLowerCase();
@@ -1134,6 +1141,7 @@ export class BrandProfileComponent implements OnInit {
     delete payload.googleMapAddress;
     this.configService.updateBrandProfile(payload).subscribe({
       next: () => {
+        this.saving = false;
         this.registrationSuccess = true;
         this.isEditMode = false;
         this.registrationForm.disable({ emitEvent: false });
@@ -1161,6 +1169,7 @@ export class BrandProfileComponent implements OnInit {
         }
       },
       error: err => {
+        this.saving = false;
         this.registrationError = 'Update failed. Please try again.';
         this.submitted = false;
         this.cd.detectChanges();

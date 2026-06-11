@@ -73,6 +73,11 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     return dashboardBrand.lastLoginAt || sessionUser.lastLoginAt || null;
   }
 
+  get isMobileVerified(): boolean {
+    const brand = this.dashboard?.brand || {};
+    return !!(brand.isMobileVerified ?? brand.mobileVerified ?? brand.phoneVerified ?? brand.isPhoneVerified);
+  }
+
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
   constructor(

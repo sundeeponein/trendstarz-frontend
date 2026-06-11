@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Campaign } from '../../campaigns/campaign.model';
@@ -15,10 +15,11 @@ import { CampaignGuideModalComponent } from '../../components/campaign-guide-mod
     './photographer-collaboration-form.component.scss',
   ],
 })
-export class PhotographerCollaborationFormComponent implements OnInit {
+export class PhotographerCollaborationFormComponent implements OnInit, OnChanges {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() hasPremium = false;
+  @Input() saving = false;
 
   @Output() save = new EventEmitter<Partial<Campaign>>();
   @Output() cancel = new EventEmitter<void>();
@@ -44,6 +45,7 @@ export class PhotographerCollaborationFormComponent implements OnInit {
   selectedDeliverables: string[] = [];
   selectedPlatforms: string[] = [];
   submitAttempted = false;
+  submitLocked = false;
 
   protected guideModal = inject(CampaignGuideModalService);
 
@@ -51,6 +53,12 @@ export class PhotographerCollaborationFormComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly config: ConfigService,
   ) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['saving'] && changes['saving'].currentValue === false) {
+      this.submitLocked = false;
+    }
+  }
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -297,6 +305,8 @@ export class PhotographerCollaborationFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.saving || this.submitLocked) return;
+
     this.submitAttempted = true;
     this.form.markAllAsTouched();
     const v = this.form.value;
@@ -350,6 +360,7 @@ export class PhotographerCollaborationFormComponent implements OnInit {
       specialInstructions,
     };
 
+    this.submitLocked = true;
     this.save.emit(payload);
   }
 

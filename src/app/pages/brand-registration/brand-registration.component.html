@@ -328,6 +328,7 @@
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
+                        <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
                       </div>
                     </div>
                   </div>
@@ -402,7 +403,7 @@
                 Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
                 Email is shown only when email is verified. Call/WhatsApp are shown only when mobile is verified.
                 <br>
-                <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+                <span class="text-warning">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
               </div>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
@@ -434,8 +435,8 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">← Back</button>
-            <button type="submit" class="btn btn-success fw-bold" [disabled]="isSubmitting">
-              {{ isSubmitting ? 'Registering...' : '🚀 Launch Your Brand' }}
+            <button type="submit" class="btn btn-success fw-bold" [disabled]="registrationForm.invalid || !brandLogoFile || isSubmitting">
+              {{ isSubmitting ? 'Registering...' : 'Launch Your Brand' }}
             </button>
           </div>
         </section>

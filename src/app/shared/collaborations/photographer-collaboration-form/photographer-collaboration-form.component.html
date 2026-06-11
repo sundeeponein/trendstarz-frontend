@@ -206,8 +206,10 @@
         </div>
 
         <div class="pcf-actions">
-          <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">Cancel</button>
-          <button type="submit" class="btn btn-primary">{{ isEdit ? 'Update Collaboration Request' : 'Create Collaboration Request' }}</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="saving || submitLocked">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving || submitLocked">
+            {{ (saving || submitLocked) ? 'Saving...' : (isEdit ? 'Update Collaboration Request' : 'Create Collaboration Request') }}
+          </button>
         </div>
       </form>
     </div>

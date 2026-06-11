@@ -935,9 +935,9 @@
             <span class="inf-sel-count">
               {{ selectedInfluencerIds.size }} {{ inviteRecipientLabelSingular.toLowerCase() }}{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
             </span>
-            <button type="button" class="btn btn-send" [disabled]="uploading || saving" (click)="onSubmit()">
-              <span *ngIf="uploading || saving">Saving…</span>
-              <span *ngIf="!(uploading || saving)">Send invites <i class="bi bi-arrow-right"></i></span>
+            <button type="button" class="btn btn-send" [disabled]="uploading || saving || submitLocked" (click)="onSubmit()">
+              <span *ngIf="uploading || saving || submitLocked">Saving…</span>
+              <span *ngIf="!(uploading || saving || submitLocked)">Send invites <i class="bi bi-arrow-right"></i></span>
             </button>
           </div>
 
@@ -1099,26 +1099,26 @@
 
       <!-- Footer changes based on mode -->
       <div class="form-footer" *ngIf="f['campaignMode'].value === 'tier_filtered_open'; else inviteOnlyFooter">
-        <button type="button" class="btn btn-back" [disabled]="uploading || saving" (click)="prevStep()">
+        <button type="button" class="btn btn-back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
           <i class="bi bi-arrow-left"></i> Back
         </button>
-        <button type="button" class="btn btn-send" [disabled]="uploading || saving" (click)="skipAndSave()">
-          <span *ngIf="uploading || saving">Saving…</span>
-          <span *ngIf="!(uploading || saving)">Submit for review <i class="bi bi-arrow-right"></i></span>
+        <button type="button" class="btn btn-send" [disabled]="uploading || saving || submitLocked" (click)="skipAndSave()">
+          <span *ngIf="uploading || saving || submitLocked">Saving…</span>
+          <span *ngIf="!(uploading || saving || submitLocked)">Submit for review <i class="bi bi-arrow-right"></i></span>
         </button>
       </div>
       <ng-template #inviteOnlyFooter>
         <div class="form-footer">
-          <button type="button" class="btn btn-back" [disabled]="uploading || saving" (click)="prevStep()">
+          <button type="button" class="btn btn-back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
             <i class="bi bi-arrow-left"></i> Back
           </button>
-          <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading || saving">
-            {{ isEditingForReview ? 'Save & Submit for Review' : (isEdit ? 'Save changes' : 'Save as draft') }}
+          <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading || saving || submitLocked">
+            {{ (uploading || saving || submitLocked) ? 'Saving…' : (isEditingForReview ? 'Save & Submit for Review' : (isEdit ? 'Save changes' : 'Save as draft')) }}
           </button>
           <button type="button" class="btn btn-send"
-            [disabled]="selectedInfluencerIds.size === 0 || uploading || saving" (click)="onSubmit()">
-            <span *ngIf="uploading || saving">Saving…</span>
-            <span *ngIf="!(uploading || saving)">Send invites &amp; submit for review <i class="bi bi-arrow-right"></i></span>
+            [disabled]="selectedInfluencerIds.size === 0 || uploading || saving || submitLocked" (click)="onSubmit()">
+            <span *ngIf="uploading || saving || submitLocked">Saving…</span>
+            <span *ngIf="!(uploading || saving || submitLocked)">Send invites &amp; submit for review <i class="bi bi-arrow-right"></i></span>
           </button>
         </div>
       </ng-template>

@@ -517,6 +517,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   submit() {
+    if (this.submitting) return;
+
     if (!this.canSubmit()) {
       if (this.isReadOnly) {
         this.error = 'Submission is locked after posting and cannot be edited.';

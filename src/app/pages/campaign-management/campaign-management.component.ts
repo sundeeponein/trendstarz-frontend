@@ -1267,7 +1267,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   sendSelectedInvites() {
-    if (!this.invitePanelCampaign?._id || this.selectedInfluencerIds.size === 0) return;
+    if (!this.invitePanelCampaign?._id || this.selectedInfluencerIds.size === 0 || this.bulkSending) return;
     this.inviteError = '';
     this.bulkSending = true;
     this.cd.detectChanges();
@@ -1936,6 +1936,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
     const finish = (shippingAddress?: ShippingAddress) => {
+      if (this.photographerRespondingInviteIds.has(inviteId)) return;
       this.photographerRespondingInviteIds.add(inviteId);
       this.cd.detectChanges();
 
@@ -2060,7 +2061,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       : undefined;
 
     const finish = (shippingAddress?: ShippingAddress) => {
+      if (this.photographerRespondingInviteIds.has(inviteId)) return;
       this.photographerRespondingInviteIds.add(inviteId);
+      this.cd.detectChanges();
       this.config.respondToInvite(
         inviteId,
         status,
@@ -2258,6 +2261,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     inviteRecipientIds?: string[];
     inviteRecipientRole?: 'influencer' | 'photographer';
   }) {
+    if (this.formSaving) return;
+    this.formSaving = true;
+    this.cd.detectChanges();
+
     const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = data;
     const existingCampaignRole: 'influencer' | 'photographer' =
       (this.formMode === 'edit' && this.editingCampaign)
@@ -2286,6 +2293,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       }
     }
     if (!validBrandId) {
+      this.formSaving = false;
       this.showError('Brand profile not loaded or invalid. Please wait and try again.');
       // Attempt to reload brand profile and update state
       const ownerProfile$ = this.isPhotographerView
@@ -2307,7 +2315,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
     if (this.formMode === 'edit' && this.editingCampaign?._id) {
-      this.formSaving = true;
       // Capture id before closeForm() nullifies editingCampaign
       const editingId = this.editingCampaign._id;
       this.config.updateCampaign(editingId, { ...campaignPayload, brandId: validBrandId }).subscribe({
@@ -2413,10 +2420,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       // debug: creating campaign payload
       // Basic required fields check
       if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId) {
+        this.formSaving = false;
         this.showError('Please fill all required fields (title, timeline, brand).');
         return;
       }
-      this.formSaving = true;
       this.config.createCampaign(payload).subscribe({
         next: (created: Campaign) => {
           const createdAny: any = created && typeof created === 'object' ? created : {};
@@ -2752,6 +2759,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   sendInvite(influencer: any) {
     if (!this.invitePanelCampaign?._id) return;
+    if (this.sendingInviteIds.has(influencer._id)) return;
     this.inviteError = '';
     this.sendingInviteIds.add(influencer._id);
     this.cd.detectChanges();
@@ -4317,8 +4325,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       : undefined;
 
     const finish = (shippingAddress?: ShippingAddress) => {
+      if (this.actioningInviteIds.has(inviteId)) return;
       // mark as actioning and call
       this.actioningInviteIds.add(inviteId);
+      this.cd.detectChanges();
       this.config.respondToInvite(
         inviteId,
         status,

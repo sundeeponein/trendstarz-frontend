@@ -51,12 +51,13 @@
 
   </div>
   
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'influencer'">
     <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
       <p>No Data</p>
     </div>
-    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table">
-      <thead>
+    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table  table-striped">
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
           <th>Profile</th>
           <th>Name</th>
@@ -88,12 +89,13 @@
     </table>
   </div>
   
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'brand'">
     <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
       <p>No Data</p>
     </div>
     <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
-      <thead>
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
           <th>Logo</th>
           <th>Brand Name</th>
@@ -139,12 +141,13 @@
     </table>
   </div>
 
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'photographer'">
     <div *ngIf="!filteredPhotographers || filteredPhotographers.length === 0" class="no-data-message">
       <p>No Data</p>
     </div>
     <table *ngIf="filteredPhotographers && filteredPhotographers.length > 0" class="table table-hover admin-table">
-      <thead>
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
           <th>Profile</th>
           <th>Name</th>

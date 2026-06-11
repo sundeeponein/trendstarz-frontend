@@ -20,7 +20,7 @@
 
   <ng-container *ngIf="!loading && !error && photographer">
     <div class="row mb-4 gx-3">
-      <div class="col-md-4 mb-3 mb-md-0">
+      <div class="col-md-3 mb-3 mb-md-0">
         <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
           <div class="d-flex align-items-start">
             <span class="alert-card-icon me-3"><i class="bi bi-person-badge-fill"></i></span>
@@ -34,21 +34,36 @@
         </div>
       </div>
 
-      <div class="col-md-4 mb-3 mb-md-0">
+      <div class="col-md-3 mb-3 mb-md-0">
         <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
           <div class="d-flex align-items-start">
             <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
             <div>
-              <div class="alert-card-title fw-bold">{{ photographer.isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
-              <div class="alert-card-desc">Verified email helps brands trust your profile and increases response rates.</div>
+              <div class="alert-card-title fw-bold">{{ isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
+              <div class="alert-card-desc">{{ isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start receiving brand communication.' }}</div>
             </div>
           </div>
-          <span *ngIf="photographer.isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
-          <span *ngIf="!photographer.isEmailVerified" class="alert-card-link mt-2 fw-bold text-warning">Verify in profile</span>
+          <span *ngIf="isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+          <a *ngIf="!isEmailVerified" class="alert-card-link mt-2 fw-bold" (click)="onVerifyEmail()">Resend verification</a>
         </div>
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="alert-card alert-card--mobile d-flex flex-column justify-content-between h-100">
+          <div class="d-flex align-items-start">
+            <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
+            <div>
+              <div class="alert-card-title fw-bold">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+              <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+              <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+            </div>
+          </div>
+          <span *ngIf="isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+          <a *ngIf="!isMobileVerified" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+        </div>
+      </div>
+
+      <div class="col-md-3">
         <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
           <div class="d-flex align-items-start">
             <span class="alert-card-icon me-3"><i class="bi bi-geo-alt-fill"></i></span>

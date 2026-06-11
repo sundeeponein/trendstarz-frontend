@@ -83,6 +83,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return dashboardUser.lastLoginAt || sessionUser.lastLoginAt || null;
   }
 
+  get isMobileVerified(): boolean {
+    const user = this.dashboard?.user || {};
+    return !!(user.isMobileVerified ?? user.mobileVerified ?? user.phoneVerified ?? user.isPhoneVerified);
+  }
+
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
 

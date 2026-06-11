@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Campaign, CampaignInfluencer } from '../campaign.model';
@@ -26,7 +26,7 @@ import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handl
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
-export class CampaignFormComponent implements OnInit {
+export class CampaignFormComponent implements OnInit, OnChanges {
   readonly tierOrder: readonly string[] = TIER_ORDER;
   readonly photographerCreatorTypeOptions = [
     'Reel Creator',
@@ -108,6 +108,7 @@ export class CampaignFormComponent implements OnInit {
   imagePreview: string | null = null;
   selectedFile: File | null = null;
   uploading = false;
+  submitLocked = false;
   currentStep = 1;
   platformsTouched = false;
   categoriesTouched = false;
@@ -369,6 +370,12 @@ export class CampaignFormComponent implements OnInit {
     private toast: ToastService,
     private plansService: PlansService,
   ) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['saving'] && changes['saving'].currentValue === false) {
+      this.submitLocked = false;
+    }
+  }
 
   ngOnInit() {
     this.currentBrandName = this.readCurrentBrandName();
@@ -2136,6 +2143,7 @@ export class CampaignFormComponent implements OnInit {
 
   // ── Submit ───────────────────────────────────────────────────
   skipAndSave() {
+    if (this.saving || this.uploading || this.submitLocked) return;
     // For tier_filtered_open publish immediately; otherwise save as draft
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -2192,11 +2200,13 @@ export class CampaignFormComponent implements OnInit {
       : undefined;
     this.sanitizeCampaignTypeFields(payload);
     this.uploading = false;
+    this.submitLocked = true;
     this.save.emit(payload);
     this.selectedInfluencerIds.clear();
   }
 
   async onSubmit() {
+    if (this.saving || this.uploading || this.submitLocked) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -2234,6 +2244,7 @@ export class CampaignFormComponent implements OnInit {
       payload.image = this.campaign.image;
     }
     this.uploading = false;
+    this.submitLocked = true;
     this.save.emit(this.buildSavePayload(payload));
     if (this.isEdit && this.campaign?._id) {
       this.fetchCampaignInvites();
@@ -2345,6 +2356,7 @@ export class CampaignFormComponent implements OnInit {
   }
 
   private saveDraftWithoutValidation() {
+    if (this.saving || this.uploading || this.submitLocked) return;
     const v = this.form.value;
     const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
     const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
@@ -2370,6 +2382,7 @@ export class CampaignFormComponent implements OnInit {
     payload.image = this.isEdit && this.campaign?.image ? this.campaign.image : undefined;
     this.uploading = false;
     this.toast.success('Campaign saved as draft. You can continue editing it later.');
+    this.submitLocked = true;
     this.save.emit(this.buildSavePayload(payload));
   }
 
@@ -2386,6 +2399,7 @@ export class CampaignFormComponent implements OnInit {
   }
 
   private handleImageUploadFailure() {
+    if (this.saving || this.submitLocked) return;
     const v = this.form.value;
     const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
     const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
@@ -2411,6 +2425,7 @@ export class CampaignFormComponent implements OnInit {
     payload.image = this.isEdit && this.campaign?.image ? this.campaign.image : undefined;
     this.uploading = false;
     this.toast.warning('Campaign saved as draft so you can fix the image later.');
+    this.submitLocked = true;
     this.save.emit(this.buildSavePayload(payload));
   }
 

@@ -39,13 +39,13 @@
         <div class="d-flex align-items-start">
           <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
           <div>
-            <div class="alert-card-title fw-bold">{{ dashboard?.brand?.isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
-            <div class="alert-card-desc">Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.</div>
-            <div *ngIf="verificationCallNumber" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+            <div class="alert-card-title fw-bold">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+            <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+            <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
           </div>
         </div>
-        <a *ngIf="dashboard?.brand && dashboard?.brand.isMobileVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
-        <span *ngIf="dashboard?.brand && dashboard?.brand.isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+        <a *ngIf="dashboard?.brand && !isMobileVerified" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+        <span *ngIf="dashboard?.brand && isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
       </div>
     </div>
     <div class="col-md-4">

@@ -618,10 +618,16 @@ export class PhotographerRegistrationComponent implements OnInit {
 
 
   onSubmit() {
+    if (this.submitting) {
+      return;
+    }
+
     this.submitted = true;
     if (this.form.invalid) return;
     if (!this.profileImagePreview) return;
     if (!this.platformsValid) return;
+    this.submitting = true;
+    this.cdr.detectChanges();
     this.step2Complete = true;
     this.step3Complete = true;
 
@@ -699,7 +705,6 @@ export class PhotographerRegistrationComponent implements OnInit {
       },
     };
 
-    this.submitting = true;
     this.registrationError = '';
     this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
