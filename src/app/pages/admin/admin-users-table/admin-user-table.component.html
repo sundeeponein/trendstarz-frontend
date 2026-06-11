@@ -127,8 +127,24 @@
             <div class="user-sub">{{ getUserHandle(user) }}</div>
           </td>
           <td>
-            <div>{{ user.email || '-' }}</div>
-            <div class="user-sub">{{ getDisplayPhoneNumber(user) }}</div>
+            <div class="contact-line">
+              <span>{{ user.email || '-' }}</span>
+              <i
+                *ngIf="isEmailVerified(user)"
+                class="bi bi-check2 contact-verified-icon"
+                title="Email verified"
+                aria-label="Email verified"
+              ></i>
+            </div>
+            <div class="user-sub contact-line">
+              <span>{{ getDisplayPhoneNumber(user) }}</span>
+              <i
+                *ngIf="isMobileVerified(user)"
+                class="bi bi-check2 contact-verified-icon"
+                title="Mobile verified"
+                aria-label="Mobile verified"
+              ></i>
+            </div>
           </td>
           <td>
             <div class="table-social-list" *ngIf="getTableSocialMediaItems(user).length; else noTableSocial">
