@@ -31,7 +31,7 @@ import { ProfileFlag } from '../../services/profile-verification.service';
           <div class="flag-main">
             <span class="severity" [ngClass]="flag.severity.toLowerCase()">{{ flag.severity }}</span>
             <strong>{{ flag.message }}</strong>
-            <span class="meta">{{ flag.category }} · {{ flag.flagCode }}</span>
+            <span class="meta">{{ flag.category }} · {{ getFlagLabel(flag.flagCode) }}</span>
           </div>
           <div class="flag-actions" *ngIf="editable">
             <button type="button" title="Mark this issue as fixed and remove it from open issues" (click)="updateFlag.emit({ flag, status: 'Resolved' })">
@@ -174,4 +174,20 @@ export class ProfileFlagsComponent {
   @Input() showAdd = false;
   @Output() updateFlag = new EventEmitter<{ flag: ProfileFlag; status: 'Resolved' | 'Ignored' }>();
   @Output() addFlag = new EventEmitter<void>();
+
+  getFlagLabel(code: string): string {
+    const labels: Record<string, string> = {
+      EMAIL_NOT_VERIFIED: 'Email not verified',
+      MOBILE_NOT_VERIFIED: 'Mobile not verified',
+      ID_PENDING: 'Identity review pending',
+      ID_NOT_SUBMITTED: 'Identity document not submitted',
+      PAYMENT_MISSING: 'Payment or payout details missing',
+      PORTFOLIO_MISSING: 'Portfolio or gallery missing',
+      FOLLOWER_COUNT_MISMATCH: 'Follower count needs review',
+      PROFILE_PHOTO_SCREENSHOT: 'Profile photo needs review',
+      SOCIAL_LINK_BROKEN: 'Social profile needs review',
+    };
+    const key = String(code || '').trim().toUpperCase();
+    return labels[key] || key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  }
 }
