@@ -232,10 +232,12 @@
           />
         </div>
 
+        <div class="full-width border-bottom">
+          <h6>User Profile Data</h6>
+        </div>
+        
+        
         <div class="details-grid">
-          <div class="full-width">
-            <h6>User Profile Data</h6>
-          </div>
           <div>
             <label>Email Address (<small>{{ isEmailVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
             <div>{{ selectedUser.email || '-' }}</div>
