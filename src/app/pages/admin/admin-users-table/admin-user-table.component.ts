@@ -190,11 +190,16 @@ export class AdminUserTableComponent implements OnInit {
     return `Rs ${value} / post`;
   }
 
-  getUserSocialRateGroups(user: any): Array<{ platform: string; items: Array<{ name: string; price: number }> }> {
+  getUserSocialRateGroups(user: any): Array<{ platform: string; icon: string; href: string; handle: string; tierLabel: string; items: Array<{ name: string; price: number }> }> {
     const rows = Array.isArray(user?.socialMedia) ? user.socialMedia : [];
     return rows
       .map((sm: any) => {
-        const platform = this.getSocialLabel(this.resolveSocialPlatform(sm));
+        const platformKey = this.resolveSocialPlatform(sm);
+        const platform = this.getSocialLabel(platformKey);
+        const href = this.resolveSocialHref(sm, platformKey);
+        const handle =
+          normalizeSocialHandle(sm?.handle, platformKey) ||
+          normalizeSocialHandle(sm?.url, platformKey);
         const items = (Array.isArray(sm?.contentTypes) ? sm.contentTypes : [])
           .filter((ct: any) => this.isEnabledPricedItem(ct))
           .map((ct: any) => ({
@@ -202,7 +207,14 @@ export class AdminUserTableComponent implements OnInit {
             price: Number(ct?.price) || 0,
           }))
           .filter((item: any) => item.name && item.price > 0);
-        return { platform, items };
+        return {
+          platform,
+          icon: this.getSocialIcon(platformKey),
+          href: href || '',
+          handle: handle ? `@${handle}` : '',
+          tierLabel: this.getSocialTierLabel(sm),
+          items,
+        };
       })
       .filter((group: any) => group.items.length > 0);
   }
@@ -880,7 +892,6 @@ export class AdminUserTableComponent implements OnInit {
           if (!res) return;
           user[field] = value;
           if (field === 'isEmailVerified') {
-            user.emailVerified = value;
             user.emailVerifiedAt = value ? (user.emailVerifiedAt || new Date().toISOString()) : null;
           }
           if (field === 'isMobileVerified') {

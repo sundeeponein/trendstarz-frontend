@@ -24,7 +24,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {

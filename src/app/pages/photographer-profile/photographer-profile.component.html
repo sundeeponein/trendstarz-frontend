@@ -42,14 +42,14 @@
           <span class="badge rounded-pill bg-primary ms-2 me-2" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
         </div>
 
-        <!-- <div class="alert alert-light border mb-4" *ngIf="profileVerificationDashboard || profileVerificationLoading">
+        <div class="alert alert-light border mb-4" *ngIf="profileVerificationDashboard || profileVerificationLoading">
           <strong class="d-block mb-2">Profile Review</strong>
           <app-profile-review-summary
             [detail]="profileVerificationDashboard"
             [loading]="profileVerificationLoading"
             profileRoute="/photographer-profile"
           />
-        </div> -->
+        </div>
 
         <form [formGroup]="form" (ngSubmit)="onSave()">
 

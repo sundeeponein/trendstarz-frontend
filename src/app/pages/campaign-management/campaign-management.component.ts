@@ -3113,9 +3113,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   private emailVerificationState(recipient: any): boolean | null {
     if (!recipient) return null;
-    const emailFlag =
-      this.asBoolean(recipient?.isEmailVerified) ??
-      this.asBoolean(recipient?.emailVerified);
+    const emailFlag = this.asBoolean(recipient?.isEmailVerified);
     if (emailFlag === true) return true;
     if (emailFlag === false) return false;
     return null;

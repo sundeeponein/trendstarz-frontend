@@ -10,15 +10,23 @@
   <h2 class="text-white">Deleted Users</h2>
 
   <div class="row">
-    <div class="col-4">
-      <div class="admin-tabs">
-        <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-        <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-        <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
+    <div class="col-12 col-xl-6">
+      <div class="tabs-bulk-row">
+        <div class="admin-tabs">
+          <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+          <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+          <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
+        </div>
+        
+        <div class="bulk-actions" *ngIf="getSelectedCount() > 0">
+          <span>{{ getSelectedCount() }} selected</span>
+          <button class="btn btn-success btn-sm" [disabled]="bulkActionLoading" (click)="restoreSelectedUsers()">Restore</button>
+          <button class="btn btn-danger btn-sm" [disabled]="bulkActionLoading" (click)="deleteSelectedPermanently()">Delete Permanently</button>
+        </div>
       </div>
     </div>
 
-    <div class="col-8">
+    <div class="col-12 col-xl-6">
       <div class="filters-section p-0 bg-transparent border-0">
         <div class="filter-group justify-content-end">
           <!-- Category Filter -->
@@ -59,6 +67,17 @@
     <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table  table-striped">
       <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
+          <th class="select-col">
+            <label class="select-all-control" [class.disabled]="getTotalVisibleUsers() === 0">
+              <input
+                type="checkbox"
+                [checked]="areAllVisibleUsersSelected()"
+                [indeterminate]="isSomeVisibleUserSelected()"
+                [disabled]="getTotalVisibleUsers() === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+              />
+            </label>
+          </th>
           <th>Profile</th>
           <th>Name</th>
           <th>Username</th>
@@ -71,6 +90,14 @@
       </thead>
       <tbody>
         <tr *ngFor="let user of getPagedDeletedUsers()">
+          <td class="select-col">
+            <input
+              type="checkbox"
+              [checked]="isUserSelected(user._id)"
+              (change)="toggleUserSelection(user._id, $any($event.target).checked)"
+              [attr.aria-label]="'Select ' + (user.name || user.email || 'user')"
+            />
+          </td>
           <td>
             <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
@@ -97,6 +124,17 @@
     <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
       <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
+          <th class="select-col">
+            <label class="select-all-control" [class.disabled]="getTotalVisibleUsers() === 0">
+              <input
+                type="checkbox"
+                [checked]="areAllVisibleUsersSelected()"
+                [indeterminate]="isSomeVisibleUserSelected()"
+                [disabled]="getTotalVisibleUsers() === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+              />
+            </label>
+          </th>
           <th>Logo</th>
           <th>Brand Name</th>
           <th>Email <small>Phone</small></th>
@@ -108,6 +146,14 @@
       </thead>
       <tbody>
         <tr *ngFor="let user of getPagedDeletedUsers()">
+          <td class="select-col">
+            <input
+              type="checkbox"
+              [checked]="isUserSelected(user._id)"
+              (change)="toggleUserSelection(user._id, $any($event.target).checked)"
+              [attr.aria-label]="'Select ' + (user.brandName || user.email || 'brand')"
+            />
+          </td>
           <td>
             <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-profile-brands.png')" alt="Logo" width="40" height="40" (error)="$any($event.target).src='assets/default-profile-brands.png'">
           </td>
@@ -149,6 +195,17 @@
     <table *ngIf="filteredPhotographers && filteredPhotographers.length > 0" class="table table-hover admin-table">
       <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
+          <th class="select-col">
+            <label class="select-all-control" [class.disabled]="getTotalVisibleUsers() === 0">
+              <input
+                type="checkbox"
+                [checked]="areAllVisibleUsersSelected()"
+                [indeterminate]="isSomeVisibleUserSelected()"
+                [disabled]="getTotalVisibleUsers() === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+              />
+            </label>
+          </th>
           <th>Profile</th>
           <th>Name</th>
           <th>Email <small>Phone</small></th>
@@ -159,6 +216,14 @@
       </thead>
       <tbody>
         <tr *ngFor="let user of getPagedDeletedUsers()">
+          <td class="select-col">
+            <input
+              type="checkbox"
+              [checked]="isUserSelected(user._id)"
+              (change)="toggleUserSelection(user._id, $any($event.target).checked)"
+              [attr.aria-label]="'Select ' + (user.name || user.email || 'photo/videographer')"
+            />
+          </td>
           <td>
             <img [src]="user.profileImage || (user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png'))" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>

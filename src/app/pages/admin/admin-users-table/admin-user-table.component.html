@@ -107,7 +107,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)" (click)="openUserDetails(user)">
+        <!-- (click)="openUserDetails(user)" -->
+        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)" >
           <td>
             <img
               class="avatar"
@@ -209,6 +210,15 @@
 
       <div class="modal-body pt-2">
         <div class="verification-summary-card">
+          <div class="verification-summary-head mb-3">
+            <div>
+              <label>Admin Profile Review</label>
+              <h5>Verification controls</h5>
+              <p class="review-helper mb-0">
+                These controls are for admins only. Users see a simpler review popup with verified items and items needing attention.
+              </p>
+            </div>
+          </div>
           <app-profile-review-panel
             [detail]="selectedProfileVerification"
             [loading]="selectedProfileVerificationLoading"
@@ -223,6 +233,9 @@
         </div>
 
         <div class="details-grid">
+          <div class="full-width">
+            <h6>User Profile Data</h6>
+          </div>
           <div>
             <label>Email Address (<small>{{ isEmailVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
             <div>{{ selectedUser.email || '-' }}</div>
@@ -290,41 +303,22 @@
               <label>Languages</label>
               <div>{{ getUserLanguages(selectedUser) }}</div>
             </div>
-            <div class="rate-details">
-              <label>Social Media</label>
-              <div class="social-list" *ngIf="getSocialMediaItems(selectedUser).length; else noSocialLinks">
-                <ng-container *ngFor="let social of getSocialMediaItems(selectedUser)">
-                  <div
-                    rel="noopener noreferrer"
-                    [title]="social.label"
-                    class="social-link w-100">
-                    <i class="bi" [ngClass]="social.icon"></i>
-                    <span class="social-name">{{ social.label }}</span>
-                    <span *ngIf="social.tierLabel">{{ social.tierLabel }}</span>
-                    <a *ngIf="social.href !== '#'; else socialText" target="_blank"
-                   [href]="social.href">{{ social.handle }}</a>
-                    <span *ngIf="social.followers">({{ social.followers | number }})</span>
-                  </div>
-                  <ng-template #socialText>
-                    <span class="social-link">
-                      <i class="bi" [ngClass]="social.icon"></i>
-                      <span class="social-name">{{ social.label }}</span>
-                      <span *ngIf="social.tierLabel">{{ social.tierLabel }}</span>
-                      <a *ngIf="social.href !== '#'; else socialText" target="_blank"
-                      [href]="social.href">{{ social.handle }}</a>
-                      <span *ngIf="social.followers">({{ social.followers | number }})</span>
-                    </span>
-                  </ng-template>
-                </ng-container>
-              </div>
-              <ng-template #noSocialLinks>
-                <div>-</div>
-              </ng-template>
-            </div>
             <div class="rate-details" *ngIf="hasUserRateDetails(selectedUser)">
               <label>Social Media - Content & Rates</label>
               <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
-                <div class="rate-platform-name">{{ group.platform }}</div>
+                <div class="rate-platform-name">
+                  <span>
+                    <i class="bi" [ngClass]="group.icon"></i>
+                    {{ group.platform }}
+                  </span>
+                  <span class="rate-platform-meta" *ngIf="group.tierLabel || group.handle">
+                    <span *ngIf="group.tierLabel">{{ group.tierLabel }}</span>
+                    <a *ngIf="group.href && group.handle; else plainRateHandle" [href]="group.href" target="_blank" rel="noopener noreferrer">{{ group.handle }}</a>
+                    <ng-template #plainRateHandle>
+                      <span *ngIf="group.handle">{{ group.handle }}</span>
+                    </ng-template>
+                  </span>
+                </div>
                 <div class="rate-row" *ngFor="let item of group.items">
                   <span>{{ item.name }}</span>
                   <strong>₹{{ item.price | number:'1.0-0' }}</strong>

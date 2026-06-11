@@ -838,11 +838,14 @@ form {
 .quick-view-modal {
   position: relative;
   width: min(430px, 100%);
+  max-height: min(84vh, 720px);
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e4e8f2;
   box-shadow: 0 20px 55px rgba(15, 23, 42, 0.22);
-  padding: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .quick-view-close {
@@ -870,7 +873,9 @@ form {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-right: 28px;
+  flex-shrink: 0;
+  padding: 18px 52px 14px 18px;
+  border-bottom: 1px solid #edf0f6;
 
   h4 {
     margin: 0 0 4px;
@@ -884,6 +889,12 @@ form {
     color: $text-muted;
     font-size: 0.82rem;
   }
+}
+
+.quick-view-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 18px 18px;
 }
 
 .quick-view-section {

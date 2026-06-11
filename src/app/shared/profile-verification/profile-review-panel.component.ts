@@ -72,10 +72,14 @@ import { VerificationStatusComponent } from './verification-status.component';
         </div>
 
         <div class="actions" *ngIf="editable">
-          <button type="button" class="approve" (click)="action.emit('approve')">Approve</button>
-          <button type="button" class="warning" (click)="action.emit('approve_warning')">Approve with warning</button>
-          <button type="button" class="changes" (click)="action.emit('request_changes')">Request changes</button>
-          <button type="button" class="reject" (click)="action.emit('reject')">Reject</button>
+          <p class="action-help">
+            Approve makes the profile verified. Approve with warning keeps it live but notes minor issues.
+            Request changes sends it back to the user. Reject blocks approval.
+          </p>
+          <button type="button" class="approve" title="Mark the profile verified" (click)="action.emit('approve')">Approve</button>
+          <button type="button" class="warning" title="Approve while keeping review notes/warnings" (click)="action.emit('approve_warning')">Approve with warning</button>
+          <button type="button" class="changes" title="Ask the user to update the listed items" (click)="action.emit('request_changes')">Request changes</button>
+          <button type="button" class="reject" title="Reject the profile verification" (click)="action.emit('reject')">Reject</button>
         </div>
       </ng-container>
 
@@ -164,6 +168,14 @@ import { VerificationStatusComponent } from './verification-status.component';
     }
     .actions {
       justify-content: flex-start;
+    }
+    .action-help {
+      flex: 1 1 100%;
+      margin: 0;
+      color: #64748b;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.35;
     }
     .actions button {
       border: 1px solid #d7deea;

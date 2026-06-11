@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import { ConfigService } from '../../../shared/config.service';
 import { environment } from '../../../../environments/environment';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-deleted-users-table',
@@ -48,6 +50,8 @@ export class DeletedUsersTableComponent implements OnInit {
   currentPage = 1;
   pageSize = 100;
   readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
+  selectedUserIds = new Set<string>();
+  bulkActionLoading = false;
 
   // Filter properties
   influencerFilters = {
@@ -98,6 +102,7 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   private removeUserFromDeletedLists(userId: string) {
+    this.selectedUserIds.delete(userId);
     this.influencers = this.influencers.filter(user => user._id !== userId);
     this.brands = this.brands.filter(user => user._id !== userId);
     this.photographers = this.photographers.filter(user => user._id !== userId);
@@ -154,6 +159,7 @@ export class DeletedUsersTableComponent implements OnInit {
           this.errorMessage = null;
           this.setDeletedUsersByType(userType, users);
           this.applyFilters(userType);
+          this.pruneSelection();
           this.updateAllFilterOptions(userType);
           this.isLoading = false;
         },
@@ -261,6 +267,7 @@ export class DeletedUsersTableComponent implements OnInit {
   onFilterChange(userType: 'influencer' | 'brand' | 'photographer') {
     this.applyFilters(userType);
     this.currentPage = 1;
+    this.pruneSelection();
   }
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
@@ -273,11 +280,13 @@ export class DeletedUsersTableComponent implements OnInit {
     }
     this.applyFilters(userType);
     this.currentPage = 1;
+    this.pruneSelection();
   }
 
   setTab(tab: 'influencer' | 'brand' | 'photographer') {
     this.activeTab = tab;
     this.currentPage = 1;
+    this.selectedUserIds.clear();
     this.fetchDeletedUsers(tab);
   }
 
@@ -296,6 +305,56 @@ export class DeletedUsersTableComponent implements OnInit {
   getPagedDeletedUsers(): any[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.getVisibleDeletedUsers().slice(start, start + this.pageSize);
+  }
+
+  getActiveVisibleUserIds(): string[] {
+    return this.getVisibleDeletedUsers()
+      .map(user => String(user?._id || ''))
+      .filter(Boolean);
+  }
+
+  getSelectedCount(): number {
+    return this.getActiveVisibleUserIds().filter(id => this.selectedUserIds.has(id)).length;
+  }
+
+  areAllVisibleUsersSelected(): boolean {
+    const visibleIds = this.getActiveVisibleUserIds();
+    return visibleIds.length > 0 && visibleIds.every(id => this.selectedUserIds.has(id));
+  }
+
+  isSomeVisibleUserSelected(): boolean {
+    const visibleIds = this.getActiveVisibleUserIds();
+    return visibleIds.some(id => this.selectedUserIds.has(id)) && !this.areAllVisibleUsersSelected();
+  }
+
+  isUserSelected(userId: string): boolean {
+    return this.selectedUserIds.has(String(userId || ''));
+  }
+
+  toggleUserSelection(userId: string, checked: boolean): void {
+    const id = String(userId || '');
+    if (!id) return;
+    if (checked) {
+      this.selectedUserIds.add(id);
+    } else {
+      this.selectedUserIds.delete(id);
+    }
+  }
+
+  toggleSelectAllVisible(checked: boolean): void {
+    const visibleIds = this.getActiveVisibleUserIds();
+    if (checked) {
+      visibleIds.forEach(id => this.selectedUserIds.add(id));
+    } else {
+      visibleIds.forEach(id => this.selectedUserIds.delete(id));
+    }
+  }
+
+  private pruneSelection(): void {
+    const activeIds = new Set(this.getActiveVisibleUserIds());
+    Array.from(this.selectedUserIds).forEach(id => {
+      if (!activeIds.has(id)) this.selectedUserIds.delete(id);
+    });
   }
 
   getTotalVisibleUsers(): number {
@@ -356,6 +415,30 @@ export class DeletedUsersTableComponent implements OnInit {
     });
   }
 
+  restoreSelectedUsers(): void {
+    const ids = this.getActiveVisibleUserIds().filter(id => this.selectedUserIds.has(id));
+    if (!ids.length || this.bulkActionLoading) return;
+    this.showConfirm(`Restore ${ids.length} selected ${this.getRoleTitle()}?`, () => {
+      this.bulkActionLoading = true;
+      forkJoin(
+        ids.map(id =>
+          this.http.patch(`${environment.apiBaseUrl}/users/${id}/restore`, {}, this.getAuthHeaders())
+            .pipe(catchError(err => of({ __error: true, id, err }))),
+        ),
+      ).subscribe((results: any[]) => {
+        this.bulkActionLoading = false;
+        const failed = results.filter(result => result?.__error);
+        ids
+          .filter(id => !failed.some(result => result.id === id))
+          .forEach(id => this.removeUserFromDeletedLists(id));
+        this.dispatchAdminRefresh('user-restored-refresh');
+        this.errorMessage = failed.length
+          ? `Restored ${ids.length - failed.length} user(s). ${failed.length} failed.`
+          : null;
+      });
+    });
+  }
+
   deletePermanently(userId: string) {
     this.showConfirm(
       'Permanently delete this user? This action cannot be undone. All profile data and uploaded images will be removed.',
@@ -372,6 +455,33 @@ export class DeletedUsersTableComponent implements OnInit {
             }
           });
       }
+    );
+  }
+
+  deleteSelectedPermanently(): void {
+    const ids = this.getActiveVisibleUserIds().filter(id => this.selectedUserIds.has(id));
+    if (!ids.length || this.bulkActionLoading) return;
+    this.showConfirm(
+      `Permanently delete ${ids.length} selected ${this.getRoleTitle()}? This action cannot be undone.`,
+      () => {
+        this.bulkActionLoading = true;
+        forkJoin(
+          ids.map(id =>
+            this.http.delete(`${environment.apiBaseUrl}/users/${id}/permanent`, this.getAuthHeaders())
+              .pipe(catchError(err => of({ __error: true, id, err }))),
+          ),
+        ).subscribe((results: any[]) => {
+          this.bulkActionLoading = false;
+          const failed = results.filter(result => result?.__error);
+          ids
+            .filter(id => !failed.some(result => result.id === id))
+            .forEach(id => this.removeUserFromDeletedLists(id));
+          this.dispatchAdminRefresh('user-deleted-refresh');
+          this.errorMessage = failed.length
+            ? `Permanently deleted ${ids.length - failed.length} user(s). ${failed.length} failed.`
+            : null;
+        });
+      },
     );
   }
 

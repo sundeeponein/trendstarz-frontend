@@ -25,7 +25,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent,],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -460,7 +460,7 @@ export class PhotographerProfileComponent implements OnInit {
         this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
         this.lastLoginAt = profile?.lastLoginAt || null;
         this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
-        this.emailVerified = !!(profile?.emailVerified ?? profile?.isEmailVerified ?? sessionUser?.emailVerified ?? sessionUser?.isEmailVerified);
+        this.emailVerified = !!(profile?.isEmailVerified ?? sessionUser?.isEmailVerified);
         this.showEmailVerificationPrompt = !this.emailVerified;
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({
