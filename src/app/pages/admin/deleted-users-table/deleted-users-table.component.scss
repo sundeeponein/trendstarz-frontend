@@ -36,6 +36,52 @@
 	}
 }
 
+.tabs-bulk-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.select-all-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.select-all-control.disabled {
+  opacity: 0.55;
+}
+
+.select-all-control input,
+.select-col input {
+  width: 18px;
+  height: 18px;
+  accent-color: #ff6b35;
+}
+
+.bulk-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-actions span {
+  color: #d7deea;
+  font-weight: 700;
+}
+
+.select-col {
+  width: 42px;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .deleted-table-footer {
   padding: 14px 16px;
   display: flex;

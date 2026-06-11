@@ -31,11 +31,11 @@
           </div>
           <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Complete profile</a>
           <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
-          <!-- <app-profile-review-summary
+          <app-profile-review-summary
             [detail]="profileVerificationDashboard"
             [loading]="profileVerificationLoading"
             profileRoute="/photographer-profile"
-          /> -->
+          />
         </div>
       </div>
 

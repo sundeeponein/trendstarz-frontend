@@ -12,6 +12,9 @@ import { ProfileFlag } from '../../services/profile-verification.service';
         <div>
           <p class="eyebrow">{{ title }}</p>
           <h3>{{ flags.length || 0 }} open issue{{ flags.length === 1 ? '' : 's' }}</h3>
+          <p class="helper" *ngIf="editable && flags.length">
+            Resolve closes a fixed issue. Ignore hides a non-blocking issue from this review.
+          </p>
         </div>
         <button *ngIf="showAdd" type="button" class="icon-btn" (click)="addFlag.emit()" title="Add flag">
           <i class="bi bi-plus-lg"></i>
@@ -31,11 +34,11 @@ import { ProfileFlag } from '../../services/profile-verification.service';
             <span class="meta">{{ flag.category }} · {{ flag.flagCode }}</span>
           </div>
           <div class="flag-actions" *ngIf="editable">
-            <button type="button" (click)="updateFlag.emit({ flag, status: 'Resolved' })">
+            <button type="button" title="Mark this issue as fixed and remove it from open issues" (click)="updateFlag.emit({ flag, status: 'Resolved' })">
               <i class="bi bi-check2"></i>
               Resolve
             </button>
-            <button type="button" (click)="updateFlag.emit({ flag, status: 'Ignored' })">
+            <button type="button" title="Dismiss this issue when it should not block approval" (click)="updateFlag.emit({ flag, status: 'Ignored' })">
               <i class="bi bi-slash-circle"></i>
               Ignore
             </button>
@@ -71,6 +74,13 @@ import { ProfileFlag } from '../../services/profile-verification.service';
       font-size: 1.2rem;
       font-weight: 800;
     }
+    .helper {
+      margin: 0.3rem 0 0;
+      color: #64748b;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
     .icon-btn {
       width: 36px;
       height: 36px;
@@ -93,6 +103,7 @@ import { ProfileFlag } from '../../services/profile-verification.service';
     .flag-list {
       display: flex;
       flex-direction: column;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.65rem;
     }
     .flag-row {

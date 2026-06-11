@@ -22,7 +22,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent,],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
@@ -149,7 +149,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   get isEmailVerified(): boolean {
     const photographer = this.photographer || {};
-    return !!(photographer.isEmailVerified ?? photographer.emailVerified);
+    return !!photographer.isEmailVerified;
   }
 
   get isMobileVerified(): boolean {

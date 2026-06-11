@@ -303,6 +303,20 @@
 
 .details-modal {
   border-radius: 18px;
+  max-height: min(90vh, 980px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.details-modal .modal-header,
+.details-modal .modal-footer {
+  flex-shrink: 0;
+}
+
+.details-modal .modal-body {
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .details-head h4 {
@@ -377,6 +391,14 @@
   font-size: 0.76rem;
   font-weight: 800;
   margin-bottom: 4px;
+}
+
+.review-helper {
+  max-width: 720px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .verification-summary-head h5 {
@@ -535,30 +557,6 @@
   margin-top: 0;
 }
 
-.social-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.social-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #1d4ed8;
-  text-decoration: none;
-  font-size: 0.92rem;
-}
-
-.social-name {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.social-link:hover {
-  text-decoration: underline;
-}
-
 .rate-details {
   grid-column: 1 / -1;
 }
@@ -572,9 +570,28 @@
 }
 
 .rate-platform-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
   font-weight: 800;
   color: #1f2937;
   margin-bottom: 6px;
+}
+
+.rate-platform-name > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rate-platform-meta {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.rate-platform-meta a {
+  color: #1d4ed8;
 }
 
 .rate-row {

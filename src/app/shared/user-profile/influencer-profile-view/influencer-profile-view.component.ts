@@ -78,7 +78,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   get isEmailVerified(): boolean {
-    return !!(this.influencer?.emailVerified ?? this.influencer?.isEmailVerified);
+    return !!this.influencer?.isEmailVerified;
   }
 
   stripProtocol(url: string): string {

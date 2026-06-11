@@ -108,7 +108,7 @@ import { VerificationChecklistItem } from '../../services/profile-verification.s
     .status-pill.bad { background: #fff0ef; color: #bd2d20; }
     .checklist {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.7rem;
     }
     .check-item {

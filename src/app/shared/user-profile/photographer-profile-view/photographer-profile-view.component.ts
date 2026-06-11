@@ -74,7 +74,7 @@ export class PhotographerProfileViewComponent implements OnInit {
   }
 
   get isEmailVerified(): boolean {
-    return !!(this.photographer?.emailVerified ?? this.photographer?.isEmailVerified);
+    return !!this.photographer?.isEmailVerified;
   }
 
   get displayImage(): string {

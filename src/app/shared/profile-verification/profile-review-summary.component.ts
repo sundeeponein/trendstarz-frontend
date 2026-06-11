@@ -2,12 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ProfileVerificationDashboard } from '../../services/profile-verification.service';
-import { ProfileReviewPanelComponent } from './profile-review-panel.component';
 
 @Component({
   selector: 'app-profile-review-summary',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProfileReviewPanelComponent],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="review-summary" *ngIf="detail || loading">
       <div class="summary-loading" *ngIf="loading">
@@ -46,14 +45,57 @@ import { ProfileReviewPanelComponent } from './profile-review-panel.component';
           </button>
         </div>
 
-        <app-profile-review-panel
-          [detail]="detail"
-          [loading]="loading"
-          [editable]="false"
-          [showHeader]="false"
-          [showEligibility]="true"
-          [compact]="true"
-        />
+        <div class="review-modal-body">
+          <div class="simple-review" *ngIf="detail as data">
+            <div class="simple-card">
+              <span>Profile completion</span>
+              <strong>{{ data.profileCompletion || 0 }}%</strong>
+              <div class="meter"><i [style.width.%]="data.profileCompletion || 0"></i></div>
+            </div>
+            <div class="simple-card">
+              <span>Campaign status</span>
+              <strong [class.blocked]="!data.campaignEligibility.eligible">
+                {{ data.campaignEligibility.eligible ? 'Enabled' : 'Blocked' }}
+              </strong>
+              <p *ngIf="data.campaignEligibility.eligible">Your profile can participate in eligible campaigns.</p>
+              <ul *ngIf="!data.campaignEligibility.eligible">
+                <li *ngFor="let blocker of data.campaignEligibility.blockers">{{ blocker }}</li>
+              </ul>
+            </div>
+            <div class="simple-card">
+              <span>Review status</span>
+              <strong>{{ data.verificationStatus }}</strong>
+              <p *ngIf="data.actionRequired.length">{{ data.actionRequired.length }} item{{ data.actionRequired.length === 1 ? '' : 's' }} need attention.</p>
+              <p *ngIf="!data.actionRequired.length">No open review issues.</p>
+            </div>
+
+            <div class="simple-card">
+              <span>Verified</span>
+              <ul class="status-list ok" *ngIf="getVerifiedItems(data).length; else noVerifiedItems">
+                <li *ngFor="let item of getVerifiedItems(data)">
+                  <i class="bi bi-check-circle-fill"></i>
+                  {{ item }}
+                </li>
+              </ul>
+              <ng-template #noVerifiedItems>
+                <p>No completed checks yet.</p>
+              </ng-template>
+            </div>
+
+            <div class="simple-card attention">
+              <span>Needs attention</span>
+              <ul class="status-list" *ngIf="getAttentionItems(data).length; else noAttentionItems">
+                <li *ngFor="let item of getAttentionItems(data)">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  {{ item }}
+                </li>
+              </ul>
+              <ng-template #noAttentionItems>
+                <p>No changes requested.</p>
+              </ng-template>
+            </div>
+          </div>
+        </div>
 
         <div class="review-modal-actions" *ngIf="profileRoute">
           <a [routerLink]="profileRoute" (click)="open = false">
@@ -125,13 +167,12 @@ import { ProfileReviewPanelComponent } from './profile-review-panel.component';
     .review-modal {
       width: min(980px, 100%);
       max-height: min(86vh, 900px);
-      overflow: auto;
+      overflow: hidden;
       background: #fff;
       border-radius: 12px;
       border: 1px solid #d7deea;
-      padding: 1rem;
-      display: grid;
-      gap: 1rem;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
     }
     .review-modal-header {
@@ -139,6 +180,9 @@ import { ProfileReviewPanelComponent } from './profile-review-panel.component';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      flex-shrink: 0;
+      padding: 1rem;
+      border-bottom: 1px solid #e8edf5;
     }
     .review-modal-header p {
       margin: 0 0 0.15rem;
@@ -163,6 +207,79 @@ import { ProfileReviewPanelComponent } from './profile-review-panel.component';
     .review-modal-actions {
       display: flex;
       justify-content: flex-end;
+      flex-shrink: 0;
+      padding: 1rem;
+      border-top: 1px solid #e8edf5;
+      background: #fff;
+    }
+    .review-modal-body {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .simple-review {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .simple-card {
+      border: 1px solid #e1e6ef;
+      border-radius: 10px;
+      padding: 0.85rem;
+      background: #fbfcfe;
+      display: grid;
+      gap: 0.35rem;
+    }
+    .simple-card span {
+      color: #657082;
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .simple-card strong {
+      color: #198754;
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+    .simple-card strong.blocked {
+      color: #bd2d20;
+    }
+    .simple-card p,
+    .simple-card ul {
+      margin: 0;
+      color: #465468;
+    }
+    .meter {
+      height: 9px;
+      background: #eef1f6;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .meter i {
+      display: block;
+      height: 100%;
+      background: #2da64a;
+      border-radius: inherit;
+    }
+    .status-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .status-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      color: #465468;
+      font-weight: 800;
+    }
+    .status-list i {
+      color: #e8580c;
+      margin-top: 0.1rem;
+    }
+    .status-list.ok i {
+      color: #2da64a;
     }
     .review-modal-actions a {
       border: 1px solid #d7deea;
@@ -184,4 +301,18 @@ export class ProfileReviewSummaryComponent {
   @Input() profileRoute = '';
 
   open = false;
+
+  getVerifiedItems(data: ProfileVerificationDashboard): string[] {
+    return (data.checklist || [])
+      .filter((item) => item.status === 'Verified')
+      .map((item) => item.label);
+  }
+
+  getAttentionItems(data: ProfileVerificationDashboard): string[] {
+    const checklistItems = (data.checklist || [])
+      .filter((item) => item.status !== 'Verified')
+      .map((item) => item.label);
+    const flagItems = (data.actionRequired || []).map((flag) => flag.message || flag.flagCode);
+    return Array.from(new Set([...checklistItems, ...flagItems].filter(Boolean)));
+  }
 }
