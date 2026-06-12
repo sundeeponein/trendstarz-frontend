@@ -624,7 +624,19 @@ export class AdminManagementComponent implements OnInit {
       }
     }, 15000);
 
-    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, this.settings, headers).subscribe({
+    const payload = {
+      ...this.settings,
+      campaignTypeConfigs: this.normalizeCampaignTypeConfigs(
+        this.settings.campaignTypeConfigs,
+        this.campaignTypeConfigDefaults,
+      ),
+      campaignAccessModeConfigs: this.normalizeCampaignAccessModeConfigs(
+        this.settings.campaignAccessModeConfigs,
+        this.campaignAccessModeConfigDefaults,
+      ),
+    };
+
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, payload, headers).subscribe({
       next: (res) => {
         clearTimeout(safetyTimer);
         // Confirm the saved doc actually contains our support fields. If the
@@ -632,21 +644,27 @@ export class AdminManagementComponent implements OnInit {
         // missing from the returned `settings` and we'd warn the admin instead
         // of silently letting them think the save worked.
         const saved = (res && (res.settings ?? res.data?.settings)) || {};
-        const persistedSupport =
-          'supportContactEmail' in saved ||
-          'supportContactPhone' in saved ||
-          'supportContactWhatsapp' in saved ||
-          'supportContactMessage' in saved ||
-          'supportContactEnabled' in saved;
-        this.settingsSaving = false;
+	        const persistedSupport =
+	          'supportContactEmail' in saved ||
+	          'supportContactPhone' in saved ||
+	          'supportContactWhatsapp' in saved ||
+	          'supportContactMessage' in saved ||
+	          'supportContactEnabled' in saved;
+	        const persistedCampaignAccessModes = 'campaignAccessModeConfigs' in saved;
+	        this.settingsSaving = false;
         this.settingsSaved = true;
         this.cdr.detectChanges();
         this.loadSettings();
-        if (!persistedSupport) {
-          alert(
-            'Saved, but support contact fields were not persisted. Please restart the backend so the new schema is loaded.',
-          );
-        }
+	        if (!persistedSupport) {
+	          alert(
+	            'Saved, but support contact fields were not persisted. Please restart the backend so the new schema is loaded.',
+	          );
+	        }
+	        if (!persistedCampaignAccessModes) {
+	          alert(
+	            'Saved, but campaign access mode fields were not persisted. Please restart/deploy the backend so the new schema is loaded.',
+	          );
+	        }
         setTimeout(() => {
           this.settingsSaved = false;
           this.cdr.detectChanges();

@@ -1,7 +1,7 @@
 <div class="modal-backdrop show" (click)="onCancel()"></div>
 
 <div class="modal d-block" tabindex="-1" (click)="onCancel()">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-workspace" (click)="$event.stopPropagation()">
     <div class="modal-content pcf-modal">
       <div class="pcf-header">
         <h3>{{ isEdit ? 'Edit Collaboration Request' : 'Create Collaboration Request' }}</h3>
