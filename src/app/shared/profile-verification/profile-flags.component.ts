@@ -184,6 +184,7 @@ export class ProfileFlagsComponent {
       PAYMENT_MISSING: 'Payment or payout details missing',
       PORTFOLIO_MISSING: 'Portfolio or gallery missing',
       FOLLOWER_COUNT_MISMATCH: 'Follower count needs review',
+      PROFILE_PHOTO_PENDING_REVIEW: 'Profile photo pending admin review',
       PROFILE_PHOTO_SCREENSHOT: 'Profile photo needs review',
       SOCIAL_LINK_BROKEN: 'Social profile needs review',
     };

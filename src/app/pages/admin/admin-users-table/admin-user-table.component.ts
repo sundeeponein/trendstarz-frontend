@@ -460,7 +460,8 @@ export class AdminUserTableComponent implements OnInit {
     signupSource: '',
     badgeTag: '',
     emailVerified: '',
-    mobileVerified: ''
+    mobileVerified: '',
+    contactVerification: ''
   };
   brandFilters = {
     status: '',
@@ -470,7 +471,8 @@ export class AdminUserTableComponent implements OnInit {
     signupSource: '',
     badgeTag: '',
     emailVerified: '',
-    mobileVerified: ''
+    mobileVerified: '',
+    contactVerification: ''
   };
   photographerFilters = {
     status: '',
@@ -480,7 +482,8 @@ export class AdminUserTableComponent implements OnInit {
     signupSource: '',
     badgeTag: '',
     emailVerified: '',
-    mobileVerified: ''
+    mobileVerified: '',
+    contactVerification: ''
   };
 
   // Available filter options
@@ -583,8 +586,12 @@ export class AdminUserTableComponent implements OnInit {
         : userType === 'brand'
           ? 'brands'
           : 'photographers';
-    const statusParam = this.isDeletedTab() ? 'status=deleted&' : '';
-    return `${environment.apiBaseUrl}/admin/${endpoint}?${statusParam}limit=1000`;
+    const params = new URLSearchParams();
+    if (this.isDeletedTab()) params.set('status', 'deleted');
+    const verification = this.getActiveFilterValue('contactVerification');
+    if (verification) params.set('verification', verification);
+    params.set('limit', '1000');
+    return `${environment.apiBaseUrl}/admin/${endpoint}?${params.toString()}`;
   }
 
   private setUsersByType(userType: 'influencer' | 'brand' | 'photographer', users: any[]): void {
@@ -774,6 +781,32 @@ export class AdminUserTableComponent implements OnInit {
     if (filters.mobileVerified === 'not_verified' && user.isMobileVerified) {
       return false;
     }
+
+    if (filters.contactVerification === 'email_pending' && user.isEmailVerified) {
+      return false;
+    }
+    if (filters.contactVerification === 'mobile_pending' && user.isMobileVerified) {
+      return false;
+    }
+    if (
+      filters.contactVerification === 'email_or_mobile_pending' &&
+      user.isEmailVerified &&
+      user.isMobileVerified
+    ) {
+      return false;
+    }
+    if (
+      filters.contactVerification === 'both_pending' &&
+      (user.isEmailVerified || user.isMobileVerified)
+    ) {
+      return false;
+    }
+    if (
+      filters.contactVerification === 'both_verified' &&
+      (!user.isEmailVerified || !user.isMobileVerified)
+    ) {
+      return false;
+    }
     
     // Premium filter
     if (filters.premium === 'premium' && !user.isPremium) {
@@ -836,6 +869,10 @@ export class AdminUserTableComponent implements OnInit {
   setActiveFilterValue(field: string, value: string): void {
     const filters = this.getFiltersForType(this.activeTab) as Record<string, string>;
     filters[field] = value;
+    if (field === 'contactVerification') {
+      this.fetchUsers(this.activeTab);
+      return;
+    }
     this.onFilterChange(this.activeTab);
   }
 
@@ -966,11 +1003,11 @@ export class AdminUserTableComponent implements OnInit {
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
     if (userType === 'influencer') {
-      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
+      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
     } else if (userType === 'brand') {
-      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
+      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
     } else {
-      this.photographerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '' };
+      this.photographerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
     }
     this.applyFilters(userType);
     this.currentPage = 1;
