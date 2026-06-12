@@ -101,11 +101,16 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">{{ campaignModeFieldLabel }} <span class="required">*</span></label>
-          <select formControlName="campaignMode" class="field-input">
-            <option value="invite_only">🔒 Invite only — you pick &amp; invite creators</option>
-            <option value="tier_filtered_open">🌐 Open to all (with filters) — creators apply</option>
-          </select>
+	          <label class="field-label">{{ campaignModeFieldLabel }} <span class="required">*</span></label>
+	          <select formControlName="campaignMode" class="field-input">
+	            <option
+	              *ngFor="let mode of accessModes"
+	              [value]="mode.value"
+	              [disabled]="mode.enabled === false || (!hasPremium && !!mode.premiumOnly)"
+	            >
+	              {{ mode.label }}{{ (!hasPremium && !!mode.premiumOnly) ? ' (Premium)' : '' }}{{ (mode.enabled === false) ? ' (Unavailable)' : '' }}
+	            </option>
+	          </select>
           <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
             <i class="bi bi-person-check"></i>
             You manually select and invite specific {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} in Step 3.

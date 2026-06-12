@@ -355,11 +355,20 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   campaignTypeConfigs: Array<{
     key: string;
     label: string;
-    ownerType: 'brand' | 'photographer';
-    enabled: boolean;
-    premiumOnly: boolean;
-    sortOrder: number;
-  }> = [];
+	    ownerType: 'brand' | 'photographer';
+	    enabled: boolean;
+	    premiumOnly: boolean;
+	    sortOrder: number;
+	  }> = [];
+  accessModes: Array<{
+    value: 'invite_only' | 'tier_filtered_open';
+    label: string;
+    premiumOnly?: boolean;
+    enabled?: boolean;
+  }> = [
+    { value: 'invite_only', label: 'Invite only — you pick & invite creators' },
+    { value: 'tier_filtered_open', label: 'Open to all (with filters) — creators apply' },
+  ];
   protected tierInfo = inject(TierInfoService);
   protected flowHelp = inject(FlowHelpModalService);
   protected guideModal = inject(CampaignGuideModalService);
@@ -453,6 +462,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         .filter(Boolean),
     );
     this.loadCampaignTypeConfigs();
+    this.loadCampaignAccessModeConfigs();
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
     if (!this.hasPremium && this.isPremiumOnlyType(String(this.f['campaignType']?.value || ''))) {
       this.ensureCampaignTypeSelection();
@@ -815,6 +825,21 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     });
   }
 
+  private loadCampaignAccessModeConfigs(): void {
+    this.config.getCampaignAccessModeConfigs().subscribe({
+      next: (items) => {
+        this.accessModes = this.normalizeCampaignModeOptions(items);
+        this.ensureCampaignModeSelection();
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.accessModes = this.normalizeCampaignModeOptions([]);
+        this.ensureCampaignModeSelection();
+        this.cd.detectChanges();
+      },
+    });
+  }
+
   private buildSyntheticCampaignTypeOption(
     ownerType: 'brand' | 'photographer',
     type: string,
@@ -852,6 +877,45 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
     this.form.patchValue({ campaignType: fallback.value }, { emitEvent: false });
     this.applyCampaignTypeValidators(String(fallback.value || ''));
+  }
+
+  private normalizeCampaignModeOptions(items: Array<any>): Array<{
+    value: 'invite_only' | 'tier_filtered_open';
+    label: string;
+    premiumOnly?: boolean;
+    enabled?: boolean;
+  }> {
+    const source = Array.isArray(items) && items.length ? items : [
+      { key: 'invite_only', label: 'Invite only', enabled: true, premiumOnly: false },
+      { key: 'tier_filtered_open', label: 'Open to all', enabled: true, premiumOnly: false },
+    ];
+    return source
+      .map((item: any) => {
+        const value: 'invite_only' | 'tier_filtered_open' =
+          String(item?.key || item?.value) === 'tier_filtered_open' ? 'tier_filtered_open' : 'invite_only';
+        const defaultLabel = value === 'tier_filtered_open'
+          ? 'Open to all (with filters) — creators apply'
+          : 'Invite only — you pick & invite creators';
+        return {
+          value,
+          label: String(item?.label || defaultLabel).trim(),
+          premiumOnly: item?.premiumOnly === true,
+          enabled: item?.enabled !== false,
+        };
+      })
+      .filter((item, index, list) => list.findIndex((other) => other.value === item.value) === index);
+  }
+
+  private ensureCampaignModeSelection(): void {
+    const selected = String(this.form?.get('campaignMode')?.value || 'invite_only');
+    const canUse = (mode: { value: string; enabled?: boolean; premiumOnly?: boolean }) =>
+      mode.enabled !== false && (this.hasPremium || !mode.premiumOnly);
+    const selectedMode = this.accessModes.find((mode) => mode.value === selected);
+    if (selectedMode && canUse(selectedMode)) return;
+    const fallback = this.accessModes.find(canUse) || this.accessModes[0];
+    if (fallback) {
+      this.form.get('campaignMode')?.setValue(fallback.value, { emitEvent: true });
+    }
   }
 
   getCampaignTypeOptions(): Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> {

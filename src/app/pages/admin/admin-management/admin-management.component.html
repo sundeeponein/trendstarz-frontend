@@ -1192,12 +1192,56 @@
       </div>
     </div>
 
-    <div class="settings-row row-expanded mt-3">
-      <div class="settings-row-header">
-        <div class="settings-info">
-          <strong>Requirement Types (Brand → Influencer/Photographer)</strong>
-          <p>Control which requirement types are visible and whether they are free or premium-only.</p>
-        </div>
+	    <div class="settings-row row-expanded mt-3">
+	      <div class="settings-row-header">
+	        <div class="settings-info">
+	          <strong>Campaign Access Modes</strong>
+	          <p>Control which campaign access modes appear in campaign forms and whether they require Premium.</p>
+	        </div>
+	      </div>
+
+	      <div class="table-responsive campaign-type-table-wrap">
+	        <table class="table table-sm align-middle mb-0 campaign-type-table">
+	          <thead>
+	            <tr>
+	              <th>Access mode</th>
+	              <th>Enabled</th>
+	              <th>Premium only</th>
+	              <th>Free Users</th>
+	              <th>Premium Users</th>
+	            </tr>
+	          </thead>
+	          <tbody>
+	            <tr *ngFor="let item of campaignAccessModeConfigs">
+	              <td>{{ item.label }}</td>
+	              <td class="campaign-type-col-toggle">
+	                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+	              </td>
+	              <td class="campaign-type-col-toggle">
+	                <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
+	              </td>
+	              <td>
+	                <span class="campaign-type-badge" [ngClass]="item.enabled && !item.premiumOnly ? 'is-yes' : 'is-no'">
+	                  {{ item.enabled && !item.premiumOnly ? 'Yes' : 'No' }}
+	                </span>
+	              </td>
+	              <td>
+	                <span class="campaign-type-badge" [ngClass]="item.enabled ? 'is-yes' : 'is-no'">
+	                  {{ item.enabled ? 'Yes' : 'No' }}
+	                </span>
+	              </td>
+	            </tr>
+	          </tbody>
+	        </table>
+	      </div>
+	    </div>
+
+	    <div class="settings-row row-expanded mt-3">
+	      <div class="settings-row-header">
+	        <div class="settings-info">
+	          <strong>Requirement Types (Brand → Influencer/Photographer)</strong>
+	          <p>Control which requirement types appear in campaign forms and whether they require Premium.</p>
+	        </div>
         <button type="button" class="btn btn-outline-secondary btn-sm settings-reset-btn" (click)="resetCampaignTypeConfigs()">
           Reset defaults
         </button>
@@ -1209,10 +1253,10 @@
         <table class="table table-sm align-middle mb-0 campaign-type-table">
           <thead>
             <tr>
-              <th>Requirement Type</th>
-              <th>Order</th>
-              <th>Enabled</th>
-              <th>Premium only</th>
+	              <th>Requirement Type</th>
+	              <th>Order</th>
+	              <th>Enabled</th>
+	              <th>Premium only</th>
               <th>Free Users</th>
               <th>Premium Users</th>
             </tr>
@@ -1250,8 +1294,8 @@
                   </div>
                 </div>
               </td>
-              <td class="campaign-type-col-toggle">
-                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+	              <td class="campaign-type-col-toggle">
+	                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
               </td>
               <td class="campaign-type-col-toggle">
                 <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
@@ -1282,9 +1326,9 @@
         <table class="table table-sm align-middle mb-0 campaign-type-table">
           <thead>
             <tr>
-              <th>Collaboration Type</th>
-              <th>Order</th>
-              <th>Enabled</th>
+	              <th>Collaboration Type</th>
+	              <th>Order</th>
+	              <th>Enabled</th>
               <th>Premium only</th>
               <th>Free Users</th>
               <th>Premium Users</th>
@@ -1323,7 +1367,7 @@
                   </div>
                 </div>
               </td>
-              <td class="campaign-type-col-toggle">
+	              <td class="campaign-type-col-toggle">
                 <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
               </td>
               <td class="campaign-type-col-toggle">

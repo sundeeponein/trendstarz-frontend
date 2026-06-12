@@ -28,9 +28,9 @@ export class PhotographerCollaborationFormComponent implements OnInit, OnChanges
 
   collaborationTypes: Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> = [];
 
-  accessModes: Array<{ value: string; label: string }> = [
-    { value: 'tier_filtered_open', label: 'Open to All' },
-    { value: 'invite_only', label: 'Invite Only' },
+  accessModes: Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> = [
+    { value: 'invite_only', label: 'Invite only' },
+    { value: 'tier_filtered_open', label: 'Open to all' },
   ];
 
   deliverableOptions = ['Reels', 'Photos', 'Stories', 'YouTube Short', 'Collaboration Post'];
@@ -116,7 +116,51 @@ export class PhotographerCollaborationFormComponent implements OnInit, OnChanges
     this.form.get('maxInfluencers')?.valueChanges.subscribe(() => this.normalizeMinParticipantsField());
 
     this.loadCollaborationTypeConfigs();
+    this.loadCampaignAccessModeConfigs();
     this.normalizeMinParticipantsField();
+  }
+
+  private loadCampaignAccessModeConfigs(): void {
+    this.config.getCampaignAccessModeConfigs().subscribe({
+      next: (items) => {
+        this.accessModes = this.normalizeCampaignModeOptions(items);
+        this.ensureCampaignModeSelection();
+      },
+      error: () => {
+        this.accessModes = this.normalizeCampaignModeOptions([]);
+        this.ensureCampaignModeSelection();
+      },
+    });
+  }
+
+  private normalizeCampaignModeOptions(items: Array<any>): Array<{ value: string; label: string; premiumOnly?: boolean; enabled?: boolean }> {
+    const source = Array.isArray(items) && items.length ? items : [
+      { key: 'invite_only', label: 'Invite only', enabled: true, premiumOnly: false },
+      { key: 'tier_filtered_open', label: 'Open to all', enabled: true, premiumOnly: false },
+    ];
+    return source
+      .map((item: any) => {
+        const value = String(item?.key || item?.value) === 'tier_filtered_open' ? 'tier_filtered_open' : 'invite_only';
+        return {
+          value,
+          label: String(item?.label || (value === 'tier_filtered_open' ? 'Open to all' : 'Invite only')).trim(),
+          enabled: item?.enabled !== false,
+          premiumOnly: item?.premiumOnly === true,
+        };
+      })
+      .filter((item, index, list) => list.findIndex((other) => other.value === item.value) === index);
+  }
+
+  private ensureCampaignModeSelection(): void {
+    const selected = String(this.form?.get('campaignMode')?.value || 'invite_only');
+    const canUse = (mode: { enabled?: boolean; premiumOnly?: boolean }) =>
+      mode.enabled !== false && (this.hasPremium || !mode.premiumOnly);
+    const selectedMode = this.accessModes.find((mode) => mode.value === selected);
+    if (selectedMode && canUse(selectedMode)) return;
+    const fallback = this.accessModes.find(canUse) || this.accessModes[0];
+    if (fallback) {
+      this.form.get('campaignMode')?.setValue(fallback.value);
+    }
   }
 
   private loadCollaborationTypeConfigs(): void {
