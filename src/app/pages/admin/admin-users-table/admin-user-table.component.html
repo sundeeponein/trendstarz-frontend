@@ -43,10 +43,20 @@
       />
     </div>
 
-    <select [ngModel]="getActiveFilterValue('status')" (change)="setActiveFilterValue('status', $any($event.target).value)">
+    <!-- <select [ngModel]="getActiveFilterValue('status')" (change)="setActiveFilterValue('status', $any($event.target).value)">
       <option value="">Status: All</option>
       <option *ngFor="let status of statusArray" [value]="status">Status: {{ status | titlecase }}</option>
+    </select> -->
+
+    <select [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
+      <option value="">Verification: All</option>
+      <option value="email_pending">Email pending</option>
+      <option value="mobile_pending">Mobile pending</option>
+      <option value="email_or_mobile_pending">Email or mobile pending</option>
+      <option value="both_pending">Both pending</option>
+      <option value="both_verified">Both verified</option>
     </select>
+
 
     <select [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">
       <option value="">Tier: All</option>
