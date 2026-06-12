@@ -70,7 +70,7 @@
           <div class="notifications-menu" *ngIf="notificationsOpen">
             <div class="notifications-header">
               <strong>Notifications</strong>
-              <button type="button" class="mark-all-btn" *ngIf="unreadNotificationCount > 0" (click)="markAllNotificationsRead()">Mark all read</button>
+              <button type="button" class="mark-all-btn" *ngIf="notifications.length > 0" (click)="markAllNotificationsRead()">Clear all</button>
             </div>
 
             <button

@@ -323,7 +323,7 @@ export class NavbarLayoutComponent implements OnDestroy {
   markAllNotificationsRead() {
     this.subs.add(
       this.config.markAllNotificationsRead().subscribe(() => {
-        this.notifications = this.notifications.map((n) => ({ ...n, read: true }));
+        this.notifications = [];
         this.unreadNotificationCount = 0;
         this.cdr.detectChanges();
       }),
