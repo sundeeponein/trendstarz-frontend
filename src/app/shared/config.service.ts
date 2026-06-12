@@ -93,6 +93,35 @@ export class ConfigService {
     );
   }
 
+  getCampaignAccessModeConfigs(): Observable<Array<{
+    key: 'invite_only' | 'tier_filtered_open';
+    label: string;
+    enabled: boolean;
+    premiumOnly: boolean;
+    sortOrder: number;
+  }>> {
+    return this.http.get<any>(`${this.apiUrl}/public/campaign-type-configs`).pipe(
+      map((res) => {
+        const data = res?.data ?? res ?? {};
+        const items = Array.isArray(data?.accessModes) ? data.accessModes : [];
+        return items
+          .map((item: any) => ({
+            key: String(item?.key || item?.value) === 'tier_filtered_open' ? 'tier_filtered_open' : 'invite_only',
+            label: String(item?.label || '').trim(),
+            enabled: item?.enabled !== false,
+            premiumOnly: item?.premiumOnly === true,
+            sortOrder: Number.isFinite(Number(item?.sortOrder)) ? Number(item.sortOrder) : 999,
+          }))
+          .filter((item: any) => !!item.key && !!item.label)
+          .sort((a: any, b: any) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+      }),
+      catchError(() => of([
+        { key: 'invite_only' as const, label: 'Invite only', enabled: true, premiumOnly: false, sortOrder: 10 },
+        { key: 'tier_filtered_open' as const, label: 'Open to all', enabled: true, premiumOnly: false, sortOrder: 20 },
+      ])),
+    );
+  }
+
   // Check if username exists (for async validation)
   checkUsernameExists(username: string) {
     return this.http.get<{ exists: boolean }>(`${this.apiUrl}/users/check-username/${encodeURIComponent(username)}`)

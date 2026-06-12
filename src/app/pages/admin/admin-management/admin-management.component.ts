@@ -51,6 +51,14 @@ type CampaignTypeConfigItem = {
   sortOrder: number;
 };
 
+type CampaignAccessModeConfigItem = {
+  key: 'invite_only' | 'tier_filtered_open';
+  label: string;
+  enabled: boolean;
+  premiumOnly: boolean;
+  sortOrder: number;
+};
+
 type CollaborationAvailabilityRole = 'influencer' | 'photographer';
 
 type CollaborationAvailabilitySection = {
@@ -201,6 +209,45 @@ export class AdminManagementComponent implements OnInit {
     return out.sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
   }
 
+  private normalizeCampaignAccessModeConfigs(
+    list: unknown,
+    fallbackList: CampaignAccessModeConfigItem[] = [],
+  ): CampaignAccessModeConfigItem[] {
+    const baseline: CampaignAccessModeConfigItem[] = fallbackList.length ? fallbackList : [
+      { key: 'invite_only', label: 'Invite only', enabled: true, premiumOnly: false, sortOrder: 10 },
+      { key: 'tier_filtered_open', label: 'Open to all', enabled: true, premiumOnly: false, sortOrder: 20 },
+    ];
+    const source = Array.isArray(list) && list.length ? list : baseline;
+    const out: CampaignAccessModeConfigItem[] = [];
+    const seen = new Set<string>();
+
+    for (const raw of source) {
+      if (!raw || typeof raw !== 'object') continue;
+      const key: 'invite_only' | 'tier_filtered_open' =
+        String((raw as any).key || (raw as any).value) === 'tier_filtered_open'
+          ? 'tier_filtered_open'
+          : 'invite_only';
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const fallback = baseline.find((item) => item.key === key);
+      out.push({
+        key,
+        label: String((raw as any).label || fallback?.label || key).trim(),
+        enabled: (raw as any).enabled !== false,
+        premiumOnly: (raw as any).premiumOnly === true,
+        sortOrder: Number.isFinite(Number((raw as any).sortOrder))
+          ? Number((raw as any).sortOrder)
+          : Number(fallback?.sortOrder || 999),
+      });
+    }
+
+    for (const fallback of baseline) {
+      if (!seen.has(fallback.key)) out.push({ ...fallback });
+    }
+
+    return out.sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }
+
   get filteredUserTags(): Array<{ name: string; visible: boolean }> {
     const list = this.config?.userTags?.[this.userTagsRoleTab];
     return Array.isArray(list) ? list : [];
@@ -220,6 +267,11 @@ export class AdminManagementComponent implements OnInit {
     return (this.settings.campaignTypeConfigs || [])
       .filter((item: CampaignTypeConfigItem) => item.ownerType === 'photographer')
       .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder);
+  }
+
+  get campaignAccessModeConfigs(): CampaignAccessModeConfigItem[] {
+    return (this.settings.campaignAccessModeConfigs || [])
+      .sort((a: CampaignAccessModeConfigItem, b: CampaignAccessModeConfigItem) => a.sortOrder - b.sortOrder);
   }
 
   canMoveCampaignType(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem, direction: -1 | 1): boolean {
@@ -314,6 +366,7 @@ export class AdminManagementComponent implements OnInit {
     showRegisterBrandLink: true,
     showRegisterPhotographerLink: true,
     campaignTypeConfigs: [] as CampaignTypeConfigItem[],
+    campaignAccessModeConfigs: [] as CampaignAccessModeConfigItem[],
   };
   settingsSaving = false;
   settingsSaved = false;
@@ -341,6 +394,7 @@ export class AdminManagementComponent implements OnInit {
   firebaseEmailSyncLastRunAt: string | null = null;
   firebaseEmailSyncLastRunCount = 0;
   campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
+  campaignAccessModeConfigDefaults: CampaignAccessModeConfigItem[] = [];
   campaignTypeResetMessage = '';
   showVisibilityConfirmModal = false;
   private visibilitySnapshot: any = null;
@@ -470,13 +524,20 @@ export class AdminManagementComponent implements OnInit {
           this.settings.internalTestCommissionPercent = typeof data?.internalTestCommissionPercent === 'number' ? data.internalTestCommissionPercent : 0;
           this.settings.showSearchLink = data?.showSearchLink !== false;
           this.settings.showRegisterInfluencerLink = data?.showRegisterInfluencerLink !== false;
-          this.settings.showRegisterBrandLink = data?.showRegisterBrandLink !== false;
-          this.settings.showRegisterPhotographerLink = data?.showRegisterPhotographerLink !== false;
-          this.campaignTypeConfigDefaults = this.normalizeCampaignTypeConfigs(data?.campaignTypeConfigDefaults);
-          this.settings.campaignTypeConfigs = this.normalizeCampaignTypeConfigs(
-            data?.campaignTypeConfigs,
-            this.campaignTypeConfigDefaults,
-          );
+	          this.settings.showRegisterBrandLink = data?.showRegisterBrandLink !== false;
+	          this.settings.showRegisterPhotographerLink = data?.showRegisterPhotographerLink !== false;
+	          this.campaignTypeConfigDefaults = this.normalizeCampaignTypeConfigs(data?.campaignTypeConfigDefaults);
+	          this.campaignAccessModeConfigDefaults = this.normalizeCampaignAccessModeConfigs(
+	            data?.campaignAccessModeConfigDefaults,
+	          );
+	          this.settings.campaignTypeConfigs = this.normalizeCampaignTypeConfigs(
+	            data?.campaignTypeConfigs,
+	            this.campaignTypeConfigDefaults,
+	          );
+	          this.settings.campaignAccessModeConfigs = this.normalizeCampaignAccessModeConfigs(
+	            data?.campaignAccessModeConfigs,
+	            this.campaignAccessModeConfigDefaults,
+	          );
         this.cdr.detectChanges();
       },
       error: () => {}
@@ -538,7 +599,8 @@ export class AdminManagementComponent implements OnInit {
 
   resetCampaignTypeConfigs(): void {
     this.settings.campaignTypeConfigs = this.campaignTypeConfigDefaults.map((item) => ({ ...item }));
-    this.campaignTypeResetMessage = 'Campaign and collaboration type rules restored to the default baseline. Save Settings to persist them.';
+    this.settings.campaignAccessModeConfigs = this.campaignAccessModeConfigDefaults.map((item) => ({ ...item }));
+    this.campaignTypeResetMessage = 'Campaign, collaboration, and access mode rules restored to the default baseline. Save Settings to persist them.';
     this.cdr.detectChanges();
     setTimeout(() => {
       this.campaignTypeResetMessage = '';

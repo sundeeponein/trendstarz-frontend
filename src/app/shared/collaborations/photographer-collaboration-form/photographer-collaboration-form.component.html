@@ -36,10 +36,16 @@
           </div>
 
           <div class="pcf-field">
-            <label>Collaboration Access Mode *</label>
-            <select class="form-select" formControlName="campaignMode">
-              <option *ngFor="let mode of accessModes" [value]="mode.value">{{ mode.label }}</option>
-            </select>
+	            <label>Collaboration Access Mode *</label>
+	            <select class="form-select" formControlName="campaignMode">
+	              <option
+	                *ngFor="let mode of accessModes"
+	                [value]="mode.value"
+	                [disabled]="mode.enabled === false || (!hasPremium && !!mode.premiumOnly)"
+	              >
+	                {{ mode.label }}{{ (!hasPremium && !!mode.premiumOnly) ? ' (Premium)' : '' }}{{ (mode.enabled === false) ? ' (Unavailable)' : '' }}
+	              </option>
+	            </select>
           </div>
 
           <div class="pcf-field">
