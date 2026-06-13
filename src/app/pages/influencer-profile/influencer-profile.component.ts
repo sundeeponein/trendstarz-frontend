@@ -24,11 +24,12 @@ import {
   ProfileVerificationService,
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -107,6 +108,9 @@ export class InfluencerProfileComponent implements OnInit {
   originalPlatformForms: { [platformId: string]: any } = {};
   /** Currently visible platform tab in the social media section. */
   activePlatformTab: string | null = null;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
 
   isPlatformSelected(platform: any): boolean {
     return !!this.platformForms[platform._id];
@@ -153,7 +157,7 @@ export class InfluencerProfileComponent implements OnInit {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
-  private confirmCriticalProfileDetails(raw: any): boolean {
+  private buildCriticalProfileMessage(raw: any): string {
     const socials = this.selectedPlatforms().map((platform: any) => {
       const pf = this.platformForms[platform._id] || {};
       return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
@@ -161,7 +165,7 @@ export class InfluencerProfileComponent implements OnInit {
     const state = this.states.find((s: any) => s._id === raw?.location?.state || s.name === raw?.location?.state)?.name || raw?.location?.state || '-';
     const district = this.districts.find((d: any) => d._id === raw?.location?.district || d.name === raw?.location?.district)?.name || raw?.location?.district || '-';
     const hasProfilePhoto = !!(this.profileImagePreview || this.profileImagesFormArray?.at(0)?.value?.url);
-    return window.confirm([
+    return [
       'Please verify these details before saving:',
       '',
       `Email: ${raw?.email || '-'}`,
@@ -171,7 +175,28 @@ export class InfluencerProfileComponent implements OnInit {
       `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
       '',
       'Continue saving profile?'
-    ].join('\n'));
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cd.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
   }
 
   /** Selected platforms missing handle or tier. */
@@ -251,6 +276,7 @@ export class InfluencerProfileComponent implements OnInit {
   // Phone/email verification status and error
   phoneVerified: boolean = false;
   verificationCallNumber = '';
+  otpVerificationEnabled = false;
 
   emailVerified: boolean = false;
   emailEditRequested: boolean = false;
@@ -309,6 +335,7 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   sendPhoneOtp() {
+    if (!this.otpVerificationEnabled) return;
     void this.sendFirebasePhoneOtp();
   }
 
@@ -434,6 +461,10 @@ export class InfluencerProfileComponent implements OnInit {
     this.loadPremiumMonthlyPrice();
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
+      this.cd.markForCheck();
+    });
+    this.configService.getAppSettings().subscribe(s => {
+      this.otpVerificationEnabled = !!s.otpVerificationEnabled;
       this.cd.markForCheck();
     });
 
@@ -1153,7 +1184,7 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationSuccess = false;
     this.registrationSuccessMessage = '';
     const raw = this.registrationForm.getRawValue();
-    if (!this.confirmCriticalProfileDetails(raw)) {
+    if (!(await this.confirmCriticalProfileDetails(raw))) {
       return;
     }
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();

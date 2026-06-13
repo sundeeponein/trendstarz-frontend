@@ -155,6 +155,9 @@
                 aria-label="Mobile verified"
               ></i>
             </div>
+            <div class="user-sub" *ngIf="getDisplayPhoneNumber(user) !== '-'">
+              {{ getMobileVerificationSource(user) }}
+            </div>
           </td>
           <td>
             <div class="table-social-list" *ngIf="getTableSocialMediaItems(user).length; else noTableSocial">
@@ -326,6 +329,15 @@
             ></app-verification-field>
           </div>
           <div>
+            <app-verification-field
+              label="Payment Method"
+              [status]="getUserPaymentVerificationStatus(selectedUser)"
+              [value]="getUserPaymentMethodLabel(selectedUser)"
+              [verified]="isPaymentMethodVerified(selectedUser)"
+              (toggled)="toggleSelectedPaymentVerification()"
+            ></app-verification-field>
+          </div>
+          <div>
             <label>Date of Birth</label>
             <div>{{ selectedUser.dateOfBirth ? (selectedUser.dateOfBirth | date:'mediumDate') : '-' }}</div>
           </div>
@@ -374,6 +386,15 @@
             </div>
             <div class="rate-details" *ngIf="hasUserRateDetails(selectedUser)">
               <label>Social Media - Content & Rates</label>
+              <div class="mb-2">
+                <app-verification-field
+                  label="Social Profile & Creator Tier"
+                  [status]="getUserCreatorTierStatus()"
+                  [value]="getUserCreatorTierSummary(selectedUser)"
+                  [verified]="isCreatorTierVerified()"
+                  (toggled)="toggleSelectedCreatorTierVerification()"
+                ></app-verification-field>
+              </div>
               <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
                 <div class="rate-platform-name">
                   <span>
@@ -434,13 +455,6 @@
             <div>
               <label>Premium</label>
               <div>{{ getUserPremiumLabel(selectedUser) }}</div>
-            </div>
-            <div>
-              <label>Payment Method (<small>{{ getUserPaymentVerificationStatus(selectedUser) }}</small>)</label>
-              <div>{{ getUserPaymentMethodLabel(selectedUser) }}</div>
-              <button class="btn btn-sm mt-1" [class.btn-outline-secondary]="isPaymentMethodVerified(selectedUser)" [class.btn-success]="!isPaymentMethodVerified(selectedUser)" (click)="toggleSelectedPaymentVerification()">
-                {{ isPaymentMethodVerified(selectedUser) ? 'Unverify' : 'Verify' }}
-              </button>
             </div>
             <div>
               <label>Status</label>

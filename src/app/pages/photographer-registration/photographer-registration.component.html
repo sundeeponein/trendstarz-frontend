@@ -82,7 +82,24 @@
               <div class="field-block">
                 <label>Mobile Number <span class="text-danger">*</span></label>
                   <input formControlName="phoneNumber" type="tel" class="form-control" placeholder="10-digit mobile" (blur)="onPhoneNumberBlur()" />
-                <small class="text-muted mt-1">You may receive a verification call from our team.</small>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-2" *ngIf="otpVerificationEnabled; else photographerManualMobileVerify">
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()" [disabled]="form.get('phoneNumber')?.invalid">
+                    {{ phoneVerified ? 'Mobile Verified' : 'Send Mobile OTP' }}
+                  </button>
+                  <button type="button" class="btn btn-link btn-sm p-0" *ngIf="showPhoneOtp && canResendPhoneOtp && !phoneVerified" (click)="resendPhoneOtp()">Resend OTP</button>
+                  <small *ngIf="showPhoneOtp && !canResendPhoneOtp && !phoneVerified" class="text-muted">Resend available shortly.</small>
+                  <span *ngIf="phoneVerified" class="text-success fw-semibold">Verified</span>
+                </div>
+                <ng-template #photographerManualMobileVerify>
+                  <small class="text-muted d-block mt-1">Mobile verification is currently manual. Our support/admin team will verify this number after registration.</small>
+                </ng-template>
+                <small *ngIf="otpVerificationEnabled" class="text-muted d-block mt-1">Verify your mobile number with OTP. Admin can also verify manually if needed.</small>
+                <div *ngIf="otpVerificationEnabled && showPhoneOtp && !phoneVerified" class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                  <input *ngFor="let item of phoneOtp; let i = index" [(ngModel)]="phoneOtp[i]" [ngModelOptions]="{standalone: true}" maxlength="1" inputmode="numeric" class="form-control text-center" style="width:42px;" />
+                  <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify OTP</button>
+                </div>
+                <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
+                <small *ngIf="phoneVerifyError" class="text-danger d-block mt-1">{{ phoneVerifyError }}</small>
                 <div *ngIf="submitted && form.get('phoneNumber')?.invalid" class="text-danger mt-1">Mobile number is required.</div>
                 <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
               </div>
@@ -504,3 +521,14 @@
     </main>
   </div>
 </div>
+
+<app-confirm-dialog
+  [open]="profileConfirmOpen"
+  title="Verify Profile Details"
+  [message]="profileConfirmMessage"
+  confirmText="Continue"
+  cancelText="Cancel"
+  confirmVariant="primary"
+  (confirm)="onProfileConfirmContinue()"
+  (cancel)="onProfileConfirmCancel()"
+></app-confirm-dialog>

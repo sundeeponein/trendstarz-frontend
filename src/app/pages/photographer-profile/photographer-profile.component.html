@@ -99,17 +99,16 @@
                   <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em; vertical-align: middle;">✔️</span>
                   <span *ngIf="!phoneVerified" class="verified-icon" title="Mobile verification pending" style="color: #f59e0b; font-size: 1.2em; vertical-align: middle;"><i class="bi bi-hourglass-split"></i></span>
                 </div>
-                <small *ngIf="phoneVerified" class="text-muted d-block mt-1">✅ Verified by TrendStarz Team. To change verified mobile number, contact support.</small>
-                <small *ngIf="verificationCallNumber && !phoneVerified" class="text-muted mt-1 d-block">
-                  Need urgent help? Call <a [href]="'tel:' + verificationCallNumber">{{ verificationCallNumber }}</a>
-                </small>
-                <div *ngIf="!phoneVerified" class="mt-2">
-                  <!-- <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button> -->
+                <small *ngIf="phoneVerified" class="text-muted d-block mt-1">Mobile number verified. To change verified mobile number, contact support.</small>
+                <small *ngIf="!phoneVerified && otpVerificationEnabled" class="text-muted d-block mt-1">Verify your mobile number with OTP. Admin can also verify manually if needed.</small>
+                <small *ngIf="!phoneVerified && !otpVerificationEnabled" class="text-muted d-block mt-1">Mobile verification is currently manual. Our support/admin team will verify this number.</small>
+                <div *ngIf="!phoneVerified && otpVerificationEnabled" class="mt-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()" [disabled]="form.get('phoneNumber')?.invalid">Send Mobile OTP</button>
                   <span *ngIf="phoneVerifyError" class="text-danger ms-2">{{ phoneVerifyError }}</span>
                   <div id="photographer-phone-recaptcha"></div>
                   <div *ngIf="showPhoneOtp" class="d-flex align-items-center gap-2 flex-wrap mt-2">
                     <input *ngFor="let item of phoneOtp; let i = index" [(ngModel)]="phoneOtp[i]" [ngModelOptions]="{standalone: true}" maxlength="1" inputmode="numeric" class="form-control text-center" style="width:42px;" />
-                    <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify</button>
+                    <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify OTP</button>
                   </div>
                   <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
                 </div>
@@ -453,3 +452,14 @@
     </main>
   </div>
 </div>
+
+<app-confirm-dialog
+  [open]="profileConfirmOpen"
+  title="Verify Profile Details"
+  [message]="profileConfirmMessage"
+  confirmText="Continue"
+  cancelText="Cancel"
+  confirmVariant="primary"
+  (confirm)="onProfileConfirmContinue()"
+  (cancel)="onProfileConfirmCancel()"
+></app-confirm-dialog>

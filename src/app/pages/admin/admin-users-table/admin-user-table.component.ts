@@ -216,7 +216,7 @@ export class AdminUserTableComponent implements OnInit {
     const status = this.getChecklistStatus('Payment Method Verified');
     if (status && status !== 'Verified') return status;
     const checks = this.selectedProfileVerification?.verificationChecks || {};
-    return checks['paymentVerified'] || user?.paymentVerified || status === 'Verified' ? 'Verified' : 'Pending';
+    return checks['paymentVerified'] || user?.paymentVerified || status === 'Verified' || this.hasUserPaymentMethod(user) ? 'Verified' : 'Pending';
   }
 
   isPaymentMethodVerified(user: any): boolean {
@@ -398,6 +398,17 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getUserPaymentMethodLabel(user: any): string {
+    const payout = user?.payout || {};
+    const upiId = String(payout?.upiId || '').trim();
+    const mobile = String(payout?.mobile || '').trim();
+    const accountHolderName = String(payout?.accountHolderName || '').trim();
+    if (upiId || mobile || accountHolderName) {
+      const parts: string[] = [];
+      if (upiId) parts.push(`UPI: ${upiId}`);
+      if (mobile) parts.push(`Mobile: ${mobile}`);
+      if (accountHolderName) parts.push(`Name: ${accountHolderName}`);
+      return parts.join(' | ');
+    }
     const method = String(user?.latestPayment?.paymentMethod || '').toLowerCase();
     if (method === 'upi') return 'UPI';
     if (method === 'qr') return 'QR Code';
@@ -406,6 +417,16 @@ export class AdminUserTableComponent implements OnInit {
       return duration ? `Admin Granted (${duration})` : 'Admin Granted';
     }
     return '-';
+  }
+
+  hasUserPaymentMethod(user: any): boolean {
+    const payout = user?.payout || {};
+    return !!(
+      String(payout?.upiId || '').trim() ||
+      String(payout?.mobile || '').trim() ||
+      String(payout?.accountHolderName || '').trim() ||
+      String(user?.latestPayment?.paymentMethod || '').trim()
+    );
   }
 
   getUserPremiumLabel(user: any): string {
@@ -1022,6 +1043,16 @@ export class AdminUserTableComponent implements OnInit {
     return raw;
   }
 
+  getMobileVerificationSource(user: any): string {
+    if (!this.isMobileVerified(user)) return 'Pending';
+    const method = String(user?.mobileVerificationMethod || '').trim();
+    const verifiedBy = String(user?.mobileVerifiedBy || '').trim();
+    if (verifiedBy && method) return `${method} by ${verifiedBy}`;
+    if (verifiedBy) return `Verified by ${verifiedBy}`;
+    if (method) return `Verified via ${method}`;
+    return 'Verified';
+  }
+
   updateContactVerification(
     user: any,
     userType: 'influencer' | 'brand' | 'photographer',
@@ -1074,6 +1105,7 @@ export class AdminUserTableComponent implements OnInit {
             user.mobileVerified = value;
             user.mobileVerifiedAt = value ? (user.mobileVerifiedAt || new Date().toISOString()) : null;
             user.mobileVerificationMethod = value ? (user.mobileVerificationMethod || 'Manual') : '';
+            user.mobileVerifiedBy = value ? (user.mobileVerifiedBy || 'Admin') : '';
           }
           if (field === 'locationVerified') {
             user.locationVerified = value;

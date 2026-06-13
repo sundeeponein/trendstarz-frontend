@@ -239,6 +239,7 @@ export class ConfigService {
     submissionApprovalWaitHours?: number;
     submissionAutoCompleteGraceHours?: number;
     payoutReleaseWaitHours?: number;
+    otpVerificationEnabled?: boolean;
     showSearchLink: boolean;
     showRegisterInfluencerLink: boolean;
     showRegisterBrandLink: boolean;
@@ -261,6 +262,7 @@ export class ConfigService {
           submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
           submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48,
           payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
+          otpVerificationEnabled: !!data?.otpVerificationEnabled,
           showSearchLink: data?.showSearchLink !== false,
           showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
           showRegisterBrandLink: data?.showRegisterBrandLink !== false,
@@ -274,6 +276,7 @@ export class ConfigService {
         submissionApprovalWaitHours: 24,
         submissionAutoCompleteGraceHours: 48,
         payoutReleaseWaitHours: 24,
+        otpVerificationEnabled: false,
         showSearchLink: true,
         showRegisterInfluencerLink: true,
         showRegisterBrandLink: true,
