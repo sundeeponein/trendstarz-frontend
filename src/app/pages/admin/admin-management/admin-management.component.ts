@@ -349,6 +349,7 @@ export class AdminManagementComponent implements OnInit {
     supportContactMessage: '',
     // Number shown on registration/profile phone field as verification call hint
     verificationCallNumber: '',
+    otpVerificationEnabled: false,
     // Platform commission and tax (admin-managed)
     platformFeeEnabled: false,
     platformFeePercent: 0,
@@ -509,6 +510,7 @@ export class AdminManagementComponent implements OnInit {
         this.settings.supportContactWhatsapp = data?.supportContactWhatsapp || '';
         this.settings.supportContactMessage = data?.supportContactMessage || '';
           this.settings.verificationCallNumber = data?.verificationCallNumber || '';
+          this.settings.otpVerificationEnabled = data?.otpVerificationEnabled === true;
           this.settings.platformFeeEnabled = !!data?.platformFeeEnabled;
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;

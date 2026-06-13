@@ -36,7 +36,7 @@ export class MonetizationApiService {
     );
   }
 
-  createSubscriptionOrder(planId: string, billingCycle: "monthly" | "yearly") {
+  createSubscriptionOrder(planId: string, billingCycle: "monthly" | "quarterly" | "yearly") {
     return this.http.post<{
       success: boolean;
       order: { orderId: string; amount: number; currency: string; keyId: string };

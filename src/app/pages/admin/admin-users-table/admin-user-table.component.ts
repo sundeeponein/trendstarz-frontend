@@ -17,11 +17,21 @@ import {
   ProfileVerificationService,
 } from '../../../services/profile-verification.service';
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
+import { ImageGalleryModalComponent } from '../../../shared/components/image-gallery-modal/image-gallery-modal.component';
+import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AdminConfirmDialogComponent, ProfileReviewPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    AdminConfirmDialogComponent,
+    ProfileReviewPanelComponent,
+    ImageGalleryModalComponent,
+    VerificationFieldComponent,
+  ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
@@ -38,6 +48,9 @@ export class AdminUserTableComponent implements OnInit {
   selectedUserInternalNotes = '';
   selectedProfileVerification: ProfileVerificationDashboard | null = null;
   selectedProfileVerificationLoading = false;
+  galleryModalOpen = false;
+  galleryModalImages: string[] = [];
+  galleryModalIndex = 0;
 
   private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
   influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
@@ -134,6 +147,32 @@ export class AdminUserTableComponent implements OnInit {
     return explicitGallery.filter((img: any) => !!(img?.url || img)).length + Math.max(0, profileImages.length - 1);
   }
 
+  getUserGalleryImages(user: any): string[] {
+    const explicitGallery = Array.isArray(user?.galleryImages)
+      ? user.galleryImages
+      : Array.isArray(user?.products)
+        ? user.products
+        : [];
+    const profileImages = Array.isArray(user?.profileImages) ? user.profileImages.slice(1) : [];
+    return [...explicitGallery, ...profileImages]
+      .map((img: any) => String(img?.url || img || '').trim())
+      .filter((url: string) => !!url);
+  }
+
+  openUserGalleryModal(user: any, index = 0): void {
+    const images = this.getUserGalleryImages(user);
+    if (!images.length) return;
+    this.galleryModalImages = images;
+    this.galleryModalIndex = Math.max(0, Math.min(index, images.length - 1));
+    this.galleryModalOpen = true;
+  }
+
+  closeGalleryModal(): void {
+    this.galleryModalOpen = false;
+    this.galleryModalImages = [];
+    this.galleryModalIndex = 0;
+  }
+
   getUserGalleryStatus(user: any): string {
     const status = this.getChecklistStatus('Gallery Images Attached');
     if (status) return status;
@@ -162,7 +201,11 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserLocationVerificationStatus(user: any): string {
     const checks = this.selectedProfileVerification?.verificationChecks || {};
-    return checks['locationVerified'] || user?.locationVerified ? 'Verified' : 'Pending';
+    const hasLocationIssue = (this.selectedProfileVerification?.actionRequired || []).some((flag: any) =>
+      ['LOCATION_MISSING', 'LOCATION_MISMATCH', 'INTERNATIONAL_LOCATION'].includes(String(flag?.flagCode || '')),
+    );
+    const hasLocation = !!(user?.location?.state || user?.location?.district);
+    return checks['locationVerified'] || user?.locationVerified || (hasLocation && !hasLocationIssue) ? 'Verified' : 'Pending';
   }
 
   isLocationVerified(user: any): boolean {
@@ -173,7 +216,7 @@ export class AdminUserTableComponent implements OnInit {
     const status = this.getChecklistStatus('Payment Method Verified');
     if (status && status !== 'Verified') return status;
     const checks = this.selectedProfileVerification?.verificationChecks || {};
-    return checks['paymentVerified'] || user?.paymentVerified || status === 'Verified' ? 'Verified' : 'Pending';
+    return checks['paymentVerified'] || user?.paymentVerified || status === 'Verified' || this.hasUserPaymentMethod(user) ? 'Verified' : 'Pending';
   }
 
   isPaymentMethodVerified(user: any): boolean {
@@ -355,6 +398,17 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getUserPaymentMethodLabel(user: any): string {
+    const payout = user?.payout || {};
+    const upiId = String(payout?.upiId || '').trim();
+    const mobile = String(payout?.mobile || '').trim();
+    const accountHolderName = String(payout?.accountHolderName || '').trim();
+    if (upiId || mobile || accountHolderName) {
+      const parts: string[] = [];
+      if (upiId) parts.push(`UPI: ${upiId}`);
+      if (mobile) parts.push(`Mobile: ${mobile}`);
+      if (accountHolderName) parts.push(`Name: ${accountHolderName}`);
+      return parts.join(' | ');
+    }
     const method = String(user?.latestPayment?.paymentMethod || '').toLowerCase();
     if (method === 'upi') return 'UPI';
     if (method === 'qr') return 'QR Code';
@@ -363,6 +417,16 @@ export class AdminUserTableComponent implements OnInit {
       return duration ? `Admin Granted (${duration})` : 'Admin Granted';
     }
     return '-';
+  }
+
+  hasUserPaymentMethod(user: any): boolean {
+    const payout = user?.payout || {};
+    return !!(
+      String(payout?.upiId || '').trim() ||
+      String(payout?.mobile || '').trim() ||
+      String(payout?.accountHolderName || '').trim() ||
+      String(user?.latestPayment?.paymentMethod || '').trim()
+    );
   }
 
   getUserPremiumLabel(user: any): string {
@@ -979,6 +1043,16 @@ export class AdminUserTableComponent implements OnInit {
     return raw;
   }
 
+  getMobileVerificationSource(user: any): string {
+    if (!this.isMobileVerified(user)) return 'Pending';
+    const method = String(user?.mobileVerificationMethod || '').trim();
+    const verifiedBy = String(user?.mobileVerifiedBy || '').trim();
+    if (verifiedBy && method) return `${method} by ${verifiedBy}`;
+    if (verifiedBy) return `Verified by ${verifiedBy}`;
+    if (method) return `Verified via ${method}`;
+    return 'Verified';
+  }
+
   updateContactVerification(
     user: any,
     userType: 'influencer' | 'brand' | 'photographer',
@@ -1031,6 +1105,7 @@ export class AdminUserTableComponent implements OnInit {
             user.mobileVerified = value;
             user.mobileVerifiedAt = value ? (user.mobileVerifiedAt || new Date().toISOString()) : null;
             user.mobileVerificationMethod = value ? (user.mobileVerificationMethod || 'Manual') : '';
+            user.mobileVerifiedBy = value ? (user.mobileVerifiedBy || 'Admin') : '';
           }
           if (field === 'locationVerified') {
             user.locationVerified = value;

@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+label {
+  display: block;
+}
+
+.verification-field-value {
+  min-height: 1.7rem;
+}
+
+.verification-field-value.with-thumb {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.verification-field-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #d7dee9;
+  background: #f8fafc;
+}
+
+.verification-field-link {
+  display: inline;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.verification-field-link:not(:disabled) {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.verification-field-link:disabled {
+  color: inherit;
+  cursor: default;
+  text-decoration: none;
+}

@@ -20,6 +20,7 @@ import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -36,7 +37,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
@@ -65,6 +66,9 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   // Platform Tabs UI
   activePlatformTab: string | null = null;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
 
   getPlatformById(id: string) {
     return this.socialMediaList.find(p => p._id === id);
@@ -133,6 +137,48 @@ export class InfluencerRegistrationComponent implements OnInit {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
+  private buildCriticalProfileMessage(raw: any): string {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const state = this.states.find((s: any) => s._id === raw?.location?.state)?.name || raw?.location?.state || '-';
+    const district = this.districts.find((d: any) => d._id === raw?.location?.district)?.name || raw?.location?.district || '-';
+    return [
+      'Please verify these details before submitting:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${this.profileImagePreview ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      `Payment details: ${raw?.payout?.upiId || raw?.payout?.mobile || raw?.payout?.accountHolderName ? 'Added' : 'Missing'}`,
+      '',
+      'Continue with registration?'
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
+  }
+
   /** Selected platforms missing handle or tier. */
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
@@ -183,6 +229,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   phoneOtp: string[] = ['', '', '', '', '', ''];
   emailOtp: string[] = ['', '', '', '', '', ''];
   phoneVerified = false;
+  mobileOtpVerificationToken = '';
   emailVerified = false;
   showEmailVerificationPrompt = false;
   phoneVerifyError = '';
@@ -200,6 +247,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   registrationEmailSendFailed = false;
   registrationError = '';
   preApproveActive = false;
+  otpVerificationEnabled = false;
   showPassword = false;
   showConfirmPassword = false;
   showProfessionalOptional = false;
@@ -293,6 +341,11 @@ export class InfluencerRegistrationComponent implements OnInit {
       categories: [[], Validators.required],
       creatorTypes: [[]],
       profileImages: this.fb.array([]),
+      payout: this.fb.group({
+        upiId: [''],
+        mobile: [''],
+        accountHolderName: [''],
+      }),
       contact: this.fb.group({
         whatsapp: [false], email: [false], call: [false]
       }, { validators: [atLeastOneContactRequired] }),
@@ -375,7 +428,10 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.categoriesList = data;
       this.cdr.detectChanges();
     });
-    this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveInfluencers; });
+    this.configService.getAppSettings().subscribe(s => {
+      this.preApproveActive = s.preApproveInfluencers;
+      this.otpVerificationEnabled = !!s.otpVerificationEnabled;
+    });
 
     // Load districts when state changes
     this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
@@ -799,8 +855,17 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   sendPhoneOtp() {
+    if (!this.otpVerificationEnabled) return;
     const phone = this.registrationForm.get('phoneNumber')?.value;
-    this.otpService.sendOtp('phone', phone).subscribe({ next: () => { this.phoneVerifyError = ''; }, error: () => { this.phoneVerifyError = 'Failed to send OTP'; } });
+    this.mobileOtpVerificationToken = '';
+    this.phoneVerified = false;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => {
+        this.phoneVerifyError = '';
+        this.showPhoneOtp = true;
+      },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
+    });
     this.phoneOtpError = ''; this.startPhoneOtpTimer();
   }
 
@@ -808,7 +873,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.verifyingPhoneOtp = true; this.phoneOtpError = '';
     const phone = this.registrationForm.get('phoneNumber')?.value;
     this.otpService.verifyOtp('phone', phone, this.phoneOtp.join('')).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      next: (res: any) => {
+        this.phoneVerified = true;
+        this.mobileOtpVerificationToken = res?.verificationToken || '';
+        this.showPhoneOtp = false;
+        this.phoneVerifyError = '';
+        this.verifyingPhoneOtp = false;
+      },
       error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
     });
   }
@@ -936,6 +1007,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.isSubmitting = true; this.registrationError = ''; this.registrationSuccess = false;
     this.cdr.detectChanges();
     const raw = this.registrationForm.value;
+    if (!(await this.confirmCriticalProfileDetails(raw))) {
+      this.isSubmitting = false;
+      return;
+    }
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
       this.isSubmitting = false;
@@ -1006,6 +1081,11 @@ export class InfluencerRegistrationComponent implements OnInit {
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
       collaborationAvailability: raw.collaborationAvailability,
       socialMedia,
+      isMobileVerified: !!this.phoneVerified,
+      mobileVerified: !!this.phoneVerified,
+      mobileVerificationMethod: this.phoneVerified ? 'OTP' : '',
+      mobileVerifiedAt: this.phoneVerified ? new Date() : null,
+      mobileOtpVerificationToken: this.mobileOtpVerificationToken,
       profileImages: [
         ...(imageUploadResult ? [imageUploadResult] : []),
         ...this.galleryImagesData,

@@ -21,11 +21,12 @@ import {
   ProfileVerificationService,
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -76,6 +77,10 @@ export class PhotographerProfileComponent implements OnInit {
   phoneOtpError = '';
   private firebasePhoneConfirmation: any = null;
   verificationCallNumber = '';
+  otpVerificationEnabled = false;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
   readonly maxSkills = 3;
   readonly maxAvailableFor = 2;
 
@@ -149,6 +154,7 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   sendPhoneOtp(): void {
+    if (!this.otpVerificationEnabled) return;
     void this.sendFirebasePhoneOtp();
   }
 
@@ -185,6 +191,50 @@ export class PhotographerProfileComponent implements OnInit {
     } finally {
       this.verifyingPhoneOtp = false;
     }
+  }
+
+  private buildCriticalProfileMessage(raw: any): string {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const stateValue = String(raw?.location?.state || '').trim();
+    const districtValue = String(raw?.location?.district || '').trim();
+    const state = this.states.find((s: any) => String(s?._id || '') === stateValue || String(s?.name || '').toLowerCase() === stateValue.toLowerCase())?.name || stateValue || '-';
+    const district = this.districts.find((d: any) => String(d?._id || '') === districtValue || String(d?.name || '').toLowerCase() === districtValue.toLowerCase())?.name || districtValue || '-';
+    const hasProfilePhoto = !!(this.profileImagePreview || this.profileImageData?.url);
+    return [
+      'Please verify these details before saving:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${hasProfilePhoto ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      '',
+      'Continue saving profile?'
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
   }
 
   openProfilePhotoGuidelines(): void {
@@ -341,6 +391,10 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.config.getAppSettings().subscribe((settings) => {
+      this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
+      this.cdr.detectChanges();
+    });
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.plansService.getMyCapabilities().subscribe((caps) => {
@@ -908,7 +962,7 @@ export class PhotographerProfileComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  onSave() {
+  async onSave() {
     this.submitted = true;
     if (!this.isEditMode || this.form.invalid || this.saving) return;
     if (this.selectedPlatforms().length > 0 && !this.platformsValid) {
@@ -924,6 +978,9 @@ export class PhotographerProfileComponent implements OnInit {
     }
     this.startingPriceRequiredError = false;
     const v = this.form.getRawValue();
+    if (!(await this.confirmCriticalProfileDetails(v))) {
+      return;
+    }
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(v?.email || '').trim().toLowerCase();
     const emailChanged = !!currentEmail && previousEmail !== currentEmail;

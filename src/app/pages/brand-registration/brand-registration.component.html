@@ -397,6 +397,29 @@
           </div>
 
           <div class="field-grid">
+            <div class="field-block full-width payout-block" formGroupName="payout">
+              <h3 class="payout-heading">
+                <i class="bi bi-bank2"></i>
+                Payment details
+                <small>For refunds or campaign payment support. You can also add this later in Edit Profile.</small>
+              </h3>
+              <div class="field-grid">
+                <div class="field-block">
+                  <label>UPI ID</label>
+                  <input formControlName="upiId" type="text" class="form-control" placeholder="e.g. brand@upi" />
+                </div>
+                <div class="field-block">
+                  <label>Mobile (GPay / PhonePe)</label>
+                  <input formControlName="mobile" type="tel" class="form-control" placeholder="10-digit mobile number" inputmode="tel" maxlength="15" />
+                </div>
+                <div class="field-block full-width">
+                  <label>Account holder name</label>
+                  <input formControlName="accountHolderName" type="text" class="form-control" placeholder="Name on UPI / bank account" />
+                </div>
+              </div>
+              <p class="payout-hint">Optional now. For now, payment support uses UPI.</p>
+            </div>
+
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">

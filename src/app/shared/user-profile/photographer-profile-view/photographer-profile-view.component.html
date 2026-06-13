@@ -115,7 +115,7 @@
         <div class="info-card" *ngIf="galleryImages.length">
           <h5 class="section-label">PORTFOLIO IMAGES</h5>
           <div class="profile-gallery-grid">
-            <img *ngFor="let imageUrl of galleryImages" [src]="getGalleryImageSrc(imageUrl)" (error)="onImgError($event)" [attr.srcset]="getGallerySrcSet(imageUrl)" sizes="(max-width: 768px) 44vw, 240px" alt="Photographer profile" class="profile-gallery-image" width="360" height="360" loading="lazy" fetchpriority="low" decoding="async" />
+            <img *ngFor="let imageUrl of galleryImages; let i = index" [src]="getGalleryImageSrc(imageUrl)" (click)="openGalleryModal(i)" (error)="onImgError($event)" [attr.srcset]="getGallerySrcSet(imageUrl)" sizes="(max-width: 768px) 44vw, 240px" alt="Photographer profile" class="profile-gallery-image" width="360" height="360" loading="lazy" fetchpriority="low" decoding="async" />
           </div>
         </div>
       } @placeholder {
@@ -277,3 +277,13 @@
     </div>
   </div>
 </div>
+
+<app-image-gallery-modal
+  [open]="galleryModalOpen"
+  title="Portfolio Images"
+  [images]="galleryImages"
+  [(selectedIndex)]="galleryModalIndex"
+  imageAlt="Selected portfolio image"
+  thumbnailAlt="Portfolio thumbnail"
+  (closed)="closeGalleryModal()"
+></app-image-gallery-modal>

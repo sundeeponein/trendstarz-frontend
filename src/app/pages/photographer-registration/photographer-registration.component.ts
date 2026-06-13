@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { OtpService } from '../../shared/otp.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
@@ -12,6 +13,7 @@ import { CollaborationAvailabilityFormComponent } from '../../shared/collaborati
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { firstValueFrom } from 'rxjs';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -28,7 +30,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-photographer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent],
   templateUrl: './photographer-registration.component.html',
   styleUrls: ['./photographer-registration.component.scss'],
 })
@@ -58,6 +60,20 @@ export class PhotographerRegistrationComponent implements OnInit {
   registrationEmailSendFailed = false;
   registrationError = '';
   galleryUploadWarning = '';
+  showPhoneOtp = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  phoneVerified = false;
+  phoneVerifyError = '';
+  verifyingPhoneOtp = false;
+  phoneOtpError = '';
+  phoneOtpTimer = 300;
+  canResendPhoneOtp = false;
+  mobileOtpVerificationToken = '';
+  otpVerificationEnabled = false;
+  private phoneOtpInterval: any;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
   readonly maxSkills = 3;
   readonly maxAvailableFor = 2;
 
@@ -128,6 +144,7 @@ export class PhotographerRegistrationComponent implements OnInit {
     private fb: FormBuilder,
     private config: ConfigService,
     private firebaseAuth: FirebaseAuthService,
+    private otpService: OtpService,
     private plansService: PlansService,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -168,6 +185,10 @@ export class PhotographerRegistrationComponent implements OnInit {
 
   ngOnInit() {
     this.loadPlanConfig();
+    this.config.getAppSettings().subscribe((settings) => {
+      this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
+      this.cdr.detectChanges();
+    });
     this.form = this.fb.group({
       name: ['', Validators.required],
       username: ['', [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
@@ -186,6 +207,11 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: ['free', Validators.required],
       skills: [[]],
       equipment: [[]],
+      payout: this.fb.group({
+        upiId: [''],
+        mobile: [''],
+        accountHolderName: [''],
+      }),
       contact: this.fb.group({
         whatsapp: [false],
         email: [false],
@@ -615,9 +641,101 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.photoshootImagesPreview = this.photoshootImagesPreview.slice(0, this.maxPhotoshootImages);
   }
 
+  resendPhoneOtp() {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
 
+  startPhoneOtpTimer() {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) clearInterval(this.phoneOtpInterval);
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
 
-  onSubmit() {
+  sendPhoneOtp() {
+    if (!this.otpVerificationEnabled) return;
+    const phone = this.form.get('phoneNumber')?.value;
+    this.mobileOtpVerificationToken = '';
+    this.phoneVerified = false;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => {
+        this.phoneVerifyError = '';
+        this.showPhoneOtp = true;
+      },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; },
+    });
+    this.phoneOtpError = '';
+    this.startPhoneOtpTimer();
+  }
+
+  confirmPhoneOtp() {
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
+    const phone = this.form.get('phoneNumber')?.value;
+    this.otpService.verifyOtp('phone', phone, this.phoneOtp.join('')).subscribe({
+      next: (res: any) => {
+        this.phoneVerified = true;
+        this.mobileOtpVerificationToken = res?.verificationToken || '';
+        this.showPhoneOtp = false;
+        this.phoneVerifyError = '';
+        this.verifyingPhoneOtp = false;
+      },
+      error: () => {
+        this.phoneOtpError = 'Invalid or expired OTP.';
+        this.verifyingPhoneOtp = false;
+      },
+    });
+  }
+
+  private buildCriticalProfileMessage(raw: any): string {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const state = this.states.find((s: any) => s._id === raw?.location?.state)?.name || raw?.location?.state || '-';
+    const district = this.districts.find((d: any) => d._id === raw?.location?.district)?.name || raw?.location?.district || '-';
+    return [
+      'Please verify these details before submitting:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${this.profileImagePreview ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      `Payment details: ${raw?.payout?.upiId || raw?.payout?.mobile || raw?.payout?.accountHolderName ? 'Added' : 'Missing'}`,
+      '',
+      'Continue with registration?'
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
+  }
+
+  async onSubmit() {
     if (this.submitting) {
       return;
     }
@@ -632,6 +750,10 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.step3Complete = true;
 
     const v = this.form.value;
+    if (!(await this.confirmCriticalProfileDetails(v))) {
+      this.submitting = false;
+      return;
+    }
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
       .map(p => ({
@@ -679,6 +801,11 @@ export class PhotographerRegistrationComponent implements OnInit {
       username: this.slugifyUsername(v.username || v.name || ''),
       email: v.email,
       phoneNumber: v.phoneNumber,
+      isMobileVerified: !!this.phoneVerified,
+      mobileVerified: !!this.phoneVerified,
+      mobileVerificationMethod: this.phoneVerified ? 'OTP' : '',
+      mobileVerifiedAt: this.phoneVerified ? new Date() : null,
+      mobileOtpVerificationToken: this.mobileOtpVerificationToken,
       dateOfBirth: v.dateOfBirth || null,
       gender: v.gender || '',
       portfolio: v.portfolio || '',
@@ -691,6 +818,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],
+      payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
       contact: v.contact || { whatsapp: false, email: false, call: false },
       collaborationAvailability: v.collaborationAvailability,
       pricing: pricingArr,
