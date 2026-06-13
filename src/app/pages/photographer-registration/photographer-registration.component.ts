@@ -207,6 +207,11 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: ['free', Validators.required],
       skills: [[]],
       equipment: [[]],
+      payout: this.fb.group({
+        upiId: [''],
+        mobile: [''],
+        accountHolderName: [''],
+      }),
       contact: this.fb.group({
         whatsapp: [false],
         email: [false],
@@ -703,6 +708,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       `Profile photo: ${this.profileImagePreview ? 'Uploaded' : 'Missing'}`,
       `Location: ${district} | ${state}`,
       `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      `Payment details: ${raw?.payout?.upiId || raw?.payout?.mobile || raw?.payout?.accountHolderName ? 'Added' : 'Missing'}`,
       '',
       'Continue with registration?'
     ].join('\n');
@@ -812,6 +818,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       paymentOption: v.paymentOption || 'free',
       skills: v.skills || [],
       equipment: v.equipment || [],
+      payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
       contact: v.contact || { whatsapp: false, email: false, call: false },
       collaborationAvailability: v.collaborationAvailability,
       pricing: pricingArr,

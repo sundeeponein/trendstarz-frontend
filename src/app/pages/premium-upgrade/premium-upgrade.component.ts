@@ -376,15 +376,15 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       this.upgradeError = 'Please select a plan first.';
       return;
     }
-    if (!this.selectedDurationKey || !['1m', '1y'].includes(this.selectedDurationKey)) {
-      this.upgradeError = 'Razorpay currently supports 1 Month and 1 Year in this flow. Use manual UPI for 3 Months.';
-      return;
-    }
-
     this.processingRazorpay = true;
     this.upgradeError = '';
     try {
-      const billingCycle = this.selectedDurationKey === '1y' ? 'yearly' : 'monthly';
+      const billingCycle =
+        this.selectedDurationKey === '1y'
+          ? 'yearly'
+          : this.selectedDurationKey === '3m'
+            ? 'quarterly'
+            : 'monthly';
       const orderRes = await firstValueFrom(
         this.monetizationApi.createSubscriptionOrder(
           String((this.selectedPlan as any)?._id || ''),
@@ -494,4 +494,3 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/influencer-profile']);
   }
 }
-

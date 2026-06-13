@@ -162,7 +162,12 @@
                   <input formControlName="accountHolderName" type="text" class="form-control" placeholder="Name on UPI / bank account" />
                 </div>
               </div>
-              <p class="payout-hint">Admin will use these details to send your earnings. You can also confirm or update this information when accepting a campaign.</p>
+              <p class="payout-hint">
+                <strong *ngIf="!form.get('payout.upiId')?.value && !form.get('payout.mobile')?.value">
+                  Add your Payment Details. For now, payouts use UPI.
+                </strong>
+                Admin will use these details to send your earnings. You can also confirm or update this information when accepting a campaign.
+              </p>
             </div>
 
             <div class="actions-row dual">

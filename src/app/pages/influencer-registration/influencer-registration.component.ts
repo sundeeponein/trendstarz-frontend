@@ -152,6 +152,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       `Profile photo: ${this.profileImagePreview ? 'Uploaded' : 'Missing'}`,
       `Location: ${district} | ${state}`,
       `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      `Payment details: ${raw?.payout?.upiId || raw?.payout?.mobile || raw?.payout?.accountHolderName ? 'Added' : 'Missing'}`,
       '',
       'Continue with registration?'
     ].join('\n');
@@ -340,6 +341,11 @@ export class InfluencerRegistrationComponent implements OnInit {
       categories: [[], Validators.required],
       creatorTypes: [[]],
       profileImages: this.fb.array([]),
+      payout: this.fb.group({
+        upiId: [''],
+        mobile: [''],
+        accountHolderName: [''],
+      }),
       contact: this.fb.group({
         whatsapp: [false], email: [false], call: [false]
       }, { validators: [atLeastOneContactRequired] }),
