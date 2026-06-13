@@ -133,6 +133,26 @@ export class InfluencerRegistrationComponent implements OnInit {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
+  private confirmCriticalProfileDetails(raw: any): boolean {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const state = this.states.find((s: any) => s._id === raw?.location?.state)?.name || raw?.location?.state || '-';
+    const district = this.districts.find((d: any) => d._id === raw?.location?.district)?.name || raw?.location?.district || '-';
+    return window.confirm([
+      'Please verify these details before submitting:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${this.profileImagePreview ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      '',
+      'Continue with registration?'
+    ].join('\n'));
+  }
+
   /** Selected platforms missing handle or tier. */
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
@@ -183,6 +203,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   phoneOtp: string[] = ['', '', '', '', '', ''];
   emailOtp: string[] = ['', '', '', '', '', ''];
   phoneVerified = false;
+  // mobileOtpVerificationToken = '';
   emailVerified = false;
   showEmailVerificationPrompt = false;
   phoneVerifyError = '';
@@ -800,6 +821,8 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   sendPhoneOtp() {
     const phone = this.registrationForm.get('phoneNumber')?.value;
+    // this.mobileOtpVerificationToken = '';
+    // this.phoneVerified = false;
     this.otpService.sendOtp('phone', phone).subscribe({ next: () => { this.phoneVerifyError = ''; }, error: () => { this.phoneVerifyError = 'Failed to send OTP'; } });
     this.phoneOtpError = ''; this.startPhoneOtpTimer();
   }
@@ -808,7 +831,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.verifyingPhoneOtp = true; this.phoneOtpError = '';
     const phone = this.registrationForm.get('phoneNumber')?.value;
     this.otpService.verifyOtp('phone', phone, this.phoneOtp.join('')).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      next: (res: any) => {
+        this.phoneVerified = true;
+        // this.mobileOtpVerificationToken = res?.verificationToken || '';
+        this.showPhoneOtp = false;
+        this.phoneVerifyError = '';
+        this.verifyingPhoneOtp = false;
+      },
       error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
     });
   }
@@ -936,6 +965,10 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.isSubmitting = true; this.registrationError = ''; this.registrationSuccess = false;
     this.cdr.detectChanges();
     const raw = this.registrationForm.value;
+    if (!this.confirmCriticalProfileDetails(raw)) {
+      this.isSubmitting = false;
+      return;
+    }
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
       this.isSubmitting = false;
@@ -1006,6 +1039,11 @@ export class InfluencerRegistrationComponent implements OnInit {
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
       collaborationAvailability: raw.collaborationAvailability,
       socialMedia,
+      isMobileVerified: !!this.phoneVerified,
+      mobileVerified: !!this.phoneVerified,
+      mobileVerificationMethod: this.phoneVerified ? 'OTP' : '',
+      mobileVerifiedAt: this.phoneVerified ? new Date() : null,
+      // mobileOtpVerificationToken: this.mobileOtpVerificationToken,
       profileImages: [
         ...(imageUploadResult ? [imageUploadResult] : []),
         ...this.galleryImagesData,

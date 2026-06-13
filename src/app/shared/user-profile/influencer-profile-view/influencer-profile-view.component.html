@@ -163,8 +163,9 @@
           <h5 class="section-label">PROFILE IMAGES</h5>
           <div class="profile-gallery-grid">
             <img
-              *ngFor="let imageUrl of galleryImages"
+              *ngFor="let imageUrl of galleryImages; let i = index"
               [src]="imageUrl"
+              (click)="openGalleryModal(i)"
               (error)="onImgError($event)"
               [attr.srcset]="getGallerySrcSet(imageUrl)"
               sizes="(max-width: 768px) 44vw, 240px"
@@ -375,3 +376,13 @@
 
   </div>
 </div>
+
+<app-image-gallery-modal
+  [open]="galleryModalOpen"
+  title="Profile Images"
+  [images]="galleryImages"
+  [(selectedIndex)]="galleryModalIndex"
+  imageAlt="Selected profile image"
+  thumbnailAlt="Profile thumbnail"
+  (closed)="closeGalleryModal()"
+></app-image-gallery-modal>

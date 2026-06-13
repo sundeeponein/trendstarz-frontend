@@ -10,11 +10,18 @@ import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/pro
 import { environment } from '../../../../environments/environment';
 import { CollaborationAvailabilityViewComponent } from '../../collaboration-availability/collaboration-availability-view.component';
 import { buildSocialProfileUrl } from '../../social-handle.util';
+import { ImageGalleryModalComponent } from '../../components/image-gallery-modal/image-gallery-modal.component';
 
 @Component({
   selector: 'app-photographer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProfileSocialPlatformsComponent, CollaborationAvailabilityViewComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ProfileSocialPlatformsComponent,
+    CollaborationAvailabilityViewComponent,
+    ImageGalleryModalComponent,
+  ],
   templateUrl: './photographer-profile-view.component.html',
   styleUrls: ['./photographer-profile-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,6 +32,8 @@ export class PhotographerProfileViewComponent implements OnInit {
   error = '';
   showContact = false;
   pricingLabelMap: Record<string, string> = {};
+  galleryModalOpen = false;
+  galleryModalIndex = 0;
 
   private readonly fallbackPricingLabelMap: Record<string, string> = {
     'Starting Price': 'Starting Price',
@@ -114,6 +123,16 @@ export class PhotographerProfileViewComponent implements OnInit {
       .map((entry: any) => this.normalizeImageUrl(typeof entry === 'string' ? entry : entry?.url))
       .filter((url: string) => !!url);
     return Array.from(new Set<string>(normalized));
+  }
+
+  openGalleryModal(index: number): void {
+    if (!this.galleryImages.length) return;
+    this.galleryModalIndex = Math.max(0, Math.min(index, this.galleryImages.length - 1));
+    this.galleryModalOpen = true;
+  }
+
+  closeGalleryModal(): void {
+    this.galleryModalOpen = false;
   }
 
   getGalleryImageSrc(imageUrl: string): string {

@@ -153,6 +153,27 @@ export class InfluencerProfileComponent implements OnInit {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
+  private confirmCriticalProfileDetails(raw: any): boolean {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const state = this.states.find((s: any) => s._id === raw?.location?.state || s.name === raw?.location?.state)?.name || raw?.location?.state || '-';
+    const district = this.districts.find((d: any) => d._id === raw?.location?.district || d.name === raw?.location?.district)?.name || raw?.location?.district || '-';
+    const hasProfilePhoto = !!(this.profileImagePreview || this.profileImagesFormArray?.at(0)?.value?.url);
+    return window.confirm([
+      'Please verify these details before saving:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${hasProfilePhoto ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      '',
+      'Continue saving profile?'
+    ].join('\n'));
+  }
+
   /** Selected platforms missing handle or tier. */
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
@@ -1132,6 +1153,9 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationSuccess = false;
     this.registrationSuccessMessage = '';
     const raw = this.registrationForm.getRawValue();
+    if (!this.confirmCriticalProfileDetails(raw)) {
+      return;
+    }
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(raw?.email || '').trim().toLowerCase();
     const emailChanged = !!currentEmail && previousEmail !== currentEmail;

@@ -17,11 +17,21 @@ import {
   ProfileVerificationService,
 } from '../../../services/profile-verification.service';
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
+import { ImageGalleryModalComponent } from '../../../shared/components/image-gallery-modal/image-gallery-modal.component';
+import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AdminConfirmDialogComponent, ProfileReviewPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    AdminConfirmDialogComponent,
+    ProfileReviewPanelComponent,
+    ImageGalleryModalComponent,
+    VerificationFieldComponent,
+  ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
 })
@@ -38,6 +48,9 @@ export class AdminUserTableComponent implements OnInit {
   selectedUserInternalNotes = '';
   selectedProfileVerification: ProfileVerificationDashboard | null = null;
   selectedProfileVerificationLoading = false;
+  galleryModalOpen = false;
+  galleryModalImages: string[] = [];
+  galleryModalIndex = 0;
 
   private readonly defaultUserTagOptions = buildDefaultUserTagOptions();
   influencerBadgeOptions = [...this.defaultUserTagOptions.influencer];
@@ -134,6 +147,32 @@ export class AdminUserTableComponent implements OnInit {
     return explicitGallery.filter((img: any) => !!(img?.url || img)).length + Math.max(0, profileImages.length - 1);
   }
 
+  getUserGalleryImages(user: any): string[] {
+    const explicitGallery = Array.isArray(user?.galleryImages)
+      ? user.galleryImages
+      : Array.isArray(user?.products)
+        ? user.products
+        : [];
+    const profileImages = Array.isArray(user?.profileImages) ? user.profileImages.slice(1) : [];
+    return [...explicitGallery, ...profileImages]
+      .map((img: any) => String(img?.url || img || '').trim())
+      .filter((url: string) => !!url);
+  }
+
+  openUserGalleryModal(user: any, index = 0): void {
+    const images = this.getUserGalleryImages(user);
+    if (!images.length) return;
+    this.galleryModalImages = images;
+    this.galleryModalIndex = Math.max(0, Math.min(index, images.length - 1));
+    this.galleryModalOpen = true;
+  }
+
+  closeGalleryModal(): void {
+    this.galleryModalOpen = false;
+    this.galleryModalImages = [];
+    this.galleryModalIndex = 0;
+  }
+
   getUserGalleryStatus(user: any): string {
     const status = this.getChecklistStatus('Gallery Images Attached');
     if (status) return status;
@@ -162,7 +201,11 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserLocationVerificationStatus(user: any): string {
     const checks = this.selectedProfileVerification?.verificationChecks || {};
-    return checks['locationVerified'] || user?.locationVerified ? 'Verified' : 'Pending';
+    const hasLocationIssue = (this.selectedProfileVerification?.actionRequired || []).some((flag: any) =>
+      ['LOCATION_MISSING', 'LOCATION_MISMATCH', 'INTERNATIONAL_LOCATION'].includes(String(flag?.flagCode || '')),
+    );
+    const hasLocation = !!(user?.location?.state || user?.location?.district);
+    return checks['locationVerified'] || user?.locationVerified || (hasLocation && !hasLocationIssue) ? 'Verified' : 'Pending';
   }
 
   isLocationVerified(user: any): boolean {

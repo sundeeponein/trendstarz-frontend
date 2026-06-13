@@ -332,6 +332,10 @@ export class ProfileReviewSummaryComponent {
             flagCodes.has('SOCIAL_LINK_DUPLICATE')
           )
         ) return false;
+        if (
+          label === 'location' &&
+          (flagCodes.has('LOCATION_MISSING') || flagCodes.has('LOCATION_MISMATCH') || flagCodes.has('INTERNATIONAL_LOCATION'))
+        ) return false;
         if (label === 'gallery images attached' && flagCodes.has('PORTFOLIO_MISSING')) return false;
         if (label === 'payment method verified' && flagCodes.has('PAYMENT_MISSING')) return false;
         return true;

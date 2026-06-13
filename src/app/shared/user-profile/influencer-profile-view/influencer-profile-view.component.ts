@@ -14,11 +14,20 @@ import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/pro
 import { environment } from '../../../../environments/environment';
 import { CollaborationAvailabilityViewComponent } from '../../collaboration-availability/collaboration-availability-view.component';
 import { buildSocialProfileUrl } from '../../social-handle.util';
+import { ImageGalleryModalComponent } from '../../components/image-gallery-modal/image-gallery-modal.component';
 
 @Component({
   selector: 'app-influencer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent, CollaborationAvailabilityViewComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    WriteReviewComponent,
+    ReviewListComponent,
+    ProfileSocialPlatformsComponent,
+    CollaborationAvailabilityViewComponent,
+    ImageGalleryModalComponent,
+  ],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: ['./influencer-profile-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +37,8 @@ export class InfluencerProfileViewComponent implements OnInit {
   loading = true;
   error = '';
   showContactInfo = false;
+  galleryModalOpen = false;
+  galleryModalIndex = 0;
 
   /** Active social media platform tab index. */
   activePlatformIdx = 0;
@@ -132,6 +143,16 @@ export class InfluencerProfileViewComponent implements OnInit {
       unique.push(this.displayImage);
     }
     return unique;
+  }
+
+  openGalleryModal(index: number): void {
+    if (!this.galleryImages.length) return;
+    this.galleryModalIndex = Math.max(0, Math.min(index, this.galleryImages.length - 1));
+    this.galleryModalOpen = true;
+  }
+
+  closeGalleryModal(): void {
+    this.galleryModalOpen = false;
   }
 
   getProfileSrcSet(): string {
