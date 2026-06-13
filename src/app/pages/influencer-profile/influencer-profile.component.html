@@ -69,8 +69,8 @@
               </span>
             </div>
             <div class="profile-upload-box" [class.has-image]="profileImagePreview || (profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url)"
-              [class.clickable]="isEditMode && imageUploadAllowed"
-              (click)="isEditMode && imageUploadAllowed && profileFileInput.click()">
+              [class.clickable]="isEditMode"
+              (click)="isEditMode && profileFileInput.click()">
               <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="profile-upload-preview" />
               <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url"
                 [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="profile-upload-preview" />
@@ -81,9 +81,11 @@
               </ng-container>
               <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
             </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
-              *ngIf="isEditMode && profileImagesFormArray.length > 0" (click)="removeProfileImage(0)">Remove</button>
-            <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted mt-1" style="font-size:0.82rem">Remove an image to upload a new one, or upgrade your plan.</p>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-1"
+              *ngIf="isEditMode" (click)="profileFileInput.click()">
+              {{ profileImagePreview || (profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url) ? 'Replace profile photo' : 'Upload profile photo' }}
+            </button>
+            <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted mt-1" style="font-size:0.82rem">Gallery limit reached. You can still replace the profile photo, or upgrade to upload more gallery images.</p>
             <div *ngIf="submitted && !profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)" class="text-danger mt-1">Profile photo is required.</div>
           </div>
 

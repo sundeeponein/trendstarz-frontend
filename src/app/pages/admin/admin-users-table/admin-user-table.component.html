@@ -282,8 +282,42 @@
             </button>
           </div>
           <div>
-            <label>Location</label>
+            <label>Profile Photo (<small>{{ isProfilePhotoVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
+            <div class="profile-data-inline">
+              <img
+                [src]="getUserAvatar(selectedUser, selectedUserType || activeTab)"
+                alt="Profile photo"
+                class="profile-data-thumb"
+                (error)="$any($event.target).src = (selectedUserType || activeTab) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
+              />
+              <span>{{ getUserProfilePhotoStatus(selectedUser) }}</span>
+            </div>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+              <button class="btn btn-sm" [class.btn-outline-secondary]="isProfilePhotoVerified(selectedUser)" [class.btn-success]="!isProfilePhotoVerified(selectedUser)" (click)="toggleSelectedProfilePhotoVerification()">
+                {{ isProfilePhotoVerified(selectedUser) ? 'Unverify' : 'Verify' }}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label>Social Profile & Creator Tier (<small>{{ getUserCreatorTierStatus() }}</small>)</label>
+            <div>{{ getUserCreatorTierSummary(selectedUser) }}</div>
+            <button class="btn btn-sm mt-1" [class.btn-outline-secondary]="isCreatorTierVerified()" [class.btn-success]="!isCreatorTierVerified()" (click)="toggleSelectedCreatorTierVerification()">
+              {{ isCreatorTierVerified() ? 'Unverify' : 'Verify' }}
+            </button>
+          </div>
+          <div>
+            <label>Gallery Images (<small>{{ getUserGalleryStatus(selectedUser) }}</small>)</label>
+            <div>{{ getUserGalleryImageCount(selectedUser) }} attached · {{ getUserGalleryStatus(selectedUser) }}</div>
+            <button class="btn btn-sm mt-1" [class.btn-outline-secondary]="isGalleryImagesVerified(selectedUser)" [class.btn-success]="!isGalleryImagesVerified(selectedUser)" (click)="toggleSelectedGalleryImagesVerification()">
+              {{ isGalleryImagesVerified(selectedUser) ? 'Unverify' : 'Verify' }}
+            </button>
+          </div>
+          <div>
+            <label>Location (<small>{{ getUserLocationVerificationStatus(selectedUser) }}</small>)</label>
             <div>{{ getUserStateLabel(selectedUser) }}</div>
+            <button class="btn btn-sm mt-1" [class.btn-outline-secondary]="isLocationVerified(selectedUser)" [class.btn-success]="!isLocationVerified(selectedUser)" (click)="toggleSelectedLocationVerification()">
+              {{ isLocationVerified(selectedUser) ? 'Unverify' : 'Verify' }}
+            </button>
           </div>
           <div>
             <label>Date of Birth</label>
@@ -396,8 +430,11 @@
               <div>{{ getUserPremiumLabel(selectedUser) }}</div>
             </div>
             <div>
-              <label>Payment Method</label>
+              <label>Payment Method (<small>{{ getUserPaymentVerificationStatus(selectedUser) }}</small>)</label>
               <div>{{ getUserPaymentMethodLabel(selectedUser) }}</div>
+              <button class="btn btn-sm mt-1" [class.btn-outline-secondary]="isPaymentMethodVerified(selectedUser)" [class.btn-success]="!isPaymentMethodVerified(selectedUser)" (click)="toggleSelectedPaymentVerification()">
+                {{ isPaymentMethodVerified(selectedUser) ? 'Unverify' : 'Verify' }}
+              </button>
             </div>
             <div>
               <label>Status</label>

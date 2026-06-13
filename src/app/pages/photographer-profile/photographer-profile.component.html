@@ -73,7 +73,9 @@
                 </ng-container>
                 <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
               </div>
-              <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview && isEditMode" (click)="removeProfileImage()">Remove</button>
+              <button type="button" class="btn btn-outline-primary btn-sm mt-1" *ngIf="isEditMode" (click)="profileFileInput.click()">
+                {{ profileImagePreview ? 'Replace profile photo' : 'Upload profile photo' }}
+              </button>
             </div>
 
             <div class="field-grid">

@@ -186,6 +186,16 @@ export class ProfileFlagsComponent {
       FOLLOWER_COUNT_MISMATCH: 'Follower count needs review',
       PROFILE_PHOTO_PENDING_REVIEW: 'Profile photo pending admin review',
       PROFILE_PHOTO_SCREENSHOT: 'Profile photo needs review',
+      PROFILE_PHOTO_LOW_QUALITY: 'Profile photo quality needs review',
+      PROFILE_PHOTO_BLURRY: 'Profile photo is blurry',
+      PROFILE_PHOTO_LOGO: 'Profile photo should not be a logo',
+      PROFILE_PHOTO_GROUP: 'Profile photo should show one person clearly',
+      FACE_NOT_VISIBLE: 'Face is not clearly visible',
+      TIER_MISMATCH: 'Social profile and creator tier need verification',
+      PORTFOLIO_LOW_QUALITY: 'Gallery image quality needs review',
+      PORTFOLIO_SCREENSHOT: 'Gallery image appears to be a screenshot',
+      PORTFOLIO_WATERMARK: 'Gallery image has a watermark',
+      PORTFOLIO_DUPLICATE: 'Duplicate gallery images',
       SOCIAL_LINK_BROKEN: 'Social profile needs review',
     };
     const key = String(code || '').trim().toUpperCase();
