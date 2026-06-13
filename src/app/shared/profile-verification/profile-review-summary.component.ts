@@ -65,8 +65,8 @@ import { ProfileVerificationDashboard } from '../../services/profile-verificatio
             <div class="simple-card">
               <span>Review status</span>
               <strong>{{ data.verificationStatus }}</strong>
-              <p *ngIf="data.actionRequired.length">{{ data.actionRequired.length }} item{{ data.actionRequired.length === 1 ? '' : 's' }} need attention.</p>
-              <p *ngIf="!data.actionRequired.length">No open review issues.</p>
+              <p *ngIf="getAttentionItems(data).length">{{ getAttentionItems(data).length }} item{{ getAttentionItems(data).length === 1 ? '' : 's' }} need attention.</p>
+              <p *ngIf="!getAttentionItems(data).length">No open review issues.</p>
             </div>
 
             <div class="simple-card">
@@ -309,10 +309,43 @@ export class ProfileReviewSummaryComponent {
   }
 
   getAttentionItems(data: ProfileVerificationDashboard): string[] {
+    const flags = data.actionRequired || [];
+    const flagCodes = new Set(flags.map((flag) => String(flag.flagCode || '').toUpperCase()));
+    const hasProfilePhotoFlag = Array.from(flagCodes).some((code) => code.startsWith('PROFILE_PHOTO_') || code === 'FACE_NOT_VISIBLE');
+
     const checklistItems = (data.checklist || [])
       .filter((item) => item.status !== 'Verified')
+      .filter((item) => {
+        const label = String(item.label || '').toLowerCase();
+        if (label === 'email verified' && flagCodes.has('EMAIL_NOT_VERIFIED')) return false;
+        if (label === 'mobile verified' && flagCodes.has('MOBILE_NOT_VERIFIED')) return false;
+        if (label === 'profile photo' && hasProfilePhotoFlag) return false;
+        if (
+          label === 'social profile & creator tier' &&
+          (
+            flagCodes.has('TIER_MISMATCH') ||
+            flagCodes.has('FOLLOWER_COUNT_MISMATCH') ||
+            flagCodes.has('SOCIAL_LINK_MISSING') ||
+            flagCodes.has('SOCIAL_LINK_BROKEN') ||
+            flagCodes.has('SOCIAL_LINK_PRIVATE') ||
+            flagCodes.has('SOCIAL_LINK_MISMATCH') ||
+            flagCodes.has('SOCIAL_LINK_DUPLICATE')
+          )
+        ) return false;
+        if (label === 'gallery images attached' && flagCodes.has('PORTFOLIO_MISSING')) return false;
+        if (label === 'payment method verified' && flagCodes.has('PAYMENT_MISSING')) return false;
+        return true;
+      })
       .map((item) => item.label);
-    const flagItems = (data.actionRequired || []).map((flag) => flag.message || flag.flagCode);
-    return Array.from(new Set([...checklistItems, ...flagItems].filter(Boolean)));
+    const flagItems = flags.map((flag) => flag.message || flag.flagCode);
+    const seen = new Set<string>();
+    return [...flagItems, ...checklistItems]
+      .filter(Boolean)
+      .filter((item) => {
+        const key = String(item).trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   }
 }

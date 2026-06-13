@@ -104,6 +104,82 @@ export class AdminUserTableComponent implements OnInit {
     return userType === 'brand' ? this.getBrandLogo(user) : this.getProfileImage(user);
   }
 
+  getUserProfilePhotoStatus(user: any): string {
+    const reviewItem = this.selectedProfileVerification?.checklist?.find(
+      (item) => String(item?.label || '').toLowerCase() === 'profile photo',
+    );
+    if (reviewItem?.status) return reviewItem.status;
+    const avatar = this.getUserAvatar(user, this.selectedUserType || this.activeTab);
+    return avatar.includes('default-profile') ? 'Missing' : 'Attached';
+  }
+
+  isProfilePhotoVerified(user: any): boolean {
+    return this.getUserProfilePhotoStatus(user) === 'Verified';
+  }
+
+  private getChecklistStatus(label: string): string {
+    const reviewItem = this.selectedProfileVerification?.checklist?.find(
+      (item) => String(item?.label || '').toLowerCase() === label.toLowerCase(),
+    );
+    return String(reviewItem?.status || '');
+  }
+
+  getUserGalleryImageCount(user: any): number {
+    const explicitGallery = Array.isArray(user?.galleryImages)
+      ? user.galleryImages
+      : Array.isArray(user?.products)
+        ? user.products
+        : [];
+    const profileImages = Array.isArray(user?.profileImages) ? user.profileImages : [];
+    return explicitGallery.filter((img: any) => !!(img?.url || img)).length + Math.max(0, profileImages.length - 1);
+  }
+
+  getUserGalleryStatus(user: any): string {
+    const status = this.getChecklistStatus('Gallery Images Attached');
+    if (status) return status;
+    return this.getUserGalleryImageCount(user) > 0 ? 'Attached' : 'Missing';
+  }
+
+  isGalleryImagesVerified(user: any): boolean {
+    return this.getUserGalleryStatus(user) === 'Verified' || this.getUserGalleryStatus(user) === 'Attached';
+  }
+
+  getUserCreatorTierSummary(user: any): string {
+    const tiers = (Array.isArray(user?.socialMedia) ? user.socialMedia : [])
+      .map((sm: any) => this.getSocialTierLabel(sm))
+      .filter((tier: string) => !!tier);
+    const uniqueTiers = Array.from(new Set(tiers));
+    return uniqueTiers.length ? uniqueTiers.join(', ') : '-';
+  }
+
+  getUserCreatorTierStatus(): string {
+    return this.getChecklistStatus('Social Profile & Creator Tier') || 'Verified';
+  }
+
+  isCreatorTierVerified(): boolean {
+    return this.getUserCreatorTierStatus() === 'Verified';
+  }
+
+  getUserLocationVerificationStatus(user: any): string {
+    const checks = this.selectedProfileVerification?.verificationChecks || {};
+    return checks['locationVerified'] || user?.locationVerified ? 'Verified' : 'Pending';
+  }
+
+  isLocationVerified(user: any): boolean {
+    return this.getUserLocationVerificationStatus(user) === 'Verified';
+  }
+
+  getUserPaymentVerificationStatus(user: any): string {
+    const status = this.getChecklistStatus('Payment Method Verified');
+    if (status && status !== 'Verified') return status;
+    const checks = this.selectedProfileVerification?.verificationChecks || {};
+    return checks['paymentVerified'] || user?.paymentVerified || status === 'Verified' ? 'Verified' : 'Pending';
+  }
+
+  isPaymentMethodVerified(user: any): boolean {
+    return this.getUserPaymentVerificationStatus(user) === 'Verified';
+  }
+
   getUserDisplayName(user: any): string {
     return user?.brandName || user?.name || '-';
   }
@@ -906,12 +982,32 @@ export class AdminUserTableComponent implements OnInit {
   updateContactVerification(
     user: any,
     userType: 'influencer' | 'brand' | 'photographer',
-    field: 'isEmailVerified' | 'isMobileVerified',
+    field:
+      | 'isEmailVerified'
+      | 'isMobileVerified'
+      | 'profilePhotoVerified'
+      | 'creatorTierVerified'
+      | 'locationVerified'
+      | 'galleryImagesVerified'
+      | 'paymentVerified',
     value: boolean,
   ): void {
     const userId = String(user?._id || '');
     if (!userId) return;
-    const label = field === 'isEmailVerified' ? 'email' : 'mobile';
+    const label =
+      field === 'isEmailVerified'
+        ? 'email'
+        : field === 'isMobileVerified'
+          ? 'mobile'
+          : field === 'profilePhotoVerified'
+            ? 'profile photo'
+            : field === 'creatorTierVerified'
+              ? 'creator tier/social links'
+              : field === 'locationVerified'
+                ? 'location'
+                : field === 'galleryImagesVerified'
+                  ? 'gallery images'
+                  : 'payment method';
     this.showConfirm(`Mark ${label} as ${value ? 'verified' : 'pending verification'}?`, () => {
       const payload: any = {
         [field]: value,
@@ -935,6 +1031,14 @@ export class AdminUserTableComponent implements OnInit {
             user.mobileVerified = value;
             user.mobileVerifiedAt = value ? (user.mobileVerifiedAt || new Date().toISOString()) : null;
             user.mobileVerificationMethod = value ? (user.mobileVerificationMethod || 'Manual') : '';
+          }
+          if (field === 'locationVerified') {
+            user.locationVerified = value;
+            user.locationVerifiedAt = value ? (user.locationVerifiedAt || new Date().toISOString()) : null;
+          }
+          if (field === 'paymentVerified') {
+            user.paymentVerified = value;
+            user.paymentVerifiedAt = value ? (user.paymentVerifiedAt || new Date().toISOString()) : null;
           }
           this.loadSelectedProfileVerification();
           this.fetchUsers();
@@ -1272,6 +1376,32 @@ export class AdminUserTableComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isMobileVerified(this.selectedUser);
     this.updateContactVerification(this.selectedUser, this.selectedUserType, 'isMobileVerified', nextValue);
+  }
+
+  toggleSelectedProfilePhotoVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const nextValue = !this.isProfilePhotoVerified(this.selectedUser);
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'profilePhotoVerified', nextValue);
+  }
+
+  toggleSelectedCreatorTierVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'creatorTierVerified', !this.isCreatorTierVerified());
+  }
+
+  toggleSelectedLocationVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'locationVerified', !this.isLocationVerified(this.selectedUser));
+  }
+
+  toggleSelectedGalleryImagesVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'galleryImagesVerified', !this.isGalleryImagesVerified(this.selectedUser));
+  }
+
+  toggleSelectedPaymentVerification(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    this.updateContactVerification(this.selectedUser, this.selectedUserType, 'paymentVerified', !this.isPaymentMethodVerified(this.selectedUser));
   }
 
   saveSelectedUserNotes(): void {
