@@ -32,6 +32,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     fees: 0,
     pendingPayouts: 0,
     paidOut: 0,
+    refunded: 0,
     netBalance: 0,
   } as TransactionSummary;
 
@@ -164,6 +165,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
           fees: Number(d.fees || 0),
           pendingPayouts: Number(d.pendingPayouts || 0),
           paidOut: Number(d.paidOut || 0),
+          refunded: Number(d.refunded || 0),
           netBalance: Number(d.netBalance || 0),
         };
       },
@@ -174,19 +176,22 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   private recomputeTransactionSummary(rows: CampaignTransaction[]) {
     const verified = rows.filter((r) => r.collectionStatus === 'verified');
     const paid = rows.filter((r) => r.payoutStatus === 'paid');
+    const refundedRows = rows.filter((r) => r.resolveOutcome === 'refund_to_brand');
     const payoutPending = rows.filter((r) => r.payoutStatus === 'pending' || r.payoutStatus === 'processing');
 
     const collected = verified.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
     const fees = verified.reduce((sum, r) => sum + (r.platformFee || 0), 0);
     const pendingPayouts = payoutPending.reduce((sum, r) => sum + (r.recipientPayout || 0), 0);
     const paidOut = paid.reduce((sum, r) => sum + (r.recipientPayout || 0), 0);
+    const refunded = refundedRows.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
 
     this.txSummary = {
       collected,
       fees,
       pendingPayouts,
       paidOut,
-      netBalance: collected - paidOut - pendingPayouts,
+      refunded,
+      netBalance: collected - paidOut - pendingPayouts - refunded,
     };
   }
 
