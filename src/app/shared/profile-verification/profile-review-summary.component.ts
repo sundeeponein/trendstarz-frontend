@@ -52,47 +52,61 @@ import { ProfileVerificationDashboard } from '../../services/profile-verificatio
               <strong>{{ data.profileCompletion || 0 }}%</strong>
               <div class="meter"><i [style.width.%]="data.profileCompletion || 0"></i></div>
             </div>
-            <div class="simple-card">
-              <span>Campaign status</span>
-              <strong [class.blocked]="!data.campaignEligibility.eligible">
-                {{ data.campaignEligibility.eligible ? 'Enabled' : 'Blocked' }}
-              </strong>
-              <p *ngIf="data.campaignEligibility.eligible">Your profile can participate in eligible campaigns.</p>
-              <ul *ngIf="!data.campaignEligibility.eligible">
-                <li *ngFor="let blocker of data.campaignEligibility.blockers">{{ blocker }}</li>
-              </ul>
-            </div>
-            <div class="simple-card">
-              <span>Review status</span>
-              <strong>{{ data.verificationStatus }}</strong>
-              <p *ngIf="getAttentionItems(data).length">{{ getAttentionItems(data).length }} item{{ getAttentionItems(data).length === 1 ? '' : 's' }} need attention.</p>
-              <p *ngIf="!getAttentionItems(data).length">No open review issues.</p>
+            
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <div class="simple-card h-100">
+                  <span>Campaign status</span>
+                  <strong [class.blocked]="!data.campaignEligibility.eligible">
+                    {{ data.campaignEligibility.eligible ? 'Enabled' : 'Blocked' }}
+                  </strong>
+                  <p *ngIf="data.campaignEligibility.eligible">Your profile can participate in eligible campaigns.</p>
+                  <ul *ngIf="!data.campaignEligibility.eligible">
+                    <li *ngFor="let blocker of data.campaignEligibility.blockers">{{ blocker }}</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="simple-card h-100">
+                  <span>Review status</span>
+                  <strong>{{ data.verificationStatus }}</strong>
+                  <p *ngIf="getAttentionItems(data).length">{{ getAttentionItems(data).length }} item{{ getAttentionItems(data).length === 1 ? '' : 's' }} need attention.</p>
+                  <p *ngIf="!getAttentionItems(data).length">No open review issues.</p>
+                </div>
+              </div>
+
             </div>
 
-            <div class="simple-card">
-              <span>Verified</span>
-              <ul class="status-list ok" *ngIf="getVerifiedItems(data).length; else noVerifiedItems">
-                <li *ngFor="let item of getVerifiedItems(data)">
-                  <i class="bi bi-check-circle-fill"></i>
-                  {{ item }}
-                </li>
-              </ul>
-              <ng-template #noVerifiedItems>
-                <p>No completed checks yet.</p>
-              </ng-template>
-            </div>
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <div class="simple-card h-100">
+                  <span>Verified</span>
+                  <ul class="status-list ok" *ngIf="getVerifiedItems(data).length; else noVerifiedItems">
+                    <li *ngFor="let item of getVerifiedItems(data)">
+                      <i class="bi bi-check-circle-fill"></i>
+                      {{ item }}
+                    </li>
+                  </ul>
+                  <ng-template #noVerifiedItems>
+                    <p>No completed checks yet.</p>
+                  </ng-template>
+                </div>
+              </div>
 
-            <div class="simple-card attention">
-              <span>Needs attention</span>
-              <ul class="status-list" *ngIf="getAttentionItems(data).length; else noAttentionItems">
-                <li *ngFor="let item of getAttentionItems(data)">
-                  <i class="bi bi-exclamation-triangle"></i>
-                  {{ item }}
-                </li>
-              </ul>
-              <ng-template #noAttentionItems>
-                <p>No changes requested.</p>
-              </ng-template>
+              <div class="col-12 col-md-6">
+                <div class="simple-card attention h-100">
+                  <span>Needs attention</span>
+                  <ul class="status-list" *ngIf="getAttentionItems(data).length; else noAttentionItems">
+                    <li *ngFor="let item of getAttentionItems(data)">
+                      <i class="bi bi-exclamation-triangle"></i>
+                      {{ item }}
+                    </li>
+                  </ul>
+                  <ng-template #noAttentionItems>
+                    <p>No changes requested.</p>
+                  </ng-template>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -293,6 +307,11 @@ import { ProfileVerificationDashboard } from '../../services/profile-verificatio
       font-weight: 800;
       text-decoration: none;
     }
+    @media (max-width: 720px) {
+      .simple-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   `],
 })
 export class ProfileReviewSummaryComponent {
@@ -336,11 +355,26 @@ export class ProfileReviewSummaryComponent {
           label === 'location' &&
           (flagCodes.has('LOCATION_MISSING') || flagCodes.has('LOCATION_MISMATCH') || flagCodes.has('INTERNATIONAL_LOCATION'))
         ) return false;
-        if (label === 'gallery images attached' && flagCodes.has('PORTFOLIO_MISSING')) return false;
+        if (
+          label === 'gallery images attached' &&
+          (
+            flagCodes.has('PORTFOLIO_MISSING') ||
+            flagCodes.has('PORTFOLIO_SCREENSHOT') ||
+            flagCodes.has('PORTFOLIO_LOW_QUALITY') ||
+            flagCodes.has('PORTFOLIO_DUPLICATE') ||
+            flagCodes.has('PORTFOLIO_WATERMARK')
+          )
+        ) return false;
         if (label === 'payment method verified' && flagCodes.has('PAYMENT_MISSING')) return false;
         return true;
       })
-      .map((item) => item.label);
+      .map((item) => {
+        const label = String(item.label || '');
+        if (label.toLowerCase() === 'payment method verified' && item.status === 'Not Added') {
+          return 'Add payment method';
+        }
+        return label;
+      });
     const flagItems = flags.map((flag) => flag.message || flag.flagCode);
     const seen = new Set<string>();
     return [...flagItems, ...checklistItems]

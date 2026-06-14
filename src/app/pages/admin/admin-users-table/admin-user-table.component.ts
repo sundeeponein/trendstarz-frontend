@@ -214,9 +214,10 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserPaymentVerificationStatus(user: any): string {
     const status = this.getChecklistStatus('Payment Method Verified');
-    if (status && status !== 'Verified') return status;
+    if (status === 'Action Required' || status === 'Not Added') return status;
+    if (!this.hasUserPaymentMethod(user)) return 'Not Added';
     const checks = this.selectedProfileVerification?.verificationChecks || {};
-    return checks['paymentVerified'] || user?.paymentVerified || status === 'Verified' || this.hasUserPaymentMethod(user) ? 'Verified' : 'Pending';
+    return checks['paymentVerified'] || user?.paymentVerified || this.hasUserPaymentMethod(user) ? 'Verified' : 'Not Added';
   }
 
   isPaymentMethodVerified(user: any): boolean {
@@ -416,7 +417,7 @@ export class AdminUserTableComponent implements OnInit {
       const duration = this.getPremiumDurationLabel(user?.premiumDuration);
       return duration ? `Admin Granted (${duration})` : 'Admin Granted';
     }
-    return '-';
+    return 'Add payment method';
   }
 
   hasUserPaymentMethod(user: any): boolean {
@@ -424,8 +425,7 @@ export class AdminUserTableComponent implements OnInit {
     return !!(
       String(payout?.upiId || '').trim() ||
       String(payout?.mobile || '').trim() ||
-      String(payout?.accountHolderName || '').trim() ||
-      String(user?.latestPayment?.paymentMethod || '').trim()
+      String(payout?.accountHolderName || '').trim()
     );
   }
 

@@ -49,8 +49,8 @@
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Profile</h2>
-          <p class="section-subtitle">Update your core account and contact details.</p>
+          <h2>Profile <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()"><i class="bi bi-pencil"></i></button></h2>
+          <p class="section-subtitle">Update your core account and contact details. </p>
 
           <!-- Profile Image Upload -->
           <div class="field-block profile-upload-block">
