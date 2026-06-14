@@ -289,7 +289,7 @@
           <div>
             <app-verification-field
               label="Profile Photo"
-              [status]="isProfilePhotoVerified(selectedUser) ? 'Verified' : 'Pending'"
+              [status]="getUserProfilePhotoStatus(selectedUser)"
               [value]="getUserProfilePhotoStatus(selectedUser)"
               [thumbSrc]="getUserAvatar(selectedUser, selectedUserType || activeTab)"
               thumbAlt="Profile photo"

@@ -92,6 +92,7 @@ export interface TransactionSummary {
   fees: number;
   pendingPayouts: number;
   paidOut: number;
+  refunded?: number;
   netBalance: number;
 }
 
@@ -108,14 +109,18 @@ export interface PremiumPayment {
   paymentId?: string;
   amount: number;
   premiumDuration: '1m' | '3m' | '1y';
-  paymentMethod: 'upi' | 'qr';
+  paymentMethod: 'upi' | 'qr' | 'razorpay';
   gatewayProvider?: 'manual_upi' | 'razorpay';
   paymentStatus?: 'created' | 'authorized' | 'captured' | 'failed' | 'refunded';
+  refundStatus?: 'none' | 'requested' | 'processed' | 'failed';
   purpose?: 'subscription' | 'invite_unlock' | 'campaign_payment';
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   approvedAt?: string;
   approvalNotes?: string;
+  refundedAt?: string;
+  refundAmount?: number;
+  refundReason?: string;
 }
 
 export interface PendingPremiumPaymentsResponse {

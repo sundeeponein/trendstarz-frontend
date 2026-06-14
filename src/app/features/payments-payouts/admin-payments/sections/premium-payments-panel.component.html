@@ -4,6 +4,29 @@
   <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
 </div>
 
+<div class="tx-summary-grid">
+  <div class="tx-card">
+    <div class="tx-label">Premium Received</div>
+    <div class="tx-value">₹{{ premiumSummary.received | number:'1.0-0' }}</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Pending Review</div>
+    <div class="tx-value">₹{{ premiumSummary.pending | number:'1.0-0' }}</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Rejected</div>
+    <div class="tx-value">₹{{ premiumSummary.rejected | number:'1.0-0' }}</div>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Refunded</div>
+    <div class="tx-value">₹{{ premiumSummary.refunded | number:'1.0-0' }}</div>
+  </div>
+  <div class="tx-card tx-card--accent">
+    <div class="tx-label">Net Premium</div>
+    <div class="tx-value">₹{{ premiumSummary.netReceived | number:'1.0-0' }}</div>
+  </div>
+</div>
+
 <div class="status-tabs">
   <button class="status-tab" [class.active]="statusTab === 'pending'" (click)="statusTab = 'pending'">
     Pending ({{ pendingCount }})
@@ -13,6 +36,9 @@
   </button>
   <button class="status-tab" [class.active]="statusTab === 'rejected'" (click)="statusTab = 'rejected'">
     Rejected ({{ rejectedCount }})
+  </button>
+  <button class="status-tab" [class.active]="statusTab === 'refunded'" (click)="statusTab = 'refunded'">
+    Refunded ({{ refundedCount }})
   </button>
 </div>
 
@@ -34,8 +60,8 @@
         <th>Reference</th>
         <th>Gateway Status</th>
         <th>Date</th>
-        <th *ngIf="statusTab === 'rejected'">Reason</th>
-        <th *ngIf="statusTab === 'pending'">Actions</th>
+        <th *ngIf="statusTab === 'rejected' || statusTab === 'refunded'">Reason</th>
+        <th *ngIf="statusTab === 'pending' || statusTab === 'approved'">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -58,14 +84,18 @@
           <code *ngIf="payment.gatewayProvider !== 'razorpay'">{{ payment.transactionId }}</code>
         </td>
         <td>{{ ui.premiumPaymentGatewayStatus(payment) }}</td>
-        <td class="col-date">{{ ui.formatDateTime(statusTab === 'pending' ? payment.createdAt : (payment.approvedAt || payment.createdAt)) }}</td>
+        <td class="col-date">{{ ui.formatDateTime(statusTab === 'pending' ? payment.createdAt : (payment.refundedAt || payment.approvedAt || payment.createdAt)) }}</td>
         <td *ngIf="statusTab === 'rejected'">{{ payment.approvalNotes || '-' }}</td>
-        <td *ngIf="statusTab === 'pending'" class="col-actions">
-          <button class="btn btn-success btn-sm me-1" (click)="approvePayment(payment)" title="Approve">
+        <td *ngIf="statusTab === 'refunded'">{{ payment.refundReason || payment.approvalNotes || '-' }}</td>
+        <td *ngIf="statusTab === 'pending' || statusTab === 'approved'" class="col-actions">
+          <button class="btn btn-success btn-sm me-1" *ngIf="statusTab === 'pending'" (click)="approvePayment(payment)" title="Approve">
             <i class="bi bi-check-circle-fill"></i> Approve
           </button>
-          <button class="btn btn-danger btn-sm" (click)="openRejectModal(payment)" title="Reject">
+          <button class="btn btn-danger btn-sm" *ngIf="statusTab === 'pending'" (click)="openRejectModal(payment)" title="Reject">
             <i class="bi bi-x-circle-fill"></i> Reject
+          </button>
+          <button class="btn btn-warning btn-sm" *ngIf="statusTab === 'approved'" (click)="openRefundModal(payment)" title="Refund">
+            <i class="bi bi-arrow-counterclockwise"></i> Refund
           </button>
         </td>
       </tr>
@@ -102,6 +132,35 @@
     <div class="modal-actions">
       <button class="btn-cancel" (click)="closeRejectModal()">Cancel</button>
       <button class="btn-reject-confirm" (click)="rejectPayment()">Confirm Rejection</button>
+    </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal-backdrop show" *ngIf="showRefundModal" (click)="closeRefundModal()"></div>
+<div class="modal d-block" *ngIf="showRefundModal" tabindex="-1" (click)="closeRefundModal()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
+    <h2>Refund Premium Payment</h2>
+    <p *ngIf="selectedPaymentForRefund" class="modal-info">
+      Marking refund for <strong>₹{{ selectedPaymentForRefund.amount }}</strong> from
+      <strong>{{ ui.getUserDisplayName(selectedPaymentForRefund) }}</strong>.
+      Premium access will be removed.
+    </p>
+
+    <div class="form-group">
+      <label>Refund Reason:</label>
+      <textarea
+        class="form-textarea"
+        [(ngModel)]="refundReason"
+        placeholder="e.g., Duplicate payment, customer requested cancellation, wrong plan selected..."
+        rows="4"
+      ></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeRefundModal()">Cancel</button>
+      <button class="btn-reject-confirm" [disabled]="!refundReason.trim()" (click)="refundPayment()">Confirm Refund</button>
     </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

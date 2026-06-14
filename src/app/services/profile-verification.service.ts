@@ -21,7 +21,7 @@ export interface ProfileFlag {
 
 export interface VerificationChecklistItem {
   label: string;
-  status: 'Verified' | 'Pending' | 'Failed' | 'Action Required';
+  status: 'Verified' | 'Pending' | 'Failed' | 'Action Required' | 'Not Added';
 }
 
 export interface ProfileVerificationDashboard {

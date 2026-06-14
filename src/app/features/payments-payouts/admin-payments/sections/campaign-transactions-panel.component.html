@@ -24,6 +24,10 @@
     <div class="tx-label">Paid Out</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.paidOut) }}</div>
   </div>
+  <div class="tx-card">
+    <div class="tx-label">Refunded</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.refunded || 0) }}</div>
+  </div>
   <div class="tx-card tx-card--accent">
     <div class="tx-label">Net TrendStarz Balance</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.netBalance) }}</div>
