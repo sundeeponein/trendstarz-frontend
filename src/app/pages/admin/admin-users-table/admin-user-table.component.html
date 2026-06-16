@@ -384,7 +384,8 @@
               <label>Languages</label>
               <div>{{ getUserLanguages(selectedUser) }}</div>
             </div>
-            <div class="rate-details" *ngIf="hasUserRateDetails(selectedUser)">
+            <!-- <div class="rate-details" *ngIf="hasUserRateDetails(selectedUser)"> -->
+            <div class="rate-details" *ngIf="selectedUser">
               <label>Social Media - Content & Rates</label>
               <div class="mb-2">
                 <app-verification-field
@@ -395,7 +396,9 @@
                   (toggled)="toggleSelectedCreatorTierVerification()"
                 ></app-verification-field>
               </div>
+              
               <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
+                *ngIf="selectedUser">
                 <div class="rate-platform-name">
                   <span>
                     <i class="bi" [ngClass]="group.icon"></i>
