@@ -38,6 +38,7 @@ export interface ProfileVerificationDashboard {
   actionRequired: ProfileFlag[];
   flags: ProfileFlag[];
   campaignEligibility: { eligible: boolean; blockers: string[] };
+  campaignStatus: 'eligible' | 'profile_update_required' | 'restricted';
 }
 
 export interface ModerationRow {
@@ -123,5 +124,12 @@ export class ProfileVerificationService {
     return this.http
       .patch<any>(`${this.apiUrl}/admin/profile-moderation/flags/${flagId}`, patch)
       .pipe(map((res) => this.unwrap<ProfileFlag>(res)));
+  }
+
+  contactVerification(userType: string, userId: string, payload: Record<string, any>) {
+    const type = userType.toLowerCase();
+    return this.http
+      .patch<any>(`${this.apiUrl}/admin/users/${type}/${userId}/contact-verification`, payload)
+      .pipe(map((res) => this.unwrap<any>(res)));
   }
 }

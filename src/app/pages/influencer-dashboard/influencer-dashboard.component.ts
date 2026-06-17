@@ -5,7 +5,7 @@ import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize, timeout } from 'rxjs/operators';
-import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignDetailModalComponent, CampaignAcceptPayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
@@ -566,7 +566,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  onModalAccept(payload: InviteAcceptPayload) {
+  onModalAccept(payload: CampaignAcceptPayload) {
     if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
     if (payload.platform && payload.contentType) {
       this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;

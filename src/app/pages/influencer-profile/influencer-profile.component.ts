@@ -1,5 +1,5 @@
 import { environment } from '../../../environments/environment';
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
@@ -62,6 +62,11 @@ export class InfluencerProfileComponent implements OnInit {
       .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
   }
 
+  onInfluencerCategoryChange(values: string[]): void {
+    this.registrationForm.get('influencerCategory')?.setValue(values[0] || '');
+    this.registrationForm.get('influencerCategory')?.markAsTouched();
+  }
+
   setChipValues(field: 'languages' | 'categories' | 'creatorTypes', values: string[]): void {
     if (!this.isEditMode) return;
     this.registrationForm.get(field)?.setValue(values);
@@ -79,6 +84,7 @@ export class InfluencerProfileComponent implements OnInit {
     private otpService: OtpService,
     private plansService: PlansService,
     private cd: ChangeDetectorRef,
+    private ngZone: NgZone,
     private guidelinesService: ImageGuidelinesService,
     private toast: ToastService,
     private firebaseAuth: FirebaseAuthService,
@@ -425,6 +431,8 @@ export class InfluencerProfileComponent implements OnInit {
   tiers: any[] = [];
   protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
+  profileImageUploading = false;
+  galleryImageUploading = false;
   profileImageFile: File | null = null;
   galleryImagesPreview: string[] = [];
   galleryImagesData: { url: string; public_id: string }[] = [];
@@ -532,20 +540,14 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
     // Clear professional fields when professionalStatus is unchecked
-    // Dynamic validator for influencerCategory based on professionalStatus
     this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
-      const catCtrl = this.registrationForm.get('influencerCategory');
-      if (isProfessional) {
-        catCtrl?.setValidators([Validators.required]);
-      } else {
+      if (!isProfessional) {
         this.showProfessionalOptional = false;
-        catCtrl?.clearValidators();
-        catCtrl?.setValue('');
-        catCtrl?.markAsUntouched();
-        catCtrl?.markAsPristine();
+        this.registrationForm.get('creatorTypes')?.setValue([]);
+        this.registrationForm.get('creatorTypes')?.markAsUntouched();
+        this.registrationForm.get('creatorTypes')?.markAsPristine();
         this.registrationForm.get('expertiseArea')?.setValue('');
       }
-      catCtrl?.updateValueAndValidity();
       this.refreshStepCompletion();
     });
 
@@ -610,9 +612,9 @@ export class InfluencerProfileComponent implements OnInit {
           const categoryIds = (profile.categories || []).map((name: string) =>
             this.categoriesList.find(c => c.name === name)?._id
           ).filter(Boolean);
-          const creatorTypeIds = (profile.creatorTypes || []).map((name: string) =>
-            this.creatorTypeOptions.find((item: any) => item.name === name)?._id || name
-          ).filter(Boolean);
+          const creatorTypeIds = (profile.creatorTypes || [])
+            .map((name: string) => String(name || '').trim())
+            .filter(Boolean);
           // Load districts for the state, then patch form
             const patchForm = (districtId: string) => {
             this.registrationForm.patchValue({
@@ -622,9 +624,7 @@ export class InfluencerProfileComponent implements OnInit {
               email: profile.email || '',
               dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
               gender: profile.gender || '',
-              influencerCategory:
-                this.categoriesList.find((c: any) => c.name === profile.influencerCategory)?._id ||
-                '',
+              influencerCategory: profile.influencerCategory || '',
               professionalStatus: !!profile.professionalStatus,
               expertiseArea: profile.expertiseArea || '',
               verificationDocuments: profile.verificationDocuments || [],
@@ -807,7 +807,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        (!this.registrationForm.get('professionalStatus')?.value || this.registrationForm.get('influencerCategory')?.valid) &&
+        (!this.registrationForm.get('professionalStatus')?.value || (this.registrationForm.get('creatorTypes')?.value?.length > 0)) &&
         this.selectedPlatforms().length > 0
       );
     }
@@ -868,7 +868,8 @@ export class InfluencerProfileComponent implements OnInit {
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const isProfessional = !!this.registrationForm.get('professionalStatus')?.value;
       if (isProfessional) {
-        this.registrationForm.get('influencerCategory')?.markAsTouched();
+        this.registrationForm.get('creatorTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('creatorTypes')?.value?.length > 0)) return false;
       }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
@@ -876,8 +877,7 @@ export class InfluencerProfileComponent implements OnInit {
       }
       this.verificationConsentError = '';
       const requiredValid = required.every((path) => this.registrationForm.get(path)?.valid);
-      const influencerCatValid = !isProfessional || !!this.registrationForm.get('influencerCategory')?.valid;
-      if (!requiredValid || !influencerCatValid) return false;
+      if (!requiredValid) return false;
       if (this.selectedPlatforms().length === 0) {
         this.registrationError = 'Please select at least one social media platform.';
         return false;
@@ -1074,10 +1074,11 @@ export class InfluencerProfileComponent implements OnInit {
       this.toast.error(validation.reason || 'Please select a valid image file.');
       return;
     }
-    // Compress and resize before upload
+    this.profileImageUploading = true;
+    this.cd.detectChanges();
     try {
       const options = {
-        maxSizeMB: 0.2, // 200 KB
+        maxSizeMB: 0.2,
         maxWidthOrHeight: 1024,
         useWebWorker: true
       };
@@ -1085,17 +1086,27 @@ export class InfluencerProfileComponent implements OnInit {
       const uploadFile = this.normalizeUploadFile(compressedFile as File | Blob, file.name || 'profile-image.jpg');
       if (!uploadFile) {
         this.toast.error('Please select a valid image file.');
+        this.profileImageUploading = false;
+        this.cd.detectChanges();
         return;
       }
       this.profileImageFile = uploadFile;
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.profileImagePreview = e.target.result;
-        this.refreshStepCompletion();
+        this.ngZone.run(() => {
+          this.profileImagePreview = e.target.result;
+          this.profileImageUploading = false;
+          this.cd.detectChanges();
+          this.refreshStepCompletion();
+        });
       };
       reader.readAsDataURL(uploadFile);
     } catch (err) {
-      this.toast.error('Image compression failed.');
+      this.ngZone.run(() => {
+        this.toast.error('Image compression failed.');
+        this.profileImageUploading = false;
+        this.cd.detectChanges();
+      });
       return;
     }
   }
@@ -1113,6 +1124,8 @@ export class InfluencerProfileComponent implements OnInit {
     const remainingSlots = this.maxGalleryImages - this.galleryImagesData.length;
     const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
     if (!selectedFiles.length) return;
+    this.galleryImageUploading = true;
+    this.cd.detectChanges();
     let failedUploads = 0;
     for (const file of selectedFiles) {
       if (!file.type.startsWith('image/')) { failedUploads++; continue; }
@@ -1138,10 +1151,13 @@ export class InfluencerProfileComponent implements OnInit {
         } else { failedUploads++; }
       } catch { failedUploads++; }
     }
-    this.galleryUploadWarning = failedUploads
-      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
-      : '';
-    this.cd.detectChanges();
+    this.ngZone.run(() => {
+      this.galleryUploadWarning = failedUploads
+        ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+        : '';
+      this.galleryImageUploading = false;
+      this.cd.detectChanges();
+    });
   }
 
   removeGalleryImage(index: number) {
@@ -1227,12 +1243,11 @@ export class InfluencerProfileComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
-    const creatorTypeNames = (raw.creatorTypes || []).map((id: string) => {
-      const item = this.creatorTypeOptions.find((x: any) => x._id === id || x.name === id);
-      return item ? item.name : id;
-    }).filter((name: string) => !!String(name || '').trim());
+    const creatorTypeNames = (raw.creatorTypes || [])
+      .map((name: string) => String(name || '').trim())
+      .filter((name: string) => !!name);
     const influencerCategoryName = raw.influencerCategory
-      ? (this.categoriesList.find((c: any) => c._id === raw.influencerCategory)?.name || raw.influencerCategory)
+      ? (this.creatorTypeOptions.find((x: any) => x.name === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
     // Build social media from platformForms
     const socialMedia = this.selectedPlatforms().map(platform => {
@@ -1406,9 +1421,9 @@ export class InfluencerProfileComponent implements OnInit {
             const categoryIds = (profile.categories || []).map((name: string) =>
               (this.categoriesList || []).find((c: any) => c.name === name)?._id
             ).filter(Boolean);
-            const creatorTypeIds = (profile.creatorTypes || []).map((name: string) =>
-              (this.creatorTypeOptions || []).find((item: any) => item.name === name)?._id || name
-            ).filter(Boolean);
+            const creatorTypeIds = (profile.creatorTypes || [])
+              .map((name: string) => String(name || '').trim())
+              .filter(Boolean);
             const doPatch = (districtId: string) => {
               this.registrationForm.patchValue({
                 name: profile.name || '',
@@ -1417,9 +1432,7 @@ export class InfluencerProfileComponent implements OnInit {
                 email: profile.email || '',
                 dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
                 gender: profile.gender || '',
-                influencerCategory:
-                  (this.categoriesList || []).find((c: any) => c.name === profile.influencerCategory)?._id ||
-                  '',
+                influencerCategory: profile.influencerCategory || '',
                 professionalStatus: !!profile.professionalStatus,
                 expertiseArea: profile.expertiseArea || '',
                 verificationDocuments: profile.verificationDocuments || [],

@@ -19,6 +19,8 @@ export class VerificationFieldComponent {
   @Input() valueAsButton = false;
   @Input() valueButtonDisabled = false;
   @Input() showAction = true;
+  @Input() verifyLabel = 'Verify';
+  @Input() unverifyLabel = 'Unverify';
 
   @Output() toggled = new EventEmitter<void>();
   @Output() valueClicked = new EventEmitter<void>();

@@ -247,8 +247,12 @@
                 These controls are for admins only. Users see a simpler review popup with verified items and items needing attention.
               </p>
             </div>
+            <button type="button" class="flag-change-btn" (click)="showVerificationControls = !showVerificationControls">
+              {{ showVerificationControls ? 'Collapse' : 'Expand' }}
+            </button>
           </div>
           <app-profile-review-panel
+            *ngIf="showVerificationControls"
             [detail]="selectedProfileVerification"
             [loading]="selectedProfileVerificationLoading"
             [editable]="true"
@@ -297,8 +301,37 @@
               [verified]="isProfilePhotoVerified(selectedUser)"
               (toggled)="toggleSelectedProfilePhotoVerification()"
             ></app-verification-field>
+            <div class="flag-type-selector" *ngIf="!isProfilePhotoVerified(selectedUser)">
+              <span class="flag-type-label">Flag reason ssss</span>
+              <div class="flag-type-btns">
+                <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
+                  <button *ngIf="!opt.policy"
+                    type="button" class="flag-type-btn" [ngClass]="opt.cls"
+                    [class.active]="getActivePhotoFlagCode() === opt.code"
+                    (click)="setProfilePhotoFlag(opt.code)"
+                    [title]="opt.hint"
+                  >{{ opt.label }}</button>
+                </ng-container>
+              </div>
+              <div class="flag-group-divider">
+                <span>Policy Violation — HIGH severity</span>
+              </div>
+              <div class="flag-type-btns">
+                <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
+                  <button *ngIf="opt.policy"
+                    type="button" class="flag-type-btn" [ngClass]="opt.cls"
+                    [class.active]="getActivePhotoFlagCode() === opt.code"
+                    (click)="setProfilePhotoFlag(opt.code)"
+                    [title]="opt.hint"
+                  >{{ opt.label }}</button>
+                </ng-container>
+              </div>
+            </div>
+            <div class="flag-chips" *ngIf="isProfilePhotoVerified(selectedUser) && getProfilePhotoOpenFlags().length">
+              <span *ngFor="let f of getProfilePhotoOpenFlags()" class="flag-chip" [ngClass]="f.cls">{{ f.label }}</span>
+            </div>
           </div>
-          <div>
+          <!-- <div>
             <app-verification-field
               label="Social Profile & Creator Tier"
               [status]="getUserCreatorTierStatus()"
@@ -306,7 +339,7 @@
               [verified]="isCreatorTierVerified()"
               (toggled)="toggleSelectedCreatorTierVerification()"
             ></app-verification-field>
-          </div>
+          </div> -->
           <div>
             <app-verification-field
               label="Gallery Images"
@@ -318,6 +351,22 @@
               (valueClicked)="openUserGalleryModal(selectedUser)"
               (toggled)="toggleSelectedGalleryImagesVerification()"
             ></app-verification-field>
+            <div class="flag-type-selector" *ngIf="!isGalleryImagesVerified(selectedUser)">
+              <span class="flag-type-label">Flag reason</span>
+              <div class="flag-type-btns">
+                <button
+                  *ngFor="let opt of GALLERY_FLAG_OPTIONS"
+                  type="button"
+                  class="flag-type-btn flag-chip--quality"
+                  [class.active]="getActiveGalleryFlagCode() === opt.code"
+                  (click)="setGalleryFlag(opt.code)"
+                  [title]="opt.hint"
+                >{{ opt.label }}</button>
+              </div>
+            </div>
+            <div class="flag-chips" *ngIf="isGalleryImagesVerified(selectedUser) && getGalleryOpenFlags().length">
+              <span *ngFor="let f of getGalleryOpenFlags()" class="flag-chip" [ngClass]="f.cls">{{ f.label }}</span>
+            </div>
           </div>
           <div>
             <app-verification-field
@@ -372,7 +421,11 @@
               <label>Categories</label>
               <div>{{ getUserCategoriesLabel(selectedUser) }}</div>
             </div>
-            <div *ngIf="(selectedUserType || activeTab) === 'influencer'">
+            <div *ngIf="(selectedUserType || activeTab) === 'influencer' && selectedUser?.professionalStatus">
+              <label>Professional Status</label>
+              <div>Professional Creator</div>
+            </div>
+            <div *ngIf="(selectedUserType || activeTab) === 'influencer' && selectedUser?.professionalStatus">
               <label>Creator Type / Specialty</label>
               <div>{{ getUserCreatorTypesLabel(selectedUser) }}</div>
             </div>
@@ -384,9 +437,8 @@
               <label>Languages</label>
               <div>{{ getUserLanguages(selectedUser) }}</div>
             </div>
-            <!-- <div class="rate-details" *ngIf="hasUserRateDetails(selectedUser)"> -->
             <div class="rate-details" *ngIf="selectedUser">
-              <label>Social Media - Content & Rates</label>
+              <label>Social Media{{ (selectedUserType || activeTab) === 'influencer' ? ' - Content & Rates' : ' Platforms' }}</label>
               <div class="mb-2">
                 <app-verification-field
                   label="Social Profile & Creator Tier"
@@ -396,33 +448,61 @@
                   (toggled)="toggleSelectedCreatorTierVerification()"
                 ></app-verification-field>
               </div>
-              
-              <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
-                <div class="rate-platform-name">
-                  <span>
-                    <i class="bi" [ngClass]="group.icon"></i>
-                    {{ group.platform }}
-                  </span>
-                  <span class="rate-platform-meta" *ngIf="group.tierLabel || group.handle">
-                    <span *ngIf="group.tierLabel">{{ group.tierLabel }}</span>
-                    <a *ngIf="group.href && group.handle; else plainRateHandle" [href]="group.href" target="_blank" rel="noopener noreferrer">{{ group.handle }}</a>
-                    <ng-template #plainRateHandle>
-                      <span *ngIf="group.handle">{{ group.handle }}</span>
-                    </ng-template>
-                  </span>
+
+              <!-- Influencer: detailed rates + content types -->
+              <ng-container *ngIf="(selectedUserType || activeTab) === 'influencer'">
+                <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
+                  <div class="rate-platform-name">
+                    <span>
+                      <i class="bi" [ngClass]="group.icon"></i>
+                      {{ group.platform }}
+                    </span>
+                    <span class="rate-platform-meta" *ngIf="group.tierLabel || group.handle">
+                      <span *ngIf="group.tierLabel">{{ group.tierLabel }}</span>
+                      <a *ngIf="group.href && group.handle; else plainRateHandle" [href]="group.href" target="_blank" rel="noopener noreferrer">{{ group.handle }}</a>
+                      <ng-template #plainRateHandle>
+                        <span *ngIf="group.handle">{{ group.handle }}</span>
+                      </ng-template>
+                    </span>
+                  </div>
+                  <div class="rate-row" *ngFor="let item of group.items">
+                    <span>{{ item.name }}</span>
+                    <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                  </div>
                 </div>
-                <div class="rate-row" *ngFor="let item of group.items">
-                  <span>{{ item.name }}</span>
-                  <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
+                  <div class="rate-platform-name">Service Rates</div>
+                  <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
+                    <span>{{ item.name }}</span>
+                    <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                  </div>
                 </div>
-              </div>
-              <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
-                <div class="rate-platform-name">Service Rates</div>
-                <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
-                  <span>{{ item.name }}</span>
-                  <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+              </ng-container>
+
+              <!-- Brand / Photographer: platform handles list -->
+              <ng-container *ngIf="(selectedUserType || activeTab) !== 'influencer'">
+                <div class="rate-platform" *ngFor="let sm of getUserAllSocialPlatforms(selectedUser)">
+                  <div class="rate-platform-name">
+                    <span>
+                      <i class="bi" [ngClass]="sm.icon"></i>
+                      {{ sm.platform }}
+                    </span>
+                    <span class="rate-platform-meta" *ngIf="sm.handle || sm.tierLabel">
+                      <span *ngIf="sm.tierLabel">{{ sm.tierLabel }}</span>
+                      <a *ngIf="sm.href && sm.handle" [href]="sm.href" target="_blank" rel="noopener noreferrer">{{ sm.handle }}</a>
+                      <span *ngIf="!sm.href && sm.handle">{{ sm.handle }}</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
+                <div *ngIf="!getUserAllSocialPlatforms(selectedUser).length" class="text-muted small py-1">No social media platforms added.</div>
+                <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
+                  <div class="rate-platform-name">Service Rates</div>
+                  <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
+                    <span>{{ item.name }}</span>
+                    <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                  </div>
+                </div>
+              </ng-container>
             </div>
             <div>
               <label>Profile Traffic</label>

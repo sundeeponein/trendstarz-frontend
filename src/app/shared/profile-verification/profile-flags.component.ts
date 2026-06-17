@@ -2,6 +2,70 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProfileFlag } from '../../services/profile-verification.service';
 
+// --- Flag code classification ------------------------------------------
+
+const PHOTO_POLICY_CODES = new Set([
+  'PROFILE_PHOTO_POLICY', 'PROFILE_PHOTO_CONTACT_INFO', 'PROFILE_PHOTO_QR_CODE',
+]);
+
+const PHOTO_QUALITY_CODES = new Set([
+  'PROFILE_PHOTO_QUALITY', 'PROFILE_PHOTO_BLURRY', 'PROFILE_PHOTO_LOW_QUALITY',
+]);
+
+const PHOTO_FACE_CODES = new Set([
+  'PROFILE_PHOTO_GROUP', 'FACE_NOT_VISIBLE',
+]);
+
+const PHOTO_SCREENSHOT_CODES = new Set([
+  'PROFILE_PHOTO_SCREENSHOT',
+]);
+
+const PHOTO_IDENTITY_CODES = new Set([
+  'PROFILE_PHOTO_CELEBRITY', 'PROFILE_PHOTO_LOGO',
+]);
+
+const ALL_PHOTO_QUALITY_CODES = new Set([
+  ...PHOTO_QUALITY_CODES, ...PHOTO_FACE_CODES, ...PHOTO_SCREENSHOT_CODES, ...PHOTO_IDENTITY_CODES,
+]);
+
+const GALLERY_CODES = new Set([
+  'PORTFOLIO_MISSING', 'PORTFOLIO_SCREENSHOT', 'PORTFOLIO_LOW_QUALITY',
+  'PORTFOLIO_DUPLICATE', 'PORTFOLIO_WATERMARK',
+]);
+
+const POLICY_REASON_LABELS: Record<string, string> = {
+  PROFILE_PHOTO_CONTACT_INFO: 'Contact information detected',
+  PROFILE_PHOTO_QR_CODE: 'QR code or booking link detected',
+  PROFILE_PHOTO_POLICY: 'Other policy violation',
+};
+
+const PHOTO_QUALITY_REASON_LABELS: Record<string, string> = {
+  PROFILE_PHOTO_QUALITY: 'Quality issue',
+  PROFILE_PHOTO_BLURRY: 'Blurry photo',
+  PROFILE_PHOTO_LOW_QUALITY: 'Low quality photo',
+  PROFILE_PHOTO_GROUP: 'Group photo',
+  FACE_NOT_VISIBLE: 'Face not visible',
+  PROFILE_PHOTO_SCREENSHOT: 'Screenshot',
+  PROFILE_PHOTO_CELEBRITY: 'Identity issue',
+  PROFILE_PHOTO_LOGO: 'Logo or non-personal image',
+};
+
+const GALLERY_REASON_LABELS: Record<string, string> = {
+  PORTFOLIO_MISSING: 'No valid gallery images',
+  PORTFOLIO_SCREENSHOT: 'Screenshots',
+  PORTFOLIO_LOW_QUALITY: 'Low quality images',
+  PORTFOLIO_DUPLICATE: 'Duplicate images',
+  PORTFOLIO_WATERMARK: 'Watermarked images',
+};
+
+interface FlagGroup {
+  id: string;
+  severity: 'High' | 'Medium';
+  title: string;
+  reasons: string[];
+  flags: ProfileFlag[];
+}
+
 @Component({
   selector: 'app-profile-flags',
   standalone: true,
@@ -11,8 +75,8 @@ import { ProfileFlag } from '../../services/profile-verification.service';
       <div class="flags-header">
         <div>
           <p class="eyebrow">{{ title }}</p>
-          <h3>{{ flags.length || 0 }} open issue{{ flags.length === 1 ? '' : 's' }}</h3>
-          <p class="helper" *ngIf="editable && flags.length">
+          <h3>{{ groups.length }} open issue{{ groups.length === 1 ? '' : 's' }}</h3>
+          <p class="helper" *ngIf="editable && groups.length">
             Resolve closes a fixed issue. Ignore hides a non-blocking issue from this review.
           </p>
         </div>
@@ -21,26 +85,26 @@ import { ProfileFlag } from '../../services/profile-verification.service';
         </button>
       </div>
 
-      <div class="empty" *ngIf="!flags.length">
+      <div class="empty" *ngIf="!groups.length">
         <i class="bi bi-patch-check"></i>
         <span>No open profile issues.</span>
       </div>
 
-      <div class="flag-list" *ngIf="flags.length">
-        <article class="flag-row" *ngFor="let flag of flags">
+      <div class="flag-list" *ngIf="groups.length">
+        <article class="flag-row" *ngFor="let group of groups" [ngClass]="'row-' + group.severity.toLowerCase()">
           <div class="flag-main">
-            <span class="severity" [ngClass]="flag.severity.toLowerCase()">{{ flag.severity }}</span>
-            <strong>{{ flag.message }}</strong>
-            <span class="meta">{{ flag.category }} · {{ getFlagLabel(flag.flagCode) }}</span>
+            <span class="severity" [ngClass]="group.severity.toLowerCase()">{{ group.severity }}</span>
+            <strong>{{ group.title }}</strong>
+            <span class="meta" *ngIf="group.reasons.length">
+              {{ group.reasons.join(' · ') }}
+            </span>
           </div>
           <div class="flag-actions" *ngIf="editable">
-            <button type="button" title="Mark this issue as fixed and remove it from open issues" (click)="updateFlag.emit({ flag, status: 'Resolved' })">
-              <i class="bi bi-check2"></i>
-              Resolve
+            <button type="button" (click)="resolveAll(group.flags)">
+              <i class="bi bi-check2"></i> Resolve
             </button>
-            <button type="button" title="Dismiss this issue when it should not block approval" (click)="updateFlag.emit({ flag, status: 'Ignored' })">
-              <i class="bi bi-slash-circle"></i>
-              Ignore
+            <button type="button" (click)="ignoreAll(group.flags)">
+              <i class="bi bi-slash-circle"></i> Ignore
             </button>
           </div>
         </article>
@@ -103,7 +167,6 @@ import { ProfileFlag } from '../../services/profile-verification.service';
     .flag-list {
       display: flex;
       flex-direction: column;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.65rem;
     }
     .flag-row {
@@ -111,15 +174,23 @@ import { ProfileFlag } from '../../services/profile-verification.service';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding: 0.8rem;
+      padding: 0.85rem 1rem;
       border: 1px solid #edf1f6;
       border-radius: 10px;
       background: #fbfcfe;
     }
+    .flag-row.row-high {
+      border-color: #ffd8c2;
+      background: #fff8f4;
+    }
+    .flag-row.row-medium {
+      border-color: #ffeec2;
+      background: #fffdf0;
+    }
     .flag-main {
       min-width: 0;
       display: grid;
-      gap: 0.2rem;
+      gap: 0.25rem;
     }
     .flag-main strong {
       color: #16162f;
@@ -128,7 +199,6 @@ import { ProfileFlag } from '../../services/profile-verification.service';
     .meta {
       color: #64748b;
       font-size: 0.78rem;
-      word-break: break-word;
     }
     .severity {
       width: fit-content;
@@ -157,13 +227,8 @@ import { ProfileFlag } from '../../services/profile-verification.service';
       gap: 0.35rem;
     }
     @media (max-width: 720px) {
-      .flag-row {
-        align-items: stretch;
-        flex-direction: column;
-      }
-      .flag-actions {
-        flex-wrap: wrap;
-      }
+      .flag-row { align-items: stretch; flex-direction: column; }
+      .flag-actions { flex-wrap: wrap; }
     }
   `],
 })
@@ -175,30 +240,68 @@ export class ProfileFlagsComponent {
   @Output() updateFlag = new EventEmitter<{ flag: ProfileFlag; status: 'Resolved' | 'Ignored' }>();
   @Output() addFlag = new EventEmitter<void>();
 
-  getFlagLabel(code: string): string {
-    const labels: Record<string, string> = {
-      EMAIL_NOT_VERIFIED: 'Email not verified',
-      MOBILE_NOT_VERIFIED: 'Mobile not verified',
-      ID_PENDING: 'Identity review pending',
-      ID_NOT_SUBMITTED: 'Identity document not submitted',
-      PAYMENT_MISSING: 'Payment or payout details missing',
-      PORTFOLIO_MISSING: 'Portfolio or gallery missing',
-      FOLLOWER_COUNT_MISMATCH: 'Follower count needs review',
-      PROFILE_PHOTO_PENDING_REVIEW: 'Profile photo pending admin review',
-      PROFILE_PHOTO_SCREENSHOT: 'Profile photo needs review',
-      PROFILE_PHOTO_LOW_QUALITY: 'Profile photo quality needs review',
-      PROFILE_PHOTO_BLURRY: 'Profile photo is blurry',
-      PROFILE_PHOTO_LOGO: 'Profile photo should not be a logo',
-      PROFILE_PHOTO_GROUP: 'Profile photo should show one person clearly',
-      FACE_NOT_VISIBLE: 'Face is not clearly visible',
-      TIER_MISMATCH: 'Social profile and creator tier need verification',
-      PORTFOLIO_LOW_QUALITY: 'Gallery image quality needs review',
-      PORTFOLIO_SCREENSHOT: 'Gallery image appears to be a screenshot',
-      PORTFOLIO_WATERMARK: 'Gallery image has a watermark',
-      PORTFOLIO_DUPLICATE: 'Duplicate gallery images',
-      SOCIAL_LINK_BROKEN: 'Social profile needs review',
-    };
-    const key = String(code || '').trim().toUpperCase();
-    return labels[key] || key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  get groups(): FlagGroup[] {
+    const open = (this.flags || []).filter((f) => f.status === 'Open');
+    const groups: FlagGroup[] = [];
+
+    const policyFlags = open.filter((f) => PHOTO_POLICY_CODES.has(String(f.flagCode)));
+    if (policyFlags.length) {
+      groups.push({
+        id: 'photo-policy',
+        severity: 'High',
+        title: 'Profile Photo Policy Violation',
+        reasons: policyFlags.map((f) => POLICY_REASON_LABELS[String(f.flagCode)] || String(f.flagCode)),
+        flags: policyFlags,
+      });
+    }
+
+    const photoQualityFlags = open.filter((f) => ALL_PHOTO_QUALITY_CODES.has(String(f.flagCode)));
+    if (photoQualityFlags.length) {
+      groups.push({
+        id: 'photo-quality',
+        severity: 'Medium',
+        title: 'Profile Photo Requires Update',
+        reasons: photoQualityFlags.map((f) => PHOTO_QUALITY_REASON_LABELS[String(f.flagCode)] || String(f.flagCode)),
+        flags: photoQualityFlags,
+      });
+    }
+
+    const galleryFlags = open.filter((f) => GALLERY_CODES.has(String(f.flagCode)));
+    if (galleryFlags.length) {
+      groups.push({
+        id: 'gallery',
+        severity: 'Medium',
+        title: 'Gallery Images Require Update',
+        reasons: galleryFlags.map((f) => GALLERY_REASON_LABELS[String(f.flagCode)] || String(f.flagCode)),
+        flags: galleryFlags,
+      });
+    }
+
+    // Any remaining flags not in the above categories
+    const knownFlags = new Set([...PHOTO_POLICY_CODES, ...ALL_PHOTO_QUALITY_CODES, ...GALLERY_CODES]);
+    const otherFlags = open.filter((f) => !knownFlags.has(String(f.flagCode)));
+    for (const flag of otherFlags) {
+      groups.push({
+        id: `other-${flag.flagCode}`,
+        severity: flag.severity as 'High' | 'Medium',
+        title: flag.message || String(flag.flagCode),
+        reasons: [`${flag.category} · ${flag.flagCode}`],
+        flags: [flag],
+      });
+    }
+
+    return groups;
+  }
+
+  resolveAll(flags: ProfileFlag[]): void {
+    for (const flag of flags) {
+      this.updateFlag.emit({ flag, status: 'Resolved' });
+    }
+  }
+
+  ignoreAll(flags: ProfileFlag[]): void {
+    for (const flag of flags) {
+      this.updateFlag.emit({ flag, status: 'Ignored' });
+    }
   }
 }

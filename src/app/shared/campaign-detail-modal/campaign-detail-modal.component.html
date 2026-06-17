@@ -442,6 +442,27 @@
 
       <ng-container *ngIf="isPending && !adminReview">
         <span class="cdm-selected-payout" *ngIf="selectedPayoutHint">{{ selectedPayoutHint }}</span>
+        <!-- Payout details capture -->
+        <div class="cdm-payout-block" *ngIf="needsPayoutDetails">
+          <div class="cdm-payout-head">
+            <i class="bi bi-bank"></i>
+            <span class="cdm-payout-title">Receive payment to</span>
+            <button type="button" class="cdm-payout-edit-btn" (click)="togglePayoutEdit()">
+              <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
+              {{ payoutEditing ? 'Done' : (payoutSummaryText ? 'Edit' : 'Add') }}
+            </button>
+          </div>
+          <div class="cdm-payout-summary" *ngIf="!payoutEditing">
+            <span *ngIf="payoutSummaryText">{{ payoutSummaryText }}</span>
+            <span class="cdm-payout-missing" *ngIf="!payoutSummaryText">Add UPI / mobile (GPay/PhonePe) before accepting</span>
+          </div>
+          <div class="cdm-payout-form" *ngIf="payoutEditing">
+            <input type="text" class="cdm-payout-input" placeholder="UPI ID (e.g. name@upi)" [(ngModel)]="payoutUpiId" autocomplete="off" />
+            <input type="tel" class="cdm-payout-input" placeholder="Mobile (GPay / PhonePe)" [(ngModel)]="payoutMobile" autocomplete="off" inputmode="tel" maxlength="15" />
+            <input type="text" class="cdm-payout-input" placeholder="Account holder name" [(ngModel)]="payoutName" autocomplete="off" />
+            <small class="cdm-payout-hint">Admin uses these details to send your earnings.</small>
+          </div>
+        </div>
         <input *ngIf="showDateInput"
                type="date"
                class="cdm-date-input"

@@ -39,15 +39,29 @@ import { VerificationStatusComponent } from './verification-status.component';
         <section
           class="eligibility"
           *ngIf="showEligibility"
-          [ngClass]="data.campaignEligibility.eligible ? 'eligible' : 'blocked'"
+          [ngClass]="eligibilityClass(data)"
         >
-          <i class="bi" [ngClass]="data.campaignEligibility.eligible ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+          <i class="bi" [ngClass]="eligibilityIcon(data)"></i>
           <div>
-            <strong>{{ data.campaignEligibility.eligible ? 'Campaign participation enabled' : 'Campaign participation blocked' }}</strong>
-            <p *ngIf="data.campaignEligibility.eligible">This profile meets the current campaign eligibility rules.</p>
-            <ul *ngIf="!data.campaignEligibility.eligible">
-              <li *ngFor="let blocker of data.campaignEligibility.blockers">{{ blocker }}</li>
-            </ul>
+            <strong>{{ eligibilityTitle(data) }}</strong>
+            <ng-container [ngSwitch]="data.campaignStatus">
+              <p *ngSwitchCase="'eligible'">This profile meets campaign eligibility requirements.</p>
+              <div *ngSwitchCase="'profile_update_required'">
+                <p>Hidden from discovery — profile photo needs updating. Campaigns unaffected.</p>
+                <ul>
+                  <li>Not appearing in brand search</li>
+                  <li>Profile photo replaced with placeholder</li>
+                </ul>
+              </div>
+              <div *ngSwitchCase="'restricted'">
+                <ul>
+                  <li *ngFor="let blocker of data.campaignEligibility.blockers">{{ blocker }}</li>
+                </ul>
+              </div>
+              <p *ngSwitchDefault>
+                {{ data.campaignEligibility.eligible ? 'Eligible for campaigns.' : 'Not eligible for campaigns.' }}
+              </p>
+            </ng-container>
           </div>
         </section>
 
@@ -145,6 +159,11 @@ import { VerificationStatusComponent } from './verification-status.component';
       border-color: #ffd8c2;
       color: #bd2d20;
     }
+    .eligibility.update {
+      background: #fffbf0;
+      border-color: #ffd89b;
+      color: #9b4b00;
+    }
     .eligibility strong {
       color: inherit;
     }
@@ -212,6 +231,33 @@ import { VerificationStatusComponent } from './verification-status.component';
   `],
 })
 export class ProfileReviewPanelComponent {
+  eligibilityClass(data: ProfileVerificationDashboard): string {
+    switch (data.campaignStatus) {
+      case 'eligible': return 'eligible';
+      case 'profile_update_required': return 'update';
+      case 'restricted': return 'blocked';
+      default: return data.campaignEligibility?.eligible ? 'eligible' : 'blocked';
+    }
+  }
+
+  eligibilityIcon(data: ProfileVerificationDashboard): string {
+    switch (data.campaignStatus) {
+      case 'eligible': return 'bi-check-circle-fill';
+      case 'profile_update_required': return 'bi-exclamation-triangle-fill';
+      case 'restricted': return 'bi-lock-fill';
+      default: return data.campaignEligibility?.eligible ? 'bi-check-circle-fill' : 'bi-lock-fill';
+    }
+  }
+
+  eligibilityTitle(data: ProfileVerificationDashboard): string {
+    switch (data.campaignStatus) {
+      case 'eligible': return 'Campaign participation enabled';
+      case 'profile_update_required': return 'Profile update required';
+      case 'restricted': return 'Campaign participation restricted';
+      default: return data.campaignEligibility?.eligible ? 'Campaign participation enabled' : 'Campaign participation blocked';
+    }
+  }
+
   @Input() detail: ProfileVerificationDashboard | null = null;
   @Input() loading = false;
   @Input() editable = false;

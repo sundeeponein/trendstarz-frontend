@@ -15,6 +15,7 @@ export interface CampaignAcceptPayload {
   responseType?: 'accept' | 'counter';
   counterAmount?: number;
   counterMessage?: string;
+  payout?: { upiId?: string; mobile?: string; accountHolderName?: string };
 }
 
 export interface CampaignDeclinePayload {
@@ -55,6 +56,12 @@ export class CampaignDetailModalComponent implements OnChanges {
   @Input() set initialContentTypeKey(v: string | undefined) {
     if (v) this.selectedContentTypeKey = v;
   }
+  @Input() set initialPayout(v: { upiId?: string; mobile?: string; accountHolderName?: string } | undefined | null) {
+    if (!v) return;
+    if (!this.payoutUpiId) this.payoutUpiId = v.upiId || '';
+    if (!this.payoutMobile) this.payoutMobile = v.mobile || '';
+    if (!this.payoutName) this.payoutName = v.accountHolderName || '';
+  }
 
   @Output() close = new EventEmitter<void>();
   @Output() accept = new EventEmitter<CampaignAcceptPayload>();
@@ -72,6 +79,26 @@ export class CampaignDetailModalComponent implements OnChanges {
   adminInviteStatusFilter = 'all';
   toastError = '';
   private toastTimer: any;
+  payoutUpiId = '';
+  payoutMobile = '';
+  payoutName = '';
+  payoutEditing = false;
+
+  get needsPayoutDetails(): boolean {
+    return (this.campaign?.campaignType || '').toLowerCase() !== 'pay_to_join';
+  }
+
+  get payoutSummaryText(): string {
+    const parts: string[] = [];
+    if (this.payoutUpiId) parts.push(this.payoutUpiId);
+    if (this.payoutMobile) parts.push(this.payoutMobile);
+    if (this.payoutName) parts.push(this.payoutName);
+    return parts.join(' · ');
+  }
+
+  togglePayoutEdit() {
+    this.payoutEditing = !this.payoutEditing;
+  }
   // Previously used to delay pointer-events; removed now that modal mounts immediately.
 
   constructor(private cdr: ChangeDetectorRef, private session: SessionService) {}
@@ -1010,16 +1037,31 @@ export class CampaignDetailModalComponent implements OnChanges {
       );
       return;
     }
+    if (this.needsPayoutDetails) {
+      const upi = (this.payoutUpiId || '').trim();
+      const mobile = (this.payoutMobile || '').trim();
+      if (!upi && !mobile) {
+        this.payoutEditing = true;
+        this.showToastError('Please add a UPI ID or mobile number (GPay/PhonePe) to receive payment.');
+        return;
+      }
+    }
     this.toastError = '';
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];
+    const payout = this.needsPayoutDetails ? {
+      upiId: (this.payoutUpiId || '').trim(),
+      mobile: (this.payoutMobile || '').trim(),
+      accountHolderName: (this.payoutName || '').trim(),
+    } : undefined;
     this.accept.emit({
       inviteId: this.inviteId,
       postDate: this.postDate || undefined,
       platform,
       contentType,
       responseType: 'accept',
+      payout,
     });
   }
 
@@ -1062,6 +1104,11 @@ export class CampaignDetailModalComponent implements OnChanges {
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];
+    const payout = this.needsPayoutDetails ? {
+      upiId: (this.payoutUpiId || '').trim(),
+      mobile: (this.payoutMobile || '').trim(),
+      accountHolderName: (this.payoutName || '').trim(),
+    } : undefined;
     this.accept.emit({
       inviteId: this.inviteId,
       postDate: this.postDate || undefined,
@@ -1070,6 +1117,7 @@ export class CampaignDetailModalComponent implements OnChanges {
       responseType: 'counter',
       counterAmount: Number(this.counterAmountInput || 0),
       counterMessage: this.selectedCounterReason || undefined,
+      payout,
     });
   }
 

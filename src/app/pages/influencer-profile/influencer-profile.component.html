@@ -69,21 +69,28 @@
               </span>
             </div>
             <div class="profile-upload-box" [class.has-image]="profileImagePreview || (profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url)"
-              [class.clickable]="isEditMode"
-              (click)="isEditMode && profileFileInput.click()">
-              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="profile-upload-preview" />
-              <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url"
-                [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="profile-upload-preview" />
-              <ng-container *ngIf="!profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)">
-                <span class="profile-upload-icon">📷</span>
-                <span class="profile-upload-label">Upload profile photo</span>
-                <span class="profile-upload-hint">JPG, PNG up to Max 1 MB</span>
+              [class.clickable]="isEditMode && !profileImageUploading"
+              (click)="isEditMode && !profileImageUploading && profileFileInput.click()">
+              <ng-container *ngIf="profileImageUploading">
+                <span class="upload-spinner"><span class="spinner-border spinner-border-sm text-primary" role="status"></span></span>
+                <span class="profile-upload-label mt-1">Uploading...</span>
+              </ng-container>
+              <ng-container *ngIf="!profileImageUploading">
+                <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile preview" class="profile-upload-preview" />
+                <img *ngIf="!profileImagePreview && profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url"
+                  [src]="profileImagesFormArray.at(0).value.url" alt="Current profile image" class="profile-upload-preview" />
+                <ng-container *ngIf="!profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)">
+                  <span class="profile-upload-icon">📷</span>
+                  <span class="profile-upload-label">Upload profile photo</span>
+                  <span class="profile-upload-hint">JPG, PNG up to Max 1 MB</span>
+                </ng-container>
               </ng-container>
               <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
             </div>
             <button type="button" class="btn btn-outline-primary btn-sm mt-1"
-              *ngIf="isEditMode" (click)="profileFileInput.click()">
-              {{ profileImagePreview || (profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url) ? 'Replace profile photo' : 'Upload profile photo' }}
+              *ngIf="isEditMode" [disabled]="profileImageUploading" (click)="!profileImageUploading && profileFileInput.click()">
+              <span *ngIf="profileImageUploading"><span class="spinner-border spinner-border-sm me-1" role="status"></span>Uploading...</span>
+              <span *ngIf="!profileImageUploading">{{ profileImagePreview || (profileImagesFormArray.length > 0 && profileImagesFormArray.at(0).value?.url) ? 'Replace profile photo' : 'Upload profile photo' }}</span>
             </button>
             <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted mt-1" style="font-size:0.82rem">Gallery limit reached. You can still replace the profile photo, or upgrade to upload more gallery images.</p>
             <div *ngIf="submitted && !profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)" class="text-danger mt-1">Profile photo is required.</div>
@@ -101,12 +108,18 @@
                 <button *ngIf="isEditMode" type="button" (click)="removeGalleryImage(i)"
                   class="btn btn-sm btn-danger position-absolute" style="top:2px;right:2px;padding:1px 5px;font-size:0.7rem;line-height:1.2;">✕</button>
               </div>
-              <label *ngIf="isEditMode && galleryImagesData.length < maxGalleryImages"
+              <label *ngIf="isEditMode && galleryImagesData.length < maxGalleryImages && !galleryImageUploading"
                 class="d-flex align-items-center justify-content-center border rounded"
                 style="width:90px;height:90px;cursor:pointer;color:#6b7280;font-size:0.8rem;text-align:center;border-style:dashed!important;">
                 <span>＋ Add<br>image</span>
                 <input type="file" accept="image/*" multiple hidden (change)="onGalleryImagesChange($event)" />
               </label>
+              <div *ngIf="galleryImageUploading"
+                class="d-flex flex-column align-items-center justify-content-center border rounded"
+                style="width:90px;height:90px;color:#6b7280;font-size:0.75rem;text-align:center;border-style:dashed!important;">
+                <span class="spinner-border spinner-border-sm text-primary mb-1" role="status"></span>
+                <span>Uploading...</span>
+              </div>
             </div>
             <small class="text-muted d-block mt-1">
               Total limit is {{ maxImages }} images: 1 profile + up to {{ maxGalleryImages }} gallery images (based on your plan).
@@ -199,7 +212,7 @@
             <h3 class="payout-heading">
               <i class="bi bi-bank2"></i>
               Payout details
-              <small>Where you receive your campaign earnings</small>
+              <small>Where you receive your earnings</small>
             </h3>
             <div class="form-grid two-col">
               <div class="field-block">
@@ -288,47 +301,60 @@
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
-            <div class="field-block" *ngIf="creatorTypeOptions.length || registrationForm.get('creatorTypes')?.value?.length">
+            <!-- VIEW MODE: Creator Type shown like Languages/Categories -->
+            <div class="field-block" *ngIf="!isEditMode && registrationForm.get('professionalStatus')?.value">
               <app-chip-selection-group
                 label="Creator Type / Specialty"
-                sublabel="Select if it matches your content style"
+                sublabel="Professional Creator"
                 [options]="creatorTypeOptions"
                 [selected]="registrationForm.get('creatorTypes')?.value || []"
-                valueKey="_id"
+                valueKey="name"
                 labelKey="name"
-                [max]="maxCreatorTypes"
-                [readonly]="!isEditMode"
-                (selectedChange)="setChipValues('creatorTypes', $event)">
+                [readonly]="true">
               </app-chip-selection-group>
+              <div *ngIf="registrationForm.get('expertiseArea')?.value" class="small text-muted mt-1">
+                <strong>Expertise:</strong> {{ registrationForm.get('expertiseArea')?.value }}
+              </div>
             </div>
 
           </div>
 
-          <div class="card mt-2">
+          <div class="card mt-2" *ngIf="isEditMode">
             <div class="card-body">
-              <div class="field-block">
-                <label>Professional Status</label>
-                <div class="form-check my-2">
-                  <input id="professionalStatusEdit" class="form-check-input" type="checkbox" formControlName="professionalStatus" />
-                  <label class="form-check-label" for="professionalStatusEdit">
-                    I create content professionally in this domain.
-                  </label>
+
+              <!-- EDIT MODE: full form controls -->
+              <ng-container *ngIf="isEditMode">
+                <div class="field-block">
+                  <label>Professional Status</label>
+                  <div class="form-check my-2">
+                    <input id="professionalStatusEdit" class="form-check-input" type="checkbox" formControlName="professionalStatus" />
+                    <label class="form-check-label" for="professionalStatusEdit">
+                      I create content professionally in this domain.
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
-                <label>Influencer Category <span class="text-danger">*</span></label>
-                <select formControlName="influencerCategory" class="form-control">
-                  <option value="" disabled>Select primary category</option>
-                  <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
-                </select>
-                <div *ngIf="(step2Attempted || registrationForm.get('influencerCategory')?.touched) && registrationForm.get('professionalStatus')?.value && registrationForm.get('influencerCategory')?.invalid" class="text-danger mt-1">Influencer Category is required.</div>
-              </div>
+                <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value && creatorTypeOptions.length">
+                  <app-chip-selection-group
+                    label="Creator Type / Specialty"
+                    sublabel="Select your creator type"
+                    [required]="true"
+                    [options]="creatorTypeOptions"
+                    [selected]="registrationForm.get('creatorTypes')?.value || []"
+                    valueKey="name"
+                    labelKey="name"
+                    selectionMode="single"
+                    (selectedChange)="setChipValues('creatorTypes', $event)">
+                  </app-chip-selection-group>
+                  <div *ngIf="submitted && registrationForm.get('professionalStatus')?.value && !registrationForm.get('creatorTypes')?.value?.length" class="text-danger mt-1">Please select your creator type.</div>
+                </div>
 
-              <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
-                <label>Expertise Area <span class="text-muted">(Optional)</span></label>
-                <input formControlName="expertiseArea" type="text" class="form-control" placeholder="e.g. Skincare, B2B SaaS, Fitness Coaching" />
-              </div>
+                <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
+                  <label>Expertise Area <span class="text-muted">(Optional)</span></label>
+                  <input formControlName="expertiseArea" type="text" class="form-control" placeholder="e.g. Skincare, B2B SaaS, Fitness Coaching" />
+                </div>
+              </ng-container>
+
             </div>
 
             <div class="optional-verify mt-3 px-2 pb-2" *ngIf="registrationForm.get('professionalStatus')?.value">

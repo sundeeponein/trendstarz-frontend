@@ -6,7 +6,7 @@ import { finalize, timeout } from 'rxjs/operators';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
-import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignDetailModalComponent, CampaignAcceptPayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { InviteAcceptPayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -50,6 +50,11 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   selectedInvite: any = null;
   selectedInviteManual = false;
   responding: string | null = null;
+  defaultPayout: { upiId: string; mobile: string; accountHolderName: string } = {
+    upiId: '',
+    mobile: '',
+    accountHolderName: '',
+  };
 
   private readonly userSub = new Subscription();
 
@@ -171,6 +176,11 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         }
 
         this.photographer = profile;
+        this.defaultPayout = {
+          upiId: profile?.payout?.upiId || '',
+          mobile: profile?.payout?.mobile || profile?.phoneNumber || '',
+          accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
+        };
         this.profileTraffic = {
           impressions: Number(profile?.profileTraffic?.impressions || 0),
           clicks: Number(profile?.profileTraffic?.clicks || 0),
@@ -303,13 +313,14 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  onModalAccept(payload: InviteAcceptPayload): void {
+  onModalAccept(payload: CampaignAcceptPayload): void {
     this.respond(
       payload.inviteId,
       payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
       payload.postDate,
       payload.counterAmount,
       payload.counterMessage,
+      payload.payout,
     );
   }
 
@@ -325,6 +336,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     selectedPostDate?: string,
     counterAmount?: number,
     counterMessage?: string,
+    payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
   ): void {
     if (this.responding) return;
 
@@ -338,7 +350,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         undefined,
         counterAmount,
         counterMessage,
-        undefined,
+        payout,
         shippingAddress,
       ).pipe(
         timeout(20000),
