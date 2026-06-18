@@ -60,16 +60,22 @@
 
           <!-- Profile Image Upload -->
           <div class="field-block profile-upload-block">
-            <div class="profile-upload-box" [class.has-image]="profileImagePreview" (click)="profileFileInput.click()">
-              <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="profile-upload-preview" />
-              <ng-container *ngIf="!profileImagePreview">
-                <span class="profile-upload-icon">📷</span>
-                <span class="profile-upload-label">Upload profile photo</span>
-                <span class="profile-upload-hint">JPG, PNG up to 5MB</span>
+            <div class="profile-upload-box" [class.has-image]="profileImagePreview" (click)="!profileImageUploading && profileFileInput.click()">
+              <ng-container *ngIf="profileImageUploading">
+                <span class="upload-spinner"><span class="spinner-border spinner-border-sm text-primary" role="status"></span></span>
+                <span class="profile-upload-label mt-1">Uploading...</span>
+              </ng-container>
+              <ng-container *ngIf="!profileImageUploading">
+                <img *ngIf="profileImagePreview" [src]="profileImagePreview" alt="Profile Preview" class="profile-upload-preview" />
+                <ng-container *ngIf="!profileImagePreview">
+                  <span class="profile-upload-icon">📷</span>
+                  <span class="profile-upload-label">Upload profile photo</span>
+                  <span class="profile-upload-hint">JPG, PNG up to 5MB</span>
+                </ng-container>
               </ng-container>
               <input #profileFileInput type="file" accept="image/*" (change)="onProfileImageFileChange($event)" hidden />
             </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview" (click)="removeProfileImage(0)">Remove</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview && !profileImageUploading" (click)="removeProfileImage(0)">Remove</button>
             <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile photo is required.</div>
           </div>
 
@@ -261,19 +267,6 @@
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
-            <div class="field-block" *ngIf="creatorTypeOptions.length">
-              <app-chip-selection-group
-                label="Creator Type / Specialty"
-                sublabel="Select if it matches your content style"
-                [options]="creatorTypeOptions"
-                [selected]="registrationForm.get('creatorTypes')?.value || []"
-                valueKey="_id"
-                labelKey="name"
-                [max]="maxCreatorTypes"
-                (selectedChange)="setChipValues('creatorTypes', $event)">
-              </app-chip-selection-group>
-            </div>
-
             <div class="card mt-2">
               <div class="card-body">
                   <div class="field-block">
@@ -286,13 +279,19 @@
                     </div>
                   </div>
 
-                  <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
-                    <label>Influencer Category <span class="text-danger">*</span></label>
-                    <select formControlName="influencerCategory" class="form-control">
-                      <option value="" disabled selected>Select primary category</option>
-                      <option *ngFor="let cat of categoriesList" [value]="cat._id">{{ cat.name }}</option>
-                    </select>
-                    <div *ngIf="(step2Attempted || registrationForm.get('influencerCategory')?.touched) && registrationForm.get('influencerCategory')?.invalid" class="text-danger mt-1">Please select your influencer category.</div>
+                  <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value && creatorTypeOptions.length">
+                    <app-chip-selection-group
+                      label="Creator Type / Specialty"
+                      sublabel="Select your creator type"
+                      [required]="true"
+                      [options]="creatorTypeOptions"
+                      [selected]="registrationForm.get('creatorTypes')?.value || []"
+                      valueKey="name"
+                      labelKey="name"
+                      selectionMode="single"
+                      (selectedChange)="setChipValues('creatorTypes', $event)">
+                    </app-chip-selection-group>
+                    <div *ngIf="(step2Attempted || registrationForm.get('creatorTypes')?.touched) && registrationForm.get('professionalStatus')?.value && !registrationForm.get('creatorTypes')?.value?.length" class="text-danger mt-1">Please select your creator type.</div>
                   </div>
 
                   <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
@@ -345,9 +344,15 @@
               </button>
             </label>
             <div class="gallery-upload-wrap">
-              <label class="gallery-upload-cta" for="influencerGalleryInput">
-                <i class="bi bi-images"></i>
-                <span>Add gallery images</span>
+              <label class="gallery-upload-cta" [class.disabled]="galleryImageUploading" [attr.for]="galleryImageUploading ? null : 'influencerGalleryInput'">
+                <ng-container *ngIf="galleryImageUploading">
+                  <span class="spinner-border spinner-border-sm" role="status"></span>
+                  <span>Uploading...</span>
+                </ng-container>
+                <ng-container *ngIf="!galleryImageUploading">
+                  <i class="bi bi-images"></i>
+                  <span>Add gallery images</span>
+                </ng-container>
               </label>
               <input
                 id="influencerGalleryInput"

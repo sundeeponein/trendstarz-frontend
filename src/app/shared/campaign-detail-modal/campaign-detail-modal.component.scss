@@ -854,3 +854,63 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* Payout capture block in accept flow */
+.cdm-payout-block {
+  width: 100%;
+  border: 1px solid #e1e6ef;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem 0.6rem;
+  background: #f9fbfd;
+  display: grid;
+  gap: 0.4rem;
+}
+.cdm-payout-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3a4557;
+  i { color: #5c6c8a; }
+}
+.cdm-payout-title { flex: 1; }
+.cdm-payout-edit-btn {
+  border: 1px solid #d1d9e6;
+  border-radius: 6px;
+  background: #fff;
+  color: #3a4557;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.cdm-payout-summary {
+  font-size: 0.82rem;
+  color: #3a4557;
+}
+.cdm-payout-missing {
+  color: #8795a8;
+  font-style: italic;
+}
+.cdm-payout-form {
+  display: grid;
+  gap: 0.4rem;
+}
+.cdm-payout-input {
+  width: 100%;
+  border: 1px solid #d1d9e6;
+  border-radius: 7px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.82rem;
+  color: #16162f;
+  background: #fff;
+  &:focus { outline: none; border-color: #0d6efd; }
+}
+.cdm-payout-hint {
+  color: #8795a8;
+  font-size: 0.74rem;
+}

@@ -9,6 +9,7 @@ import {
 } from '../../../services/profile-verification.service';
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 import { FlagManagementDialogComponent } from './flag-management-dialog.component';
+import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 
 @Component({
   selector: 'app-admin-profile-moderation',
@@ -18,6 +19,7 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
     FormsModule,
     ProfileReviewPanelComponent,
     FlagManagementDialogComponent,
+    VerificationFieldComponent,
   ],
   template: `
     <main class="moderation-page">
@@ -87,6 +89,112 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
             (updateFlag)="updateFlag($event.flag, $event.status)"
             (action)="takeAction($event)"
           />
+
+          <div class="verify-section">
+            <h6 class="verify-section-title">Quick Verify</h6>
+            <div class="verify-grid">
+              <div>
+                <app-verification-field
+                  label="Email Address"
+                  [status]="modIsEmailVerified(detail) ? 'Verified' : 'Pending'"
+                  [value]="selectedRow()?.email || '-'"
+                  [verified]="modIsEmailVerified(detail)"
+                  (toggled)="modToggle('isEmailVerified', !modIsEmailVerified(detail))"
+                ></app-verification-field>
+              </div>
+              <div>
+                <app-verification-field
+                  label="Mobile Number"
+                  [status]="modIsMobileVerified(detail) ? 'Verified' : 'Pending'"
+                  [value]="modIsMobileVerified(detail) ? 'Verified' : 'Pending'"
+                  [verified]="modIsMobileVerified(detail)"
+                  (toggled)="modToggle('isMobileVerified', !modIsMobileVerified(detail))"
+                ></app-verification-field>
+              </div>
+              <div>
+                <app-verification-field
+                  label="Profile Photo"
+                  [status]="modChecklistStatus(detail, 'profile photo')"
+                  [value]="modChecklistStatus(detail, 'profile photo') || 'Pending'"
+                  [verified]="modIsPhotoVerified(detail)"
+                  (toggled)="modToggle('profilePhotoVerified', !modIsPhotoVerified(detail))"
+                ></app-verification-field>
+                <div class="flag-type-selector" *ngIf="!modIsPhotoVerified(detail)">
+                  <span class="flag-type-label">Flag reason</span>
+                  <div class="flag-type-btns">
+                    <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
+                      <button *ngIf="!opt.policy"
+                        type="button" class="flag-type-btn" [ngClass]="opt.cls"
+                        [class.active]="modGetActivePhotoFlagCode(detail) === opt.code"
+                        (click)="modSetPhotoFlagCode(opt.code)" [title]="opt.hint"
+                      >{{ opt.label }}</button>
+                    </ng-container>
+                  </div>
+                  <div class="flag-group-divider">
+                    <span>Policy Violation — HIGH severity</span>
+                  </div>
+                  <div class="flag-type-btns">
+                    <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
+                      <button *ngIf="opt.policy"
+                        type="button" class="flag-type-btn" [ngClass]="opt.cls"
+                        [class.active]="modGetActivePhotoFlagCode(detail) === opt.code"
+                        (click)="modSetPhotoFlagCode(opt.code)" [title]="opt.hint"
+                      >{{ opt.label }}</button>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <app-verification-field
+                  label="Gallery / Portfolio"
+                  [status]="modChecklistStatus(detail, 'gallery images attached') || 'Pending'"
+                  [value]="modChecklistStatus(detail, 'gallery images attached') || 'Pending'"
+                  [verified]="modIsGalleryVerified(detail)"
+                  (toggled)="modToggle('galleryImagesVerified', !modIsGalleryVerified(detail))"
+                ></app-verification-field>
+                <div class="flag-type-selector" *ngIf="!modIsGalleryVerified(detail)">
+                  <span class="flag-type-label">Flag reason</span>
+                  <div class="flag-type-btns">
+                    <button
+                      *ngFor="let opt of GALLERY_FLAG_OPTIONS"
+                      type="button"
+                      class="flag-type-btn flag-chip--quality"
+                      [class.active]="modGetActiveGalleryFlagCode(detail) === opt.code"
+                      (click)="modSetGalleryFlagCode(opt.code)"
+                      [title]="opt.hint"
+                    >{{ opt.label }}</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <app-verification-field
+                  label="Location"
+                  [status]="modIsLocationVerified(detail) ? 'Verified' : 'Pending'"
+                  [value]="modIsLocationVerified(detail) ? 'Verified' : 'Pending'"
+                  [verified]="modIsLocationVerified(detail)"
+                  (toggled)="modToggle('locationVerified', !modIsLocationVerified(detail))"
+                ></app-verification-field>
+              </div>
+              <div *ngIf="selectedRow()?.userType !== 'Brand'">
+                <app-verification-field
+                  label="Social Profile & Creator Tier"
+                  [status]="modIsCreatorTierVerified(detail) ? 'Verified' : 'Pending'"
+                  [value]="modIsCreatorTierVerified(detail) ? 'Verified' : 'Pending'"
+                  [verified]="modIsCreatorTierVerified(detail)"
+                  (toggled)="modToggle('creatorTierVerified', !modIsCreatorTierVerified(detail))"
+                ></app-verification-field>
+              </div>
+              <div *ngIf="selectedRow()?.userType !== 'Brand'">
+                <app-verification-field
+                  label="Payment Method"
+                  [status]="modIsPaymentVerified(detail) ? 'Verified' : 'Pending'"
+                  [value]="modIsPaymentVerified(detail) ? 'Verified' : 'Pending'"
+                  [verified]="modIsPaymentVerified(detail)"
+                  (toggled)="modToggle('paymentVerified', !modIsPaymentVerified(detail))"
+                ></app-verification-field>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="detail-panel placeholder" *ngIf="!selectedDetail()">
@@ -285,6 +393,120 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
       font-size: 2rem;
       color: #e8580c;
     }
+    .verify-section {
+      border-top: 1px solid #e8edf5;
+      padding-top: 1rem;
+    }
+    .verify-section-title {
+      margin: 0 0 0.75rem;
+      color: #465468;
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .flag-type-selector {
+      margin-top: 6px;
+      display: grid;
+      gap: 5px;
+    }
+    .flag-type-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8894a8;
+    }
+    .flag-change-btn {
+      border: 0;
+      background: transparent;
+      color: #0d6efd;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .flag-type-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .flag-group-divider {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 3px 0 1px;
+    }
+    .flag-group-divider span {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #bd2d20;
+      white-space: nowrap;
+    }
+    .flag-group-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ffd8c2;
+    }
+    .flag-type-btn {
+      border: 1.5px solid #e1e6ef;
+      border-radius: 999px;
+      background: #f8f9fb;
+      color: #465468;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .flag-type-btn.active {
+      border-color: currentColor;
+      background: transparent;
+    }
+    .flag-type-btn.flag-chip--quality.active { color: #9b4b00; border-color: #9b4b00; }
+    .flag-type-btn.flag-chip--policy.active  { color: #bd2d20; border-color: #bd2d20; }
+    .verify-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .flag-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .flag-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      background: #eef1f6;
+      color: #465468;
+    }
+    .flag-chip--quality {
+      background: #fff5e5;
+      color: #9b4b00;
+    }
+    .flag-chip--policy {
+      background: #fff0ef;
+      color: #bd2d20;
+    }
+    .flag-chip--warn {
+      background: #fffae5;
+      color: #7a5900;
+    }
     @media (max-width: 980px) {
       .layout {
         grid-template-columns: 1fr;
@@ -296,6 +518,9 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
       }
       .row-metrics {
         display: none;
+      }
+      .verify-grid {
+        grid-template-columns: 1fr;
       }
     }
   `],
@@ -398,6 +623,202 @@ export class AdminProfileModerationComponent implements OnInit {
         this.refreshSelected();
       },
       error: (err) => this.error.set(err?.error?.message || 'Flag creation failed.'),
+    });
+  }
+
+  // ── Verification helpers ──────────────────────────────────────────────────
+
+  modChecklistStatus(data: ProfileVerificationDashboard, label: string): string {
+    return String(
+      data.checklist?.find((i) => i.label.toLowerCase() === label.toLowerCase())?.status || '',
+    );
+  }
+
+  private modHasOpenFlag(data: ProfileVerificationDashboard, code: string): boolean {
+    return (data.actionRequired || []).some((f) => f.flagCode === code && f.status === 'Open');
+  }
+
+  modIsEmailVerified(data: ProfileVerificationDashboard): boolean {
+    return this.modChecklistStatus(data, 'email verified') === 'Verified';
+  }
+
+  modIsMobileVerified(data: ProfileVerificationDashboard): boolean {
+    return this.modChecklistStatus(data, 'mobile verified') === 'Verified';
+  }
+
+  modIsPhotoVerified(data: ProfileVerificationDashboard): boolean {
+    return this.modChecklistStatus(data, 'profile photo') === 'Verified';
+  }
+
+  modIsPhotoPolicyViolation(data: ProfileVerificationDashboard): boolean {
+    return this.modHasOpenFlag(data, 'PROFILE_PHOTO_POLICY');
+  }
+
+  modIsGalleryVerified(data: ProfileVerificationDashboard): boolean {
+    const s = this.modChecklistStatus(data, 'gallery images attached');
+    return s === 'Verified' || s === 'Attached';
+  }
+
+  modIsLocationVerified(data: ProfileVerificationDashboard): boolean {
+    return this.modChecklistStatus(data, 'location') === 'Verified';
+  }
+
+  modIsCreatorTierVerified(data: ProfileVerificationDashboard): boolean {
+    return this.modChecklistStatus(data, 'social profile & creator tier') === 'Verified';
+  }
+
+  modIsPaymentVerified(data: ProfileVerificationDashboard): boolean {
+    return this.modChecklistStatus(data, 'payment method verified') === 'Verified';
+  }
+
+  private static readonly MOD_FLAG_LABELS: Record<string, { label: string; cls: string }> = {
+    PROFILE_PHOTO_QUALITY:       { label: 'Quality Issue',    cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_SCREENSHOT:    { label: 'Screenshot',       cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_CELEBRITY:     { label: 'Fake/Celebrity',   cls: 'flag-chip--policy'  },
+    PROFILE_PHOTO_GROUP:         { label: 'Group Photo',      cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_BLURRY:        { label: 'Blurry',           cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_LOGO:          { label: 'Logo',             cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_LOW_QUALITY:   { label: 'Low Quality',      cls: 'flag-chip--quality' },
+    FACE_NOT_VISIBLE:            { label: 'Face Not Visible', cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_POLICY:        { label: 'Policy Violation', cls: 'flag-chip--policy'  },
+    PROFILE_PHOTO_CONTACT_INFO:  { label: 'Contact Info',     cls: 'flag-chip--policy'  },
+    PROFILE_PHOTO_QR_CODE:       { label: 'QR Code',          cls: 'flag-chip--policy'  },
+    PORTFOLIO_MISSING:           { label: 'Gallery Missing',  cls: 'flag-chip--warn'    },
+    PORTFOLIO_SCREENSHOT:        { label: 'Screenshot',       cls: 'flag-chip--quality' },
+    PORTFOLIO_LOW_QUALITY:       { label: 'Low Quality',      cls: 'flag-chip--quality' },
+    PORTFOLIO_DUPLICATE:         { label: 'Duplicate',        cls: 'flag-chip--quality' },
+    PORTFOLIO_WATERMARK:         { label: 'Watermark',        cls: 'flag-chip--quality' },
+  };
+
+  private modFlagBadges(data: ProfileVerificationDashboard, codes: string[]): { label: string; cls: string }[] {
+    const openCodes = new Set(
+      (data.actionRequired || []).filter((f) => f.status === 'Open').map((f) => f.flagCode),
+    );
+    const labels = AdminProfileModerationComponent.MOD_FLAG_LABELS;
+    return codes.filter((c) => openCodes.has(c) && labels[c]).map((c) => labels[c]);
+  }
+
+  modGetPhotoFlags(data: ProfileVerificationDashboard): { label: string; cls: string }[] {
+    return this.modFlagBadges(data, [
+      'PROFILE_PHOTO_QUALITY', 'PROFILE_PHOTO_SCREENSHOT', 'PROFILE_PHOTO_CELEBRITY',
+      'PROFILE_PHOTO_GROUP', 'PROFILE_PHOTO_BLURRY', 'PROFILE_PHOTO_LOGO',
+      'PROFILE_PHOTO_LOW_QUALITY', 'FACE_NOT_VISIBLE', 'PROFILE_PHOTO_POLICY',
+      'PROFILE_PHOTO_CONTACT_INFO', 'PROFILE_PHOTO_QR_CODE',
+    ]);
+  }
+
+  modGetGalleryFlags(data: ProfileVerificationDashboard): { label: string; cls: string }[] {
+    return this.modFlagBadges(data, [
+      'PORTFOLIO_MISSING', 'PORTFOLIO_SCREENSHOT', 'PORTFOLIO_LOW_QUALITY',
+      'PORTFOLIO_DUPLICATE', 'PORTFOLIO_WATERMARK',
+    ]);
+  }
+
+  // ── Flag-type selectors ───────────────────────────────────────────────────
+
+  readonly PHOTO_FLAG_OPTIONS = [
+    { code: 'PROFILE_PHOTO_QUALITY',      label: 'Quality Issue',   cls: 'flag-chip--quality', policy: false,
+      hint: 'Blurry · Low Quality · Poor Lighting · Cropped Face' },
+    { code: 'FACE_NOT_VISIBLE',           label: 'Face Visibility', cls: 'flag-chip--quality', policy: false,
+      hint: 'Group Photo · No Face · Covered Face · Sunglasses' },
+    { code: 'PROFILE_PHOTO_SCREENSHOT',   label: 'Screenshot',      cls: 'flag-chip--quality', policy: false,
+      hint: 'Instagram · Facebook · App UI screenshot' },
+    { code: 'PROFILE_PHOTO_CELEBRITY',    label: 'Identity Issue',  cls: 'flag-chip--quality', policy: false,
+      hint: 'Fake/Celebrity · Logo · Non-Personal Image' },
+    { code: 'PROFILE_PHOTO_CONTACT_INFO', label: 'Contact Info ⚠', cls: 'flag-chip--policy',  policy: true,
+      hint: 'Phone number · Email · Social handle in photo' },
+    { code: 'PROFILE_PHOTO_QR_CODE',      label: 'QR Code ⚠',      cls: 'flag-chip--policy',  policy: true,
+      hint: 'QR code · Booking link in photo' },
+    { code: 'PROFILE_PHOTO_POLICY',       label: 'Other Policy ⚠', cls: 'flag-chip--policy',  policy: true,
+      hint: 'Other platform guideline violation' },
+  ];
+
+  readonly GALLERY_FLAG_OPTIONS = [
+    { code: 'PORTFOLIO_LOW_QUALITY', label: 'Quality Issue',     hint: 'Low Quality · Watermark' },
+    { code: 'PORTFOLIO_SCREENSHOT',  label: 'Screenshot',        hint: 'Screenshots in gallery' },
+    { code: 'PORTFOLIO_DUPLICATE',   label: 'Duplicate Content', hint: 'Duplicate images' },
+    { code: 'PORTFOLIO_MISSING',     label: 'Missing Gallery',   hint: 'No valid gallery images' },
+  ];
+
+  modGetActivePhotoFlagCode(data: ProfileVerificationDashboard): string {
+    const open = new Set((data.actionRequired || []).filter((f) => f.status === 'Open').map((f) => f.flagCode));
+    // Map stored flag codes → the category option code used in PHOTO_FLAG_OPTIONS
+    const codeToCategory: Record<string, string> = {
+      PROFILE_PHOTO_CONTACT_INFO: 'PROFILE_PHOTO_CONTACT_INFO',
+      PROFILE_PHOTO_QR_CODE:      'PROFILE_PHOTO_QR_CODE',
+      PROFILE_PHOTO_POLICY:       'PROFILE_PHOTO_POLICY',
+      PROFILE_PHOTO_CELEBRITY:    'PROFILE_PHOTO_CELEBRITY',
+      PROFILE_PHOTO_LOGO:         'PROFILE_PHOTO_CELEBRITY',
+      PROFILE_PHOTO_SCREENSHOT:   'PROFILE_PHOTO_SCREENSHOT',
+      PROFILE_PHOTO_QUALITY:      'PROFILE_PHOTO_QUALITY',
+      PROFILE_PHOTO_BLURRY:       'PROFILE_PHOTO_QUALITY',
+      PROFILE_PHOTO_LOW_QUALITY:  'PROFILE_PHOTO_QUALITY',
+      PROFILE_PHOTO_GROUP:        'FACE_NOT_VISIBLE',
+      FACE_NOT_VISIBLE:           'FACE_NOT_VISIBLE',
+    };
+    const priority = [
+      'PROFILE_PHOTO_CONTACT_INFO', 'PROFILE_PHOTO_QR_CODE', 'PROFILE_PHOTO_POLICY',
+      'PROFILE_PHOTO_CELEBRITY', 'PROFILE_PHOTO_LOGO',
+      'PROFILE_PHOTO_SCREENSHOT',
+      'PROFILE_PHOTO_QUALITY', 'PROFILE_PHOTO_BLURRY', 'PROFILE_PHOTO_LOW_QUALITY',
+      'PROFILE_PHOTO_GROUP', 'FACE_NOT_VISIBLE',
+    ];
+    const found = priority.find((c) => open.has(c));
+    return found ? (codeToCategory[found] || found) : '';
+  }
+
+  modGetActiveGalleryFlagCode(data: ProfileVerificationDashboard): string {
+    const open = new Set((data.actionRequired || []).filter((f) => f.status === 'Open').map((f) => f.flagCode));
+    // Map stored codes → category option codes used in GALLERY_FLAG_OPTIONS
+    const codeToCategory: Record<string, string> = {
+      PORTFOLIO_MISSING:     'PORTFOLIO_MISSING',
+      PORTFOLIO_SCREENSHOT:  'PORTFOLIO_SCREENSHOT',
+      PORTFOLIO_LOW_QUALITY: 'PORTFOLIO_LOW_QUALITY',
+      PORTFOLIO_WATERMARK:   'PORTFOLIO_LOW_QUALITY',
+      PORTFOLIO_DUPLICATE:   'PORTFOLIO_DUPLICATE',
+    };
+    const priority = ['PORTFOLIO_MISSING', 'PORTFOLIO_SCREENSHOT', 'PORTFOLIO_DUPLICATE',
+      'PORTFOLIO_LOW_QUALITY', 'PORTFOLIO_WATERMARK'];
+    const found = priority.find((c) => open.has(c));
+    return found ? (codeToCategory[found] || found) : '';
+  }
+
+  modSetPhotoFlagCode(code: string): void {
+    const row = this.selectedRow();
+    if (!row) return;
+    this.api.contactVerification(row.userType, row.userId, { profilePhotoVerified: false, photoFlagCode: code }).subscribe({
+      next: () => this.refreshSelected(),
+      error: (err) => this.error.set(err?.error?.message || 'Failed'),
+    });
+  }
+
+  modSetGalleryFlagCode(code: string): void {
+    const row = this.selectedRow();
+    if (!row) return;
+    this.api.contactVerification(row.userType, row.userId, { galleryImagesVerified: false, galleryFlagCode: code }).subscribe({
+      next: () => this.refreshSelected(),
+      error: (err) => this.error.set(err?.error?.message || 'Failed'),
+    });
+  }
+
+  // ── Verification toggles ──────────────────────────────────────────────────
+
+  modToggle(field: string, value: boolean): void {
+    const row = this.selectedRow();
+    if (!row) return;
+    const label = field === 'isEmailVerified' ? 'email'
+      : field === 'isMobileVerified' ? 'mobile'
+      : field === 'profilePhotoVerified' ? 'profile photo'
+      : field === 'photoPolicy' ? (value ? 'flag photo policy violation' : 'clear photo policy violation')
+      : field === 'galleryImagesVerified' ? 'gallery images'
+      : field === 'locationVerified' ? 'location'
+      : field === 'creatorTierVerified' ? 'creator tier'
+      : field === 'paymentVerified' ? 'payment method'
+      : field;
+    if (!confirm(`Mark ${label} as ${value ? 'verified' : 'pending'}?`)) return;
+    this.api.contactVerification(row.userType, row.userId, { [field]: value }).subscribe({
+      next: () => this.refreshSelected(),
+      error: (err) => this.error.set(err?.error?.message || 'Verification update failed.'),
     });
   }
 }

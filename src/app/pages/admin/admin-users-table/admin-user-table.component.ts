@@ -130,6 +130,179 @@ export class AdminUserTableComponent implements OnInit {
     return this.getUserProfilePhotoStatus(user) === 'Verified';
   }
 
+  isPhotoPolicyViolation(): boolean {
+    return (this.selectedProfileVerification?.actionRequired || []).some(
+      (flag: any) => flag.flagCode === 'PROFILE_PHOTO_POLICY' && flag.status === 'Open',
+    );
+  }
+
+  private static readonly FLAG_LABELS: Record<string, { label: string; cls: string }> = {
+    PROFILE_PHOTO_QUALITY:       { label: 'Quality Issue',    cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_SCREENSHOT:    { label: 'Screenshot',       cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_CELEBRITY:     { label: 'Fake/Celebrity',   cls: 'flag-chip--policy'  },
+    PROFILE_PHOTO_GROUP:         { label: 'Group Photo',      cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_BLURRY:        { label: 'Blurry',           cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_LOGO:          { label: 'Logo',             cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_LOW_QUALITY:   { label: 'Low Quality',      cls: 'flag-chip--quality' },
+    FACE_NOT_VISIBLE:            { label: 'Face Not Visible', cls: 'flag-chip--quality' },
+    PROFILE_PHOTO_POLICY:        { label: 'Policy Violation', cls: 'flag-chip--policy'  },
+    PROFILE_PHOTO_CONTACT_INFO:  { label: 'Contact Info',     cls: 'flag-chip--policy'  },
+    PROFILE_PHOTO_QR_CODE:       { label: 'QR Code',          cls: 'flag-chip--policy'  },
+    PORTFOLIO_MISSING:           { label: 'Gallery Missing',  cls: 'flag-chip--warn'    },
+    PORTFOLIO_SCREENSHOT:        { label: 'Screenshot',       cls: 'flag-chip--quality' },
+    PORTFOLIO_LOW_QUALITY:       { label: 'Low Quality',      cls: 'flag-chip--quality' },
+    PORTFOLIO_DUPLICATE:         { label: 'Duplicate',        cls: 'flag-chip--quality' },
+    PORTFOLIO_WATERMARK:         { label: 'Watermark',        cls: 'flag-chip--quality' },
+  };
+
+  private getOpenFlagBadges(codes: string[]): { label: string; cls: string }[] {
+    const open = new Set(
+      (this.selectedProfileVerification?.actionRequired || [])
+        .filter((f: any) => f.status === 'Open')
+        .map((f: any) => String(f.flagCode || '')),
+    );
+    const codeSet = new Set(codes);
+    const labels = AdminUserTableComponent.FLAG_LABELS;
+    return Array.from(open)
+      .filter((code) => codeSet.has(code) && labels[code])
+      .map((code) => labels[code]);
+  }
+
+  getProfilePhotoOpenFlags(): { label: string; cls: string }[] {
+    return this.getOpenFlagBadges([
+      'PROFILE_PHOTO_QUALITY', 'PROFILE_PHOTO_SCREENSHOT', 'PROFILE_PHOTO_CELEBRITY',
+      'PROFILE_PHOTO_GROUP', 'PROFILE_PHOTO_BLURRY', 'PROFILE_PHOTO_LOGO',
+      'PROFILE_PHOTO_LOW_QUALITY', 'FACE_NOT_VISIBLE', 'PROFILE_PHOTO_POLICY',
+      'PROFILE_PHOTO_CONTACT_INFO', 'PROFILE_PHOTO_QR_CODE',
+    ]);
+  }
+
+  getGalleryOpenFlags(): { label: string; cls: string }[] {
+    return this.getOpenFlagBadges([
+      'PORTFOLIO_MISSING', 'PORTFOLIO_SCREENSHOT', 'PORTFOLIO_LOW_QUALITY',
+      'PORTFOLIO_DUPLICATE', 'PORTFOLIO_WATERMARK',
+    ]);
+  }
+
+  getActivePhotoFlagCode(): string {
+    const open = (this.selectedProfileVerification?.actionRequired || [])
+      .filter((f: any) => f.status === 'Open')
+      .map((f: any) => String(f.flagCode || ''));
+    // Priority maps existing stored codes → the category option code shown in the selector
+    const codeToCategory: Record<string, string> = {
+      PROFILE_PHOTO_CONTACT_INFO: 'PROFILE_PHOTO_CONTACT_INFO',
+      PROFILE_PHOTO_QR_CODE:      'PROFILE_PHOTO_QR_CODE',
+      PROFILE_PHOTO_POLICY:       'PROFILE_PHOTO_POLICY',
+      PROFILE_PHOTO_CELEBRITY:    'PROFILE_PHOTO_CELEBRITY',
+      PROFILE_PHOTO_LOGO:         'PROFILE_PHOTO_CELEBRITY',
+      PROFILE_PHOTO_SCREENSHOT:   'PROFILE_PHOTO_SCREENSHOT',
+      PROFILE_PHOTO_QUALITY:      'PROFILE_PHOTO_QUALITY',
+      PROFILE_PHOTO_BLURRY:       'PROFILE_PHOTO_QUALITY',
+      PROFILE_PHOTO_LOW_QUALITY:  'PROFILE_PHOTO_QUALITY',
+      PROFILE_PHOTO_GROUP:        'FACE_NOT_VISIBLE',
+      FACE_NOT_VISIBLE:           'FACE_NOT_VISIBLE',
+    };
+    const priority = [
+      'PROFILE_PHOTO_CONTACT_INFO', 'PROFILE_PHOTO_QR_CODE', 'PROFILE_PHOTO_POLICY',
+      'PROFILE_PHOTO_CELEBRITY', 'PROFILE_PHOTO_LOGO',
+      'PROFILE_PHOTO_SCREENSHOT',
+      'PROFILE_PHOTO_QUALITY', 'PROFILE_PHOTO_BLURRY', 'PROFILE_PHOTO_LOW_QUALITY',
+      'PROFILE_PHOTO_GROUP', 'FACE_NOT_VISIBLE',
+    ];
+    const found = priority.find((c) => open.includes(c));
+    return found ? (codeToCategory[found] || found) : '';
+  }
+
+  getActiveGalleryFlagCode(): string {
+    const open = (this.selectedProfileVerification?.actionRequired || [])
+      .filter((f: any) => f.status === 'Open')
+      .map((f: any) => String(f.flagCode || ''));
+    const codeToCategory: Record<string, string> = {
+      PORTFOLIO_MISSING:     'PORTFOLIO_MISSING',
+      PORTFOLIO_SCREENSHOT:  'PORTFOLIO_SCREENSHOT',
+      PORTFOLIO_DUPLICATE:   'PORTFOLIO_DUPLICATE',
+      PORTFOLIO_LOW_QUALITY: 'PORTFOLIO_LOW_QUALITY',
+      PORTFOLIO_WATERMARK:   'PORTFOLIO_LOW_QUALITY',
+    };
+    const priority = ['PORTFOLIO_MISSING', 'PORTFOLIO_SCREENSHOT', 'PORTFOLIO_DUPLICATE',
+      'PORTFOLIO_LOW_QUALITY', 'PORTFOLIO_WATERMARK'];
+    const found = priority.find((c) => open.includes(c));
+    return found ? (codeToCategory[found] || found) : '';
+  }
+
+  // Photo flag options — 5 categories, each maps to one representative flag code.
+  // Policy Violation is the only HIGH severity group.
+  readonly PHOTO_FLAG_OPTIONS = [
+    { code: 'PROFILE_PHOTO_QUALITY',      label: 'Quality Issue',       cls: 'flag-chip--quality', policy: false,
+      hint: 'Blurry · Low Quality · Poor Lighting · Cropped Face' },
+    { code: 'FACE_NOT_VISIBLE',           label: 'Face Visibility',     cls: 'flag-chip--quality', policy: false,
+      hint: 'Group Photo · No Face · Covered Face · Sunglasses' },
+    { code: 'PROFILE_PHOTO_SCREENSHOT',   label: 'Screenshot',          cls: 'flag-chip--quality', policy: false,
+      hint: 'Instagram · Facebook · App UI screenshot' },
+    { code: 'PROFILE_PHOTO_CELEBRITY',    label: 'Identity Issue',      cls: 'flag-chip--quality', policy: false,
+      hint: 'Fake/Celebrity · Logo · Non-Personal Image' },
+    { code: 'PROFILE_PHOTO_CONTACT_INFO', label: 'Contact Info ⚠',     cls: 'flag-chip--policy',  policy: true,
+      hint: 'Phone number · Email · Social handle in photo' },
+    { code: 'PROFILE_PHOTO_QR_CODE',      label: 'QR Code ⚠',          cls: 'flag-chip--policy',  policy: true,
+      hint: 'QR code · Booking link in photo' },
+    { code: 'PROFILE_PHOTO_POLICY',       label: 'Other Policy ⚠',     cls: 'flag-chip--policy',  policy: true,
+      hint: 'Other platform guideline violation' },
+  ];
+
+  // Gallery flag options — 4 categories
+  readonly GALLERY_FLAG_OPTIONS = [
+    { code: 'PORTFOLIO_LOW_QUALITY', label: 'Quality Issue',    hint: 'Low Quality · Watermark' },
+    { code: 'PORTFOLIO_SCREENSHOT',  label: 'Screenshot',       hint: 'Screenshots in gallery' },
+    { code: 'PORTFOLIO_DUPLICATE',   label: 'Duplicate Content',hint: 'Duplicate images' },
+    { code: 'PORTFOLIO_MISSING',     label: 'Missing Gallery',  hint: 'No valid gallery images' },
+  ];
+
+  showVerificationControls = false;
+
+  setProfilePhotoFlag(code: string): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    const opt = this.PHOTO_FLAG_OPTIONS.find((o) => o.code === code);
+    if (!opt) return;
+    this.http
+      .patch(
+        `${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/contact-verification`,
+        { profilePhotoVerified: false, photoFlagCode: code },
+        this.getAuthHeaders(),
+      )
+      .pipe(catchError((err) => {
+        alert('Error: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (!res) return;
+        this.loadSelectedProfileVerification();
+        this.fetchUsers();
+      });
+  }
+
+  setGalleryFlag(code: string): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    this.http
+      .patch(
+        `${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/contact-verification`,
+        { galleryImagesVerified: false, galleryFlagCode: code },
+        this.getAuthHeaders(),
+      )
+      .pipe(catchError((err) => {
+        alert('Error: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        return of(null);
+      }))
+      .subscribe((res: any) => {
+        if (!res) return;
+        this.loadSelectedProfileVerification();
+        this.fetchUsers();
+      });
+  }
+
   private getChecklistStatus(label: string): string {
     const reviewItem = this.selectedProfileVerification?.checklist?.find(
       (item) => String(item?.label || '').toLowerCase() === label.toLowerCase(),
@@ -278,6 +451,10 @@ export class AdminUserTableComponent implements OnInit {
     return cleaned.length ? cleaned.join(', ') : '-';
   }
 
+  getUserInfluencerCategoryLabel(user: any): string {
+    return String(user?.influencerCategory || '').trim() || '-';
+  }
+
   getUserCollaborationAvailabilityLabel(user: any): string {
     const collab = user?.collaborationAvailability || {};
     if (!collab || collab.enabled === false) return '-';
@@ -308,6 +485,27 @@ export class AdminUserTableComponent implements OnInit {
     const value = user?.promotionalPrice ?? user?.price ?? user?.pricing?.startingFrom;
     if (value === null || value === undefined || value === '') return '-';
     return `Rs ${value} / post`;
+  }
+
+  getUserAllSocialPlatforms(user: any): Array<{ platform: string; icon: string; href: string; handle: string; tierLabel: string }> {
+    const rows = Array.isArray(user?.socialMedia) ? user.socialMedia : [];
+    return rows
+      .map((sm: any) => {
+        const platformKey = this.resolveSocialPlatform(sm);
+        const href = this.resolveSocialHref(sm, platformKey);
+        const handle =
+          normalizeSocialHandle(sm?.handle, platformKey) ||
+          normalizeSocialHandle(sm?.url, platformKey);
+        if (!href && !handle) return null;
+        return {
+          platform: this.getSocialLabel(platformKey),
+          icon: this.getSocialIcon(platformKey),
+          href: href || '',
+          handle: handle ? `@${handle}` : '',
+          tierLabel: this.getSocialTierLabel(sm),
+        };
+      })
+      .filter((item: { platform: string; icon: string; href: string; handle: string; tierLabel: string } | null): item is { platform: string; icon: string; href: string; handle: string; tierLabel: string } => !!item);
   }
 
   getUserSocialRateGroups(user: any): Array<{ platform: string; icon: string; href: string; handle: string; tierLabel: string; items: Array<{ name: string; price: number }> }> {
@@ -1457,6 +1655,35 @@ export class AdminUserTableComponent implements OnInit {
     if (!this.selectedUser || !this.selectedUserType) return;
     const nextValue = !this.isProfilePhotoVerified(this.selectedUser);
     this.updateContactVerification(this.selectedUser, this.selectedUserType, 'profilePhotoVerified', nextValue);
+  }
+
+  toggleSelectedPhotoPolicyViolation(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    const nextValue = !this.isPhotoPolicyViolation();
+    this.showConfirm(
+      nextValue
+        ? 'Flag this profile photo as a policy violation? This will block campaign invitations.'
+        : 'Clear the photo policy violation flag?',
+      () => {
+        this.http
+          .patch(
+            `${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/contact-verification`,
+            { photoPolicy: nextValue },
+            this.getAuthHeaders(),
+          )
+          .pipe(catchError(err => {
+            alert('Error updating photo policy flag: ' + (err?.error?.message || err?.message || 'Unknown error'));
+            return of(null);
+          }))
+          .subscribe((res: any) => {
+            if (!res) return;
+            this.loadSelectedProfileVerification();
+            this.fetchUsers();
+          });
+      },
+    );
   }
 
   toggleSelectedCreatorTierVerification(): void {

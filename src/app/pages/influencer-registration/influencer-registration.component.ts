@@ -52,6 +52,11 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.registrationForm.get(field)?.markAsTouched();
   }
 
+  onInfluencerCategoryChange(values: string[]): void {
+    this.registrationForm.get('influencerCategory')?.setValue(values[0] || '');
+    this.registrationForm.get('influencerCategory')?.markAsTouched();
+  }
+
   openProfilePhotoGuidelines(): void {
     this.guidelinesService.open('influencer');
   }
@@ -269,6 +274,8 @@ export class InfluencerRegistrationComponent implements OnInit {
   tiers: any[] = [];
   protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
+  profileImageUploading = false;
+  galleryImageUploading = false;
   profileImageFile: File | null = null;
   // Cached upload result so we don't re-upload (and orphan the previous upload) on retry.
   uploadedProfileImage: { url: string; public_id: string } | null = null;
@@ -551,12 +558,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 2) {
       const f = this.registrationForm;
       const isProfessional = !!f.get('professionalStatus')?.value;
+      const creatorTypeSelected = (f.get('creatorTypes')?.value?.length ?? 0) > 0;
       const detailsValid = !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
         f.get('languages')?.valid &&
         f.get('categories')?.valid &&
-        (!isProfessional || f.get('influencerCategory')?.valid)
+        (!isProfessional || creatorTypeSelected)
       );
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
@@ -700,7 +708,10 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
       if (this.registrationForm.get('professionalStatus')?.value) {
-        this.registrationForm.get('influencerCategory')?.markAsTouched();
+        this.registrationForm.get('creatorTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('creatorTypes')?.value?.length > 0)) {
+          return false;
+        }
       }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
@@ -902,14 +913,16 @@ export class InfluencerRegistrationComponent implements OnInit {
   async onProfileImageFileChange(event: any) {
     const file = event.target.files[0];
     if (!file) return;
+    this.profileImageUploading = true;
+    this.cdr.detectChanges();
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 1024, useWebWorker: true });
       const reader = new FileReader();
-      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile as File; this.uploadedProfileImage = null; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
+      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile as File; this.uploadedProfileImage = null; this.profileImageUploading = false; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(compressedFile);
     } catch {
       const reader = new FileReader();
-      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = file; this.uploadedProfileImage = null; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
+      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = file; this.uploadedProfileImage = null; this.profileImageUploading = false; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(file);
     }
   }
@@ -927,6 +940,8 @@ export class InfluencerRegistrationComponent implements OnInit {
     const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
     if (!selectedFiles.length) return;
 
+    this.galleryImageUploading = true;
+    this.cdr.detectChanges();
     let failedUploads = 0;
 
     for (const file of selectedFiles) {
@@ -978,11 +993,13 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.cdr.detectChanges();
     }
 
-    this.galleryUploadWarning = failedUploads
-      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
-      : '';
-
-    this.cdr.detectChanges();
+    this.ngZone.run(() => {
+      this.galleryUploadWarning = failedUploads
+        ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+        : '';
+      this.galleryImageUploading = false;
+      this.cdr.detectChanges();
+    });
   }
 
   removeGalleryImage(index: number) {
@@ -1023,12 +1040,11 @@ export class InfluencerRegistrationComponent implements OnInit {
     const districtObj = this.districts.find(d => d._id === raw.location.district);
     const languageNames = (raw.languages || []).map((id: string) => { const l = this.languagesList.find((x: any) => x._id === id); return l ? l.name : id; });
     const categoryNames = (raw.categories || []).map((id: string) => { const c = this.categoriesList.find((x: any) => x._id === id); return c ? c.name : id; });
-    const creatorTypeNames = (raw.creatorTypes || []).map((id: string) => {
-      const item = this.creatorTypeOptions.find((x: any) => x._id === id || x.name === id);
-      return item ? item.name : id;
-    }).filter((name: string) => !!String(name || '').trim());
+    const creatorTypeNames = (raw.creatorTypes || [])
+      .map((name: string) => String(name || '').trim())
+      .filter((name: string) => !!name);
     const influencerCategoryName = raw.influencerCategory
-      ? (this.categoriesList.find((x: any) => x._id === raw.influencerCategory)?.name || raw.influencerCategory)
+      ? (this.creatorTypeOptions.find((x: any) => x.name === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
 
     const socialMedia = this.selectedPlatforms().map(platform => {

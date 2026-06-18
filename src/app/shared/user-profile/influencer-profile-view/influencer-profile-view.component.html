@@ -38,7 +38,10 @@
             <span>{{ cat }}</span><span *ngIf="!last" class="cat-sep"> · </span>
           </ng-container>
         </p>
-        <div class="profile-tags" *ngIf="influencer.creatorTypes?.length">
+        <div class="profile-tags mt-1" *ngIf="influencer.professionalStatus">
+          <span class="badge rounded-pill bg-success-subtle text-success fw-semibold">Professional Creator</span>
+        </div>
+        <div class="profile-tags mt-1" *ngIf="influencer.professionalStatus && influencer.creatorTypes?.length">
           <span class="profile-tag badge rounded-pill bg-light text-dark" *ngFor="let type of influencer.creatorTypes">
             {{ type }}
           </span>

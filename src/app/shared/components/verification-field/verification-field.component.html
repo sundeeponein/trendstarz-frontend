@@ -32,5 +32,5 @@
   [class.btn-success]="!verified"
   (click)="toggled.emit()"
 >
-  {{ verified ? 'Unverify' : 'Verify' }}
+  {{ verified ? unverifyLabel : verifyLabel }}
 </button>

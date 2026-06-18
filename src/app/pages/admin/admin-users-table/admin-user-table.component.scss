@@ -369,6 +369,129 @@
   font-weight: 700;
 }
 
+.flag-type-selector {
+  margin-top: 8px;
+  display: grid;
+  gap: 5px;
+}
+
+.flag-type-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8894a8;
+}
+
+.flag-change-btn {
+  border: 0;
+  background: transparent;
+  color: #0d6efd;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.flag-type-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.flag-group-divider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0 1px;
+  span {
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #bd2d20;
+    white-space: nowrap;
+  }
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #ffd8c2;
+  }
+}
+
+.flag-type-btn {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  opacity: 0.6;
+  transition: opacity 0.15s, border-color 0.15s;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.active {
+    opacity: 1;
+    border-color: currentColor;
+  }
+
+  &.flag-chip--quality {
+    background: #fff5e5;
+    color: #9b4b00;
+  }
+
+  &.flag-chip--policy {
+    background: #fff0ef;
+    color: #bd2d20;
+  }
+}
+
+.flag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.flag-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: #eef1f6;
+  color: #465468;
+
+  &.flag-chip--quality {
+    background: #fff5e5;
+    color: #9b4b00;
+  }
+
+  &.flag-chip--policy {
+    background: #fff0ef;
+    color: #bd2d20;
+  }
+
+  &.flag-chip--warn {
+    background: #fffae5;
+    color: #7a5900;
+  }
+}
+
 .details-section {
   margin-top: 18px;
   padding-top: 14px;

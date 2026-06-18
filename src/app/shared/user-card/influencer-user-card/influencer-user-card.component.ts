@@ -19,6 +19,7 @@ export class InfluencerUserCardComponent {
   @Input() categories: string[] = [];
   @Input() influencerCategory = '';
   @Input() creatorTypes: string[] = [];
+  @Input() professionalStatus = false;
   @Input() verificationStatus = 'not_submitted';
   @Input() verifiedByTrendStarz = false;
   @Input() location: any = {};

@@ -69,6 +69,7 @@
             [name]="influencer.name || influencer.fullname || ''"
             [influencerCategory]="influencer.influencerCategory || influencer.categories?.[0] || ''"
             [creatorTypes]="influencer.creatorTypes || []"
+            [professionalStatus]="!!influencer.professionalStatus"
             [isPremium]="influencer.isPremium || false"
             [promotionalPrice]="influencer.promotionalPrice"
             [showWelcomeStartingPrice]="true"
