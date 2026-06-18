@@ -202,20 +202,17 @@
     </table>
 
     <!-- Pagination -->
-    <div class="cm-pagination" *ngIf="!campaignApprovalsLoading && filteredCampaigns.length > 0">
-      <span class="cm-pagination-info">
-        Showing <strong>{{ paginationStart }}-{{ paginationEnd }}</strong> of
-        <strong>{{ filteredCampaigns.length | number }}</strong> campaigns
-      </span>
-      <div class="cm-pagination-controls">
-        <button class="cm-page-btn" type="button" [disabled]="currentPage === 1" (click)="prevPage()">
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <button class="cm-page-btn" type="button" [disabled]="currentPage === totalPages" (click)="nextPage()">
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
+    <ng-container *ngIf="!campaignApprovalsLoading">
+      <app-paginator
+        [total]="filteredCampaigns.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        [pageSizeOptions]="pageSizeOptions"
+        entityLabel="campaigns"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-paginator>
+    </ng-container>
   </div>
 
   <!-- ══ FOOTER ══ -->

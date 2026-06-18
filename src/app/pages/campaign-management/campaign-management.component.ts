@@ -24,7 +24,8 @@ import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { OfferTrailComponent } from '../../shared/offer-trail/offer-trail.component';
-import { buildAdminOfferTrailText } from '../../shared/offer-trail.util';
+import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared/offer-trail.util';
+import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -35,7 +36,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -109,6 +110,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   activeTab: TabStatus = 'active';
   pageSize = 10;
+  readonly pageSizeOptions = [10, 25, 50, 100];
   currentPage = 1;
 
   showForm = false;
@@ -2206,6 +2208,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (this.currentPage < this.totalPages) this.currentPage++;
   }
 
+  onPageChange(page: number): void { this.currentPage = page; }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
+
   openCreateForm() {
     if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) {
       // Determine if user is premium or free
@@ -3330,6 +3335,44 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   shouldShowHostCounterSummary(inv: any, campaign?: any): boolean {
     return this.getCounterOfferSummary(inv, campaign).length > 0;
+  }
+
+  getOfferTotalSummary(inv: any, campaign?: any): string {
+    return buildAdminOfferTotalText({
+      ...inv,
+      campaign,
+      campaignAmountPaise: Number(
+        inv?.campaignAmountPaise || campaign?.pricePerInfluencer || campaign?.amount || 0,
+      ),
+    });
+  }
+
+  getInviteWorkingFromDate(inv: any): string {
+    const d = inv?.acceptedAt || inv?.paymentConfirmedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  getInviteUpdatedAtText(inv: any): string {
+    const d = inv?.updatedAt || inv?.acceptedAt || inv?.createdAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+  }
+
+  getInviteRecipientEmail(inv: any): string {
+    const r = this.getInviteRecipient(inv);
+    return String(r?.email || r?.contactEmail || '').trim();
+  }
+
+  getInviteRecipientRoleLabel(inv: any, campaign?: any): string {
+    if (this.isPhotographerInviteForCampaign(inv, campaign)) return 'Photographer';
+    const r = this.getInviteRecipient(inv);
+    const role = String(r?.role || r?.userType || inv?.role || '').toLowerCase();
+    if (role.includes('photographer')) return 'Photographer';
+    return 'Influencer';
   }
 
   respondToInviteCounter(

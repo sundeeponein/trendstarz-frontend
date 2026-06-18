@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { UserAvatarComponent } from '../components/user-avatar/user-avatar.component';
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
+import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -37,7 +38,10 @@ interface ContentTypeOption {
   templateUrl: './campaign-detail-modal.component.html',
   styleUrls: ['./campaign-detail-modal.component.scss']
 })
-export class CampaignDetailModalComponent implements OnChanges {
+export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked {
+  @ViewChild('workflowTrack') private workflowTrackRef?: ElementRef<HTMLElement>;
+  private _workflowScrolled = false;
+
   @Input() invite: any;
   @Input() visible = false;
   // Optional: platform/tier that the current influencer qualifies with for this campaign
@@ -70,6 +74,8 @@ export class CampaignDetailModalComponent implements OnChanges {
   @Output() requestChanges = new EventEmitter<void>();
   @Output() reject = new EventEmitter<void>();
   @Output() validationError = new EventEmitter<string>();
+  @Output() viewSubmission = new EventEmitter<void>();
+  @Output() confirmReceipt = new EventEmitter<void>();
 
   postDate = '';
   selectedContentTypeKey = '';
@@ -157,8 +163,25 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['invite'] || changes['adminInviteProgressLoading'] || changes['visible']) {
+      this._workflowScrolled = false;
       this.cdr.detectChanges();
     }
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this._workflowScrolled && this.visible) {
+      this._centerActiveWorkflowStep();
+    }
+  }
+
+  private _centerActiveWorkflowStep(): void {
+    const track = this.workflowTrackRef?.nativeElement;
+    if (!track) return;
+    const active = track.querySelector('.cdm-workflow__step--current') as HTMLElement | null;
+    if (!active) return;
+    const scrollLeft = active.offsetLeft - track.offsetWidth / 2 + active.offsetWidth / 2;
+    track.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' });
+    this._workflowScrolled = true;
   }
 
   get campaign(): any {
@@ -235,6 +258,132 @@ export class CampaignDetailModalComponent implements OnChanges {
 
   get campaignTitle(): string {
     return this.campaign?.title || this.campaign?.campaignTitle || 'Campaign';
+  }
+
+  get campaignIdLabel(): string {
+    const num = Number(this.campaign?.campaignNumber);
+    if (num > 0) return `CMP-${num}`;
+    const id = String(this.campaign?._id || '');
+    return id ? `CMP-${id.slice(-6).toUpperCase()}` : '';
+  }
+
+  get payoutTypeTags(): string[] {
+    const tags: string[] = [];
+    if (this.campaignTypeLabel) tags.push(this.campaignTypeLabel);
+    const term = String(this.campaign?.paymentTerm || '').trim();
+    if (term) tags.push(term);
+    else if (this.isPaidCollab || this.isInviteLocation) tags.push('Net-30');
+    return tags;
+  }
+
+  get activeDurationDays(): number {
+    const c = this.campaign;
+    const start = c?.timelineStart || c?.startDate;
+    const end = c?.timelineEnd || c?.endDate;
+    if (!start || !end) return 0;
+    return Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / 86400000);
+  }
+
+  get primaryPlatform(): string {
+    return this.allCampaignPlatforms[0]?.platform || '';
+  }
+
+  get primaryContentTypeLabel(): string {
+    const sm = this.campaign?.socialMedia;
+    if (!Array.isArray(sm)) return '';
+    for (const row of sm) {
+      for (const ct of row?.contentTypes || []) {
+        if (ct?.enabled) return ct.name || '';
+      }
+    }
+    return '';
+  }
+
+  get canRevealBrandContact(): boolean {
+    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.statusKey);
+  }
+
+  get brandEmail(): string {
+    return String(this.brand?.email || this.brand?.contactEmail || this.campaign?.brandContactEmail || '').trim();
+  }
+
+  get brandPhone(): string {
+    const b = this.brand;
+    return String(
+      b?.phoneNumber || b?.mobile || b?.contactMobile || b?.phone || b?.contactPhone || this.campaign?.brandContactPhone || ''
+    ).trim();
+  }
+
+  get brandResponseRate(): string {
+    const rate = Number(this.brand?.responseRate || 0);
+    if (!rate) return '';
+    if (rate >= 90) return `Very High (${rate}%)`;
+    if (rate >= 70) return `High (${rate}%)`;
+    if (rate >= 50) return `Medium (${rate}%)`;
+    return `Low (${rate}%)`;
+  }
+
+  get showViewSubmission(): boolean {
+    return ['submitted', 'completed', 'approved'].includes(this.statusKey);
+  }
+
+  get showConfirmReceipt(): boolean {
+    return this.isProduct && this.statusKey === 'working';
+  }
+
+  get showPayoutPendingInfo(): boolean {
+    return this.statusKey === 'approved' || this.statusKey === 'completed';
+  }
+
+  get venueImageUrl(): string {
+    return String(this.campaign?.venuePhoto || this.campaign?.venueImage || this.campaignImageUrl || '').trim();
+  }
+
+  get venueLocationLabel(): string {
+    return this.venueCityState || this.venueDistrictState || '';
+  }
+
+  /** True when the influencer actually sent a counter offer (price was negotiated) */
+  get hasCounterOfferFlow(): boolean {
+    const status = String(this.invite?.counterOffer?.status || '').toLowerCase();
+    return status === 'sent' || status === 'brand_sent' || status === 'accepted'
+      || Number(this.invite?.counterOffer?.requestedAmount || 0) > 0
+      || Number(this.invite?.counterOffer?.offeredAmount || 0) > 0;
+  }
+
+  private buildInviteContext(): any {
+    return {
+      ...this.invite,
+      campaign: this.campaign,
+      campaignAmountPaise: Number(
+        this.invite?.campaignAmountPaise || this.campaign?.pricePerInfluencer || this.campaign?.amount || 0,
+      ),
+    };
+  }
+
+  get userNegotiationTrailText(): string {
+    if (this.adminReview || !this.hasCounterOfferFlow) return '';
+    return buildAdminOfferTrailText(this.buildInviteContext());
+  }
+
+  get userNegotiationTotalText(): string {
+    if (this.adminReview || !this.hasCounterOfferFlow) return '';
+    const t = buildAdminOfferTotalText(this.buildInviteContext());
+    return t.startsWith('No price change') ? '' : t;
+  }
+
+  get deliverableRows(): Array<{ platform: string; contentType: string; price: number }> {
+    const sm = this.campaign?.socialMedia;
+    if (!Array.isArray(sm)) return [];
+    const rows: Array<{ platform: string; contentType: string; price: number }> = [];
+    for (const row of sm) {
+      for (const ct of row?.contentTypes || []) {
+        if (ct?.enabled) {
+          rows.push({ platform: row.platform || '', contentType: ct.name || '', price: Number(ct.price) || 0 });
+        }
+      }
+    }
+    return rows;
   }
   get campaignDescription(): string { return this.campaign?.description || ''; }
   /** Description cleaned of literal "undefined" / empty strings, formatted for display */
@@ -1144,6 +1293,44 @@ export class CampaignDetailModalComponent implements OnChanges {
   onDecline() {
     if (!this.inviteId) return;
     this.decline.emit({ inviteId: this.inviteId });
+  }
+
+  onViewSubmission() { this.viewSubmission.emit(); }
+  onConfirmReceipt() { this.confirmReceipt.emit(); }
+
+  adminInviteOfferTrailText(item: any): string {
+    return buildAdminOfferTrailText({
+      ...item,
+      campaign: this.campaign,
+      campaignAmountPaise: Number(
+        item?.campaignAmountPaise || this.campaign?.pricePerInfluencer || this.campaign?.amount || 0,
+      ),
+    });
+  }
+
+  adminInviteOfferTotalText(item: any): string {
+    return buildAdminOfferTotalText({
+      ...item,
+      campaign: this.campaign,
+      campaignAmountPaise: Number(
+        item?.campaignAmountPaise || this.campaign?.pricePerInfluencer || this.campaign?.amount || 0,
+      ),
+    });
+  }
+
+  adminInviteWorkingFromDate(item: any): string {
+    const d = item?.acceptedAt || item?.paymentConfirmedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  adminInviteUpdatedAtText(item: any): string {
+    const d = item?.updatedAt || item?.acceptedAt || item?.createdAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
   }
 
   onAdminApprove() {

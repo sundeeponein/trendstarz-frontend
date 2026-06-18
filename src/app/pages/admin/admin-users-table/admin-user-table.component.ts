@@ -20,6 +20,7 @@ import { ProfileReviewPanelComponent } from '../../../shared/profile-verificatio
 import { ImageGalleryModalComponent } from '../../../shared/components/image-gallery-modal/image-gallery-modal.component';
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 import { SessionService } from '../../../core/session.service';
+import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -32,6 +33,7 @@ import { SessionService } from '../../../core/session.service';
     ProfileReviewPanelComponent,
     ImageGalleryModalComponent,
     VerificationFieldComponent,
+    AppPaginatorComponent,
   ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
@@ -1461,6 +1463,8 @@ export class AdminUserTableComponent implements OnInit {
     if (!this.hasNextPage()) return;
     this.currentPage += 1;
   }
+
+  onPageChange(page: number): void { this.currentPage = page; }
 
   openUserDetails(user: any): void {
     this.selectedUser = user;

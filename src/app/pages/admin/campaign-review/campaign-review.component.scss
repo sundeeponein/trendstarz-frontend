@@ -123,15 +123,15 @@ $green:     #16a34a;
 
   &--total {
     background: $orange;
-    border-color: darken($orange, 8%);
-    border-left-color: darken($orange, 8%);
+    border-color: #8c3a0c;
+    border-left-color: #8c3a0c;
     color: #fff;
 
     .cm-stat-label { color: rgba(255,255,255,0.75); }
     .cm-stat-value { color: #fff; }
 
     &.cm-stat-card--active {
-      background: darken($orange, 6%);
+      background: #9d430e;
     }
   }
 }

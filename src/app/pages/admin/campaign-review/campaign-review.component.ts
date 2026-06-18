@@ -5,13 +5,14 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-campaign-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent, AppPaginatorComponent],
   templateUrl: './campaign-review.component.html',
   styleUrls: ['./campaign-review.component.scss'],
 })
@@ -38,7 +39,8 @@ export class CampaignReviewComponent implements OnInit {
   collaborationApprovalMode: 'manual' | 'auto_live' = 'manual';
   searchQuery = '';
   currentPage = 1;
-  readonly pageSize = 10;
+  pageSize = 10;
+  readonly pageSizeOptions = [10, 25, 50, 100];
 
   selectedCampaign: any | null = null;
   selectedCampaignPreviewInvite: any | null = null;
@@ -170,6 +172,8 @@ export class CampaignReviewComponent implements OnInit {
 
   prevPage() { if (this.currentPage > 1) this.currentPage--; }
   nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
+  onPageChange(page: number): void { this.currentPage = page; }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
 
   onSearchChange() { this.currentPage = 1; this.cdr.detectChanges(); }
 
