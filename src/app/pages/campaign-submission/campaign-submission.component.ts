@@ -391,7 +391,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   get inviteStatusLabel(): string {
     const map: Record<string, string> = {
       accepted:          'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
       submitted:         'Under Review',
       completed:         'Post Approved',

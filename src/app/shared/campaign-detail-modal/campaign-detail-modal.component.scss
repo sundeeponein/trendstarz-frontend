@@ -510,6 +510,66 @@
   font-size: 0.82rem;
 }
 
+.cdm-view-post-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #60a5fa;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.08);
+  white-space: nowrap;
+
+  &:hover {
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.15);
+    text-decoration: none;
+  }
+}
+
+.cdm-workflow-section {
+  padding-bottom: 0.25rem;
+}
+
+.cdm-workflow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 0.35rem;
+}
+
+.cdm-workflow-step {
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #6b7280;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+
+  &.cdm-workflow-step--done {
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+
+  &.cdm-workflow-step--current {
+    background: rgba(234, 179, 8, 0.15);
+    color: #fbbf24;
+    border-color: rgba(234, 179, 8, 0.35);
+    font-weight: 600;
+  }
+}
+
+.cdm-workflow-step-sep {
+  color: #4b5563;
+  font-size: 0.75rem;
+}
+
 /* Platform pills */
 .cdm-platform-list {
   display: flex;

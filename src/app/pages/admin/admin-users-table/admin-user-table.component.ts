@@ -19,6 +19,7 @@ import {
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 import { ImageGalleryModalComponent } from '../../../shared/components/image-gallery-modal/image-gallery-modal.component';
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
+import { SessionService } from '../../../core/session.service';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -861,6 +862,7 @@ export class AdminUserTableComponent implements OnInit {
     private configService: ConfigService,
     private cd: ChangeDetectorRef,
     private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
 
   ngOnInit() {
@@ -1988,7 +1990,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    this.session.clearSession();
     window.location.href = '/login';
   }
 

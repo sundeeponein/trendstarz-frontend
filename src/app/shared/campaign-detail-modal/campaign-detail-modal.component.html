@@ -108,6 +108,16 @@
         </div>
       </div>
 
+      <div class="cdm-section cdm-workflow-section" *ngIf="adminReview">
+        <div class="cdm-section-label">CAMPAIGN WORKFLOW</div>
+        <div class="cdm-workflow-steps">
+          <ng-container *ngFor="let step of campaignWorkflowSteps; let last = last">
+            <span class="cdm-workflow-step" [class.cdm-workflow-step--done]="step.done" [class.cdm-workflow-step--current]="step.current">{{ step.done && step.doneLabel ? step.doneLabel : step.label }}</span>
+            <span class="cdm-workflow-step-sep" *ngIf="!last">›</span>
+          </ng-container>
+        </div>
+      </div>
+
       <div class="cdm-section" *ngIf="adminReview">
         <div class="cdm-section-label">INVITED PARTICIPANTS & PROGRESS</div>
         <div class="cdm-status-legend">
@@ -175,8 +185,14 @@
               <span class="cdm-pill cdm-pill--invite-status" [ngClass]="'cdm-pill--invite-status-' + adminInviteStatusKey(item.status)">
                 {{ adminInviteStatusLabel(item.status) }}
               </span>
+              <a *ngIf="item.postUrl" [href]="item.postUrl" target="_blank" rel="noopener noreferrer" class="cdm-view-post-link">
+                <i class="bi bi-box-arrow-up-right"></i> View post<span *ngIf="item.postPlatform"> · {{ item.postPlatform }}</span>
+              </a>
+              <div class="cdm-invite-progress-date" *ngIf="item.submittedAt">
+                Posted: {{ item.submittedAt | date:'mediumDate' }}
+              </div>
               <div class="cdm-invite-progress-date" *ngIf="item.updatedAt">
-                {{ item.updatedAt | date:'medium' }}
+                Updated: {{ item.updatedAt | date:'medium' }}
               </div>
             </div>
           </div>

@@ -36,6 +36,10 @@ export class CampaignReviewComponent implements OnInit {
   isSubmittingModeration = false;
   campaignApprovalMode: 'manual' | 'auto_live' = 'manual';
   collaborationApprovalMode: 'manual' | 'auto_live' = 'manual';
+  searchQuery = '';
+  currentPage = 1;
+  readonly pageSize = 10;
+
   selectedCampaign: any | null = null;
   selectedCampaignPreviewInvite: any | null = null;
   selectedCampaignInviteProgressLoading = false;
@@ -128,11 +132,109 @@ export class CampaignReviewComponent implements OnInit {
     });
   }
 
-  get campaignApprovals(): any[] {
-    if (this.campaignApprovalStatusFilter === 'all') {
-      return this.allCampaignApprovals;
+  get totalCampaignCount(): number { return this.allCampaignApprovals.length; }
+
+  get newPendingCount(): number {
+    const cutoff = Date.now() - 86400000;
+    return this.allCampaignApprovals.filter(c =>
+      this.matchesStatusFilter(c, 'pending_review') &&
+      new Date(c.createdAt || 0).getTime() > cutoff
+    ).length;
+  }
+
+  get filteredCampaigns(): any[] {
+    let list = this.campaignApprovalStatusFilter === 'all'
+      ? this.allCampaignApprovals
+      : this.allCampaignApprovals.filter(c => this.matchesStatusFilter(c, this.campaignApprovalStatusFilter));
+
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.trim().toLowerCase();
+      list = list.filter(c => {
+        const title = String(c.title || c.campaignTitle || '').toLowerCase();
+        const brand = String(c.brand?.brandName || c.brand?.name || '').toLowerCase();
+        const id = this.campaignIdLabel(c).toLowerCase();
+        return title.includes(q) || brand.includes(q) || id.includes(q);
+      });
     }
-    return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, this.campaignApprovalStatusFilter));
+    return list;
+  }
+
+  get campaignApprovals(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredCampaigns.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number { return Math.max(1, Math.ceil(this.filteredCampaigns.length / this.pageSize)); }
+  get paginationStart(): number { return this.filteredCampaigns.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1; }
+  get paginationEnd(): number { return Math.min(this.currentPage * this.pageSize, this.filteredCampaigns.length); }
+
+  prevPage() { if (this.currentPage > 1) this.currentPage--; }
+  nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
+
+  onSearchChange() { this.currentPage = 1; this.cdr.detectChanges(); }
+
+  campaignIdLabel(c: any): string {
+    // Prefer the DB-stored sequential number; fall back to last-6 of _id
+    const num = Number(c?.campaignNumber);
+    if (num > 0) return `CMP-${num}`;
+    return `CMP-${String(c?._id || '').slice(-6).toUpperCase()}`;
+  }
+
+  campaignBudgetType(c: any): string {
+    const t = String(c?.campaignType || '').toLowerCase();
+    if (t === 'pay_to_join') return 'Performance Base';
+    if (t === 'paid_collab') return 'Fixed Fee';
+    if (t === 'product') return 'Product Deal';
+    if (t === 'invite_location') return 'Location Deal';
+    const mode = String(c?.pricingModel || c?.budgetType || '').toLowerCase();
+    if (mode.includes('retainer')) return 'Retainer';
+    if (mode.includes('performance')) return 'Performance Base';
+    if (mode.includes('fixed')) return 'Fixed Fee';
+    return 'Fixed Fee';
+  }
+
+  campaignSubmittedDate(c: any): string {
+    const d = new Date(c?.createdAt || c?.updatedAt || '');
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  campaignSubmittedTime(c: any): string {
+    const d = new Date(c?.createdAt || c?.updatedAt || '');
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  campaignLogoInitial(c: any): string {
+    return String(c?.title || c?.campaignTitle || '?').charAt(0).toUpperCase();
+  }
+
+  brandLogoInitial(c: any): string {
+    return String(c?.brand?.brandName || c?.brand?.name || '?').charAt(0).toUpperCase();
+  }
+
+  brandLogoUrl(c: any): string | null {
+    const logo = c?.brand?.logo || c?.brand?.profileImage || c?.brand?.avatar;
+    return typeof logo === 'string' && logo ? logo : null;
+  }
+
+  exportData() {
+    const rows = this.filteredCampaigns.map(c => ({
+      id: this.campaignIdLabel(c),
+      title: c.title || '',
+      brand: c.brand?.brandName || '',
+      status: c.status || '',
+      budget: this.campaignPreviewBudget(c),
+      submitted: this.campaignSubmittedDate(c),
+    }));
+    const csv = [
+      'ID,Title,Brand,Status,Budget,Submitted',
+      ...rows.map(r => `${r.id},${r.title},${r.brand},${r.status},${r.budget},${r.submitted}`),
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'campaigns.csv'; a.click();
+    URL.revokeObjectURL(url);
   }
 
   private matchesStatusFilter(
@@ -196,6 +298,7 @@ export class CampaignReviewComponent implements OnInit {
   setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all') {
     if (this.campaignApprovalStatusFilter === status) return;
     this.campaignApprovalStatusFilter = status;
+    this.currentPage = 1;
   }
 
   getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all'): number {
@@ -375,6 +478,9 @@ export class CampaignReviewComponent implements OnInit {
           counterRequestedAmount: Number(counter?.requestedAmount || 0),
           counterRequestedAmountPaise: Number(counter?.requestedAmountPaise || 0),
           counterOffer: invite?.counterOffer || null,
+          postUrl: invite?.latestSubmission?.postUrl || invite?.postUrl || null,
+          submittedAt: invite?.latestSubmission?.submittedAt || null,
+          postPlatform: invite?.latestSubmission?.postPlatform || null,
         };
       })
       .sort((a: any, b: any) => {
@@ -768,7 +874,7 @@ export class CampaignReviewComponent implements OnInit {
     return `ts-status-${this.getParticipantStatusKey(status)}`;
   }
 
-  private getCampaignStatusKey(status: string): 'accepted' | 'pending' | 'rejected' | 'completed' | 'other' {
+  getCampaignStatusKey(status: string): 'accepted' | 'pending' | 'rejected' | 'completed' | 'other' {
     const normalized = this.normalizeReviewStatus(status);
     if (normalized === 'active') return 'accepted';
     if (normalized === 'completed') return 'completed';
@@ -830,6 +936,25 @@ export class CampaignReviewComponent implements OnInit {
       .filter((chip): chip is { key: string; label: string; count: number } => !!chip);
   }
 
+  getCampaignWorkflowSteps(campaign: any): Array<{ label: string; doneLabel?: string; done: boolean; current: boolean }> {
+    const status = String(campaign?.status || '').toLowerCase();
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    const statuses = rows.map((r: any) => String(r?.status || '').toLowerCase());
+    const isActive = ['active', 'completed'].includes(status);
+    const isDone = status === 'completed';
+    const hasAccepted = statuses.some((s: string) => ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasPaymentConfirmed = statuses.some((s: string) => ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasWorking = statuses.some((s: string) => ['working', 'submitted', 'completed', 'approved'].includes(s));
+    return [
+      { label: 'Created', done: true, current: false },
+      { label: 'Awaiting Admin Approval', doneLabel: 'Admin Approved', done: isActive, current: !isDone && !isActive },
+      { label: 'Awaiting Acceptance', done: hasAccepted, doneLabel: 'Accepted', current: !isDone && isActive && !hasAccepted },
+      { label: 'Awaiting Payment', done: hasPaymentConfirmed, doneLabel: 'Payment Confirmed', current: !isDone && hasAccepted && !hasPaymentConfirmed },
+      { label: 'Awaiting Work', done: hasWorking, doneLabel: 'Working', current: !isDone && hasPaymentConfirmed && !hasWorking },
+      { label: 'Awaiting Completion', done: isDone, doneLabel: 'Completed', current: !isDone && hasWorking },
+    ] as Array<{ label: string; doneLabel?: string; done: boolean; current: boolean }>;
+  }
+
   private campaignInviteStatusChipKey(status: string): string {
     const key = String(status || '').trim().toLowerCase();
     if (key === 'accepted' || key === 'payment_confirmed' || key === 'working') return 'working';
@@ -845,7 +970,7 @@ export class CampaignReviewComponent implements OnInit {
       invited: 'Invited',
       counter_sent: 'Pending',
       accepted: 'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
       submitted: 'Under Review',
       completed: 'Completed',

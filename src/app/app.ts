@@ -7,6 +7,7 @@ import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
 import { PushNotificationService } from './core/push-notification.service';
 import { AnalyticsService } from './core/analytics.service';
+import { ConfigService } from './shared/config.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
@@ -21,6 +22,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
   private lastPushSubscriptionKey: string | null = null;
+  private lastOpenedHeartbeatAt = 0;
 
   constructor(
     private session: SessionService,
@@ -28,6 +30,7 @@ export class App implements OnInit {
     private warmup: WarmupService,
     private pushService: PushNotificationService,
     private analytics: AnalyticsService,
+    private config: ConfigService,
     private titleService: Title,
     private meta: Meta,
     @Inject(DOCUMENT) private document: Document,
@@ -40,11 +43,14 @@ export class App implements OnInit {
     this.setupAnalyticsTracking();
 
     if (isPlatformBrowser(this.platformId)) {
+      this.markOpenedWhenVisible();
       this.session.user$.subscribe((user) => {
         if (!user) {
           this.lastPushSubscriptionKey = null;
           return;
         }
+
+        this.markOpenedWhenVisible(true);
 
         const role = this.normalizeRole((user as any).role);
         const identity = String((user as any).id || (user as any)._id || (user as any).email || role);
@@ -52,10 +58,34 @@ export class App implements OnInit {
         if (this.lastPushSubscriptionKey === key) return;
         this.lastPushSubscriptionKey = key;
 
-        // Defer slightly so login/navigation settles before asking notification permission.
-        setTimeout(() => this._initPush(role), 1200);
+        if (this.pushService.localPreference !== 'disabled') {
+          // Defer slightly so login/navigation settles before asking notification permission.
+          setTimeout(() => this._initPush(role), 1200);
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.markOpenedWhenVisible();
       });
     }
+  }
+
+  private markOpenedWhenVisible(force = false): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (document.visibilityState && document.visibilityState !== 'visible') return;
+    if (!this.session.getToken() || !this.session.getUser()) return;
+    const now = Date.now();
+    if (!force && now - this.lastOpenedHeartbeatAt < 10 * 60 * 1000) return;
+    this.lastOpenedHeartbeatAt = now;
+    this.config.markSessionOpened().subscribe({
+      next: (res) => {
+        const user = this.session.getUser();
+        if (user && res?.lastOpenedAt) {
+          this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
+        }
+      },
+      error: () => {},
+    });
   }
 
   private setupAnalyticsTracking(): void {

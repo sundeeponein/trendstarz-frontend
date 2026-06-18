@@ -886,6 +886,13 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/notifications/mark-all-read`, {});
   }
 
+  markSessionOpened(): Observable<{ success: boolean; lastOpenedAt: string }> {
+    return this.http.post<{ success: boolean; lastOpenedAt: string }>(
+      `${this.apiUrl}/auth/session/opened`,
+      {},
+    );
+  }
+
   submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
   }

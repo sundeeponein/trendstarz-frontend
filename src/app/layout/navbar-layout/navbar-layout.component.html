@@ -135,6 +135,7 @@
             <!-- influencer & brand visible links -->
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand' || user?.role === 'photographer'"><a class="dropdown-item" routerLink="/transactions">Transactions</a></li>
             <li *ngIf="user?.role === 'influencer' || user?.role === 'brand' || user?.role === 'photographer'"><a class="dropdown-item" routerLink="/payment-history">Subscription History</a></li>
+            <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
             
             <!-- Admin visible links -->
             <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Admin Panel</a></li>
@@ -197,6 +198,11 @@
             <a *ngIf="user?.role === 'influencer'" class="mobile-link" routerLink="/influencer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             <a *ngIf="user?.role === 'brand'" class="mobile-link" routerLink="/brand-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             <a *ngIf="user?.role === 'photographer'" class="mobile-link" routerLink="/photographer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+            <a class="mobile-link mobile-link--with-count" routerLink="/settings" (click)="closeMobileMenu()">
+              <i class="bi bi-bell"></i>
+              <span>Notification Settings</span>
+              <span class="mobile-notif-count" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
+            </a>
             <a *ngIf="user?.role === 'influencer' || user?.role === 'brand' || user?.role === 'photographer'" class="mobile-link" routerLink="/payment-history" (click)="closeMobileMenu()"><i class="bi bi-clock-history"></i><span>Subscription History</span></a>
             <a *ngIf="user?.role === 'photographer'" class="mobile-link" routerLink="/photographer-dashboard" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
             <a *ngIf="user?.role === 'admin'" class="mobile-link" routerLink="/admin/deleted-users" (click)="closeMobileMenu()"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>

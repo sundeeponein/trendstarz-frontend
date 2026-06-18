@@ -780,6 +780,26 @@ export class CampaignDetailModalComponent implements OnChanges {
     return Array.isArray(rows) ? rows : [];
   }
 
+  get campaignWorkflowSteps(): Array<{ label: string; doneLabel?: string; done: boolean; current: boolean }> {
+    const status = String(this.campaign?.status || '').toLowerCase();
+    const statuses = this.adminInviteProgress.map((r: any) => String(r?.status || '').toLowerCase());
+    const isActive = ['active', 'completed'].includes(status);
+    const isDone = status === 'completed';
+    const hasAccepted = statuses.some((s: string) => ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasPaymentConfirmed = statuses.some((s: string) => ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasWorking = statuses.some((s: string) => ['working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasSubmitted = statuses.some((s: string) => ['submitted', 'approved'].includes(s));
+    return [
+      { label: 'Created', done: true, current: false },
+      { label: 'Awaiting Admin Approval', doneLabel: 'Admin Approved', done: isActive, current: !isDone && !isActive },
+      { label: 'Awaiting Acceptance', doneLabel: 'Accepted', done: hasAccepted, current: !isDone && isActive && !hasAccepted },
+      { label: 'Awaiting Payment', doneLabel: 'Payment Confirmed', done: hasPaymentConfirmed, current: !isDone && hasAccepted && !hasPaymentConfirmed },
+      { label: 'Awaiting Work', doneLabel: 'Working', done: hasWorking, current: !isDone && hasPaymentConfirmed && !hasWorking },
+      { label: 'Awaiting Submission', doneLabel: 'Submitted', done: hasSubmitted, current: !isDone && hasWorking && !hasSubmitted },
+      { label: 'Awaiting Completion', doneLabel: 'Completed', done: isDone, current: !isDone && hasSubmitted },
+    ];
+  }
+
   get hasAdminInviteProgress(): boolean {
     return this.adminInviteProgress.length > 0;
   }
@@ -853,7 +873,7 @@ export class CampaignDetailModalComponent implements OnChanges {
       pending: 'Pending',
       invited: 'Invited',
       accepted: 'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
       submitted: 'Under Review',
       completed: 'Completed',

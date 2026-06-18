@@ -10,6 +10,7 @@
       <div class="dashboard-welcome-right account-meta-card">
         <div><strong>Registered on:</strong> {{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</div>
         <div><strong>Last Login:</strong> {{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</div>
+        <div><strong>Last Opened:</strong> {{ lastOpenedAtDisplay ? (lastOpenedAtDisplay | date:'medium') : '-' }}</div>
         <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
       </div>
     </div>
@@ -134,7 +135,7 @@
     </div>
   </div>
 
-  <div class="section-card mb-4 profile-traffic-card">
+  <div class="section-card mb-4 profile-traffic-card" p-2>
     <div class="section-title d-flex align-items-center mb-2">
       <span class="dot dot--purple me-2"></span> Profile Traffic
       <span class="section-count ms-auto">Last 30 days</span>

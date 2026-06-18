@@ -1,36 +1,5 @@
 @use '../../shared/styles/dashboard-layout' as *;
 
-// ── Influencer dashboard overrides ──
-.dot {
-  &--orange { background: #e8612d; }
-  &--blue { background: #2b6cb0; }
-  &--purple { background: #805ad5; }
-}
-
-.source-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.16rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  border: 1px solid transparent;
-
-  &--brand {
-    color: #9a3412;
-    background: #ffedd5;
-    border-color: #fdba74;
-  }
-
-  &--collab {
-    color: #5b21b6;
-    background: #f3e8ff;
-    border-color: #c4b5fd;
-  }
-}
-
-
 // ── Chips ──
 .chip {
   display: inline-block;
@@ -372,65 +341,6 @@
     font-size: 0.86rem;
     color: #111827;
   }
-}
-
-.txn-see-all {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f3f4f6;
-  &__link {
-    font-size: 0.85rem;
-    color: #2563eb;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 500;
-    &:hover { text-decoration: underline; }
-  }
-}
-
-.profile-traffic-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
-  gap: 0.75rem;
-}
-
-.traffic-stat-box {
-  border: 1px solid #eceff4;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  background: #f9fafb;
-}
-
-.traffic-stat-label {
-  font-size: 0.82rem;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.traffic-stat-value {
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.traffic-stat-meta {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  color: #6b7280;
-  font-size: 0.82rem;
-}
-
-.traffic-locked-state {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #4b5563;
-  font-size: 0.9rem;
 }
 
 // ── Active / Completed campaign cards ──

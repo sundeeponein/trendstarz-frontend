@@ -1,276 +1,614 @@
-.campaign-review-page {
-  .admin-tabs.review-status-tabs {
-    margin-bottom: 1rem;
+// ── Variables ──────────────────────────────────────────────────────────────
+$bg:        #f0f2f5;
+$surface:   #ffffff;
+$border:    #e5e7eb;
+$text:      #111827;
+$muted:     #6b7280;
+$orange:    #b24b10;
+$blue:      #0069a8;
+$purple:    #6d28d9;
+$red:       #dc2626;
+$dark:      #1c1917;
+$green:     #16a34a;
 
-    .tab-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-    }
-
-    .tab-count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 1.5rem;
-      height: 1.5rem;
-      padding: 0 0.35rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
-      font-size: 0.8rem;
-      line-height: 1;
-    }
-
-    .tab-btn.active .tab-count {
-      background: rgba(255, 255, 255, 0.22);
-    }
-  }
+// ── Page ──────────────────────────────────────────────────────────────────
+.cm-page {
+  background: $bg;
+  min-height: 100vh;
+  padding: 1.75rem 2rem 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.campaign-review-page {
-  background: transparent;
-  color: #e5e7eb;
-  min-height: 100%;
-}
-
-.campaign-review-header {
+// ── Header ────────────────────────────────────────────────────────────────
+.cm-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-
-  h2 {
-    margin: 0 0 0.4rem;
-    font-size: 2rem;
-    font-weight: 700;
-  }
-
-  p {
-    margin: 0;
-    color: #9ca3af;
-    line-height: 1.45;
-  }
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.review-settings-link {
-  white-space: nowrap;
+.cm-title {
+  font-size: 2rem;
+  font-weight: 900;
+  color: $text;
+  margin: 0 0 0.4rem;
+  line-height: 1.1;
 }
 
-.review-card {
-  background: transparent;
+.cm-subtitle {
+  color: $muted;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 640px;
+}
+
+.cm-header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────
+.cm-btn {
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
   border: none;
-  border-radius: 14px;
-  padding: 0;
-}
-
-.review-card-header {
-  margin-bottom: 1rem;
-
-  strong {
-    display: block;
-    font-size: 1rem;
-    margin-bottom: 0.2rem;
-    color: #f3f4f6;
-  }
-
-  p {
-    margin: 0;
-    color: #9ca3af;
-    font-size: 0.9rem;
-  }
-}
-
-.campaign-queue-title-row {
-  gap: 0.8rem;
-}
-
-.campaign-filter-toggle {
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
+  text-decoration: none;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.88; }
+
+  &--outline {
+    background: $surface;
+    color: $text;
+    border: 1px solid $border;
+  }
+
+  &--dark {
+    background: $text;
+    color: #fff;
+  }
+
+  &--primary {
+    background: $blue;
+    color: #fff;
+  }
 }
 
-.campaign-filters {
-  margin-bottom: 0.8rem;
-  padding: 0.85rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+// ── Stat Strip ────────────────────────────────────────────────────────────
+.cm-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.85rem;
+
+  @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 720px)  { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cm-stat-card {
+  background: $surface;
   border-radius: 10px;
-}
+  border: 1px solid $border;
+  border-left-width: 4px;
+  padding: 1rem 1.1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.1s;
 
-.campaign-filter-group {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
-}
-
-.filter-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-
-  .filter-summary-label {
-    color: #d1d5db;
-    font-size: 0.85rem;
-    font-weight: 600;
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+    transform: translateY(-1px);
   }
 
-  strong {
-    font-size: 1rem;
-    color: #f9fafb;
+  &--active {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transform: translateY(-1px);
+  }
+
+  &--orange { border-left-color: $orange; &.cm-stat-card--active { border-color: $orange; } }
+  &--purple { border-left-color: $purple; &.cm-stat-card--active { border-color: $purple; } }
+  &--blue   { border-left-color: $blue;   &.cm-stat-card--active { border-color: $blue; } }
+  &--dark   { border-left-color: #44403c; &.cm-stat-card--active { border-color: #44403c; } }
+
+  &--total {
+    background: $orange;
+    border-color: darken($orange, 8%);
+    border-left-color: darken($orange, 8%);
+    color: #fff;
+
+    .cm-stat-label { color: rgba(255,255,255,0.75); }
+    .cm-stat-value { color: #fff; }
+
+    &.cm-stat-card--active {
+      background: darken($orange, 6%);
+    }
   }
 }
 
-.campaign-filter-actions {
-  display: inline-flex;
+.cm-stat-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: $muted;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.cm-stat-bottom {
+  display: flex;
+  align-items: baseline;
   gap: 0.5rem;
 }
 
-.review-campaign-link {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  color: inherit;
-  text-align: left;
-  display: block;
+.cm-stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: $text;
+  line-height: 1;
 }
 
-.review-campaign-link:hover {
-  color: #ff8a4a;
+.cm-stat-new {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: $orange;
 }
 
-.campaign-list-meta {
+.cm-stat-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+
+  &--blue { background: #dbeafe; color: $blue; }
+}
+
+.cm-stat-icon-bg {
+  font-size: 1.6rem;
+  color: rgba(255,255,255,0.2);
+  margin-left: auto;
+  align-self: center;
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────
+.cm-toolbar {
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.cm-search-wrap {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+
+.cm-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $muted;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.cm-search-input {
+  width: 100%;
+  padding: 0.55rem 1rem 0.55rem 2.4rem;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: $surface;
+  font-size: 0.85rem;
+  color: $text;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: $blue; box-shadow: 0 0 0 2px rgba($blue, 0.12); }
+  &::placeholder { color: #9ca3af; }
+}
+
+.cm-toolbar-right {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cm-filter-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $text;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
   gap: 0.35rem;
-  margin-top: 0.35rem;
+  transition: border-color 0.15s;
 
-  span {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 999px;
-    background: #f3f4f6;
-    color: #4b5563;
-    font-size: 0.72rem;
-    font-weight: 700;
-    line-height: 1.2;
-    padding: 0.25rem 0.5rem;
+  &:hover { border-color: #9ca3af; }
+
+  &--icon {
+    padding: 0.5rem 0.75rem;
   }
 }
 
-.table-scroll-wrapper {
-  overflow-x: auto;
-  overflow-y: auto;
-  max-height: 70vh;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  margin-top: 12px;
-  background: #fff;
+// ── Table ─────────────────────────────────────────────────────────────────
+.cm-table-wrap {
+  background: $surface;
+  border-radius: 10px;
+  border: 1px solid $border;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
 
-  table {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
+.cm-table {
+  width: 100%;
+  border-collapse: collapse;
 
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: #f3f4f6;
-    color: #111827;
-    border-bottom: 1px solid #d1d5db;
-  }
-
-  tbody tr {
-    background: #fff;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  tbody tr:hover {
+  thead tr {
     background: #f9fafb;
+    border-bottom: 1px solid $border;
   }
-
-  tbody td {
-    color: #111827;
-    border-bottom: 1px solid #e5e7eb;
-  }
-}
-
-.review-status-legend {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.campaign-review-table {
-  background: #fff;
-  color: #111827;
 
   thead th {
-    background: #f3f4f6;
-    color: #111827;
-    border-bottom: 1px solid #d1d5db;
-  }
-
-  tbody tr {
-    background: #fff;
-  }
-
-  tbody tr:hover > * {
-    background-color: #f9fafb;
-    color: #111827;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1.1rem;
+    white-space: nowrap;
   }
 
   tbody td {
-    border-color: #e5e7eb;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
   }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #fafafa; }
 }
 
-.campaign-note-preview {
+.cm-row { transition: background 0.1s; }
+
+// Campaign cell
+.cm-campaign-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.cm-campaign-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e8521a 0%, #c44010 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cm-campaign-name {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: $text;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.3;
+
+  &:hover { color: $orange; text-decoration: underline; }
+}
+
+.cm-campaign-id {
+  display: block;
+  font-size: 0.7rem;
+  color: $muted;
+  margin-top: 0.15rem;
+}
+
+// Brand cell
+.cm-brand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cm-brand-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: 1px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: $muted;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cm-brand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cm-brand-name {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: $text;
+}
+
+.cm-brand-email {
+  display: block;
+  font-size: 0.7rem;
+  color: $muted;
+}
+
+// Date/time
+.cm-date {
+  display: block;
+  font-size: 0.82rem;
+  color: $text;
+}
+
+.cm-time {
+  display: block;
+  font-size: 0.7rem;
+  color: $muted;
+}
+
+// Budget
+.cm-budget-amount {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: $text;
+}
+
+.cm-budget-type {
+  display: block;
+  font-size: 0.7rem;
+  color: $blue;
+  font-weight: 600;
+}
+
+// Status pills
+.cm-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--accepted  { background: #d1fae5; color: #065f46; }
+  &--pending   { background: #fef3c7; color: #92400e; }
+  &--rejected  { background: #fee2e2; color: #991b1b; }
+  &--completed { background: #e0f2fe; color: #075985; }
+  &--other     { background: #f3f4f6; color: #374151; }
+}
+
+// Moderation note
+.cm-note-preview {
   margin-top: 4px;
+  font-size: 0.72rem;
   color: #92400e;
   background: #fffbeb;
   border: 1px solid #fde68a;
-  border-radius: 5px;
-  padding: 3px 7px;
-  font-size: 0.75rem;
-  max-width: 240px;
+  border-radius: 4px;
+  padding: 2px 7px;
+  max-width: 200px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  i {
-    margin-right: 4px;
-  }
 }
 
-.participant-metrics-text {
-  font-size: 0.78rem;
-  color: #111827;
-  line-height: 1.35;
-}
+// Action buttons
+.cm-actions-cell { white-space: nowrap; }
 
-.participant-metrics-text--muted {
-  color: #6b7280;
-  margin-top: 0.35rem;
-}
-
-.participant-chip-row {
+.cm-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 0.35rem;
+  gap: 0.4rem;
+  align-items: center;
 }
 
-.moderation-modal {
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    color: #111827;
+.cm-act-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) { opacity: 0.82; }
+
+  &--approve { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+  &--reject  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+  &--msg     { background: $surface; color: $text; border-color: $border; }
+  &--view    { background: $surface; color: $text; border-color: $border; }
+  &--more    { background: transparent; color: $muted; border: none; padding: 0.3rem 0.45rem; font-size: 1rem; }
+}
+
+// Empty / loading
+.cm-state-msg {
+  padding: 2rem;
+  text-align: center;
+  color: $muted;
+  font-size: 0.9rem;
+
+  &--error { color: $red; }
+}
+
+.cm-empty {
+  text-align: center;
+  color: $muted;
+  padding: 2.5rem !important;
+  font-size: 0.9rem;
+}
+
+// Pagination
+.cm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  border-top: 1px solid $border;
+  background: #fafafa;
+}
+
+.cm-pagination-info {
+  font-size: 0.78rem;
+  color: $muted;
+
+  strong { color: $text; }
+}
+
+.cm-pagination-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.cm-page-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid $border;
+  background: $surface;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: $text;
+  transition: background 0.12s;
+
+  &:hover:not(:disabled) { background: #f3f4f6; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────
+.cm-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid $border;
+}
+
+.cm-legend {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.cm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cm-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+
+  &--blue   { background: $blue; }
+  &--orange { background: $orange; }
+  &--purple { background: $purple; }
+  &--red    { background: $red; }
+}
+
+.cm-footer-copy {
+  font-size: 0.72rem;
+  color: $muted;
+  margin: 0 auto;
+}
+
+.cm-footer-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.cm-footer-link {
+  font-size: 0.72rem;
+  color: $muted;
+  text-decoration: none;
+
+  &:hover { color: $text; text-decoration: underline; }
+}
+
+// ── FAB ───────────────────────────────────────────────────────────────────
+.cm-fab {
+  position: fixed;
+  bottom: 1.75rem;
+  right: 1.75rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: $orange;
+  color: #fff;
+  border: none;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba($orange, 0.45);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 100;
+
+  &:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba($orange, 0.55);
   }
+}
+
+// ── Moderation Modal ──────────────────────────────────────────────────────
+.moderation-modal {
+  .modal-header, .modal-body, .modal-footer { color: $text; }
 
   .target-campaign-name {
     font-size: 0.95rem;
@@ -279,9 +617,7 @@
     color: #374151;
   }
 
-  .form-label {
-    font-weight: 600;
-  }
+  .form-label { font-weight: 600; }
 
   textarea.form-control {
     resize: vertical;
@@ -289,41 +625,15 @@
   }
 }
 
+// ── Responsive ────────────────────────────────────────────────────────────
 @media (max-width: 768px) {
-  .campaign-review-page {
-    padding: 1rem !important;
-  }
-
-  .campaign-review-header {
-    flex-direction: column;
-  }
-
-  .review-settings-link {
-    width: 100%;
-  }
-
-  .campaign-queue-title-row {
-    flex-direction: column;
-    align-items: flex-start !important;
-  }
-
-  .campaign-filters {
-    padding: 0.75rem;
-  }
-
-  .campaign-filter-group {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.65rem;
-  }
-
-  .campaign-filter-actions {
-    display: flex;
-    width: 100%;
-
-    .btn {
-      flex: 1;
-    }
-  }
-
+  .cm-page { padding: 1rem 1rem 5rem; }
+  .cm-header { flex-direction: column; }
+  .cm-header-actions { width: 100%; }
+  .cm-toolbar { flex-direction: column; align-items: stretch; }
+  .cm-toolbar-right { justify-content: flex-end; }
+  .cm-table { min-width: 700px; }
+  .cm-table-wrap { overflow-x: auto; }
+  .cm-footer { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .cm-footer-copy { margin: 0; }
 }

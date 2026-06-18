@@ -378,7 +378,7 @@ export class CampaignInviteCardComponent {
       invited:           'Invited',
       counter_sent:      'Confirmation Pending',
       accepted:          this.campaignTypeKey === 'paid_collab' ? 'Confirmation Pending' : 'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
       submitted:         'Under Review',
       completed:         'Completed',
