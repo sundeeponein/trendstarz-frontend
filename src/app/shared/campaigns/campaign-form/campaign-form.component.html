@@ -150,6 +150,10 @@
           </div>
           <textarea formControlName="description" class="field-textarea" rows="5"
                     placeholder="Describe campaign objectives and expectations..."></textarea>
+          <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('description')?.value)">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accepted/confirmed.
+          </div>
           <p class="field-sublabel">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> to see ready-made briefs you can read and copy-paste. Deliverables, timeline and payment are captured in the structured fields below.
           </p>
@@ -247,6 +251,10 @@
           <label class="field-label">Deliverables</label>
           <textarea formControlName="deliverablesText" class="field-textarea" rows="3"
                     placeholder="Example: 1 Reel, 2 Stories, 1 Static post (one deliverable per line or comma-separated)"></textarea>
+          <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('deliverablesText')?.value)">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accept/confirmed.
+          </div>
           <p class="field-sublabel">This helps Influencers or Photo/Videographers understand exact expected output before applying.</p>
         </div>
 
@@ -768,6 +776,10 @@
           </div>
           <textarea [formControl]="$any(form.get('specialInstructions'))" class="field-textarea" rows="4"
                     placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
+          <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('specialInstructions')?.value)">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accepted/confirmed.
+          </div>
           <p class="field-sublabel">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> for ready-made dos, don'ts and must-include points you can copy-paste and edit.
           </p>

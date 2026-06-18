@@ -80,6 +80,12 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     return dashboardBrand.lastLoginAt || sessionUser.lastLoginAt || null;
   }
 
+  get lastOpenedAtDisplay(): string | null {
+    const dashboardBrand = this.dashboard?.brand || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return dashboardBrand.lastOpenedAt || sessionUser.lastOpenedAt || null;
+  }
+
   get isMobileVerified(): boolean {
     const brand = this.dashboard?.brand || {};
     return !!(brand.isMobileVerified ?? brand.mobileVerified ?? brand.phoneVerified ?? brand.isPhoneVerified);

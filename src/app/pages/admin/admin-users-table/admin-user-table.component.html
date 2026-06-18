@@ -89,18 +89,15 @@
       <span class="ts-status-badge ts-status-deleted">Deleted</span>
       <span class="ts-status-badge ts-status-other">Other</span>
     </div>
-    <div class="table-footer col-4">
-      <div class="page-size-control">
-        <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page">
-          <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
-        </select>
-        <span>{{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalVisibleUsers() }} {{ getRoleTitle().toLowerCase() }}</span>
-      </div>
-      <div class="pager-buttons">
-        <button (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()"><i class="bi bi-chevron-left"></i></button>
-        <button (click)="goToNextPage()" [disabled]="!hasNextPage()"><i class="bi bi-chevron-right"></i></button>
-      </div>
-    </div>
+    <app-paginator
+      [total]="getTotalVisibleUsers()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="pageSizeOptions"
+      [entityLabel]="getRoleTitle().toLowerCase()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-paginator>
   </div>
 
   <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
@@ -200,18 +197,15 @@
       <div class="empty-state">{{ isLoading ? 'Loading users...' : 'No users found for current filters.' }}</div>
     </ng-template>
 
-    <div class="table-footer">
-      <div class="page-size-control">
-        <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page">
-          <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
-        </select>
-        <span>{{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalVisibleUsers() }} {{ getRoleTitle().toLowerCase() }}</span>
-      </div>
-      <div class="pager-buttons">
-        <button (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()"><i class="bi bi-chevron-left"></i></button>
-        <button (click)="goToNextPage()" [disabled]="!hasNextPage()"><i class="bi bi-chevron-right"></i></button>
-      </div>
-    </div>
+    <app-paginator
+      [total]="getTotalVisibleUsers()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="pageSizeOptions"
+      [entityLabel]="getRoleTitle().toLowerCase()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-paginator>
   </div>
 </div>
 
@@ -411,6 +405,10 @@
           <div>
             <label>Last Login</label>
             <div>{{ selectedUser.lastLoginAt ? (selectedUser.lastLoginAt | date:'medium') : '-' }}</div>
+          </div>
+          <div>
+            <label>Last Opened</label>
+            <div>{{ selectedUser.lastOpenedAt ? (selectedUser.lastOpenedAt | date:'medium') : '-' }}</div>
           </div>
         </div>
 

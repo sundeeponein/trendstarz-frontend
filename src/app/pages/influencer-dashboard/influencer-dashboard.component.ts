@@ -90,6 +90,12 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return dashboardUser.lastLoginAt || sessionUser.lastLoginAt || null;
   }
 
+  get lastOpenedAtDisplay(): string | null {
+    const dashboardUser = this.dashboard?.user || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return dashboardUser.lastOpenedAt || sessionUser.lastOpenedAt || null;
+  }
+
   get isMobileVerified(): boolean {
     const user = this.dashboard?.user || {};
     return !!(user.isMobileVerified ?? user.mobileVerified ?? user.phoneVerified ?? user.isPhoneVerified);

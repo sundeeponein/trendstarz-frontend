@@ -7,6 +7,7 @@
     <div class="dashboard-welcome-right account-meta-card">
       <div><strong>Registered on:</strong> {{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</div>
       <div><strong>Last Login:</strong> {{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</div>
+      <div><strong>Last Opened:</strong> {{ lastOpenedAtDisplay ? (lastOpenedAtDisplay | date:'medium') : '-' }}</div>
       <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
     </div>
   </div>
@@ -32,7 +33,7 @@
       </div>
     </div>
     <div class="col-md-4 mb-3 mb-md-0">
-      <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
+      <div class="alert-card alert-card--mobile d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">
           <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
           <div>
@@ -66,7 +67,7 @@
     </div>
   </div>
 
-  <div class="section-card mb-4" *ngIf="!loading">
+  <div class="section-card dashboard-action-panel mb-4" *ngIf="!loading">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--blue me-2"></span>
       Dual Role Summary
@@ -342,7 +343,7 @@
   <!-- ═══════════════════════════════════════════════════════
        ACTIVE CAMPAIGNS
   ═══════════════════════════════════════════════════════ -->
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div *ngIf="!loading && activeCampaigns.length > 0" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--blue me-2"></span> Active Campaigns
       <span class="section-count ms-2">{{ activeCampaigns.length }}</span>
@@ -406,7 +407,7 @@
   <!-- ═══════════════════════════════════════════════════════
        COMPLETED CAMPAIGNS
   ═══════════════════════════════════════════════════════ -->
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div *ngIf="!loading && completedCampaigns.length > 0" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span> Completed Campaigns
       <span class="section-count ms-2">{{ completedCampaigns.length }}</span>
@@ -416,17 +417,17 @@
       <div class="section-empty-title">No completed campaigns yet</div>
       <div class="section-empty-desc">Campaigns in Completed or Payout Released will appear here.</div>
     </div>
-    <div *ngFor="let c of completedCampaigns" class="active-camp-card completed">
+    <div *ngFor="let c of completedCampaigns" class="active-camp-card completed mt-3">
       <div class="d-flex align-items-start gap-2" (click)="goToStats(c)">
         <div class="active-camp-dot completed-dot"></div>
         <div class="flex-1">
           <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
           <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
           <div class="d-flex gap-2 mt-1 flex-wrap">
-            <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
+            <span class="badge rounded-pill bg-dark text-white" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
           </div>
         </div>
-        <span *ngIf="c.inviteStatus === 'completed'" class="badge rounded-pill bg-dark ms-2">Completed</span>
+        <span *ngIf="c.inviteStatus === 'completed'" class="badge rounded-pill bg-success ms-2">Completed</span>
         <span *ngIf="c.inviteStatus === 'approved'" class="badge rounded-pill bg-info text-dark ms-2">Payout Released</span>
         <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-warning text-dark ms-2">Under Review</span>
       </div>
@@ -447,9 +448,8 @@
       </div>
     </div>
   </div>
-</div>
-
-<div class="section-card mb-4 profile-traffic-card">
+  <!-- Profile Traffic hidden - by sundeep -->
+  <div class="section-card mb-4 profile-traffic-card p-2 d-none">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span>
       Profile Traffic
@@ -481,6 +481,7 @@
     <br>
     <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>
   </div>
+</div>
 
 <!-- Shared Campaign Detail Modal -->
 <app-campaign-detail-modal

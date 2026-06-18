@@ -1,185 +1,283 @@
-<div class="admin-dashboard container py-4">
-  <h2 class="mb-4 text-white">Admin Dashboard</h2>
+<div class="adm-dash">
 
-  <!-- Card Style Overview -->
-  <section class="stats-strip mb-4">
-    <article class="stat-card">
-      <p class="stat-title">Total</p>
-      <h3 class="stat-total">{{ influencerCount + brandCount + photographerCount }}</h3>
-      <div class="stat-split-head">
-        <span>Influencers</span>
-        <span>Brands</span>
-        <span>Creators</span>
+  <!-- ══ STATS STRIP ══ -->
+  <section class="adm-stats-strip">
+
+    <article class="adm-stat-card adm-stat-card--orange">
+      <div class="adm-stat-top">
+        <div>
+          <p class="adm-stat-label">Total Registered</p>
+          <h2 class="adm-stat-value">{{ totalRegistered | number }}</h2>
+        </div>
+        <span class="adm-stat-icon adm-stat-icon--orange">
+          <i class="bi bi-people-fill"></i>
+        </span>
       </div>
-      <div class="stat-split-values">
-        <span>{{ influencerCount }}</span>
-        <span>{{ brandCount }}</span>
-        <span>{{ photographerCount }}</span>
+      <div class="adm-stat-breakdown">
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">INFLUENCERS</span>
+          <span class="adm-bd-val">{{ influencerCount | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">BRANDS</span>
+          <span class="adm-bd-val">{{ brandCount | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">CREATORS</span>
+          <span class="adm-bd-val">{{ photographerCount | number }}</span>
+        </div>
       </div>
     </article>
 
-    <article class="stat-card warn-card">
-      <p class="stat-title">Pending</p>
-      <h3 class="stat-total">{{ totalPending }}</h3>
-      <div class="stat-split-head">
-        <span>Influencers</span>
-        <span>Brands</span>
-        <span>Creators</span>
+    <article class="adm-stat-card adm-stat-card--blue">
+      <div class="adm-stat-top">
+        <div>
+          <p class="adm-stat-label">Verified High-Trust</p>
+          <h2 class="adm-stat-value">{{ totalVerified | number }}</h2>
+        </div>
+        <span class="adm-stat-icon adm-stat-icon--blue">
+          <i class="bi bi-patch-check-fill"></i>
+        </span>
       </div>
-      <div class="stat-split-values">
-        <span>{{ influencerPending }}</span>
-        <span>{{ brandPending }}</span>
-        <span>{{ photographerPending }}</span>
-      </div>
-    </article>
-
-    <article class="stat-card ok-card">
-      <p class="stat-title">Verified</p>
-      <h3 class="stat-total">{{ totalVerified }}</h3>
-      <div class="stat-split-head">
-        <span>Influencers</span>
-        <span>Brands</span>
-        <span>Creators</span>
-      </div>
-      <div class="stat-split-values">
-        <span>{{ influencerActivated }}</span>
-        <span>{{ brandActivated }}</span>
-        <span>{{ photographerActivated }}</span>
+      <div class="adm-stat-breakdown">
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">INFLUENCERS</span>
+          <span class="adm-bd-val">{{ influencerActivated | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">BRANDS</span>
+          <span class="adm-bd-val">{{ brandActivated | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">CREATORS</span>
+          <span class="adm-bd-val">{{ photographerActivated | number }}</span>
+        </div>
       </div>
     </article>
 
-    <article class="stat-card premium-card">
-      <p class="stat-title">Premium</p>
-      <h3 class="stat-total">{{ premiumTotal }}</h3>
-      <div class="stat-split-head">
-        <span>Influencers</span>
-        <span>Brands</span>
-        <span>Creators</span>
+    <article class="adm-stat-card adm-stat-card--amber">
+      <div class="adm-stat-top">
+        <div>
+          <p class="adm-stat-label">Pending Review</p>
+          <h2 class="adm-stat-value">{{ totalPending | number }}</h2>
+        </div>
+        <span class="adm-stat-icon adm-stat-icon--amber">
+          <i class="bi bi-clipboard2-check"></i>
+        </span>
       </div>
-      <div class="stat-split-values">
-        <span>{{ influencerPremium }}</span>
-        <span>{{ brandPremium }}</span>
-        <span>{{ photographerPremium }}</span>
+      <div class="adm-stat-breakdown">
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">INFLUENCERS</span>
+          <span class="adm-bd-val">{{ influencerPending | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">BRANDS</span>
+          <span class="adm-bd-val">{{ brandPending | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">CREATORS</span>
+          <span class="adm-bd-val">{{ photographerPending | number }}</span>
+        </div>
       </div>
     </article>
 
-    <article class="stat-card danger-card">
-      <p class="stat-title">Suspicious / Flagged</p>
-      <h3 class="stat-total">{{ suspiciousFlaggedTotal }}</h3>
-      <div class="stat-split-head">
-        <span>Influencers</span>
-        <span>Brands</span>
-        <span>Creators</span>
+    <article class="adm-stat-card adm-stat-card--red">
+      <div class="adm-stat-top">
+        <div>
+          <p class="adm-stat-label">Suspicious / Flagged</p>
+          <h2 class="adm-stat-value">{{ suspiciousFlaggedTotal | number }}</h2>
+        </div>
+        <span class="adm-stat-icon adm-stat-icon--red">
+          <i class="bi bi-exclamation-circle-fill"></i>
+        </span>
       </div>
-      <div class="stat-split-values">
-        <span>{{ suspiciousFlaggedInfluencers }}</span>
-        <span>{{ suspiciousFlaggedBrands }}</span>
-        <span>{{ suspiciousFlaggedPhotographers }}</span>
+      <div class="adm-stat-breakdown">
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">INFLUENCERS</span>
+          <span class="adm-bd-val">{{ suspiciousFlaggedInfluencers | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">BRANDS</span>
+          <span class="adm-bd-val">{{ suspiciousFlaggedBrands | number }}</span>
+        </div>
+        <div class="adm-stat-breakdown-col">
+          <span class="adm-bd-label">CREATORS</span>
+          <span class="adm-bd-val">{{ suspiciousFlaggedPhotographers | number }}</span>
+        </div>
       </div>
     </article>
+
   </section>
 
-  <!-- Recent Registrations & 7-Day Chart -->
-   <div class="role-tabs" role="tablist" aria-label="Recent registration role filter">
-            <button
-              type="button"
-              class="role-tab"
-              [class.active]="selectedRoleTab === 'influencer'"
-              (click)="setRoleTab('influencer')"
+  <!-- ══ MAIN GRID ══ -->
+  <div class="adm-main-grid">
+
+    <!-- LEFT COLUMN -->
+    <div class="adm-col-left">
+
+      <!-- Campaign Pulse -->
+      <article class="adm-card adm-campaign-pulse">
+        <header class="adm-card-header adm-card-header--between">
+          <div>
+            <h3 class="adm-card-title">Campaign Pulse</h3>
+            <p class="adm-card-sub">Real-time status of brand-creator collaborations.</p>
+          </div>
+          <div class="adm-pulse-controls">
+            <select
+              class="adm-date-select"
+              [value]="campaignDateFilter"
+              (change)="setCampaignDateFilter($any($event.target).value)"
             >
-              <i class="bi bi-person-fill role-tab-icon" aria-hidden="true"></i>
+              <option *ngFor="let opt of campaignDateOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <a routerLink="/admin/campaign-review" class="adm-view-link">
+              View Full Queue <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </header>
+        <div class="adm-pulse-grid">
+          <div class="adm-pulse-item adm-pulse-item--review">
+            <span class="adm-pulse-label">REVIEW QUEUE</span>
+            <span class="adm-pulse-count adm-pulse-count--review">{{ campaignReviewCount | number }}</span>
+            <div class="adm-pulse-bar">
+              <div class="adm-pulse-bar-fill adm-pulse-bar-fill--review"
+                   [style.width]="campaignReviewCount > 0 ? '60%' : '10%'"></div>
+            </div>
+          </div>
+          <div class="adm-pulse-item adm-pulse-item--live">
+            <span class="adm-pulse-label">LIVE NOW</span>
+            <span class="adm-pulse-count adm-pulse-count--live">{{ campaignLiveCount | number }}</span>
+            <div class="adm-pulse-bar">
+              <div class="adm-pulse-bar-fill adm-pulse-bar-fill--live"
+                   [style.width]="campaignLiveCount > 0 ? '85%' : '10%'"></div>
+            </div>
+          </div>
+          <div class="adm-pulse-item adm-pulse-item--draft">
+            <span class="adm-pulse-label">DRAFT MODE</span>
+            <span class="adm-pulse-count adm-pulse-count--draft">{{ campaignDraftCount | number }}</span>
+            <div class="adm-pulse-bar">
+              <div class="adm-pulse-bar-fill adm-pulse-bar-fill--draft"
+                   [style.width]="campaignDraftCount > 0 ? '40%' : '10%'"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Recent Registrations -->
+      <article class="adm-card adm-recent-reg">
+        <header class="adm-card-header adm-card-header--between">
+          <div>
+            <h3 class="adm-card-title">Recent Registrations</h3>
+          </div>
+          <div class="adm-role-tabs">
+            <button class="adm-role-tab" [class.active]="selectedRoleTab === 'all'" (click)="setRoleTab('all')">
+              All Roles
+            </button>
+            <button class="adm-role-tab" [class.active]="selectedRoleTab === 'influencer'" (click)="setRoleTab('influencer')">
               Influencers
             </button>
-            <button
-              type="button"
-              class="role-tab"
-              [class.active]="selectedRoleTab === 'brand'"
-              (click)="setRoleTab('brand')"
-            >
-              <i class="bi bi-building role-tab-icon" aria-hidden="true"></i>
+            <button class="adm-role-tab" [class.active]="selectedRoleTab === 'brand'" (click)="setRoleTab('brand')">
               Brands
             </button>
-            <button
-              type="button"
-              class="role-tab"
-              [class.active]="selectedRoleTab === 'photographer'"
-              (click)="setRoleTab('photographer')"
-            >
-              <i class="bi bi-camera-fill role-tab-icon" aria-hidden="true"></i>
-              Creators
-            </button>
           </div>
-  <section class="recent-section mb-4">
-
-    <!-- 7-Day chart: shown above heading on the right via grid -->
-    <div class="recent-grid">
-
-      <!-- Left: Recent Registrations Table -->
-      <article class="recent-card registrations-card">
-        <header class="recent-header">
-          <div>
-            <h4>Recent Registrations</h4>
-            <span>Role-based view for faster moderation</span>
-          </div>
-          
         </header>
-        <div *ngIf="visibleRecentRegistrations.length === 0" class="no-data">No registrations in this role yet.</div>
-        <div *ngFor="let r of visibleRecentRegistrations" class="reg-row">
-          <span class="reg-badge" [class.inf]="r.type === 'influencer'" [class.brand]="r.type === 'brand'" [class.photographer]="r.type === 'photographer'">
-            <i [class]="r.type === 'influencer' ? 'bi bi-person-fill' : r.type === 'brand' ? 'bi bi-building' : 'bi bi-camera-fill'" aria-hidden="true"></i>
-          </span>
-          <div class="reg-info">
-            <strong>{{ r.name }}</strong>
-            <small>{{ r.email }}</small>
+
+        <div class="adm-reg-list">
+          <div *ngIf="visibleRecentRegistrations.length === 0" class="adm-empty">
+            No registrations yet.
           </div>
-          <div class="reg-meta">
-            <span class="reg-status" [class.accepted]="r.status === 'accepted'" [class.pending]="r.status === 'pending'">
-              {{ r.status }}
+          <div *ngFor="let r of visibleRecentRegistrations" class="adm-reg-row">
+            <div class="adm-reg-avatar"
+                 [class.adm-reg-avatar--inf]="r.type === 'influencer'"
+                 [class.adm-reg-avatar--brand]="r.type === 'brand'"
+                 [class.adm-reg-avatar--creator]="r.type === 'photographer'">
+              <img *ngIf="r.avatar" [src]="r.avatar" [alt]="r.name" class="adm-reg-avatar-img" />
+              <span *ngIf="!r.avatar" class="adm-reg-avatar-initials">
+                {{ r.name.charAt(0).toUpperCase() }}
+              </span>
+            </div>
+            <div class="adm-reg-info">
+              <strong class="adm-reg-name">{{ r.name }}</strong>
+              <span class="adm-reg-meta">{{ r.email }} &bull; Joined {{ timeAgo(r.createdAt) }}</span>
+            </div>
+            <span class="adm-role-pill"
+                  [class.adm-role-pill--inf]="r.type === 'influencer'"
+                  [class.adm-role-pill--brand]="r.type === 'brand'"
+                  [class.adm-role-pill--creator]="r.type === 'photographer'">
+              {{ r.type === 'influencer' ? 'INFLUENCER' : r.type === 'brand' ? 'BRAND' : 'CREATOR' }}
             </span>
-            <small class="reg-date">{{ r.createdAt | date:'d MMM, HH:mm' }}</small>
+            <div class="adm-reg-actions">
+              <button class="adm-action-btn adm-action-btn--approve" title="Approve">
+                <i class="bi bi-check-circle"></i>
+              </button>
+              <button class="adm-action-btn adm-action-btn--ban" title="Restrict">
+                <i class="bi bi-slash-circle"></i>
+              </button>
+            </div>
           </div>
         </div>
       </article>
 
-      <!-- Right: 7-Day Registration Bar Chart -->
-      <!-- Right: Verification / Pending Queue -->
-      <article class="recent-card queue-card">
-        <header class="recent-header">
-          <div>
-            <h4>Pending Actions Queue</h4>
-            <span>{{ selectedRoleTab === 'influencer' ? 'Influencer queue' : selectedRoleTab === 'brand' ? 'Brand queue' : 'Creator queue' }}</span>
-          </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="adm-col-right">
+
+      <!-- Moderation Queue -->
+      <article class="adm-card adm-mod-queue">
+        <header class="adm-mod-queue-header">
+          <span class="adm-mod-icon"><i class="bi bi-exclamation-lg"></i></span>
+          <h3 class="adm-card-title">Moderation Queue</h3>
         </header>
 
-        <div class="queue-row" [class.queue-alert]="visiblePendingApprovalCount > 0">
-          <span class="queue-icon" aria-hidden="true"><i class="bi bi-person-check"></i></span>
-          <span class="queue-label">Account Approvals</span>
-          <span class="queue-count" [class.nonzero]="visiblePendingApprovalCount > 0">{{ visiblePendingApprovalCount }}</span>
-        </div>
-        <div class="queue-row" [class.queue-alert]="visiblePendingMobileCount > 0">
-          <span class="queue-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
-          <span class="queue-label">Mobile Unverified</span>
-          <span class="queue-count" [class.nonzero]="visiblePendingMobileCount > 0">{{ visiblePendingMobileCount }}</span>
-        </div>
-        <div class="queue-row" [class.queue-alert]="visiblePendingEmailCount > 0">
-          <span class="queue-icon" aria-hidden="true"><i class="bi bi-envelope-exclamation"></i></span>
-          <span class="queue-label">Email Unverified</span>
-          <span class="queue-count" [class.nonzero]="visiblePendingEmailCount > 0">{{ visiblePendingEmailCount }}</span>
-        </div>
+        <div class="adm-mod-items">
+          <div *ngFor="let item of moderationItems" class="adm-mod-item">
+            <div class="adm-mod-item-top">
+              <span class="adm-mod-tag" [ngClass]="item.tagClass">{{ item.tag }}</span>
+              <span class="adm-mod-time">{{ item.timeAgo }}</span>
+            </div>
+            <p class="adm-mod-title">{{ item.title }}</p>
+            <p class="adm-mod-sub">{{ item.subtitle }}</p>
+            <div class="adm-mod-btns">
+              <a [routerLink]="item.routerLink" class="adm-mod-btn" [ngClass]="item.primaryClass">
+                {{ item.primaryAction }}
+              </a>
+              <button *ngIf="item.secondaryAction" class="adm-mod-btn adm-mod-btn--dismiss">
+                {{ item.secondaryAction }}
+              </button>
+            </div>
+          </div>
 
-        <div *ngIf="visiblePendingUsers.length > 0" class="queue-preview-header">Latest Pending</div>
-        <div *ngFor="let u of visiblePendingUsers" class="queue-preview-row">
-          <span class="reg-badge" [class.inf]="u.type === 'influencer'" [class.brand]="u.type === 'brand'" [class.photographer]="u.type === 'photographer'">
-            <i [class]="u.type === 'influencer' ? 'bi bi-person-fill' : u.type === 'brand' ? 'bi bi-building' : 'bi bi-camera-fill'" aria-hidden="true"></i>
-          </span>
-          <div class="queue-preview-info">
-            <strong>{{ u.name }}</strong>
-            <small>{{ u.label }}</small>
+          <div *ngIf="moderationItems.length === 0" class="adm-empty adm-empty--center">
+            <i class="bi bi-check2-all"></i>
+            <span>No pending tasks</span>
           </div>
         </div>
-        <div *ngIf="visiblePendingUsers.length === 0" class="no-data">No pending users in this role.</div>
+
+        <a routerLink="/admin/campaign-review" class="adm-manage-all-btn">Manage All Tasks</a>
       </article>
+
+      <!-- Platform Activity -->
+      <article class="adm-card adm-activity">
+        <p class="adm-activity-label">Platform Activity</p>
+        <h3 class="adm-activity-growth">
+          {{ activityGrowthPct >= 0 ? '+' : '' }}{{ activityGrowthPct }}% Growth
+        </h3>
+        <div class="adm-activity-bars" *ngIf="activityBars.length > 0">
+          <div *ngFor="let bar of activityBars" class="adm-bar-wrap">
+            <div class="adm-bar-track">
+              <div
+                class="adm-bar-fill"
+                [class.adm-bar-fill--highlight]="bar.highlighted"
+                [style.height]="activityBarHeight(bar)"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <p class="adm-activity-caption">Activity tracking over last 7 days</p>
+      </article>
+
     </div>
-  </section>
+  </div>
 
 </div>

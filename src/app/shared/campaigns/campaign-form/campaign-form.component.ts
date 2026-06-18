@@ -2529,4 +2529,15 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       return inviteInfId === this.getRecipientId(inf);
     });
   }
+
+  containsContactInfo(value: string | null | undefined): boolean {
+    if (!value) return false;
+    const patterns = [
+      /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/,
+      /\b\d{10}\b|\+?91[\s\-]?\d{10}/,
+      /https?:\/\/\S+|www\.\S+/i,
+      /\bwhatsapp\b|\bwa\.me\b|\bt\.me\b|\btelegram\b/i,
+    ];
+    return patterns.some(p => p.test(value));
+  }
 }

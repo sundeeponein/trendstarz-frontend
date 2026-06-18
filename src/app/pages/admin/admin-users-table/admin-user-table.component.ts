@@ -19,6 +19,8 @@ import {
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 import { ImageGalleryModalComponent } from '../../../shared/components/image-gallery-modal/image-gallery-modal.component';
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
+import { SessionService } from '../../../core/session.service';
+import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -31,6 +33,7 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
     ProfileReviewPanelComponent,
     ImageGalleryModalComponent,
     VerificationFieldComponent,
+    AppPaginatorComponent,
   ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
@@ -861,6 +864,7 @@ export class AdminUserTableComponent implements OnInit {
     private configService: ConfigService,
     private cd: ChangeDetectorRef,
     private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
 
   ngOnInit() {
@@ -1460,6 +1464,8 @@ export class AdminUserTableComponent implements OnInit {
     this.currentPage += 1;
   }
 
+  onPageChange(page: number): void { this.currentPage = page; }
+
   openUserDetails(user: any): void {
     this.selectedUser = user;
     this.selectedUserType = this.activeTab;
@@ -1988,7 +1994,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    this.session.clearSession();
     window.location.href = '/login';
   }
 

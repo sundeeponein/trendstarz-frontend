@@ -2722,6 +2722,45 @@
   }
 }
 
+.expand-role-email {
+  display: block;
+  font-size: 0.71rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.expand-dates-row {
+  display: block;
+  font-size: 0.71rem;
+  color: #6b7280;
+  margin-top: 3px;
+  i { margin-right: 3px; color: #9ca3af; }
+}
+
+.expand-negotiation {
+  display: block;
+  font-size: 0.72rem;
+  color: #374151;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.expand-negotiation-total {
+  display: block;
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-top: 2px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.expand-updated-at {
+  display: block;
+  font-size: 0.68rem;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
 .expand-empty-inf {
   font-size: 0.84rem;
   color: $text-muted;
@@ -3748,4 +3787,214 @@
   padding: 12px 18px;
   border-top: 1px solid $border;
   background: #fafafa;
+}
+
+// ── Campaign Inbox section (influencer / photographer) ─────────
+.ci-inbox-section {
+  padding-bottom: 24px;
+}
+
+.ci-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-top: 8px;
+}
+
+.ci-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.ci-subtitle {
+  font-size: 0.88rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ci-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ci-refresh-btn, .ci-info-btn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.95rem;
+  &:hover { background: #f3f4f6; color: #111827; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// Row 1: Type tabs (All / Invitations / Active Work)
+.ci-type-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+  width: fit-content;
+}
+
+.ci-type-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  i { font-size: 0.82rem; }
+
+  &.active {
+    background: #fff;
+    color: #111827;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+}
+
+.ci-type-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #374151;
+  padding: 1px 6px;
+  border-radius: 999px;
+  .ci-type-tab.active & { background: #f0f2f5; }
+}
+
+// Row 2: Status tabs
+.ci-status-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ci-status-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+
+  &:hover { border-color: #9ca3af; }
+
+  &.active {
+    background: #d2521a;
+    border-color: #d2521a;
+    color: #fff;
+  }
+}
+
+.ci-status-count {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.12);
+  .ci-status-tab.active & { background: rgba(255,255,255,0.25); }
+
+  &--pending   { background: #fed7aa; color: #c2410c; .ci-status-tab.active & { background: rgba(255,255,255,0.25); color: #fff; } }
+  &--accepted  { background: #d1fae5; color: #065f46; .ci-status-tab.active & { background: rgba(255,255,255,0.25); color: #fff; } }
+  &--completed { background: #dbeafe; color: #1d4ed8; .ci-status-tab.active & { background: rgba(255,255,255,0.25); color: #fff; } }
+}
+
+// Empty states
+.ci-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+
+  &--first { padding: 64px 24px; }
+}
+
+.ci-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-bottom: 18px;
+}
+
+.ci-empty-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.ci-empty-sub {
+  font-size: 0.88rem;
+  color: #6b7280;
+  max-width: 380px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.ci-empty-link {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #d2521a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  &:hover { text-decoration: underline; }
+}
+
+.ci-clear-filter {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  &:hover { background: #f3f4f6; }
+}
+
+// Invite list spacing
+.invite-list .cic-card + .cic-card,
+.invite-list > :not(:first-child) {
+  margin-top: 12px;
 }

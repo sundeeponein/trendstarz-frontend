@@ -317,56 +317,36 @@
     </div>
 
     <!-- ───── INBOX (influencer view) ───── -->
-    <div class="py-3 my-invites-section" *ngIf="showInfluencerInboxSection">
-      <div class="my-invites-header">
-        <div class="inbox-title-group">
-          <h2 class="my-invites-title">
-            <i class="bi bi-inbox-fill"></i> Inbox
-          </h2>
-          <span class="inbox-subtitle">{{ influencerInboxSubtitle }}</span>
+    <div class="ci-inbox-section" *ngIf="showInfluencerInboxSection">
+
+      <!-- ── CAMPAIGN INBOX HEADER ────────────────────────── -->
+      <div class="ci-header">
+        <div>
+          <h1 class="ci-title">Campaign Inbox</h1>
+          <p class="ci-subtitle">Manage your invitations and active collaborations with precision.</p>
         </div>
-        <div class="inbox-header-actions">
-          <span class="pending-badge" *ngIf="getPendingInviteCount() > 0">
-            {{ getPendingInviteCount() }} pending
-          </span>
-          <span class="missed-badge" *ngIf="myInvitesMissed.length > 0">
-            {{ myInvitesMissed.length }} expired
-          </span>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-secondary"
-            title="Refresh invites"
-            [disabled]="myInvitesLoading"
-            (click)="reloadMyInvites()"
-          >
+        <div class="ci-header-actions">
+          <button type="button" class="ci-refresh-btn" title="Refresh" [disabled]="myInvitesLoading" (click)="reloadMyInvites()">
             <i class="bi bi-arrow-clockwise" [class.spin]="myInvitesLoading"></i>
           </button>
-          <button
-            type="button"
-            class="flow-info-trigger border-0"
-            title="How campaigns work — full flow guide"
-            (click)="flowHelp.openCampaignFlowDiagram()"
-          >
+          <button type="button" class="ci-info-btn" title="How campaigns work" (click)="flowHelp.openCampaignFlowDiagram()">
             <i class="bi bi-info-circle"></i>
           </button>
         </div>
       </div>
 
-      <!-- Type filter chips (only show when there are invites of both types) -->
-      <div class="inbox-type-filter" *ngIf="!myInvitesLoading && myInvites.length > 0 && isInfluencerView">
-        <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'all'" (click)="myInviteTypeFilter = 'all'">
+      <!-- ── ROW 1: Type tabs (All / Invitations / Active Work) ── -->
+      <div class="ci-type-tabs" *ngIf="!myInvitesLoading && myInvites.length > 0">
+        <button class="ci-type-tab" [class.active]="myInviteTypeFilter === 'all'" (click)="myInviteTypeFilter = 'all'">
           All
-          <span class="itc-count">{{ myInvites.length }}</span>
         </button>
-        <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'brand'" (click)="myInviteTypeFilter = 'brand'"
-                *ngIf="myBrandCount > 0">
-          <i class="bi bi-megaphone"></i> Brand Campaigns
-          <span class="itc-count">{{ myBrandCount }}</span>
+        <button class="ci-type-tab" [class.active]="myInviteTypeFilter === 'brand'" (click)="myInviteTypeFilter = 'brand'" *ngIf="myBrandCount > 0">
+          <i class="bi bi-megaphone"></i> Invitations
+          <span class="ci-type-count" *ngIf="myBrandCount > 0">{{ myBrandCount }}</span>
         </button>
-        <button class="inbox-type-chip" [class.active]="myInviteTypeFilter === 'collab'" (click)="myInviteTypeFilter = 'collab'"
-                *ngIf="myCollabCount > 0">
-          <i class="bi bi-camera-reels"></i> Collaborations
-          <span class="itc-count">{{ myCollabCount }}</span>
+        <button class="ci-type-tab" [class.active]="myInviteTypeFilter === 'collab'" (click)="myInviteTypeFilter = 'collab'" *ngIf="myCollabCount > 0">
+          <i class="bi bi-camera-reels"></i> Active Work
+          <span class="ci-type-count" *ngIf="myCollabCount > 0">{{ myCollabCount }}</span>
         </button>
       </div>
 
@@ -391,34 +371,28 @@
 
       <div *ngIf="!myInvitesLoading">
         <ng-container *ngIf="myInvites.length > 0">
-          <!-- Invite tabs -->
-          <div class="invite-tabs-shell mobile-scroll-shell">
-            <div class="pill-tabs invite-tabs-row mobile-scroll-row">
-              <button class="pill-tab" [class.active]="myInviteTab === 'pending'" (click)="myInviteTab = 'pending'">
-                Pending
-                <span class="pill-tab-badge badge-pending" *ngIf="myInvitesPending.length > 0">{{ myInvitesPending.length }}</span>
-              </button>
-              <button class="pill-tab" [class.active]="myInviteTab === 'missed'" (click)="myInviteTab = 'missed'">
-                Expired / Missed
-                <span class="pill-tab-badge badge-declined" *ngIf="myInvitesMissed.length > 0">{{ myInvitesMissed.length }}</span>
-              </button>
-              <button class="pill-tab" [class.active]="myInviteTab === 'accepted'" (click)="myInviteTab = 'accepted'">
-                Accepted
-                <span class="pill-tab-badge badge-accepted" *ngIf="myInvitesAccepted.length > 0">{{ myInvitesAccepted.length }}</span>
-              </button>
-              <button class="pill-tab" [class.active]="myInviteTab === 'completed'" (click)="myInviteTab = 'completed'">
-                Completed
-                <span class="pill-tab-badge badge-completed" *ngIf="myInvitesCompleted.length > 0">{{ myInvitesCompleted.length }}</span>
-              </button>
-              <button class="pill-tab" [class.active]="myInviteTab === 'declined'" (click)="myInviteTab = 'declined'">
-                Declined
-                <span class="pill-tab-badge badge-declined" *ngIf="myInvitesDeclined.length > 0">{{ myInvitesDeclined.length }}</span>
-              </button>
-            </div>
-            <div class="invite-tabs-mobile-hint mobile-scroll-hint">
-              <i class="bi bi-arrow-left-right"></i>
-              Swipe left or right to see more tabs
-            </div>
+          <!-- ── ROW 2: Status tabs ── -->
+          <div class="ci-status-tabs">
+            <button class="ci-status-tab" [class.active]="myInviteTab === 'pending'" (click)="myInviteTab = 'pending'">
+              Pending
+              <span class="ci-status-count ci-status-count--pending" *ngIf="myInvitesPending.length > 0">{{ myInvitesPending.length }}</span>
+            </button>
+            <button class="ci-status-tab" [class.active]="myInviteTab === 'accepted'" (click)="myInviteTab = 'accepted'">
+              Accepted
+              <span class="ci-status-count ci-status-count--accepted" *ngIf="myInvitesAccepted.length > 0">{{ myInvitesAccepted.length }}</span>
+            </button>
+            <button class="ci-status-tab" [class.active]="myInviteTab === 'completed'" (click)="myInviteTab = 'completed'">
+              Completed
+              <span class="ci-status-count ci-status-count--completed" *ngIf="myInvitesCompleted.length > 0">{{ myInvitesCompleted.length }}</span>
+            </button>
+            <button class="ci-status-tab" [class.active]="myInviteTab === 'declined'" (click)="myInviteTab = 'declined'">
+              Declined
+              <span class="ci-status-count" *ngIf="myInvitesDeclined.length > 0">{{ myInvitesDeclined.length }}</span>
+            </button>
+            <button class="ci-status-tab" [class.active]="myInviteTab === 'missed'" (click)="myInviteTab = 'missed'">
+              Expired
+              <span class="ci-status-count" *ngIf="myInvitesMissed.length > 0">{{ myInvitesMissed.length }}</span>
+            </button>
           </div>
 
           <div class="invite-list" *ngIf="myInvitesFiltered.length > 0">
@@ -447,27 +421,33 @@
             </ng-container>
           </div>
 
-          <div class="empty-invites" *ngIf="myInvitesFiltered.length === 0">
-            <i class="bi bi-inbox"></i>
-            <p *ngIf="myInviteTab === 'pending'">No pending invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
-            <p *ngIf="myInviteTab === 'missed'">No missed invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
-            <p *ngIf="myInviteTab === 'accepted'">No active campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} right now.</p>
-            <p *ngIf="myInviteTab === 'declined'">No declined invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</p>
-            <p *ngIf="myInviteTab === 'completed'">No completed campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} yet.</p>
-            <button class="btn-clear-type-filter" *ngIf="myInviteTypeFilter !== 'all'" (click)="myInviteTypeFilter = 'all'">
+          <!-- Empty filtered state -->
+          <div class="ci-empty" *ngIf="myInvitesFiltered.length === 0">
+            <div class="ci-empty-icon">📢</div>
+            <div class="ci-empty-title">No campaigns found</div>
+            <div class="ci-empty-sub">
+              <ng-container *ngIf="myInviteTab === 'pending'">No pending invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</ng-container>
+              <ng-container *ngIf="myInviteTab === 'missed'">No expired invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</ng-container>
+              <ng-container *ngIf="myInviteTab === 'accepted'">No active campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} right now.</ng-container>
+              <ng-container *ngIf="myInviteTab === 'declined'">No declined invites{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }}.</ng-container>
+              <ng-container *ngIf="myInviteTab === 'completed'">No completed campaigns{{ myInviteTypeFilter !== 'all' ? ' in this category' : '' }} yet.</ng-container>
+            </div>
+            <button class="ci-clear-filter" *ngIf="myInviteTypeFilter !== 'all'" (click)="myInviteTypeFilter = 'all'">
               <i class="bi bi-x-circle"></i> Clear filter
             </button>
           </div>
         </ng-container>
 
-        <div class="empty-invites empty-invites--first" *ngIf="myInvites.length === 0">
-          <i class="bi bi-envelope-open"></i>
-          <p class="empty-invites__title">No invites yet</p>
-          <p class="empty-invites__sub">{{ influencerInboxEmptySubtitle }}</p>
+        <!-- No invites at all -->
+        <div class="ci-empty ci-empty--first" *ngIf="myInvites.length === 0">
+          <div class="ci-empty-icon">📢</div>
+          <div class="ci-empty-title">No more campaigns found</div>
+          <div class="ci-empty-sub">You've reached the end of your inbox. We'll notify you as soon as new brands want to collaborate with you.</div>
+          <a class="ci-empty-link" routerLink="/search">Check suggested brands <i class="bi bi-arrow-right"></i></a>
         </div>
       </div>
 
-    </div>
+    </div><!-- /ci-inbox-section -->
       <hr class="section-divider" />
     <!-- Upgrade Banner for Plan Limit -->
     <ng-container *ngIf="showUpgradeBanner || planLimitError || upgradeBannerMessage">
@@ -786,19 +766,42 @@
                       </span>
                     </div>
                     <span class="expand-inf-user" *ngIf="getCampaignInviteRecipientUsername(inv, c)">@{{ getCampaignInviteRecipientUsername(inv, c) }}</span>
+                    <!-- Role + email -->
+                    <small class="expand-role-email"
+                           *ngIf="getInviteRecipientRoleLabel(inv, c) || getInviteRecipientEmail(inv)">
+                      <span *ngIf="getInviteRecipientRoleLabel(inv, c)">{{ getInviteRecipientRoleLabel(inv, c) }}</span>
+                      <span *ngIf="getInviteRecipientRoleLabel(inv, c) && getInviteRecipientEmail(inv)"> • </span>
+                      <span *ngIf="getInviteRecipientEmail(inv)">{{ getInviteRecipientEmail(inv) }}</span>
+                    </small>
                     <div class="expand-inf-socials" *ngIf="getCampaignInviteRecipientSocialTags(inv, c).length">
                       <span class="expand-inf-social-chip" *ngFor="let sm of getCampaignInviteRecipientSocialTags(inv, c, 3)">
                         {{ sm.platform }} · {{ sm.tier }}
                       </span>
                     </div>
-                    <small class="expand-post-date" *ngIf="inv.selectedPostDate">
-                      <i class="bi bi-calendar-check"></i> {{ getParticipantDateLabel(c) }}: {{ inv.selectedPostDate | date:'MMM d' }}
+                    <!-- Dates row: Working from + Post date -->
+                    <small class="expand-dates-row"
+                           *ngIf="getInviteWorkingFromDate(inv) || inv.selectedPostDate">
+                      <ng-container *ngIf="getInviteWorkingFromDate(inv)">
+                        <i class="bi bi-play-circle"></i>
+                        Working from: {{ getInviteWorkingFromDate(inv) }}
+                      </ng-container>
+                      <ng-container *ngIf="getInviteWorkingFromDate(inv) && inv.selectedPostDate"> &bull; </ng-container>
+                      <ng-container *ngIf="inv.selectedPostDate">
+                        Post date: {{ inv.selectedPostDate | date:'MMM d, yyyy' }}
+                      </ng-container>
                     </small>
                     <small class="expand-post-date expand-post-date--visited" *ngIf="hasVisitedStatus(inv, c)">
                       <i class="bi bi-check-circle-fill"></i> {{ getVisitedStatusText(inv) }}
                     </small>
                     <small class="expand-post-date" *ngIf="inv.selectedPlatform">
                       <i class="bi bi-broadcast"></i> Posts on <strong>{{ inv.selectedPlatform }}</strong>
+                    </small>
+                    <!-- Negotiation trail -->
+                    <small class="expand-negotiation" *ngIf="getCounterOfferSummary(inv, c)">
+                      {{ getCounterOfferSummary(inv, c) }}
+                    </small>
+                    <small class="expand-negotiation-total" *ngIf="getOfferTotalSummary(inv, c)">
+                      {{ getOfferTotalSummary(inv, c) }}
                     </small>
                     <div class="submission-summary" *ngIf="c.status === 'completed' && getSubmissionForInvite(c, inv) as workedSub">
                       <span>
@@ -815,6 +818,10 @@
                   <div class="col-md-6">
 
                     <span class="inv-status" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv) }}</span>
+                    <!-- Updated at timestamp -->
+                    <small class="expand-updated-at" *ngIf="getInviteUpdatedAtText(inv)">
+                      {{ getInviteUpdatedAtText(inv) }}
+                    </small>
                   
                     <span class="inv-closed-chip"
                           *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">
@@ -1197,20 +1204,16 @@
     </ng-template>
 
     <!-- Pagination -->
-    <div class="cm-pagination" *ngIf="showCollaborationsWorkspace && showOwnerWorkspaceBoard && filtered.length > 0">
-      <span class="page-info">
-        Showing {{ showingFrom }} of {{ filtered.length }} {{ activeTab }} {{ isPhotographerView ? 'collaborations' : 'campaigns' }}
-      </span>
-      <div class="page-controls">
-        <button class="page-btn" [disabled]="currentPage === 1" (click)="prevPage()">
-          <i class="bi bi-chevron-left"></i>
-        </button>
-        <span class="page-num active">{{ currentPage }}</span>
-        <button class="page-btn" [disabled]="currentPage >= totalPages" (click)="nextPage()">
-          <i class="bi bi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
+    <app-paginator
+      *ngIf="showCollaborationsWorkspace && showOwnerWorkspaceBoard"
+      [total]="filtered.length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="pageSizeOptions"
+      [entityLabel]="isPhotographerView ? 'collaborations' : 'campaigns'"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-paginator>
 
   </div>
 

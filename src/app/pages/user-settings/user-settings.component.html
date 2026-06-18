@@ -1,0 +1,52 @@
+<div class="user-settings-page">
+  <header class="settings-header">
+    <div>
+      <h1>Settings</h1>
+      <p>Manage notification access and account activity for this device.</p>
+    </div>
+    <a routerLink="/" class="settings-back">Back</a>
+  </header>
+
+  <section class="settings-section">
+    <div class="settings-section__main">
+      <div class="settings-icon">
+        <i class="bi bi-bell"></i>
+        <span class="settings-count" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+      </div>
+      <div>
+        <h2>Mobile &amp; Web Push Notifications</h2>
+        <p>
+          Receive campaign invite and campaign start-work updates even when the app is closed,
+          where your browser and phone allow push notifications.
+        </p>
+        <div class="settings-status">{{ notificationStatusLabel }}</div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button type="button" class="btn-enable" (click)="enablePush()" [disabled]="pushBusy || !pushSupported || pushPermission === 'denied' || pushActive">
+        {{ pushBusy ? 'Saving...' : 'Enable' }}
+      </button>
+      <button type="button" class="btn-disable" (click)="disablePush()" [disabled]="pushBusy || (!pushActive && pushPreference === 'disabled')">
+        Disable
+      </button>
+    </div>
+  </section>
+
+  <section class="settings-section compact">
+    <div>
+      <h2>Account Activity</h2>
+      <p>Login and app-open activity are tracked separately.</p>
+    </div>
+    <div class="activity-grid">
+      <div>
+        <span>Last login</span>
+        <strong>{{ lastLoginAt ? (lastLoginAt | date:'medium') : '-' }}</strong>
+      </div>
+      <div>
+        <span>Last opened</span>
+        <strong>{{ lastOpenedAt ? (lastOpenedAt | date:'medium') : '-' }}</strong>
+      </div>
+    </div>
+  </section>
+</div>

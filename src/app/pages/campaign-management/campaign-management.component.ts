@@ -24,7 +24,8 @@ import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { OfferTrailComponent } from '../../shared/offer-trail/offer-trail.component';
-import { buildAdminOfferTrailText } from '../../shared/offer-trail.util';
+import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared/offer-trail.util';
+import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -35,7 +36,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -109,6 +110,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   activeTab: TabStatus = 'active';
   pageSize = 10;
+  readonly pageSizeOptions = [10, 25, 50, 100];
   currentPage = 1;
 
   showForm = false;
@@ -1498,9 +1500,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       if (this.isCampaignOwnedByCurrentUser(c)) return false;
 
       if (applied.has(String(c._id || ''))) return false;
-      // Non-tier campaigns are visible to all influencers (unless applied)
+      // Non-open campaigns (invite-only) are visible in discovery unless already applied
       if ((c as any)?.campaignMode !== 'tier_filtered_open') return true;
-      // For tier-filtered open campaigns, show only if influencer has a qualifying social entry
+      // Open campaigns with no minimum tier are truly open to all influencers
+      if (!(c as any)?.minInfluencerTier) return true;
+      // Open campaigns with a tier requirement: show only if influencer qualifies
       return this.getTierQualifyingSocials(c).length > 0;
     });
   }
@@ -1900,7 +1904,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const s = String(status || '').toLowerCase();
     if (s === 'pending' || s === 'invited') return 'Pending';
     if (s === 'counter_sent') return 'Counter Sent';
-    if (s === 'accepted' || s === 'payment_confirmed' || s === 'working') return 'Working';
+    if (s === 'payment_confirmed') return 'Confirmed — Start Work';
+    if (s === 'accepted' || s === 'working') return 'Working';
     if (s === 'submitted' || s === 'disputed') return 'Under Review';
     if (s === 'declined') return 'Declined';
     if (s === 'withdrawn') return 'Withdrawn';
@@ -2202,6 +2207,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   nextPage() {
     if (this.currentPage < this.totalPages) this.currentPage++;
   }
+
+  onPageChange(page: number): void { this.currentPage = page; }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
 
   openCreateForm() {
     if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) {
@@ -3329,6 +3337,44 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.getCounterOfferSummary(inv, campaign).length > 0;
   }
 
+  getOfferTotalSummary(inv: any, campaign?: any): string {
+    return buildAdminOfferTotalText({
+      ...inv,
+      campaign,
+      campaignAmountPaise: Number(
+        inv?.campaignAmountPaise || campaign?.pricePerInfluencer || campaign?.amount || 0,
+      ),
+    });
+  }
+
+  getInviteWorkingFromDate(inv: any): string {
+    const d = inv?.acceptedAt || inv?.paymentConfirmedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  getInviteUpdatedAtText(inv: any): string {
+    const d = inv?.updatedAt || inv?.acceptedAt || inv?.createdAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+  }
+
+  getInviteRecipientEmail(inv: any): string {
+    const r = this.getInviteRecipient(inv);
+    return String(r?.email || r?.contactEmail || '').trim();
+  }
+
+  getInviteRecipientRoleLabel(inv: any, campaign?: any): string {
+    if (this.isPhotographerInviteForCampaign(inv, campaign)) return 'Photographer';
+    const r = this.getInviteRecipient(inv);
+    const role = String(r?.role || r?.userType || inv?.role || '').toLowerCase();
+    if (role.includes('photographer')) return 'Photographer';
+    return 'Influencer';
+  }
+
   respondToInviteCounter(
     inv: any,
     action: 'accept' | 'decline' | 'counter',
@@ -3931,7 +3977,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       invited: 'Invited',
       counter_sent: 'Confirmation Pending',
       accepted: campaignType === 'paid_collab' ? 'Confirmation Pending' : 'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
       submitted: 'Under Review',
       approved: 'Payout Released',
@@ -4136,7 +4182,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const minTier: string = (campaign as any)?.minInfluencerTier || '';
     const minIdx = TIER_ORDER.indexOf(minTier);
     const sm = this.myInfluencerSocialMedia || [];
-    if (!sm.length) return [];
+    // No tier requirement = open to all regardless of influencer's social media
+    if (!minTier) return sm.length ? sm : [{ platform: 'any', tier: 'any' }];
 
     let candidates = sm;
     if (campaignPlatforms.length > 0) {
@@ -4747,7 +4794,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       invited:           'Invited',
       counter_sent:      'Counter Received',
       accepted:          'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
       submitted:         'Under Review',
       approved:          'Payout Released',

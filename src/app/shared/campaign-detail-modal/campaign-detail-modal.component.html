@@ -1,528 +1,544 @@
-<div class="modal-backdrop show" *ngIf="visible" (click)="onClose()"></div>
+<div class="cdm-backdrop" *ngIf="visible" (click)="onClose()"></div>
 
-<div class="modal d-block" *ngIf="visible" tabindex="-1" (click)="onClose()">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-xlarge" (click)="$event.stopPropagation()">
-    <div class="modal-content ts-modal ts-modal--wizard" role="dialog" aria-modal="true">
-  <!-- Validation toast (fixed, centered top) -->
-  <div class="cdm-toast cdm-toast-error" *ngIf="toastError">
-    <i class="bi bi-exclamation-triangle-fill"></i> {{ toastError }}
-  </div>
+<div class="cdm-overlay" *ngIf="visible" (click)="onClose()">
+  <div class="cdm-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
 
-    <!-- Header -->
+    <!-- Toast -->
+    <div class="cdm-toast cdm-toast--error" *ngIf="toastError">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ toastError }}
+    </div>
+
+    <!-- ── HEADER ─────────────────────────────────────────────── -->
     <div class="cdm-header">
-      <div class="cdm-header-titles">
-        <div class="d-flex align-items-center gap-2 flex-wrap">
+      <div class="cdm-header-left">
+        <div class="cdm-header-top">
           <h3 class="cdm-title">{{ campaignTitle }}</h3>
-          <span class="cdm-status-chip" [ngClass]="'cdm-status-chip--' + (campaignStatus || 'active')"
-                *ngIf="campaignStatus">
+          <span class="cdm-status-badge cdm-status-badge--{{ campaignStatus || 'active' }}" *ngIf="campaignStatus">
             {{ campaignStatus | uppercase }}
           </span>
         </div>
+        <div class="cdm-campaign-id" *ngIf="campaignIdLabel">{{ campaignIdLabel }}</div>
       </div>
-      <button class="cdm-close" (click)="onClose()" aria-label="Close">
+      <button class="cdm-close-btn" (click)="onClose()" aria-label="Close">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
 
-    <!-- Body -->
+    <!-- ── INFO STRIP (3 stat cards) ─────────────────────────── -->
+    <div class="cdm-info-strip">
+
+      <!-- Admin view: Timeline · Available Slots · Est. Payout -->
+      <ng-container *ngIf="adminReview">
+        <div class="cdm-info-card">
+          <div class="cdm-info-card__label"><i class="bi bi-calendar3"></i> TIMELINE</div>
+          <div class="cdm-info-card__value">{{ timelineText }}</div>
+          <div class="cdm-info-card__sub" *ngIf="timelineYearText">{{ timelineYearText }}</div>
+        </div>
+        <div class="cdm-info-card">
+          <div class="cdm-info-card__label"><i class="bi bi-people-fill"></i> AVAILABLE SLOTS</div>
+          <div class="cdm-info-card__value">{{ slots || '—' }}<span class="cdm-info-card__unit" *ngIf="slots"> Participants</span></div>
+        </div>
+        <div class="cdm-info-card">
+          <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> EST. PAYOUT</div>
+          <div class="cdm-info-card__value" style="color:#d2521a">
+            {{ yourPayoutText || campaignBudgetText || '—' }}
+            <span class="cdm-info-card__unit" *ngIf="yourPayoutText || campaignBudgetText"> Total</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- User view: Your Payout (with tags) · Timeline (with duration) · Platform -->
+      <ng-container *ngIf="!adminReview">
+        <div class="cdm-info-card">
+          <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
+          <div class="cdm-info-card__value" style="color:#d2521a">{{ yourPayoutText || campaignBudgetText || '—' }}</div>
+          <div class="cdm-info-card__tags" *ngIf="payoutTypeTags.length">
+            <span class="cdm-tag" *ngFor="let tag of payoutTypeTags">{{ tag }}</span>
+          </div>
+        </div>
+        <div class="cdm-info-card">
+          <div class="cdm-info-card__label"><i class="bi bi-calendar3"></i> TIMELINE</div>
+          <div class="cdm-info-card__value">{{ timelineText }}</div>
+          <div class="cdm-info-card__sub" *ngIf="activeDurationDays > 0">Active duration: {{ activeDurationDays }} Days</div>
+        </div>
+        <div class="cdm-info-card" *ngIf="primaryPlatform; else slotsCard">
+          <div class="cdm-info-card__label">
+            <i class="bi" [ngClass]="platformIcon(primaryPlatform)" [style.color]="platformColor(primaryPlatform)"></i>
+            PLATFORM
+          </div>
+          <div class="cdm-info-card__value">{{ platformLabel(primaryPlatform) }}</div>
+          <div class="cdm-info-card__sub" *ngIf="primaryContentTypeLabel">{{ primaryContentTypeLabel }}</div>
+        </div>
+        <ng-template #slotsCard>
+          <div class="cdm-info-card">
+            <div class="cdm-info-card__label"><i class="bi bi-people-fill"></i> AVAILABLE SLOTS</div>
+            <div class="cdm-info-card__value">{{ slots || '—' }}<span class="cdm-info-card__unit" *ngIf="slots"> Participants</span></div>
+          </div>
+        </ng-template>
+      </ng-container>
+
+    </div>
+
+    <!-- ── SCROLLABLE BODY ────────────────────────────────────── -->
     <div class="cdm-body">
 
-      <!-- Admin: requested changes note -->
-      <div class="cdm-moderation-note" *ngIf="adminReview && campaignModerationNote">
-        <div class="cdm-moderation-note__label"><i class="bi bi-exclamation-circle-fill"></i> Requested Changes</div>
-        <div class="cdm-moderation-note__text">{{ campaignModerationNote }}</div>
-      </div>
-
-      <!-- Campaign image -->
-      <div class="cdm-campaign-image-wrap" *ngIf="campaignImageUrl">
-        <img class="cdm-campaign-image" [src]="campaignImageUrl" (error)="onCampaignImgError($event)" alt="" />
-        <div class="cdm-campaign-gallery" *ngIf="campaignImageUrls.length > 1">
-          <img
-            class="cdm-campaign-gallery-image"
-            *ngFor="let img of campaignImageUrls.slice(1, 5)"
-            [src]="img"
-            (error)="onCampaignImgError($event)"
-            alt=""
-          />
+      <!-- Campaign Workflow stepper -->
+      <div class="cdm-workflow" *ngIf="adminReview">
+        <div class="cdm-workflow__label">CAMPAIGN WORKFLOW</div>
+        <div class="cdm-workflow__track" #workflowTrack>
+          <ng-container *ngFor="let step of campaignWorkflowSteps; let i = index; let last = last">
+            <div class="cdm-workflow__step" [class.cdm-workflow__step--done]="step.done" [class.cdm-workflow__step--current]="step.current">
+              <div class="cdm-workflow__dot"></div>
+              <div class="cdm-workflow__step-label">{{ step.done && step.doneLabel ? step.doneLabel : step.label }}</div>
+            </div>
+            <div class="cdm-workflow__connector" *ngIf="!last" [class.cdm-workflow__connector--done]="step.done"></div>
+          </ng-container>
         </div>
       </div>
 
-      <!-- Description -->
-      <div class="cdm-section" *ngIf="campaignDescriptionSafe">
-        <div class="cdm-section-label">DESCRIPTION</div>
-        <div class="cdm-brief-box cdm-description" [innerText]="campaignDescriptionSafe"></div>
-      </div>
+      <!-- Offer trail (user view only) -->
+      <app-offer-trail
+        *ngIf="!adminReview"
+        [source]="invite"
+        [campaignContext]="invite?.campaign || invite?.campaignId || {}"
+        mode="receiver">
+      </app-offer-trail>
 
-      <!-- Stat cards -->
-      <div class="cdm-stats">
-        <div class="cdm-stat-card" *ngIf="yourPayoutText">
-          <div class="cdm-stat-label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
-          <div class="cdm-stat-value">{{ yourPayoutText }}</div>
-        </div>
-        <div class="cdm-stat-card" *ngIf="!yourPayoutText && campaignBudgetText">
-          <div class="cdm-stat-label"><i class="bi bi-cash-coin"></i> BUDGET</div>
-          <div class="cdm-stat-value" style="color:var(--ts-primary,#e8620f)">{{ campaignBudgetText }}</div>
-        </div>
-        <div class="cdm-stat-card">
-          <div class="cdm-stat-label"><i class="bi bi-calendar3"></i> TIMELINE</div>
-          <div class="cdm-stat-value">{{ timelineText }}</div>
-          <div class="cdm-stat-sub" *ngIf="timelineYearText">{{ timelineYearText }}</div>
-        </div>
-        <div class="cdm-stat-card" *ngIf="slots">
-          <div class="cdm-stat-label"><i class="bi bi-people-fill"></i> SLOTS</div>
-          <div class="cdm-stat-value">{{ slots }}</div>
-        </div>
-        <div class="cdm-stat-card" *ngIf="minInfluencerTier">
-          <div class="cdm-stat-label"><i class="bi bi-bar-chart-steps"></i> MIN. TIER</div>
-          <div class="cdm-stat-value">{{ minInfluencerTier }}</div>
-        </div>
-          <div class="cdm-stat-card" *ngIf="qualifyingPlatform || qualifyingTier">
-            <div class="cdm-stat-label"><i class="bi bi-person-check-fill"></i> YOU MATCH</div>
-            <div class="cdm-stat-value">
-              <ng-container *ngIf="qualifyingPlatform">{{ platformLabel(qualifyingPlatform) }}</ng-container>
-              <ng-container *ngIf="qualifyingPlatform && qualifyingTier"> · </ng-container>
-              <ng-container *ngIf="qualifyingTier">{{ qualifyingTier }}</ng-container>
+      <!-- ── TWO COLUMN GRID ──────────────────────────────────── -->
+      <div class="cdm-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="cdm-grid-left">
+
+          <!-- Campaign Brief -->
+          <div class="cdm-section" *ngIf="campaignDescriptionSafe || specialInstructions">
+            <div class="cdm-section__label">CAMPAIGN BRIEF</div>
+            <div class="cdm-brief-box" [innerText]="campaignDescriptionSafe || specialInstructions"></div>
+          </div>
+
+          <!-- Price negotiation trail (user view, only when counter offer was made) -->
+          <div class="cdm-section" *ngIf="!adminReview && !isPending && hasCounterOfferFlow && userNegotiationTrailText">
+            <div class="cdm-section__label">PRICE NEGOTIATION</div>
+            <div class="cdm-negotiation-box">
+              <div class="cdm-negotiation-box__trail">{{ userNegotiationTrailText }}</div>
+              <div class="cdm-negotiation-box__total" *ngIf="userNegotiationTotalText">{{ userNegotiationTotalText }}</div>
             </div>
           </div>
-      </div>
 
-        <app-offer-trail
-          *ngIf="!adminReview"
-          [source]="invite"
-          [campaignContext]="invite?.campaign || invite?.campaignId || {}"
-          mode="receiver">
-        </app-offer-trail>
+          <!-- Venue details -->
+          <div class="cdm-section" *ngIf="hasVenueDetails">
+            <div class="cdm-section__label">VENUE DETAILS</div>
+            <div class="cdm-brief-box">
+              <div *ngIf="canRevealExactVenueDetails && venueName" class="mb-1"><strong>{{ venueName }}</strong></div>
+              <div *ngIf="canRevealExactVenueDetails && venueAddress" class="mb-1"><i class="bi bi-geo-alt"></i> {{ venueAddress }}</div>
+              <div *ngIf="venuePreviewText" class="mb-1">{{ venuePreviewText }}</div>
+              <div *ngIf="!canRevealExactVenueDetails" class="cdm-locked-hint">
+                <i class="bi bi-lock-fill"></i> Exact venue unlocks after acceptance &amp; payment.
+              </div>
+              <a *ngIf="canRevealExactVenueDetails && venueMapUrl" [href]="venueMapUrl" target="_blank" rel="noopener noreferrer" class="cdm-map-link">
+                <i class="bi bi-map"></i> Open in Maps
+              </a>
+            </div>
+          </div>
 
-      <div class="cdm-section cdm-admin-setup" *ngIf="adminReview">
-        <div class="cdm-section-label">CAMPAIGN / COLLAB SETUP</div>
-        <div class="cdm-admin-setup-grid">
-          <div class="cdm-admin-setup-card">
-            <span>Type</span>
-            <strong>{{ campaignTypeLabel || 'Not specified' }}</strong>
+          <!-- Shoot location -->
+          <div class="cdm-section" *ngIf="hasShootLocationDetails">
+            <div class="cdm-section__label">SHOOT LOCATION</div>
+            <div class="cdm-brief-box">
+              <div *ngIf="shootLocationTypeLabel" class="mb-1"><strong>{{ shootLocationTypeLabel }}</strong></div>
+              <div *ngIf="canRevealExactShootLocation && shootLocationAddress" class="mb-1"><i class="bi bi-geo-alt"></i> {{ shootLocationAddress }}</div>
+              <div *ngIf="!canRevealExactShootLocation" class="cdm-locked-hint"><i class="bi bi-lock-fill"></i> Exact location unlocks after payment.</div>
+              <div *ngIf="canRevealExactShootLocation && shootLocationNotes" class="mb-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
+              <a *ngIf="canRevealExactShootLocation && shootLocationMapUrl" [href]="shootLocationMapUrl" target="_blank" rel="noopener noreferrer" class="cdm-map-link">
+                <i class="bi bi-map"></i> Open in Maps
+              </a>
+            </div>
           </div>
-          <div class="cdm-admin-setup-card">
-            <span>Campaign access mode</span>
-            <strong>{{ campaignAccessModeLabel }}</strong>
-            <small *ngIf="campaignAccessDetailText">{{ campaignAccessDetailText }}</small>
-          </div>
-        </div>
-      </div>
 
-      <div class="cdm-section" *ngIf="adminReview">
-        <div class="cdm-section-label">INVITED PARTICIPANTS & PROGRESS</div>
-        <div class="cdm-status-legend">
-          <span class="cdm-status-legend__label">Legend:</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-accepted">Working</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-submitted">Under Review</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-working">Working</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-pending">Pending</span>
-          <span class="cdm-pill cdm-pill--invite-status cdm-pill--invite-status-withdrawn">Withdrawn / Rejected</span>
-        </div>
-        <div class="cdm-meta-row mb-2" *ngIf="hasAdminInviteProgress && adminInviteProgressSummary.length">
-          <span class="cdm-pill cdm-pill--invite-summary" *ngFor="let item of adminInviteProgressSummary">
-            {{ item.label }}: {{ item.count }}
-          </span>
-        </div>
-        <div class="cdm-status-filter-row" *ngIf="hasAdminInviteProgress && adminInviteFilterOptions.length > 1">
-          <button
-            type="button"
-            class="cdm-status-filter-btn"
-            *ngFor="let option of adminInviteFilterOptions"
-            [class.cdm-status-filter-btn--active]="adminInviteStatusFilter === option.key"
-            (click)="setAdminInviteStatusFilter(option.key)">
-            {{ option.label }} ({{ option.count }})
-          </button>
-        </div>
-        <div class="cdm-note" *ngIf="hasAdminInviteProgress && adminInviteFilterOptions.length > 1">
-          Actionable = Working and Under Review stages.
-        </div>
-        <div class="cdm-invite-progress-list">
-          <div class="cdm-invite-progress-empty" *ngIf="adminInviteProgressLoading">
-            Loading invited participants...
+          <!-- Invite benefits -->
+          <div class="cdm-section" *ngIf="isInviteLocation && inviteBenefits">
+            <div class="cdm-section__label">WHAT'S INCLUDED</div>
+            <div class="cdm-brief-box" style="white-space:pre-wrap;"><i class="bi bi-stars"></i> {{ inviteBenefits }}</div>
           </div>
-          <div class="cdm-invite-progress-empty" *ngIf="!adminInviteProgressLoading && !hasAdminInviteProgress">
-            No invited participants yet.
+
+          <!-- Product collab -->
+          <div class="cdm-section" *ngIf="isProduct">
+            <div class="cdm-section__label">PRODUCT COLLABORATION</div>
+            <div class="cdm-brief-box">
+              <div *ngIf="productDescription" style="white-space:pre-wrap;" class="mb-2">{{ productDescription }}</div>
+              <div *ngIf="productValueText"><i class="bi bi-box-seam"></i> <strong>Product worth {{ productValueText }}</strong></div>
+              <div *ngIf="productPaymentMode === 'product_plus_payment' && productPaymentAmountText" class="mt-1">
+                <i class="bi bi-cash-coin"></i> Plus: <strong>{{ productPaymentAmountText }}</strong>
+              </div>
+            </div>
           </div>
-          <div class="cdm-invite-progress-item" *ngFor="let item of filteredAdminInviteProgress">
-            <div class="cdm-invite-progress-main">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <app-user-avatar
-                  [name]="item.participantName || (adminInviteParticipantRoleLabel(item.participantRole) + ' Participant')"
-                  [src]="item.participantAvatar || ''"
-                  [size]="38"
-                ></app-user-avatar>
-                <div>
-                  <div class="cdm-invite-progress-name">{{ item.participantName || (adminInviteParticipantRoleLabel(item.participantRole) + ' Participant') }}</div>
-                  <div class="cdm-invite-progress-meta" *ngIf="item.participantUsername">@{{ item.participantUsername }}</div>
-                  <div class="cdm-invite-progress-meta">
-                    {{ adminInviteParticipantRoleLabel(item.participantRole) }}
-                    <span *ngIf="item.participantEmail">• {{ item.participantEmail }}</span>
+
+          <!-- Social Platforms -->
+          <div class="cdm-section" *ngIf="allCampaignPlatforms.length">
+            <div class="cdm-section__label">SOCIAL PLATFORMS</div>
+            <div class="cdm-platform-pills">
+              <span class="cdm-platform-pill" *ngFor="let p of allCampaignPlatforms">
+                <i class="bi" [ngClass]="platformIcon(p.platform)" [style.color]="platformColor(p.platform)"></i>
+                {{ platformLabel(p.platform) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- You Match (user only) -->
+          <div class="cdm-section" *ngIf="allCampaignPlatforms.length && !adminReview">
+            <div class="cdm-section__label">YOU MATCH</div>
+            <div class="cdm-platform-pills">
+              <span *ngFor="let p of allCampaignPlatforms"
+                    class="cdm-platform-pill"
+                    [class.cdm-platform-pill--match]="userHasPlatform(p.platform)"
+                    [class.cdm-platform-pill--missing]="!userHasPlatform(p.platform)">
+                <i class="bi" [ngClass]="platformIcon(p.platform)" [style.color]="platformColor(p.platform)"></i>
+                {{ platformLabel(p.platform) }}
+                <span class="cdm-match-tag">{{ userHasPlatform(p.platform) ? 'You have' : 'Missing' }}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Content type selection (user pending) -->
+          <div class="cdm-section" *ngIf="!adminReview && (availableContentTypeOptions.length || unavailableContentTypeOptions.length)">
+            <div class="cdm-section__label">SELECT CONTENT TYPE</div>
+            <div class="cdm-ct-row" *ngIf="availableContentTypeOptions.length">
+              <button type="button" class="cdm-ct-pill"
+                      *ngFor="let opt of availableContentTypeOptions"
+                      [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
+                      [disabled]="!isPending || !isOptionSelectable(opt)"
+                      (click)="isPending && (selectedContentTypeKey = opt.key); toastError = ''">
+                <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+                {{ platformLabel(opt.platform) }} · {{ opt.contentType }}
+                <span class="cdm-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+              </button>
+            </div>
+            <div class="cdm-ct-row" *ngIf="unavailableContentTypeOptions.length">
+              <button class="cdm-ct-pill cdm-ct-pill--disabled" *ngFor="let opt of unavailableContentTypeOptions" disabled>
+                <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
+                {{ platformLabel(opt.platform) }} · {{ opt.contentType }}
+                <span class="cdm-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Deliverables table -->
+          <div class="cdm-section" *ngIf="deliverableRows.length || deliverables.length">
+            <div class="cdm-section__label">DELIVERABLES</div>
+            <div class="cdm-deliverables" *ngIf="deliverableRows.length">
+              <div class="cdm-deliverable-row" *ngFor="let d of deliverableRows; let i = index">
+                <span class="cdm-deliverable-row__num">{{ i + 1 }}</span>
+                <span class="cdm-deliverable-row__name">
+                  <i class="bi" [ngClass]="platformIcon(d.platform)"></i>
+                  {{ d.contentType }}
+                </span>
+                <span class="cdm-deliverable-row__price" *ngIf="d.price">₹{{ d.price | number }}</span>
+              </div>
+            </div>
+            <div class="cdm-brief-box" *ngIf="!deliverableRows.length && deliverables.length" style="white-space:pre-wrap;">
+              <div *ngFor="let item of deliverables">• {{ item }}</div>
+            </div>
+          </div>
+
+          <!-- What you must do checklist (user pending) -->
+          <div class="cdm-section" *ngIf="isPending && !adminReview">
+            <div class="cdm-section__label">WHAT YOU MUST DO</div>
+            <ul class="cdm-checklist">
+              <li><i class="bi bi-check-circle-fill"></i><span>Platform: {{ checklistPlatformText }}</span></li>
+              <li>
+                <i class="bi" [ngClass]="selectedContentTypeKey || contentTypeOptions.length === 0 ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                <span>Content type: {{ checklistContentTypeText }}</span>
+              </li>
+              <li><i class="bi bi-check-circle-fill"></i><span>{{ dateChecklistLabel }}: {{ timelineText }}</span></li>
+              <li>
+                <i class="bi" [ngClass]="hasChecklistLocationInfo ? 'bi-check-circle-fill' : 'bi-info-circle'"></i>
+                <span>Location: {{ checklistLocationText }}</span>
+              </li>
+              <li><i class="bi bi-check-circle-fill"></i><span>Upload proof: post screenshot + insights screenshot</span></li>
+              <li><i class="bi bi-check-circle-fill"></i><span>Submission deadline: {{ checklistSubmissionDeadlineText }}</span></li>
+            </ul>
+          </div>
+
+          <!-- Active Creators / Invite Progress (admin) -->
+          <div class="cdm-section" *ngIf="adminReview">
+            <div class="cdm-section__label-row">
+              <span class="cdm-section__label">ACTIVE CREATORS ({{ adminInviteProgress.length }})</span>
+              <div class="cdm-status-filter-row" *ngIf="hasAdminInviteProgress && adminInviteFilterOptions.length > 1">
+                <button type="button" class="cdm-filter-btn"
+                        *ngFor="let opt of adminInviteFilterOptions"
+                        [class.cdm-filter-btn--active]="adminInviteStatusFilter === opt.key"
+                        (click)="setAdminInviteStatusFilter(opt.key)">
+                  {{ opt.label }} ({{ opt.count }})
+                </button>
+              </div>
+            </div>
+            <div class="cdm-creators-table">
+              <div class="cdm-creators-table__head">
+                <span>CREATOR</span>
+                <span>STATUS</span>
+                <span>ACTION</span>
+              </div>
+              <div class="cdm-creators-table__empty" *ngIf="adminInviteProgressLoading">Loading participants…</div>
+              <div class="cdm-creators-table__empty" *ngIf="!adminInviteProgressLoading && !hasAdminInviteProgress">No participants yet.</div>
+              <div class="cdm-creator-card" *ngFor="let item of filteredAdminInviteProgress">
+                <div class="cdm-creator-card__left">
+                  <app-user-avatar
+                    [name]="item.participantName || 'Participant'"
+                    [src]="item.participantAvatar || ''"
+                    [size]="36">
+                  </app-user-avatar>
+                  <div class="cdm-creator-card__info">
+                    <div class="cdm-creator-cell__name">{{ item.participantName || 'Participant' }}</div>
+                    <div class="cdm-creator-cell__meta" *ngIf="item.participantUsername">@{{ item.participantUsername }}</div>
+                    <!-- Role + email -->
+                    <div class="cdm-creator-card__role-email"
+                         *ngIf="item.participantRole || item.participantEmail">
+                      <span *ngIf="item.participantRole">{{ item.participantRole | titlecase }}</span>
+                      <span *ngIf="item.participantRole && item.participantEmail"> &bull; </span>
+                      <span *ngIf="item.participantEmail">{{ item.participantEmail }}</span>
+                    </div>
+                    <!-- Dates -->
+                    <div class="cdm-creator-card__dates"
+                         *ngIf="adminInviteWorkingFromDate(item) || item.selectedPostDate">
+                      <ng-container *ngIf="adminInviteWorkingFromDate(item)">
+                        Working from: {{ adminInviteWorkingFromDate(item) }}
+                      </ng-container>
+                      <ng-container *ngIf="adminInviteWorkingFromDate(item) && item.selectedPostDate"> &bull; </ng-container>
+                      <ng-container *ngIf="item.selectedPostDate">
+                        Post date: {{ item.selectedPostDate | date:'MMM d, yyyy' }}
+                      </ng-container>
+                    </div>
+                    <!-- Negotiation trail -->
+                    <div class="cdm-creator-card__negotiation" *ngIf="adminInviteOfferTrailText(item)">
+                      {{ adminInviteOfferTrailText(item) }}
+                    </div>
+                    <div class="cdm-creator-card__negotiation-total" *ngIf="adminInviteOfferTotalText(item)">
+                      {{ adminInviteOfferTotalText(item) }}
+                    </div>
                   </div>
                 </div>
+                <div class="cdm-creator-card__right">
+                  <span class="cdm-status-dot cdm-status-dot--{{ adminInviteStatusKey(item.status) }}"></span>
+                  <span class="cdm-creator-status-text">{{ adminInviteStatusLabel(item.status) }}</span>
+                  <div class="cdm-creator-card__timestamp" *ngIf="adminInviteUpdatedAtText(item)">
+                    {{ adminInviteUpdatedAtText(item) }}
+                  </div>
+                  <a *ngIf="item.postUrl" [href]="item.postUrl" target="_blank" rel="noopener noreferrer" class="cdm-view-post-link mt-1">
+                    <i class="bi bi-box-arrow-up-right"></i> Post
+                  </a>
+                </div>
               </div>
-              <div class="cdm-invite-progress-meta" *ngIf="item.acceptedAt || item.selectedPostDate">
-                <span *ngIf="item.acceptedAt">Working from: {{ item.acceptedAt | date:'mediumDate' }}</span>
-                <span *ngIf="item.acceptedAt && item.selectedPostDate">&nbsp;•&nbsp;</span>
-                <span *ngIf="item.selectedPostDate">{{ dateHistoryLabel }}: {{ item.selectedPostDate | date:'mediumDate' }}</span>
-              </div>
-              <app-offer-trail
-                [source]="item"
-                [campaignContext]="invite?.campaign || invite?.campaignId || {}"
-                mode="admin">
-              </app-offer-trail>
-            </div>
-            <div class="cdm-invite-progress-side">
-              <span class="cdm-pill cdm-pill--invite-status" [ngClass]="'cdm-pill--invite-status-' + adminInviteStatusKey(item.status)">
-                {{ adminInviteStatusLabel(item.status) }}
-              </span>
-              <div class="cdm-invite-progress-date" *ngIf="item.updatedAt">
-                {{ item.updatedAt | date:'medium' }}
+              <div class="cdm-creators-table__empty" *ngIf="!adminInviteProgressLoading && hasAdminInviteProgress && filteredAdminInviteProgress.length === 0">
+                No participants for this status.
               </div>
             </div>
           </div>
-          <div class="cdm-invite-progress-empty" *ngIf="!adminInviteProgressLoading && filteredAdminInviteProgress.length === 0">
-            No participants for selected status.
-          </div>
-        </div>
-      </div>
 
-      <!-- Campaign type -->
-      <div class="cdm-section" *ngIf="campaignTypeLabel">
-        <div class="cdm-meta-row">
-          <span class="cdm-pill cdm-pill--type" *ngIf="campaignTypeLabel">
-            <i class="bi bi-tag-fill"></i> {{ campaignTypeLabel }}
+          
+
+        </div><!-- /cdm-grid-left -->
+
+        <!-- RIGHT COLUMN -->
+        <div class="cdm-grid-right">
+
+
+          <!-- Campaign setup (admin) -->
+          <div class="cdm-section" *ngIf="adminReview">
+            <div class="cdm-section__label">CAMPAIGN SETUP</div>
+            <div class="cdm-setup-grid">
+              <div class="cdm-setup-card">
+                <span>Type</span>
+                <strong>{{ campaignTypeLabel || 'Not specified' }}</strong>
+              </div>
+              <div class="cdm-setup-card">
+                <span>Access mode</span>
+                <strong>{{ campaignAccessModeLabel }}</strong>
+                <small *ngIf="campaignAccessDetailText">{{ campaignAccessDetailText }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Brand card -->
+          <div class="cdm-brand-panel" *ngIf="brandName">
+            <div class="cdm-brand-panel__header"></div>
+            <div class="cdm-brand-panel__body">
+              <div class="cdm-brand-logo">
+                <img *ngIf="brandLogo" [src]="brandLogo" [alt]="brandName" (error)="onLogoError($event)" />
+                <span *ngIf="!brandLogo" class="cdm-brand-initial">{{ brandInitial }}</span>
+              </div>
+              <div class="cdm-brand-name">{{ brandName }}</div>
+              <div class="cdm-brand-tagline" *ngIf="brandTagline">{{ brandTagline }}</div>
+              <div class="cdm-brand-meta" *ngIf="brandLocation">
+                <i class="bi bi-geo-alt"></i> {{ brandLocation }}
+              </div>
+              <a class="cdm-brand-profile-btn"
+                 *ngIf="brandProfileLink"
+                 [routerLink]="brandProfileLink"
+                 (click)="onClose()">
+                VIEW BRAND PROFILE
+              </a>
+              <a class="cdm-brand-website-link" *ngIf="brandWebsite"
+                 [href]="brandWebsiteHref" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-globe"></i> {{ brandWebsite }}
+              </a>
+            </div>
+          </div>
+
+          <!-- Moderation note (admin only) -->
+          <div class="cdm-moderation-note" *ngIf="adminReview && campaignModerationNote">
+            <div class="cdm-moderation-note__label"><i class="bi bi-shield-exclamation"></i> MODERATION NOTE</div>
+            <div class="cdm-moderation-note__text">"{{ campaignModerationNote }}"</div>
+          </div>
+
+          <!-- Pay to join details -->
+          <div class="cdm-section" *ngIf="isPayToJoin && hasPayToJoinDetails">
+            <div class="cdm-section__label">PAY TO JOIN</div>
+            <div class="cdm-brief-box" *ngIf="payToJoinBenefits">
+              <div class="cdm-section__label" style="margin-bottom:6px;">WHAT YOU GET</div>
+              <div style="white-space:pre-wrap;">{{ payToJoinBenefits }}</div>
+            </div>
+            <div class="cdm-brief-box mt-2" *ngIf="payToJoinInstructions">
+              <div class="cdm-section__label" style="margin-bottom:6px;">HOW TO JOIN</div>
+              <div style="white-space:pre-wrap;">{{ payToJoinInstructions }}</div>
+            </div>
+          </div>
+
+          <!-- Venue / campaign image (user view) -->
+          <div class="cdm-venue-img-card" *ngIf="!adminReview && venueImageUrl">
+            <img [src]="venueImageUrl" alt="Campaign venue" (error)="onCampaignImgError($event)" />
+            <div class="cdm-venue-img-overlay" *ngIf="venueLocationLabel">
+              <i class="bi bi-geo-alt-fill"></i> {{ venueLocationLabel }}
+            </div>
+          </div>
+
+          <!-- Brand contact (user view, unlocked after payment confirmation) -->
+          <div class="cdm-contact-panel" *ngIf="!adminReview && canRevealBrandContact && (brandEmail || brandPhone)">
+            <div class="cdm-contact-panel__label"><i class="bi bi-person-lines-fill"></i> BRAND CONTACT</div>
+            <a class="cdm-contact-panel__chip" *ngIf="brandEmail"
+               [href]="'mailto:' + brandEmail" (click)="$event.stopPropagation()">
+              <i class="bi bi-envelope-fill"></i> {{ brandEmail }}
+            </a>
+            <a class="cdm-contact-panel__chip" *ngIf="brandPhone"
+               [href]="'tel:' + brandPhone" (click)="$event.stopPropagation()">
+              <i class="bi bi-telephone-fill"></i> {{ brandPhone }}
+            </a>
+          </div>
+
+          <!-- Response rate (user view) -->
+          <div class="cdm-response-rate" *ngIf="!adminReview && brandResponseRate">
+            <div class="cdm-response-rate__label">RESPONSE RATE</div>
+            <div class="cdm-response-rate__value">
+              <i class="bi bi-graph-up-arrow"></i> {{ brandResponseRate }}
+            </div>
+          </div>
+
+        </div><!-- /cdm-grid-right -->
+      </div><!-- /cdm-grid -->
+    </div><!-- /cdm-body -->
+
+    <!-- ── FOOTER ─────────────────────────────────────────────── -->
+    <div class="cdm-footer">
+
+      <!-- Admin footer -->
+      <ng-container *ngIf="adminReview">
+        <div class="cdm-footer-left">
+          <button class="cdm-foot-btn cdm-foot-btn--primary" *ngIf="adminCanApprove" (click)="onAdminApprove()" [disabled]="busy">
+            <i class="bi bi-check2-circle"></i> APPROVE
+          </button>
+          <button class="cdm-foot-btn cdm-foot-btn--outline" *ngIf="adminCanRequestChanges" (click)="onAdminRequestChanges()" [disabled]="busy">
+            REQUEST CHANGES
+          </button>
+        </div>
+        <div class="cdm-footer-right">
+          <button class="cdm-foot-btn cdm-foot-btn--danger" *ngIf="adminCanReject" (click)="onAdminReject()" [disabled]="busy">
+            REJECT
+          </button>
+          <button class="cdm-foot-btn cdm-foot-btn--ghost" (click)="onClose()">Close</button>
+        </div>
+      </ng-container>
+
+      <!-- User footer (pending) -->
+      <ng-container *ngIf="isPending && !adminReview">
+        <div class="cdm-footer-left">
+          <span class="cdm-selected-payout-hint" *ngIf="selectedPayoutHint">{{ selectedPayoutHint }}</span>
+
+          <!-- Payout details -->
+          <div class="cdm-payout-block" *ngIf="needsPayoutDetails">
+            <div class="cdm-payout-head">
+              <i class="bi bi-bank"></i>
+              <span>Receive payment to</span>
+              <button type="button" class="cdm-payout-edit-btn" (click)="togglePayoutEdit()">
+                <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
+                {{ payoutEditing ? 'Done' : (payoutSummaryText ? 'Edit' : 'Add') }}
+              </button>
+            </div>
+            <div class="cdm-payout-summary" *ngIf="!payoutEditing">
+              <span *ngIf="payoutSummaryText">{{ payoutSummaryText }}</span>
+              <span class="cdm-payout-missing" *ngIf="!payoutSummaryText">Add UPI / mobile before accepting</span>
+            </div>
+            <div class="cdm-payout-form" *ngIf="payoutEditing">
+              <input type="text" class="cdm-payout-input" placeholder="UPI ID" [(ngModel)]="payoutUpiId" autocomplete="off" />
+              <input type="tel" class="cdm-payout-input" placeholder="Mobile (GPay/PhonePe)" [(ngModel)]="payoutMobile" autocomplete="off" maxlength="15" />
+              <input type="text" class="cdm-payout-input" placeholder="Account holder name" [(ngModel)]="payoutName" autocomplete="off" />
+            </div>
+          </div>
+
+          <input *ngIf="showDateInput" type="date" class="cdm-date-input"
+                 [(ngModel)]="postDate" (ngModelChange)="toastError = ''"
+                 [min]="minPostDate" [max]="maxPostDate" [title]="dateInputTitle" />
+
+          <button class="cdm-foot-btn cdm-foot-btn--counter" *ngIf="canSendCounterOffer" (click)="onToggleCounter()" [disabled]="busy">
+            {{ counterEditing ? 'Cancel' : 'Counter Offer' }}
+          </button>
+
+          <div class="cdm-counter-row" *ngIf="counterEditing">
+            <input type="number" class="cdm-counter-input" min="1" [(ngModel)]="counterAmountInput"
+                   (ngModelChange)="toastError = ''" placeholder="Counter amount (₹)" />
+            <select class="cdm-counter-input" [(ngModel)]="counterReasonInput" (ngModelChange)="toastError = ''">
+              <option value="">Reason (optional)</option>
+              <option *ngFor="let r of counterReasonOptions" [value]="r">{{ r }}</option>
+            </select>
+            <button class="cdm-foot-btn cdm-foot-btn--outline" (click)="onSendCounter()" [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
+          </div>
+
+          <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
+          <span class="cdm-counter-hint" *ngIf="isPending && hasUsedCounterOffer">Counter offer already used.</span>
+        </div>
+        <div class="cdm-footer-right">
+          <button class="cdm-foot-btn cdm-foot-btn--ghost" (click)="onDecline()" [disabled]="busy">Decline</button>
+          <button class="cdm-foot-btn cdm-foot-btn--accept" (click)="onAccept()" [disabled]="busy">Accept</button>
+        </div>
+      </ng-container>
+
+      <!-- User footer (not pending) -->
+      <ng-container *ngIf="!isPending && !adminReview">
+        <div class="cdm-footer-left">
+          <span class="cdm-footer-status cdm-footer-status--{{ statusKey }}">
+            <i class="bi" [ngClass]="showPayoutPendingInfo ? 'bi-shield-check' : 'bi-circle-fill'"></i>
+            {{ statusFooterLabel }}
+          </span>
+          <span class="cdm-footer-status-msg" *ngIf="showPayoutPendingInfo">
+            Your post has been approved. Payout will be processed shortly.
           </span>
         </div>
-      </div>
-
-      <!-- Venue details -->
-      <div class="cdm-section" *ngIf="hasVenueDetails">
-        <div class="cdm-section-label">VENUE DETAILS</div>
-        <div class="cdm-brief-box">
-          <div *ngIf="canRevealExactVenueDetails && venueName" class="mb-1"><strong>{{ venueName }}</strong></div>
-          <div *ngIf="canRevealExactVenueDetails && venueAddress" class="mb-1">
-            <i class="bi bi-geo-alt"></i> {{ venueAddress }}
-          </div>
-          <div *ngIf="venuePreviewText" class="mb-1">{{ venuePreviewText }}</div>
-          <div *ngIf="!canRevealExactVenueDetails && venuePreviewText" class="text-muted mt-1">
-            Exact venue unlocks after accepted + brand unlock, or once payment is confirmed.
-          </div>
-          <div *ngIf="!canRevealExactVenueDetails && venueMapUrl" class="text-muted mt-1">
-            <i class="bi bi-lock-fill"></i> Map link unlocks after accepted + brand unlock, or payment confirmation.
-          </div>
-          <a *ngIf="canRevealExactVenueDetails && venueMapUrl"
-             class="d-inline-flex align-items-center gap-1 mt-2"
-             [href]="venueMapUrl"
-             target="_blank"
-             rel="noopener noreferrer">
-            <i class="bi bi-map"></i> Open in Maps
-          </a>
-        </div>
-      </div>
-
-      <div class="cdm-section" *ngIf="hasShootLocationDetails">
-        <div class="cdm-section-label">SHOOT LOCATION</div>
-        <div class="cdm-brief-box">
-          <div *ngIf="shootLocationTypeLabel" class="mb-1"><strong>{{ shootLocationTypeLabel }}</strong></div>
-          <div *ngIf="canRevealExactShootLocation && shootLocationAddress" class="mb-1">
-            <i class="bi bi-geo-alt"></i> {{ shootLocationAddress }}
-          </div>
-          <div *ngIf="!canRevealExactShootLocation && venuePreviewText" class="text-muted mb-1">Area: {{ venuePreviewText }}</div>
-          <div *ngIf="!canRevealExactShootLocation && shootLocationAddress" class="text-muted mb-1">Exact shoot location unlocks after accepted + brand unlock, or once payment is confirmed.</div>
-          <div *ngIf="!canRevealExactShootLocation && shootLocationMapUrl" class="text-muted mb-1">
-            <i class="bi bi-lock-fill"></i> Map link unlocks after accepted + brand unlock, or payment confirmation.
-          </div>
-          <div *ngIf="canRevealExactShootLocation && shootLocationNotes" class="mb-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
-          <a *ngIf="canRevealExactShootLocation && shootLocationMapUrl"
-             class="d-inline-flex align-items-center gap-1 mt-2"
-             [href]="shootLocationMapUrl"
-             target="_blank"
-             rel="noopener noreferrer">
-            <i class="bi bi-map"></i> Open in Maps
-          </a>
-        </div>
-      </div>
-
-      <!-- Invite benefits (what's included) -->
-      <div class="cdm-section" *ngIf="isInviteLocation && inviteBenefits">
-        <div class="cdm-section-label">WHAT'S INCLUDED</div>
-        <div class="cdm-brief-box" style="white-space:pre-wrap;">
-          <i class="bi bi-stars"></i> {{ inviteBenefits }}
-        </div>
-      </div>
-
-      <!-- Product collaboration details -->
-      <div class="cdm-section" *ngIf="isProduct">
-        <div class="cdm-section-label">PRODUCT COLLABORATION</div>
-        <div class="cdm-brief-box">
-          <div *ngIf="productDescription" style="white-space:pre-wrap;" class="mb-2">{{ productDescription }}</div>
-          <div *ngIf="productValueText"><i class="bi bi-box-seam"></i> <strong>Product worth {{ productValueText }}</strong></div>
-          <div *ngIf="!productValueText && !productDescription"><i class="bi bi-box-seam"></i> Product collaboration (barter)</div>
-          <div *ngIf="productPaymentMode === 'product_plus_payment' && productPaymentAmountText" class="mt-1">
-            <i class="bi bi-cash-coin"></i> Plus cash component: <strong>{{ productPaymentAmountText }}</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pay to Join details -->
-      <div class="cdm-section" *ngIf="isPayToJoin && hasPayToJoinDetails">
-        <div class="cdm-section-label">PAY TO JOIN DETAILS</div>
-        <div class="cdm-brief-box" *ngIf="payToJoinBenefits">
-          <div class="cdm-section-label" style="margin-bottom:6px;">WHAT YOU GET</div>
-          <div style="white-space:pre-wrap;">{{ payToJoinBenefits }}</div>
-        </div>
-        <div class="cdm-brief-box mt-2" *ngIf="payToJoinInstructions">
-          <div class="cdm-section-label" style="margin-bottom:6px;">HOW TO JOIN</div>
-          <div style="white-space:pre-wrap;">{{ payToJoinInstructions }}</div>
-        </div>
-      </div>
-
-      <!-- Selected outputs -->
-      <div class="cdm-section" *ngIf="selectedOutputs.length">
-        <div class="cdm-section-label">SELECTED CONTENT OUTPUTS</div>
-        <div class="cdm-meta-row">
-          <span class="cdm-pill" *ngFor="let d of selectedOutputs">{{ d }}</span>
-        </div>
-      </div>
-
-      <!-- Host-entered deliverables -->
-      <div class="cdm-section" *ngIf="deliverables.length">
-        <div class="cdm-section-label">DELIVERABLES</div>
-        <div class="cdm-brief-box" style="white-space:pre-wrap;">
-          <div *ngFor="let item of deliverables">• {{ item }}</div>
-        </div>
-      </div>
-
-      <!-- Full brief -->
-      <div class="cdm-section" *ngIf="specialInstructions">
-        <div class="cdm-section-label">CAMPAIGN BRIEF</div>
-        <div class="cdm-brief-box">{{ specialInstructions }}</div>
-      </div>
-
-      <ng-container *ngIf="showInvitePlatformSections">
-        <!-- Social platforms (all campaign platforms without filtering) -->
-        <div class="cdm-section" *ngIf="allCampaignPlatforms.length">
-          <div class="cdm-section-label">SOCIAL PLATFORMS</div>
-          <div class="cdm-platform-list">
-            <div class="cdm-platform-pill" *ngFor="let p of allCampaignPlatforms">
-              <i class="bi" [ngClass]="platformIcon(p.platform)" [style.color]="platformColor(p.platform)"></i>
-              <span>{{ platformLabel(p.platform) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- You match (all campaign platforms with user matching status) -->
-        <div class="cdm-section" *ngIf="allCampaignPlatforms.length && !adminReview">
-          <div class="cdm-section-label">YOU MATCH</div>
-          <div class="cdm-platform-match-row">
-            <!-- Show each campaign platform with user's matching status -->
-            <div *ngFor="let platform of allCampaignPlatforms" 
-                 [ngClass]="userHasPlatform(platform.platform) ? 'cdm-platform-match-pill' : 'cdm-platform-missing-pill'">
-              <i class="bi" [ngClass]="platformIcon(platform.platform)" [style.color]="platformColor(platform.platform)"></i>
-              <span>{{ platformLabel(platform.platform) }}</span>
-              <span class="cdm-match-badge" [ngClass]="!userHasPlatform(platform.platform) ? 'cdm-match-badge--missing' : ''">
-                {{ userHasPlatform(platform.platform) ? 'You have' : 'Not Exist' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Selectable content options (only for platforms user has) -->
-        <div class="cdm-section" *ngIf="availableContentTypeOptions.length || unavailableContentTypeOptions.length">
-          <div class="cdm-section-label">SELECT CONTENT TYPE</div>
-        <div class="cdm-note mb-2" *ngIf="isPending && availableContentTypeOptions.length">Choose the content type you can provide:</div>
-        
-        <!-- Selectable content types (user has these platforms) -->
-        <div class="cdm-ct-selection-row" *ngIf="availableContentTypeOptions.length">
-          <button type="button"
-                  class="cdm-ct-pill"
-                  *ngFor="let opt of availableContentTypeOptions"
-                  [class.cdm-ct-pill--selected]="selectedContentTypeKey === opt.key"
-                  [class.disabled]="!isPending || !isOptionSelectable(opt)"
-                  [disabled]="!isPending || !isOptionSelectable(opt)"
-                  (click)="isPending && (selectedContentTypeKey = opt.key); toastError = ''">
-            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-            <span>{{ platformLabel(opt.platform) }} · {{ opt.contentType }}</span>
-            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+        <div class="cdm-footer-right">
+          <button class="cdm-foot-btn cdm-foot-btn--primary"
+                  *ngIf="showViewSubmission"
+                  type="button"
+                  (click)="onViewSubmission()">
+            <i class="bi bi-eye-fill"></i> View Submission
           </button>
-        </div>
-
-        <!-- Unavailable content types (user doesn't have these platforms) - shown as disabled -->
-        <div class="cdm-ct-selection-row" *ngIf="unavailableContentTypeOptions.length">
-          <div class="cdm-note mb-2" *ngIf="availableContentTypeOptions.length">Not available in your profile:</div>
-          <button class="cdm-ct-pill cdm-missing-pill" *ngFor="let opt of unavailableContentTypeOptions" disabled>
-            <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-            <span>{{ platformLabel(opt.platform) }} · {{ opt.contentType }}</span>
-            <span class="cdm-platform-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
+          <button class="cdm-foot-btn cdm-foot-btn--outline"
+                  *ngIf="showConfirmReceipt"
+                  type="button"
+                  (click)="onConfirmReceipt()">
+            <i class="bi bi-check2-circle"></i> Confirm Receipt
           </button>
+          <button class="cdm-foot-btn cdm-foot-btn--ghost" (click)="onClose()">Close</button>
         </div>
-      </div>
       </ng-container>
 
-      <!-- What to do checklist (before accept) -->
-      <div class="cdm-section" *ngIf="isPending">
-        <div class="cdm-section-label">WHAT YOU MUST DO</div>
-        <ul class="cdm-checklist">
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Platform: {{ checklistPlatformText }}</span>
-          </li>
-          <li>
-            <i class="bi" [ngClass]="selectedContentTypeKey || contentTypeOptions.length === 0 ? 'bi-check-circle-fill' : 'bi-circle'"></i>
-            <span>Content type: {{ checklistContentTypeText }}</span>
-          </li>
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>{{ dateChecklistLabel }}: {{ timelineText }}</span>
-          </li>
-          <li>
-            <i class="bi" [ngClass]="hasChecklistLocationInfo ? 'bi-check-circle-fill' : 'bi-info-circle'"></i>
-            <span>Location for shoot/meetup: {{ checklistLocationText }}</span>
-          </li>
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Upload proof screenshots: post screenshot + insights screenshot</span>
-          </li>
-          <li>
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Submission deadline: {{ checklistSubmissionDeadlineText }}</span>
-          </li>
-        </ul>
-      </div>
+    </div><!-- /cdm-footer -->
 
-      <!-- About the brand -->
-      <div class="cdm-section" *ngIf="brandName">
-        <div class="cdm-section-label">ABOUT THE BRAND</div>
-        <div class="cdm-brand-card">
-          <div class="cdm-brand-avatar">
-            <img *ngIf="brandLogo" [src]="brandLogo" [alt]="brandName" (error)="onLogoError($event)" />
-            <span *ngIf="!brandLogo" class="cdm-brand-initial">{{ brandInitial }}</span>
-          </div>
-          <div class="cdm-brand-info">
-            <div class="cdm-brand-name">{{ brandName }}</div>
-            <div class="cdm-brand-tagline" *ngIf="brandTagline">{{ brandTagline }}</div>
-            <div class="cdm-brand-meta" *ngIf="brandLocation">
-              <i class="bi bi-geo-alt"></i> {{ brandLocation }}
-            </div>
-          </div>
-          <a class="cdm-view-profile"
-             *ngIf="brandProfileLink"
-             [routerLink]="brandProfileLink"
-             (click)="onClose()">
-            View Profile
-          </a>
-        </div>
-
-        <a class="cdm-brand-website" *ngIf="brandWebsite"
-           [href]="brandWebsiteHref" target="_blank" rel="noopener noreferrer">
-          <i class="bi bi-globe"></i> {{ brandWebsite }}
-        </a>
-      </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="cdm-footer" [ngClass]="{'cdm-footer--admin-centered': adminReview}">
-      <span class="cdm-footer-status" [ngClass]="'cdm-footer-status--' + statusKey">
-        <i class="bi bi-circle-fill"></i>
-        {{ statusFooterLabel }}
-      </span>
-
-      <ng-container *ngIf="adminReview">
-        <button class="cdm-btn cdm-btn--accept" *ngIf="adminCanApprove" (click)="onAdminApprove()" [disabled]="busy">
-          Approve
-        </button>
-        <button class="cdm-btn cdm-btn--secondary" *ngIf="adminCanRequestChanges" (click)="onAdminRequestChanges()" [disabled]="busy">
-          Needs Changes
-        </button>
-        <button class="cdm-btn cdm-btn--decline" *ngIf="adminCanReject" (click)="onAdminReject()" [disabled]="busy">
-          Reject
-        </button>
-      </ng-container>
-
-      <ng-container *ngIf="isPending && !adminReview">
-        <span class="cdm-selected-payout" *ngIf="selectedPayoutHint">{{ selectedPayoutHint }}</span>
-        <!-- Payout details capture -->
-        <div class="cdm-payout-block" *ngIf="needsPayoutDetails">
-          <div class="cdm-payout-head">
-            <i class="bi bi-bank"></i>
-            <span class="cdm-payout-title">Receive payment to</span>
-            <button type="button" class="cdm-payout-edit-btn" (click)="togglePayoutEdit()">
-              <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
-              {{ payoutEditing ? 'Done' : (payoutSummaryText ? 'Edit' : 'Add') }}
-            </button>
-          </div>
-          <div class="cdm-payout-summary" *ngIf="!payoutEditing">
-            <span *ngIf="payoutSummaryText">{{ payoutSummaryText }}</span>
-            <span class="cdm-payout-missing" *ngIf="!payoutSummaryText">Add UPI / mobile (GPay/PhonePe) before accepting</span>
-          </div>
-          <div class="cdm-payout-form" *ngIf="payoutEditing">
-            <input type="text" class="cdm-payout-input" placeholder="UPI ID (e.g. name@upi)" [(ngModel)]="payoutUpiId" autocomplete="off" />
-            <input type="tel" class="cdm-payout-input" placeholder="Mobile (GPay / PhonePe)" [(ngModel)]="payoutMobile" autocomplete="off" inputmode="tel" maxlength="15" />
-            <input type="text" class="cdm-payout-input" placeholder="Account holder name" [(ngModel)]="payoutName" autocomplete="off" />
-            <small class="cdm-payout-hint">Admin uses these details to send your earnings.</small>
-          </div>
-        </div>
-        <input *ngIf="showDateInput"
-               type="date"
-               class="cdm-date-input"
-               [(ngModel)]="postDate"
-               (ngModelChange)="toastError = ''"
-               [min]="minPostDate"
-               [max]="maxPostDate"
-               [title]="dateInputTitle" />
-        <button class="cdm-btn cdm-btn--secondary cdm-btn--counter"
-                *ngIf="canSendCounterOffer"
-                (click)="onToggleCounter()"
-                [disabled]="busy">
-          {{ counterEditing ? 'Cancel Counter' : 'Counter Offer' }}
-        </button>
-        <div class="cdm-counter-inline" *ngIf="counterEditing">
-          <input type="number"
-                 class="cdm-counter-input"
-                 min="1"
-                 step="1"
-                 [(ngModel)]="counterAmountInput"
-                 (ngModelChange)="toastError = ''"
-                 placeholder="Counter amount (₹)" />
-          <select class="cdm-counter-input"
-                  [(ngModel)]="counterReasonInput"
-                  (ngModelChange)="toastError = ''">
-            <option value="">Reason (optional)</option>
-            <option *ngFor="let reason of counterReasonOptions" [value]="reason">{{ reason }}</option>
-          </select>
-          <button class="cdm-btn cdm-btn--secondary"
-                  (click)="onSendCounter()"
-                  [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
-          <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
-        </div>
-        <span class="cdm-counter-hint" *ngIf="counterEditing">
-          Comment/note text is reserved for future feature use.
-        </span>
-        <span class="cdm-counter-hint" *ngIf="counterReasonText && (statusKey === 'counter_sent' || statusKey === 'accepted' || statusKey === 'payment_confirmed' || statusKey === 'working' || statusKey === 'submitted' || statusKey === 'completed' || statusKey === 'disputed')">
-          Counter reason: {{ counterReasonText }}
-        </span>
-        <span class="cdm-counter-hint" *ngIf="isPending && hasUsedCounterOffer">
-          Counter offer already used for this invite. You can now only accept or decline.
-        </span>
-        <div class="cdm-inline-error" *ngIf="false"></div>
-        <button class="cdm-btn cdm-btn--decline" (click)="onDecline()" [disabled]="busy">
-          Decline
-        </button>
-        <button class="cdm-btn cdm-btn--accept" (click)="onAccept()" [disabled]="busy">
-          Accept
-        </button>
-      </ng-container>
-
-      <button class="cdm-btn cdm-btn--secondary" *ngIf="!isPending && !adminReview" (click)="onClose()">
-        Close
-      </button>
-
-      <button class="cdm-btn cdm-btn--secondary" *ngIf="adminReview" (click)="onClose()">
-        Close
-      </button>
-    </div>
-
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+  </div><!-- /cdm-panel -->
+</div><!-- /cdm-overlay -->
