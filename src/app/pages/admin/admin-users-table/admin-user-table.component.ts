@@ -2075,8 +2075,9 @@ export class AdminUserTableComponent implements OnInit {
         this.smEditSaving = false;
         this.smEditModalOpen = false;
         this.smEditingIdx = null;
-        if (res?.user) {
-          this.mergeUpdatedUser(userType, res.user);
+        const updatedUser = res?.user ?? res?.data?.user;
+        if (updatedUser) {
+          this.mergeUpdatedUser(userType, updatedUser);
           this.loadSelectedProfileVerification();
         }
         this.applyFilters(userType);
@@ -2094,6 +2095,20 @@ export class AdminUserTableComponent implements OnInit {
     return Array.isArray(this.selectedUser?.socialMediaEditLog)
       ? this.selectedUser.socialMediaEditLog
       : [];
+  }
+
+  getConsolidatedSocialMediaChanges(): any[] {
+    const logs = this.getSocialMediaEditLog();
+    if (!logs.length) return [];
+    const platformMap = new Map<string, any>();
+    for (const log of logs) {
+      const key = String(log.platformIdx ?? log.platform ?? '');
+      // Always overwrite so only the most recent admin change per platform is kept
+      platformMap.set(key, { ...log });
+    }
+    return Array.from(platformMap.values()).filter(
+      e => e.oldHandle !== e.newHandle || e.oldTier !== e.newTier
+    );
   }
 
   getTierWithRange(tier: string): string {

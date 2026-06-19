@@ -538,9 +538,9 @@
               </ng-container>
 
               <!-- Change log -->
-              <div class="sm-changelog" *ngIf="getSocialMediaEditLog().length">
+              <div class="sm-changelog" *ngIf="getConsolidatedSocialMediaChanges().length">
                 <div class="sm-changelog-title">Changes Requested</div>
-                <div class="sm-changelog-entry" *ngFor="let log of getSocialMediaEditLog() | slice:0:10">
+                <div class="sm-changelog-entry" *ngFor="let log of getConsolidatedSocialMediaChanges()">
                   <div class="sm-changelog-changes">
                     <span *ngIf="log.oldHandle !== log.newHandle">
                       <strong>{{ getSocialLabelForPlatform(log.platform) }} Handle:</strong>
