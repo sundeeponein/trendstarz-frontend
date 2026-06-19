@@ -54,7 +54,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   }
 
   get displayCommunityName(): string {
-    return String(this.community?.communityName || this.user?.communityName || 'your local TrendStarz WhatsApp Community');
+    return String(this.community?.communityName || this.user?.communityName || 'TrendStarz WhatsApp Community');
   }
 
   get displayCommunityState(): string {
@@ -80,7 +80,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   get statusDescription(): string {
     if (this.joined) return 'You will receive community campaign alerts for your region.';
     if (!this.isUnlocked) return 'Finish the verification steps to receive instant campaign alerts.';
-    return 'Join your local TrendStarz WhatsApp Community to receive instant campaign alerts.';
+    return 'Join TrendStarz WhatsApp Community to receive instant campaign alerts.';
   }
 
   get qrCodeUrl(): string {
