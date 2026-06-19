@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
@@ -14,6 +14,7 @@ import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/c
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -147,6 +148,7 @@ export class PhotographerRegistrationComponent implements OnInit {
     private otpService: OtpService,
     private plansService: PlansService,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private guidelinesService: ImageGuidelinesService,
   ) {}
@@ -827,10 +829,10 @@ export class PhotographerRegistrationComponent implements OnInit {
         ...(this.profileImageData ? [this.profileImageData] : []),
         ...this.photoshootImagesData,
       ],
-      signupAttribution: {
-        source: 'direct',
-        referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
-      },
+      signupAttribution: captureSignupAttribution(
+        this.route.snapshot.queryParamMap,
+        typeof window !== 'undefined' ? window : undefined,
+      ),
     };
 
     this.registrationError = '';

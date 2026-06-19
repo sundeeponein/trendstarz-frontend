@@ -17,6 +17,7 @@ import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -132,7 +133,7 @@ export class BrandRegistrationComponent implements OnInit {
   productImagesFiles: (File | null)[] = [];
   // Per-index cached upload result for product images.
   uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
-  signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  signupAttribution: { source?: string; audience?: string; referrerPath?: string; referrerUrl?: string } = {};
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -153,13 +154,10 @@ export class BrandRegistrationComponent implements OnInit {
       this.verificationCallNumber = s.verificationCallNumber || '';
     });
 
-    const source = this.route.snapshot.queryParamMap.get('source') || '';
-    const audience = this.route.snapshot.queryParamMap.get('audience') || '';
-    this.signupAttribution = {
-      source: source || undefined,
-      audience: audience || undefined,
-      referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    };
+    this.signupAttribution = captureSignupAttribution(
+      this.route.snapshot.queryParamMap,
+      typeof window !== 'undefined' ? window : undefined,
+    );
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
@@ -1082,9 +1080,7 @@ export class BrandRegistrationComponent implements OnInit {
       products: uploadedProducts,
       contact: raw.contact
     };
-    if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
-      payload.signupAttribution = this.signupAttribution;
-    }
+    payload.signupAttribution = this.signupAttribution;
     delete payload.googleMapAddress;
 
     this.configService.registerBrand(payload).subscribe({

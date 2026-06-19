@@ -21,6 +21,7 @@ import { CollaborationAvailabilityFormComponent } from '../../shared/collaborati
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -296,7 +297,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   isSubmitting = false;
   stepTransitioning = false;
-  signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  signupAttribution: { source?: string; audience?: string; referrerPath?: string; referrerUrl?: string } = {};
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -319,13 +320,10 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.verificationCallNumber = s.verificationCallNumber || '';
     });
 
-    const source = this.route.snapshot.queryParamMap.get('source') || '';
-    const audience = this.route.snapshot.queryParamMap.get('audience') || '';
-    this.signupAttribution = {
-      source: source || undefined,
-      audience: audience || undefined,
-      referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    };
+    this.signupAttribution = captureSignupAttribution(
+      this.route.snapshot.queryParamMap,
+      typeof window !== 'undefined' ? window : undefined,
+    );
 
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
@@ -1108,9 +1106,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       ],
       contact: raw.contact
     };
-    if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
-      payload.signupAttribution = this.signupAttribution;
-    }
+    payload.signupAttribution = this.signupAttribution;
 
     this.configService.registerInfluencer(payload).subscribe({
       next: async () => {
