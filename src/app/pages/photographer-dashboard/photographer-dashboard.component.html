@@ -19,8 +19,6 @@
   <div *ngIf="!loading && error" class="alert alert-danger">{{ error }}</div>
 
   <ng-container *ngIf="!loading && !error && photographer">
-    <app-whatsapp-community-card [user]="photographer"></app-whatsapp-community-card>
-
     <div class="row mb-4 gx-3">
       <div class="col-md-3 mb-3 mb-md-0">
         <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
@@ -84,6 +82,13 @@
         </div>
       </div>
     </div>
+
+    <app-whatsapp-community-card
+      [user]="photographer"
+      variant="strip"
+      [respectSkip]="false"
+      [showSkipAction]="false"
+    ></app-whatsapp-community-card>
 
     <div class="performance-overview mb-4">
       <div class="d-flex align-items-center justify-content-between mb-2">

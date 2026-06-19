@@ -11,11 +11,6 @@
     </div>
   </div>
 
-  <app-whatsapp-community-card
-    *ngIf="dashboard?.user"
-    [user]="dashboard.user"
-  ></app-whatsapp-community-card>
-
   <!-- Alert Cards Row -->
   <div class="row mb-4 gx-3">
     <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.user?.isEmailVerified">
@@ -70,6 +65,14 @@
       </div>
     </div>
   </div>
+
+  <app-whatsapp-community-card
+    *ngIf="dashboard?.user"
+    [user]="dashboard.user"
+    variant="strip"
+    [respectSkip]="false"
+    [showSkipAction]="false"
+  ></app-whatsapp-community-card>
 
   <div class="section-card mb-4" *ngIf="!loading">
     <div class="section-title d-flex align-items-center mb-3">

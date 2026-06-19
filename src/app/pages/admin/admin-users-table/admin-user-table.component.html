@@ -194,7 +194,7 @@
             <span class="ts-status-badge" [ngClass]="user.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
               {{ user.communityJoined ? 'Joined' : 'Not Joined' }}
             </span>
-            <div class="user-sub" *ngIf="user.communityName">{{ user.communityName }}</div>
+            <div class="user-sub" *ngIf="user.communityJoined && user.communityName">{{ user.communityName }}</div>
           </td>
           <td class="ts-status-action-cell">
             <div class="row-actions">
@@ -313,10 +313,18 @@
               <span class="ts-status-badge" [ngClass]="selectedUser.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
                 {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
               </span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-2"
+                *ngIf="selectedUser.communityJoined"
+                (click)="markCommunityNotJoined(selectedUser, selectedUserType)"
+              >
+                Not Joined
+              </button>
             </div>
-            <div class="user-sub mt-1" *ngIf="selectedUser.communityName">{{ selectedUser.communityName }}</div>
-            <div class="user-sub" *ngIf="selectedUser.communityState">State: {{ selectedUser.communityState }}</div>
-            <div class="user-sub" *ngIf="selectedUser.communityJoinedAt || selectedUser.communityJoinedDate">
+            <div class="user-sub mt-1" *ngIf="selectedUser.communityJoined && selectedUser.communityName">{{ selectedUser.communityName }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && selectedUser.communityState">State: {{ selectedUser.communityState }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate)">
               Joined at {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
             </div>
           </div>
@@ -446,10 +454,18 @@
             <label>WhatsApp Community</label>
             <div>
               {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
-              <span *ngIf="selectedUser.communityName"> - {{ selectedUser.communityName }}</span>
-              <span *ngIf="selectedUser.communityState"> ({{ selectedUser.communityState }})</span>
+              <span *ngIf="selectedUser.communityJoined && selectedUser.communityName"> - {{ selectedUser.communityName }}</span>
+              <span *ngIf="selectedUser.communityJoined && selectedUser.communityState"> ({{ selectedUser.communityState }})</span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-2"
+                *ngIf="selectedUser.communityJoined"
+                (click)="markCommunityNotJoined(selectedUser, selectedUserType)"
+              >
+                Not Joined
+              </button>
             </div>
-            <div class="user-sub" *ngIf="selectedUser.communityJoinedAt || selectedUser.communityJoinedDate">
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate)">
               Joined on {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
             </div>
           </div>

@@ -1355,6 +1355,42 @@ export class AdminUserTableComponent implements OnInit {
     });
   }
 
+  markCommunityNotJoined(user: any, userType: 'influencer' | 'brand' | 'photographer' | null): void {
+    const userId = String(user?._id || '');
+    if (!userId || !userType) return;
+    this.showConfirm('Mark this user as not joined in WhatsApp Community so they can join again?', () => {
+      this.http.patch(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/community-status`,
+        { communityJoined: false },
+        this.getAuthHeaders(),
+      )
+        .pipe(catchError(err => {
+          alert('Error updating WhatsApp community status: ' + (err?.error?.message || err?.message || 'Unknown error'));
+          return of(null);
+        }))
+        .subscribe((res: any) => {
+          if (!res) return;
+          const updated = res?.user || {};
+          user.communityJoined = false;
+          user.communityJoinedAt = null;
+          user.communityJoinedDate = null;
+          user.communityName = updated.communityName ?? '';
+          user.communityState = updated.communityState ?? '';
+          if (this.selectedUser && String(this.selectedUser._id || '') === userId) {
+            this.selectedUser = {
+              ...this.selectedUser,
+              communityJoined: false,
+              communityJoinedAt: null,
+              communityJoinedDate: null,
+              communityName: '',
+              communityState: '',
+            };
+          }
+          this.fetchUsers();
+        });
+    });
+  }
+
   openVerificationDocsModal(user: any, userType: 'influencer' | 'brand' | 'photographer'): void {
     this.verificationDocsUser = user;
     this.verificationDocsUserType = userType;

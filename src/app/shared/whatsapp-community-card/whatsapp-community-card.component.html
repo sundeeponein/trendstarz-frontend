@@ -1,4 +1,4 @@
-<section class="whatsapp-community-card" *ngIf="shouldShowCard">
+<section class="whatsapp-community-card" [class.whatsapp-community-card--strip]="isStrip" *ngIf="shouldShowCard">
   <div class="whatsapp-community-card__copy">
     <span class="whatsapp-community-card__eyebrow" *ngIf="!joined">Campaign Alerts</span>
     <h2>{{ statusTitle }}</h2>
@@ -20,13 +20,16 @@
   </div>
 
   <div class="whatsapp-community-card__actions" *ngIf="isUnlocked && !joined && hasActiveCommunity">
-    <button type="button" class="btn btn-primary" (click)="joinCommunity()" [disabled]="joining">
-      {{ joining ? 'Opening...' : 'Join Community' }}
+    <button type="button" class="btn btn-primary" (click)="joinCommunity()">
+      Join Community
+    </button>
+    <button type="button" class="btn btn-success" *ngIf="linkOpened" (click)="confirmJoined()" [disabled]="joining">
+      {{ joining ? 'Saving...' : 'I Joined' }}
     </button>
     <button type="button" class="btn btn-outline-secondary" (click)="toggleQr()">
       {{ showQr ? 'Hide QR Code' : 'Show QR Code' }}
     </button>
-    <button type="button" class="btn btn-link" (click)="skipForNow()">
+    <button type="button" class="btn btn-link" *ngIf="showSkipAction && respectSkip && !isStrip" (click)="skipForNow()">
       Skip for Now
     </button>
   </div>

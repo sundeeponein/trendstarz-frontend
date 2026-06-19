@@ -12,9 +12,13 @@ import { ConfigService } from '../config.service';
 export class WhatsappCommunityCardComponent implements OnChanges {
   @Input() user: any | null = null;
   @Input() requireProfileCompletion = false;
+  @Input() variant: 'card' | 'strip' = 'card';
+  @Input() respectSkip = true;
+  @Input() showSkipAction = true;
   community: any | null = null;
   loading = false;
   joining = false;
+  linkOpened = false;
   showQr = false;
   error = '';
   skipped = false;
@@ -75,8 +79,16 @@ export class WhatsappCommunityCardComponent implements OnChanges {
     return !!(this.community?.communityLink && this.community?.isActive !== false);
   }
 
+  get isStrip(): boolean {
+    return this.variant === 'strip';
+  }
+
+  get isDismissed(): boolean {
+    return this.respectSkip && this.skipped && !this.isStrip;
+  }
+
   get shouldShowCard(): boolean {
-    if (!this.user || this.skipped) return false;
+    if (!this.user || this.isDismissed) return false;
     if (this.joined) return true;
     if (!this.isUnlocked) return true;
     return this.hasActiveCommunity;
@@ -84,6 +96,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
 
   get statusTitle(): string {
     if (this.joined) return `Joined Community: ${this.displayCommunityName}`;
+    if (this.isStrip && this.isUnlocked) return 'Do not miss campaign opportunities';
     if (!this.emailVerified) return 'Verify Email to unlock campaign alerts.';
     if (!this.mobileVerified) return 'Verify Mobile Number to unlock campaign alerts.';
     if (!this.profileReady) return 'Complete your profile to receive campaign opportunities.';
@@ -93,6 +106,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   get statusDescription(): string {
     if (this.joined) return 'You will receive community campaign alerts for your region.';
     if (!this.isUnlocked) return 'Finish the verification steps to receive instant campaign alerts.';
+    if (this.isStrip) return 'Join your local WhatsApp Community for instant campaign alerts.';
     return 'Join TrendStarz WhatsApp Community to receive instant campaign alerts.';
   }
 
@@ -106,6 +120,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
     this.community = null;
     this.error = '';
     this.showQr = false;
+    this.linkOpened = false;
     const state = this.stateName;
     if (!state) return;
     this.loading = true;
@@ -124,10 +139,15 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   }
 
   joinCommunity() {
-    if (!this.hasActiveCommunity || this.joining) return;
+    if (!this.hasActiveCommunity) return;
     if (typeof window !== 'undefined') {
       window.open(this.community.communityLink, '_blank', 'noopener');
     }
+    this.linkOpened = true;
+  }
+
+  confirmJoined() {
+    if (!this.hasActiveCommunity || this.joining) return;
     this.joining = true;
     this.config.markCommunityJoined(this.displayCommunityName, this.displayCommunityState).subscribe({
       next: (res) => {
@@ -154,6 +174,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   }
 
   skipForNow() {
+    if (!this.respectSkip) return;
     this.skipped = true;
     const key = this.skipStorageKey();
     if (key && typeof window !== 'undefined') {

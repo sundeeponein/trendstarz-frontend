@@ -54,6 +54,8 @@
         <app-whatsapp-community-card
           *ngIf="communityProfileUser"
           [user]="communityProfileUser"
+          [respectSkip]="false"
+          [showSkipAction]="false"
         ></app-whatsapp-community-card>
 
         <form [formGroup]="form" (ngSubmit)="onSave()">
