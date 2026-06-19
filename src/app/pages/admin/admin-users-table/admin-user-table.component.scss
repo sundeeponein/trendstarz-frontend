@@ -75,21 +75,30 @@
 
 .filters-grid {
   margin-top: 18px;
+  margin-bottom: 18px;
   display: grid;
-  grid-template-columns: minmax(260px, 1.35fr) repeat(3, minmax(130px, 0.65fr)) 120px;
-  gap: 12px;
+  grid-template-columns:
+    minmax(340px, 2.1fr)
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(170px, 1fr)
+    minmax(140px, 0.72fr);
+  gap: 12px 14px;
+  align-items: stretch;
 }
 
 .search-wrap {
   position: relative;
+  min-width: 0;
 }
 
 .search-wrap i {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: #9098aa;
+  font-size: 1.05rem;
 }
 
 .search-wrap input,
@@ -98,13 +107,27 @@
   border: 1px solid #d9dde6;
   border-radius: 10px;
   background: #fff;
-  min-height: 44px;
+  min-height: 52px;
   color: #222b38;
-  padding: 0 12px;
+  padding: 0 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: none;
+  outline: none;
 }
 
 .search-wrap input {
-  padding-left: 36px;
+  padding-left: 44px;
+}
+
+.search-wrap input:focus,
+.filters-grid select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.12);
+}
+
+.category-filter {
+  grid-column: 1 / 2;
 }
 
 .reset-btn {
@@ -112,8 +135,14 @@
   background: #e3e6eb;
   color: #1f2937;
   border-radius: 10px;
-  font-weight: 600;
-  min-height: 44px;
+  font-weight: 700;
+  min-height: 52px;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
 }
 
 // .users-table-shell {
@@ -709,18 +738,20 @@
 
 .rate-platform-name {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
   font-weight: 800;
   color: #1f2937;
   margin-bottom: 6px;
 }
 
-.rate-platform-name > span:first-child {
+.rate-platform-info {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  font-size: 0.9rem;
 }
 
 .rate-platform-meta {
@@ -812,13 +843,32 @@
   padding: 6px 12px;
 }
 
+@media (max-width: 1200px) {
+  .filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .search-wrap {
+    grid-column: span 3;
+  }
+
+  .category-filter {
+    grid-column: span 2;
+  }
+}
+
 @media (max-width: 992px) {
   .filters-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .reset-btn {
+  .search-wrap,
+  .category-filter {
     grid-column: span 2;
+  }
+
+  .reset-btn {
+    width: 100%;
   }
 }
 
@@ -836,6 +886,11 @@
   .details-grid,
   .details-grid-extended {
     grid-template-columns: 1fr;
+  }
+
+  .search-wrap,
+  .category-filter {
+    grid-column: auto;
   }
 
   .role-tabs {
@@ -859,4 +914,86 @@
     grid-template-columns: 1fr;
     width: 100%;
   }
+}
+
+/* ── Social Media Edit ─────────────────────────────────────────── */
+.sm-tier-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+
+.sm-handle-link {
+  color: #2563eb;
+  font-weight: 500;
+  font-size: 0.82rem;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.sm-edit-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background 0.15s;
+  &:hover { background: #f3f4f6; }
+}
+
+/* Change log */
+.sm-changelog {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sm-changelog-title {
+  background: #f3f4f6;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sm-changelog-entry {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  &:last-child { border-bottom: none; }
+}
+
+.sm-changelog-changes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: #111827;
+  margin-bottom: 4px;
+
+  span { display: block; }
+  strong { color: #374151; }
+}
+
+.sm-changelog-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 0.72rem;
+  color: #6b7280;
+
+  .bi { margin-right: 3px; }
 }

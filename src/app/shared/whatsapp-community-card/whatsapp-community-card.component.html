@@ -1,10 +1,10 @@
-<section class="whatsapp-community-card" *ngIf="user">
+<section class="whatsapp-community-card" *ngIf="shouldShowCard">
   <div class="whatsapp-community-card__copy">
     <span class="whatsapp-community-card__eyebrow" *ngIf="!joined">Campaign Alerts</span>
     <h2>{{ statusTitle }}</h2>
     <p>{{ statusDescription }}</p>
 
-    <div class="whatsapp-community-card__community" *ngIf="isUnlocked && !joined">
+    <div class="whatsapp-community-card__community" *ngIf="isUnlocked && !joined && hasActiveCommunity">
       <span>Community:</span>
       <strong>{{ loading ? 'Loading...' : displayCommunityName }}</strong>
       <span *ngIf="displayCommunityState">({{ displayCommunityState }})</span>
@@ -19,14 +19,14 @@
     <div class="whatsapp-community-card__error" *ngIf="error">{{ error }}</div>
   </div>
 
-  <div class="whatsapp-community-card__actions" *ngIf="isUnlocked && !joined">
-    <button type="button" class="btn btn-primary" (click)="joinCommunity()" [disabled]="!community?.communityLink || joining">
+  <div class="whatsapp-community-card__actions" *ngIf="isUnlocked && !joined && hasActiveCommunity">
+    <button type="button" class="btn btn-primary" (click)="joinCommunity()" [disabled]="joining">
       {{ joining ? 'Opening...' : 'Join Community' }}
     </button>
-    <button type="button" class="btn btn-outline-secondary" (click)="toggleQr()" [disabled]="!community?.communityLink">
+    <button type="button" class="btn btn-outline-secondary" (click)="toggleQr()">
       {{ showQr ? 'Hide QR Code' : 'Show QR Code' }}
     </button>
-    <button type="button" class="btn btn-link" (click)="user.communitySkipped = true">
+    <button type="button" class="btn btn-link" (click)="skipForNow()">
       Skip for Now
     </button>
   </div>

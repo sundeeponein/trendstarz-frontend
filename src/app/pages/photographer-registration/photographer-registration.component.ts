@@ -60,6 +60,10 @@ export class PhotographerRegistrationComponent implements OnInit {
   registrationSuccess = false;
   registrationEmailSendFailed = false;
   registrationError = '';
+  resendingEmailVerification = false;
+  resendEmailVerificationSuccess = false;
+  resendEmailVerificationError: string | null = null;
+  pendingVerificationEmail = '';
   galleryUploadWarning = '';
   showPhoneOtp = false;
   phoneOtp: string[] = ['', '', '', '', '', ''];
@@ -835,6 +839,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       ),
     };
 
+    this.pendingVerificationEmail = v.email || '';
     this.registrationError = '';
     this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
@@ -876,6 +881,28 @@ export class PhotographerRegistrationComponent implements OnInit {
         this.registrationError = body?.message || 'Registration failed. Please try again.';
         this.cdr.detectChanges();
       },
+    });
+  }
+
+  resendEmailVerification() {
+    this.resendingEmailVerification = true;
+    this.resendEmailVerificationSuccess = false;
+    this.resendEmailVerificationError = null;
+    const email = this.pendingVerificationEmail || this.form.get('email')?.value;
+    if (!email) {
+      this.resendingEmailVerification = false;
+      this.resendEmailVerificationError = 'No email found for verification resend.';
+      return;
+    }
+    this.config.sendEmailVerificationLink(email).subscribe({
+      next: () => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationSuccess = true;
+      },
+      error: (err: any) => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationError = err?.error?.message || 'Failed to resend verification email.';
+      }
     });
   }
 

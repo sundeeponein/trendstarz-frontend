@@ -19,6 +19,8 @@ import {
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 import { ImageGalleryModalComponent } from '../../../shared/components/image-gallery-modal/image-gallery-modal.component';
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
+import { SocialMediaEditModalComponent, AdminUser, SocialMediaEditPayload } from '../../../shared/components/social-media-edit-modal/social-media-edit-modal.component';
+import { SessionService } from '../../../core/session.service';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -31,6 +33,7 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
     ProfileReviewPanelComponent,
     ImageGalleryModalComponent,
     VerificationFieldComponent,
+    SocialMediaEditModalComponent,
   ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
@@ -356,11 +359,15 @@ export class AdminUserTableComponent implements OnInit {
     return this.getUserGalleryStatus(user) === 'Verified' || this.getUserGalleryStatus(user) === 'Attached';
   }
 
-  getUserCreatorTierSummary(user: any): string {
+  getUserCreatorTiers(user: any): string[] {
     const tiers = (Array.isArray(user?.socialMedia) ? user.socialMedia : [])
       .map((sm: any) => this.getSocialTierLabel(sm))
       .filter((tier: string) => !!tier);
-    const uniqueTiers = Array.from(new Set(tiers));
+    return Array.from(new Set(tiers));
+  }
+
+  getUserCreatorTierSummary(user: any): string {
+    const uniqueTiers = this.getUserCreatorTiers(user);
     return uniqueTiers.length ? uniqueTiers.join(', ') : '-';
   }
 
@@ -793,6 +800,7 @@ export class AdminUserTableComponent implements OnInit {
   influencerFilters = {
     status: '',
     premium: '',
+    creatorTier: '',
     category: '',
     state: '',
     signupSource: '',
@@ -804,6 +812,7 @@ export class AdminUserTableComponent implements OnInit {
   brandFilters = {
     status: '',
     premium: '',
+    creatorTier: '',
     category: '',
     state: '',
     signupSource: '',
@@ -815,6 +824,7 @@ export class AdminUserTableComponent implements OnInit {
   photographerFilters = {
     status: '',
     premium: '',
+    creatorTier: '',
     category: '',
     state: '',
     signupSource: '',
@@ -827,6 +837,7 @@ export class AdminUserTableComponent implements OnInit {
   // Available filter options
   categoriesArray: string[] = [];
   statesArray: string[] = [];
+  creatorTiersArray: string[] = [];
   statusArray: string[] = [];
   signupSourcesArray: string[] = [];
 
@@ -849,6 +860,14 @@ export class AdminUserTableComponent implements OnInit {
   verificationDocsUserType: 'influencer' | 'brand' | 'photographer' | null = null;
   verificationDocsDraft = '';
 
+  // Social media edit modal state
+  smEditModalOpen = false;
+  smEditingIdx: number | null = null;
+  smEditSaving = false;
+  smEditError: string | null = null;
+  adminUserList: AdminUser[] = [];
+  currentAdmin: AdminUser | null = null;
+
   // Holds an error message when profile/registration fetch fails
   registrationError: string | null = null;
   firebaseImportMessage = '';
@@ -861,13 +880,23 @@ export class AdminUserTableComponent implements OnInit {
     private configService: ConfigService,
     private cd: ChangeDetectorRef,
     private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
 
   ngOnInit() {
     if (typeof window !== 'undefined') {
       this.filtersExpanded = window.innerWidth >= 768;
     }
+    const sessionUser = this.session.getUser();
+    if (sessionUser) {
+      this.currentAdmin = {
+        id: sessionUser.id || sessionUser._id || '',
+        name: sessionUser.name || sessionUser.email || 'Admin',
+        role: sessionUser.role || 'admin',
+      };
+    }
     this.fetchUsers();
+    this.loadAdminUserList();
     if (typeof window !== 'undefined') {
       window.addEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
     }
@@ -1014,6 +1043,7 @@ export class AdminUserTableComponent implements OnInit {
   updateAllFilterOptions(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
     const categoriesSet = new Set<string>();
     const statesSet = new Set<string>();
+    const creatorTiersSet = new Set<string>();
     const statusSet = new Set<string>();
     const signupSourceSet = new Set<string>();
 
@@ -1027,6 +1057,7 @@ export class AdminUserTableComponent implements OnInit {
       if (user.location?.state) {
         statesSet.add(user.location.state);
       }
+      this.getUserCreatorTiers(user).forEach((tier) => creatorTiersSet.add(tier));
       if (user.status) {
         statusSet.add(user.status);
       }
@@ -1038,6 +1069,7 @@ export class AdminUserTableComponent implements OnInit {
 
     this.categoriesArray = Array.from(categoriesSet).sort();
     this.statesArray = Array.from(statesSet).sort();
+    this.creatorTiersArray = Array.from(creatorTiersSet).sort();
     this.statusArray = Array.from(statusSet).sort();
     this.signupSourcesArray = Array.from(signupSourceSet).sort();
   }
@@ -1151,6 +1183,10 @@ export class AdminUserTableComponent implements OnInit {
       return false;
     }
     if (filters.premium === 'free' && user.isPremium) {
+      return false;
+    }
+
+    if (filters.creatorTier && !this.getUserCreatorTiers(user).includes(filters.creatorTier)) {
       return false;
     }
     
@@ -1380,11 +1416,11 @@ export class AdminUserTableComponent implements OnInit {
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
     if (userType === 'influencer') {
-      this.influencerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
+      this.influencerFilters = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
     } else if (userType === 'brand') {
-      this.brandFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
+      this.brandFilters = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
     } else {
-      this.photographerFilters = { status: '', premium: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
+      this.photographerFilters = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
     }
     this.applyFilters(userType);
     this.currentPage = 1;
@@ -1466,6 +1502,9 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
     this.showUserDetailsModal = true;
     this.loadSelectedProfileVerification();
+    this.smEditModalOpen = false;
+    this.smEditingIdx = null;
+    this.smEditError = null;
   }
 
   closeUserDetailsModal(): void {
@@ -1892,6 +1931,85 @@ export class AdminUserTableComponent implements OnInit {
     this.premiumType = null;
     this.fetchUsers(tab);
   }
+
+  // ── Social media edit modal ───────────────────────────────────────────
+  loadAdminUserList() {
+    this.http.get<AdminUser[]>(
+      `${environment.apiBaseUrl}/admin/admin-users`,
+      this.getAuthHeaders()
+    ).subscribe({ next: (list) => { this.adminUserList = list || []; }, error: () => {} });
+  }
+
+  openSocialMediaEdit(idx: number) {
+    this.smEditingIdx = idx;
+    this.smEditError = null;
+    this.smEditModalOpen = true;
+    if (!this.adminUserList.length) this.loadAdminUserList();
+  }
+
+  cancelSocialMediaEdit() {
+    this.smEditModalOpen = false;
+    this.smEditingIdx = null;
+    this.smEditError = null;
+  }
+
+  saveSocialMediaEdit(payload: SocialMediaEditPayload) {
+    if (!this.selectedUser || this.smEditingIdx === null) return;
+    const idx = this.smEditingIdx;
+    const userId = this.selectedUser._id || this.selectedUser.id;
+    const userType = this.selectedUserType || this.activeTab;
+    this.smEditSaving = true;
+    this.smEditError = null;
+    this.http.patch(
+      `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-media/${idx}`,
+      payload,
+      this.getAuthHeaders()
+    ).subscribe({
+      next: (res: any) => {
+        this.smEditSaving = false;
+        this.smEditModalOpen = false;
+        this.smEditingIdx = null;
+        if (res?.user) {
+          const list: any[] =
+            userType === 'influencer' ? this.influencers :
+            userType === 'brand' ? this.brands : this.photographers;
+          const i = list.findIndex((u: any) => String(u._id || u.id) === String(userId));
+          if (i >= 0) list[i] = res.user;
+          this.selectedUser = res.user;
+        }
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.smEditSaving = false;
+        this.smEditError = err?.error?.message || 'Failed to save. Please try again.';
+      }
+    });
+  }
+
+  getSocialMediaEditLog(): any[] {
+    return Array.isArray(this.selectedUser?.socialMediaEditLog)
+      ? this.selectedUser.socialMediaEditLog
+      : [];
+  }
+
+  getTierWithRange(tier: string): string {
+    const range = TIER_DESC_MAP[(tier || '').toLowerCase()];
+    return range ? `${tier} (${range})` : tier;
+  }
+
+  getSocialIconForPlatform(platform: string): string {
+    return this.getSocialIcon(this.resolveSocialPlatform({ platform }));
+  }
+
+  getSocialLabelForPlatform(platform: string): string {
+    return this.getSocialLabel(this.resolveSocialPlatform({ platform }));
+  }
+
+  resolveSocialHrefForPlatform(sm: any): string {
+    const key = this.resolveSocialPlatform(sm);
+    return this.resolveSocialHref(sm, key) || '';
+  }
+  // ─────────────────────────────────────────────────────────────────────
 
   getAuthHeaders() {
     const token =

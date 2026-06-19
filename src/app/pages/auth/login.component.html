@@ -80,6 +80,21 @@
           <button type="submit" class="btn-signin">Sign In</button>
         </form>
 
+        <div *ngIf="emailNotVerified" class="email-not-verified-banner">
+          <div class="env-icon">&#9888;</div>
+          <h4 class="env-title">Email Not Verified</h4>
+          <p class="env-msg">Your email address has not been verified yet.</p>
+          <p class="env-hint">Didn't receive the email? Check your Spam or Promotions folder, or resend the verification link below.</p>
+          <div *ngIf="resendVerificationSuccess" class="env-success">Verification email sent! Check your inbox.</div>
+          <div *ngIf="resendVerificationError" class="env-error">{{ resendVerificationError }}</div>
+          <div class="env-actions">
+            <button class="btn-resend" (click)="resendVerificationEmail()" [disabled]="resendingVerification">
+              {{ resendingVerification ? 'Sending...' : 'Resend Verification Email' }}
+            </button>
+            <button class="btn-change-email" (click)="changeEmailForVerification()">Try a Different Email</button>
+          </div>
+        </div>
+
         <div class="divider"><span>Don&apos;t have an account?</span></div>
 
         <h6 class="text-center text-black">Join Now</h6>

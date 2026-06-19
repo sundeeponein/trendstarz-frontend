@@ -26,6 +26,7 @@ export const routes: Routes = [
 			{ path: 'privacy-policy', loadComponent: () => import('./legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
 			{ path: 'terms-and-conditions', loadComponent: () => import('./legal/terms/terms.component').then(m => m.TermsComponent) },
 			{ path: 'refund-policy', loadComponent: () => import('./legal/refund-policy/refund-policy.component').then(m => m.RefundPolicyComponent) },
+			{ path: 'community-guidelines', loadComponent: () => import('./legal/community-guidelines/community-guidelines.component').then(m => m.CommunityGuidelinesComponent) },
 			{ path: 'contact', loadComponent: () => import('./legal/contact/contact.component').then(m => m.ContactComponent) },
 			// user/brand/influencer pages
 			{ path: 'register-influencer', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },

@@ -17,6 +17,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   joining = false;
   showQr = false;
   error = '';
+  skipped = false;
 
   constructor(
     private readonly config: ConfigService,
@@ -25,6 +26,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['user']) {
+      this.skipped = this.readSkipPreference();
       this.loadCommunity();
     }
   }
@@ -69,6 +71,17 @@ export class WhatsappCommunityCardComponent implements OnChanges {
     return !!this.user?.communityJoined;
   }
 
+  get hasActiveCommunity(): boolean {
+    return !!(this.community?.communityLink && this.community?.isActive !== false);
+  }
+
+  get shouldShowCard(): boolean {
+    if (!this.user || this.skipped) return false;
+    if (this.joined) return true;
+    if (!this.isUnlocked) return true;
+    return this.hasActiveCommunity;
+  }
+
   get statusTitle(): string {
     if (this.joined) return `Joined Community: ${this.displayCommunityName}`;
     if (!this.emailVerified) return 'Verify Email to unlock campaign alerts.';
@@ -92,12 +105,13 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   loadCommunity() {
     this.community = null;
     this.error = '';
+    this.showQr = false;
     const state = this.stateName;
     if (!state) return;
     this.loading = true;
     this.config.getWhatsappCommunityForState(state).subscribe({
       next: (community) => {
-        this.community = community || null;
+        this.community = community?.isActive === false ? null : (community || null);
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -110,7 +124,7 @@ export class WhatsappCommunityCardComponent implements OnChanges {
   }
 
   joinCommunity() {
-    if (!this.community?.communityLink || this.joining) return;
+    if (!this.hasActiveCommunity || this.joining) return;
     if (typeof window !== 'undefined') {
       window.open(this.community.communityLink, '_blank', 'noopener');
     }
@@ -137,5 +151,26 @@ export class WhatsappCommunityCardComponent implements OnChanges {
 
   toggleQr() {
     this.showQr = !this.showQr;
+  }
+
+  skipForNow() {
+    this.skipped = true;
+    const key = this.skipStorageKey();
+    if (key && typeof window !== 'undefined') {
+      localStorage.setItem(key, '1');
+    }
+  }
+
+  private readSkipPreference(): boolean {
+    const key = this.skipStorageKey();
+    if (!key || typeof window === 'undefined') return false;
+    return localStorage.getItem(key) === '1';
+  }
+
+  private skipStorageKey(): string {
+    const identity = String(this.user?.id || this.user?._id || this.user?.email || '').trim();
+    const state = this.stateName || 'unknown';
+    if (!identity) return '';
+    return `whatsappCommunitySkipped:${identity}:${state}`;
   }
 }

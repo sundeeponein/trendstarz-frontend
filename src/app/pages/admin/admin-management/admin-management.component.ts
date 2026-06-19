@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { buildDefaultUserTagVisibilityOptions } from '../../../shared/constants/user-tag-options.constants';
 
@@ -440,6 +441,7 @@ export class AdminManagementComponent implements OnInit {
   campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
   campaignAccessModeConfigDefaults: CampaignAccessModeConfigItem[] = [];
   campaignTypeResetMessage = '';
+  tierUsageCounts: Record<string, number> = {};
   whatsappCommunities: any[] = [];
   whatsappCommunitiesLoading = false;
   whatsappCommunitySaving = false;
@@ -919,6 +921,7 @@ export class AdminManagementComponent implements OnInit {
     this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+      this.loadTierUsageCounts();
     });
     this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
@@ -927,6 +930,48 @@ export class AdminManagementComponent implements OnInit {
 
     this.loadUserTagsConfig();
     this.loadCollaborationAvailabilityConfig();
+  }
+
+  loadTierUsageCounts() {
+    const baseUrl = environment.apiBaseUrl;
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const requests = [
+      this.http.get<any>(`${baseUrl}/admin/influencers?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/brands?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/photographers?limit=1000`, headers),
+    ];
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const counts: Record<string, number> = {};
+        responses
+          .flatMap((res: any) => {
+            const data = res?.data ?? res ?? [];
+            return Array.isArray(data) ? data : [];
+          })
+          .forEach((user: any) => {
+            const userTiers = new Set<string>();
+            (Array.isArray(user?.socialMedia) ? user.socialMedia : []).forEach((sm: any) => {
+              const tier = String(sm?.tier || '').trim();
+              if (tier) userTiers.add(tier.toLowerCase());
+            });
+            userTiers.forEach((tier) => {
+              counts[tier] = (counts[tier] || 0) + 1;
+            });
+          });
+        this.tierUsageCounts = counts;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.tierUsageCounts = {};
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  getTierUsageCount(tier: any): number {
+    const name = String(tier?.name || '').trim().toLowerCase();
+    return name ? Number(this.tierUsageCounts[name] || 0) : 0;
   }
 
   loadCollaborationAvailabilityConfig() {
