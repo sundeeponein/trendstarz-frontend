@@ -233,9 +233,9 @@
         <div class="details-head d-flex gap-3 align-items-center">
           <img
             class="avatar lg"
-            [src]="getUserAvatar(selectedUser, selectedUserType || activeTab)"
+            [src]="getUserAvatar(selectedUser, selectedRole)"
             alt="Selected user"
-            (error)="$any($event.target).src = (selectedUserType || activeTab) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
+            (error)="$any($event.target).src = (selectedRole) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
           />
           <div>
             <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getSelectedUserStatus() === 'accepted'">| {{ getSelectedUserStatus() | titlecase }}</span></h4>
@@ -311,7 +311,7 @@
                 type="button"
                 class="btn btn-sm btn-outline-secondary ms-2"
                 *ngIf="selectedUser.communityJoined"
-                (click)="markCommunityNotJoined(selectedUser, selectedUserType)"
+                (click)="markCommunityNotJoined(selectedUser, selectedRole)"
               >
                 Not Joined
               </button>
@@ -327,9 +327,9 @@
               label="Profile Photo"
               [status]="getUserProfilePhotoStatus(selectedUser)"
               [value]="getUserProfilePhotoStatus(selectedUser)"
-              [thumbSrc]="getUserAvatar(selectedUser, selectedUserType || activeTab)"
+              [thumbSrc]="getUserAvatar(selectedUser, selectedRole)"
               thumbAlt="Profile photo"
-              [fallbackSrc]="(selectedUserType || activeTab) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
+              [fallbackSrc]="(selectedRole) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
               [verified]="isProfilePhotoVerified(selectedUser)"
               (toggled)="toggleSelectedProfilePhotoVerification()"
             ></app-verification-field>
@@ -444,25 +444,6 @@
             <label>Last Login</label>
             <div>{{ selectedUser.lastLoginAt ? (selectedUser.lastLoginAt | date:'medium') : '-' }}</div>
           </div>
-          <div>
-            <label>WhatsApp Community</label>
-            <div>
-              {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
-              <span *ngIf="selectedUser.communityJoined && selectedUser.communityName"> - {{ selectedUser.communityName }}</span>
-              <span *ngIf="selectedUser.communityJoined && selectedUser.communityState"> ({{ selectedUser.communityState }})</span>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary ms-2"
-                *ngIf="selectedUser.communityJoined"
-                (click)="markCommunityNotJoined(selectedUser, selectedUserType)"
-              >
-                Not Joined
-              </button>
-            </div>
-            <div class="user-sub" *ngIf="selectedUser.communityJoined && (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate)">
-              Joined on {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
-            </div>
-          </div>
         </div>
 
         <div class="details-section">
@@ -472,15 +453,15 @@
               <label>Categories</label>
               <div>{{ getUserCategoriesLabel(selectedUser) }}</div>
             </div>
-            <div *ngIf="(selectedUserType || activeTab) === 'influencer' && selectedUser?.professionalStatus">
+            <div *ngIf="(selectedRole) === 'influencer' && selectedUser?.professionalStatus">
               <label>Professional Status</label>
               <div>Professional Creator</div>
             </div>
-            <div *ngIf="(selectedUserType || activeTab) === 'influencer' && selectedUser?.professionalStatus">
+            <div *ngIf="(selectedRole) === 'influencer' && selectedUser?.professionalStatus">
               <label>Creator Type / Specialty</label>
               <div>{{ getUserCreatorTypesLabel(selectedUser) }}</div>
             </div>
-            <div *ngIf="(selectedUserType || activeTab) === 'influencer'">
+            <div *ngIf="(selectedRole) === 'influencer'">
               <label>Collaboration Availability</label>
               <div>{{ getUserCollaborationAvailabilityLabel(selectedUser) }}</div>
             </div>
@@ -489,7 +470,7 @@
               <div>{{ getUserLanguages(selectedUser) }}</div>
             </div>
             <div class="rate-details" *ngIf="selectedUser">
-              <label>Social Media{{ (selectedUserType || activeTab) === 'influencer' ? ' - Content & Rates' : ' Platforms' }}</label>
+              <label>Social Media{{ (selectedRole) === 'influencer' ? ' - Content & Rates' : ' Platforms' }}</label>
               <div class="mb-2">
                 <app-verification-field
                   label="Social Profile & Creator Tier"
@@ -521,7 +502,7 @@
                 </div>
 
                 <!-- Content type rates (influencer only) -->
-                <ng-container *ngIf="(selectedUserType || activeTab) === 'influencer'">
+                <ng-container *ngIf="(selectedRole) === 'influencer'">
                   <div class="rate-row" *ngFor="let ct of sm?.contentTypes">
                     <ng-container *ngIf="ct?.enabled && ct?.price > 0">
                       <span>{{ ct?.name || ct?.label }}</span>
@@ -592,7 +573,7 @@
                 </span>
                 <button class="btn btn-outline-secondary btn-sm"
                         [disabled]="!hasVerificationDocuments(selectedUser)"
-                        (click)="openVerificationDocsModal(selectedUser, selectedUserType || activeTab)">
+                        (click)="openVerificationDocsModal(selectedUser, selectedRole)">
                   View Docs
                 </button>
               </div>
@@ -674,13 +655,13 @@
           <i class="bi bi-trash-fill"></i>
           Delete
         </button>
-        <button class="btn btn-outline-primary btn-sm" *ngIf="!selectedUser.isPremium" (click)="openPremiumModal(selectedUser._id, selectedUserType || activeTab)">
+        <button class="btn btn-outline-primary btn-sm" *ngIf="!selectedUser.isPremium" (click)="openPremiumModal(selectedUser._id, selectedRole)">
           Set Premium
         </button>
-        <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedUser.isPremium" (click)="setPremium(selectedUser._id, false, selectedUserType || activeTab)">
+        <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedUser.isPremium" (click)="setPremium(selectedUser._id, false, selectedRole)">
           Set Free
         </button>
-        <button class="btn btn-outline-info btn-sm" (click)="openTagModal(selectedUser, selectedUserType || activeTab)">
+        <button class="btn btn-outline-info btn-sm" (click)="openTagModal(selectedUser, selectedRole)">
           Edit Tags
         </button>
       </div>
@@ -821,16 +802,16 @@
       <div class="modal-footer d-flex gap-2 justify-content-between">
         <button type="button" class="btn btn-outline-secondary" (click)="closeVerificationDocsModal()">Cancel</button>
         <div class="d-flex gap-2">
-          <button type="button" class="btn btn-success" (click)="updateInfluencerVerificationFromModal('approve')" title="Approve documents as authentic">
+          <button type="button" class="btn btn-success" (click)="updateProfileDocumentVerificationFromModal('approve')" title="Approve documents as authentic">
             <i class="bi bi-check-circle"></i> Approve
           </button>
-          <button type="button" class="btn btn-warning text-dark" (click)="updateInfluencerVerificationFromModal('reject')" title="Reject documents - need resubmission">
+          <button type="button" class="btn btn-warning text-dark" (click)="updateProfileDocumentVerificationFromModal('reject')" title="Reject documents - need resubmission">
             <i class="bi bi-x-circle"></i> Reject
           </button>
-          <button type="button" class="btn btn-info text-dark" (click)="updateInfluencerVerificationFromModal('pending')" title="Mark as pending review">
+          <button type="button" class="btn btn-info text-dark" (click)="updateProfileDocumentVerificationFromModal('pending')" title="Mark as pending review">
             <i class="bi bi-hourglass-split"></i> Pending
           </button>
-          <button type="button" class="btn btn-danger" (click)="updateInfluencerVerificationFromModal('remove')" title="Remove - for expired/invalid docs">
+          <button type="button" class="btn btn-danger" (click)="updateProfileDocumentVerificationFromModal('remove')" title="Remove - for expired/invalid docs">
             <i class="bi bi-trash"></i> Remove
           </button>
         </div>

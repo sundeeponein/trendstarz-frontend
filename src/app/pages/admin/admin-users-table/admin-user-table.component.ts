@@ -23,6 +23,8 @@ import { SocialMediaEditModalComponent, AdminUser, SocialMediaEditPayload } from
 import { SessionService } from '../../../core/session.service';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 
+type AdminUserRole = 'influencer' | 'brand' | 'photographer';
+
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
@@ -49,7 +51,7 @@ export class AdminUserTableComponent implements OnInit {
 
   showUserDetailsModal = false;
   selectedUser: any = null;
-  selectedUserType: 'influencer' | 'brand' | 'photographer' | null = null;
+  selectedUserType: AdminUserRole | null = null;
   selectedUserInternalNotes = '';
   selectedProfileVerification: ProfileVerificationDashboard | null = null;
   selectedProfileVerificationLoading = false;
@@ -118,7 +120,11 @@ export class AdminUserTableComponent implements OnInit {
     return 'assets/default-profile-brands.png';
   }
 
-  getUserAvatar(user: any, userType: 'influencer' | 'brand' | 'photographer'): string {
+  get selectedRole(): AdminUserRole {
+    return this.selectedUserType || this.activeTab;
+  }
+
+  getUserAvatar(user: any, userType: AdminUserRole): string {
     return userType === 'brand' ? this.getBrandLogo(user) : this.getProfileImage(user);
   }
 
@@ -859,7 +865,7 @@ export class AdminUserTableComponent implements OnInit {
   // Verification docs modal state
   showVerificationDocsModal = false;
   verificationDocsUser: any = null;
-  verificationDocsUserType: 'influencer' | 'brand' | 'photographer' | null = null;
+  verificationDocsUserType: AdminUserRole | null = null;
   verificationDocsDraft = '';
 
   // Social media edit modal state
@@ -948,7 +954,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
 
-  private getAdminListUrl(userType: 'influencer' | 'brand' | 'photographer'): string {
+  private getAdminListUrl(userType: AdminUserRole): string {
     const endpoint =
       userType === 'influencer'
         ? 'influencers'
@@ -963,7 +969,7 @@ export class AdminUserTableComponent implements OnInit {
     return `${environment.apiBaseUrl}/admin/${endpoint}?${params.toString()}`;
   }
 
-  private setUsersByType(userType: 'influencer' | 'brand' | 'photographer', users: any[]): void {
+  private setUsersByType(userType: AdminUserRole, users: any[]): void {
     if (userType === 'influencer') {
       this.influencers = users;
     } else if (userType === 'brand') {
@@ -973,7 +979,30 @@ export class AdminUserTableComponent implements OnInit {
     }
   }
 
-  fetchUsers(userType: 'influencer' | 'brand' | 'photographer' = this.activeTab) {
+  private mergeUpdatedUser(
+    userType: AdminUserRole,
+    updatedUser: any,
+  ): void {
+    const userId = String(updatedUser?._id || updatedUser?.id || '');
+    if (!userId) return;
+    const list = this.getUsersByType(userType);
+    const index = list.findIndex((u: any) => String(u?._id || u?.id || '') === userId);
+    if (index >= 0) {
+      list[index] = { ...list[index], ...updatedUser };
+      this.setUsersByType(userType, [...list]);
+    }
+    if (this.selectedUser && String(this.selectedUser?._id || this.selectedUser?.id || '') === userId) {
+      this.selectedUser = { ...this.selectedUser, ...updatedUser };
+      this.selectedUserInternalNotes = String(
+        this.selectedUser?.verificationAdminNotes ||
+        this.selectedUser?.profileModerationNotes ||
+        this.selectedUserInternalNotes ||
+        '',
+      );
+    }
+  }
+
+  fetchUsers(userType: AdminUserRole = this.activeTab) {
     this.isLoading = true;
     const headers = this.getAuthHeaders();
     this.http.get<any>(this.getAdminListUrl(userType), headers)
@@ -1023,10 +1052,32 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
-  private getUsersByType(userType: 'influencer' | 'brand' | 'photographer'): any[] {
+  private getUsersByType(userType: AdminUserRole): any[] {
     if (userType === 'influencer') return this.influencers;
     if (userType === 'brand') return this.brands;
     return this.photographers;
+  }
+
+  private inferUserType(user: any): AdminUserRole {
+    const userId = String(user?._id || user?.id || '');
+    if (userId) {
+      const roles: AdminUserRole[] = ['influencer', 'brand', 'photographer'];
+      const matchedRole = roles.find((role) =>
+        this.getUsersByType(role).some((candidate: any) => String(candidate?._id || candidate?.id || '') === userId),
+      );
+      if (matchedRole) return matchedRole;
+    }
+    if (user?.userType === 'brand' || user?.role === 'brand' || user?.brandName || user?.brandUsername) return 'brand';
+    if (
+      user?.userType === 'photographer' ||
+      user?.role === 'photographer' ||
+      user?.photographerType ||
+      user?.videographerType ||
+      Array.isArray(user?.pricing)
+    ) {
+      return 'photographer';
+    }
+    return this.activeTab;
   }
 
   private refreshSelectedUserFromLists(): void {
@@ -1333,7 +1384,11 @@ export class AdminUserTableComponent implements OnInit {
         }))
         .subscribe((res: any) => {
           if (!res) return;
-          user[field] = value;
+          if (res?.user) {
+            this.mergeUpdatedUser(userType, res.user);
+          } else {
+            user[field] = value;
+          }
           if (field === 'isEmailVerified') {
             user.emailVerifiedAt = value ? (user.emailVerifiedAt || new Date().toISOString()) : null;
           }
@@ -1353,6 +1408,7 @@ export class AdminUserTableComponent implements OnInit {
           }
           this.loadSelectedProfileVerification();
           this.fetchUsers();
+          this.cd.detectChanges();
         });
     });
   }
@@ -1393,7 +1449,7 @@ export class AdminUserTableComponent implements OnInit {
     });
   }
 
-  openVerificationDocsModal(user: any, userType: 'influencer' | 'brand' | 'photographer'): void {
+  openVerificationDocsModal(user: any, userType: AdminUserRole): void {
     this.verificationDocsUser = user;
     this.verificationDocsUserType = userType;
     this.verificationDocsDraft = String(user?.verificationAdminNotes || '');
@@ -1407,15 +1463,16 @@ export class AdminUserTableComponent implements OnInit {
     this.verificationDocsDraft = '';
   }
 
-  updateInfluencerVerificationFromModal(action: 'pending' | 'approve' | 'reject' | 'remove'): void {
+  updateProfileDocumentVerificationFromModal(action: 'pending' | 'approve' | 'reject' | 'remove'): void {
     if (!this.verificationDocsUser || !this.verificationDocsUserType) return;
     const user = this.verificationDocsUser;
     const userId = String(user?._id || '');
     if (!userId) return;
     const notes = this.verificationDocsDraft;
     const payload = { action, notes };
+    const userType = this.verificationDocsUserType;
     this.http.patch(
-      `${environment.apiBaseUrl}/admin/users/influencer/${userId}/verification`,
+      `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/verification`,
       payload,
       this.getAuthHeaders(),
     )
@@ -1425,8 +1482,9 @@ export class AdminUserTableComponent implements OnInit {
       }))
       .subscribe((res: any) => {
         if (!res) return;
+        if (res?.user) this.mergeUpdatedUser(userType, res.user);
         this.closeVerificationDocsModal();
-        this.fetchUsers();
+        this.fetchUsers(userType);
       });
   }
 
@@ -1441,14 +1499,16 @@ export class AdminUserTableComponent implements OnInit {
     if (!userId) return;
     const notes = this.getVerificationNotes(user);
     const payload = { action, notes };
-    this.http.patch(`${environment.apiBaseUrl}/admin/users/influencer/${userId}/verification`, payload, this.getAuthHeaders())
+    const userType = this.inferUserType(user);
+    this.http.patch(`${environment.apiBaseUrl}/admin/users/${userType}/${userId}/verification`, payload, this.getAuthHeaders())
       .pipe(catchError(err => {
         alert('Error updating verification: ' + (err?.error?.message || err?.message || 'Unknown error'));
         return of(null);
       }))
       .subscribe((res: any) => {
         if (!res) return;
-        this.fetchUsers();
+        if (res?.user) this.mergeUpdatedUser(userType, res.user);
+        this.fetchUsers(userType);
       });
   }
 
@@ -1538,7 +1598,7 @@ export class AdminUserTableComponent implements OnInit {
 
   openUserDetails(user: any): void {
     this.selectedUser = user;
-    this.selectedUserType = this.activeTab;
+    this.selectedUserType = this.inferUserType(user);
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
     this.showUserDetailsModal = true;
     this.loadSelectedProfileVerification();
@@ -1798,7 +1858,13 @@ export class AdminUserTableComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((res: any) => {
         if (!res) return;
-        this.selectedUser.verificationAdminNotes = this.selectedUserInternalNotes;
+        if (res?.user) {
+          this.mergeUpdatedUser(this.selectedUserType!, res.user);
+        } else {
+          this.selectedUser.verificationAdminNotes = this.selectedUserInternalNotes;
+          this.selectedUser.profileModerationNotes = this.selectedUserInternalNotes;
+        }
+        this.cd.detectChanges();
       });
   }
 
@@ -2010,13 +2076,11 @@ export class AdminUserTableComponent implements OnInit {
         this.smEditModalOpen = false;
         this.smEditingIdx = null;
         if (res?.user) {
-          const list: any[] =
-            userType === 'influencer' ? this.influencers :
-            userType === 'brand' ? this.brands : this.photographers;
-          const i = list.findIndex((u: any) => String(u._id || u.id) === String(userId));
-          if (i >= 0) list[i] = res.user;
-          this.selectedUser = res.user;
+          this.mergeUpdatedUser(userType, res.user);
+          this.loadSelectedProfileVerification();
         }
+        this.applyFilters(userType);
+        this.updateAllFilterOptions(userType);
         this.cd.detectChanges();
       },
       error: (err: any) => {
