@@ -1,0 +1,21 @@
+<section class="campaign-alert-message">
+  <div class="campaign-alert-message__header">
+    <div>
+      <strong>Campaign Approved Successfully</strong>
+      <p>{{ whatsappHelpText }}</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" (click)="onCopy()">
+      {{ copied ? 'Copied' : 'Copy Alert Message' }}
+    </button>
+  </div>
+
+  <div class="campaign-alert-message__checks" aria-label="Campaign notification channels">
+    <span class="campaign-alert-message__check is-on">In-App Notification</span>
+    <span class="campaign-alert-message__check is-disabled">Email Notification (Coming Soon)</span>
+    <span class="campaign-alert-message__check is-on">
+      {{ whatsappAlertLabel }}
+    </span>
+  </div>
+
+  <pre>{{ alertMessage }}</pre>
+</section>

@@ -22,11 +22,12 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -65,6 +66,7 @@ export class PhotographerProfileComponent implements OnInit {
   private originalPlatformForms: any = null;
   phoneVerified = false;
   emailVerified = false;
+  communityProfileUser: any | null = null;
   emailEditRequested = false;
   showEmailVerificationPrompt = false;
   resendingEmailVerification = false;
@@ -515,6 +517,12 @@ export class PhotographerProfileComponent implements OnInit {
         this.lastLoginAt = profile?.lastLoginAt || null;
         this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
         this.emailVerified = !!(profile?.isEmailVerified ?? sessionUser?.isEmailVerified);
+        this.communityProfileUser = {
+          ...profile,
+          isEmailVerified: this.emailVerified,
+          isMobileVerified: this.phoneVerified,
+          location: profile?.location || { state: resolvedState, district: resolvedDistrict },
+        };
         this.showEmailVerificationPrompt = !this.emailVerified;
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({

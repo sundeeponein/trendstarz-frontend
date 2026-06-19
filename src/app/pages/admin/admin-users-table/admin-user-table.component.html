@@ -113,6 +113,7 @@
           <th>Contact Details</th>
           <th>Social Media</th>
           <th>Subscription</th>
+          <th>Community</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -178,6 +179,12 @@
             <span class="tier-badge" [ngClass]="getTierValue(user) === 'premium' ? 'premium' : 'free'">
               {{ getTierValue(user) === 'premium' ? 'PREMIUM' : 'FREE' }}
             </span>
+          </td>
+          <td>
+            <span class="ts-status-badge" [ngClass]="user.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
+              {{ user.communityJoined ? 'Joined' : 'Not Joined' }}
+            </span>
+            <div class="user-sub" *ngIf="user.communityName">{{ user.communityName }}</div>
           </td>
           <td class="ts-status-action-cell">
             <div class="row-actions">
@@ -289,6 +296,19 @@
               [verified]="isMobileVerified(selectedUser)"
               (toggled)="toggleSelectedMobileVerification()"
             ></app-verification-field>
+          </div>
+          <div>
+            <label>WhatsApp Community</label>
+            <div>
+              <span class="ts-status-badge" [ngClass]="selectedUser.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
+                {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
+              </span>
+            </div>
+            <div class="user-sub mt-1" *ngIf="selectedUser.communityName">{{ selectedUser.communityName }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityState">State: {{ selectedUser.communityState }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoinedAt || selectedUser.communityJoinedDate">
+              Joined at {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
+            </div>
           </div>
           <div>
             <app-verification-field
@@ -411,6 +431,17 @@
           <div>
             <label>Last Login</label>
             <div>{{ selectedUser.lastLoginAt ? (selectedUser.lastLoginAt | date:'medium') : '-' }}</div>
+          </div>
+          <div>
+            <label>WhatsApp Community</label>
+            <div>
+              {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
+              <span *ngIf="selectedUser.communityName"> - {{ selectedUser.communityName }}</span>
+              <span *ngIf="selectedUser.communityState"> ({{ selectedUser.communityState }})</span>
+            </div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoinedAt || selectedUser.communityJoinedDate">
+              Joined on {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
+            </div>
           </div>
         </div>
 

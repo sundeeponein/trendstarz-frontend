@@ -20,13 +20,14 @@ import {
   ProfileVerificationService,
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;

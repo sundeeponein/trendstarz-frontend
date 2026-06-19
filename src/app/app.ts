@@ -7,6 +7,7 @@ import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
 import { PushNotificationService } from './core/push-notification.service';
 import { AnalyticsService } from './core/analytics.service';
+import { ConfigService } from './shared/config.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
@@ -21,6 +22,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
   private lastPushSubscriptionKey: string | null = null;
+  private lastSessionOpenedPing = 0;
 
   constructor(
     private session: SessionService,
@@ -28,6 +30,7 @@ export class App implements OnInit {
     private warmup: WarmupService,
     private pushService: PushNotificationService,
     private analytics: AnalyticsService,
+    private config: ConfigService,
     private titleService: Title,
     private meta: Meta,
     @Inject(DOCUMENT) private document: Document,
@@ -46,6 +49,7 @@ export class App implements OnInit {
           return;
         }
 
+        this.markSessionOpened();
         const role = this.normalizeRole((user as any).role);
         const identity = String((user as any).id || (user as any)._id || (user as any).email || role);
         const key = `${role}:${identity}`;
@@ -55,7 +59,26 @@ export class App implements OnInit {
         // Defer slightly so login/navigation settles before asking notification permission.
         setTimeout(() => this._initPush(role), 1200);
       });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.session.getUser()) {
+          this.markSessionOpened();
+        }
+      });
     }
+  }
+
+  private markSessionOpened(): void {
+    const now = Date.now();
+    if (now - this.lastSessionOpenedPing < 10 * 60 * 1000) return;
+    this.lastSessionOpenedPing = now;
+    this.config.markSessionOpened().subscribe({
+      next: (res) => {
+        const user = this.session.getUser();
+        if (!user || !res?.lastOpenedAt) return;
+        this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
+      },
+      error: () => {},
+    });
   }
 
   private setupAnalyticsTracking(): void {

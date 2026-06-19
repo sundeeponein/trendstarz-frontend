@@ -47,6 +47,11 @@
         />
       </div>
 
+      <app-whatsapp-community-card
+        *ngIf="communityProfileUser"
+        [user]="communityProfileUser"
+      ></app-whatsapp-community-card>
+
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
           <h2>Profile <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()"><i class="bi bi-pencil"></i></button></h2>

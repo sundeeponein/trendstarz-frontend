@@ -24,6 +24,16 @@ export class ConfigService {
     return this.apiUrl;
   }
 
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
+  private getAuthOptions() {
+    const token = this.getToken();
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  }
+
   /**
    * Fetch the admin-managed support contact (email / phone / whatsapp / message / enabled).
    * Public endpoint — safe to call from any page. Used by the campaign-management
@@ -63,6 +73,49 @@ export class ConfigService {
           }),
         ),
       );
+  }
+
+  getWhatsappCommunityForState(state: string): Observable<any | null> {
+    const qs = state ? `?state=${encodeURIComponent(state)}` : '';
+    return this.http.get<any>(`${this.apiUrl}/public/whatsapp-community${qs}`).pipe(
+      map((res) => this.extractData<any>(res) || null),
+      catchError(() => of(null)),
+    );
+  }
+
+  getWhatsappCommunities(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/admin/whatsapp-communities`, this.getAuthOptions()).pipe(
+      map((res) => this.extractData<any[]>(res) || []),
+      catchError(() => of([])),
+    );
+  }
+
+  createWhatsappCommunity(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/admin/whatsapp-communities`, payload, this.getAuthOptions()).pipe(
+      map((res) => this.extractData<any>(res) || res),
+    );
+  }
+
+  updateWhatsappCommunity(id: string, payload: any): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/admin/whatsapp-communities/${encodeURIComponent(id)}`, payload, this.getAuthOptions()).pipe(
+      map((res) => this.extractData<any>(res) || res),
+    );
+  }
+
+  deleteWhatsappCommunity(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/admin/whatsapp-communities/${encodeURIComponent(id)}`, this.getAuthOptions());
+  }
+
+  markSessionOpened(): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/auth/session/opened`, {}, this.getAuthOptions());
+  }
+
+  markCommunityJoined(communityName: string, communityState = ''): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/community/joined`,
+      { communityName, communityState },
+      this.getAuthOptions(),
+    );
   }
 
   getCampaignTypeConfigs(): Observable<Array<{

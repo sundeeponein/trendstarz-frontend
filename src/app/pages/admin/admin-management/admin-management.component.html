@@ -20,6 +20,7 @@
     <button class="tab-chip" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-chip" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
     <button class="tab-chip" [class.active]="activeTab === 'support'" (click)="setTab('support')">Support</button>
+    <button class="tab-chip" [class.active]="activeTab === 'communities'" (click)="setTab('communities')">Community Management</button>
     <button class="tab-chip" [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
   </nav>
 
@@ -259,42 +260,86 @@
       Locations are seeded from the permanent admin config into MongoDB. Use these switches to control what appears in registration and location filters.
       Toggling a state applies the same visibility to its districts; you can still fine-tune individual districts after.
     </p>
-    <div class="state-tabs mb-3">
-      <button *ngFor="let state of config.locations; let i = index"
-              class="btn btn-outline-light me-2 mb-2"
-              [class.active]="districtFilterState === state.name"
-              (click)="districtFilterState = state.name">
-        {{ state.name }}
-        <span class="ms-2">
-          <input class="form-check-input" type="checkbox" role="switch"
-            [id]="'switchState' + i"
-            [checked]="state.visible"
-            (click)="$event.stopPropagation(); toggleVisible('state', i)"
-          >
-          <label class="form-check-label ms-1" [for]="'switchState' + i">
-            {{ state.visible ? 'Show' : 'Hide' }}
-          </label>
-        </span>
-      </button>
-    </div>
-    <div *ngIf="districtFilterState">
-      <h4>Districts in {{ districtFilterState }}</h4>
-      <ul class="list-group mb-3">
-        <li class="list-group-item d-flex justify-content-between align-items-center"
-          *ngFor="let dist of filteredDistricts; let i = index">
-          <div><strong>{{ dist.name }}</strong></div>
-          <div class="form-check form-switch d-inline-block ms-2">
-            <input class="form-check-input" type="checkbox" role="switch"
-              [id]="'switchDist' + i"
-              [checked]="dist.visible"
-              (change)="toggleVisible('district', getDistrictIndex(dist))"
+    <div class="settings-row row-expanded location-directory-card">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Location Directory</strong>
+          <p>
+            Configured: {{ config.locations.length }} · Active: {{ activeLocationCount }}
+          </p>
+        </div>
+      </div>
+      <div class="settings-conditions">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Search by state or district name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="locationSearch"
+              placeholder="Search Maharashtra, Mumbai, Telangana..."
             >
-            <label class="form-check-label" [for]="'switchDist' + i">
-              {{ dist.visible ? 'Show' : 'Hide' }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="locationStatusFilter">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="text-light-emphasis">
+              Showing {{ filteredLocations.length }} of {{ config.locations.length }} states.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="location-accordion mb-3">
+      <div class="location-state" *ngFor="let state of filteredLocations; let i = index" [class.is-expanded]="isLocationStateExpanded(state.name)" [class.is-disabled]="state.visible === false">
+        <div class="location-state-header" role="button" tabindex="0" (click)="toggleLocationStateExpanded(state)">
+          <div class="location-state-main">
+            <i class="bi location-chevron" [class.bi-chevron-down]="isLocationStateExpanded(state.name)" [class.bi-chevron-right]="!isLocationStateExpanded(state.name)"></i>
+            <strong>{{ state.name }}</strong>
+            <span class="location-district-count">
+              {{ getVisibleDistrictCount(state.name) }}/{{ getStateDistricts(state.name).length }} districts
+            </span>
+          </div>
+          <div class="form-check form-switch location-state-switch" (click)="$event.stopPropagation()">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchState' + i"
+              [checked]="state.visible"
+              (change)="toggleVisible('state', getStateIndex(state))"
+            >
+            <label class="form-check-label" [for]="'switchState' + i">
+              {{ state.visible ? 'Show' : 'Hide' }}
             </label>
           </div>
-        </li>
-      </ul>
+        </div>
+
+        <div class="location-district-panel" *ngIf="isLocationStateExpanded(state.name)">
+          <div class="location-district-row"
+            *ngFor="let dist of getStateDistricts(state.name); let districtIndex = index">
+            <strong>{{ dist.name }}</strong>
+            <div class="form-check form-switch d-inline-block ms-2">
+              <input class="form-check-input" type="checkbox" role="switch"
+                [id]="'switchDist' + i + '-' + districtIndex"
+                [checked]="dist.visible"
+                (change)="toggleVisible('district', getDistrictIndex(dist))"
+              >
+              <label class="form-check-label" [for]="'switchDist' + i + '-' + districtIndex">
+                {{ dist.visible ? 'Show' : 'Hide' }}
+              </label>
+            </div>
+          </div>
+          <div class="location-empty" *ngIf="getStateDistricts(state.name).length === 0">
+            No districts configured for this state.
+          </div>
+        </div>
+      </div>
+      <div class="location-empty" *ngIf="filteredLocations.length === 0">
+        No states match your filters.
+      </div>
     </div>
     <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
@@ -585,6 +630,137 @@
       </div>
     </div>
 
+  </div>
+
+  <div *ngIf="activeTab === 'communities'">
+    <h2>Community Management</h2>
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      Manage state-wise WhatsApp communities used for open campaign alerts and verified creator onboarding.
+    </p>
+
+    <div class="settings-row row-expanded">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>{{ editingWhatsappCommunityId ? 'Edit Community' : 'Add Community' }}</strong>
+          <p>Creators see the matching community after email, mobile, and profile completion checks pass.</p>
+        </div>
+      </div>
+      <div class="settings-conditions">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">State</label>
+            <input class="form-control" [(ngModel)]="whatsappCommunityForm.state" placeholder="AP & Telangana">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Community Name</label>
+            <input class="form-control" [(ngModel)]="whatsappCommunityForm.communityName" placeholder="TrendStarz AP & Telangana">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">WhatsApp Link</label>
+            <input class="form-control" [(ngModel)]="whatsappCommunityForm.communityLink" placeholder="https://chat.whatsapp.com/xxxxx">
+          </div>
+          <div class="col-12 d-flex align-items-center gap-3 flex-wrap">
+            <label class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="whatsappCommunityForm.isActive">
+              <span class="form-check-label">Active</span>
+            </label>
+            <button class="btn btn-primary" type="button" (click)="saveWhatsappCommunity()" [disabled]="whatsappCommunitySaving">
+              {{ whatsappCommunitySaving ? 'Saving...' : (editingWhatsappCommunityId ? 'Update' : 'Add') }}
+            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="resetWhatsappCommunityForm()" *ngIf="editingWhatsappCommunityId">
+              Cancel Edit
+            </button>
+            <span class="text-danger" *ngIf="whatsappCommunityError">{{ whatsappCommunityError }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Community Directory</strong>
+          <p>
+            Configured: {{ whatsappCommunities.length }} · Active: {{ activeWhatsappCommunityCount }} ·
+            Joined users: {{ totalWhatsappJoinedUserCount }}
+          </p>
+        </div>
+      </div>
+      <div class="settings-conditions">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Search by state or community name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="whatsappCommunitySearch"
+              placeholder="Search Andhra Pradesh, Karnataka, TrendStarz..."
+            >
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="whatsappCommunityStatusFilter">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="text-light-emphasis">
+              Showing {{ filteredWhatsappCommunities.length }} of {{ whatsappCommunities.length }} communities.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-3">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Community Name</th>
+            <th>Joined Users</th>
+            <th>QR Code</th>
+            <th>WhatsApp Actions</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="whatsappCommunitiesLoading">
+            <td colspan="7" class="text-muted">Loading communities...</td>
+          </tr>
+          <tr *ngFor="let item of filteredWhatsappCommunities">
+            <td>{{ item.state }}</td>
+            <td>{{ item.communityName }}</td>
+            <td>{{ item.joinedUserCount || 0 }}</td>
+            <td>
+              <img
+                *ngIf="item.communityLink"
+                class="whatsapp-community-qr"
+                [src]="getWhatsappQrUrl(item.communityLink)"
+                alt="WhatsApp invite QR code"
+              >
+              <span *ngIf="!item.communityLink" class="text-muted">-</span>
+            </td>
+            <td>
+              <a class="btn btn-outline-primary btn-sm me-2" [href]="item.communityLink" target="_blank" rel="noopener">Join</a>
+              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="copyWhatsappCommunityLink(item)">Copy Link</button>
+            </td>
+            <td>{{ item.isActive === false ? 'Inactive' : 'Active' }}</td>
+            <td>
+              <button class="btn btn-outline-secondary btn-sm me-2" type="button" (click)="editWhatsappCommunity(item)">Edit</button>
+              <button class="btn btn-outline-danger btn-sm" type="button" (click)="deleteWhatsappCommunity(item)">Delete</button>
+            </td>
+          </tr>
+          <tr *ngIf="!whatsappCommunitiesLoading && filteredWhatsappCommunities.length === 0">
+            <td colspan="7" class="text-muted">
+              {{ whatsappCommunities.length === 0 ? 'No WhatsApp communities configured.' : 'No communities match your search.' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- User Management Tab -->

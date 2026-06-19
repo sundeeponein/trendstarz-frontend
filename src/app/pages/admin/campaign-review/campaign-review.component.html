@@ -9,6 +9,13 @@
     </a>
   </div>
 
+  <app-campaign-alert-message
+    *ngIf="approvedCampaignAlert"
+    [campaign]="approvedCampaignAlert"
+    [copied]="alertMessageCopied"
+    (copyAlert)="copyCampaignAlertMessage($event)"
+  ></app-campaign-alert-message>
+
   <div class="review-card">
     <div class="review-card-header">
       <div>

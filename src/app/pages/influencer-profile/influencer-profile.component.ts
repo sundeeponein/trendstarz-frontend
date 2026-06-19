@@ -25,11 +25,12 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -53,6 +54,7 @@ export class InfluencerProfileComponent implements OnInit {
   lastLoginAt: string | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
   profileVerificationLoading = false;
+  communityProfileUser: any | null = null;
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -597,6 +599,12 @@ export class InfluencerProfileComponent implements OnInit {
           }
           this.emailVerified = !!profile.isEmailVerified;
           this.phoneVerified = !!profile.isMobileVerified;
+          this.communityProfileUser = {
+            ...profile,
+            isEmailVerified: this.emailVerified,
+            isMobileVerified: this.phoneVerified,
+            location: profile.location || {},
+          };
           this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
           this.firstRegisteredAt = profile.firstRegisteredAt || profile.createdAt || null;
           this.lastLoginAt = profile.lastLoginAt || null;

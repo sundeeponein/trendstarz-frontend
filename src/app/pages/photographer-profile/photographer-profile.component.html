@@ -51,6 +51,11 @@
           />
         </div>
 
+        <app-whatsapp-community-card
+          *ngIf="communityProfileUser"
+          [user]="communityProfileUser"
+        ></app-whatsapp-community-card>
+
         <form [formGroup]="form" (ngSubmit)="onSave()">
 
           <section class="form-card" *ngIf="currentStep === 1">

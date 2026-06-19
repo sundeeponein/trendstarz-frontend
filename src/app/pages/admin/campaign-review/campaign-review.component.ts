@@ -5,13 +5,14 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-campaign-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignAlertMessageComponent],
   templateUrl: './campaign-review.component.html',
   styleUrls: ['./campaign-review.component.scss'],
 })
@@ -44,6 +45,8 @@ export class CampaignReviewComponent implements OnInit {
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
   moderationNoteInput = '';
   moderationModalError = '';
+  approvedCampaignAlert: any | null = null;
+  alertMessageCopied = false;
 
   private readonly isServer: boolean;
 
@@ -229,6 +232,15 @@ export class CampaignReviewComponent implements OnInit {
       next: () => {
         this.isSubmittingModeration = false;
         this.moderatingCampaignId = '';
+        if (action === 'approve') {
+          this.approvedCampaignAlert = {
+            ...campaign,
+            status: 'active',
+            moderationNote: note,
+            moderatedAt: new Date().toISOString(),
+          };
+          this.alertMessageCopied = false;
+        }
         const labels: Record<string, string> = {
           approve: 'Campaign approved successfully.',
           needs_changes: 'Needs Changes sent to brand.',
@@ -252,6 +264,39 @@ export class CampaignReviewComponent implements OnInit {
         this.toast.error(msg);
       },
     });
+  }
+
+  copyCampaignAlertMessage(message: string) {
+    const text = String(message || '').trim();
+    if (!text) return;
+    const done = () => {
+      this.alertMessageCopied = true;
+      this.toast.success('Alert message copied.');
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.alertMessageCopied = false;
+        this.cdr.detectChanges();
+      }, 2500);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopy(text, done));
+      return;
+    }
+    this.fallbackCopy(text, done);
+  }
+
+  private fallbackCopy(text: string, done: () => void) {
+    if (typeof document === 'undefined') return;
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    done();
   }
 
   openModerationModal(campaign: any, action: 'approve' | 'reject' | 'needs_changes') {
