@@ -4,6 +4,7 @@ import { NavigationStart, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { filter, Subscription } from 'rxjs';
+import { SessionService } from '../../core/session.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -49,6 +50,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private elRef: ElementRef,
     private config: ConfigService,
     private cd: ChangeDetectorRef,
+    private session: SessionService,
   ) {
     this.loadAdminUser();
   }
@@ -97,7 +99,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   loadAdminUser() {
-    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
+    const token = this.session.getToken();
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -114,7 +116,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    this.session.clearSession();
     this.adminUser = null;
     this.router.navigate(['/']);
   }
@@ -156,4 +158,3 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.closeMobileMenu();
   }
 }
-

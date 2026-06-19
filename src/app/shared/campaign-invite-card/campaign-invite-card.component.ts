@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
-import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -36,7 +35,7 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-invite-card',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, OfferTrailComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './campaign-invite-card.component.html',
   styleUrls: ['./campaign-invite-card.component.scss'],
 })
@@ -78,6 +77,7 @@ export class CampaignInviteCardComponent {
   postDate = '';
   selectedContentTypeKey = '';
   logoErrored = false;
+  briefExpanded = false;
 
   // Payout details (where influencer wants to be paid)
   payoutUpiId = '';
@@ -87,6 +87,28 @@ export class CampaignInviteCardComponent {
   counterEditing = false;
   counterAmountInput: number | null = null;
   counterReasonInput = '';
+
+  get brandAvatarBg(): string {
+    const palette = ['#f97316', '#8b5cf6', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#ef4444'];
+    const code = (this.brandName || 'B').charCodeAt(0);
+    return palette[code % palette.length];
+  }
+
+  get primaryActionLabel(): string {
+    if (this.showViewSubmission) return 'View Submission';
+    if (this.showSubmitCTA) return 'Submit Post';
+    if (this.showPaymentAwaited) return 'Awaiting Payment';
+    if (this.showPaymentConfirmed) return 'Payment Confirmed';
+    if (this.showPayoutPendingInfo) return 'Post Approved';
+    if (this.isActionable) return 'Review & Accept';
+    return '';
+  }
+
+  get hasPrimaryAction(): boolean { return !!this.primaryActionLabel; }
+
+  private get inviteCampaignContext(): any {
+    return this.invite?.campaign || this.invite?.campaignId || {};
+  }
 
   togglePayoutEdit(ev?: Event) {
     if (ev) ev.stopPropagation();
@@ -378,7 +400,7 @@ export class CampaignInviteCardComponent {
       invited:           'Invited',
       counter_sent:      'Confirmation Pending',
       accepted:          this.campaignTypeKey === 'paid_collab' ? 'Confirmation Pending' : 'Working',
-      payment_confirmed: 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
       submitted:         'Under Review',
       completed:         'Completed',

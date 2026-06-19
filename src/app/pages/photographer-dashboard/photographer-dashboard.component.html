@@ -7,6 +7,7 @@
     <div class="dashboard-welcome-right account-meta-card" *ngIf="photographer">
       <div><strong>Registered on:</strong> {{ (photographer.firstRegisteredAt || photographer.createdAt) ? ((photographer.firstRegisteredAt || photographer.createdAt) | date:'medium') : '-' }}</div>
       <div><strong>Last Login:</strong> {{ photographer.lastLoginAt ? (photographer.lastLoginAt | date:'medium') : '-' }}</div>
+      <div><strong>Last Opened:</strong> {{ photographer.lastOpenedAt ? (photographer.lastOpenedAt | date:'medium') : '-' }}</div>
       <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
     </div>
   </div>
@@ -229,7 +230,7 @@
       </div>
     </div>
 
-    <div class="section-card mb-4 profile-traffic-card">
+    <div class="section-card mb-4 profile-traffic-card p-2">
       <div class="section-title d-flex align-items-center mb-2">
         <span class="dot dot--purple me-2"></span>
         {{ trafficCardTitle }}

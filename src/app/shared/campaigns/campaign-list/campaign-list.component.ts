@@ -4,6 +4,7 @@ import { Campaign } from '../campaign.model';
 import { CampaignCardComponent } from '../campaign-card/campaign-card.component';
 import { CampaignFormComponent } from '../campaign-form/campaign-form.component';
 import { CampaignDetailModalComponent } from '../../campaign-detail-modal/campaign-detail-modal.component';
+import { AppPaginatorComponent } from '../../components/app-paginator/app-paginator.component';
 
 type TabStatus =
   | 'active'
@@ -16,7 +17,7 @@ type TabStatus =
 @Component({
   selector: 'app-campaign-list',
   standalone: true,
-  imports: [CommonModule, CampaignCardComponent, CampaignFormComponent, CampaignDetailModalComponent],
+  imports: [CommonModule, CampaignCardComponent, CampaignFormComponent, CampaignDetailModalComponent, AppPaginatorComponent],
   templateUrl: './campaign-list.component.html',
   styleUrls: ['./campaign-list.component.scss']
 })
@@ -38,7 +39,8 @@ export class CampaignListComponent implements OnChanges {
   selectedCampaign: Campaign | null = null;
 
   activeTab: TabStatus = 'active';
-  pageSize = 6;
+  pageSize = 10;
+  readonly pageSizeOptions = [10, 25, 50, 100];
   currentPage = 1;
 
   tabs: { key: TabStatus; label: string }[] = [
@@ -117,6 +119,9 @@ export class CampaignListComponent implements OnChanges {
   nextPage() {
     if (this.currentPage < this.totalPages) this.currentPage++;
   }
+
+  onPageChange(page: number): void { this.currentPage = page; }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
 
   onViewDetails(campaign: Campaign) {
     if (this.externalDetailHandling) {

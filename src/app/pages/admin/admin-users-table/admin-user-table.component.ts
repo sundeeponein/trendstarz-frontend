@@ -1532,6 +1532,8 @@ export class AdminUserTableComponent implements OnInit {
     this.currentPage += 1;
   }
 
+  onPageChange(page: number): void { this.currentPage = page; }
+
   openUserDetails(user: any): void {
     this.selectedUser = user;
     this.selectedUserType = this.activeTab;
@@ -2142,7 +2144,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    this.session.clearSession();
     window.location.href = '/login';
   }
 

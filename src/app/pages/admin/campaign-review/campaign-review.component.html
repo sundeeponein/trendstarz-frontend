@@ -1,13 +1,4 @@
-<div class="campaign-review-page container-fluid p-4">
-  <div class="campaign-review-header">
-    <div>
-      <h2 class="text-white">{{ pageTitle }}</h2>
-      <p>{{ pageSubtitle }}</p>
-    </div>
-    <a routerLink="/admin/admin-management" class="btn btn-outline-light review-settings-link">
-      Approval Settings
-    </a>
-  </div>
+<div class="cm-page">
 
   <app-campaign-alert-message
     *ngIf="approvedCampaignAlert"
@@ -28,144 +19,236 @@
         </p>
       </div>
     </div>
-
-    <div class="admin-tabs review-status-tabs" aria-label="Campaign review status tabs">
-      <button
-        *ngFor="let tab of statusTabs"
-        type="button"
-        class="tab-btn ts-status-tab"
-        [ngClass]="getReviewTabStatusClass(tab.key)"
-        [class.active]="campaignApprovalStatusFilter === tab.key"
-        (click)="setStatusTab(tab.key)"
-      >
-        {{ tab.label }} <span class="tab-count">{{ getStatusCount(tab.key) }}</span>
+    <div class="cm-header-actions">
+      <button class="cm-btn cm-btn--outline" type="button" (click)="exportData()">
+        Export Data
       </button>
+      <a routerLink="/admin/admin-management" class="cm-btn cm-btn--dark">
+        <i class="bi bi-sliders"></i> Moderation Settings
+      </a>
     </div>
+  </header>
 
-    <div class="d-flex align-items-center justify-content-between mb-2 campaign-queue-title-row">
-      <strong>{{ queueTitle }}</strong>
-      <button class="btn btn-outline-light btn-sm campaign-filter-toggle" type="button" (click)="toggleCampaignFilters()">
-        <i class="bi" [class.bi-chevron-up]="campaignFiltersExpanded" [class.bi-chevron-down]="!campaignFiltersExpanded"></i>
-        {{ campaignFiltersExpanded ? 'Collapse Filters' : 'Expand Filters' }}
+  <!-- ══ STAT CARDS (clickable tabs) ══ -->
+  <section class="cm-stat-strip">
+
+    <button type="button" class="cm-stat-card cm-stat-card--orange"
+            [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'pending_review'"
+            (click)="setStatusTab('pending_review')">
+      <span class="cm-stat-label">PENDING REVIEW</span>
+      <div class="cm-stat-bottom">
+        <span class="cm-stat-value">{{ getStatusCount('pending_review') | number:'2.0-0' }}</span>
+        <span class="cm-stat-new" *ngIf="newPendingCount > 0">+{{ newPendingCount }} new</span>
+      </div>
+    </button>
+
+    <button type="button" class="cm-stat-card cm-stat-card--purple"
+            [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'needs_changes'"
+            (click)="setStatusTab('needs_changes')">
+      <span class="cm-stat-label">NEEDS CHANGES</span>
+      <div class="cm-stat-bottom">
+        <span class="cm-stat-value">{{ getStatusCount('needs_changes') | number:'2.0-0' }}</span>
+      </div>
+    </button>
+
+    <button type="button" class="cm-stat-card cm-stat-card--blue"
+            [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'active'"
+            (click)="setStatusTab('active')">
+      <span class="cm-stat-label">APPROVED / LIVE</span>
+      <div class="cm-stat-bottom">
+        <span class="cm-stat-value">{{ getStatusCount('active') | number }}</span>
+        <span class="cm-stat-tag cm-stat-tag--blue">Active</span>
+      </div>
+    </button>
+
+    <button type="button" class="cm-stat-card cm-stat-card--dark"
+            [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'completed'"
+            (click)="setStatusTab('completed')">
+      <span class="cm-stat-label">COMPLETED</span>
+      <div class="cm-stat-bottom">
+        <span class="cm-stat-value">{{ getStatusCount('completed') | number }}</span>
+      </div>
+    </button>
+
+    <button type="button" class="cm-stat-card cm-stat-card--total"
+            [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'all'"
+            (click)="setStatusTab('all')">
+      <span class="cm-stat-label">TOTAL CAMPAIGNS</span>
+      <div class="cm-stat-bottom">
+        <span class="cm-stat-value">{{ totalCampaignCount | number }}</span>
+        <i class="bi bi-graph-up-arrow cm-stat-icon-bg"></i>
+      </div>
+    </button>
+
+  </section>
+
+  <!-- ══ SEARCH / FILTER BAR ══ -->
+  <div class="cm-toolbar">
+    <div class="cm-search-wrap">
+      <i class="bi bi-search cm-search-icon"></i>
+      <input
+        class="cm-search-input"
+        type="text"
+        placeholder="Filter by title, brand, or ID..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange()"
+      />
+    </div>
+    <div class="cm-toolbar-right">
+      <button class="cm-filter-btn" type="button">All Platforms</button>
+      <button class="cm-filter-btn" type="button">
+        Status: {{ campaignStatusLabel(campaignApprovalStatusFilter) }}
       </button>
-    </div>
-
-    <div class="campaign-filters" *ngIf="campaignFiltersExpanded">
-      <div class="campaign-filter-group">
-        <div class="filter-summary">
-          <span class="filter-summary-label">Active filter</span>
-          <strong>{{ campaignStatusLabel(campaignApprovalStatusFilter) }}</strong>
-        </div>
-        <div class="campaign-filter-actions">
-          <button class="btn btn-outline-light btn-sm" type="button" (click)="loadCampaignApprovals()">Refresh</button>
-          <button class="btn btn-secondary btn-sm" type="button" (click)="resetCampaignApprovalFilters()">Reset Filters</button>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="campaignApprovalsLoading" class="text-muted">Loading campaign approvals...</div>
-    <div *ngIf="campaignApprovalsError" class="text-danger">{{ campaignApprovalsError }}</div>
-
-    <div class="table-scroll-wrapper" *ngIf="!campaignApprovalsLoading && !campaignApprovalsError">
-      <div class="ts-status-legend review-status-legend">
-        <span class="ts-status-legend-label">Legend:</span>
-        <span class="ts-status-badge ts-status-accepted">Accepted</span>
-        <span class="ts-status-badge ts-status-submitted">Submitted</span>
-        <span class="ts-status-badge ts-status-working">Working</span>
-        <span class="ts-status-badge ts-status-pending">Pending</span>
-        <span class="ts-status-badge ts-status-rejected">Withdrawn / Rejected</span>
-      </div>
-      <table class="table table-hover align-middle admin-table campaign-review-table">
-        <thead>
-          <tr>
-            <th>Campaign</th>
-            <th>Brand</th>
-            <th>Status</th>
-            <th>Participants</th>
-            <th>Budget</th>
-            <th>Updated</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of campaignApprovals" [ngClass]="getCampaignStatusRowClass(c)">
-            <td>
-              <button type="button" class="review-campaign-link" (click)="openCampaignPreview(c)">
-                <div class="fw-semibold">{{ c.title || 'Untitled campaign' }}</div>
-              </button>
-              <div class="campaign-list-meta">
-                <span>{{ campaignPreviewType(c) }}</span>
-                <span>{{ campaignAccessModeLabel(c) }}</span>
-                <span *ngIf="campaignAccessDetailText(c)">{{ campaignAccessDetailText(c) }}</span>
-              </div>
-            </td>
-            <td>
-              <div>{{ c.brand?.brandName || '-' }}</div>
-              <div class="small text-secondary" *ngIf="c.brand?.email">{{ c.brand.email }}</div>
-            </td>
-            <td>
-              <span class="ts-status-badge" [ngClass]="getCampaignStatusBadgeClass(c.status)">
-                {{ campaignStatusLabel(c.status) }}
-              </span>
-              <div class="small campaign-note-preview" *ngIf="c.moderationNote">
-                <i class="bi bi-chat-square-text"></i> {{ c.moderationNote }}
-              </div>
-            </td>
-            <td>
-              <div class="participant-metrics-text">Invited: <strong>{{ c.inviteCount || 0 }}</strong></div>
-              <div class="participant-chip-row" *ngIf="getParticipantStatusChips(c).length > 0">
-                <span
-                  class="ts-status-badge"
-                  *ngFor="let chip of getParticipantStatusChips(c)"
-                  [ngClass]="getParticipantStatusBadgeClass(chip.key)">
-                  {{ chip.label }} {{ chip.count }}
-                </span>
-              </div>
-              <div class="participant-metrics-text participant-metrics-text--muted">
-                Accepted: <strong>{{ getAcceptedInviteCount(c) }}</strong> · Progressed: <strong>{{ getProgressedInviteCount(c) }}</strong>
-              </div>
-            </td>
-            <td>{{ campaignPreviewBudget(c) }}</td>
-            <td>{{ (c.updatedAt || c.createdAt) | date:'medium' }}</td>
-            <td class="ts-status-action-cell">
-              <div class="d-flex gap-1 flex-wrap">
-                <button
-                  class="btn btn-outline-secondary btn-sm"
-                  type="button"
-                  (click)="openCampaignPreview(c)"
-                >View</button>
-                <button
-                  *ngIf="canApproveCampaign(c)"
-                  class="btn btn-outline-success btn-sm"
-                  type="button"
-                  [disabled]="moderatingCampaignId === c._id"
-                  (click)="openModerationModal(c, 'approve')"
-                >Approve</button>
-                <button
-                  *ngIf="canRequestChangesCampaign(c)"
-                  class="btn btn-outline-warning btn-sm"
-                  type="button"
-                  [disabled]="moderatingCampaignId === c._id"
-                  (click)="openModerationModal(c, 'needs_changes')"
-                >Needs Changes</button>
-                <button
-                  *ngIf="canRejectCampaign(c)"
-                  class="btn btn-outline-danger btn-sm"
-                  type="button"
-                  [disabled]="moderatingCampaignId === c._id"
-                  (click)="openModerationModal(c, 'reject')"
-                >Reject</button>
-              </div>
-            </td>
-          </tr>
-          <tr *ngIf="campaignApprovals.length === 0">
-            <td colspan="7" class="text-center text-muted">No campaigns found for selected status.</td>
-          </tr>
-        </tbody>
-      </table>
+      <button class="cm-filter-btn cm-filter-btn--icon" type="button" title="Date filter">
+        <i class="bi bi-calendar3"></i>
+      </button>
+      <button class="cm-btn cm-btn--primary" type="button" (click)="loadCampaignApprovals()">
+        Refresh
+      </button>
     </div>
   </div>
 
+  <!-- ══ TABLE ══ -->
+  <div class="cm-table-wrap">
+    <div *ngIf="campaignApprovalsLoading" class="cm-state-msg">Loading campaigns…</div>
+    <div *ngIf="campaignApprovalsError" class="cm-state-msg cm-state-msg--error">{{ campaignApprovalsError }}</div>
+
+    <table class="cm-table" *ngIf="!campaignApprovalsLoading && !campaignApprovalsError">
+      <thead>
+        <tr>
+          <th>CAMPAIGN TITLE</th>
+          <th>BRAND IDENTITY</th>
+          <th>SUBMITTED</th>
+          <th>BUDGET</th>
+          <th>STATUS</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of campaignApprovals" class="cm-row">
+
+          <!-- Campaign Title -->
+          <td>
+            <div class="cm-campaign-cell">
+              <div class="cm-campaign-logo" [attr.data-letter]="campaignLogoInitial(c)">
+                <span>{{ campaignLogoInitial(c) }}</span>
+              </div>
+              <div>
+                <button class="cm-campaign-name" type="button" (click)="openCampaignPreview(c)">
+                  {{ c.title || c.campaignTitle || 'Untitled Campaign' }}
+                </button>
+                <span class="cm-campaign-id">ID: {{ campaignIdLabel(c) }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Brand Identity -->
+          <td>
+            <div class="cm-brand-cell">
+              <div class="cm-brand-logo">
+                <img *ngIf="brandLogoUrl(c)" [src]="brandLogoUrl(c)" [alt]="c.brand?.brandName" class="cm-brand-img" />
+                <span *ngIf="!brandLogoUrl(c)">{{ brandLogoInitial(c) }}</span>
+              </div>
+              <div>
+                <span class="cm-brand-name">{{ c.brand?.brandName || c.brand?.name || '-' }}</span>
+                <span class="cm-brand-email">{{ c.brand?.email || '' }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Submitted -->
+          <td>
+            <span class="cm-date">{{ campaignSubmittedDate(c) }}</span>
+            <span class="cm-time">{{ campaignSubmittedTime(c) }}</span>
+          </td>
+
+          <!-- Budget -->
+          <td>
+            <span class="cm-budget-amount">{{ campaignPreviewBudget(c) }}</span>
+            <span class="cm-budget-type">{{ campaignBudgetType(c) }}</span>
+          </td>
+
+          <!-- Status -->
+          <td>
+            <span class="cm-status-pill" [ngClass]="'cm-status-pill--' + getCampaignStatusKey(c.status)">
+              {{ campaignStatusLabel(c.status) }}
+            </span>
+            <div class="cm-note-preview" *ngIf="c.moderationNote">
+              <i class="bi bi-chat-square-text"></i> {{ c.moderationNote }}
+            </div>
+          </td>
+
+          <!-- Actions -->
+          <td class="cm-actions-cell">
+            <div class="cm-actions">
+              <ng-container *ngIf="canApproveCampaign(c)">
+                <button class="cm-act-btn cm-act-btn--approve" type="button"
+                        [disabled]="moderatingCampaignId === c._id"
+                        (click)="openModerationModal(c, 'approve')">Approve</button>
+                <button class="cm-act-btn cm-act-btn--reject" type="button"
+                        [disabled]="moderatingCampaignId === c._id"
+                        (click)="openModerationModal(c, 'reject')">Reject</button>
+              </ng-container>
+              <ng-container *ngIf="canRequestChangesCampaign(c) && !canApproveCampaign(c)">
+                <button class="cm-act-btn cm-act-btn--msg" type="button"
+                        [disabled]="moderatingCampaignId === c._id"
+                        (click)="openModerationModal(c, 'needs_changes')">Message Brand</button>
+                <button class="cm-act-btn cm-act-btn--more" type="button"
+                        (click)="openCampaignPreview(c)" title="More options">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+              </ng-container>
+              <button *ngIf="!canApproveCampaign(c) && !canRequestChangesCampaign(c)"
+                      class="cm-act-btn cm-act-btn--view" type="button"
+                      (click)="openCampaignPreview(c)">View</button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="campaignApprovals.length === 0">
+          <td colspan="6" class="cm-empty">No campaigns found.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <ng-container *ngIf="!campaignApprovalsLoading">
+      <app-paginator
+        [total]="filteredCampaigns.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        [pageSizeOptions]="pageSizeOptions"
+        entityLabel="campaigns"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-paginator>
+    </ng-container>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <footer class="cm-footer">
+    <div class="cm-legend">
+      <span class="cm-legend-item"><span class="cm-dot cm-dot--blue"></span> LIVE</span>
+      <span class="cm-legend-item"><span class="cm-dot cm-dot--orange"></span> PENDING</span>
+      <span class="cm-legend-item"><span class="cm-dot cm-dot--purple"></span> NEEDS ACTION</span>
+      <span class="cm-legend-item"><span class="cm-dot cm-dot--red"></span> REJECTED</span>
+    </div>
+    <span class="cm-footer-copy">© 2024 Trendstarz Admin Core &bull; High-Trust Editorial Console</span>
+    <div class="cm-footer-links">
+      <a href="#" class="cm-footer-link">API Status</a>
+      <a href="#" class="cm-footer-link">Security Policy</a>
+      <a href="#" class="cm-footer-link">Admin Handbook</a>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ══ FAB ══ -->
+<button class="cm-fab" type="button" title="New campaign" (click)="loadCampaignApprovals()">
+  <i class="bi bi-plus-lg"></i>
+</button>
+
+<!-- ══ CAMPAIGN DETAIL MODAL ══ -->
 <app-campaign-detail-modal
   *ngIf="selectedCampaignPreviewInvite"
   [invite]="selectedCampaignPreviewInvite"
@@ -183,6 +266,7 @@
   (reject)="openModerationModal(selectedCampaign, 'reject')"
 ></app-campaign-detail-modal>
 
+<!-- ══ MODERATION MODAL ══ -->
 <div class="modal-backdrop show" *ngIf="showModerationModal" (click)="closeModerationModal()"></div>
 <div class="modal d-block" *ngIf="showModerationModal" tabindex="-1" (click)="closeModerationModal()">
   <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
@@ -206,9 +290,11 @@
         <div class="text-danger mt-2" *ngIf="moderationModalError">{{ moderationModalError }}</div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline-secondary" type="button" (click)="closeModerationModal()" [disabled]="isSubmittingModeration">Cancel</button>
-        <button class="btn btn-primary" type="button" (click)="submitModerationFromModal()" [disabled]="isSubmittingModeration">
-          {{ isSubmittingModeration ? 'Saving...' : moderationModalPrimaryText }}
+        <button class="btn btn-outline-secondary" type="button"
+                (click)="closeModerationModal()" [disabled]="isSubmittingModeration">Cancel</button>
+        <button class="btn btn-primary" type="button"
+                (click)="submitModerationFromModal()" [disabled]="isSubmittingModeration">
+          {{ isSubmittingModeration ? 'Saving…' : moderationModalPrimaryText }}
         </button>
       </div>
     </div>

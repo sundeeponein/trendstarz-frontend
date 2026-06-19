@@ -43,6 +43,7 @@ export class App implements OnInit {
     this.setupAnalyticsTracking();
 
     if (isPlatformBrowser(this.platformId)) {
+      this.markOpenedWhenVisible();
       this.session.user$.subscribe((user) => {
         if (!user) {
           this.lastPushSubscriptionKey = null;
@@ -56,8 +57,14 @@ export class App implements OnInit {
         if (this.lastPushSubscriptionKey === key) return;
         this.lastPushSubscriptionKey = key;
 
-        // Defer slightly so login/navigation settles before asking notification permission.
-        setTimeout(() => this._initPush(role), 1200);
+        if (this.pushService.localPreference !== 'disabled') {
+          // Defer slightly so login/navigation settles before asking notification permission.
+          setTimeout(() => this._initPush(role), 1200);
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.markOpenedWhenVisible();
       });
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && this.session.getUser()) {

@@ -29,6 +29,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'campaign-payment/:campaignId', renderMode: RenderMode.Client },
   { path: 'payment-history', renderMode: RenderMode.Client },
   { path: 'transactions', renderMode: RenderMode.Client },
+  { path: 'settings', renderMode: RenderMode.Client },
   { path: 'influencer-profile', renderMode: RenderMode.Client },
   { path: 'brand-profile', renderMode: RenderMode.Client },
   { path: 'campaigns', renderMode: RenderMode.Client },

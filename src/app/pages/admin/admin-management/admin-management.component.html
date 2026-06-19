@@ -971,6 +971,7 @@
                 <th>Email</th>
                 <th>Registered</th>
                 <th>First Login</th>
+                <th>Last Opened</th>
               </tr>
             </thead>
             <tbody>
@@ -980,6 +981,7 @@
                 <td>{{ user.email }}</td>
                 <td>{{ (user.firstRegisteredAt || user.createdAt) | date:'mediumDate' }}</td>
                 <td>{{ user.lastLoginAt ? (user.lastLoginAt | date:'medium') : 'Never' }}</td>
+                <td>{{ user.lastOpenedAt ? (user.lastOpenedAt | date:'medium') : 'Never' }}</td>
               </tr>
             </tbody>
           </table>

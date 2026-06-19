@@ -1,0 +1,184 @@
+.user-settings-page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: #1f2530;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+
+  h1 {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  p {
+    color: #5b6472;
+    margin: 0.25rem 0 0;
+  }
+}
+
+.settings-back {
+  color: #0b6ea8;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.settings-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.settings-section.compact {
+  align-items: flex-start;
+}
+
+.settings-section__main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.settings-icon {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  border-radius: 8px;
+  background: #eef4fb;
+  color: #0b6ea8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex: 0 0 auto;
+}
+
+.settings-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 0 5px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+p {
+  margin: 0.35rem 0 0;
+  color: #5b6472;
+  line-height: 1.45;
+}
+
+.settings-status {
+  margin-top: 0.55rem;
+  color: #1f2530;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+button {
+  border-radius: 6px;
+  border: 1px solid transparent;
+  padding: 0.55rem 0.9rem;
+  font-weight: 800;
+}
+
+button:disabled {
+  opacity: 0.55;
+}
+
+.btn-enable {
+  background: #0b6ea8;
+  color: #fff;
+}
+
+.btn-disable {
+  background: #fff;
+  color: #9f2f2f;
+  border-color: #efb8b8;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(170px, 1fr));
+  gap: 0.75rem;
+  min-width: min(100%, 430px);
+
+  div {
+    background: #f7f8fb;
+    border-radius: 6px;
+    padding: 0.75rem;
+  }
+
+  span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.25rem;
+    color: #1f2530;
+  }
+}
+
+@media (max-width: 720px) {
+  .user-settings-page {
+    padding: 1rem;
+  }
+
+  .settings-section,
+  .settings-header {
+    flex-direction: column;
+  }
+
+  .settings-actions {
+    width: 100%;
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .activity-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}

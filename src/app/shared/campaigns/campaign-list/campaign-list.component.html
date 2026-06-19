@@ -43,15 +43,15 @@
   </ng-template>
 
   <!-- Pagination -->
-  <div class="campaigns-pagination" *ngIf="filtered.length > 0">
-    <span class="page-info">
-      Showing {{ showingFrom }} to {{ showingTo }} of {{ filtered.length }} campaigns
-    </span>
-    <div class="page-btns">
-      <button class="btn btn-page" [disabled]="currentPage === 1" (click)="prevPage()">Previous</button>
-      <button class="btn btn-page" [disabled]="currentPage >= totalPages" (click)="nextPage()">Next</button>
-    </div>
-  </div>
+  <app-paginator
+    [total]="filtered.length"
+    [pageSize]="pageSize"
+    [currentPage]="currentPage"
+    [pageSizeOptions]="pageSizeOptions"
+    entityLabel="campaigns"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)">
+  </app-paginator>
 
   <!-- Campaign Form Modal -->
   <app-campaign-form
