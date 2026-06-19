@@ -6,3 +6,5 @@ const bootstrap = (context: BootstrapContext) =>
     bootstrapApplication(App, config, context);
 
 export default bootstrap;
+
+export { ɵgetOrCreateAngularServerApp } from '@angular/ssr';
