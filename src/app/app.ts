@@ -88,6 +88,13 @@ export class App implements OnInit {
     });
   }
 
+  private markOpenedWhenVisible(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.document.visibilityState !== 'visible') return;
+    if (!this.session.getUser()) return;
+    this.markSessionOpened();
+  }
+
   private setupAnalyticsTracking(): void {
     const getCurrentPath = () => this.router.url || '/';
 

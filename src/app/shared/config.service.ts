@@ -106,10 +106,6 @@ export class ConfigService {
     return this.http.delete<any>(`${this.apiUrl}/admin/whatsapp-communities/${encodeURIComponent(id)}`, this.getAuthOptions());
   }
 
-  markSessionOpened(): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/auth/session/opened`, {}, this.getAuthOptions());
-  }
-
   markCommunityJoined(communityName: string, communityState = ''): Observable<any> {
     return this.http.post<any>(
       `${this.apiUrl}/auth/community/joined`,

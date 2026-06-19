@@ -59,7 +59,8 @@
         <th>They Paid</th>
         <th>Platform Fee</th>
         <th>Recipient Gets</th>
-        <th>UTR</th>
+        <th>Payment Mode</th>
+        <th>Reference</th>
         <th>Collection</th>
         <th>Payout</th>
         <th>Actions</th>
@@ -83,8 +84,16 @@
         <td>{{ ui.formatPaise(tx.platformFee) }}</td>
         <td>{{ ui.formatPaise(tx.recipientPayout) }}</td>
         <td>
-          <code>{{ tx.utrNumber || '-' }}</code>
-          <button class="btn btn-link btn-sm" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">View proof</button>
+          {{ collectionModeLabel(tx) }}
+        </td>
+        <td>
+          <ng-container *ngIf="tx.gateway === 'razorpay'; else manualReference">
+            <code>{{ tx.gatewayPaymentId || tx.gatewayOrderId || '-' }}</code>
+          </ng-container>
+          <ng-template #manualReference>
+            <code>{{ tx.utrNumber || '-' }}</code>
+            <button class="btn btn-link btn-sm" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">View proof</button>
+          </ng-template>
         </td>
         <td>{{ ui.collectionStatusLabel(tx.collectionStatus) }}</td>
         <td>

@@ -6,13 +6,14 @@ import { Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
+import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-campaign-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignAlertMessageComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignAlertMessageComponent, AppPaginatorComponent],
   templateUrl: './campaign-review.component.html',
   styleUrls: ['./campaign-review.component.scss'],
 })

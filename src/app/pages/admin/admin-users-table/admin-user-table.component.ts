@@ -21,6 +21,7 @@ import { ImageGalleryModalComponent } from '../../../shared/components/image-gal
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 import { SocialMediaEditModalComponent, AdminUser, SocialMediaEditPayload } from '../../../shared/components/social-media-edit-modal/social-media-edit-modal.component';
 import { SessionService } from '../../../core/session.service';
+import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 
 @Component({
   selector: 'app-admin-user-table',
@@ -34,6 +35,7 @@ import { SessionService } from '../../../core/session.service';
     ImageGalleryModalComponent,
     VerificationFieldComponent,
     SocialMediaEditModalComponent,
+    AppPaginatorComponent,
   ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']

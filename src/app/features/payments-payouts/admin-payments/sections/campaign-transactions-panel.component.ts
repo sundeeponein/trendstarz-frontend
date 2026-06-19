@@ -313,6 +313,11 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     return 'Manual (UPI)';
   }
 
+  collectionModeLabel(tx: CampaignTransaction): string {
+    const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
+    return gateway === 'razorpay' ? 'Razorpay' : 'Manual UPI';
+  }
+
   reviewFlowStatusLabel(tx: CampaignTransaction): 'Awaiting Host Completion' | 'Payout Pending' | 'Paid Out' {
     if (tx.payoutStatus === 'paid') return 'Paid Out';
     return this.isInvitePayoutEligible(tx) ? 'Payout Pending' : 'Awaiting Host Completion';
