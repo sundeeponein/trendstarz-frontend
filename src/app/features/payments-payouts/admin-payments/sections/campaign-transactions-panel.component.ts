@@ -291,7 +291,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   }
 
   markPaidDisabledReason(tx: CampaignTransaction): string {
-    if (!this.isManualSettlement(tx)) return 'Auto settlement handles payout.';
+    if (!this.isManualSettlement(tx)) return 'Gateway payout is already in progress.';
     if (tx.collectionStatus !== 'verified') return 'Collection must be verified first.';
     if (!(tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')) return 'Payout is not pending.';
     if (this.transactionStatus === 'verified') return 'Switch to Pending Payout tab to release payout.';
@@ -309,7 +309,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   settlementModeLabel(tx: CampaignTransaction): string {
     const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
-    if (gateway === 'razorpay') return 'Auto (Razorpay)';
+    if (gateway === 'razorpay') return 'Razorpay collection + manual payout';
     return 'Manual (UPI)';
   }
 
@@ -327,7 +327,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   releaseActionHint(tx: CampaignTransaction): string {
     if (!this.isManualSettlement(tx)) {
-      return `Auto release via ${this.settlementModeLabel(tx)}.`;
+      return 'Gateway payout is already in progress.';
     }
     return 'Admin must release payout manually.';
   }
@@ -457,8 +457,8 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   }
 
   isManualSettlement(tx: CampaignTransaction): boolean {
-    const gateway = String(tx.gateway || 'manual_upi').toLowerCase();
-    return gateway === '' || gateway === 'manual_upi';
+    const payoutGateway = String(tx.payoutGatewayProvider || 'manual_upi').toLowerCase();
+    return payoutGateway === '' || payoutGateway === 'manual_upi';
   }
 
   private formatHoursLabel(hours: number): string {

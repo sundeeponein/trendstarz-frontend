@@ -2,9 +2,6 @@
   <button class="btn btn-warning btn-sm" (click)="runAutoApproveStaleSubmissions()">
     Auto-approve stale (48h)
   </button>
-  <button class="btn btn-primary btn-sm ms-2" (click)="runAutoPayoutSweep()">
-    Run Auto Payout Sweep
-  </button>
 </div>
 
 <div class="tx-summary-grid">
@@ -120,9 +117,6 @@
                   [title]="canMarkPaid(tx) ? markPaidActionLabel(tx) : markPaidDisabledReason(tx)">
             {{ markPaidActionLabel(tx) }}
           </button>
-          <span class="small text-muted d-block mb-1" *ngIf="!canMarkPaid(tx) && tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && tx.gateway === 'razorpay'">
-            Auto settlement enabled
-          </span>
           <!-- Dispute resolve button -->
           <button class="btn btn-sm btn-dispute-resolve" *ngIf="tx.disputeStatus === 'open'" (click)="openDisputeModal(tx)">
             <i class="bi bi-shield-exclamation"></i> Resolve Dispute

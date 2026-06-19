@@ -480,14 +480,16 @@
         Localhost mode: Firebase email verification was skipped.<br>
         You can log in with this email and password.
       </p>
-      <p *ngIf="!isPremiumPlan() && !localAuthBypassEnabled" class="reg-success-msg">
-        Registration successful.<br>
-        Please verify your email address to activate your account.<br>
-        A verification link has been sent to your email.<br>
-        <br>
-        Check Inbox, Spam, or Promotions folders.<br>
-        Already registered but didn't receive the email? You can use Forgot Password to verify and activate your account.
-      </p>
+      <div *ngIf="!isPremiumPlan() && !localAuthBypassEnabled" class="reg-success-msg">
+        <p>We've sent a verification link to your email address.</p>
+        <p><strong>Next Steps:</strong></p>
+        <ol style="text-align:left; margin-top:4px;">
+          <li>Open your email inbox.</li>
+          <li>Click the verification link.</li>
+          <li>Check Spam, Promotions, or Updates folders.</li>
+          <li>Return to TrendStarz and log in.</li>
+        </ol>
+      </div>
 
       <!-- Premium user message -->
       <ng-container *ngIf="isPremiumPlan()">
@@ -510,7 +512,10 @@
           <a class="btn btn-outline-secondary" href="/">Back to Home</a>
         </ng-container>
         <ng-template #freeActions>
-          <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
+          <button class="btn btn-primary" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
+            {{ resendingEmailVerification ? 'Sending...' : 'Resend Verification Email' }}
+          </button>
+          <button class="btn btn-outline-secondary" (click)="closeSuccessModal()">Go to Login</button>
           <a class="btn btn-outline-secondary" href="/">Back to Home</a>
         </ng-template>
       </div>
@@ -523,22 +528,22 @@
       <div class="reg-success-icon" style="background:#f59e0b;">!</div>
       <h3 class="reg-success-title">Registration Completed</h3>
       <div class="reg-success-msg" style="text-align:left;">
-        <p>Registration completed.</p>
         <p>Your account has been created, but we could not send the verification email at this time.</p>
-        <p>Your account is not yet activated.</p>
-        <p class="mb-1">Please:</p>
+        <p class="mb-1">Please try the following:</p>
         <ul>
-          <li>Check your Inbox, Spam and Promotions folders.</li>
-          <li>Try "Resend Verification Email".</li>
-          <li>Use "Forgot Password" to verify your email ownership and activate your account.</li>
+          <li>Check your Inbox, Spam, and Promotions folders.</li>
+          <li>Click <strong>Resend Verification Email</strong> below.</li>
           <li>Contact Support if the issue continues.</li>
         </ul>
-        <p *ngIf="emailVerificationError" class="text-danger mb-0">{{ emailVerificationError }}</p>
+        <p *ngIf="resendEmailVerificationSuccess" class="text-success mb-0">Verification email sent! Check your inbox.</p>
+        <p *ngIf="resendEmailVerificationError" class="text-danger mb-0">{{ resendEmailVerificationError }}</p>
       </div>
       <div class="reg-success-actions">
-        <a class="btn btn-primary" href="/forgot-password">Forgot Password</a>
+        <button class="btn btn-primary" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
+          {{ resendingEmailVerification ? 'Sending...' : 'Resend Verification Email' }}
+        </button>
         <button class="btn btn-outline-secondary" (click)="closeEmailSendFailedModal()">Go to Login</button>
-        <a class="btn btn-outline-secondary" href="mailto:support.in">Contact Support</a>
+        <a class="btn btn-outline-secondary" href="mailto:support@trendstarz.in">Contact Support</a>
       </div>
     </div>
   </div>

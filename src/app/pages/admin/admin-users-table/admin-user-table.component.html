@@ -48,7 +48,7 @@
       <option *ngFor="let status of statusArray" [value]="status">Status: {{ status | titlecase }}</option>
     </select> -->
 
-    <select [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
+    <select class="verification-filter" [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
       <option value="">Verification: All</option>
       <option value="email_pending">Email pending</option>
       <option value="mobile_pending">Mobile pending</option>
@@ -58,13 +58,23 @@
     </select>
 
 
-    <select [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">
-      <option value="">Tier: All</option>
-      <option value="premium">Tier: Premium</option>
-      <option value="free">Tier: Free</option>
+    <select class="subscription-filter" [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">
+      <option value="">Subscription: All</option>
+      <option value="premium">Subscription: Premium</option>
+      <option value="free">Subscription: Free</option>
     </select>
 
-    <select [ngModel]="getActiveFilterValue('category')" (change)="setActiveFilterValue('category', $any($event.target).value)">
+    <select class="tier-filter" [ngModel]="getActiveFilterValue('creatorTier')" (change)="setActiveFilterValue('creatorTier', $any($event.target).value)">
+      <option value="">Tier: All</option>
+      <option *ngFor="let tier of creatorTiersArray" [value]="tier">Tier: {{ tier }}</option>
+    </select>
+
+    <select class="state-filter" [ngModel]="getActiveFilterValue('state')" (change)="setActiveFilterValue('state', $any($event.target).value)">
+      <option value="">State: All</option>
+      <option *ngFor="let state of statesArray" [value]="state">State: {{ state }}</option>
+    </select>
+
+    <select class="category-filter" [ngModel]="getActiveFilterValue('category')" (change)="setActiveFilterValue('category', $any($event.target).value)">
       <option value="">Category: All</option>
       <option *ngFor="let category of categoriesArray" [value]="category">Category: {{ category }}</option>
     </select>
@@ -110,6 +120,7 @@
           <th>Contact Details</th>
           <th>Social Media</th>
           <th>Subscription</th>
+          <th>Community</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -175,6 +186,12 @@
             <span class="tier-badge" [ngClass]="getTierValue(user) === 'premium' ? 'premium' : 'free'">
               {{ getTierValue(user) === 'premium' ? 'PREMIUM' : 'FREE' }}
             </span>
+          </td>
+          <td>
+            <span class="ts-status-badge" [ngClass]="user.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
+              {{ user.communityJoined ? 'Joined' : 'Not Joined' }}
+            </span>
+            <div class="user-sub" *ngIf="user.communityJoined && user.communityName">{{ user.communityName }}</div>
           </td>
           <td class="ts-status-action-cell">
             <div class="row-actions">
@@ -283,6 +300,27 @@
               [verified]="isMobileVerified(selectedUser)"
               (toggled)="toggleSelectedMobileVerification()"
             ></app-verification-field>
+          </div>
+          <div>
+            <label>WhatsApp Community</label>
+            <div>
+              <span class="ts-status-badge" [ngClass]="selectedUser.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
+                {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
+              </span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-2"
+                *ngIf="selectedUser.communityJoined"
+                (click)="markCommunityNotJoined(selectedUser, selectedUserType)"
+              >
+                Not Joined
+              </button>
+            </div>
+            <div class="user-sub mt-1" *ngIf="selectedUser.communityJoined && selectedUser.communityName">{{ selectedUser.communityName }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && selectedUser.communityState">State: {{ selectedUser.communityState }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate)">
+              Joined at {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
+            </div>
           </div>
           <div>
             <app-verification-field
@@ -407,8 +445,23 @@
             <div>{{ selectedUser.lastLoginAt ? (selectedUser.lastLoginAt | date:'medium') : '-' }}</div>
           </div>
           <div>
-            <label>Last Opened</label>
-            <div>{{ selectedUser.lastOpenedAt ? (selectedUser.lastOpenedAt | date:'medium') : '-' }}</div>
+            <label>WhatsApp Community</label>
+            <div>
+              {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
+              <span *ngIf="selectedUser.communityJoined && selectedUser.communityName"> - {{ selectedUser.communityName }}</span>
+              <span *ngIf="selectedUser.communityJoined && selectedUser.communityState"> ({{ selectedUser.communityState }})</span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-2"
+                *ngIf="selectedUser.communityJoined"
+                (click)="markCommunityNotJoined(selectedUser, selectedUserType)"
+              >
+                Not Joined
+              </button>
+            </div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate)">
+              Joined on {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
+            </div>
           </div>
         </div>
 
@@ -447,60 +500,81 @@
                 ></app-verification-field>
               </div>
 
-              <!-- Influencer: detailed rates + content types -->
-              <ng-container *ngIf="(selectedUserType || activeTab) === 'influencer'">
-                <div class="rate-platform" *ngFor="let group of getUserSocialRateGroups(selectedUser)">
-                  <div class="rate-platform-name">
-                    <span>
-                      <i class="bi" [ngClass]="group.icon"></i>
-                      {{ group.platform }}
-                    </span>
-                    <span class="rate-platform-meta" *ngIf="group.tierLabel || group.handle">
-                      <span *ngIf="group.tierLabel">{{ group.tierLabel }}</span>
-                      <a *ngIf="group.href && group.handle; else plainRateHandle" [href]="group.href" target="_blank" rel="noopener noreferrer">{{ group.handle }}</a>
-                      <ng-template #plainRateHandle>
-                        <span *ngIf="group.handle">{{ group.handle }}</span>
-                      </ng-template>
-                    </span>
-                  </div>
-                  <div class="rate-row" *ngFor="let item of group.items">
-                    <span>{{ item.name }}</span>
-                    <strong>₹{{ item.price | number:'1.0-0' }}</strong>
-                  </div>
+              <!-- Social media: unified rows with Edit button (all user types) -->
+              <div *ngIf="!selectedUser?.socialMedia?.length" class="text-muted small py-1">No social media platforms added.</div>
+
+              <div class="rate-platform" *ngFor="let sm of selectedUser?.socialMedia; let smIdx = index">
+                <!-- Platform header: icon · label · tier(range) · handle · Edit -->
+                <div class="rate-platform-name">
+                  <span class="rate-platform-info">
+                    <i class="bi" [ngClass]="getSocialIconForPlatform(sm?.platform)"></i>
+                    <strong>{{ getSocialLabelForPlatform(sm?.platform) }}</strong>
+                    <span class="sm-tier-badge" *ngIf="sm?.tier">{{ getTierWithRange(sm.tier) }}</span>
+                    <ng-container *ngIf="resolveSocialHrefForPlatform(sm) as href">
+                      <a [href]="href" target="_blank" rel="noopener noreferrer" class="sm-handle-link">{{ sm?.handle ? '@' + sm.handle : '' }}</a>
+                    </ng-container>
+                    <span *ngIf="!resolveSocialHrefForPlatform(sm) && sm?.handle" class="sm-handle-link">@{{ sm.handle }}</span>
+                  </span>
+                  <button class="sm-edit-btn" (click)="openSocialMediaEdit(smIdx)">
+                    <i class="bi bi-pencil-fill"></i> Edit
+                  </button>
                 </div>
-                <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
-                  <div class="rate-platform-name">Service Rates</div>
-                  <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
-                    <span>{{ item.name }}</span>
-                    <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+
+                <!-- Content type rates (influencer only) -->
+                <ng-container *ngIf="(selectedUserType || activeTab) === 'influencer'">
+                  <div class="rate-row" *ngFor="let ct of sm?.contentTypes">
+                    <ng-container *ngIf="ct?.enabled && ct?.price > 0">
+                      <span>{{ ct?.name || ct?.label }}</span>
+                      <strong>₹{{ ct.price | number:'1.0-0' }}</strong>
+                    </ng-container>
                   </div>
+                </ng-container>
+              </div>
+
+              <!-- Service rates (all user types) -->
+              <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
+                <div class="rate-platform-name">Service Rates</div>
+                <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
+                  <span>{{ item.name }}</span>
+                  <strong>₹{{ item.price | number:'1.0-0' }}</strong>
                 </div>
+              </div>
+
+              <!-- Social media edit modal (popup) -->
+              <ng-container *ngIf="smEditModalOpen && smEditingIdx !== null">
+                <app-social-media-edit-modal
+                  [platform]="selectedUser?.socialMedia?.[smEditingIdx]?.platform"
+                  [platformLabel]="getSocialLabelForPlatform(selectedUser?.socialMedia?.[smEditingIdx]?.platform)"
+                  [platformIcon]="getSocialIconForPlatform(selectedUser?.socialMedia?.[smEditingIdx]?.platform)"
+                  [handle]="selectedUser?.socialMedia?.[smEditingIdx]?.handle || ''"
+                  [tier]="selectedUser?.socialMedia?.[smEditingIdx]?.tier || ''"
+                  [currentAdmin]="currentAdmin"
+                  [saving]="smEditSaving"
+                  [error]="smEditError"
+                  (save)="saveSocialMediaEdit($event)"
+                  (cancel)="cancelSocialMediaEdit()"
+                ></app-social-media-edit-modal>
               </ng-container>
 
-              <!-- Brand / Photographer: platform handles list -->
-              <ng-container *ngIf="(selectedUserType || activeTab) !== 'influencer'">
-                <div class="rate-platform" *ngFor="let sm of getUserAllSocialPlatforms(selectedUser)">
-                  <div class="rate-platform-name">
-                    <span>
-                      <i class="bi" [ngClass]="sm.icon"></i>
-                      {{ sm.platform }}
+              <!-- Change log -->
+              <div class="sm-changelog" *ngIf="getSocialMediaEditLog().length">
+                <div class="sm-changelog-title">Changes Requested</div>
+                <div class="sm-changelog-entry" *ngFor="let log of getSocialMediaEditLog() | slice:0:10">
+                  <div class="sm-changelog-changes">
+                    <span *ngIf="log.oldHandle !== log.newHandle">
+                      <strong>{{ getSocialLabelForPlatform(log.platform) }} Handle:</strong>
+                      @{{ log.oldHandle }} &rarr; @{{ log.newHandle }}
                     </span>
-                    <span class="rate-platform-meta" *ngIf="sm.handle || sm.tierLabel">
-                      <span *ngIf="sm.tierLabel">{{ sm.tierLabel }}</span>
-                      <a *ngIf="sm.href && sm.handle" [href]="sm.href" target="_blank" rel="noopener noreferrer">{{ sm.handle }}</a>
-                      <span *ngIf="!sm.href && sm.handle">{{ sm.handle }}</span>
+                    <span *ngIf="log.oldTier !== log.newTier">
+                      <strong>Tier:</strong> {{ log.oldTier }} &rarr; {{ log.newTier }}
                     </span>
                   </div>
-                </div>
-                <div *ngIf="!getUserAllSocialPlatforms(selectedUser).length" class="text-muted small py-1">No social media platforms added.</div>
-                <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
-                  <div class="rate-platform-name">Service Rates</div>
-                  <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
-                    <span>{{ item.name }}</span>
-                    <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                  <div class="sm-changelog-meta">
+                    <span><i class="bi bi-person-fill"></i> {{ log.changedByName || log.changedBy || 'Admin' }}</span>
+                    <span><i class="bi bi-calendar3"></i> {{ log.changedAt | date:'dd-MMM-yyyy' }}</span>
                   </div>
                 </div>
-              </ng-container>
+              </div>
             </div>
             <div>
               <label>Profile Traffic</label>

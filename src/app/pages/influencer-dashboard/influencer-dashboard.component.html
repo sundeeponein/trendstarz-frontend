@@ -67,7 +67,15 @@
     </div>
   </div>
 
-  <div class="section-card dashboard-action-panel mb-4" *ngIf="!loading">
+  <app-whatsapp-community-card
+    *ngIf="dashboard?.user"
+    [user]="dashboard.user"
+    variant="strip"
+    [respectSkip]="false"
+    [showSkipAction]="false"
+  ></app-whatsapp-community-card>
+
+  <div class="section-card mb-4" *ngIf="!loading">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--blue me-2"></span>
       Dual Role Summary

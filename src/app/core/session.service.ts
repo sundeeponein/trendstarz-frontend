@@ -52,10 +52,8 @@ export class SessionService {
       sessionStorage.removeItem(SessionService.TOKEN_KEY);
       return;
     }
-
     sessionStorage.setItem(SessionService.TOKEN_KEY, token);
-    localStorage.removeItem(SessionService.TOKEN_KEY);
-    localStorage.removeItem(SessionService.LOGIN_TIME_KEY);
+    this.clearRememberedSession();
   }
 
   getToken(): string | null {

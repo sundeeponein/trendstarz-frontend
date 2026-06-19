@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { buildDefaultUserTagVisibilityOptions } from '../../../shared/constants/user-tag-options.constants';
 
@@ -78,6 +79,10 @@ export class AdminManagementComponent implements OnInit {
   getDistrictIndex(dist: any): number {
     return this.config.districts.findIndex((d: any) => d._id === dist._id);
   }
+
+  getStateIndex(state: any): number {
+    return this.config.locations.findIndex((item: any) => item._id === state?._id);
+  }
   activeTab: string = 'campaigns';
   categoriesRoleTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   userTagsRoleTab: 'influencer' | 'brand' | 'photographer' | 'commission' = 'influencer';
@@ -104,6 +109,8 @@ export class AdminManagementComponent implements OnInit {
   };
 
   districtFilterState: string = '';
+  locationSearch = '';
+  locationStatusFilter: 'all' | 'active' | 'inactive' = 'all';
 
   get filteredCategories(): any[] {
     const role = this.categoriesRoleTab;
@@ -117,6 +124,43 @@ export class AdminManagementComponent implements OnInit {
     const all = (this.config.districts || []).map((d: any, i: number) => ({ ...d, _origIndex: i }));
     if (!this.districtFilterState) return all;
     return all.filter((d: any) => d.state === this.districtFilterState);
+  }
+
+  get filteredLocations(): any[] {
+    const query = this.locationSearch.trim().toLowerCase();
+    return (this.config.locations || []).filter((state: any) => {
+      if (this.locationStatusFilter === 'active' && state?.visible === false) return false;
+      if (this.locationStatusFilter === 'inactive' && state?.visible !== false) return false;
+      if (!query) return true;
+      const districts = this.getStateDistricts(state?.name).map((district: any) => district?.name).join(' ');
+      const haystack = `${state?.name || ''} ${districts}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  get activeLocationCount(): number {
+    return (this.config.locations || []).filter((state: any) => state?.visible !== false).length;
+  }
+
+  getStateDistricts(stateName: string): any[] {
+    const normalizedState = String(stateName || '').trim().toLowerCase();
+    return (this.config.districts || [])
+      .map((district: any, index: number) => ({ ...district, _origIndex: index }))
+      .filter((district: any) => String(district?.state || '').trim().toLowerCase() === normalizedState);
+  }
+
+  getVisibleDistrictCount(stateName: string): number {
+    return this.getStateDistricts(stateName).filter((district: any) => district?.visible !== false).length;
+  }
+
+  toggleLocationStateExpanded(state: any) {
+    if (state?.visible === false) return;
+    const stateName = String(state?.name || '');
+    this.districtFilterState = this.districtFilterState === stateName ? '' : stateName;
+  }
+
+  isLocationStateExpanded(stateName: string): boolean {
+    return this.districtFilterState === stateName;
   }
 
   setCategoriesRoleTab(role: 'influencer' | 'brand' | 'photographer') {
@@ -397,6 +441,20 @@ export class AdminManagementComponent implements OnInit {
   campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
   campaignAccessModeConfigDefaults: CampaignAccessModeConfigItem[] = [];
   campaignTypeResetMessage = '';
+  tierUsageCounts: Record<string, number> = {};
+  whatsappCommunities: any[] = [];
+  whatsappCommunitiesLoading = false;
+  whatsappCommunitySaving = false;
+  whatsappCommunityError = '';
+  whatsappCommunitySearch = '';
+  whatsappCommunityStatusFilter: 'all' | 'active' | 'inactive' = 'all';
+  editingWhatsappCommunityId = '';
+  whatsappCommunityForm = {
+    state: '',
+    communityName: '',
+    communityLink: '',
+    isActive: true,
+  };
   showVisibilityConfirmModal = false;
   private visibilitySnapshot: any = null;
 
@@ -419,6 +477,7 @@ export class AdminManagementComponent implements OnInit {
     if (!this.isServer) {
       this.loadConfig();
       this.loadSettings();
+      this.loadWhatsappCommunities();
       this.loadPendingUnverifiedReport();
       this.loadCommissionCounts();
     }
@@ -427,6 +486,9 @@ export class AdminManagementComponent implements OnInit {
   setTab(tab: string) {
     this.visibilitySnapshot = null;
     this.activeTab = tab;
+    if (tab === 'communities') {
+      this.loadWhatsappCommunities();
+    }
   }
 
   private ensureVisibilitySnapshot() {
@@ -465,6 +527,144 @@ export class AdminManagementComponent implements OnInit {
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
+  private getAuthHeaders() {
+    const token = this.getToken();
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  }
+
+  get filteredWhatsappCommunities(): any[] {
+    const query = this.whatsappCommunitySearch.trim().toLowerCase();
+    const list = Array.isArray(this.whatsappCommunities) ? this.whatsappCommunities : [];
+    return list.filter((item: any) => {
+      if (this.whatsappCommunityStatusFilter === 'active' && item?.isActive === false) return false;
+      if (this.whatsappCommunityStatusFilter === 'inactive' && item?.isActive !== false) return false;
+      if (!query) return true;
+      const haystack = [
+        item?.state,
+        item?.communityName,
+        item?.communityLink,
+      ]
+        .map((value) => String(value || '').toLowerCase())
+        .join(' ');
+      return haystack.includes(query);
+    });
+  }
+
+  get activeWhatsappCommunityCount(): number {
+    return this.whatsappCommunities.filter((item: any) => item?.isActive !== false).length;
+  }
+
+  get totalWhatsappJoinedUserCount(): number {
+    return this.whatsappCommunities.reduce(
+      (sum: number, item: any) => sum + Number(item?.joinedUserCount || 0),
+      0,
+    );
+  }
+
+  loadWhatsappCommunities() {
+    this.whatsappCommunitiesLoading = true;
+    this.whatsappCommunityError = '';
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const data = res?.data ?? res ?? [];
+        this.whatsappCommunities = Array.isArray(data) ? data : [];
+        this.whatsappCommunitiesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.whatsappCommunitiesLoading = false;
+        this.whatsappCommunityError = err?.error?.message || 'Failed to load WhatsApp communities.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  resetWhatsappCommunityForm() {
+    this.editingWhatsappCommunityId = '';
+    this.whatsappCommunityForm = {
+      state: '',
+      communityName: '',
+      communityLink: '',
+      isActive: true,
+    };
+  }
+
+  editWhatsappCommunity(item: any) {
+    this.editingWhatsappCommunityId = String(item?._id || '');
+    this.whatsappCommunityForm = {
+      state: String(item?.state || ''),
+      communityName: String(item?.communityName || ''),
+      communityLink: String(item?.communityLink || ''),
+      isActive: item?.isActive !== false,
+    };
+  }
+
+  getWhatsappQrUrl(link: string, size = 96): string {
+    const value = String(link || '').trim();
+    if (!value) return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
+  }
+
+  copyWhatsappCommunityLink(item: any) {
+    const link = String(item?.communityLink || '').trim();
+    if (!link) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(link);
+      return;
+    }
+    if (typeof document === 'undefined') return;
+    const textarea = document.createElement('textarea');
+    textarea.value = link;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
+  saveWhatsappCommunity() {
+    if (this.whatsappCommunitySaving) return;
+    this.whatsappCommunitySaving = true;
+    this.whatsappCommunityError = '';
+    const payload = { ...this.whatsappCommunityForm };
+    const request = this.editingWhatsappCommunityId
+      ? this.http.patch<any>(
+          `${environment.apiBaseUrl}/admin/whatsapp-communities/${this.editingWhatsappCommunityId}`,
+          payload,
+          this.getAuthHeaders(),
+        )
+      : this.http.post<any>(
+          `${environment.apiBaseUrl}/admin/whatsapp-communities`,
+          payload,
+          this.getAuthHeaders(),
+        );
+    request.subscribe({
+      next: () => {
+        this.whatsappCommunitySaving = false;
+        this.resetWhatsappCommunityForm();
+        this.loadWhatsappCommunities();
+      },
+      error: (err) => {
+        this.whatsappCommunitySaving = false;
+        this.whatsappCommunityError = err?.error?.message || 'Failed to save WhatsApp community.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  deleteWhatsappCommunity(item: any) {
+    const id = String(item?._id || '');
+    if (!id) return;
+    this.http.delete<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities/${id}`, this.getAuthHeaders()).subscribe({
+      next: () => this.loadWhatsappCommunities(),
+      error: (err) => {
+        this.whatsappCommunityError = err?.error?.message || 'Failed to delete WhatsApp community.';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   loadSettings() {
@@ -721,6 +921,7 @@ export class AdminManagementComponent implements OnInit {
     this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+      this.loadTierUsageCounts();
     });
     this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
@@ -729,6 +930,48 @@ export class AdminManagementComponent implements OnInit {
 
     this.loadUserTagsConfig();
     this.loadCollaborationAvailabilityConfig();
+  }
+
+  loadTierUsageCounts() {
+    const baseUrl = environment.apiBaseUrl;
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const requests = [
+      this.http.get<any>(`${baseUrl}/admin/influencers?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/brands?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/photographers?limit=1000`, headers),
+    ];
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const counts: Record<string, number> = {};
+        responses
+          .flatMap((res: any) => {
+            const data = res?.data ?? res ?? [];
+            return Array.isArray(data) ? data : [];
+          })
+          .forEach((user: any) => {
+            const userTiers = new Set<string>();
+            (Array.isArray(user?.socialMedia) ? user.socialMedia : []).forEach((sm: any) => {
+              const tier = String(sm?.tier || '').trim();
+              if (tier) userTiers.add(tier.toLowerCase());
+            });
+            userTiers.forEach((tier) => {
+              counts[tier] = (counts[tier] || 0) + 1;
+            });
+          });
+        this.tierUsageCounts = counts;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.tierUsageCounts = {};
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  getTierUsageCount(tier: any): number {
+    const name = String(tier?.name || '').trim().toLowerCase();
+    return name ? Number(this.tierUsageCounts[name] || 0) : 0;
   }
 
   loadCollaborationAvailabilityConfig() {
@@ -814,6 +1057,9 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'state') {
       const state = this.config.locations[idx];
       state.visible = !state.visible;
+      if (state.visible === false && this.districtFilterState === state.name) {
+        this.districtFilterState = '';
+      }
       this.config.districts
         .filter((district: any) => String(district?.state || '').trim().toLowerCase() === String(state?.name || '').trim().toLowerCase())
         .forEach((district: any) => {

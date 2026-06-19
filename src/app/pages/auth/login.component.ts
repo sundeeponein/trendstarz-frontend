@@ -24,6 +24,12 @@ export class LoginComponent {
   loginForm: FormGroup;
   submitted = false;
   showPassword = false;
+  emailNotVerified = false;
+  resendingVerification = false;
+  resendVerificationSuccess = false;
+  resendVerificationError: string | null = null;
+  changingEmail = false;
+  private unverifiedEmail = '';
 
   constructor(
     private fb: FormBuilder,
@@ -39,10 +45,13 @@ export class LoginComponent {
       password: ['', Validators.required],
     });
 
-    // Reset “submitted” flag when the user starts editing again so any
-    // field-level hints disappear until they press Sign In once more.
     this.loginForm.valueChanges.subscribe(() => {
       if (this.submitted) this.submitted = false;
+      if (this.emailNotVerified) {
+        this.emailNotVerified = false;
+        this.resendVerificationSuccess = false;
+        this.resendVerificationError = null;
+      }
     });
   }
 
@@ -66,13 +75,23 @@ export class LoginComponent {
     };
     this.http.post(`${environment.apiBaseUrl}/auth/login`, loginPayload)
       .pipe(timeout(5000), catchError(err => {
-        if (err?.error?.message?.includes('pending')) {
+        const msg: string = err?.error?.message || '';
+        if (msg.toLowerCase().includes('pending')) {
           this.toast.warning(
-            'Your account is awaiting admin verification. We’ll notify you once it’s approved.',
+            "Your account is awaiting admin verification. We'll notify you once it's approved.",
             6000,
           );
+        } else if (
+          msg.toLowerCase().includes('not verified') ||
+          msg.toLowerCase().includes('email is not verified') ||
+          msg.toLowerCase().includes('verify your email')
+        ) {
+          this.unverifiedEmail = this.loginForm.value.email || '';
+          this.emailNotVerified = true;
+          this.resendVerificationSuccess = false;
+          this.resendVerificationError = null;
         } else {
-          this.toast.error(err?.error?.message || 'Login failed. Please check your details and try again.');
+          this.toast.error(msg || 'Login failed. Please check your details and try again.');
         }
         return of(null);
       }))
@@ -112,5 +131,32 @@ export class LoginComponent {
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
+  }
+
+  resendVerificationEmail() {
+    const email = this.unverifiedEmail || this.loginForm.value.email;
+    if (!email) return;
+    this.resendingVerification = true;
+    this.resendVerificationSuccess = false;
+    this.resendVerificationError = null;
+    this.configService.sendEmailVerificationLink(email).subscribe({
+      next: () => {
+        this.resendingVerification = false;
+        this.resendVerificationSuccess = true;
+      },
+      error: (err: any) => {
+        this.resendingVerification = false;
+        this.resendVerificationError = err?.error?.message || 'Failed to resend verification email.';
+      }
+    });
+  }
+
+  changeEmailForVerification() {
+    this.emailNotVerified = false;
+    this.resendVerificationSuccess = false;
+    this.resendVerificationError = null;
+    this.unverifiedEmail = '';
+    this.loginForm.get('email')?.setValue('');
+    this.loginForm.get('password')?.setValue('');
   }
 }

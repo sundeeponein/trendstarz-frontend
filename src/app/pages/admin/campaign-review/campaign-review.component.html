@@ -1,13 +1,23 @@
 <div class="cm-page">
 
-  <!-- ══ PAGE HEADER ══ -->
-  <header class="cm-header">
-    <div class="cm-header-left">
-      <h1 class="cm-title">Campaign Moderation</h1>
-      <p class="cm-subtitle">
-        Review, validate, and manage submissions across all active brand partnerships.
-        Maintain editorial integrity and brand safety standards from a centralized hub.
-      </p>
+  <app-campaign-alert-message
+    *ngIf="approvedCampaignAlert"
+    [campaign]="approvedCampaignAlert"
+    [copied]="alertMessageCopied"
+    (copyAlert)="copyCampaignAlertMessage($event)"
+  ></app-campaign-alert-message>
+
+  <div class="review-card">
+    <div class="review-card-header">
+      <div>
+        <strong>Current moderation mode</strong>
+        <p *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'manual'">
+          Manual: New {{ isCollaborationScope ? 'collaboration' : 'campaign' }} submits as <strong>Pending Review</strong> and needs admin decision.
+        </p>
+        <p *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'auto_live'">
+          Auto-live: {{ isCollaborationScope ? 'Collaboration' : 'Campaign' }} goes public immediately (still appears in admin queue for audit).
+        </p>
+      </div>
     </div>
     <div class="cm-header-actions">
       <button class="cm-btn cm-btn--outline" type="button" (click)="exportData()">

@@ -384,3 +384,93 @@
     box-shadow: 0 0 0 0.2rem rgba(234, 88, 12, 0.18);
   }
 }
+
+
+.email-not-verified-banner {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.25rem 1rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #f59e0b;
+  border-radius: 10px;
+  text-align: center;
+
+  .env-icon {
+    font-size: 1.8rem;
+    color: #f59e0b;
+    margin-bottom: 0.4rem;
+  }
+
+  .env-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #78350f;
+    margin-bottom: 0.35rem;
+  }
+
+  .env-msg {
+    font-size: 0.88rem;
+    color: #92400e;
+    margin-bottom: 0.25rem;
+  }
+
+  .env-hint {
+    font-size: 0.82rem;
+    color: #a16207;
+    margin-bottom: 0.75rem;
+  }
+
+  .env-success {
+    font-size: 0.85rem;
+    color: #166534;
+    background: #dcfce7;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .env-error {
+    font-size: 0.85rem;
+    color: #991b1b;
+    background: #fee2e2;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .env-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn-resend {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background: #f59e0b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover:not(:disabled) { background: #d97706; }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+
+  .btn-change-email {
+    width: 100%;
+    padding: 0.55rem 1rem;
+    background: transparent;
+    color: #92400e;
+    border: 1.5px solid #fbbf24;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover { background: #fef3c7; }
+  }
+}

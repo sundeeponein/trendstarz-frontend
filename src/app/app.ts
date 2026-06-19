@@ -22,7 +22,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
   private lastPushSubscriptionKey: string | null = null;
-  private lastOpenedHeartbeatAt = 0;
+  private lastSessionOpenedPing = 0;
 
   constructor(
     private session: SessionService,
@@ -50,8 +50,7 @@ export class App implements OnInit {
           return;
         }
 
-        this.markOpenedWhenVisible(true);
-
+        this.markSessionOpened();
         const role = this.normalizeRole((user as any).role);
         const identity = String((user as any).id || (user as any)._id || (user as any).email || role);
         const key = `${role}:${identity}`;
@@ -67,22 +66,23 @@ export class App implements OnInit {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') this.markOpenedWhenVisible();
       });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.session.getUser()) {
+          this.markSessionOpened();
+        }
+      });
     }
   }
 
-  private markOpenedWhenVisible(force = false): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    if (document.visibilityState && document.visibilityState !== 'visible') return;
-    if (!this.session.getToken() || !this.session.getUser()) return;
+  private markSessionOpened(): void {
     const now = Date.now();
-    if (!force && now - this.lastOpenedHeartbeatAt < 10 * 60 * 1000) return;
-    this.lastOpenedHeartbeatAt = now;
+    if (now - this.lastSessionOpenedPing < 10 * 60 * 1000) return;
+    this.lastSessionOpenedPing = now;
     this.config.markSessionOpened().subscribe({
       next: (res) => {
         const user = this.session.getUser();
-        if (user && res?.lastOpenedAt) {
-          this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
-        }
+        if (!user || !res?.lastOpenedAt) return;
+        this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
       },
       error: () => {},
     });
