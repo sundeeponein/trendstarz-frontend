@@ -2098,16 +2098,8 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getConsolidatedSocialMediaChanges(): any[] {
-    const logs = this.getSocialMediaEditLog();
-    if (!logs.length) return [];
-    const platformMap = new Map<string, any>();
-    for (const log of logs) {
-      const key = String(log.platformIdx ?? log.platform ?? '');
-      // Always overwrite so only the most recent admin change per platform is kept
-      platformMap.set(key, { ...log });
-    }
-    return Array.from(platformMap.values()).filter(
-      e => e.oldHandle !== e.newHandle || e.oldTier !== e.newTier
+    return this.getSocialMediaEditLog().filter(
+      (e: any) => e.oldHandle !== e.newHandle || e.oldTier !== e.newTier
     );
   }
 
