@@ -22,6 +22,11 @@
           {{ point }}
         </li>
       </ul>
+
+      <div *ngIf="config.disclaimer" class="rcm-disclaimer">
+        <i class="bi bi-exclamation-triangle-fill rcm-disclaimer-icon"></i>
+        {{ config.disclaimer }}
+      </div>
     </div>
 
     <div class="rcm-footer">

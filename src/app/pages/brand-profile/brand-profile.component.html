@@ -47,6 +47,8 @@
         />
       </div>
 
+      <app-registration-notice role="brand"></app-registration-notice>
+
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
           <h2>Brand Info</h2>

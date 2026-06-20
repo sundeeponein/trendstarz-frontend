@@ -19,11 +19,12 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })

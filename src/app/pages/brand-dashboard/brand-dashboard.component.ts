@@ -17,6 +17,7 @@ import {
   ProfileVerificationService,
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -24,7 +25,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {

@@ -7,6 +7,7 @@ interface RoleConfig {
   title: string;
   heading: string;
   points: string[];
+  disclaimer?: string;
   buttonLabel: string;
 }
 
@@ -18,8 +19,8 @@ const ROLE_CONFIG: Record<RegistrationRole, RoleConfig> = {
     points: [
       'I want to receive collaboration opportunities from brands.',
       'I want to promote products, services, events, or businesses through my social media accounts.',
-      'I understand that registering as an Influencer does not guarantee paid campaigns.',
     ],
+    disclaimer: 'Registration does not guarantee collaborations, campaign approvals, project assignments, or paid opportunities.',
     buttonLabel: 'Continue as Influencer',
   },
   brand: {
@@ -42,6 +43,7 @@ const ROLE_CONFIG: Record<RegistrationRole, RoleConfig> = {
       'I want to collaborate with Brands and Influencers.',
       'I understand this account is not an Influencer profile.',
     ],
+    disclaimer: 'Registration does not guarantee collaborations, campaign approvals, project assignments, or paid opportunities.',
     buttonLabel: 'Continue as Photographer / Videographer',
   },
 };

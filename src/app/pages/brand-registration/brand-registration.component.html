@@ -37,16 +37,11 @@
         Please ensure your mobile number is valid and reachable.
       </div>
 
-      <div *ngIf="preApproveActive" class="auto-approve-notice">
-        <div class="auto-approve-notice-line approve">
-          <i class="bi bi-check-circle-fill"></i>
-          Your account will be <strong>activated immediately once you verify your email</strong> — no manual approval wait.
-        </div>
-        <div class="auto-approve-notice-line warn">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          Accounts with unsecured or misleading information may be <strong>removed or deleted</strong> by an admin without notice.
-        </div>
-      </div>
+      <app-registration-notice
+        role="brand"
+        [showActivationNotice]="preApproveActive"
+        [showModerationWarning]="preApproveActive">
+      </app-registration-notice>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <!-- ═══ STEP 1: BRAND INFO ═══ -->
         <section class="form-card" *ngIf="currentStep === 1">

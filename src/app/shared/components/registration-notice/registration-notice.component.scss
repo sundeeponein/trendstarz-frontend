@@ -1,0 +1,47 @@
+/* Mirrors .auto-approve-notice from _registration.scss so the component works anywhere */
+.reg-notice {
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  font-size: 0.88rem;
+  border: 1px solid #dee2e6;
+}
+
+.reg-notice-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  line-height: 1.5;
+
+  i {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  &.approve {
+    background: #d1fae5;
+    color: #065f46;
+    border-bottom: 1px solid #a7f3d0;
+    i { color: #059669; }
+  }
+
+  &.warn {
+    background: #fff7ed;
+    color: #7c2d12;
+    border-bottom: 1px solid #fed7aa;
+    i { color: #ea580c; }
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &.info {
+    background: #eff6ff;
+    color: #1e3a5f;
+    border-bottom: 1px solid #bfdbfe;
+    i { color: #2563eb; }
+
+    &:last-child { border-bottom: none; }
+  }
+}
