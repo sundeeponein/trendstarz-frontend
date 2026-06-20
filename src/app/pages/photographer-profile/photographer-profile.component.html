@@ -37,11 +37,6 @@
           <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
         </div>
 
-        <div *ngIf="commissionAccessTags.length" class="alert alert-info mb-4">
-          <strong>Access Badge:</strong>
-          <span class="badge rounded-pill bg-primary ms-2 me-2" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
-        </div>
-
         <div class="alert alert-light border mb-4" *ngIf="profileVerificationDashboard || profileVerificationLoading">
           <strong class="d-block mb-2">Profile Review</strong>
           <app-profile-review-summary
@@ -51,7 +46,10 @@
           />
         </div>
 
-        <app-registration-notice role="photographer"></app-registration-notice>
+        <app-registration-notice
+          role="photographer"
+          [showModerationWarning]="true">
+        </app-registration-notice>
 
         <app-whatsapp-community-card
           *ngIf="communityProfileUser"
@@ -63,7 +61,12 @@
         <form [formGroup]="form" (ngSubmit)="onSave()">
 
           <section class="form-card" *ngIf="currentStep === 1">
-            <h2>Profile</h2>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <h2>Profile</h2>
+              <div *ngIf="commissionAccessTags.length" class="d-flex flex-wrap justify-content-end gap-2" aria-label="Access badges">
+                <span class="badge rounded-pill bg-primary" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
+              </div>
+            </div>
             <p class="section-subtitle">Update your core account and contact details.</p>
 
             <div class="field-block profile-upload-block">

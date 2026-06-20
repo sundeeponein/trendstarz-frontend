@@ -13,9 +13,13 @@ export class RegistrationNoticeComponent {
   @Input() showActivationNotice = false;
   /** Show the orange "accounts may be removed" moderation warning */
   @Input() showModerationWarning = false;
+  /** Show the role-specific participation/opportunity notice — dashboards only */
+  @Input() showRoleNotice = false;
   @Input() role: 'influencer' | 'brand' | 'photographer' | null = null;
 
   get noGuaranteeText(): string | null {
+    if (!this.showRoleNotice) return null;
+
     switch (this.role) {
       case 'influencer':
         return 'Registration does not guarantee collaborations, campaign approvals, creator selections, or paid promotions.';

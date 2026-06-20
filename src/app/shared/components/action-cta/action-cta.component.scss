@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.action-cta {
+  padding-block: clamp(2.5rem, 6vw, 5rem) !important;
+  padding-inline: clamp(1.5rem, 6vw, 5rem) !important;
+}
+
+.action-cta__heading {
+  max-width: 680px;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  line-height: 1.15;
+}
+
+.action-cta__description {
+  max-width: 680px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.7;
+}
+
+.action-cta__button {
+  min-width: 240px;
+  padding: 1rem 1.5rem;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 575.98px) {
+  .action-cta__button {
+    width: 100%;
+    min-width: 0;
+  }
+}

@@ -13,7 +13,7 @@
   </div>
 
   <!-- No-guarantee notice -->
-  <app-registration-notice role="photographer" class="d-block mb-4"></app-registration-notice>
+  <app-registration-notice role="photographer" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
 
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>

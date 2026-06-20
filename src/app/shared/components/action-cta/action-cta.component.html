@@ -1,0 +1,14 @@
+<article class="action-cta bg-dark text-white rounded-4 p-4 p-md-5" [attr.aria-label]="ariaLabel">
+  <div class="row align-items-center g-4">
+    <div class="col-12 col-lg-8">
+      <h2 class="action-cta__heading fw-bold mb-3">{{ heading }}</h2>
+      <p class="action-cta__description text-white-50 mb-0">{{ description }}</p>
+    </div>
+
+    <div class="col-12 col-lg-4 d-flex justify-content-lg-end">
+      <a class="btn btn-primary action-cta__button" [routerLink]="buttonRoute">
+        {{ buttonLabel }}
+      </a>
+    </div>
+  </div>
+</article>

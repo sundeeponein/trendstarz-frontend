@@ -14,11 +14,12 @@ import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
+import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, RegistrationConfirmModalComponent],
+  imports: [CommonModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })

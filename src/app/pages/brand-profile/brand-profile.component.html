@@ -33,11 +33,6 @@
         Please ensure your mobile number is valid and reachable.
       </div>
 
-      <div *ngIf="commissionAccessTags.length" class="alert alert-info mb-4">
-        <strong>Access Badge:</strong>
-        <span class="badge rounded-pill bg-primary ms-2 me-2" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
-      </div>
-
       <div class="alert alert-light border mb-4" *ngIf="profileVerificationDashboard || profileVerificationLoading">
         <strong class="d-block mb-2">Profile Review</strong>
         <app-profile-review-summary
@@ -47,11 +42,19 @@
         />
       </div>
 
-      <app-registration-notice role="brand"></app-registration-notice>
+      <app-registration-notice
+        role="brand"
+        [showModerationWarning]="true">
+      </app-registration-notice>
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Brand Info</h2>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h2>Brand Info</h2>
+            <div *ngIf="commissionAccessTags.length" class="d-flex flex-wrap justify-content-end gap-2" aria-label="Access badges">
+              <span class="badge rounded-pill bg-primary" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
+            </div>
+          </div>
           <p class="section-subtitle">Update core brand identity and contact details.</p>
 
           <div class="field-grid">
