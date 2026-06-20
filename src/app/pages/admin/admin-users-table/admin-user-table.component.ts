@@ -375,8 +375,15 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getUserCreatorTierSummary(user: any): string {
-    const uniqueTiers = this.getUserCreatorTiers(user);
-    return uniqueTiers.length ? uniqueTiers.join(', ') : '-';
+    const entries = (Array.isArray(user?.socialMedia) ? user.socialMedia : [])
+      .filter((sm: any) => sm?.tier)
+      .map((sm: any) => {
+        const platformKey = this.resolveSocialPlatform(sm);
+        const platformLabel = this.getSocialLabel(platformKey);
+        const tierLabel = this.getSocialTierLabel(sm);
+        return `${platformLabel}: ${tierLabel}`;
+      });
+    return entries.length ? entries.join(', ') : '-';
   }
 
   getUserCreatorTierStatus(): string {
