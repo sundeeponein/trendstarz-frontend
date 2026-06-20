@@ -17,6 +17,7 @@ import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 
@@ -35,7 +36,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })

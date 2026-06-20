@@ -1,4 +1,4 @@
-<div class="registration-shell">
+<div class="registration-shell mobile-actions-enabled">
   <div class="registration-wrap">
     <main class="content-panel">
 
@@ -462,6 +462,17 @@
           </section>
 
           <app-reset-password-modal [(visible)]="showResetPasswordModal"></app-reset-password-modal>
+
+          <app-mobile-bottom-actions ariaLabel="Photographer profile actions">
+            <button *ngIf="currentStep > 1" type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()"><i class="bi bi-arrow-left"></i><span>Back</span></button>
+            <button *ngIf="!isEditMode" type="button" class="btn btn-outline-secondary" (click)="enableEdit()"><i class="bi bi-pencil"></i><span>Edit</span></button>
+            <button *ngIf="isEditMode" type="button" class="btn btn-outline-secondary" (click)="cancelEdit()"><i class="bi bi-x-circle"></i><span>Cancel</span></button>
+            <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true"><i class="bi bi-shield-lock"></i><span>Password</span></button>
+            <button *ngIf="currentStep < 3" type="button" class="btn btn-primary" (click)="nextStep()"><i class="bi bi-arrow-right"></i><span>Next</span></button>
+            <button *ngIf="currentStep === 3 && isEditMode" type="submit" class="btn btn-primary" [disabled]="saving || uploadingImage">
+              <i class="bi bi-check-circle"></i><span>{{ saving ? 'Saving...' : saved ? 'Saved' : 'Save' }}</span>
+            </button>
+          </app-mobile-bottom-actions>
 
         </form>
       </ng-container>

@@ -26,11 +26,12 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })

@@ -15,6 +15,7 @@ import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, vali
 import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
@@ -32,7 +33,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-photographer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
   templateUrl: './photographer-registration.component.html',
   styleUrls: ['./photographer-registration.component.scss'],
 })

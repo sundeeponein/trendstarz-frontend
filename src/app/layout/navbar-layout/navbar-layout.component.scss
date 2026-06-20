@@ -184,6 +184,29 @@
         gap: 0.35rem;
       }
     }
+
+    .navbar-actions .navbar-icons .notification-dropdown .notifications-menu {
+      position: fixed;
+      top: 76px;
+      right: 0.75rem;
+      left: 0.75rem;
+      width: auto;
+      max-height: calc(100dvh - 92px);
+      padding: 0.5rem;
+      border-radius: 14px;
+    }
+
+    .navbar-actions .navbar-icons .notification-dropdown .notifications-header {
+      position: sticky;
+      top: -0.5rem;
+      z-index: 1;
+      padding: 0.75rem 0.6rem;
+      background: #1a2741;
+    }
+
+    .navbar-actions .navbar-icons .notification-dropdown .notification-item {
+      padding: 0.75rem 0.6rem;
+    }
   }
 }
 

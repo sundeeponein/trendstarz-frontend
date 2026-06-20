@@ -22,6 +22,7 @@ import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/c
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
@@ -39,7 +40,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })

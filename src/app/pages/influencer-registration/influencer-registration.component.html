@@ -1,5 +1,5 @@
 
-<div class="registration-shell">
+<div class="registration-shell mobile-actions-enabled">
   <div class="registration-wrap">
     <main class="content-panel">
 
@@ -692,6 +692,22 @@
             </button>
           </div>
         </section>
+
+        <app-mobile-bottom-actions ariaLabel="Influencer registration actions">
+          <button *ngIf="currentStep > 1" type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()"><i class="bi bi-arrow-left"></i><span>Back</span></button>
+          <button *ngIf="currentStep === 1" type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="stepTransitioning"><i class="bi bi-arrow-right"></i><span>Next</span></button>
+          <button
+            *ngIf="currentStep === 2"
+            type="button"
+            class="btn btn-primary"
+            (click)="nextStep()"
+            [disabled]="registrationForm.get('location.state')?.invalid || registrationForm.get('location.district')?.invalid || registrationForm.get('languages')?.invalid || registrationForm.get('categories')?.invalid || selectedPlatforms().length === 0">
+            <i class="bi bi-arrow-right"></i><span>Next</span>
+          </button>
+          <button *ngIf="currentStep === 3" type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview || isSubmitting">
+            <i class="bi bi-person-plus-fill"></i><span>{{ isSubmitting ? 'Registering...' : 'Register' }}</span>
+          </button>
+        </app-mobile-bottom-actions>
       </form>
     </main>
   </div>
