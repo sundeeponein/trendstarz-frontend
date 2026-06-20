@@ -12,6 +12,39 @@
     </div>
   </div>
 
+  <!-- Admin Social Media Change Notifications -->
+  <div *ngIf="adminSocialNotifications.length" class="admin-social-notif-banner mb-4">
+    <div class="admin-social-notif-header">
+      <span><i class="bi bi-shield-check me-2"></i><strong>Your social media details were updated by Admin</strong></span>
+      <button class="admin-social-notif-dismiss" (click)="dismissAdminSocialNotifications()" title="Dismiss">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="admin-social-notif-list">
+      <div class="admin-social-notif-item" *ngFor="let n of adminSocialNotifications">
+        <span class="admin-social-notif-platform">
+          <i class="bi bi-instagram" *ngIf="n.platform === 'instagram'"></i>
+          <i class="bi bi-youtube" *ngIf="n.platform === 'youtube'"></i>
+          <i class="bi bi-twitter-x" *ngIf="n.platform === 'twitter' || n.platform === 'x'"></i>
+          <i class="bi bi-facebook" *ngIf="n.platform === 'facebook'"></i>
+          <i class="bi bi-share" *ngIf="!['instagram','youtube','twitter','x','facebook'].includes(n.platform)"></i>
+          <strong>{{ n.platform | titlecase }}</strong>
+        </span>
+        <span *ngIf="n.oldHandle !== n.newHandle" class="admin-social-notif-change">
+          Handle: <span class="notif-old">@{{ n.oldHandle }}</span>
+          <i class="bi bi-arrow-right mx-1"></i>
+          <span class="notif-new">@{{ n.newHandle }}</span>
+        </span>
+        <span *ngIf="n.oldTier !== n.newTier" class="admin-social-notif-change">
+          Tier: <span class="notif-old">{{ n.oldTier }}</span>
+          <i class="bi bi-arrow-right mx-1"></i>
+          <span class="notif-new">{{ n.newTier }}</span>
+        </span>
+        <span class="admin-social-notif-by">by {{ n.changedByName || 'Admin' }} &middot; {{ n.changedAt | date:'dd MMM yyyy' }}</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Alert Cards Row -->
   <div class="row mb-4 gx-3">
     <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.user?.isEmailVerified">

@@ -38,6 +38,7 @@ export class SocialMediaEditModalComponent implements OnChanges {
 
   editHandle = '';
   editTier = '';
+  confirmMode = false;
 
   readonly tierOptions = TIER_ORDER.map(name => ({
     value: name,
@@ -54,9 +55,21 @@ export class SocialMediaEditModalComponent implements OnChanges {
     return `${this.currentAdmin.name} (${roleLabel})`;
   }
 
+  getTierLabel(tier: string): string {
+    const range = TIER_DESC_MAP[(tier || '').toLowerCase()];
+    return range ? `${tier} (${range})` : tier || '';
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['handle']) this.editHandle = this.handle;
+    if (changes['handle']) { this.editHandle = this.handle; this.confirmMode = false; }
     if (changes['tier']) this.editTier = this.tier;
+  }
+
+  requestConfirm(): void {
+    const handleChanged = this.editHandle.trim().replace(/^@/, '') !== this.handle;
+    const tierChanged = this.editTier !== this.tier;
+    if (!handleChanged && !tierChanged) return;
+    this.confirmMode = true;
   }
 
   onSave(): void {
@@ -66,14 +79,17 @@ export class SocialMediaEditModalComponent implements OnChanges {
       changedBy: this.currentAdmin?.id || '',
       changedByName: this.currentAdmin?.name || '',
     });
+    this.confirmMode = false;
   }
 
   onCancel(): void {
+    this.confirmMode = false;
     this.cancel.emit();
   }
 
   onOverlayClick(e: MouseEvent): void {
     if ((e.target as HTMLElement).classList.contains('smem-overlay')) {
+      this.confirmMode = false;
       this.cancel.emit();
     }
   }

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
+import { HttpClient } from '@angular/common/http';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize, timeout } from 'rxjs/operators';
@@ -21,6 +22,7 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -68,6 +70,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
   emailBannerDismissed = false;
+  adminSocialNotifications: any[] = [];
   verificationCallNumber = '';
   usageSummary: UsageSummary | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -116,6 +119,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private shippingModal: ShippingAddressModalService,
     private profileVerification: ProfileVerificationService,
+    private http: HttpClient,
   ) {}
 
   ngOnInit() {
@@ -166,6 +170,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
               accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
             };
             this.myInfluencerSocialMedia = (profile?.socialMedia || []).map((sm: any) => ({ platform: sm.platform || '', tier: sm.tier || '' }));
+            this.adminSocialNotifications = profile?.adminSocialNotifications || [];
             // Only call setUser if profile data is different
             const merged = { ...user, ...profile };
             const isSame = JSON.stringify(user) === JSON.stringify(merged);
@@ -751,6 +756,15 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       sessionStorage.setItem('emailVerifDismissed', '1');
     }
     this.cdr.markForCheck();
+  }
+
+  dismissAdminSocialNotifications() {
+    this.adminSocialNotifications = [];
+    this.cdr.markForCheck();
+    this.http.patch(
+      `${environment.apiBaseUrl}/users/influencer-profile/admin-social-notifications/dismiss`,
+      {}
+    ).subscribe();
   }
 
   onUpgrade() {
