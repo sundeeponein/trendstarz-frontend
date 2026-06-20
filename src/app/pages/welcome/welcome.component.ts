@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
@@ -12,17 +12,19 @@ import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
+import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent],
+  imports: [CommonModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, RegistrationConfirmModalComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
-  // Welcome brand cards: keep minimal by default (logo, name, verified, category).
-  // Flip to true when campaign meta row is needed again.
+  readonly regConfirm = inject(RegistrationConfirmModalService);
+
   readonly showBrandCampaignMetaOnWelcome = false;
 
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;

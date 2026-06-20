@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, HostListener, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectorRef, HostListener, OnDestroy, inject } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
@@ -6,17 +6,21 @@ import { RouterModule } from '@angular/router';
 import { NavigationStart, Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { ImageGuidelinesModalComponent } from '../../shared/components/image-guidelines-modal/image-guidelines-modal.component';
+import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
+import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { environment } from '../../../environments/environment';
 import { filter, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FooterComponent, ImageGuidelinesModalComponent],
+  imports: [CommonModule, RouterModule, FooterComponent, ImageGuidelinesModalComponent, RegistrationConfirmModalComponent],
   templateUrl: './navbar-layout.component.html',
   styleUrl: './navbar-layout.component.scss'
 })
 export class NavbarLayoutComponent implements OnDestroy {
+  readonly regConfirm = inject(RegistrationConfirmModalService);
+
   mobileMenuOpen = false;
   mobileProfileMenuOpen = false;
   notificationsOpen = false;

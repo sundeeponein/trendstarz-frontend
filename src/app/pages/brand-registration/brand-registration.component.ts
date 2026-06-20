@@ -123,6 +123,7 @@ export class BrandRegistrationComponent implements OnInit {
   protected tierInfo = inject(TierInfoService);
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  readonly maxCategories = 5;
 
   brandLogoPreview: string | null = null;
   brandLogoFile: File | null = null;

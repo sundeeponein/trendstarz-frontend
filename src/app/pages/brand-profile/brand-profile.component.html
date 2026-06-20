@@ -140,6 +140,7 @@
                 [selected]="registrationForm.get('categories')?.value || []"
                 valueKey="_id"
                 labelKey="name"
+                [max]="maxCategories"
                 [readonly]="!isEditMode"
                 (selectedChange)="setChipValues('categories', $event)">
               </app-chip-selection-group>

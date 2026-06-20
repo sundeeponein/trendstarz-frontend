@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
@@ -23,11 +23,22 @@ export class HeroBannerComponent {
   @Input() secondaryRoute = '/register-influencer';
   @Input() thirdRoute = '/features';
   @Input() imageAlt = 'TrendStarz hero image';
+  @Output() primaryClick = new EventEmitter<void>();
+  @Output() secondaryClick = new EventEmitter<void>();
 
-  // simple cache buster so changed images appear immediately during development
   cacheBuster = Date.now();
 
   constructor(private router: Router) {}
+
+  goPrimary() {
+    if (this.primaryClick.observed) { this.primaryClick.emit(); return; }
+    if (this.primaryRoute) this.router.navigate([this.primaryRoute]);
+  }
+
+  goSecondary() {
+    if (this.secondaryClick.observed) { this.secondaryClick.emit(); return; }
+    if (this.secondaryRoute) this.router.navigate([this.secondaryRoute]);
+  }
 
   go(route: string) {
     if (!route) return;

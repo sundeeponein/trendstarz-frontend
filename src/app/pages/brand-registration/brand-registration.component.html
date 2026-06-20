@@ -162,6 +162,7 @@
                 [selected]="registrationForm.get('categories')?.value || []"
                 valueKey="_id"
                 labelKey="name"
+                [max]="maxCategories"
                 (selectedChange)="setChipValues('categories', $event)">
               </app-chip-selection-group>
               <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>

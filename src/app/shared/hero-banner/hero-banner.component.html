@@ -6,8 +6,8 @@
         <h1 class="hero-title mt-3">{{ titleMain }} <span class="highlight">{{ titleHighlight }}</span> Platform</h1>
         <p class="hero-copy mt-3">{{ subtitle }}</p>
         <div class="d-flex flex-wrap gap-3 mt-4">
-          <button class="btn btn-lg btn-primary" (click)="go(primaryRoute)">{{ primaryLabel }}</button>
-          <button class="btn btn-lg btn-dark" (click)="go(secondaryRoute)">{{ secondaryLabel }}</button>
+          <button class="btn btn-lg btn-primary" (click)="goPrimary()">{{ primaryLabel }}</button>
+          <button class="btn btn-lg btn-dark" (click)="goSecondary()">{{ secondaryLabel }}</button>
           <button *ngIf="thirdLabel" class="btn btn-lg btn-text" style="font-size: 14px;" (click)="go(thirdRoute)">{{ thirdLabel }}</button>
         </div>
       </div>

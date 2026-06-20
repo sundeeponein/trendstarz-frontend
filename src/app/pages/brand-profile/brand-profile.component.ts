@@ -267,6 +267,7 @@ export class BrandProfileComponent implements OnInit {
   protected tierInfo = inject(TierInfoService);
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  readonly maxCategories = 5;
   isPremium = false;
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   showChangePasswordModal = false;

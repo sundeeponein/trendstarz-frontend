@@ -1,14 +1,17 @@
 <div class="home-shell rounded-3 shadow-sm">
   <app-hero-banner
     [primaryLabel]="isLoggedIn() ? 'Start a Campaign' : 'Register as Brand'"
-    [primaryRoute]="isLoggedIn() ? '/campaigns' : '/register-brand'"
+    [primaryRoute]="isLoggedIn() ? '/campaigns' : ''"
     [secondaryLabel]="isLoggedIn() ? 'Find Creators' : 'Register as Influencer'"
-    [secondaryRoute]="isLoggedIn() ? '/search' : '/register-influencer'"
+    [secondaryRoute]="isLoggedIn() ? '/search' : ''"
     [thirdLabel]="'Explore Features'"
     [thirdRoute]="'/features'"
     liveMetricText="Live: 5,400+ Campaigns active now"
     imageUrl="assets/banner-trendstarz-1600.jpg"
+    (primaryClick)="isLoggedIn() ? null : regConfirm.open('brand')"
+    (secondaryClick)="isLoggedIn() ? null : regConfirm.open('influencer')"
   ></app-hero-banner>
+  <app-registration-confirm-modal></app-registration-confirm-modal>
 
   <!-- <ng-container
     [ngComponentOutlet]="heroSliderBannerComponent"

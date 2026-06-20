@@ -45,14 +45,13 @@
       <a routerLink="/" fragment="why-trendstarz" class="nav-tab">
         Why TrendStarz
       </a>
-      <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="showRegisterInfluencerLink" class="nav-tab">
+      <a *ngIf="showRegisterInfluencerLink" class="nav-tab" (click)="regConfirm.open('influencer')" style="cursor:pointer;">
         Join as Influencer
       </a>
-      <a routerLink="/register-brand" routerLinkActive="active" *ngIf="showRegisterBrandLink" class="nav-tab">
+      <a *ngIf="showRegisterBrandLink" class="nav-tab" (click)="regConfirm.open('brand')" style="cursor:pointer;">
         Join as Brand
       </a>
-
-      <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="showRegisterPhotographerLink" class="nav-tab">
+      <a *ngIf="showRegisterPhotographerLink" class="nav-tab" (click)="regConfirm.open('photographer')" style="cursor:pointer;">
         Join as Photographer
       </a>
     </div>
@@ -228,9 +227,9 @@
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer' || user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/how-it-works" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>How It Works</span></a>
         <a routerLink="/" fragment="why-trendstarz" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
-        <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
-        <a routerLink="/register-brand" routerLinkActive="active" *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
-        <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
+        <a *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('influencer')" style="cursor:pointer;"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
+        <a *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('brand')" style="cursor:pointer;"><i class="bi bi-building"></i><span>Register as Brand</span></a>
+        <a *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('photographer')" style="cursor:pointer;"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
       </div>
 
       <div class="mobile-upgrade" *ngIf="user && !user?.isPremium">
@@ -253,3 +252,4 @@
 <app-footer></app-footer>
 
 <app-image-guidelines-modal></app-image-guidelines-modal>
+<app-registration-confirm-modal></app-registration-confirm-modal>
