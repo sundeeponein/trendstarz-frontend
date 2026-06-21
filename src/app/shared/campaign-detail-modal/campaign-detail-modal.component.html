@@ -298,6 +298,9 @@
                       <span *ngIf="item.participantEmail">{{ item.participantEmail }}</span>
                     </div>
                     <!-- Dates -->
+                    <div class="cdm-creator-card__dates" *ngIf="adminInviteAcceptedAtText(item)">
+                      Accepted campaign: {{ adminInviteAcceptedAtText(item) }}
+                    </div>
                     <div class="cdm-creator-card__dates"
                          *ngIf="adminInviteWorkingFromDate(item) || item.selectedPostDate">
                       <ng-container *ngIf="adminInviteWorkingFromDate(item)">
@@ -309,8 +312,8 @@
                       </ng-container>
                     </div>
                     <!-- Accepted content type -->
-                    <div class="cdm-creator-card__content-type" *ngIf="item.selectedContentType">
-                      Accepted: <strong>{{ item.selectedContentType }}</strong><ng-container *ngIf="item.selectedPlatform"> ({{ platformLabel(item.selectedPlatform) }})</ng-container>
+                    <div class="cdm-creator-card__content-type" *ngIf="adminInviteAcceptedDeliverableText(item)">
+                      Accepted deliverable: <strong>{{ adminInviteAcceptedDeliverableText(item) }}</strong>
                     </div>
                     <!-- Negotiation trail -->
                     <div class="cdm-creator-card__negotiation" *ngIf="adminInviteOfferTrailText(item)">

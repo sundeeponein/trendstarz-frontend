@@ -1319,9 +1319,36 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   adminInviteWorkingFromDate(item: any): string {
-    const d = item?.acceptedAt || item?.paymentConfirmedAt;
+    const status = String(item?.status || '').toLowerCase();
+    const isWorkConfirmed = ['payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed'].includes(status);
+    const d = item?.paymentConfirmedAt
+      || (status === 'payment_confirmed' ? item?.updatedAt : null)
+      || (isWorkConfirmed ? item?.acceptedAt : null);
     if (!d) return '';
     return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  adminInviteAcceptedAtText(item: any): string {
+    const d = item?.acceptedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  adminInviteAcceptedDeliverableText(item: any): string {
+    const platform = this.platformLabel(String(item?.selectedPlatform || ''));
+    const contentType = String(item?.selectedContentType || '').trim();
+    if (!platform && !contentType) return '';
+
+    const amountPaise = Number(item?.agreedAmountPaise || 0);
+    const amountRupees = amountPaise > 0 ? amountPaise / 100 : Number(item?.agreedAmount || 0);
+    const parts = [platform, contentType].filter(Boolean);
+    if (amountRupees > 0) {
+      parts.push(`₹${amountRupees.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`);
+    }
+    return parts.join(' · ');
   }
 
   adminInviteUpdatedAtText(item: any): string {
