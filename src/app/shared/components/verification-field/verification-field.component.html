@@ -30,6 +30,8 @@
   class="btn btn-sm mt-1"
   [class.btn-outline-secondary]="verified"
   [class.btn-success]="!verified"
+  [disabled]="actionDisabled"
+  [title]="actionDisabled ? lockedTitle : ''"
   (click)="toggled.emit()"
 >
   {{ verified ? unverifyLabel : verifyLabel }}
