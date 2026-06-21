@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -11,16 +11,20 @@ import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
+import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, RegistrationConfirmModalComponent],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
+  readonly regConfirm = inject(RegistrationConfirmModalService);
+
   loginForm: FormGroup;
   submitted = false;
   loggingIn = false;

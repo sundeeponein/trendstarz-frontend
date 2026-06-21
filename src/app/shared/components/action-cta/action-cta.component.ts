@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -14,4 +14,13 @@ export class ActionCtaComponent {
   @Input() buttonLabel = '';
   @Input() buttonRoute = '/';
   @Input() ariaLabel = 'Call to action';
+  /** When set, clicking the button calls this output instead of navigating via buttonRoute. */
+  @Output() buttonClick = new EventEmitter<void>();
+
+  onButtonClick(event: Event): void {
+    if (this.buttonClick.observed) {
+      event.preventDefault();
+      this.buttonClick.emit();
+    }
+  }
 }

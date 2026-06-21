@@ -99,9 +99,9 @@
 
         <h6 class="text-center text-black">Join Now</h6>
         <div class="join-actions">
-          <a class="btn-outline btn-sm" routerLink="/register-influencer">Influencer</a>
-          <a class="btn-outline btn-sm" routerLink="/register-brand">Brand</a>
-          <a class="btn-outline btn-sm" routerLink="/register-photographer">Photo/Video</a>
+          <a class="btn-outline btn-sm" (click)="regConfirm.open('influencer')" style="cursor:pointer;">Influencer</a>
+          <a class="btn-outline btn-sm" (click)="regConfirm.open('brand')" style="cursor:pointer;">Brand</a>
+          <a class="btn-outline btn-sm" (click)="regConfirm.open('photographer')" style="cursor:pointer;">Photo/Video</a>
         </div>
       </div>
     </section>
@@ -118,4 +118,6 @@
     </nav>
     <div class="footer-copy">© 2026 TrendstarZ. All rights reserved.</div>
   </footer>
+
+  <app-registration-confirm-modal></app-registration-confirm-modal>
 </div>

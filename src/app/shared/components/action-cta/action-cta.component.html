@@ -6,7 +6,7 @@
     </div>
 
     <div class="col-12 col-lg-4 d-flex justify-content-lg-end">
-      <a class="btn btn-primary action-cta__button" [routerLink]="buttonRoute">
+      <a class="btn btn-primary action-cta__button" [routerLink]="buttonRoute" (click)="onButtonClick($event)">
         {{ buttonLabel }}
       </a>
     </div>

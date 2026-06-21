@@ -30,7 +30,7 @@
           <h2 class="section-title mb-1">Featured Brands</h2>
           <p class="section-subtitle">Discover top companies actively hiring creators</p>
         </div>
-        <button class="btn btn-link view-all" (click)="router.navigate(['/register-brand'])" type="button">View all brands</button>
+        <button class="btn btn-link view-all" (click)="regConfirm.open('brand')" type="button">View all brands</button>
       </div>
 
       <div *ngIf="brandsLoading && brands.length === 0" class="text-center text-muted">Loading brands...</div>
@@ -149,7 +149,8 @@
         description="Register as a Brand to hire Influencers and Photo/Videographers for campaigns that move your business forward."
         buttonLabel="Register as a Brand"
         buttonRoute="/register-brand"
-        ariaLabel="Register as a Brand">
+        ariaLabel="Register as a Brand"
+        (buttonClick)="regConfirm.open('brand')">
       </app-action-cta>
     </div>
   </section>
