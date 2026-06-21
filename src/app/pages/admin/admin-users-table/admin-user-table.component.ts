@@ -269,6 +269,7 @@ export class AdminUserTableComponent implements OnInit {
   ];
 
   showVerificationControls = false;
+  otpVerificationEnabled = false;
 
   setProfilePhotoFlag(code: string): void {
     if (!this.selectedUser || !this.selectedUserType) return;
@@ -912,6 +913,9 @@ export class AdminUserTableComponent implements OnInit {
     }
     this.fetchUsers();
     this.loadAdminUserList();
+    this.configService.getAppSettings().subscribe(s => {
+      this.otpVerificationEnabled = !!s.otpVerificationEnabled;
+    });
     if (typeof window !== 'undefined') {
       window.addEventListener('user-restored-refresh', this.handleUserRestoredRefresh);
     }

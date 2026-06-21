@@ -130,11 +130,15 @@ export class BrandProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  phoneEditRequested: boolean = false;
   verificationCallNumber = '';
 
   emailVerified: boolean = false;
   emailEditRequested: boolean = false;
   showEmailVerificationPrompt: boolean = false;
+  emailJustChanged: boolean = false;
+  previousVerifiedEmail: string = '';
+  pendingVerificationEmail: string = '';
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -1107,6 +1111,10 @@ export class BrandProfileComponent implements OnInit {
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(raw?.email || '').trim().toLowerCase();
     const emailChanged = !!currentEmail && previousEmail !== currentEmail;
+    const previousEmailWasVerified = this.emailVerified;
+    const previousPhone = String(this.originalFormValue?.phoneNumber || '').trim();
+    const currentPhone = String(raw?.phoneNumber || '').trim();
+    const phoneChanged = !!currentPhone && previousPhone !== currentPhone;
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
     let districtObj = this.districts.find(d => d._id === raw.location.district);
@@ -1176,7 +1184,7 @@ export class BrandProfileComponent implements OnInit {
     delete payload.productImages;
     delete payload.googleMapAddress;
     this.configService.updateBrandProfile(payload).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.registrationSuccess = true;
         this.isEditMode = false;
@@ -1186,13 +1194,27 @@ export class BrandProfileComponent implements OnInit {
         this.originalFormValue = this.registrationForm.getRawValue();
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.cd.detectChanges();
+        const serverUser = res?.user;
         if (emailChanged) {
-          this.emailVerified = false;
-          this.showEmailVerificationPrompt = true;
+          // Server may have auto-verified the new email (local dev bypass) —
+          // trust its returned state instead of assuming it's pending.
+          this.emailVerified = !!serverUser?.isEmailVerified;
           this.emailEditRequested = true;
-          this.resendEmailVerification();
+          if (!this.emailVerified) {
+            this.showEmailVerificationPrompt = true;
+            this.emailJustChanged = true;
+            this.previousVerifiedEmail = previousEmailWasVerified ? previousEmail : '';
+            this.pendingVerificationEmail = currentEmail;
+            this.resendEmailVerification();
+          }
         } else {
           this.emailEditRequested = false;
+        }
+        if (phoneChanged) {
+          this.phoneVerified = false;
+          this.phoneEditRequested = true;
+        } else {
+          this.phoneEditRequested = false;
         }
         this.submitted = false;
         // Ensure districts loaded for the saved state so the view shows district name
@@ -1215,7 +1237,28 @@ export class BrandProfileComponent implements OnInit {
 
   requestEmailEdit(): void {
     if (!this.isEditMode) return;
+    if (
+      this.emailVerified &&
+      !window.confirm(
+        'Your email is currently verified. Changing it will mark it as unverified, and some features may be restricted until you verify the new address. Continue?',
+      )
+    ) {
+      return;
+    }
     this.emailEditRequested = true;
   }
-  
+
+  requestPhoneEdit(): void {
+    if (!this.isEditMode) return;
+    if (
+      this.phoneVerified &&
+      !window.confirm(
+        'Your mobile number is currently verified. Changing it will mark it as unverified, and you will need to re-verify the new number before some features are available again. Continue?',
+      )
+    ) {
+      return;
+    }
+    this.phoneEditRequested = true;
+  }
+
 }

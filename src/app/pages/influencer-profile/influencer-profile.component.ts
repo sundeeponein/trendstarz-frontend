@@ -197,6 +197,30 @@ export class InfluencerProfileComponent implements OnInit {
     });
   }
 
+  private confirmEditVerifiedEmail(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your email is currently verified. Changing it will mark it as unverified, and some features may be restricted until you verify the new address. Continue?';
+    this.profileConfirmOpen = true;
+    this.cd.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  private confirmEditVerifiedPhone(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your mobile number is currently verified. Changing it will mark it as unverified, and you will need to re-verify the new number before some features are available again. Continue?';
+    this.profileConfirmOpen = true;
+    this.cd.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  async requestPhoneEdit(): Promise<void> {
+    if (!this.isEditMode) return;
+    if (this.phoneVerified && !(await this.confirmEditVerifiedPhone())) return;
+    this.phoneEditRequested = true;
+  }
+
   onProfileConfirmContinue(): void {
     this.profileConfirmOpen = false;
     this.profileConfirmResolver?.(true);
@@ -285,12 +309,16 @@ export class InfluencerProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  phoneEditRequested: boolean = false;
   verificationCallNumber = '';
   otpVerificationEnabled = false;
 
   emailVerified: boolean = false;
   emailEditRequested: boolean = false;
   showEmailVerificationPrompt: boolean = false;
+  emailJustChanged: boolean = false;
+  previousVerifiedEmail: string = '';
+  pendingVerificationEmail: string = '';
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -1225,6 +1253,10 @@ export class InfluencerProfileComponent implements OnInit {
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(raw?.email || '').trim().toLowerCase();
     const emailChanged = !!currentEmail && previousEmail !== currentEmail;
+    const previousEmailWasVerified = this.emailVerified;
+    const previousPhone = String(this.originalFormValue?.phoneNumber || '').trim();
+    const currentPhone = String(raw?.phoneNumber || '').trim();
+    const phoneChanged = !!currentPhone && previousPhone !== currentPhone;
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
       return;
@@ -1392,12 +1424,25 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
         if (emailChanged) {
-          this.emailVerified = false;
-          this.showEmailVerificationPrompt = true;
+          // Server may have auto-verified the new email (local dev bypass) —
+          // trust its returned state instead of assuming it's pending.
+          this.emailVerified = !!serverUser?.isEmailVerified;
           this.emailEditRequested = true;
-          this.resendEmailVerification();
+          if (!this.emailVerified) {
+            this.showEmailVerificationPrompt = true;
+            this.emailJustChanged = true;
+            this.previousVerifiedEmail = previousEmailWasVerified ? previousEmail : '';
+            this.pendingVerificationEmail = currentEmail;
+            this.resendEmailVerification();
+          }
         } else {
           this.emailEditRequested = false;
+        }
+        if (phoneChanged) {
+          this.phoneVerified = false;
+          this.phoneEditRequested = true;
+        } else {
+          this.phoneEditRequested = false;
         }
         this.fetchAndPatchProfile().catch(() => {});
       },
@@ -1411,8 +1456,9 @@ export class InfluencerProfileComponent implements OnInit {
     });
   }
 
-  requestEmailEdit(): void {
+  async requestEmailEdit(): Promise<void> {
     if (!this.isEditMode) return;
+    if (this.emailVerified && !(await this.confirmEditVerifiedEmail())) return;
     this.emailEditRequested = true;
   }
 

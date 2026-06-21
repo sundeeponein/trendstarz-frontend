@@ -67,10 +67,14 @@ export class PhotographerProfileComponent implements OnInit {
   private originalPricingState: any = null;
   private originalPlatformForms: any = null;
   phoneVerified = false;
+  phoneEditRequested = false;
   emailVerified = false;
   communityProfileUser: any | null = null;
   emailEditRequested = false;
   showEmailVerificationPrompt = false;
+  emailJustChanged = false;
+  previousVerifiedEmail = '';
+  pendingVerificationEmail = '';
   resendingEmailVerification = false;
   resendEmailVerificationSuccess = false;
   resendEmailVerificationError: string | null = null;
@@ -227,6 +231,30 @@ export class PhotographerProfileComponent implements OnInit {
     return new Promise((resolve) => {
       this.profileConfirmResolver = resolve;
     });
+  }
+
+  private confirmEditVerifiedEmail(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your email is currently verified. Changing it will mark it as unverified, and some features may be restricted until you verify the new address. Continue?';
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  private confirmEditVerifiedPhone(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your mobile number is currently verified. Changing it will mark it as unverified, and you will need to re-verify the new number before some features are available again. Continue?';
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  async requestPhoneEdit(): Promise<void> {
+    if (!this.isEditMode) return;
+    if (this.phoneVerified && !(await this.confirmEditVerifiedPhone())) return;
+    this.phoneEditRequested = true;
   }
 
   onProfileConfirmContinue(): void {
@@ -994,6 +1022,10 @@ export class PhotographerProfileComponent implements OnInit {
     const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
     const currentEmail = String(v?.email || '').trim().toLowerCase();
     const emailChanged = !!currentEmail && previousEmail !== currentEmail;
+    const previousEmailWasVerified = this.emailVerified;
+    const previousPhone = String(this.originalFormValue?.phoneNumber || '').trim();
+    const currentPhone = String(v?.phoneNumber || '').trim();
+    const phoneChanged = !!currentPhone && previousPhone !== currentPhone;
     const stateValue = String(v?.location?.state || '').trim();
     const districtValue = String(v?.location?.district || '').trim();
     const stateObj = this.states.find(
@@ -1064,7 +1096,7 @@ export class PhotographerProfileComponent implements OnInit {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
     this.saving = true;
     this.http.patch(`${this.apiUrl}/users/photographers/me/profile`, payload, { headers }).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.saved = true;
         this.submitted = false;
@@ -1077,12 +1109,25 @@ export class PhotographerProfileComponent implements OnInit {
         this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
         this.galleryUploadWarning = '';
         if (emailChanged) {
-          this.emailVerified = false;
-          this.showEmailVerificationPrompt = true;
+          // Server may have auto-verified the new email (local dev bypass) —
+          // trust its returned state instead of assuming it's pending.
+          this.emailVerified = !!res?.isEmailVerified;
           this.emailEditRequested = true;
-          this.resendEmailVerification();
+          if (!this.emailVerified) {
+            this.showEmailVerificationPrompt = true;
+            this.emailJustChanged = true;
+            this.previousVerifiedEmail = previousEmailWasVerified ? previousEmail : '';
+            this.pendingVerificationEmail = currentEmail;
+            this.resendEmailVerification();
+          }
         } else {
           this.emailEditRequested = false;
+        }
+        if (phoneChanged) {
+          this.phoneVerified = false;
+          this.phoneEditRequested = true;
+        } else {
+          this.phoneEditRequested = false;
         }
         this.refreshStepCompletion();
         this.toast.success('Profile saved!');
@@ -1097,8 +1142,9 @@ export class PhotographerProfileComponent implements OnInit {
     });
   }
 
-  requestEmailEdit(): void {
+  async requestEmailEdit(): Promise<void> {
     if (!this.isEditMode) return;
+    if (this.emailVerified && !(await this.confirmEditVerifiedEmail())) return;
     this.emailEditRequested = true;
   }
 
