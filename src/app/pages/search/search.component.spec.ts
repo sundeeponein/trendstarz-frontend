@@ -1,7 +1,7 @@
 import { SearchComponent } from './search.component';
 
 describe('SearchComponent profile view gating', () => {
-  function createComponent(user: { role: 'brand' | 'influencer' | 'photographer'; isPremium?: boolean } | null) {
+  function createComponent(user: { role: 'brand' | 'influencer' | 'photographer' | 'admin'; isPremium?: boolean } | null) {
     const sessionStub = {
       getUser: () => user,
     };
@@ -21,6 +21,20 @@ describe('SearchComponent profile view gating', () => {
   }
 
   describe('isInfluencerProfileViewDisabled', () => {
+    it('lets admins preview Starter and Pro visibility without changing their session', () => {
+      const component = createComponent({ role: 'admin', isPremium: true });
+
+      expect(component.isProView).toBeFalse();
+      expect(component.isFreeUser).toBeTrue();
+      expect(component.isInfluencerProfileViewDisabled({})).toBeTrue();
+
+      component.setAdminPreviewTier('pro');
+
+      expect(component.isProView).toBeTrue();
+      expect(component.isFreeUser).toBeFalse();
+      expect(component.isInfluencerProfileViewDisabled({})).toBeFalse();
+    });
+
     it('disables for Starter brand users', () => {
       const component = createComponent({ role: 'brand', isPremium: false });
 

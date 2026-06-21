@@ -308,6 +308,10 @@
                         Post date: {{ item.selectedPostDate | date:'MMM d, yyyy' }}
                       </ng-container>
                     </div>
+                    <!-- Accepted content type -->
+                    <div class="cdm-creator-card__content-type" *ngIf="item.selectedContentType">
+                      Accepted: <strong>{{ item.selectedContentType }}</strong><ng-container *ngIf="item.selectedPlatform"> ({{ platformLabel(item.selectedPlatform) }})</ng-container>
+                    </div>
                     <!-- Negotiation trail -->
                     <div class="cdm-creator-card__negotiation" *ngIf="adminInviteOfferTrailText(item)">
                       {{ adminInviteOfferTrailText(item) }}

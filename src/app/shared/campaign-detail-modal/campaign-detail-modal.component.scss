@@ -618,6 +618,13 @@ $dk-orange:    #e06030;
     .cdm-panel--dark & { color: $dk-muted; }
   }
 
+  &__content-type {
+    font-size: 0.71rem;
+    color: $lt-text;
+    margin-top: 3px;
+    .cdm-panel--dark & { color: $dk-text; }
+  }
+
   &__negotiation {
     font-size: 0.72rem;
     color: $lt-text;

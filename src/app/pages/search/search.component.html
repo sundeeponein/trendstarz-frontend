@@ -18,6 +18,11 @@
       </div>
       <!-- Right actions -->
       <div class="header-actions">
+        <div class="viewing-as-toggle" *ngIf="isAdminUser" aria-label="Preview search as a subscription tier">
+          <span class="viewing-as-label">View as</span>
+          <button type="button" class="viewing-as-btn" [class.active]="adminPreviewTier === 'starter'" [attr.aria-pressed]="adminPreviewTier === 'starter'" (click)="setAdminPreviewTier('starter')">Starter (Free)</button>
+          <button type="button" class="viewing-as-btn" [class.active]="adminPreviewTier === 'pro'" [attr.aria-pressed]="adminPreviewTier === 'pro'" (click)="setAdminPreviewTier('pro')">Pro</button>
+        </div>
         <button class="btn-create-campaign" *ngIf="isBrandUser" (click)="router.navigate(['/campaigns'])">
           <i class="bi bi-plus-lg"></i> Create Campaign
         </button>
@@ -40,10 +45,10 @@
   <!-- Upgrade Banner (shown only for logged-in free users) -->
   <div class="upgrade-banner" *ngIf="isFreeUser">
     <div class="upgrade-banner__content">
-      <strong>Upgrade to Pro — unlock contact details &amp; advanced filters</strong>
-      <p>Free users see limited info. Pro brands see WhatsApp, email, phone, pricing &amp; engagement rates.</p>
+      <strong>{{ isAdminUser ? 'Starter (Free) preview' : 'Upgrade to Pro — unlock contact details & advanced filters' }}</strong>
+      <p>{{ isAdminUser ? 'This is how the search page appears to a Starter user.' : 'Free users see limited info. Pro brands see WhatsApp, email, phone, pricing & engagement rates.' }}</p>
     </div>
-    <a routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
+    <a *ngIf="!isAdminUser" routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
   </div>
 
   <!-- ───── REUSABLE FILTERS ───── -->

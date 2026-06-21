@@ -46,6 +46,7 @@ export class SearchComponent implements OnInit {
   brandsError = '';
   photographersError = '';
   usageSummary: UsageSummary | null = null;
+  adminPreviewTier: 'starter' | 'pro' = 'starter';
 
   // Filter options (populated from data)
   categoryOptions: string[] = [];
@@ -88,6 +89,7 @@ export class SearchComponent implements OnInit {
    * Returns true if the logged-in user is premium. If not logged in, always false (treat as free user).
    */
   get isProView(): boolean {
+    if (this.isAdminUser) return this.adminPreviewTier === 'pro';
     const user = this.session.getUser();
     return !!(user && user.isPremium);
   }
@@ -96,19 +98,21 @@ export class SearchComponent implements OnInit {
    * Returns true if the user is logged in and is a free (not premium) user.
    */
   get isFreeUser(): boolean {
+    if (this.isAdminUser) return this.adminPreviewTier === 'starter';
     const user = this.session.getUser();
     return !!user && !user.isPremium;
   }
 
   get currentUser(): any { return this.session.getUser(); }
+  get isAdminUser(): boolean { return String(this.currentUser?.role || '').toLowerCase() === 'admin'; }
   get isBrandUser(): boolean { return this.currentUser?.role === 'brand'; }
   get isInfluencerUser(): boolean { return this.currentUser?.role === 'influencer'; }
   get isPhotographerUser(): boolean { return this.currentUser?.role === 'photographer'; }
   get isGuestUser(): boolean { return !this.currentUser; }
 
   /** Which tabs are available per role */
-  get showInfluencerTab(): boolean { return this.isBrandUser || this.isPhotographerUser || this.isGuestUser; }
-  get showPhotographersTab(): boolean { return this.isBrandUser || this.isInfluencerUser || this.isGuestUser; }
+  get showInfluencerTab(): boolean { return this.isAdminUser || this.isBrandUser || this.isPhotographerUser || this.isGuestUser; }
+  get showPhotographersTab(): boolean { return this.isAdminUser || this.isBrandUser || this.isInfluencerUser || this.isGuestUser; }
   get showBrandsTab(): boolean { return false; /* brands hidden from public discovery */ }
 
   get defaultTab(): 'influencers' | 'photographers' {
@@ -121,7 +125,7 @@ export class SearchComponent implements OnInit {
   get isPhotographerMode(): boolean { return this.activeTab === 'photographers'; }
 
   get showUsageSummary(): boolean {
-    return !this.isGuestUser && !!this.usageSummary;
+    return !this.isAdminUser && !this.isGuestUser && !!this.usageSummary;
   }
 
   get pageTitle(): string {
@@ -227,7 +231,11 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
-    if (!this.isGuestUser) {
+    const previewTier = this.route.snapshot.queryParamMap.get('viewAs');
+    if (this.isAdminUser && previewTier === 'pro') {
+      this.adminPreviewTier = 'pro';
+    }
+    if (!this.isAdminUser && !this.isGuestUser) {
       this.loadUsageSummary();
     }
     this.loadRoleCategoryOptions();
@@ -240,6 +248,16 @@ export class SearchComponent implements OnInit {
     } else {
       this.fetchBrands();
     }
+  }
+
+  setAdminPreviewTier(tier: 'starter' | 'pro'): void {
+    if (!this.isAdminUser || this.adminPreviewTier === tier) return;
+    this.adminPreviewTier = tier;
+    this.router.navigate([], {
+      queryParams: { viewAs: tier },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private loadUsageSummary(): void {
@@ -415,7 +433,7 @@ export class SearchComponent implements OnInit {
 
   private triggerSearchFetch(reason: 'query' | 'filter' | 'pagination', debounceMs = 0): void {
     const run = () => {
-      const countSearch = !this.isGuestUser;
+      const countSearch = !this.isAdminUser && !this.isGuestUser;
       if (this.isInfluencerMode) {
         this.fetchInfluencers({ countSearch, countReason: reason });
       } else if (this.isPhotographerMode) {
@@ -562,7 +580,7 @@ export class SearchComponent implements OnInit {
   }
 
   isPhotographerProfileViewDisabled(photographer: any): boolean {
-    return this.isGuestUser || (this.isBrandUser && this.isFreeUser);
+    return this.isGuestUser || ((this.isBrandUser || this.isAdminUser) && this.isFreeUser);
   }
 
   applyInfluencerFilters() {
@@ -633,7 +651,7 @@ export class SearchComponent implements OnInit {
     this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0 };
     this.applyInfluencerFilters();
     if (countSearch) {
-      this.fetchInfluencers({ countSearch: !this.isGuestUser, countReason: 'filter' });
+      this.fetchInfluencers({ countSearch: !this.isAdminUser && !this.isGuestUser, countReason: 'filter' });
     }
   }
 
@@ -767,7 +785,7 @@ export class SearchComponent implements OnInit {
     this.photographerFilters = { keyword: '', skill: '', location: '' };
     this.applyPhotographerFilters();
     if (countSearch) {
-      this.fetchPhotographers({ countSearch: !this.isGuestUser, countReason: 'filter' });
+      this.fetchPhotographers({ countSearch: !this.isAdminUser && !this.isGuestUser, countReason: 'filter' });
     }
   }
 
@@ -803,7 +821,7 @@ export class SearchComponent implements OnInit {
   }
 
   isInfluencerProfileViewDisabled(influencer: any): boolean {
-    return this.isGuestUser || (this.isBrandUser && this.isFreeUser);
+    return this.isGuestUser || ((this.isBrandUser || this.isAdminUser) && this.isFreeUser);
   }
 
   private slugify(value: string): string {
