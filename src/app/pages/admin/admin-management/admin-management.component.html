@@ -1323,12 +1323,12 @@
       </div>
 
       <div class="settings-conditions">
-        <span class="conditions-label">Current moderation mode:</span>
+        <span class="conditions-label text-black">Current moderation mode:</span>
         <div class="condition-item">
-          <span class="condition-name" *ngIf="settings.campaignApprovalMode === 'manual'">
+          <span class="condition-name text-black" *ngIf="settings.campaignApprovalMode === 'manual'">
             Manual: New campaign submits as <strong>Pending Review</strong> and needs admin decision.
           </span>
-          <span class="condition-name" *ngIf="settings.campaignApprovalMode === 'auto_live'">
+          <span class="condition-name text-black" *ngIf="settings.campaignApprovalMode === 'auto_live'">
             Auto-live: Campaign goes public immediately (still appears in admin queue for audit).
           </span>
         </div>

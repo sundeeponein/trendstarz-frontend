@@ -10,11 +10,11 @@
   <div class="review-card">
     <div class="review-card-header">
       <div>
-        <strong>Current moderation mode</strong>
-        <p *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'manual'">
+        <strong class="text-black">Current moderation mode</strong>
+        <p class="text-black" *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'manual'">
           Manual: New {{ isCollaborationScope ? 'collaboration' : 'campaign' }} submits as <strong>Pending Review</strong> and needs admin decision.
         </p>
-        <p *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'auto_live'">
+        <p class="text-black" *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'auto_live'">
           Auto-live: {{ isCollaborationScope ? 'Collaboration' : 'Campaign' }} goes public immediately (still appears in admin queue for audit).
         </p>
       </div>
