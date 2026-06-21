@@ -61,7 +61,7 @@
         <!-- Free plan price -->
         <div class="plan-price" *ngIf="plan.price.monthly === 0">
           <span>₹0</span>
-          <div class="price-period">Always free</div>
+          <div class="price-period">Starter</div>
         </div>
 
         <!-- Unselected paid plan — just show monthly price -->
@@ -75,12 +75,15 @@
             <span class="feat-icon" [style.color]="f.value ? '#22c55e' : '#ef4444'">{{ f.value ? '✔' : '✕' }}</span>
             {{ f.label }}
           </div>
+          <hr>
           <div *ngFor="let l of plan.limits">
             <span class="feat-icon">📦</span> {{ l.label }}: <strong>{{ l.value }}</strong>
           </div>
+          <hr>
           <div class="feature-item note" *ngIf="plan.policies.imageRetentionDaysAfterExpiry">
             <span class="feat-icon">⚠</span> Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> if not renewed
           </div>
+          <hr>
           <div class="feature-item note">
             <span class="feat-icon">🔓</span> <strong>{{ getContactVisibilityLabel(plan) }}</strong>
           </div>
