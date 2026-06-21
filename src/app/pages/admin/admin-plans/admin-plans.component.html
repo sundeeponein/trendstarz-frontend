@@ -40,10 +40,23 @@
       No plans found. Click <strong>Seed Default Plans</strong> to get started.
     </div>
 
-    <div class="plans-section">
-      <h3>Influencer Plans</h3>
+    <div class="trial-summary-card" *ngIf="!loading && plans.length > 0">
+      <div class="trial-summary-title">Recommended</div>
+      <div class="trial-summary-row" *ngFor="let r of trialDaysSummary">
+        <span class="trial-summary-label">{{ r.label }}</span>
+        <span class="trial-summary-days">Trial Days: {{ r.days }}</span>
+      </div>
+    </div>
+
+    <div class="role-tabs" role="tablist" aria-label="Plan Roles">
+      <button class="role-tab" [class.active]="activeTab === 'INFLUENCER'" (click)="setTab('INFLUENCER')">Influencers</button>
+      <button class="role-tab" [class.active]="activeTab === 'BRAND'" (click)="setTab('BRAND')">Brands</button>
+      <button class="role-tab" [class.active]="activeTab === 'PHOTOGRAPHER'" (click)="setTab('PHOTOGRAPHER')">Photographers</button>
+    </div>
+
+    <div class="plans-section mt-3">
       <div class="plans-grid">
-        <div class="plan-card" *ngFor="let plan of influencerPlans; trackBy: trackById">
+        <div class="plan-card" *ngFor="let plan of activePlans; trackBy: trackById">
           <div class="plan-card-header">
             <div>
               <span class="plan-name">{{ plan.name }}</span>
@@ -87,151 +100,17 @@
           <div class="section-label">Policies</div>
           <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }}</strong> days post-expiry</p>
 
-            <!-- Discount (Offers) -->
-            <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
-            <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
-              <li *ngFor="let o of plan.offers">
-                <span *ngIf="o.key === 'discountOnBrandPro' || o.key === 'discountOnInfluencerPro'">
-                  {{ o.label }}: <strong>{{ o.value }}%</strong>
-                </span>
-              </li>
-            </ul>
+          <!-- Discount (Offers) -->
+          <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
+          <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
+            <li *ngFor="let o of plan.offers">
+              {{ o.label }}: <strong>{{ offerValueDisplay(o) }}</strong>
+            </li>
+          </ul>
 
           <div class="card-actions">
             <button class="admin-btn admin-btn-secondary admin-btn-sm" (click)="startEdit(plan)">Edit</button>
             <button class="admin-btn admin-btn-danger admin-btn-sm" (click)="deletePlan(plan)">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="plans-section mt-5 border-top pt-4">
-      <h3>Brand Plans</h3>
-      <div class="plans-grid">
-        <div class="plan-card" *ngFor="let plan of brandPlans; trackBy: trackById">
-          <div class="plan-card-header">
-            <div>
-              <span class="plan-name">{{ plan.name }}</span>
-              <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                  [class.badge-brand]="plan.userType === 'BRAND'">{{ plan.userType }}</span>
-            </div>
-            <div class="plan-status" [class.active]="plan.isActive">
-              {{ plan.isActive ? 'Active' : 'Inactive' }}
-            </div>
-          </div>
-
-          <div class="plan-pricing">
-            <span>₹{{ plan.price.monthly || 0 }}/mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.quarterly || 0 }}/3mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.yearly || 0 }}/yr
-            </span>
-          </div>
-          <div class="plan-pricing" *ngIf="plan.discountLabel">
-            <span>{{ plan.discountLabel }}</span>
-          </div>
-
-          <!-- Features -->
-          <div class="section-label">Features</div>
-          <ul class="feature-list">
-            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
-              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
-            </li>
-          </ul>
-
-          <!-- Limits -->
-          <div class="section-label">Limits</div>
-          <ul class="limit-list">
-            <li *ngFor="let l of plan.limits">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
-            </li>
-          </ul>
-
-          <!-- Policies -->
-          <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
-
-            <!-- Discount (Offers) -->
-            <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
-            <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
-              <li *ngFor="let o of plan.offers">
-                <span *ngIf="o.key === 'discountOnBrandPro' || o.key === 'discountOnInfluencerPro'">
-                  {{ o.label }}: <strong>{{ o.value }}%</strong>
-                </span>
-              </li>
-            </ul>
-
-          <div class="card-actions">
-            <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
-            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="plans-section mt-5 border-top pt-4">
-      <h3>Photographer Plans</h3>
-      <div class="plans-grid">
-        <div class="plan-card" *ngFor="let plan of photographerPlans; trackBy: trackById">
-          <div class="plan-card-header">
-            <div>
-              <span class="plan-name">{{ plan.name }}</span>
-              <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                  [class.badge-brand]="plan.userType === 'BRAND'">{{ plan.userType }}</span>
-            </div>
-            <div class="plan-status" [class.active]="plan.isActive">
-              {{ plan.isActive ? 'Active' : 'Inactive' }}
-            </div>
-          </div>
-
-          <div class="plan-pricing">
-            <span>₹{{ plan.price.monthly || 0 }}/mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.quarterly || 0 }}/3mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.yearly || 0 }}/yr
-            </span>
-          </div>
-          <div class="plan-pricing" *ngIf="plan.discountLabel">
-            <span>{{ plan.discountLabel }}</span>
-          </div>
-
-          <div class="section-label">Features</div>
-          <ul class="feature-list">
-            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
-              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
-            </li>
-          </ul>
-
-          <div class="section-label">Limits</div>
-          <ul class="limit-list">
-            <li *ngFor="let l of plan.limits">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
-            </li>
-          </ul>
-
-          <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
-
-          <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
-          <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
-            <li *ngFor="let o of plan.offers">
-              <span>
-                {{ o.label }}: <strong>{{ o.value }}%</strong>
-              </span>
-            </li>
-          </ul>
-
-          <div class="card-actions">
-            <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
-            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
           </div>
         </div>
       </div>
@@ -254,18 +133,55 @@
       </select>
     </div>
 
-    <div class="form-row three-col">
-      <div>
-        <label>Monthly Price (₹)</label>
-        <input type="number" [(ngModel)]="editingPlan.price.monthly" min="0" />
+    <!-- Pricing & Discounts section: price + discount paired per duration -->
+    <div class="form-section">
+      <div class="section-header"><span>Pricing &amp; Discounts</span></div>
+
+      <div class="pricing-discount-row">
+        <div>
+          <label>Monthly Price (₹)</label>
+          <input type="number" [(ngModel)]="editingPlan.price.monthly" min="0" />
+        </div>
+        <div>
+          <label>Monthly Discount (%)</label>
+          <div class="discount-input-with-final">
+            <input type="number" [value]="getOfferValue('discountMonthly')" min="0" max="100" (input)="setOfferValue('discountMonthly', $event.target.valueAsNumber)" />
+            <span class="final-price-hint">Final: ₹{{ getFinalPrice('monthly') }}</span>
+          </div>
+        </div>
       </div>
-      <div>
-        <label>Quarterly Price (₹)</label>
-        <input type="number" [(ngModel)]="editingPlan.price.quarterly" min="0" />
+
+      <div class="pricing-discount-row">
+        <div>
+          <label>Quarterly Price (₹)</label>
+          <input type="number" [(ngModel)]="editingPlan.price.quarterly" min="0" />
+        </div>
+        <div>
+          <label>Quarterly Discount (%)</label>
+          <div class="discount-input-with-final">
+            <input type="number" [value]="getOfferValue('discountQuarterly')" min="0" max="100" (input)="setOfferValue('discountQuarterly', $event.target.valueAsNumber)" />
+            <span class="final-price-hint">Final: ₹{{ getFinalPrice('quarterly') }}</span>
+          </div>
+        </div>
       </div>
-      <div>
-        <label>Yearly Price (₹)</label>
-        <input type="number" [(ngModel)]="editingPlan.price.yearly" min="0" />
+
+      <div class="pricing-discount-row">
+        <div>
+          <label>Yearly Price (₹)</label>
+          <input type="number" [(ngModel)]="editingPlan.price.yearly" min="0" />
+        </div>
+        <div>
+          <label>Yearly Discount (%)</label>
+          <div class="discount-input-with-final">
+            <input type="number" [value]="getOfferValue('discountYearly')" min="0" max="100" (input)="setOfferValue('discountYearly', $event.target.valueAsNumber)" />
+            <span class="final-price-hint">Final: ₹{{ getFinalPrice('yearly') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Trial Days</label>
+        <input type="number" [value]="getOfferValue('trialPeriodDays')" min="0" (input)="setOfferValue('trialPeriodDays', $event.target.valueAsNumber)" />
       </div>
     </div>
 
@@ -279,7 +195,7 @@
       <div class="section-header">
         <span>Features (Toggles)</span>
       </div>
-      <div class="feature-row" *ngFor="let f of getMergedFeatures()">
+      <div class="feature-row" *ngFor="let f of getMergedFeatures(); trackBy: trackByKey">
         <div class="toggle-wrap">
           <label class="toggle">
             <input type="checkbox" [checked]="f.value" (change)="toggleFeature(f.key)" />
@@ -296,22 +212,10 @@
       <div class="section-header">
         <span>Limits (Numbers)</span>
       </div>
-      <div class="limit-row" *ngFor="let l of getMergedLimits()">
+      <div class="limit-row" *ngFor="let l of getMergedLimits(); trackBy: trackByKey">
         <input type="text" [value]="l.key" class="input-key" readonly />
         <input type="text" [value]="l.label" class="input-label" readonly />
         <input type="number" [value]="l.value" min="0" class="input-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
-      </div>
-    </div>
-
-    <!-- Offers section: trial periods, cross-plan discounts -->
-    <div class="form-section">
-      <div class="section-header">
-        <span>Offers (Trial / Discounts)</span>
-      </div>
-      <div class="limit-row" *ngFor="let o of getMergedOffers()">
-        <input type="text" [value]="o.key" class="input-key" readonly />
-        <input type="text" [value]="o.label" class="input-label" readonly />
-        <input type="number" [value]="o.value" min="0" class="input-value" (input)="setOfferValue(o.key, $event.target.valueAsNumber)" />
       </div>
     </div>
 
@@ -341,8 +245,8 @@
     </div>
 
     <div class="form-actions">
-      <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-      <button class="btn btn-primary" (click)="save()">{{ isCreating ? 'Create' : 'Save Changes' }}</button>
+      <button class="btn btn-secondary" [disabled]="saving" (click)="cancelEdit()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="saving" (click)="save()">{{ saving ? (isCreating ? 'Saving...' : 'Updating...') : (isCreating ? 'Create' : 'Save Changes') }}</button>
     </div>
   </div>
 </div>

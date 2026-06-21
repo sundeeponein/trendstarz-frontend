@@ -416,6 +416,13 @@ export class InfluencerProfileComponent implements OnInit {
   myPayments: any[] = [];
   latestPendingPayment: any = null;
 
+  // Razorpay payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
+  get latestPendingPaymentAmount(): number {
+    const p = this.latestPendingPayment;
+    if (!p) return 0;
+    return p.paymentMethod === 'razorpay' ? (p.amount || 0) / 100 : (p.amount || 0);
+  }
+
   // Plan capabilities
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxProductImages'); }
@@ -731,7 +738,9 @@ export class InfluencerProfileComponent implements OnInit {
           // Load payment status
           this.configService.getMyPayments(5).subscribe(payments => {
             this.myPayments = payments;
-            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending') || null;
+            // Razorpay is auto-verified via webhook, never reviewed by an admin — a 'pending'
+            // razorpay record only means checkout was abandoned/cancelled, not awaiting review.
+            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending' && p.paymentMethod !== 'razorpay') || null;
           });
           this.refreshStepCompletion();
         },

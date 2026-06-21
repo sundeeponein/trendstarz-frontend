@@ -49,7 +49,7 @@
   <app-registration-notice role="influencer" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
 
   <!-- Alert Cards Row -->
-  <div class="row mb-4 gx-3">
+  <div class="row mb-4 gx-3" *ngIf="!loading">
     <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.user?.isEmailVerified">
       <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">

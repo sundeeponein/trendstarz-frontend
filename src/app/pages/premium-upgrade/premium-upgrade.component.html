@@ -36,7 +36,8 @@
             </button>
           </div>
           <div class="plan-price">
-            <span>₹{{ selectedDuration?.price }}</span>
+            <span class="price-original-strike" *ngIf="planDiscountPercent > 0">₹{{ selectedDuration?.price }}</span>
+            <span>₹{{ planDiscountPercent > 0 ? finalPrice : selectedDuration?.price }}</span>
             <span class="price-period"> /{{ selectedDurationKey === '1m' ? 'mo' : selectedDurationKey === '3m' ? '3mo' : 'yr' }}</span>
           </div>
           <div class="discount-info-pills" *ngIf="planDiscountPercent > 0">
@@ -52,7 +53,7 @@
           </div>
           <div class="price-monthly-hint mt-1">
             <span *ngIf="selectedDurationKey === '3m' || selectedDurationKey === '1y'" class="per-month-after-discount">
-              ₹{{ (selectedDuration?.price / (selectedDurationKey === '3m' ? 3 : selectedDurationKey === '1y' ? 12 : 1)).toFixed(0) }}/mo
+              ₹{{ (finalPrice / (selectedDurationKey === '3m' ? 3 : 12)).toFixed(0) }}/mo
             </span>
           </div>
         </ng-container>
@@ -135,50 +136,72 @@
     <div *ngIf="couponApplied" class="coupon-success">🎉 Coupon applied! You save ₹{{ discountAmount }}</div>
     <div *ngIf="couponError" class="coupon-error">{{ couponError }}</div>
 
-    <!-- ── Unified payment block (UPI ID + QR + Pay button) ─── -->
-    <app-payment-checkout
-      *ngIf="selectedDuration"
-      title=""
-      [chip]="(selectedPlan?.name || '') + ' Premium'"
-      [amountRupees]="finalPrice"
-      [breakdown]="paymentBreakdown"
-      [transactionNote]="paymentTransactionNote"
-      [trustLabels]="['Secured by TrendstarZ', 'Premium activated within 24 hours of UTR verification']">
-    </app-payment-checkout>
-
-    <div class="upgrade-actions" style="margin-top: 8px; margin-bottom: 12px;">
-      <button class="btn-upgrade" [disabled]="processingRazorpay" (click)="payByRazorpay()">
-        <span *ngIf="processingRazorpay" class="spinner"></span>
-        <span *ngIf="!processingRazorpay">Pay with Razorpay (Recommended)</span>
-        <span *ngIf="processingRazorpay">Opening Razorpay…</span>
-      </button>
+    <!-- ── Choose Payment Method (only when both are available) ───── -->
+    <div class="payment-method-tabs" *ngIf="effectiveGatewayMode === 'razorpay_fallback'">
+      <div class="payment-method-tabs-label">Choose Payment Method</div>
+      <div class="payment-method-tab-buttons">
+        <button class="payment-method-tab" [class.active]="paymentMethodTab === 'razorpay'" (click)="selectPaymentMethodTab('razorpay')">Razorpay ⚡ Recommended</button>
+        <button class="payment-method-tab" [class.active]="paymentMethodTab === 'manual'" (click)="selectPaymentMethodTab('manual')">Manual UPI</button>
+      </div>
     </div>
-    <small class="text-muted" style="display:block;margin-bottom:12px;">
-      Instant verification via Razorpay for 1 month, 3 months, and 1 year. Manual UPI + UTR is available below as fallback.
-    </small>
 
-    <!-- ── UTR confirmation (manual verification) ───────────── -->
-    <div class="form-group">
-      <label>UPI Transaction ID / UTR Number <span style="color:#dc2626">*</span></label>
-      <input
-        type="text"
-        class="form-input"
-        placeholder="e.g. 416221039385"
-        [(ngModel)]="upiRef"
-        [disabled]="upgrading"
-      />
-      <small class="text-muted">Enter the UTR shown by your UPI app after paying. We verify within 24 hours.</small>
+    <!-- ── Razorpay panel ───────────────────────────────────────── -->
+    <div class="payment-method-panel"
+         *ngIf="effectiveGatewayMode === 'razorpay_only' || (effectiveGatewayMode === 'razorpay_fallback' && paymentMethodTab === 'razorpay')">
+      <p class="payment-method-info">⚡ Instant activation after successful payment</p>
+      <div class="upgrade-actions" style="margin-top: 8px; margin-bottom: 12px;">
+        <button class="btn-upgrade" [disabled]="processingRazorpay" (click)="payByRazorpay()">
+          <span *ngIf="processingRazorpay" class="spinner"></span>
+          <span *ngIf="!processingRazorpay">Pay with Razorpay</span>
+          <span *ngIf="processingRazorpay">Opening Razorpay…</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Manual UPI panel ─────────────────────────────────────── -->
+    <div class="payment-method-panel"
+         *ngIf="effectiveGatewayMode === 'manual' || (effectiveGatewayMode === 'razorpay_fallback' && paymentMethodTab === 'manual')">
+      <ul class="payment-method-info-list">
+        <li>Scan QR or pay to UPI ID</li>
+        <li>Submit UTR after payment</li>
+        <li>Activation within 24 hours</li>
+      </ul>
+
+      <app-payment-checkout
+        *ngIf="selectedDuration"
+        title=""
+        [chip]="(selectedPlan?.name || '') + ' Premium'"
+        [amountRupees]="finalPrice"
+        [breakdown]="paymentBreakdown"
+        [transactionNote]="paymentTransactionNote"
+        [trustLabels]="['Secured by TrendstarZ', 'Premium activated within 24 hours of UTR verification']">
+      </app-payment-checkout>
+
+      <div class="form-group">
+        <label>UPI Transaction ID / UTR Number <span style="color:#dc2626">*</span></label>
+        <input
+          type="text"
+          class="form-input"
+          placeholder="e.g. 416221039385"
+          [(ngModel)]="upiRef"
+          [disabled]="upgrading"
+        />
+        <small class="text-muted">Enter the UTR shown by your UPI app after paying. We verify within 24 hours.</small>
+      </div>
+
+      <div class="upgrade-actions">
+        <button class="btn-upgrade" [disabled]="upgrading || !upiRef.trim()" (click)="payByUpi()">
+          <span *ngIf="upgrading" class="spinner"></span>
+          <span *ngIf="!upgrading">Confirm Payment</span>
+          <span *ngIf="upgrading">Confirming…</span>
+        </button>
+      </div>
     </div>
 
     <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
 
     <div class="upgrade-actions">
       <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading">← Change Plan</button>
-      <button class="btn-upgrade" [disabled]="upgrading || !upiRef.trim()" (click)="payByUpi()">
-        <span *ngIf="upgrading" class="spinner"></span>
-        <span *ngIf="!upgrading">Confirm Payment</span>
-        <span *ngIf="upgrading">Confirming…</span>
-      </button>
     </div>
 
     <!-- ── Recent Payments ────────────────────── -->
@@ -186,7 +209,7 @@
       <h3 class="recent-title">Recent Payments</h3>
       <div *ngFor="let pay of myPayments" class="recent-row" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
         <div class="recent-main">
-          <span class="recent-amt">₹{{ pay.amount }}</span>
+          <span class="recent-amt">₹{{ getPaymentDisplayAmount(pay) | number:'1.0-2' }}</span>
           <span class="recent-plan">{{ pay.premiumDuration | uppercase }}</span>
           <span class="recent-status" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
             {{ pay.status | titlecase }}

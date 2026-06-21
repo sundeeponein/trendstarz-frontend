@@ -68,7 +68,7 @@
     <!-- Payment records -->
     <div *ngFor="let payment of payments" class="payment-card" [ngClass]="getStatusClass(payment.status)">
       <div class="payment-card-header">
-        <div class="payment-amount">₹{{ payment.amount }}</div>
+        <div class="payment-amount">₹{{ getDisplayAmount(payment) | number:'1.0-2' }}</div>
         <span class="payment-status-badge" [ngClass]="getStatusClass(payment.status)">
           <ng-container [ngSwitch]="payment.status">
             <span *ngSwitchCase="'pending'">⏳ Pending</span>

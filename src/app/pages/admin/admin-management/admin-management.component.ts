@@ -383,6 +383,7 @@ export class AdminManagementComponent implements OnInit {
     pendingUserAutoDeleteDays: 45,
     campaignApprovalMode: 'manual',
     collaborationApprovalMode: 'manual',
+    paymentGatewayMode: 'razorpay_fallback',
     // Admin-managed support contact (shown on campaign-management page banner).
     // Can be toggled off entirely via supportContactEnabled. Stays useful even
     // after Razorpay automation lands — repurposed as "Need help?" channel.
@@ -704,6 +705,9 @@ export class AdminManagementComponent implements OnInit {
             : 0;
         this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
+        this.settings.paymentGatewayMode = ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
+          ? data.paymentGatewayMode
+          : 'razorpay_fallback';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
         this.settings.supportContactEmail = data?.supportContactEmail || 'support@trendstarz.in';
         this.settings.supportContactPhone = data?.supportContactPhone || '';

@@ -30,22 +30,6 @@ $green:     #16a34a;
   flex-wrap: wrap;
 }
 
-.cm-title {
-  font-size: 2rem;
-  font-weight: 900;
-  color: $text;
-  margin: 0 0 0.4rem;
-  line-height: 1.1;
-}
-
-.cm-subtitle {
-  color: $muted;
-  font-size: 0.85rem;
-  line-height: 1.55;
-  margin: 0;
-  max-width: 640px;
-}
-
 .cm-header-actions {
   display: flex;
   gap: 0.75rem;
@@ -481,46 +465,6 @@ $green:     #16a34a;
   color: $muted;
   padding: 2.5rem !important;
   font-size: 0.9rem;
-}
-
-// Pagination
-.cm-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1.1rem;
-  border-top: 1px solid $border;
-  background: #fafafa;
-}
-
-.cm-pagination-info {
-  font-size: 0.78rem;
-  color: $muted;
-
-  strong { color: $text; }
-}
-
-.cm-pagination-controls {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.cm-page-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid $border;
-  background: $surface;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: $text;
-  transition: background 0.12s;
-
-  &:hover:not(:disabled) { background: #f3f4f6; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 // ── Footer ────────────────────────────────────────────────────────────────

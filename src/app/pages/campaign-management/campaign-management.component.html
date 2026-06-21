@@ -1685,142 +1685,63 @@
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
 
-  <div class="modal-backdrop show"
-       *ngIf="visitConfirmModalOpen"
-       (click)="!isVisitConfirmSubmitting && closeVisitConfirmModal()"></div>
-  <div class="modal d-block"
-       *ngIf="visitConfirmModalOpen"
-       tabindex="-1"
-       (click)="!isVisitConfirmSubmitting && closeVisitConfirmModal()">
-    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
-      <div class="modal-content ts-modal invite-action-modal visit-confirm-modal">
-        <div class="invite-action-modal__header">
-          <h4>Confirm Visit</h4>
-          <button class="drawer-close"
-                  type="button"
-                  [disabled]="isVisitConfirmSubmitting"
-                  (click)="closeVisitConfirmModal()">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div class="invite-action-modal__body">
-          <p class="invite-action-modal__help">Confirm that this participant has arrived at the collaboration location?</p>
-        </div>
-        <div class="invite-action-modal__footer">
-          <button class="btn btn-outline-secondary"
-                  type="button"
-                  [disabled]="isVisitConfirmSubmitting"
-                  (click)="closeVisitConfirmModal()">Cancel</button>
-          <button class="btn btn-primary"
-                  type="button"
-                  [disabled]="isVisitConfirmSubmitting"
-                  (click)="confirmParticipantVisited()">
-            {{ isVisitConfirmSubmitting ? 'Saving...' : 'Confirm' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-confirm-action-modal
+      [isOpen]="visitConfirmModalOpen"
+      title="Confirm Visit"
+      width="min(460px, 92vw)"
+      [submitting]="isVisitConfirmSubmitting"
+      confirmLabel="Confirm"
+      confirmLoadingLabel="Saving..."
+      (closed)="closeVisitConfirmModal()"
+      (confirmed)="confirmParticipantVisited()">
+    <p class="invite-action-modal__help">Confirm that this participant has arrived at the collaboration location?</p>
+  </app-confirm-action-modal>
 
   <!-- ─── Revised Counter Modal (brand sends revised amount) ─── -->
-  <div class="modal-backdrop show"
-       *ngIf="revisedCounterModalOpen"
-       (click)="!isRevisedCounterSubmitting && closeRevisedCounterModal()"></div>
-  <div class="modal d-block"
-       *ngIf="revisedCounterModalOpen"
-       tabindex="-1"
-       (click)="!isRevisedCounterSubmitting && closeRevisedCounterModal()">
-    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
-      <div class="modal-content ts-modal invite-action-modal revised-counter-modal">
-        <div class="invite-action-modal__header">
-          <h4>Send Revised Offer</h4>
-          <button class="drawer-close"
-                  type="button"
-                  [disabled]="isRevisedCounterSubmitting"
-                  (click)="closeRevisedCounterModal()">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-
-        <div class="invite-action-modal__body">
-          <p class="invite-action-modal__help" *ngIf="revisedCounterCurrentRequestedAmount > 0">
-            Recipient requested ₹{{ revisedCounterCurrentRequestedAmount | number:'1.0-0' }}. Enter your revised amount.
-          </p>
-          <label class="invite-action-modal__label" for="revised-counter-input">Revised amount (₹)</label>
-          <input id="revised-counter-input"
-                 class="revised-counter-input"
-                 type="number"
-                 min="1"
-                 step="1"
-                 [ngModel]="revisedCounterAmountInput"
-                 (ngModelChange)="revisedCounterAmountInput = $event; revisedCounterModalError = ''"
-                 placeholder="e.g. 3000" />
-          <div class="text-danger small" *ngIf="revisedCounterModalError">{{ revisedCounterModalError }}</div>
-        </div>
-
-        <div class="invite-action-modal__footer">
-          <button class="btn btn-outline-secondary"
-                  type="button"
-                  [disabled]="isRevisedCounterSubmitting"
-                  (click)="closeRevisedCounterModal()">Cancel</button>
-          <button class="btn btn-primary"
-                  type="button"
-                  [disabled]="isRevisedCounterSubmitting"
-                  (click)="submitRevisedCounterFromModal()">
-            {{ isRevisedCounterSubmitting ? 'Sending...' : 'Send Revised Offer' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-confirm-action-modal
+      [isOpen]="revisedCounterModalOpen"
+      title="Send Revised Offer"
+      width="min(480px, 92vw)"
+      [submitting]="isRevisedCounterSubmitting"
+      confirmLabel="Send Revised Offer"
+      confirmLoadingLabel="Sending..."
+      (closed)="closeRevisedCounterModal()"
+      (confirmed)="submitRevisedCounterFromModal()">
+    <p class="invite-action-modal__help" *ngIf="revisedCounterCurrentRequestedAmount > 0">
+      Recipient requested ₹{{ revisedCounterCurrentRequestedAmount | number:'1.0-0' }}. Enter your revised amount.
+    </p>
+    <label class="invite-action-modal__label" for="revised-counter-input">Revised amount (₹)</label>
+    <input id="revised-counter-input"
+           class="revised-counter-input"
+           type="number"
+           min="1"
+           step="1"
+           [ngModel]="revisedCounterAmountInput"
+           (ngModelChange)="revisedCounterAmountInput = $event; revisedCounterModalError = ''"
+           placeholder="e.g. 3000" />
+    <div class="text-danger small" *ngIf="revisedCounterModalError">{{ revisedCounterModalError }}</div>
+  </app-confirm-action-modal>
 
   <!-- ─── Invite Action Modal (withdraw/decline/report) ─── -->
-  <div class="modal-backdrop show"
-       *ngIf="inviteActionModalOpen"
-       (click)="!isInviteActionSubmitting && closeInviteActionModal()"></div>
-  <div class="modal d-block"
-       *ngIf="inviteActionModalOpen"
-       tabindex="-1"
-       (click)="!isInviteActionSubmitting && closeInviteActionModal()">
-    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
-      <div class="modal-content ts-modal invite-action-modal">
-        <div class="invite-action-modal__header">
-          <h4>{{ inviteActionModalTitle }}</h4>
-          <button class="drawer-close"
-                  type="button"
-                  [disabled]="isInviteActionSubmitting"
-                  (click)="closeInviteActionModal()">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-
-        <div class="invite-action-modal__body">
-          <p class="invite-action-modal__help">{{ inviteActionModalHelpText }}</p>
-          <label class="invite-action-modal__label" for="invite-action-reason-input">{{ inviteActionModalReasonLabel }}</label>
-          <textarea id="invite-action-reason-input"
-                    class="invite-action-modal__textarea"
-                    rows="4"
-                    [ngModel]="inviteActionReasonInput"
-                    (ngModelChange)="inviteActionReasonInput = $event; inviteActionModalError = ''"
-                    placeholder="Add details here..."></textarea>
-          <div class="text-danger small" *ngIf="inviteActionModalError">{{ inviteActionModalError }}</div>
-        </div>
-
-        <div class="invite-action-modal__footer">
-          <button class="btn btn-outline-secondary"
-                  type="button"
-                  [disabled]="isInviteActionSubmitting"
-                  (click)="closeInviteActionModal()">Cancel</button>
-          <button class="btn btn-primary"
-                  type="button"
-                  [disabled]="isInviteActionSubmitting"
-                  (click)="submitInviteActionFromModal()">
-            {{ isInviteActionSubmitting ? 'Saving...' : inviteActionModalSubmitText }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-confirm-action-modal
+      [isOpen]="inviteActionModalOpen"
+      [title]="inviteActionModalTitle"
+      width="min(520px, 92vw)"
+      [submitting]="isInviteActionSubmitting"
+      [confirmLabel]="inviteActionModalSubmitText"
+      confirmLoadingLabel="Saving..."
+      (closed)="closeInviteActionModal()"
+      (confirmed)="submitInviteActionFromModal()">
+    <p class="invite-action-modal__help">{{ inviteActionModalHelpText }}</p>
+    <label class="invite-action-modal__label" for="invite-action-reason-input">{{ inviteActionModalReasonLabel }}</label>
+    <textarea id="invite-action-reason-input"
+              class="invite-action-modal__textarea"
+              rows="4"
+              [ngModel]="inviteActionReasonInput"
+              (ngModelChange)="inviteActionReasonInput = $event; inviteActionModalError = ''"
+              placeholder="Add details here..."></textarea>
+    <div class="text-danger small" *ngIf="inviteActionModalError">{{ inviteActionModalError }}</div>
+  </app-confirm-action-modal>
 
   <!-- ─── Fulfillment Modal (Slice D) ─── -->
   <div class="modal-backdrop show" *ngIf="fulfillModalOpen && fulfillInvite" (click)="closeFulfillment()"></div>

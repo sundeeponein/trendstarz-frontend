@@ -391,6 +391,12 @@ code {
     font-weight: 500;
     color: #333;
   }
+
+  .field-error {
+    margin-top: 0.4rem;
+    color: #c5192d;
+    font-size: 0.85rem;
+  }
 }
 
 .form-textarea {

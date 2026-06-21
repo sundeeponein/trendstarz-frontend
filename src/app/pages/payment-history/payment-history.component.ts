@@ -120,6 +120,12 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Razorpay-sourced payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
+  getDisplayAmount(payment: any): number {
+    const amount = payment?.amount || 0;
+    return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+  }
+
   getModeLabel(payment: any): string {
     if (payment?.gatewayProvider === 'razorpay') return 'Razorpay';
     return payment?.paymentMethod === 'qr' ? 'Manual QR' : 'Manual UPI';

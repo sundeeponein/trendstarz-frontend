@@ -76,7 +76,7 @@
           </div>
           <div class="user-phone" *ngIf="payment.userId?.phoneNumber">{{ payment.userId.phoneNumber }}</div>
         </td>
-        <td class="col-amount">₹{{ payment.amount }}</td>
+        <td class="col-amount">{{ ui.formatPremiumPaymentAmount(payment) }}</td>
         <td>{{ payment.premiumDuration }}</td>
         <td>{{ ui.premiumPaymentModeLabel(payment) }}</td>
         <td>
@@ -115,7 +115,7 @@
     <div class="modal-content ts-modal">
     <h2>Reject Payment</h2>
     <p *ngIf="selectedPaymentForReject" class="modal-info">
-      Rejecting payment of <strong>₹{{ selectedPaymentForReject.amount }}</strong> from
+      Rejecting payment of <strong>{{ ui.formatPremiumPaymentAmount(selectedPaymentForReject) }}</strong> from
       <strong>{{ ui.getUserDisplayName(selectedPaymentForReject) }}</strong>
     </p>
 
@@ -127,6 +127,7 @@
         placeholder="e.g., Transaction ID not found, amount mismatch, duplicate payment..."
         rows="4"
       ></textarea>
+      <div *ngIf="rejectionReasonError" class="field-error">{{ rejectionReasonError }}</div>
     </div>
 
     <div class="modal-actions">
@@ -143,7 +144,7 @@
     <div class="modal-content ts-modal">
     <h2>Refund Premium Payment</h2>
     <p *ngIf="selectedPaymentForRefund" class="modal-info">
-      Marking refund for <strong>₹{{ selectedPaymentForRefund.amount }}</strong> from
+      Marking refund for <strong>{{ ui.formatPremiumPaymentAmount(selectedPaymentForRefund) }}</strong> from
       <strong>{{ ui.getUserDisplayName(selectedPaymentForRefund) }}</strong>.
       Premium access will be removed.
     </p>
@@ -156,6 +157,7 @@
         placeholder="e.g., Duplicate payment, customer requested cancellation, wrong plan selected..."
         rows="4"
       ></textarea>
+      <div *ngIf="refundReasonError" class="field-error">{{ refundReasonError }}</div>
     </div>
 
     <div class="modal-actions">

@@ -7,6 +7,17 @@ export class AdminPaymentsUiUtilsService {
     return `₹${((amount || 0) / 100).toLocaleString('en-IN')}`;
   }
 
+  // Razorpay-sourced premium payments store `amount` in paise; manual UPI/QR payments
+  // store it in plain rupees — normalize before display either way.
+  premiumPaymentAmount(payment: PremiumPayment): number {
+    const amount = payment?.amount || 0;
+    return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+  }
+
+  formatPremiumPaymentAmount(payment: PremiumPayment): string {
+    return `₹${this.premiumPaymentAmount(payment).toLocaleString('en-IN')}`;
+  }
+
   formatDateTime(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', {

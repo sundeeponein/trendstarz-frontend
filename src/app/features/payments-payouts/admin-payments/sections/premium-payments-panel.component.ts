@@ -35,9 +35,11 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   loading = false;
 
   rejectionReason = '';
+  rejectionReasonError = '';
   showRejectModal = false;
   selectedPaymentForReject: PremiumPayment | null = null;
   refundReason = '';
+  refundReasonError = '';
   showRefundModal = false;
   selectedPaymentForRefund: PremiumPayment | null = null;
 
@@ -163,7 +165,7 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   }
 
   approvePayment(payment: PremiumPayment) {
-    if (!confirm(`Approve payment of ₹${payment.amount} from ${this.ui.getUserDisplayName(payment)}?`)) return;
+    if (!confirm(`Approve payment of ${this.ui.formatPremiumPaymentAmount(payment)} from ${this.ui.getUserDisplayName(payment)}?`)) return;
 
     const token = this.getToken();
     if (!token) {
@@ -186,6 +188,7 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   openRejectModal(payment: PremiumPayment) {
     this.selectedPaymentForReject = payment;
     this.rejectionReason = '';
+    this.rejectionReasonError = '';
     this.showRejectModal = true;
   }
 
@@ -193,12 +196,14 @@ export class PremiumPaymentsPanelComponent implements OnInit {
     this.showRejectModal = false;
     this.selectedPaymentForReject = null;
     this.rejectionReason = '';
+    this.rejectionReasonError = '';
   }
 
   rejectPayment() {
     if (!this.selectedPaymentForReject) return;
+    this.rejectionReasonError = '';
     if (!this.rejectionReason.trim()) {
-      this.errorMessage.emit('Please provide a rejection reason');
+      this.rejectionReasonError = 'Please provide a rejection reason';
       return;
     }
 
@@ -226,6 +231,7 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   openRefundModal(payment: PremiumPayment) {
     this.selectedPaymentForRefund = payment;
     this.refundReason = '';
+    this.refundReasonError = '';
     this.showRefundModal = true;
   }
 
@@ -233,12 +239,14 @@ export class PremiumPaymentsPanelComponent implements OnInit {
     this.showRefundModal = false;
     this.selectedPaymentForRefund = null;
     this.refundReason = '';
+    this.refundReasonError = '';
   }
 
   refundPayment() {
     if (!this.selectedPaymentForRefund) return;
+    this.refundReasonError = '';
     if (!this.refundReason.trim()) {
-      this.errorMessage.emit('Please provide a refund reason');
+      this.refundReasonError = 'Please provide a refund reason';
       return;
     }
 

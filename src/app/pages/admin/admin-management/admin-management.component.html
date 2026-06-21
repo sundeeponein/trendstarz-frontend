@@ -1346,6 +1346,62 @@
     <div class="settings-row row-expanded mt-3">
       <div class="settings-row-header">
         <div class="settings-info">
+          <strong>Payment Gateway Mode</strong>
+          <p>Controls which payment method(s) appear on the Premium upgrade page.</p>
+        </div>
+      </div>
+
+      <div class="settings-conditions">
+        <div class="condition-item">
+          <span class="condition-name">Mode</span>
+          <div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="paymentGatewayModeManual"
+                name="paymentGatewayMode"
+                value="manual"
+                [(ngModel)]="settings.paymentGatewayMode"
+              />
+              <label class="form-check-label" for="paymentGatewayModeManual">Manual Only</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="paymentGatewayModeFallback"
+                name="paymentGatewayMode"
+                value="razorpay_fallback"
+                [(ngModel)]="settings.paymentGatewayMode"
+              />
+              <label class="form-check-label" for="paymentGatewayModeFallback">Razorpay + Manual Fallback</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="paymentGatewayModeRazorpayOnly"
+                name="paymentGatewayMode"
+                value="razorpay_only"
+                [(ngModel)]="settings.paymentGatewayMode"
+              />
+              <label class="form-check-label" for="paymentGatewayModeRazorpayOnly">Razorpay Only</label>
+            </div>
+          </div>
+        </div>
+        <div class="condition-item">
+          <span class="condition-name">Note</span>
+          <small class="text-light-emphasis">
+            Razorpay options are hidden automatically if RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET aren't configured on the server, regardless of this setting.
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
           <strong>Collaboration Approval Workflow</strong>
           <p>Configure moderation mode for photographer collaboration requests.</p>
         </div>

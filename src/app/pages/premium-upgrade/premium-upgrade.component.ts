@@ -22,6 +22,7 @@ import { environment } from '../../../environments/environment';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { PaymentCheckoutComponent, BreakdownRow } from '../../shared/payment-checkout/payment-checkout.component';
 import { MonetizationApiService } from '../../services/monetization-api.service';
+import { ConfigService } from '../../shared/config.service';
 
 
 
@@ -49,6 +50,27 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     planDiscountPercent = 0;
     myPayments: any[] = [];
     discountLabel?: string;
+
+    // Admin-configured gateway mode + actual key-presence on the server.
+    paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only' = 'razorpay_fallback';
+    razorpayConfigured = false;
+    paymentMethodTab: 'razorpay' | 'manual' = 'razorpay';
+
+    // Razorpay can never be shown if the server has no keys configured, regardless
+    // of the admin setting — avoids rendering a button that would just error out.
+    get effectiveGatewayMode(): 'manual' | 'razorpay_fallback' | 'razorpay_only' {
+      return this.razorpayConfigured ? this.paymentGatewayMode : 'manual';
+    }
+
+    selectPaymentMethodTab(tab: 'razorpay' | 'manual') {
+      this.paymentMethodTab = tab;
+    }
+
+    // Razorpay-sourced payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
+    getPaymentDisplayAmount(payment: any): number {
+      const amount = payment?.amount || 0;
+      return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+    }
     readonly upiId = 'trendstarzin@kotak';
     readonly isProduction = environment.production;
 
@@ -75,11 +97,18 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       private cdr: ChangeDetectorRef,
       private plansService: PlansService,
       private monetizationApi: MonetizationApiService,
+      private configService: ConfigService,
       @Inject(PLATFORM_ID) private platformId: object,
     ) {}
 
     ngOnInit(): void {
       this.loadMyPayments();
+      this.configService.getAppSettings().subscribe(settings => {
+        this.paymentGatewayMode = settings.paymentGatewayMode;
+        this.razorpayConfigured = settings.razorpayConfigured;
+        this.paymentMethodTab = this.effectiveGatewayMode === 'manual' ? 'manual' : 'razorpay';
+        this.cdr.markForCheck();
+      });
       // Set selectedRole based on logged-in user
       const user = this.getCurrentUser();
       if (user?.role === 'brand') {
@@ -167,22 +196,11 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   applyPlanDiscount() {
-    // Reset discount
-    this.planDiscountPercent = 0;
+    // planDiscountPercent is already set by updateDuration() for the currently
+    // selected duration (discountMonthly/discountQuarterly/discountYearly).
     this.discountLabel = this.selectedPlan?.discountLabel || '';
-    if (!this.selectedPlan || !this.selectedPlan.offers) return;
-    // Robust: check both discount keys for both roles
-    const discountKeys = ["discountOnBrandPro", "discountOnInfluencerPro", "discountOnPhotographerPro"];
-    let offer = this.selectedPlan.offers.find((o: any) => discountKeys.includes(o.key) && o.value > 0);
-    if (offer) {
-      this.planDiscountPercent = offer.value;
-      // Only apply if no coupon is applied
-      if (!this.couponApplied) {
-        this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * (offer.value / 100));
-      }
-    } else if (!this.couponApplied) {
-      this.discountAmount = 0;
-    }
+    if (this.couponApplied) return;
+    this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * (this.planDiscountPercent / 100));
   }
 
   get finalPrice(): number {
@@ -389,6 +407,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
         this.monetizationApi.createSubscriptionOrder(
           String((this.selectedPlan as any)?._id || ''),
           billingCycle,
+          this.finalPrice,
         ),
       );
       const order = orderRes?.order;

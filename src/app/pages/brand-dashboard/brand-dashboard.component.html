@@ -4,7 +4,7 @@
 <div class="cm-page brand-dashboard p-4">
     <div class="dashboard-welcome-bar mb-4">
       <div class="dashboard-welcome-left">
-        <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Influencer' }}</h1>
+        <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Brand' }}</h1>
         <div class="welcome-subtitle">Here is what is happening with your brand campaigns today.</div>
       </div>
       <div class="dashboard-welcome-right account-meta-card">
@@ -19,7 +19,7 @@
   <app-registration-notice role="brand" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
 
   <!-- Alert Cards Row -->
-  <div class="row mb-4 gx-3">
+  <div class="row mb-4 gx-3" *ngIf="!loading">
     <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.brand?.isEmailVerified">
       <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">

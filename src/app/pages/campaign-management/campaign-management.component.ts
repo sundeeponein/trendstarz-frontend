@@ -26,6 +26,7 @@ import { ShippingAddressModalService, ShippingAddress } from '../../shared/compo
 import { OfferTrailComponent } from '../../shared/offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared/offer-trail.util';
 import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
+import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -36,7 +37,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })

@@ -23,6 +23,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 export class LoginComponent {
   loginForm: FormGroup;
   submitted = false;
+  loggingIn = false;
   showPassword = false;
   emailNotVerified = false;
   resendingVerification = false;
@@ -59,6 +60,7 @@ export class LoginComponent {
     this.submitted = true;
     Object.values(this.loginForm.controls).forEach(control => control.markAsTouched());
     if (this.loginForm.invalid) return;
+    this.loggingIn = true;
     const { email, password } = this.loginForm.value;
     let firebaseIdToken: string | null = null;
     try {
@@ -75,6 +77,7 @@ export class LoginComponent {
     };
     this.http.post(`${environment.apiBaseUrl}/auth/login`, loginPayload)
       .pipe(timeout(5000), catchError(err => {
+        this.loggingIn = false;
         const msg: string = err?.error?.message || '';
         if (msg.toLowerCase().includes('pending')) {
           this.toast.warning(

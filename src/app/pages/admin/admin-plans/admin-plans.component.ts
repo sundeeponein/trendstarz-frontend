@@ -20,6 +20,32 @@ export class AdminPlansComponent implements OnInit {
   brandPlans: Plan[] = [];
   photographerPlans: Plan[] = [];
 
+  activeTab: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER' = 'INFLUENCER';
+
+  setTab(tab: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER') {
+    this.activeTab = tab;
+  }
+
+  get activePlans(): Plan[] {
+    if (this.activeTab === 'BRAND') return this.brandPlans;
+    if (this.activeTab === 'PHOTOGRAPHER') return this.photographerPlans;
+    return this.influencerPlans;
+  }
+
+  // Quick reference so trial days across roles are visible without switching tabs —
+  // avoids the "is this plan's trial different on purpose or did I forget it" confusion.
+  get trialDaysSummary(): { label: string; days: number }[] {
+    const trialDaysOf = (plans: Plan[]) => {
+      const plan = plans.find(p => p.highlight) || plans[0];
+      return plan?.offers?.find(o => o.key === 'trialPeriodDays')?.value ?? 0;
+    };
+    return [
+      { label: 'Influencer Pro', days: trialDaysOf(this.influencerPlans) },
+      { label: 'Brand Pro', days: trialDaysOf(this.brandPlans) },
+      { label: 'Photo/Video Pro', days: trialDaysOf(this.photographerPlans) },
+    ];
+  }
+
   readonly masterFeatures: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'publicProfileListing', label: 'Public profile listing' },
@@ -61,15 +87,21 @@ export class AdminPlansComponent implements OnInit {
   readonly masterOffers: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnInfluencerPro', label: 'Discount on Influencer Pro plan (%)' },
+      { key: 'discountMonthly', label: 'Monthly Discount (%)' },
+      { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
+      { key: 'discountYearly', label: 'Yearly Discount (%)' },
     ],
     BRAND: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnBrandPro', label: 'Discount on Brand Pro plan (%)' },
+      { key: 'discountMonthly', label: 'Monthly Discount (%)' },
+      { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
+      { key: 'discountYearly', label: 'Yearly Discount (%)' },
     ],
     PHOTOGRAPHER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnPhotographerPro', label: 'Discount on Photographer Pro plan (%)' },
+      { key: 'discountMonthly', label: 'Monthly Discount (%)' },
+      { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
+      { key: 'discountYearly', label: 'Yearly Discount (%)' },
     ],
   };
 
@@ -107,6 +139,7 @@ export class AdminPlansComponent implements OnInit {
   loading = false;
   error = '';
   successMsg = '';
+  saving = false;
 
   editingPlan: Plan | null = null;
   isCreating = false;
@@ -168,6 +201,10 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
+  getOfferValue(key: string): number {
+    return this.getMergedOffers().find(o => o.key === key)?.value ?? 0;
+  }
+
   setOfferValue(key: string, value: number) {
     if (!this.editingPlan) return;
     if (!this.editingPlan.offers) this.editingPlan.offers = [];
@@ -179,6 +216,32 @@ export class AdminPlansComponent implements OnInit {
     const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
     const m = master.find(o => o.key === key);
     if (m) this.editingPlan.offers.push({ ...m, value });
+  }
+
+  // Offer values are mixed units: trialPeriodDays is a day count, the discount
+  // keys are percentages. Render each with its own unit instead of assuming '%' for all.
+  offerValueDisplay(o: { key: string; value: number }): string {
+    return o.key === 'trialPeriodDays' ? `${o.value} days` : `${o.value}%`;
+  }
+
+  getPricingPreview(): { label: string; price: number; discountPercent: number; final: number }[] {
+    if (!this.editingPlan) return [];
+    const offers = this.getMergedOffers();
+    const discountFor = (key: string) => offers.find(o => o.key === key)?.value ?? 0;
+    const rows: { key: 'monthly' | 'quarterly' | 'yearly'; label: string; discountKey: string }[] = [
+      { key: 'monthly', label: 'Monthly', discountKey: 'discountMonthly' },
+      { key: 'quarterly', label: 'Quarterly', discountKey: 'discountQuarterly' },
+      { key: 'yearly', label: 'Yearly', discountKey: 'discountYearly' },
+    ];
+    return rows.map(r => {
+      const price = this.editingPlan!.price[r.key] ?? 0;
+      const discountPercent = discountFor(r.discountKey);
+      return { label: r.label, price, discountPercent, final: Math.round(price * (1 - discountPercent / 100)) };
+    });
+  }
+
+  getFinalPrice(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
+    return this.getPricingPreview().find(r => r.label.toLowerCase() === durationKey)?.final ?? 0;
   }
 
   private syncContactVisibilityFeature(_plan: Plan) {
@@ -230,6 +293,7 @@ export class AdminPlansComponent implements OnInit {
   startCreate() {
     this.loading = false;
     this.isCreating = false;
+    this.saving = false;
     this.showTypeSelector = true;
     this.newPlanType = null;
     this.editingPlan = null;
@@ -313,6 +377,7 @@ export class AdminPlansComponent implements OnInit {
   startEdit(plan: Plan) {
     this.loading = false;
     this.isCreating = false;
+    this.saving = false;
     this.editingPlan = JSON.parse(JSON.stringify(plan));
     if (this.editingPlan) {
       this.syncContactVisibilityFeature(this.editingPlan);
@@ -333,6 +398,7 @@ export class AdminPlansComponent implements OnInit {
   cancelEdit() {
     this.editingPlan = null;
     this.isCreating = false;
+    this.saving = false;
     this.showTypeSelector = false;
     this.newPlanType = null;
   }
@@ -342,6 +408,7 @@ export class AdminPlansComponent implements OnInit {
 
     this.error = '';
     this.successMsg = '';
+    this.saving = true;
 
     this.editingPlan.features = this.getMergedFeatures();
     this.editingPlan.limits = this.getMergedLimits();
@@ -357,9 +424,13 @@ export class AdminPlansComponent implements OnInit {
           this.successMsg = 'Plan created successfully';
           this.editingPlan = null;
           this.isCreating = false;
+          this.saving = false;
           this.loadPlans();
         },
-        error: (err) => (this.error = err?.error?.message || 'Failed to save plan'),
+        error: (err) => {
+          this.error = err?.error?.message || 'Failed to save plan';
+          this.saving = false;
+        },
       });
       return;
     }
@@ -369,9 +440,13 @@ export class AdminPlansComponent implements OnInit {
       next: () => {
         this.successMsg = 'Plan updated successfully';
         this.editingPlan = null;
+        this.saving = false;
         this.loadPlans();
       },
-      error: (err) => (this.error = err?.error?.message || 'Failed to update plan'),
+      error: (err) => {
+        this.error = err?.error?.message || 'Failed to update plan';
+        this.saving = false;
+      },
     });
   }
 
@@ -432,5 +507,9 @@ export class AdminPlansComponent implements OnInit {
 
   trackById(_: number, item: Plan) {
     return item._id;
+  }
+
+  trackByKey(_: number, item: { key: string }) {
+    return item.key;
   }
 }

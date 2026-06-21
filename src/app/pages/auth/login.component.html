@@ -77,7 +77,7 @@
             <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
           </div>
 
-          <button type="submit" class="btn-signin">Sign In</button>
+          <button type="submit" class="btn-signin" [disabled]="loggingIn">{{ loggingIn ? 'Signing in...' : 'Sign In' }}</button>
         </form>
 
         <div *ngIf="emailNotVerified" class="email-not-verified-banner">

@@ -557,7 +557,7 @@
               <span style="font-size:1.3em;">⏳</span>
               <div>
                 <strong>Payment Pending</strong>
-                <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
+                <div><small>Your payment of ₹{{ latestPendingPaymentAmount | number:'1.0-2' }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
               </div>
             </div>
 

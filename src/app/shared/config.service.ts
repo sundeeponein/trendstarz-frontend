@@ -289,6 +289,8 @@ export class ConfigService {
     submissionAutoCompleteGraceHours?: number;
     payoutReleaseWaitHours?: number;
     otpVerificationEnabled?: boolean;
+    paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only';
+    razorpayConfigured: boolean;
     showSearchLink: boolean;
     showRegisterInfluencerLink: boolean;
     showRegisterBrandLink: boolean;
@@ -312,6 +314,10 @@ export class ConfigService {
           submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48,
           payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
           otpVerificationEnabled: !!data?.otpVerificationEnabled,
+          paymentGatewayMode: ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
+            ? data.paymentGatewayMode
+            : 'razorpay_fallback',
+          razorpayConfigured: !!data?.razorpayConfigured,
           showSearchLink: data?.showSearchLink !== false,
           showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
           showRegisterBrandLink: data?.showRegisterBrandLink !== false,
@@ -326,6 +332,8 @@ export class ConfigService {
         submissionAutoCompleteGraceHours: 48,
         payoutReleaseWaitHours: 24,
         otpVerificationEnabled: false,
+        paymentGatewayMode: 'manual' as const,
+        razorpayConfigured: false,
         showSearchLink: true,
         showRegisterInfluencerLink: true,
         showRegisterBrandLink: true,

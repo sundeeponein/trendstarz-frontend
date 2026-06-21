@@ -1,51 +1,99 @@
-/* ── Plan Tabs Switcher ─────────────────────────────────────── */
-.plan-tabs-switcher {
+/* ── Trial days summary (visible across all roles, not just the active tab) ── */
+.trial-summary-card {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
   display: flex;
-  gap: 0;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+}
+
+.trial-summary-title {
+  font-weight: 700;
+  color: #c2410c;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trial-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.trial-summary-label { color: #374151; font-weight: 600; }
+.trial-summary-days { color: #6b7280; }
+
+/* ── Role tabs (matches admin-user-table's role-tabs convention) ──────── */
+.role-tabs {
+  margin-top: 8px;
+  display: inline-flex;
+  border-radius: 12px;
+  background: #eceef3;
+  padding: 4px;
+  gap: 4px;
+}
+
+.role-tab {
+  border: 0;
   background: transparent;
-  border-radius: 18px;
-  box-shadow: none;
-  width: fit-content;
+  color: #4b5565;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
 
-  button {
-    border: none;
-    outline: none;
-    background: #23293a;
-    color: #b0b6c3;
-    font-weight: 700;
-    font-size: 1.1rem;
-    padding: 12px 32px;
-    border-radius: 18px;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-    box-shadow: none;
-    margin: 0;
+.role-tab.active {
+  background: #ff7b10;
+  color: #111827;
+}
+
+/* ── Pricing & Discounts (edit form) ──────────────────────────────────── */
+.pricing-discount-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+
+  > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
-  button.active {
-    background: #ff6a2b;
-    color: #fff;
-    box-shadow: 0 2px 12px 0 #ff6a2b33;
-    z-index: 1;
-  }
+  label { font-size: 0.85rem; font-weight: 600; color: #374151; }
 
-  button:not(.active) {
-    background: #23293a;
-    color: #b0b6c3;
-    opacity: 0.6;
-    z-index: 0;
-  }
-
-  button:first-child {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-  button:last-child {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+  input[type=number] {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    &:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
   }
 }
+
+.discount-input-with-final {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  input[type=number] { flex: 1; min-width: 0; }
+
+  .final-price-hint {
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #059669;
+    white-space: nowrap;
+  }
+}
+
 .admin-plans {
   padding: 16px;
   max-width: 1100px;
@@ -313,5 +361,6 @@ input.input-key, input.input-label, input.input-value {
   &.btn-outline   { background: transparent; border: 1px solid #6366f1; color: #6366f1; &:hover { background: #eef2ff; } }
   &.btn-danger    { background: #fee2e2; color: #b91c1c; &:hover { background: #fca5a5; } }
   &.btn-sm        { padding: 5px 10px; font-size: 0.8rem; }
+  &:disabled      { opacity: 0.65; cursor: not-allowed; }
   &.btn-xs        { padding: 3px 8px; font-size: 0.78rem; }
 }

@@ -267,6 +267,70 @@
 }
 .price-monthly-hint { font-size: 0.8rem; color: #94a3b8; margin-top: -0.4rem; margin-bottom: 0.5rem; }
 
+.payment-method-tabs {
+  margin: 0.75rem 0 1rem;
+}
+
+.payment-method-tabs-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+
+.payment-method-tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.payment-method-tab {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active {
+    border-color: #f97316;
+    background: #fff7ed;
+    color: #f97316;
+  }
+  &:hover:not(.active) { border-color: #94a3b8; }
+}
+
+.payment-method-panel {
+  margin-bottom: 0.75rem;
+}
+
+.payment-method-info {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #16a34a;
+  margin: 0 0 0.75rem;
+}
+
+.payment-method-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: #64748b;
+
+  li {
+    position: relative;
+    padding-left: 1.1rem;
+    margin-bottom: 0.25rem;
+    &::before { content: '•'; position: absolute; left: 0; color: #f97316; }
+  }
+}
+
 /* Payment tabs */
 .pay-tabs {
   display: flex;
@@ -570,6 +634,14 @@
     font-size: 1.8rem;
     font-weight: 800;
     color: #f97316;
+
+    .price-original-strike {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-decoration: line-through;
+      margin-right: 0.4rem;
+    }
   }
 
   .plan-price-per {
