@@ -15,10 +15,12 @@
         <p class="crop-hint" *ngIf="!loadError">Drag to reposition, use the slider or pinch/scroll to zoom, then choose the visible area.</p>
         <div class="crop-error" *ngIf="loadError">Couldn't load this image for cropping. It may be unreachable or blocked by the browser. You can cancel and try again.</div>
         <div class="cropper-wrap" *ngIf="!loadError">
+          <div class="crop-loading" *ngIf="resolvingUrl">
+            <span class="spinner-border spinner-border-sm text-light" role="status"></span>
+          </div>
           <image-cropper
             *ngIf="hasSource"
-            [imageFile]="imageFile || undefined"
-            [imageURL]="imageFile ? undefined : (imageUrl || undefined)"
+            [imageFile]="effectiveImageFile || undefined"
             [maintainAspectRatio]="true"
             [aspectRatio]="aspectRatio"
             [roundCropper]="round"
