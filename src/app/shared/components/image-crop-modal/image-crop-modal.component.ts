@@ -29,7 +29,6 @@ export class ImageCropModalComponent implements OnChanges {
   constructor(private cd: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('[DBG] ngOnChanges', Object.keys(changes), 'imageUrl=', this.imageUrl, 'imageFile=', this.imageFile, 'open=', this.open);
     if (changes['imageFile'] || changes['imageUrl']) {
       this.imageLoaded = false;
       this.croppedBlob = null;
@@ -45,26 +44,18 @@ export class ImageCropModalComponent implements OnChanges {
   }
 
   private async resolveImageUrl(url: string): Promise<void> {
-    console.log('[DBG] start', url);
     this.resolvingUrl = true;
     try {
-      console.log('[DBG] before fetch');
       const response = await fetch(url);
-      console.log('[DBG] after fetch', response.status);
       if (!response.ok) throw new Error('Failed to fetch image');
       const blob = await response.blob();
-      console.log('[DBG] after blob', blob.size);
       const filename = url.split('/').pop()?.split('?')[0] || 'profile-image.jpg';
       this.resolvedFile = new File([blob], filename, { type: blob.type || 'image/jpeg' });
-      console.log('[DBG] resolvedFile', this.resolvedFile.size);
-    } catch (e) {
-      console.log('[DBG] caught', e);
+    } catch {
       this.loadError = true;
     } finally {
-      console.log('[DBG] finally, resolvingUrl->false');
       this.resolvingUrl = false;
       this.cd.detectChanges();
-      console.log('[DBG] after detectChanges');
     }
   }
 
