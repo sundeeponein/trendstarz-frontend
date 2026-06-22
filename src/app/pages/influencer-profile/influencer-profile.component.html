@@ -114,6 +114,14 @@
             </button>
             <p *ngIf="isEditMode && !imageUploadAllowed" class="text-muted mt-1" style="font-size:0.82rem">Gallery limit reached. You can still replace the profile photo, or upgrade to upload more gallery images.</p>
             <div *ngIf="submitted && !profileImagePreview && (profileImagesFormArray.length === 0 || !profileImagesFormArray.at(0).value?.url)" class="text-danger mt-1">Profile photo is required.</div>
+            <app-image-crop-modal
+              [open]="cropModalOpen"
+              [imageFile]="cropSourceFile"
+              [aspectRatio]="1"
+              title="Adjust profile photo"
+              (cropped)="onProfileImageCropped($event)"
+              (closed)="onProfileImageCropCancelled()"
+            ></app-image-crop-modal>
           </div>
 
           <!-- Gallery Images -->

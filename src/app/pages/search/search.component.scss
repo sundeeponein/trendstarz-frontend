@@ -199,6 +199,11 @@
   margin: 0 0 20px;
 }
 
+// ── Mobile filter toggle (hidden on desktop) ─────────
+.mobile-filter-toggle {
+  display: none;
+}
+
 // ── Filter Bar ───────────────────────────────────────
 .filter-bar {
   display: flex;
@@ -464,9 +469,49 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    color: #1a1a2e;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    i.bi-sliders { color: #ff6b35; }
+
+    span:not(.mobile-filter-count) { flex: 0 0 auto; }
+
+    i:last-child {
+      margin-left: auto;
+      color: #9ca3af;
+    }
+  }
+
+  .mobile-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: #ff6b35;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
   .filter-bar {
     flex-direction: column;
     gap: 0.75rem;
+
+    &.is-collapsed { display: none; }
   }
 
   .filter-item,

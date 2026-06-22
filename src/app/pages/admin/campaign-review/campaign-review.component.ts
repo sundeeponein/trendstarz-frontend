@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformServer } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -43,6 +43,13 @@ export class CampaignReviewComponent implements OnInit {
   pageSize = 10;
   readonly pageSizeOptions = [10, 25, 50, 100];
 
+  // Date range filter (applies to the campaign's submitted date, i.e. createdAt/updatedAt)
+  dateFilterOpen = false;
+  dateFrom = '';
+  dateTo = '';
+  appliedDateFrom = '';
+  appliedDateTo = '';
+
   selectedCampaign: any | null = null;
   selectedCampaignPreviewInvite: any | null = null;
   selectedCampaignInviteProgressLoading = false;
@@ -62,8 +69,18 @@ export class CampaignReviewComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private router: Router,
+    private elRef: ElementRef<HTMLElement>,
   ) {
     this.isServer = isPlatformServer(platformId);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.dateFilterOpen) return;
+    const wrap = this.elRef.nativeElement.querySelector('.cm-date-filter-wrap');
+    if (wrap && !wrap.contains(event.target as Node)) {
+      this.closeDateFilter();
+    }
   }
 
   ngOnInit() {
@@ -161,6 +178,18 @@ export class CampaignReviewComponent implements OnInit {
         return title.includes(q) || brand.includes(q) || id.includes(q);
       });
     }
+
+    if (this.appliedDateFrom || this.appliedDateTo) {
+      const from = this.appliedDateFrom ? new Date(`${this.appliedDateFrom}T00:00:00`) : null;
+      const to = this.appliedDateTo ? new Date(`${this.appliedDateTo}T23:59:59.999`) : null;
+      list = list.filter(c => {
+        const submitted = this.campaignSubmittedDateValue(c);
+        if (!submitted) return false;
+        if (from && submitted < from) return false;
+        if (to && submitted > to) return false;
+        return true;
+      });
+    }
     return list;
   }
 
@@ -179,6 +208,41 @@ export class CampaignReviewComponent implements OnInit {
   onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
 
   onSearchChange() { this.currentPage = 1; this.cdr.detectChanges(); }
+
+  get hasDateFilter(): boolean { return !!(this.appliedDateFrom || this.appliedDateTo); }
+
+  toggleDateFilter(): void {
+    if (!this.dateFilterOpen) {
+      this.dateFrom = this.appliedDateFrom;
+      this.dateTo = this.appliedDateTo;
+    }
+    this.dateFilterOpen = !this.dateFilterOpen;
+  }
+
+  closeDateFilter(): void { this.dateFilterOpen = false; }
+
+  applyDateFilter(): void {
+    this.appliedDateFrom = this.dateFrom;
+    this.appliedDateTo = this.dateTo;
+    this.currentPage = 1;
+    this.dateFilterOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  clearDateFilter(): void {
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.appliedDateFrom = '';
+    this.appliedDateTo = '';
+    this.currentPage = 1;
+    this.dateFilterOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  private campaignSubmittedDateValue(c: any): Date | null {
+    const d = new Date(c?.createdAt || c?.updatedAt || '');
+    return isNaN(d.getTime()) ? null : d;
+  }
 
   campaignIdLabel(c: any): string {
     // Prefer the DB-stored sequential number; fall back to last-6 of _id

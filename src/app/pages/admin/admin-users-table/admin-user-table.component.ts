@@ -22,6 +22,7 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
 import { SocialMediaEditModalComponent, AdminUser, SocialMediaEditPayload } from '../../../shared/components/social-media-edit-modal/social-media-edit-modal.component';
 import { SessionService } from '../../../core/session.service';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
+import { ImageCropModalComponent } from '../../../shared/components/image-crop-modal/image-crop-modal.component';
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
@@ -38,6 +39,7 @@ type AdminUserRole = 'influencer' | 'brand' | 'photographer';
     VerificationFieldComponent,
     SocialMediaEditModalComponent,
     AppPaginatorComponent,
+    ImageCropModalComponent,
   ],
   templateUrl: './admin-user-table.component.html',
   styleUrls: ['./admin-user-table.component.scss']
@@ -104,19 +106,27 @@ export class AdminUserTableComponent implements OnInit {
     this.fetchUsers(this.activeTab);
   };
 
+  // Resolve locally-stored dev-mode uploads (relative "/assets/..." paths) to the backend origin;
+  // Cloudinary URLs are already absolute and pass through unchanged.
+  private normalizeImageUrl(url: string): string {
+    if (!url.startsWith('/assets')) return url;
+    const backend = (environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
+    return backend ? backend + url : url;
+  }
+
   getProfileImage(user: any): string {
     if (!user.profileImages || !user.profileImages.length) return 'assets/default-profile.png';
     const img = user.profileImages[0];
-    if (img && typeof img === 'object' && img.url) return img.url;
-    if (typeof img === 'string' && img) return img;
+    if (img && typeof img === 'object' && img.url) return this.normalizeImageUrl(img.url);
+    if (typeof img === 'string' && img) return this.normalizeImageUrl(img);
     return 'assets/default-profile.png';
   }
 
   getBrandLogo(user: any): string {
     if (!user.brandLogo || !user.brandLogo.length) return 'assets/default-profile-brands.png';
     const img = user.brandLogo[0];
-    if (img && typeof img === 'object' && img.url) return img.url;
-    if (typeof img === 'string' && img) return img;
+    if (img && typeof img === 'object' && img.url) return this.normalizeImageUrl(img.url);
+    if (typeof img === 'string' && img) return this.normalizeImageUrl(img);
     return 'assets/default-profile-brands.png';
   }
 
@@ -126,6 +136,73 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserAvatar(user: any, userType: AdminUserRole): string {
     return userType === 'brand' ? this.getBrandLogo(user) : this.getProfileImage(user);
+  }
+
+  hasRecroppableImage(user: any, userType: AdminUserRole): boolean {
+    const avatar = this.getUserAvatar(user, userType);
+    return !avatar.includes('default-profile');
+  }
+
+  // --- Admin recrop of an existing profile image/logo (no re-upload needed) ---
+  cropModalOpen = false;
+  cropSourceUrl: string | null = null;
+  cropSaving = false;
+  private cropTargetUser: any = null;
+  private cropTargetRole: AdminUserRole | null = null;
+
+  openRecropModal(user: any, role: AdminUserRole): void {
+    this.cropTargetUser = user;
+    this.cropTargetRole = role;
+    this.cropSourceUrl = this.getUserAvatar(user, role);
+    this.cropModalOpen = true;
+  }
+
+  onRecropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceUrl = null;
+    this.cropTargetUser = null;
+    this.cropTargetRole = null;
+  }
+
+  onRecropCropped(file: File): void {
+    const user = this.cropTargetUser;
+    const role = this.cropTargetRole;
+    if (!user || !role) { this.onRecropCancelled(); return; }
+    this.cropSaving = true;
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append('folder', role === 'brand' ? 'brand_logo' : 'registration_images');
+    this.configService.uploadImage(formData).subscribe({
+      next: (uploaded: { url: string; public_id: string }) => {
+        if (!uploaded?.url || !uploaded?.public_id) {
+          this.cropSaving = false;
+          alert('Image upload failed. Please try again.');
+          return;
+        }
+        const path = role === 'brand' ? 'brands' : role === 'photographer' ? 'photographers' : 'influencers';
+        const body = role === 'brand'
+          ? { brandLogo: [{ url: uploaded.url, public_id: uploaded.public_id }] }
+          : { profileImages: [{ url: uploaded.url, public_id: uploaded.public_id }] };
+        this.http.patch(`${environment.apiBaseUrl}/admin/${path}/${user._id}/images`, body, this.getAuthHeaders())
+          .subscribe({
+            next: () => {
+              if (role === 'brand') user.brandLogo = body.brandLogo;
+              else user.profileImages = body.profileImages;
+              this.cropSaving = false;
+              this.onRecropCancelled();
+              this.cd.detectChanges();
+            },
+            error: (err) => {
+              this.cropSaving = false;
+              alert('Error saving cropped image: ' + (err?.error?.message || err?.message || 'Unknown error'));
+            },
+          });
+      },
+      error: (err) => {
+        this.cropSaving = false;
+        alert('Image upload failed: ' + (err?.error?.message || err?.message || 'Unknown error'));
+      },
+    });
   }
 
   getUserProfilePhotoStatus(user: any): string {

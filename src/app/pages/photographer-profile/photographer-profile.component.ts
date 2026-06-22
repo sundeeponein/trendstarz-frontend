@@ -25,11 +25,12 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dial
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -851,11 +852,30 @@ export class PhotographerProfileComponent implements OnInit {
     return desc ? `${name} (${desc})` : name;
   }
 
-  async onProfileImageFileChange(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private profileImageInputEl: HTMLInputElement | null = null;
+
+  onProfileImageFileChange(event: Event) {
+    this.profileImageInputEl = event.target as HTMLInputElement;
+    const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { this.toast.error('Please select a valid image file.'); return; }
     if (file.size > 5 * 1024 * 1024) { this.toast.error('Image size must be below 5MB.'); return; }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onProfileImageCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+  }
+
+  onProfileImageCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
     this.uploadingImage = true;
     const reader = new FileReader();
     reader.onload = (e) => { this.profileImagePreview = e.target?.result as string; this.cdr.detectChanges(); };

@@ -28,11 +28,12 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dial
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -1109,18 +1110,37 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
 
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private profileImageInputEl: HTMLInputElement | null = null;
+
   // Only allow 1 image for now (can extend for premium)
-  async onProfileImageFileChange(event: any) {
+  onProfileImageFileChange(event: any) {
     if (!this.isEditMode) return;
-    this.profileImagePreview = null;
-    this.profileImageFile = null;
-    const file: File = event.target.files && event.target.files[0];
+    this.profileImageInputEl = event.target as HTMLInputElement;
+    const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
     const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
     if (!validation.valid) {
       this.toast.error(validation.reason || 'Please select a valid image file.');
       return;
     }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onProfileImageCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+  }
+
+  async onProfileImageCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
     this.profileImageUploading = true;
     this.cd.detectChanges();
     try {

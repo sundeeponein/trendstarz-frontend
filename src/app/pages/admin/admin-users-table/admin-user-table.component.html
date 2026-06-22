@@ -231,12 +231,26 @@
     <div class="modal-content details-modal">
       <div class="modal-header border-0 pb-2">
         <div class="details-head d-flex gap-3 align-items-center">
-          <img
-            class="avatar lg"
-            [src]="getUserAvatar(selectedUser, selectedRole)"
-            alt="Selected user"
-            (error)="$any($event.target).src = (selectedRole) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
-          />
+          <div class="avatar-wrap">
+            <img
+              class="avatar lg"
+              [src]="getUserAvatar(selectedUser, selectedRole)"
+              alt="Selected user"
+              (error)="$any($event.target).src = (selectedRole) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
+            />
+            <button
+              type="button"
+              class="avatar-recrop-btn"
+              *ngIf="hasRecroppableImage(selectedUser, selectedRole) && !cropSaving"
+              (click)="openRecropModal(selectedUser, selectedRole)"
+              title="Adjust crop"
+            >
+              <i class="bi bi-crop"></i>
+            </button>
+            <span class="avatar-saving-overlay" *ngIf="cropSaving">
+              <span class="spinner-border spinner-border-sm text-light" role="status"></span>
+            </span>
+          </div>
           <div>
             <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getSelectedUserStatus() === 'accepted'">| {{ getSelectedUserStatus() | titlecase }}</span></h4>
             <div class="user-sub">{{ getUserHandle(selectedUser) }}</div>
@@ -679,6 +693,15 @@
     </div>
   </div>
 </div>
+
+<app-image-crop-modal
+  [open]="cropModalOpen"
+  [imageUrl]="cropSourceUrl"
+  [aspectRatio]="1"
+  title="Adjust crop"
+  (cropped)="onRecropCropped($event)"
+  (closed)="onRecropCancelled()"
+></app-image-crop-modal>
 
 <!-- Premium Duration Modal -->
 <div *ngIf="showPremiumModal" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">

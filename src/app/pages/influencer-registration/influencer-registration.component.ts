@@ -24,6 +24,7 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dial
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -40,7 +41,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
@@ -910,9 +911,28 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   get profileImagesFormArray() { return this.registrationForm.get('profileImages') as FormArray; }
 
-  async onProfileImageFileChange(event: any) {
-    const file = event.target.files[0];
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private profileImageInputEl: HTMLInputElement | null = null;
+
+  onProfileImageFileChange(event: any) {
+    this.profileImageInputEl = event.target as HTMLInputElement;
+    const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onProfileImageCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+  }
+
+  async onProfileImageCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
     this.profileImageUploading = true;
     this.cdr.detectChanges();
     try {

@@ -27,11 +27,12 @@ import {
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -311,10 +312,14 @@ export class BrandProfileComponent implements OnInit {
   }
 
   // Getter for brandLogo FormArray
-  // Handle brand logo file selection, compress, upload, and preview
-  async onBrandLogoFileChange(event: any) {
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private brandLogoInputEl: HTMLInputElement | null = null;
+
+  onBrandLogoFileChange(event: any) {
     if (!this.isEditMode) return;
-    const file: File = event.target.files && event.target.files[0];
+    this.brandLogoInputEl = event.target as HTMLInputElement;
+    const file = this.brandLogoInputEl.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       this.showValidationMessage('Please select a valid image file.');
@@ -324,6 +329,21 @@ export class BrandProfileComponent implements OnInit {
       this.showValidationMessage('Image size must be below 2MB.');
       return;
     }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onBrandLogoCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
+  }
+
+  // Handle brand logo crop confirmation: compress, upload, and preview
+  async onBrandLogoCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
     // Compress image before upload
     const options = {
       maxSizeMB: 0.1,

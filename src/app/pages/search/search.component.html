@@ -52,7 +52,14 @@
   </div>
 
   <!-- ───── REUSABLE FILTERS ───── -->
-  <div class="filter-bar">
+  <button type="button" class="mobile-filter-toggle" (click)="toggleMobileFilters()" [attr.aria-expanded]="showMobileFilters">
+    <i class="bi bi-sliders"></i>
+    <span>Filters</span>
+    <span class="mobile-filter-count" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+    <i class="bi" [ngClass]="showMobileFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+  </button>
+
+  <div class="filter-bar" [class.is-collapsed]="!showMobileFilters">
     <!-- Keyword Search -->
     <div class="filter-item search-item">
       <label class="filter-label">Search</label>

@@ -96,6 +96,14 @@
               <button type="button" class="btn btn-outline-primary btn-sm mt-1" *ngIf="isEditMode" (click)="profileFileInput.click()">
                 {{ profileImagePreview ? 'Replace profile photo' : 'Upload profile photo' }}
               </button>
+              <app-image-crop-modal
+                [open]="cropModalOpen"
+                [imageFile]="cropSourceFile"
+                [aspectRatio]="1"
+                title="Adjust profile photo"
+                (cropped)="onProfileImageCropped($event)"
+                (closed)="onProfileImageCropCancelled()"
+              ></app-image-crop-modal>
             </div>
 
             <div class="field-grid">

@@ -72,6 +72,14 @@
             </div>
             <button type="button" class="btn btn-outline-secondary btn-sm mt-1" *ngIf="profileImagePreview && !profileImageUploading" (click)="removeProfileImage(0)">Remove</button>
             <div *ngIf="!profileImagePreview && submitted" class="text-danger mt-1">Profile photo is required.</div>
+            <app-image-crop-modal
+              [open]="cropModalOpen"
+              [imageFile]="cropSourceFile"
+              [aspectRatio]="1"
+              title="Adjust profile photo"
+              (cropped)="onProfileImageCropped($event)"
+              (closed)="onProfileImageCropCancelled()"
+            ></app-image-crop-modal>
           </div>
 
           <div class="field-grid">

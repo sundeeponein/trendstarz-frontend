@@ -67,6 +67,14 @@
             </div>
             <button type="button" class="btn btn-outline-secondary btn-sm mt-1" (click)="removeBrandLogo()" *ngIf="brandLogoPreview">Remove</button>
             <div *ngIf="submitted && !brandLogoPreview" class="text-danger mt-1">Brand logo is required.</div>
+            <app-image-crop-modal
+              [open]="cropModalOpen"
+              [imageFile]="cropSourceFile"
+              [aspectRatio]="1"
+              title="Adjust brand logo"
+              (cropped)="onBrandLogoCropped($event)"
+              (closed)="onBrandLogoCropCancelled()"
+            ></app-image-crop-modal>
           </div>
 
           <div class="field-grid">

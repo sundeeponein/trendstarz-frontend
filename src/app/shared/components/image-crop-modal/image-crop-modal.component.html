@@ -1,0 +1,41 @@
+<div
+  *ngIf="open"
+  class="modal fade show reusable-image-crop-modal"
+  style="display:block; background: rgba(7, 12, 22, 0.72);"
+  tabindex="-1"
+  (click)="cancel()"
+>
+  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ title }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cancel()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="crop-hint" *ngIf="!loadError">Drag to reposition, use the slider or pinch/scroll to zoom, then choose the visible area.</p>
+        <div class="crop-error" *ngIf="loadError">Couldn't load this image for cropping. It may be unreachable or blocked by the browser. You can cancel and try again.</div>
+        <div class="cropper-wrap" *ngIf="!loadError">
+          <image-cropper
+            *ngIf="hasSource"
+            [imageFile]="imageFile || undefined"
+            [imageURL]="imageFile ? undefined : (imageUrl || undefined)"
+            [maintainAspectRatio]="true"
+            [aspectRatio]="aspectRatio"
+            [roundCropper]="round"
+            [resizeToWidth]="600"
+            format="jpeg"
+            [autoCrop]="true"
+            output="blob"
+            (imageCropped)="onImageCropped($event)"
+            (imageLoaded)="onImageLoaded($event)"
+            (loadImageFailed)="onLoadImageFailed()"
+          ></image-cropper>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn-primary" *ngIf="!loadError" [disabled]="!imageLoaded" (click)="confirm()">Use this photo</button>
+      </div>
+    </div>
+  </div>
+</div>

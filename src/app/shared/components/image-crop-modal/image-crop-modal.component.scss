@@ -1,0 +1,21 @@
+.crop-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.cropper-wrap {
+  max-height: 60vh;
+  background: #111;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.crop-error {
+  font-size: 0.85rem;
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fda29b;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}

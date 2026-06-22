@@ -28,6 +28,13 @@ export class SearchComponent implements OnInit {
 
   activeTab: 'influencers' | 'brands' | 'photographers' = 'influencers';
 
+  // Filters are collapsed by default on mobile to avoid pushing results below the fold.
+  showMobileFilters = false;
+
+  toggleMobileFilters(): void {
+    this.showMobileFilters = !this.showMobileFilters;
+  }
+
   // Raw data
   allInfluencers: any[] = [];
   allBrands: any[] = [];
@@ -206,6 +213,13 @@ export class SearchComponent implements OnInit {
     return this.isInfluencerMode
       ? 'Search creators, keywords, or niches...'
       : 'Search brands, keywords, or industries...';
+  }
+
+  get activeFilterCount(): number {
+    const values = [this.activeKeyword, this.activeCategory, this.activeLocation, this.activeAgeRange];
+    if (this.isInfluencerMode) values.push(this.infFilters.tier);
+    if (this.isPhotographerMode) values.push(this.photographerFilters.skill);
+    return values.filter((v) => !!v).length;
   }
 
   get categoryLabel(): string {

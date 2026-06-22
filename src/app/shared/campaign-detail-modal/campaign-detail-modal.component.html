@@ -303,9 +303,9 @@
                     </div>
                     <div class="cdm-creator-card__dates"
                          *ngIf="adminInviteWorkingFromDate(item) || item.selectedPostDate">
-                      <ng-container *ngIf="adminInviteWorkingFromDate(item)">
+                      <!-- <ng-container *ngIf="adminInviteWorkingFromDate(item)">
                         Working from: {{ adminInviteWorkingFromDate(item) }}
-                      </ng-container>
+                      </ng-container> -->
                       <ng-container *ngIf="adminInviteWorkingFromDate(item) && item.selectedPostDate"> &bull; </ng-container>
                       <ng-container *ngIf="item.selectedPostDate">
                         Post date: {{ item.selectedPostDate | date:'MMM d, yyyy' }}

@@ -20,6 +20,7 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -36,7 +37,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent, MobileBottomActionsComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })
@@ -610,15 +611,33 @@ export class BrandRegistrationComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
-  async onBrandLogoFileChange(event: any) {
-    const file: File = event?.target?.files?.[0];
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private brandLogoInputEl: HTMLInputElement | null = null;
+
+  onBrandLogoFileChange(event: any) {
+    this.brandLogoInputEl = event?.target as HTMLInputElement;
+    const file: File = this.brandLogoInputEl?.files?.[0] as File;
     if (!file) return;
     const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
     if (!validation.valid) {
       this.registrationError = validation.reason || 'Invalid image file.';
       return;
     }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
 
+  onBrandLogoCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
+  }
+
+  async onBrandLogoCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
     try {
       const compressedFile = await imageCompression(file, {
         maxSizeMB: 0.1,

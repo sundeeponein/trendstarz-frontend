@@ -99,9 +99,33 @@
       <button class="cm-filter-btn" type="button">
         Status: {{ campaignStatusLabel(campaignApprovalStatusFilter) }}
       </button>
-      <button class="cm-filter-btn cm-filter-btn--icon" type="button" title="Date filter">
-        <i class="bi bi-calendar3"></i>
-      </button>
+      <div class="cm-date-filter-wrap">
+        <button
+          class="cm-filter-btn cm-filter-btn--icon"
+          type="button"
+          title="Date filter"
+          [class.cm-filter-btn--active]="hasDateFilter"
+          (click)="toggleDateFilter()"
+        >
+          <i class="bi bi-calendar3"></i>
+          <span *ngIf="hasDateFilter" class="cm-date-filter-dot"></span>
+        </button>
+
+        <div class="cm-date-filter-panel" *ngIf="dateFilterOpen">
+          <div class="cm-date-filter-row">
+            <label>From</label>
+            <input type="date" [(ngModel)]="dateFrom" [max]="dateTo || null" />
+          </div>
+          <div class="cm-date-filter-row">
+            <label>To</label>
+            <input type="date" [(ngModel)]="dateTo" [min]="dateFrom || null" />
+          </div>
+          <div class="cm-date-filter-actions">
+            <button type="button" class="cm-btn cm-btn--outline" (click)="clearDateFilter()">Clear</button>
+            <button type="button" class="cm-btn cm-btn--primary" (click)="applyDateFilter()">Apply</button>
+          </div>
+        </div>
+      </div>
       <button class="cm-btn cm-btn--primary" type="button" (click)="loadCampaignApprovals()">
         Refresh
       </button>
