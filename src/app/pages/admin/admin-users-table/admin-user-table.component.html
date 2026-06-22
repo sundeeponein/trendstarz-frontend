@@ -12,15 +12,6 @@
     <div class="admin-users-header col-8">
       <div class="admin-title-row">
         <h4>Admin Users</h4>
-        <button
-          class="import-users-btn"
-          (click)="importFirebaseUsers()"
-          [disabled]="isImportingFirebaseUsers"
-          title="Import Firebase Auth users missing from MongoDB. Uses Firebase role claims when available; otherwise imports as pending influencers."
-        >
-          <i class="bi bi-cloud-download"></i>
-          {{ isImportingFirebaseUsers ? 'Importing...' : 'Import Users' }}
-        </button>
       </div>
       <small>Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
     </div>
@@ -32,7 +23,7 @@
     </div>
   </div>
 
-  <div class="filters-grid">
+  <div class="toolbar-row">
     <div class="search-wrap">
       <i class="bi bi-search"></i>
       <input
@@ -43,11 +34,24 @@
       />
     </div>
 
-    <!-- <select [ngModel]="getActiveFilterValue('status')" (change)="setActiveFilterValue('status', $any($event.target).value)">
-      <option value="">Status: All</option>
-      <option *ngFor="let status of statusArray" [value]="status">Status: {{ status | titlecase }}</option>
-    </select> -->
+    <div class="toolbar-actions">
+      <button class="download-users-btn" (click)="downloadUsersData()">
+        <i class="bi bi-download"></i>
+        Download
+      </button>
+      <button type="button" class="filters-toggle-btn" (click)="toggleFilters()" [attr.aria-expanded]="filtersExpanded">
+        <i class="bi bi-funnel"></i>
+        <span>Filters</span>
+        <i class="bi" [ngClass]="filtersExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <button class="reset-btn" (click)="resetFilters(activeTab)">
+        <i class="bi bi-sliders2"></i>
+        Reset
+      </button>
+    </div>
+  </div>
 
+  <div class="filters-grid" *ngIf="filtersExpanded">
     <select class="verification-filter" [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
       <option value="">Verification: All</option>
       <option value="email_pending">Email pending</option>
@@ -56,7 +60,6 @@
       <option value="both_pending">Both pending</option>
       <option value="both_verified">Both verified</option>
     </select>
-
 
     <select class="subscription-filter" [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">
       <option value="">Subscription: All</option>
@@ -79,11 +82,29 @@
       <option *ngFor="let category of categoriesArray" [value]="category">Category: {{ category }}</option>
     </select>
 
-    <button class="reset-btn" (click)="resetFilters(activeTab)">
-      <i class="bi bi-sliders2"></i>
-      Reset
-    </button>
+    <select class="sort-filter" [(ngModel)]="registeredSortOrder" (ngModelChange)="onSortOrderChange()">
+      <option value="newest">Sort: Newest registered</option>
+      <option value="oldest">Sort: Oldest registered</option>
+    </select>
 
+    <div class="registered-range-filter">
+      <label>Registered</label>
+      <input
+        type="date"
+        [ngModel]="getActiveFilterValue('registeredFrom')"
+        [max]="getActiveFilterValue('registeredTo') || null"
+        (change)="setActiveFilterValue('registeredFrom', $any($event.target).value)"
+        title="Registered from"
+      />
+      <span>to</span>
+      <input
+        type="date"
+        [ngModel]="getActiveFilterValue('registeredTo')"
+        [min]="getActiveFilterValue('registeredFrom') || null"
+        (change)="setActiveFilterValue('registeredTo', $any($event.target).value)"
+        title="Registered to"
+      />
+    </div>
   </div>
 
   <div class="alert alert-info py-2" *ngIf="firebaseImportMessage">
@@ -99,6 +120,12 @@
       <span class="ts-status-badge ts-status-deleted">Deleted</span>
       <span class="ts-status-badge ts-status-other">Other</span>
     </div>
+    <div class="col-4">
+      
+    </div>
+
+    
+
     <app-paginator
       [total]="getTotalVisibleUsers()"
       [pageSize]="pageSize"
@@ -106,7 +133,7 @@
       [pageSizeOptions]="pageSizeOptions"
       [entityLabel]="getRoleTitle().toLowerCase()"
       (pageChange)="onPageChange($event)"
-      (pageSizeChange)="onPageSizeChange($event)">
+      (pageSizeChange)="onPageSizeChange($event)" class="my-1">
     </app-paginator>
   </div>
 

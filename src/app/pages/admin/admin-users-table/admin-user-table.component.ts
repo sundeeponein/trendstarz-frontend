@@ -900,7 +900,9 @@ export class AdminUserTableComponent implements OnInit {
     badgeTag: '',
     emailVerified: '',
     mobileVerified: '',
-    contactVerification: ''
+    contactVerification: '',
+    registeredFrom: '',
+    registeredTo: ''
   };
   brandFilters = {
     status: '',
@@ -912,7 +914,9 @@ export class AdminUserTableComponent implements OnInit {
     badgeTag: '',
     emailVerified: '',
     mobileVerified: '',
-    contactVerification: ''
+    contactVerification: '',
+    registeredFrom: '',
+    registeredTo: ''
   };
   photographerFilters = {
     status: '',
@@ -924,8 +928,19 @@ export class AdminUserTableComponent implements OnInit {
     badgeTag: '',
     emailVerified: '',
     mobileVerified: '',
-    contactVerification: ''
+    contactVerification: '',
+    registeredFrom: '',
+    registeredTo: ''
   };
+
+  registeredSortOrder: 'newest' | 'oldest' = 'newest';
+
+  onSortOrderChange(): void {
+    this.applyFilters('influencer');
+    this.applyFilters('brand');
+    this.applyFilters('photographer');
+    this.currentPage = 1;
+  }
 
   // Available filter options
   categoriesArray: string[] = [];
@@ -1033,6 +1048,10 @@ export class AdminUserTableComponent implements OnInit {
 
   toggleFilters() {
     this.filtersExpanded = !this.filtersExpanded;
+  }
+
+  downloadUsersData() {
+    // TODO: export the currently filtered user list.
   }
 
   ngOnDestroy() {
@@ -1228,7 +1247,8 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   private sortNewestUsers(users: any[]): any[] {
-    return [...users].sort((a, b) => this.getUserSortTime(b) - this.getUserSortTime(a));
+    const direction = this.registeredSortOrder === 'oldest' ? -1 : 1;
+    return [...users].sort((a, b) => direction * (this.getUserSortTime(b) - this.getUserSortTime(a)));
   }
 
   applyFilters(userType: 'influencer' | 'brand' | 'photographer') {
@@ -1357,7 +1377,20 @@ export class AdminUserTableComponent implements OnInit {
     if (filters.badgeTag && !this.getUserTags(user).includes(filters.badgeTag)) {
       return false;
     }
-    
+
+    // Registered date range filter
+    if (filters.registeredFrom || filters.registeredTo) {
+      const registeredAt = user?.firstRegisteredAt || user?.createdAt;
+      const registeredTime = registeredAt ? new Date(registeredAt).getTime() : NaN;
+      if (!Number.isFinite(registeredTime)) return false;
+      if (filters.registeredFrom && registeredTime < new Date(`${filters.registeredFrom}T00:00:00`).getTime()) {
+        return false;
+      }
+      if (filters.registeredTo && registeredTime > new Date(`${filters.registeredTo}T23:59:59.999`).getTime()) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -1601,13 +1634,15 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
+    const empty = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '', registeredFrom: '', registeredTo: '' };
     if (userType === 'influencer') {
-      this.influencerFilters = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
+      this.influencerFilters = { ...empty };
     } else if (userType === 'brand') {
-      this.brandFilters = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
+      this.brandFilters = { ...empty };
     } else {
-      this.photographerFilters = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '' };
+      this.photographerFilters = { ...empty };
     }
+    this.registeredSortOrder = 'newest';
     this.applyFilters(userType);
     this.currentPage = 1;
   }
