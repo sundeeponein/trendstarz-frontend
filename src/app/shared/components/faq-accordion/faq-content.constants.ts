@@ -11,7 +11,7 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   },
   {
     question: 'Is TrendStarz free to use?',
-    answer: 'Yes, registration is currently free for early users during the MVP phase.'
+    answer: 'Yes, registration is currently free for all users. Join TrendStarZ and start connecting with brands, creators, and industry professionals.'
   },
   {
     question: 'How do brands use TrendStarz?',

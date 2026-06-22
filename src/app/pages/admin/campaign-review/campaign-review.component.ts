@@ -55,7 +55,7 @@ export class CampaignReviewComponent implements OnInit {
   selectedCampaignInviteProgressLoading = false;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
-  moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
+  moderationAction: 'approve' | 'reject' | 'needs_changes' | 'complete' = 'needs_changes';
   moderationNoteInput = '';
   moderationModalError = '';
   approvedCampaignAlert: any | null = null;
@@ -366,6 +366,10 @@ export class CampaignReviewComponent implements OnInit {
     return this.canApproveCampaign(campaign) || this.canRequestChangesCampaign(campaign) || this.canRejectCampaign(campaign);
   }
 
+  canCompleteCampaign(campaign: any): boolean {
+    return this.isActiveCampaign(campaign);
+  }
+
   setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all') {
     if (this.campaignApprovalStatusFilter === status) return;
     this.campaignApprovalStatusFilter = status;
@@ -390,7 +394,7 @@ export class CampaignReviewComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  private moderateCampaign(campaign: any, action: 'approve' | 'reject' | 'needs_changes', moderationNote = '') {
+  private moderateCampaign(campaign: any, action: 'approve' | 'reject' | 'needs_changes' | 'complete', moderationNote = '') {
     if (!campaign?._id) return;
     const note = String(moderationNote || '').trim();
     this.moderatingCampaignId = String(campaign._id);
@@ -416,6 +420,7 @@ export class CampaignReviewComponent implements OnInit {
           approve: 'Campaign approved successfully.',
           needs_changes: 'Needs Changes sent to brand.',
           reject: 'Campaign rejected.',
+          complete: 'Campaign marked complete.',
         };
         this.closeModerationModal();
         this.closeCampaignPreview();
@@ -470,13 +475,13 @@ export class CampaignReviewComponent implements OnInit {
     done();
   }
 
-  openModerationModal(campaign: any, action: 'approve' | 'reject' | 'needs_changes') {
+  openModerationModal(campaign: any, action: 'approve' | 'reject' | 'needs_changes' | 'complete') {
     if (!campaign?._id) return;
     this.moderationTargetCampaign = campaign;
     this.moderationAction = action;
     this.moderationModalError = '';
     const existing = String(campaign?.moderationNote || '').trim();
-    this.moderationNoteInput = action === 'approve' ? '' : existing;
+    this.moderationNoteInput = (action === 'approve' || action === 'complete') ? '' : existing;
     this.showModerationModal = true;
   }
 
@@ -491,12 +496,14 @@ export class CampaignReviewComponent implements OnInit {
   get moderationModalTitle(): string {
     if (this.moderationAction === 'needs_changes') return 'Request Changes';
     if (this.moderationAction === 'reject') return 'Reject Campaign';
+    if (this.moderationAction === 'complete') return 'Mark Campaign Complete';
     return 'Approve Campaign';
   }
 
   get moderationModalPrimaryText(): string {
     if (this.moderationAction === 'needs_changes') return 'Send To Brand';
     if (this.moderationAction === 'reject') return 'Reject Campaign';
+    if (this.moderationAction === 'complete') return 'Mark Complete';
     return 'Approve Campaign';
   }
 
@@ -512,6 +519,9 @@ export class CampaignReviewComponent implements OnInit {
     }
     if (this.moderationAction === 'reject') {
       return 'Share the reason so the brand understands why it was rejected.';
+    }
+    if (this.moderationAction === 'complete') {
+      return 'This closes the campaign out permanently — it cannot be reopened afterward.';
     }
     return 'Optional note for audit context.';
   }
@@ -597,6 +607,14 @@ export class CampaignReviewComponent implements OnInit {
           postUrl: invite?.latestSubmission?.postUrl || invite?.postUrl || null,
           submittedAt: invite?.latestSubmission?.submittedAt || null,
           postPlatform: invite?.latestSubmission?.postPlatform || null,
+          // Host (campaign owner) approval of the participant's submitted post.
+          postSubmissionStatus: invite?.latestSubmission?.status || null,
+          postApproved: invite?.latestSubmission?.status === 'approved',
+          postApprovedAt: invite?.latestSubmission?.reviewedAt || invite?.latestSubmission?.autoCompletedAt || null,
+          // Payout to the participant for this invite.
+          payoutStatus: invite?.latestPayout?.payoutStatus || null,
+          payoutDate: invite?.latestPayout?.payoutSettledAt || null,
+          payoutInitiatedAt: invite?.latestPayout?.payoutInitiatedAt || null,
         };
       })
       .sort((a: any, b: any) => {
@@ -956,6 +974,10 @@ export class CampaignReviewComponent implements OnInit {
 
   get selectedCampaignCanReject(): boolean {
     return this.canRejectCampaign(this.selectedCampaign);
+  }
+
+  get selectedCampaignCanComplete(): boolean {
+    return this.canCompleteCampaign(this.selectedCampaign);
   }
 
   campaignStatusLabel(status: string): string {

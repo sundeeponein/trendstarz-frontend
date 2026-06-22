@@ -33,7 +33,9 @@ export class PhotographerUserCardComponent {
   }
 
   get displayImage(): string {
-    return this.profileImage || this.profileImages?.[0]?.url || 'assets/default-profile.png';
+    // profileImages[0] is the live source of truth; profileImage is a legacy
+    // field that can go stale after a re-upload/recrop, so prefer the array.
+    return this.profileImages?.[0]?.url || this.profileImage || 'assets/default-profile.png';
   }
 
   get displayLocation(): string {

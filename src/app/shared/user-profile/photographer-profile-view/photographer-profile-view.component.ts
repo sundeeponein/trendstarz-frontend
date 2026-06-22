@@ -92,7 +92,7 @@ export class PhotographerProfileViewComponent implements OnInit {
       typeof firstImage === 'string'
         ? firstImage
         : (firstImage?.url || firstImage?.secure_url || '');
-    const imageUrl = this.photographer?.profileImage || firstImageUrl;
+    const imageUrl = firstImageUrl || this.photographer?.profileImage;
     return this.normalizeImageUrl(imageUrl, 220, 220) || 'assets/default-profile.png';
   }
   
@@ -146,7 +146,7 @@ export class PhotographerProfileViewComponent implements OnInit {
       typeof firstImage === 'string'
         ? firstImage
         : (firstImage?.url || firstImage?.secure_url || '');
-    const imageUrl = this.photographer?.profileImage || firstImageUrl;
+    const imageUrl = firstImageUrl || this.photographer?.profileImage;
     if (!imageUrl) return '';
     const base = this.normalizeImageUrl(imageUrl);
     if (!base.includes('res.cloudinary.com')) return '';

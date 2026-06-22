@@ -138,36 +138,7 @@
     </div>
   </div>
 
-  <div class="section-card mb-4 profile-traffic-card" p-2>
-    <div class="section-title d-flex align-items-center mb-2">
-      <span class="dot dot--purple me-2"></span> Profile Traffic
-      <span class="section-count ms-auto">Last 30 days</span>
-    </div>
-
-    <div class="profile-traffic-grid" *ngIf="canViewProfileTraffic; else brandTrafficLocked">
-      <div class="traffic-stat-box">
-        <div class="traffic-stat-label">Impressions</div>
-        <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
-      </div>
-      <div class="traffic-stat-box">
-        <div class="traffic-stat-label">Clicks</div>
-        <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
-      </div>
-      <div class="traffic-stat-meta">
-        <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ profileTraffic.lastImpressionAt | date:'medium' }}</span>
-        <span *ngIf="profileTraffic.lastClickAt">Last click: {{ profileTraffic.lastClickAt | date:'medium' }}</span>
-      </div>
-    </div>
-
-    <ng-template #brandTrafficLocked>
-      <div class="traffic-locked-state">
-        <i class="bi bi-lock-fill"></i>
-        <span>Upgrade to Premium to view profile traffic analytics.</span>
-        <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
-      </div>
-    </ng-template>
-  </div>
-
+  
   <!-- Campaign Sections -->
   <div class="row mb-4 gx-3">
     <div class="col-md-4 mb-3 mb-md-0">
@@ -286,6 +257,37 @@
         <i class="bi bi-arrow-right-circle"></i> View all payment history
       </a>
     </div>
+  </div>
+
+  <!-- Profile Traffic hidden - by sundeep -->
+  <div class="section-card mb-4 profile-traffic-card p-2 d-none">
+    <div class="section-title d-flex align-items-center mb-2">
+      <span class="dot dot--purple me-2"></span> Profile Traffic
+      <span class="section-count ms-auto">Last 30 days</span>
+    </div>
+
+    <div class="profile-traffic-grid" *ngIf="canViewProfileTraffic; else brandTrafficLocked">
+      <div class="traffic-stat-box">
+        <div class="traffic-stat-label">Impressions</div>
+        <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
+      </div>
+      <div class="traffic-stat-box">
+        <div class="traffic-stat-label">Clicks</div>
+        <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
+      </div>
+      <div class="traffic-stat-meta">
+        <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ profileTraffic.lastImpressionAt | date:'medium' }}</span>
+        <span *ngIf="profileTraffic.lastClickAt">Last click: {{ profileTraffic.lastClickAt | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <ng-template #brandTrafficLocked>
+      <div class="traffic-locked-state">
+        <i class="bi bi-lock-fill"></i>
+        <span>Upgrade to Premium to view profile traffic analytics.</span>
+        <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
+      </div>
+    </ng-template>
   </div>
 
   <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>

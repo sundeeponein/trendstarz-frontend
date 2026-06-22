@@ -54,6 +54,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanApprove = true;
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
+  @Input() adminCanComplete = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
   }
@@ -73,6 +74,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() approve = new EventEmitter<void>();
   @Output() requestChanges = new EventEmitter<void>();
   @Output() reject = new EventEmitter<void>();
+  @Output() complete = new EventEmitter<void>();
   @Output() validationError = new EventEmitter<string>();
   @Output() viewSubmission = new EventEmitter<void>();
   @Output() confirmReceipt = new EventEmitter<void>();
@@ -1360,6 +1362,34 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     });
   }
 
+  adminInvitePostApprovedAtText(item: any): string {
+    const d = item?.postApprovedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  adminInvitePayoutDateText(item: any): string {
+    const d = item?.payoutDate;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  adminInvitePayoutStatusLabel(item: any): string {
+    const status = String(item?.payoutStatus || '').toLowerCase();
+    if (status === 'paid') return 'Paid';
+    if (status === 'processing') return 'Payout processing';
+    if (status === 'frozen') return 'Payout frozen (dispute)';
+    if (status === 'skipped') return 'Payout skipped';
+    if (status === 'pending') return 'Payout pending';
+    return '';
+  }
+
   onAdminApprove() {
     this.approve.emit();
   }
@@ -1370,6 +1400,10 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   onAdminReject() {
     this.reject.emit();
+  }
+
+  onAdminComplete() {
+    this.complete.emit();
   }
 
   onLogoError(event: Event) {

@@ -355,9 +355,11 @@ export class PhotographerProfileComponent implements OnInit {
     };
 
     const firstProfileImage = profile?.profileImages?.[0] || sessionUser?.profileImages?.[0] || null;
+    // profileImages[0] is the live source of truth; profileImage is a legacy
+    // field that can go stale after a re-upload/recrop, so prefer the array.
     const imgUrl =
-      this.asText(profile?.profileImage) ||
       getImageUrl(firstProfileImage) ||
+      this.asText(profile?.profileImage) ||
       this.asText(sessionUser?.profileImage);
 
     if (!imgUrl) return null;

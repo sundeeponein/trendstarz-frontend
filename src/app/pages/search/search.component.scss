@@ -350,6 +350,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.25rem;
+
+  // Grid items default to min-width: auto, so a child with unwrappable content
+  // (long text/badges) can force its track wider than the grid, blowing out
+  // the row horizontally. Let items shrink to their track's actual width.
+  > * {
+    min-width: 0;
+  }
 }
 
 // Loading / empty / error states

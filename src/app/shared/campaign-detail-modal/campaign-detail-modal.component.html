@@ -333,6 +333,20 @@
                   <a *ngIf="item.postUrl" [href]="item.postUrl" target="_blank" rel="noopener noreferrer" class="cdm-view-post-link mt-1">
                     <i class="bi bi-box-arrow-up-right"></i> Post
                   </a>
+                  <!-- Host (campaign owner) approval of the submitted post -->
+                  <span class="cdm-host-approved-badge" *ngIf="item.postApproved">
+                    <i class="bi bi-patch-check-fill"></i> Post Approved
+                  </span>
+                  <div class="cdm-creator-card__timestamp" *ngIf="item.postApproved && adminInvitePostApprovedAtText(item)">
+                    {{ adminInvitePostApprovedAtText(item) }}
+                  </div>
+                  <!-- Payout to the participant -->
+                  <span class="cdm-payout-paid-badge" *ngIf="item.payoutStatus === 'paid'">
+                    <i class="bi bi-check-circle-fill"></i> Payout: {{ adminInvitePayoutDateText(item) }}
+                  </span>
+                  <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
+                    {{ adminInvitePayoutStatusLabel(item) }}
+                  </span>
                 </div>
               </div>
               <div class="cdm-creators-table__empty" *ngIf="!adminInviteProgressLoading && hasAdminInviteProgress && filteredAdminInviteProgress.length === 0">
@@ -454,6 +468,9 @@
           </button>
           <button class="cdm-foot-btn cdm-foot-btn--outline" *ngIf="adminCanRequestChanges" (click)="onAdminRequestChanges()" [disabled]="busy">
             REQUEST CHANGES
+          </button>
+          <button class="cdm-foot-btn cdm-foot-btn--primary" *ngIf="adminCanComplete" (click)="onAdminComplete()" [disabled]="busy">
+            <i class="bi bi-check2-circle"></i> MARK COMPLETE
           </button>
         </div>
         <div class="cdm-footer-right">

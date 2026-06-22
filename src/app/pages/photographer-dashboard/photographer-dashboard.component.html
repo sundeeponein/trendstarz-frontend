@@ -233,30 +233,6 @@
       </div>
     </div>
 
-    <div class="section-card mb-4 profile-traffic-card p-2">
-      <div class="section-title d-flex align-items-center mb-2">
-        <span class="dot dot--purple me-2"></span>
-        {{ trafficCardTitle }}
-        <span class="section-count ms-2">Last 30 days</span>
-      </div>
-
-      <div class="profile-traffic-grid">
-        <div class="traffic-stat-box">
-          <div class="traffic-stat-label">Impressions</div>
-          <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
-        </div>
-        <div class="traffic-stat-box">
-          <div class="traffic-stat-label">Clicks</div>
-          <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
-        </div>
-        <div class="traffic-stat-meta">
-          <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ formatDate(profileTraffic.lastImpressionAt) }}</span>
-          <span *ngIf="profileTraffic.lastClickAt">Last click: {{ formatDate(profileTraffic.lastClickAt) }}</span>
-          <span *ngIf="!profileTraffic.lastImpressionAt && !profileTraffic.lastClickAt">No traffic tracked yet.</span>
-        </div>
-      </div>
-    </div>
-
     <div class="row mb-4 gx-3">
       <div class="col-md-4 mb-3 mb-md-0">
         <div class="section-card h-100">
@@ -305,6 +281,31 @@
       </div>
     </div>
   </ng-container>
+
+  <!-- Profile Traffic hidden - by sundeep -->
+    <div class="section-card mb-4 profile-traffic-card p-2 d-none">
+      <div class="section-title d-flex align-items-center mb-2">
+        <span class="dot dot--purple me-2"></span>
+        {{ trafficCardTitle }}
+        <span class="section-count ms-2">Last 30 days</span>
+      </div>
+
+      <div class="profile-traffic-grid">
+        <div class="traffic-stat-box">
+          <div class="traffic-stat-label">Impressions</div>
+          <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
+        </div>
+        <div class="traffic-stat-box">
+          <div class="traffic-stat-label">Clicks</div>
+          <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
+        </div>
+        <div class="traffic-stat-meta">
+          <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ formatDate(profileTraffic.lastImpressionAt) }}</span>
+          <span *ngIf="profileTraffic.lastClickAt">Last click: {{ formatDate(profileTraffic.lastClickAt) }}</span>
+          <span *ngIf="!profileTraffic.lastImpressionAt && !profileTraffic.lastClickAt">No traffic tracked yet.</span>
+        </div>
+      </div>
+    </div>
 
   <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>
 </div>

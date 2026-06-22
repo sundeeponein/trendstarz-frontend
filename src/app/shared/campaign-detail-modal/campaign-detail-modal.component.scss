@@ -680,6 +680,18 @@ $dk-orange:    #e06030;
   &:hover { color: #60a5fa; background: rgba(59,130,246,0.14); }
 }
 
+.cdm-host-approved-badge, .cdm-payout-paid-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.76rem; font-weight: 600; color: #059669; padding: 2px 7px; margin-top: 4px;
+  border-radius: 999px; border: 1px solid rgba(5,150,105,0.25); background: rgba(5,150,105,0.08);
+}
+
+.cdm-payout-pending-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.76rem; font-weight: 600; color: #b45309; padding: 2px 7px; margin-top: 4px;
+  border-radius: 999px; border: 1px solid rgba(180,83,9,0.25); background: rgba(180,83,9,0.08);
+}
+
 // ── Setup grid ────────────────────────────────────────────────
 .cdm-setup-grid {
   display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;

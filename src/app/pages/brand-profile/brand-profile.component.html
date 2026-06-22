@@ -65,6 +65,30 @@
           </div>
           <p class="section-subtitle">Update core brand identity and contact details.</p>
 
+          <div class="field-block media-uploader mt-3">
+            <label>
+              Brand Logo
+              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openBrandImageGuidelines()" title="View image guidelines">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </label>
+            <div class="upload-box">
+              <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand logo preview" class="preview-image" />
+              <img *ngIf="!brandLogoPreview && brandLogoFormArray.length > 0 && brandLogoFormArray.at(0).value?.url" [src]="brandLogoFormArray.at(0).value.url" alt="Current brand logo" class="preview-image" />
+              <p *ngIf="!brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)">No brand logo uploaded.</p>
+              <input *ngIf="isEditMode" type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
+            </div>
+            <div *ngIf="submitted && !brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)" class="text-danger mt-1">Brand logo is required.</div>
+            <app-image-crop-modal
+              [open]="cropModalOpen"
+              [imageFile]="cropSourceFile"
+              [aspectRatio]="1"
+              title="Adjust brand logo"
+              (cropped)="onBrandLogoCropped($event)"
+              (closed)="onBrandLogoCropCancelled()"
+            ></app-image-crop-modal>
+          </div>
+          
           <div class="field-grid">
             <div class="field-block">
               <label>Brand Name <span class="text-danger">*</span></label>
@@ -163,34 +187,12 @@
             </div>
             <div class="field-block full-width">
               <label>Brand Description <span class="text-danger">*</span></label>
-              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell influencers about your brand..."></textarea>
+              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell about your brand..."></textarea>
               <div *ngIf="submitted && registrationForm.get('description')?.invalid" class="text-danger mt-1">Brand description is required.</div>
             </div>
           </div>
 
-          <div class="field-block media-uploader mt-3">
-            <label>
-              Brand Logo
-              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openBrandImageGuidelines()" title="View image guidelines">
-                <i class="bi bi-info-circle"></i>
-              </button>
-            </label>
-            <div class="upload-box">
-              <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand logo preview" class="preview-image" />
-              <img *ngIf="!brandLogoPreview && brandLogoFormArray.length > 0 && brandLogoFormArray.at(0).value?.url" [src]="brandLogoFormArray.at(0).value.url" alt="Current brand logo" class="preview-image" />
-              <p *ngIf="!brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)">No brand logo uploaded.</p>
-              <input *ngIf="isEditMode" type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
-            </div>
-            <div *ngIf="submitted && !brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)" class="text-danger mt-1">Brand logo is required.</div>
-            <app-image-crop-modal
-              [open]="cropModalOpen"
-              [imageFile]="cropSourceFile"
-              [aspectRatio]="1"
-              title="Adjust brand logo"
-              (cropped)="onBrandLogoCropped($event)"
-              (closed)="onBrandLogoCropCancelled()"
-            ></app-image-crop-modal>
-          </div>
+          
 
           <!-- Payout details: where the brand receives money for pay_to_join campaigns -->
           <div class="field-block full-width payout-block" formGroupName="payout">

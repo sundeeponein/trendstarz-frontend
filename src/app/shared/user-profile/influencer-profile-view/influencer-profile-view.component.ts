@@ -129,7 +129,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   get displayImage(): string {
-    const imageUrl = this.influencer?.profileImage || this.influencer?.profileImages?.[0]?.url;
+    const imageUrl = this.influencer?.profileImages?.[0]?.url || this.influencer?.profileImage;
     return this.normalizeImageUrl(imageUrl, 220, 220) || 'assets/default-profile.png';
   }
 
@@ -156,7 +156,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   getProfileSrcSet(): string {
-    const imageUrl = this.influencer?.profileImage || this.influencer?.profileImages?.[0]?.url;
+    const imageUrl = this.influencer?.profileImages?.[0]?.url || this.influencer?.profileImage;
     if (!imageUrl) return '';
     const base = this.normalizeImageUrl(imageUrl);
     if (!base.includes('res.cloudinary.com')) return '';
