@@ -32,6 +32,8 @@ export class PremiumPaymentsPanelComponent implements OnInit {
 
   activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   statusTab: 'pending' | 'approved' | 'rejected' | 'refunded' = 'pending';
+  sortOption: 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc' = 'date_desc';
+  modeFilter: 'all' | 'manual' | 'razorpay' = 'all';
   loading = false;
 
   rejectionReason = '';
@@ -303,10 +305,32 @@ export class PremiumPaymentsPanelComponent implements OnInit {
 
   get filteredPayments(): PremiumPayment[] {
     const type = this.currentUserType;
-    if (this.statusTab === 'pending') return this.pendingPayments.filter((p) => p.userType === type);
-    if (this.statusTab === 'approved') return this.approvedPayments.filter((p) => p.userType === type);
-    if (this.statusTab === 'rejected') return this.rejectedPayments.filter((p) => p.userType === type);
-    return this.refundedPayments.filter((p) => p.userType === type);
+    let rows: PremiumPayment[];
+    if (this.statusTab === 'pending') rows = this.pendingPayments.filter((p) => p.userType === type);
+    else if (this.statusTab === 'approved') rows = this.approvedPayments.filter((p) => p.userType === type);
+    else if (this.statusTab === 'rejected') rows = this.rejectedPayments.filter((p) => p.userType === type);
+    else rows = this.refundedPayments.filter((p) => p.userType === type);
+    return this.sortPayments(this.filterByMode(rows));
+  }
+
+  private filterByMode(rows: PremiumPayment[]): PremiumPayment[] {
+    if (this.modeFilter === 'all') return rows;
+    return rows.filter((p) => {
+      const gateway = String(p.gatewayProvider || 'manual_upi').toLowerCase();
+      return this.modeFilter === 'razorpay' ? gateway === 'razorpay' : gateway !== 'razorpay';
+    });
+  }
+
+  private sortPayments(rows: PremiumPayment[]): PremiumPayment[] {
+    const sorted = [...rows];
+    sorted.sort((a, b) => {
+      if (this.sortOption === 'amount_desc') return (b.amount || 0) - (a.amount || 0);
+      if (this.sortOption === 'amount_asc') return (a.amount || 0) - (b.amount || 0);
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return this.sortOption === 'date_asc' ? aTime - bTime : bTime - aTime;
+    });
+    return sorted;
   }
 
   get pendingCount(): number {

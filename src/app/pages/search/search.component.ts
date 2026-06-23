@@ -53,7 +53,6 @@ export class SearchComponent implements OnInit {
   brandsError = '';
   photographersError = '';
   usageSummary: UsageSummary | null = null;
-  adminPreviewTier: 'starter' | 'pro' = 'starter';
 
   // Filter options (populated from data)
   categoryOptions: string[] = [];
@@ -96,7 +95,6 @@ export class SearchComponent implements OnInit {
    * Returns true if the logged-in user is premium. If not logged in, always false (treat as free user).
    */
   get isProView(): boolean {
-    if (this.isAdminUser) return this.adminPreviewTier === 'pro';
     const user = this.session.getUser();
     return !!(user && user.isPremium);
   }
@@ -105,7 +103,6 @@ export class SearchComponent implements OnInit {
    * Returns true if the user is logged in and is a free (not premium) user.
    */
   get isFreeUser(): boolean {
-    if (this.isAdminUser) return this.adminPreviewTier === 'starter';
     const user = this.session.getUser();
     return !!user && !user.isPremium;
   }
@@ -245,10 +242,6 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
-    const previewTier = this.route.snapshot.queryParamMap.get('viewAs');
-    if (this.isAdminUser && previewTier === 'pro') {
-      this.adminPreviewTier = 'pro';
-    }
     if (!this.isAdminUser && !this.isGuestUser) {
       this.loadUsageSummary();
     }
@@ -262,16 +255,6 @@ export class SearchComponent implements OnInit {
     } else {
       this.fetchBrands();
     }
-  }
-
-  setAdminPreviewTier(tier: 'starter' | 'pro'): void {
-    if (!this.isAdminUser || this.adminPreviewTier === tier) return;
-    this.adminPreviewTier = tier;
-    this.router.navigate([], {
-      queryParams: { viewAs: tier },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
   }
 
   private loadUsageSummary(): void {

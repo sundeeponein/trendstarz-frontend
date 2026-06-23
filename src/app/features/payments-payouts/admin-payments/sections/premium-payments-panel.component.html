@@ -4,6 +4,20 @@
   <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
 </div>
 
+<div class="tx-toolbar">
+  <select class="sort-select" [(ngModel)]="modeFilter" aria-label="Filter by payment mode">
+    <option value="all">All modes</option>
+    <option value="manual">Manual</option>
+    <option value="razorpay">Auto (Razorpay)</option>
+  </select>
+  <select class="sort-select" [(ngModel)]="sortOption" aria-label="Sort premium payments">
+    <option value="date_desc">Newest first</option>
+    <option value="date_asc">Oldest first</option>
+    <option value="amount_desc">Amount: High to Low</option>
+    <option value="amount_asc">Amount: Low to High</option>
+  </select>
+</div>
+
 <div class="tx-summary-grid">
   <div class="tx-card">
     <div class="tx-label">Premium Received</div>

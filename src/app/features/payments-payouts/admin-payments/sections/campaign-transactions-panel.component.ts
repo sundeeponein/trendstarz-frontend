@@ -24,6 +24,8 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   @Output() successMessage = new EventEmitter<string>();
 
   transactionStatus: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes' = 'all';
+  sortOption: 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc' = 'date_desc';
+  modeFilter: 'all' | 'manual' | 'razorpay' = 'all';
   campaignTransactions: CampaignTransaction[] = [];
   transactionLoading = false;
 
@@ -196,6 +198,10 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   }
 
   get visibleTransactions(): CampaignTransaction[] {
+    return this.sortTransactions(this.filterByMode(this.filteredTransactions));
+  }
+
+  private get filteredTransactions(): CampaignTransaction[] {
     if (this.transactionStatus === 'all') return this.campaignTransactions;
     if (this.transactionStatus === 'awaiting') {
       return this.campaignTransactions.filter((r) => r.collectionStatus === 'awaiting_payment' || r.collectionStatus === 'proof_submitted');
@@ -210,6 +216,26 @@ export class CampaignTransactionsPanelComponent implements OnInit {
       return this.campaignTransactions.filter((r) => r.disputeStatus === 'open');
     }
     return this.campaignTransactions.filter((r) => r.payoutStatus === 'paid');
+  }
+
+  private filterByMode(rows: CampaignTransaction[]): CampaignTransaction[] {
+    if (this.modeFilter === 'all') return rows;
+    return rows.filter((r) => {
+      const gateway = String(r.gateway || 'manual_upi').toLowerCase();
+      return this.modeFilter === 'razorpay' ? gateway === 'razorpay' : gateway !== 'razorpay';
+    });
+  }
+
+  private sortTransactions(rows: CampaignTransaction[]): CampaignTransaction[] {
+    const sorted = [...rows];
+    sorted.sort((a, b) => {
+      if (this.sortOption === 'amount_desc') return (b.payerTotal || 0) - (a.payerTotal || 0);
+      if (this.sortOption === 'amount_asc') return (a.payerTotal || 0) - (b.payerTotal || 0);
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return this.sortOption === 'date_asc' ? aTime - bTime : bTime - aTime;
+    });
+    return sorted;
   }
 
   get openDisputeCount(): number {

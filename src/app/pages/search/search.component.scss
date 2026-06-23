@@ -62,42 +62,6 @@
   flex-wrap: wrap;
 }
 
-// ── Viewing As Toggle ──────────────────────────────────────────
-.viewing-as-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #f4f5f7;
-  border: 1px solid #e0e5ef;
-  border-radius: 0.6rem;
-  padding: 0.25rem 0.5rem;
-}
-
-.viewing-as-label {
-  font-size: 0.8rem;
-  color: #6b7280;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.viewing-as-btn {
-  padding: 0.3rem 0.85rem;
-  border-radius: 0.45rem;
-  border: none;
-  background: transparent;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.18s ease;
-
-  &.active {
-    background: #fff;
-    color: #1a1a2e;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-  }
-}
-
 // ── Upgrade Banner ─────────────────────────────────────────────
 .upgrade-banner {
   display: flex;

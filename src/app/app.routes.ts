@@ -61,7 +61,6 @@ export const routes: Routes = [
 		children: [
 			{ path: '', redirectTo: 'admin-dashboard', pathMatch: 'full' },
 			{ path: 'admin-dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
-			{ path: 'search', loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
 			{ path: 'admin-user-table', loadComponent: () => import('./pages/admin/admin-users-table/admin-user-table.component').then(m => m.AdminUserTableComponent) },
 			{ path: 'campaign-review', loadComponent: () => import('./pages/admin/campaign-review/campaign-review.component').then(m => m.CampaignReviewComponent) },
 			{ path: 'collaboration-review', loadComponent: () => import('./pages/admin/campaign-review/campaign-review.component').then(m => m.CampaignReviewComponent) },

@@ -89,11 +89,11 @@ export class NavbarLayoutComponent implements OnDestroy {
   }
 
   get showSearchLink(): boolean {
-    return this.isAdminUser || this.appLinkVisibility.showSearchLink;
+    return !this.isAdminUser && this.appLinkVisibility.showSearchLink;
   }
 
   get searchRoute(): string {
-    return this.isAdminUser ? '/admin/search' : '/search';
+    return '/search';
   }
 
   get showRegisterLinks(): boolean {

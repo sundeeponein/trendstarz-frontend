@@ -1,4 +1,15 @@
 <div class="tx-toolbar">
+  <select class="sort-select" [(ngModel)]="modeFilter" aria-label="Filter by payment mode">
+    <option value="all">All modes</option>
+    <option value="manual">Manual</option>
+    <option value="razorpay">Auto (Razorpay)</option>
+  </select>
+  <select class="sort-select" [(ngModel)]="sortOption" aria-label="Sort transactions">
+    <option value="date_desc">Newest first</option>
+    <option value="date_asc">Oldest first</option>
+    <option value="amount_desc">Amount: High to Low</option>
+    <option value="amount_asc">Amount: Low to High</option>
+  </select>
   <button class="btn btn-warning btn-sm" (click)="runAutoApproveStaleSubmissions()">
     Auto-approve stale (48h)
   </button>
