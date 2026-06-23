@@ -90,6 +90,11 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   filterTier = '';
   filterPlatform = '';
   quickViewRecipient: any | null = null;
+  inviteListPage = 1;
+  inviteListLimit = 40;
+  inviteListHasMore = false;
+  loadingMoreInfluencers = false;
+  private inviteSearchDebounce: any = null;
   creatorTypeOptions: any[] = [];
   collaborationAvailabilityOptions: any = {};
   lookingForCreatorTypes: string[] = [];
@@ -1614,39 +1619,94 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     }
 
     if (this.allInfluencers.length > 0) return;
-    this.influencersLoading = true;
-    this.config.getInfluencers().subscribe({
+    this.fetchInfluencerInvitePage(true);
+  }
+
+  /**
+   * Fetches one page of invitable influencers from the server, with the
+   * active search text / category / creator-type sent as query params so
+   * matching isn't limited to whichever page happens to already be loaded.
+   */
+  private fetchInfluencerInvitePage(reset: boolean) {
+    if (reset) {
+      this.inviteListPage = 1;
+      this.allInfluencers = [];
+      this.inviteListHasMore = false;
+    }
+    if (reset) this.influencersLoading = true;
+    else this.loadingMoreInfluencers = true;
+
+    this.config.getInfluencers({
+      page: this.inviteListPage,
+      limit: this.inviteListLimit,
+      category: this.filterCategory || undefined,
+      creatorType: this.filterCreatorType || undefined,
+      q: this.influencerSearch.trim() || undefined,
+    }).subscribe({
       next: (data: any[]) => {
-        this.allInfluencers = (Array.isArray(data) ? data : [])
+        const rows = (Array.isArray(data) ? data : [])
           .map((p: any) => ({ ...p, _id: p?._id || p?.id || '' }))
           .filter((p: any) => !!String(p?._id || '').trim());
+        this.allInfluencers = reset ? rows : [...this.allInfluencers, ...rows];
+        this.inviteListHasMore = rows.length >= this.inviteListLimit;
         this.influencersLoading = false;
+        this.loadingMoreInfluencers = false;
         this.cd.detectChanges();
       },
-      error: () => { this.influencersLoading = false; this.cd.detectChanges(); }
+      error: () => {
+        this.influencersLoading = false;
+        this.loadingMoreInfluencers = false;
+        this.cd.detectChanges();
+      },
     });
   }
 
+  loadMoreInviteRecipients(): void {
+    if (this.inviteRecipientRole === 'photographer' || !this.inviteListHasMore || this.loadingMoreInfluencers) return;
+    this.inviteListPage++;
+    this.fetchInfluencerInvitePage(false);
+  }
+
+  /** Debounced re-fetch as the brand types in the invite search box. */
+  onInviteSearchChange(): void {
+    if (this.inviteRecipientRole === 'photographer') return;
+    if (this.inviteSearchDebounce) clearTimeout(this.inviteSearchDebounce);
+    this.inviteSearchDebounce = setTimeout(() => this.fetchInfluencerInvitePage(true), 350);
+  }
+
+  /** Category/creator-type selects re-fetch immediately (no debounce needed). */
+  onInviteCategoryOrTypeChange(): void {
+    if (this.inviteRecipientRole === 'photographer') return;
+    this.fetchInfluencerInvitePage(true);
+  }
+
   get filteredInfluencers(): any[] {
+    // Search text, category, and creator-type are now applied server-side
+    // (see fetchInfluencerInvitePage) so matching isn't limited to whatever
+    // page happens to already be loaded. Tier/platform/smart-matching have
+    // no backend filter support yet, so they still narrow client-side over
+    // whatever pages are currently loaded.
     let list = this.inviteCandidates.filter((recipient) => this.isCampaignVerifiedRecipient(recipient));
     // Hide already-invited creators for influencer campaigns, but keep invited photographers visible in edit mode.
     if (this.campaignInvites?.length && this.inviteRecipientRole !== 'photographer') {
       list = list.filter(inf => !this.isInfluencerInvited(inf));
     }
-    const q = this.influencerSearch.toLowerCase().trim();
-    if (q) {
-      list = list.filter(inf =>
-        (inf.fullName || inf.name || '').toLowerCase().includes(q) ||
-        (inf.username || '').toLowerCase().includes(q) ||
-        (inf.location?.state || '').toLowerCase().includes(q) ||
-        (inf.categories || inf.skills || []).some((c: string) => c.toLowerCase().includes(q))
-      );
-    }
-    if (this.filterCategory) {
-      list = list.filter(inf => this.recipientHasExactCategory(inf, this.filterCategory));
-    }
-    if (this.inviteRecipientRole === 'influencer' && this.filterCreatorType) {
-      list = list.filter(inf => (inf.creatorTypes || []).includes(this.filterCreatorType));
+    // Photographers aren't fetched with server-side filtering (the whole
+    // list is loaded up front), so search/category/type stay client-side
+    // for that path only.
+    if (this.inviteRecipientRole === 'photographer') {
+      const q = this.influencerSearch.toLowerCase().trim();
+      if (q) {
+        list = list.filter(inf =>
+          (inf.fullName || inf.name || '').toLowerCase().includes(q) ||
+          (inf.username || '').toLowerCase().includes(q) ||
+          (inf.location?.state || '').toLowerCase().includes(q) ||
+          (inf.categories || inf.skills || []).some((c: string) => c.toLowerCase().includes(q))
+        );
+      }
+      if (this.filterCategory) {
+        list = list.filter(inf => this.recipientHasExactCategory(inf, this.filterCategory));
+      }
     }
     if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
       list = list.filter(inf => this.creatorMatchesSmartFilters(inf));
@@ -1915,6 +1975,12 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   getUniqueCategoryFilters(): string[] {
+    // For influencers, filter by whatever the brand actually targeted in
+    // step 2 — this is what should appear in the dropdown regardless of
+    // which influencers happen to already be loaded on the current page.
+    if (this.inviteRecipientRole === 'influencer' && this.selectedCategories.length) {
+      return this.selectedCategories;
+    }
     const cats = new Set<string>();
     this.inviteCandidates
       .filter((recipient) => this.isCampaignVerifiedRecipient(recipient))
@@ -2012,12 +2078,14 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   clearInviteRecipientFilters(): void {
+    const hadServerFilter = !!(this.filterCategory || this.filterCreatorType);
     this.filterCategory = '';
     this.filterCreatorType = '';
     this.filterTier = '';
     this.filterPlatform = '';
     this.clearSmartMatchingFilters();
     this.clearPhotographerSmartMatchingFilters();
+    if (hadServerFilter) this.onInviteCategoryOrTypeChange();
   }
 
   hasInviteRecipientFilters(): boolean {

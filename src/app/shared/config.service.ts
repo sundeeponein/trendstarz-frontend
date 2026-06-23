@@ -615,6 +615,8 @@ export class ConfigService {
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
     creatorType?: string;
+    category?: string;
+    q?: string;
   }): Observable<any> {
     const params: string[] = [];
     if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
@@ -623,6 +625,8 @@ export class ConfigService {
     if (options?.state) params.push(`state=${encodeURIComponent(options.state)}`);
     if (options?.district) params.push(`district=${encodeURIComponent(options.district)}`);
     if (options?.creatorType) params.push(`creatorType=${encodeURIComponent(options.creatorType)}`);
+    if (options?.category) params.push(`category=${encodeURIComponent(options.category)}`);
+    if (options?.q) params.push(`q=${encodeURIComponent(options.q)}`);
     if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
@@ -652,6 +656,8 @@ export class ConfigService {
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
     creatorType?: string;
+    category?: string;
+    q?: string;
   }): Observable<any[]> {
     return this.getInfluencersSearchResponse(options).pipe(
       map((data) => (data?.data || data || []) as any[]),

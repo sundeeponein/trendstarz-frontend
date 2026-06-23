@@ -903,7 +903,7 @@
 
           <div class="inf-search-box">
             <i class="bi bi-search"></i>
-            <input type="text" [(ngModel)]="influencerSearch" [ngModelOptions]="{standalone: true}" class="inf-search-input"
+            <input type="text" [(ngModel)]="influencerSearch" (ngModelChange)="onInviteSearchChange()" [ngModelOptions]="{standalone: true}" class="inf-search-input"
                    [placeholder]="'Search ' + inviteRecipientLabelPlural.toLowerCase() + ' by name, category, or location…'" />
           </div>
 
@@ -916,7 +916,7 @@
             <div class="recipient-filter-grid">
               <div class="recipient-filter-group recipient-filter-field" *ngIf="getUniqueCategoryFilters().length">
                 <label>{{ inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories' }}</label>
-                <select class="recipient-filter-select" [(ngModel)]="filterCategory" [ngModelOptions]="{standalone: true}">
+                <select class="recipient-filter-select" [(ngModel)]="filterCategory" (ngModelChange)="onInviteCategoryOrTypeChange()" [ngModelOptions]="{standalone: true}">
                   <option value="">All categories</option>
                   <option *ngFor="let item of getUniqueCategoryFilters()" [value]="item">{{ item }}</option>
                 </select>
@@ -924,7 +924,7 @@
 
               <div class="recipient-filter-group recipient-filter-field" *ngIf="inviteRecipientRole === 'influencer' && creatorTypeOptions.length">
                 <label>Creator Type / Specialty</label>
-                <select class="recipient-filter-select" [(ngModel)]="filterCreatorType" [ngModelOptions]="{standalone: true}">
+                <select class="recipient-filter-select" [(ngModel)]="filterCreatorType" (ngModelChange)="onInviteCategoryOrTypeChange()" [ngModelOptions]="{standalone: true}">
                   <option value="">All creator types</option>
                   <option *ngFor="let item of creatorTypeOptions" [value]="item.name">{{ item.name }}</option>
                 </select>
@@ -1033,6 +1033,12 @@
             <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
               <i class="bi bi-search"></i>
               <p>No {{ inviteRecipientLabelPlural.toLowerCase() }} match your filters.</p>
+            </div>
+
+            <div class="text-center py-3" *ngIf="inviteRecipientRole === 'influencer' && inviteListHasMore">
+              <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="loadingMoreInfluencers" (click)="loadMoreInviteRecipients()">
+                {{ loadingMoreInfluencers ? 'Loading…' : 'Load more' }}
+              </button>
             </div>
           </div>
 
