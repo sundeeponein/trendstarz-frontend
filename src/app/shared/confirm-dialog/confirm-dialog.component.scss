@@ -10,6 +10,31 @@
 
 .dialog-content {
   padding: 1.5rem;
+  position: relative;
+}
+
+.dialog-close-btn {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #6c757d;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #e9ecef;
+    color: #212529;
+  }
 }
 
 .dialog-title {

@@ -4,6 +4,7 @@
   <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
     <div class="modal-content ts-modal">
       <div class="dialog-content">
+        <button type="button" class="dialog-close-btn" aria-label="Close" (click)="onClose()">&times;</button>
         <div class="dialog-title" *ngIf="title">{{ title }}</div>
         <div class="dialog-message">{{ message }}</div>
         <div class="dialog-actions">

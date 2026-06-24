@@ -1,21 +1,38 @@
 <section class="campaign-alert-message">
   <div class="campaign-alert-message__header">
     <div>
-      <strong>Campaign Approved Successfully</strong>
-      <p>{{ whatsappHelpText }}</p>
+      <strong>Campaign Status: Approved ✅</strong>
+      <p>Share the right WhatsApp message with creators below.</p>
     </div>
-    <button type="button" class="btn btn-primary btn-sm" (click)="onCopy()">
-      {{ copied ? 'Copied' : 'Copy Alert Message' }}
-    </button>
   </div>
 
   <div class="campaign-alert-message__checks" aria-label="Campaign notification channels">
     <span class="campaign-alert-message__check is-on">In-App Notification</span>
     <span class="campaign-alert-message__check is-disabled">Email Notification (Coming Soon)</span>
-    <span class="campaign-alert-message__check is-on">
-      {{ whatsappAlertLabel }}
-    </span>
+    <span class="campaign-alert-message__check is-on">WhatsApp Alert Ready</span>
   </div>
 
-  <pre>{{ alertMessage }}</pre>
+  <div class="campaign-alert-message__share">
+    <strong class="campaign-alert-message__share-title">Ready to Share</strong>
+
+    <div class="campaign-alert-message__template">
+      <div class="campaign-alert-message__template-header">
+        <span>Open Campaign Message</span>
+        <button type="button" class="btn btn-primary btn-sm" (click)="copyOpenCampaignMessage()">
+          {{ copied && lastCopiedType === 'open' ? 'Copied' : 'Copy Open Campaign Message' }}
+        </button>
+      </div>
+      <pre>{{ openCampaignMessage }}</pre>
+    </div>
+
+    <div class="campaign-alert-message__template">
+      <div class="campaign-alert-message__template-header">
+        <span>Invite Only Message</span>
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="copyInviteOnlyMessage()">
+          {{ copied && lastCopiedType === 'invite' ? 'Copied' : 'Copy Invite Only Message' }}
+        </button>
+      </div>
+      <pre>{{ inviteOnlyMessage }}</pre>
+    </div>
+  </div>
 </section>

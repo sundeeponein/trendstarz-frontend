@@ -2507,6 +2507,13 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     }
   }
 
+  // (X) button: dismiss only this popup and let the user keep editing the campaign form.
+  onConfirmDialogClose() {
+    this.confirmDialogOpen = false;
+    this.confirmDialogCallback = null;
+    this.confirmDialogPurpose = null;
+  }
+
   private shouldPromptSaveDraft(): boolean {
     if (!this.form) return false;
     if (this.form.dirty) return true;

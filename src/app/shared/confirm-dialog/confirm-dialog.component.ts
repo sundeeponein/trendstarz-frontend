@@ -17,7 +17,16 @@ export class ConfirmDialogComponent {
   @Input() open = false;
   @Output() confirm = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
+  /** Emitted when the (X) button is clicked. Falls back to `cancel` if nothing listens. */
+  @Output() close = new EventEmitter<void>();
 
   onConfirm() { this.confirm.emit(); }
   onCancel() { this.cancel.emit(); }
+  onClose() {
+    if (this.close.observed) {
+      this.close.emit();
+    } else {
+      this.cancel.emit();
+    }
+  }
 }

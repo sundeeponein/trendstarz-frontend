@@ -62,8 +62,41 @@ pre {
   white-space: pre-wrap;
 }
 
+.campaign-alert-message__share-title {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.campaign-alert-message__template {
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.campaign-alert-message__template-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+
+  span {
+    color: #52606d;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+}
+
 @media (max-width: 640px) {
   .campaign-alert-message__header {
     flex-direction: column;
+  }
+
+  .campaign-alert-message__template-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
   }
 }
