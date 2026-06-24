@@ -297,15 +297,15 @@
                       <span *ngIf="item.participantRole && item.participantEmail"> &bull; </span>
                       <span *ngIf="item.participantEmail">{{ item.participantEmail }}</span>
                     </div>
-                    <!-- Dates -->
-                    <div class="cdm-creator-card__dates" *ngIf="adminInviteAcceptedAtText(item)">
-                      Accepted campaign: {{ adminInviteAcceptedAtText(item) }}
+                    <!-- Dates: Accepted (pre-confirmation) or Working from (post-confirmation) + Post date -->
+                    <div class="cdm-creator-card__dates" *ngIf="adminInviteAcceptedAtText(item) && !adminInviteWorkingFromDate(item)">
+                      Accepted: {{ adminInviteAcceptedAtText(item) }}
                     </div>
                     <div class="cdm-creator-card__dates"
                          *ngIf="adminInviteWorkingFromDate(item) || item.selectedPostDate">
-                      <!-- <ng-container *ngIf="adminInviteWorkingFromDate(item)">
+                      <ng-container *ngIf="adminInviteWorkingFromDate(item)">
                         Working from: {{ adminInviteWorkingFromDate(item) }}
-                      </ng-container> -->
+                      </ng-container>
                       <ng-container *ngIf="adminInviteWorkingFromDate(item) && item.selectedPostDate"> &bull; </ng-container>
                       <ng-container *ngIf="item.selectedPostDate">
                         Post date: {{ item.selectedPostDate | date:'MMM d, yyyy' }}
