@@ -316,7 +316,7 @@ export class CampaignReviewComponent implements OnInit {
     return this.normalizeReviewStatus(campaign?.status) === filter;
   }
 
-  private normalizeReviewStatus(status: unknown): 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' | 'draft' | 'completed' | 'unknown' {
+  private normalizeReviewStatus(status: unknown): 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' | 'draft' | 'completed' | 'cancelled' | 'unknown' {
     const normalized = String(status || '').trim().toLowerCase();
     if (!normalized) return 'unknown';
     if (normalized === 'pending_review' || normalized === 'pending') return 'pending_review';
@@ -325,6 +325,7 @@ export class CampaignReviewComponent implements OnInit {
     if (normalized === 'active' || normalized === 'approved' || normalized === 'live') return 'active';
     if (normalized === 'draft') return 'draft';
     if (normalized === 'completed') return 'completed';
+    if (normalized === 'cancelled') return 'cancelled';
     if (normalized === 'all') return 'all';
     return 'unknown';
   }
@@ -433,6 +434,60 @@ export class CampaignReviewComponent implements OnInit {
         this.moderationModalError = msg;
         this.cdr.detectChanges();
         this.toast.error(msg);
+      },
+    });
+  }
+
+  /** Emergency admin override — see campaign-detail-modal's "Emergency Admin Action" panel. */
+  onForceCompleteCampaign(reason: string) {
+    const campaign = this.selectedCampaign;
+    if (!campaign?._id) return;
+    this.moderatingCampaignId = String(campaign._id);
+    this.cdr.detectChanges();
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/force-complete`, {
+      reason,
+    }, this.getAuthHeaders()).subscribe({
+      next: () => {
+        this.moderatingCampaignId = '';
+        this.closeCampaignPreview();
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.toast.success('Campaign force-completed.');
+          this.loadCampaignApprovals();
+          this.cdr.detectChanges();
+        }, 0);
+      },
+      error: (err) => {
+        this.moderatingCampaignId = '';
+        this.cdr.detectChanges();
+        this.toast.error(err?.error?.message || 'Failed to force-complete campaign.');
+      },
+    });
+  }
+
+  /** Emergency admin override — see campaign-detail-modal's "Emergency Admin Action" panel. */
+  onCancelCampaignParticipation(reason: string) {
+    const campaign = this.selectedCampaign;
+    if (!campaign?._id) return;
+    this.moderatingCampaignId = String(campaign._id);
+    this.cdr.detectChanges();
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/cancel-participation`, {
+      reason,
+    }, this.getAuthHeaders()).subscribe({
+      next: () => {
+        this.moderatingCampaignId = '';
+        this.closeCampaignPreview();
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.toast.success('Participation cancelled for pending/unconfirmed invites.');
+          this.loadCampaignApprovals();
+          this.cdr.detectChanges();
+        }, 0);
+      },
+      error: (err) => {
+        this.moderatingCampaignId = '';
+        this.cdr.detectChanges();
+        this.toast.error(err?.error?.message || 'Failed to cancel campaign participation.');
       },
     });
   }
@@ -975,6 +1030,7 @@ export class CampaignReviewComponent implements OnInit {
     if (normalized === 'all') return 'All';
     if (normalized === 'draft') return 'Draft';
     if (normalized === 'completed') return 'Completed';
+    if (normalized === 'cancelled') return 'Cancelled';
     return status || 'Unknown';
   }
 
@@ -1003,7 +1059,7 @@ export class CampaignReviewComponent implements OnInit {
     if (normalized === 'active') return 'accepted';
     if (normalized === 'completed') return 'completed';
     if (normalized === 'pending_review' || normalized === 'needs_changes' || normalized === 'draft') return 'pending';
-    if (normalized === 'rejected') return 'rejected';
+    if (normalized === 'rejected' || normalized === 'cancelled') return 'rejected';
     return 'other';
   }
 

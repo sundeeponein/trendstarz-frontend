@@ -1441,6 +1441,20 @@ export class AdminUserTableComponent implements OnInit {
     return !!user?.isMobileVerified;
   }
 
+  /** Quick per-row check off the stored field — unlike isProfilePhotoVerified(), doesn't depend on the selected-user verification checklist, so it's safe to use across every row in the table. */
+  hasVerifiedProfilePhoto(user: any): boolean {
+    return !!user?.profilePhotoVerified;
+  }
+
+  isAdminReviewAccepted(user: any): boolean {
+    return this.getUserStatusKey(user) === 'accepted';
+  }
+
+  hasSocialMediaWithTier(user: any): boolean {
+    const rows = Array.isArray(user?.socialMedia) ? user.socialMedia : [];
+    return rows.some((sm: any) => !!sm?.tier);
+  }
+
   getDisplayPhoneNumber(user: any): string {
     const raw = String(user?.phoneNumber || '').trim();
     if (!raw) return '-';
@@ -1452,12 +1466,12 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getMobileVerificationSource(user: any): string {
-    if (!this.isMobileVerified(user)) return 'Pending';
-    const method = String(user?.mobileVerificationMethod || '').trim();
+    if (!this.isMobileVerified(user)) return 'Need to verify';
+    const method = String(user?.mobileVerificationMethod || '').trim().toLowerCase();
+    if (method === 'otp') return 'Verified by OTP';
+    if (method === 'manual') return 'Verified by Admin (Manual)';
     const verifiedBy = String(user?.mobileVerifiedBy || '').trim();
-    if (verifiedBy && method) return `${method} by ${verifiedBy}`;
     if (verifiedBy) return `Verified by ${verifiedBy}`;
-    if (method) return `Verified via ${method}`;
     return 'Verified';
   }
 

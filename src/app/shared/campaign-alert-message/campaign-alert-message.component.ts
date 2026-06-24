@@ -13,10 +13,34 @@ export class CampaignAlertMessageComponent {
   @Input() copied = false;
   @Output() copyAlert = new EventEmitter<string>();
 
-  lastCopiedType: 'open' | 'invite' | null = null;
+  /** Collapsed by default — this sits at the end of the campaign detail view. */
+  expanded = false;
+
+  toggleExpanded(): void {
+    this.expanded = !this.expanded;
+  }
 
   get isOpenToAll(): boolean {
     return String(this.campaign?.campaignMode || '') === 'tier_filtered_open';
+  }
+
+  /** Once active/completed, this is the message that actually went out; before that, it's just a preview of what will be sent. */
+  get isApprovedStatus(): boolean {
+    return ['active', 'completed'].includes(String(this.campaign?.status || '').toLowerCase());
+  }
+
+  get statusHeaderText(): string {
+    return this.isApprovedStatus ? 'Campaign Status: Approved ✅' : 'Campaign Status: Pending Review';
+  }
+
+  get shareHelpText(): string {
+    return this.isApprovedStatus
+      ? 'Share the right WhatsApp message with creators below.'
+      : 'Preview only — these messages become ready to share once this campaign is approved.';
+  }
+
+  get shareSectionTitle(): string {
+    return this.isApprovedStatus ? 'Ready to Share' : 'Preview — Ready to Share Once Approved';
   }
 
   get campaignNameLabel(): string {
@@ -91,13 +115,20 @@ export class CampaignAlertMessageComponent {
     ].join('\n');
   }
 
-  copyOpenCampaignMessage() {
-    this.lastCopiedType = 'open';
-    this.copyAlert.emit(this.openCampaignMessage);
+  /** Only the message matching this campaign's actual access mode is shown — never both at once. */
+  get relevantMessage(): string {
+    return this.isOpenToAll ? this.openCampaignMessage : this.inviteOnlyMessage;
   }
 
-  copyInviteOnlyMessage() {
-    this.lastCopiedType = 'invite';
-    this.copyAlert.emit(this.inviteOnlyMessage);
+  get relevantMessageLabel(): string {
+    return this.isOpenToAll ? 'Open Campaign Message' : 'Invite Only Message';
+  }
+
+  get relevantCopyButtonLabel(): string {
+    return this.isOpenToAll ? 'Copy Open Campaign Message' : 'Copy Invite Only Message';
+  }
+
+  copyRelevantMessage() {
+    this.copyAlert.emit(this.relevantMessage);
   }
 }

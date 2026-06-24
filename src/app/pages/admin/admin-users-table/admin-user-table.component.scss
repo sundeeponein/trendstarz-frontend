@@ -697,7 +697,14 @@
 }
 
 .details-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+
+  button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 }
 
 .modal-actions {
@@ -769,12 +776,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-  }
-
-  .details-actions {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
   }
 }
 
@@ -855,4 +856,14 @@
   color: #6b7280;
 
   .bi { margin-right: 3px; }
+}
+
+
+.user-verify-admin-helper{
+    gap:5px; display: flex;
+  span {
+    small{
+      display: none;
+    }
+  }
 }

@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { UserAvatarComponent } from '../components/user-avatar/user-avatar.component';
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
+import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -34,7 +35,7 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-detail-modal',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent, OfferTrailComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent, OfferTrailComponent, CampaignAlertMessageComponent],
   templateUrl: './campaign-detail-modal.component.html',
   styleUrls: ['./campaign-detail-modal.component.scss']
 })
@@ -73,9 +74,52 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() approve = new EventEmitter<void>();
   @Output() requestChanges = new EventEmitter<void>();
   @Output() reject = new EventEmitter<void>();
+  @Output() forceComplete = new EventEmitter<string>();
+  @Output() cancelParticipation = new EventEmitter<string>();
   @Output() validationError = new EventEmitter<string>();
   @Output() viewSubmission = new EventEmitter<void>();
   @Output() confirmReceipt = new EventEmitter<void>();
+
+  // Emergency admin overrides — collapsed by default; both require a reason.
+  showEmergencyAdminPanel = false;
+  emergencyActionReason = '';
+
+  // Ready-to-share WhatsApp message preview (visible before and after approval).
+  alertMessageCopied = false;
+  private alertMessageCopiedTimer: any;
+
+  copyAdminAlertMessage(message: string): void {
+    const text = String(message || '').trim();
+    if (!text) return;
+    const done = () => {
+      this.alertMessageCopied = true;
+      this.cdr.detectChanges();
+      clearTimeout(this.alertMessageCopiedTimer);
+      this.alertMessageCopiedTimer = setTimeout(() => {
+        this.alertMessageCopied = false;
+        this.cdr.detectChanges();
+      }, 2500);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyAlertMessage(text, done));
+      return;
+    }
+    this.fallbackCopyAlertMessage(text, done);
+  }
+
+  private fallbackCopyAlertMessage(text: string, done: () => void): void {
+    if (typeof document === 'undefined') return;
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    done();
+  }
 
   postDate = '';
   selectedContentTypeKey = '';
@@ -403,6 +447,59 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return withBullets.replace(/\n{2,}/g, '\n').trim();
   }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
+
+  /** "Completion Status" shown to admin in place of the old Mark Complete button — completion is the host's call (or the auto-complete cron / an emergency override), never a direct admin click. */
+  get completionStatusLabel(): string {
+    const status = this.campaignStatus;
+    if (status === 'completed') {
+      const by = String(this.campaign?.completedBy || '').toLowerCase();
+      if (by === 'auto') return 'Auto Completed';
+      if (by === 'admin') return 'Completed (Admin Override)';
+      return 'Completed by Host';
+    }
+    if (status === 'cancelled') return 'Cancelled (Admin Override)';
+    if (status === 'active') return 'Waiting for Host Review';
+    return '';
+  }
+
+  get completionStatusClass(): string {
+    const status = this.campaignStatus;
+    if (status === 'completed') return 'is-completed';
+    if (status === 'cancelled') return 'is-cancelled';
+    return 'is-waiting';
+  }
+
+  /** Emergency overrides only make sense on a live campaign — not draft/pending/already-closed ones. */
+  get canShowEmergencyAdminAction(): boolean {
+    return this.adminReview && this.campaignStatus === 'active';
+  }
+
+  get isEmergencyReasonValid(): boolean {
+    return this.emergencyActionReason.trim().length >= 10;
+  }
+
+  toggleEmergencyAdminPanel(): void {
+    this.showEmergencyAdminPanel = !this.showEmergencyAdminPanel;
+  }
+
+  closeEmergencyAdminPanel(): void {
+    this.showEmergencyAdminPanel = false;
+    this.emergencyActionReason = '';
+  }
+
+  onForceComplete(): void {
+    if (!this.isEmergencyReasonValid) return;
+    this.forceComplete.emit(this.emergencyActionReason.trim());
+    this.emergencyActionReason = '';
+    this.showEmergencyAdminPanel = false;
+  }
+
+  onCancelParticipation(): void {
+    if (!this.isEmergencyReasonValid) return;
+    this.cancelParticipation.emit(this.emergencyActionReason.trim());
+    this.emergencyActionReason = '';
+    this.showEmergencyAdminPanel = false;
+  }
 
   get campaignModerationNote(): string {
     return String(this.campaign?.moderationNote || '').trim();

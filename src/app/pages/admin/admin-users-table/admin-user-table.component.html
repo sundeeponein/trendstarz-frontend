@@ -170,6 +170,13 @@
               </span>
             </div>
             <div class="user-sub">{{ getUserHandle(user) }}</div>
+            <div class="user-verify-admin-helper">
+              <span><i class="bi bi-envelope-check" [class.text-success]="isEmailVerified(user)" [class.text-danger]="!isEmailVerified(user)"></i><small>Email</small></span>
+              <span><i class="bi bi-phone" [class.text-success]="isMobileVerified(user)" [class.text-danger]="!isMobileVerified(user)"></i><small>Mobile</small></span>
+              <span><i class="bi bi-image" [class.text-success]="hasVerifiedProfilePhoto(user)" [class.text-danger]="!hasVerifiedProfilePhoto(user)"></i><small>Profile Photo</small></span>
+              <span><i class="bi bi-person-vcard" [class.text-success]="isAdminReviewAccepted(user)" [class.text-danger]="!isAdminReviewAccepted(user)"></i><small>Admin Review</small></span>
+              <span><i class="bi bi-collection-play-fill" [class.text-success]="hasSocialMediaWithTier(user)" [class.text-danger]="!hasSocialMediaWithTier(user)"></i><small>Social Media & Tier</small></span>
+            </div>
           </td>
           <td>
             <div class="contact-line">
@@ -345,6 +352,9 @@
               [verified]="isMobileVerified(selectedUser)"
               (toggled)="toggleSelectedMobileVerification()"
             ></app-verification-field>
+            <div class="user-sub mt-1" *ngIf="getDisplayPhoneNumber(selectedUser) !== '-'">
+              {{ getMobileVerificationSource(selectedUser) }}
+            </div>
             <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedMobile" title="This account changed mobile number after the previous one was verified — useful signal to check for account takeover or typos.">
               Previous verified mobile: {{ selectedUser.previousVerifiedMobile }}
             </div>

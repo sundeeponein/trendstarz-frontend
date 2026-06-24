@@ -1,38 +1,33 @@
 <section class="campaign-alert-message">
-  <div class="campaign-alert-message__header">
-    <div>
-      <strong>Campaign Status: Approved ✅</strong>
-      <p>Share the right WhatsApp message with creators below.</p>
-    </div>
-  </div>
+  <button type="button" class="campaign-alert-message__toggle" (click)="toggleExpanded()">
+    <span class="campaign-alert-message__toggle-text">
+      <strong>{{ statusHeaderText }}</strong>
+      <small>&bull; {{ shareSectionTitle }}</small>
+    </span>
+    <i class="bi" [ngClass]="expanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+  </button>
 
-  <div class="campaign-alert-message__checks" aria-label="Campaign notification channels">
-    <span class="campaign-alert-message__check is-on">In-App Notification</span>
-    <span class="campaign-alert-message__check is-disabled">Email Notification (Coming Soon)</span>
-    <span class="campaign-alert-message__check is-on">WhatsApp Alert Ready</span>
-  </div>
+  <div class="campaign-alert-message__body" *ngIf="expanded">
+    <p class="campaign-alert-message__help">{{ shareHelpText }}</p>
 
-  <div class="campaign-alert-message__share">
-    <strong class="campaign-alert-message__share-title">Ready to Share</strong>
-
-    <div class="campaign-alert-message__template">
-      <div class="campaign-alert-message__template-header">
-        <span>Open Campaign Message</span>
-        <button type="button" class="btn btn-primary btn-sm" (click)="copyOpenCampaignMessage()">
-          {{ copied && lastCopiedType === 'open' ? 'Copied' : 'Copy Open Campaign Message' }}
-        </button>
-      </div>
-      <pre>{{ openCampaignMessage }}</pre>
+    <div class="campaign-alert-message__checks" aria-label="Campaign notification channels">
+      <span class="campaign-alert-message__check" [class.is-on]="isApprovedStatus" [class.is-disabled]="!isApprovedStatus">
+        In-App Notification{{ isApprovedStatus ? '' : ' (after approval)' }}
+      </span>
+      <span class="campaign-alert-message__check is-disabled">Email Notification (Coming Soon)</span>
+      <span class="campaign-alert-message__check" [class.is-on]="isApprovedStatus" [class.is-disabled]="!isApprovedStatus">
+        WhatsApp Alert {{ isApprovedStatus ? 'Ready' : '(after approval)' }}
+      </span>
     </div>
 
     <div class="campaign-alert-message__template">
       <div class="campaign-alert-message__template-header">
-        <span>Invite Only Message</span>
-        <button type="button" class="btn btn-outline-primary btn-sm" (click)="copyInviteOnlyMessage()">
-          {{ copied && lastCopiedType === 'invite' ? 'Copied' : 'Copy Invite Only Message' }}
+        <span>{{ relevantMessageLabel }}</span>
+        <button type="button" class="btn btn-primary btn-sm" (click)="copyRelevantMessage()">
+          {{ copied ? 'Copied' : relevantCopyButtonLabel }}
         </button>
       </div>
-      <pre>{{ inviteOnlyMessage }}</pre>
+      <pre>{{ relevantMessage }}</pre>
     </div>
   </div>
 </section>

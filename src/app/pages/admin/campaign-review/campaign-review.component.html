@@ -288,6 +288,8 @@
   (approve)="openModerationModal(selectedCampaign, 'approve')"
   (requestChanges)="openModerationModal(selectedCampaign, 'needs_changes')"
   (reject)="openModerationModal(selectedCampaign, 'reject')"
+  (forceComplete)="onForceCompleteCampaign($event)"
+  (cancelParticipation)="onCancelCampaignParticipation($event)"
 ></app-campaign-detail-modal>
 
 <!-- ══ MODERATION MODAL ══ -->

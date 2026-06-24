@@ -455,6 +455,15 @@
 
         </div><!-- /cdm-grid-right -->
       </div><!-- /cdm-grid -->
+
+      <!-- Ready-to-share WhatsApp message — preview before approval, live after -->
+      <app-campaign-alert-message
+        *ngIf="adminReview"
+        [campaign]="campaign"
+        [copied]="alertMessageCopied"
+        (copyAlert)="copyAdminAlertMessage($event)">
+      </app-campaign-alert-message>
+
     </div><!-- /cdm-body -->
 
     <!-- ── FOOTER ─────────────────────────────────────────────── -->
@@ -463,6 +472,15 @@
       <!-- Admin footer -->
       <ng-container *ngIf="adminReview">
         <div class="cdm-footer-left">
+          <div class="cdm-completion-row" *ngIf="completionStatusLabel">
+            <span class="cdm-completion-row__label">Completion Status</span>
+            <span class="cdm-completion-row__value" [ngClass]="completionStatusClass">{{ completionStatusLabel }}</span>
+          </div>
+
+          <button type="button" class="cdm-emergency-toggle" *ngIf="canShowEmergencyAdminAction" (click)="toggleEmergencyAdminPanel()">
+            <i class="bi bi-shield-exclamation"></i> Emergency Admin Action
+          </button>
+
           <button class="cdm-foot-btn cdm-foot-btn--primary" *ngIf="adminCanApprove" (click)="onAdminApprove()" [disabled]="busy">
             <i class="bi bi-check2-circle"></i> APPROVE
           </button>
@@ -563,3 +581,31 @@
 
   </div><!-- /cdm-panel -->
 </div><!-- /cdm-overlay -->
+
+<!-- ── EMERGENCY ADMIN ACTION (popup, separate from the panel footer) ───── -->
+<div class="modal-backdrop show" *ngIf="showEmergencyAdminPanel" (click)="closeEmergencyAdminPanel()"></div>
+<div class="modal d-block" *ngIf="showEmergencyAdminPanel" tabindex="-1" (click)="closeEmergencyAdminPanel()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal cdm-emergency-modal-content">
+      <div class="cdm-emergency-modal-title">
+        <i class="bi bi-shield-exclamation"></i> Emergency Admin Action
+      </div>
+      <p class="cdm-emergency-panel__warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        Destructive overrides for stuck/problem campaigns — completion normally happens via the host, or automatically. A reason is required and recorded for audit.
+      </p>
+      <textarea class="cdm-emergency-panel__reason" rows="3"
+                placeholder="Reason for this override (required, min 10 characters)…"
+                [(ngModel)]="emergencyActionReason"></textarea>
+      <div class="cdm-emergency-panel__actions">
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--ghost" (click)="closeEmergencyAdminPanel()">Cancel</button>
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--outline" [disabled]="busy || !isEmergencyReasonValid" (click)="onForceComplete()">
+          Force Complete
+        </button>
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--danger" [disabled]="busy || !isEmergencyReasonValid" (click)="onCancelParticipation()">
+          Cancel Participation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

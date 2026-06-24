@@ -26,6 +26,7 @@ export interface Campaign {
     | 'needs_changes'
     | 'rejected'
     | 'completed'
+    | 'cancelled'
     | 'draft';
   budgetMin?: number;
   budgetMax?: number;
