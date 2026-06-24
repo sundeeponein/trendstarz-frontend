@@ -469,9 +469,6 @@
           <button class="cdm-foot-btn cdm-foot-btn--outline" *ngIf="adminCanRequestChanges" (click)="onAdminRequestChanges()" [disabled]="busy">
             REQUEST CHANGES
           </button>
-          <button class="cdm-foot-btn cdm-foot-btn--primary" *ngIf="adminCanComplete" (click)="onAdminComplete()" [disabled]="busy">
-            <i class="bi bi-check2-circle"></i> MARK COMPLETE
-          </button>
         </div>
         <div class="cdm-footer-right">
           <button class="cdm-foot-btn cdm-foot-btn--danger" *ngIf="adminCanReject" (click)="onAdminReject()" [disabled]="busy">

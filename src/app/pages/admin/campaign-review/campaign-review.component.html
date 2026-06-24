@@ -284,12 +284,10 @@
   [adminCanApprove]="selectedCampaignCanApprove"
   [adminCanRequestChanges]="selectedCampaignCanRequestChanges"
   [adminCanReject]="selectedCampaignCanReject"
-  [adminCanComplete]="selectedCampaignCanComplete"
   (close)="closeCampaignPreview()"
   (approve)="openModerationModal(selectedCampaign, 'approve')"
   (requestChanges)="openModerationModal(selectedCampaign, 'needs_changes')"
   (reject)="openModerationModal(selectedCampaign, 'reject')"
-  (complete)="openModerationModal(selectedCampaign, 'complete')"
 ></app-campaign-detail-modal>
 
 <!-- ══ MODERATION MODAL ══ -->

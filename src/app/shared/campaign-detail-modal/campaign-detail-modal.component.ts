@@ -54,7 +54,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanApprove = true;
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
-  @Input() adminCanComplete = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
   }
@@ -74,7 +73,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() approve = new EventEmitter<void>();
   @Output() requestChanges = new EventEmitter<void>();
   @Output() reject = new EventEmitter<void>();
-  @Output() complete = new EventEmitter<void>();
   @Output() validationError = new EventEmitter<string>();
   @Output() viewSubmission = new EventEmitter<void>();
   @Output() confirmReceipt = new EventEmitter<void>();
@@ -1400,10 +1398,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   onAdminReject() {
     this.reject.emit();
-  }
-
-  onAdminComplete() {
-    this.complete.emit();
   }
 
   onLogoError(event: Event) {
