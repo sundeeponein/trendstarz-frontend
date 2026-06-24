@@ -1441,18 +1441,20 @@ export class AdminUserTableComponent implements OnInit {
     return !!user?.isMobileVerified;
   }
 
-  /** Quick per-row check off the stored field — unlike isProfilePhotoVerified(), doesn't depend on the selected-user verification checklist, so it's safe to use across every row in the table. */
+  /** Mirrors the "Profile Photo" checklist item — driven by open ProfileFlag records (batched server-side into profilePhotoActionRequired), the same source of truth the detail popup's checklist uses. */
   hasVerifiedProfilePhoto(user: any): boolean {
-    return !!user?.profilePhotoVerified;
+    return !user?.profilePhotoActionRequired;
   }
 
+  /** Mirrors the "Admin Review Pending" checklist item (profile-verification.service.ts) — verificationStatus, not the accept/decline status badge, which is a separate concept. */
   isAdminReviewAccepted(user: any): boolean {
-    return this.getUserStatusKey(user) === 'accepted';
+    const status = String(user?.verificationStatus || 'not_submitted').trim().toLowerCase();
+    return !['pending', 'not_submitted'].includes(status);
   }
 
+  /** Mirrors the "Social Profile & Creator Tier" checklist item — driven by open ProfileFlag records (batched server-side into socialTierActionRequired), not just "has a tier value". */
   hasSocialMediaWithTier(user: any): boolean {
-    const rows = Array.isArray(user?.socialMedia) ? user.socialMedia : [];
-    return rows.some((sm: any) => !!sm?.tier);
+    return !user?.socialTierActionRequired;
   }
 
   getDisplayPhoneNumber(user: any): string {

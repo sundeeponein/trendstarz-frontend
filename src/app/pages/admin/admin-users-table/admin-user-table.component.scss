@@ -110,6 +110,35 @@
   flex-shrink: 0;
 }
 
+.refresh-btn {
+  border: 1px solid #d0d5de;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 10px;
+  font-weight: 700;
+  min-height: 52px;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+}
+
+.refresh-btn i.spin {
+  animation: admin-refresh-spin 0.8s linear infinite;
+}
+
+@keyframes admin-refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .download-users-btn {
   border: none;
   background: #ff7b10;
@@ -725,6 +754,7 @@
     flex-wrap: wrap;
   }
 
+  .refresh-btn,
   .download-users-btn,
   .filters-toggle-btn,
   .reset-btn {
