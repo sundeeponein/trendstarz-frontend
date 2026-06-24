@@ -27,6 +27,11 @@ import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handl
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit, OnChanges {
+  private static readonly MS_PER_DAY = 24 * 60 * 60 * 1000;
+  /** Host can't pick a start date sooner than this — leaves room for admin approval, applications/invites, and review. */
+  private static readonly MIN_START_DAYS_FROM_TODAY = 3;
+  /** Longest a campaign's start-to-end window can span. */
+  private static readonly MAX_DURATION_DAYS = 15;
   readonly tierOrder: readonly string[] = TIER_ORDER;
   readonly photographerCreatorTypeOptions = [
     'Reel Creator',
@@ -424,7 +429,8 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         (this.campaign as any)?.minInfluencers || 1,
         [Validators.min(1)],
       ],
-      acceptanceDeadline: [this.formatDateTimeLocal((this.campaign as any)?.acceptanceDeadline)],
+      // Auto-derived from timelineStart right after the form is built — see syncAcceptanceDeadlineControl.
+      acceptanceDeadline: [''],
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
@@ -451,6 +457,11 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       productShippingRequired: [!!(this.campaign as any)?.productShippingRequired],
       inviteBenefits: [(this.campaign as any)?.inviteBenefits || ''],
     }, { validators: [this.dateRangeValidator, this.minMaxInfluencerValidator] });
+
+    this.syncAcceptanceDeadlineControl(this.f['timelineStart']?.value);
+    this.form.get('timelineStart')?.valueChanges.subscribe((startVal: string) => {
+      this.syncAcceptanceDeadlineControl(startVal);
+    });
 
     this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
     this.inviteRecipientRole = this.isPhotographerCreator
@@ -1095,16 +1106,19 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   private dateRangeValidator = (group: FormGroup) => {
     const start = group.get('timelineStart')?.value;
     const end = group.get('timelineEnd')?.value;
-    const acceptanceDeadline = group.get('acceptanceDeadline')?.value;
     if (!start || !end) return null;
-    if (new Date(end) < new Date(start)) return { invalidDateRange: true };
-    if (acceptanceDeadline) {
-      const acceptance = new Date(acceptanceDeadline);
-      if (Number.isNaN(acceptance.getTime())) return { invalidAcceptanceDeadline: true };
-      if (acceptance < new Date(start) || acceptance > new Date(end)) {
-        return { invalidAcceptanceDeadlineRange: true };
-      }
-    }
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (endDate < startDate) return { invalidDateRange: true };
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const minStart = new Date(today.getTime() + CampaignFormComponent.MIN_START_DAYS_FROM_TODAY * CampaignFormComponent.MS_PER_DAY);
+    if (startDate < minStart) return { invalidStartDate: true };
+
+    const maxDurationMs = CampaignFormComponent.MAX_DURATION_DAYS * CampaignFormComponent.MS_PER_DAY;
+    if (endDate.getTime() - startDate.getTime() > maxDurationMs) return { invalidDuration: true };
+
     return null;
   };
 
@@ -1241,7 +1255,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid
       )) &&
       (!isLocation || (this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid && this.f['inviteBenefits'].valid)) &&
-      !this.form.errors?.['invalidDateRange']
+      !this.form.errors?.['invalidDateRange'] &&
+      !this.form.errors?.['invalidStartDate'] &&
+      !this.form.errors?.['invalidDuration']
     );
   }
 
@@ -2278,12 +2294,58 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return new Date(dateStr).toISOString().split('T')[0];
   }
 
-  private formatDateTimeLocal(dateStr?: string): string {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return '';
-    const tzOffsetMs = d.getTimezoneOffset() * 60000;
-    return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+  // ── Campaign date rules ──────────────────────────────────────
+  // Acceptance deadline = start date - 1 day, 11:59 PM, auto-derived for
+  // both Invite Only and Open to All campaigns — the host never sets it.
+  // Computed off the plain Y-M-D parts (not a parsed local Date) so it can't
+  // shift a day depending on the viewer's timezone.
+  private parseDateParts(dateStr?: string): { y: number; m: number; d: number } | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr || ''));
+    if (!match) return null;
+    return { y: Number(match[1]), m: Number(match[2]), d: Number(match[3]) };
+  }
+
+  private computeAcceptanceDeadline(startDateStr?: string): Date | null {
+    const parts = this.parseDateParts(startDateStr);
+    if (!parts) return null;
+    return new Date(Date.UTC(parts.y, parts.m - 1, parts.d - 1, 23, 59, 59, 999));
+  }
+
+  private minStartDateValue(): string {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const min = new Date(today.getTime() + CampaignFormComponent.MIN_START_DAYS_FROM_TODAY * CampaignFormComponent.MS_PER_DAY);
+    return min.toISOString().split('T')[0];
+  }
+
+  get minStartDate(): string {
+    return this.minStartDateValue();
+  }
+
+  get maxEndDate(): string {
+    const parts = this.parseDateParts(this.f['timelineStart']?.value);
+    if (!parts) return '';
+    const max = new Date(Date.UTC(parts.y, parts.m - 1, parts.d + CampaignFormComponent.MAX_DURATION_DAYS));
+    return max.toISOString().split('T')[0];
+  }
+
+  get acceptanceDeadlineDisplay(): string {
+    const deadline = this.computeAcceptanceDeadline(this.f['timelineStart']?.value);
+    if (!deadline) return 'Set automatically once you choose a start date';
+    return deadline.toLocaleString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'UTC',
+    });
+  }
+
+  private syncAcceptanceDeadlineControl(startDateStr?: string): void {
+    const deadline = this.computeAcceptanceDeadline(startDateStr);
+    this.form.get('acceptanceDeadline')?.setValue(deadline ? deadline.toISOString() : '', { emitEvent: false });
   }
 
   onFileSelected(event: Event) {

@@ -701,10 +701,15 @@
 
             <div class="acceptance-closed-banner" *ngIf="isAcceptanceClosed(c)">
               <i class="bi bi-check2-circle"></i>
-              Acceptance closed: max {{ getAcceptanceCloseThreshold(c) }} accepted participants reached.
+              Status: Acceptance Closed — Final Accepted: {{ getExpandAcceptedOrBeyond(c) }}
               <span *ngIf="getAcceptanceBlockedPendingCount(c) > 0">
                 {{ getAcceptanceBlockedPendingCount(c) }} pending invite{{ getAcceptanceBlockedPendingCount(c) === 1 ? '' : 's' }} can no longer accept.
               </span>
+            </div>
+
+            <div class="acceptance-deadline-banner" *ngIf="!isAcceptanceClosed(c) && getCampaignAcceptanceDeadlineText(c)">
+              <i class="bi bi-clock-history"></i>
+              Acceptance closes: {{ getCampaignAcceptanceDeadlineText(c) }}
             </div>
 
             <div class="acceptance-ready-banner" *ngIf="!isAcceptanceClosed(c) && isMinimumParticipantsReached(c)">
@@ -718,6 +723,10 @@
             <!-- Mini stat chips -->
             <div class="expand-stats">
               <div class="expand-stat">
+                <span class="expand-stat-val">{{ getRequiredCreatorsCount(c) }}</span>
+                <span class="expand-stat-lbl">Required Creators</span>
+              </div>
+              <div class="expand-stat">
                 <span class="expand-stat-val">{{ getExpandInvites(c).length }}</span>
                 <span class="expand-stat-lbl">Invites Sent</span>
               </div>
@@ -728,6 +737,10 @@
               <div class="expand-stat">
                 <span class="expand-stat-val">{{ getExpandInvitesByStatus(c, 'pending') }}</span>
                 <span class="expand-stat-lbl">Pending</span>
+              </div>
+              <div class="expand-stat">
+                <span class="expand-stat-val">{{ getExpandDeclinedCount(c) }}</span>
+                <span class="expand-stat-lbl">Declined</span>
               </div>
               <div class="expand-stat">
                 <span class="expand-stat-val" [class.expired-text]="isExpired(c)">{{ daysRemainingText(c) }}</span>
@@ -778,14 +791,18 @@
                         {{ sm.platform }} · {{ sm.tier }}
                       </span>
                     </div>
-                    <!-- Dates row: Working from + Post date -->
+                    <!-- Dates row: Accepted (pre-confirmation) or Working from (post-confirmation) + Post date -->
                     <small class="expand-dates-row"
-                           *ngIf="getInviteWorkingFromDate(inv) || inv.selectedPostDate">
+                           *ngIf="getInviteWorkingFromDate(inv) || getInviteAcceptedDate(inv) || inv.selectedPostDate">
                       <ng-container *ngIf="getInviteWorkingFromDate(inv)">
                         <i class="bi bi-play-circle"></i>
                         Working from: {{ getInviteWorkingFromDate(inv) }}
                       </ng-container>
-                      <ng-container *ngIf="getInviteWorkingFromDate(inv) && inv.selectedPostDate"> &bull; </ng-container>
+                      <ng-container *ngIf="!getInviteWorkingFromDate(inv) && getInviteAcceptedDate(inv)">
+                        <i class="bi bi-check-circle"></i>
+                        Accepted: {{ getInviteAcceptedDate(inv) }}
+                      </ng-container>
+                      <ng-container *ngIf="(getInviteWorkingFromDate(inv) || getInviteAcceptedDate(inv)) && inv.selectedPostDate"> &bull; </ng-container>
                       <ng-container *ngIf="inv.selectedPostDate">
                         Post date: {{ inv.selectedPostDate | date:'MMM d, yyyy' }}
                       </ng-container>
@@ -1265,10 +1282,16 @@
     <div class="acceptance-closed-banner"
          *ngIf="invitePanelCampaign && isInvitePanelAcceptanceClosed()">
       <i class="bi bi-check2-circle"></i>
-      Acceptance closed at {{ getAcceptanceCloseThreshold(invitePanelCampaign) }} accepted participants.
+      Status: Acceptance Closed — Final Accepted: {{ getCardAcceptedCount(invitePanelCampaign) }}
       <span *ngIf="getInvitePanelBlockedPendingCount() > 0">
         {{ getInvitePanelBlockedPendingCount() }} pending invite{{ getInvitePanelBlockedPendingCount() === 1 ? '' : 's' }} are now closed.
       </span>
+    </div>
+
+    <div class="acceptance-deadline-banner"
+         *ngIf="invitePanelCampaign && !isInvitePanelAcceptanceClosed() && getCampaignAcceptanceDeadlineText(invitePanelCampaign)">
+      <i class="bi bi-clock-history"></i>
+      Acceptance closes: {{ getCampaignAcceptanceDeadlineText(invitePanelCampaign) }}
     </div>
 
     <div class="acceptance-ready-banner"

@@ -3348,8 +3348,22 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Only meaningful once the host has confirmed payment — that's when work actually starts. */
   getInviteWorkingFromDate(inv: any): string {
-    const d = inv?.acceptedAt || inv?.paymentConfirmedAt;
+    const status = this.getHostInviteEffectiveStatus(inv);
+    const isWorkConfirmed = this.isPaidStatus(status);
+    if (!isWorkConfirmed) return '';
+    const d = inv?.paymentConfirmedAt
+      || (status === 'payment_confirmed' ? inv?.updatedAt : null)
+      || inv?.acceptedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  /** Shown before payment is confirmed — the date the creator accepted the invite. */
+  getInviteAcceptedDate(inv: any): string {
+    if (this.isPaidStatus(this.getHostInviteEffectiveStatus(inv))) return '';
+    const d = inv?.acceptedAt;
     if (!d) return '';
     return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   }
@@ -3858,6 +3872,42 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return min > 0 ? min : 1;
   }
 
+  /** Target headcount the host needs for this campaign — independent of how many invites have gone out so far. */
+  getRequiredCreatorsCount(c: Campaign): number {
+    return Number((c as any)?.maxInfluencers || 0);
+  }
+
+  getExpandDeclinedCount(c: Campaign): number {
+    const declinedStatuses = new Set(['declined', 'withdrawn']);
+    return this.getExpandInvites(c)
+      .filter((i: any) => declinedStatuses.has(this.getHostInviteEffectiveStatus(i))).length;
+  }
+
+  /** True once the campaign's acceptance window has closed — either the deadline passed, or the max headcount was reached. */
+  private isAcceptanceDeadlinePassed(c: Campaign): boolean {
+    const acceptanceDeadlineRaw = (c as any)?.acceptanceDeadline;
+    if (!acceptanceDeadlineRaw) return false;
+    const acceptanceDeadline = new Date(acceptanceDeadlineRaw);
+    if (Number.isNaN(acceptanceDeadline.getTime())) return false;
+    return acceptanceDeadline.getTime() <= Date.now();
+  }
+
+  getCampaignAcceptanceDeadlineText(c: Campaign | null | undefined): string {
+    const acceptanceDeadlineRaw = (c as any)?.acceptanceDeadline;
+    if (!acceptanceDeadlineRaw) return '';
+    const acceptanceDeadline = new Date(acceptanceDeadlineRaw);
+    if (Number.isNaN(acceptanceDeadline.getTime())) return '';
+    return acceptanceDeadline.toLocaleString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'UTC',
+    });
+  }
+
   private getAcceptedRowsCount(rows: any[]): number {
     const acceptedStatuses = new Set([
       'accepted',
@@ -3873,13 +3923,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   isAcceptanceClosed(c: Campaign): boolean {
-    const acceptanceDeadlineRaw = (c as any)?.acceptanceDeadline;
-    if (acceptanceDeadlineRaw) {
-      const acceptanceDeadline = new Date(acceptanceDeadlineRaw);
-      if (!Number.isNaN(acceptanceDeadline.getTime()) && acceptanceDeadline.getTime() > Date.now()) {
-        return false;
-      }
-    }
+    if (this.isAcceptanceDeadlinePassed(c)) return true;
     const threshold = this.getAcceptanceCloseThreshold(c);
     if (!threshold) return false;
     return this.getCardAcceptedCount(c) >= threshold;
@@ -3901,13 +3945,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   isInvitePanelAcceptanceClosed(): boolean {
     const c = this.invitePanelCampaign;
     if (!c) return false;
-    const acceptanceDeadlineRaw = (c as any)?.acceptanceDeadline;
-    if (acceptanceDeadlineRaw) {
-      const acceptanceDeadline = new Date(acceptanceDeadlineRaw);
-      if (!Number.isNaN(acceptanceDeadline.getTime()) && acceptanceDeadline.getTime() > Date.now()) {
-        return false;
-      }
-    }
+    if (this.isAcceptanceDeadlinePassed(c)) return true;
     const threshold = this.getAcceptanceCloseThreshold(c);
     if (!threshold) return false;
     return this.getAcceptedRowsCount(this.invites) >= threshold;

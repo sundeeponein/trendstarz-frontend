@@ -317,12 +317,12 @@
         <div class="field-row">
           <div class="field-group half">
             <label class="field-label">Start date <span class="required">*</span></label>
-            <input type="date" formControlName="timelineStart" class="field-input" />
+            <input type="date" formControlName="timelineStart" class="field-input" [attr.min]="minStartDate" />
             <span class="field-error" *ngIf="f['timelineStart'].touched && !f['timelineStart'].value">Required</span>
           </div>
           <div class="field-group half">
             <label class="field-label">End date <span class="required">*</span></label>
-            <input type="date" formControlName="timelineEnd" class="field-input" />
+            <input type="date" formControlName="timelineEnd" class="field-input" [attr.min]="f['timelineStart'].value || minStartDate" [attr.max]="maxEndDate" />
             <span class="field-error" *ngIf="f['timelineEnd'].touched && !f['timelineEnd'].value">Required</span>
           </div>
         </div>
@@ -330,18 +330,20 @@
         <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDateRange']">
           End date must be on or after start date.
         </span>
+        <span class="field-error" *ngIf="f['timelineStart'].touched && form.errors?.['invalidStartDate']">
+          Start date must be at least 3 days from today.
+        </span>
+        <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDuration']">
+          Campaign duration cannot exceed 15 days.
+        </span>
 
         <div class="field-group half">
-          <label class="field-label">Acceptance deadline <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-          <input type="datetime-local" formControlName="acceptanceDeadline" class="field-input" />
+          <label class="field-label">Acceptance deadline</label>
+          <input type="text" class="field-input" [value]="acceptanceDeadlineDisplay" disabled readonly />
         </div>
-
-        <span class="field-error" *ngIf="f['acceptanceDeadline'].touched && form.errors?.['invalidAcceptanceDeadline']">
-          Acceptance deadline is invalid.
-        </span>
-        <span class="field-error" *ngIf="f['acceptanceDeadline'].touched && form.errors?.['invalidAcceptanceDeadlineRange']">
-          Acceptance deadline must be between campaign start and end dates.
-        </span>
+        <p class="field-sublabel">
+          Auto-set to 1 day before the start date — creators must accept or decline by then.
+        </p>
         <p class="field-sublabel">
           Note: {{ inviteRecipientLabelPlural }} can only choose a posting/visit date within your selected start and end dates when accepting invites.
         </p>

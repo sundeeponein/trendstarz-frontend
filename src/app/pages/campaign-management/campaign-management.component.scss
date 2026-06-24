@@ -630,6 +630,25 @@
   }
 }
 
+.acceptance-deadline-banner {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #adc6ff;
+  background: #f0f5ff;
+  color: #1d39c4;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+
+  i {
+    font-size: 0.95rem;
+    color: #2f54eb;
+  }
+}
+
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);   opacity: 1; }
