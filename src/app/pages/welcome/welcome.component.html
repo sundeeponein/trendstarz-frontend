@@ -43,6 +43,7 @@
             [brandName]="brand.brandName || ''"
             [categories]="brand.categories || []"
             [isPremium]="brand.isPremium || false"
+            [verifiedByTrendStarz]="brand.verifiedByTrendStarz || false"
             [adminTags]="[]"
             [location]="{ state: brand.location?.state || '' }"
             [showWelcomeCampaignMeta]="showBrandCampaignMetaOnWelcome"
@@ -76,8 +77,8 @@
             [isPremium]="influencer.isPremium || false"
             [promotionalPrice]="influencer.promotionalPrice"
             [showWelcomeStartingPrice]="true"
-            [verificationStatus]="'not_submitted'"
-            [verifiedByTrendStarz]="false"
+            [verificationStatus]="influencer.verificationStatus || 'not_submitted'"
+            [verifiedByTrendStarz]="influencer.verifiedByTrendStarz || false"
             [location]="{ state: influencer.location?.state || '' }"
             [socialMedia]="[]"
             [adminTags]="[]"
@@ -109,11 +110,11 @@
         </div>
         <div class="col-12 col-lg-5">
           <article class="prelaunch-card h-100">
-            <h3 class="mb-3">Early Success Targets</h3>
+            <h3 class="mb-3">Trendstarz at a Glance</h3>
             <div class="metric-list">
-              <div class="metric-item" *ngFor="let metric of successMetrics">
-                <span>{{ metric.label }}</span>
-                <strong>{{ metric.value }}</strong>
+              <div class="metric-item" *ngFor="let counter of homepageCounters">
+                <span>{{ counter.label }}</span>
+                <strong>{{ counter.value }}</strong>
               </div>
             </div>
             <hr />

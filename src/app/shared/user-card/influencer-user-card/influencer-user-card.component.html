@@ -8,24 +8,22 @@
   <div class="inf-card__img-wrap">
     <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" />
 
-    <!-- Admin badges on image -->
-    <div class="inf-card__img-tags" *ngIf="displayTags.length">
-      <span
-        *ngFor="let tag of displayTags"
-        class="inf-card__img-tag badge rounded-pill"
-        [ngClass]="tagBadgeClass(tag)">
-        {{ tag }}
+    <!-- Trust badges -->
+    <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
+      <span class="inf-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified">
+        <i class="bi bi-patch-check-fill"></i> Verified by Trendstarz
+      </span>
+      <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium">
+        <i class="bi bi-star-fill"></i> Premium
       </span>
     </div>
   </div>
 
   <!-- Body -->
   <div class="inf-card__body">
-    <!-- Name + verified -->
+    <!-- Name -->
     <div class="inf-card__name">
       {{ name }}
-      <i class="bi bi-patch-check-fill inf-card__verified" *ngIf="isPremium" title="Verified"></i>
-      <span class="inf-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
     </div>
 
     <!-- Categories + welcome-only starting price -->

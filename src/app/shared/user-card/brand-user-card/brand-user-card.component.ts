@@ -22,6 +22,7 @@ export class BrandUserCardComponent {
   @Input() website = '';
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
+  @Input() verifiedByTrendStarz = false;
   @Input() productImages: any[] = [];
   @Input() socialMedia: any[] = [];
   /** Show the "+ Campaign" button — pass true for brand users */
@@ -57,13 +58,8 @@ export class BrandUserCardComponent {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
-  get displayTags(): string[] {
-    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
-    return Array.isArray(this.adminTags)
-      ? this.adminTags
-          .filter((tag) => !!String(tag || '').trim())
-          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
-      : [];
+  get isTrendstarzVerified(): boolean {
+    return !!this.verifiedByTrendStarz;
   }
 
   /** Tier of the first social handle the user added (entry order). */
@@ -81,14 +77,6 @@ export class BrandUserCardComponent {
     if (p === 'twitter' || p === 'x' || p === 'x / twitter') return 'bi-twitter-x';
     if (p === 'tiktok') return 'bi-tiktok';
     return 'bi-globe';
-  }
-
-  tagBadgeClass(tag: string): string {
-    const normalized = String(tag || '').toLowerCase();
-    if (normalized.includes('founder')) return 'badge--founder';
-    if (normalized.includes('verified')) return 'badge--verified';
-    if (normalized.includes('internal')) return 'badge--internal';
-    return 'badge--neutral';
   }
 
   formatFollowers(count: number | undefined): string {

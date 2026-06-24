@@ -113,6 +113,14 @@
       </select>
     </div>
 
+    <!-- Sort -->
+    <div class="filter-item" *ngIf="isInfluencerMode || isPhotographerMode">
+      <label class="filter-label">Sort By</label>
+      <select class="filter-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+        <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+    </div>
+
     <!-- Actions -->
     <div class="filter-actions">
       <button class="btn-clear" (click)="clearActiveFilters()">
@@ -211,6 +219,7 @@
         [socialMedia]="brand.socialMedia || []"
         [adminTags]="brand.adminTags || []"
         [isPremium]="brand.isPremium || false"
+        [verifiedByTrendStarz]="brand.verifiedByTrendStarz || false"
         [promotionalPrice]="brand.promotionalPrice"
         [products]="brand.products || []"
         [website]="brand.website || ''"

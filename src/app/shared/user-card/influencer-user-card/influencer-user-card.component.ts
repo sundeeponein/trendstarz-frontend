@@ -62,15 +62,6 @@ export class InfluencerUserCardComponent {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
-  get displayTags(): string[] {
-    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
-    return Array.isArray(this.adminTags)
-      ? this.adminTags
-          .filter((tag) => !!String(tag || '').trim())
-          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
-      : [];
-  }
-
   get displayCategory(): string {
     if (String(this.influencerCategory || '').trim()) return this.influencerCategory;
     return this.categories?.[0] || '—';
@@ -117,14 +108,6 @@ export class InfluencerUserCardComponent {
     if (p === 'twitter' || p === 'x' || p === 'x / twitter') return 'X';
     if (p === 'tiktok') return 'TT';
     return platform.slice(0, 2).toUpperCase();
-  }
-
-  tagBadgeClass(tag: string): string {
-    const normalized = String(tag || '').toLowerCase();
-    if (normalized.includes('founder')) return 'badge--founder';
-    if (normalized.includes('verified')) return 'badge--verified';
-    if (normalized.includes('internal')) return 'badge--internal';
-    return 'badge--neutral';
   }
 
   formatFollowers(count: number | undefined): string {

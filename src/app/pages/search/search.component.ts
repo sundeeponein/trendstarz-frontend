@@ -62,6 +62,27 @@ export class SearchComponent implements OnInit {
   tierOptions: string[] = [];
   ageRangeOptions: string[] = ['18-24', '25-34', '35-44', '45+'];
 
+  readonly sortOptions: { value: string; label: string }[] = [
+    { value: 'recommended', label: 'Recommended' },
+    { value: 'recently_active', label: 'Recently Active' },
+    { value: 'new_members', label: 'New Members' },
+    { value: 'verified_first', label: 'Verified First' },
+    { value: 'premium_first', label: 'Premium First' },
+    { value: 'lowest_price', label: 'Lowest Price' },
+    { value: 'highest_followers', label: 'Highest Followers' },
+  ];
+  sortBy = 'recommended';
+
+  onSortChange(): void {
+    if (this.isPhotographerMode) {
+      this.applyPhotographerFilters();
+      return;
+    }
+    if (this.isInfluencerMode) {
+      this.applyInfluencerFilters();
+    }
+  }
+
   // Influencer filters
   infFilters = {
     keyword: '',
@@ -601,9 +622,7 @@ export class SearchComponent implements OnInit {
       }
       return true;
     });
-    this.filteredInfluencers = f.location
-      ? filtered
-      : this.sortBySmartLocationPriority(filtered);
+    this.filteredInfluencers = this.sortResults(filtered, !!f.location);
   }
 
   private getInfluencerAgeRange(influencer: any): string {
@@ -718,9 +737,7 @@ export class SearchComponent implements OnInit {
       if (f.location && p.location?.state !== f.location) return false;
       return true;
     });
-    this.filteredPhotographers = f.location
-      ? filtered
-      : this.sortBySmartLocationPriority(filtered);
+    this.filteredPhotographers = this.sortResults(filtered, !!f.location);
   }
 
   private normalizeLocationValue(value: unknown): string {
@@ -754,6 +771,67 @@ export class SearchComponent implements OnInit {
       if (locationDiff !== 0) return locationDiff;
       return this.getTopFollowersCount(b) - this.getTopFollowersCount(a);
     });
+  }
+
+  private sortResults<T extends any>(rows: T[], hasLocationFilter: boolean): T[] {
+    if (this.sortBy === 'recommended') {
+      return hasLocationFilter ? rows : this.sortBySmartLocationPriority(rows);
+    }
+
+    const sorted = [...rows];
+    switch (this.sortBy) {
+      case 'recently_active':
+        sorted.sort((a: any, b: any) => this.getActivityTimestamp(b) - this.getActivityTimestamp(a));
+        break;
+      case 'new_members':
+        sorted.sort((a: any, b: any) => this.getRegisteredTimestamp(b) - this.getRegisteredTimestamp(a));
+        break;
+      case 'verified_first':
+        sorted.sort((a: any, b: any) =>
+          Number(this.isVerifiedEntity(b)) - Number(this.isVerifiedEntity(a)) ||
+          this.getTopFollowersCount(b) - this.getTopFollowersCount(a)
+        );
+        break;
+      case 'premium_first':
+        sorted.sort((a: any, b: any) =>
+          Number(!!b.isPremium) - Number(!!a.isPremium) ||
+          this.getTopFollowersCount(b) - this.getTopFollowersCount(a)
+        );
+        break;
+      case 'lowest_price':
+        sorted.sort((a: any, b: any) => this.getPriceValue(a) - this.getPriceValue(b));
+        break;
+      case 'highest_followers':
+        sorted.sort((a: any, b: any) => this.getTopFollowersCount(b) - this.getTopFollowersCount(a));
+        break;
+    }
+    return sorted;
+  }
+
+  private getActivityTimestamp(entity: any): number {
+    const value = entity?.lastLoginAt || entity?.firstRegisteredAt || entity?.createdAt;
+    const time = value ? new Date(value).getTime() : NaN;
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  private getRegisteredTimestamp(entity: any): number {
+    const value = entity?.firstRegisteredAt || entity?.createdAt;
+    const time = value ? new Date(value).getTime() : NaN;
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  private isVerifiedEntity(entity: any): boolean {
+    return !!entity?.verifiedByTrendStarz || entity?.verificationStatus === 'approved';
+  }
+
+  private getPriceValue(entity: any): number {
+    const direct = Number(entity?.promotionalPrice ?? entity?.price);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+    const pricingArr = Array.isArray(entity?.pricing) ? entity.pricing : [];
+    const prices = pricingArr
+      .map((p: any) => Number(p?.price))
+      .filter((n: number) => Number.isFinite(n) && n > 0);
+    return prices.length ? Math.min(...prices) : Number.POSITIVE_INFINITY;
   }
 
   private trackSmartDiscoveryIfApplicable(

@@ -51,15 +51,6 @@ export class PhotographerUserCardComponent {
     return this.displaySkills[0] || '—';
   }
 
-  get displayTags(): string[] {
-    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
-    return Array.isArray(this.adminTags)
-      ? this.adminTags
-          .filter((tag) => !!String(tag || '').trim())
-          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
-      : [];
-  }
-
   get isTrendstarzVerified(): boolean {
     return this.verifiedByTrendStarz || this.verificationStatus === 'approved';
   }
@@ -71,14 +62,6 @@ export class PhotographerUserCardComponent {
 
   get platforms(): string[] {
     return (this.socialMedia || []).map(sm => (sm.platform || '').toLowerCase());
-  }
-
-  tagBadgeClass(tag: string): string {
-    const normalized = String(tag || '').toLowerCase();
-    if (normalized.includes('founder')) return 'badge--founder';
-    if (normalized.includes('verified')) return 'badge--verified';
-    if (normalized.includes('internal')) return 'badge--internal';
-    return 'badge--neutral';
   }
 
   onViewProfileClick(event: Event) {

@@ -7,12 +7,12 @@
   <div class="photographer-card__img-wrap">
     <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" />
 
-    <div class="photographer-card__img-tags" *ngIf="displayTags.length">
-      <span
-        *ngFor="let tag of displayTags"
-        class="photographer-card__img-tag badge rounded-pill"
-        [ngClass]="tagBadgeClass(tag)">
-        {{ tag }}
+    <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
+      <span class="photographer-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified">
+        <i class="bi bi-patch-check-fill"></i> Verified by Trendstarz
+      </span>
+      <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium">
+        <i class="bi bi-star-fill"></i> Premium
       </span>
     </div>
   </div>
@@ -20,8 +20,6 @@
   <div class="photographer-card__body">
     <div class="photographer-card__name">
       {{ name || '—' }}
-      <i class="bi bi-patch-check-fill photographer-card__verified" *ngIf="isPremium" title="Verified"></i>
-      <span class="photographer-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
     </div>
 
     <div class="photographer-card__category-row">

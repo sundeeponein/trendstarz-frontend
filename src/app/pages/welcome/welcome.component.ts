@@ -58,10 +58,11 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     'Fitness'
   ];
 
-  readonly successMetrics = [
-    { label: 'Campaign match time', value: '48 hrs' },
-    { label: 'Verified creator quality checks', value: '100%' },
-    { label: 'Avg. campaign completion target', value: '95%' }
+  readonly homepageCounters = [
+    { label: 'Verified Influencers', value: '108+' },
+    { label: 'Creator Profiles', value: '200+' },
+    { label: 'Growing Network of', value: 'Brands' },
+    { label: 'Photographers & Videographers', value: 'Across India' }
   ];
 
   readonly featuredCampaignExamples = [
