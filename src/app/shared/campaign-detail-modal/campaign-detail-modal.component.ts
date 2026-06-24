@@ -1023,7 +1023,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const labels: Record<string, string> = {
       pending: 'Pending',
       invited: 'Invited',
-      accepted: 'Working',
+      accepted: 'Accepted',
       payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
       submitted: 'Under Review',

@@ -1066,7 +1066,7 @@ export class CampaignReviewComponent implements OnInit {
       });
     }
 
-    const order = ['working', 'under_review', 'completed', 'approved', 'pending', 'withdrawn', 'declined', 'rejected'];
+    const order = ['accepted', 'working', 'under_review', 'completed', 'approved', 'pending', 'withdrawn', 'declined', 'rejected'];
     return order
       .filter((key) => counts.has(key))
       .slice(0, 4)
@@ -1095,7 +1095,8 @@ export class CampaignReviewComponent implements OnInit {
 
   private campaignInviteStatusChipKey(status: string): string {
     const key = String(status || '').trim().toLowerCase();
-    if (key === 'accepted' || key === 'payment_confirmed' || key === 'working') return 'working';
+    if (key === 'payment_confirmed' || key === 'working') return 'working';
+    if (key === 'accepted') return 'accepted';
     if (key === 'submitted' || key === 'disputed') return 'under_review';
     if (key === 'pending' || key === 'invited' || key === 'counter_sent') return 'pending';
     return key;
@@ -1107,7 +1108,7 @@ export class CampaignReviewComponent implements OnInit {
       pending: 'Pending',
       invited: 'Invited',
       counter_sent: 'Pending',
-      accepted: 'Working',
+      accepted: 'Accepted',
       payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
       submitted: 'Under Review',

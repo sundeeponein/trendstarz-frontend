@@ -663,10 +663,10 @@ $dk-orange:    #e06030;
   display: inline-block; width: 7px; height: 7px; border-radius: 50%;
   margin-right: 6px; vertical-align: middle;
   background: $lt-muted;
-  &--working, &--accepted, &--payment_confirmed { background: #10b981; }
+  &--working, &--payment_confirmed { background: #10b981; }
   &--submitted { background: #3b82f6; }
   &--completed, &--approved { background: #059669; }
-  &--pending, &--invited { background: #f59e0b; }
+  &--pending, &--invited, &--accepted { background: #f59e0b; }
   &--withdrawn, &--declined, &--rejected { background: #ef4444; }
 }
 
