@@ -44,7 +44,7 @@ export class HowItWorksComponent implements OnDestroy {
     {
       icon: 'bi-check-circle-fill',
       tint: 'purple',
-      title: 'Deal Done',
+      title: 'Done',
       description: 'Content is uploaded, brand approves, and payment is released instantly.',
       status: 'Completed',
     },

@@ -15,6 +15,7 @@ import { RegistrationConfirmModalComponent } from '../../shared/components/regis
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
 import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
+import { formatBrandsStat, formatPhotographersStat } from '../../shared/utils/platform-stats.util';
 
 @Component({
   selector: 'app-welcome',
@@ -52,7 +53,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     { label: 'Verified Influencers', value: '108+', emphasis: true },
     { label: 'Creator Profiles', value: '200+', emphasis: true },
     { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
-    { label: 'Photographers', value: 'Across India', emphasis: false },
+    { label: 'Photographers', value: 'Growing the count', emphasis: false },
   ];
 
   readonly placeholderCategories: string[] = [
@@ -206,11 +207,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       const hasData = (stats?.totalInfluencers || 0) > 0 || (stats?.totalPhotographers || 0) > 0;
       if (!hasData) return;
       const formatCount = (count: number) => (Number.isFinite(count) ? String(count) : '0');
+      const brandsStat = formatBrandsStat(stats);
+      const photographersStat = formatPhotographersStat(stats);
       this.glanceCounters = [
         { label: 'Verified Influencers', value: formatCount(stats.verifiedInfluencers), emphasis: true },
         { label: 'Creator Profiles', value: formatCount(stats.totalInfluencers), emphasis: true },
-        { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
-        { label: 'Photographers', value: formatCount(stats.totalPhotographers), emphasis: false },
+        { label: brandsStat.label, value: brandsStat.value, emphasis: true },
+        { label: photographersStat.label, value: photographersStat.value, emphasis: false },
       ];
       this.cd.detectChanges();
     });

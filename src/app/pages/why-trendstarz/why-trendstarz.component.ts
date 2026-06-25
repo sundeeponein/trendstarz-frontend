@@ -2,6 +2,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
+import { formatBrandsStat, formatPhotographersStat } from '../../shared/utils/platform-stats.util';
 
 @Component({
   selector: 'app-why-trendstarz',
@@ -33,8 +34,8 @@ export class WhyTrendstarzComponent implements OnInit {
   glanceStats = [
     { label: 'Verified Influencers', value: '108+', icon: 'bi-person-check', emphasis: true },
     { label: 'Creator Profiles', value: '200+', icon: 'bi-briefcase', emphasis: true },
-    { label: 'Network of Brands', value: 'Scaling', icon: 'bi-tags', emphasis: false },
-    { label: 'Photographers', value: '0', icon: 'bi-camera', emphasis: false },
+    { label: 'Growing Network of', value: 'BRANDS', icon: 'bi-tags', emphasis: true },
+    { label: 'Photographers', value: 'Growing the count', icon: 'bi-camera', emphasis: false },
   ];
 
   readonly precisionStats = [
@@ -57,11 +58,13 @@ export class WhyTrendstarzComponent implements OnInit {
       const hasData = (stats?.totalInfluencers || 0) > 0 || (stats?.totalPhotographers || 0) > 0;
       if (!hasData) return;
       const formatCount = (count: number) => (Number.isFinite(count) ? String(count) : '0');
+      const brandsStat = formatBrandsStat(stats);
+      const photographersStat = formatPhotographersStat(stats);
       this.glanceStats = [
         { label: 'Verified Influencers', value: formatCount(stats.verifiedInfluencers), icon: 'bi-person-check', emphasis: true },
         { label: 'Creator Profiles', value: formatCount(stats.totalInfluencers), icon: 'bi-briefcase', emphasis: true },
-        { label: 'Network of Brands', value: 'Scaling', icon: 'bi-tags', emphasis: false },
-        { label: 'Photographers', value: formatCount(stats.totalPhotographers), icon: 'bi-camera', emphasis: false },
+        { label: brandsStat.label, value: brandsStat.value, icon: 'bi-tags', emphasis: true },
+        { label: photographersStat.label, value: photographersStat.value, icon: 'bi-camera', emphasis: false },
       ];
     });
   }
