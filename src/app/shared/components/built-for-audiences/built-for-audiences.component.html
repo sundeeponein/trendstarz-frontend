@@ -4,9 +4,9 @@
     <p class="built-for-subtitle mb-4 text-center">{{ subheading }}</p>
 
     <div class="built-for-grid">
-      <div class="built-for-item" *ngFor="let item of items">
+      <div class="built-for-item" *ngFor="let item of items; let i = index">
         <article class="built-for-card">
-          <div class="built-for-tile">
+          <div class="built-for-tile" [ngClass]="'tile-' + tintFor(item, i)">
             <i class="bi" [ngClass]="item.icon"></i>
           </div>
           <h5>{{ item.title }}</h5>

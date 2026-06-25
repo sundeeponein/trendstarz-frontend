@@ -13,7 +13,7 @@ export class HeroBannerComponent {
   @Input() badge = 'Next-Gen Influencer';
   @Input() titleMain = 'Connect Brands with India\'s';
   @Input() titleHighlight = 'Top Creators';
-  @Input() subtitle = 'TrendStarz helps brands discover creators, launch campaigns, and manage collaborations efficiently.';
+  @Input() subtitle = 'TrendStarz helps brands discover creators, launch campaigns, and manage collaborations efficiently. Scale your reach with data-driven creative precision.';
   @Input() primaryLabel = 'Register as Brand';
   @Input() secondaryLabel = 'Join as Influencer';
   @Input() thirdLabel = '';

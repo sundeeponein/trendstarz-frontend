@@ -42,7 +42,7 @@
       <a routerLink="/how-it-works" routerLinkActive="active" class="nav-tab">
         How It Works
       </a>
-      <a routerLink="/" fragment="why-trendstarz" class="nav-tab">
+      <a routerLink="/why-trendstarz" routerLinkActive="active" class="nav-tab">
         Why TrendStarz
       </a>
       <a *ngIf="showRegisterInfluencerLink" class="nav-tab" (click)="regConfirm.open('influencer')" style="cursor:pointer;">
@@ -226,7 +226,7 @@
         <a *ngIf="showSearchLink" [routerLink]="searchRoute" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer' || user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/how-it-works" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>How It Works</span></a>
-        <a routerLink="/" fragment="why-trendstarz" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
+        <a routerLink="/why-trendstarz" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
         <a *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('influencer')" style="cursor:pointer;"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
         <a *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('brand')" style="cursor:pointer;"><i class="bi bi-building"></i><span>Register as Brand</span></a>
         <a *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('photographer')" style="cursor:pointer;"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>

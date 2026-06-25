@@ -26,6 +26,30 @@ export class HowItWorksComponent implements OnDestroy {
     return this.routeBasePath === '/features' ? 'Features' : 'How It Works';
   }
 
+  readonly dealLifecycleSteps = [
+    {
+      icon: 'bi-megaphone-fill',
+      tint: 'peach',
+      title: 'Brand Offers',
+      description: 'A lifestyle brand offers Rs 3,000 for a dedicated reel and story set.',
+      status: 'Initiated',
+    },
+    {
+      icon: 'bi-tag-fill',
+      tint: 'blue',
+      title: 'Influencer Accepts',
+      description: 'The creator reviews terms, portfolio match, and clicks "Accept Offer".',
+      status: 'Agreed',
+    },
+    {
+      icon: 'bi-check-circle-fill',
+      tint: 'purple',
+      title: 'Deal Done',
+      description: 'Content is uploaded, brand approves, and payment is released instantly.',
+      status: 'Completed',
+    },
+  ];
+
   influencerSignupParams = {
     source: this.routeSource,
     audience: 'influencer',

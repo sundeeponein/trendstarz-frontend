@@ -1,7 +1,21 @@
 .built-for-strip {
-  background: #ffffff;
+  position: relative;
+  background: #f7f8fa;
   border-top: 1px solid #dce3ed;
   border-bottom: 1px solid #dce3ed;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    width: 560px;
+    height: 280px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(255, 122, 0, 0.08), transparent 70%);
+    pointer-events: none;
+  }
 }
 
 .built-for-title {
@@ -16,9 +30,11 @@
 }
 
 .built-for-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.1rem;
+  z-index: 1;
 }
 
 .built-for-item {
@@ -29,52 +45,78 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.55rem;
-  border: 1px solid #e3e7ee;
-  border-radius: 12px;
-  background: #f2f4f8;
-  padding: 1.35rem 1rem;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.3rem;
+  border: 1px solid #eef0f4;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 1.4rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
 }
 
 .built-for-tile {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ece6f8;
-}
+  margin-bottom: 0.5rem;
 
-.built-for-card i {
-  color: #6f52aa;
-  font-size: 1.35rem;
-  line-height: 1;
+  i {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  &.tile-purple {
+    background: #ede9fe;
+    i { color: #7c3aed; }
+  }
+
+  &.tile-orange {
+    background: #ffedd5;
+    i { color: #ea580c; }
+  }
+
+  &.tile-blue {
+    background: #dbeafe;
+    i { color: #2563eb; }
+  }
+
+  &.tile-gray {
+    background: #e5e7eb;
+    i { color: #4b5563; }
+  }
+
+  &.tile-red {
+    background: #fee2e2;
+    i { color: #dc2626; }
+  }
 }
 
 .built-for-card h5 {
-  margin: 0.5rem 0 0;
+  margin: 0;
   color: #212736;
-  font-size: 1.04rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
 .built-for-card p {
   margin: 0;
   color: #6c758b;
-  font-size: 0.95rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
 }
 
 @media (max-width: 991px) {
   .built-for-card {
-    padding: 1.1rem 0.8rem;
+    padding: 1.1rem 0.9rem;
   }
 
   .built-for-tile {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
   }
 
   .built-for-grid {

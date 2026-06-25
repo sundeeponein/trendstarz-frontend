@@ -1,12 +1,9 @@
 <section class="how-wrap">
   <header class="hero">
     <p class="eyebrow">{{ pageEyebrow }}</p>
-    <h1 *ngIf="role === 'guest'">Get collaborations moving in 3 simple steps</h1>
+    <h1 *ngIf="role === 'guest' || role === 'admin'">Empowering the creator ecosystem.</h1>
     <h1 *ngIf="role === 'influencer'">You are live. Turn visibility into offers.</h1>
     <h1 *ngIf="role === 'brand'">You are ready. Launch your first campaign.</h1>
-    <p class="sub" *ngIf="role === 'guest'">
-      Two clear paths. One platform. Pick your side and start today.
-    </p>
     <p class="sub" *ngIf="role === 'influencer'">
       Brands can now discover your profile. Take one action now to get offers faster.
     </p>
@@ -26,119 +23,166 @@
     <article class="journey influencer-journey" *ngIf="audienceMode === 'all' || audienceMode === 'influencer'">
       <p class="journey-tag">Influencers</p>
       <h2>Get Brand Deals Without Chasing DMs</h2>
-      <p class="journey-sub">Join TrendStarz and start receiving paid collaboration offers.</p>
+      <p class="journey-sub">Join Trendstarz and start receiving paid collaboration offers directly from brands looking for your unique voice.</p>
 
-      <ol class="steps">
-        <li>
-          <h3>Create Your Profile</h3>
-          <p>Add your Instagram or YouTube and set your starting price.</p>
-        </li>
-        <li>
-          <h3>Get Matched with Brands</h3>
-          <p>Brands find you based on budget and category fit.</p>
-        </li>
-        <li>
-          <h3>Receive and Accept Offers</h3>
-          <p>Accept, reject, or negotiate deals on your terms.</p>
-        </li>
-      </ol>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">01.</span>
+          <div>
+            <h3>Create Your Profile</h3>
+            <p>Add your Instagram or YouTube and set your starting price.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">02.</span>
+          <div>
+            <h3>Get Matched with Brands</h3>
+            <p>Brands find you based on budget, category fit, and engagement metrics.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">03.</span>
+          <div>
+            <h3>Receive and Accept Offers</h3>
+            <p>Accept, reject, or negotiate deals on your terms within the app.</p>
+          </div>
+        </div>
+      </div>
 
       <div class="benefit-box">
-        <h4>Why Influencers Join TrendStarz</h4>
+        <h4>Why Influencers Join Trendstarz</h4>
         <ul>
-          <li>Paid collaborations that fit your niche</li>
-          <li>No need to pitch brands manually</li>
-          <li>Relevant campaigns only</li>
-          <li>Flexible pricing and deal control</li>
-          <li>Contact privacy stays protected</li>
+          <li><i class="bi bi-check-circle"></i> Paid collaborations that fit your niche</li>
+          <li><i class="bi bi-check-circle"></i> No need to pitch brands manually</li>
+          <li><i class="bi bi-check-circle"></i> Flexible pricing and deal control</li>
+          <li><i class="bi bi-check-circle"></i> Contact privacy stays protected</li>
         </ul>
       </div>
 
-      <p class="trust">Profiles with pricing and active status get more offers.</p>
-      <a routerLink="/register-influencer" [queryParams]="influencerSignupParams" class="cta influencer-cta">Start Getting Brand Deals</a>
-      <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
-        <i class="bi bi-diagram-3"></i> How Campaigns Work
-      </button>
+      <div class="journey-actions">
+        <a routerLink="/register-influencer" [queryParams]="influencerSignupParams" class="cta influencer-cta">Start Getting Brand Deals</a>
+        <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
+          <i class="bi bi-diagram-3"></i> How Campaigns Work
+        </button>
+      </div>
     </article>
 
     <article class="journey brand-journey" *ngIf="audienceMode === 'all' || audienceMode === 'brand'">
       <p class="journey-tag">Brands</p>
       <h2>Find the Right Influencers for Your Brand</h2>
-      <p class="journey-sub">Launch campaigns and collaborate with verified creators.</p>
+      <p class="journey-sub">Launch data-driven campaigns and collaborate with verified creators who deliver real results.</p>
 
-      <ol class="steps">
-        <li>
-          <h3>Create Campaign</h3>
-          <p>Define budget, content type, and campaign goal.</p>
-        </li>
-        <li>
-          <h3>Discover Influencers</h3>
-          <p>Get matched profiles instantly from your target category.</p>
-        </li>
-        <li>
-          <h3>Send Offers</h3>
-          <p>Send offers, negotiate quickly, and finalize deals.</p>
-        </li>
-      </ol>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">01.</span>
+          <div>
+            <h3>Create Campaign</h3>
+            <p>Define budget, content type, and campaign goal in minutes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">02.</span>
+          <div>
+            <h3>Discover Influencers</h3>
+            <p>Get matched profiles instantly or browse through our verified database.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">03.</span>
+          <div>
+            <h3>Send Offers</h3>
+            <p>Send offers, negotiate quickly, and finalize deals via smart contracts.</p>
+          </div>
+        </div>
+      </div>
 
       <div class="benefit-box">
-        <h4>Why Brands Use TrendStarz</h4>
+        <h4>Why Brands Use Trendstarz</h4>
         <ul>
-          <li>Find relevant influencers fast</li>
-          <li>Work within your budget</li>
-          <li>Get faster responses</li>
-          <li>Transparent pricing up front</li>
-          <li>Direct and simple collaboration</li>
+          <li><i class="bi bi-check-circle"></i> Find relevant influencers 10x faster</li>
+          <li><i class="bi bi-check-circle"></i> Work within your specific budget</li>
+          <li><i class="bi bi-check-circle"></i> Get faster responses via direct dashboard</li>
+          <li><i class="bi bi-check-circle"></i> Transparent pricing and ROI tracking</li>
         </ul>
       </div>
 
-      <a routerLink="/register-brand" [queryParams]="brandSignupParams" class="cta brand-cta">Start Your First Campaign</a>
-      <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
-        <i class="bi bi-diagram-3"></i> How Campaigns Work
-      </button>
-    </article>
-
-    <article class="journey photographer-journey" *ngIf="audienceMode === 'all' || audienceMode === 'photographer'">
-      <p class="journey-tag">Photographers</p>
-      <h2>Get Photography Collaborations with Clear Deliverables</h2>
-      <p class="journey-sub">Join as a photographer and receive collaboration requests from brands and creators.</p>
-
-      <ol class="steps">
-        <li>
-          <h3>Create Your Photography Profile</h3>
-          <p>Add portfolio, equipment, pricing options, and your preferred shoot categories.</p>
-        </li>
-        <li>
-          <h3>Receive Collaboration Requests</h3>
-          <p>See campaign and collaboration requests matched to your skills and location.</p>
-        </li>
-        <li>
-          <h3>Accept and Deliver Shoots</h3>
-          <p>Finalize scope, complete shoots, and submit deliverables through a tracked workflow.</p>
-        </li>
-      </ol>
-
-      <div class="benefit-box">
-        <h4>Why Photographers Join TrendStarz</h4>
-        <ul>
-          <li>Consistent collaboration opportunities</li>
-          <li>Clear project scope before accepting</li>
-          <li>Structured timeline and deliverables</li>
-          <li>Portfolio-first discovery for better fit</li>
-          <li>Simple communication and tracking</li>
-        </ul>
+      <div class="journey-actions">
+        <a routerLink="/register-brand" [queryParams]="brandSignupParams" class="cta brand-cta">Start Your First Campaign</a>
+        <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
+          <i class="bi bi-diagram-3"></i> View Success Stories
+        </button>
       </div>
-
-      <a routerLink="/register-photographer" [queryParams]="photographerSignupParams" class="cta photographer-cta">Start Getting Photography Leads</a>
-      <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
-        <i class="bi bi-diagram-3"></i> How Campaigns Work
-      </button>
     </article>
   </div>
 
+  <section class="photographer-strip" *ngIf="(role === 'guest' || role === 'admin') && (audienceMode === 'all' || audienceMode === 'photographer')">
+    <div class="photographer-copy">
+      <p class="journey-tag photographer-tag">Photographers</p>
+      <h2>Get Photography Collaborations with Clear Deliverables</h2>
+      <p class="journey-sub">Join as a photographer and receive collaboration requests from brands and creators looking for professional, high-quality content.</p>
+
+      <div class="steps steps--inline">
+        <div class="step">
+          <span class="step-num">01.</span>
+          <div>
+            <h3>Create Portfolio</h3>
+            <p>Add portfolio, equipment, and shoot categories.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">02.</span>
+          <div>
+            <h3>Receive Requests</h3>
+            <p>See matches based on your skills and location.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">03.</span>
+          <div>
+            <h3>Accept &amp; Deliver</h3>
+            <p>Finalize scope, shoot, and submit via workflow.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-actions">
+        <a routerLink="/register-photographer" [queryParams]="photographerSignupParams" class="cta photographer-cta">Start Getting Photography Leads</a>
+      </div>
+      <p class="photographer-stat"><i class="bi bi-camera-fill"></i> 1,200+ Active Photographers</p>
+    </div>
+
+    <div class="photographer-media">
+      <img src="assets/banner-trendstarz-1600.jpg" alt="Photographer studio setup" />
+      <div class="photographer-callout">
+        <p class="photographer-callout-label">Why Join Us?</p>
+        <ul>
+          <li><i class="bi bi-check-circle"></i> Guaranteed payment through escrow</li>
+          <li><i class="bi bi-check-circle"></i> Detailed shoot briefs provided</li>
+          <li><i class="bi bi-check-circle"></i> Automated rights management</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <section class="example" *ngIf="role === 'guest' || role === 'admin'">
-    <p class="example-label">Real flow example</p>
-    <p class="example-text">Brand offered Rs 3000 -> Influencer accepted -> Deal done.</p>
+    <p class="example-label">The Deal Lifecycle</p>
+    <h2 class="example-heading">Real Flow Example</h2>
+
+    <div class="example-card">
+      <div class="example-steps">
+        <div class="example-step" *ngFor="let step of dealLifecycleSteps">
+          <div class="example-step-icon" [ngClass]="'tint-' + step.tint">
+            <i class="bi" [ngClass]="step.icon"></i>
+          </div>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.description }}</p>
+          <span class="example-status" [ngClass]="'tint-' + step.tint">{{ step.status | uppercase }}</span>
+        </div>
+      </div>
+      <div class="example-bar">
+        Brand offered Rs 3000 <i class="bi bi-arrow-right"></i> Influencer accepted <i class="bi bi-arrow-right"></i> Deal done.
+      </div>
+    </div>
   </section>
 
   <section class="activation influencer-activation" *ngIf="role === 'influencer'">

@@ -89,51 +89,14 @@
     </div>
   </section>
 
-  <section id="why-trendstarz" class="prelaunch-strip py-5" aria-label="Marketplace Highlights" *ngIf="!isMarketplaceReadyForPublic">
-    <div class="container py-4">
-      <div class="row g-4 align-items-stretch">
-        <div class="col-12 col-lg-7">
-          <article class="prelaunch-card h-100">
-            <h2 class="section-title mb-2">Why Trendstarz</h2>
-            <p class="section-subtitle mb-4">Built for India's growing creator economy.</p>
-            <div class="benefit-grid">
-              <div class="benefit-item">
-                <h5>Verified Creator Network</h5>
-                <p>Identity and profile checks designed for reliable brand partnerships.</p>
-              </div>
-              <div class="benefit-item">
-                <h5>Campaign Operations</h5>
-                <p>From brief to payout, the workflow is structured to reduce coordination overhead.</p>
-              </div>
-            </div>
-          </article>
-        </div>
-        <div class="col-12 col-lg-5">
-          <article class="prelaunch-card h-100">
-            <h3 class="mb-3">Trendstarz at a Glance</h3>
-            <div class="metric-list">
-              <div class="metric-item" *ngFor="let counter of homepageCounters">
-                <span>{{ counter.label }}</span>
-                <strong>{{ counter.value }}</strong>
-              </div>
-            </div>
-            <hr />
-            <h4 class="mb-2">Top Creator Categories</h4>
-            <div class="chip-row dark mb-3">
-              <span class="chip light" *ngFor="let cat of homepageCategories">{{ cat }}</span>
-            </div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
+  <app-why-trendstarz-glance *ngIf="!isMarketplaceReadyForPublic" [categories]="homepageCategories"></app-why-trendstarz-glance>
 
   <section class="demo-campaigns-strip py-5" aria-label="Featured Campaign Examples" *ngIf="!isMarketplaceReadyForPublic">
     <div class="container py-4">
       <h2 class="text-center text-white mb-5">Featured Campaign Examples</h2>
       <div class="row g-3">
-        <div class="col-12 col-md-6 col-lg-4" *ngFor="let campaign of featuredCampaignExamples">
-          <article class="example-item h-100">
+        <div class="col-12 col-md-6 col-lg-4" *ngFor="let campaign of featuredCampaignExamples; let i = index">
+          <article class="example-item h-100" [ngClass]="'accent-' + (i % 3)">
             <h5>{{ campaign.title }}</h5>
             <p>{{ campaign.summary }}</p>
             <span>{{ campaign.focus }}</span>

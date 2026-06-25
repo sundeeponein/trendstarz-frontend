@@ -1,12 +1,11 @@
 .hero-block {
   .pill-label {
-    display:inline-block;
-    background: rgba(255,255,255,0.08);
+    display: inline-block;
     color: #ff7a00;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-weight:700;
-    font-size:0.8rem;
+    font-weight: 800;
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
   .hero-title {
     font-size: 2.1rem;
@@ -22,6 +21,23 @@
     min-width: 180px;
     font-size: 0.95rem;
     font-weight: 700;
+    border-radius: 8px;
+  }
+
+  .btn-text {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #0b1220;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    &:hover {
+      color: #ff7a00;
+    }
   }
 
   .hero-media {

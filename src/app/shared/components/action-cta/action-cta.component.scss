@@ -5,6 +5,7 @@
 .action-cta {
   padding-block: clamp(2.5rem, 6vw, 5rem) !important;
   padding-inline: clamp(1.5rem, 6vw, 5rem) !important;
+  background: linear-gradient(135deg, #4d3a2a 0%, #2d2520 40%, #1c1d22 100%);
 }
 
 .action-cta__heading {
@@ -23,6 +24,7 @@
   min-width: 240px;
   padding: 1rem 1.5rem;
   font-size: 1.05rem;
+  color: #1a1f2e !important;
 }
 
 @media (max-width: 575.98px) {
