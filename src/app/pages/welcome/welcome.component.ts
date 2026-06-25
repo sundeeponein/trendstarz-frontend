@@ -14,7 +14,7 @@ import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.compon
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
-import { WhyTrendstarzGlanceComponent } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
+import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
 
 @Component({
   selector: 'app-welcome',
@@ -47,6 +47,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
   readonly minPublicBrands = environment.marketplacePublicMinBrands;
+
+  glanceCounters: TrendstarzGlanceCounter[] = [
+    { label: 'Verified Influencers', value: '108+', emphasis: true },
+    { label: 'Creator Profiles', value: '200+', emphasis: true },
+    { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
+    { label: 'Photographers', value: 'Across India', emphasis: false },
+  ];
 
   readonly placeholderCategories: string[] = [
     'Fashion',
@@ -146,6 +153,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
     ]);
     if (!this.isBrowser) return;
+    this.loadPlatformStats();
     this.scheduleMarketplaceBootstrap();
     this.routerSubscription = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -190,6 +198,21 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         console.error('Influencer fetch error:', err);
         this.cd.detectChanges();
       }
+    });
+  }
+
+  private loadPlatformStats(): void {
+    this.config.getPlatformStats().subscribe((stats) => {
+      const hasData = (stats?.totalInfluencers || 0) > 0 || (stats?.totalPhotographers || 0) > 0;
+      if (!hasData) return;
+      const formatCount = (count: number) => (Number.isFinite(count) ? String(count) : '0');
+      this.glanceCounters = [
+        { label: 'Verified Influencers', value: formatCount(stats.verifiedInfluencers), emphasis: true },
+        { label: 'Creator Profiles', value: formatCount(stats.totalInfluencers), emphasis: true },
+        { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
+        { label: 'Photographers', value: formatCount(stats.totalPhotographers), emphasis: false },
+      ];
+      this.cd.detectChanges();
     });
   }
 

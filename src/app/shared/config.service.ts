@@ -603,6 +603,13 @@ export class ConfigService {
     return (Array.isArray(items) ? items : []).filter((item: T) => item?.showInFrontend !== false);
   }
 
+  getPlatformStats(): Observable<{ totalInfluencers: number; verifiedInfluencers: number; totalPhotographers: number }> {
+    return this.http.get<any>(`${this.apiUrl}/users/platform-stats`).pipe(
+      map((res) => this.extractData<any>(res) || res || {}),
+      catchError(() => of({ totalInfluencers: 0, verifiedInfluencers: 0, totalPhotographers: 0 }))
+    );
+  }
+
   getInfluencersSearchResponse(options?: {
     page?: number;
     limit?: number;
