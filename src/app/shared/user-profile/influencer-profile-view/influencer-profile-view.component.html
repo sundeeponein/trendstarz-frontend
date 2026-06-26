@@ -25,6 +25,9 @@
           <span class="pro-badge" *ngIf="influencer.isPremium">PRO</span>
         </div>
         <h2 class="profile-name">{{ influencer.name }}</h2>
+        <div *ngIf="isTrendstarzVerified">
+          <span class="verified-badge" title="Verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+        </div>
         <div class="profile-tags" *ngIf="displayTags.length">
           <span
             *ngFor="let tag of displayTags"
@@ -52,7 +55,7 @@
         </p>
 
         <div class="profile-actions">
-          <a
+          <!-- <a
             class="btn-follow"
             *ngIf="isLoggedIn"
             [href]="getMainSocialLink()"
@@ -60,7 +63,7 @@
             [attr.rel]="hasMainSocialLink ? 'noopener noreferrer' : null"
             [class.btn-follow--disabled]="!hasMainSocialLink"
             (click)="!hasMainSocialLink && $event.preventDefault(); onFollowClick()"
-          >Follow</a>
+          >Follow</a> -->
           <!-- <button type="button" class="btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
         </div>
 
@@ -74,10 +77,10 @@
             <span class="stat-val">{{ formatFollowers(getTotalFollowers()) }}</span>
             <span class="stat-lbl">FOLLOWERS / SUBS</span>
           </div> -->
-          <div class="stat-item">
+          <!-- <div class="stat-item">
             <span class="stat-val">{{ getPrimaryTier() || '—' }}</span>
             <span class="stat-lbl">TIER</span>
-          </div>
+          </div> -->
           <div class="stat-item">
             <span class="stat-val">{{ influencer.socialMedia?.length || 0 }}</span>
             <span class="stat-lbl">PLATFORMS</span>
@@ -86,7 +89,7 @@
             <span class="stat-val" [class.stat-val--price]="isProViewer && influencer.promotionalPrice">
               {{ isProViewer && influencer.promotionalPrice ? '₹' + influencer.promotionalPrice : '—' }}
             </span>
-            <span class="stat-lbl">AD PRICE</span>
+            <span class="stat-lbl">STARTING PRICE</span>
           </div>
         </div>
       </div>
@@ -97,12 +100,12 @@
         <div class="detail-list">
 
           <div class="detail-row" *ngIf="influencer.username">
-            <span class="detail-key">Username</span>
+            <div><span class="detail-key">Username</span></div>
             <span class="detail-val">@{{ influencer.username }}</span>
           </div>
 
           <div class="detail-row">
-            <span class="detail-key">Advertising price</span>
+            <div><span class="detail-key">Advertising price</span></div>
             <span class="detail-val detail-val--price" *ngIf="isProViewer && influencer.promotionalPrice">
               ₹{{ influencer.promotionalPrice }}
             </span>
@@ -113,28 +116,28 @@
           </div>
 
           <div class="detail-row" *ngIf="influencer.languages?.length">
-            <span class="detail-key">Languages</span>
+            <div><span class="detail-key">Languages</span></div>
             <div class="chip-list">
               <span *ngFor="let lang of influencer.languages" class="chip chip--gray">{{ lang }}</span>
             </div>
           </div>
 
           <div class="detail-row" *ngIf="influencer.categories?.length">
-            <span class="detail-key">Categories</span>
+            <div><span class="detail-key">Categories</span></div>
             <div class="chip-list">
               <span *ngFor="let cat of influencer.categories" class="chip chip--accent">{{ cat }}</span>
             </div>
           </div>
 
           <div class="detail-row" *ngIf="influencer.website">
-            <span class="detail-key">Website</span>
+            <div><span class="detail-key">Website</span></div>
             <a class="detail-val" [href]="influencer.website" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(influencer.website) }}
             </a>
           </div>
 
           <div class="detail-row" *ngIf="influencer.gender">
-            <span class="detail-key">Gender</span>
+            <div><span class="detail-key">Gender</span></div>
             <span class="detail-val">{{ influencer.gender }}</span>
           </div>
 

@@ -48,7 +48,7 @@ export class AdminUserTableComponent implements OnInit {
   filtersExpanded = true;
   searchQuery = '';
   currentPage = 1;
-  pageSize = 100;
+  pageSize = 25;
   readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
 
   showUserDetailsModal = false;
@@ -506,31 +506,44 @@ export class AdminUserTableComponent implements OnInit {
     return handle ? `@${handle}` : '-';
   }
 
-  getUserStatusKey(user: any): 'accepted' | 'pending' | 'rejected' | 'deleted' | 'other' {
-    if (this.isDeletedUser(user)) return 'deleted';
+  getUserStatusKey(user: any): 'active' | 'pending' | 'suspended' | 'rejected' | 'disabled' | 'other' {
+    if (this.isDeletedUser(user)) return 'disabled';
     const status = String(user?.status || '').trim().toLowerCase();
-    if (['accepted', 'approved', 'active'].includes(status)) return 'accepted';
+    if (['accepted', 'approved', 'active'].includes(status)) return 'active';
     if (['pending', 'pending_verification', 'pending_review', 'new'].includes(status)) return 'pending';
-    if (['rejected', 'declined', 'blocked', 'suspended'].includes(status)) return 'rejected';
+    if (['suspended', 'blocked'].includes(status)) return 'suspended';
+    if (['rejected', 'declined'].includes(status)) return 'rejected';
+    if (['disabled', 'deleted', 'removed'].includes(status)) return 'disabled';
     return 'other';
   }
 
   getUserStatusLabel(user: any): string {
     const key = this.getUserStatusKey(user);
-    if (key === 'accepted') return 'Accepted';
+    if (key === 'active') return 'Active';
     if (key === 'pending') return 'Pending';
+    if (key === 'suspended') return 'Suspended';
     if (key === 'rejected') return 'Rejected';
-    if (key === 'deleted') return 'Deleted';
+    if (key === 'disabled') return 'Disabled';
     const raw = String(user?.status || '').trim();
     return raw ? raw.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'Unknown';
   }
 
   getUserStatusBadgeClass(user: any): string {
-    return `ts-status-${this.getUserStatusKey(user)}`;
+    const key = this.getUserStatusKey(user);
+    if (key === 'active') return 'ts-status-accepted';
+    if (key === 'suspended' || key === 'rejected') return 'ts-status-rejected';
+    if (key === 'disabled') return 'ts-status-deleted';
+    return `ts-status-${key}`;
   }
 
   getUserStatusRowClass(user: any): string {
-    return `ts-status-row ts-status-row--${this.getUserStatusKey(user)}`;
+    const key = this.getUserStatusKey(user);
+    const styleKey = key === 'active'
+      ? 'accepted'
+      : key === 'disabled'
+        ? 'deleted'
+        : (key === 'suspended' ? 'rejected' : key);
+    return `ts-status-row ts-status-row--${styleKey}`;
   }
 
   private isDeletedUser(user: any): boolean {
@@ -690,6 +703,23 @@ export class AdminUserTableComponent implements OnInit {
 
   getUserVerificationStatus(user: any): string {
     return String(user?.verificationStatus || 'not_submitted');
+  }
+
+  getVerificationStatusLabel(status: any): string {
+    const normalized = String(status || 'not_submitted').trim().toLowerCase();
+    switch (normalized) {
+      case 'pending':
+        return 'Pending Review';
+      case 'approved':
+        return 'Verified';
+      case 'rejected':
+        return 'Rejected';
+      case 'removed':
+        return 'Removed';
+      case 'not_submitted':
+      default:
+        return 'Not Submitted';
+    }
   }
 
   hasVerificationDocuments(user: any): boolean {
@@ -1446,10 +1476,10 @@ export class AdminUserTableComponent implements OnInit {
     return !user?.profilePhotoActionRequired;
   }
 
-  /** Mirrors the "Admin Review Pending" checklist item (profile-verification.service.ts) — verificationStatus, not the accept/decline status badge, which is a separate concept. */
+  /** Public/admin verification trust signal — only approved profiles are verified. */
   isAdminReviewAccepted(user: any): boolean {
     const status = String(user?.verificationStatus || 'not_submitted').trim().toLowerCase();
-    return !['pending', 'not_submitted'].includes(status);
+    return user?.verifiedByTrendStarz === true || status === 'approved';
   }
 
   /** Mirrors the "Social Profile & Creator Tier" checklist item — driven by open ProfileFlag records (batched server-side into socialTierActionRequired), not just "has a tier value". */
@@ -1711,7 +1741,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   onPageSizeChange(value: string | number): void {
-    this.pageSize = Number(value) || 100;
+    this.pageSize = Number(value) || 25;
     this.currentPage = 1;
   }
 
@@ -1763,7 +1793,7 @@ export class AdminUserTableComponent implements OnInit {
 
   getSelectedUserStatus(): string {
     if (!this.selectedUser?.status) return '-';
-    return String(this.selectedUser.status);
+    return this.getUserStatusLabel(this.selectedUser);
   }
 
   getAdminUserType(userType: 'influencer' | 'brand' | 'photographer' | null): 'Influencer' | 'Brand' | 'Photographer' {
@@ -1789,7 +1819,9 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   getProfileVerificationScore(): number {
-    return Number(this.selectedProfileVerification?.profileQualityScore ?? this.selectedUser?.profileQualityScore ?? 100);
+    const score = Number(this.selectedProfileVerification?.profileQualityScore ?? this.selectedUser?.profileQualityScore ?? 0);
+    const completion = Number(this.selectedProfileVerification?.profileCompletion ?? this.selectedUser?.profileCompletion ?? score);
+    return Math.min(score, completion);
   }
 
   getProfileCompletionScore(): number {

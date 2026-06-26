@@ -23,6 +23,7 @@ export class BrandUserCardComponent {
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
   @Input() verifiedByTrendStarz = false;
+  @Input() verificationStatus = 'not_submitted';
   @Input() productImages: any[] = [];
   @Input() socialMedia: any[] = [];
   /** Show the "+ Campaign" button — pass true for brand users */
@@ -59,7 +60,7 @@ export class BrandUserCardComponent {
   }
 
   get isTrendstarzVerified(): boolean {
-    return !!this.verifiedByTrendStarz;
+    return this.verifiedByTrendStarz === true || String(this.verificationStatus || '').toLowerCase() === 'approved';
   }
 
   /** Tier of the first social handle the user added (entry order). */

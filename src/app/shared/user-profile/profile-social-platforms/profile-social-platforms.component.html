@@ -21,6 +21,7 @@
           <div class="platform-followers-block">
             <strong>{{ sm.tier || getSocialLabel(sm) }}</strong>
             <span>{{ sm.tier ? 'tier' : 'platform' }}</span>
+            <span class="tier-range" *ngIf="sm.tier && getTierRange(sm.tier)">{{ getTierRange(sm.tier) }}</span>
           </div>
           <div class="platform-handle-row" *ngIf="getSocialHandle(sm) as handle">
             <a *ngIf="canOpen && getSocialUrl(sm) !== '#'; else handleText"
@@ -116,6 +117,7 @@
                 <i class="bi bi-lock-fill social-lock-icon"></i>
               </span>
             </ng-template>
+            <div class="tier-range" *ngIf="sm.tier && getTierRange(sm.tier)">{{ getTierRange(sm.tier) }}</div>
 
             <ng-container *ngIf="showContentTypes && getContentTypes(sm).length">
               <div class="content-rates-label">Content &amp; Starting Rates</div>

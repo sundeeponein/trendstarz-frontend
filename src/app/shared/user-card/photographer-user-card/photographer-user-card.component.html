@@ -5,13 +5,13 @@
   [title]="profileViewDisabled ? 'Upgrade to Pro to open this profile' : null"
   (click)="onViewProfileClick($event)">
   <div class="photographer-card__img-wrap">
-    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" />
+    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" {{ name }} />
 
     <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
-      <span class="photographer-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified">
-        <i class="bi bi-patch-check-fill"></i> Verified by Trendstarz
+      <span class="photographer-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified" tooltip="Verified" title="Verified">
+        <i class="bi bi-patch-check-fill"></i> Verified
       </span>
-      <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium">
+      <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
         <i class="bi bi-star-fill"></i> Premium
       </span>
     </div>
@@ -24,7 +24,7 @@
 
     <div class="photographer-card__category-row">
       <div class="photographer-card__category">{{ displayCategory }}</div>
-      <div class="photographer-card__welcome-price" *ngIf="startingPrice !== null">
+      <div class="photographer-card__welcome-price" *ngIf="showStartingPrice && startingPrice !== null">
         ₹{{ startingPrice | number:'1.0-0' }}
       </div>
     </div>

@@ -65,7 +65,7 @@
     white-space: nowrap;
     font-size: 0.9rem;
   }
-  select {
+  select, input[type="text"], input[type="search"] {
     padding: 0.5rem 0.75rem;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -88,6 +88,11 @@
       background-color: #333;
       color: white;
     }
+  }
+  input[type="text"], input[type="search"] {
+    cursor: text;
+    min-width: 220px;
+    &::placeholder { color: #9098aa; }
   }
 }
 .filter-item .btn-secondary {

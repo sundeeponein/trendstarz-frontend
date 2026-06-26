@@ -6,14 +6,14 @@
   (click)="onViewProfileClick($event)">
   <!-- Image + overlays -->
   <div class="inf-card__img-wrap">
-    <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" />
+    <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" title="{{ name }}" />
 
     <!-- Trust badges -->
     <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
-      <span class="inf-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified">
-        <i class="bi bi-patch-check-fill"></i> Verified by Trendstarz
+      <span class="inf-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified" title="Verified" tooltip="Verified">
+        <i class="bi bi-patch-check-fill"></i> Verified
       </span>
-      <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium">
+      <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
         <i class="bi bi-star-fill"></i> Premium
       </span>
     </div>
@@ -35,10 +35,10 @@
     </div>
 
     <!-- Professional Status + Creator Type -->
-    <div class="inf-card__pro-row" *ngIf="professionalStatus && visibleCreatorTypes.length">
-      <span class="inf-card__pro-badge">Pro</span>
+    <!-- <div class="inf-card__pro-row" *ngIf="professionalStatus && visibleCreatorTypes.length">
+      <span class="inf-card__pro-badge">Professional</span>
       <span class="inf-card__creator-type" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
-    </div>
+    </div> -->
 
     <!-- Location -->
     <div class="inf-card__location" *ngIf="location?.state">

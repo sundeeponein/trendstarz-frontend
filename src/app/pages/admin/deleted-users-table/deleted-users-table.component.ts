@@ -47,8 +47,9 @@ export class DeletedUsersTableComponent implements OnInit {
   activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   errorMessage: string | null = null;
   isLoading = false;
+  searchQuery = '';
   currentPage = 1;
-  pageSize = 100;
+  pageSize = 25;
   readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
   selectedUserIds = new Set<string>();
   bulkActionLoading = false;
@@ -296,10 +297,37 @@ export class DeletedUsersTableComponent implements OnInit {
     return 'photo/videographers';
   }
 
+  private matchesSearch(user: any): boolean {
+    const query = this.searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    const text = [
+      user?._id,
+      user?.name,
+      user?.brandName,
+      user?.username,
+      user?.brandUsername,
+      user?.email,
+      user?.phoneNumber,
+      user?.location?.district,
+      user?.location?.state,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return text.includes(query);
+  }
+
+  onSearchQueryChange(): void {
+    this.currentPage = 1;
+  }
+
   getVisibleDeletedUsers(): any[] {
-    if (this.activeTab === 'influencer') return this.filteredInfluencers || [];
-    if (this.activeTab === 'brand') return this.filteredBrands || [];
-    return this.filteredPhotographers || [];
+    const source = this.activeTab === 'influencer'
+      ? this.filteredInfluencers || []
+      : this.activeTab === 'brand'
+        ? this.filteredBrands || []
+        : this.filteredPhotographers || [];
+    return source.filter((user) => this.matchesSearch(user));
   }
 
   getPagedDeletedUsers(): any[] {
@@ -376,7 +404,7 @@ export class DeletedUsersTableComponent implements OnInit {
   }
 
   onPageSizeChange(value: string | number): void {
-    this.pageSize = Number(value) || 100;
+    this.pageSize = Number(value) || 25;
     this.currentPage = 1;
   }
 

@@ -610,6 +610,7 @@ export class ConfigService {
     verifiedPhotographers: number;
     totalBrands: number;
     verifiedBrands: number;
+    totalCampaigns: number;
   }> {
     return this.http.get<any>(`${this.apiUrl}/users/platform-stats`).pipe(
       map((res) => this.extractData<any>(res) || res || {}),
@@ -620,6 +621,7 @@ export class ConfigService {
         verifiedPhotographers: 0,
         totalBrands: 0,
         verifiedBrands: 0,
+        totalCampaigns: 0,
       }))
     );
   }

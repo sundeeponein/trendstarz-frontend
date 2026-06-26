@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
+import { TIER_DESC_MAP } from '../../tiers.constants';
 
 export type ProfileSocialPlatformsVariant = 'brand' | 'photographer' | 'influencer';
 
@@ -58,6 +59,11 @@ export class ProfileSocialPlatformsComponent {
     return normalizeSocialHandle(sm?.handle, sm?.platform || '') || normalizeSocialHandle(sm?.url, sm?.platform || '');
   }
 
+  getTierRange(tier: string): string {
+    const desc = TIER_DESC_MAP[String(tier || '').trim().toLowerCase()];
+    return desc ? `${desc} followers` : '';
+  }
+
   getContentTypes(sm: any): any[] {
     if (!Array.isArray(sm?.contentTypes)) return [];
     return sm.contentTypes.filter((ct: any) => {
@@ -77,5 +83,9 @@ export class ProfileSocialPlatformsComponent {
     event.preventDefault();
     event.stopPropagation();
     this.platformClick.emit(sm);
+    const url = this.getSocialUrl(sm);
+    if (url && url !== '#') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   }
 }

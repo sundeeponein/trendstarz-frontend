@@ -29,6 +29,17 @@
     <div class="col-12 col-xl-6">
       <div class="filters-section p-0 bg-transparent border-0">
         <div class="filter-group justify-content-end">
+          <!-- Search -->
+          <div class="filter-item">
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Search by name, email or ID..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchQueryChange()"
+            />
+          </div>
+
           <!-- Category Filter -->
           <div class="filter-item">
             <label>Category</label>

@@ -21,6 +21,7 @@ export class PhotographerUserCardComponent {
   @Input() portfolio = '';
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
+  @Input() showStartingPrice = true;
   @Input() verifiedByTrendStarz = false;
   @Input() verificationStatus = 'not_submitted';
   @Input() socialMediaRestricted = false;

@@ -118,10 +118,11 @@
   <div class="row">
     <div class="col-8 ts-status-legend admin-status-legend" aria-label="User status legend">
       <span class="ts-status-legend-label">Status:</span>
-      <span class="ts-status-badge ts-status-accepted">Accepted</span>
+      <span class="ts-status-badge ts-status-accepted">Active</span>
       <span class="ts-status-badge ts-status-pending">Pending</span>
-      <span class="ts-status-badge ts-status-rejected">Rejected / Declined</span>
-      <span class="ts-status-badge ts-status-deleted">Deleted</span>
+      <span class="ts-status-badge ts-status-rejected">Suspended</span>
+      <span class="ts-status-badge ts-status-rejected">Rejected</span>
+      <span class="ts-status-badge ts-status-deleted">Disabled</span>
       <span class="ts-status-badge ts-status-other">Other</span>
     </div>
     <div class="col-4">
@@ -290,7 +291,7 @@
             </span>
           </div>
           <div>
-            <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getSelectedUserStatus() === 'accepted'">| {{ getSelectedUserStatus() | titlecase }}</span></h4>
+            <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getUserStatusKey(selectedUser) === 'active'">| {{ getSelectedUserStatus() }}</span></h4>
             <div class="user-sub">{{ getUserHandle(selectedUser) }}</div>
             <div class="tag-row" *ngIf="getUserTags(selectedUser).length">
               <span class="badge rounded-pill" *ngFor="let tag of getUserTags(selectedUser)" [ngClass]="getTagBadgeClass(tag)">{{ tag }}</span>
@@ -634,8 +635,14 @@
               <label>Document Verification</label>
               <div class="d-flex align-items-center gap-2">
                 <span class="badge"
-                      [ngClass]="getUserVerificationStatus(selectedUser) === 'approved' ? 'bg-success' : (getUserVerificationStatus(selectedUser) === 'pending' ? 'bg-info text-dark' : 'bg-secondary')">
-                  {{ getUserVerificationStatus(selectedUser) }}
+                      [ngClass]="{
+                        'bg-secondary': getUserVerificationStatus(selectedUser) === 'not_submitted',
+                        'bg-info text-dark': getUserVerificationStatus(selectedUser) === 'pending',
+                        'bg-success': getUserVerificationStatus(selectedUser) === 'approved',
+                        'bg-warning text-dark': getUserVerificationStatus(selectedUser) === 'rejected',
+                        'bg-dark': getUserVerificationStatus(selectedUser) === 'removed'
+                      }">
+                  {{ getVerificationStatusLabel(getUserVerificationStatus(selectedUser)) }}
                 </span>
                 <button class="btn btn-outline-secondary btn-sm"
                         [disabled]="!hasVerificationDocuments(selectedUser)"
@@ -856,10 +863,10 @@
               'bg-warning text-dark': verificationDocsUser.verificationStatus === 'rejected',
               'bg-dark': verificationDocsUser.verificationStatus === 'removed'
             }">
-            {{ verificationDocsUser.verificationStatus || 'not_submitted' }}
+            {{ getVerificationStatusLabel(verificationDocsUser.verificationStatus) }}
           </span>
           <div *ngIf="verificationDocsUser.verifiedByTrendStarz" class="mt-2">
-            <small class="text-success fw-bold">Verified by TrendStarz</small>
+            <small class="text-success fw-bold">Verified</small>
           </div>
         </div>
 

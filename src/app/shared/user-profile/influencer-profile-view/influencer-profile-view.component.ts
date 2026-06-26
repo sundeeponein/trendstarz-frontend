@@ -92,6 +92,10 @@ export class InfluencerProfileViewComponent implements OnInit {
     return !!this.influencer?.isEmailVerified;
   }
 
+  get isTrendstarzVerified(): boolean {
+    return !!this.influencer?.verifiedByTrendStarz || String(this.influencer?.verificationStatus || '').toLowerCase() === 'approved';
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }

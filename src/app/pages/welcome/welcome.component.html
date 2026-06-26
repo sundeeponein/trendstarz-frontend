@@ -23,7 +23,7 @@
     [ngComponentOutletInputs]="builtForAudiencesInputs"
   ></ng-container>
 
-  <section class="brands-strip py-5" aria-label="Brands Grid" *ngIf="isMarketplaceReadyForPublic">
+  <section class="brands-strip py-5" aria-label="Brands Grid" *ngIf="showBrandsSection">
     <div class="container">
       <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
@@ -44,6 +44,7 @@
             [categories]="brand.categories || []"
             [isPremium]="brand.isPremium || false"
             [verifiedByTrendStarz]="brand.verifiedByTrendStarz || false"
+            [verificationStatus]="brand.verificationStatus || 'not_submitted'"
             [adminTags]="[]"
             [location]="{ state: brand.location?.state || '' }"
             [showWelcomeCampaignMeta]="showBrandCampaignMetaOnWelcome"
@@ -55,9 +56,9 @@
     </div>
   </section>
 
-  <section class="creators-strip py-5" aria-label="Influencers Grid" *ngIf="isMarketplaceReadyForPublic">
+  <section class="creators-strip py-5" aria-label="Influencers Grid" *ngIf="showInfluencersSection">
     <div class="container">
-      <h2 class="section-title text-white mb-1">Trending Creators</h2>
+      <h2 class="section-title text-white mb-3 bg-transparent border-0">Trending Creators</h2>
       <div class="chip-row mb-4">
         <span class="chip" [class.active]="!selectedCategory" (click)="filterByCategory('')">All Categories</span>
         <span class="chip" *ngFor="let cat of creatorCategories" [class.active]="selectedCategory === cat" (click)="filterByCategory(cat)">{{ cat }}</span>
@@ -66,7 +67,7 @@
       <div *ngIf="influencersLoading && influencers.length === 0" class="text-center text-white-50">Loading influencers...</div>
 
       <div class="row g-3" *ngIf="influencers.length > 0">
-        <div class="col-12 col-md-6 col-lg-3" *ngFor="let influencer of influencers | slice:0:6">
+        <div class="col-12 col-md-6 col-lg-3" *ngFor="let influencer of influencers | slice:0:8">
           <app-influencer-user-card
             class="welcome-card-host"
             [profileImage]="influencer.profileImage || influencer.profileImages?.[0]?.url || ''"
@@ -76,7 +77,7 @@
             [professionalStatus]="!!influencer.professionalStatus"
             [isPremium]="influencer.isPremium || false"
             [promotionalPrice]="influencer.promotionalPrice"
-            [showWelcomeStartingPrice]="true"
+            [showWelcomeStartingPrice]="isLoggedIn()"
             [verificationStatus]="influencer.verificationStatus || 'not_submitted'"
             [verifiedByTrendStarz]="influencer.verifiedByTrendStarz || false"
             [location]="{ state: influencer.location?.state || '' }"
@@ -89,9 +90,54 @@
     </div>
   </section>
 
-  <app-why-trendstarz-glance *ngIf="!isMarketplaceReadyForPublic" [categories]="homepageCategories" [counters]="glanceCounters"></app-why-trendstarz-glance>
+  <section class="container py-4" aria-label="Why creators and brands trust TrendStarZ">
+    <app-trust-badges-strip></app-trust-badges-strip>
+  </section>
 
-  <section class="demo-campaigns-strip py-5" aria-label="Featured Campaign Examples" *ngIf="!isMarketplaceReadyForPublic">
+  <section class="photographers-strip py-5" aria-label="Photo and Videographers Grid" *ngIf="showPhotographersSection">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h2 class="section-title mb-1 bg-transparent">Featured Photo/Videographers</h2>
+          <p class="section-subtitle">Discover visual creators available for campaigns and collaborations</p>
+        </div>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'photographers' }">View all creators</a>
+      </div>
+
+      <div *ngIf="photographersLoading && photographers.length === 0" class="text-center text-muted">
+        Loading photo/videographers...
+      </div>
+
+      <div class="row g-3" *ngIf="photographers.length > 0">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let photographer of photographers | slice:0:8">
+          <app-photographer-user-card
+            class="welcome-card-host"
+            [profileImage]="photographer.profileImage || ''"
+            [profileImages]="photographer.profileImages || []"
+            [name]="photographer.name || ''"
+            [username]="photographer.username || ''"
+            [location]="photographer.location || {}"
+            [skills]="photographer.skills || []"
+            [pricing]="photographer.pricing || []"
+            [equipment]="photographer.equipment || []"
+            [socialMedia]="photographer.socialMedia || []"
+            [portfolio]="photographer.portfolio || ''"
+            [adminTags]="[]"
+            [isPremium]="photographer.isPremium || false"
+            [verifiedByTrendStarz]="photographer.verifiedByTrendStarz || false"
+            [verificationStatus]="photographer.verificationStatus || 'not_submitted'"
+            [socialMediaRestricted]="photographer.socialMediaRestricted === true"
+            [showStartingPrice]="isLoggedIn()"
+            (viewProfileClick)="viewPhotographerProfile(photographer)">
+          </app-photographer-user-card>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <app-why-trendstarz-glance *ngIf="!marketplaceLoading && !isMarketplaceReadyForPublic" [categories]="homepageCategories" [counters]="glanceCounters"></app-why-trendstarz-glance>
+
+  <section class="demo-campaigns-strip py-5" aria-label="Featured Campaign Examples" *ngIf="!marketplaceLoading && !isMarketplaceReadyForPublic">
     <div class="container py-4">
       <h2 class="text-center text-white mb-5">Featured Campaign Examples</h2>
       <div class="row g-3">
@@ -117,6 +163,10 @@
         (buttonClick)="regConfirm.open('brand')">
       </app-action-cta>
     </div>
+  </section>
+
+  <section class="container py-4" aria-label="Platform milestones">
+    <app-platform-stats-strip [items]="statsStripItems"></app-platform-stats-strip>
   </section>
 
   <section class="faq-strip py-5" aria-label="Frequently Asked Questions">

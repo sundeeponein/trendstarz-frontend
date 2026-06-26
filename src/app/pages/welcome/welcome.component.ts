@@ -6,6 +6,7 @@ import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
+import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../shared/components/faq-accordion/faq-accordion.component';
 import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
@@ -15,12 +16,14 @@ import { RegistrationConfirmModalComponent } from '../../shared/components/regis
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
 import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
-import { formatBrandsStat, formatPhotographersStat } from '../../shared/utils/platform-stats.util';
+import { PlatformStatsStripComponent, PlatformStatItem } from '../../shared/components/platform-stats-strip/platform-stats-strip.component';
+import { TrustBadgesStripComponent } from '../../shared/components/trust-badges-strip/trust-badges-strip.component';
+import { formatBrandsStat, formatPhotographersStat, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent],
+  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, PhotographerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent, PlatformStatsStripComponent, TrustBadgesStripComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })
@@ -48,12 +51,20 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
   readonly minPublicBrands = environment.marketplacePublicMinBrands;
+  readonly minPublicPhotographers = environment.marketplacePublicMinPhotographers;
 
   glanceCounters: TrendstarzGlanceCounter[] = [
     { label: 'Verified Influencers', value: '108+', emphasis: true },
     { label: 'Creator Profiles', value: '200+', emphasis: true },
     { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
     { label: 'Photographers', value: 'Growing the count', emphasis: false },
+  ];
+
+  statsStripItems: PlatformStatItem[] = [
+    { icon: 'bi-people-fill', value: '100+', label: 'Verified Creators' },
+    { icon: 'bi-briefcase-fill', value: '50+', label: 'Active Brands' },
+    { icon: 'bi-camera-fill', value: '20+', label: 'Photo/VideoGraphers' },
+    { icon: 'bi-patch-check-fill', value: '500+', label: 'Campaigns Created' },
   ];
 
   readonly placeholderCategories: string[] = [
@@ -107,16 +118,34 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   influencers: any[] = [];
   allInfluencers: any[] = [];
   brands: any[] = [];
+  photographers: any[] = [];
   brandCampaignStatusMap: Record<string, string> = {};
   influencersLoading = false;
   brandsLoading = false;
+  photographersLoading = false;
   selectedCategory: string = '';
   creatorCategories: string[] = [];
 
   private isBrowser: boolean;
 
   get isMarketplaceReadyForPublic(): boolean {
-    return this.brands.length >= this.minPublicBrands && this.allInfluencers.length >= this.minPublicInfluencers;
+    return this.showBrandsSection || this.showInfluencersSection || this.showPhotographersSection;
+  }
+
+  get showBrandsSection(): boolean {
+    return this.brands.length >= this.minPublicBrands;
+  }
+
+  get showInfluencersSection(): boolean {
+    return this.allInfluencers.length >= this.minPublicInfluencers;
+  }
+
+  get showPhotographersSection(): boolean {
+    return this.photographers.length >= this.minPublicPhotographers;
+  }
+
+  get marketplaceLoading(): boolean {
+    return this.brandsLoading || this.influencersLoading || this.photographersLoading;
   }
 
   get homepageCategories(): string[] {
@@ -135,7 +164,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.isBrowser = isPlatformBrowser(platformId);
   }
   isLoggedIn(): boolean {
-    // Check for token or user in session/localStorage (adjust as per your auth/session logic)
+    if (!this.isBrowser) return false;
     return !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
   }
 
@@ -215,6 +244,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         { label: brandsStat.label, value: brandsStat.value, emphasis: true },
         { label: photographersStat.label, value: photographersStat.value, emphasis: false },
       ];
+      this.statsStripItems = [
+        { icon: 'bi-people-fill', value: formatMilestoneCount(stats.verifiedInfluencers), label: 'Verified Creators' },
+        { icon: 'bi-briefcase-fill', value: formatMilestoneCount(stats.totalBrands), label: 'Active Brands' },
+        { icon: 'bi-camera-fill', value: formatMilestoneCount(stats.totalPhotographers), label: 'Photo/VideoGraphers' },
+        { icon: 'bi-patch-check-fill', value: formatMilestoneCount(stats.totalCampaigns), label: 'Campaigns Created' },
+      ];
       this.cd.detectChanges();
     });
   }
@@ -238,6 +273,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.ngZone.run(() => {
         this.fetchBrands();
         this.fetchInfluencers();
+        this.fetchPhotographers();
       });
     };
 
@@ -312,6 +348,37 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       }
     });
+  }
+
+  fetchPhotographers(): void {
+    this.photographersLoading = true;
+    this.photographers = [];
+    this.config.getPhotographers({ page: 1, limit: 8 }).subscribe({
+      next: (data) => {
+        this.photographers = Array.isArray(data)
+          ? data
+          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
+        this.photographersLoading = false;
+        this.cd.detectChanges();
+      },
+      error: (err) => {
+        this.photographersLoading = false;
+        console.error('Photographer fetch error:', err);
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  viewPhotographerProfile(photographer: any): void {
+    const username = String(photographer?.username || '').trim();
+    const id = String(photographer?._id || '').trim();
+    if (username) {
+      this.router.navigate(['/photographer', username]);
+      return;
+    }
+    if (id) {
+      this.router.navigate(['/photographer', id]);
+    }
   }
 
   private getBrandMapKey(brand: any): string {

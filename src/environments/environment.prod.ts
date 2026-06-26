@@ -3,8 +3,9 @@ export const environment = {
   apiBaseUrl: 'https://trendstarz-backend-production.up.railway.app/api',
   cloudinaryUploadPreset: 'trendstarz_prod', // <-- Replace with your unsigned upload preset
   cloudinaryCloudName: 'ddnsoypf8', // <-- Replace with your cloud name
-  marketplacePublicMinInfluencers: 20,
-  marketplacePublicMinBrands: 5,
+  marketplacePublicMinInfluencers: 300,
+  marketplacePublicMinBrands: 30,
+  marketplacePublicMinPhotographers: 30,
   // Set this to the live Razorpay Key ID before deploying.
   razorpayKeyId: 'rzp_live_XXXXXXXXXXXXXXXX',
   firebase: {

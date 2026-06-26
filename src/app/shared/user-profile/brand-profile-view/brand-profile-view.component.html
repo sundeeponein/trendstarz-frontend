@@ -17,6 +17,9 @@
         <img [src]="displayImage" (error)="onImgError($event)" alt="Brand logo" class="brand-logo" />
         <div class="brand-header-info">
           <h1 class="brand-name">{{ brand.brandName || brand.name }}</h1>
+          <div *ngIf="isTrendstarzVerified">
+            <span class="verified-badge" title="Verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+          </div>
           <div class="brand-tags" *ngIf="displayTags.length">
             <span
               *ngFor="let tag of displayTags"

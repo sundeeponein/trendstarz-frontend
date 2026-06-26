@@ -1,15 +1,15 @@
 <div class="brand-card" (click)="viewProfileClick.emit()">
   <!-- Image + overlays -->
   <div class="brand-card__img-wrap">
-    <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" />
+    <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" {{ brandName }} />
 
     <!-- Trust badges -->
     <div class="brand-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
-      <span class="brand-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified">
-        <i class="bi bi-patch-check-fill"></i> Verified by Trendstarz
+      <span class="brand-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified"  tooltip="Verified" title="Verified">
+        <i class="bi bi-patch-check-fill"></i> Verified
       </span>
-      <span class="brand-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium">
-        <i class="bi bi-star-fill"></i> Premium
+      <span class="brand-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium"  tooltip="Premium" title="Premium">
+        <i class="bi bi-star-fill"></i> Pro
       </span>
     </div>
 

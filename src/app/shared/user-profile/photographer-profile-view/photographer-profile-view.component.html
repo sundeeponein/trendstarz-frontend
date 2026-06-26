@@ -19,6 +19,9 @@
         </div>
 
         <h2 class="profile-name">{{ photographer.name }}</h2>
+        <div *ngIf="isTrendstarzVerified">
+          <span class="verified-badge" title="Verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+        </div>
         <div class="profile-tags" *ngIf="displayTags.length">
           <span *ngFor="let tag of displayTags" class="profile-tag badge rounded-pill" [ngClass]="tagBadgeClass(tag)">
             {{ tag }}
@@ -51,10 +54,10 @@
         </div>
 
         <div class="stats-row">
-          <div class="stat-item">
+          <!-- <div class="stat-item">
             <span class="stat-val">{{ getPrimaryTier() || '—' }}</span>
             <span class="stat-lbl">TIER</span>
-          </div>
+          </div> -->
           <div class="stat-item">
             <span class="stat-val">{{ socialPlatforms.length }}</span>
             <span class="stat-lbl">PLATFORMS</span>
@@ -63,7 +66,7 @@
             <span class="stat-val" [class.stat-val--price]="isProViewer && enabledPricing.length">
               {{ isProViewer && enabledPricing.length ? '₹' + (enabledPricing[0].price || 0) : '—' }}
             </span>
-            <span class="stat-lbl">STARTING</span>
+            <span class="stat-lbl">STARTING PRICE</span>
           </div>
         </div>
       </div>
@@ -72,25 +75,25 @@
         <h6 class="section-label">DETAILS</h6>
         <div class="detail-list">
           <div class="detail-row" *ngIf="displayUsername">
-            <span class="detail-key">Username</span>
+            <div><span class="detail-key">Username</span></div>
             <span class="detail-val">@{{ displayUsername }}</span>
           </div>
 
-          <div class="detail-row">
-            <span class="detail-key">Pricing visibility</span>
+          <!-- <div class="detail-row">
+            <span class="detail-key">Pricing visibility</span><br>
             <span class="detail-val detail-val--price" *ngIf="isProViewer">Visible</span>
             <span class="detail-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Upgrade to view values</span>
-          </div>
+          </div> -->
 
           <div class="detail-row" *ngIf="getEquipmentChips().length">
-            <span class="detail-key">Equipment</span>
+            <div><span class="detail-key">Equipment</span></div>
             <div class="chip-list">
               <span *ngFor="let eq of getEquipmentChips()" class="chip chip--gray">{{ eq }}</span>
             </div>
           </div>
 
           <div class="detail-row" *ngIf="canViewContactDetails && photographer.portfolio">
-            <span class="detail-key">Portfolio</span>
+            <div><span class="detail-key">Portfolio</span></div>
             <a class="detail-val" [href]="photographer.portfolio" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(photographer.portfolio) }}
             </a>
