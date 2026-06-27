@@ -27,6 +27,45 @@
   background: #f9fafb;
 }
 
+.social-empty-state {
+  min-height: 120px;
+  border: 1px dashed #d8deea;
+  border-radius: 16px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+
+  i {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #e8612d;
+    font-size: 1.1rem;
+  }
+
+  strong {
+    color: #111827;
+    font-size: 0.98rem;
+  }
+
+  span {
+    max-width: 360px;
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+}
+
 @media (max-width: 576px) {
   .pricing-card-header {
     align-items: flex-start;

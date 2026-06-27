@@ -179,8 +179,11 @@
               <span><i class="bi bi-envelope-check" [class.text-success]="isEmailVerified(user)" [class.text-danger]="!isEmailVerified(user)"></i><small>Email</small></span>
               <span><i class="bi bi-phone" [class.text-success]="isMobileVerified(user)" [class.text-danger]="!isMobileVerified(user)"></i><small>Mobile</small></span>
               <span><i class="bi bi-image" [class.text-success]="hasVerifiedProfilePhoto(user)" [class.text-danger]="!hasVerifiedProfilePhoto(user)"></i><small>Profile Photo</small></span>
-              <span><i class="bi bi-person-vcard" [class.text-success]="isAdminReviewAccepted(user)" [class.text-danger]="!isAdminReviewAccepted(user)" title="admin review" tooltip="Admin Review"></i><small>Admin Review</small></span>
+              <span><i class="bi bi-images" [class.text-success]="hasVerifiedGallery(user)" [class.text-danger]="!hasVerifiedGallery(user)"></i><small>Gallery</small></span>
               <span><i class="bi bi-collection-play-fill" [class.text-success]="hasSocialMediaWithTier(user)" [class.text-danger]="!hasSocialMediaWithTier(user)"></i><small>Social Media & Tier</small></span>
+              <span><i class="bi bi-geo-alt-fill" [class.text-success]="hasVerifiedLocation(user)" [class.text-danger]="!hasVerifiedLocation(user)"></i><small>Location</small></span>
+              <span><i class="bi bi-wallet2" [class.text-success]="hasVerifiedPayment(user)" [class.text-danger]="!hasVerifiedPayment(user)"></i><small>Payment</small></span>
+              <span><i class="bi bi-person-vcard" [class.text-success]="isAdminReviewAccepted(user)" [class.text-danger]="!isAdminReviewAccepted(user)" title="admin review" tooltip="Admin Review"></i><small>Admin Review</small></span>
             </div>
           </td>
           <td>
@@ -401,7 +404,7 @@
               (toggled)="toggleSelectedProfilePhotoVerification()"
             ></app-verification-field>
             <div class="flag-type-selector" *ngIf="!isProfilePhotoVerified(selectedUser)">
-              <span class="flag-type-label">Flag reason ssss</span>
+              <span class="flag-type-label">Flag reason</span>
               <div class="flag-type-btns">
                 <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
                   <button *ngIf="!opt.policy"

@@ -10,6 +10,13 @@
         <i class="bi bi-lock-fill"></i> {{ lockedMessage }}
       </div>
 
+      <div class="social-empty-state" *ngIf="!hasPlatforms">
+        <i class="bi bi-lock-fill" *ngIf="locked"></i>
+        <i class="bi bi-share" *ngIf="!locked"></i>
+        <strong>{{ locked ? 'Upgrade to view social platforms and pricing' : 'No social platforms added yet' }}</strong>
+        <span>{{ locked ? 'Social handles, content types, and starting rates are visible to Pro members.' : 'This profile has not added social platforms yet.' }}</span>
+      </div>
+
       <div *ngFor="let sm of platforms; let last = last" class="platform-section" [class.platform-section--last]="last">
         <div class="platform-header-row">
           <span class="platform-icon-circle">
@@ -63,6 +70,12 @@
       <div class="detail-locked mb-2" *ngIf="locked">
         <i class="bi bi-lock-fill"></i> {{ lockedMessage }}
       </div>
+      <div class="social-empty-state" *ngIf="!hasPlatforms">
+        <i class="bi bi-lock-fill" *ngIf="locked"></i>
+        <i class="bi bi-share" *ngIf="!locked"></i>
+        <strong>{{ locked ? 'Upgrade to view social platforms' : 'No social platforms added yet' }}</strong>
+        <span>{{ locked ? 'Social handles are visible to Pro members.' : 'This profile has not added social platforms yet.' }}</span>
+      </div>
       <div class="social-list">
         <ng-container *ngIf="canOpen; else lockedRows">
           <a *ngFor="let sm of platforms"
@@ -96,6 +109,12 @@
       <h5 class="section-label">{{ title }}</h5>
       <div class="detail-locked mb-2" *ngIf="locked">
         <i class="bi bi-lock-fill"></i> {{ lockedMessage }}
+      </div>
+      <div class="social-empty-state" *ngIf="!hasPlatforms">
+        <i class="bi bi-lock-fill" *ngIf="locked"></i>
+        <i class="bi bi-share" *ngIf="!locked"></i>
+        <strong>{{ locked ? 'Upgrade to view social platforms' : 'No social platforms added yet' }}</strong>
+        <span>{{ locked ? 'Social links are visible to Pro members.' : 'This profile has not added social platforms yet.' }}</span>
       </div>
       <div class="social-links">
         <ng-container *ngFor="let sm of platforms">

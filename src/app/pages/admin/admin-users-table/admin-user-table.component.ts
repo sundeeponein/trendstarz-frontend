@@ -1487,6 +1487,19 @@ export class AdminUserTableComponent implements OnInit {
     return !user?.socialTierActionRequired;
   }
 
+  hasVerifiedLocation(user: any): boolean {
+    const hasLocation = !!(user?.location?.state || user?.location?.district);
+    return user?.locationActionRequired !== true && (!!user?.locationVerified || hasLocation);
+  }
+
+  hasVerifiedGallery(user: any): boolean {
+    return user?.galleryActionRequired !== true && (!!user?.galleryImagesVerified || this.getUserGalleryImageCount(user) > 0);
+  }
+
+  hasVerifiedPayment(user: any): boolean {
+    return user?.paymentActionRequired !== true && (!!user?.paymentVerified || this.hasUserPaymentMethod(user));
+  }
+
   getDisplayPhoneNumber(user: any): string {
     const raw = String(user?.phoneNumber || '').trim();
     if (!raw) return '-';
@@ -1551,27 +1564,70 @@ export class AdminUserTableComponent implements OnInit {
         }))
         .subscribe((res: any) => {
           if (!res) return;
+          const effectiveValue = field === 'paymentVerified'
+            ? !!(res?.user?.paymentVerified ?? value)
+            : value;
           if (res?.user) {
             this.mergeUpdatedUser(userType, res.user);
           } else {
-            user[field] = value;
+            user[field] = effectiveValue;
           }
           if (field === 'isEmailVerified') {
-            user.emailVerifiedAt = value ? (user.emailVerifiedAt || new Date().toISOString()) : null;
+            user.emailVerifiedAt = effectiveValue ? (user.emailVerifiedAt || new Date().toISOString()) : null;
           }
           if (field === 'isMobileVerified') {
-            user.mobileVerified = value;
-            user.mobileVerifiedAt = value ? (user.mobileVerifiedAt || new Date().toISOString()) : null;
-            user.mobileVerificationMethod = value ? (user.mobileVerificationMethod || 'Manual') : '';
-            user.mobileVerifiedBy = value ? (user.mobileVerifiedBy || 'Admin') : '';
+            user.mobileVerified = effectiveValue;
+            user.mobileVerifiedAt = effectiveValue ? (user.mobileVerifiedAt || new Date().toISOString()) : null;
+            user.mobileVerificationMethod = effectiveValue ? (user.mobileVerificationMethod || 'Manual') : '';
+            user.mobileVerifiedBy = effectiveValue ? (user.mobileVerifiedBy || 'Admin') : '';
           }
           if (field === 'locationVerified') {
-            user.locationVerified = value;
-            user.locationVerifiedAt = value ? (user.locationVerifiedAt || new Date().toISOString()) : null;
+            user.locationVerified = effectiveValue;
+            user.locationVerifiedAt = effectiveValue ? (user.locationVerifiedAt || new Date().toISOString()) : null;
+            user.locationActionRequired = !effectiveValue;
           }
           if (field === 'paymentVerified') {
-            user.paymentVerified = value;
-            user.paymentVerifiedAt = value ? (user.paymentVerifiedAt || new Date().toISOString()) : null;
+            user.paymentVerified = effectiveValue;
+            user.paymentVerifiedAt = effectiveValue ? (user.paymentVerifiedAt || new Date().toISOString()) : null;
+            user.paymentActionRequired = !effectiveValue;
+          }
+          if (field === 'profilePhotoVerified') {
+            user.profilePhotoVerified = effectiveValue;
+            user.profilePhotoActionRequired = !effectiveValue;
+            this.mergeUpdatedUser(userType, {
+              _id: userId,
+              profilePhotoVerified: effectiveValue,
+              profilePhotoActionRequired: !effectiveValue,
+            });
+            if (this.selectedUser && String(this.selectedUser._id || '') === userId) {
+              this.selectedUser = {
+                ...this.selectedUser,
+                profilePhotoVerified: effectiveValue,
+                profilePhotoActionRequired: !effectiveValue,
+              };
+            }
+          }
+          if (field === 'creatorTierVerified') {
+            user.creatorTierVerified = effectiveValue;
+            user.socialTierActionRequired = !effectiveValue;
+          }
+          if (field === 'galleryImagesVerified') {
+            user.galleryImagesVerified = effectiveValue;
+            user.galleryActionRequired = !effectiveValue;
+          }
+          if (['creatorTierVerified', 'locationVerified', 'galleryImagesVerified', 'paymentVerified'].includes(field)) {
+            const actionField = field === 'creatorTierVerified'
+              ? 'socialTierActionRequired'
+              : field === 'locationVerified'
+                ? 'locationActionRequired'
+                : field === 'galleryImagesVerified'
+                  ? 'galleryActionRequired'
+                  : 'paymentActionRequired';
+            this.mergeUpdatedUser(userType, {
+              _id: userId,
+              [field]: effectiveValue,
+              [actionField]: !effectiveValue,
+            });
           }
           this.loadSelectedProfileVerification();
           this.fetchUsers();
