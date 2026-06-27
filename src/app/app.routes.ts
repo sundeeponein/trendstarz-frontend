@@ -69,6 +69,8 @@ export const routes: Routes = [
 			{ path: 'payments', loadComponent: () => import('./features/payments-payouts/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent) },			{ path: 'plans', loadComponent: () => import('./pages/admin/admin-plans/admin-plans.component').then(m => m.AdminPlansComponent) },			{ path: 'deleted-users', loadComponent: () => import('./pages/admin/deleted-users-table/deleted-users-table.component').then(m => m.DeletedUsersTableComponent) },
 			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
 			{ path: 'disputes', loadComponent: () => import('./pages/admin/admin-disputes/admin-disputes.component').then(m => m.AdminDisputesComponent) },
+			// Intentionally not linked from admin-layout's nav — reachable only via direct URL or the dashboard widget's link.
+			{ path: 'verification-funnel', loadComponent: () => import('./pages/admin/verification-funnel/verification-funnel.component').then(m => m.VerificationFunnelPageComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 		],
 	},

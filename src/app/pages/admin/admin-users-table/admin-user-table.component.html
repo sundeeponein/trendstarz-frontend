@@ -63,6 +63,10 @@
       <option value="email_or_mobile_pending">Email or mobile pending</option>
       <option value="both_pending">Both pending</option>
       <option value="both_verified">Both verified</option>
+      <option value="search_eligible">Search Eligible</option>
+      <option value="admin_approved">Admin Approved</option>
+      <option value="featured_eligible">Featured Eligible</option>
+      <option value="campaign_eligible">Campaign Eligible</option>
     </select>
 
     <select class="subscription-filter" [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">

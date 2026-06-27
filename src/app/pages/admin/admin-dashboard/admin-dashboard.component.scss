@@ -165,6 +165,31 @@ $green:     #16a34a;
   margin: 0;
 }
 
+.adm-funnel-widget {
+  margin-bottom: 1.2rem;
+}
+
+.adm-funnel-widget__link {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: $text;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+
+  &:hover {
+    color: #e8612d;
+  }
+}
+
+.adm-funnel-widget__state {
+  color: $muted;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 .adm-view-link {
   font-size: 0.78rem;
   font-weight: 700;

@@ -277,6 +277,25 @@
         <p class="adm-activity-caption">Activity tracking over last 7 days</p>
       </article>
 
+      <!-- ══ VERIFICATION FUNNEL WIDGET ══ -->
+  <article class="adm-card adm-funnel-widget">
+    <header class="adm-card-header adm-card-header--between">
+      <div>
+        <h3 class="adm-card-title">Verification Funnel</h3>
+        <p class="adm-card-sub">Registration → Campaign-eligible, all roles combined.</p>
+      </div>
+      <a routerLink="/admin/verification-funnel" class="adm-funnel-widget__link">
+        View full funnel <i class="bi bi-arrow-right"></i>
+      </a>
+    </header>
+    <div *ngIf="funnelLoading" class="adm-funnel-widget__state">Loading…</div>
+    <app-verification-funnel
+      *ngIf="!funnelLoading"
+      [stages]="funnelStages"
+      [compact]="true"
+    ></app-verification-funnel>
+  </article>
+
     </div>
   </div>
 

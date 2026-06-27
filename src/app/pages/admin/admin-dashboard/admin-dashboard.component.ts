@@ -3,6 +3,18 @@ import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { VerificationFunnelComponent, FunnelStage } from '../../../shared/components/verification-funnel/verification-funnel.component';
+
+const FUNNEL_STAGE_LABELS: Array<{ key: string; label: string }> = [
+  { key: 'registered', label: 'Registered' },
+  { key: 'active', label: 'Active' },
+  { key: 'emailVerified', label: 'Email Verified' },
+  { key: 'mobileVerified', label: 'Mobile Verified' },
+  { key: 'searchEligible', label: 'Search Eligible' },
+  { key: 'adminApproved', label: 'Admin Approved' },
+  { key: 'featuredEligible', label: 'Featured Eligible' },
+  { key: 'campaignEligible', label: 'Campaign Eligible' },
+];
 
 interface RecentReg {
   type: 'influencer' | 'brand' | 'photographer';
@@ -34,11 +46,13 @@ interface ActivityBar {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, VerificationFunnelComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
 export class AdminDashboardComponent implements OnInit {
+  funnelStages: FunnelStage[] = [];
+  funnelLoading = false;
   selectedRoleTab: 'all' | 'influencer' | 'brand' = 'all';
 
   influencerCount = 0;
@@ -120,7 +134,26 @@ export class AdminDashboardComponent implements OnInit {
       this.fetchPhotographers();
       this.fetchCampaigns();
       this.fetchOpenDisputes();
+      this.fetchVerificationFunnel();
     }
+  }
+
+  fetchVerificationFunnel(): void {
+    this.funnelLoading = true;
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/verification-funnel`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const combined = (res?.data ?? res)?.combined;
+        this.funnelStages = combined
+          ? FUNNEL_STAGE_LABELS.map(({ key, label }) => ({ key, label, count: Number(combined[key] || 0) }))
+          : [];
+        this.funnelLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.funnelLoading = false;
+        this.cd.detectChanges();
+      },
+    });
   }
 
   setRoleTab(tab: 'all' | 'influencer' | 'brand') {
