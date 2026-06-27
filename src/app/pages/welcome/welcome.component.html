@@ -30,7 +30,7 @@
           <h2 class="section-title mb-1">Featured Brands</h2>
           <p class="section-subtitle">Discover top companies actively hiring creators</p>
         </div>
-        <button class="btn btn-link view-all" (click)="regConfirm.open('brand')" type="button">View all brands</button>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'brands' }">Explore More →</a>
       </div>
 
       <div *ngIf="brandsLoading && brands.length === 0" class="text-center text-muted">Loading brands...</div>
@@ -58,7 +58,10 @@
 
   <section class="creators-strip py-5" aria-label="Influencers Grid" *ngIf="showInfluencersSection">
     <div class="container">
-      <h2 class="section-title text-white mb-3 bg-transparent border-0">Trending Creators</h2>
+      <div class="d-flex justify-content-between align-items-end mb-3">
+        <h2 class="section-title text-white mb-0 bg-transparent border-0">Trending Creators</h2>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'influencers' }">Explore More →</a>
+      </div>
       <div class="chip-row mb-4">
         <span class="chip" [class.active]="!selectedCategory" (click)="filterByCategory('')">All Categories</span>
         <span class="chip" *ngFor="let cat of creatorCategories" [class.active]="selectedCategory === cat" (click)="filterByCategory(cat)">{{ cat }}</span>
@@ -101,7 +104,7 @@
           <h2 class="section-title mb-1 bg-transparent">Featured Photo/Videographers</h2>
           <p class="section-subtitle">Discover visual creators available for campaigns and collaborations</p>
         </div>
-        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'photographers' }">View all creators</a>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'photographers' }">Explore More →</a>
       </div>
 
       <div *ngIf="photographersLoading && photographers.length === 0" class="text-center text-muted">
@@ -152,7 +155,7 @@
     </div>
   </section>
 
-  <section class="brand-cta-strip py-5" aria-label="Brand registration">
+  <section class="brand-cta-strip py-1" aria-label="Brand registration">
     <div class="container py-4">
       <app-action-cta
         heading="Ready to hire the right creative talent?"
@@ -165,11 +168,11 @@
     </div>
   </section>
 
-  <section class="container py-4" aria-label="Platform milestones">
+  <section class="container py-2 d-none" aria-label="Platform milestones">
     <app-platform-stats-strip [items]="statsStripItems"></app-platform-stats-strip>
   </section>
 
-  <section class="faq-strip py-5" aria-label="Frequently Asked Questions">
+  <section class="faq-strip py-1" aria-label="Frequently Asked Questions">
     <div class="container py-4">
       <ng-container
         [ngComponentOutlet]="faqAccordionComponent"

@@ -31,7 +31,19 @@ export class CampaignReviewComponent implements OnInit {
   ];
   campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all' = 'pending_review';
   campaignFiltersExpanded = true;
-  allCampaignApprovals: any[] = [];
+  // Current server-paginated page only — the backend now owns filtering/counting,
+  // so this never needs to hold the entire (potentially unbounded) campaign set.
+  campaignApprovals: any[] = [];
+  totalCampaigns = 0;
+  statusCounts: Record<'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all', number> = {
+    pending_review: 0,
+    needs_changes: 0,
+    rejected: 0,
+    active: 0,
+    completed: 0,
+    all: 0,
+  };
+  newPendingCount = 0;
   campaignApprovalsLoading = false;
   campaignApprovalsError = '';
   moderatingCampaignId = '';
@@ -42,6 +54,7 @@ export class CampaignReviewComponent implements OnInit {
   currentPage = 1;
   pageSize = 10;
   readonly pageSizeOptions = [10, 25, 50, 100];
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Date range filter (applies to the campaign's submitted date, i.e. createdAt/updatedAt)
   dateFilterOpen = false;
@@ -135,14 +148,38 @@ export class CampaignReviewComponent implements OnInit {
     });
   }
 
+  /** Builds the query string for the current status/search/date/page/pageSize filters. */
+  private buildCampaignsQueryParams(overrides?: { page?: number; limit?: number }): string {
+    const ownerType = this.isCollaborationScope ? 'photographer' : 'brand';
+    const params = new URLSearchParams();
+    params.set('status', this.campaignApprovalStatusFilter);
+    params.set('ownerType', ownerType);
+    params.set('page', String(overrides?.page ?? this.currentPage));
+    params.set('limit', String(overrides?.limit ?? this.pageSize));
+    if (this.searchQuery.trim()) params.set('q', this.searchQuery.trim());
+    if (this.appliedDateFrom) params.set('dateFrom', this.appliedDateFrom);
+    if (this.appliedDateTo) params.set('dateTo', this.appliedDateTo);
+    return params.toString();
+  }
+
   loadCampaignApprovals() {
     this.campaignApprovalsLoading = true;
     this.campaignApprovalsError = '';
-    const ownerType = this.isCollaborationScope ? 'photographer' : 'brand';
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?status=all&ownerType=${ownerType}`, this.getAuthHeaders()).subscribe({
+    const query = this.buildCampaignsQueryParams();
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`, this.getAuthHeaders()).subscribe({
       next: (res) => {
         const data = res?.data ?? [];
-        this.allCampaignApprovals = Array.isArray(data) ? data : [];
+        this.campaignApprovals = Array.isArray(data) ? data : [];
+        this.totalCampaigns = Number(res?.total || 0);
+        this.statusCounts = {
+          pending_review: Number(res?.statusCounts?.pending_review || 0),
+          needs_changes: Number(res?.statusCounts?.needs_changes || 0),
+          rejected: Number(res?.statusCounts?.rejected || 0),
+          active: Number(res?.statusCounts?.active || 0),
+          completed: Number(res?.statusCounts?.completed || 0),
+          all: Number(res?.statusCounts?.all || 0),
+        };
+        this.newPendingCount = Number(res?.newPendingCount || 0);
         this.campaignApprovalsLoading = false;
         this.cdr.detectChanges();
       },
@@ -154,60 +191,20 @@ export class CampaignReviewComponent implements OnInit {
     });
   }
 
-  get totalCampaignCount(): number { return this.allCampaignApprovals.length; }
+  get totalCampaignCount(): number { return this.totalCampaigns; }
 
-  get newPendingCount(): number {
-    const cutoff = Date.now() - 86400000;
-    return this.allCampaignApprovals.filter(c =>
-      this.matchesStatusFilter(c, 'pending_review') &&
-      new Date(c.createdAt || 0).getTime() > cutoff
-    ).length;
+  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all'): number {
+    return this.statusCounts[status] ?? 0;
   }
 
-  get filteredCampaigns(): any[] {
-    let list = this.campaignApprovalStatusFilter === 'all'
-      ? this.allCampaignApprovals
-      : this.allCampaignApprovals.filter(c => this.matchesStatusFilter(c, this.campaignApprovalStatusFilter));
+  onPageChange(page: number): void { this.currentPage = page; this.loadCampaignApprovals(); }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; this.loadCampaignApprovals(); }
 
-    if (this.searchQuery.trim()) {
-      const q = this.searchQuery.trim().toLowerCase();
-      list = list.filter(c => {
-        const title = String(c.title || c.campaignTitle || '').toLowerCase();
-        const brand = String(c.brand?.brandName || c.brand?.name || '').toLowerCase();
-        const id = this.campaignIdLabel(c).toLowerCase();
-        return title.includes(q) || brand.includes(q) || id.includes(q);
-      });
-    }
-
-    if (this.appliedDateFrom || this.appliedDateTo) {
-      const from = this.appliedDateFrom ? new Date(`${this.appliedDateFrom}T00:00:00`) : null;
-      const to = this.appliedDateTo ? new Date(`${this.appliedDateTo}T23:59:59.999`) : null;
-      list = list.filter(c => {
-        const submitted = this.campaignSubmittedDateValue(c);
-        if (!submitted) return false;
-        if (from && submitted < from) return false;
-        if (to && submitted > to) return false;
-        return true;
-      });
-    }
-    return list;
+  onSearchChange() {
+    this.currentPage = 1;
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = setTimeout(() => this.loadCampaignApprovals(), 350);
   }
-
-  get campaignApprovals(): any[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredCampaigns.slice(start, start + this.pageSize);
-  }
-
-  get totalPages(): number { return Math.max(1, Math.ceil(this.filteredCampaigns.length / this.pageSize)); }
-  get paginationStart(): number { return this.filteredCampaigns.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1; }
-  get paginationEnd(): number { return Math.min(this.currentPage * this.pageSize, this.filteredCampaigns.length); }
-
-  prevPage() { if (this.currentPage > 1) this.currentPage--; }
-  nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
-  onPageChange(page: number): void { this.currentPage = page; }
-  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
-
-  onSearchChange() { this.currentPage = 1; this.cdr.detectChanges(); }
 
   get hasDateFilter(): boolean { return !!(this.appliedDateFrom || this.appliedDateTo); }
 
@@ -227,6 +224,7 @@ export class CampaignReviewComponent implements OnInit {
     this.currentPage = 1;
     this.dateFilterOpen = false;
     this.cdr.detectChanges();
+    this.loadCampaignApprovals();
   }
 
   clearDateFilter(): void {
@@ -237,11 +235,7 @@ export class CampaignReviewComponent implements OnInit {
     this.currentPage = 1;
     this.dateFilterOpen = false;
     this.cdr.detectChanges();
-  }
-
-  private campaignSubmittedDateValue(c: any): Date | null {
-    const d = new Date(c?.createdAt || c?.updatedAt || '');
-    return isNaN(d.getTime()) ? null : d;
+    this.loadCampaignApprovals();
   }
 
   campaignIdLabel(c: any): string {
@@ -289,31 +283,33 @@ export class CampaignReviewComponent implements OnInit {
     return typeof logo === 'string' && logo ? logo : null;
   }
 
+  /** Exports every campaign matching the current filters (not just the visible page) — fetches a fresh, high-limit batch from the server. */
   exportData() {
-    const rows = this.filteredCampaigns.map(c => ({
-      id: this.campaignIdLabel(c),
-      title: c.title || '',
-      brand: c.brand?.brandName || '',
-      status: c.status || '',
-      budget: this.campaignPreviewBudget(c),
-      submitted: this.campaignSubmittedDate(c),
-    }));
-    const csv = [
-      'ID,Title,Brand,Status,Budget,Submitted',
-      ...rows.map(r => `${r.id},${r.title},${r.brand},${r.status},${r.budget},${r.submitted}`),
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'campaigns.csv'; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  private matchesStatusFilter(
-    campaign: any,
-    filter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all',
-  ): boolean {
-    if (filter === 'all') return true;
-    return this.normalizeReviewStatus(campaign?.status) === filter;
+    const query = this.buildCampaignsQueryParams({ page: 1, limit: 10000 });
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        const rows = list.map((c: any) => ({
+          id: this.campaignIdLabel(c),
+          title: c.title || '',
+          brand: c.brand?.brandName || '',
+          status: c.status || '',
+          budget: this.campaignPreviewBudget(c),
+          submitted: this.campaignSubmittedDate(c),
+        }));
+        const csv = [
+          'ID,Title,Brand,Status,Budget,Submitted',
+          ...rows.map((r: any) => `${r.id},${r.title},${r.brand},${r.status},${r.budget},${r.submitted}`),
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'campaigns.csv'; a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Failed to export campaigns.');
+      },
+    });
   }
 
   private normalizeReviewStatus(status: unknown): 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' | 'draft' | 'completed' | 'cancelled' | 'unknown' {
@@ -371,11 +367,7 @@ export class CampaignReviewComponent implements OnInit {
     if (this.campaignApprovalStatusFilter === status) return;
     this.campaignApprovalStatusFilter = status;
     this.currentPage = 1;
-  }
-
-  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all'): number {
-    if (status === 'all') return this.allCampaignApprovals.length;
-    return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, status)).length;
+    this.loadCampaignApprovals();
   }
 
   onCampaignApprovalFilterChange() {
@@ -388,7 +380,9 @@ export class CampaignReviewComponent implements OnInit {
 
   resetCampaignApprovalFilters() {
     this.campaignApprovalStatusFilter = 'pending_review';
+    this.currentPage = 1;
     this.cdr.detectChanges();
+    this.loadCampaignApprovals();
   }
 
   private moderateCampaign(campaign: any, action: 'approve' | 'reject' | 'needs_changes', moderationNote = '') {

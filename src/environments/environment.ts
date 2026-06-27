@@ -4,9 +4,9 @@ export const environment = {
   razorpayKeyId: 'rzp_test_XXXXXXXXXXXXXXXX',
   cloudinaryUploadPreset: 'trendstarz_dev',
   cloudinaryCloudName: 'ddnsoypf8',
-  marketplacePublicMinInfluencers: 300,
-  marketplacePublicMinBrands: 30,
-  marketplacePublicMinPhotographers: 30,
+  marketplacePublicMinInfluencers: 1,
+  marketplacePublicMinBrands: 1,
+  marketplacePublicMinPhotographers: 1,
   firebase: {
     apiKey: "AIzaSyDfvDexaapUpOdM07hWX6q-gtZ11R5Aa64",
     authDomain: "trendstarz-d3c58.firebaseapp.com",

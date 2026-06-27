@@ -626,6 +626,25 @@ export class ConfigService {
     );
   }
 
+  /**
+   * Welcome Page "Featured" sections — eligible-only, weighted-random profiles.
+   * Identical response for Guest, Registered, and Premium viewers.
+   */
+  getFeaturedProfiles(options?: {
+    influencerLimit?: number;
+    brandLimit?: number;
+    photographerLimit?: number;
+  }): Observable<{ influencers: any[]; brands: any[]; photographers: any[] }> {
+    const params: Record<string, string> = {};
+    if (options?.influencerLimit) params['influencerLimit'] = String(options.influencerLimit);
+    if (options?.brandLimit) params['brandLimit'] = String(options.brandLimit);
+    if (options?.photographerLimit) params['photographerLimit'] = String(options.photographerLimit);
+    return this.http.get<any>(`${this.apiUrl}/users/featured-profiles`, { params }).pipe(
+      map((res) => this.extractData<any>(res) || res || {}),
+      catchError(() => of({ influencers: [], brands: [], photographers: [] })),
+    );
+  }
+
   getInfluencersSearchResponse(options?: {
     page?: number;
     limit?: number;

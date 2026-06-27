@@ -238,7 +238,7 @@
     <!-- Pagination -->
     <ng-container *ngIf="!campaignApprovalsLoading">
       <app-paginator
-        [total]="filteredCampaigns.length"
+        [total]="totalCampaigns"
         [pageSize]="pageSize"
         [currentPage]="currentPage"
         [pageSizeOptions]="pageSizeOptions"

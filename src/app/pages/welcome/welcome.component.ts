@@ -200,15 +200,21 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  fetchInfluencers() {
+  /**
+   * Loads all three Welcome Page "Featured" sections in a single call —
+   * eligible-only, weighted-random profiles, identical for every viewer type.
+   */
+  fetchFeaturedProfiles(): void {
     this.influencersLoading = true;
+    this.brandsLoading = true;
+    this.photographersLoading = true;
     this.influencers = [];
-    this.config.getInfluencers().subscribe({
-      next: (data) => {
-        const influencerArray = Array.isArray(data)
-          ? data
-          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
-        this.allInfluencers = influencerArray;
+    this.brands = [];
+    this.photographers = [];
+    this.brandCampaignStatusMap = {};
+    this.config.getFeaturedProfiles({ influencerLimit: 8, brandLimit: 6, photographerLimit: 6 }).subscribe({
+      next: (res) => {
+        this.allInfluencers = Array.isArray(res?.influencers) ? res.influencers : [];
 
         // Extract top 5 categories by registered user count (descending)
         const catCounts = new Map<string, number>();
@@ -220,14 +226,27 @@ export class WelcomeComponent implements OnInit, OnDestroy {
           .slice(0, 5)
           .map(([cat]) => cat);
         this.filterByCategory(this.selectedCategory);
+
+        const brandArray = Array.isArray(res?.brands) ? res.brands : [];
+        this.brands = brandArray;
+        if (this.showBrandCampaignMetaOnWelcome) {
+          this.populateWelcomeBrandCampaignStatus(brandArray);
+        }
+
+        this.photographers = Array.isArray(res?.photographers) ? res.photographers : [];
+
         this.influencersLoading = false;
+        this.brandsLoading = false;
+        this.photographersLoading = false;
         this.cd.detectChanges();
       },
       error: (err) => {
         this.influencersLoading = false;
-        console.error('Influencer fetch error:', err);
+        this.brandsLoading = false;
+        this.photographersLoading = false;
+        console.error('Featured profiles fetch error:', err);
         this.cd.detectChanges();
-      }
+      },
     });
   }
 
@@ -271,9 +290,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
       this.marketplaceBootstrapStarted = true;
       this.ngZone.run(() => {
-        this.fetchBrands();
-        this.fetchInfluencers();
-        this.fetchPhotographers();
+        this.fetchFeaturedProfiles();
       });
     };
 
@@ -326,48 +343,6 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  fetchBrands() {
-    this.brandsLoading = true;
-    this.brands = [];
-    this.brandCampaignStatusMap = {};
-    this.config.getBrands().subscribe({
-      next: (data) => {
-        const brandArray = Array.isArray(data)
-          ? data
-          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
-        this.brands = brandArray;
-        if (this.showBrandCampaignMetaOnWelcome) {
-          this.populateWelcomeBrandCampaignStatus(brandArray);
-        }
-        this.brandsLoading = false;
-        this.cd.detectChanges();
-      },
-      error: (err) => {
-        this.brandsLoading = false;
-        console.error('Brand fetch error:', err);
-        this.cd.detectChanges();
-      }
-    });
-  }
-
-  fetchPhotographers(): void {
-    this.photographersLoading = true;
-    this.photographers = [];
-    this.config.getPhotographers({ page: 1, limit: 8 }).subscribe({
-      next: (data) => {
-        this.photographers = Array.isArray(data)
-          ? data
-          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
-        this.photographersLoading = false;
-        this.cd.detectChanges();
-      },
-      error: (err) => {
-        this.photographersLoading = false;
-        console.error('Photographer fetch error:', err);
-        this.cd.detectChanges();
-      },
-    });
-  }
 
   viewPhotographerProfile(photographer: any): void {
     const username = String(photographer?.username || '').trim();
