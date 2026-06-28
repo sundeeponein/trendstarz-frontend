@@ -9,7 +9,7 @@ import { ImageGuidelinesModalComponent } from '../../shared/components/image-gui
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { environment } from '../../../environments/environment';
-import { filter, Subscription } from 'rxjs';
+import { filter, interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar-layout',
@@ -27,6 +27,8 @@ export class NavbarLayoutComponent implements OnDestroy {
   notifications: any[] = [];
   unreadNotificationCount = 0;
   private readonly subs = new Subscription();
+  private readonly NOTIFICATION_POLL_INTERVAL_MS = 60000;
+  private notificationPollStarted = false;
   private readonly commissionBadgeMap: Record<string, string> = {
     early_access_creator: 'Early Access',
     partner_creator: 'Partner',
@@ -194,6 +196,7 @@ export class NavbarLayoutComponent implements OnDestroy {
 
       this.refreshNotifications();
       this.refreshNotificationCount();
+      this.startNotificationPolling();
     }
   }
 
@@ -237,6 +240,9 @@ export class NavbarLayoutComponent implements OnDestroy {
           this.notificationsOpen = false;
           this.notifications = [];
           this.unreadNotificationCount = 0;
+        } else {
+          this.refreshNotificationCount();
+          this.startNotificationPolling();
         }
       }),
     );
@@ -306,6 +312,18 @@ export class NavbarLayoutComponent implements OnDestroy {
       this.config.getUnreadNotificationsCount().subscribe((count) => {
         this.unreadNotificationCount = Number(count || 0);
         this.cdr.detectChanges();
+      }),
+    );
+  }
+
+  private startNotificationPolling() {
+    if (this.notificationPollStarted) return;
+    this.notificationPollStarted = true;
+    this.subs.add(
+      interval(this.NOTIFICATION_POLL_INTERVAL_MS).subscribe(() => {
+        if (this.user) {
+          this.refreshNotificationCount();
+        }
       }),
     );
   }

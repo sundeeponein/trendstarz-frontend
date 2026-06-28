@@ -7,29 +7,100 @@
     <a routerLink="/" class="settings-back">Back</a>
   </header>
 
-  <section class="settings-section">
-    <div class="settings-section__main">
-      <div class="settings-icon">
-        <i class="bi bi-bell"></i>
-        <span class="settings-count" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+  <section class="settings-section notif-card">
+    <div class="notif-card__header">
+      <div class="settings-section__main">
+        <div class="settings-icon">
+          <i class="bi bi-bell"></i>
+          <span class="settings-count" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </div>
+        <div>
+          <h2>Push Notifications</h2>
+          <p>Get real-time alerts on this device, even when the app is closed.</p>
+          <div class="settings-status">{{ notificationStatusLabel }}</div>
+        </div>
       </div>
-      <div>
-        <h2>Mobile &amp; Web Push Notifications</h2>
-        <p>
-          Receive campaign invite and campaign start-work updates even when the app is closed,
-          where your browser and phone allow push notifications.
-        </p>
-        <div class="settings-status">{{ notificationStatusLabel }}</div>
+
+      <div class="settings-actions" *ngIf="pushSupported">
+        <button type="button" class="btn-enable" (click)="enablePush()" [disabled]="pushBusy || pushPermission === 'denied' || pushActive">
+          {{ pushBusy ? 'Saving...' : 'Enable' }}
+        </button>
+        <button type="button" class="btn-disable" (click)="disablePush()" [disabled]="pushBusy || (!pushActive && pushPreference === 'disabled')">
+          Disable
+        </button>
       </div>
     </div>
 
-    <div class="settings-actions">
-      <button type="button" class="btn-enable" (click)="enablePush()" [disabled]="pushBusy || !pushSupported || pushPermission === 'denied' || pushActive">
-        {{ pushBusy ? 'Saving...' : 'Enable' }}
-      </button>
-      <button type="button" class="btn-disable" (click)="disablePush()" [disabled]="pushBusy || (!pushActive && pushPreference === 'disabled')">
-        Disable
-      </button>
+    <p class="notif-pref-hint">Applies to every device of that type on your account, not just this one.</p>
+
+    <div class="device-grid">
+      <label class="device-box">
+        <div class="device-box__icon device-box__icon--web"><i class="bi bi-laptop"></i></div>
+        <div class="device-box__body">
+          <strong>Web browsers</strong>
+          <span>Desktop &amp; laptop browser alerts</span>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" [checked]="webEnabled" [disabled]="preferencesBusy" (change)="toggleWebEnabled()" />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label class="device-box">
+        <div class="device-box__icon device-box__icon--mobile"><i class="bi bi-phone"></i></div>
+        <div class="device-box__body">
+          <strong>Mobile browsers</strong>
+          <span>Phone browser alerts</span>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" [checked]="mobileEnabled" [disabled]="preferencesBusy" (change)="toggleMobileEnabled()" />
+          <span class="slider"></span>
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <section class="settings-section compact notif-pref-card">
+    <div>
+      <h2>Notification Preferences</h2>
+      <p>Fine-tune exactly what updates reach you.</p>
+    </div>
+
+    <div class="pref-category">
+      <div class="pref-category__label"><span class="dot dot--campaign"></span>Campaign management</div>
+      <div class="pref-category__box">
+        <div class="pref-category__box-header">
+          <strong>Campaign updates</strong>
+          <span class="badge-priority">Priority</span>
+        </div>
+        <div class="pref-category__box-row">
+          <span>Invites, applications, approvals, and disputes</span>
+          <span class="toggle">
+            <input type="checkbox" [checked]="campaignEnabled" [disabled]="preferencesBusy" (change)="toggleCampaignEnabled()" />
+            <span class="slider"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pref-category">
+      <div class="pref-category__label"><span class="dot dot--payment"></span>Financial activity</div>
+      <div class="pref-category__box">
+        <div class="pref-category__box-row pref-category__box-row--icon">
+          <div class="pref-icon"><i class="bi bi-cash-coin"></i></div>
+          <div class="pref-category__box-text">
+            <strong>Payment updates</strong>
+            <span>Payments verified, payouts, and premium billing</span>
+          </div>
+          <span class="toggle">
+            <input type="checkbox" [checked]="paymentEnabled" [disabled]="preferencesBusy" (change)="togglePaymentEnabled()" />
+            <span class="slider"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pref-reset">
+      <button type="button" class="btn-reset" (click)="resetPreferencesToDefaults()" [disabled]="preferencesBusy">Reset to defaults</button>
     </div>
   </section>
 

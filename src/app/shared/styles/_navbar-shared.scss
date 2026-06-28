@@ -71,7 +71,7 @@ $hover-bg: rgba(255, 255, 255, 0.08);
       padding: 0 0.45rem;
       color: $text-muted;
       text-decoration: none;
-      font-size: clamp(0.9rem, 1.25vw, 1.25rem);
+      font-size: clamp(0.9rem, 1vw, 1rem);
       font-weight: 500;
       position: relative;
       transition: color 0.2s ease;
@@ -90,10 +90,10 @@ $hover-bg: rgba(255, 255, 255, 0.08);
         &::after {
           content: '';
           position: absolute;
-          bottom: 0;
+          bottom: -5px;
           left: 0;
           right: 0;
-          height: 5px;
+          height: 1px;
           background-color: $orange-primary;
           border-radius: 999px 999px 0 0;
         }

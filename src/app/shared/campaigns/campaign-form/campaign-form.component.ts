@@ -29,7 +29,7 @@ import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handl
 export class CampaignFormComponent implements OnInit, OnChanges {
   private static readonly MS_PER_DAY = 24 * 60 * 60 * 1000;
   /** Host can't pick a start date sooner than this — leaves room for admin approval, applications/invites, and review. */
-  private static readonly MIN_START_DAYS_FROM_TODAY = 3;
+  private static readonly MIN_START_DAYS_FROM_TODAY = 0;
   /** Longest a campaign's start-to-end window can span. */
   private static readonly MAX_DURATION_DAYS = 15;
   readonly tierOrder: readonly string[] = TIER_ORDER;

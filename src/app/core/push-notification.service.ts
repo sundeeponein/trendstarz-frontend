@@ -5,6 +5,13 @@ import { environment } from '../../environments/environment';
 import { catchError } from 'rxjs/operators';
 import { of, Subscription } from 'rxjs';
 
+export interface NotificationPreferences {
+  webEnabled: boolean;
+  mobileEnabled: boolean;
+  campaignEnabled: boolean;
+  paymentEnabled: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService implements OnDestroy {
   private readonly apiUrl = environment.apiBaseUrl || '/api';
@@ -84,6 +91,20 @@ export class PushNotificationService implements OnDestroy {
         await this.swPush.unsubscribe();
       }
     } catch { /* silent */ }
+  }
+
+  /** Get the account-level push preference for the logged-in user (device + event category). */
+  getPreferences() {
+    return this.http
+      .get<NotificationPreferences>(`${this.apiUrl}/push/preferences`)
+      .pipe(catchError(() => of({ webEnabled: true, mobileEnabled: true, campaignEnabled: true, paymentEnabled: true })));
+  }
+
+  /** Update the account-level push preference for the logged-in user (device + event category). */
+  updatePreferences(updates: Partial<NotificationPreferences>) {
+    return this.http
+      .patch<NotificationPreferences>(`${this.apiUrl}/push/preferences`, updates)
+      .pipe(catchError(() => of(null)));
   }
 
   /** Register a handler that shows an in-app toast when a push message arrives. */

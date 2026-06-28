@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { PushNotificationService } from '../../core/push-notification.service';
+import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 
@@ -18,6 +18,11 @@ export class UserSettingsComponent implements OnInit {
   pushBusy = false;
   pushPermission: NotificationPermission | 'unsupported' = 'unsupported';
   pushPreference: 'enabled' | 'disabled' | 'unset' = 'unset';
+  webEnabled = true;
+  mobileEnabled = true;
+  campaignEnabled = true;
+  paymentEnabled = true;
+  preferencesBusy = false;
   unreadCount = 0;
   lastLoginAt: string | null = null;
   lastOpenedAt: string | null = null;
@@ -35,6 +40,54 @@ export class UserSettingsComponent implements OnInit {
     this.refreshPushState();
     this.config.getUnreadNotificationsCount().subscribe((count) => {
       this.unreadCount = Number(count || 0);
+    });
+    this.push.getPreferences().subscribe((prefs) => {
+      this.webEnabled = prefs.webEnabled;
+      this.mobileEnabled = prefs.mobileEnabled;
+      this.campaignEnabled = prefs.campaignEnabled;
+      this.paymentEnabled = prefs.paymentEnabled;
+    });
+  }
+
+  toggleWebEnabled(): void {
+    if (this.preferencesBusy) return;
+    this.setPreference({ webEnabled: !this.webEnabled });
+  }
+
+  toggleMobileEnabled(): void {
+    if (this.preferencesBusy) return;
+    this.setPreference({ mobileEnabled: !this.mobileEnabled });
+  }
+
+  toggleCampaignEnabled(): void {
+    if (this.preferencesBusy) return;
+    this.setPreference({ campaignEnabled: !this.campaignEnabled });
+  }
+
+  togglePaymentEnabled(): void {
+    if (this.preferencesBusy) return;
+    this.setPreference({ paymentEnabled: !this.paymentEnabled });
+  }
+
+  resetPreferencesToDefaults(): void {
+    if (this.preferencesBusy) return;
+    this.setPreference({
+      webEnabled: true,
+      mobileEnabled: true,
+      campaignEnabled: true,
+      paymentEnabled: true,
+    });
+  }
+
+  private setPreference(updates: Partial<NotificationPreferences>): void {
+    this.preferencesBusy = true;
+    this.push.updatePreferences(updates).subscribe((result) => {
+      this.preferencesBusy = false;
+      if (!result) return;
+      this.webEnabled = result.webEnabled;
+      this.mobileEnabled = result.mobileEnabled;
+      this.campaignEnabled = result.campaignEnabled;
+      this.paymentEnabled = result.paymentEnabled;
     });
   }
 
