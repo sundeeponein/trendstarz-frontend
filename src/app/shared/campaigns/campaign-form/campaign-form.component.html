@@ -504,7 +504,7 @@
 
         <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}</p>
 
-        <div class="field-group" *ngIf="!isPhotographerCreator">
+        <div class="field-group">
           <app-chip-selection-group
             [label]="'Target ' + inviteRecipientLabelPlural + ' Categories'"
             [required]="true"
@@ -550,16 +550,6 @@
             </label>
           </div>
 
-          <label class="field-label smart-match-subtitle">Open for Collaboration Types</label>
-          <app-chip-selection-group
-            [options]="openCollaborationTypeOptions"
-            [selected]="openCollaborationTypes"
-            valueKey="name"
-            labelKey="name"
-            [max]="maxCollaborationTypeFilters"
-            (selectedChange)="setSmartMatchValues('openCollaborationTypes', $event)">
-          </app-chip-selection-group>
-
           <p class="chip-hint" *ngIf="preferredCollaborationPreference">
             <i class="bi bi-stars"></i> Smart matching boosts creators with matching preference.
           </p>
@@ -567,9 +557,11 @@
 
         <div class="field-group smart-match-panel" *ngIf="showPhotographerSmartMatching">
           <div class="field-label-row">
-            <label class="field-label">Preferred Creator Type</label>
+            <label class="field-label">Creative Requirements</label>
             <button type="button" class="smart-match-clear" *ngIf="hasAnyPhotographerSmartMatchingFilter()" (click)="clearPhotographerSmartMatchingFilters()">Clear</button>
           </div>
+
+          <label class="field-label smart-match-subtitle">Preferred Creator Type</label>
           <p class="field-sublabel">Helps match your requirement with suitable creators.</p>
           <app-chip-selection-group
             [options]="photographerCreatorTypeOptions"
@@ -578,39 +570,54 @@
             (selectedChange)="setPhotographerPreferredCreatorTypes($event)">
           </app-chip-selection-group>
 
-          <label class="field-label smart-match-subtitle">Collaboration Preference</label>
-          <div class="smart-radio-row">
-            <label class="smart-radio" *ngFor="let item of photographerCollaborationPreferenceOptions">
-              <input type="radio"
-                     name="photographerCollaborationPreference"
-                     [value]="item.name"
-                     [(ngModel)]="photographerCollaborationPreference"
-                     [ngModelOptions]="{standalone: true}" />
-              <span>{{ item.name }}</span>
-            </label>
-          </div>
-
-          <label class="field-label smart-match-subtitle">Equipment Preference</label>
-          <p class="field-sublabel">Used to prioritize creators with matching equipment and production capabilities.</p>
+          <label class="field-label smart-match-subtitle">Services Required <span class="required">*</span></label>
           <div class="chip-list">
             <button type="button" class="chip"
-                    *ngFor="let item of equipmentOptions"
-                    [class.chip--selected]="isPhotographerSmartMatchSelected('photographerEquipmentPreference', item.name)"
-                    (click)="togglePhotographerSmartMatchValue('photographerEquipmentPreference', item.name)">
-              {{ item.name }}
-            </button>
+                    *ngFor="let s of PHOTOGRAPHER_SERVICES"
+                    [class.chip--selected]="selectedPhotographerServices.includes(s)"
+                    (click)="togglePhotographerService(s)">{{ s }}</button>
           </div>
+          <span class="field-error" *ngIf="selectedPhotographerServices.length === 0 && platformsTouched">Select at least one service</span>
 
-          <!-- <label class="smart-check">
-            <input type="checkbox"
-                   [(ngModel)]="photographerOpenToTravelOnly"
-                   [ngModelOptions]="{standalone: true}" />
-            <span>Show creators open to travel</span>
-          </label> -->
+          <label class="field-label smart-match-subtitle">Deliverables <span class="required">*</span></label>
+          <div class="chip-list">
+            <button type="button" class="chip"
+                    *ngFor="let d of PHOTOGRAPHER_DELIVERABLES"
+                    [class.chip--selected]="selectedPhotographerDeliverables.includes(d)"
+                    (click)="togglePhotographerDeliverable(d)">{{ d }}</button>
+          </div>
+          <span class="field-error" *ngIf="selectedPhotographerDeliverables.length === 0 && platformsTouched">Select at least one deliverable</span>
 
-          <p class="chip-hint" *ngIf="photographerCollaborationPreference">
-            <i class="bi bi-stars"></i> Matching creator preferences boosts ranking.
-          </p>
+          <details class="advanced-filters-collapse">
+            <summary>Advanced Filters (Optional)</summary>
+
+            <label class="field-label smart-match-subtitle">Equipment Preference</label>
+            <p class="field-sublabel">Used to prioritize creators with matching equipment and production capabilities.</p>
+            <div class="chip-list">
+              <button type="button" class="chip"
+                      *ngFor="let item of equipmentOptions"
+                      [class.chip--selected]="isPhotographerSmartMatchSelected('photographerEquipmentPreference', item.name)"
+                      (click)="togglePhotographerSmartMatchValue('photographerEquipmentPreference', item.name)">
+                {{ item.name }}
+              </button>
+            </div>
+
+            <label class="field-label smart-match-subtitle">Collaboration Preference</label>
+            <div class="smart-radio-row">
+              <label class="smart-radio" *ngFor="let item of photographerCollaborationPreferenceOptions">
+                <input type="radio"
+                       name="photographerCollaborationPreference"
+                       [value]="item.name"
+                       [(ngModel)]="photographerCollaborationPreference"
+                       [ngModelOptions]="{standalone: true}" />
+                <span>{{ item.name }}</span>
+              </label>
+            </div>
+
+            <p class="chip-hint" *ngIf="photographerCollaborationPreference">
+              <i class="bi bi-stars"></i> Matching creator preferences boosts ranking.
+            </p>
+          </details>
         </div>
 
         <!-- ── Platform multi-select ── -->
@@ -909,34 +916,69 @@
                    [placeholder]="'Search ' + inviteRecipientLabelPlural.toLowerCase() + ' by name, category, or location…'" />
           </div>
 
+          <!-- Requirement summary — set once in step 2, shown read-only here as one row with a single Change link. -->
+          <div class="target-categories-card" *ngIf="selectedCategories.length || lookingForCreatorTypes.length || photographerPreferredCreatorTypes.length || selectedPhotographerServices.length || selectedPhotographerDeliverables.length || preferredCollaborationPreference || photographerEquipmentPreference.length || photographerCollaborationPreference">
+            <div class="target-categories-card__head">
+              <span class="target-categories-card__title">Campaign Summary</span>
+              <button type="button" class="smart-match-clear" (click)="goToStep(2)">Change</button>
+            </div>
+            <div class="target-categories-card__row-list">
+              <div class="target-categories-card__row" *ngIf="selectedCategories.length">
+                <span class="target-categories-card__row-label">Category</span>
+                <span class="target-categories-card__row-value">{{ selectedCategories.join(' • ') }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'influencer' && lookingForCreatorTypes.length">
+                <span class="target-categories-card__row-label">Looking For</span>
+                <span class="target-categories-card__row-value">{{ lookingForCreatorTypes.join(' • ') }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && photographerPreferredCreatorTypes.length">
+                <span class="target-categories-card__row-label">Creator Type</span>
+                <span class="target-categories-card__row-value">{{ photographerPreferredCreatorTypes.join(' • ') }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && selectedPhotographerServices.length">
+                <span class="target-categories-card__row-label">Services</span>
+                <span class="target-categories-card__row-value">{{ selectedPhotographerServices.join(' • ') }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && selectedPhotographerDeliverables.length">
+                <span class="target-categories-card__row-label">Deliverables</span>
+                <span class="target-categories-card__row-value">{{ selectedPhotographerDeliverables.join(' • ') }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'influencer' && preferredCollaborationPreference">
+                <span class="target-categories-card__row-label">Collaboration Preference</span>
+                <span class="target-categories-card__row-value">{{ preferredCollaborationPreference }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && photographerEquipmentPreference.length">
+                <span class="target-categories-card__row-label">Equipment</span>
+                <span class="target-categories-card__row-value">{{ photographerEquipmentPreference.join(' • ') }}</span>
+              </div>
+              <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && photographerCollaborationPreference">
+                <span class="target-categories-card__row-label">Collaboration</span>
+                <span class="target-categories-card__row-value">{{ photographerCollaborationPreference }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional filters — temporary, browsing-only; never saved with the campaign. -->
           <div class="recipient-filter-panel">
             <div class="recipient-filter-panel__head">
-              <span>Filters</span>
+              <span>Additional Filters</span>
               <button type="button" class="smart-match-clear" *ngIf="hasInviteRecipientFilters()" (click)="clearInviteRecipientFilters()">Clear</button>
             </div>
 
             <div class="recipient-filter-grid">
-              <div class="recipient-filter-group recipient-filter-field" *ngIf="getUniqueCategoryFilters().length">
-                <label>{{ inviteRecipientRole === 'photographer' ? 'Photo/Videographer Categories' : 'Categories' }}</label>
-                <select class="recipient-filter-select" [(ngModel)]="filterCategory" (ngModelChange)="onInviteCategoryOrTypeChange()" [ngModelOptions]="{standalone: true}">
-                  <option value="">All categories</option>
-                  <option *ngFor="let item of getUniqueCategoryFilters()" [value]="item">{{ item }}</option>
+              <div class="recipient-filter-group recipient-filter-field">
+                <label>State</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterState" (ngModelChange)="onInviteStateFilterChange()" [ngModelOptions]="{standalone: true}">
+                  <option value="">All states</option>
+                  <option *ngFor="let item of states" [value]="item.name">{{ item.name }}</option>
                 </select>
               </div>
 
-              <div class="recipient-filter-group recipient-filter-field" *ngIf="inviteRecipientRole === 'influencer' && creatorTypeOptions.length">
-                <label>Creator Type / Specialty</label>
-                <select class="recipient-filter-select" [(ngModel)]="filterCreatorType" (ngModelChange)="onInviteCategoryOrTypeChange()" [ngModelOptions]="{standalone: true}">
-                  <option value="">All creator types</option>
-                  <option *ngFor="let item of creatorTypeOptions" [value]="item.name">{{ item.name }}</option>
-                </select>
-              </div>
-
-              <div class="recipient-filter-group recipient-filter-field" *ngIf="getAvailableTierFilters().length">
-                <label>{{ inviteRecipientLabelSingular }} Tier</label>
-                <select class="recipient-filter-select" [(ngModel)]="filterTier" [ngModelOptions]="{standalone: true}">
-                  <option value="">All tiers</option>
-                  <option *ngFor="let item of getAvailableTierFilters()" [value]="item">{{ item }}</option>
+              <div class="recipient-filter-group recipient-filter-field" *ngIf="filterState && inviteFilterDistricts.length">
+                <label>District / City</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterDistrict" (ngModelChange)="onInviteDistrictFilterChange()" [ngModelOptions]="{standalone: true}">
+                  <option value="">All districts</option>
+                  <option *ngFor="let item of inviteFilterDistricts" [value]="item.name">{{ item.name }}</option>
                 </select>
               </div>
 
@@ -946,6 +988,21 @@
                   <option value="">All platforms</option>
                   <option *ngFor="let item of platformFilterOptions" [value]="item.value">{{ item.name }}</option>
                 </select>
+              </div>
+
+              <div class="recipient-filter-group recipient-filter-field" *ngIf="inviteRecipientRole === 'influencer' && getAvailableTierFilters().length">
+                <label>{{ inviteRecipientLabelSingular }} Tier</label>
+                <select class="recipient-filter-select" [(ngModel)]="filterTier" [ngModelOptions]="{standalone: true}">
+                  <option value="">All tiers</option>
+                  <option *ngFor="let item of getAvailableTierFilters()" [value]="item">{{ item }}</option>
+                </select>
+              </div>
+
+              <div class="recipient-filter-group recipient-filter-field">
+                <label class="recipient-filter-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="filterVerifiedOnly" [ngModelOptions]="{standalone: true}" />
+                  Verified Only
+                </label>
               </div>
             </div>
           </div>
@@ -995,20 +1052,35 @@
               <div class="inf-info">
                   <p class="inf-name">
                    {{ getInviteRecipientName({ photographerId: inf, recipientRole: inviteRecipientRole }) || inf.fullName || inf.name || inviteRecipientLabelSingular }}
-                   <i class="bi bi-patch-check-fill" *ngIf="inf.isPremium" title="Verified Premium"
-                     style="color:#22c55e;font-size:0.85rem;vertical-align:middle;margin-left:3px;"></i>
+                   <span class="inf-badge inf-badge--verified" *ngIf="inf.verifiedByTrendStarz" title="Verified by TrendStarz">
+                     <i class="bi bi-patch-check-fill"></i> Verified
+                   </span>
+                   <span class="inf-badge inf-badge--premium" *ngIf="inf.isPremium" title="Premium plan">Premium</span>
                   </p>
-                <p class="inf-meta">
+                <p class="inf-meta" *ngIf="inviteRecipientRole === 'photographer'; else influencerMeta">
                   <ng-container *ngIf="inf.location?.state">{{ inf.location.state }}</ng-container>
-                  <ng-container *ngIf="inf.location?.state && (inf.contentNiche || (inf.categories || []).length > 0)"> · </ng-container>
-                  <ng-container *ngIf="inf.contentNiche">{{ inf.contentNiche }}</ng-container>
-                  <ng-container *ngIf="!inf.contentNiche && (inf.categories || []).length > 0">{{ inf.categories[0] }}</ng-container>
+                  <ng-container *ngIf="inf.location?.state && (inf.skills || []).length > 0"> · </ng-container>
+                  <ng-container *ngIf="(inf.skills || []).length > 0">{{ inf.skills[0] }}</ng-container>
                 </p>
-                <div class="inf-tags">
-                  <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
-                  <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
-                  <span class="inf-tag inf-tag--cat" *ngFor="let type of (inf.creatorTypes || []).slice(0, 2)">{{ type }}</span>
+                <ng-template #influencerMeta>
+                  <p class="inf-meta">
+                    <ng-container *ngIf="inf.location?.state">{{ inf.location.state }}</ng-container>
+                    <ng-container *ngIf="inf.location?.state && (inf.contentNiche || (inf.categories || []).length > 0)"> · </ng-container>
+                    <ng-container *ngIf="inf.contentNiche">{{ inf.contentNiche }}</ng-container>
+                    <ng-container *ngIf="!inf.contentNiche && (inf.categories || []).length > 0">{{ inf.categories[0] }}</ng-container>
+                  </p>
+                </ng-template>
+                <div class="inf-tags" *ngIf="inviteRecipientRole === 'photographer'; else influencerTags">
+                  <span class="inf-tag inf-tag--cat" *ngFor="let skill of (inf.skills || []).slice(0, 3)"><i class="bi bi-camera-fill"></i> {{ skill }}</span>
+                  <span class="inf-tag" *ngFor="let item of (inf.equipment || []).slice(0, 3)">{{ item }}</span>
                 </div>
+                <ng-template #influencerTags>
+                  <div class="inf-tags">
+                    <span class="inf-tag" *ngFor="let tag of getPlatformTags(inf)">{{ tag }}</span>
+                    <span class="inf-tag inf-tag--cat" *ngFor="let cat of (inf.categories || []).slice(0, 2)">{{ cat }}</span>
+                    <span class="inf-tag inf-tag--cat" *ngFor="let type of (inf.creatorTypes || []).slice(0, 2)">{{ type }}</span>
+                  </div>
+                </ng-template>
               </div>
               <div class="inf-right">
                 <button
@@ -1021,8 +1093,13 @@
                 <span class="inf-engagement" *ngIf="inf.avgEngagement">
                   Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
                 </span>
+                <span class="inf-status-tag inf-status-tag--declined" *ngIf="!isInfluencerInvited(inf) && getInviteStatusBadge(inf)?.label === 'Declined'">
+                  Previously declined
+                </span>
                 <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
-                  <span class="inf-invited-badge badge rounded-pill bg-success"><i class="bi bi-check-circle-fill"></i> Invited</span>
+                  <span class="inf-invited-badge badge rounded-pill" [ngClass]="getInviteStatusBadge(inf)?.cssClass">
+                    <i class="bi bi-check-circle-fill"></i> {{ getInviteStatusBadge(inf)?.label }}
+                  </span>
                 </ng-container>
                 <ng-template #selectable>
                   <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(getRecipientId(inf))">
@@ -1035,6 +1112,14 @@
             <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
               <i class="bi bi-search"></i>
               <p>No {{ inviteRecipientLabelPlural.toLowerCase() }} match your filters.</p>
+              <ul class="empty-state-suggestions" *ngIf="hasInviteRecipientFilters()">
+                <li *ngFor="let suggestion of activeFilterClearSuggestions()">
+                  <button type="button" class="empty-state-suggestion-btn" (click)="suggestion.clear()">{{ suggestion.label }}</button>
+                </li>
+                <li>
+                  <button type="button" class="empty-state-suggestion-btn" (click)="clearInviteRecipientFilters()">Browse all verified {{ inviteRecipientLabelPlural.toLowerCase() }}</button>
+                </li>
+              </ul>
             </div>
 
             <div class="text-center py-3" *ngIf="inviteRecipientRole === 'influencer' && inviteListHasMore">
@@ -1140,12 +1225,12 @@
             <i class="bi bi-arrow-left"></i> Back
           </button>
           <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading || saving || submitLocked">
-            {{ (uploading || saving || submitLocked) ? 'Saving…' : (isEditingForReview ? 'Save & Submit for Review' : (isEdit ? 'Save changes' : 'Save as draft')) }}
+            {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Save as Draft' }}
           </button>
           <button type="button" class="btn btn-send"
             [disabled]="selectedInfluencerIds.size === 0 || uploading || saving || submitLocked" (click)="onSubmit()">
             <span *ngIf="uploading || saving || submitLocked">Saving…</span>
-            <span *ngIf="!(uploading || saving || submitLocked)">Send invites &amp; submit for review <i class="bi bi-arrow-right"></i></span>
+            <span *ngIf="!(uploading || saving || submitLocked)">Send Invites <i class="bi bi-arrow-right"></i></span>
           </button>
         </div>
       </ng-template>

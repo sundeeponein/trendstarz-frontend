@@ -2605,7 +2605,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   canDeletePendingCampaign(campaign: Campaign): boolean {
     if (!campaign?._id) return false;
     const status = String(campaign.status || '').toLowerCase();
-    if (status !== 'pending' && status !== 'pending_review') return false;
+    // Draft, sent-for-changes, rejected, pending, or in-review — none of these
+    // have admin approval yet. Deletable as long as no one has accepted work.
+    const deletableStatuses = ['draft', 'needs_changes', 'rejected', 'pending', 'pending_review'];
+    if (!deletableStatuses.includes(status)) return false;
 
     const invites = this.campaignInvitesMap.get(campaign._id) || [];
     if (!invites.length) return true;
@@ -2620,7 +2623,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   onDelete(campaign: Campaign) {
     if (!campaign._id) return;
     if (!this.canDeletePendingCampaign(campaign)) {
-      this.toast.error('Only pending or in-review campaigns without accepted work can be deleted.');
+      this.toast.error('Only draft, needs-changes, rejected, pending, or in-review campaigns without accepted work can be deleted.');
       return;
     }
 
@@ -2986,21 +2989,26 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return n > 0 ? String(n) : '';
   }
 
+  /** Invites actively in progress — accepted/paid/working, but not yet submitted or done. */
+  getCardWorkingCount(c: Campaign): number {
+    const key = this.getCampaignMapKey(c);
+    const workingStatuses = ['accepted', 'payment_confirmed', 'working'];
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => workingStatuses.includes(i.status)).length;
+  }
+
   timelineProgressText(c: Campaign): string {
+    const parts: string[] = [];
+
     const submitted = this.getCardSubmittedCount(c);
-    if (submitted > 0) {
-      return submitted === 1 ? '1 under review' : `${submitted} under review`;
-    }
+    if (submitted > 0) parts.push(submitted === 1 ? '1 under review' : `${submitted} under review`);
 
     const completed = this.getCardCompletedCount(c);
-    if (completed > 0) {
-      return completed === 1 ? '1 completed' : `${completed} completed`;
-    }
+    if (completed > 0) parts.push(completed === 1 ? '1 completed' : `${completed} completed`);
 
-    const acceptedOrBeyond = this.getCardAcceptedCount(c);
-    if (acceptedOrBeyond > 0) {
-      return 'Working';
-    }
+    const working = this.getCardWorkingCount(c);
+    if (working > 0) parts.push(working === 1 ? '1 working' : `${working} working`);
+
+    if (parts.length) return parts.join(' • ');
 
     const pct = this.timelineProgress(c);
     if (pct === 0) return 'Not started';
@@ -3985,7 +3993,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   getCardCompletedCount(c: Campaign): number {
     const key = this.getCampaignMapKey(c);
-    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => i.status === 'completed').length;
+    // Payout release sets the invite to 'approved', not 'completed' — both
+    // are terminal "done" states (see payments-payouts.service.ts).
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => ['completed', 'approved'].includes(i.status)).length;
   }
 
   getCardInvitePreview(c: Campaign): any[] {

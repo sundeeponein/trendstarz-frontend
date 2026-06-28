@@ -90,10 +90,12 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   influencerSearch = '';
   selectedInfluencerIds = new Set<string>();
   inviteRecipientRole: 'influencer' | 'photographer' = 'influencer';
-  filterCategory = '';
-  filterCreatorType = '';
   filterTier = '';
   filterPlatform = '';
+  filterState = '';
+  filterDistrict = '';
+  filterVerifiedOnly = false;
+  inviteFilterDistricts: any[] = [];
   quickViewRecipient: any | null = null;
   inviteListPage = 1;
   inviteListLimit = 40;
@@ -103,9 +105,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   creatorTypeOptions: any[] = [];
   collaborationAvailabilityOptions: any = {};
   lookingForCreatorTypes: string[] = [];
-  preferredCreatorTypes: string[] = [];
   preferredCollaborationPreference = '';
-  openCollaborationTypes: string[] = [];
   photographerPreferredCreatorTypes: string[] = [];
   photographerCollaborationPreference = '';
   photographerEquipmentPreference: string[] = [];
@@ -114,7 +114,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   readonly maxInfluencerTargetCategories = 5;
   readonly maxPhotographerTargetCategories = 3;
   readonly maxCreatorTypeFilters = 3;
-  readonly maxCollaborationTypeFilters = 3;
   imagePreview: string | null = null;
   selectedFile: File | null = null;
   uploading = false;
@@ -518,7 +517,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       this.applyCampaignTypeValidators(String(this.f['campaignType']?.value || ''));
       this.selectedInfluencerIds.clear();
       this.selectionLimitError = '';
-      this.filterCreatorType = '';
       this.clearSmartMatchingFilters();
       this.clearPhotographerSmartMatchingFilters();
       this.loadRecipientCategories();
@@ -785,10 +783,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return this.collaborationAvailabilityOptions?.influencer?.preferences || [];
   }
 
-  get openCollaborationTypeOptions(): any[] {
-    return this.collaborationAvailabilityOptions?.influencer?.collaborationTypes || [];
-  }
-
   get showPhotographerSmartMatching(): boolean {
     return this.inviteRecipientRole === 'photographer';
   }
@@ -977,10 +971,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return this.campaignTypeOptionsCache;
   }
 
-  get isEditingForReview(): boolean {
-    const s = String(this.campaign?.status || '').toLowerCase();
-    return this.isEdit && (s === 'draft' || s === 'needs_changes' || s === 'rejected');
-  }
   get f() { return this.form.controls; }
   get selectedCampaignType(): string {
     return String(this.f['campaignType']?.value || 'paid_collab');
@@ -1205,6 +1195,11 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     if (this.isPhotographerCreator) {
       this.selectedPhotographerServices = [...categories];
       this.selectedPhotographerDeliverables = [...deliverables];
+      // Target (influencer) Categories has no free array field of its own
+      // here — `categories` already holds Services Offered for this role.
+      // `targetTiers` has no frontend writer anywhere else, so it's reused
+      // as storage for this instead of a schema change.
+      this.selectedCategories = this.asStringArray(campaign.targetTiers);
 
       const pricingRows = Array.isArray(campaign.platforms) ? campaign.platforms : [];
       const pricingNames: string[] = [];
@@ -1229,6 +1224,14 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       this.photographerPricingPrices = { ...pricingMap };
     } else {
       this.selectedCategories = [...categories];
+      if (this.isInvitingPhotographers) {
+        // Services Required / Deliverables are saved on the campaign's
+        // `platforms` / `deliverables` fields for this flow (no schema
+        // change — those fields are otherwise unused when inviting
+        // photographers, since shouldShowPlatformSelection is false here).
+        this.selectedPhotographerServices = this.asStringArray(campaign.platforms);
+        this.selectedPhotographerDeliverables = [...deliverables];
+      }
       const existingSocialMedia = campaign.socialMedia;
       if (Array.isArray(existingSocialMedia) && existingSocialMedia.length) {
         this.platformDeliverables = existingSocialMedia.map((sm: any) => ({
@@ -1289,7 +1292,8 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         platformValid &&
         perContentPriceValid &&
         this.selectedPhotographerServices.length > 0 &&
-        this.selectedPhotographerDeliverables.length > 0
+        this.selectedPhotographerDeliverables.length > 0 &&
+        this.selectedCategories.length > 0
       );
     }
     const priceValid = !this.shouldRequireFlatPricePerParticipant
@@ -1303,6 +1307,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       this.f['maxInfluencers'].value > 0 &&
       !this.form.errors?.['invalidMinMaxInfluencers'] &&
       this.selectedCategories.length > 0 &&
+      (!this.isInvitingPhotographers || (this.selectedPhotographerServices.length > 0 && this.selectedPhotographerDeliverables.length > 0)) &&
       platformValid &&
       perContentPriceValid
     );
@@ -1351,11 +1356,21 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       if (this.selectedPhotographerDeliverables.length === 0) {
         return 'Select at least one deliverable.';
       }
+      if (this.selectedCategories.length === 0) {
+        return `Select at least one target ${this.inviteRecipientLabelSingular.toLowerCase()} category.`;
+      }
       return 'Complete all mandatory fields to continue.';
     }
 
     if (this.selectedCategories.length === 0) {
       return `Select at least one target ${this.inviteRecipientLabelSingular.toLowerCase()} category.`;
+    }
+
+    if (this.isInvitingPhotographers && this.selectedPhotographerServices.length === 0) {
+      return 'Select at least one required service.';
+    }
+    if (this.isInvitingPhotographers && this.selectedPhotographerDeliverables.length === 0) {
+      return 'Select at least one deliverable.';
     }
 
     if (this.shouldShowPlatformSelection && this.platformDeliverables.length === 0) {
@@ -1562,6 +1577,11 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   setTargetCategories(values: string[]): void {
     this.selectedCategories = this.uniqueStrings(values).slice(0, this.maxTargetCategories);
     this.categoriesTouched = true;
+    // Invite candidates are fetched/scoped using the target categories, so
+    // force a fresh fetch next time step 3 is opened instead of reusing a
+    // page loaded under the old category selection.
+    this.allInfluencers = [];
+    this.inviteListHasMore = false;
     this.cd.detectChanges();
   }
 
@@ -1661,8 +1681,13 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.config.getInfluencers({
       page: this.inviteListPage,
       limit: this.inviteListLimit,
-      category: this.filterCategory || undefined,
-      creatorType: this.filterCreatorType || undefined,
+      // Server-side category/creatorType matching only supports one value
+      // each; the campaign's full target lists are enforced client-side
+      // below so brands targeting multiple values still get correct results.
+      category: this.selectedCategories[0] || undefined,
+      creatorType: this.lookingForCreatorTypes[0] || undefined,
+      state: this.filterState || undefined,
+      district: this.filterDistrict || undefined,
       q: this.influencerSearch.trim() || undefined,
     }).subscribe({
       next: (data: any[]) => {
@@ -1702,6 +1727,31 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.fetchInfluencerInvitePage(true);
   }
 
+  onInviteStateFilterChange(): void {
+    this.filterDistrict = '';
+    this.loadInviteFilterDistrictsFor(this.filterState);
+    if (this.inviteRecipientRole !== 'photographer') this.fetchInfluencerInvitePage(true);
+  }
+
+  onInviteDistrictFilterChange(): void {
+    if (this.inviteRecipientRole !== 'photographer') this.fetchInfluencerInvitePage(true);
+  }
+
+  private loadInviteFilterDistrictsFor(stateValue: string): void {
+    if (!stateValue) {
+      this.inviteFilterDistricts = [];
+      this.cd.detectChanges();
+      return;
+    }
+    const sel = (this.states || []).find((s: any) => s?.name === stateValue || s?._id === stateValue || s?.id === stateValue);
+    const stateName = sel?.name || stateValue;
+    const stateId = sel?._id || sel?.id || '';
+    this.config.getDistricts(stateName, stateId).subscribe({
+      next: (data: any[]) => { this.inviteFilterDistricts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+      error: () => { this.inviteFilterDistricts = []; this.cd.detectChanges(); }
+    });
+  }
+
   get filteredInfluencers(): any[] {
     // Search text, category, and creator-type are now applied server-side
     // (see fetchInfluencerInvitePage) so matching isn't limited to whatever
@@ -1709,10 +1759,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     // no backend filter support yet, so they still narrow client-side over
     // whatever pages are currently loaded.
     let list = this.inviteCandidates.filter((recipient) => this.isCampaignVerifiedRecipient(recipient));
-    // Hide already-invited creators for influencer campaigns, but keep invited photographers visible in edit mode.
-    if (this.campaignInvites?.length && this.inviteRecipientRole !== 'photographer') {
-      list = list.filter(inf => !this.isInfluencerInvited(inf));
-    }
+    // Invited creators (either role) stay in the list with a status badge
+    // instead of disappearing — answers "did I already invite this person?"
+    // rather than just hiding the evidence.
     // Photographers aren't fetched with server-side filtering (the whole
     // list is loaded up front), so search/category/type stay client-side
     // for that path only.
@@ -1726,9 +1775,16 @@ export class CampaignFormComponent implements OnInit, OnChanges {
           (inf.categories || inf.skills || []).some((c: string) => c.toLowerCase().includes(q))
         );
       }
-      if (this.filterCategory) {
-        list = list.filter(inf => this.recipientHasExactCategory(inf, this.filterCategory));
-      }
+    }
+    // The campaign's target categories (set once in step 2) are the single
+    // source of truth for who shows up here — no separate category filter.
+    if (this.selectedCategories.length) {
+      list = list.filter(inf => this.selectedCategories.some((cat) => this.recipientHasExactCategory(inf, cat)));
+    }
+    // Services Required (set once in step 2) is a hard requirement for
+    // photographer invites, matched against the candidate's listed skills.
+    if (this.showPhotographerSmartMatching && this.selectedPhotographerServices.length) {
+      list = list.filter(inf => this.valuesOverlap(Array.isArray(inf?.skills) ? inf.skills : [], this.selectedPhotographerServices));
     }
     if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
       list = list.filter(inf => this.creatorMatchesSmartFilters(inf));
@@ -1747,19 +1803,31 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         )
       );
     }
-    if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
-      list = [...list].sort((a, b) => {
+    if (this.filterState) {
+      list = list.filter(inf => String(inf?.location?.state || '').toLowerCase() === this.filterState.toLowerCase());
+    }
+    if (this.filterDistrict) {
+      list = list.filter(inf => String(inf?.location?.district || '').toLowerCase() === this.filterDistrict.toLowerCase());
+    }
+    if (this.filterVerifiedOnly) {
+      list = list.filter(inf => !!inf?.verifiedByTrendStarz);
+    }
+    // Default ranking, always applied (not just when a smart filter is set):
+    // verified creators first, then best match (if smart filters are active),
+    // then premium as a tiebreaker. "Verified first" alone already improves
+    // list quality with no filters touched.
+    list = [...list].sort((a, b) => {
+      const verifiedDiff = (Number(b?.verifiedByTrendStarz) || 0) - (Number(a?.verifiedByTrendStarz) || 0);
+      if (verifiedDiff !== 0) return verifiedDiff;
+      if (this.showInfluencerSmartMatching) {
         const scoreDiff = this.getSmartMatchScore(b) - this.getSmartMatchScore(a);
         if (scoreDiff !== 0) return scoreDiff;
-        return (Number(b?.isPremium) || 0) - (Number(a?.isPremium) || 0);
-      });
-    } else if (this.showPhotographerSmartMatching && this.hasAnyPhotographerSmartMatchingFilter()) {
-      list = [...list].sort((a, b) => {
+      } else if (this.showPhotographerSmartMatching) {
         const scoreDiff = this.getPhotographerSmartMatchScore(b) - this.getPhotographerSmartMatchScore(a);
         if (scoreDiff !== 0) return scoreDiff;
-        return (Number(b?.isPremium) || 0) - (Number(a?.isPremium) || 0);
-      });
-    }
+      }
+      return (Number(b?.isPremium) || 0) - (Number(a?.isPremium) || 0);
+    });
     return list;
   }
   fetchCampaignInvites() {
@@ -1996,20 +2064,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.quickViewRecipient = null;
   }
 
-  getUniqueCategoryFilters(): string[] {
-    // For influencers, filter by whatever the brand actually targeted in
-    // step 2 — this is what should appear in the dropdown regardless of
-    // which influencers happen to already be loaded on the current page.
-    if (this.inviteRecipientRole === 'influencer' && this.selectedCategories.length) {
-      return this.selectedCategories;
-    }
-    const cats = new Set<string>();
-    this.inviteCandidates
-      .filter((recipient) => this.isCampaignVerifiedRecipient(recipient))
-      .forEach(inf => this.getRecipientCategoryValues(inf).forEach((c: string) => cats.add(c)));
-    return Array.from(cats).slice(0, 5);
-  }
-
   private isCampaignVerifiedRecipient(recipient: any): boolean {
     return recipient?.isEmailVerified === true && recipient?.isMobileVerified === true;
   }
@@ -2049,23 +2103,14 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return out;
   }
 
-  private maxForSmartMatchField(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes'): number {
-    return field === 'openCollaborationTypes'
-      ? this.maxCollaborationTypeFilters
-      : this.maxCreatorTypeFilters;
-  }
-
-  setSmartMatchValues(field: 'lookingForCreatorTypes' | 'preferredCreatorTypes' | 'openCollaborationTypes', values: string[]): void {
-    const max = this.maxForSmartMatchField(field);
-    this[field] = this.uniqueStrings(values).slice(0, max);
+  setSmartMatchValues(field: 'lookingForCreatorTypes', values: string[]): void {
+    this[field] = this.uniqueStrings(values).slice(0, this.maxCreatorTypeFilters);
     this.cd.detectChanges();
   }
 
   clearSmartMatchingFilters(): void {
     this.lookingForCreatorTypes = [];
-    this.preferredCreatorTypes = [];
     this.preferredCollaborationPreference = '';
-    this.openCollaborationTypes = [];
   }
 
   togglePhotographerSmartMatchValue(field: 'photographerPreferredCreatorTypes' | 'photographerEquipmentPreference', value: string): void {
@@ -2088,7 +2133,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.cd.detectChanges();
   }
 
-  setSingleFilter(field: 'filterCategory' | 'filterCreatorType' | 'filterTier' | 'filterPlatform', values: string[]): void {
+  setSingleFilter(field: 'filterTier' | 'filterPlatform', values: string[]): void {
     this[field] = String(values?.[0] || '').trim();
   }
 
@@ -2099,25 +2144,31 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     ];
   }
 
+  /**
+   * Clears only the temporary, browsing-time "Additional Filters" (state,
+   * district, platform, tier, verified-only). Looking For / Preferred
+   * Creator Type / Equipment / Target Categories are campaign requirements
+   * set in step 2 — they're shown read-only here and changed via "Change",
+   * not cleared from this panel.
+   */
   clearInviteRecipientFilters(): void {
-    const hadServerFilter = !!(this.filterCategory || this.filterCreatorType);
-    this.filterCategory = '';
-    this.filterCreatorType = '';
+    const hadServerFilter = !!(this.filterState || this.filterDistrict);
+    this.filterState = '';
+    this.filterDistrict = '';
+    this.inviteFilterDistricts = [];
     this.filterTier = '';
     this.filterPlatform = '';
-    this.clearSmartMatchingFilters();
-    this.clearPhotographerSmartMatchingFilters();
-    if (hadServerFilter) this.onInviteCategoryOrTypeChange();
+    this.filterVerifiedOnly = false;
+    if (hadServerFilter && this.inviteRecipientRole !== 'photographer') this.fetchInfluencerInvitePage(true);
   }
 
   hasInviteRecipientFilters(): boolean {
     return !!(
-      this.filterCategory ||
-      this.filterCreatorType ||
+      this.filterState ||
+      this.filterDistrict ||
       this.filterTier ||
       this.filterPlatform ||
-      this.hasAnySmartMatchingFilter() ||
-      this.hasAnyPhotographerSmartMatchingFilter()
+      this.filterVerifiedOnly
     );
   }
 
@@ -2136,10 +2187,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   hasAnySmartMatchingFilter(): boolean {
-    return this.lookingForCreatorTypes.length > 0 ||
-      this.preferredCreatorTypes.length > 0 ||
-      !!this.preferredCollaborationPreference ||
-      this.openCollaborationTypes.length > 0;
+    return this.lookingForCreatorTypes.length > 0 || !!this.preferredCollaborationPreference;
   }
 
   private valuesOverlap(source: any, selected: string[]): boolean {
@@ -2158,13 +2206,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   private creatorMatchesSmartFilters(inf: any): boolean {
-    if (!this.showInfluencerSmartMatching || !this.hasAnySmartMatchingFilter()) return true;
+    if (!this.showInfluencerSmartMatching || !this.lookingForCreatorTypes.length) return true;
     const creatorTypes = Array.isArray(inf?.creatorTypes) ? inf.creatorTypes : [];
-    const availability = inf?.collaborationAvailability || {};
-    if (this.lookingForCreatorTypes.length && !this.valuesOverlap(creatorTypes, this.lookingForCreatorTypes)) return false;
-    if (this.preferredCreatorTypes.length && !this.valuesOverlap(creatorTypes, this.preferredCreatorTypes)) return false;
-    if (this.openCollaborationTypes.length && !this.valuesOverlap(availability?.collaborationTypes, this.openCollaborationTypes)) return false;
-    return true;
+    return this.valuesOverlap(creatorTypes, this.lookingForCreatorTypes);
   }
 
   private getSmartMatchScore(inf: any): number {
@@ -2173,8 +2217,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     const availability = inf?.collaborationAvailability || {};
     let score = 0;
     if (this.valuesOverlap(creatorTypes, this.lookingForCreatorTypes)) score += this.lookingForCreatorTypes.length ? 30 : 0;
-    if (this.valuesOverlap(creatorTypes, this.preferredCreatorTypes)) score += this.preferredCreatorTypes.length ? 25 : 0;
-    if (this.valuesOverlap(availability?.collaborationTypes, this.openCollaborationTypes)) score += this.openCollaborationTypes.length ? 20 : 0;
     if (
       this.preferredCollaborationPreference &&
       String(availability?.preference || '').trim().toLowerCase() === this.preferredCollaborationPreference.trim().toLowerCase()
@@ -2201,6 +2243,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     const equipment = Array.isArray(creator?.equipment) ? creator.equipment : [];
     const availability = creator?.collaborationAvailability || {};
     let score = 0;
+    if (this.selectedPhotographerServices.length && this.valuesOverlap(skills, this.selectedPhotographerServices)) score += 35;
     if (this.photographerPreferredCreatorTypes.length && this.valuesOverlap(skills, this.photographerPreferredCreatorTypes)) score += 30;
     if (this.photographerEquipmentPreference.length && this.valuesOverlap(equipment, this.photographerEquipmentPreference)) score += 20;
     if (
@@ -2382,27 +2425,37 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
     const isTierOpen = v.campaignMode === 'tier_filtered_open';
     const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
-    const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
     const keepPendingReview = this.isEdit && originalStatus === 'pending_review';
     const keepPending = this.isEdit && originalStatus === 'pending';
     const payload: any = {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
       minInfluencers: Number(v.minInfluencers || 1),
-      status: (isTierOpen || isResubmit || keepPendingReview)
+      // "Save as Draft" never auto-promotes a draft/needs_changes/rejected
+      // campaign to pending_review — that only happens via the explicit
+      // "Submit for Review" action. tier_filtered_open campaigns publish
+      // immediately from this same button, so they're the one exception.
+      status: (isTierOpen || keepPendingReview)
         ? 'pending_review'
-        : (keepPending ? 'pending' : 'draft'),
-      deliverables: this.isPhotographerCreator
+        : (keepPending ? 'pending' : originalStatus),
+      deliverables: this.isPhotographerCreator || this.isInvitingPhotographers
         ? this.selectedPhotographerDeliverables
         : this.parseDeliverables(v.deliverablesText),
       targetCities: v.targetDistrict ? [v.targetDistrict] : [],
       targetDistrict: undefined,
       categories: this.cappedTargetCategories(),
+      // Target (influencer) Categories for the photographer-creator's own
+      // listing has no free field of its own (`categories` already holds
+      // Services Offered for this role) — reuse `targetTiers`, which has no
+      // frontend writer elsewhere.
+      targetTiers: this.isPhotographerCreator ? this.selectedCategories : undefined,
+      // For the invite-photographers flow, `platforms` is otherwise unused
+      // (no schema change) so it carries "Services Required" instead.
       platforms: this.isPhotographerCreator
         ? (this.isPerContentPricingFlow
             ? this.platformDeliverables.map(pd => pd.platform)
             : this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) })))
-        : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => pd.platform)),
+        : (this.isInvitingPhotographers ? this.selectedPhotographerServices : this.platformDeliverables.map(pd => pd.platform)),
       socialMedia: this.isPhotographerCreator
         ? (this.isPerContentPricingFlow
             ? this.platformDeliverables.map(pd => ({
@@ -2483,11 +2536,18 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return {
       ...payload,
       categories: this.cappedTargetCategories(),
+      // Target (influencer) Categories for the photographer-creator's own
+      // listing has no free field of its own (`categories` already holds
+      // Services Offered for this role) — reuse `targetTiers`, which has no
+      // frontend writer elsewhere.
+      targetTiers: this.isPhotographerCreator ? this.selectedCategories : undefined,
+      // For the invite-photographers flow, `platforms` is otherwise unused
+      // (no schema change) so it carries "Services Required" instead.
       platforms: this.isPhotographerCreator
         ? (this.isPerContentPricingFlow
             ? this.platformDeliverables.map(pd => pd.platform)
             : this.selectedPhotographerPricing.map(p => ({ pricingType: p, price: Math.round((this.photographerPricingPrices[p] || 0) * 100) })))
-        : (this.isInvitingPhotographers ? [] : this.platformDeliverables.map(pd => pd.platform)),
+        : (this.isInvitingPhotographers ? this.selectedPhotographerServices : this.platformDeliverables.map(pd => pd.platform)),
       socialMedia: this.isPhotographerCreator
         ? (this.isPerContentPricingFlow
             ? this.platformDeliverables.map(pd => ({
@@ -2507,7 +2567,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
               price: ct.price
             }))
           }))),
-      deliverables: this.isPhotographerCreator
+      deliverables: this.isPhotographerCreator || this.isInvitingPhotographers
         ? this.selectedPhotographerDeliverables
         : this.parseDeliverables(payload.deliverablesText ?? ''),
       inviteInfluencerIds: this.selectedInfluencerIds.size > 0
@@ -2595,7 +2655,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     const v = this.form.value;
     const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
     const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
-    const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
     const keepPendingReview = this.isEdit && originalStatus === 'pending_review';
     const keepPending = this.isEdit && originalStatus === 'pending';
     const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
@@ -2603,9 +2662,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
       minInfluencers: Number(v.minInfluencers || 1),
-      status: (isOpenCampaign || isResubmit || keepPendingReview)
+      status: (isOpenCampaign || keepPendingReview)
         ? 'pending_review'
-        : (keepPending ? 'pending' : 'draft'),
+        : (keepPending ? 'pending' : originalStatus),
       deliverables: this.isPhotographerCreator
         ? this.selectedPhotographerDeliverables
         : this.parseDeliverables(v.deliverablesText),
@@ -2638,7 +2697,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     const v = this.form.value;
     const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
     const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
-    const isResubmit = this.isEdit && (originalStatus === 'draft' || originalStatus === 'needs_changes' || originalStatus === 'rejected');
     const keepPendingReview = this.isEdit && originalStatus === 'pending_review';
     const keepPending = this.isEdit && originalStatus === 'pending';
     const pricePerInfluencerPaise = v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0;
@@ -2646,9 +2704,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
       minInfluencers: Number(v.minInfluencers || 1),
-      status: (isOpenCampaign || isResubmit || keepPendingReview)
+      status: (isOpenCampaign || keepPendingReview)
         ? 'pending_review'
-        : (keepPending ? 'pending' : 'draft'),
+        : (keepPending ? 'pending' : originalStatus),
       deliverables: this.isPhotographerCreator
         ? this.selectedPhotographerDeliverables
         : this.parseDeliverables(v.deliverablesText),
@@ -2671,6 +2729,53 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
       return inviteInfId === this.getRecipientId(inf);
     });
+  }
+
+  /** Maps a candidate's invite record (if any) to a status label/style for the card. */
+  getInviteStatusBadge(inf: any): { label: string; cssClass: string } | null {
+    const recipientId = this.getRecipientId(inf);
+    const invite = this.campaignInvites.find(i => {
+      const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
+      return inviteInfId === recipientId;
+    });
+    if (!invite) return null;
+    const status = String(invite?.status || '').toLowerCase();
+    if (status === 'declined' || status === 'withdrawn') {
+      return { label: 'Declined', cssClass: 'bg-secondary' };
+    }
+    if (status === 'disputed') {
+      return { label: 'Disputed', cssClass: 'bg-danger' };
+    }
+    if (['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(status)) {
+      return { label: 'Accepted', cssClass: 'bg-success' };
+    }
+    return { label: 'Invited', cssClass: 'bg-success' };
+  }
+
+  /** Active-filter "clear just this one" suggestions for the step-3 empty state. */
+  activeFilterClearSuggestions(): Array<{ label: string; clear: () => void }> {
+    const suggestions: Array<{ label: string; clear: () => void }> = [];
+    if (this.filterState || this.filterDistrict) {
+      suggestions.push({
+        label: 'Clear State / District',
+        clear: () => {
+          this.filterState = '';
+          this.filterDistrict = '';
+          this.inviteFilterDistricts = [];
+          if (this.inviteRecipientRole !== 'photographer') this.fetchInfluencerInvitePage(true);
+        },
+      });
+    }
+    if (this.filterTier) {
+      suggestions.push({ label: 'Clear Tier', clear: () => { this.filterTier = ''; } });
+    }
+    if (this.filterPlatform) {
+      suggestions.push({ label: 'Clear Platform', clear: () => { this.filterPlatform = ''; } });
+    }
+    if (this.filterVerifiedOnly) {
+      suggestions.push({ label: 'Clear Verified Only', clear: () => { this.filterVerifiedOnly = false; } });
+    }
+    return suggestions;
   }
 
   containsContactInfo(value: string | null | undefined): boolean {
