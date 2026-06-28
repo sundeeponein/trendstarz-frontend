@@ -288,6 +288,8 @@ export class ConfigService {
     submissionApprovalWaitHours?: number;
     submissionAutoCompleteGraceHours?: number;
     payoutReleaseWaitHours?: number;
+    minCampaignStartDays?: number;
+    maxCampaignDurationDays?: number;
     otpVerificationEnabled?: boolean;
     paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only';
     razorpayConfigured: boolean;
@@ -313,6 +315,8 @@ export class ConfigService {
           submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
           submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48,
           payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
+          minCampaignStartDays: typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3,
+          maxCampaignDurationDays: typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15,
           otpVerificationEnabled: !!data?.otpVerificationEnabled,
           paymentGatewayMode: ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
             ? data.paymentGatewayMode
@@ -331,6 +335,8 @@ export class ConfigService {
         submissionApprovalWaitHours: 24,
         submissionAutoCompleteGraceHours: 48,
         payoutReleaseWaitHours: 24,
+        minCampaignStartDays: 3,
+        maxCampaignDurationDays: 15,
         otpVerificationEnabled: false,
         paymentGatewayMode: 'manual' as const,
         razorpayConfigured: false,

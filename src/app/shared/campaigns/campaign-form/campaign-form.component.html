@@ -331,10 +331,10 @@
           End date must be on or after start date.
         </span>
         <span class="field-error" *ngIf="f['timelineStart'].touched && form.errors?.['invalidStartDate']">
-          Start date must be at least 3 days from today.
+          Start date must be at least {{ minStartDays }} day{{ minStartDays === 1 ? '' : 's' }} from today.
         </span>
         <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDuration']">
-          Campaign duration cannot exceed 15 days.
+          Campaign duration cannot exceed {{ maxDurationDays }} days.
         </span>
 
         <div class="field-group half">

@@ -28,10 +28,10 @@ import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handl
 })
 export class CampaignFormComponent implements OnInit, OnChanges {
   private static readonly MS_PER_DAY = 24 * 60 * 60 * 1000;
-  /** Host can't pick a start date sooner than this — leaves room for admin approval, applications/invites, and review. */
-  private static readonly MIN_START_DAYS_FROM_TODAY = 0;
-  /** Longest a campaign's start-to-end window can span. */
-  private static readonly MAX_DURATION_DAYS = 15;
+  /** Host can't pick a start date sooner than this — leaves room for admin approval, applications/invites, and review. Admin-configurable via AppSettings; these are just fallback defaults until that loads. Public so the template can show the live value in error text. */
+  minStartDays = 3;
+  /** Longest a campaign's start-to-end window can span. Admin-configurable via AppSettings. */
+  maxDurationDays = 15;
   readonly tierOrder: readonly string[] = TIER_ORDER;
   readonly photographerCreatorTypeOptions = [
     'Reel Creator',
@@ -406,6 +406,12 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       error: () => {
         this.planCaps = FREE_CAPABILITIES;
       },
+    });
+    this.config.getAppSettings().subscribe((settings) => {
+      this.minStartDays = settings.minCampaignStartDays ?? 3;
+      this.maxDurationDays = settings.maxCampaignDurationDays ?? 15;
+      this.form?.updateValueAndValidity();
+      this.cd.detectChanges();
     });
     this.form = this.fb.group({
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
@@ -1113,10 +1119,10 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
-    const minStart = new Date(today.getTime() + CampaignFormComponent.MIN_START_DAYS_FROM_TODAY * CampaignFormComponent.MS_PER_DAY);
+    const minStart = new Date(today.getTime() + this.minStartDays * CampaignFormComponent.MS_PER_DAY);
     if (startDate < minStart) return { invalidStartDate: true };
 
-    const maxDurationMs = CampaignFormComponent.MAX_DURATION_DAYS * CampaignFormComponent.MS_PER_DAY;
+    const maxDurationMs = this.maxDurationDays * CampaignFormComponent.MS_PER_DAY;
     if (endDate.getTime() - startDate.getTime() > maxDurationMs) return { invalidDuration: true };
 
     return null;
@@ -2314,7 +2320,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   private minStartDateValue(): string {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
-    const min = new Date(today.getTime() + CampaignFormComponent.MIN_START_DAYS_FROM_TODAY * CampaignFormComponent.MS_PER_DAY);
+    const min = new Date(today.getTime() + this.minStartDays * CampaignFormComponent.MS_PER_DAY);
     return min.toISOString().split('T')[0];
   }
 
@@ -2325,7 +2331,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   get maxEndDate(): string {
     const parts = this.parseDateParts(this.f['timelineStart']?.value);
     if (!parts) return '';
-    const max = new Date(Date.UTC(parts.y, parts.m - 1, parts.d + CampaignFormComponent.MAX_DURATION_DAYS));
+    const max = new Date(Date.UTC(parts.y, parts.m - 1, parts.d + this.maxDurationDays));
     return max.toISOString().split('T')[0];
   }
 

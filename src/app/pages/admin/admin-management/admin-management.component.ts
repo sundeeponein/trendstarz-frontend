@@ -402,6 +402,8 @@ export class AdminManagementComponent implements OnInit {
     submissionApprovalWaitHours: 24,
     submissionAutoCompleteGraceHours: 48,
     payoutReleaseWaitHours: 24,
+    minCampaignStartDays: 3,
+    maxCampaignDurationDays: 15,
     earlyAccessAssignmentMode: 'manual',
     // Commission percentages for badge types (applicable when badge is assigned)
     earlyAccessCommissionPercent: 0,
@@ -729,6 +731,8 @@ export class AdminManagementComponent implements OnInit {
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
           this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
+          this.settings.minCampaignStartDays = typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3;
+          this.settings.maxCampaignDurationDays = typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
           this.earlyAccessLastRunAt = data?.earlyAccessLastRunAt || null;
           this.earlyAccessLastRunStatus = String(data?.earlyAccessLastRunStatus || '');

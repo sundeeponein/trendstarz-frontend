@@ -567,6 +567,26 @@
           </div>
 
           <div class="mb-3">
+            <h6 class="mb-2">Campaign scheduling window</h6>
+            <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
+              Controls the campaign creation form's date picker for brands/photographers. Lower the minimum to 0 to let support/admin post a campaign starting today, then set it back to the standard value afterward.
+            </p>
+            <div class="row g-2 mb-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label" style="font-size:0.9rem;">Minimum start date (days from today)</label>
+                <input type="number" class="form-control" min="0" max="30" step="1" [(ngModel)]="settings.minCampaignStartDays" />
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label" style="font-size:0.9rem;">Maximum campaign duration (days)</label>
+                <input type="number" class="form-control" min="1" max="365" step="1" [(ngModel)]="settings.maxCampaignDurationDays" />
+              </div>
+            </div>
+            <small class="text-light-emphasis d-block">
+              Standard values: 3 days minimum start, 15 days maximum duration. Changes apply to new campaigns immediately after saving — no redeploy needed.
+            </small>
+          </div>
+
+          <div class="mb-3">
             <h6 class="mb-2">User Platform Fee Discounts</h6>
             <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
               Assign platform fee badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
