@@ -1,5 +1,18 @@
-<div class="container-fluid p-4">
-  <h2 class="page-title">💳 Premium Payments</h2>
+<div class="admin-payments-container">
+  <div class="payments-page-header">
+    <div class="payments-page-title">
+      <div class="payments-title-row">
+        <i class="bi bi-cash-coin"></i>
+        <h2 class="page-title">Premium Payments</h2>
+      </div>
+      <p>Manage influencer collaborations, verify proofs, and execute secure payouts from your administrative command center.</p>
+    </div>
+
+    <div class="mode-tabs" aria-label="Payment admin sections">
+      <button class="mode-tab" [class.active]="viewMode === 'premium'" (click)="setViewMode('premium')">Premium</button>
+      <button class="mode-tab" [class.active]="viewMode === 'transactions'" (click)="setViewMode('transactions')">Transactions</button>
+    </div>
+  </div>
 
   <!-- Error / Success alerts -->
   <div *ngIf="error" class="alert alert-error">
@@ -9,11 +22,6 @@
   <div *ngIf="successMessage" class="alert alert-success">
     {{ successMessage }}
     <button class="alert-close" (click)="successMessage = ''">×</button>
-  </div>
-
-  <div class="mode-tabs">
-    <button class="mode-tab" [class.active]="viewMode === 'premium'" (click)="setViewMode('premium')">Premium</button>
-    <button class="mode-tab" [class.active]="viewMode === 'transactions'" (click)="setViewMode('transactions')">Transactions</button>
   </div>
 
   <app-premium-payments-panel

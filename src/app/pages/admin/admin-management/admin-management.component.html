@@ -229,7 +229,7 @@
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'influencer'" (click)="setUserTagsRoleTab('influencer')">Influencer</button>
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'brand'" (click)="setUserTagsRoleTab('brand')">Brand</button>
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'photographer'" (click)="setUserTagsRoleTab('photographer')">Photo/Videographer</button>
-      <button class="tab-chip" [class.active]="userTagsRoleTab === 'commission'" (click)="setUserTagsRoleTab('commission')">Commission</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'commission'" (click)="setUserTagsRoleTab('commission')">Fee Badges</button>
     </div>
 
     <ul class="list-group mb-3" *ngIf="filteredUserTags.length; else noUserTags">
@@ -525,15 +525,15 @@
         </div>
 
         <div class="col-12 col-xl-5 settings-row">
-          <h4>Platform commission & GST</h4>
+          <h4>Platform Fee & GST</h4>
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="platformFeeEnabled"
               [(ngModel)]="settings.platformFeeEnabled" />
-            <label class="form-check-label" for="platformFeeEnabled">Enable platform commission on campaigns</label>
+            <label class="form-check-label" for="platformFeeEnabled">Enable platform fee on campaigns</label>
           </div>
           <div class="row mb-3">
             <div class="col">
-              <label class="form-label">Commission (%)</label>
+              <label class="form-label">Standard Platform Fee (%)</label>
               <input type="number" class="form-control" [(ngModel)]="settings.platformFeePercent" min="0" max="100" />
             </div>
             <div class="col">
@@ -567,21 +567,21 @@
           </div>
 
           <div class="mb-3">
-            <h6 class="mb-2">Commission to users</h6>
+            <h6 class="mb-2">User Platform Fee Discounts</h6>
             <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
-              Assign commission badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
+              Assign platform fee badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
             </p>
             <div class="row g-2 mb-3">
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Early Access (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Early Access Fee (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.earlyAccessCommissionPercent" />
               </div>
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Partner (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Partner Fee (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.partnerCommissionPercent" />
               </div>
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Internal/Test (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Internal/Test Fee (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.internalTestCommissionPercent" />
               </div>
             </div>
@@ -590,7 +590,9 @@
                 <thead>
                   <tr>
                     <th>Badge</th>
-                    <th>Commission</th>
+                    <th>Standard Fee</th>
+                    <th>Your Fee</th>
+                    <th>Savings</th>
                     <th>Influencers</th>
                     <th>Brands</th>
                   </tr>
@@ -599,23 +601,31 @@
                   <tr>
                     <td>Normal (no badge)</td>
                     <td>{{ settings.platformFeePercent }}%</td>
+                    <td>{{ settings.platformFeePercent }}%</td>
+                    <td>—</td>
                     <td colspan="2"><small class="text-muted">All users without a badge</small></td>
                   </tr>
                   <tr>
                     <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
+                    <td>{{ settings.platformFeePercent }}%</td>
                     <td>{{ settings.earlyAccessCommissionPercent }}%</td>
+                    <td>{{ platformFeeSavingsText(settings.earlyAccessCommissionPercent) }}</td>
                     <td>{{ commissionCounts.influencer.early_access_creator }}</td>
                     <td>{{ commissionCounts.brand.early_access_brand }}</td>
                   </tr>
                   <tr>
                     <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
+                    <td>{{ settings.platformFeePercent }}%</td>
                     <td>{{ settings.partnerCommissionPercent }}%</td>
+                    <td>{{ platformFeeSavingsText(settings.partnerCommissionPercent) }}</td>
                     <td>{{ commissionCounts.influencer.partner_creator }}</td>
                     <td>{{ commissionCounts.brand.partner_brand }}</td>
                   </tr>
                   <tr>
                     <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
+                    <td>{{ settings.platformFeePercent }}%</td>
                     <td>{{ settings.internalTestCommissionPercent }}%</td>
+                    <td>{{ platformFeeSavingsText(settings.internalTestCommissionPercent) }}</td>
                     <td>{{ commissionCounts.influencer.internal_test_creator }}</td>
                     <td>{{ commissionCounts.brand.internal_test_brand }}</td>
                   </tr>

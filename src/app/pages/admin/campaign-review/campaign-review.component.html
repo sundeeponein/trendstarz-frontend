@@ -194,9 +194,18 @@
 
           <!-- Status -->
           <td>
-            <span class="cm-status-pill" [ngClass]="'cm-status-pill--' + getCampaignStatusKey(c.status)">
-              {{ campaignStatusLabel(c.status) }}
-            </span>
+            <div class="cm-status-stack">
+              <span class="cm-status-pill" [ngClass]="'cm-status-pill--' + getCampaignStatusKey(c.status)">
+                {{ campaignStatusLabel(c.status) }}
+              </span>
+              <span
+                *ngIf="shouldShowParticipantCompletionBadge(c)"
+                class="cm-progress-pill cm-progress-pill--completed"
+                [title]="participantCompletionBadgeTitle(c)">
+                <i class="bi bi-check2-circle"></i>
+                {{ participantCompletionBadgeLabel(c) }}
+              </span>
+            </div>
             <div class="cm-note-preview" *ngIf="c.moderationNote">
               <i class="bi bi-chat-square-text"></i> {{ c.moderationNote }}
             </div>

@@ -2169,15 +2169,15 @@ export class AdminUserTableComponent implements OnInit {
       : '';
 
     if (badge.includes('early_access')) {
-      return `0% commission${untilText}`;
+      return `0% platform fee${untilText}`;
     }
     if (badge.includes('internal_test')) {
-      return `0% commission${untilText}`;
+      return `0% platform fee${untilText}`;
     }
     if (badge.includes('partner')) {
       const value = typeof override.value === 'number' ? override.value : 0;
       const displayPercent = override.overrideType === 'fixed' ? `${value}%` : 'custom';
-      return `${displayPercent} commission${untilText}`;
+      return `${displayPercent} platform fee${untilText}`;
     }
     return '';
   }

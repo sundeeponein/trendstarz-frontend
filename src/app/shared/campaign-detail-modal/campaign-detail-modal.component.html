@@ -344,6 +344,14 @@
                   <span class="cdm-payout-paid-badge" *ngIf="item.payoutStatus === 'paid'">
                     <i class="bi bi-check-circle-fill"></i> Payout: {{ adminInvitePayoutDateText(item) }}
                   </span>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="item.payoutStatus === 'paid'"
+                    (click)="copyPaymentReleaseMessage(item)">
+                    <i class="bi bi-clipboard-check"></i>
+                    {{ payoutMessageCopiedInviteId === item.inviteId ? 'Copied' : 'Copy payment message' }}
+                  </button>
                   <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
                     {{ adminInvitePayoutStatusLabel(item) }}
                   </span>

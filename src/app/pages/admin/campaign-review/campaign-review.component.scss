@@ -454,6 +454,13 @@ $green:     #16a34a;
 }
 
 // Status pills
+.cm-status-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
 .cm-status-pill {
   display: inline-flex;
   align-items: center;
@@ -470,6 +477,31 @@ $green:     #16a34a;
   &--rejected  { background: #fee2e2; color: #991b1b; }
   &--completed { background: #e0f2fe; color: #075985; }
   &--other     { background: #f3f4f6; color: #374151; }
+}
+
+.cm-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  padding: 0.22rem 0.55rem;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+
+  i {
+    font-size: 0.82rem;
+    line-height: 1;
+  }
+
+  &--completed {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #047857;
+  }
 }
 
 // Moderation note

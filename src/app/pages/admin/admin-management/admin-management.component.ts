@@ -464,6 +464,14 @@ export class AdminManagementComponent implements OnInit {
     brand: { early_access_brand: 0, partner_brand: 0, internal_test_brand: 0 },
   };
 
+  platformFeeSavingsText(userFeePercent: unknown): string {
+    const standard = Number(this.settings.platformFeePercent || 0);
+    const userFee = Number(userFeePercent || 0);
+    const savings = Math.max(standard - userFee, 0);
+    if (!Number.isFinite(savings) || savings <= 0) return '—';
+    return `Save ${savings.toLocaleString('en-IN', { maximumFractionDigits: 2 })}%`;
+  }
+
   isServer: boolean;
 
   constructor(

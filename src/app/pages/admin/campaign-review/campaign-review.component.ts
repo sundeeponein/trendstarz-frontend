@@ -1087,6 +1087,32 @@ export class CampaignReviewComponent implements OnInit {
     return rows.filter((row: any) => progressed.has(String(row?.status || '').toLowerCase())).length;
   }
 
+  getCompletedInviteCount(campaign: any): number {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    return rows.filter((row: any) => this.isParticipantCompletionStatus(row?.status)).length;
+  }
+
+  shouldShowParticipantCompletionBadge(campaign: any): boolean {
+    return this.normalizeReviewStatus(campaign?.status) !== 'completed'
+      && this.getCompletedInviteCount(campaign) > 0;
+  }
+
+  participantCompletionBadgeLabel(campaign: any): string {
+    const completed = this.getCompletedInviteCount(campaign);
+    const progressed = this.getProgressedInviteCount(campaign);
+    if (completed <= 0) return '';
+    if (progressed <= 1) return 'Completed';
+    return `${completed}/${progressed} Completed`;
+  }
+
+  participantCompletionBadgeTitle(campaign: any): string {
+    const completed = this.getCompletedInviteCount(campaign);
+    const progressed = this.getProgressedInviteCount(campaign);
+    if (completed <= 0) return '';
+    if (progressed <= 1) return 'This participant is completed and ready for payout review.';
+    return `${completed} of ${progressed} active participants completed. Remaining participants can keep working.`;
+  }
+
   getParticipantStatusChips(campaign: any): Array<{ key: string; label: string; count: number }> {
     const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
     const counts = new Map<string, { key: string; label: string; count: number }>();
@@ -1136,6 +1162,11 @@ export class CampaignReviewComponent implements OnInit {
     if (key === 'submitted' || key === 'disputed') return 'under_review';
     if (key === 'pending' || key === 'invited' || key === 'counter_sent') return 'pending';
     return key;
+  }
+
+  private isParticipantCompletionStatus(status: unknown): boolean {
+    const key = String(status || '').trim().toLowerCase();
+    return key === 'completed' || key === 'approved';
   }
 
   private campaignInviteStatusLabel(status: string): string {

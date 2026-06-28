@@ -86,7 +86,9 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   // Ready-to-share WhatsApp message preview (visible before and after approval).
   alertMessageCopied = false;
+  payoutMessageCopiedInviteId = '';
   private alertMessageCopiedTimer: any;
+  private payoutMessageCopiedTimer: any;
 
   copyAdminAlertMessage(message: string): void {
     const text = String(message || '').trim();
@@ -105,6 +107,39 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       return;
     }
     this.fallbackCopyAlertMessage(text, done);
+  }
+
+  copyPaymentReleaseMessage(item: any): void {
+    const text = this.paymentReleaseMessage(item);
+    if (!text) return;
+    const inviteId = String(item?.inviteId || item?._id || '');
+    const done = () => {
+      this.payoutMessageCopiedInviteId = inviteId;
+      this.cdr.detectChanges();
+      clearTimeout(this.payoutMessageCopiedTimer);
+      this.payoutMessageCopiedTimer = setTimeout(() => {
+        this.payoutMessageCopiedInviteId = '';
+        this.cdr.detectChanges();
+      }, 2500);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyAlertMessage(text, done));
+      return;
+    }
+    this.fallbackCopyAlertMessage(text, done);
+  }
+
+  paymentReleaseMessage(item: any): string {
+    const amount = this.adminInvitePayoutAmountText(item);
+    const campaignName = this.campaignTitle;
+    const transactionId = this.adminInvitePayoutTransactionId(item);
+    return [
+      `🎉 Your payment of **${amount}** for the **${campaignName}** campaign has been released successfully.`,
+      '',
+      `Transaction ID: **${transactionId}**`,
+      '',
+      'Thank you for collaborating with TrendStarz!',
+    ].join('\n');
   }
 
   private fallbackCopyAlertMessage(text: string, done: () => void): void {
@@ -1473,6 +1508,36 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
+  }
+
+  adminInvitePayoutAmountText(item: any): string {
+    const paise = Number(
+      item?.payoutAmountPaise
+        || item?.agreedAmountPaise
+        || item?.campaignAmountPaise
+        || item?.counterOfferedAmountPaise
+        || item?.counterRequestedAmountPaise
+        || 0,
+    );
+    if (paise > 0) {
+      const rupees = paise / 100;
+      return `₹${rupees.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    }
+
+    const rupees = Number(
+      item?.agreedAmount
+        || item?.counterOfferedAmount
+        || item?.counterRequestedAmount
+        || 0,
+    );
+    if (rupees > 0) {
+      return `₹${rupees.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    }
+    return '₹0';
+  }
+
+  adminInvitePayoutTransactionId(item: any): string {
+    return String(item?.payoutUtr || item?.payoutTransferId || item?.transactionId || '-').trim() || '-';
   }
 
   adminInvitePayoutStatusLabel(item: any): string {

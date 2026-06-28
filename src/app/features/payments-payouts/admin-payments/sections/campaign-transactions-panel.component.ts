@@ -1,6 +1,6 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { ChangeDetectorRef, Component, EventEmitter, Inject, OnInit, Output, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Inject, OnDestroy, OnInit, Output, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
@@ -9,16 +9,19 @@ import { CampaignTransaction, TransactionSummary } from '../../payments-payouts.
 import { AdminPaymentsUiUtilsService } from '../admin-payments-ui-utils.service';
 import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
 import { ConfigService } from '../../../../shared/config.service';
+import { AppPaginatorComponent } from '../../../../shared/components/app-paginator/app-paginator.component';
 
 @Component({
   selector: 'app-campaign-transactions-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppPaginatorComponent],
   templateUrl: './campaign-transactions-panel.component.html',
   styleUrls: ['../admin-payments.component.scss'],
 })
-export class CampaignTransactionsPanelComponent implements OnInit {
+export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
   payoutReleaseWaitHours = 24;
+  nowMs = Date.now();
+  private payoutTimerInterval: ReturnType<typeof setInterval> | null = null;
 
   @Output() errorMessage = new EventEmitter<string>();
   @Output() successMessage = new EventEmitter<string>();
@@ -26,6 +29,9 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   transactionStatus: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes' = 'all';
   sortOption: 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc' = 'date_desc';
   modeFilter: 'all' | 'manual' | 'razorpay' = 'all';
+  currentPage = 1;
+  pageSize = 10;
+  readonly pageSizeOptions = [10, 25, 50, 100];
   campaignTransactions: CampaignTransaction[] = [];
   transactionLoading = false;
 
@@ -70,6 +76,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.startPayoutTimer();
     this.config.getAppSettings().subscribe({
       next: (settings: any) => {
         const hours = Number(settings?.payoutReleaseWaitHours);
@@ -83,8 +90,24 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     this.loadCampaignTransactions();
   }
 
+  ngOnDestroy(): void {
+    if (this.payoutTimerInterval) {
+      clearInterval(this.payoutTimerInterval);
+      this.payoutTimerInterval = null;
+    }
+  }
+
+  private startPayoutTimer(): void {
+    if (!isPlatformBrowser(this.platformId) || this.payoutTimerInterval) return;
+    this.payoutTimerInterval = setInterval(() => {
+      this.nowMs = Date.now();
+      this.cdr.markForCheck();
+    }, 60000);
+  }
+
   setTransactionStatus(status: 'all' | 'awaiting' | 'verified' | 'payout_pending' | 'paid' | 'disputes') {
     this.transactionStatus = status;
+    this.currentPage = 1;
   }
 
   runAutoApproveStaleSubmissions() {
@@ -201,6 +224,11 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     return this.sortTransactions(this.filterByMode(this.filteredTransactions));
   }
 
+  get pagedVisibleTransactions(): CampaignTransaction[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.visibleTransactions.slice(start, start + this.pageSize);
+  }
+
   private get filteredTransactions(): CampaignTransaction[] {
     if (this.transactionStatus === 'all') return this.campaignTransactions;
     if (this.transactionStatus === 'awaiting') {
@@ -226,6 +254,23 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     });
   }
 
+  onModeFilterChange(): void {
+    this.currentPage = 1;
+  }
+
+  onSortChange(): void {
+    this.currentPage = 1;
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = Number(size) || 10;
+    this.currentPage = 1;
+  }
+
   private sortTransactions(rows: CampaignTransaction[]): CampaignTransaction[] {
     const sorted = [...rows];
     sorted.sort((a, b) => {
@@ -240,6 +285,41 @@ export class CampaignTransactionsPanelComponent implements OnInit {
 
   get openDisputeCount(): number {
     return this.campaignTransactions.filter(r => r.disputeStatus === 'open').length;
+  }
+
+  get filteredTransactionCount(): number {
+    return this.filterByMode(this.filteredTransactions).length;
+  }
+
+  shortCampaignId(id: string): string {
+    const value = String(id || '').trim();
+    return value.length > 22 ? value.slice(0, 22) : value || '-';
+  }
+
+  transactionReference(tx: CampaignTransaction): string {
+    if (String(tx.gateway || '').toLowerCase() === 'razorpay') {
+      return String(tx.gatewayPaymentId || tx.gatewayOrderId || '-');
+    }
+    return String(tx.utrNumber || '-');
+  }
+
+  payoutDestinationCompactLabel(tx: CampaignTransaction): string {
+    const r = tx.recipient;
+    if (!r) return 'Payout profile missing';
+    const upi = String(r.payoutUpiId || '').trim();
+    const mobile = String(r.payoutMobile || r.mobile || '').trim();
+    if (upi) return `UPI: ${upi}`;
+    if (mobile) return `Mobile: ${mobile}`;
+    return 'No payout destination';
+  }
+
+  hasNoPrimaryAction(tx: CampaignTransaction): boolean {
+    const proofAction = tx.collectionStatus === 'proof_submitted';
+    const payoutAction = tx.collectionStatus === 'verified'
+      && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')
+      && this.isManualSettlement(tx);
+    const disputeAction = tx.disputeStatus === 'open';
+    return !proofAction && !payoutAction && !disputeAction;
   }
 
   verifyTransaction(tx: CampaignTransaction) {
@@ -441,6 +521,55 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     return `Payout window: opens at ${unlockAt.toUTCString()}.`;
   }
 
+  payoutTimingLabel(tx: CampaignTransaction): string {
+    if (tx.payoutStatus === 'paid') {
+      const paidAt = tx.payoutSettledAt || tx.paidOutAt || tx.updatedAt;
+      return paidAt ? `Paid ${this.ui.formatDateTime(paidAt)}` : 'Payout released';
+    }
+    if (!this.isInvitePayoutEligible(tx)) {
+      return `Timer starts after host completion · ${this.inviteStatusLabel(tx)}`;
+    }
+    const unlockAt = this.getPayoutUnlockAt(tx);
+    if (!unlockAt) return 'Completion timestamp missing';
+    const remainingMs = unlockAt.getTime() - this.nowMs;
+    if (remainingMs <= 0) return 'Payout window open now';
+    return `Unlocks in ${this.formatRemainingMs(remainingMs)}`;
+  }
+
+  payoutTimingSubtext(tx: CampaignTransaction): string {
+    if (tx.payoutStatus === 'paid') return '';
+    if (!this.isInvitePayoutEligible(tx)) {
+      return 'Waiting for the host to mark this work completed.';
+    }
+    const unlockAt = this.getPayoutUnlockAt(tx);
+    if (!unlockAt) return 'Re-mark invite as completed, then retry payout.';
+    return `Eligible at ${unlockAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+  }
+
+  payoutTimingClass(tx: CampaignTransaction): string {
+    if (tx.payoutStatus === 'paid') return 'tx-payout-timer--paid';
+    if (!this.isInvitePayoutEligible(tx)) return 'tx-payout-timer--waiting';
+    return this.isPayoutHoldWindowOpen(tx) ? 'tx-payout-timer--open' : 'tx-payout-timer--locked';
+  }
+
+  actionPayoutHint(tx: CampaignTransaction): string {
+    if (tx.payoutStatus === 'paid') return '';
+    if (!this.isInvitePayoutEligible(tx)) {
+      return `Awaiting host completion · ${this.inviteStatusLabel(tx)}`;
+    }
+    const unlockAt = this.getPayoutUnlockAt(tx);
+    if (!unlockAt) return 'Completion timestamp missing.';
+    const remainingMs = unlockAt.getTime() - this.nowMs;
+    if (remainingMs <= 0) return 'Payout window open.';
+    return `Payout unlocks in ${this.formatRemainingMs(remainingMs)}.`;
+  }
+
   unlockedOfferTrailSummary(tx: CampaignTransaction): string {
     if (!tx.inviteSnapshot?.unlocked) return '';
     return this.offerTrailSummary(tx);
@@ -484,7 +613,7 @@ export class CampaignTransactionsPanelComponent implements OnInit {
   private isPayoutHoldWindowOpen(tx: CampaignTransaction): boolean {
     const unlockAt = this.getPayoutUnlockAt(tx);
     if (!unlockAt) return false;
-    return Date.now() >= unlockAt.getTime();
+    return this.nowMs >= unlockAt.getTime();
   }
 
   isManualSettlement(tx: CampaignTransaction): boolean {
@@ -497,6 +626,18 @@ export class CampaignTransactionsPanelComponent implements OnInit {
     if (!Number.isFinite(value)) return '24 hours';
     if (value === 1) return '1 hour';
     return `${value} hours`;
+  }
+
+  private formatRemainingMs(ms: number): string {
+    const totalMinutes = Math.max(1, Math.ceil(ms / 60000));
+    const days = Math.floor(totalMinutes / 1440);
+    const hours = Math.floor((totalMinutes % 1440) / 60);
+    const minutes = totalMinutes % 60;
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+    return parts.join(' ');
   }
 
   closePayoutModal() {
