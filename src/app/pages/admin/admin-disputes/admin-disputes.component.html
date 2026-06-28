@@ -1,10 +1,13 @@
-<div class="admin-disputes">
-  <header class="hdr">
-    <h2>Disputes & Reported Issues</h2>
-    <div class="filter-tabs">
-      <button [class.active]="statusFilter === 'open'" (click)="setFilter('open')">Open</button>
-      <button [class.active]="statusFilter === 'resolved'" (click)="setFilter('resolved')">Resolved</button>
-      <button [class.active]="statusFilter === 'all'" (click)="setFilter('all')">All reported</button>
+<div class="admin-disputes ts-admin-page">
+  <header class="hdr ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title"><i class="bi bi-exclamation-octagon"></i> Disputes & Reported Issues</h2>
+      <p class="ts-admin-subtitle">Review reported campaign issues, resolve disputes, and keep payout decisions traceable.</p>
+    </div>
+    <div class="filter-tabs ts-admin-tabbar">
+      <button class="ts-admin-tab" [class.active]="statusFilter === 'open'" (click)="setFilter('open')">Open</button>
+      <button class="ts-admin-tab" [class.active]="statusFilter === 'resolved'" (click)="setFilter('resolved')">Resolved</button>
+      <button class="ts-admin-tab" [class.active]="statusFilter === 'all'" (click)="setFilter('all')">All reported</button>
     </div>
   </header>
 

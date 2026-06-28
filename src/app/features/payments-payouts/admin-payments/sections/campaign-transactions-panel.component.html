@@ -35,12 +35,12 @@
 
 <div class="tx-toolbar">
   <div class="tx-filter-group">
-    <select class="sort-select" [(ngModel)]="modeFilter" (ngModelChange)="onModeFilterChange()" aria-label="Filter by payment mode">
+    <select class="sort-select ts-admin-filter-control" [(ngModel)]="modeFilter" (ngModelChange)="onModeFilterChange()" aria-label="Filter by payment mode">
       <option value="all">All modes</option>
       <option value="manual">Manual</option>
       <option value="razorpay">Auto (Razorpay)</option>
     </select>
-    <select class="sort-select" [(ngModel)]="sortOption" (ngModelChange)="onSortChange()" aria-label="Sort transactions">
+    <select class="sort-select ts-admin-filter-control" [(ngModel)]="sortOption" (ngModelChange)="onSortChange()" aria-label="Sort transactions">
       <option value="date_desc">Newest first</option>
       <option value="date_asc">Oldest first</option>
       <option value="amount_desc">Amount: High to Low</option>

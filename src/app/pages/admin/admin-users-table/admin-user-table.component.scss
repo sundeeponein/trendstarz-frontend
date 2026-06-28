@@ -5,23 +5,7 @@
 }
 
 .admin-users-page {
-  background: #f2f4f8;
-  border-radius: 16px;
-  padding: 24px;
-  color: #18202b;
-}
-
-.admin-users-header h2 {
-  margin: 0;
-  font-size: 2.6rem;
-  font-weight: 700;
-  color: #1f2530;
-}
-
-.admin-users-header p {
-  margin: 8px 0 0;
-  color: #586174;
-  max-width: 540px;
+  display: block;
 }
 
 .admin-title-row {
@@ -36,27 +20,11 @@
 }
 
 .role-tabs {
-  margin-top: 22px;
-  display: inline-flex;
-  border-radius: 12px;
-  background: #eceef3;
-  padding: 4px;
-  gap: 4px;
+  flex-shrink: 0;
 }
 
 .role-tab {
-  border: 0;
-  background: transparent;
-  color: #4b5565;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
   min-width: 0;
-}
-
-.role-tab.active {
-  background: #ff7b10;
-  color: #111827;
 }
 
 // ── Toolbar row: search + actions ────────────────────────────────
@@ -763,15 +731,6 @@
 }
 
 @media (max-width: 768px) {
-  .admin-users-page {
-    padding: 14px;
-    border-radius: 0;
-  }
-
-  .admin-users-header h2 {
-    font-size: 2rem;
-  }
-
   .toolbar-row {
     flex-direction: column;
   }
@@ -785,10 +744,7 @@
     grid-template-columns: 1fr;
   }
 
-  .admin-users-header,
   .role-tabs {
-    flex: 0 0 100%;
-    max-width: 100%;
     width: 100%;
   }
 

@@ -1,16 +1,16 @@
-<div class="admin-tabs">
-  <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-  <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-  <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
+<div class="admin-tabs ts-admin-tabbar">
+  <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+  <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+  <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
 </div>
 
 <div class="tx-toolbar">
-  <select class="sort-select" [(ngModel)]="modeFilter" aria-label="Filter by payment mode">
+  <select class="sort-select ts-admin-filter-control" [(ngModel)]="modeFilter" aria-label="Filter by payment mode">
     <option value="all">All modes</option>
     <option value="manual">Manual</option>
     <option value="razorpay">Auto (Razorpay)</option>
   </select>
-  <select class="sort-select" [(ngModel)]="sortOption" aria-label="Sort premium payments">
+  <select class="sort-select ts-admin-filter-control" [(ngModel)]="sortOption" aria-label="Sort premium payments">
     <option value="date_desc">Newest first</option>
     <option value="date_asc">Oldest first</option>
     <option value="amount_desc">Amount: High to Low</option>

@@ -7,19 +7,19 @@
   (cancel)="onConfirmDialogCancel()"
 ></admin-confirm-dialog>
 
-<div class="admin-users-page">
-  <div class="row">
-    <div class="admin-users-header col-8">
+<div class="admin-users-page ts-admin-page">
+  <div class="admin-users-page-header ts-admin-page-header">
+    <div class="admin-users-header ts-admin-heading">
       <div class="admin-title-row">
-        <h4>Admin Users</h4>
+        <h2 class="ts-admin-title">Admin Users</h2>
       </div>
-      <small>Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
+      <small class="ts-admin-subtitle">Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
     </div>
 
-    <div class="role-tabs col-4" role="tablist" aria-label="User Roles">
-      <button class="role-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-      <button class="role-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-      <button class="role-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
+    <div class="role-tabs ts-admin-tabbar" role="tablist" aria-label="User Roles">
+      <button class="role-tab ts-admin-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+      <button class="role-tab ts-admin-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+      <button class="role-tab ts-admin-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
     </div>
   </div>
 

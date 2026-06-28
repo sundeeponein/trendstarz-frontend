@@ -13,9 +13,6 @@ $green:     #16a34a;
 
 // ── Page ──────────────────────────────────────────────────────────────────
 .cm-page {
-  background: $bg;
-  min-height: 100vh;
-  padding: 1.75rem 2rem 5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -671,7 +668,6 @@ $green:     #16a34a;
 
 // ── Responsive ────────────────────────────────────────────────────────────
 @media (max-width: 768px) {
-  .cm-page { padding: 1rem 1rem 5rem; }
   .cm-header { flex-direction: column; }
   .cm-header-actions { width: 100%; }
   .cm-toolbar { flex-direction: column; align-items: stretch; }

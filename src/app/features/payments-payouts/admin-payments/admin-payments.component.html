@@ -1,16 +1,16 @@
-<div class="admin-payments-container">
-  <div class="payments-page-header">
-    <div class="payments-page-title">
-      <div class="payments-title-row">
+<div class="admin-payments-container ts-admin-page">
+  <div class="payments-page-header ts-admin-page-header">
+    <div class="payments-page-title ts-admin-heading">
+      <h2 class="payments-title-row page-title ts-admin-title">
         <i class="bi bi-cash-coin"></i>
-        <h2 class="page-title">Premium Payments</h2>
-      </div>
-      <p>Manage influencer collaborations, verify proofs, and execute secure payouts from your administrative command center.</p>
+        <span>Premium Payments</span>
+      </h2>
+      <p class="ts-admin-subtitle">Manage influencer collaborations, verify proofs, and execute secure payouts from your administrative command center.</p>
     </div>
 
-    <div class="mode-tabs" aria-label="Payment admin sections">
-      <button class="mode-tab" [class.active]="viewMode === 'premium'" (click)="setViewMode('premium')">Premium</button>
-      <button class="mode-tab" [class.active]="viewMode === 'transactions'" (click)="setViewMode('transactions')">Transactions</button>
+    <div class="mode-tabs ts-admin-tabbar" aria-label="Payment admin sections">
+      <button class="mode-tab ts-admin-tab" [class.active]="viewMode === 'premium'" (click)="setViewMode('premium')">Premium</button>
+      <button class="mode-tab ts-admin-tab" [class.active]="viewMode === 'transactions'" (click)="setViewMode('transactions')">Transactions</button>
     </div>
   </div>
 

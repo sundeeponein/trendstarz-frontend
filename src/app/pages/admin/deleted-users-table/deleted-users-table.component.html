@@ -6,68 +6,61 @@
   (confirm)="onConfirmDialogConfirm()"
   (cancel)="onConfirmDialogCancel()"
 ></admin-confirm-dialog>
-<div class="container-fluid p-4">
-  <h2 class="text-white">Deleted Users</h2>
+<div class="deleted-users-page ts-admin-page">
+  <div class="ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title"><i class="bi bi-trash3"></i> Deleted Users</h2>
+      <p class="ts-admin-subtitle">Restore soft-deleted users or permanently remove records when required.</p>
+    </div>
 
-  <div class="row">
-    <div class="col-12 col-xl-6">
-      <div class="tabs-bulk-row">
-        <div class="admin-tabs">
-          <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-          <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-          <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
-        </div>
-        
-        <div class="bulk-actions" *ngIf="getSelectedCount() > 0">
-          <span>{{ getSelectedCount() }} selected</span>
-          <button class="btn btn-success btn-sm" [disabled]="bulkActionLoading" (click)="restoreSelectedUsers()">Restore</button>
-          <button class="btn btn-danger btn-sm" [disabled]="bulkActionLoading" (click)="deleteSelectedPermanently()">Delete Permanently</button>
-        </div>
+    <div class="admin-tabs ts-admin-tabbar" role="tablist" aria-label="Deleted user roles">
+      <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+      <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+      <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
+    </div>
+  </div>
+
+  <div class="deleted-users-toolbar">
+    <div class="tabs-bulk-row">
+      <div class="bulk-actions" *ngIf="getSelectedCount() > 0">
+        <span>{{ getSelectedCount() }} selected</span>
+        <button class="btn btn-success btn-sm" [disabled]="bulkActionLoading" (click)="restoreSelectedUsers()">Restore</button>
+        <button class="btn btn-danger btn-sm" [disabled]="bulkActionLoading" (click)="deleteSelectedPermanently()">Delete Permanently</button>
       </div>
     </div>
 
-    <div class="col-12 col-xl-6">
-      <div class="filters-section p-0 bg-transparent border-0">
-        <div class="filter-group justify-content-end">
-          <!-- Search -->
-          <div class="filter-item">
-            <label>Search</label>
-            <input
-              type="text"
-              placeholder="Search by name, email or ID..."
-              [(ngModel)]="searchQuery"
-              (ngModelChange)="onSearchQueryChange()"
-            />
-          </div>
-
-          <!-- Category Filter -->
-          <div class="filter-item">
-            <label>Category</label>
-            <select id="category-filter"
-                    [ngModel]="getActiveFilterValue('category')"
-                    (change)="setActiveFilterValue('category', $any($event.target).value)">
-              <option value="">All Categories</option>
-              <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
-            </select>
-          </div>
-
-          <!-- State Filter -->
-          <div class="filter-item">
-            <label>State</label>
-            <select id="state-filter"
-                    [ngModel]="getActiveFilterValue('state')"
-                    (change)="setActiveFilterValue('state', $any($event.target).value)">
-              <option value="">All States</option>
-              <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
-            </select>
-          </div>
-
-          <!-- Reset Button -->
-          <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
-        </div>
+    <div class="deleted-users-actions">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          placeholder="Search by name, email or ID..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchQueryChange()"
+        />
       </div>
-    </div>
 
+      <select class="deleted-filter-select" id="category-filter"
+              [ngModel]="getActiveFilterValue('category')"
+              (change)="setActiveFilterValue('category', $any($event.target).value)"
+              aria-label="Filter deleted users by category">
+        <option value="">All Categories</option>
+        <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
+      </select>
+
+      <select class="deleted-filter-select" id="state-filter"
+              [ngModel]="getActiveFilterValue('state')"
+              (change)="setActiveFilterValue('state', $any($event.target).value)"
+              aria-label="Filter deleted users by state">
+        <option value="">All States</option>
+        <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
+      </select>
+
+      <button class="reset-btn" (click)="resetFilters(activeTab)">
+        <i class="bi bi-sliders2"></i>
+        Reset
+      </button>
+    </div>
   </div>
   
   <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->

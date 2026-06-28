@@ -1,29 +1,14 @@
 .admin-payments-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-  color: #2f1f18;
-  background: #f6f7fb;
-  min-height: calc(100vh - 64px);
+  display: block;
 }
 
 .payments-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
   margin-bottom: 1.75rem;
 }
 
 .payments-page-title {
-  max-width: 560px;
-
   p {
-    margin: 0.65rem 0 0;
-    color: #4b2b22;
-    font-size: 0.95rem;
-    line-height: 1.45;
+    margin-top: 0.65rem;
   }
 }
 
@@ -39,37 +24,15 @@
 }
 
 .page-title {
-  font-size: 1rem;
-  font-weight: 800;
   margin: 0;
-  color: #1f1715;
 }
 
 .mode-tabs {
-  display: flex;
-  gap: 0;
-  padding: 0.25rem;
-  border-radius: 10px;
-  background: #e5e7eb;
   min-width: 260px;
 }
 
 .mode-tab {
   flex: 1;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #5f504b;
-  padding: 0.55rem 1.15rem;
-  font-size: 0.82rem;
-  font-weight: 800;
-  cursor: pointer;
-
-  &.active {
-    background: #b45309;
-    color: #fff;
-    box-shadow: 0 8px 18px rgba(180, 83, 9, 0.24);
-  }
 }
 
 .tx-summary-grid {
@@ -291,7 +254,7 @@
     td {
       padding: 1.1rem 1.25rem;
       border-bottom: 1px solid #f0f1f4;
-      vertical-align: middle;
+      // vertical-align: middle;
       color: #1f1715;
     }
   }
@@ -354,7 +317,7 @@
 
 .col-actions {
   white-space: nowrap;
-  text-align: right;
+  // text-align: right;
 }
 
 .tx-type-cell,
@@ -534,7 +497,7 @@
 
 code {
   background-color: transparent;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem 0rem;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 0.72rem;
@@ -748,14 +711,6 @@ input.form-textarea {
 
 /* ─── Responsive ─────────────────────────── */
 @media (max-width: 768px) {
-  .admin-payments-container {
-    padding: 1rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-  }
-
   .status-tabs {
     flex-wrap: wrap;
 

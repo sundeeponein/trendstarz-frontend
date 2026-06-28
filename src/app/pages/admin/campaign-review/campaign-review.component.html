@@ -1,4 +1,4 @@
-<div class="cm-page">
+<div class="cm-page ts-admin-page">
 
   <app-campaign-alert-message
     *ngIf="approvedCampaignAlert"
@@ -6,6 +6,16 @@
     [copied]="alertMessageCopied"
     (copyAlert)="copyCampaignAlertMessage($event)"
   ></app-campaign-alert-message>
+
+  <div class="cm-page-header ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title">
+        <i class="bi" [ngClass]="isCollaborationScope ? 'bi-camera-reels' : 'bi-kanban'"></i>
+        <span>{{ pageTitle }}</span>
+      </h2>
+      <p class="ts-admin-subtitle">{{ pageSubtitle }}</p>
+    </div>
+  </div>
 
   <div class="review-card">
     <div class="review-card-header">
