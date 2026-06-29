@@ -102,12 +102,22 @@ export class TransactionsComponent implements OnInit {
   }
 
   private computeSummary(rows: any[]) {
+    const payoutProcessingStage = (tx: any) => {
+      const inviteStatus = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+      const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+      return ['completed', 'approved'].includes(inviteStatus) || workStatus === 'approved';
+    };
+
     if (this.isRecipient) {
       this.summary.totalEarned = rows
         .filter(r => r.payoutStatus === 'paid' && (r.recipientRole === 'influencer' || r.recipientRole === 'photographer'))
         .reduce((s, r) => s + Number(r.recipientPayout || 0), 0);
       this.summary.totalPending = rows
-        .filter(r => (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') && (r.recipientRole === 'influencer' || r.recipientRole === 'photographer'))
+        .filter(r =>
+          (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') &&
+          (r.recipientRole === 'influencer' || r.recipientRole === 'photographer') &&
+          payoutProcessingStage(r)
+        )
         .reduce((s, r) => s + Number(r.recipientPayout || 0), 0);
     } else {
       this.summary.totalPaid = rows
@@ -136,11 +146,18 @@ export class TransactionsComponent implements OnInit {
 
   statusLabel(tx: any): string {
     if (this.isRecipient) {
-      if (tx.payoutStatus === 'paid') return 'Received';
-      if (tx.payoutStatus === 'processing') return 'Processing';
-      if (tx.collectionStatus === 'verified') return 'Awaiting Payout';
+      const inviteStatus = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+      const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+      const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
+      if (payoutStatus === 'paid') return `Paid ${this.formatPaise(tx.recipientPayout || 0)}`;
+      if (payoutStatus === 'processing' || ['completed', 'approved'].includes(inviteStatus) || workStatus === 'approved') return 'Payout Processing (4-6 hrs)';
+      if (inviteStatus === 'submitted') return 'Under Review (24 hrs)';
+      if (inviteStatus === 'working') return 'Complete your Reel/Post';
+      if (inviteStatus === 'payment_confirmed') return 'Ready to Start';
+      if (inviteStatus === 'accepted') return 'Waiting for Host Confirmation';
       if (tx.collectionStatus === 'proof_submitted') return 'Payment Under Review';
-      return 'Awaiting Brand Payment';
+      if (tx.collectionStatus === 'verified') return 'Ready to Start';
+      return 'Waiting for Host Confirmation';
     } else {
       if (tx.collectionStatus === 'verified') return 'Payment Verified';
       if (tx.collectionStatus === 'proof_submitted') return 'Proof Under Review';
@@ -152,6 +169,13 @@ export class TransactionsComponent implements OnInit {
   statusClass(tx: any): string {
     const s = tx.payoutStatus;
     const c = tx.collectionStatus;
+    if (this.isRecipient) {
+      const label = this.statusLabel(tx).toLowerCase();
+      if (label.includes('paid')) return 'status--green';
+      if (label.includes('processing') || label.includes('under review') || label.includes('ready')) return 'status--blue';
+      if (label.includes('rejected')) return 'status--red';
+      return 'status--amber';
+    }
     if (s === 'paid' || c === 'verified') return 'status--green';
     if (s === 'processing' || c === 'proof_submitted') return 'status--blue';
     if (c === 'failed') return 'status--red';

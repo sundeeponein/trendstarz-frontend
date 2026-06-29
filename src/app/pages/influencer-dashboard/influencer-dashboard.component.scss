@@ -204,6 +204,7 @@
   &.idb-status--frozen { background: #fff7ed; color: #9a3412; }
   &.idb-status--processing { background: #eff6ff; color: #1e40af; }
   &.idb-status--pending { background: #f3f4f6; color: #6b7280; }
+  &.idb-status--rejected { background: #fee2e2; color: #991b1b; }
 }
 
 .payments-table {

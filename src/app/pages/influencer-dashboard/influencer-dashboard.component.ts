@@ -371,7 +371,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
     const pending = rows
-      .filter((r: any) => r.recipientRole === 'influencer' && (r.payoutStatus === 'pending' || r.payoutStatus === 'processing'))
+      .filter((r: any) =>
+        r.recipientRole === 'influencer' &&
+        (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') &&
+        this.isPayoutProcessingStage(r)
+      )
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
     const frozen = rows
@@ -390,6 +394,44 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return this.paymentHistory.filter(tx =>
       tx.payoutStatus !== 'paid' && tx.payoutStatus !== 'skipped'
     );
+  }
+
+  private inviteStage(tx: any): string {
+    return String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+  }
+
+  private isPayoutProcessingStage(tx: any): boolean {
+    const stage = this.inviteStage(tx);
+    const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+    return ['completed', 'approved'].includes(stage) || workStatus === 'approved';
+  }
+
+  paymentFlowStatusLabel(tx: any): string {
+    const stage = this.inviteStage(tx);
+    const collectionStatus = String(tx?.collectionStatus || '').trim().toLowerCase();
+    const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
+
+    if (payoutStatus === 'frozen') return 'Dispute open';
+    if (payoutStatus === 'paid') return `Paid ${this.formatPaise(tx?.recipientPayout || 0)}`;
+    if (payoutStatus === 'processing' || this.isPayoutProcessingStage(tx)) return 'Payout Processing (4-6 hrs)';
+    if (stage === 'submitted') return 'Under Review (24 hrs)';
+    if (stage === 'working') return 'Complete your Reel/Post';
+    if (stage === 'payment_confirmed') return 'Ready to Start';
+    if (stage === 'accepted') return 'Waiting for Host Confirmation';
+    if (collectionStatus === 'proof_submitted') return 'Payment verifying';
+    if (collectionStatus === 'failed') return 'Payment rejected';
+    if (collectionStatus === 'verified') return 'Ready to Start';
+    return 'Waiting for Host Confirmation';
+  }
+
+  paymentFlowStatusClass(tx: any): Record<string, boolean> {
+    const label = this.paymentFlowStatusLabel(tx).toLowerCase();
+    return {
+      'idb-status--frozen': label.includes('dispute') || String(tx?.payoutStatus || '') === 'frozen',
+      'idb-status--processing': label.includes('processing') || label.includes('under review') || label.includes('ready'),
+      'idb-status--pending': label.includes('waiting') || label.includes('complete your') || label.includes('verifying'),
+      'idb-status--rejected': label.includes('rejected'),
+    };
   }
 
   get frozenPayouts(): any[] {
