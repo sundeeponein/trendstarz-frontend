@@ -224,6 +224,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     paymentCampaignId: string | null = null;
     paymentInitialTab: 'summary' | 'pay' | 'status' = 'summary';
     campaignCollectionStatusById = new Map<string, string>();
+    /** inviteId -> latest Transaction row, so the brand's invite card can reflect the real payout state (not just invite.status). */
+    private transactionByInviteId = new Map<string, any>();
 
     private deriveCampaignCollectionStatus(rows: any[]): string {
       const statuses = (Array.isArray(rows) ? rows : [])
@@ -248,6 +250,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           next: (rows: any[]) => {
             const status = this.deriveCampaignCollectionStatus(rows);
             this.campaignCollectionStatusById.set(campaignId, status);
+            (Array.isArray(rows) ? rows : []).forEach((row: any) => {
+              const inviteId = String(row?.inviteId || '');
+              if (inviteId) this.transactionByInviteId.set(inviteId, row);
+            });
             this.cd.detectChanges();
           },
           error: () => {
@@ -1910,8 +1916,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (s === 'submitted' || s === 'disputed') return 'Under Review';
     if (s === 'declined') return 'Declined';
     if (s === 'withdrawn') return 'Withdrawn';
-    if (s === 'completed') return 'Post Approved';
-    if (s === 'approved') return 'Payout Released';
+    if (s === 'completed') return 'Payout Processing (4-6 hrs)';
+    if (s === 'approved') return 'Payout Processing (4-6 hrs)';
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Pending';
   }
 
@@ -4035,8 +4041,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
       submitted: 'Under Review',
-      approved: 'Payout Released',
-      completed: 'Post Approved',
+      // Don't imply payout is already released just because the host
+      // approved the post — see paymentFlowStatusLabel() in
+      // influencer-dashboard.component.ts for the transaction-aware version.
+      approved: 'Payout Processing (4-6 hrs)',
+      completed: 'Payout Processing (4-6 hrs)',
       declined: 'Declined',
       withdrawn: 'Withdrawn',
       disputed: 'Under Review',
@@ -4844,6 +4853,25 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const status = typeof invOrStatus === 'string'
       ? String(invOrStatus || '').toLowerCase()
       : this.getHostInviteEffectiveStatus(invOrStatus);
+
+    // The invite's own status never moves past "completed" — real payout
+    // progress (processing vs. actually paid) only exists on the matching
+    // Transaction record. Without this, the brand would see "Post Approved"
+    // forever and never "Paid ₹x", even after the receiver was paid out.
+    if (typeof invOrStatus !== 'string') {
+      const inviteId = String(invOrStatus?._id || '');
+      const tx = inviteId ? this.transactionByInviteId.get(inviteId) : null;
+      if (tx) {
+        const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
+        const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+        if (payoutStatus === 'frozen') return 'Dispute open';
+        if (payoutStatus === 'paid') return `Paid ₹${((tx?.recipientPayout || 0) / 100).toLocaleString('en-IN')}`;
+        if (payoutStatus === 'processing' || ['completed', 'approved'].includes(status) || workStatus === 'approved') {
+          return 'Payout Processing (4-6 hrs)';
+        }
+      }
+    }
+
     const map: Record<string, string> = {
       pending:           'Pending',
       invited:           'Invited',
@@ -4852,8 +4880,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
       submitted:         'Under Review',
-      approved:          'Payout Released',
-      completed:         'Post Approved',
+      // No transaction loaded yet (or none exists) — still don't imply payout
+      // is already released just because the host approved the post.
+      approved:          'Payout Processing (4-6 hrs)',
+      completed:         'Payout Processing (4-6 hrs)',
       declined:          'Declined',
       withdrawn:         'Withdrawn',
       disputed:          'Under Review',

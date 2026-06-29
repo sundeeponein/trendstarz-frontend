@@ -34,6 +34,13 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   brandCampaignsLoading = false;
   brandInvites: any[] = [];
   brandInvitesLoading = false;
+  paymentHistory: any[] = [];
+  paymentSummary = {
+    earnedThisMonth: 0,
+    pending: 0,
+    frozen: 0,
+    paidInPayToJoin: 0,
+  };
   loading = true;
   error = '';
   profileIncomplete = false;
@@ -193,6 +200,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.loadBrandInvites();
         this.loadBrandCampaigns();
+        this.loadPaymentHistory();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -242,6 +250,131 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  loadPaymentHistory(): void {
+    this.config.getMyCampaignTransactions().subscribe({
+      next: (rows: any[]) => {
+        this.paymentHistory = rows;
+        this.recomputePaymentSummary(rows);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.paymentHistory = [];
+        this.recomputePaymentSummary([]);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private recomputePaymentSummary(rows: any[]) {
+    const month = new Date().getMonth();
+    const year = new Date().getFullYear();
+    const isThisMonth = (d?: string) => {
+      if (!d) return false;
+      const dt = new Date(d);
+      return dt.getMonth() === month && dt.getFullYear() === year;
+    };
+
+    const earnedThisMonth = rows
+      .filter((r: any) => r.recipientRole === 'photographer' && r.payoutStatus === 'paid' && isThisMonth(r.paidOutAt || r.updatedAt || r.createdAt))
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    const pending = rows
+      .filter((r: any) =>
+        r.recipientRole === 'photographer' &&
+        (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') &&
+        this.isPayoutProcessingStage(r)
+      )
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    const frozen = rows
+      .filter((r: any) => r.recipientRole === 'photographer' && r.payoutStatus === 'frozen')
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    const paidInPayToJoin = rows
+      .filter((r: any) => r.payerRole === 'photographer')
+      .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
+
+    this.paymentSummary = { earnedThisMonth, pending, frozen, paidInPayToJoin };
+  }
+
+  /** Only non-paid / non-skipped transactions for the dashboard snapshot */
+  get pendingPaymentHistory(): any[] {
+    return this.paymentHistory.filter(tx =>
+      tx.payoutStatus !== 'paid' && tx.payoutStatus !== 'skipped'
+    );
+  }
+
+  get frozenPayouts(): any[] {
+    return this.paymentHistory.filter(tx =>
+      tx.recipientRole === 'photographer' && tx.payoutStatus === 'frozen'
+    );
+  }
+
+  private inviteStage(tx: any): string {
+    return String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+  }
+
+  private isPayoutProcessingStage(tx: any): boolean {
+    const stage = this.inviteStage(tx);
+    const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+    return ['completed', 'approved'].includes(stage) || workStatus === 'approved';
+  }
+
+  paymentFlowStatusLabel(tx: any): string {
+    const stage = this.inviteStage(tx);
+    const collectionStatus = String(tx?.collectionStatus || '').trim().toLowerCase();
+    const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
+
+    if (payoutStatus === 'frozen') return 'Dispute open';
+    if (payoutStatus === 'paid') return `Paid ${this.formatPaise(tx?.recipientPayout || 0)}`;
+    if (payoutStatus === 'processing' || this.isPayoutProcessingStage(tx)) return 'Payout Processing (4-6 hrs)';
+    if (stage === 'submitted') return 'Under Review (24 hrs)';
+    if (stage === 'working') return 'Complete your Reel/Post';
+    if (stage === 'payment_confirmed') return 'Ready to Start';
+    if (stage === 'accepted') return 'Waiting for Host Confirmation';
+    if (collectionStatus === 'proof_submitted') return 'Payment verifying';
+    if (collectionStatus === 'failed') return 'Payment rejected';
+    if (collectionStatus === 'verified') return 'Ready to Start';
+    return 'Waiting for Host Confirmation';
+  }
+
+  paymentFlowStatusClass(tx: any): Record<string, boolean> {
+    const label = this.paymentFlowStatusLabel(tx).toLowerCase();
+    return {
+      'idb-status--frozen': label.includes('dispute') || String(tx?.payoutStatus || '') === 'frozen',
+      'idb-status--processing': label.includes('processing') || label.includes('under review') || label.includes('ready'),
+      'idb-status--pending': label.includes('waiting') || label.includes('complete your') || label.includes('verifying'),
+      'idb-status--rejected': label.includes('rejected'),
+    };
+  }
+
+  formatPaise(paise: number): string {
+    return `₹${((paise || 0) / 100).toLocaleString('en-IN')}`;
+  }
+
+  /** Invites still awaiting the photographer's own response */
+  get pendingBrandInvites(): any[] {
+    const pendingStatuses = new Set(['pending', 'invited', 'counter_sent']);
+    return this.brandInvites.filter((inv: any) => pendingStatuses.has(String(inv?.status || '').toLowerCase()));
+  }
+
+  /** Accepted invites that are in progress — accepted through submitted, not yet completed */
+  get activeCollaborations(): any[] {
+    const activeStatuses = new Set(['accepted', 'payment_confirmed', 'working', 'submitted']);
+    return this.brandInvites.filter((inv: any) => activeStatuses.has(String(inv?.status || '').toLowerCase()));
+  }
+
+  activeCollabBadgeLabel(inv: any): string {
+    const status = String(inv?.status || '').toLowerCase();
+    const campaignType = String(inv?.campaignId?.campaignType || '').toLowerCase();
+    if (status === 'accepted' && campaignType === 'paid_collab') return 'Confirmation Pending';
+    if (status === 'accepted') return 'Working';
+    if (status === 'payment_confirmed') return 'Ready to Start';
+    if (status === 'working') return 'Working';
+    if (status === 'submitted') return 'Under Review';
+    return status ? status.charAt(0).toUpperCase() + status.slice(1) : '';
   }
 
   getBrandName(campaign: any): string {
@@ -362,7 +495,14 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         }),
       ).subscribe({
         next: () => {
-          this.brandInvites = this.brandInvites.filter(i => i._id !== inviteId);
+          // Declined invites have nothing further to track; accepted/counter_sent
+          // ones need to stay in brandInvites so they surface in
+          // activeCollaborations/pendingBrandInvites with their new status.
+          if (status === 'declined') {
+            this.brandInvites = this.brandInvites.filter(i => i._id !== inviteId);
+          } else {
+            this.brandInvites = this.brandInvites.map(i => i._id === inviteId ? { ...i, status } : i);
+          }
           if (this.selectedInvite?._id === inviteId) {
             this.selectedInvite = null;
             this.selectedInviteManual = false;
