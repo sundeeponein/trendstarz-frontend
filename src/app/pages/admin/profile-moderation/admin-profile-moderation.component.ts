@@ -38,7 +38,7 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
         <select [(ngModel)]="filter" (ngModelChange)="loadRows()">
           <option value="all">All profiles</option>
           <option>Pending Review</option>
-          <option>Action Required</option>
+          <option value="Action Required">Needs Attention</option>
           <option>Verified</option>
           <option>Rejected</option>
         </select>

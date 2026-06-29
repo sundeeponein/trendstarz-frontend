@@ -3426,20 +3426,26 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       }),
     ).subscribe({
       next: (res: any) => {
+        // The endpoint returns the updated invite document directly, not
+        // wrapped as { invite }. Fall back to res.invite too in case that
+        // ever changes, but res itself is the real shape today — without
+        // this, the stale local counterOffer (still status: 'sent') keeps
+        // the Counter Received card and its buttons showing after acting.
+        const updatedInvite = res?.invite || res || {};
         const nextStatus = String(
-          res?.invite?.status || (action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'counter_sent'),
+          updatedInvite?.status || (action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'counter_sent'),
         );
         if (campaign?.invites && Array.isArray(campaign.invites)) {
           campaign.invites = campaign.invites.map((row: any) =>
             String(row?._id || '') === inviteId
-              ? { ...row, ...(res?.invite || {}), status: nextStatus }
+              ? { ...row, ...updatedInvite, status: nextStatus }
               : row,
           );
         }
         if (this.invites && Array.isArray(this.invites)) {
           this.invites = this.invites.map((row: any) =>
             String(row?._id || '') === inviteId
-              ? { ...row, ...(res?.invite || {}), status: nextStatus }
+              ? { ...row, ...updatedInvite, status: nextStatus }
               : row,
           );
         }

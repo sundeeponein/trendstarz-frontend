@@ -8,6 +8,13 @@ import { VerificationChecklistItem } from '../../services/profile-verification.s
   imports: [CommonModule],
   template: `
     <section class="verification-card">
+      <div class="trust-row">
+        <span class="trust-pill" [ngClass]="isTrendstarzVerified ? 'good' : 'warn'">
+          <i class="bi" [ngClass]="isTrendstarzVerified ? 'bi-patch-check-fill' : 'bi-hourglass-split'"></i>
+          {{ isTrendstarzVerified ? 'TrendStarz Verified' : 'Admin Approval Pending' }}
+        </span>
+      </div>
+
       <div class="score-row">
         <div>
           <p class="eyebrow">Profile Completion</p>
@@ -25,7 +32,7 @@ import { VerificationChecklistItem } from '../../services/profile-verification.s
           <span class="quality-label">{{ qualityLabel }}</span>
         </div>
         <div>
-          <p class="eyebrow">Verification Status</p>
+          <p class="eyebrow">Profile Tier</p>
           <span class="status-pill" [ngClass]="statusClass">{{ status }}</span>
         </div>
       </div>
@@ -106,6 +113,20 @@ import { VerificationChecklistItem } from '../../services/profile-verification.s
     .status-pill.good { background: #e8f7ee; color: #1f8d43; }
     .status-pill.warn { background: #fff5e5; color: #b45b00; }
     .status-pill.bad { background: #fff0ef; color: #bd2d20; }
+    .trust-row {
+      margin-bottom: 1rem;
+    }
+    .trust-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+    .trust-pill.good { background: #e8f7ee; color: #1f8d43; }
+    .trust-pill.warn { background: #fff5e5; color: #b45b00; }
     .checklist {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -158,11 +179,12 @@ export class VerificationStatusComponent {
   @Input() qualityScore = 0;
   @Input() qualityLabel = '';
   @Input() status = 'Draft';
+  @Input() isTrendstarzVerified = false;
   @Input() checklist: VerificationChecklistItem[] = [];
 
   get statusClass(): string {
-    if (['Premium Verified', 'Brand Ready', 'Verified Creator'].includes(this.status)) return 'good';
-    if (['Action Required'].includes(this.status)) return 'bad';
+    if (['Outstanding Profile', 'Brand Ready', 'Good Profile'].includes(this.status)) return 'good';
+    if (['Needs Attention'].includes(this.status)) return 'bad';
     return 'warn';
   }
 

@@ -1884,8 +1884,8 @@ export class AdminUserTableComponent implements OnInit {
     return Number(this.selectedProfileVerification?.profileCompletion ?? this.selectedUser?.profileCompletion ?? 0);
   }
 
-  getVerificationDashboardStatus(): string {
-    return String(this.selectedProfileVerification?.verificationStatus || this.selectedUser?.verificationDashboardStatus || 'Draft');
+  getProfileTier(): string {
+    return String(this.selectedProfileVerification?.profileTier || this.selectedUser?.profileTier || 'Draft');
   }
 
   getVerificationChecks(): Record<string, any> {
@@ -1945,7 +1945,7 @@ export class AdminUserTableComponent implements OnInit {
           panVerified: !!checks['panVerified'],
           profileCompletion: detail.profileCompletion,
           profileQualityScore: detail.profileQualityScore,
-          verificationDashboardStatus: detail.verificationStatus,
+          profileTier: detail.profileTier,
         };
         this.fetchUsers();
         this.cd.detectChanges();
@@ -1966,7 +1966,7 @@ export class AdminUserTableComponent implements OnInit {
       panVerified: !!checks['panVerified'],
       profileCompletion: detail.profileCompletion,
       profileQualityScore: detail.profileQualityScore,
-      verificationDashboardStatus: detail.verificationStatus,
+      profileTier: detail.profileTier,
       verificationAdminNotes: this.selectedUserInternalNotes,
     };
   }

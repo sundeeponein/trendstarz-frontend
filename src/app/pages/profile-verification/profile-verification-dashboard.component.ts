@@ -36,7 +36,8 @@ import { ProfileFlagsComponent } from '../../shared/profile-verification/profile
           [completion]="data.profileCompletion"
           [qualityScore]="data.profileQualityScore"
           [qualityLabel]="data.profileQualityLabel"
-          [status]="data.verificationStatus"
+          [status]="data.profileTier"
+          [isTrendstarzVerified]="data.isTrendstarzVerified"
           [checklist]="data.checklist"
         />
 

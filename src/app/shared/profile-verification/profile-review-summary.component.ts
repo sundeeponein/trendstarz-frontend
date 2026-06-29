@@ -568,12 +568,11 @@ export class ProfileReviewSummaryComponent implements OnChanges {
   }
 
   reviewStatusLabel(data: ProfileVerificationDashboard): string {
-    const status = String(data.verificationStatus || '').toLowerCase();
-    if (status.includes('approved')) return 'Approved';
-    if (status.includes('restricted')) return 'Restricted';
-    if (status.includes('action') || this.sectionCount(data) > 0) return 'Action Required';
-    if (status.includes('review')) return 'Under Review';
-    return data.verificationStatus || 'Under Review';
+    if (data.isTrendstarzVerified) return 'Approved';
+    if (data.campaignStatus === 'restricted') return 'Restricted';
+    if (data.profileTier === 'Needs Attention' || this.sectionCount(data) > 0) return 'Action Required';
+    if (data.profileTier === 'Under Review') return 'Under Review';
+    return data.profileTier || 'Under Review';
   }
 
   reviewStatusClass(data: ProfileVerificationDashboard): string {

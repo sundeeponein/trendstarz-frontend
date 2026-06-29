@@ -25,14 +25,17 @@ import { VerificationStatusComponent } from './verification-status.component';
             <p class="eyebrow">{{ data.userType }}</p>
             <h2>{{ data.displayName }}</h2>
           </div>
-          <span class="status-chip">{{ data.verificationStatus }}</span>
+          <span class="status-chip" [class.verified]="data.isTrendstarzVerified">
+            {{ data.isTrendstarzVerified ? 'TrendStarz Verified' : 'Not Admin Approved' }}
+          </span>
         </div>
 
         <app-verification-status
           [completion]="data.profileCompletion"
           [qualityScore]="data.profileQualityScore"
           [qualityLabel]="data.profileQualityLabel"
-          [status]="data.verificationStatus"
+          [status]="data.profileTier"
+          [isTrendstarzVerified]="data.isTrendstarzVerified"
           [checklist]="data.checklist"
         />
 
@@ -135,6 +138,10 @@ import { VerificationStatusComponent } from './verification-status.component';
       color: #16162f;
       padding: 0.3rem 0.7rem;
       font-weight: 900;
+    }
+    .status-chip.verified {
+      background: #e8f7ee;
+      color: #1f8d43;
     }
     .eligibility {
       display: flex;

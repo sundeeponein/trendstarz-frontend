@@ -31,7 +31,12 @@ export interface ProfileVerificationDashboard {
   profileCompletion: number;
   profileQualityScore: number;
   profileQualityLabel: string;
+  /** Profile data-quality tier (Draft/Under Review/Needs Attention/Good Profile/Brand Ready/Outstanding Profile) — NOT admin approval. */
+  profileTier: string;
+  /** Real admin-approval status display label (Pending/Under Review/Approved/Rejected/Removed). Independent of profileTier above. */
   verificationStatus: string;
+  /** The real admin-approval gate — same one campaign eligibility uses. Independent of profileTier above. */
+  isTrendstarzVerified: boolean;
   verificationChecks?: Record<string, any>;
   verificationBadges?: Array<{ label: string; verified: boolean }>;
   checklist: VerificationChecklistItem[];
@@ -48,8 +53,8 @@ export interface ModerationRow {
   email: string;
   profileCompletion: number;
   profileQualityScore: number;
+  profileTier: string;
   verificationStatus: string;
-  documentStatus: string;
   openFlagsCount: number;
   adminReviewPending: boolean;
   updatedAt: string;
