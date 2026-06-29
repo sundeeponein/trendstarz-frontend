@@ -84,10 +84,16 @@ const GALLERY_FLAG_CODES = new Set([
                       Your profile is visible and you can receive campaign invitations.
                     </p>
                     <p *ngSwitchCase="'update'">
-                      Your profile is currently hidden from creator discovery until your profile photo is updated.
+                      <ng-container *ngIf="data.campaignEligibility.blockers.length; else genericUpdateMsg">
+                        Your profile is currently hidden from creator discovery: {{ data.campaignEligibility.blockers.join('; ') }}.
+                      </ng-container>
+                      <ng-template #genericUpdateMsg>Your profile is currently hidden from creator discovery until your profile is updated.</ng-template>
                     </p>
                     <p *ngSwitchCase="'restricted'">
-                      Update your profile photo to restore campaign visibility.
+                      <ng-container *ngIf="data.campaignEligibility.blockers.length; else genericRestrictedMsg">
+                        {{ data.campaignEligibility.blockers.join('; ') }}.
+                      </ng-container>
+                      <ng-template #genericRestrictedMsg>Update your profile to restore campaign visibility.</ng-template>
                     </p>
                   </ng-container>
                 </div>
@@ -509,9 +515,15 @@ export class ProfileReviewSummaryComponent implements OnChanges {
     }
   }
 
+  // Reads from data.flags (the full open-flag list), not data.actionRequired —
+  // the backend deliberately excludes "score-only" codes like PORTFOLIO_MISSING
+  // from actionRequired so they don't clutter generic admin/action queues, but
+  // the gallery attention-card below still needs to know about them so a
+  // photographer's missing-portfolio gap gets the same detailed treatment an
+  // influencer's photo issue does, instead of just a one-line status text.
   private openFlagCodes(data: ProfileVerificationDashboard): Set<string> {
     return new Set(
-      (data.actionRequired || [])
+      (data.flags || [])
         .filter((f) => f.status === 'Open')
         .map((f) => String(f.flagCode || '').toUpperCase()),
     );

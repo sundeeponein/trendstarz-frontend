@@ -40,15 +40,18 @@
             <span>₹{{ planDiscountPercent > 0 ? finalPrice : selectedDuration?.price }}</span>
             <span class="price-period"> /{{ selectedDurationKey === '1m' ? 'mo' : selectedDurationKey === '3m' ? '3mo' : 'yr' }}</span>
           </div>
-          <div class="discount-info-pills" *ngIf="planDiscountPercent > 0">
-            <span class="pill pill-save">
+          <div class="discount-info-pills" *ngIf="planDiscountPercent > 0 || bonusMonths > 0">
+            <span class="pill pill-save" *ngIf="planDiscountPercent > 0">
               ✨ Save ₹{{ (selectedPlan.price[selectedDurationKey === '1m' ? 'monthly' : selectedDurationKey === '3m' ? 'quarterly' : 'yearly'] * (planDiscountPercent / 100)).toFixed(0) }}
               <ng-container *ngIf="selectedDurationKey === '1m'">/mo</ng-container>
               <ng-container *ngIf="selectedDurationKey === '3m'">/3mo</ng-container>
               <ng-container *ngIf="selectedDurationKey === '1y'">/yr</ng-container>
             </span>
-            <span class="pill pill-discount">
+            <span class="pill pill-discount" *ngIf="planDiscountPercent > 0">
               {{ planDiscountPercent }}% Discount
+            </span>
+            <span class="pill pill-bonus" *ngIf="bonusMonths > 0">
+              🎁 Pay {{ baseMonths }} mo, get {{ totalMonths }} mo total
             </span>
           </div>
           <div class="price-monthly-hint mt-1">

@@ -90,18 +90,27 @@ export class AdminPlansComponent implements OnInit {
       { key: 'discountMonthly', label: 'Monthly Discount (%)' },
       { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
       { key: 'discountYearly', label: 'Yearly Discount (%)' },
+      { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
+      { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
+      { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
     ],
     BRAND: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
       { key: 'discountMonthly', label: 'Monthly Discount (%)' },
       { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
       { key: 'discountYearly', label: 'Yearly Discount (%)' },
+      { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
+      { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
+      { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
     ],
     PHOTOGRAPHER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
       { key: 'discountMonthly', label: 'Monthly Discount (%)' },
       { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
       { key: 'discountYearly', label: 'Yearly Discount (%)' },
+      { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
+      { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
+      { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
     ],
   };
 
@@ -218,11 +227,20 @@ export class AdminPlansComponent implements OnInit {
     if (m) this.editingPlan.offers.push({ ...m, value });
   }
 
-  // Offer values are mixed units: trialPeriodDays is a day count, the discount
-  // keys are percentages. Render each with its own unit instead of assuming '%' for all.
+  // Offer values are mixed units: trialPeriodDays/bonusMonths are counts, the
+  // discount keys are percentages. Render each with its own unit instead of
+  // assuming '%' for all.
   offerValueDisplay(o: { key: string; value: number }): string {
-    return o.key === 'trialPeriodDays' ? `${o.value} days` : `${o.value}%`;
+    if (o.key === 'trialPeriodDays') return `${o.value} days`;
+    if (o.key.startsWith('bonusMonths')) return `${o.value} months`;
+    return `${o.value}%`;
   }
+
+  private readonly baseMonthsByCycle: Record<'monthly' | 'quarterly' | 'yearly', number> = {
+    monthly: 1,
+    quarterly: 3,
+    yearly: 12,
+  };
 
   getPricingPreview(): { label: string; price: number; discountPercent: number; final: number }[] {
     if (!this.editingPlan) return [];
@@ -242,6 +260,13 @@ export class AdminPlansComponent implements OnInit {
 
   getFinalPrice(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
     return this.getPricingPreview().find(r => r.label.toLowerCase() === durationKey)?.final ?? 0;
+  }
+
+  /** Months actually granted when a user pays for this cycle, after the configured bonus. */
+  getFinalDuration(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
+    const bonusKey = `bonusMonths${durationKey.charAt(0).toUpperCase()}${durationKey.slice(1)}`;
+    const bonusMonths = this.getOfferValue(bonusKey);
+    return this.baseMonthsByCycle[durationKey] + bonusMonths;
   }
 
   private syncContactVisibilityFeature(_plan: Plan) {

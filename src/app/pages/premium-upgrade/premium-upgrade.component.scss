@@ -760,10 +760,10 @@
 }
 .pill {
   display: inline-block;
-  padding: 4px 16px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 .pill-save {
@@ -773,4 +773,8 @@
 .pill-discount {
   background: #18b0ff;
   color: #003366;
+}
+.pill-bonus {
+  background: #16a34a;
+  color: #fff;
 }

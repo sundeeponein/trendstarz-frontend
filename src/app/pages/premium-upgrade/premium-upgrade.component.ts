@@ -48,6 +48,8 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     couponError = '';
     discountAmount = 0;
     planDiscountPercent = 0;
+    /** Admin-configured bonus months for the selected duration (e.g. "pay 1 month, get 2"). */
+    bonusMonths = 0;
     myPayments: any[] = [];
     discountLabel?: string;
 
@@ -166,33 +168,55 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     let price = 0;
     let label = '';
     let offerKey = '';
+    let bonusKey = '';
+    let baseMonths = 1;
     if (this.selectedDurationKey === '1y') {
       price = plan.price.yearly;
       label = 'Yearly';
       offerKey = 'discountYearly';
+      bonusKey = 'bonusMonthsYearly';
+      baseMonths = 12;
     } else if (this.selectedDurationKey === '3m') {
       price = plan.price.quarterly;
       label = '3 Months';
       offerKey = 'discountQuarterly';
+      bonusKey = 'bonusMonthsQuarterly';
+      baseMonths = 3;
     } else {
       price = plan.price.monthly;
       label = 'Monthly';
       offerKey = 'discountMonthly';
+      bonusKey = 'bonusMonthsMonthly';
+      baseMonths = 1;
     }
     this.selectedDuration = { key: this.selectedDurationKey, label, price };
+    this.baseMonths = baseMonths;
 
     // Find admin-configured discount for this duration
     let discountPercent = 0;
+    let bonusMonths = 0;
     if (plan.offers && Array.isArray(plan.offers)) {
       // Look for a matching offer key (e.g., discountMonthly, discountQuarterly, discountYearly)
       const offer = plan.offers.find((o: any) => o.key === offerKey);
       if (offer && offer.value > 0) {
         discountPercent = offer.value;
       }
+      const bonus = plan.offers.find((o: any) => o.key === bonusKey);
+      if (bonus && bonus.value > 0) {
+        bonusMonths = bonus.value;
+      }
     }
     // Store the discount percent for use in calculation
     this.planDiscountPercent = discountPercent;
+    this.bonusMonths = bonusMonths;
     this.applyPlanDiscount();
+  }
+
+  /** Months actually paid for at the selected duration (1/3/12), before any bonus. */
+  baseMonths = 1;
+
+  get totalMonths(): number {
+    return this.baseMonths + this.bonusMonths;
   }
 
   applyPlanDiscount() {
@@ -219,6 +243,9 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
         ? 'Coupon discount'
         : (this.discountLabel || `Discount (${this.planDiscountPercent}%)`);
       rows.push({ label, value: '− ₹' + this.discountAmount, free: true });
+    }
+    if (this.bonusMonths > 0) {
+      rows.push({ label: 'Bonus duration', value: `+${this.bonusMonths} month${this.bonusMonths > 1 ? 's' : ''} free`, free: true });
     }
     rows.push({ label: 'Total', value: '₹' + this.finalPrice, strong: true });
     return rows;

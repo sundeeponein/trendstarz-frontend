@@ -742,8 +742,11 @@ export class BrandProfileComponent implements OnInit {
   }
 
   private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
-    if (plan?.discountLabel) return plan.discountLabel;
-    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
     const hasTrialOffer = Array.isArray(plan?.offers)
       && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
     return hasTrialOffer ? 'Early Access Offer' : '';

@@ -425,10 +425,26 @@
               <div class="plan-card" [class.selected]="selectedPlan === 'premium'">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
-                  <span class="plan-card-price premium">₹{{ premiumMonthlyPrice }}/mo</span>
+                  <span class="plan-card-price premium">
+                    <span *ngIf="premiumOriginalMonthlyPrice" class="plan-card-price-original">₹{{ premiumOriginalMonthlyPrice }}</span>
+                    ₹{{ premiumMonthlyPrice }}/mo
+                  </span>
                 </div>
+                <div *ngIf="premiumOfferChip" class="plan-offer-chip">{{ premiumOfferChip }}</div>
                 <div class="plan-card-desc">Top placement, analytics, priority invites</div>
               </div>
+            </div>
+
+            <!-- Premium upgrade CTA -->
+            <div *ngIf="selectedPlan === 'free'" class="premium-upgrade-cta mt-2">
+              <div class="premium-cta-content">
+                <span class="premium-cta-icon">🌟</span>
+                <div>
+                  <strong>Upgrade to Premium</strong>
+                  <p class="text-muted mb-0" style="font-size:0.9em;">Unlock contact visibility, unlimited social profiles, and priority listing.</p>
+                </div>
+              </div>
+              <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold">Choose Plan &amp; Pay</a>
             </div>
 
             <div class="field-grid mt-3">
@@ -472,7 +488,6 @@
               <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Edit Profile</button>
               <button type="button" class="btn btn-outline-secondary" *ngIf="isEditMode" (click)="cancelEdit()">Cancel Edit</button>
               <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true">Reset Password</button>
-              <!-- <a class="btn btn-outline-secondary" routerLink="/upgrade-premium">Upgrade Plan</a> -->
               <button type="submit" *ngIf="isEditMode" class="btn btn-primary" [disabled]="saving || uploadingImage">
                 {{ saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Profile' }}
               </button>

@@ -149,6 +149,13 @@
             <span class="final-price-hint">Final: ₹{{ getFinalPrice('monthly') }}</span>
           </div>
         </div>
+        <div>
+          <label>Bonus Months (Monthly)</label>
+          <div class="discount-input-with-final">
+            <input type="number" [value]="getOfferValue('bonusMonthsMonthly')" min="0" (input)="setOfferValue('bonusMonthsMonthly', $event.target.valueAsNumber)" />
+            <span class="final-price-hint">Final duration: {{ getFinalDuration('monthly') }} mo</span>
+          </div>
+        </div>
       </div>
 
       <div class="pricing-discount-row">
@@ -163,6 +170,13 @@
             <span class="final-price-hint">Final: ₹{{ getFinalPrice('quarterly') }}</span>
           </div>
         </div>
+        <div>
+          <label>Bonus Months (Quarterly)</label>
+          <div class="discount-input-with-final">
+            <input type="number" [value]="getOfferValue('bonusMonthsQuarterly')" min="0" (input)="setOfferValue('bonusMonthsQuarterly', $event.target.valueAsNumber)" />
+            <span class="final-price-hint">Final duration: {{ getFinalDuration('quarterly') }} mo</span>
+          </div>
+        </div>
       </div>
 
       <div class="pricing-discount-row">
@@ -175,6 +189,13 @@
           <div class="discount-input-with-final">
             <input type="number" [value]="getOfferValue('discountYearly')" min="0" max="100" (input)="setOfferValue('discountYearly', $event.target.valueAsNumber)" />
             <span class="final-price-hint">Final: ₹{{ getFinalPrice('yearly') }}</span>
+          </div>
+        </div>
+        <div>
+          <label>Bonus Months (Yearly)</label>
+          <div class="discount-input-with-final">
+            <input type="number" [value]="getOfferValue('bonusMonthsYearly')" min="0" (input)="setOfferValue('bonusMonthsYearly', $event.target.valueAsNumber)" />
+            <span class="final-price-hint">Final duration: {{ getFinalDuration('yearly') }} mo</span>
           </div>
         </div>
       </div>

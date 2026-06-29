@@ -123,6 +123,8 @@ export class PhotographerRegistrationComponent implements OnInit {
   showPassword = false;
   showConfirmPassword = false;
   premiumMonthlyPrice = 399;
+  premiumOriginalMonthlyPrice: number | null = null;
+  premiumOfferChip = '';
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
@@ -186,10 +188,34 @@ export class PhotographerRegistrationComponent implements OnInit {
       if (paidPlan) {
         const monthly = Number(paidPlan?.price?.monthly || 0);
         if (monthly > 0) this.premiumMonthlyPrice = monthly;
+
+        const discountPercent = this.getPlanDiscountPercent(paidPlan, ['discountOnPhotographerPro', 'discountMonthly']);
+        if (discountPercent > 0) {
+          this.premiumOriginalMonthlyPrice = monthly;
+          this.premiumMonthlyPrice = Math.round(monthly * (1 - discountPercent / 100));
+        }
+        this.premiumOfferChip = this.resolveOfferChipLabel(paidPlan, discountPercent);
       }
 
       this.cdr.detectChanges();
     });
+  }
+
+  private getPlanDiscountPercent(plan: Plan, keys: string[]): number {
+    if (!Array.isArray(plan?.offers)) return 0;
+    const offer = plan.offers.find((item) => keys.includes(item.key) && Number(item.value) > 0);
+    return offer ? Number(offer.value) : 0;
+  }
+
+  private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
+    const hasTrialOffer = Array.isArray(plan?.offers)
+      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
+    return hasTrialOffer ? 'Early Access Offer' : '';
   }
 
   ngOnInit() {

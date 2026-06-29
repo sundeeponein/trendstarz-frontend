@@ -408,8 +408,12 @@
                 (click)="form.get('paymentOption')?.setValue('premium')">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
-                  <span class="plan-card-price premium">₹{{ premiumMonthlyPrice }}/mo</span>
+                  <span class="plan-card-price premium">
+                    <span *ngIf="premiumOriginalMonthlyPrice" class="plan-card-price-original">₹{{ premiumOriginalMonthlyPrice }}</span>
+                    ₹{{ premiumMonthlyPrice }}/mo
+                  </span>
                 </div>
+                <div *ngIf="premiumOfferChip" class="plan-offer-chip">{{ premiumOfferChip }}</div>
                 <div class="plan-card-desc">Top placement, analytics, priority invites</div>
               </div>
             </div>
