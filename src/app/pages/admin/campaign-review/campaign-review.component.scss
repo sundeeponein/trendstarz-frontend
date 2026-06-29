@@ -70,10 +70,10 @@ $green:     #16a34a;
 // ── Stat Strip ────────────────────────────────────────────────────────────
 .cm-stat-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.85rem;
 
-  @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 1280px) { grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 720px)  { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -100,6 +100,7 @@ $green:     #16a34a;
   &--orange { border-left-color: $orange; &.cm-stat-card--active { border-color: $orange; } }
   &--purple { border-left-color: $purple; &.cm-stat-card--active { border-color: $purple; } }
   &--blue   { border-left-color: $blue;   &.cm-stat-card--active { border-color: $blue; } }
+  &--muted  { border-left-color: #9ca3af; &.cm-stat-card--active { border-color: #9ca3af; } }
   &--dark   { border-left-color: #44403c; &.cm-stat-card--active { border-color: #44403c; } }
 
   &--total {

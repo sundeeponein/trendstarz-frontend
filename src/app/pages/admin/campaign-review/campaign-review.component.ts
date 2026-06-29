@@ -19,27 +19,29 @@ import { ToastService } from '../../../shared/toast/toast.service';
 })
 export class CampaignReviewComponent implements OnInit {
   readonly statusTabs: Array<{
-    key: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all';
+    key: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all';
     label: string;
   }> = [
     { key: 'pending_review', label: 'Pending Review' },
     { key: 'needs_changes', label: 'Needs Changes' },
     { key: 'rejected', label: 'Rejected' },
     { key: 'active', label: 'Approved / Live' },
+    { key: 'draft', label: 'Draft' },
     { key: 'completed', label: 'Completed' },
     { key: 'all', label: 'All' },
   ];
-  campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all' = 'pending_review';
+  campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all' = 'pending_review';
   campaignFiltersExpanded = true;
   // Current server-paginated page only — the backend now owns filtering/counting,
   // so this never needs to hold the entire (potentially unbounded) campaign set.
   campaignApprovals: any[] = [];
   totalCampaigns = 0;
-  statusCounts: Record<'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all', number> = {
+  statusCounts: Record<'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all', number> = {
     pending_review: 0,
     needs_changes: 0,
     rejected: 0,
     active: 0,
+    draft: 0,
     completed: 0,
     all: 0,
   };
@@ -176,6 +178,7 @@ export class CampaignReviewComponent implements OnInit {
           needs_changes: Number(res?.statusCounts?.needs_changes || 0),
           rejected: Number(res?.statusCounts?.rejected || 0),
           active: Number(res?.statusCounts?.active || 0),
+          draft: Number(res?.statusCounts?.draft || 0),
           completed: Number(res?.statusCounts?.completed || 0),
           all: Number(res?.statusCounts?.all || 0),
         };
@@ -193,7 +196,7 @@ export class CampaignReviewComponent implements OnInit {
 
   get totalCampaignCount(): number { return this.totalCampaigns; }
 
-  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all'): number {
+  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all'): number {
     return this.statusCounts[status] ?? 0;
   }
 
@@ -363,7 +366,7 @@ export class CampaignReviewComponent implements OnInit {
     return this.canApproveCampaign(campaign) || this.canRequestChangesCampaign(campaign) || this.canRejectCampaign(campaign);
   }
 
-  setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all') {
+  setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all') {
     if (this.campaignApprovalStatusFilter === status) return;
     this.campaignApprovalStatusFilter = status;
     this.currentPage = 1;
@@ -1029,7 +1032,7 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   getReviewTabStatusClass(
-    status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'completed' | 'all',
+    status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all',
   ): string {
     if (status === 'all') return 'ts-status-tab--other';
     return `ts-status-tab--${this.getCampaignStatusKey(status)}`;

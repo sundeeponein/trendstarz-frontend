@@ -71,6 +71,15 @@
       </div>
     </button>
 
+    <button type="button" class="cm-stat-card cm-stat-card--muted"
+            [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'draft'"
+            (click)="setStatusTab('draft')">
+      <span class="cm-stat-label">DRAFT</span>
+      <div class="cm-stat-bottom">
+        <span class="cm-stat-value">{{ getStatusCount('draft') | number }}</span>
+      </div>
+    </button>
+
     <button type="button" class="cm-stat-card cm-stat-card--dark"
             [class.cm-stat-card--active]="campaignApprovalStatusFilter === 'completed'"
             (click)="setStatusTab('completed')">

@@ -210,6 +210,8 @@ $green:     #16a34a;
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .adm-date-select {
@@ -234,12 +236,43 @@ $green:     #16a34a;
 
 .adm-pulse-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+.adm-pulse-group {
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid $border;
+  padding: 0.85rem;
+}
+
+.adm-pulse-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
+
+  > span {
+    color: $text;
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+}
+
+.adm-pulse-group-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 520px) { grid-template-columns: 1fr; }
 }
 
 .adm-pulse-item {
-  background: #f9fafb;
+  background: #fff;
   border-radius: 8px;
   border: 1px solid $border;
   padding: 0.85rem;

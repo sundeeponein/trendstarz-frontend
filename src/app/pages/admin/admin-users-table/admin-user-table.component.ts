@@ -928,6 +928,7 @@ export class AdminUserTableComponent implements OnInit {
     state: '',
     signupSource: '',
     badgeTag: '',
+    userPlatform: '',
     emailVerified: '',
     mobileVerified: '',
     contactVerification: '',
@@ -942,6 +943,7 @@ export class AdminUserTableComponent implements OnInit {
     state: '',
     signupSource: '',
     badgeTag: '',
+    userPlatform: '',
     emailVerified: '',
     mobileVerified: '',
     contactVerification: '',
@@ -956,6 +958,7 @@ export class AdminUserTableComponent implements OnInit {
     state: '',
     signupSource: '',
     badgeTag: '',
+    userPlatform: '',
     emailVerified: '',
     mobileVerified: '',
     contactVerification: '',
@@ -978,6 +981,8 @@ export class AdminUserTableComponent implements OnInit {
   creatorTiersArray: string[] = [];
   statusArray: string[] = [];
   signupSourcesArray: string[] = [];
+  userTagsArray: string[] = [];
+  userPlatformsArray: string[] = [];
 
   // Premium modal state
   showPremiumModal = false;
@@ -1236,6 +1241,10 @@ export class AdminUserTableComponent implements OnInit {
     const creatorTiersSet = new Set<string>();
     const statusSet = new Set<string>();
     const signupSourceSet = new Set<string>();
+    const userTagSet = new Set<string>();
+    const userPlatformSet = new Set<string>();
+    this.getRegularTagOptions(userType).forEach((tag) => userTagSet.add(tag));
+    this.getCommissionTagOptions(userType).forEach((tag) => userPlatformSet.add(tag));
 
     this.getUsersByType(userType).forEach(user => {
       const categories = Array.isArray(user.categories)
@@ -1255,6 +1264,8 @@ export class AdminUserTableComponent implements OnInit {
       if (signupSource) {
         signupSourceSet.add(signupSource);
       }
+      this.getUserRegularTags(user).forEach((tag) => userTagSet.add(tag));
+      this.getUserPlatformFeeTags(user).forEach((platform) => userPlatformSet.add(platform));
     });
 
     this.categoriesArray = Array.from(categoriesSet).sort();
@@ -1262,6 +1273,8 @@ export class AdminUserTableComponent implements OnInit {
     this.creatorTiersArray = Array.from(creatorTiersSet).sort();
     this.statusArray = Array.from(statusSet).sort();
     this.signupSourcesArray = Array.from(signupSourceSet).sort();
+    this.userTagsArray = Array.from(userTagSet).sort();
+    this.userPlatformsArray = Array.from(userPlatformSet).sort();
   }
 
   private getUserSortTime(user: any): number {
@@ -1368,6 +1381,15 @@ export class AdminUserTableComponent implements OnInit {
     ) {
       return false;
     }
+    if (filters.contactVerification === 'admin_review_pending' && this.getAdminReviewStatus(user) !== 'pending') {
+      return false;
+    }
+    if (filters.contactVerification === 'admin_approved' && this.getAdminReviewStatus(user) !== 'approved') {
+      return false;
+    }
+    if (filters.contactVerification === 'admin_review_rejected' && this.getAdminReviewStatus(user) !== 'rejected') {
+      return false;
+    }
     
     // Premium filter
     if (filters.premium === 'premium' && !user.isPremium) {
@@ -1404,7 +1426,11 @@ export class AdminUserTableComponent implements OnInit {
       return false;
     }
 
-    if (filters.badgeTag && !this.getUserTags(user).includes(filters.badgeTag)) {
+    if (filters.badgeTag && !this.getUserRegularTags(user).includes(filters.badgeTag)) {
+      return false;
+    }
+
+    if (filters.userPlatform && !this.getUserPlatformFeeTags(user).includes(filters.userPlatform)) {
       return false;
     }
 
@@ -1736,7 +1762,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
-    const empty = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', emailVerified: '', mobileVerified: '', contactVerification: '', registeredFrom: '', registeredTo: '' };
+    const empty = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', userPlatform: '', emailVerified: '', mobileVerified: '', contactVerification: '', registeredFrom: '', registeredTo: '' };
     if (userType === 'influencer') {
       this.influencerFilters = { ...empty };
     } else if (userType === 'brand') {
@@ -2114,12 +2140,7 @@ export class AdminUserTableComponent implements OnInit {
     return this.commissionBadgeOptions.includes(tag);
   }
 
-  getUserTags(user: any): string[] {
-    const tags = Array.isArray(user?.adminTags)
-      ? user.adminTags.filter((tag: any) => !!String(tag || '').trim())
-      : [];
-    const commissionTags = this.commissionBadgeOptions;
-
+  private getUserCommissionTagFromBadge(user: any): string {
     const commissionBadgeMap: Record<string, string> = {
       early_access_creator: 'Early Access',
       partner_creator: 'Partner',
@@ -2131,20 +2152,46 @@ export class AdminUserTableComponent implements OnInit {
       zero_commission_creator: 'Early Access',
       zero_commission_brand: 'Early Access',
     };
-
-    const commissionTag = user?.commissionBadge
+    return user?.commissionBadge
       ? (commissionBadgeMap[String(user.commissionBadge)] || '')
       : '';
-    const regularTags = tags.filter((tag: string) => !commissionTags.includes(tag));
+  }
+
+  getUserRegularTags(user: any): string[] {
+    const tags = Array.isArray(user?.adminTags)
+      ? user.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      : [];
+    const commissionTags = this.commissionBadgeOptions;
+    return Array.from(new Set(tags.filter((tag: string) => !commissionTags.includes(tag))));
+  }
+
+  getUserPlatformFeeTags(user: any): string[] {
+    const tags = Array.isArray(user?.adminTags)
+      ? user.adminTags.filter((tag: any) => !!String(tag || '').trim())
+      : [];
+    const commissionTags = this.commissionBadgeOptions;
+    const commissionTag = this.getUserCommissionTagFromBadge(user);
     const fallbackCommissionTag = commissionTags.find((tag) => tags.includes(tag)) || '';
     const effectiveCommissionTag = commissionTag || fallbackCommissionTag;
+    return effectiveCommissionTag ? [effectiveCommissionTag] : [];
+  }
 
+  getUserTags(user: any): string[] {
     return [
       ...new Set([
-        ...regularTags,
-        ...(effectiveCommissionTag ? [effectiveCommissionTag] : []),
+        ...this.getUserRegularTags(user),
+        ...this.getUserPlatformFeeTags(user),
       ]),
     ];
+  }
+
+  private getAdminReviewStatus(user: any): 'approved' | 'pending' | 'rejected' | 'removed' | 'not_submitted' {
+    const status = String(user?.verificationStatus || 'not_submitted').trim().toLowerCase();
+    if (user?.verifiedByTrendStarz === true || status === 'approved') return 'approved';
+    if (status === 'pending' || user?.adminReviewPending === true) return 'pending';
+    if (status === 'rejected') return 'rejected';
+    if (status === 'removed') return 'removed';
+    return 'not_submitted';
   }
 
   getTagBadgeClass(tag: string): string {

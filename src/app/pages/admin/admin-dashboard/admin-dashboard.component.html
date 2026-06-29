@@ -120,7 +120,7 @@
         <header class="adm-card-header adm-card-header--between">
           <div>
             <h3 class="adm-card-title">Campaign Pulse</h3>
-            <p class="adm-card-sub">Real-time status of brand-creator collaborations.</p>
+            <p class="adm-card-sub">Real-time review and live status for campaigns and collaborations.</p>
           </div>
           <div class="adm-pulse-controls">
             <select
@@ -130,34 +130,60 @@
             >
               <option *ngFor="let opt of campaignDateOptions" [value]="opt.value">{{ opt.label }}</option>
             </select>
-            <a routerLink="/admin/campaign-review" class="adm-view-link">
-              View Full Queue <i class="bi bi-arrow-right"></i>
-            </a>
           </div>
         </header>
         <div class="adm-pulse-grid">
-          <div class="adm-pulse-item adm-pulse-item--review">
-            <span class="adm-pulse-label">REVIEW QUEUE</span>
-            <span class="adm-pulse-count adm-pulse-count--review">{{ campaignReviewCount | number }}</span>
-            <div class="adm-pulse-bar">
-              <div class="adm-pulse-bar-fill adm-pulse-bar-fill--review"
-                   [style.width]="campaignReviewCount > 0 ? '60%' : '10%'"></div>
+          <div class="adm-pulse-group">
+            <div class="adm-pulse-group-head">
+              <span>Campaign</span>
+              <a routerLink="/admin/campaign-review" class="adm-view-link">
+                View Queue <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+            <div class="adm-pulse-group-stats">
+              <div class="adm-pulse-item adm-pulse-item--review">
+                <span class="adm-pulse-label">REVIEW PENDING</span>
+                <span class="adm-pulse-count adm-pulse-count--review">{{ campaignReviewPendingCount | number }}</span>
+                <div class="adm-pulse-bar">
+                  <div class="adm-pulse-bar-fill adm-pulse-bar-fill--review"
+                       [style.width]="campaignReviewPendingCount > 0 ? '60%' : '10%'"></div>
+                </div>
+              </div>
+              <div class="adm-pulse-item adm-pulse-item--live">
+                <span class="adm-pulse-label">ACTIVE / LIVE</span>
+                <span class="adm-pulse-count adm-pulse-count--live">{{ campaignActiveLiveCount | number }}</span>
+                <div class="adm-pulse-bar">
+                  <div class="adm-pulse-bar-fill adm-pulse-bar-fill--live"
+                       [style.width]="campaignActiveLiveCount > 0 ? '85%' : '10%'"></div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="adm-pulse-item adm-pulse-item--live">
-            <span class="adm-pulse-label">LIVE NOW</span>
-            <span class="adm-pulse-count adm-pulse-count--live">{{ campaignLiveCount | number }}</span>
-            <div class="adm-pulse-bar">
-              <div class="adm-pulse-bar-fill adm-pulse-bar-fill--live"
-                   [style.width]="campaignLiveCount > 0 ? '85%' : '10%'"></div>
+
+          <div class="adm-pulse-group">
+            <div class="adm-pulse-group-head">
+              <span>Collab</span>
+              <a routerLink="/admin/collaboration-review" class="adm-view-link">
+                View Queue <i class="bi bi-arrow-right"></i>
+              </a>
             </div>
-          </div>
-          <div class="adm-pulse-item adm-pulse-item--draft">
-            <span class="adm-pulse-label">DRAFT MODE</span>
-            <span class="adm-pulse-count adm-pulse-count--draft">{{ campaignDraftCount | number }}</span>
-            <div class="adm-pulse-bar">
-              <div class="adm-pulse-bar-fill adm-pulse-bar-fill--draft"
-                   [style.width]="campaignDraftCount > 0 ? '40%' : '10%'"></div>
+            <div class="adm-pulse-group-stats">
+              <div class="adm-pulse-item adm-pulse-item--review">
+                <span class="adm-pulse-label">REVIEW PENDING</span>
+                <span class="adm-pulse-count adm-pulse-count--review">{{ collaborationReviewPendingCount | number }}</span>
+                <div class="adm-pulse-bar">
+                  <div class="adm-pulse-bar-fill adm-pulse-bar-fill--review"
+                       [style.width]="collaborationReviewPendingCount > 0 ? '60%' : '10%'"></div>
+                </div>
+              </div>
+              <div class="adm-pulse-item adm-pulse-item--live">
+                <span class="adm-pulse-label">ACTIVE / LIVE</span>
+                <span class="adm-pulse-count adm-pulse-count--live">{{ collaborationActiveLiveCount | number }}</span>
+                <div class="adm-pulse-bar">
+                  <div class="adm-pulse-bar-fill adm-pulse-bar-fill--live"
+                       [style.width]="collaborationActiveLiveCount > 0 ? '85%' : '10%'"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

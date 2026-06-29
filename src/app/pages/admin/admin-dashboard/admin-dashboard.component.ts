@@ -84,15 +84,17 @@ export class AdminDashboardComponent implements OnInit {
     { value: '30days', label: 'Last 30 Days' },
   ];
 
-  campaignReviewCount = 0;
-  campaignLiveCount = 0;
-  campaignDraftCount = 0;
+  campaignReviewPendingCount = 0;
+  campaignActiveLiveCount = 0;
+  collaborationReviewPendingCount = 0;
+  collaborationActiveLiveCount = 0;
 
   moderationItems: ModerationItem[] = [];
   urgentCampaign: any = null;
   latestDispute: any = null;
 
   private allCampaigns: any[] = [];
+  private allCollaborations: any[] = [];
 
   recentAll: RecentReg[] = [];
   recentInfluencers: RecentReg[] = [];
@@ -178,18 +180,23 @@ export class AdminDashboardComponent implements OnInit {
 
   private applyCampaignFilter() {
     const cutoff = this.campaignDateCutoff();
-    const filtered = this.allCampaigns.filter(c => {
+    const filterByDate = (items: any[]) => items.filter(c => {
       const ts = new Date(c.createdAt || c.updatedAt || 0).getTime();
       return ts >= cutoff;
     });
-    this.campaignReviewCount = filtered.filter(c =>
+    const campaigns = filterByDate(this.allCampaigns);
+    const collaborations = filterByDate(this.allCollaborations);
+    this.campaignReviewPendingCount = campaigns.filter(c =>
       ['pending_review', 'pending'].includes(String(c?.status || '').toLowerCase())
     ).length;
-    this.campaignLiveCount = filtered.filter(c =>
+    this.campaignActiveLiveCount = campaigns.filter(c =>
       ['active', 'approved', 'live'].includes(String(c?.status || '').toLowerCase())
     ).length;
-    this.campaignDraftCount = filtered.filter(c =>
-      String(c?.status || '').toLowerCase() === 'draft'
+    this.collaborationReviewPendingCount = collaborations.filter(c =>
+      ['pending_review', 'pending'].includes(String(c?.status || '').toLowerCase())
+    ).length;
+    this.collaborationActiveLiveCount = collaborations.filter(c =>
+      ['active', 'approved', 'live'].includes(String(c?.status || '').toLowerCase())
     ).length;
   }
 
@@ -376,8 +383,15 @@ export class AdminDashboardComponent implements OnInit {
     return '';
   }
 
+  private loadPulseQueue(ownerType: 'brand' | 'photographer') {
+    return this.http.get<any>(
+      `${environment.apiBaseUrl}/admin/campaigns?status=all&ownerType=${ownerType}&page=1&limit=200`,
+      this.getAuthHeaders(),
+    );
+  }
+
   fetchCampaigns() {
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?status=all&ownerType=brand`, this.getAuthHeaders())
+    this.loadPulseQueue('brand')
       .subscribe({
         next: (res) => {
           this.allCampaigns = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
@@ -385,6 +399,16 @@ export class AdminDashboardComponent implements OnInit {
           this.urgentCampaign = this.allCampaigns.find(c =>
             ['pending_review', 'pending'].includes(String(c?.status || '').toLowerCase())
           ) || null;
+          this.buildModerationQueue();
+          this.cd.detectChanges();
+        },
+        error: () => { this.cd.detectChanges(); }
+      });
+    this.loadPulseQueue('photographer')
+      .subscribe({
+        next: (res) => {
+          this.allCollaborations = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+          this.applyCampaignFilter();
           this.buildModerationQueue();
           this.cd.detectChanges();
         },

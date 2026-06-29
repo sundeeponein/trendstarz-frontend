@@ -63,9 +63,11 @@
       <option value="email_or_mobile_pending">Email or mobile pending</option>
       <option value="both_pending">Both pending</option>
       <option value="both_verified">Both verified</option>
-      <option value="search_eligible">Search Eligible</option>
       <option value="admin_approved">Admin Approved</option>
+      <option value="admin_review_pending">Admin Review Pending</option>
+      <option value="admin_review_rejected">Admin Review Rejected</option>
       <option value="featured_eligible">Featured Eligible</option>
+      <option value="search_eligible">Search Eligible</option>
       <option value="campaign_eligible">Campaign Eligible</option>
     </select>
 
@@ -88,6 +90,16 @@
     <select class="category-filter" [ngModel]="getActiveFilterValue('category')" (change)="setActiveFilterValue('category', $any($event.target).value)">
       <option value="">Category: All</option>
       <option *ngFor="let category of categoriesArray" [value]="category">Category: {{ category }}</option>
+    </select>
+
+    <select class="badge-tag-filter" [ngModel]="getActiveFilterValue('badgeTag')" (change)="setActiveFilterValue('badgeTag', $any($event.target).value)">
+      <option value="">User Tags: All</option>
+      <option *ngFor="let tag of userTagsArray" [value]="tag">User Tags: {{ tag }}</option>
+    </select>
+
+    <select class="platform-filter" [ngModel]="getActiveFilterValue('userPlatform')" (change)="setActiveFilterValue('userPlatform', $any($event.target).value)">
+      <option value="">User Platform: All</option>
+      <option *ngFor="let platform of userPlatformsArray" [value]="platform">User Platform: {{ platform }}</option>
     </select>
 
     <select class="sort-filter" [(ngModel)]="registeredSortOrder" (ngModelChange)="onSortOrderChange()">
