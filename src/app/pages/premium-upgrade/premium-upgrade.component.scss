@@ -124,8 +124,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
-  padding: 2rem 1rem 4rem;
+  background: #f6f7fb;
+  padding: 2rem 1rem 7rem;
   overflow-y: auto;
 }
 
@@ -196,6 +196,269 @@
 
 /* ── Payment step card ────────────────────────── */
 .payment-step { max-width: 560px; }
+
+.plan-comparison-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 1.4rem;
+  align-items: stretch;
+  margin: 0 auto 2.2rem;
+  max-width: 980px;
+}
+
+.comparison-plan {
+  position: relative;
+  background: #fff;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  padding: 2.15rem 2rem;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.05);
+}
+
+.free-plan {
+  color: #5f504a;
+}
+
+.pro-plan {
+  border: 2px solid #ff6b1a;
+  box-shadow: 0 28px 70px rgba(249, 115, 22, 0.14);
+}
+
+.limited-offer {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 156px;
+  text-align: center;
+  background: #ff6b1a;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.32rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.plan-kicker {
+  display: inline-flex;
+  align-items: center;
+  background: #eee9e5;
+  color: #6c5c56;
+  padding: 0.34rem 0.72rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+  font-weight: 900;
+  margin-bottom: 1.1rem;
+
+  &.pro {
+    background: #00669f;
+    color: #fff;
+  }
+}
+
+.comparison-price {
+  display: grid;
+  gap: 0.14rem;
+  margin-bottom: 1.7rem;
+}
+
+.currency-price,
+.premium-price {
+  font-size: 2rem;
+  line-height: 1;
+  color: #8d3f17;
+  font-weight: 900;
+}
+
+.premium-price {
+  font-size: 2.35rem;
+}
+
+.plan-title {
+  color: #24272f;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.pro-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0.15rem 0 1.25rem;
+}
+
+.pro-price-row .price-original-strike {
+  color: #7a685f;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-decoration: line-through;
+}
+
+.price-period {
+  color: #6f625b;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.comparison-duration-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 1.15rem;
+
+  .dur-btn {
+    min-height: 58px;
+    border-radius: 4px;
+    border-color: #f0dfd6;
+    background: #fff;
+    color: #755e52;
+    font-size: 0.78rem;
+
+    &.active {
+      border-color: #ff6b1a;
+      background: #fff8f3;
+      color: #ff6b1a;
+      box-shadow: inset 0 0 0 1px #ff6b1a;
+    }
+  }
+}
+
+.feature-stack {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0 1.8rem;
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  color: #655650;
+  font-size: 0.93rem;
+  font-weight: 750;
+
+  &.muted {
+    color: #b6a9a4;
+  }
+}
+
+.feature-icon {
+  color: #c26d3a;
+  font-size: 1rem;
+  line-height: 1;
+
+  &.negative {
+    color: #c9bbb6;
+  }
+
+  &.info {
+    color: #ad9b93;
+  }
+}
+
+.pro-features .feature-icon:not(.negative) {
+  color: #c15f27;
+}
+
+.limits-panel {
+  background: #f1f2f4;
+  border-radius: 4px;
+  padding: 1.1rem 1.15rem;
+  margin: 0 0 1.45rem;
+}
+
+.limits-header,
+.limit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.limits-header {
+  color: #6a5a55;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin-bottom: 0.8rem;
+}
+
+.limit-row {
+  color: #6b5a54;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 0.28rem 0;
+
+  strong {
+    color: #3a332f;
+    font-size: 0.9rem;
+  }
+}
+
+.plan-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 4px;
+  padding: 1rem 1.05rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+
+  &.warning {
+    background: #fff7f5;
+    color: #7b5045;
+
+    i {
+      color: #e34b4b;
+    }
+  }
+
+  &.success {
+    background: #fff5ee;
+    color: #723a20;
+  }
+}
+
+.plan-footnote {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: #a2928b;
+  font-size: 0.82rem;
+  font-style: italic;
+  font-weight: 700;
+  margin-top: 1rem;
+}
+
+.plan-actions {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 5;
+  width: min(680px, calc(100vw - 2rem));
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.1);
+  padding: 0.75rem;
+  flex-wrap: nowrap;
+
+  .btn-back {
+    min-width: 170px;
+    border: none;
+    font-weight: 800;
+    color: #3f4652;
+  }
+
+  .btn-upgrade {
+    min-height: 52px;
+    border-radius: 8px;
+  }
+}
 
 /* Order bar */
 .order-bar {
@@ -777,4 +1040,88 @@
 .pill-bonus {
   background: #16a34a;
   color: #fff;
+}
+
+.upgrade-card.plan-upgrade-card {
+  max-width: 1180px;
+  width: 100%;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.plan-upgrade-card .upgrade-header {
+  margin-bottom: 2.4rem;
+
+  .premium-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #fff0e8;
+    color: #ff6b1a;
+    border: 1px solid #ffd7c3;
+    border-radius: 999px;
+    box-shadow: none;
+    font-size: 0.78rem;
+    padding: 0.38rem 0.9rem;
+    letter-spacing: 0;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: 0;
+    color: #171a21;
+  }
+
+  .upgrade-sub {
+    max-width: 650px;
+    color: #695951;
+    font-weight: 700;
+  }
+}
+
+@media (max-width: 860px) {
+  .plan-comparison-grid {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
+
+  .comparison-plan {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .plan-actions {
+    width: calc(100vw - 1.5rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .upgrade-shell {
+    padding: 1.25rem 0.75rem 7rem;
+  }
+
+  .plan-upgrade-card .upgrade-header {
+    margin-bottom: 1.6rem;
+  }
+
+  .comparison-duration-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .pro-price-row {
+    flex-wrap: wrap;
+  }
+
+  .plan-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    bottom: 0.75rem;
+
+    .btn-back,
+    .btn-upgrade {
+      width: 100%;
+      min-width: 0;
+    }
+  }
 }

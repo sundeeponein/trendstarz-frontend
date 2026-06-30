@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { Router } from '@angular/router';
 import { PlansService, Plan } from '../plans.service';
 import { ConfigService } from '../config.service';
-import { buildFounderOfferOptions, hasRealFounderOffer, FounderOfferOption } from './founder-offer.util';
+import { buildFounderOfferOptions, hasRealFounderOffer, matchesFounderOfferAudience, FounderOfferOption } from './founder-offer.util';
 
 const BENEFITS_BY_ROLE: Record<string, string[]> = {
   INFLUENCER: ['⭐ Higher search ranking', '🚀 Featured profile', '🔔 Early campaign notifications', '💼 Priority visibility to brands', '💬 Priority support'],
@@ -127,6 +127,8 @@ const BENEFITS_BY_ROLE: Record<string, string[]> = {
 export class FounderOfferModalComponent implements OnChanges {
   @Input() open = false;
   @Input() role: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER' = 'INFLUENCER';
+  /** Only used to decide new-vs-existing audience targeting — the countdown itself is always the full window, not elapsed time. */
+  @Input() registeredAt: string | Date | null = null;
   @Output() closed = new EventEmitter<void>();
 
   options: FounderOfferOption[] = [];
@@ -148,7 +150,10 @@ export class FounderOfferModalComponent implements OnChanges {
     if (changes['open'] && this.open) {
       this.plansService.getActivePlans(this.role).subscribe((plans) => {
         const paidPlan = plans.find((p: Plan) => (p?.price?.monthly ?? 0) > 0 || (p?.price?.quarterly ?? 0) > 0);
-        this.hasOffer = hasRealFounderOffer(paidPlan);
+        // An audience mismatch (admin excluded "new" or "existing" users from this
+        // offer) falls through to the same plain-welcome view as "no offer
+        // configured" — the popup still shows once, just without offer details.
+        this.hasOffer = hasRealFounderOffer(paidPlan) && matchesFounderOfferAudience(paidPlan, this.registeredAt);
         this.offerName = paidPlan?.founderOfferName || 'Founder Launch Offer';
         // The popup only ever shows once per user (gated by founderOfferSeenAt), so
         // "ends in N days" always counts from this view, not from registration —

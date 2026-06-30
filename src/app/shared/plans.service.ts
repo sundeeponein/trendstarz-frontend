@@ -43,6 +43,10 @@ export interface Plan {
   founderOfferName?: string;
   /** Founder Launch Offer countdown window, in days. */
   founderOfferWindowDays?: number;
+  /** Show the popup to users who registered within founderOfferWindowDays of now. */
+  founderOfferForNewUsers?: boolean;
+  /** Show the popup to users who registered before that window. */
+  founderOfferForExistingUsers?: boolean;
 }
 
 export interface PlanCapabilities {

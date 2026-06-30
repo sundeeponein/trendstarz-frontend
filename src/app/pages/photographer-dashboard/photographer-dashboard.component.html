@@ -2,6 +2,7 @@
   <app-founder-offer-modal
     [open]="showFounderOfferModal"
     role="PHOTOGRAPHER"
+    [registeredAt]="photographer?.firstRegisteredAt || photographer?.createdAt"
     (closed)="onFounderOfferModalClosed()">
   </app-founder-offer-modal>
   <div class="dashboard-welcome-bar mb-4">

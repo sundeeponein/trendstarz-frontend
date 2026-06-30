@@ -54,46 +54,6 @@
   color: #111827;
 }
 
-/* ── Pricing & Discounts (edit form) ──────────────────────────────────── */
-.pricing-discount-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 14px;
-
-  > div {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  label { font-size: 0.85rem; font-weight: 600; color: #374151; }
-
-  input[type=number] {
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    &:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
-  }
-}
-
-.discount-input-with-final {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  input[type=number] { flex: 1; min-width: 0; }
-
-  .final-price-hint {
-    flex-shrink: 0;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #059669;
-    white-space: nowrap;
-  }
-}
-
 .admin-plans {
   padding: 16px;
   max-width: 1100px;
@@ -222,13 +182,36 @@
 
 /* ── Form ─────────────────────────────────────────────────────── */
 .plan-form-wrap {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 24px;
-  max-width: 800px;
+  max-width: 920px;
+}
 
-  h3 { margin: 0 0 20px; font-size: 1.2rem; font-weight: 700; }
+.plan-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h3 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 700; }
+}
+
+.plan-form-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.88rem;
+}
+
+.success-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .form-row {
@@ -255,7 +238,7 @@
   flex-direction: row;
   gap: 16px;
   > div { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-  input { max-width: 100%; }
+  input, select { max-width: 100%; }
 }
 
 .checkbox-row {
@@ -265,44 +248,191 @@
   input[type=checkbox] { width: 15px; height: 15px; }
 }
 
-.form-section {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 14px;
+.section-hint {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: -8px 0 14px;
 }
 
-.section-header {
+/* ── Card sections ────────────────────────────────────────────── */
+.plan-card-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.plan-card-section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  gap: 9px;
+  font-size: 0.95rem;
   font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+
+  i { color: #f97316; font-size: 1.05rem; }
+}
+
+.audience-badge {
+  margin-left: auto;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ── Pricing cycle cards ──────────────────────────────────────── */
+.cycle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 14px;
+
+  @media (max-width: 700px) { grid-template-columns: 1fr; }
+}
+
+.cycle-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fafafa;
+
+  .form-row { margin-bottom: 8px; }
+  input { max-width: 100% !important; }
+}
+
+.cycle-card-title {
+  font-weight: 700;
+  font-size: 0.88rem;
   color: #374151;
   margin-bottom: 10px;
 }
 
-.section-hint {
-  font-size: 0.78rem;
+.cycle-months-badge {
+  font-weight: 700;
+  font-size: 0.65rem;
   color: #6b7280;
-  margin: -4px 0 10px;
+  background: #eef0f3;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
-.feature-row, .limit-row {
+.cycle-final {
+  font-size: 0.85rem;
+  color: #374151;
+  margin-top: 6px;
+  strong { color: #0d9488; }
+}
+
+/* ── Bonus months mini-cards ──────────────────────────────────── */
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 14px;
+
+  @media (max-width: 700px) { grid-template-columns: 1fr; }
+}
+
+.bonus-card {
+  border: 1px solid #e5e7eb;
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  input[type=number] {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    margin-bottom: 6px;
+    &:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
+  }
+}
+
+.bonus-final { font-size: 0.78rem; font-weight: 700; }
+
+.bonus-monthly   { border-left-color: #f97316; .bonus-final { color: #c2410c; } }
+.bonus-quarterly { border-left-color: #2563eb; .bonus-final { color: #1d4ed8; } }
+.bonus-yearly    { border-left-color: #7c3aed; .bonus-final { color: #6d28d9; } }
+
+/* ── Feature toggle grid ──────────────────────────────────────── */
+.feature-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  @media (max-width: 700px) { grid-template-columns: 1fr; }
+}
+
+.feature-toggle-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  background: #fafafa;
 }
 
-.toggle-wrap { flex-shrink: 0; }
+.feature-toggle-key { font-weight: 700; font-size: 0.85rem; color: #1f2937; }
+.feature-toggle-label { font-size: 0.78rem; color: #6b7280; margin-top: 2px; }
+
+/* ── Two cards side by side (Limits + Policies) ───────────────── */
+.two-card-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 700px) { grid-template-columns: 1fr; }
+
+  .plan-card-section { margin-bottom: 0; }
+}
+
+/* ── Clean limit rows ──────────────────────────────────────────── */
+.limit-clean-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  &:last-child { border-bottom: none; }
+}
+
+.limit-clean-label { font-size: 0.85rem; color: #374151; font-weight: 500; }
+
+.limit-clean-value {
+  width: 70px;
+  text-align: right;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  background: transparent;
+  &:hover, &:focus { border-color: #d1d5db; background: #fff; }
+  &:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
+}
 
 .toggle {
   position: relative;
   display: inline-block;
   width: 36px;
   height: 20px;
+  flex-shrink: 0;
 
   input { opacity: 0; width: 0; height: 0; }
 
@@ -330,17 +460,6 @@
     background: #6366f1;
     &::before { transform: translateX(16px); }
   }
-}
-
-.input-key   { flex: 2; min-width: 0; }
-.input-label { flex: 3; min-width: 0; }
-.input-value { width: 70px; flex-shrink: 0; }
-
-input.input-key, input.input-label, input.input-value {
-  padding: 6px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.85rem;
 }
 
 .form-actions {

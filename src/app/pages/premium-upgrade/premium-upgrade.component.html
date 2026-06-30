@@ -3,104 +3,110 @@
   <!-- ══════════════════════════════════════════
        STEP 1 — Choose Plan
   ══════════════════════════════════════════ -->
-  <div *ngIf="step === 'plan'" class="upgrade-card">
+  <div *ngIf="step === 'plan'" class="upgrade-card plan-upgrade-card">
     <div class="upgrade-header">
-      <span class="premium-badge">🌟 Premium</span>
+      <span class="premium-badge"><i class="bi bi-stars"></i> Premium</span>
       <h1>Choose Your Plan</h1>
-      <p class="upgrade-sub">Unlock contact visibility, analytics, priority search ranking, and unlimited social profiles.</p>
+      <p class="upgrade-sub">Unlock contact visibility, advanced analytics, priority search ranking, and unlimited social profiles to scale your {{ roleDisplayName.toLowerCase() }} journey.</p>
     </div>
 
-    <!-- Role toggle removed: Only show relevant plan for user's role -->
-
-    <div class="plans-grid">
-      <div *ngFor="let plan of plans" class="plan-card" [class.selected]="selectedPlan === plan" (click)="selectPlanCard(plan)">
-        <div class="plan-badge">{{ plan.name }}</div>
-        <div class="plan-offer-chip-upgrade" *ngIf="plan.discountLabel">{{ plan.discountLabel }}</div>
-
-        <!-- Duration selector for paid plans -->
-        <ng-container *ngIf="plan.price.monthly > 0 && selectedPlan === plan">
-          <div class="duration-tabs">
-            <button class="dur-btn" [class.active]="selectedDurationKey === '1m'" (click)="$event.stopPropagation(); selectDuration('1m')">
-              1 Month
-              <span class="dur-save" *ngIf="selectedPlan">{{ monthSavings > 0 ? 'Save ₹' + monthSavings : '' }}</span>
-            </button>
-            <button class="dur-btn" [class.active]="selectedDurationKey === '3m'" (click)="$event.stopPropagation(); selectDuration('3m')">
-              3 Months
-              <span class="dur-save" *ngIf="selectedPlan">{{ quarterlySavings > 0 ? 'Save ₹' + quarterlySavings : '' }}</span>
-            </button>
-            <button class="dur-btn" [class.active]="selectedDurationKey === '1y'" (click)="$event.stopPropagation(); selectDuration('1y')">
-              1 Year
-              <span class="dur-save" *ngIf="selectedPlan">
-                <span *ngIf="yearlySavings > 0">Save ₹{{ yearlySavings }} · Best Value</span>
-              </span>
-            </button>
-          </div>
-          <div class="plan-price">
-            <span class="price-original-strike" *ngIf="planDiscountPercent > 0">₹{{ selectedDuration?.price }}</span>
-            <span>₹{{ planDiscountPercent > 0 ? finalPrice : selectedDuration?.price }}</span>
-            <span class="price-period"> /{{ selectedDurationKey === '1m' ? 'mo' : selectedDurationKey === '3m' ? '3mo' : 'yr' }}</span>
-          </div>
-          <div class="discount-info-pills" *ngIf="planDiscountPercent > 0 || bonusMonths > 0">
-            <span class="pill pill-save" *ngIf="planDiscountPercent > 0">
-              ✨ Save ₹{{ (selectedPlan.price[selectedDurationKey === '1m' ? 'monthly' : selectedDurationKey === '3m' ? 'quarterly' : 'yearly'] * (planDiscountPercent / 100)).toFixed(0) }}
-              <ng-container *ngIf="selectedDurationKey === '1m'">/mo</ng-container>
-              <ng-container *ngIf="selectedDurationKey === '3m'">/3mo</ng-container>
-              <ng-container *ngIf="selectedDurationKey === '1y'">/yr</ng-container>
-            </span>
-            <span class="pill pill-discount" *ngIf="planDiscountPercent > 0">
-              {{ planDiscountPercent }}% Discount
-            </span>
-            <span class="pill pill-bonus" *ngIf="bonusMonths > 0">
-              🎁 Pay {{ baseMonths }} mo, get {{ totalMonths }} mo total
-            </span>
-          </div>
-          <div class="price-monthly-hint mt-1">
-            <span *ngIf="selectedDurationKey === '3m' || selectedDurationKey === '1y'" class="per-month-after-discount">
-              ₹{{ (finalPrice / (selectedDurationKey === '3m' ? 3 : 12)).toFixed(0) }}/mo
-            </span>
-          </div>
-        </ng-container>
-
-        <!-- Free plan price -->
-        <div class="plan-price" *ngIf="plan.price.monthly === 0">
-          <span>₹0</span>
-          <div class="price-period">Starter</div>
+    <div class="plan-comparison-grid">
+      <div class="comparison-plan free-plan">
+        <div class="plan-kicker">{{ freePlan?.name || freePlanName }}</div>
+        <div class="comparison-price">
+          <span class="currency-price">₹0</span>
+          <span class="plan-title">Starter</span>
         </div>
 
-        <!-- Unselected paid plan — just show monthly price -->
-        <div class="plan-price" *ngIf="plan.price.monthly > 0 && selectedPlan !== plan">
-          <span>₹{{ plan.price.monthly }}<span class="price-period">/mo</span></span>
+        <div class="feature-stack">
+          <div *ngFor="let feature of freeFeatures" class="feature-row" [class.muted]="!feature.value">
+            <span class="feature-icon" [class.negative]="!feature.value">
+              <i class="bi" [ngClass]="feature.value ? 'bi-check-lg' : 'bi-x-lg'"></i>
+            </span>
+            <span>{{ feature.label }}</span>
+          </div>
         </div>
 
-        <div class="plan-check" *ngIf="selectedPlan === plan">✓ Selected</div>
-        <div class="features-list unified">
-          <div *ngFor="let f of plan.features">
-            <span class="feat-icon" [style.color]="f.value ? '#22c55e' : '#ef4444'">{{ f.value ? '✔' : '✕' }}</span>
-            {{ f.label }}
+        <div class="limits-panel">
+          <div class="limits-header">
+            <span>Daily stats</span>
+            <span>Limits</span>
           </div>
-          <hr>
-          <div *ngFor="let l of plan.limits">
-            <span class="feat-icon">📦</span> {{ l.label }}: <strong>{{ l.value }}</strong>
+          <div *ngFor="let limit of freeLimits" class="limit-row">
+            <span>{{ limit.label }}</span>
+            <strong>{{ limit.value }}</strong>
           </div>
-          <hr>
-          <div class="feature-item note" *ngIf="plan.policies.imageRetentionDaysAfterExpiry">
-            <span class="feat-icon">⚠</span> Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> if not renewed
+        </div>
+
+        <div class="plan-notice warning" *ngIf="freeImageRetentionDays">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span>Images removed after <strong>{{ freeImageRetentionDays }} days</strong> if not renewed.</span>
+        </div>
+
+        <div class="plan-footnote">
+          <i class="bi bi-lock"></i>
+          <span>{{ freePlan ? getContactVisibilityLabel(freePlan) : 'Contact details hidden' }}</span>
+        </div>
+      </div>
+
+      <div class="comparison-plan pro-plan" *ngIf="displayPaidPlan as proPlan">
+        <div class="limited-offer">{{ bestOfferLabel }}</div>
+        <div class="plan-kicker pro">{{ proPlan.name || proPlanName }}</div>
+
+        <div class="pro-price-row">
+          <span class="price-original-strike" *ngIf="planDiscountPercent > 0">₹{{ selectedDurationPrice }}</span>
+          <span class="premium-price">₹{{ finalPrice }}</span>
+          <span class="price-period">/ {{ durationPeriodLabel }}</span>
+        </div>
+
+        <div class="duration-tabs comparison-duration-tabs">
+          <button class="dur-btn" [class.active]="selectedDurationKey === '1m'" (click)="selectDuration('1m')">
+            1 Month
+            <span class="dur-save" *ngIf="monthSavings > 0">Save ₹{{ monthSavings }}</span>
+          </button>
+          <button class="dur-btn" [class.active]="selectedDurationKey === '3m'" (click)="selectDuration('3m')">
+            3 Months
+            <span class="dur-save" *ngIf="quarterlySavings > 0">Save ₹{{ quarterlySavings }}</span>
+          </button>
+          <button class="dur-btn" [class.active]="selectedDurationKey === '1y'" (click)="selectDuration('1y')">
+            1 Year
+            <span class="dur-save" *ngIf="yearlySavings > 0">Save ₹{{ yearlySavings }}</span>
+          </button>
+        </div>
+
+        <div class="discount-info-pills" *ngIf="planDiscountPercent > 0 || bonusMonths > 0 || founderBonusMonths > 0">
+          <span class="pill pill-save" *ngIf="planDiscountPercent > 0">Save ₹{{ discountAmount }}</span>
+          <span class="pill pill-discount" *ngIf="planDiscountPercent > 0">{{ planDiscountPercent }}% Discount</span>
+          <span class="pill pill-bonus" *ngIf="bonusMonths > 0 || founderBonusMonths > 0">Pay {{ baseMonths }}, get {{ totalMonths }}</span>
+        </div>
+
+        <div class="feature-stack pro-features">
+          <div *ngFor="let feature of paidFeatures" class="feature-row" [class.muted]="!feature.value">
+            <span class="feature-icon" [class.negative]="!feature.value" [class.info]="!feature.value">
+              <i class="bi" [ngClass]="feature.value ? 'bi-check-circle' : 'bi-info-circle'"></i>
+            </span>
+            <span>{{ feature.label }}</span>
           </div>
-          <hr>
-          <div class="feature-item note">
-            <span class="feat-icon">🔓</span> <strong>{{ getContactVisibilityLabel(plan) }}</strong>
+        </div>
+
+        <div class="limits-panel pro-limits">
+          <div *ngFor="let limit of paidLimits" class="limit-row">
+            <span>{{ limit.label }}</span>
+            <strong>{{ limit.value }}</strong>
           </div>
-          <div class="offers">
-            <span *ngIf="plan.discountLabel">{{ plan.discountLabel }}</span>
-          </div>
+        </div>
+
+        <div class="plan-notice success">
+          <i class="bi bi-eye"></i>
+          <span>{{ getContactVisibilityLabel(proPlan) }}</span>
         </div>
       </div>
     </div>
 
     <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
 
-    <div class="upgrade-actions">
-      <button class="btn-back" (click)="goToProfile()">← Back to Profile</button>
+    <div class="upgrade-actions plan-actions">
+      <button class="btn-back" (click)="goToProfile()"><i class="bi bi-arrow-left"></i> Back to Profile</button>
       <button class="btn-upgrade" [disabled]="!selectedDuration" (click)="goToPayment()">
         {{ getCtaLabel() }}
       </button>

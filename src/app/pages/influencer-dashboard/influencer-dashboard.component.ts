@@ -66,6 +66,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   paymentSummary = {
     earnedThisMonth: 0,
     pending: 0,
+    confirmedWorkValue: 0,
     frozen: 0,
     paidInPayToJoin: 0,
   };
@@ -397,6 +398,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       )
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
+    const confirmedWorkValue = rows
+      .filter((r: any) => {
+        if (r.recipientRole !== 'influencer') return false;
+        if (r.payoutStatus === 'paid' || r.payoutStatus === 'skipped' || r.payoutStatus === 'frozen') return false;
+        return !this.isPayoutProcessingStage(r);
+      })
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
     const frozen = rows
       .filter((r: any) => r.recipientRole === 'influencer' && r.payoutStatus === 'frozen')
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
@@ -405,7 +414,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .filter((r: any) => r.payerRole === 'influencer')
       .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
 
-    this.paymentSummary = { earnedThisMonth, pending, frozen, paidInPayToJoin };
+    this.paymentSummary = { earnedThisMonth, pending, confirmedWorkValue, frozen, paidInPayToJoin };
   }
 
   /** Only non-paid / non-skipped transactions for the dashboard snapshot */

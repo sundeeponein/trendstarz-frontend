@@ -2,6 +2,7 @@
   <app-founder-offer-modal
     [open]="showFounderOfferModal"
     role="INFLUENCER"
+    [registeredAt]="firstRegisteredAtDisplay"
     (closed)="onFounderOfferModalClosed()">
   </app-founder-offer-modal>
   <div class="dashboard-welcome-bar mb-4">
@@ -321,7 +322,13 @@
     </div>
 
     <div class="invite-summary" *ngIf="pendingPaymentHistory.length">
-      <div>Payout processing: <strong>{{ formatPaise(paymentSummary.pending) }}</strong></div>
+      <div *ngIf="paymentSummary.pending > 0">
+        Payout processing: <strong>{{ formatPaise(paymentSummary.pending) }}</strong>
+      </div>
+      <div *ngIf="paymentSummary.pending === 0 && paymentSummary.confirmedWorkValue > 0">
+        Confirmed upcoming earnings: <strong>{{ formatPaise(paymentSummary.confirmedWorkValue) }}</strong>
+        <span class="idb-summary-note">Release starts after work is completed and approved.</span>
+      </div>
       <div *ngIf="paymentSummary.frozen > 0" class="idb-frozen-note">
         <i class="bi bi-exclamation-triangle-fill"></i>
         {{ formatPaise(paymentSummary.frozen) }} frozen — dispute under review

@@ -93,6 +93,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
       { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
       { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
+      { key: 'founderBonusMonthsMonthly', label: 'Founder Offer Bonus Months (Monthly)' },
+      { key: 'founderBonusMonthsQuarterly', label: 'Founder Offer Bonus Months (Quarterly)' },
+      { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
     BRAND: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
@@ -102,6 +105,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
       { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
       { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
+      { key: 'founderBonusMonthsMonthly', label: 'Founder Offer Bonus Months (Monthly)' },
+      { key: 'founderBonusMonthsQuarterly', label: 'Founder Offer Bonus Months (Quarterly)' },
+      { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
     PHOTOGRAPHER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
@@ -111,6 +117,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
       { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
       { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
+      { key: 'founderBonusMonthsMonthly', label: 'Founder Offer Bonus Months (Monthly)' },
+      { key: 'founderBonusMonthsQuarterly', label: 'Founder Offer Bonus Months (Quarterly)' },
+      { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
   };
 
@@ -262,11 +271,28 @@ export class AdminPlansComponent implements OnInit {
     return this.getPricingPreview().find(r => r.label.toLowerCase() === durationKey)?.final ?? 0;
   }
 
-  /** Months actually granted when a user pays for this cycle, after the configured bonus. */
+  /** Months actually granted to every paying user of this cycle: base + the standing Pricing & Discounts bonus. */
   getFinalDuration(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
     const bonusKey = `bonusMonths${durationKey.charAt(0).toUpperCase()}${durationKey.slice(1)}`;
     const bonusMonths = this.getOfferValue(bonusKey);
     return this.baseMonthsByCycle[durationKey] + bonusMonths;
+  }
+
+  /** Months granted to a Founder-Offer-eligible user: standing bonus (above) + the Founder Offer's own bonus, stacked — e.g. pay 1, +1 standing, +1 Founder Offer = 3 total. */
+  getFounderFinalDuration(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
+    const founderBonusKey = `founderBonusMonths${durationKey.charAt(0).toUpperCase()}${durationKey.slice(1)}`;
+    const founderBonusMonths = this.getOfferValue(founderBonusKey);
+    return this.getFinalDuration(durationKey) + founderBonusMonths;
+  }
+
+  /** Small status tag next to "First-Login Founder Offer Popup" summarizing who the two checkboxes target. */
+  get founderOfferAudienceBadge(): string {
+    const forNew = this.editingPlan?.founderOfferForNewUsers ?? true;
+    const forExisting = this.editingPlan?.founderOfferForExistingUsers ?? true;
+    if (forNew && forExisting) return 'ALL USERS';
+    if (forNew) return 'NEW USERS';
+    if (forExisting) return 'EXISTING USERS';
+    return 'DISABLED';
   }
 
   private syncContactVisibilityFeature(_plan: Plan) {
