@@ -83,6 +83,13 @@ export function isNewUserForFounderOffer(registeredAt: string | Date | null | un
 /** Whether the popup should be shown to this user at all, combining the offer's audience checkboxes with their new/existing status. */
 export function matchesFounderOfferAudience(plan: Plan | undefined, registeredAt: string | Date | null | undefined): boolean {
   if (!plan) return false;
+  if (plan.founderOfferEndsAt) {
+    const endsAt = new Date(plan.founderOfferEndsAt).getTime();
+    if (Number.isFinite(endsAt) && endsAt < Date.now()) return false;
+  }
+  const audienceCap = Number(plan.founderOfferAudienceCap || 0);
+  const audienceCount = Number(plan.founderOfferAudienceCount || 0);
+  if (audienceCap > 0 && audienceCount >= audienceCap) return false;
   const isNew = isNewUserForFounderOffer(registeredAt, plan.founderOfferWindowDays || 7);
   return isNew ? (plan.founderOfferForNewUsers ?? true) : (plan.founderOfferForExistingUsers ?? true);
 }

@@ -209,6 +209,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     'Other',
   ];
   reviewLoading = new Set<string>();
+  autoCompleteToggleLoading = new Set<string>();
   expandedSubmissionIds = new Set<string>();
   private submissionApprovalTicker: ReturnType<typeof setInterval> | null = null;
   showUpgradeBanner: boolean = false;
@@ -4724,6 +4725,37 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  toggleSubmissionAutoComplete(sub: any, campaignId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const enabled = !!input.checked;
+    const inviteId = String(sub?.inviteId || '');
+    if (!inviteId || this.autoCompleteToggleLoading.has(inviteId)) return;
+
+    this.autoCompleteToggleLoading.add(inviteId);
+    this.config.setCampaignSubmissionAutoComplete(inviteId, enabled).subscribe({
+      next: (res: any) => {
+        const updated = res?.submission;
+        const submissions = this.campaignSubmissionsMap.get(campaignId) || [];
+        this.campaignSubmissionsMap.set(
+          campaignId,
+          submissions.map((item: any) => String(item?.inviteId || '') === inviteId
+            ? { ...item, hostAutoCompleteEnabled: enabled, hostAutoCompleteEnabledAt: updated?.hostAutoCompleteEnabledAt || item?.hostAutoCompleteEnabledAt }
+            : item),
+        );
+        this.toast.success(enabled ? 'Auto-complete enabled for this post.' : 'Auto-complete disabled for this post.');
+        this.cd.detectChanges();
+      },
+      error: (err) => {
+        input.checked = !enabled;
+        this.toast.error(err?.error?.message || 'Could not update auto-complete setting.');
+      },
+      complete: () => {
+        this.autoCompleteToggleLoading.delete(inviteId);
+        this.cd.detectChanges();
+      },
+    });
+  }
+
   onSubmissionDisputeEvidenceChange(inviteId: string, event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -4913,9 +4945,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getSubmissionAutoCompleteAt(submission: any): Date | null {
+    if (!submission?.hostAutoCompleteEnabled) return null;
     const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
     if (!unlockAt) return null;
-    return new Date(unlockAt.getTime() + this.submissionAutoCompleteGraceHours * 60 * 60 * 1000);
+    return unlockAt;
   }
 
   canApproveSubmission(submission: any): boolean {
@@ -4987,6 +5020,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       hour12: true,
     });
+  }
+
+  getSubmissionAutoCompleteDelayLabel(): string {
+    return this.formatHoursLabel(this.submissionApprovalWaitHours);
   }
 
   private formatHoursLabel(hours: number): string {

@@ -1060,6 +1060,17 @@
                           <i class="bi bi-flag"></i> Submit Issue
                         </button>
                       </div>
+                      <label class="sub-auto-complete-toggle" *ngIf="sub.status === 'submitted'">
+                        <input
+                          type="checkbox"
+                          [checked]="sub.hostAutoCompleteEnabled"
+                          [disabled]="autoCompleteToggleLoading.has(sub.inviteId)"
+                          (change)="toggleSubmissionAutoComplete(sub, c._id, $event)" />
+                        <span>
+                          Auto complete after {{ getSubmissionAutoCompleteDelayLabel() }}
+                          <small>Completes the post automatically if no issue is submitted.</small>
+                        </span>
+                      </label>
                       <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub) && !isSubmissionAutoCompleteWindowExpired(sub)">
                         <i class="bi bi-clock-history"></i>
                         Review period active. Completion confirmation unlocks in {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
@@ -1070,7 +1081,12 @@
                       </div>
                       <div class="sub-metrics-empty" *ngIf="canApproveSubmission(sub)">
                         <i class="bi bi-clock-history"></i>
-                        Host review is open. If no action is taken, this will auto-complete at {{ getSubmissionAutoCompleteAtText(sub) }}.
+                        <ng-container *ngIf="sub.hostAutoCompleteEnabled; else manualReviewOpen">
+                          Host review is open. If no action is taken, this will auto-complete at {{ getSubmissionAutoCompleteAtText(sub) }}.
+                        </ng-container>
+                        <ng-template #manualReviewOpen>
+                          Host review is open. Mark completed or submit an issue.
+                        </ng-template>
                       </div>
                     </div>
 

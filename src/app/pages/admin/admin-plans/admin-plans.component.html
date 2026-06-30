@@ -224,7 +224,7 @@
         <span>First-Login Founder Offer Popup</span>
         <span class="audience-badge">{{ founderOfferAudienceBadge }}</span>
       </div>
-      <p class="section-hint">Shown once, on first login, when a real discount (Pricing &amp; Discounts) or any bonus months (Pricing &amp; Discounts or below) is set. Bonus months below stack <strong>on top of</strong> the standing Bonus Months above — e.g. pay 1 month, +1 standing, +1 Founder Offer = 3 months total — but only for users who still match the audience checkboxes when their payment is approved.</p>
+      <p class="section-hint">Shown once for eligible free users when a real discount or bonus months are configured. The Founder Offer bonus below is an <strong>extra launch bonus</strong> added on top of the standard bonus from Pricing &amp; Discounts, only while users still match the audience, cap, and end-date rules.</p>
 
       <div class="form-row two-col">
         <div>
@@ -237,19 +237,32 @@
         </div>
       </div>
 
+      <div class="form-row two-col">
+        <div>
+          <label>Launch Audience Cap</label>
+          <input type="number" [(ngModel)]="editingPlan.founderOfferAudienceCap" min="0" placeholder="0 = unlimited" />
+          <small class="field-hint">Current {{ editingPlan.userType | titlecase }} count: {{ editingPlan.founderOfferAudienceCount || 0 }}</small>
+        </div>
+        <div>
+          <label>Offer Ends At</label>
+          <input type="date" [ngModel]="dateInputValue(editingPlan.founderOfferEndsAt)" (ngModelChange)="editingPlan.founderOfferEndsAt = $event || null" />
+          <small class="field-hint">Leave empty to use only audience/window rules.</small>
+        </div>
+      </div>
+
       <div class="bonus-grid">
         <div class="bonus-card bonus-monthly">
-          <label>Founder Offer Bonus Months (Monthly) <span class="cycle-months-badge">+{{ getOfferValue('bonusMonthsMonthly') }} standing</span></label>
+          <label>Extra Founder Bonus Months (Monthly) <span class="cycle-months-badge" *ngIf="getOfferValue('bonusMonthsMonthly') > 0">+{{ getOfferValue('bonusMonthsMonthly') }} standard bonus</span></label>
           <input type="number" [value]="getOfferValue('founderBonusMonthsMonthly')" min="0" (input)="setOfferValue('founderBonusMonthsMonthly', $event.target.valueAsNumber)" />
           <span class="bonus-final">Final (stacked): {{ getFounderFinalDuration('monthly') }} mo</span>
         </div>
         <div class="bonus-card bonus-quarterly">
-          <label>Founder Offer Bonus Months (Quarterly) <span class="cycle-months-badge">+{{ getOfferValue('bonusMonthsQuarterly') }} standing</span></label>
+          <label>Extra Founder Bonus Months (Quarterly) <span class="cycle-months-badge" *ngIf="getOfferValue('bonusMonthsQuarterly') > 0">+{{ getOfferValue('bonusMonthsQuarterly') }} standard bonus</span></label>
           <input type="number" [value]="getOfferValue('founderBonusMonthsQuarterly')" min="0" (input)="setOfferValue('founderBonusMonthsQuarterly', $event.target.valueAsNumber)" />
           <span class="bonus-final">Final (stacked): {{ getFounderFinalDuration('quarterly') }} mo</span>
         </div>
         <div class="bonus-card bonus-yearly">
-          <label>Founder Offer Bonus Months (Yearly) <span class="cycle-months-badge">+{{ getOfferValue('bonusMonthsYearly') }} standing</span></label>
+          <label>Extra Founder Bonus Months (Yearly) <span class="cycle-months-badge" *ngIf="getOfferValue('bonusMonthsYearly') > 0">+{{ getOfferValue('bonusMonthsYearly') }} standard bonus</span></label>
           <input type="number" [value]="getOfferValue('founderBonusMonthsYearly')" min="0" (input)="setOfferValue('founderBonusMonthsYearly', $event.target.valueAsNumber)" />
           <span class="bonus-final">Final (stacked): {{ getFounderFinalDuration('yearly') }} mo</span>
         </div>

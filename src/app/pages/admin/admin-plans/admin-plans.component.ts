@@ -289,10 +289,24 @@ export class AdminPlansComponent implements OnInit {
   get founderOfferAudienceBadge(): string {
     const forNew = this.editingPlan?.founderOfferForNewUsers ?? true;
     const forExisting = this.editingPlan?.founderOfferForExistingUsers ?? true;
+    const cap = Number(this.editingPlan?.founderOfferAudienceCap || 0);
+    const count = Number(this.editingPlan?.founderOfferAudienceCount || 0);
+    if (cap > 0 && count >= cap) return 'CAP REACHED';
+    if (this.editingPlan?.founderOfferEndsAt) {
+      const endsAt = new Date(this.editingPlan.founderOfferEndsAt).getTime();
+      if (Number.isFinite(endsAt) && endsAt < Date.now()) return 'ENDED';
+    }
     if (forNew && forExisting) return 'ALL USERS';
     if (forNew) return 'NEW USERS';
     if (forExisting) return 'EXISTING USERS';
     return 'DISABLED';
+  }
+
+  dateInputValue(value?: string | Date | null): string {
+    if (!value) return '';
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
   }
 
   private syncContactVisibilityFeature(_plan: Plan) {

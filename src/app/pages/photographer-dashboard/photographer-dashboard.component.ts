@@ -61,6 +61,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   showFounderOfferModal = false;
   private founderOfferAlreadySeen = true;
   private founderOfferCapsLoaded = false;
+  private showingEligibilityUpgradePrompt = false;
 
   selectedInvite: any = null;
   selectedInviteManual = false;
@@ -105,6 +106,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       this.planCaps = caps;
       this.founderOfferCapsLoaded = true;
       this.maybeShowFounderOfferModal();
+      this.maybeShowUpgradeEligibilityModal();
     });
 
     this.loadProfileVerificationDashboard();
@@ -141,7 +143,86 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   }
 
   onFounderOfferModalClosed(): void {
+    if (this.showingEligibilityUpgradePrompt) {
+      this.markEligibilityUpgradePromptSeen();
+      this.showingEligibilityUpgradePrompt = false;
+    }
     this.showFounderOfferModal = false;
+  }
+
+  private maybeShowUpgradeEligibilityModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.showFounderOfferModal) return;
+    if (!this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    if (!this.hasStarterEligibilityClosed()) return;
+    if (this.hasSeenEligibilityUpgradePrompt()) return;
+
+    this.showingEligibilityUpgradePrompt = true;
+    this.showFounderOfferModal = true;
+  }
+
+  private hasStarterEligibilityClosed(): boolean {
+    const cap = this.starterCampaignEligibilityCap();
+    if (cap <= 0) return false;
+    return this.completedStarterCampaignCountThisMonth() >= cap;
+  }
+
+  private starterCampaignEligibilityCap(): number {
+    const limits = Array.isArray(this.planCaps?.limits) ? this.planCaps.limits : [];
+    const values = ['maxActiveCampaigns', 'maxInvitesPerMonth', 'maxInvitesPerCampaign', 'maxCampaignPosts']
+      .map(key => Number(limits.find((limit: any) => limit?.key === key)?.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+    return values.length ? Math.min(...values) : 1;
+  }
+
+  private completedStarterCampaignCountThisMonth(): number {
+    const completedStatuses = new Set(['completed', 'approved']);
+    const completedIds = new Set<string>();
+
+    for (const invite of this.brandInvites) {
+      if (!completedStatuses.has(String(invite?.status || '').toLowerCase())) continue;
+      if (!this.isInCurrentMonth(invite?.completedAt || invite?.updatedAt || invite?.createdAt)) continue;
+      completedIds.add(String(invite?._id || invite?.inviteId || invite?.campaignId?._id || completedIds.size));
+    }
+
+    for (const tx of this.paymentHistory) {
+      if (tx?.recipientRole !== 'photographer') continue;
+      if (!this.isPayoutProcessingStage(tx)) continue;
+      if (!this.isInCurrentMonth(tx?.completedAt || tx?.paidOutAt || tx?.updatedAt || tx?.createdAt)) continue;
+      completedIds.add(String(tx?.inviteId || tx?.campaignId || tx?._id || completedIds.size));
+    }
+
+    return completedIds.size;
+  }
+
+  private isInCurrentMonth(value?: string | Date | null): boolean {
+    if (!value) return false;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return false;
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }
+
+  private eligibilityUpgradePromptKey(): string {
+    const user = this.photographer || this.session.getUser() || {};
+    const id = user?._id || user?.id || user?.email || 'current';
+    return `trendstarz:upgrade-eligibility-prompt:photographer:${id}:${this.currentMonthKey()}`;
+  }
+
+  private currentMonthKey(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private hasSeenEligibilityUpgradePrompt(): boolean {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(this.eligibilityUpgradePromptKey()) === '1';
+  }
+
+  private markEligibilityUpgradePromptSeen(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.eligibilityUpgradePromptKey(), '1');
   }
 
   private loadProfileVerificationDashboard(): void {
@@ -227,6 +308,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.loadBrandInvites();
         this.loadBrandCampaigns();
         this.loadPaymentHistory();
+        this.maybeShowUpgradeEligibilityModal();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -268,6 +350,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.brandInvites = Array.isArray(rows) ? rows : [];
         this.brandInvitesLoading = false;
+        this.maybeShowUpgradeEligibilityModal();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -283,6 +366,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.paymentHistory = rows;
         this.recomputePaymentSummary(rows);
+        this.maybeShowUpgradeEligibilityModal();
         this.cdr.detectChanges();
       },
       error: () => {

@@ -47,6 +47,12 @@ export interface Plan {
   founderOfferForNewUsers?: boolean;
   /** Show the popup to users who registered before that window. */
   founderOfferForExistingUsers?: boolean;
+  /** Optional cap for the role audience; 0 or empty means unlimited. */
+  founderOfferAudienceCap?: number;
+  /** Current total users for this plan role, returned by the API for launch cap checks. */
+  founderOfferAudienceCount?: number;
+  /** Optional date after which the Founder Offer no longer appears or grants bonuses. */
+  founderOfferEndsAt?: string | Date | null;
 }
 
 export interface PlanCapabilities {

@@ -1273,6 +1273,10 @@ export class ConfigService {
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/review`, data);
   }
 
+  setCampaignSubmissionAutoComplete(inviteId: string, enabled: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/auto-complete`, { enabled });
+  }
+
   updateSubmissionStats(inviteId: string, stats: {
     viewsCount?: number;
     likesCount?: number;

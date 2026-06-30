@@ -61,6 +61,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   showFounderOfferModal = false;
   private founderOfferAlreadySeen = true;
   private founderOfferCapsLoaded = false;
+  private showingEligibilityUpgradePrompt = false;
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
   usageSummary: UsageSummary | null = null;
@@ -116,6 +117,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
           this.planCaps = caps;
           this.founderOfferCapsLoaded = true;
           this.maybeShowFounderOfferModal();
+          this.maybeShowUpgradeEligibilityModal();
         });
         this.monetizationApi.getMyUsage().subscribe({
           next: (res) => {
@@ -183,7 +185,89 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   }
 
   onFounderOfferModalClosed(): void {
+    if (this.showingEligibilityUpgradePrompt) {
+      this.markEligibilityUpgradePromptSeen();
+      this.showingEligibilityUpgradePrompt = false;
+    }
     this.showFounderOfferModal = false;
+  }
+
+  private maybeShowUpgradeEligibilityModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.showFounderOfferModal) return;
+    if (!this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    if (!this.hasStarterEligibilityClosed()) return;
+    if (this.hasSeenEligibilityUpgradePrompt()) return;
+
+    this.showingEligibilityUpgradePrompt = true;
+    this.showFounderOfferModal = true;
+  }
+
+  private hasStarterEligibilityClosed(): boolean {
+    const cap = this.starterCampaignEligibilityCap();
+    if (cap <= 0) return false;
+    return this.completedStarterCampaignCountThisMonth() >= cap;
+  }
+
+  private starterCampaignEligibilityCap(): number {
+    const limits = Array.isArray(this.planCaps?.limits) ? this.planCaps.limits : [];
+    const values = ['maxActiveCampaigns', 'maxInvitesPerMonth', 'maxInvitesPerCampaign', 'maxCampaignPosts']
+      .map(key => Number(limits.find((limit: any) => limit?.key === key)?.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+    return values.length ? Math.min(...values) : 1;
+  }
+
+  private completedStarterCampaignCountThisMonth(): number {
+    const completedIds = new Set<string>();
+
+    for (const campaign of this.recentCampaigns) {
+      const status = String(campaign?.status || '').toLowerCase();
+      const completedCount = Number(campaign?.completed || 0);
+      const isClosed = completedCount > 0 || status === 'completed' || status === 'approved';
+      if (!isClosed) continue;
+      if (!this.isInCurrentMonth(campaign?.completedAt || campaign?.updatedAt || campaign?.createdAt)) continue;
+      completedIds.add(String(campaign?._id || campaign?.id || completedIds.size));
+    }
+
+    for (const tx of this.paymentHistory) {
+      if (tx?.payerRole !== 'brand') continue;
+      const stage = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || tx?.workStatus || '').toLowerCase();
+      if (!['completed', 'approved'].includes(stage)) continue;
+      if (!this.isInCurrentMonth(tx?.completedAt || tx?.paidOutAt || tx?.updatedAt || tx?.createdAt)) continue;
+      completedIds.add(String(tx?.inviteId || tx?.campaignId || tx?._id || completedIds.size));
+    }
+
+    return completedIds.size;
+  }
+
+  private isInCurrentMonth(value?: string | Date | null): boolean {
+    if (!value) return false;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return false;
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }
+
+  private eligibilityUpgradePromptKey(): string {
+    const brand = this.dashboard?.brand || this.session.getUser() || {};
+    const id = brand?._id || brand?.id || brand?.email || 'current';
+    return `trendstarz:upgrade-eligibility-prompt:brand:${id}:${this.currentMonthKey()}`;
+  }
+
+  private currentMonthKey(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private hasSeenEligibilityUpgradePrompt(): boolean {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(this.eligibilityUpgradePromptKey()) === '1';
+  }
+
+  private markEligibilityUpgradePromptSeen(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.eligibilityUpgradePromptKey(), '1');
   }
 
   private loadProfileVerificationDashboard(): void {
@@ -227,6 +311,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.loadPaymentHistory();
         this.loadAttentionCounts();
+        this.maybeShowUpgradeEligibilityModal();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -242,6 +327,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.paymentHistory = rows;
         this.recomputePaymentSummary(rows);
+        this.maybeShowUpgradeEligibilityModal();
       },
       error: () => {
         this.paymentHistory = [];
