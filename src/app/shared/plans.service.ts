@@ -39,6 +39,10 @@ export interface Plan {
   isActive?: boolean;
   sortOrder?: number;
   discountLabel?: string;
+  /** First-login Founder Launch Offer popup title — admin-renameable (e.g. "Festival Offer"). */
+  founderOfferName?: string;
+  /** Founder Launch Offer countdown window, in days. */
+  founderOfferWindowDays?: number;
 }
 
 export interface PlanCapabilities {

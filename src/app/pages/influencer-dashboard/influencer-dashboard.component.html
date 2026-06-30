@@ -1,4 +1,9 @@
 <div class="cm-page influencer-dashboard p-4">
+  <app-founder-offer-modal
+    [open]="showFounderOfferModal"
+    role="INFLUENCER"
+    (closed)="onFounderOfferModalClosed()">
+  </app-founder-offer-modal>
   <div class="dashboard-welcome-bar mb-4">
     <div class="dashboard-welcome-left">
       <h1 class="welcome-title mb-1">Welcome, {{ dashboard?.user?.name || 'Influencer' }}</h1>

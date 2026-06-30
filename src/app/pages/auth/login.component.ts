@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -35,11 +35,14 @@ export class LoginComponent {
   resendVerificationError: string | null = null;
   changingEmail = false;
   private unverifiedEmail = '';
+  /** Where to send the user after login instead of their role dashboard, e.g. /login?returnUrl=/upgrade-premium */
+  private returnUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private session: SessionService,
     private configService: ConfigService,
     private firebaseAuth: FirebaseAuthService,
@@ -49,6 +52,12 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
     });
+
+    // Only honor app-internal paths — never an absolute/external URL.
+    const requested = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (requested && requested.startsWith('/') && !requested.startsWith('//')) {
+      this.returnUrl = requested;
+    }
 
     this.loginForm.valueChanges.subscribe(() => {
       if (this.submitted) this.submitted = false;
@@ -119,17 +128,17 @@ export class LoginComponent {
               const user = { ...res.user, ...(profile || {}), brandId: profile?._id || res.user?._id };
               this.session.setUser(user);
               // Always redirect to brand-dashboard; user can complete profile from there
-              this.router.navigate(['/brand-dashboard']);
+              this.router.navigateByUrl(this.returnUrl || '/brand-dashboard');
             },
             error: () => {
               // Even on error, go to dashboard (dashboard will show profile incomplete banner)
-              this.router.navigate(['/brand-dashboard']);
+              this.router.navigateByUrl(this.returnUrl || '/brand-dashboard');
             }
           });
         } else if (userType === 'influencer') {
-          this.router.navigate(['/influencer-dashboard']);
+          this.router.navigateByUrl(this.returnUrl || '/influencer-dashboard');
         } else if (userType === 'photographer') {
-          this.router.navigate(['/photographer-dashboard']);
+          this.router.navigateByUrl(this.returnUrl || '/photographer-dashboard');
         } else {
           this.router.navigate(['/']);
         }

@@ -18,6 +18,7 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -25,7 +26,7 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, FounderOfferModalComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {
@@ -57,6 +58,9 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   };
   verificationCallNumber = '';
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
+  showFounderOfferModal = false;
+  private founderOfferAlreadySeen = true;
+  private founderOfferCapsLoaded = false;
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
   usageSummary: UsageSummary | null = null;
@@ -110,6 +114,8 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         this.loadProfileVerificationDashboard();
         this.plansService.getMyCapabilities().subscribe((caps) => {
           this.planCaps = caps;
+          this.founderOfferCapsLoaded = true;
+          this.maybeShowFounderOfferModal();
         });
         this.monetizationApi.getMyUsage().subscribe({
           next: (res) => {
@@ -146,6 +152,8 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     this.userSub = this.session.user$.subscribe(user => {
       if (user) {
         this.config.getBrandProfileById().subscribe((profile: any) => {
+          this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
+          this.maybeShowFounderOfferModal();
           const merged = { ...user, ...profile };
           const isSame = JSON.stringify(user) === JSON.stringify(merged);
           if (profile && !isSame) {
@@ -165,6 +173,17 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     });
     // Removed router event subscription to prevent infinite reloads
     // Load categories/states for filters (implement as needed)
+  }
+
+  private maybeShowFounderOfferModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    this.showFounderOfferModal = true;
+  }
+
+  onFounderOfferModalClosed(): void {
+    this.showFounderOfferModal = false;
   }
 
   private loadProfileVerificationDashboard(): void {

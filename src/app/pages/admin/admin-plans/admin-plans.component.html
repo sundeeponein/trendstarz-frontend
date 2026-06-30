@@ -211,6 +211,21 @@
       <input type="text" [(ngModel)]="editingPlan.discountLabel" placeholder="e.g. Early Access Offer / New Year Offer" />
     </div>
 
+    <div class="form-section">
+      <div class="section-header"><span>First-Login Founder Offer Popup</span></div>
+      <p class="section-hint">Shown once to new users on their first login, when a real discount or bonus months is set above. Same pricing as Pricing &amp; Discounts — just the popup's title and countdown.</p>
+      <div class="pricing-discount-row">
+        <div>
+          <label>Offer Name (popup title)</label>
+          <input type="text" [(ngModel)]="editingPlan.founderOfferName" placeholder="e.g. Founder Launch Offer / Festival Offer" />
+        </div>
+        <div>
+          <label>Offer Window (days)</label>
+          <input type="number" [(ngModel)]="editingPlan.founderOfferWindowDays" min="0" />
+        </div>
+      </div>
+    </div>
+
     <!-- Features section: always show all for type -->
     <div class="form-section">
       <div class="section-header">

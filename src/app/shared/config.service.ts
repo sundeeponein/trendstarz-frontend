@@ -1004,6 +1004,13 @@ export class ConfigService {
     );
   }
 
+  markFounderOfferSeen(): Observable<{ success: boolean; founderOfferSeenAt: string }> {
+    return this.http.post<{ success: boolean; founderOfferSeenAt: string }>(
+      `${this.apiUrl}/auth/founder-offer/seen`,
+      {},
+    );
+  }
+
   submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
   }

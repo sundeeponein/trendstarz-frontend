@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { finalize, timeout } from 'rxjs/operators';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
 import { CampaignDetailModalComponent, CampaignAcceptPayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { InviteAcceptPayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
@@ -20,11 +21,12 @@ import {
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
@@ -55,6 +57,10 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
   profileVerificationLoading = false;
   private loadedOnce = false;
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
+  showFounderOfferModal = false;
+  private founderOfferAlreadySeen = true;
+  private founderOfferCapsLoaded = false;
 
   selectedInvite: any = null;
   selectedInviteManual = false;
@@ -70,6 +76,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private readonly session: SessionService,
     private readonly config: ConfigService,
+    private readonly plansService: PlansService,
     private readonly monetizationApi: MonetizationApiService,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
@@ -92,6 +99,12 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.usageSummary = null;
       },
+    });
+
+    this.plansService.getMyCapabilities().subscribe((caps) => {
+      this.planCaps = caps;
+      this.founderOfferCapsLoaded = true;
+      this.maybeShowFounderOfferModal();
     });
 
     this.loadProfileVerificationDashboard();
@@ -118,6 +131,17 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.loadDashboard();
       }),
     );
+  }
+
+  private maybeShowFounderOfferModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    this.showFounderOfferModal = true;
+  }
+
+  onFounderOfferModalClosed(): void {
+    this.showFounderOfferModal = false;
   }
 
   private loadProfileVerificationDashboard(): void {
@@ -185,6 +209,8 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         }
 
         this.photographer = profile;
+        this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
+        this.maybeShowFounderOfferModal();
         this.defaultPayout = {
           upiId: profile?.payout?.upiId || '',
           mobile: profile?.payout?.mobile || profile?.phoneNumber || '',

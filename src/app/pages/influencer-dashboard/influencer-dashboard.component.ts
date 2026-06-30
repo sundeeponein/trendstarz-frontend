@@ -23,6 +23,7 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -30,7 +31,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -70,6 +71,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   };
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
+  showFounderOfferModal = false;
+  private founderOfferAlreadySeen = true;
+  private founderOfferCapsLoaded = false;
   emailBannerDismissed = false;
   adminSocialNotifications: any[] = [];
   verificationCallNumber = '';
@@ -127,6 +131,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.loadProfileVerificationDashboard();
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;
+      this.founderOfferCapsLoaded = true;
+      this.maybeShowFounderOfferModal();
     });
     this.monetizationApi.getMyUsage().subscribe({
       next: (res) => {
@@ -172,6 +178,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
             };
             this.myInfluencerSocialMedia = (profile?.socialMedia || []).map((sm: any) => ({ platform: sm.platform || '', tier: sm.tier || '' }));
             this.adminSocialNotifications = profile?.adminSocialNotifications || [];
+            this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
+            this.maybeShowFounderOfferModal();
             // Only call setUser if profile data is different
             const merged = { ...user, ...profile };
             const isSame = JSON.stringify(user) === JSON.stringify(merged);
@@ -191,6 +199,17 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       }
     });
     // Removed router event subscription to prevent infinite reloads
+  }
+
+  private maybeShowFounderOfferModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    this.showFounderOfferModal = true;
+  }
+
+  onFounderOfferModalClosed(): void {
+    this.showFounderOfferModal = false;
   }
 
   private loadProfileVerificationDashboard(): void {
