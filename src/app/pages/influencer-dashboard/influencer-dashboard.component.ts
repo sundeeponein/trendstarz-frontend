@@ -25,6 +25,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { environment } from '../../../environments/environment';
+import { TIER_ORDER, normalizeTierLabel } from '../../shared/tiers.constants';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -796,40 +797,43 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private computeQualifyingPlatformAndTierForCampaign(campaign: any): { platform?: string; tier?: string } | null {
-    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
     const normalized = (s: string) => (s || '').toLowerCase().trim();
     const mySm = this.myInfluencerSocialMedia || [];
     if (!mySm.length) return null;
 
+    const campaignSm: any[] = Array.isArray(campaign?.socialMedia) ? campaign.socialMedia : [];
+    const campaignPlatformKeys = new Set<string>([
+      ...campaignSm.map((sm: any) => normalized(sm?.platform || '')).filter(Boolean),
+      ...((campaign as any)?.platforms || []).map((p: string) => normalized(p)).filter(Boolean),
+    ]);
+
     let candidates = mySm;
-    const campaignPlatforms: string[] = (campaign as any)?.platforms || [];
-    if (campaignPlatforms.length > 0) {
-      candidates = candidates.filter(smEntry => campaignPlatforms.some(p => normalized(p) === normalized(smEntry.platform)));
+    if (campaignPlatformKeys.size > 0) {
+      candidates = candidates.filter(smEntry => campaignPlatformKeys.has(normalized(smEntry.platform)));
     }
     if (!candidates.length) return null;
 
-    const minTier: string = (campaign as any)?.minInfluencerTier || '';
+    const minTier = normalizeTierLabel((campaign as any)?.minInfluencerTier || '');
     const minIdx = TIER_ORDER.indexOf(minTier);
     if (minIdx !== -1) {
       candidates = candidates.filter(smEntry => {
-        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
-        return idx !== -1 && idx === minIdx;
+        const idx = TIER_ORDER.indexOf(normalizeTierLabel(smEntry.tier || ''));
+        return idx !== -1 && idx >= minIdx;
       });
     }
     if (!candidates.length) return null;
 
     // pick highest tier among candidates (safe in case multiple match)
     let best = candidates[0];
-    let bestIdx = TIER_ORDER.indexOf(best.tier || '');
+    let bestIdx = TIER_ORDER.indexOf(normalizeTierLabel(best.tier || ''));
     for (const c of candidates) {
-      const idx = TIER_ORDER.indexOf(c.tier || '');
+      const idx = TIER_ORDER.indexOf(normalizeTierLabel(c.tier || ''));
       if (idx > bestIdx) { bestIdx = idx; best = c; }
     }
     return { platform: best.platform, tier: best.tier };
   }
 
   private computeAllQualifyingPlatforms(campaign: any): string[] {
-    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
     const normalized = (s: string) => (s || '').toLowerCase().trim();
     const mySm = this.myInfluencerSocialMedia || [];
     if (!mySm.length) return [];
@@ -847,11 +851,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
     if (!candidates.length) return [];
 
-    const minTier: string = campaign?.minInfluencerTier || '';
+    const minTier = normalizeTierLabel(campaign?.minInfluencerTier || '');
     const minIdx = TIER_ORDER.indexOf(minTier);
     if (minIdx !== -1) {
       candidates = candidates.filter(smEntry => {
-        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
+        const idx = TIER_ORDER.indexOf(normalizeTierLabel(smEntry.tier || ''));
         return idx !== -1 && idx >= minIdx;
       });
     }

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { TIER_ORDER, normalizeTierLabel } from '../tiers.constants';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -830,13 +831,16 @@ export class CampaignInviteCardComponent {
         : [];
     if (!socials.length) return [];
 
-    const tierOrder = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
-    const requiredTier = String(this.campaign?.minInfluencerTier || '').trim();
-    const requiredTierIndex = tierOrder.indexOf(requiredTier);
+    const requiredTier = normalizeTierLabel(this.campaign?.minInfluencerTier || '');
+    const requiredTierIndex = TIER_ORDER.indexOf(requiredTier);
     if (requiredTier && requiredTierIndex === -1) return [];
 
+    const campaignSocialMedia = Array.isArray(this.campaign?.socialMedia) ? this.campaign.socialMedia : [];
     const campaignPlatforms = Array.isArray(this.campaign?.platforms) ? this.campaign.platforms : [];
-    const allowedPlatforms = new Set(campaignPlatforms.map((platform: string) => this.normalized(platform)));
+    const allowedPlatforms = new Set([
+      ...campaignSocialMedia.map((sm: any) => this.normalized(sm?.platform || '')).filter(Boolean),
+      ...campaignPlatforms.map((platform: string) => this.normalized(platform)).filter(Boolean),
+    ]);
 
     return socials
       .filter((entry: any) => {
@@ -844,7 +848,8 @@ export class CampaignInviteCardComponent {
         if (!platformKey) return false;
         if (allowedPlatforms.size && !allowedPlatforms.has(platformKey)) return false;
         if (requiredTierIndex === -1) return true;
-        return tierOrder.indexOf(String(entry?.tier || '').trim()) === requiredTierIndex;
+        const tierIndex = TIER_ORDER.indexOf(normalizeTierLabel(entry?.tier || ''));
+        return tierIndex !== -1 && tierIndex >= requiredTierIndex;
       })
       .map((entry: any) => String(entry?.platform || '').trim())
       .filter(Boolean);

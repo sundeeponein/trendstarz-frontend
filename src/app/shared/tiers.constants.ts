@@ -33,7 +33,7 @@ export const TIER_DEFAULTS: { name: string; desc: string; icon: string }[] = TIE
  * e.g. 'mid tier', 'midtier' → 'Mid-Tier'; 'mega celebrity' → 'Mega / Celebrity'
  */
 export function normalizeTierLabel(tier: string): string {
-  const t = String(tier || '').trim().toLowerCase();
+  const t = String(tier || '').trim().replace(/\s*\([^)]*\)\s*$/, '').toLowerCase();
   if (!t) return '';
   if (t === 'starter') return 'Starter';
   if (t === 'nano') return 'Nano';
