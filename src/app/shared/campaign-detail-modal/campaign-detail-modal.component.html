@@ -209,11 +209,11 @@
             </div>
           </div>
 
-          <!-- You Match (user only) -->
-          <div class="cdm-section" *ngIf="allCampaignPlatforms.length && !adminReview">
+          <!-- You Match (user only) — only platforms that have deliverables configured -->
+          <div class="cdm-section" *ngIf="campaignPlatformsWithDeliverables.length && !adminReview">
             <div class="cdm-section__label">YOU MATCH</div>
             <div class="cdm-platform-pills">
-              <span *ngFor="let p of allCampaignPlatforms"
+              <span *ngFor="let p of campaignPlatformsWithDeliverables"
                     class="cdm-platform-pill"
                     [class.cdm-platform-pill--match]="userHasPlatform(p.platform)"
                     [class.cdm-platform-pill--missing]="!userHasPlatform(p.platform)">

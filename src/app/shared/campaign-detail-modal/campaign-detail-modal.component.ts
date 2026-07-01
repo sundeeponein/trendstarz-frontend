@@ -480,19 +480,20 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   get campaignDescription(): string { return this.campaign?.description || ''; }
   /** Description cleaned of literal "undefined" / empty strings, formatted for display */
   get campaignDescriptionSafe(): string {
-    const raw = String(this.campaignDescription || '').replace(/\s+/g, ' ').trim();
+    const raw = String(this.campaignDescription || '').trim();
     if (!raw || raw === 'undefined' || raw === 'null') return '';
     return this.campaignDescriptionFormatted;
   }
   get campaignDescriptionFormatted(): string {
-    const raw = String(this.campaignDescription || '').replace(/\s+/g, ' ').trim();
+    const raw = String(this.campaignDescription || '').trim();
     if (!raw || raw === 'undefined' || raw === 'null') return '';
+    // Preserve \n line breaks; only collapse runs of spaces/tabs (not newlines)
     const withHeadings = raw.replace(
-      /\s*(What we expect:|Content Guidelines:|Deliverables:|Timeline:|Payment:|Important Notes:)/gi,
+      /[ \t]*(What we expect:|Content Guidelines:|Deliverables:|Timeline:|Payment:|Important Notes:)/gi,
       '\n$1'
     );
-    const withBullets = withHeadings.replace(/\s*•\s*/g, '\n• ');
-    return withBullets.replace(/\n{2,}/g, '\n').trim();
+    const withBullets = withHeadings.replace(/[ \t]*•[ \t]*/g, '\n• ');
+    return withBullets.replace(/\n{3,}/g, '\n\n').trim();
   }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
 
@@ -847,6 +848,13 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return [];
   }
 
+  /** Campaign platforms that have at least one enabled content type (for YOU MATCH section) */
+  get campaignPlatformsWithDeliverables(): { platform: string }[] {
+    const withCt = new Set(this.contentTypeOptions.map(opt => this.normalized(opt.platform)));
+    if (!withCt.size) return this.allCampaignPlatforms; // fallback: show all if no ct data
+    return this.allCampaignPlatforms.filter(p => withCt.has(this.normalized(p.platform)));
+  }
+
   get contentTypeOptions(): ContentTypeOption[] {
     const sm = this.campaign?.socialMedia;
     if (!Array.isArray(sm) || !sm.length) return [];
@@ -1193,7 +1201,10 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   get checklistPlatformText(): string {
     const selected = this.selectedContentTypeOption;
     if (selected?.platform) return this.platformLabel(selected.platform);
-    if (this.platforms.length > 0) return this.platformLabel(this.platforms[0].platform);
+    if (this.platforms.length > 1) {
+      return this.platforms.map(p => this.platformLabel(p.platform)).join(', ');
+    }
+    if (this.platforms.length === 1) return this.platformLabel(this.platforms[0].platform);
     return 'Not specified';
   }
 

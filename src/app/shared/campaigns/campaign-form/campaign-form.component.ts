@@ -1313,21 +1313,28 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   // ── Stepper helpers ──────────────────────────────────────────
+
+  /** A disabled control is locked by the field-lock system; treat it as passing. */
+  private controlOk(name: string): boolean {
+    const c = this.f[name];
+    return !c || c.disabled || c.valid;
+  }
+
   step1Valid(): boolean {
     const isLocation = this.selectedCampaignType === 'invite_location';
     const needsStructuredVenueAddress = this.useStructuredVenueFields;
-    const photographerLocationValid = !this.isPhotographerCreator || this.f['shootLocationType'].valid;
+    const photographerLocationValid = !this.isPhotographerCreator || this.controlOk('shootLocationType');
     return !!(
-      this.f['title'].valid &&
-      this.f['campaignType'].valid &&
-      (this.isPhotographerCreator || this.f['inviteRecipientRole'].valid) &&
+      this.controlOk('title') &&
+      this.controlOk('campaignType') &&
+      (this.isPhotographerCreator || this.controlOk('inviteRecipientRole')) &&
       this.f['timelineStart'].value &&
       this.f['timelineEnd'].value &&
       photographerLocationValid &&
       (!needsStructuredVenueAddress || (
-        this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid
+        this.controlOk('venueAddress') && this.controlOk('venueState') && this.controlOk('venueDistrict') && this.controlOk('venueCity')
       )) &&
-      (!isLocation || (this.f['venueAddress'].valid && this.f['venueState'].valid && this.f['venueDistrict'].valid && this.f['venueCity'].valid && this.f['inviteBenefits'].valid)) &&
+      (!isLocation || (this.controlOk('venueAddress') && this.controlOk('venueState') && this.controlOk('venueDistrict') && this.controlOk('venueCity') && this.controlOk('inviteBenefits'))) &&
       !this.form.errors?.['invalidDateRange'] &&
       !this.form.errors?.['invalidStartDate'] &&
       !this.form.errors?.['invalidDuration']
@@ -1338,19 +1345,21 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     const requiredControls = ['pricePerInfluencer', 'maxInfluencers', 'payToJoinBenefits', 'productDescription', 'productPaymentAmount'];
     const hasMissingRequiredControl = requiredControls.some((name) => {
       const control = this.form.get(name);
-      return !!control && control.hasValidator(Validators.required) && control.invalid;
+      // Disabled controls are locked — treat as passing even if they have validators
+      return !!control && !control.disabled && control.hasValidator(Validators.required) && control.invalid;
     });
     if (hasMissingRequiredControl) return false;
 
     if (this.isPhotographerCreator) {
       const priceValid = !this.shouldRequireFlatPricePerParticipant
+        || this.f['pricePerInfluencer'].disabled
         || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
       const platformValid = !this.shouldShowPlatformSelection
         || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes);
       const perContentPriceValid = !this.isPerContentPricingFlow || this.hasValidEnabledContentTypePricing;
       return !!(
         priceValid &&
-        this.f['maxInfluencers'].valid &&
+        this.controlOk('maxInfluencers') &&
         this.f['maxInfluencers'].value > 0 &&
         !this.form.errors?.['invalidMinMaxInfluencers'] &&
         platformValid &&
@@ -1361,13 +1370,14 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       );
     }
     const priceValid = !this.shouldRequireFlatPricePerParticipant
+      || this.f['pricePerInfluencer'].disabled
       || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
     const platformValid = !this.shouldShowPlatformSelection
       || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes);
     const perContentPriceValid = !this.isPerContentPricingFlow || this.hasValidEnabledContentTypePricing;
     return !!(
       priceValid &&
-      this.f['maxInfluencers'].valid &&
+      this.controlOk('maxInfluencers') &&
       this.f['maxInfluencers'].value > 0 &&
       !this.form.errors?.['invalidMinMaxInfluencers'] &&
       this.selectedCategories.length > 0 &&

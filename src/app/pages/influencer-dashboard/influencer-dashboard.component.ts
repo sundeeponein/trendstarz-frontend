@@ -709,10 +709,14 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.error = '';
     this.selectedInvite = invite;
     this.selectedInviteManual = true;
-    // compute qualifying platform/tier for this invite's campaign (treat minInfluencerTier as tier-filtered)
+    // Qualifying platform/tier is only relevant for open tier-filtered campaigns where
+    // the influencer must meet a minimum tier to participate. For direct invites the
+    // host already chose this person explicitly — no tier gate should restrict which
+    // content types are shown.
     const campaign = invite?.campaign || invite?.campaignId || null;
-    const isTierFiltered = !!campaign && (String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!campaign?.minInfluencerTier);
-    if (campaign && isTierFiltered) {
+    const isOpenTierFiltered = !!campaign &&
+      String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open';
+    if (campaign && isOpenTierFiltered) {
       const qual = this.computeQualifyingPlatformAndTierForCampaign(campaign);
       this.selectedInviteQualifyingPlatform = qual?.platform || null;
       this.selectedInviteQualifyingTier = qual?.tier || null;
