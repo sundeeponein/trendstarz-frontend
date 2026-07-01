@@ -902,6 +902,43 @@ $dk-orange:    #e06030;
   color: $lt-text;
   .cdm-panel--dark & { color: $dk-text; }
 }
+
+.cdm-payout-message-modal-content {
+  padding: 1.25rem 1.5rem;
+}
+
+.cdm-payout-message-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #047857;
+}
+
+.cdm-payout-message-modal-text {
+  margin: 0;
+  padding: 0.9rem;
+  border: 1px solid rgba(16,185,129,0.24);
+  border-radius: 8px;
+  background: rgba(16,185,129,0.06);
+  color: #111827;
+  font-family: inherit;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cdm-payout-message-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
 .cdm-emergency-panel__warning {
   display: flex;
   align-items: flex-start;

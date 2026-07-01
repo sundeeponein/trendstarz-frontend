@@ -387,6 +387,24 @@
   }
 }
 
+.tx-ref-line {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 0;
+
+  span {
+    color: #6b5a55;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  code {
+    max-width: 180px;
+    overflow-wrap: anywhere;
+  }
+}
+
 .tx-proof-link {
   width: fit-content;
   border: 0;
@@ -618,6 +636,48 @@ code {
     .ri-pay-hint {
       font-size: 0.76rem;
       color: #6b7280;
+    }
+  }
+
+  .payout-reference-info {
+    display: grid;
+    gap: 0.55rem;
+    margin: -0.75rem 0 1.5rem;
+    padding: 0.85rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #dbe4ee;
+    border-radius: 6px;
+
+    .pri-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .pri-label {
+      color: #64748b;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    strong {
+      color: #1f1715;
+      font-size: 0.88rem;
+      text-align: right;
+    }
+
+    code {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      color: #b91c1c;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      text-align: right;
     }
   }
 }

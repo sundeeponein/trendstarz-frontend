@@ -27,6 +27,7 @@ import { OfferTrailComponent } from '../../shared/offer-trail/offer-trail.compon
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared/offer-trail.util';
 import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
 import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
+import { WriteReviewComponent } from '../../shared/write-review/write-review.component';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -37,7 +38,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -211,6 +212,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   reviewLoading = new Set<string>();
   autoCompleteToggleLoading = new Set<string>();
   expandedSubmissionIds = new Set<string>();
+  reviewModalInviteId: string | null = null;
+  reviewModalTargetName = '';
   private submissionApprovalTicker: ReturnType<typeof setInterval> | null = null;
   showUpgradeBanner: boolean = false;
   planLimitError: string = '';
@@ -4725,6 +4728,30 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  canWriteReviewForInvite(inv: any, campaign: Campaign): boolean {
+    const status = String(inv?.status || '').toLowerCase();
+    const campaignStatus = String(campaign?.status || '').toLowerCase();
+    return campaignStatus === 'completed' || status === 'completed' || status === 'approved';
+  }
+
+  openWriteReview(inv: any, event?: Event): void {
+    event?.stopPropagation();
+    const inviteId = String(inv?._id || '');
+    if (!inviteId) return;
+    const recipient = this.getInviteRecipient(inv) || {};
+    this.reviewModalInviteId = inviteId;
+    this.reviewModalTargetName = recipient.name || recipient.username || recipient.brandName || recipient.email || 'this creator';
+  }
+
+  closeWriteReview(): void {
+    this.reviewModalInviteId = null;
+    this.reviewModalTargetName = '';
+  }
+
+  onReviewSubmitted(): void {
+    this.toast.success('Review submitted for admin approval.');
+  }
+
   toggleSubmissionAutoComplete(sub: any, campaignId: string, event: Event) {
     const input = event.target as HTMLInputElement;
     const enabled = !!input.checked;
@@ -5133,6 +5160,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   extendTimeline(c: Campaign) {
     this.editingCampaign = c;
     this.formMode = 'edit';
+    this.showForm = true;
+  }
+
+  duplicateCampaign(c: Campaign) {
+    const { _id, timelineStart, timelineEnd, image, ...rest } = c as any;
+    this.searchPrefilledRecipients = [];
+    this.searchPrefilledRecipientRole = 'influencer';
+    this.pendingSearchPrefill = false;
+    this.editingCampaign = { ...rest, status: 'draft', timelineStart: null, timelineEnd: null } as Campaign;
+    this.formMode = 'create';
     this.showForm = true;
   }
 

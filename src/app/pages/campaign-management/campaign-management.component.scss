@@ -2213,6 +2213,14 @@
   color: #991b1b;
 }
 
+.btn-expand-duplicate {
+  @extend %expand-btn-base;
+  background: #f5f0ff;
+  color: #6d28d9;
+  border: 1.5px solid #ddd6fe;
+  &:hover { background: #6d28d9; color: #fff; }
+}
+
 /* ── New primary action button ── */
 .btn-expand-primary {
   @extend %expand-btn-base;
@@ -2597,6 +2605,22 @@
   cursor: pointer;
   &:hover { background: #fff5f5; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-write-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.45rem 0;
+  border-color: #f59e0b;
+  color: #92400e;
+  background: #fffbeb;
+
+  &:hover {
+    background: #fef3c7;
+    border-color: #d97706;
+    color: #78350f;
+  }
 }
 
 .sub-dispute-form {

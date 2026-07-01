@@ -654,7 +654,15 @@ export class CampaignReviewComponent implements OnInit {
           postApproved: invite?.latestSubmission?.status === 'approved',
           postApprovedAt: invite?.latestSubmission?.reviewedAt || invite?.latestSubmission?.autoCompletedAt || null,
           // Payout to the participant for this invite.
+          paymentGateway: invite?.latestPayout?.gateway || null,
+          hostPaymentUtr: invite?.latestPayout?.utrNumber || null,
+          hostPaymentGatewayOrderId: invite?.latestPayout?.gatewayOrderId || null,
+          hostPaymentGatewayPaymentId: invite?.latestPayout?.gatewayPaymentId || null,
           payoutStatus: invite?.latestPayout?.payoutStatus || null,
+          payoutAmountPaise: Number(invite?.latestPayout?.recipientPayout || 0),
+          payoutGatewayProvider: invite?.latestPayout?.payoutGatewayProvider || null,
+          payoutUtr: invite?.latestPayout?.payoutUtr || null,
+          payoutTransferId: invite?.latestPayout?.payoutTransferId || null,
           payoutDate: invite?.latestPayout?.payoutSettledAt || null,
           payoutInitiatedAt: invite?.latestPayout?.payoutInitiatedAt || null,
         };
@@ -674,11 +682,15 @@ export class CampaignReviewComponent implements OnInit {
       const name = String(row?.participantName || '').trim().toLowerCase();
       const avatar = String(row?.participantAvatar || '').trim();
       const username = String(row?.participantUsername || '').trim();
+      const payoutStatus = String(row?.payoutStatus || '').trim().toLowerCase();
+      const payoutRef = String(row?.payoutUtr || row?.payoutTransferId || '').trim();
+      const hostPaymentRef = String(row?.hostPaymentUtr || row?.hostPaymentGatewayPaymentId || row?.hostPaymentGatewayOrderId || '').trim();
       return !role
         || name === ''
         || name === 'influencer'
         || (name !== 'photographer' && !avatar)
         || !username
+        || (payoutStatus === 'paid' && (!payoutRef || !hostPaymentRef))
         || (this.isPhotographerTargetCampaign(campaign) && role !== 'photographer');
     });
   }

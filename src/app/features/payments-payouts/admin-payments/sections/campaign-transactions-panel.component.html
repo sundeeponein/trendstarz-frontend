@@ -99,7 +99,14 @@
         <td>
           <div class="tx-ref-cell">
             <strong>{{ collectionModeLabel(tx) }}</strong>
-            <code>{{ transactionReference(tx) }}</code>
+            <span class="tx-ref-line">
+              <span>{{ transactionReferenceLabel(tx) }}</span>
+              <code>{{ transactionReference(tx) }}</code>
+            </span>
+            <span class="tx-ref-line">
+              <span>{{ payoutReferenceLabel(tx) }}</span>
+              <code>{{ payoutReference(tx) }}</code>
+            </span>
             <button class="tx-proof-link" type="button" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">
               View proof
             </button>
@@ -214,6 +221,20 @@
       Release mode: <strong>{{ settlementModeLabel(selectedTx) }}</strong> ·
       Send to: <strong>{{ payoutDestinationLabel(selectedTx) }}</strong>
     </p>
+    <div class="payout-reference-info" *ngIf="selectedTx">
+      <div class="pri-row">
+        <span class="pri-label">Payment mode</span>
+        <strong>{{ collectionModeLabel(selectedTx) }}</strong>
+      </div>
+      <div class="pri-row">
+        <span class="pri-label">{{ transactionReferenceLabel(selectedTx) }}</span>
+        <code>{{ transactionReference(selectedTx) }}</code>
+      </div>
+      <div class="pri-row">
+        <span class="pri-label">{{ payoutReferenceLabel(selectedTx) }}</span>
+        <code>{{ payoutReference(selectedTx) }}</code>
+      </div>
+    </div>
     <p class="modal-info" *ngIf="selectedTx">
       {{ payoutWindowSummary(selectedTx) }}
     </p>

@@ -303,6 +303,26 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     return String(tx.utrNumber || '-');
   }
 
+  transactionReferenceLabel(tx: CampaignTransaction): string {
+    return String(tx.gateway || '').toLowerCase() === 'razorpay'
+      ? 'Host paid Razorpay ref'
+      : 'Host paid UTR';
+  }
+
+  payoutReference(tx: CampaignTransaction): string {
+    const payoutGateway = String(tx.payoutGatewayProvider || 'manual_upi').toLowerCase();
+    if (payoutGateway === 'razorpayx') {
+      return String(tx.payoutTransferId || tx.payoutUtr || '-');
+    }
+    return String(tx.payoutUtr || tx.payoutTransferId || '-');
+  }
+
+  payoutReferenceLabel(tx: CampaignTransaction): string {
+    return String(tx.payoutGatewayProvider || 'manual_upi').toLowerCase() === 'razorpayx'
+      ? 'Admin to user Razorpay ref'
+      : 'Admin to user payout UTR';
+  }
+
   payoutDestinationCompactLabel(tx: CampaignTransaction): string {
     const r = tx.recipient;
     if (!r) return 'Payout profile missing';

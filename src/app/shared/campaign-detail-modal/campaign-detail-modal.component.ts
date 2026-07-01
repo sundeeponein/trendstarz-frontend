@@ -87,6 +87,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   // Ready-to-share WhatsApp message preview (visible before and after approval).
   alertMessageCopied = false;
   payoutMessageCopiedInviteId = '';
+  payoutMessagePreviewItem: any = null;
   private alertMessageCopiedTimer: any;
   private payoutMessageCopiedTimer: any;
 
@@ -129,14 +130,25 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     this.fallbackCopyAlertMessage(text, done);
   }
 
+  openPaymentReleaseMessage(item: any, ev?: Event): void {
+    ev?.stopPropagation();
+    this.payoutMessagePreviewItem = item || null;
+    this.cdr.detectChanges();
+  }
+
+  closePaymentReleaseMessage(): void {
+    this.payoutMessagePreviewItem = null;
+    this.cdr.detectChanges();
+  }
+
   paymentReleaseMessage(item: any): string {
     const amount = this.adminInvitePayoutAmountText(item);
     const campaignName = this.campaignTitle;
-    const transactionId = this.adminInvitePayoutTransactionId(item);
     return [
-      `🎉 Your payment of **${amount}** for the **${campaignName}** campaign has been released successfully.`,
+      `Your payment of ${amount} for the "${campaignName}" campaign has been released successfully.`,
       '',
-      `Transaction ID: **${transactionId}**`,
+      `${this.adminInviteHostPaymentRefLabel(item)}: ${this.adminInviteHostPaymentRef(item)}`,
+      `${this.adminInvitePayoutRefLabel(item)}: ${this.adminInvitePayoutTransactionId(item)}`,
       '',
       'Thank you for collaborating with TrendStarz!',
     ].join('\n');
@@ -1537,7 +1549,36 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   adminInvitePayoutTransactionId(item: any): string {
-    return String(item?.payoutUtr || item?.payoutTransferId || item?.transactionId || '-').trim() || '-';
+    const payoutGateway = String(item?.payoutGatewayProvider || 'manual_upi').toLowerCase();
+    if (payoutGateway === 'razorpayx') {
+      return String(item?.payoutUtr || item?.payoutTransferId || item?.transactionId || 'Not recorded').trim() || 'Not recorded';
+    }
+    return String(item?.payoutUtr || item?.payoutTransferId || item?.transactionId || 'Not recorded').trim() || 'Not recorded';
+  }
+
+  adminInviteHostPaymentRefLabel(item: any): string {
+    return String(item?.paymentGateway || '').toLowerCase() === 'razorpay'
+      ? 'Host paid Razorpay ref'
+      : 'Host paid UTR';
+  }
+
+  adminInviteHostPaymentRef(item: any): string {
+    if (String(item?.paymentGateway || '').toLowerCase() === 'razorpay') {
+      return String(
+        item?.hostPaymentGatewayPaymentId
+          || item?.gatewayPaymentId
+          || item?.hostPaymentGatewayOrderId
+          || item?.gatewayOrderId
+          || 'Not recorded',
+      ).trim() || 'Not recorded';
+    }
+    return String(item?.hostPaymentUtr || item?.utrNumber || 'Not recorded').trim() || 'Not recorded';
+  }
+
+  adminInvitePayoutRefLabel(item: any): string {
+    return String(item?.payoutGatewayProvider || 'manual_upi').toLowerCase() === 'razorpayx'
+      ? 'Admin to user Razorpay ref'
+      : 'Admin to user payout UTR';
   }
 
   adminInvitePayoutStatusLabel(item: any): string {

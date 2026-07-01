@@ -348,9 +348,9 @@
                     type="button"
                     class="cdm-copy-payout-btn"
                     *ngIf="item.payoutStatus === 'paid'"
-                    (click)="copyPaymentReleaseMessage(item)">
-                    <i class="bi bi-clipboard-check"></i>
-                    {{ payoutMessageCopiedInviteId === item.inviteId ? 'Copied' : 'Copy payment message' }}
+                    (click)="openPaymentReleaseMessage(item, $event)">
+                    <i class="bi bi-card-text"></i>
+                    Show payment message
                   </button>
                   <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
                     {{ adminInvitePayoutStatusLabel(item) }}
@@ -589,6 +589,26 @@
 
   </div><!-- /cdm-panel -->
 </div><!-- /cdm-overlay -->
+
+<!-- ── PAYOUT WHATSAPP MESSAGE (popup) ───── -->
+<div class="modal-backdrop show" *ngIf="payoutMessagePreviewItem" (click)="closePaymentReleaseMessage()"></div>
+<div class="modal d-block" *ngIf="payoutMessagePreviewItem as payoutItem" tabindex="-1" (click)="closePaymentReleaseMessage()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal cdm-payout-message-modal-content">
+      <div class="cdm-payout-message-modal-title">
+        <i class="bi bi-whatsapp"></i> Payment Message
+      </div>
+      <pre class="cdm-payout-message-modal-text">{{ paymentReleaseMessage(payoutItem) }}</pre>
+      <div class="cdm-payout-message-modal-actions">
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--ghost" (click)="closePaymentReleaseMessage()">Close</button>
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--outline" (click)="copyPaymentReleaseMessage(payoutItem)">
+          <i class="bi bi-clipboard-check"></i>
+          {{ payoutMessageCopiedInviteId === payoutItem.inviteId ? 'Copied' : 'Copy payment message' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── EMERGENCY ADMIN ACTION (popup, separate from the panel footer) ───── -->
 <div class="modal-backdrop show" *ngIf="showEmergencyAdminPanel" (click)="closeEmergencyAdminPanel()"></div>

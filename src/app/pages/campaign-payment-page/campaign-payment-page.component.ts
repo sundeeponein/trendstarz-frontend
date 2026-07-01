@@ -39,6 +39,8 @@ export class CampaignPaymentPageComponent implements OnInit {
   successMessage = '';
   submitError = '';
   copied = false;
+  payoutMessageVisible = false;
+  payoutMessageCopied = false;
 
   statusTransactions: CampaignTransaction[] = [];
 
@@ -119,6 +121,40 @@ export class CampaignPaymentPageComponent implements OnInit {
       setTimeout(() => { this.copied = false; this.cd.markForCheck(); }, 2000);
       this.cd.markForCheck();
     }).catch(() => {});
+  }
+
+  togglePayoutMessage() {
+    this.payoutMessageVisible = !this.payoutMessageVisible;
+    this.cd.markForCheck();
+  }
+
+  copyPayoutWhatsAppMessage() {
+    const text = this.payoutWhatsAppMessage;
+    if (!text) return;
+    const done = () => {
+      this.payoutMessageCopied = true;
+      setTimeout(() => { this.payoutMessageCopied = false; this.cd.markForCheck(); }, 2000);
+      this.cd.markForCheck();
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopy(text, done));
+      return;
+    }
+    this.fallbackCopy(text, done);
+  }
+
+  private fallbackCopy(text: string, done: () => void) {
+    if (typeof document === 'undefined') return;
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    done();
   }
 
   get canSubmit(): boolean {
@@ -262,6 +298,51 @@ export class CampaignPaymentPageComponent implements OnInit {
       frozen: 'Payout on hold',
     };
     return m[status] || status;
+  }
+
+  transactionReference(tx: CampaignTransaction | null): string {
+    if (!tx) return '-';
+    if (String(tx.gateway || '').toLowerCase() === 'razorpay') {
+      return String(tx.gatewayPaymentId || tx.gatewayOrderId || '-');
+    }
+    return String(tx.utrNumber || '-');
+  }
+
+  transactionReferenceLabel(tx: CampaignTransaction | null): string {
+    return String(tx?.gateway || '').toLowerCase() === 'razorpay'
+      ? 'Host paid Razorpay ref'
+      : 'Host paid UTR';
+  }
+
+  payoutReference(tx: CampaignTransaction | null): string {
+    if (!tx) return '-';
+    const payoutGateway = String(tx.payoutGatewayProvider || 'manual_upi').toLowerCase();
+    if (payoutGateway === 'razorpayx') {
+      return String(tx.payoutTransferId || tx.payoutUtr || '-');
+    }
+    return String(tx.payoutUtr || tx.payoutTransferId || '-');
+  }
+
+  payoutReferenceLabel(tx: CampaignTransaction | null): string {
+    return String(tx?.payoutGatewayProvider || 'manual_upi').toLowerCase() === 'razorpayx'
+      ? 'Admin to user Razorpay ref'
+      : 'Admin to user payout UTR';
+  }
+
+  get payoutWhatsAppMessage(): string {
+    const tx = this.primaryTx;
+    if (!tx || tx.payoutStatus !== 'paid') return '';
+    const campaignTitle = String(this.campaign?.title || this.campaign?.campaignName || 'your campaign').trim();
+    const amount = this.formatINR(tx.recipientPayout || tx.agreedAmount || 0);
+    const paidAt = tx.payoutSettledAt || tx.paidOutAt || tx.updatedAt;
+    const dateLine = paidAt ? `\nPaid on: ${new Date(paidAt).toLocaleString('en-IN')}` : '';
+    return [
+      `Hi, your TrendStarZ payout for "${campaignTitle}" has been released.`,
+      `Amount: ${amount}`,
+      `${this.transactionReferenceLabel(tx)}: ${this.transactionReference(tx)}`,
+      `${this.payoutReferenceLabel(tx)}: ${this.payoutReference(tx)}${dateLine}`,
+      'Thank you for completing the campaign.',
+    ].join('\n');
   }
 
   formatINR(paise: number | undefined | null): string {

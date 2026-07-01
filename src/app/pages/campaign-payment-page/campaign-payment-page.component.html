@@ -171,6 +171,23 @@
           <i class="bi bi-check-circle-fill"></i>
           Payout sent to influencer. Campaign complete!
         </div>
+        <div class="cmp-payout-message" *ngIf="primaryTx.payoutStatus === 'paid'">
+          <div class="cmp-payout-message-head">
+            <div>
+              <strong>WhatsApp payout message</strong>
+              <span>Ready to copy after payout release</span>
+            </div>
+            <button type="button" class="cmp-copy-btn" (click)="togglePayoutMessage()">
+              {{ payoutMessageVisible ? 'Hide message' : 'Show message' }}
+            </button>
+          </div>
+          <div class="cmp-payout-message-body" *ngIf="payoutMessageVisible">
+            <pre>{{ payoutWhatsAppMessage }}</pre>
+            <button type="button" class="cmp-copy-btn" [class.copied]="payoutMessageCopied" (click)="copyPayoutWhatsAppMessage()">
+              {{ payoutMessageCopied ? 'Copied!' : 'Copy WhatsApp Message' }}
+            </button>
+          </div>
+        </div>
 
         <!-- Resubmit if failed -->
         <div class="cmp-resubmit" *ngIf="primaryTx.collectionStatus === 'failed'">

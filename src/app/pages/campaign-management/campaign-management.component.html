@@ -898,6 +898,13 @@
                         </button>
                       </div>
                     </ng-container>
+                    <button class="btn-action btn-write-review"
+                            type="button"
+                            *ngIf="canWriteReviewForInvite(inv, c)"
+                            (click)="openWriteReview(inv, $event)"
+                            title="Write a review for this completed collaboration">
+                      <i class="bi bi-star-fill"></i> Write Review
+                    </button>
 
                     <!-- Brand actions row (same as invite drawer) -->
                     <div class="invite-actions" (click)="$event.stopPropagation()">
@@ -1133,6 +1140,9 @@
                 <button class="btn-expand-end" (click)="endCampaign(c)">
                   <i class="bi bi-stop-circle"></i> End
                 </button>
+                <button class="btn-expand-duplicate" (click)="duplicateCampaign(c)">
+                  <i class="bi bi-copy"></i> Duplicate
+                </button>
               </ng-container>
 
               <!-- Active (not expired) -->
@@ -1145,6 +1155,9 @@
                 </button>
                 <button class="btn-expand-end" (click)="endCampaign(c)">
                   <i class="bi bi-stop-circle"></i> End
+                </button>
+                <button class="btn-expand-duplicate" (click)="duplicateCampaign(c)">
+                  <i class="bi bi-copy"></i> Duplicate
                 </button>
               </ng-container>
 
@@ -1218,9 +1231,17 @@
                 <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
                   <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
                 </button>
+                <button class="btn-expand-duplicate" (click)="duplicateCampaign(c)">
+                  <i class="bi bi-copy"></i> Duplicate
+                </button>
               </ng-container>
 
-              <!-- Completed: show nothing, only influencer list above is enough -->
+              <!-- Completed -->
+              <ng-container *ngIf="c.status === 'completed'">
+                <button class="btn-expand-duplicate" (click)="duplicateCampaign(c)">
+                  <i class="bi bi-copy"></i> Duplicate
+                </button>
+              </ng-container>
 
             </div>
 
@@ -1891,3 +1912,11 @@
 </ng-template>
 
 <app-shipping-address-modal></app-shipping-address-modal>
+
+<app-write-review
+  *ngIf="reviewModalInviteId"
+  [inviteId]="reviewModalInviteId"
+  [targetName]="reviewModalTargetName"
+  (close)="closeWriteReview()"
+  (submitted)="onReviewSubmitted()">
+</app-write-review>

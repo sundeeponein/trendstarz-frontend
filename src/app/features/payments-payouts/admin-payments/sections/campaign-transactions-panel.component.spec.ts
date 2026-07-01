@@ -118,4 +118,40 @@ describe('CampaignTransactionsPanelComponent', () => {
       'Auto payout complete. Processed: 1, Queued: 1, Skipped: 0, Failed: 0.',
     );
   });
+
+  it('shows separate manual host payment and admin payout references', () => {
+    const fixture = TestBed.createComponent(CampaignTransactionsPanelComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const tx: any = {
+      gateway: 'manual_upi',
+      utrNumber: 'TRENDSTARZADMIN1000',
+      payoutGatewayProvider: 'manual_upi',
+      payoutUtr: 'PAYOUTUTR1000',
+    };
+
+    expect(component.transactionReferenceLabel(tx)).toBe('Host paid UTR');
+    expect(component.transactionReference(tx)).toBe('TRENDSTARZADMIN1000');
+    expect(component.payoutReferenceLabel(tx)).toBe('Admin to user payout UTR');
+    expect(component.payoutReference(tx)).toBe('PAYOUTUTR1000');
+  });
+
+  it('shows Razorpay host payment and RazorpayX payout references separately', () => {
+    const fixture = TestBed.createComponent(CampaignTransactionsPanelComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const tx: any = {
+      gateway: 'razorpay',
+      gatewayPaymentId: 'pay_123',
+      gatewayOrderId: 'order_123',
+      payoutGatewayProvider: 'razorpayx',
+      payoutTransferId: 'trf_123',
+      payoutUtr: 'UTR_123',
+    };
+
+    expect(component.transactionReferenceLabel(tx)).toBe('Host paid Razorpay ref');
+    expect(component.transactionReference(tx)).toBe('pay_123');
+    expect(component.payoutReferenceLabel(tx)).toBe('Admin to user Razorpay ref');
+    expect(component.payoutReference(tx)).toBe('trf_123');
+  });
 });
