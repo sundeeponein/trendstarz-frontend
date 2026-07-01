@@ -1681,10 +1681,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.config.getInfluencers({
       page: this.inviteListPage,
       limit: this.inviteListLimit,
-      // Server-side category/creatorType matching only supports one value
-      // each; the campaign's full target lists are enforced client-side
-      // below so brands targeting multiple values still get correct results.
-      category: this.selectedCategories[0] || undefined,
+      // Send all campaign categories as a comma-separated string so the
+      // backend matches influencers who have ANY of them (not just the first).
+      category: this.selectedCategories.length ? this.selectedCategories.join(',') : undefined,
       creatorType: this.lookingForCreatorTypes[0] || undefined,
       state: this.filterState || undefined,
       district: this.filterDistrict || undefined,
