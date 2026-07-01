@@ -71,8 +71,11 @@
           <section class="form-card" *ngIf="currentStep === 1">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
               <h2>Profile</h2>
-              <div *ngIf="commissionAccessTags.length" class="d-flex flex-wrap justify-content-end gap-2" aria-label="Access badges">
+              <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
                 <span class="badge rounded-pill bg-primary" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
+                <span class="badge rounded-pill" style="background:#fce4ec; color:#880e4f; border:1px solid #f48fb1; font-weight:500;">
+                  Platform Commission: {{ platformCommissionPercent }}%
+                </span>
               </div>
             </div>
             <p class="section-subtitle">Update your core account and contact details.</p>

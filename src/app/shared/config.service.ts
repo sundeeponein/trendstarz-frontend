@@ -283,6 +283,9 @@ export class ConfigService {
     preApproveBrands: boolean; brandRequireEmailVerified: boolean; brandRequireMobileVerified: boolean;
     platformFeeEnabled?: boolean;
     platformFeePercent?: number;
+    brandFeePercent?: number;
+    influencerFeePercent?: number;
+    photographerFeePercent?: number;
     gstPercent?: number;
     paymentUpiId?: string;
     submissionApprovalWaitHours?: number;
@@ -310,6 +313,9 @@ export class ConfigService {
           brandRequireMobileVerified: !!data?.brandRequireMobileVerified,
           platformFeeEnabled: !!data?.platformFeeEnabled,
           platformFeePercent: typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : undefined,
+          brandFeePercent: typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : undefined,
+          influencerFeePercent: typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : undefined,
+          photographerFeePercent: typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : undefined,
           gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
           paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
           submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
@@ -665,6 +671,7 @@ export class ConfigService {
     creatorType?: string;
     category?: string;
     q?: string;
+    campaignEligible?: boolean;
   }): Observable<any> {
     const params: string[] = [];
     if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
@@ -675,6 +682,9 @@ export class ConfigService {
     if (options?.creatorType) params.push(`creatorType=${encodeURIComponent(options.creatorType)}`);
     if (options?.category) params.push(`category=${encodeURIComponent(options.category)}`);
     if (options?.q) params.push(`q=${encodeURIComponent(options.q)}`);
+    if (typeof options?.campaignEligible === 'boolean') {
+      params.push(`campaignEligible=${options.campaignEligible ? '1' : '0'}`);
+    }
     if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
@@ -706,6 +716,7 @@ export class ConfigService {
     creatorType?: string;
     category?: string;
     q?: string;
+    campaignEligible?: boolean;
   }): Observable<any[]> {
     return this.getInfluencersSearchResponse(options).pipe(
       map((data) => (data?.data || data || []) as any[]),

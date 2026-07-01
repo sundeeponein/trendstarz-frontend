@@ -39,6 +39,7 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 export class BrandProfileComponent implements OnInit {
   premiumMonthlyPrice = 999;
   commissionAccessTags: string[] = [];
+  platformCommissionPercent: number = 0;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -460,6 +461,9 @@ export class BrandProfileComponent implements OnInit {
     });
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
+    });
+    this.configService.getAppSettings().subscribe(s => {
+      if (typeof s.brandFeePercent === 'number') this.platformCommissionPercent = s.brandFeePercent;
     });
 
     // ngOnInit called

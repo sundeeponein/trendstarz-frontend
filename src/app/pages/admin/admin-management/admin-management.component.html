@@ -434,7 +434,7 @@
     <div class="container">
       <div class="row">
 
-        <div class="col-12 col-xl-7 settings-row">
+        <div class="col-12 col-xl-5 settings-row">
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="supportEnabled"
               [(ngModel)]="settings.supportContactEnabled" />
@@ -524,21 +524,66 @@
           <small class="text-light-emphasis d-block mb-2">Changes here affect both desktop and mobile navbar links, and corresponding routes.</small>
         </div>
 
-        <div class="col-12 col-xl-5 settings-row">
-          <h4>Platform Fee & GST</h4>
+        <div class="col-12 col-xl-7 settings-row">
+          <h4>Platform Commission & GST</h4>
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="platformFeeEnabled"
               [(ngModel)]="settings.platformFeeEnabled" />
-            <label class="form-check-label" for="platformFeeEnabled">Enable platform fee on campaigns</label>
+            <label class="form-check-label" for="platformFeeEnabled">Enable platform commission on campaigns</label>
           </div>
-          <div class="row mb-3">
-            <div class="col">
-              <label class="form-label">Standard Platform Fee (%)</label>
-              <input type="number" class="form-control" [(ngModel)]="settings.platformFeePercent" min="0" max="100" />
-            </div>
-            <div class="col">
-              <label class="form-label">GST (%)</label>
-              <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" />
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Platform Commission (%) by Campaign Type</label>
+            <div class="row g-3">
+              <!-- Regular campaigns: Brand pays -->
+              <div class="col-12 col-md-4">
+                <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
+                  <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#1b5e20;">Brands</div>
+                  <div class="mb-2">
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.brandFeePercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="mb-0">
+                    <label class="form-label" style="font-size:0.85rem;">GST (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">All regular campaign types</small>
+                </div>
+              </div>
+              <!-- Influencer commission -->
+              <div class="col-12 col-md-4">
+                <div class="p-2 rounded" style="background:#e3f2fd; border:1px solid #bbdefb;">
+                  <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#0d47a1;">Influencers</div>
+                  <div class="mb-0">
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.influencerFeePercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
+                </div>
+              </div>
+              <!-- Photographer commission -->
+              <div class="col-12 col-md-4">
+                <div class="p-2 rounded" style="background:#fce4ec; border:1px solid #f8bbd0;">
+                  <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#880e4f;">Photo/Video</div>
+                  <div class="mb-0">
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.photographerFeePercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -587,70 +632,134 @@
           </div>
 
           <div class="mb-3">
-            <h6 class="mb-2">User Platform Fee Discounts</h6>
+            <h6 class="mb-2">User Platform Commission Discounts</h6>
             <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
-              Assign platform fee badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
+              Assign commission badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
             </p>
             <div class="row g-2 mb-3">
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Early Access Fee (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Early Access Commission (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.earlyAccessCommissionPercent" />
               </div>
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Partner Fee (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Partner Commission (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.partnerCommissionPercent" />
               </div>
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Internal/Test Fee (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Internal/Test Commission (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.internalTestCommissionPercent" />
               </div>
             </div>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>Badge</th>
-                    <th>Standard Fee</th>
-                    <th>Your Fee</th>
-                    <th>Savings</th>
-                    <th>Influencers</th>
-                    <th>Brands</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Normal (no badge)</td>
-                    <td>{{ settings.platformFeePercent }}%</td>
-                    <td>{{ settings.platformFeePercent }}%</td>
-                    <td>—</td>
-                    <td colspan="2"><small class="text-muted">All users without a badge</small></td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
-                    <td>{{ settings.platformFeePercent }}%</td>
-                    <td>{{ settings.earlyAccessCommissionPercent }}%</td>
-                    <td>{{ platformFeeSavingsText(settings.earlyAccessCommissionPercent) }}</td>
-                    <td>{{ commissionCounts.influencer.early_access_creator }}</td>
-                    <td>{{ commissionCounts.brand.early_access_brand }}</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
-                    <td>{{ settings.platformFeePercent }}%</td>
-                    <td>{{ settings.partnerCommissionPercent }}%</td>
-                    <td>{{ platformFeeSavingsText(settings.partnerCommissionPercent) }}</td>
-                    <td>{{ commissionCounts.influencer.partner_creator }}</td>
-                    <td>{{ commissionCounts.brand.partner_brand }}</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
-                    <td>{{ settings.platformFeePercent }}%</td>
-                    <td>{{ settings.internalTestCommissionPercent }}%</td>
-                    <td>{{ platformFeeSavingsText(settings.internalTestCommissionPercent) }}</td>
-                    <td>{{ commissionCounts.influencer.internal_test_creator }}</td>
-                    <td>{{ commissionCounts.brand.internal_test_brand }}</td>
-                  </tr>
-                </tbody>
-              </table>
+
+            <!-- Regular campaigns: Brand commission only -->
+            <div class="mb-2">
+              <div class="fw-semibold mb-1" style="font-size:0.85rem; color:#1b5e20;">Regular Campaigns — Brand Commission</div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Badge</th>
+                      <th>Brand Commission<br><small class="text-muted fw-normal">base: {{ effectiveRoleFee('brandFeePercent') }}%</small></th>
+                      <th>Brands</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Normal <small class="text-muted">(no badge)</small></td>
+                      <td>{{ effectiveRoleFee('brandFeePercent') }}%</td>
+                      <td><small class="text-muted">All brands without badge</small></td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
+                      <td>{{ settings.earlyAccessCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.earlyAccessCommissionPercent, effectiveRoleFee('brandFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.brand.early_access_brand }} brands</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
+                      <td>{{ settings.partnerCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.partnerCommissionPercent, effectiveRoleFee('brandFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.brand.partner_brand }} brands</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
+                      <td>{{ settings.internalTestCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.internalTestCommissionPercent, effectiveRoleFee('brandFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.brand.internal_test_brand }} brands</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pay-to-Join: Influencer + Photo/Video commission (default 0%) -->
+            <div class="mb-2">
+              <div class="fw-semibold mb-1" style="font-size:0.85rem; color:#bf360c;">Pay-to-Join — Creator Commission <span class="badge bg-secondary ms-1" style="font-weight:400; font-size:0.7rem;">Default 0%</span></div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Badge</th>
+                      <th>Influencer<br><small class="text-muted fw-normal">base: {{ effectiveRoleFee('influencerFeePercent') }}%</small></th>
+                      <th>Photo/Video<br><small class="text-muted fw-normal">base: {{ effectiveRoleFee('photographerFeePercent') }}%</small></th>
+                      <th>Users</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Normal <small class="text-muted">(no badge)</small></td>
+                      <td>{{ effectiveRoleFee('influencerFeePercent') }}%</td>
+                      <td>{{ effectiveRoleFee('photographerFeePercent') }}%</td>
+                      <td><small class="text-muted">All creators without badge</small></td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
+                      <td>{{ settings.earlyAccessCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.earlyAccessCommissionPercent, effectiveRoleFee('influencerFeePercent')) }})</small></td>
+                      <td>{{ settings.earlyAccessCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.earlyAccessCommissionPercent, effectiveRoleFee('photographerFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.influencer.early_access_creator }} inf · {{ commissionCounts.photographer.early_access_photographer }} photo</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
+                      <td>{{ settings.partnerCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.partnerCommissionPercent, effectiveRoleFee('influencerFeePercent')) }})</small></td>
+                      <td>{{ settings.partnerCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.partnerCommissionPercent, effectiveRoleFee('photographerFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.influencer.partner_creator }} inf · {{ commissionCounts.photographer.partner_photographer }} photo</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
+                      <td>{{ settings.internalTestCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.internalTestCommissionPercent, effectiveRoleFee('influencerFeePercent')) }})</small></td>
+                      <td>{{ settings.internalTestCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.internalTestCommissionPercent, effectiveRoleFee('photographerFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.influencer.internal_test_creator }} inf · {{ commissionCounts.photographer.internal_test_photographer }} photo</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="mt-3 p-3 rounded" style="background:#f8f9fa; border:1px solid #dee2e6; font-size:0.85rem;">
+              <strong>How platform commission applies</strong>
+              <div class="row mt-2 g-2">
+                <div class="col-12 col-md-6">
+                  <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
+                    <strong style="color:#1b5e20;">Regular campaigns</strong><br>
+                    <small style="color:#388e3c;">Paid collab · Product · Location invite · Reel collab · Portfolio</small>
+                    <div class="mt-1" style="color:#2e7d32;">
+                      Brand pays: agreed amount + commission ({{ effectiveRoleFee('brandFeePercent') }}%)<br>
+                      Creator receives: full agreed amount<br>
+                      <small class="text-muted">Commission added on top — creator is never docked. GST applies on commission.</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <div class="p-2 rounded" style="background:#fff3e0; border:1px solid #ffe0b2;">
+                    <strong style="color:#bf360c;">Pay-to-Join campaigns</strong><br>
+                    <small style="color:#e65100;">Product collab · Invite to location · Enable from Campaign Types above</small>
+                    <div class="mt-1" style="color:#e65100;">
+                      Creator pays: join fee (face value)<br>
+                      Creator commission ({{ effectiveRoleFee('influencerFeePercent') }}% / {{ effectiveRoleFee('photographerFeePercent') }}%) deducted — currently 0%<br>
+                      Host receives: join fees minus creator commission<br>
+                      <small class="text-muted">Set Influencer/Photo-Video % above to activate. Badge overrides apply to the paying creator.</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="mb-0 mt-2 text-muted" style="font-size:0.8rem;">Brand badge overrides apply to Regular campaigns. Creator badge overrides apply to Pay-to-Join. Assign badges via Users table → Fee Badges tab.</p>
             </div>
           </div>
         </div>

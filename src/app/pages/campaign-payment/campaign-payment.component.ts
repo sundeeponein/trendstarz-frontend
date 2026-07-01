@@ -147,6 +147,10 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   // ── Helpers / display ──────────────────────────────────
+  get isPayToJoin(): boolean {
+    return (this.calculated?.campaignType || '').toLowerCase() === 'pay_to_join';
+  }
+
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
       paid_collab: 'Paid Collaboration',

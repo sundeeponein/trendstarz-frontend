@@ -122,6 +122,7 @@ export class PhotographerProfileComponent implements OnInit {
   private originalPhotoshootImagesPreview: string[] = [];
   private originalPhotoshootImagesData: { url: string; public_id: string }[] = [];
   commissionAccessTags: string[] = [];
+  platformCommissionPercent: number = 0;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -454,6 +455,7 @@ export class PhotographerProfileComponent implements OnInit {
   ngOnInit() {
     this.config.getAppSettings().subscribe((settings) => {
       this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
+      if (typeof settings.photographerFeePercent === 'number') this.platformCommissionPercent = settings.photographerFeePercent;
       this.cdr.detectChanges();
     });
     this.loadProfileVerificationDashboard();

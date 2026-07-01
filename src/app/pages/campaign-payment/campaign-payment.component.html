@@ -6,10 +6,11 @@
   <!-- Header -->
   <div class="cp-header">
     <div>
-      <h3 class="cp-title">Pay for Campaign</h3>
+      <h3 class="cp-title">{{ isPayToJoin ? 'Creator Join Fees' : 'Pay for Campaign' }}</h3>
       <p class="cp-sub" *ngIf="calculated">
         <span class="cp-type-chip">{{ campaignTypeLabel }}</span>
-        <span class="cp-accepted">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
+        <span class="cp-accepted" *ngIf="!isPayToJoin">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
+        <span class="cp-accepted" *ngIf="isPayToJoin">{{ calculated.acceptedCount }} creator{{ calculated.acceptedCount === 1 ? '' : 's' }} joined</span>
       </p>
     </div>
     <button type="button" class="cp-close" (click)="close()" aria-label="Close">
@@ -22,10 +23,10 @@
     <button type="button" class="cp-tab" [class.active]="activeTab === 'summary'" (click)="setTab('summary')">
       <i class="bi bi-receipt"></i> Summary
     </button>
-    <button type="button" class="cp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')">
+    <button type="button" class="cp-tab" [class.active]="activeTab === 'pay'" (click)="setTab('pay')" *ngIf="!isPayToJoin">
       <i class="bi bi-credit-card"></i> Pay
     </button>
-    <button type="button" class="cp-tab" [class.active]="activeTab === 'status'" (click)="setTab('status')" *ngIf="hasSubmittedProof">
+    <button type="button" class="cp-tab" [class.active]="activeTab === 'status'" (click)="setTab('status')" *ngIf="hasSubmittedProof && !isPayToJoin">
       <i class="bi bi-clock-history"></i> Status
     </button>
   </div>
@@ -46,44 +47,64 @@
       <!-- Breakdown card -->
       <div class="cp-card">
         <div class="cp-row">
-          <span class="cp-row-label">Price per influencer</span>
+          <span class="cp-row-label">{{ isPayToJoin ? 'Join fee per creator' : 'Price per influencer' }}</span>
           <span class="cp-row-val">{{ formatINR(calculated.pricePerInfluencer) }}</span>
         </div>
         <div class="cp-row">
-          <span class="cp-row-label">Accepted influencers</span>
+          <span class="cp-row-label">{{ isPayToJoin ? 'Creators joined' : 'Accepted influencers' }}</span>
           <span class="cp-row-val">× {{ calculated.acceptedCount }}</span>
         </div>
         <div class="cp-row cp-row--strong">
-          <span class="cp-row-label">Agreed amount</span>
+          <span class="cp-row-label">{{ isPayToJoin ? 'Total join fees' : 'Agreed amount' }}</span>
           <span class="cp-row-val">{{ formatINR(calculated.agreedAmount) }}</span>
         </div>
 
         <hr />
 
-        <div class="cp-row" *ngIf="calculated.platformFeeEnabled">
-          <span class="cp-row-label">Platform fee ({{ calculated.platformFeePercent }}%)</span>
-          <span class="cp-row-val">{{ formatINR(calculated.platformFee) }}</span>
-        </div>
-        <div class="cp-row cp-row--muted" *ngIf="!calculated.platformFeeEnabled">
-          <span class="cp-row-label">Platform fee</span>
-          <span class="cp-row-val">Free during launch</span>
-        </div>
-        <div class="cp-row" *ngIf="gstAmount > 0">
-          <span class="cp-row-label">GST ({{ gstPercent }}%)</span>
-          <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
-        </div>
+        <ng-container *ngIf="!isPayToJoin">
+          <div class="cp-row" *ngIf="calculated.platformFeeEnabled">
+            <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
+            <span class="cp-row-val">{{ formatINR(calculated.platformFee) }}</span>
+          </div>
+          <div class="cp-row cp-row--muted" *ngIf="!calculated.platformFeeEnabled">
+            <span class="cp-row-label">Platform commission</span>
+            <span class="cp-row-val">Free during launch</span>
+          </div>
+          <div class="cp-row" *ngIf="gstAmount > 0">
+            <span class="cp-row-label">GST ({{ gstPercent }}%)</span>
+            <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
+          </div>
+          <div class="cp-total">
+            <span>Total to pay</span>
+            <span class="cp-total-val">{{ formatINR(totalToPay) }}</span>
+          </div>
+        </ng-container>
 
-        <div class="cp-total">
-          <span>Total to pay</span>
-          <span class="cp-total-val">{{ formatINR(totalToPay) }}</span>
-        </div>
+        <ng-container *ngIf="isPayToJoin">
+          <div class="cp-row" *ngIf="calculated.platformFeeEnabled">
+            <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
+            <span class="cp-row-val cp-row-val--deduct">−{{ formatINR(calculated.platformFee) }}</span>
+          </div>
+          <div class="cp-total">
+            <span>Brand receives</span>
+            <span class="cp-total-val">{{ formatINR(calculated.recipientPayoutTotal) }}</span>
+          </div>
+        </ng-container>
       </div>
 
-      <!-- What influencers receive -->
-      <div class="cp-card cp-card--soft">
-        <div class="cp-card-title"><i class="bi bi-people"></i> Influencer payout</div>
+      <!-- What creators receive / brand receives -->
+      <div class="cp-card cp-card--soft" *ngIf="!isPayToJoin">
+        <div class="cp-card-title"><i class="bi bi-people"></i> Creator payout</div>
         <div class="cp-row">
-          <span class="cp-row-label">Total released to influencers</span>
+          <span class="cp-row-label">Campaign earnings</span>
+          <span class="cp-row-val">{{ formatINR(calculated.agreedAmount) }}</span>
+        </div>
+        <div class="cp-row cp-row--muted" *ngIf="calculated.platformFeeEnabled">
+          <span class="cp-row-label">Platform commission</span>
+          <span class="cp-row-val">Paid by Brand</span>
+        </div>
+        <div class="cp-row cp-row--strong">
+          <span class="cp-row-label">Creator receives</span>
           <span class="cp-row-val">{{ formatINR(calculated.recipientPayoutTotal) }}</span>
         </div>
         <p class="cp-note">Released after each post is approved by you.</p>
@@ -97,8 +118,8 @@
       </ul>
 
       <div class="cp-actions">
-        <button type="button" class="cp-btn cp-btn--secondary" (click)="close()">Cancel</button>
-        <button type="button" class="cp-btn cp-btn--primary" (click)="setTab('pay')">
+        <button type="button" class="cp-btn cp-btn--secondary" (click)="close()">{{ isPayToJoin ? 'Close' : 'Cancel' }}</button>
+        <button type="button" class="cp-btn cp-btn--primary" (click)="setTab('pay')" *ngIf="!isPayToJoin">
           <i class="bi bi-credit-card"></i> Pay Now
         </button>
       </div>

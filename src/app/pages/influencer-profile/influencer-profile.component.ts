@@ -53,6 +53,7 @@ export class InfluencerProfileComponent implements OnInit {
   verificationStatusDisplay = 'not_submitted';
   verificationAdminNotesDisplay = '';
   commissionAccessTags: string[] = [];
+  platformCommissionPercent: number = 0;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -513,6 +514,7 @@ export class InfluencerProfileComponent implements OnInit {
     });
     this.configService.getAppSettings().subscribe(s => {
       this.otpVerificationEnabled = !!s.otpVerificationEnabled;
+      if (typeof s.influencerFeePercent === 'number') this.platformCommissionPercent = s.influencerFeePercent;
       this.cd.markForCheck();
     });
 

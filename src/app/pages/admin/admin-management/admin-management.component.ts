@@ -398,6 +398,9 @@ export class AdminManagementComponent implements OnInit {
     // Platform commission and tax (admin-managed)
     platformFeeEnabled: false,
     platformFeePercent: 0,
+    brandFeePercent: null as number | null,
+    influencerFeePercent: 0 as number,
+    photographerFeePercent: 0 as number,
     gstPercent: 0,
     submissionApprovalWaitHours: 24,
     submissionAutoCompleteGraceHours: 48,
@@ -464,10 +467,16 @@ export class AdminManagementComponent implements OnInit {
   commissionCounts = {
     influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
     brand: { early_access_brand: 0, partner_brand: 0, internal_test_brand: 0 },
+    photographer: { early_access_photographer: 0, partner_photographer: 0, internal_test_photographer: 0 },
   };
 
-  platformFeeSavingsText(userFeePercent: unknown): string {
-    const standard = Number(this.settings.platformFeePercent || 0);
+  effectiveRoleFee(roleField: 'brandFeePercent' | 'influencerFeePercent' | 'photographerFeePercent'): number {
+    const val = this.settings[roleField];
+    return typeof val === 'number' ? val : 0;
+  }
+
+  platformFeeSavingsText(userFeePercent: unknown, basePercent?: number): string {
+    const standard = typeof basePercent === 'number' ? basePercent : Number(this.settings.platformFeePercent || 0);
     const userFee = Number(userFeePercent || 0);
     const savings = Math.max(standard - userFee, 0);
     if (!Number.isFinite(savings) || savings <= 0) return '—';
@@ -727,6 +736,9 @@ export class AdminManagementComponent implements OnInit {
           this.settings.otpVerificationEnabled = data?.otpVerificationEnabled === true;
           this.settings.platformFeeEnabled = !!data?.platformFeeEnabled;
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
+          this.settings.brandFeePercent = typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : null;
+          this.settings.influencerFeePercent = typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : 0;
+          this.settings.photographerFeePercent = typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : 0;
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
           this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
@@ -1313,6 +1325,20 @@ export class AdminManagementComponent implements OnInit {
         next: (res) => {
           const data = res?.data ?? res;
           this.commissionCounts.brand[badge] = data.count || 0;
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    });
+
+    const photographerBadges: (keyof typeof this.commissionCounts.photographer)[] =
+      ['early_access_photographer', 'partner_photographer', 'internal_test_photographer'];
+
+    photographerBadges.forEach(badge => {
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/photographer/${badge}`, headers).subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.commissionCounts.photographer[badge] = data.count || 0;
           this.cdr.detectChanges();
         },
         error: () => {}

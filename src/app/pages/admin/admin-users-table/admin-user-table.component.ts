@@ -2148,6 +2148,9 @@ export class AdminUserTableComponent implements OnInit {
       early_access_brand: 'Early Access',
       partner_brand: 'Partner',
       internal_test_brand: 'Internal/Test',
+      early_access_photographer: 'Early Access',
+      partner_photographer: 'Partner',
+      internal_test_photographer: 'Internal/Test',
       launch_partner: 'Partner',
       zero_commission_creator: 'Early Access',
       zero_commission_brand: 'Early Access',
@@ -2216,15 +2219,15 @@ export class AdminUserTableComponent implements OnInit {
       : '';
 
     if (badge.includes('early_access')) {
-      return `0% platform fee${untilText}`;
+      return `0% platform commission${untilText}`;
     }
     if (badge.includes('internal_test')) {
-      return `0% platform fee${untilText}`;
+      return `0% platform commission${untilText}`;
     }
     if (badge.includes('partner')) {
       const value = typeof override.value === 'number' ? override.value : 0;
       const displayPercent = override.overrideType === 'fixed' ? `${value}%` : 'custom';
-      return `${displayPercent} platform fee${untilText}`;
+      return `${displayPercent} platform commission${untilText}`;
     }
     return '';
   }

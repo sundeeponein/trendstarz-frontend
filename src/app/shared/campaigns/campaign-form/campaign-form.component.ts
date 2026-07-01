@@ -1689,6 +1689,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       state: this.filterState || undefined,
       district: this.filterDistrict || undefined,
       q: this.influencerSearch.trim() || undefined,
+      campaignEligible: true,
     }).subscribe({
       next: (data: any[]) => {
         const rows = (Array.isArray(data) ? data : [])
@@ -2065,7 +2066,20 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   private isCampaignVerifiedRecipient(recipient: any): boolean {
-    return recipient?.isEmailVerified === true && recipient?.isMobileVerified === true;
+    return this.truthyFlag(recipient?.isEmailVerified ?? recipient?.emailVerified)
+      && this.truthyFlag(
+        recipient?.isMobileVerified
+          ?? recipient?.mobileVerified
+          ?? recipient?.phoneVerified
+          ?? recipient?.isPhoneVerified,
+      );
+  }
+
+  private truthyFlag(value: any): boolean {
+    if (value === true) return true;
+    if (typeof value === 'string') return ['true', '1', 'yes', 'verified'].includes(value.trim().toLowerCase());
+    if (typeof value === 'number') return value === 1;
+    return false;
   }
 
   private getRecipientCategoryValues(recipient: any): string[] {

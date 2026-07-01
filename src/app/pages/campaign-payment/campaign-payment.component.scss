@@ -114,6 +114,7 @@
   font-size: 0.92rem;
   &-label { color: #475569; }
   &-val { color: #0f172a; font-weight: 500; }
+  &-val--deduct { color: #dc2626; font-weight: 600; }
   &--strong { font-weight: 700; .cp-row-val { font-weight: 700; } }
   &--muted .cp-row-val { color: #16a34a; font-weight: 600; font-size: 0.85rem; }
 }
