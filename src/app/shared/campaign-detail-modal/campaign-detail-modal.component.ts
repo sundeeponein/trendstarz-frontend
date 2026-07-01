@@ -47,6 +47,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() visible = false;
   // Optional: platform/tier that the current influencer qualifies with for this campaign
   @Input() qualifyingPlatform?: string | null;
+  @Input() qualifyingPlatforms?: string[] | null;
   @Input() qualifyingTier?: string | null;
   @Input() showDateInput = true;
   @Input() busy = false;
@@ -947,6 +948,9 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   private get qualifyingPlatformKeySet(): Set<string> {
     const set = new Set<string>();
     if (this.qualifyingPlatform) set.add(this.normalized(this.qualifyingPlatform));
+    for (const p of this.qualifyingPlatforms || []) {
+      if (p) set.add(this.normalized(p));
+    }
     return set;
   }
 

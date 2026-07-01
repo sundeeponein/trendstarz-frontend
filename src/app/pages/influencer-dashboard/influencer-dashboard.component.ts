@@ -60,6 +60,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     accountHolderName: '',
   };
   selectedInviteQualifyingPlatform: string | null = null;
+  selectedInviteQualifyingPlatforms: string[] = [];
   selectedInviteQualifyingTier: string | null = null;
   myInfluencerSocialMedia: Array<{ platform: string; tier: string }> = [];
   paymentHistory: any[] = [];
@@ -715,9 +716,11 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       const qual = this.computeQualifyingPlatformAndTierForCampaign(campaign);
       this.selectedInviteQualifyingPlatform = qual?.platform || null;
       this.selectedInviteQualifyingTier = qual?.tier || null;
+      this.selectedInviteQualifyingPlatforms = this.computeAllQualifyingPlatforms(campaign);
     } else {
       this.selectedInviteQualifyingPlatform = null;
       this.selectedInviteQualifyingTier = null;
+      this.selectedInviteQualifyingPlatforms = [];
     }
     this.cdr.markForCheck();
   }
@@ -726,6 +729,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.selectedInvite = null;
     this.selectedInviteManual = false;
     this.selectedInviteQualifyingPlatform = null;
+    this.selectedInviteQualifyingPlatforms = [];
     this.selectedInviteQualifyingTier = null;
     this.cdr.markForCheck();
   }
@@ -818,6 +822,46 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       if (idx > bestIdx) { bestIdx = idx; best = c; }
     }
     return { platform: best.platform, tier: best.tier };
+  }
+
+  private computeAllQualifyingPlatforms(campaign: any): string[] {
+    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
+    const normalized = (s: string) => (s || '').toLowerCase().trim();
+    const mySm = this.myInfluencerSocialMedia || [];
+    if (!mySm.length) return [];
+
+    // Build the full set of campaign platforms from both old and new schema fields
+    const campaignSm: any[] = campaign?.socialMedia || [];
+    const campaignPlatformKeys = new Set<string>([
+      ...campaignSm.map((sm: any) => normalized(sm.platform || '')).filter(Boolean),
+      ...(campaign?.platforms || []).map((p: string) => normalized(p)).filter(Boolean),
+    ]);
+
+    let candidates = campaignPlatformKeys.size
+      ? mySm.filter(smEntry => campaignPlatformKeys.has(normalized(smEntry.platform)))
+      : [...mySm];
+
+    if (!candidates.length) return [];
+
+    const minTier: string = campaign?.minInfluencerTier || '';
+    const minIdx = TIER_ORDER.indexOf(minTier);
+    if (minIdx !== -1) {
+      candidates = candidates.filter(smEntry => {
+        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
+        return idx !== -1 && idx >= minIdx;
+      });
+    }
+    if (!candidates.length) return [];
+
+    const seen = new Set<string>();
+    return candidates
+      .map(c => c.platform)
+      .filter(p => {
+        const key = normalized(p);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   }
 
   onCardContentTypeChange(inviteId: string, key: string) {

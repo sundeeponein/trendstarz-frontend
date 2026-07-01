@@ -171,7 +171,7 @@ $dk-orange:    #e06030;
   gap: 1px;
   background: $lt-border;
   border-bottom: 1px solid $lt-border;
-  flex-shrink: 0;
+  margin: -20px -24px 20px;
 
   .cdm-panel--dark & { background: $dk-border; border-bottom-color: $dk-border; }
 }
@@ -1034,6 +1034,8 @@ $dk-orange:    #e06030;
   border: 1px solid $lt-border; border-radius: 9px;
   padding: 8px 12px; background: $lt-surface;
   .cdm-panel--dark & { border-color: $dk-border; background: $dk-surface; }
+
+  &--body { margin-bottom: 16px; }
 }
 .cdm-payout-head {
   display: flex; align-items: center; gap: 7px;
@@ -1107,12 +1109,13 @@ $dk-orange:    #e06030;
   overflow: hidden;
   margin-bottom: 16px;
   border: 1px solid $lt-border;
-  height: 150px;
+  aspect-ratio: 1 / 1;
+  background-color: white;
 
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
   }
 }

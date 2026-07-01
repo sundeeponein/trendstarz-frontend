@@ -62,6 +62,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     }
 
     canSelectMoreInfluencers(): boolean {
+      if (this.isAcceptanceDeadlinePassed) return false;
       const max = this.inviteSelectionLimit;
       return max === -1 || this.takenSlotsCount < max;
     }
@@ -588,6 +589,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       this.hydrateSelectionStateFromCampaign(this.campaign as any);
     }
 
+    // Apply field locks immediately based on current campaign status.
+    this.applyFieldLocks();
+
     // If editing, fetch current invites and a full campaign snapshot by id.
     // Some list views provide partial objects, which can miss required chip selections.
     if (this.isEdit && this.campaign?._id) {
@@ -652,6 +656,26 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
   get isEdit(): boolean { return this.mode === 'edit'; }
 
+  /** True once admin has approved the campaign (status = active or completed). */
+  get isApproved(): boolean {
+    const s = String(this.campaign?.status || '');
+    return s === 'active' || s === 'completed';
+  }
+
+  /** True once at least one influencer has confirmed (accepted) participation. */
+  get hasAcceptedInvite(): boolean {
+    return (this.campaignInvites || []).some(i =>
+      ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved']
+        .includes(String(i?.status || '').toLowerCase())
+    );
+  }
+
+  /** Fields locked after admin approval. */
+  get isApprovalLocked(): boolean { return this.isEdit && this.isApproved; }
+
+  /** Fields locked after any influencer confirms (subset of approval-locked). */
+  get isAcceptanceLocked(): boolean { return this.isApprovalLocked && this.hasAcceptedInvite; }
+
   get isPhotographerCreator(): boolean {
     return this.creatorRole === 'photographer';
   }
@@ -662,6 +686,46 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
   get hasFixedInviteRecipientRole(): boolean {
     return this.isPhotographerCreator || this.isInfluencerCreator;
+  }
+
+  /**
+   * Disable/enable form controls based on campaign status and acceptance state.
+   * Called after form build and after invites load (acceptance state may change).
+   */
+  applyFieldLocks(): void {
+    if (!this.form) return;
+
+    const setLock = (fields: string[], locked: boolean) => {
+      for (const f of fields) {
+        const ctrl = this.form.get(f);
+        if (!ctrl) continue;
+        locked ? ctrl.disable({ emitEvent: false }) : ctrl.enable({ emitEvent: false });
+      }
+    };
+
+    // Fields locked once admin approves (active/completed)
+    const approvalLockedFields = [
+      'title', 'campaignType', 'pricePerInfluencer',
+      'budgetMin', 'budgetMax',
+    ];
+    setLock(approvalLockedFields, this.isApprovalLocked);
+
+    // Fields additionally locked once any influencer has accepted
+    const acceptanceLockedFields = [
+      'description', 'deliverablesText', 'specialInstructions',
+      'inviteBenefits', 'payToJoinBenefits', 'payToJoinInstructions',
+      'productDescription', 'timelineStart',
+      'venueName', 'venueAddress', 'venueCity', 'venueDistrict',
+      'venueState', 'venueGoogleMapUrl',
+    ];
+    setLock(acceptanceLockedFields, this.isAcceptanceLocked);
+  }
+
+  /** True when the acceptance deadline has passed — no more invites allowed. */
+  get isAcceptanceDeadlinePassed(): boolean {
+    const deadline = (this.campaign as any)?.acceptanceDeadline;
+    if (!deadline) return false;
+    return new Date(deadline) < new Date();
   }
 
   /**
@@ -1842,6 +1906,8 @@ export class CampaignFormComponent implements OnInit, OnChanges {
           this.loadInviteRecipients();
         }
       }
+      // Re-apply locks now that we know the actual acceptance state.
+      this.applyFieldLocks();
       this.cd.detectChanges();
     });
   }
@@ -2511,6 +2577,11 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       this.uploading = false;
       return;
     }
+    // Block new invites once acceptance deadline has passed
+    if (this.selectedInfluencerIds.size > 0 && this.isAcceptanceDeadlinePassed) {
+      this.toast.error('Acceptance deadline has passed. No more invites can be sent for this campaign.');
+      return;
+    }
     this.uploading = true;
     const v = this.form.value;
     // Convert pricePerInfluencer (entered in rupees) to paise for backend
@@ -2519,7 +2590,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       ...v,
       pricePerInfluencer: pricePerInfluencerPaise,
       minInfluencers: Number(v.minInfluencers || 1),
-      status: 'pending_review',
+      status: this.resolveSubmitStatus(),
       deliverables: this.parseDeliverables(v.deliverablesText),
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
@@ -2543,6 +2614,18 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     if (this.isEdit && this.campaign?._id) {
       this.fetchCampaignInvites();
     }
+  }
+
+  private resolveSubmitStatus(): string {
+    if (this.isEdit && this.campaign) {
+      const current = String(this.campaign.status || '');
+      // active: backend VALID_TRANSITIONS does not allow active → pending_review
+      // (that path is admin-only). Keep active so edits/invites don't break the campaign.
+      // pending: brand paused the campaign; stay paused — they can resume separately.
+      if (current === 'active' || current === 'pending') return current;
+      // needs_changes / rejected → re-submit for admin review.
+    }
+    return 'pending_review';
   }
 
   private buildSavePayload(payload: any) {

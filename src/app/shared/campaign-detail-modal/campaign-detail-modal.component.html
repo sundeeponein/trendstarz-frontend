@@ -24,63 +24,84 @@
       </button>
     </div>
 
-    <!-- ── INFO STRIP (3 stat cards) ─────────────────────────── -->
-    <div class="cdm-info-strip">
+    <!-- ── SCROLLABLE BODY ────────────────────────────────────── -->
+    <div class="cdm-body">
 
-      <!-- Admin view: Timeline · Available Slots · Est. Payout -->
-      <ng-container *ngIf="adminReview">
-        <div class="cdm-info-card">
-          <div class="cdm-info-card__label"><i class="bi bi-calendar3"></i> TIMELINE</div>
-          <div class="cdm-info-card__value">{{ timelineText }}</div>
-          <div class="cdm-info-card__sub" *ngIf="timelineYearText">{{ timelineYearText }}</div>
-        </div>
-        <div class="cdm-info-card">
-          <div class="cdm-info-card__label"><i class="bi bi-people-fill"></i> AVAILABLE SLOTS</div>
-          <div class="cdm-info-card__value">{{ slots || '—' }}<span class="cdm-info-card__unit" *ngIf="slots"> Participants</span></div>
-        </div>
-        <div class="cdm-info-card">
-          <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> EST. PAYOUT</div>
-          <div class="cdm-info-card__value" style="color:#d2521a">
-            {{ yourPayoutText || campaignBudgetText || '—' }}
-            <span class="cdm-info-card__unit" *ngIf="yourPayoutText || campaignBudgetText"> Total</span>
-          </div>
-        </div>
-      </ng-container>
+      <!-- ── INFO STRIP (3 stat cards) — scrolls with body ─── -->
+      <div class="cdm-info-strip">
 
-      <!-- User view: Your Payout (with tags) · Timeline (with duration) · Platform -->
-      <ng-container *ngIf="!adminReview">
-        <div class="cdm-info-card">
-          <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
-          <div class="cdm-info-card__value" style="color:#d2521a">{{ yourPayoutText || campaignBudgetText || '—' }}</div>
-          <div class="cdm-info-card__tags" *ngIf="payoutTypeTags.length">
-            <span class="cdm-tag" *ngFor="let tag of payoutTypeTags">{{ tag }}</span>
+        <!-- Admin view: Timeline · Available Slots · Est. Payout -->
+        <ng-container *ngIf="adminReview">
+          <div class="cdm-info-card">
+            <div class="cdm-info-card__label"><i class="bi bi-calendar3"></i> TIMELINE</div>
+            <div class="cdm-info-card__value">{{ timelineText }}</div>
+            <div class="cdm-info-card__sub" *ngIf="timelineYearText">{{ timelineYearText }}</div>
           </div>
-        </div>
-        <div class="cdm-info-card">
-          <div class="cdm-info-card__label"><i class="bi bi-calendar3"></i> TIMELINE</div>
-          <div class="cdm-info-card__value">{{ timelineText }}</div>
-          <div class="cdm-info-card__sub" *ngIf="activeDurationDays > 0">Active duration: {{ activeDurationDays }} Days</div>
-        </div>
-        <div class="cdm-info-card" *ngIf="primaryPlatform; else slotsCard">
-          <div class="cdm-info-card__label">
-            <i class="bi" [ngClass]="platformIcon(primaryPlatform)" [style.color]="platformColor(primaryPlatform)"></i>
-            PLATFORM
-          </div>
-          <div class="cdm-info-card__value">{{ platformLabel(primaryPlatform) }}</div>
-          <div class="cdm-info-card__sub" *ngIf="primaryContentTypeLabel">{{ primaryContentTypeLabel }}</div>
-        </div>
-        <ng-template #slotsCard>
           <div class="cdm-info-card">
             <div class="cdm-info-card__label"><i class="bi bi-people-fill"></i> AVAILABLE SLOTS</div>
             <div class="cdm-info-card__value">{{ slots || '—' }}<span class="cdm-info-card__unit" *ngIf="slots"> Participants</span></div>
           </div>
-        </ng-template>
-      </ng-container>
+          <div class="cdm-info-card">
+            <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> EST. PAYOUT</div>
+            <div class="cdm-info-card__value" style="color:#d2521a">
+              {{ yourPayoutText || campaignBudgetText || '—' }}
+              <span class="cdm-info-card__unit" *ngIf="yourPayoutText || campaignBudgetText"> Total</span>
+            </div>
+          </div>
+        </ng-container>
 
-    </div>
+        <!-- User view: Your Payout (with tags) · Timeline (with duration) · Platform -->
+        <ng-container *ngIf="!adminReview">
+          <div class="cdm-info-card">
+            <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
+            <div class="cdm-info-card__value" style="color:#d2521a">{{ yourPayoutText || campaignBudgetText || '—' }}</div>
+            <div class="cdm-info-card__tags" *ngIf="payoutTypeTags.length">
+              <span class="cdm-tag" *ngFor="let tag of payoutTypeTags">{{ tag }}</span>
+            </div>
+          </div>
+          <div class="cdm-info-card">
+            <div class="cdm-info-card__label"><i class="bi bi-calendar3"></i> TIMELINE</div>
+            <div class="cdm-info-card__value">{{ timelineText }}</div>
+            <div class="cdm-info-card__sub" *ngIf="activeDurationDays > 0">Active duration: {{ activeDurationDays }} Days</div>
+          </div>
+          <div class="cdm-info-card" *ngIf="primaryPlatform; else slotsCard">
+            <div class="cdm-info-card__label">
+              <i class="bi" [ngClass]="platformIcon(primaryPlatform)" [style.color]="platformColor(primaryPlatform)"></i>
+              PLATFORM
+            </div>
+            <div class="cdm-info-card__value">{{ platformLabel(primaryPlatform) }}</div>
+            <div class="cdm-info-card__sub" *ngIf="primaryContentTypeLabel">{{ primaryContentTypeLabel }}</div>
+          </div>
+          <ng-template #slotsCard>
+            <div class="cdm-info-card">
+              <div class="cdm-info-card__label"><i class="bi bi-people-fill"></i> AVAILABLE SLOTS</div>
+              <div class="cdm-info-card__value">{{ slots || '—' }}<span class="cdm-info-card__unit" *ngIf="slots"> Participants</span></div>
+            </div>
+          </ng-template>
+        </ng-container>
 
-    <!-- ── SCROLLABLE BODY ────────────────────────────────────── -->
-    <div class="cdm-body">
+      </div>
+
+      <!-- Payout details (user, pending — shown above offer trail) -->
+      <div class="cdm-payout-block cdm-payout-block--body" *ngIf="isPending && !adminReview && needsPayoutDetails">
+        <div class="cdm-payout-head">
+          <i class="bi bi-bank"></i>
+          <span>Receive payment to</span>
+          <button type="button" class="cdm-payout-edit-btn" (click)="togglePayoutEdit()">
+            <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
+            {{ payoutEditing ? 'Done' : (payoutSummaryText ? 'Edit' : 'Add') }}
+          </button>
+        </div>
+        <div class="cdm-payout-summary" *ngIf="!payoutEditing">
+          <span *ngIf="payoutSummaryText">{{ payoutSummaryText }}</span>
+          <span class="cdm-payout-missing" *ngIf="!payoutSummaryText">Add UPI / mobile before accepting</span>
+        </div>
+        <div class="cdm-payout-form" *ngIf="payoutEditing">
+          <input type="text" class="cdm-payout-input" placeholder="UPI ID" [(ngModel)]="payoutUpiId" autocomplete="off" />
+          <input type="tel" class="cdm-payout-input" placeholder="Mobile (GPay/PhonePe)" [(ngModel)]="payoutMobile" autocomplete="off" maxlength="15" />
+          <input type="text" class="cdm-payout-input" placeholder="Account holder name" [(ngModel)]="payoutName" autocomplete="off" />
+        </div>
+      </div>
 
       <!-- Campaign Workflow stepper -->
       <div class="cdm-workflow" *ngIf="adminReview">
@@ -113,7 +134,11 @@
           <!-- Campaign Brief -->
           <div class="cdm-section" *ngIf="campaignDescriptionSafe || specialInstructions">
             <div class="cdm-section__label">CAMPAIGN BRIEF</div>
-            <div class="cdm-brief-box" [innerText]="campaignDescriptionSafe || specialInstructions"></div>
+            <div class="cdm-brief-box" *ngIf="campaignDescriptionSafe" style="white-space: pre-wrap;" [innerText]="campaignDescriptionSafe"></div>
+            <ng-container *ngIf="specialInstructions">
+              <div class="cdm-section__label" style="margin-top: 14px;">SPECIAL INSTRUCTIONS</div>
+              <div class="cdm-brief-box" style="white-space: pre-wrap;" [innerText]="specialInstructions"></div>
+            </ng-container>
           </div>
 
           <!-- Price negotiation trail (user view, only when counter offer was made) -->
@@ -508,27 +533,6 @@
       <ng-container *ngIf="isPending && !adminReview">
         <div class="cdm-footer-left">
           <span class="cdm-selected-payout-hint" *ngIf="selectedPayoutHint">{{ selectedPayoutHint }}</span>
-
-          <!-- Payout details -->
-          <div class="cdm-payout-block" *ngIf="needsPayoutDetails">
-            <div class="cdm-payout-head">
-              <i class="bi bi-bank"></i>
-              <span>Receive payment to</span>
-              <button type="button" class="cdm-payout-edit-btn" (click)="togglePayoutEdit()">
-                <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
-                {{ payoutEditing ? 'Done' : (payoutSummaryText ? 'Edit' : 'Add') }}
-              </button>
-            </div>
-            <div class="cdm-payout-summary" *ngIf="!payoutEditing">
-              <span *ngIf="payoutSummaryText">{{ payoutSummaryText }}</span>
-              <span class="cdm-payout-missing" *ngIf="!payoutSummaryText">Add UPI / mobile before accepting</span>
-            </div>
-            <div class="cdm-payout-form" *ngIf="payoutEditing">
-              <input type="text" class="cdm-payout-input" placeholder="UPI ID" [(ngModel)]="payoutUpiId" autocomplete="off" />
-              <input type="tel" class="cdm-payout-input" placeholder="Mobile (GPay/PhonePe)" [(ngModel)]="payoutMobile" autocomplete="off" maxlength="15" />
-              <input type="text" class="cdm-payout-input" placeholder="Account holder name" [(ngModel)]="payoutName" autocomplete="off" />
-            </div>
-          </div>
 
           <input *ngIf="showDateInput" type="date" class="cdm-date-input"
                  [(ngModel)]="postDate" (ngModelChange)="toastError = ''"
