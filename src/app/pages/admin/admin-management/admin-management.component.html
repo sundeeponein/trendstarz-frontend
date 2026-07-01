@@ -526,30 +526,44 @@
 
         <div class="col-12 col-xl-7 settings-row">
           <h4>Platform Commission & GST</h4>
-          <div class="form-check form-switch mb-3">
+          <div class="form-check form-switch mb-1">
             <input class="form-check-input" type="checkbox" id="platformFeeEnabled"
               [(ngModel)]="settings.platformFeeEnabled" />
             <label class="form-check-label" for="platformFeeEnabled">Enable platform commission on campaigns</label>
           </div>
+          <small class="text-muted d-block mb-3">When enabled, all host/payer fees, recipient payout fees and GST below are applied across all roles.</small>
+
+          <!-- GST — global, applies to all platform commission (not role-specific) -->
+          <div class="mb-3 p-2 rounded" style="background:#fffde7; border:1px solid #fff176;">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <div>
+                <label class="form-label mb-1 fw-semibold" style="font-size:0.88rem;">GST on Platform Commission (%)</label>
+                <div class="input-group input-group-sm" style="max-width:160px;">
+                  <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+              <small class="text-muted" style="font-size:0.8rem;">
+                Applied to <strong>platform commission only</strong> (not on the agreed campaign amount) — for all roles.<br>
+                e.g. ₹500 campaign × {{ effectiveRoleFee('brandFeePercent') }}% commission = ₹{{ (500 * effectiveRoleFee('brandFeePercent') / 100).toFixed(0) }} → {{ settings.gstPercent }}% GST = ₹{{ (500 * effectiveRoleFee('brandFeePercent') / 100 * settings.gstPercent / 100).toFixed(2) }}
+              </small>
+            </div>
+            <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
+              Applies when platform commission is enabled · shown in the Host (payer) breakdown as "GST on commission" and in the Recipient breakdown as "GST on payout fee"
+            </small>
+          </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Platform Commission (%) by Campaign Type</label>
+            <label class="form-label fw-semibold">Platform Commission (%) by Role — Host/Payer</label>
             <div class="row g-3">
               <!-- Regular campaigns: Brand pays -->
               <div class="col-12 col-md-4">
                 <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
                   <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#1b5e20;">Brands</div>
-                  <div class="mb-2">
+                  <div class="mb-0">
                     <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
                     <div class="input-group input-group-sm">
                       <input type="number" class="form-control" [(ngModel)]="settings.brandFeePercent" min="0" max="100" placeholder="0" />
-                      <span class="input-group-text">%</span>
-                    </div>
-                  </div>
-                  <div class="mb-0">
-                    <label class="form-label" style="font-size:0.85rem;">GST (%)</label>
-                    <div class="input-group input-group-sm">
-                      <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" placeholder="0" />
                       <span class="input-group-text">%</span>
                     </div>
                   </div>
@@ -583,6 +597,50 @@
                   </div>
                   <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recipient / Payout Fee — per role, default 0%, ready for future 1-4% activation -->
+          <div class="mb-1 mt-2">
+            <span class="fw-semibold" style="font-size:0.93rem;">Recipient Payout Fee (%) by Role</span>
+            <span class="badge bg-secondary ms-2" style="font-weight:400; font-size:0.7rem;">Default 0%</span>
+          </div>
+          <div class="row g-2 mb-3">
+            <!-- Influencer as recipient -->
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded" style="background:#e3f2fd; border:1px solid #bbdefb;">
+                <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#0d47a1;">Influencers</div>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.influencerRecipientFeePercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">Deducted from influencer payout · default 0%</small>
+              </div>
+            </div>
+            <!-- Photo/Video as recipient -->
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded" style="background:#fce4ec; border:1px solid #f8bbd0;">
+                <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#880e4f;">Photo/Video</div>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.photographerRecipientFeePercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">Deducted from photographer payout · default 0%</small>
+              </div>
+            </div>
+            <!-- Brand as recipient (future) -->
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded" style="background:#f5f5f5; border:1px solid #e0e0e0; opacity:0.75;">
+                <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#616161;">Brands <span class="badge bg-secondary ms-1" style="font-size:0.65rem; font-weight:400;">Future</span></div>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.brandRecipientFeePercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">For when influencers/photographers invite brands · default 0%</small>
               </div>
             </div>
           </div>

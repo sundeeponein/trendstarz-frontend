@@ -286,6 +286,9 @@ export class ConfigService {
     brandFeePercent?: number;
     influencerFeePercent?: number;
     photographerFeePercent?: number;
+    influencerRecipientFeePercent?: number;
+    photographerRecipientFeePercent?: number;
+    brandRecipientFeePercent?: number;
     gstPercent?: number;
     paymentUpiId?: string;
     submissionApprovalWaitHours?: number;
@@ -316,6 +319,9 @@ export class ConfigService {
           brandFeePercent: typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : undefined,
           influencerFeePercent: typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : undefined,
           photographerFeePercent: typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : undefined,
+          influencerRecipientFeePercent: typeof data?.influencerRecipientFeePercent === 'number' ? data.influencerRecipientFeePercent : undefined,
+          photographerRecipientFeePercent: typeof data?.photographerRecipientFeePercent === 'number' ? data.photographerRecipientFeePercent : undefined,
+          brandRecipientFeePercent: typeof data?.brandRecipientFeePercent === 'number' ? data.brandRecipientFeePercent : undefined,
           gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
           paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
           submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,

@@ -401,6 +401,9 @@ export class AdminManagementComponent implements OnInit {
     brandFeePercent: null as number | null,
     influencerFeePercent: 0 as number,
     photographerFeePercent: 0 as number,
+    influencerRecipientFeePercent: 0 as number,
+    photographerRecipientFeePercent: 0 as number,
+    brandRecipientFeePercent: 0 as number,
     gstPercent: 0,
     submissionApprovalWaitHours: 24,
     submissionAutoCompleteGraceHours: 48,
@@ -739,6 +742,9 @@ export class AdminManagementComponent implements OnInit {
           this.settings.brandFeePercent = typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : null;
           this.settings.influencerFeePercent = typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : 0;
           this.settings.photographerFeePercent = typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : 0;
+          this.settings.influencerRecipientFeePercent = typeof data?.influencerRecipientFeePercent === 'number' ? data.influencerRecipientFeePercent : 0;
+          this.settings.photographerRecipientFeePercent = typeof data?.photographerRecipientFeePercent === 'number' ? data.photographerRecipientFeePercent : 0;
+          this.settings.brandRecipientFeePercent = typeof data?.brandRecipientFeePercent === 'number' ? data.brandRecipientFeePercent : 0;
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
           this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;

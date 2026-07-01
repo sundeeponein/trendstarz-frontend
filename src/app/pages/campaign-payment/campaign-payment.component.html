@@ -61,17 +61,14 @@
 
         <hr />
 
+        <!-- ── HOST / PAYER breakdown ── -->
         <ng-container *ngIf="!isPayToJoin">
-          <div class="cp-row" *ngIf="calculated.platformFeeEnabled">
+          <div class="cp-row" [class.cp-row--muted]="!calculated.platformFeeEnabled || calculated.platformFee === 0">
             <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
             <span class="cp-row-val">{{ formatINR(calculated.platformFee) }}</span>
           </div>
-          <div class="cp-row cp-row--muted" *ngIf="!calculated.platformFeeEnabled">
-            <span class="cp-row-label">Platform commission</span>
-            <span class="cp-row-val">Free during launch</span>
-          </div>
-          <div class="cp-row" *ngIf="gstAmount > 0">
-            <span class="cp-row-label">GST ({{ gstPercent }}%)</span>
+          <div class="cp-row" [class.cp-row--muted]="gstAmount === 0" *ngIf="gstPercent > 0">
+            <span class="cp-row-label">GST on commission ({{ gstPercent }}%)</span>
             <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
           </div>
           <div class="cp-total">
@@ -80,10 +77,15 @@
           </div>
         </ng-container>
 
+        <!-- ── HOST / PAYER breakdown for pay_to_join ── -->
         <ng-container *ngIf="isPayToJoin">
-          <div class="cp-row" *ngIf="calculated.platformFeeEnabled">
+          <div class="cp-row" [class.cp-row--muted]="!calculated.platformFeeEnabled || calculated.platformFee === 0">
             <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
             <span class="cp-row-val cp-row-val--deduct">−{{ formatINR(calculated.platformFee) }}</span>
+          </div>
+          <div class="cp-row" [class.cp-row--muted]="gstAmount === 0" *ngIf="gstPercent > 0">
+            <span class="cp-row-label">GST on commission ({{ gstPercent }}%)</span>
+            <span class="cp-row-val cp-row-val--deduct">−{{ formatINR(gstAmount) }}</span>
           </div>
           <div class="cp-total">
             <span>Brand receives</span>
@@ -92,20 +94,35 @@
         </ng-container>
       </div>
 
-      <!-- What creators receive / brand receives -->
+      <!-- ── RECIPIENT breakdown (creator receives) — regular campaigns only ── -->
       <div class="cp-card cp-card--soft" *ngIf="!isPayToJoin">
         <div class="cp-card-title"><i class="bi bi-people"></i> Creator payout</div>
         <div class="cp-row">
           <span class="cp-row-label">Campaign earnings</span>
           <span class="cp-row-val">{{ formatINR(calculated.agreedAmount) }}</span>
         </div>
-        <div class="cp-row cp-row--muted" *ngIf="calculated.platformFeeEnabled">
-          <span class="cp-row-label">Platform commission</span>
-          <span class="cp-row-val">Paid by Brand</span>
+        <!-- Host pays the platform commission — recipient doesn't bear this -->
+        <div class="cp-row cp-row--muted">
+          <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
+          <span class="cp-row-val">Paid by Host</span>
+        </div>
+        <!-- Recipient payout fee (default 0%, activatable per role) -->
+        <div class="cp-row" [class.cp-row--muted]="!calculated.platformFeeEnabled || (calculated.recipientFee || 0) === 0">
+          <span class="cp-row-label">Payout fee ({{ calculated.recipientFeePercent || 0 }}%)</span>
+          <span class="cp-row-val" [class.cp-row-val--deduct]="(calculated.recipientFee || 0) > 0">
+            {{ (calculated.recipientFee || 0) > 0 ? '−' + formatINR(calculated.recipientFee) : formatINR(0) }}
+          </span>
+        </div>
+        <!-- GST on payout fee (only when both gstPercent and recipientFee > 0) -->
+        <div class="cp-row cp-row--muted" *ngIf="gstPercent > 0">
+          <span class="cp-row-label">GST on payout fee ({{ gstPercent }}%)</span>
+          <span class="cp-row-val">
+            {{ recipientGstAmount > 0 ? '−' + formatINR(recipientGstAmount) : formatINR(0) }}
+          </span>
         </div>
         <div class="cp-row cp-row--strong">
           <span class="cp-row-label">Creator receives</span>
-          <span class="cp-row-val">{{ formatINR(calculated.recipientPayoutTotal) }}</span>
+          <span class="cp-row-val">{{ formatINR(recipientNetPayout) }}</span>
         </div>
         <p class="cp-note">Released after each post is approved by you.</p>
       </div>
