@@ -233,7 +233,7 @@
 }
 
 .detail-row {
-  display: flex;
+  display: block;
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
@@ -289,7 +289,7 @@
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  // justify-content: flex-end;
 }
 
 .chip {
@@ -543,7 +543,7 @@
 }
 
 .insight-detail-row {
-  display: flex;
+  display: block;
   justify-content: space-between;
   gap: 0.5rem;
   align-items: center;
@@ -564,7 +564,7 @@
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .kw-chip {

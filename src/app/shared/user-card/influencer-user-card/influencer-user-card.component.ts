@@ -71,7 +71,7 @@ export class InfluencerUserCardComponent {
     return (Array.isArray(this.creatorTypes) ? this.creatorTypes : [])
       .map((type) => String(type || '').trim())
       .filter((type) => !!type)
-      .slice(0, 3);
+      .slice(0, 1);
   }
 
   get isTrendstarzVerified(): boolean {

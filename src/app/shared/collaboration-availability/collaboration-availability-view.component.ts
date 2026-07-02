@@ -10,15 +10,15 @@ import { Component, Input } from '@angular/core';
       <h3>Collaboration Availability</h3>
       <div class="ca-row" *ngIf="availability.collaborationTypes?.length">
         <strong>Types</strong>
-        <span *ngFor="let item of availability.collaborationTypes">{{ item }}</span>
+        <span *ngFor="let item of availability.collaborationTypes">{{ item }},</span>
       </div>
       <div class="ca-row border-top" *ngIf="availability.preference">
         <strong>Preference</strong>
-        <span>{{ availability.preference }}</span>
+        <span>{{ availability.preference }},</span>
       </div>
       <div class="ca-row border-top" *ngIf="availability.availableFor?.length">
         <strong>Available For</strong>
-        <span *ngFor="let item of availability.availableFor">{{ item }}</span>
+        <span *ngFor="let item of availability.availableFor">{{ item }},</span>
       </div>
       <div class="ca-row border-top" *ngIf="availability.openToTravel">
         <strong>Travel</strong>

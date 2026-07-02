@@ -9,13 +9,13 @@
     <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" title="{{ name }}" />
 
     <!-- Trust badges -->
-    <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
-      <span class="inf-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified" title="Verified" tooltip="Verified">
-        <i class="bi bi-patch-check-fill"></i> Verified
-      </span>
+    <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || (professionalStatus && visibleCreatorTypes.length)">
       <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
         <i class="bi bi-star-fill"></i> Premium
       </span>
+      <ng-container *ngIf="professionalStatus && visibleCreatorTypes.length">
+        <span class="inf-card__img-tag badge rounded-pill badge--creator-type" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
+      </ng-container>
     </div>
   </div>
 
@@ -23,7 +23,10 @@
   <div class="inf-card__body">
     <!-- Name -->
     <div class="inf-card__name">
-      {{ name }}
+      {{ name }} 
+      <span class="text-success" *ngIf="isTrendstarzVerified" title="Verified" tooltip="Verified">
+        <i class="bi bi-patch-check-fill"></i>
+      </span>
     </div>
 
     <!-- Categories + welcome-only starting price -->
@@ -33,12 +36,6 @@
         ₹{{ promotionalPrice | number:'1.0-0' }}
       </div>
     </div>
-
-    <!-- Professional Status + Creator Type -->
-    <!-- <div class="inf-card__pro-row" *ngIf="professionalStatus && visibleCreatorTypes.length">
-      <span class="inf-card__pro-badge">Professional</span>
-      <span class="inf-card__creator-type" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
-    </div> -->
 
     <!-- Location -->
     <div class="inf-card__location" *ngIf="location?.state">

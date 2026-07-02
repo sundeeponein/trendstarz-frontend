@@ -96,6 +96,13 @@ export class InfluencerProfileViewComponent implements OnInit {
     return !!this.influencer?.verifiedByTrendStarz || String(this.influencer?.verificationStatus || '').toLowerCase() === 'approved';
   }
 
+  get visibleCreatorTypes(): string[] {
+    return (Array.isArray(this.influencer?.creatorTypes) ? this.influencer.creatorTypes : [])
+      .map((type: any) => String(type || '').trim())
+      .filter(Boolean)
+      .slice(0, 1);
+  }
+
   stripProtocol(url: string): string {
     return (url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   }

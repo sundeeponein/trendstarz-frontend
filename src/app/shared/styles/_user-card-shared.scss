@@ -189,6 +189,15 @@ $user-card-btn-primary-hover-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
       color: #92400e;
     }
 
+    .badge--creator-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: #f0f4ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
     &__platforms {
       display: flex;
       gap: 0.35rem;

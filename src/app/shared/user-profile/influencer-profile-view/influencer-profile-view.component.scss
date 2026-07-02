@@ -10,6 +10,37 @@ $text-muted: #7a7a8e;
 $radius: 16px;
 $green: #22c55e;
 
+.professional-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.professional-badge,
+.creator-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.professional-badge {
+  color: #087f5b;
+  background: #d8f8e6;
+}
+
+.creator-type-badge {
+  color: #1f2937;
+  background: #f8fafc;
+  border: 1px solid #d7dee9;
+}
+
 /* Reviews */
 .reviews-wrapper {
   max-width: 860px;

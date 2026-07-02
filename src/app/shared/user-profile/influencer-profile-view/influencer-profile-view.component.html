@@ -41,13 +41,9 @@
             <span>{{ cat }}</span><span *ngIf="!last" class="cat-sep"> · </span>
           </ng-container>
         </p>
-        <div class="profile-tags mt-1" *ngIf="influencer.professionalStatus">
-          <span class="badge rounded-pill bg-success-subtle text-success fw-semibold">Professional Creator</span>
-        </div>
-        <div class="profile-tags mt-1" *ngIf="influencer.professionalStatus && influencer.creatorTypes?.length">
-          <span class="profile-tag badge rounded-pill bg-light text-dark" *ngFor="let type of influencer.creatorTypes">
-            {{ type }}
-          </span>
+        <div class="professional-tags" *ngIf="influencer.professionalStatus && visibleCreatorTypes.length">
+          <!-- <span class="professional-badge">Professional Creator</span> -->
+          <span class="creator-type-badge" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
         </div>
         <p class="profile-location" *ngIf="influencer.location?.state">
           <i class="bi bi-geo-alt"></i>
@@ -126,6 +122,13 @@
             <div><span class="detail-key">Categories</span></div>
             <div class="chip-list">
               <span *ngFor="let cat of influencer.categories" class="chip chip--accent">{{ cat }}</span>
+            </div>
+          </div>
+
+          <div class="detail-row" *ngIf="influencer.professionalStatus && visibleCreatorTypes.length">
+            <div><span class="detail-key">Professional Status</span></div>
+            <div class="chip-list">
+              <span *ngFor="let type of visibleCreatorTypes" class="chip chip--gray">{{ type }}</span>
             </div>
           </div>
 

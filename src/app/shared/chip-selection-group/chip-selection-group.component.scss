@@ -51,7 +51,7 @@
 .chip-group__chip--selected:hover:not(:disabled) {
   background: #f55b0a;
   border-color: #f55b0a;
-  color: #fff;
+  color: #fff !important;
 }
 
 .chip-group__chip--disabled:not(.chip-group__chip--selected) {

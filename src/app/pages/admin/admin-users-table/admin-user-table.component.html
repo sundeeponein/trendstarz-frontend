@@ -545,11 +545,7 @@
             </div>
             <div *ngIf="(selectedRole) === 'influencer' && selectedUser?.professionalStatus">
               <label>Professional Status</label>
-              <div>Professional Creator</div>
-            </div>
-            <div *ngIf="(selectedRole) === 'influencer' && selectedUser?.professionalStatus">
-              <label>Creator Type / Specialty</label>
-              <div>{{ getUserCreatorTypesLabel(selectedUser) }}</div>
+              <div>{{ getUserCreatorTypesLabel(selectedUser) !== '-' ? 'Professional Creator (' + getUserCreatorTypesLabel(selectedUser) + ')' : 'Professional Creator' }}</div>
             </div>
             <div *ngIf="(selectedRole) === 'influencer'">
               <label>Collaboration Availability</label>
