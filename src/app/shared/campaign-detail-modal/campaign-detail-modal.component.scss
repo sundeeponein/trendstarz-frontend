@@ -478,6 +478,21 @@ $dk-orange:    #e06030;
   .cdm-panel--dark & { color: $dk-orange; }
 }
 
+.cdm-counter-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed $lt-border;
+
+  .cdm-panel--dark & { border-top-color: $dk-border; }
+}
+
+.cdm-counter-panel__top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 // ── Deliverables table ────────────────────────────────────────
 .cdm-deliverables {
   border: 1px solid $lt-border;

@@ -806,7 +806,14 @@ export class CampaignInviteCardComponent {
     return (v || '').toLowerCase().trim();
   }
 
+  private get isTierFilteredCampaign(): boolean {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    return campaignMode === 'tier_filtered_open'
+      || (campaignMode !== 'invite_only' && !!String(this.campaign?.minInfluencerTier || '').trim());
+  }
+
   private get qualifyingPlatformChoices(): string[] {
+    if (!this.isTierFilteredCampaign) return [];
     const explicitChoices = Array.isArray(this.qualifyingPlatforms) ? this.qualifyingPlatforms : [];
     const derivedChoices = explicitChoices.length ? explicitChoices : this.deriveTierQualifyingPlatforms();
     const seen = new Set<string>();
@@ -821,9 +828,7 @@ export class CampaignInviteCardComponent {
   }
 
   private deriveTierQualifyingPlatforms(): string[] {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
-    if (!isTierFiltered) return [];
+    if (!this.isTierFilteredCampaign) return [];
     const socials = Array.isArray(this.influencerSocialMedia) && this.influencerSocialMedia.length
       ? this.influencerSocialMedia
       : Array.isArray(this.invite?.influencerId?.socialMedia)
@@ -875,8 +880,7 @@ export class CampaignInviteCardComponent {
   }
 
   get lockedPlatform(): string {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    if (this.isActionable && (campaignMode === 'tier_filtered_open' || this.hasMultiplePlatformChoices)) return '';
+    if (this.isActionable && (this.isTierFilteredCampaign || this.hasMultiplePlatformChoices)) return '';
     return String(this.invite?.selectedPlatform || '').trim();
   }
 
@@ -919,10 +923,8 @@ export class CampaignInviteCardComponent {
 
   /** UI options shown to influencer; for tier-locked invites we show only relevant platform choices. */
   get displayContentTypeOptions(): ContentTypeOption[] {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
     const qualifying = this.qualifyingPlatformKeySet;
-    if (isTierFiltered && qualifying.size === 0) {
+    if (this.isTierFilteredCampaign && qualifying.size === 0) {
       // If a campaign requires an exact tier but we couldn't determine
       // any qualifying platform for this influencer, do not show
       // content-type options (prevents showing irrelevant platforms).

@@ -245,6 +245,25 @@
                 <span class="cdm-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
               </button>
             </div>
+            <div class="cdm-counter-panel" *ngIf="isPending && (canSendCounterOffer || hasUsedCounterOffer)">
+              <div class="cdm-counter-panel__top">
+                <button class="cdm-foot-btn cdm-foot-btn--counter" *ngIf="canSendCounterOffer" (click)="onToggleCounter()" [disabled]="busy">
+                  {{ counterEditing ? 'Cancel counter' : 'Counter Offer' }}
+                </button>
+                <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
+                <span class="cdm-counter-hint" *ngIf="hasUsedCounterOffer">Counter offer already used.</span>
+              </div>
+
+              <div class="cdm-counter-row" *ngIf="counterEditing">
+                <input type="number" class="cdm-counter-input" min="1" [(ngModel)]="counterAmountInput"
+                       (ngModelChange)="toastError = ''" placeholder="Counter amount (₹)" />
+                <select class="cdm-counter-input" [(ngModel)]="counterReasonInput" (ngModelChange)="toastError = ''">
+                  <option value="">Reason (optional)</option>
+                  <option *ngFor="let r of counterReasonOptions" [value]="r">{{ r }}</option>
+                </select>
+                <button class="cdm-foot-btn cdm-foot-btn--outline" (click)="onSendCounter()" [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
+              </div>
+            </div>
           </div>
 
           <!-- Deliverables table -->
@@ -537,23 +556,6 @@
           <input *ngIf="showDateInput" type="date" class="cdm-date-input"
                  [(ngModel)]="postDate" (ngModelChange)="toastError = ''"
                  [min]="minPostDate" [max]="maxPostDate" [title]="dateInputTitle" />
-
-          <button class="cdm-foot-btn cdm-foot-btn--counter" *ngIf="canSendCounterOffer" (click)="onToggleCounter()" [disabled]="busy">
-            {{ counterEditing ? 'Cancel' : 'Counter Offer' }}
-          </button>
-
-          <div class="cdm-counter-row" *ngIf="counterEditing">
-            <input type="number" class="cdm-counter-input" min="1" [(ngModel)]="counterAmountInput"
-                   (ngModelChange)="toastError = ''" placeholder="Counter amount (₹)" />
-            <select class="cdm-counter-input" [(ngModel)]="counterReasonInput" (ngModelChange)="toastError = ''">
-              <option value="">Reason (optional)</option>
-              <option *ngFor="let r of counterReasonOptions" [value]="r">{{ r }}</option>
-            </select>
-            <button class="cdm-foot-btn cdm-foot-btn--outline" (click)="onSendCounter()" [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
-          </div>
-
-          <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
-          <span class="cdm-counter-hint" *ngIf="isPending && hasUsedCounterOffer">Counter offer already used.</span>
         </div>
         <div class="cdm-footer-right">
           <button class="cdm-foot-btn cdm-foot-btn--ghost" (click)="onDecline()" [disabled]="busy">Decline</button>

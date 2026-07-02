@@ -810,8 +810,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
 
   get lockedPlatform(): string {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    if (this.isPending && (campaignMode === 'tier_filtered_open' || this.hasMultiplePlatformChoices)) return '';
+    if (this.isPending && (this.isTierFilteredCampaign || this.hasMultiplePlatformChoices)) return '';
     return String(this.invite?.selectedPlatform || '').trim();
   }
 
@@ -963,8 +962,15 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return (v || '').toLowerCase().trim();
   }
 
+  private get isTierFilteredCampaign(): boolean {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    return campaignMode === 'tier_filtered_open'
+      || (campaignMode !== 'invite_only' && !!String(this.campaign?.minInfluencerTier || '').trim());
+  }
+
   private get qualifyingPlatformKeySet(): Set<string> {
     const set = new Set<string>();
+    if (!this.isTierFilteredCampaign) return set;
     if (this.qualifyingPlatform) set.add(this.normalized(this.qualifyingPlatform));
     for (const p of this.qualifyingPlatforms || []) {
       if (p) set.add(this.normalized(p));
