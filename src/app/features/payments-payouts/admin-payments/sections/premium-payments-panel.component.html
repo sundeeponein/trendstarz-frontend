@@ -63,6 +63,7 @@
     <p>No {{ statusTab }} payments for {{ activeTab === 'influencer' ? 'influencers' : (activeTab === 'brand' ? 'brands' : 'photographers') }}.</p>
   </div>
 
+  <div class="table-scroll-wrap">
   <table *ngIf="filteredPayments.length > 0" class="table table-hover payments-table-grid">
     <thead>
       <tr>
@@ -102,10 +103,10 @@
         <td *ngIf="statusTab === 'rejected'">{{ payment.approvalNotes || '-' }}</td>
         <td *ngIf="statusTab === 'refunded'">{{ payment.refundReason || payment.approvalNotes || '-' }}</td>
         <td *ngIf="statusTab === 'pending' || statusTab === 'approved'" class="col-actions">
-          <button class="btn btn-success btn-sm me-1" *ngIf="statusTab === 'pending'" (click)="approvePayment(payment)" title="Approve">
+          <button class="btn btn-success btn-sm me-1" *ngIf="statusTab === 'pending'" (click)="approvePayment(payment)" [disabled]="payment.gatewayProvider === 'razorpay'" [title]="payment.gatewayProvider === 'razorpay' ? 'Auto-verified by Razorpay — no manual action needed' : 'Approve'">
             <i class="bi bi-check-circle-fill"></i> Approve
           </button>
-          <button class="btn btn-danger btn-sm" *ngIf="statusTab === 'pending'" (click)="openRejectModal(payment)" title="Reject">
+          <button class="btn btn-danger btn-sm" *ngIf="statusTab === 'pending'" (click)="openRejectModal(payment)" [disabled]="payment.gatewayProvider === 'razorpay'" [title]="payment.gatewayProvider === 'razorpay' ? 'Auto-verified by Razorpay — no manual action needed' : 'Reject'">
             <i class="bi bi-x-circle-fill"></i> Reject
           </button>
           <button class="btn btn-warning btn-sm" *ngIf="statusTab === 'approved'" (click)="openRefundModal(payment)" title="Refund">
@@ -115,6 +116,7 @@
       </tr>
     </tbody>
   </table>
+  </div><!-- /.table-scroll-wrap -->
 
   <div *ngIf="statusTab === 'pending' && totalPages > 1" class="pagination">
     <button [disabled]="currentPage === 1" (click)="previousPage()">← Previous</button>

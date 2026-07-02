@@ -60,6 +60,7 @@
     <p>No transactions in this filter.</p>
   </div>
 
+  <div class="table-scroll-wrap">
   <table *ngIf="visibleTransactions.length > 0" class="table table-hover payments-table-grid">
     <thead>
       <tr>
@@ -166,6 +167,7 @@
       </tr>
     </tbody>
   </table>
+  </div><!-- /.table-scroll-wrap -->
 
   <div class="tx-table-footer" *ngIf="visibleTransactions.length > 0">
     <app-paginator
