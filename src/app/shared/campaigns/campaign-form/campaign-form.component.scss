@@ -724,6 +724,11 @@ form {
   }
 }
 
+.field-textarea--campaign-description {
+  min-height: 118px;
+  line-height: 1.45;
+}
+
 .premium-lock-hint {
   display: flex;
   align-items: center;

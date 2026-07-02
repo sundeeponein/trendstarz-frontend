@@ -157,7 +157,7 @@
               <i class="bi bi-question-circle"></i> View guide &amp; examples
             </button>
           </div>
-          <textarea formControlName="description" class="field-textarea" rows="5"
+          <textarea formControlName="description" class="field-textarea field-textarea--campaign-description" rows="4"
                     placeholder="Describe campaign objectives and expectations..."></textarea>
           <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('description')?.value)">
             <i class="bi bi-exclamation-triangle-fill"></i>

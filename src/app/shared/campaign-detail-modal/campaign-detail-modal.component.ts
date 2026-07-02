@@ -485,15 +485,23 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return this.campaignDescriptionFormatted;
   }
   get campaignDescriptionFormatted(): string {
-    const raw = String(this.campaignDescription || '').trim();
+    return this.formatBriefText(this.campaignDescription);
+  }
+
+  private formatBriefText(value: string): string {
+    const raw = String(value || '').trim();
     if (!raw || raw === 'undefined' || raw === 'null') return '';
-    // Preserve \n line breaks; only collapse runs of spaces/tabs (not newlines)
-    const withHeadings = raw.replace(
-      /[ \t]*(What we expect:|Content Guidelines:|Deliverables:|Timeline:|Payment:|Important Notes:)/gi,
-      '\n$1'
-    );
-    const withBullets = withHeadings.replace(/[ \t]*•[ \t]*/g, '\n• ');
-    return withBullets.replace(/\n{3,}/g, '\n\n').trim();
+    const headings = '(What we expect:|Content Guidelines:|Deliverables:|Timeline:|Payment:|Important Notes:)';
+    return raw
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      .map((line) => line.replace(/[ \t]+/g, ' ').trim())
+      .join('\n')
+      .replace(new RegExp(`([^\\n])\\s*${headings}`, 'gi'), '$1\n$2')
+      .replace(/([^\n])\s*•\s*/g, '$1\n• ')
+      .replace(/(^|\n)\s*•\s*/g, '$1• ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
   get campaignStatus(): string { return (this.campaign?.status || '').toLowerCase(); }
 
@@ -802,6 +810,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
 
   get lockedPlatform(): string {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    if (this.isPending && (campaignMode === 'tier_filtered_open' || this.hasMultiplePlatformChoices)) return '';
     return String(this.invite?.selectedPlatform || '').trim();
   }
 
@@ -962,6 +972,21 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return set;
   }
 
+  private get hasMultiplePlatformChoices(): boolean {
+    const sm = this.campaign?.socialMedia;
+    if (!Array.isArray(sm) || !sm.length) return false;
+    const qualifying = this.qualifyingPlatformKeySet;
+    const platforms = new Set<string>();
+    for (const row of sm) {
+      const platform = String(row?.platform || '').trim();
+      if (!platform) continue;
+      if (qualifying.size && !qualifying.has(this.normalized(platform))) continue;
+      const hasEnabled = Array.isArray(row?.contentTypes) && row.contentTypes.some((ct: any) => !!ct?.enabled);
+      if (hasEnabled) platforms.add(this.normalized(platform));
+    }
+    return platforms.size > 1;
+  }
+
   get selectedContentTypeOption(): ContentTypeOption | undefined {
     if (!this.selectedContentTypeKey) return undefined;
     return this.selectableContentTypeOptions.find((opt) => opt.key === this.selectedContentTypeKey);
@@ -1051,7 +1076,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
 
   get specialInstructions(): string {
-    return (this.campaign?.specialInstructions || '').trim();
+    return this.formatBriefText(this.campaign?.specialInstructions || '');
   }
 
   get minInfluencerTier(): string {
