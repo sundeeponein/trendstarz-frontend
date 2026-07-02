@@ -245,15 +245,7 @@
                 <span class="cdm-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
               </button>
             </div>
-            <div class="cdm-counter-panel" *ngIf="isPending && (canSendCounterOffer || hasUsedCounterOffer)">
-              <div class="cdm-counter-panel__top">
-                <button class="cdm-foot-btn cdm-foot-btn--counter" *ngIf="canSendCounterOffer" (click)="onToggleCounter()" [disabled]="busy">
-                  {{ counterEditing ? 'Cancel counter' : 'Counter Offer' }}
-                </button>
-                <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
-                <span class="cdm-counter-hint" *ngIf="hasUsedCounterOffer">Counter offer already used.</span>
-              </div>
-
+            <div class="cdm-counter-panel bg-white pt-0" *ngIf="isPending && (canSendCounterOffer || hasUsedCounterOffer)">
               <div class="cdm-counter-row" *ngIf="counterEditing">
                 <input type="number" class="cdm-counter-input" min="1" [(ngModel)]="counterAmountInput"
                        (ngModelChange)="toastError = ''" placeholder="Counter amount (₹)" />
@@ -262,6 +254,13 @@
                   <option *ngFor="let r of counterReasonOptions" [value]="r">{{ r }}</option>
                 </select>
                 <button class="cdm-foot-btn cdm-foot-btn--outline" (click)="onSendCounter()" [disabled]="busy || !hasValidCounterAmount">Send Counter</button>
+              </div>
+              <div class="cdm-counter-panel__top">
+                <button class="cdm-foot-btn cdm-foot-btn--counter" *ngIf="canSendCounterOffer" (click)="onToggleCounter()" [disabled]="busy">
+                  {{ counterEditing ? 'Cancel counter' : 'Counter Offer' }}
+                </button>
+                <span class="cdm-counter-hint" *ngIf="counterHintText">{{ counterHintText }}</span>
+                <span class="cdm-counter-hint" *ngIf="hasUsedCounterOffer">Counter offer already used.</span>
               </div>
             </div>
           </div>
