@@ -28,25 +28,38 @@
     </div>
     <div class="admin-social-notif-list">
       <div class="admin-social-notif-item" *ngFor="let n of adminSocialNotifications">
-        <span class="admin-social-notif-platform">
-          <i class="bi bi-instagram" *ngIf="n.platform === 'instagram'"></i>
-          <i class="bi bi-youtube" *ngIf="n.platform === 'youtube'"></i>
-          <i class="bi bi-twitter-x" *ngIf="n.platform === 'twitter' || n.platform === 'x'"></i>
-          <i class="bi bi-facebook" *ngIf="n.platform === 'facebook'"></i>
-          <i class="bi bi-share" *ngIf="!['instagram','youtube','twitter','x','facebook'].includes(n.platform)"></i>
-          <strong>{{ n.platform | titlecase }}</strong>
-        </span>
-        <span *ngIf="n.oldHandle !== n.newHandle" class="admin-social-notif-change">
-          Handle: <span class="notif-old">@{{ n.oldHandle }}</span>
-          <i class="bi bi-arrow-right mx-1"></i>
-          <span class="notif-new">@{{ n.newHandle }}</span>
-        </span>
-        <span *ngIf="n.oldTier !== n.newTier" class="admin-social-notif-change">
-          Tier: <span class="notif-old">{{ n.oldTier }}</span>
-          <i class="bi bi-arrow-right mx-1"></i>
-          <span class="notif-new">{{ n.newTier }}</span>
-        </span>
-        <span class="admin-social-notif-by">by {{ n.changedByName || 'Admin' }} &middot; {{ n.changedAt | date:'dd MMM yyyy' }}</span>
+        <div class="admin-social-notif-main">
+          <span class="admin-social-notif-platform">
+            <i class="bi bi-instagram" *ngIf="n.platform === 'instagram'"></i>
+            <i class="bi bi-youtube" *ngIf="n.platform === 'youtube'"></i>
+            <i class="bi bi-twitter-x" *ngIf="n.platform === 'twitter' || n.platform === 'x'"></i>
+            <i class="bi bi-facebook" *ngIf="n.platform === 'facebook'"></i>
+            <i class="bi bi-share" *ngIf="!['instagram','youtube','twitter','x','facebook'].includes(n.platform)"></i>
+            <strong>{{ n.platform | titlecase }}</strong>
+          </span>
+          <span *ngIf="n.oldHandle !== n.newHandle" class="admin-social-notif-change">
+            Handle: <span class="notif-old">@{{ n.oldHandle }}</span>
+            <i class="bi bi-arrow-right mx-1"></i>
+            <span class="notif-new">@{{ n.newHandle }}</span>
+          </span>
+          <span *ngIf="n.oldTier !== n.newTier" class="admin-social-notif-change">
+            Tier: <span class="notif-old">{{ n.oldTier }}</span>
+            <i class="bi bi-arrow-right mx-1"></i>
+            <span class="notif-new">{{ n.newTier }}</span>
+          </span>
+          <span class="admin-social-notif-by">by {{ n.changedByName || 'Admin' }} &middot; {{ n.changedAt | date:'dd MMM yyyy' }}</span>
+        </div>
+        <div class="admin-social-notif-actions">
+          <button type="button" class="admin-social-action admin-social-action--confirm" (click)="respondToAdminSocialNotifications('confirmed')">
+            <i class="bi bi-check2-circle"></i> Confirm
+          </button>
+          <button type="button" class="admin-social-action admin-social-action--edit" (click)="editAdminSocialDetails()">
+            <i class="bi bi-pencil-square"></i> Edit
+          </button>
+          <button type="button" class="admin-social-action admin-social-action--cancel" (click)="respondToAdminSocialNotifications('cancelled')">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+        </div>
       </div>
     </div>
   </div>

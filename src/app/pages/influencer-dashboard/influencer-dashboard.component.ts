@@ -963,12 +963,25 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   dismissAdminSocialNotifications() {
+    this.respondToAdminSocialNotifications();
+  }
+
+  respondToAdminSocialNotifications(action?: 'confirmed' | 'cancelled') {
     this.adminSocialNotifications = [];
     this.cdr.markForCheck();
     this.http.patch(
       `${environment.apiBaseUrl}/users/influencer-profile/admin-social-notifications/dismiss`,
-      {}
-    ).subscribe();
+      action ? { action } : {}
+    ).subscribe({
+      next: () => {
+        if (action === 'confirmed') this.toast.success('Social media update confirmed.');
+        if (action === 'cancelled') this.toast.info('Social media update dismissed. You can edit your profile anytime.');
+      },
+    });
+  }
+
+  editAdminSocialDetails() {
+    this.router.navigate(['/influencer-profile'], { queryParams: { step: 'social' } });
   }
 
   onUpgrade() {
