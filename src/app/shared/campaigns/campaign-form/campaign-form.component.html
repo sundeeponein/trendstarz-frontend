@@ -1077,8 +1077,8 @@
               *ngFor="let inf of filteredInfluencers"
               [class.inf-row--selected]="selectedInfluencerIds.has(getRecipientId(inf))"
               [class.inf-row--invited]="isInfluencerInvited(inf)"
-              [class.inf-row--disabled]="isInfluencerInvited(inf) || (!selectedInfluencerIds.has(getRecipientId(inf)) && !canSelectMoreInfluencers())"
-              (click)="!isInfluencerInvited(inf) && (selectedInfluencerIds.has(getRecipientId(inf)) || canSelectMoreInfluencers()) && toggleInfluencerSelect(getRecipientId(inf))">
+              [class.inf-row--disabled]="isInfluencerInvited(inf) || isInfluencerDeclined(inf) || (!selectedInfluencerIds.has(getRecipientId(inf)) && !canSelectMoreInfluencers())"
+              (click)="!isInfluencerInvited(inf) && !isInfluencerDeclined(inf) && (selectedInfluencerIds.has(getRecipientId(inf)) || canSelectMoreInfluencers()) && toggleInfluencerSelect(getRecipientId(inf))">
               <app-user-avatar
                 [name]="getInviteRecipientName({ photographerId: inf, recipientRole: inviteRecipientRole }) || inf.fullName || inf.name || inf.username || ''"
                 [src]="getInfluencerAvatar(inf)"
@@ -1128,19 +1128,19 @@
                 <span class="inf-engagement" *ngIf="inf.avgEngagement">
                   Avg engagement<br><strong>{{ inf.avgEngagement }}%</strong>
                 </span>
-                <span class="inf-status-tag inf-status-tag--declined" *ngIf="!isInfluencerInvited(inf) && getInviteStatusBadge(inf)?.label === 'Declined'">
-                  Previously declined
-                </span>
-                <ng-container *ngIf="isInfluencerInvited(inf); else selectable">
+                <ng-container *ngIf="isInfluencerInvited(inf)">
                   <span class="inf-invited-badge badge rounded-pill" [ngClass]="getInviteStatusBadge(inf)?.cssClass">
                     <i class="bi bi-check-circle-fill"></i> {{ getInviteStatusBadge(inf)?.label }}
                   </span>
                 </ng-container>
-                <ng-template #selectable>
+                <ng-container *ngIf="isInfluencerDeclined(inf)">
+                  <span class="inf-status-tag inf-status-tag--declined">Previously declined</span>
+                </ng-container>
+                <ng-container *ngIf="!isInfluencerInvited(inf) && !isInfluencerDeclined(inf)">
                   <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(getRecipientId(inf))">
                     <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(getRecipientId(inf))"></i>
                   </div>
-                </ng-template>
+                </ng-container>
               </div>
             </div>
 

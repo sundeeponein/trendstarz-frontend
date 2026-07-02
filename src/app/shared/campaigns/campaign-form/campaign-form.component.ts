@@ -2831,9 +2831,19 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   isInfluencerInvited(inf: any): boolean {
     return this.campaignInvites.some(i => {
       const status = String(i?.status || '').toLowerCase();
-      if (status === 'declined') return false;
+      if (status === 'declined' || status === 'withdrawn') return false;
       const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
       return inviteInfId === this.getRecipientId(inf);
+    });
+  }
+
+  isInfluencerDeclined(inf: any): boolean {
+    const recipientId = this.getRecipientId(inf);
+    return this.campaignInvites.some(i => {
+      const status = String(i?.status || '').toLowerCase();
+      if (status !== 'declined' && status !== 'withdrawn') return false;
+      const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
+      return inviteInfId === recipientId;
     });
   }
 

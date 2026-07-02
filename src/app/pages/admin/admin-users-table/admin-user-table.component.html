@@ -504,6 +504,10 @@
               (toggled)="toggleSelectedPaymentVerification()"
             ></app-verification-field>
           </div>
+          <div *ngIf="selectedRole === 'brand'">
+            <label>Contact Person Name</label>
+            <div>{{ selectedUser.contactPersonName || '-' }}</div>
+          </div>
           <div>
             <label>Date of Birth</label>
             <div>{{ selectedUser.dateOfBirth ? (selectedUser.dateOfBirth | date:'mediumDate') : '-' }}</div>

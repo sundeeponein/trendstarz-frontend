@@ -64,6 +64,14 @@
     <div *ngIf="showContact && isLoggedIn && canViewContactDetails" class="contact-info-card">
       <h6 class="section-label">Contact Info</h6>
 
+      <div class="contact-row" *ngIf="brand.contactPersonName">
+        <span class="contact-icon-wrap ci--person"><i class="bi bi-person-fill"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-lbl">Contact Person</span>
+          <span class="contact-field-val">{{ brand.contactPersonName }}</span>
+        </div>
+      </div>
+
       <div class="contact-row" *ngIf="brand.contact?.whatsapp">
         <span class="contact-icon-wrap ci--whatsapp"><i class="bi bi-whatsapp"></i></span>
         <div class="contact-content">
