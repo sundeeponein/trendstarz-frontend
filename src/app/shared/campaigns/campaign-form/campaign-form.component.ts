@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Campaign, CampaignInfluencer } from '../campaign.model';
 import { ConfigService } from '../../config.service';
@@ -16,17 +17,20 @@ import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-requir
 import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.service';
 import { ChipSelectionGroupComponent } from '../../chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
+import { MobileBottomActionsComponent } from '../../components/mobile-bottom-actions/mobile-bottom-actions.component';
 
 
 
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent, ConfirmDialogComponent, ChipSelectionGroupComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, UserAvatarComponent, CampaignGuideModalComponent, ConfirmDialogComponent, ChipSelectionGroupComponent, MobileBottomActionsComponent],
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit, OnChanges {
+  /** When true, render the form as a full page (no modal backdrop) */
+  @Input() asPage = false;
   private static readonly MS_PER_DAY = 24 * 60 * 60 * 1000;
   /** Host can't pick a start date sooner than this — leaves room for admin approval, applications/invites, and review. Admin-configurable via AppSettings; these are just fallback defaults until that loads. Public so the template can show the live value in error text. */
   minStartDays = 3;
@@ -117,6 +121,41 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   readonly maxCreatorTypeFilters = 3;
   imagePreview: string | null = null;
   selectedFile: File | null = null;
+  resourceLogoPreview: string | null = null;
+  selectedResourceLogoFile: File | null = null;
+  resourceImagePreviews: string[] = [];
+  selectedResourceImageFiles: File[] = [];
+  existingResourceImages: { url: string; public_id: string }[] = [];
+  resourceGuidelinesFileName: string | null = null;
+  resourceGuidelinesUrl: string | null = null;
+  selectedResourceGuidelinesFile: File | null = null;
+  resourcesExpanded = false;
+
+  get resourcesFilledCount(): number {
+    let count = 0;
+    if (this.imagePreview) count++;
+    if (this.resourceLogoPreview) count++;
+    if (this.resourceImagePreviews.length) count++;
+    if (this.resourceGuidelinesFileName) count++;
+    if (String(this.form?.get('promotionUrl')?.value || '').trim()) count++;
+    if (String(this.form?.get('suggestedCaption')?.value || '').trim()) count++;
+    if (String(this.form?.get('hashtags')?.value || '').trim()) count++;
+    return count;
+  }
+
+  toggleResourcesExpanded(): void {
+    this.resourcesExpanded = !this.resourcesExpanded;
+  }
+  readonly promotionUrlTypes = [
+    { value: 'website', label: 'Website' },
+    { value: 'app_store', label: 'App Store' },
+    { value: 'play_store', label: 'Play Store' },
+    { value: 'instagram', label: 'Instagram Profile' },
+    { value: 'facebook', label: 'Facebook Page' },
+    { value: 'youtube', label: 'YouTube Channel' },
+    { value: 'whatsapp', label: 'WhatsApp Link' },
+    { value: 'other', label: 'Other' },
+  ];
   uploading = false;
   submitLocked = false;
   currentStep = 1;
@@ -151,26 +190,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     tier_filtered_open: `Access mode note:\n• Open to all (with filters): eligible influencers can discover and apply; you review applications in Campaigns.`,
   };
 
-  readonly SPECIAL_INSTRUCTIONS_EXAMPLES: Record<string, string> = {
-    paid_collab: `Dos:\n• Mention the brand name at least once in the video/caption\n• Use the hashtags: #[BrandHashtag] #[CampaignHashtag]\n• Keep the tone conversational — no hard selling\n• Post on the agreed date (or within the selected date range)\n\nDon'ts:\n• Do not post competitor brand content in the same week\n• Do not use filters that alter the product's appearance\n• Do not repost content previously used for another brand\n\nMust include:\n• Brand handle tag: @[BrandHandle]\n• CTA: "Check out the link in bio / visit our page"\n• Story reshare of the post (if Instagram)`,
-    product: `Dos:\n• Unbox or showcase the product naturally on camera\n• Highlight your genuine experience / first impression\n• Use hashtags: #[BrandHashtag] #gifted #collab\n• Tag our account: @[BrandHandle]\n\nDon'ts:\n• Do not compare with competitor products\n• Do not make claims about benefits not listed on the product\n• Do not post before the agreed go-live date\n\nMust mention:\n• This is a gifted collaboration (#gifted)\n• At least one key benefit or use-case of the product`,
-    invite_location: `Before the visit:\n• Confirm attendance at least 24 hours in advance\n• Carry your equipment (phone/camera) — lighting will be arranged on-site\n\nDuring the visit:\n• Create at least 1 Instagram Story from the location (tag us live)\n• Capture ambience, product/service, and your experience\n\nDon'ts:\n• Do not visit without a confirmed booking\n• Do not bring external teams without prior approval\n\nAfter the visit:\n• Post Reel/content within 2–3 days\n• Share post insights (reach, views) once live`,
-  };
-
-  readonly SPECIAL_INSTRUCTIONS_MODE_EXAMPLES: Record<string, string> = {
-    invite_only: `Mode: Invite only\n• Manually shortlist and invite recipients in Step 3\n• Keep acceptance criteria explicit to avoid back-and-forth\n• Mention expected response timeline from invited recipients`,
-    tier_filtered_open: `Mode: Open to all (with filters)\n• Mention minimum tier and optional location constraints\n• Clarify that eligible creators apply and you'll review applicants\n• Add how quickly applications will be reviewed`,
-  };
-
-  getSpecialInstructionsExample(): string {
-    const typeKey = this.selectedCampaignType;
-    const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
-    const base = this.SPECIAL_INSTRUCTIONS_EXAMPLES[typeKey] || '';
-    const mode = this.SPECIAL_INSTRUCTIONS_MODE_EXAMPLES[modeKey] || '';
-    if (base && mode) return `${base}\n\n${mode}`;
-    return base || mode;
-  }
-
   /**
    * Opens a popup with guideline + copyable example brief based on the
    * currently selected campaign type and invite-recipient role. The user can
@@ -195,7 +214,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         heading: 'What to cover in your description',
         variant: 'tip',
         copyable: false,
-        body: `• Goal of the collaboration (launch, awareness, conversions)\n• What the ${audienceSingular} will create (format, length)\n• Tone and creative direction (do/don't)\n• Any platform / hashtag / CTA requirements\n\nDeliverables, timeline and payment are captured in the form fields below — you do not need to repeat them in the description.`,
+        body: `• Goal of the collaboration (launch, awareness, conversions)\n• What the ${audienceSingular} will create — including expected deliverables (e.g. 1 Reel, 2 Stories)\n• Tone and creative direction (do/don't)\n• Any platform / hashtag / CTA requirements\n\nTimeline and payment are captured in the form fields below — you do not need to repeat them in the description.`,
       });
       content.sections.push({
         heading: invitingPhotographers ? 'Sample brief (Paid creative requirement)' : 'Sample brief (Paid collaboration)',
@@ -255,7 +274,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         heading: 'Tips for writing a clear description',
         variant: 'tip',
         copyable: false,
-        body: `• State the goal of the collaboration\n• Describe the content you expect (format, tone)\n• Mention any platform / hashtag / CTA requirements\n• Deliverables, timeline and payment go in the fields below — no need to repeat here.`,
+        body: `• State the goal of the collaboration\n• Describe the content you expect (format, tone) and expected deliverables\n• Mention any platform / hashtag / CTA requirements\n• Timeline and payment go in the fields below — no need to repeat here.`,
       });
     }
 
@@ -271,51 +290,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.guideModal.open(content);
   }
 
-  /**
-   * Opens a popup with dos, don'ts and must-include guidance for the
-   * "Special instructions / brief" field, tailored to campaign type, access
-   * mode and recipient role.
-   */
-  openSpecialInstructionsGuide(): void {
-    const type = this.selectedCampaignType;
-    const invitingPhotographers = this.isInvitingPhotographers;
-    const modeKey = String(this.f['campaignMode']?.value || 'invite_only');
-    const audienceSingular = invitingPhotographers ? 'creator' : 'influencer';
-
-    const content: CampaignGuideContent = {
-      title: 'Special instructions — guide & examples',
-      subtitle: `Use these dos, don'ts and must-include points as a starting point for your brief. Copy any block and edit to match your brand.`,
-      sections: [],
-    };
-
-    const typeExample = this.SPECIAL_INSTRUCTIONS_EXAMPLES[type];
-    if (typeExample) {
-      content.sections.push({
-        heading: type === 'invite_location' ? 'Visit instructions (Dos / Don\'ts)' : 'Dos, Don\'ts and Must-include',
-        body: invitingPhotographers
-          ? typeExample.replace(/influencer/gi, audienceSingular)
-          : typeExample,
-      });
-    } else {
-      content.sections.push({
-        heading: 'General brief structure',
-        variant: 'tip',
-        copyable: false,
-        body: `Dos:\n• ...\n\nDon'ts:\n• ...\n\nMust include:\n• ...`,
-      });
-    }
-
-    const modeExample = this.SPECIAL_INSTRUCTIONS_MODE_EXAMPLES[modeKey];
-    if (modeExample) {
-      content.sections.push({
-        heading: 'Access-mode specific notes',
-        variant: 'info',
-        body: modeExample,
-      });
-    }
-
-    this.guideModal.open(content);
-  }
   // ── Photographer-specific ────────────────────────────────────
   readonly PHOTOGRAPHER_SERVICES = [
     'Reel Shoot', 'Video Editing', 'Product Photography',
@@ -354,6 +328,26 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   photographerPricingPrices: { [key: string]: number | null } = {}; // Map of pricing type to price
 
   categoriesList: any[] = [];
+  categoriesExpanded = false;
+  readonly categoriesInitialVisibleCount = 8;
+
+  get visibleCategoriesList(): any[] {
+    if (this.categoriesExpanded || this.categoriesList.length <= this.categoriesInitialVisibleCount) {
+      return this.categoriesList;
+    }
+    const top = this.categoriesList.slice(0, this.categoriesInitialVisibleCount);
+    const topNames = new Set(top.map((c: any) => String(c?.name || c || '').trim()));
+    const selectedExtras = this.categoriesList.filter((c: any) => {
+      const name = String(c?.name || c || '').trim();
+      return !topNames.has(name) && this.selectedCategories.includes(name);
+    });
+    return [...top, ...selectedExtras];
+  }
+
+  get hasMoreCategories(): boolean {
+    return this.categoriesList.length > this.visibleCategoriesList.length;
+  }
+
   states: any[] = [];
   districts: any[] = [];
   targetDistricts: any[] = [];
@@ -394,6 +388,72 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     if (changes['saving'] && changes['saving'].currentValue === false) {
       this.submitLocked = false;
     }
+
+    // If the campaign input arrives or changes after init (routed edit),
+    // apply values to the form and hydrate selection state.
+    if (changes['campaign'] && !changes['campaign'].isFirstChange()) {
+      const newCampaign = changes['campaign'].currentValue as any;
+      if (newCampaign) {
+        // If form already exists, patch values and re-run hydrations.
+        if (this.form) {
+          // Patch simple scalar controls
+          try {
+            const patch: any = {
+              title: newCampaign.title || '',
+              description: newCampaign.description || '',
+              campaignType: newCampaign.campaignType || 'paid_collab',
+              inviteRecipientRole: newCampaign.inviteRecipientRole || 'influencer',
+              campaignMode: newCampaign.campaignMode || 'invite_only',
+              status: newCampaign.status || 'draft',
+              pricePerInfluencer: (function(c:any){ const existingPaise = Number((c as any)?.pricePerInfluencer || 0); if (existingPaise > 0) return Math.floor(existingPaise / 100); const budgetMin = Number(c?.budgetMin || 0); return budgetMin > 0 ? budgetMin : null; })(newCampaign),
+              maxInfluencers: newCampaign.maxInfluencers || null,
+              minInfluencers: newCampaign.minInfluencers || 1,
+              timelineStart: this.formatDate(newCampaign.timelineStart),
+              timelineEnd: this.formatDate(newCampaign.timelineEnd),
+              minInfluencerTier: newCampaign.minInfluencerTier || '',
+              targetState: newCampaign.targetState || '',
+              targetDistrict: (newCampaign.targetCities && newCampaign.targetCities[0]) || '',
+              platformPreference: newCampaign.platformPreference || '',
+            };
+            this.form.patchValue(patch, { emitEvent: false });
+          } catch (e) {
+            // ignore patch errors
+          }
+
+          // Images and resources
+          if (newCampaign.image?.url) this.imagePreview = newCampaign.image.url;
+          if (newCampaign.resourceLogo?.url) this.resourceLogoPreview = newCampaign.resourceLogo.url;
+          if (Array.isArray(newCampaign.resourceImages)) {
+            this.existingResourceImages = newCampaign.resourceImages;
+            this.resourceImagePreviews = this.existingResourceImages.map((img: any) => img.url);
+          }
+          if (newCampaign.resourceGuidelines?.url) {
+            this.resourceGuidelinesUrl = newCampaign.resourceGuidelines.url;
+            this.resourceGuidelinesFileName = newCampaign.resourceGuidelines.originalName || 'Guidelines file';
+          }
+
+          // Hydrate selection chips and related arrays
+          this.hydrateSelectionStateFromCampaign(newCampaign);
+          this.applyFieldLocks();
+
+          // If editing and campaign id present, fetch invites and full snapshot
+          if (newCampaign._id) {
+            this.fetchCampaignInvites();
+            this.config.getCampaignById(newCampaign._id).subscribe({
+              next: (fullCampaign: any) => {
+                if (!fullCampaign || !fullCampaign._id) return;
+                this.hydrateSelectionStateFromCampaign(fullCampaign);
+                this.cd.detectChanges();
+              },
+              error: () => {
+                // non-blocking
+              }
+            });
+          }
+          this.cd.detectChanges();
+        }
+      }
+    }
   }
 
   ngOnInit() {
@@ -417,7 +477,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
       brandName: [this.currentBrandName],
       description: [this.campaign?.description || ''],
-      deliverablesText: [Array.isArray((this.campaign as any)?.deliverables) ? (this.campaign as any).deliverables.join('\n') : ''],
       campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
       inviteRecipientRole: [
         this.isPhotographerCreator
@@ -443,7 +502,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       targetState: [(this.campaign as any)?.targetState || ''],
       targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
       platformPreference: [this.campaign?.platformPreference || ''],
-      specialInstructions: [this.campaign?.specialInstructions || ''],
       shootLocationType: [(this.campaign as any)?.shootLocationType || ''],
       shootLocationAddress: [(this.campaign as any)?.shootLocationAddress || ''],
       shootLocationMapUrl: [(this.campaign as any)?.shootLocationMapUrl || ''],
@@ -462,6 +520,10 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       productPaymentAmount: [this.getInitialProductPaymentAmount()],
       productShippingRequired: [!!(this.campaign as any)?.productShippingRequired],
       inviteBenefits: [(this.campaign as any)?.inviteBenefits || ''],
+      promotionUrlType: [(this.campaign as any)?.promotionUrlType || ''],
+      promotionUrl: [(this.campaign as any)?.promotionUrl || ''],
+      suggestedCaption: [(this.campaign as any)?.suggestedCaption || ''],
+      hashtags: [(this.campaign as any)?.hashtags || ''],
     }, { validators: [this.dateRangeValidator, this.minMaxInfluencerValidator] });
 
     this.syncAcceptanceDeadlineControl(this.f['timelineStart']?.value);
@@ -582,6 +644,20 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
     if (this.campaign?.image?.url) {
       this.imagePreview = this.campaign.image.url;
+    }
+    if ((this.campaign as any)?.resourceLogo?.url) {
+      this.resourceLogoPreview = (this.campaign as any).resourceLogo.url;
+    }
+    if (Array.isArray((this.campaign as any)?.resourceImages)) {
+      this.existingResourceImages = (this.campaign as any).resourceImages;
+      this.resourceImagePreviews = this.existingResourceImages.map((img) => img.url);
+    }
+    if ((this.campaign as any)?.resourceGuidelines?.url) {
+      this.resourceGuidelinesUrl = (this.campaign as any).resourceGuidelines.url;
+      this.resourceGuidelinesFileName = (this.campaign as any).resourceGuidelines.originalName || 'Guidelines file';
+    }
+    if (this.resourcesFilledCount > 0) {
+      this.resourcesExpanded = true;
     }
 
     // Pre-populate selection chips for edit mode from the current object.
@@ -712,7 +788,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
     // Fields additionally locked once any influencer has accepted
     const acceptanceLockedFields = [
-      'description', 'deliverablesText', 'specialInstructions',
+      'description',
       'inviteBenefits', 'payToJoinBenefits', 'payToJoinInstructions',
       'productDescription', 'timelineStart',
       'venueName', 'venueAddress', 'venueCity', 'venueDistrict',
@@ -1221,12 +1297,10 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return '';
   }
 
-  private parseDeliverables(raw: string): string[] {
-    return String(raw || '')
-      .split(/\n|,/g)
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .slice(0, 12);
+  /** Deliverables are no longer collected in this form — preserve whatever an
+   * existing campaign already has saved (edit mode); new campaigns start empty. */
+  private getInfluencerDeliverables(): string[] {
+    return Array.isArray((this.campaign as any)?.deliverables) ? (this.campaign as any).deliverables : [];
   }
 
   private asStringArray(value: any): string[] {
@@ -2501,6 +2575,59 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.selectedFile = null;
   }
 
+  onResourceLogoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.selectedResourceLogoFile = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => { this.resourceLogoPreview = reader.result as string; };
+      reader.readAsDataURL(this.selectedResourceLogoFile);
+    }
+  }
+
+  removeResourceLogo() {
+    this.resourceLogoPreview = null;
+    this.selectedResourceLogoFile = null;
+  }
+
+  onResourceImagesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    for (const file of Array.from(input.files)) {
+      this.selectedResourceImageFiles.push(file);
+      const reader = new FileReader();
+      reader.onload = () => { this.resourceImagePreviews.push(reader.result as string); };
+      reader.readAsDataURL(file);
+    }
+    input.value = '';
+  }
+
+  removeResourceImage(index: number) {
+    this.resourceImagePreviews.splice(index, 1);
+    // Newly selected files are appended after existing ones in the preview list.
+    const newFileIndex = index - this.existingResourceImages.length;
+    if (newFileIndex >= 0) {
+      this.selectedResourceImageFiles.splice(newFileIndex, 1);
+    } else {
+      this.existingResourceImages.splice(index, 1);
+    }
+  }
+
+  onResourceGuidelinesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.selectedResourceGuidelinesFile = input.files[0];
+      this.resourceGuidelinesFileName = this.selectedResourceGuidelinesFile.name;
+      this.resourceGuidelinesUrl = null;
+    }
+  }
+
+  removeResourceGuidelines() {
+    this.selectedResourceGuidelinesFile = null;
+    this.resourceGuidelinesFileName = null;
+    this.resourceGuidelinesUrl = null;
+  }
+
   // ── Submit ───────────────────────────────────────────────────
   skipAndSave() {
     if (this.saving || this.uploading || this.submitLocked) return;
@@ -2529,7 +2656,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         : (keepPending ? 'pending' : originalStatus),
       deliverables: this.isPhotographerCreator || this.isInvitingPhotographers
         ? this.selectedPhotographerDeliverables
-        : this.parseDeliverables(v.deliverablesText),
+        : this.getInfluencerDeliverables(),
       targetCities: v.targetDistrict ? [v.targetDistrict] : [],
       targetDistrict: undefined,
       categories: this.cappedTargetCategories(),
@@ -2601,7 +2728,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       pricePerInfluencer: pricePerInfluencerPaise,
       minInfluencers: Number(v.minInfluencers || 1),
       status: this.resolveSubmitStatus(),
-      deliverables: this.parseDeliverables(v.deliverablesText),
+      deliverables: this.getInfluencerDeliverables(),
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
       ? new Date(payload.acceptanceDeadline).toISOString()
@@ -2617,6 +2744,26 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       }
     } else if (this.isEdit && this.campaign?.image) {
       payload.image = this.campaign.image;
+    }
+    try {
+      if (this.selectedResourceLogoFile) {
+        payload.resourceLogo = await this.uploadToCloudinary(this.selectedResourceLogoFile, 'campaign_resource_logo');
+      } else if (this.isEdit && (this.campaign as any)?.resourceLogo) {
+        payload.resourceLogo = (this.campaign as any).resourceLogo;
+      }
+      const uploadedResourceImages = this.selectedResourceImageFiles.length
+        ? await Promise.all(this.selectedResourceImageFiles.map((file) => this.uploadToCloudinary(file, 'campaign_resource_images')))
+        : [];
+      payload.resourceImages = [...this.existingResourceImages, ...uploadedResourceImages];
+      if (this.selectedResourceGuidelinesFile) {
+        payload.resourceGuidelines = await this.uploadGuidelinesFile(this.selectedResourceGuidelinesFile);
+      } else if (this.isEdit && (this.campaign as any)?.resourceGuidelines?.url) {
+        payload.resourceGuidelines = (this.campaign as any).resourceGuidelines;
+      }
+    } catch {
+      this.uploading = false;
+      this.showUploadFailureDialog();
+      return;
     }
     this.uploading = false;
     this.submitLocked = true;
@@ -2675,7 +2822,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
           }))),
       deliverables: this.isPhotographerCreator || this.isInvitingPhotographers
         ? this.selectedPhotographerDeliverables
-        : this.parseDeliverables(payload.deliverablesText ?? ''),
+        : this.getInfluencerDeliverables(),
       inviteInfluencerIds: this.selectedInfluencerIds.size > 0
         ? Array.from(this.selectedInfluencerIds).slice(0, this.inviteSelectionLimit === -1 ? this.selectedInfluencerIds.size : this.inviteSelectionLimit)
         : undefined,
@@ -2686,10 +2833,10 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     };
   }
 
-  private async uploadToCloudinary(file: File): Promise<{ url: string; public_id: string }> {
+  private async uploadToCloudinary(file: File, folder = 'campaign_images'): Promise<{ url: string; public_id: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', 'campaign_images');
+    formData.append('folder', folder);
     const res = await fetch(
       `${environment.apiBaseUrl}/auth/upload-image`,
       { method: 'POST', body: formData }
@@ -2703,6 +2850,29 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       return { url: payload.secure_url || payload.url, public_id: payload.public_id };
     }
     throw new Error('Image upload failed');
+  }
+
+  private async uploadGuidelinesFile(file: File): Promise<{ url: string; public_id: string; originalName: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'campaign_guidelines');
+    const res = await fetch(
+      `${environment.apiBaseUrl}/auth/upload-verification`,
+      { method: 'POST', body: formData }
+    );
+    if (!res.ok) {
+      throw new Error('File upload failed');
+    }
+    const data = await res.json();
+    const payload = data?.data || data || {};
+    if ((payload.secure_url || payload.url) && payload.public_id) {
+      return {
+        url: payload.secure_url || payload.url,
+        public_id: payload.public_id,
+        originalName: payload.originalName || file.name,
+      };
+    }
+    throw new Error('File upload failed');
   }
 
   onCancel() {
@@ -2773,7 +2943,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         : (keepPending ? 'pending' : originalStatus),
       deliverables: this.isPhotographerCreator
         ? this.selectedPhotographerDeliverables
-        : this.parseDeliverables(v.deliverablesText),
+        : this.getInfluencerDeliverables(),
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
       ? new Date(payload.acceptanceDeadline).toISOString()
@@ -2815,7 +2985,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         : (keepPending ? 'pending' : originalStatus),
       deliverables: this.isPhotographerCreator
         ? this.selectedPhotographerDeliverables
-        : this.parseDeliverables(v.deliverablesText),
+        : this.getInfluencerDeliverables(),
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
       ? new Date(payload.acceptanceDeadline).toISOString()

@@ -1281,18 +1281,7 @@
   </div>
 
     <!-- Campaign Form Modal (brand & photographer) -->
-  <app-campaign-form
-    *ngIf="showForm && canCreateCollaborations"
-    [mode]="formMode"
-    [campaign]="editingCampaign"
-    [saving]="formSaving"
-    [preSelectedInfluencers]="formMode === 'create' ? searchPrefilledRecipients : []"
-    [preSelectedRecipientRole]="formMode === 'create' ? searchPrefilledRecipientRole : null"
-    [hasPremium]="!!planCapabilities?.hasPremium"
-    [creatorRole]="isPhotographerView ? 'photographer' : (isInfluencerView ? 'influencer' : 'brand')"
-    (save)="onFormSave($event)"
-    (cancel)="closeForm()"
-  ></app-campaign-form>
+  <!-- Campaign form is now a dedicated page at /campaigns/new and /campaigns/:id/edit -->
 
   <!-- ───── INVITE PANEL (brand view) ───── -->
   <div class="modal-backdrop show" *ngIf="invitePanelOpen" (click)="closeInvitePanel()"></div>

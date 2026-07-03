@@ -40,6 +40,8 @@ export const routes: Routes = [
 			{ path: 'profile-verification', canActivate: [authGuard], loadComponent: () => import('./pages/profile-verification/profile-verification-dashboard.component').then(m => m.ProfileVerificationDashboardComponent) },
 			{ path: 'photographer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/photographer-dashboard/photographer-dashboard.component').then(m => m.PhotographerDashboardComponent) },
 			{ path: 'photographer/:username', loadChildren: () => import('./shared/user-profile/photographer-profile-view/photographer-profile-view.route').then(m => m.default) },
+			{ path: 'campaigns/new', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-form-page/campaign-form-page.component').then(m => m.CampaignFormPageComponent) },
+			{ path: 'campaigns/:id/edit', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-form-page/campaign-form-page.component').then(m => m.CampaignFormPageComponent) },
 			{ path: 'campaigns', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-management/campaign-management.component').then(m => m.CampaignManagementComponent) },
 			{ path: 'brand/:brandName', loadChildren: () => import('./shared/user-profile/brand-profile-view/brand-profile-view.route').then(m => m.default) },
 			{ path: 'upgrade-premium', canActivate: [authGuard], loadComponent: () => import('./pages/premium-upgrade/premium-upgrade.component').then(m => m.PremiumUpgradeComponent) },

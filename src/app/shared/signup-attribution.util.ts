@@ -1,6 +1,8 @@
 export interface SignupAttribution {
   source?: string;
   audience?: string;
+  campaign?: string;
+  content?: string;
   referrerPath?: string;
   referrerUrl?: string;
 }
@@ -58,6 +60,8 @@ export function captureSignupAttribution(
     queryParams.get('audience') ||
     queryParams.get('utm_medium') ||
     '';
+  const qCampaign = queryParams.get('utm_campaign') || '';
+  const qContent = queryParams.get('utm_content') || '';
 
   const referrer = win?.document?.referrer || '';
   const referrerSource = sourceFromReferrer(referrer);
@@ -65,10 +69,14 @@ export function captureSignupAttribution(
 
   const source = qSource || referrerSource || 'direct';
   const audience = qAudience || undefined;
+  const campaign = qCampaign || undefined;
+  const content = qContent || undefined;
 
   return {
     source,
     audience,
+    campaign,
+    content,
     referrerPath: currentPath || undefined,
     referrerUrl: referrer || undefined,
   };

@@ -21,6 +21,7 @@
     <button class="tab-chip" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
     <button class="tab-chip" [class.active]="activeTab === 'support'" (click)="setTab('support')">Support</button>
     <button class="tab-chip" [class.active]="activeTab === 'communities'" (click)="setTab('communities')">Community Management</button>
+    <button class="tab-chip" [class.active]="activeTab === 'socialLinks'" (click)="setTab('socialLinks')">Social Links</button>
     <button class="tab-chip" [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
   </nav>
 
@@ -961,6 +962,49 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Social Links Tab -->
+  <div *ngIf="activeTab === 'socialLinks'">
+    <h2>Generate Social Link</h2>
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      Create a trackable trendstarz.in registration link for an influencer, brand, or photographer/videographer to post on their own social profile. Meta Ads links are handled separately by the TrendStarz team.
+    </p>
+
+    <div class="settings-row row-expanded">
+      <div class="settings-conditions">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Role</label>
+            <select class="form-select" [(ngModel)]="referralLinkRole">
+              <option value="influencer">Influencer</option>
+              <option value="brand">Brand</option>
+              <option value="photographer">Photographer/Videographer</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Username / Name</label>
+            <input class="form-control" [(ngModel)]="referralLinkUsername" placeholder="riya_creates">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Platform (optional)</label>
+            <select class="form-select" [(ngModel)]="referralLinkPlatform">
+              <option value="">Not specified</option>
+              <option *ngFor="let platform of REFERRAL_LINK_PLATFORMS" [value]="platform">{{ platform }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" type="button" (click)="copyReferralLink()" [disabled]="!generatedReferralLink">
+              {{ referralLinkCopied ? 'Copied!' : 'Copy Link' }}
+            </button>
+          </div>
+        </div>
+        <div class="mt-3" *ngIf="generatedReferralLink">
+          <label class="form-label">Generated Link</label>
+          <input class="form-control" [value]="generatedReferralLink" readonly (click)="selectReferralLinkText($event)">
+        </div>
+      </div>
     </div>
   </div>
 

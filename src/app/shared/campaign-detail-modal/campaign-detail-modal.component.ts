@@ -8,6 +8,7 @@ import { UserAvatarComponent } from '../components/user-avatar/user-avatar.compo
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
+import { copyTextToClipboard } from '../referral-link.util';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -281,6 +282,68 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
   private get brand(): any {
     return this.invite?.brand || this.invite?.brandId || {};
+  }
+
+  private static readonly PROMOTION_URL_TYPE_LABELS: Record<string, string> = {
+    website: 'Website',
+    app_store: 'App Store',
+    play_store: 'Play Store',
+    instagram: 'Instagram Profile',
+    facebook: 'Facebook Page',
+    youtube: 'YouTube Channel',
+    whatsapp: 'WhatsApp Link',
+    other: 'Link',
+  };
+
+  get resourcePromotionUrl(): string { return String(this.campaign?.promotionUrl || '').trim(); }
+  get resourcePromotionUrlTypeLabel(): string {
+    const type = String(this.campaign?.promotionUrlType || '').trim().toLowerCase();
+    return CampaignDetailModalComponent.PROMOTION_URL_TYPE_LABELS[type] || 'Link';
+  }
+  get resourceSuggestedCaption(): string { return String(this.campaign?.suggestedCaption || '').trim(); }
+  get resourceHashtags(): string { return String(this.campaign?.hashtags || '').trim(); }
+  get resourceLogoUrl(): string { return String(this.campaign?.resourceLogo?.url || '').trim(); }
+  get resourceImages(): { url: string; public_id: string }[] {
+    return Array.isArray(this.campaign?.resourceImages) ? this.campaign.resourceImages : [];
+  }
+  get resourceGuidelinesUrl(): string { return String(this.campaign?.resourceGuidelines?.url || '').trim(); }
+  get resourceGuidelinesName(): string {
+    return String(this.campaign?.resourceGuidelines?.originalName || 'Guidelines').trim();
+  }
+  get hasCampaignResources(): boolean {
+    return !!(
+      this.resourcePromotionUrl ||
+      this.resourceSuggestedCaption ||
+      this.resourceHashtags ||
+      this.resourceLogoUrl ||
+      this.resourceImages.length ||
+      this.resourceGuidelinesUrl
+    );
+  }
+
+  resourceLinkCopied = false;
+  resourceCaptionCopied = false;
+  resourceHashtagsCopied = false;
+  private resourceCopyTimer: any;
+
+  copyResourceLink(): void { this.copyResourceText(this.resourcePromotionUrl, 'link'); }
+  copyResourceCaption(): void { this.copyResourceText(this.resourceSuggestedCaption, 'caption'); }
+  copyResourceHashtags(): void { this.copyResourceText(this.resourceHashtags, 'hashtags'); }
+
+  private copyResourceText(text: string, kind: 'link' | 'caption' | 'hashtags'): void {
+    if (!text) return;
+    copyTextToClipboard(text);
+    this.resourceLinkCopied = kind === 'link';
+    this.resourceCaptionCopied = kind === 'caption';
+    this.resourceHashtagsCopied = kind === 'hashtags';
+    this.cdr.detectChanges();
+    clearTimeout(this.resourceCopyTimer);
+    this.resourceCopyTimer = setTimeout(() => {
+      this.resourceLinkCopied = false;
+      this.resourceCaptionCopied = false;
+      this.resourceHashtagsCopied = false;
+      this.cdr.detectChanges();
+    }, 2000);
   }
 
   get campaignImageUrls(): string[] {

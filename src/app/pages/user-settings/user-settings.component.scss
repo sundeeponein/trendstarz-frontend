@@ -416,6 +416,23 @@ button:disabled {
   }
 }
 
+.referral-link-row {
+  display: flex;
+  gap: 0.5rem;
+  min-width: min(100%, 430px);
+}
+
+.referral-link-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #f7f8fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0 0.75rem;
+  color: #1f2530;
+  font-size: 0.82rem;
+}
+
 @media (max-width: 720px) {
   .user-settings-page {
     padding: 1rem;
@@ -437,6 +454,10 @@ button:disabled {
 
   .activity-grid {
     grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .referral-link-row {
     width: 100%;
   }
 

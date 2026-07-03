@@ -877,13 +877,21 @@ export class AdminUserTableComponent implements OnInit {
   getSignupSource(user: any): string {
     const source = user?.signupAttribution?.source;
     const audience = user?.signupAttribution?.audience;
-    if (!source && !audience) return '-';
-    if (source && audience) return `${source} (${audience})`;
-    return source || audience || '-';
+    const campaign = user?.signupAttribution?.campaign;
+    const content = user?.signupAttribution?.content;
+    const parts = [audience, campaign, content].filter(Boolean);
+    if (!source && !parts.length) return '-';
+    if (source && parts.length) return `${source} (${parts.join(' / ')})`;
+    return source || parts.join(' / ') || '-';
   }
 
   private getSignupSourceFilterValue(user: any): string {
-    return user?.signupAttribution?.source || user?.signupAttribution?.audience || '';
+    return [
+      user?.signupAttribution?.source,
+      user?.signupAttribution?.audience,
+      user?.signupAttribution?.campaign,
+      user?.signupAttribution?.content,
+    ].filter(Boolean).join(' ');
   }
   // Helper to calculate premium end date for display if backend does not provide
   getPremiumPeriod(user: any): { start: Date, end: Date } | null {

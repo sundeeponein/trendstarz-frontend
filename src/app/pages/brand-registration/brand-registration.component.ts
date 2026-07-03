@@ -137,7 +137,7 @@ export class BrandRegistrationComponent implements OnInit {
   productImagesFiles: (File | null)[] = [];
   // Per-index cached upload result for product images.
   uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
-  signupAttribution: { source?: string; audience?: string; referrerPath?: string; referrerUrl?: string } = {};
+  signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';

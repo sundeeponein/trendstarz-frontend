@@ -53,14 +53,7 @@
     (pageSizeChange)="onPageSizeChange($event)">
   </app-paginator>
 
-  <!-- Campaign Form Modal -->
-  <app-campaign-form
-    *ngIf="showForm"
-    [mode]="formMode"
-    [campaign]="editingCampaign"
-    (save)="onFormSave($event)"
-    (cancel)="closeForm()"
-  ></app-campaign-form>
+  <!-- Campaign Form is now a full-page flow accessible at /campaigns?create=1 -->
 
   <app-campaign-detail-modal
     *ngIf="!externalDetailHandling"

@@ -300,7 +300,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   isSubmitting = false;
   stepTransitioning = false;
-  signupAttribution: { source?: string; audience?: string; referrerPath?: string; referrerUrl?: string } = {};
+  signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';

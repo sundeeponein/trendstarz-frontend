@@ -1,34 +1,34 @@
-<div class="modal-backdrop show"></div>
+<!-- Page mode (full page layout) -->
+<ng-container *ngIf="asPage">
+  <div class="page-campaign-wrap">
+    <div class="page-campaign-dialog">
+      <div class="page-campaign-card">
 
-<div class="modal d-block" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-xlarge ts-dialog-workspace" (click)="$event.stopPropagation()">
-    <div class="modal-content ts-modal ts-modal--wizard">
+        <!-- ── Header ── -->
+        <div class="form-header">
+          <div>
+            <h3>
+              {{ isEdit ? ('Edit ' + formTitleNoun) : ('Create ' + formTitleNoun) }}
+              <button
+                type="button"
+                class="form-help-btn"
+                title="Show step-by-step builder guide"
+                (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"
+              >
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </h3>
+            <p class="form-subtitle">
+              Fill in details, then invite creators.
+              <button type="button" class="form-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
+                <i class="bi bi-diagram-3"></i> {{ isPhotographerCreator ? 'How collaboration requests work' : 'How campaigns work' }}
+              </button>
+            </p>
+          </div>
+          <!-- <button class="btn-close-modal" (click)="onCancel()" type="button"><i class="bi bi-x-lg"></i></button> -->
+        </div>
 
-    <!-- ── Header ── -->
-    <div class="form-header">
-      <div>
-        <h3>
-          {{ isEdit ? ('Edit ' + formTitleNoun) : ('Create ' + formTitleNoun) }}
-          <button
-            type="button"
-            class="form-help-btn"
-            title="Show step-by-step builder guide"
-            (click)="flowHelp.openCampaignBuilderGuide(f['campaignType']?.value)"
-          >
-            <i class="bi bi-info-circle"></i>
-          </button>
-        </h3>
-        <p class="form-subtitle">
-          Fill in details, then invite creators.
-          <button type="button" class="form-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
-            <i class="bi bi-diagram-3"></i> {{ isPhotographerCreator ? 'How collaboration requests work' : 'How campaigns work' }}
-          </button>
-        </p>
-      </div>
-      <button class="btn-close-modal" (click)="onCancel()" type="button"><i class="bi bi-x-lg"></i></button>
-    </div>
-
-    <!-- ── Stepper ── -->
+      <!-- ── Stepper ── -->
     <div class="wizard-stepper">
       <div class="wizard-step" [class.active]="currentStep === 1" [class.done]="currentStep > 1"
            (click)="currentStep > 1 ? goToStep(1) : null" [style.cursor]="currentStep > 1 ? 'pointer' : 'default'">
@@ -52,11 +52,11 @@
         <div class="step-circle"><span>3</span></div>
         <span class="step-label">{{ inviteStepLabel }}</span>
       </div>
-    </div>
+         </div>
 
-    <!-- ══════════════════════════════════════════
-         STEP 1 — Campaign Details
-    ══════════════════════════════════════════ -->
+         <!-- ══════════════════════════════════════════
+           STEP 1 — Campaign Details
+         ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 1">
       <div class="form-body">
 
@@ -101,27 +101,6 @@
         </div>
 
         <div class="field-group">
-	          <label class="field-label">{{ campaignModeFieldLabel }} <span class="required">*</span></label>
-	          <select formControlName="campaignMode" class="field-input">
-	            <option
-	              *ngFor="let mode of accessModes"
-	              [value]="mode.value"
-	              [disabled]="mode.enabled === false || (!hasPremium && !!mode.premiumOnly)"
-	            >
-	              {{ mode.label }}{{ (!hasPremium && !!mode.premiumOnly) ? ' (Premium)' : '' }}{{ (mode.enabled === false) ? ' (Unavailable)' : '' }}
-	            </option>
-	          </select>
-          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
-            <i class="bi bi-person-check"></i>
-            You manually select and invite specific {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} in Step 3.
-          </p>
-          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
-            <i class="bi bi-globe2"></i>
-            Eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} matching your minimum tier (and optional location) can discover and apply. You review applicants from the dashboard.
-          </p>
-        </div>
-
-        <div class="field-group">
           <label class="field-label">
             {{ isPhotographerCreator ? 'Collaboration Title' : 'Campaign title' }} <span class="required">*</span>
             <span class="lock-badge" *ngIf="isApprovalLocked"><i class="bi bi-lock-fill"></i> Locked</span>
@@ -136,11 +115,11 @@
 
         <div class="field-group">
           <label class="field-label">{{ isPhotographerCreator ? 'Creator name' : 'Brand name' }}</label>
-          <input type="text" formControlName="brandName" class="field-input" readonly placeholder="Auto from your profile" />
-          <p class="field-sublabel">
+          <div class="field-static-value">
             <i class="bi bi-shield-check"></i>
-            Verified brand identity is shown from your registered account details.
-          </p>
+            <span>{{ f['brandName'].value || 'Auto from your profile' }}</span>
+            <a [routerLink]="isPhotographerCreator ? '/photographer-profile' : '/brand-profile'" class="field-static-edit-link">Edit in profile</a>
+          </div>
         </div>
 
         <div class="field-group">
@@ -164,7 +143,7 @@
             Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accepted/confirmed.
           </div>
           <p class="field-sublabel">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> to see ready-made briefs you can read and copy-paste. Deliverables, timeline and payment are captured in the structured fields below.
+            <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> to see ready-made briefs you can read and copy-paste. Mention expected deliverables here — timeline and payment are captured in the structured fields below.
           </p>
         </div>
 
@@ -256,24 +235,6 @@
           </p>
         </div>
 
-        <div class="field-group">
-          <label class="field-label">
-            Deliverables
-            <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
-          </label>
-          <textarea formControlName="deliverablesText" class="field-textarea" rows="3"
-                    placeholder="Example: 1 Reel, 2 Stories, 1 Static post (one deliverable per line or comma-separated)"></textarea>
-          <p class="field-sublabel lock-note" *ngIf="isAcceptanceLocked">
-            <i class="bi bi-lock-fill"></i> Deliverables are fixed once an influencer has confirmed.
-          </p>
-          <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('deliverablesText')?.value)">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accept/confirmed.
-          </div>
-          <p class="field-sublabel" *ngIf="!isAcceptanceLocked">This helps Influencers or Photo/Videographers understand exact expected output before applying.</p>
-        </div>
-
-        
 
         <div class="field-group" *ngIf="selectedCampaignType === 'invite_location' && !isInvitingPhotographers && !isPhotographerCreator">
           <label class="field-label">Venue details <span class="required">*</span></label>
@@ -313,22 +274,6 @@
           <span class="field-error" *ngIf="f['inviteBenefits'].touched && f['inviteBenefits'].invalid">Benefits are required</span>
         </div>
 
-        <div class="field-group" *ngIf="!isPhotographerCreator">
-          <label class="field-label">Campaign image</label>
-          <div class="image-upload-area" *ngIf="!imagePreview">
-            <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
-            <label for="campaign-img-input" class="upload-label">
-              <i class="bi bi-cloud-arrow-up"></i>
-              <span>Click to upload image</span>
-              <small>PNG, JPG up to Max 1 MB</small>
-            </label>
-          </div>
-          <div class="image-preview" *ngIf="imagePreview">
-            <img [src]="imagePreview" alt="Preview" />
-            <button type="button" class="btn-remove-img" (click)="removeImage()"><i class="bi bi-trash"></i></button>
-          </div>
-        </div>
-
         <div class="field-row">
           <div class="field-group half">
             <label class="field-label">
@@ -340,11 +285,15 @@
               <i class="bi bi-lock-fill"></i> Start date is fixed once an influencer has confirmed.
             </p>
             <span class="field-error" *ngIf="f['timelineStart'].touched && !f['timelineStart'].value">Required</span>
+            <p class="field-sublabel">Acceptance deadline: <strong>{{ acceptanceDeadlineDisplay }}</strong> — creators must accept or decline by then.</p>
           </div>
           <div class="field-group half">
             <label class="field-label">End date <span class="required">*</span></label>
             <input type="date" formControlName="timelineEnd" class="field-input" [attr.min]="f['timelineStart'].value || minStartDate" [attr.max]="maxEndDate" />
             <span class="field-error" *ngIf="f['timelineEnd'].touched && !f['timelineEnd'].value">Required</span>
+            <p class="field-sublabel">
+              Note: {{ inviteRecipientLabelPlural }} can only choose a posting/visit date within your selected start and end dates when accepting invites.
+            </p>
           </div>
         </div>
 
@@ -358,16 +307,7 @@
           Campaign duration cannot exceed {{ maxDurationDays }} days.
         </span>
 
-        <div class="field-group half">
-          <label class="field-label">Acceptance deadline</label>
-          <input type="text" class="field-input" [value]="acceptanceDeadlineDisplay" disabled readonly />
-        </div>
-        <p class="field-sublabel">
-          Auto-set to 1 day before the start date — creators must accept or decline by then.
-        </p>
-        <p class="field-sublabel">
-          Note: {{ inviteRecipientLabelPlural }} can only choose a posting/visit date within your selected start and end dates when accepting invites.
-        </p>
+        
 
         <p class="step-indicator">Step 1 of 3</p>
       </div>
@@ -378,7 +318,15 @@
           Next — Requirements <i class="bi bi-arrow-right"></i>
         </button>
       </div>
-    </form>
+      <app-mobile-bottom-actions ariaLabel="Campaign details actions">
+        <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="onCancel()">
+          <i class="bi bi-x-lg"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="!step1Valid()" (click)="nextStep()">
+          <i class="bi bi-arrow-right"></i> Next
+        </button>
+      </app-mobile-bottom-actions>
+        </form>
 
     <!-- ══════════════════════════════════════════
          STEP 2 — Requirements
@@ -533,7 +481,7 @@
           <app-chip-selection-group
             [label]="'Target ' + inviteRecipientLabelPlural + ' Categories'"
             [required]="true"
-            [options]="categoriesList"
+            [options]="visibleCategoriesList"
             [selected]="selectedCategories"
             valueKey="name"
             labelKey="name"
@@ -541,6 +489,9 @@
             [emptyText]="'Loading ' + inviteRecipientLabelPlural.toLowerCase() + ' categories…'"
             (selectedChange)="setTargetCategories($event)">
           </app-chip-selection-group>
+          <button type="button" class="chip-more-toggle" *ngIf="hasMoreCategories || categoriesExpanded" (click)="categoriesExpanded = !categoriesExpanded">
+            {{ categoriesExpanded ? 'Show fewer' : '+ ' + (categoriesList.length - visibleCategoriesList.length) + ' more' }}
+          </button>
           <p class="chip-hint" *ngIf="selectedCategories.length > 0">
             <i class="bi bi-check-circle-fill"></i> Targeting: {{ selectedCategories.join(', ') }}
           </p>
@@ -797,29 +748,108 @@
           </div>
         </div>
 
-        <div class="field-group">
-          <div class="field-label-row">
-            <label class="field-label">
-              Special instructions / brief
-              <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
-            </label>
-            <button
-              type="button"
-              class="btn-use-template"
-              (click)="openSpecialInstructionsGuide()"
-              title="Open dos, don'ts and must-include guidance for this campaign type">
-              <i class="bi bi-question-circle"></i> View guide &amp; examples
-            </button>
+        <div class="field-group campaign-resources">
+          <button type="button" class="resources-accordion-toggle" (click)="toggleResourcesExpanded()">
+            <span class="field-label">
+              Add campaign assets (optional)
+              <span class="optional-badge" *ngIf="resourcesFilledCount > 0">{{ resourcesFilledCount }} added</span>
+            </span>
+            <i class="bi" [ngClass]="resourcesExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          </button>
+          <p class="field-sublabel">Shared with the creator once they accept — caption, hashtags, link, image, and any assets they need.</p>
+
+          <div class="resources-accordion-body" *ngIf="resourcesExpanded">
+
+            <div class="field-group" *ngIf="!isPhotographerCreator">
+              <label class="field-label">Campaign image</label>
+              <div class="image-upload-area" *ngIf="!imagePreview">
+                <input type="file" accept="image/*" (change)="onFileSelected($event)" id="campaign-img-input" class="hidden-input" />
+                <label for="campaign-img-input" class="upload-label">
+                  <i class="bi bi-cloud-arrow-up"></i>
+                  <span>Click to upload image</span>
+                  <small>PNG, JPG up to Max 1 MB</small>
+                </label>
+              </div>
+              <div class="image-preview" *ngIf="imagePreview">
+                <img [src]="imagePreview" alt="Preview" />
+                <button type="button" class="btn-remove-img" (click)="removeImage()"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Suggested caption <span class="optional-badge">Optional, ready to post</span></label>
+              <textarea formControlName="suggestedCaption" class="field-textarea" rows="3"
+                placeholder="A ready-to-use caption the creator can copy for their post"></textarea>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Hashtags</label>
+              <input type="text" formControlName="hashtags" class="field-input" placeholder="#yourbrand #trending" />
+            </div>
+
+            <div class="field-row">
+              <div class="field-group half">
+                <label class="field-label">Promotion link type</label>
+                <select formControlName="promotionUrlType" class="field-input">
+                  <option value="">Select type</option>
+                  <option *ngFor="let type of promotionUrlTypes" [value]="type.value">{{ type.label }}</option>
+                </select>
+              </div>
+              <div class="field-group half">
+                <label class="field-label">Promotion link</label>
+                <input type="text" formControlName="promotionUrl" class="field-input" placeholder="https://…" />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Brand logo</label>
+              <div class="image-upload-area" *ngIf="!resourceLogoPreview">
+                <input type="file" accept="image/*" (change)="onResourceLogoSelected($event)" id="resource-logo-input" class="hidden-input" />
+                <label for="resource-logo-input" class="upload-label">
+                  <i class="bi bi-cloud-arrow-up"></i>
+                  <span>Click to upload logo</span>
+                </label>
+              </div>
+              <div class="image-preview" *ngIf="resourceLogoPreview">
+                <img [src]="resourceLogoPreview" alt="Logo preview" />
+                <button type="button" class="btn-remove-img" (click)="removeResourceLogo()"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Brand / product images</label>
+              <div class="image-upload-area">
+                <input type="file" accept="image/*" multiple (change)="onResourceImagesSelected($event)" id="resource-images-input" class="hidden-input" />
+                <label for="resource-images-input" class="upload-label">
+                  <i class="bi bi-cloud-arrow-up"></i>
+                  <span>Click to upload images</span>
+                </label>
+              </div>
+              <div class="resource-image-grid" *ngIf="resourceImagePreviews.length">
+                <div class="image-preview" *ngFor="let src of resourceImagePreviews; let i = index">
+                  <img [src]="src" alt="Resource image preview" />
+                  <button type="button" class="btn-remove-img" (click)="removeResourceImage(i)"><i class="bi bi-trash"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Brand guidelines (PDF)</label>
+              <div class="image-upload-area" *ngIf="!resourceGuidelinesFileName">
+                <input type="file" accept="application/pdf,image/jpeg,image/png" (change)="onResourceGuidelinesSelected($event)" id="resource-guidelines-input" class="hidden-input" />
+                <label for="resource-guidelines-input" class="upload-label">
+                  <i class="bi bi-cloud-arrow-up"></i>
+                  <span>Click to upload guidelines</span>
+                </label>
+              </div>
+              <div class="resource-file-chip" *ngIf="resourceGuidelinesFileName">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span>{{ resourceGuidelinesFileName }}</span>
+                <button type="button" class="btn-remove-img" (click)="removeResourceGuidelines()"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+
           </div>
-          <textarea [formControl]="$any(form.get('specialInstructions'))" class="field-textarea" rows="4"
-                    placeholder="Key messaging, dos and don'ts, tone of voice…"></textarea>
-          <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('specialInstructions')?.value)">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accepted/confirmed.
-          </div>
-          <p class="field-sublabel">
-            <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> for ready-made dos, don'ts and must-include points you can copy-paste and edit.
-          </p>
         </div>
 
         <div class="trust-note-list">
@@ -838,6 +868,14 @@
           <i class="bi bi-arrow-right"></i>
         </button>
       </div>
+      <app-mobile-bottom-actions ariaLabel="Requirements actions">
+        <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="!step2Valid()" (click)="nextStep()">
+          <i class="bi bi-arrow-right"></i> Next
+        </button>
+      </app-mobile-bottom-actions>
       <p class="field-sublabel" *ngIf="!step2Valid()" style="margin-top:8px;">
         <i class="bi bi-info-circle"></i> {{ step2BlockingReason() }}
       </p>
@@ -848,6 +886,27 @@
     ══════════════════════════════════════════ -->
     <form [formGroup]="form" *ngIf="currentStep === 3">
       <div class="form-body form-body--step3">
+
+        <div class="field-group">
+          <label class="field-label">{{ campaignModeFieldLabel }} <span class="required">*</span></label>
+          <select formControlName="campaignMode" class="field-input">
+            <option
+              *ngFor="let mode of accessModes"
+              [value]="mode.value"
+              [disabled]="mode.enabled === false || (!hasPremium && !!mode.premiumOnly)"
+            >
+              {{ mode.label }}{{ (!hasPremium && !!mode.premiumOnly) ? ' (Premium)' : '' }}{{ (mode.enabled === false) ? ' (Unavailable)' : '' }}
+            </option>
+          </select>
+          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'invite_only'">
+            <i class="bi bi-person-check"></i>
+            You manually select and invite specific {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} below.
+          </p>
+          <p class="field-sublabel" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+            <i class="bi bi-globe2"></i>
+            Eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }} matching your minimum tier (and optional location) can discover and apply. You review applicants from the dashboard.
+          </p>
+        </div>
 
         <!-- ── TIER-FILTERED OPEN: no manual invites, influencers apply ── -->
         <ng-container *ngIf="f['campaignMode'].value === 'tier_filtered_open'; else inviteOnlyStep3">
@@ -1254,6 +1313,14 @@
           <span *ngIf="!(uploading || saving || submitLocked)">Submit for review <i class="bi bi-arrow-right"></i></span>
         </button>
       </div>
+      <app-mobile-bottom-actions *ngIf="f['campaignMode'].value === 'tier_filtered_open'" ariaLabel="Review and publish actions">
+        <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-success" [disabled]="uploading || saving || submitLocked" (click)="skipAndSave()">
+          <i class="bi bi-arrow-right"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Submit' }}
+        </button>
+      </app-mobile-bottom-actions>
       <ng-template #inviteOnlyFooter>
         <div class="form-footer">
           <button type="button" class="btn btn-back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
@@ -1268,12 +1335,25 @@
             <span *ngIf="!(uploading || saving || submitLocked)">Send Invites <i class="bi bi-arrow-right"></i></span>
           </button>
         </div>
+        <app-mobile-bottom-actions ariaLabel="Invite recipients actions">
+          <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="skipAndSave()" [disabled]="uploading || saving || submitLocked">
+            <i class="bi bi-save"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Draft' }}
+          </button>
+          <button type="button" class="btn btn-success"
+            [disabled]="selectedInfluencerIds.size === 0 || uploading || saving || submitLocked" (click)="onSubmit()">
+            <i class="bi bi-send"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Invite' }}
+          </button>
+        </app-mobile-bottom-actions>
       </ng-template>
     </form>
 
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+      </div><!-- /.page-campaign-card -->
+    </div><!-- /.page-campaign-dialog -->
+  </div><!-- /.page-campaign-wrap -->
+</ng-container>
 
 <app-campaign-guide-modal></app-campaign-guide-modal>
 

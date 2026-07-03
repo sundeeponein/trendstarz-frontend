@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { buildDefaultUserTagVisibilityOptions } from '../../../shared/constants/user-tag-options.constants';
+import { buildReferralLink, copyTextToClipboard, ReferralLinkRole } from '../../../shared/referral-link.util';
 
 const DEFAULT_EQUIPMENT_OPTIONS = [
   { name: 'Sony', visible: true },
@@ -84,6 +85,11 @@ export class AdminManagementComponent implements OnInit {
     return this.config.locations.findIndex((item: any) => item._id === state?._id);
   }
   activeTab: string = 'campaigns';
+  referralLinkRole: ReferralLinkRole = 'influencer';
+  referralLinkUsername = '';
+  referralLinkPlatform = '';
+  referralLinkCopied = false;
+  readonly REFERRAL_LINK_PLATFORMS = ['Instagram', 'YouTube', 'Facebook', 'WhatsApp'];
   categoriesRoleTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   userTagsRoleTab: 'influencer' | 'brand' | 'photographer' | 'commission' = 'influencer';
   collaborationAvailabilityRoleTab: CollaborationAvailabilityRole = 'influencer';
@@ -622,6 +628,22 @@ export class AdminManagementComponent implements OnInit {
       communityLink: String(item?.communityLink || ''),
       isActive: item?.isActive !== false,
     };
+  }
+
+  get generatedReferralLink(): string {
+    return buildReferralLink(this.referralLinkRole, this.referralLinkUsername, this.referralLinkPlatform);
+  }
+
+  selectReferralLinkText(event: Event) {
+    (event.target as HTMLInputElement)?.select();
+  }
+
+  copyReferralLink() {
+    const link = this.generatedReferralLink;
+    if (!link) return;
+    copyTextToClipboard(link);
+    this.referralLinkCopied = true;
+    setTimeout(() => { this.referralLinkCopied = false; }, 2000);
   }
 
   getWhatsappQrUrl(link: string, size = 96): string {

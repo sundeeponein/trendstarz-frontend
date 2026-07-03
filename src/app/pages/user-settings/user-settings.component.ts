@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { buildReferralLink, copyTextToClipboard } from '../../shared/referral-link.util';
 
 @Component({
   selector: 'app-user-settings',
@@ -26,6 +27,8 @@ export class UserSettingsComponent implements OnInit {
   unreadCount = 0;
   lastLoginAt: string | null = null;
   lastOpenedAt: string | null = null;
+  referralLink = '';
+  referralLinkCopied = false;
 
   constructor(
     private readonly push: PushNotificationService,
@@ -37,6 +40,10 @@ export class UserSettingsComponent implements OnInit {
     const user = this.session.getUser();
     this.lastLoginAt = user?.lastLoginAt || null;
     this.lastOpenedAt = user?.lastOpenedAt || null;
+    const role = this.normalizeRole(user?.role);
+    if (role !== 'admin') {
+      this.referralLink = buildReferralLink(role, user?.username);
+    }
     this.refreshPushState();
     this.config.getUnreadNotificationsCount().subscribe((count) => {
       this.unreadCount = Number(count || 0);
@@ -122,6 +129,13 @@ export class UserSettingsComponent implements OnInit {
     this.pushPermission = this.push.browserPermission;
     this.pushPreference = this.push.localPreference;
     this.pushActive = await this.push.hasActiveSubscription();
+  }
+
+  copyReferralLink(): void {
+    if (!this.referralLink) return;
+    copyTextToClipboard(this.referralLink);
+    this.referralLinkCopied = true;
+    setTimeout(() => { this.referralLinkCopied = false; }, 2000);
   }
 
   private normalizeRole(role: any): 'brand' | 'influencer' | 'photographer' | 'admin' {

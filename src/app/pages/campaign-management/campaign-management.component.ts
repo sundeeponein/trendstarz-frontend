@@ -12,7 +12,6 @@ import { SupportBannerComponent } from '../../shared/support-banner/support-bann
 import { CampaignPaymentComponent } from '../campaign-payment/campaign-payment.component';
 import { SessionService } from '../../core/session.service';
 import { Campaign } from '../../shared/campaigns/campaign.model';
-import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/campaign-form.component';
 
 import { CampaignDetailModalComponent, CampaignAcceptPayload, CampaignDeclinePayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignInviteCardComponent, InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
@@ -38,7 +37,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignFormComponent, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -114,11 +113,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   pageSize = 10;
   readonly pageSizeOptions = [10, 25, 50, 100];
   currentPage = 1;
-
-  showForm = false;
-  formSaving = false;
-  formMode: 'create' | 'edit' = 'create';
-  editingCampaign: Campaign | null = null;
 
   // ── Invite panel (brand view) ─────────────────────────────────
   invitePanelOpen = false;
@@ -460,40 +454,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get quotaChipTitle(): string {
     return `Active ${this.quotaEntityPluralLabel} used`;
-  }
-
-  private isApprovalPendingInviteReason(reason: string): boolean {
-    const normalized = String(reason || '').trim().toLowerCase();
-    return normalized.includes('awaiting admin approval')
-      || normalized.includes('invite after it is approved')
-      || normalized.includes('still under admin review');
-  }
-
-  private areAllInviteFailuresApprovalPending(
-    failures: { influencerId?: string; photographerId?: string; reason: string }[],
-  ): boolean {
-    return failures.length > 0 && failures.every((f) => this.isApprovalPendingInviteReason(f.reason));
-  }
-
-  private focusPendingTabIfUnderReview(status: unknown): void {
-    const normalized = String(status || '').trim().toLowerCase();
-    if (normalized === 'pending' || normalized === 'pending_review') {
-      this.activeTab = 'pending';
-    }
-  }
-
-  private getSubmitSuccessMessage(status: unknown, invitesSent = false): string {
-    const normalized = String(status || '').trim().toLowerCase();
-    const noun = this.quotaEntitySingularLabel;
-    const title = noun.charAt(0).toUpperCase() + noun.slice(1);
-    if (normalized === 'pending' || normalized === 'pending_review') {
-      return invitesSent
-        ? `${title} submitted for review and invites sent. Check Pending tab.`
-        : `${title} submitted for review. Check Pending tab.`;
-    }
-    return invitesSent
-      ? `${title} created and invites sent!`
-      : `${title} created successfully!`;
   }
 
   get influencerInboxSubtitle(): string {
@@ -1599,6 +1559,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Route-based create/edit handled by dedicated routes: /campaigns/new and /campaigns/:id/edit
     this.config.getAppSettings().subscribe({
       next: (settings: any) => {
         const submissionHours = Number(settings?.submissionApprovalWaitHours);
@@ -2236,379 +2197,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.showUpgradeBanner = true;
       return;
     }
-    this.editingCampaign = null;
-    this.formMode = 'create';
-    this.showForm = true;
+    this.router.navigate(['/campaigns', 'new']);
   }
 
   onManage(campaign: Campaign) {
-    // Prefill data is only for create-from-search flow; never carry it into edit.
-    this.searchPrefilledRecipients = [];
-    this.searchPrefilledRecipientRole = 'influencer';
-    this.pendingSearchPrefill = false;
-
-    // Always refresh brand profile before editing
-    const ownerProfile$ = this.isPhotographerView
-      ? this.config.getPhotographerProfileById()
-      : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
-    ownerProfile$.subscribe({
-        next: (profile: any) => {
-        const owner = this.isPhotographerView
-          ? (profile?.data?.photographer || profile?.photographer || profile)
-          : (this.isInfluencerView
-            ? (profile?.data?.influencer || profile?.influencer || profile)
-            : (profile?.data?.brand || profile?.brand || profile));
-        this.brandId = this.resolveOwnerId(owner, this.getCurrentRequesterId());
-        this.brandName = owner?.brandName || owner?.name || '';
-        this.editingCampaign = campaign;
-        this.formMode = 'edit';
-        this.showForm = true;
-        this.cd.detectChanges();
-      },
-      error: () => {
-        // Fallback: still allow edit but warn
-        this.editingCampaign = campaign;
-        this.formMode = 'edit';
-        this.showForm = true;
-        this.cd.detectChanges();
-      }
-    });
-  }
-
-  onFormSave(data: Partial<Campaign> & {
-    inviteInfluencerIds?: string[];
-    inviteRecipientIds?: string[];
-    inviteRecipientRole?: 'influencer' | 'photographer';
-  }) {
-    if (this.formSaving) return;
-    this.formSaving = true;
-    this.cd.detectChanges();
-
-    const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = data;
-    const existingCampaignRole: 'influencer' | 'photographer' =
-      (this.formMode === 'edit' && this.editingCampaign)
-        ? this.resolveCampaignInviteTargetRole(this.editingCampaign)
-        : 'influencer';
-    const recipientRole: 'influencer' | 'photographer' = this.isInfluencerCollaborationsView
-      ? 'photographer'
-      : (inviteRecipientRole === 'photographer'
-        ? 'photographer'
-        : (inviteRecipientRole === 'influencer' ? 'influencer' : existingCampaignRole));
-    const campaignPayload = {
-      ...campaignData,
-      inviteRecipientRole: recipientRole,
-    };
-    const inviteIds = (Array.isArray(inviteRecipientIds) && inviteRecipientIds.length > 0)
-      ? inviteRecipientIds
-      : (Array.isArray(inviteInfluencerIds) ? inviteInfluencerIds : []);
-
-    // Allow campaign creation if brandId is a non-empty string (for minimal profiles), or a valid ObjectId
-    let validBrandId = '';
-    if (this.brandId && typeof this.brandId === 'string') {
-      if (this.brandId.length === 24 && /^[a-fA-F0-9]{24}$/.test(this.brandId)) {
-        validBrandId = this.brandId; // MongoDB ObjectId
-      } else if (this.brandId.length > 0) {
-        validBrandId = this.brandId; // Minimal profile (username or temp string)
-      }
-    }
-    if (!validBrandId) {
-      this.formSaving = false;
-      this.showError('Brand profile not loaded or invalid. Please wait and try again.');
-      // Attempt to reload brand profile and update state
-      const ownerProfile$ = this.isPhotographerView
-        ? this.config.getPhotographerProfileById()
-        : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
-      ownerProfile$.subscribe({
-        next: (profile: any) => {
-          const owner = this.isPhotographerView
-            ? (profile?.data?.photographer || profile?.photographer || profile)
-            : (this.isInfluencerView
-              ? (profile?.data?.influencer || profile?.influencer || profile)
-              : (profile?.data?.brand || profile?.brand || profile));
-          this.brandId = this.resolveOwnerId(owner, this.getCurrentRequesterId());
-          this.brandName = owner?.brandName || owner?.name || '';
-          this.cd.detectChanges();
-        }
-      });
-      return;
-    }
-
-    if (this.formMode === 'edit' && this.editingCampaign?._id) {
-      // Capture id before closeForm() nullifies editingCampaign
-      const editingId = this.editingCampaign._id;
-      this.config.updateCampaign(editingId, { ...campaignPayload, brandId: validBrandId }).subscribe({
-        next: (updated: Campaign | null) => {
-          this.campaigns = this.campaigns.map(c => {
-            if (!c || !c._id) return c;
-            if (c._id !== editingId) return c;
-            if (updated && updated._id) {
-              return { ...c, ...updated };
-            } else {
-              return c;
-            }
-          });
-          const updatedStatus = (updated as any)?.status || campaignPayload?.status;
-          // If there are recipients to invite, send invites and update state before closing form
-          if (inviteIds && inviteIds.length > 0) {
-            const validIds = inviteIds.filter(id => !!id);
-            if (validIds.length > 0) {
-              const request$ = recipientRole === 'photographer'
-                ? this.config.invitePhotographers(editingId, validIds)
-                : this.config.inviteInfluencers(editingId, validIds);
-              request$.subscribe({
-                next: (resp: any) => {
-                  const failures: { influencerId?: string; photographerId?: string; reason: string }[] = Array.isArray(resp?.failures) ? resp.failures : [];
-                  const sentCount: number = typeof resp?.count === 'number' ? resp.count : 0;
-                  this.closeForm();
-                  this.focusPendingTabIfUnderReview(updatedStatus);
-                  this.loadCampaigns();
-
-                  if (sentCount > 0 && failures.length === 0) {
-                    const msg = this.getSubmitSuccessMessage(updatedStatus, true);
-                    this.toastMessage = msg;
-                    this.toast.success(msg);
-                    this.showSuccessToast = true;
-                    setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-                  } else if (sentCount > 0 && failures.length > 0) {
-                    const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
-                    const msg = `${sentCount} invite(s) sent, ${failures.length} failed: ${reasons}`;
-                    this.toastMessage = msg;
-                    this.toast.success(msg);
-                    this.showSuccessToast = true;
-                    setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 7000);
-                  } else if (failures.length > 0) {
-                    const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
-                    const msg = `No invites were sent: ${reasons}`;
-                    this.toastMessage = msg;
-                    this.toast.error(msg);
-                    this.showErrorToast = true;
-                    setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 7000);
-                  } else {
-                    const msg = 'No invites were sent. Please select recipients and try again.';
-                    this.toastMessage = msg;
-                    this.toast.error(msg);
-                    this.showErrorToast = true;
-                    setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
-                  }
-
-                  this.config.getInvitesByCampaign(editingId).subscribe({
-                    next: (invites: any[]) => {
-                      this.campaignInvitesMap.set(editingId, invites);
-                      this.invites = invites;
-                      this.cd.detectChanges();
-                    },
-                    error: () => {
-                      // Non-blocking: UI already refreshed.
-                    }
-                  });
-                },
-                error: (err) => {
-                  let msg = 'Failed to send invites.';
-                  if (err?.error?.message) msg = err.error.message;
-                  this.closeForm();
-                  this.focusPendingTabIfUnderReview(updatedStatus);
-                  this.loadCampaigns();
-                  this.toastMessage = msg;
-                  this.showErrorToast = true;
-                  setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
-                  this.cd.detectChanges();
-                }
-              });
-              return; // Prevent double closeForm()
-            }
-          }
-          this.closeForm();
-          this.focusPendingTabIfUnderReview(updatedStatus);
-          this.loadCampaigns();
-          const msg = this.getSubmitSuccessMessage(updatedStatus, false);
-          this.toastMessage = msg;
-          this.toast.success(msg);
-          this.showSuccessToast = true;
-          this.cd.detectChanges();
-          setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-        },
-        error: (err: any) => {
-          const msg = err?.error?.message || err?.message || 'Failed to update collaboration.';
-          this.formSaving = false;
-          this.toast.error(msg);
-          this.cd.detectChanges();
-        },
-      });
-    } else {
-      const payload: any = { ...campaignPayload, brandId: validBrandId };
-      // debug: creating campaign payload
-      // Basic required fields check
-      if (!payload.title || !payload.timelineStart || !payload.timelineEnd || !payload.brandId) {
-        this.formSaving = false;
-        this.showError('Please fill all required fields (title, timeline, brand).');
-        return;
-      }
-      this.config.createCampaign(payload).subscribe({
-        next: (created: Campaign) => {
-          const createdAny: any = created && typeof created === 'object' ? created : {};
-          const createdId = String(
-            createdAny?._id || createdAny?.id || createdAny?.campaignId || createdAny?.campaign?._id || '',
-          ).trim();
-          const createdCampaign: any = createdId
-            ? { ...createdAny, _id: createdId }
-            : createdAny;
-
-          // Refresh brand profile in background (non-blocking)
-          const ownerProfile$ = this.isPhotographerView
-            ? this.config.getPhotographerProfileById()
-            : (this.isInfluencerView ? this.config.getInfluencerProfileById() : this.config.getBrandProfileById());
-          ownerProfile$.subscribe({
-            next: (profile: any) => {
-              const owner = this.isPhotographerView
-                ? (profile?.data?.photographer || profile?.photographer || profile)
-                : (this.isInfluencerView
-                  ? (profile?.data?.influencer || profile?.influencer || profile)
-                  : (profile?.data?.brand || profile?.brand || profile));
-              this.brandId = this.resolveOwnerId(owner, this.getCurrentRequesterId());
-              this.brandName = owner?.brandName || owner?.name || '';
-              this.cd.detectChanges();
-            }
-          });
-          // Send invites to selected recipients if any
-          if (inviteIds?.length && createdId) {
-            const validIds = inviteIds.filter(id => !!id);
-            // debug: inviting recipients after campaign creation
-            if (validIds.length === 0) {
-              this.closeForm();
-              this.focusPendingTabIfUnderReview(createdCampaign?.status || payload?.status);
-              this.loadCampaigns();
-              const msg = this.getSubmitSuccessMessage(createdCampaign?.status || payload?.status, false);
-              this.toastMessage = msg;
-              this.toast.success(msg);
-              this.showSuccessToast = true;
-              this.cd.detectChanges();
-              setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-            } else {
-              const request$ = recipientRole === 'photographer'
-                ? this.config.invitePhotographers(createdId, validIds)
-                : this.config.inviteInfluencers(createdId, validIds);
-              request$.subscribe({
-                next: (resp: any) => {
-                  const failures: { influencerId?: string; photographerId?: string; reason: string }[] = Array.isArray(resp?.failures) ? resp.failures : [];
-                  const sentCount: number = typeof resp?.count === 'number' ? resp.count : 0;
-                  this.closeForm();
-                  this.focusPendingTabIfUnderReview(createdCampaign?.status || payload?.status);
-                  this.loadCampaigns();
-                  if (sentCount > 0 && failures.length === 0) {
-                    const msg = this.getSubmitSuccessMessage(createdCampaign?.status || payload?.status, true);
-                    this.toastMessage = msg;
-                    this.toast.success(msg);
-                    this.showSuccessToast = true;
-                    this.cd.detectChanges();
-                    setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-                  } else {
-                    const reasons = Array.from(new Set(failures.map(f => f.reason))).join(' | ');
-                    const approvalPendingOnly = this.areAllInviteFailuresApprovalPending(failures);
-                    const msg = sentCount > 0
-                      ? `Campaign created. ${sentCount} invite(s) sent, ${failures.length} failed: ${reasons}`
-                      : (approvalPendingOnly
-                        ? 'Campaign created successfully. Invites will be available after admin approval.'
-                        : `Campaign created, but no invites were sent: ${reasons}`);
-                    this.toastMessage = msg;
-                    if (sentCount > 0 || approvalPendingOnly) {
-                      this.toast.success(msg);
-                      this.showSuccessToast = true;
-                    } else {
-                      this.toast.error(msg);
-                      this.showErrorToast = true;
-                    }
-                    this.cd.detectChanges();
-                    setTimeout(() => {
-                      this.showSuccessToast = false;
-                      this.showErrorToast = false;
-                      this.cd.detectChanges();
-                    }, 7000);
-                  }
-                  this.config.getInvitesByCampaign(createdId).subscribe({
-                    next: (invites: any[]) => {
-                      if (createdId) {
-                        this.campaignInvitesMap.set(createdId, invites);
-                        this.invites = invites;
-                        if (invites && invites.length > 0) {
-                          this.activateCampaign(createdCampaign);
-                        }
-                        this.cd.detectChanges();
-                      }
-                    },
-                    error: () => {
-                      // Non-blocking: list already refreshed.
-                    }
-                  });
-                },
-                error: (err) => {
-                  console.error('[Invite API error]', err);
-                  this.closeForm();
-                  this.focusPendingTabIfUnderReview(createdCampaign?.status || payload?.status);
-                  this.loadCampaigns();
-                  this.toastMessage = 'Campaign created, but failed to send invites.';
-                  this.showErrorToast = true;
-                  this.cd.detectChanges();
-                  setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
-                }
-              });
-            }
-          } else {
-            if (inviteIds?.length && !createdId) {
-              this.closeForm();
-              this.loadCampaigns();
-              this.toastMessage = 'Campaign created, but invite send skipped because campaign ID was missing in response.';
-              this.showErrorToast = true;
-              this.cd.detectChanges();
-              setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
-              return;
-            }
-            this.closeForm();
-            this.focusPendingTabIfUnderReview(createdCampaign?.status || payload?.status);
-            this.loadCampaigns();
-            const msg = this.getSubmitSuccessMessage(createdCampaign?.status || payload?.status, false);
-            this.toastMessage = msg;
-            this.toast.success(msg);
-            this.showSuccessToast = true;
-            this.cd.detectChanges();
-            setTimeout(() => { this.showSuccessToast = false; this.cd.detectChanges(); }, 4000);
-          }
-        },
-        error: (err) => {
-          console.error('Failed to create campaign:', err);
-          let toastMsg = '';
-          if (err?.error?.message && typeof err.error.message === 'string') {
-            toastMsg = err.error.message;
-          } else if (err?.message && typeof err.message === 'string') {
-            toastMsg = err.message;
-          } else if (typeof err === 'string') {
-            toastMsg = err;
-          } else {
-            toastMsg = 'Failed to create campaign. Please check your input and try again.';
-          }
-          if (err?.error?.message && err.error.message.includes('Plan limit')) {
-            const isPremium = this.isPremiumPlan;
-            if (isPremium) {
-              this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} ${this.quotaEntityPluralLabel} used.`;
-              this.planLimitError = '';
-            } else {
-              this.upgradeBannerMessage = '';
-              this.planLimitError = err.error.message;
-            }
-            this.showUpgradeBanner = true;
-          } else {
-            this.planLimitError = '';
-            this.upgradeBannerMessage = '';
-            this.showUpgradeBanner = false;
-          }
-          this.toastMessage = toastMsg;
-          this.toast.error(toastMsg);
-          this.formSaving = false;
-          this.showErrorToast = true;
-          // debug: showing error toast message (hidden for CI cleanliness)
-          this.cd.detectChanges();
-          setTimeout(() => { this.showErrorToast = false; this.cd.detectChanges(); }, 5000);
-        }
-      });
+    // Navigate to edit page for this campaign
+    if (campaign && campaign._id) {
+      this.router.navigate(['/campaigns', String(campaign._id), 'edit']);
     }
   }
 
@@ -2659,13 +2254,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       },
     });
-  }
-
-  closeForm() {
-    this.formSaving = false;
-    this.showForm = false;
-    this.editingCampaign = null;
-    this.cd.detectChanges();
   }
 
   formatBudget(c: Campaign): string {
@@ -5158,19 +4746,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   extendTimeline(c: Campaign) {
-    this.editingCampaign = c;
-    this.formMode = 'edit';
-    this.showForm = true;
+    if (c && c._id) {
+      this.router.navigate(['/campaigns', String(c._id), 'edit']);
+    }
   }
 
   duplicateCampaign(c: Campaign) {
     const { _id, timelineStart, timelineEnd, image, ...rest } = c as any;
-    this.searchPrefilledRecipients = [];
-    this.searchPrefilledRecipientRole = 'influencer';
-    this.pendingSearchPrefill = false;
-    this.editingCampaign = { ...rest, status: 'draft', timelineStart: null, timelineEnd: null } as Campaign;
-    this.formMode = 'create';
-    this.showForm = true;
+    const prefill = { ...rest, status: 'draft', timelineStart: null, timelineEnd: null };
+    // Navigate to new campaign page with prefill state
+    this.router.navigate(['/campaigns', 'new'], { state: { prefill } });
   }
 
   // ── Summary stats ─────────────────────────────────────────────
