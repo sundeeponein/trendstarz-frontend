@@ -8,7 +8,8 @@ import { UserAvatarComponent } from '../components/user-avatar/user-avatar.compo
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
-import { copyTextToClipboard } from '../referral-link.util';
+import { buildPromotionTrackingLink, copyTextToClipboard } from '../referral-link.util';
+import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -36,7 +37,7 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-detail-modal',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent, OfferTrailComponent, CampaignAlertMessageComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, UserAvatarComponent, OfferTrailComponent, CampaignAlertMessageComponent, PromoLinkCardComponent],
   templateUrl: './campaign-detail-modal.component.html',
   styleUrls: ['./campaign-detail-modal.component.scss']
 })
@@ -321,25 +322,21 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     );
   }
 
-  resourceLinkCopied = false;
   resourceCaptionCopied = false;
   resourceHashtagsCopied = false;
   private resourceCopyTimer: any;
 
-  copyResourceLink(): void { this.copyResourceText(this.resourcePromotionUrl, 'link'); }
   copyResourceCaption(): void { this.copyResourceText(this.resourceSuggestedCaption, 'caption'); }
   copyResourceHashtags(): void { this.copyResourceText(this.resourceHashtags, 'hashtags'); }
 
-  private copyResourceText(text: string, kind: 'link' | 'caption' | 'hashtags'): void {
+  private copyResourceText(text: string, kind: 'caption' | 'hashtags'): void {
     if (!text) return;
     copyTextToClipboard(text);
-    this.resourceLinkCopied = kind === 'link';
     this.resourceCaptionCopied = kind === 'caption';
     this.resourceHashtagsCopied = kind === 'hashtags';
     this.cdr.detectChanges();
     clearTimeout(this.resourceCopyTimer);
     this.resourceCopyTimer = setTimeout(() => {
-      this.resourceLinkCopied = false;
       this.resourceCaptionCopied = false;
       this.resourceHashtagsCopied = false;
       this.cdr.detectChanges();
@@ -387,6 +384,43 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       && this.campaignStatus !== 'completed';
   }
   get statusKey(): string { return (this.invite?.status || 'pending').toLowerCase(); }
+
+  private static readonly ACCEPTED_OR_LATER_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
+
+  get isAcceptedOrLater(): boolean {
+    return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.statusKey);
+  }
+
+  /** UTM-tagged variant of the host's promotion link, unique to the signed-in creator viewing their own invite. */
+  get generatedPromotionLink(): string {
+    if (!this.resourcePromotionUrl) return '';
+    const username = String(this.session.getUser()?.username || '').trim();
+    if (!username) return this.resourcePromotionUrl;
+    return buildPromotionTrackingLink(this.resourcePromotionUrl, {
+      source: username,
+      campaignLabel: this.campaignIdLabel,
+      platform: this.invite?.selectedPlatform,
+      contentType: this.invite?.selectedContentType,
+    });
+  }
+
+  /** UTM-tagged variant of the host's promotion link for a specific creator, used in the admin roster table. */
+  adminInviteTaggedPromotionLink(item: any): string {
+    if (!this.resourcePromotionUrl) return '';
+    const username = String(item?.participantUsername || '').trim();
+    if (!username) return '';
+    return buildPromotionTrackingLink(this.resourcePromotionUrl, {
+      source: username,
+      campaignLabel: this.campaignIdLabel,
+      platform: item?.selectedPlatform,
+      contentType: item?.selectedContentType,
+    });
+  }
+
+  adminInviteShowsPromotionLink(item: any): boolean {
+    return !!this.resourcePromotionUrl
+      && CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+  }
 
   get statusFooterLabel(): string {
     const s = this.invite?.status;
@@ -1610,6 +1644,15 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return new Date(d).toLocaleString('en-IN', {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+  }
+
+  adminInviteSubmittedAtText(item: any): string {
+    const d = item?.submittedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
   }
 

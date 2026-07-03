@@ -1,0 +1,45 @@
+:host { display: block; }
+
+$orange: #d2521a;
+$border: #e5e7eb;
+$muted:  #6b7280;
+$text:   #111827;
+
+.plc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid $border;
+  &:last-child { border-bottom: none; padding-bottom: 0; }
+}
+
+.plc-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+
+  strong { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.02em; color: $muted; }
+  a { font-size: 0.88rem; word-break: break-word; color: $orange; }
+}
+
+.plc-copy-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid $border;
+  background: transparent;
+  color: $text;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover { border-color: $orange; color: $orange; }
+}

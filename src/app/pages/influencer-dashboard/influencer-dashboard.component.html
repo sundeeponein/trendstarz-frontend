@@ -501,6 +501,12 @@
         <span *ngIf="c.metrics.likesCount != null"><i class="bi bi-heart"></i> {{ c.metrics.likesCount }} likes</span>
         <span *ngIf="c.metrics.commentsCount != null"><i class="bi bi-chat"></i> {{ c.metrics.commentsCount }} comments</span>
       </div>
+      <app-promo-link-card
+        *ngIf="c.promotionUrl"
+        class="mt-2 d-block"
+        [typeLabel]="promotionUrlTypeLabel(c)"
+        [url]="taggedPromotionLink(c)">
+      </app-promo-link-card>
       <div class="submit-post-cta mt-2">
         <button class="btn-submit-post" (click)="goToStats(c); $event.stopPropagation()">
           <i class="bi bi-eye-fill"></i>
@@ -509,7 +515,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Profile Traffic hidden - by sundeep -->
   <div class="section-card mb-4 profile-traffic-card p-2 d-none">
     <div class="section-title d-flex align-items-center mb-3">

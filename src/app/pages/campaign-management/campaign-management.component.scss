@@ -2489,6 +2489,7 @@
 
 // Pad the rest of the inline panel content
 .submission-inline .sub-post-link,
+.submission-inline .sub-submitted-at,
 .submission-inline .sub-metrics,
 .submission-inline .sub-metrics-empty,
 .submission-inline .sub-review-area,
@@ -2521,6 +2522,15 @@
   width: 100%;
   box-sizing: border-box;
   a { color: #E8580C; word-break: break-all; }
+}
+
+.sub-submitted-at {
+  font-size: 0.78rem;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.55rem;
 }
 
 // The old .sub-screenshots is now overridden by the new one above; keep thumb style

@@ -829,6 +829,12 @@
                         View post
                       </a>
                     </div>
+                    <!-- Promotion link, tagged with this creator's utm_source -->
+                    <app-promo-link-card
+                      *ngIf="showsPromotionLink(inv, c)"
+                      [typeLabel]="promotionUrlTypeLabel(c)"
+                      [url]="taggedPromotionLink(inv, c)">
+                    </app-promo-link-card>
                   </div>
 
 
@@ -987,6 +993,9 @@
                     <div class="sub-post-link">
                       <i class="bi bi-link-45deg"></i>
                       <a [href]="sub.postUrl" target="_blank" rel="noopener">{{ sub.postUrl }}</a>
+                    </div>
+                    <div class="sub-submitted-at" *ngIf="submissionSubmittedAtText(sub)">
+                      <i class="bi bi-clock-history"></i> Posted on {{ submissionSubmittedAtText(sub) }}
                     </div>
 
                     <!-- Screenshots -->

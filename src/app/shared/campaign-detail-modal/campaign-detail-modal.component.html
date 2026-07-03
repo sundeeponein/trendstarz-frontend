@@ -198,20 +198,15 @@
             </div>
           </div>
 
-          <!-- Campaign Resources (shown to the creator once beyond pending) -->
-          <div class="cdm-section" *ngIf="!adminReview && !isPending && hasCampaignResources">
+          <!-- Campaign Resources (shown to the creator once accepted) -->
+          <div class="cdm-section" *ngIf="!adminReview && isAcceptedOrLater && hasCampaignResources">
             <div class="cdm-section__label">CAMPAIGN RESOURCES</div>
             <div class="cdm-brief-box cdm-resources-box">
-              <div class="cdm-resource-row" *ngIf="resourcePromotionUrl">
-                <div class="cdm-resource-row__text">
-                  <strong>{{ resourcePromotionUrlTypeLabel }}</strong>
-                  <a [href]="resourcePromotionUrl" target="_blank" rel="noopener noreferrer">{{ resourcePromotionUrl }}</a>
-                </div>
-                <button type="button" class="cdm-resource-copy-btn" (click)="copyResourceLink()">
-                  <i class="bi" [ngClass]="resourceLinkCopied ? 'bi-check2' : 'bi-clipboard'"></i>
-                  {{ resourceLinkCopied ? 'Copied' : 'Copy' }}
-                </button>
-              </div>
+              <app-promo-link-card
+                *ngIf="resourcePromotionUrl"
+                [typeLabel]="resourcePromotionUrlTypeLabel"
+                [url]="generatedPromotionLink">
+              </app-promo-link-card>
 
               <div class="cdm-resource-row" *ngIf="resourceSuggestedCaption">
                 <div class="cdm-resource-row__text">
@@ -425,6 +420,12 @@
                     <div class="cdm-creator-card__negotiation-total" *ngIf="adminInviteOfferTotalText(item)">
                       {{ adminInviteOfferTotalText(item) }}
                     </div>
+                    <!-- Promotion link, tagged with this creator's utm_source -->
+                    <app-promo-link-card
+                      *ngIf="adminInviteShowsPromotionLink(item)"
+                      [typeLabel]="resourcePromotionUrlTypeLabel"
+                      [url]="adminInviteTaggedPromotionLink(item)">
+                    </app-promo-link-card>
                   </div>
                 </div>
                 <div class="cdm-creator-card__right">
@@ -436,6 +437,9 @@
                   <a *ngIf="item.postUrl" [href]="item.postUrl" target="_blank" rel="noopener noreferrer" class="cdm-view-post-link mt-1">
                     <i class="bi bi-box-arrow-up-right"></i> Post
                   </a>
+                  <div class="cdm-creator-card__timestamp" *ngIf="adminInviteSubmittedAtText(item)">
+                    Posted on {{ adminInviteSubmittedAtText(item) }}
+                  </div>
                   <!-- Host (campaign owner) approval of the submitted post -->
                   <span class="cdm-host-approved-badge" *ngIf="item.postApproved">
                     <i class="bi bi-patch-check-fill"></i> Post Approved

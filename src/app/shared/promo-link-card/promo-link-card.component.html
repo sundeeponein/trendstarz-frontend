@@ -1,0 +1,10 @@
+<div class="plc-row" *ngIf="url">
+  <div class="plc-row__text">
+    <strong>{{ typeLabel }}</strong>
+    <a [href]="url" target="_blank" rel="noopener noreferrer">{{ url }}</a>
+  </div>
+  <button type="button" class="plc-copy-btn" (click)="copy()">
+    <i class="bi" [ngClass]="copied ? 'bi-check2' : 'bi-clipboard'"></i>
+    {{ copied ? 'Copied' : 'Copy' }}
+  </button>
+</div>

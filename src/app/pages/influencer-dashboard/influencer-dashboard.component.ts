@@ -26,13 +26,15 @@ import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { environment } from '../../../environments/environment';
 import { TIER_ORDER, normalizeTierLabel } from '../../shared/tiers.constants';
+import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
+import { buildPromotionTrackingLink, campaignIdLabel, promotionUrlTypeLabel } from '../../shared/referral-link.util';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -1024,6 +1026,22 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       { label: 'Under Review', value: this.dashboard?.invites?.submitted || 0 },
       { label: 'Completed', value: this.dashboard?.invites?.completed || 0 },
     ];
+  }
+
+  promotionUrlTypeLabel(campaign: any): string {
+    return promotionUrlTypeLabel(campaign?.promotionUrlType);
+  }
+
+  /** UTM-tagged variant of the campaign's promotion link, unique to the signed-in creator. */
+  taggedPromotionLink(campaign: any): string {
+    const username = String(this.session.getUser()?.username || '').trim();
+    if (!username || !campaign?.promotionUrl) return '';
+    return buildPromotionTrackingLink(campaign.promotionUrl, {
+      source: username,
+      campaignLabel: campaignIdLabel(campaign),
+      platform: campaign?.selectedPlatform,
+      contentType: campaign?.selectedContentType,
+    });
   }
 
   goToStats(campaign: any) {

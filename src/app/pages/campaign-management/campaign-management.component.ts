@@ -19,6 +19,8 @@ import { environment } from '../../../environments/environment';
 import { UserAvatarComponent } from '../../shared/components/user-avatar/user-avatar.component';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { FlowHelpModalService } from '../../shared/components/flow-help-modal/flow-help-modal.service';
+import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
+import { buildPromotionTrackingLink, campaignIdLabel, promotionUrlTypeLabel } from '../../shared/referral-link.util';
 import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
@@ -37,7 +39,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent, PromoLinkCardComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -1138,6 +1140,29 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getCampaignInviteRecipientUsername(invite: any, campaign: any): string {
     const recipient = this.getCampaignInviteRecipient(invite, campaign);
     return String(recipient?.username || '').trim();
+  }
+
+  private static readonly PROMO_LINK_ACCEPTED_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
+
+  promotionUrlTypeLabel(campaign: any): string {
+    return promotionUrlTypeLabel(campaign?.promotionUrlType);
+  }
+
+  /** UTM-tagged variant of the campaign's promotion link, unique to this invite's creator. */
+  showsPromotionLink(invite: any, campaign: any): boolean {
+    return !!campaign?.promotionUrl
+      && CampaignManagementComponent.PROMO_LINK_ACCEPTED_STATUSES.includes(String(invite?.status || '').toLowerCase());
+  }
+
+  taggedPromotionLink(invite: any, campaign: any): string {
+    const username = this.getCampaignInviteRecipientUsername(invite, campaign);
+    if (!username || !campaign?.promotionUrl) return '';
+    return buildPromotionTrackingLink(campaign.promotionUrl, {
+      source: username,
+      campaignLabel: campaignIdLabel(campaign),
+      platform: invite?.selectedPlatform,
+      contentType: invite?.selectedContentType,
+    });
   }
 
   getCampaignInviteRecipientTier(invite: any, campaign: any): string {
@@ -4591,6 +4616,19 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (hours <= 0) return `${minutes}m`;
     if (minutes === 0) return `${hours}h`;
     return `${hours}h ${minutes}m`;
+  }
+
+  submissionSubmittedAtText(submission: any): string {
+    const d = submission?.submittedAt;
+    if (!d) return '';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
   }
 
   getSubmissionApprovalUnlockAtText(submission: any): string {
