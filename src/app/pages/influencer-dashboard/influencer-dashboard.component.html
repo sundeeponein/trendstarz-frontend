@@ -428,7 +428,7 @@
         <span *ngIf="c.inviteStatus === 'accepted' && c.campaignType !== 'paid_collab'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
         <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Ready to Start</span>
         <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
-        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-warning text-dark ms-2">Under Review</span>
+        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Submitted</span>
         <span *ngIf="c.inviteStatus === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
       </div>
       <div class="active-camp-meta mt-2">
@@ -455,7 +455,7 @@
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">
-        <i class="bi bi-hourglass-split"></i> Under review by the brand
+        <i class="bi bi-hourglass-split"></i> 24-hour review period — auto-completes if no issue is reported
       </div>
     </div>
     <div class="txn-see-all" *ngIf="activeCampaigns.length">

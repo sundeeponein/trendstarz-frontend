@@ -122,6 +122,38 @@
   gap: 4px;
 }
 
+.review-period-box {
+  background: #f8fbff;
+  border: 1px solid #bfd7ff;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.review-period-box__title {
+  color: #1e3a5f;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.review-period-box__desc {
+  color: #33507a;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.review-period-box__countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2563eb;
+  font-weight: 600;
+  font-size: 0.88rem;
+
+  i { color: #2563eb; }
+}
+
 .alert-info--instructions .instructions-text {
   white-space: pre-line;
   line-height: 1.55;

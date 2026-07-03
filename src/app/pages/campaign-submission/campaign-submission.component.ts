@@ -393,12 +393,26 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       accepted:          'Working',
       payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
-      submitted:         'Under Review',
+      submitted:         'Submitted',
       completed:         'Post Approved',
       approved:          'Payout Released',
       disputed:          'Under Review',
     };
     return map[this.inviteStatus] || this.inviteStatus;
+  }
+
+  /** True while the post is submitted and still inside the 24h host-review window. */
+  get isInAutoCompleteReviewPeriod(): boolean {
+    if (this.inviteStatus !== 'submitted') return false;
+    const unlockAt = this.submissionReviewUnlockAt;
+    return !!unlockAt && Date.now() < unlockAt.getTime();
+  }
+
+  /** "23h 34m"-style countdown to when the 24h review window unlocks / auto-completes. */
+  get submissionAutoCompleteCountdownText(): string {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return 'unavailable';
+    return this.formatRemainingMs(unlockAt.getTime() - Date.now());
   }
 
   get inviteStageKey(): string {

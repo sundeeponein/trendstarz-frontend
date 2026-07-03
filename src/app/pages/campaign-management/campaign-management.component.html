@@ -1032,7 +1032,7 @@
                     <div class="sub-review-area" *ngIf="sub.status === 'submitted'">
                       <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for recipient..."
                         [(ngModel)]="submissionFeedback[sub.inviteId]"></textarea>
-                      <div class="sub-dispute-form" *ngIf="canDisputeSubmission(sub)">
+                      <div class="sub-dispute-form" *ngIf="disputeFormExpandedIds.has(sub.inviteId) && canDisputeSubmission(sub)">
                         <div class="sub-dispute-form__title">
                           <i class="bi bi-flag"></i> Raise Issue
                         </div>
@@ -1044,6 +1044,7 @@
                         <textarea class="sub-dispute-field" rows="3"
                           placeholder="Describe the issue * (minimum 20 characters)"
                           [(ngModel)]="submissionDisputeReason[sub.inviteId]"></textarea>
+                        
                         <div class="sub-dispute-evidence">
                           <label class="sub-dispute-upload">
                             <i class="bi bi-paperclip"></i>
@@ -1061,21 +1062,19 @@
                             View evidence
                           </a>
                         </div>
+                        <div class="sub-dispute-form__actions">
+                          <button class="btn-sub-dispute"
+                            [disabled]="reviewLoading.has(sub.inviteId) || !canDisputeSubmission(sub)"
+                            [title]="!canDisputeSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : 'Raise only for content mismatch, missing hashtags, or quality issues'"
+                            (click)="reviewSubmission(sub.inviteId, c._id, 'dispute')">
+                            <i class="bi bi-flag"></i> Submit Issue
+                          </button>
+                          <button type="button" class="btn-sub-dispute-cancel" (click)="toggleDisputeForm(sub.inviteId)">
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                      <div class="sub-review-actions">
-                        <button class="btn-sub-approve"
-                          [disabled]="reviewLoading.has(sub.inviteId) || !canApproveSubmission(sub)"
-                          [title]="!canApproveSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : ''"
-                          (click)="reviewSubmission(sub.inviteId, c._id, 'approve')">
-                          <i class="bi bi-check-circle"></i> Mark Completed
-                        </button>
-                        <button class="btn-sub-dispute"
-                          [disabled]="reviewLoading.has(sub.inviteId) || !canDisputeSubmission(sub)"
-                          [title]="!canDisputeSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : 'Raise only for content mismatch, missing hashtags, or quality issues'"
-                          (click)="reviewSubmission(sub.inviteId, c._id, 'dispute')">
-                          <i class="bi bi-flag"></i> Submit Issue
-                        </button>
-                      </div>
+                      
                       <label class="sub-auto-complete-toggle" *ngIf="sub.status === 'submitted'">
                         <input
                           type="checkbox"
@@ -1084,12 +1083,15 @@
                           (change)="toggleSubmissionAutoComplete(sub, c._id, $event)" />
                         <span>
                           Auto complete after {{ getSubmissionAutoCompleteDelayLabel() }}
-                          <small>Completes the post automatically if no issue is submitted.</small>
                         </span>
                       </label>
                       <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub) && !isSubmissionAutoCompleteWindowExpired(sub)">
                         <i class="bi bi-clock-history"></i>
-                        Review period active. Completion confirmation unlocks in {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
+                        Review period active. Manual review unlocks in {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
+                        <p class="review-period-box__desc">
+                          This post has been submitted for review. You have {{ getSubmissionAutoCompleteDelayLabel() }} to report any issues.
+                          If no issue is reported, this collaboration will be completed automatically.
+                        </p>
                       </div>
                       <div class="sub-metrics-empty" *ngIf="isSubmissionAutoCompleteWindowExpired(sub)">
                         <i class="bi bi-check-circle"></i>
@@ -1103,6 +1105,21 @@
                         <ng-template #manualReviewOpen>
                           Host review is open. Mark completed or submit an issue.
                         </ng-template>
+                      </div>
+                      <div class="sub-review-actions">
+                        <button class="btn-sub-approve"
+                          [disabled]="reviewLoading.has(sub.inviteId) || !canApproveSubmission(sub)"
+                          [title]="!canApproveSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : ''"
+                          (click)="reviewSubmission(sub.inviteId, c._id, 'approve')">
+                          <i class="bi bi-check-circle"></i> Mark Completed
+                        </button>
+                        <button class="btn-sub-dispute" type="button"
+                          *ngIf="!disputeFormExpandedIds.has(sub.inviteId)"
+                          [disabled]="reviewLoading.has(sub.inviteId) || !canDisputeSubmission(sub)"
+                          [title]="!canDisputeSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : 'Raise only for content mismatch, missing hashtags, or quality issues'"
+                          (click)="toggleDisputeForm(sub.inviteId)">
+                          <i class="bi bi-flag"></i> Submit Issue
+                        </button>
                       </div>
                     </div>
 

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { copyTextToClipboard } from '../referral-link.util';
 
 @Component({
   selector: 'app-campaign-alert-message',
@@ -73,6 +74,20 @@ export class CampaignAlertMessageComponent {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  get startDateLabel(): string {
+    const raw = this.campaign?.timelineStart || this.campaign?.startDate;
+    const date = raw ? new Date(raw) : null;
+    if (!date || isNaN(date.getTime())) return 'Not specified';
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  get endDateLabel(): string {
+    const raw = this.campaign?.timelineEnd || this.campaign?.endDate;
+    const date = raw ? new Date(raw) : null;
+    if (!date || isNaN(date.getTime())) return 'Not specified';
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
   get openCampaignMessage(): string {
     return [
       '🎉 New Collaboration Opportunity on TrendStarz',
@@ -130,5 +145,37 @@ export class CampaignAlertMessageComponent {
 
   copyRelevantMessage() {
     this.copyAlert.emit(this.relevantMessage);
+  }
+
+  /** Applies to both invite-only and open-to-all campaigns alike — it's a posting-window nudge, not an invitation. */
+  get postingReminderMessage(): string {
+    return [
+      '📅 Reminder: Your TrendStarz campaign',
+      '',
+      'Hi,',
+      '',
+      'Your collaboration is scheduled to begin.',
+      '',
+      `Campaign: ${this.campaignNameLabel}`,
+      `📆 Posting Window: ${this.startDateLabel} – ${this.endDateLabel}`,
+      '',
+      'Please review the campaign resources, caption, hashtags, and promotion link before posting.',
+      '',
+      'Login to TrendStarz:',
+      'https://www.trendstarz.in',
+      '',
+      'Thank you,',
+      'TrendStarz Team',
+    ].join('\n');
+  }
+
+  reminderCopied = false;
+  private reminderCopiedTimer: any;
+
+  copyReminderMessage(): void {
+    copyTextToClipboard(this.postingReminderMessage);
+    this.reminderCopied = true;
+    clearTimeout(this.reminderCopiedTimer);
+    this.reminderCopiedTimer = setTimeout(() => (this.reminderCopied = false), 2500);
   }
 }

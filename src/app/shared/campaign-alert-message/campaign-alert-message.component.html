@@ -29,5 +29,16 @@
       </div>
       <pre>{{ relevantMessage }}</pre>
     </div>
+
+    <!-- Applies to both invite-only and open-to-all campaigns -->
+    <div class="campaign-alert-message__template">
+      <div class="campaign-alert-message__template-header">
+        <span>Upcoming Posting Reminder</span>
+        <button type="button" class="btn btn-primary btn-sm" (click)="copyReminderMessage()">
+          {{ reminderCopied ? 'Copied' : 'Copy Posting Reminder' }}
+        </button>
+      </div>
+      <pre>{{ postingReminderMessage }}</pre>
+    </div>
   </div>
 </section>

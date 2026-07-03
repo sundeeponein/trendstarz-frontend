@@ -1308,7 +1308,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       accepted: 'Accepted',
       payment_confirmed: 'Confirmed — Start Work',
       working: 'Working',
-      submitted: 'Under Review',
+      submitted: 'Submitted',
       completed: 'Completed',
       approved: 'Payout Released',
       withdrawn: 'Withdrawn',

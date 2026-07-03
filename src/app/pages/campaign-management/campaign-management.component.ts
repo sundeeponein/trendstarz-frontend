@@ -208,6 +208,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   reviewLoading = new Set<string>();
   autoCompleteToggleLoading = new Set<string>();
   expandedSubmissionIds = new Set<string>();
+  disputeFormExpandedIds = new Set<string>();
   reviewModalInviteId: string | null = null;
   reviewModalTargetName = '';
   private submissionApprovalTicker: ReturnType<typeof setInterval> | null = null;
@@ -4551,7 +4552,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       accepted:          'Working',
       payment_confirmed: 'Confirmed — Start Work',
       working:           'Working',
-      submitted:         'Under Review',
+      submitted:         'Submitted',
       // No transaction loaded yet (or none exists) — still don't imply payout
       // is already released just because the host approved the post.
       approved:          'Payout Processing (4-6 hrs)',
@@ -4599,8 +4600,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return Date.now() >= unlockAt.getTime() && (!autoCompleteAt || Date.now() < autoCompleteAt.getTime());
   }
 
+  /** Unlike Mark Completed, a host can flag an issue at any point during the review window — not just after it unlocks. */
   canDisputeSubmission(submission: any): boolean {
-    return this.canApproveSubmission(submission);
+    return !!submission && String(submission?.status || '').toLowerCase() === 'submitted';
   }
 
   getSubmissionApprovalWaitText(submission: any): string {
@@ -4898,6 +4900,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.expandedSubmissionIds.delete(inviteId);
     } else {
       this.expandedSubmissionIds.add(inviteId);
+    }
+    this.cd.detectChanges();
+  }
+
+  toggleDisputeForm(inviteId: string) {
+    if (this.disputeFormExpandedIds.has(inviteId)) {
+      this.disputeFormExpandedIds.delete(inviteId);
+    } else {
+      this.disputeFormExpandedIds.add(inviteId);
     }
     this.cd.detectChanges();
   }

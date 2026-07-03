@@ -87,6 +87,10 @@ pre {
   white-space: pre-wrap;
 }
 
+.campaign-alert-message__template + .campaign-alert-message__template {
+  margin-top: 1rem;
+}
+
 .campaign-alert-message__template-header {
   align-items: center;
   display: flex;

@@ -111,7 +111,7 @@ form {
   flex-shrink: 0;
   background: #fff;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
 }
 
@@ -225,7 +225,7 @@ form {
 .page-campaign-wrap {
   width: 100%;
   min-height: 100vh;
-  padding: 88px 32px 48px;
+  padding: 0 32px 0;
   background: transparent;
 }
 
