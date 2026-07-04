@@ -177,18 +177,6 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     return Number(this.calculated.payerTotal || 0) + this.gstAmount;
   }
 
-  // Recipient (creator/brand) payout breakdown
-  get recipientGstAmount(): number {
-    if (!this.calculated) return 0;
-    const fee = Number(this.calculated.recipientFee || 0);
-    return Math.round(fee * (this.gstPercent / 100));
-  }
-
-  get recipientNetPayout(): number {
-    if (!this.calculated) return 0;
-    return Math.max(Number(this.calculated.recipientPayoutTotal || 0) - this.recipientGstAmount, 0);
-  }
-
   get canSubmit(): boolean {
     return !!this.utrNumber.trim() && !this.submitting;
   }

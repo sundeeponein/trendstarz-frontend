@@ -94,39 +94,6 @@
         </ng-container>
       </div>
 
-      <!-- ── RECIPIENT breakdown (creator receives) — regular campaigns only ── -->
-      <div class="cp-card cp-card--soft" *ngIf="!isPayToJoin">
-        <div class="cp-card-title"><i class="bi bi-people"></i> Creator payout</div>
-        <div class="cp-row">
-          <span class="cp-row-label">Campaign earnings</span>
-          <span class="cp-row-val">{{ formatINR(calculated.agreedAmount) }}</span>
-        </div>
-        <!-- Host pays the platform commission — recipient doesn't bear this -->
-        <div class="cp-row cp-row--muted">
-          <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
-          <span class="cp-row-val">Paid by Host</span>
-        </div>
-        <!-- Recipient payout fee (default 0%, activatable per role) -->
-        <div class="cp-row" [class.cp-row--muted]="!calculated.platformFeeEnabled || (calculated.recipientFee || 0) === 0">
-          <span class="cp-row-label">Payout fee ({{ calculated.recipientFeePercent || 0 }}%)</span>
-          <span class="cp-row-val" [class.cp-row-val--deduct]="(calculated.recipientFee || 0) > 0">
-            {{ (calculated.recipientFee || 0) > 0 ? '−' + formatINR(calculated.recipientFee) : formatINR(0) }}
-          </span>
-        </div>
-        <!-- GST on payout fee (only when both gstPercent and recipientFee > 0) -->
-        <div class="cp-row cp-row--muted" *ngIf="gstPercent > 0">
-          <span class="cp-row-label">GST on payout fee ({{ gstPercent }}%)</span>
-          <span class="cp-row-val">
-            {{ recipientGstAmount > 0 ? '−' + formatINR(recipientGstAmount) : formatINR(0) }}
-          </span>
-        </div>
-        <div class="cp-row cp-row--strong">
-          <span class="cp-row-label">Creator receives</span>
-          <span class="cp-row-val">{{ formatINR(recipientNetPayout) }}</span>
-        </div>
-        <p class="cp-note">Released after each post is approved by you.</p>
-      </div>
-
       <!-- Trust labels -->
       <ul class="cp-trust" *ngIf="calculated.trustLabels?.length">
         <li *ngFor="let label of calculated.trustLabels">
