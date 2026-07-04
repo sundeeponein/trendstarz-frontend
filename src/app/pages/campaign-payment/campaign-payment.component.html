@@ -120,13 +120,6 @@
   <!-- ── PAY TAB ── -->
   <div class="cp-body" *ngIf="!loading && activeTab === 'pay'">
     <ng-container *ngIf="!successMessage; else successBlock">
-      <div class="cp-actions" style="margin-top: 0; margin-bottom: 14px;">
-        <button type="button" class="cp-btn cp-btn--primary" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting">
-          <span *ngIf="processingRazorpay" class="spinner-border spinner-border-sm"></span>
-          <i class="bi bi-lightning-charge-fill" *ngIf="!processingRazorpay"></i>
-          {{ processingRazorpay ? 'Opening Razorpay…' : 'Pay with Razorpay (Recommended)' }}
-        </button>
-      </div>
 
       <!-- Quick total reminder -->
       <div class="cp-quick-total" *ngIf="calculated">
@@ -134,81 +127,107 @@
         <strong>{{ formatINR(totalToPay) }}</strong>
       </div>
 
+
+      <div class="cp-actions" style="margin-top: 0; margin-bottom: 14px;">
+        <button type="button" class="cp-btn cp-btn--primary w-100" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting">
+          <span *ngIf="processingRazorpay" class="spinner-border spinner-border-sm"></span>
+          <i class="bi bi-lightning-charge-fill" *ngIf="!processingRazorpay"></i>
+          {{ processingRazorpay ? 'Opening Razorpay…' : 'Pay with Razorpay (Recommended)' }}
+        </button>
+      </div>
+
+      
       <div class="cp-field-note" style="margin-bottom: 10px;">
         <i class="bi bi-info-circle"></i>
         Prefer Razorpay for instant verification. Manual UPI + UTR remains available below.
       </div>
 
-      <!-- ═══ UPI Payment block ═══ -->
-      <div class="cp-upi-block">
-        <div class="cp-upi-label">
-          <i class="bi bi-qr-code"></i>
-          Pay to this UPI ID
-        </div>
-        <div class="cp-upi-id-row">
-          <span class="cp-upi-id">{{ paymentUpiId }}</span>
-          <button type="button" class="cp-upi-copy" (click)="copyUpi()" [class.copied]="copied" title="Copy UPI ID">
-            <i class="bi" [class.bi-clipboard]="!copied" [class.bi-clipboard-check-fill]="copied"></i>
-            {{ copied ? 'Copied!' : 'Copy' }}
-          </button>
-        </div>
-        <p class="cp-upi-hint">
-          Open any UPI app (PhonePe, GPay, Paytm, BHIM) and pay to the ID above.
-          Then enter the transaction UTR below to confirm.
-        </p>
-        <button type="button" class="cp-paynow-link" (click)="openPayInNewTab()">
-          <i class="bi bi-box-arrow-up-right"></i> Open full payment page
-        </button>
-      </div>
+      <hr>
 
-      <!-- Verification time notice -->
-      <div class="cp-verify-notice">
-        <i class="bi bi-clock"></i>
-        <span>Verification usually takes <strong>6–10 hours</strong> on business days. Once confirmed, your influencers can begin work.</span>
-      </div>
 
-      <!-- UTR -->
-      <div class="cp-field">
-        <label for="cp-utr">UPI Transaction / UTR number <span class="req">*</span></label>
-        <input id="cp-utr" type="text" [(ngModel)]="utrNumber" placeholder="e.g. 412345678912" autocomplete="off" />
-        <div class="cp-field-note">
-          <i class="bi bi-info-circle"></i>
-          Find the 12-digit UTR / transaction reference ID in your UPI app after paying.
+      <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" [class.collapsed]="!manualPayOpen" type="button" (click)="toggleManualPay()" [attr.aria-expanded]="manualPayOpen" aria-controls="collapseOne">
+              Manual Pay
+            </button>
+          </h2>
+          <div id="collapseOne" class="accordion-collapse collapse" [class.show]="manualPayOpen" aria-labelledby="headingOne" *ngIf="manualPayOpen">
+            <div class="accordion-body">
+               <!-- Verification time notice -->
+              <div class="cp-verify-notice">
+                <i class="bi bi-clock"></i>
+                <span>Verification usually takes <strong>6–10 hours</strong> on business days. Once confirmed, your influencers can begin work.</span>
+              </div>
+              <!-- ═══ UPI Payment block ═══ -->
+              <div class="cp-upi-block">
+                <div class="cp-upi-label">
+                  <i class="bi bi-qr-code"></i>
+                  Pay to this UPI ID
+                </div>
+                <div class="cp-upi-id-row">
+                  <span class="cp-upi-id">{{ paymentUpiId }}</span>
+                  <button type="button" class="cp-upi-copy" (click)="copyUpi()" [class.copied]="copied" title="Copy UPI ID">
+                    <i class="bi" [class.bi-clipboard]="!copied" [class.bi-clipboard-check-fill]="copied"></i>
+                    {{ copied ? 'Copied!' : 'Copy' }}
+                  </button>
+                </div>
+                <p class="cp-upi-hint">
+                  Open any UPI app (PhonePe, GPay, Paytm, BHIM) and pay to the ID above.
+                  Then enter the transaction UTR below to confirm.
+                </p>
+                <button type="button" class="cp-paynow-link" (click)="openPayInNewTab()">
+                  <i class="bi bi-box-arrow-up-right"></i> Open full payment page
+                </button>
+              </div>
+
+              <!-- UTR -->
+              <div class="cp-field">
+                <label for="cp-utr">UPI Transaction / UTR number <span class="req">*</span></label>
+                <input id="cp-utr" type="text" [(ngModel)]="utrNumber" placeholder="e.g. 412345678912" autocomplete="off" />
+                <div class="cp-field-note">
+                  <i class="bi bi-info-circle"></i>
+                  Find the 12-digit UTR / transaction reference ID in your UPI app after paying.
+                </div>
+              </div>
+
+              <!-- Proof -->
+              <div class="cp-field">
+                <label>Payment screenshot <span class="cp-optional">(optional — speeds up verification)</span></label>
+                <div class="cp-file-row" *ngIf="!paymentProofPreview">
+                  <label class="cp-file-btn">
+                    <i class="bi bi-cloud-upload"></i> Choose screenshot
+                    <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+                  </label>
+                  <span class="cp-file-hint">PNG / JPG up to 5 MB</span>
+                </div>
+                <div class="cp-preview" *ngIf="paymentProofPreview">
+                  <img [src]="paymentProofPreview" alt="Payment proof preview" />
+                  <button type="button" class="cp-preview-clear" (click)="clearFile()">
+                    <i class="bi bi-x-lg"></i> Replace
+                  </button>
+                </div>
+              </div>
+
+              <div class="cp-error" *ngIf="error">
+                <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+              </div>
+
+              <div class="cp-actions">
+                <button type="button" class="cp-btn cp-btn--secondary" (click)="setTab('summary')" [disabled]="submitting">
+                  <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <button type="button" class="cp-btn cp-btn--primary" (click)="submitProof()" [disabled]="!canSubmit">
+                  <span *ngIf="submitting" class="spinner-border spinner-border-sm"></span>
+                  <i class="bi bi-check-lg" *ngIf="!submitting"></i>
+                  {{ submitting ? 'Submitting…' : 'Submit Proof' }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- Proof -->
-      <div class="cp-field">
-        <label>Payment screenshot <span class="cp-optional">(optional — speeds up verification)</span></label>
-        <div class="cp-file-row" *ngIf="!paymentProofPreview">
-          <label class="cp-file-btn">
-            <i class="bi bi-cloud-upload"></i> Choose screenshot
-            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
-          </label>
-          <span class="cp-file-hint">PNG / JPG up to 5 MB</span>
-        </div>
-        <div class="cp-preview" *ngIf="paymentProofPreview">
-          <img [src]="paymentProofPreview" alt="Payment proof preview" />
-          <button type="button" class="cp-preview-clear" (click)="clearFile()">
-            <i class="bi bi-x-lg"></i> Replace
-          </button>
-        </div>
-      </div>
-
-      <div class="cp-error" *ngIf="error">
-        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
-      </div>
-
-      <div class="cp-actions">
-        <button type="button" class="cp-btn cp-btn--secondary" (click)="setTab('summary')" [disabled]="submitting">
-          <i class="bi bi-arrow-left"></i> Back
-        </button>
-        <button type="button" class="cp-btn cp-btn--primary" (click)="submitProof()" [disabled]="!canSubmit">
-          <span *ngIf="submitting" class="spinner-border spinner-border-sm"></span>
-          <i class="bi bi-check-lg" *ngIf="!submitting"></i>
-          {{ submitting ? 'Submitting…' : 'Submit Proof' }}
-        </button>
-      </div>
+     
     </ng-container>
 
     <ng-template #successBlock>

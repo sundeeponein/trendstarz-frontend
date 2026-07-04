@@ -46,6 +46,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   // current transaction status (polled after modal opens)
   statusTransactions: CampaignTransaction[] = [];
   copied = false;
+  manualPayOpen = false;
 
   constructor(
     private http: HttpClient,
@@ -83,9 +84,12 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     this.paymentProofPreview = null;
     this.statusTransactions = [];
     this.activeTab = this.initialTab || 'summary';
+    this.manualPayOpen = false;
   }
 
   setTab(t: Tab) { this.activeTab = t; }
+
+  toggleManualPay() { this.manualPayOpen = !this.manualPayOpen; }
 
   // ── Status helpers ──────────────────────────────────
   get primaryTx(): CampaignTransaction | null {
