@@ -27,7 +27,8 @@ import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-o
 import { environment } from '../../../environments/environment';
 import { TIER_ORDER, normalizeTierLabel } from '../../shared/tiers.constants';
 import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
-import { buildPromotionTrackingLink, campaignIdLabel, promotionUrlTypeLabel } from '../../shared/referral-link.util';
+import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
+import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -131,6 +132,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private shippingModal: ShippingAddressModalService,
     private profileVerification: ProfileVerificationService,
     private http: HttpClient,
+    private trackingLinksApi: TrackingLinksApiService,
   ) {}
 
   ngOnInit() {
@@ -1032,16 +1034,30 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return promotionUrlTypeLabel(campaign?.promotionUrlType);
   }
 
-  /** UTM-tagged variant of the campaign's promotion link, unique to the signed-in creator. */
+  private trackedLinkCache = new Map<string, string>();
+  private trackedLinkFetching = new Set<string>();
+
+  /** Tracked promo link (trendstarz.in/r/CODE), unique to the signed-in creator. Fetched once, then cached. */
   taggedPromotionLink(campaign: any): string {
-    const username = String(this.session.getUser()?.username || '').trim();
-    if (!username || !campaign?.promotionUrl) return '';
-    return buildPromotionTrackingLink(campaign.promotionUrl, {
-      source: username,
-      campaignLabel: campaignIdLabel(campaign),
-      platform: campaign?.selectedPlatform,
-      contentType: campaign?.selectedContentType,
-    });
+    if (!campaign?.promotionUrl) return '';
+    const inviteId = String(campaign?.inviteId || '');
+    if (!inviteId) return '';
+
+    const cached = this.trackedLinkCache.get(inviteId);
+    if (cached) return cached;
+
+    if (!this.trackedLinkFetching.has(inviteId)) {
+      this.trackedLinkFetching.add(inviteId);
+      this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
+        next: (res) => {
+          this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkFetching.delete(inviteId);
+          this.cdr.detectChanges();
+        },
+        error: () => this.trackedLinkFetching.delete(inviteId),
+      });
+    }
+    return '';
   }
 
   goToStats(campaign: any) {

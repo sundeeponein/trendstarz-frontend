@@ -1,0 +1,114 @@
+<div class="admin-link-analytics ts-admin-page">
+  <header class="hdr ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title"><i class="bi bi-link-45deg"></i> Link Analytics</h2>
+      <p class="ts-admin-subtitle">Click performance for every creator's tracked promo link, across all campaigns/collabs.</p>
+    </div>
+  </header>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div *ngIf="loading" class="state">Loading…</div>
+
+  <ng-container *ngIf="!loading && data as d">
+    <div class="overview-cards">
+      <div class="card">
+        <span class="label">Tracked links</span>
+        <span class="value">{{ d.overview.totalLinks }}</span>
+      </div>
+      <div class="card">
+        <span class="label">Total clicks</span>
+        <span class="value">{{ d.overview.totalClicks }}</span>
+      </div>
+      <div class="card">
+        <span class="label">Unique clicks</span>
+        <span class="value">{{ d.overview.totalUniqueClicks }}</span>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h3>Top performers</h3>
+      <div class="table-wrap" *ngIf="d.topPerformers.length; else noTop">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Campaign</th>
+              <th>Host</th>
+              <th>Recipient</th>
+              <th>Platform</th>
+              <th>Content</th>
+              <th>Clicks</th>
+              <th>Unique</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.topPerformers">
+              <td class="mono">{{ row.code }}</td>
+              <td class="mono">{{ row.campaignId.slice(-6).toUpperCase() }}</td>
+              <td>{{ row.hostType }}</td>
+              <td>{{ row.recipientType }}</td>
+              <td>{{ row.platform || '—' }}</td>
+              <td>{{ row.contentType || '—' }}</td>
+              <td class="num">{{ row.clickCount }}</td>
+              <td class="num">{{ row.uniqueClicks }}</td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noTop><p class="empty">No tracked links yet.</p></ng-template>
+    </section>
+
+    <section class="panel">
+      <h3>By campaign</h3>
+      <div class="table-wrap" *ngIf="d.perCampaign.length; else noCampaign">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Links</th>
+              <th>Clicks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.perCampaign">
+              <td class="mono">{{ row.campaignId.slice(-6).toUpperCase() }}</td>
+              <td class="num">{{ row.links }}</td>
+              <td class="num">{{ row.clicks }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noCampaign><p class="empty">No campaigns with tracked links yet.</p></ng-template>
+    </section>
+
+    <section class="panel">
+      <h3>Zero-activity links</h3>
+      <p class="hint">Posted, but nobody has clicked yet — worth a nudge or a check that the link is actually live.</p>
+      <div class="table-wrap" *ngIf="d.zeroActivity.length; else noZero">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Campaign</th>
+              <th>Platform</th>
+              <th>Content</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.zeroActivity">
+              <td class="mono">{{ row.code }}</td>
+              <td class="mono">{{ row.campaignId.slice(-6).toUpperCase() }}</td>
+              <td>{{ row.platform || '—' }}</td>
+              <td>{{ row.contentType || '—' }}</td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noZero><p class="empty">Every tracked link has at least one click.</p></ng-template>
+    </section>
+  </ng-container>
+</div>

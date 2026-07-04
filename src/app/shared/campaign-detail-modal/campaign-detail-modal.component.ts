@@ -8,7 +8,8 @@ import { UserAvatarComponent } from '../components/user-avatar/user-avatar.compo
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
-import { buildPromotionTrackingLink, copyTextToClipboard } from '../referral-link.util';
+import { copyTextToClipboard } from '../referral-link.util';
+import { TrackingLinksApiService } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 
 export interface CampaignAcceptPayload {
@@ -201,7 +202,11 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
   // Previously used to delay pointer-events; removed now that modal mounts immediately.
 
-  constructor(private cdr: ChangeDetectorRef, private session: SessionService) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private session: SessionService,
+    private trackingLinksApi: TrackingLinksApiService,
+  ) {}
 
   /** Platforms the signed-in user has in their profile (normalized set) */
   private get userSocialPlatformKeySet(): Set<string> {
@@ -391,30 +396,38 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.statusKey);
   }
 
-  /** UTM-tagged variant of the host's promotion link, unique to the signed-in creator viewing their own invite. */
-  get generatedPromotionLink(): string {
-    if (!this.resourcePromotionUrl) return '';
-    const username = String(this.session.getUser()?.username || '').trim();
-    if (!username) return this.resourcePromotionUrl;
-    return buildPromotionTrackingLink(this.resourcePromotionUrl, {
-      source: username,
-      campaignLabel: this.campaignIdLabel,
-      platform: this.invite?.selectedPlatform,
-      contentType: this.invite?.selectedContentType,
-    });
+  private trackedLinkCache = new Map<string, string>();
+  private trackedLinkFetching = new Set<string>();
+
+  private trackedLinkFor(inviteId: string): string {
+    if (!inviteId) return '';
+    const cached = this.trackedLinkCache.get(inviteId);
+    if (cached) return cached;
+
+    if (!this.trackedLinkFetching.has(inviteId)) {
+      this.trackedLinkFetching.add(inviteId);
+      this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
+        next: (res) => {
+          this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkFetching.delete(inviteId);
+          this.cdr.detectChanges();
+        },
+        error: () => this.trackedLinkFetching.delete(inviteId),
+      });
+    }
+    return '';
   }
 
-  /** UTM-tagged variant of the host's promotion link for a specific creator, used in the admin roster table. */
+  /** Tracked promo link, unique to the signed-in creator viewing their own invite. */
+  get generatedPromotionLink(): string {
+    if (!this.resourcePromotionUrl) return '';
+    return this.trackedLinkFor(String(this.invite?._id || ''));
+  }
+
+  /** Tracked promo link for a specific creator, used in the admin roster table. */
   adminInviteTaggedPromotionLink(item: any): string {
     if (!this.resourcePromotionUrl) return '';
-    const username = String(item?.participantUsername || '').trim();
-    if (!username) return '';
-    return buildPromotionTrackingLink(this.resourcePromotionUrl, {
-      source: username,
-      campaignLabel: this.campaignIdLabel,
-      platform: item?.selectedPlatform,
-      contentType: item?.selectedContentType,
-    });
+    return this.trackedLinkFor(String(item?.inviteId || ''));
   }
 
   adminInviteShowsPromotionLink(item: any): boolean {

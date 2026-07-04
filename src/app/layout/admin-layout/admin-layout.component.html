@@ -51,14 +51,20 @@
          class="nav-tab">
         Reviews
       </a>
-      <a routerLink="/admin/disputes" 
-         routerLinkActive="active" 
+      <a routerLink="/admin/disputes"
+         routerLinkActive="active"
          [routerLinkActiveOptions]="{ exact: false }"
          class="nav-tab">
         Disputes
         <span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span>
       </a>
-      
+      <a routerLink="/admin/link-analytics"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: false }"
+         class="nav-tab">
+        Link Analytics
+      </a>
+
     </div>
 
     <!-- Search and Icons -->
@@ -171,6 +177,7 @@
         <a routerLink="/admin/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gem"></i><span>Plans</span></a>
         <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
         <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
+        <a routerLink="/admin/link-analytics" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-link-45deg"></i><span>Link Analytics</span></a>
       </div>
 
       <div class="mobile-upgrade">

@@ -20,7 +20,8 @@ import { UserAvatarComponent } from '../../shared/components/user-avatar/user-av
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { FlowHelpModalService } from '../../shared/components/flow-help-modal/flow-help-modal.service';
 import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
-import { buildPromotionTrackingLink, campaignIdLabel, promotionUrlTypeLabel } from '../../shared/referral-link.util';
+import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
+import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
 import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
@@ -1156,15 +1157,30 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       && CampaignManagementComponent.PROMO_LINK_ACCEPTED_STATUSES.includes(String(invite?.status || '').toLowerCase());
   }
 
+  private trackedLinkCache = new Map<string, string>();
+  private trackedLinkFetching = new Set<string>();
+
+  /** Tracked promo link (trendstarz.in/r/CODE) unique to this invite's creator. Fetched once, then cached. */
   taggedPromotionLink(invite: any, campaign: any): string {
-    const username = this.getCampaignInviteRecipientUsername(invite, campaign);
-    if (!username || !campaign?.promotionUrl) return '';
-    return buildPromotionTrackingLink(campaign.promotionUrl, {
-      source: username,
-      campaignLabel: campaignIdLabel(campaign),
-      platform: invite?.selectedPlatform,
-      contentType: invite?.selectedContentType,
-    });
+    if (!campaign?.promotionUrl) return '';
+    const inviteId = String(invite?._id || invite?.id || '');
+    if (!inviteId) return '';
+
+    const cached = this.trackedLinkCache.get(inviteId);
+    if (cached) return cached;
+
+    if (!this.trackedLinkFetching.has(inviteId)) {
+      this.trackedLinkFetching.add(inviteId);
+      this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
+        next: (res) => {
+          this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkFetching.delete(inviteId);
+          this.cd.detectChanges();
+        },
+        error: () => this.trackedLinkFetching.delete(inviteId),
+      });
+    }
+    return '';
   }
 
   getCampaignInviteRecipientTier(invite: any, campaign: any): string {
@@ -1524,6 +1540,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private router: Router,
     private route: ActivatedRoute,
+    private trackingLinksApi: TrackingLinksApiService,
   ) {}
 
 

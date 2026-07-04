@@ -52,38 +52,6 @@ export function campaignIdLabel(campaign: { campaignNumber?: number; _id?: strin
   return id ? `CMP-${id.slice(-6).toUpperCase()}` : '';
 }
 
-/** Appends UTM tracking params to an arbitrary external URL (host-supplied promotion link) for a specific creator. */
-export function buildPromotionTrackingLink(
-  baseUrl: string,
-  opts: { source: string; campaignLabel: string; platform?: string; contentType?: string },
-): string {
-  const raw = String(baseUrl || '').trim();
-  if (!raw) return '';
-  const source = slugifyReferralUsername(opts.source);
-  if (!source) return raw;
-
-  let url: URL;
-  try {
-    url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
-  } catch {
-    return raw;
-  }
-
-  url.searchParams.set('utm_source', source);
-  url.searchParams.set('utm_medium', 'social');
-  if (opts.campaignLabel) {
-    url.searchParams.set('utm_campaign', opts.campaignLabel.toLowerCase());
-  }
-  const content = [opts.platform, opts.contentType]
-    .map((v) => String(v || '').trim().toLowerCase())
-    .filter(Boolean)
-    .join('_');
-  if (content) {
-    url.searchParams.set('utm_content', content);
-  }
-  return url.toString();
-}
-
 /** Copies text to the clipboard, falling back to a hidden textarea when the Clipboard API is unavailable. */
 export function copyTextToClipboard(text: string): void {
   if (!text) return;
