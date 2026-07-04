@@ -168,24 +168,6 @@
   margin-bottom: 0.9rem;
   strong { font-size: 1.1rem; color: #9a3412; }
 }
-.cp-paynow-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  justify-content: center;
-  padding: 0.65rem 1rem;
-  background: #16a34a;
-  border: none;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border-radius: 10px;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: background 0.15s;
-  &:hover { background: #15803d; }
-}
 .cp-instructions {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -346,61 +328,7 @@
   p { color: #475569; font-size: 0.9rem; margin: 0 0 1rem; }
 }
 
-// ── UPI payment block ──
-.cp-upi-block {
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-  border: 1.5px solid #86efac;
-  border-radius: 12px;
-  padding: 1rem 1.1rem;
-  margin-bottom: 1rem;
-}
-.cp-upi-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #15803d;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.45rem;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  i { font-size: 1rem; }
-}
-.cp-upi-id-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.cp-upi-id {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #0f172a;
-  font-family: 'Courier New', monospace;
-  background: #fff;
-  border: 1px solid #bbf7d0;
-  border-radius: 6px;
-  padding: 0.3rem 0.6rem;
-  flex: 1;
-  letter-spacing: 0.02em;
-}
-.cp-upi-copy {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0.3rem 0.7rem;
-  border-radius: 6px;
-  border: 1px solid #22c55e;
-  background: #fff;
-  color: #16a34a;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-  &:hover { background: #f0fdf4; }
-  &.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
-}
+// ── UPI payment hint (below embedded QR/pay block) ──
 .cp-upi-hint {
   font-size: 0.8rem;
   color: #4ade80;

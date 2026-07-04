@@ -160,26 +160,18 @@
                 <span>Verification usually takes <strong>6–10 hours</strong> on business days. Once confirmed, your influencers can begin work.</span>
               </div>
               <!-- ═══ UPI Payment block ═══ -->
-              <div class="cp-upi-block">
-                <div class="cp-upi-label">
-                  <i class="bi bi-qr-code"></i>
-                  Pay to this UPI ID
-                </div>
-                <div class="cp-upi-id-row">
-                  <span class="cp-upi-id">{{ paymentUpiId }}</span>
-                  <button type="button" class="cp-upi-copy" (click)="copyUpi()" [class.copied]="copied" title="Copy UPI ID">
-                    <i class="bi" [class.bi-clipboard]="!copied" [class.bi-clipboard-check-fill]="copied"></i>
-                    {{ copied ? 'Copied!' : 'Copy' }}
-                  </button>
-                </div>
-                <p class="cp-upi-hint">
-                  Open any UPI app (PhonePe, GPay, Paytm, BHIM) and pay to the ID above.
-                  Then enter the transaction UTR below to confirm.
-                </p>
-                <button type="button" class="cp-paynow-link" (click)="openPayInNewTab()">
-                  <i class="bi bi-box-arrow-up-right"></i> Open full payment page
-                </button>
-              </div>
+              <app-payment-checkout
+                [embedded]="true"
+                [title]="''"
+                [showBreakdown]="false"
+                [amountRupees]="totalToPayRupees"
+                [upiId]="paymentUpiId"
+                [transactionNote]="transactionNote">
+              </app-payment-checkout>
+              <p class="cp-upi-hint">
+                Scan the QR with any UPI app (PhonePe, GPay, Paytm, BHIM), or tap "Pay via UPI app" on your phone.
+                Then enter the transaction UTR below to confirm.
+              </p>
 
               <!-- UTR -->
               <div class="cp-field">

@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
+import { PaymentCheckoutComponent } from '../../shared/payment-checkout/payment-checkout.component';
 
 type Tab = 'summary' | 'pay' | 'status';
 
@@ -15,7 +16,7 @@ type RazorpayOrder = { orderId: string; amount: number; currency: string; keyId:
 @Component({
   selector: 'app-campaign-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaymentCheckoutComponent],
   templateUrl: './campaign-payment.component.html',
   styleUrls: ['./campaign-payment.component.scss']
 })
@@ -45,7 +46,6 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   // current transaction status (polled after modal opens)
   statusTransactions: CampaignTransaction[] = [];
-  copied = false;
   manualPayOpen = false;
 
   constructor(
@@ -130,19 +130,12 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     return 'cp-status--muted';
   }
 
-  openPayInNewTab() {
-    if (!this.campaignId) return;
-    const url = `/campaign-pay/${this.campaignId}`;
-    window.open(url, '_blank', 'noopener');
-    this.setTab('pay');
+  get totalToPayRupees(): number {
+    return this.totalToPay / 100;
   }
 
-  copyUpi() {
-    navigator.clipboard.writeText(this.paymentUpiId).then(() => {
-      this.copied = true;
-      setTimeout(() => { this.copied = false; this.cd.markForCheck(); }, 2000);
-      this.cd.markForCheck();
-    }).catch(() => {});
+  get transactionNote(): string {
+    return `Campaign payment ${(this.campaignId || '').slice(-6).toUpperCase()}`;
   }
 
   close() {
