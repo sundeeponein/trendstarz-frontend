@@ -8,6 +8,7 @@ import { ConfigService } from '../../shared/config.service';
 import { environment } from '../../../environments/environment';
 import { CampaignStatusBarComponent } from '../../shared/campaign-status-bar/campaign-status-bar.component';
 import { AnalyticsService } from '../../core/analytics.service';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 
@@ -312,13 +313,24 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   async uploadImage(file: File, type: 'screenshot' | 'insights') {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.error = validationError;
+      return;
+    }
+
     if (type === 'screenshot') this.screenshotUploading = true;
     else this.insightsUploading = true;
 
     try {
       let imageUrl = '';
+      const compressedFile = await compressImageFile(file, 'screenshot');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.error = OVERSIZE_MESSAGE;
+        return;
+      }
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressedFile);
       const res: any = await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/campaign-invites/${this.inviteId}/upload-image`, fd));
       imageUrl = res.data?.url || res.url;
       // Keep as relative path so Angular proxy serves it (avoids helmet CORP blocking)

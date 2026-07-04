@@ -1,6 +1,5 @@
 // ...existing code...
 import { environment } from '../../../environments/environment';
-import imageCompression from 'browser-image-compression';
 import { Component, OnInit, NgZone, inject } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -25,6 +24,7 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -939,7 +939,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.profileImageUploading = true;
     this.cdr.detectChanges();
     try {
-      const compressedFile = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 1024, useWebWorker: true });
+      const compressedFile = await compressImageFile(file, 'profile');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.profileImageUploading = false;
+        this.registrationError = OVERSIZE_MESSAGE;
+        this.cdr.detectChanges();
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile as File; this.uploadedProfileImage = null; this.profileImageUploading = false; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(compressedFile);
@@ -968,11 +974,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     let failedUploads = 0;
 
     for (const file of selectedFiles) {
-      if (!file.type.startsWith('image/')) {
+      if (validateImageFile(file)) {
         failedUploads += 1;
         continue;
       }
-      if (file.size > 5 * 1024 * 1024) {
+
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
         failedUploads += 1;
         continue;
       }
@@ -981,7 +989,7 @@ export class InfluencerRegistrationComponent implements OnInit {
         const reader = new FileReader();
         reader.onload = (e) => resolve(String(e.target?.result || ''));
         reader.onerror = () => reject(new Error('preview_failed'));
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(compressedFile);
       }).catch(() => '');
 
       if (!preview) {
@@ -990,7 +998,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       }
 
       const fd = new FormData();
-      fd.append('file', file, file.name || 'gallery.jpg');
+      fd.append('file', compressedFile, compressedFile.name || 'gallery.jpg');
       fd.append('folder', 'influencer_gallery_images');
 
       const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {

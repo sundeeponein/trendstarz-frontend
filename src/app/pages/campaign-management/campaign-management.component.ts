@@ -29,6 +29,7 @@ import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared
 import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
 import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
 import { WriteReviewComponent } from '../../shared/write-review/write-review.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -4397,13 +4398,26 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  onSubmissionDisputeEvidenceChange(inviteId: string, event: Event) {
+  async onSubmissionDisputeEvidenceChange(inviteId: string, event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.toast.error(validationError);
+      input.value = '';
+      return;
+    }
+
+    const compressedFile = await compressImageFile(file, 'screenshot');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.toast.error(OVERSIZE_MESSAGE);
+      input.value = '';
+      return;
+    }
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('image', compressedFile);
     this.submissionDisputeEvidenceUploading.add(inviteId);
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {

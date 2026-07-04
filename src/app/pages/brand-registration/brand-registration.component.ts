@@ -1,5 +1,4 @@
 import { environment } from '../../../environments/environment';
-import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
@@ -21,6 +20,7 @@ import { MobileBottomActionsComponent } from '../../shared/components/mobile-bot
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -45,7 +45,6 @@ export class BrandRegistrationComponent implements OnInit {
   freeProductImageLimit = 1;
   premiumProductImageLimit = 5;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
-  readonly MAX_IMAGE_SIZE_MB = 5; // reject images larger than this before attempting compression/upload
   readonly currentYear = new Date().getFullYear();
   readonly brandFoundedYears: number[] = Array.from(
     { length: this.currentYear - 1899 },
@@ -622,9 +621,9 @@ export class BrandRegistrationComponent implements OnInit {
     this.brandLogoInputEl = event?.target as HTMLInputElement;
     const file: File = this.brandLogoInputEl?.files?.[0] as File;
     if (!file) return;
-    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
-    if (!validation.valid) {
-      this.registrationError = validation.reason || 'Invalid image file.';
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.registrationError = validationError;
       return;
     }
     this.cropSourceFile = file;
@@ -642,11 +641,11 @@ export class BrandRegistrationComponent implements OnInit {
     this.cropSourceFile = null;
     if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
     try {
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.1,
-        maxWidthOrHeight: 1024,
-        useWebWorker: true,
-      });
+      const compressedFile = await compressImageFile(file, 'profile');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.registrationError = OVERSIZE_MESSAGE;
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.brandLogoPreview = e.target.result;
@@ -672,18 +671,18 @@ export class BrandRegistrationComponent implements OnInit {
   async onProductImageFileChange(event: any, index: number) {
     const file: File = event?.target?.files?.[0];
     if (!file) return;
-    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
-    if (!validation.valid) {
-      this.registrationError = validation.reason || 'Invalid product image.';
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.registrationError = validationError;
       return;
     }
 
     try {
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.1,
-        maxWidthOrHeight: 1024,
-        useWebWorker: true,
-      });
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.registrationError = OVERSIZE_MESSAGE;
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.productImagesPreview[index] = e.target.result;
@@ -697,15 +696,6 @@ export class BrandRegistrationComponent implements OnInit {
     } catch {
       this.registrationError = 'Product image preview failed.';
     }
-  }
-
-  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
-    if (!file) return { valid: false, reason: 'No file selected.' };
-    if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
-    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
-    return { valid: true };
   }
 
   private refreshStepCompletion() {

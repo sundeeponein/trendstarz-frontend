@@ -12,7 +12,7 @@ import { RouterModule } from '@angular/router';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
-import imageCompression from 'browser-image-compression';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
@@ -478,7 +478,6 @@ export class InfluencerProfileComponent implements OnInit {
   galleryImagesPreview: string[] = [];
   galleryImagesData: { url: string; public_id: string }[] = [];
   galleryUploadWarning = '';
-  readonly MAX_IMAGE_SIZE_MB = 5; // allow up to 5 MB before rejecting
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isEditMode = false;
@@ -1094,12 +1093,11 @@ export class InfluencerProfileComponent implements OnInit {
     return url;
   }
 
-  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
+  private isValidImageFile(file: any): { valid: boolean; reason?: string } {
     if (!file) return { valid: false, reason: 'No file selected.' };
     if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
-    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
+    const reason = validateImageFile(file);
+    if (reason) return { valid: false, reason };
     return { valid: true };
   }
 
@@ -1125,7 +1123,7 @@ export class InfluencerProfileComponent implements OnInit {
     this.profileImageInputEl = event.target as HTMLInputElement;
     const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
-    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    const validation = this.isValidImageFile(file);
     if (!validation.valid) {
       this.toast.error(validation.reason || 'Please select a valid image file.');
       return;
@@ -1149,15 +1147,16 @@ export class InfluencerProfileComponent implements OnInit {
     this.profileImageUploading = true;
     this.cd.detectChanges();
     try {
-      const options = {
-        maxSizeMB: 0.2,
-        maxWidthOrHeight: 1024,
-        useWebWorker: true
-      };
-      const compressedFile = await imageCompression(file, options);
+      const compressedFile = await compressImageFile(file, 'profile');
       const uploadFile = this.normalizeUploadFile(compressedFile as File | Blob, file.name || 'profile-image.jpg');
       if (!uploadFile) {
         this.toast.error('Please select a valid image file.');
+        this.profileImageUploading = false;
+        this.cd.detectChanges();
+        return;
+      }
+      if (isOversizedAfterCompression(uploadFile)) {
+        this.toast.error(OVERSIZE_MESSAGE);
         this.profileImageUploading = false;
         this.cd.detectChanges();
         return;
@@ -1200,17 +1199,18 @@ export class InfluencerProfileComponent implements OnInit {
     this.cd.detectChanges();
     let failedUploads = 0;
     for (const file of selectedFiles) {
-      if (!file.type.startsWith('image/')) { failedUploads++; continue; }
-      if (file.size > 5 * 1024 * 1024) { failedUploads++; continue; }
+      if (validateImageFile(file)) { failedUploads++; continue; }
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) { failedUploads++; continue; }
       const preview = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(String(e.target?.result || ''));
         reader.onerror = () => reject(new Error('preview_failed'));
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(compressedFile);
       }).catch(() => '');
       if (!preview) { failedUploads++; continue; }
       const fd = new FormData();
-      fd.append('file', file, file.name || 'gallery.jpg');
+      fd.append('file', compressedFile, compressedFile.name || 'gallery.jpg');
       fd.append('folder', 'influencer_gallery_images');
       try {
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });

@@ -1,6 +1,5 @@
 
 import { environment } from '../../../environments/environment';
-import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
@@ -28,6 +27,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 @Component({
   selector: 'app-brand-registration',
@@ -322,12 +322,9 @@ export class BrandProfileComponent implements OnInit {
     this.brandLogoInputEl = event.target as HTMLInputElement;
     const file = this.brandLogoInputEl.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.showValidationMessage('Please select a valid image file.');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      this.showValidationMessage('Image size must be below 2MB.');
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.showValidationMessage(validationError);
       return;
     }
     this.cropSourceFile = file;
@@ -346,13 +343,12 @@ export class BrandProfileComponent implements OnInit {
     this.cropSourceFile = null;
     if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
     // Compress image before upload
-    const options = {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 1024,
-      useWebWorker: true
-    };
     try {
-      const compressedFile = await imageCompression(file, options);
+      const compressedFile = await compressImageFile(file, 'profile');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.registrationError = OVERSIZE_MESSAGE;
+        return;
+      }
       // Upload via backend so local/prod handling stays centralized
       this.brandLogoPreview = null;
       this.brandLogoFile = null;
@@ -390,22 +386,18 @@ export class BrandProfileComponent implements OnInit {
     if (!this.isEditMode) return;
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.showValidationMessage('Please select a valid image file.');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      this.showValidationMessage('Image size must be below 2MB.');
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.showValidationMessage(validationError);
       return;
     }
     // Compress image before upload
-    const options = {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 1024,
-      useWebWorker: true
-    };
     try {
-      const compressedFile = await imageCompression(file, options);
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.showValidationMessage(OVERSIZE_MESSAGE);
+        return;
+      }
       // Upload via backend so local/prod handling stays centralized
       this.productImagesPreview[index] = null;
       this.productImagesFiles[index] = null;

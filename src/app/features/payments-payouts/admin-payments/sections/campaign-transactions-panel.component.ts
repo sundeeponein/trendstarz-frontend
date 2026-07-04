@@ -10,6 +10,7 @@ import { AdminPaymentsUiUtilsService } from '../admin-payments-ui-utils.service'
 import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
 import { ConfigService } from '../../../../shared/config.service';
 import { AppPaginatorComponent } from '../../../../shared/components/app-paginator/app-paginator.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../../../shared/utils/image-upload.util';
 
 @Component({
   selector: 'app-campaign-transactions-panel',
@@ -684,17 +685,29 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     this.markTransactionPaid();
   }
 
-  onPayoutFileSelected(ev: Event) {
+  async onPayoutFileSelected(ev: Event) {
     const el = ev.target as HTMLInputElement;
     if (!el.files?.length) return;
     const file = el.files[0];
-    this.payoutProofFile = file;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.errorMessage.emit(validationError);
+      el.value = '';
+      return;
+    }
+    const compressedFile = await compressImageFile(file, 'screenshot');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.errorMessage.emit(OVERSIZE_MESSAGE);
+      el.value = '';
+      return;
+    }
+    this.payoutProofFile = compressedFile;
     const reader = new FileReader();
     reader.onload = e => {
       this.payoutProofPreview = (e.target?.result as string) || null;
       this.cdr.markForCheck();
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(this.payoutProofFile);
   }
 
   clearPayoutFile() {

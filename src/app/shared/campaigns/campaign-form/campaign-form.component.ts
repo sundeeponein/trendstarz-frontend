@@ -18,6 +18,7 @@ import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.s
 import { ChipSelectionGroupComponent } from '../../chip-selection-group/chip-selection-group.component';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
 import { MobileBottomActionsComponent } from '../../components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../utils/image-upload.util';
 
 
 
@@ -2582,14 +2583,26 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.form.get('acceptanceDeadline')?.setValue(deadline ? deadline.toISOString() : '', { emitEvent: false });
   }
 
-  onFileSelected(event: Event) {
+  async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.selectedFile = input.files[0];
-      const reader = new FileReader();
-      reader.onload = () => { this.imagePreview = reader.result as string; };
-      reader.readAsDataURL(this.selectedFile);
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.toast.error(validationError);
+      input.value = '';
+      return;
     }
+    const compressedFile = await compressImageFile(file, 'cover');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.toast.error(OVERSIZE_MESSAGE);
+      input.value = '';
+      return;
+    }
+    this.selectedFile = compressedFile;
+    const reader = new FileReader();
+    reader.onload = () => { this.imagePreview = reader.result as string; };
+    reader.readAsDataURL(this.selectedFile);
   }
 
   removeImage() {
@@ -2597,14 +2610,26 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.selectedFile = null;
   }
 
-  onResourceLogoSelected(event: Event) {
+  async onResourceLogoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.selectedResourceLogoFile = input.files[0];
-      const reader = new FileReader();
-      reader.onload = () => { this.resourceLogoPreview = reader.result as string; };
-      reader.readAsDataURL(this.selectedResourceLogoFile);
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.toast.error(validationError);
+      input.value = '';
+      return;
     }
+    const compressedFile = await compressImageFile(file, 'profile');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.toast.error(OVERSIZE_MESSAGE);
+      input.value = '';
+      return;
+    }
+    this.selectedResourceLogoFile = compressedFile;
+    const reader = new FileReader();
+    reader.onload = () => { this.resourceLogoPreview = reader.result as string; };
+    reader.readAsDataURL(this.selectedResourceLogoFile);
   }
 
   removeResourceLogo() {
@@ -2612,14 +2637,24 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.selectedResourceLogoFile = null;
   }
 
-  onResourceImagesSelected(event: Event) {
+  async onResourceImagesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
     for (const file of Array.from(input.files)) {
-      this.selectedResourceImageFiles.push(file);
+      const validationError = validateImageFile(file);
+      if (validationError) {
+        this.toast.error(validationError);
+        continue;
+      }
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.toast.error(OVERSIZE_MESSAGE);
+        continue;
+      }
+      this.selectedResourceImageFiles.push(compressedFile);
       const reader = new FileReader();
       reader.onload = () => { this.resourceImagePreviews.push(reader.result as string); };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     }
     input.value = '';
   }

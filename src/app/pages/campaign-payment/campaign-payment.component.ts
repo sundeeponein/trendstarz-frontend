@@ -8,6 +8,7 @@ import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
 import { PaymentCheckoutComponent } from '../../shared/payment-checkout/payment-checkout.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 type Tab = 'summary' | 'pay' | 'status';
 
@@ -179,17 +180,30 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   // ── File handling ────────────────────────────────────
-  onFileSelected(ev: Event) {
+  async onFileSelected(ev: Event) {
     const el = ev.target as HTMLInputElement;
     if (!el.files?.length) return;
     const file = el.files[0];
-    this.paymentProofFile = file;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.error = validationError;
+      el.value = '';
+      return;
+    }
+    this.error = '';
+    const compressedFile = await compressImageFile(file, 'screenshot');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.error = OVERSIZE_MESSAGE;
+      el.value = '';
+      return;
+    }
+    this.paymentProofFile = compressedFile;
     const reader = new FileReader();
     reader.onload = e => {
       this.paymentProofPreview = (e.target?.result as string) || null;
       this.cd.markForCheck();
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
   }
 
   clearFile() {

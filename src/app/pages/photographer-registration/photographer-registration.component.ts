@@ -18,6 +18,7 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -524,8 +525,8 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.profileImageInputEl = event.target as HTMLInputElement;
     const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { alert('Please select a valid image file.'); return; }
-    if (file.size > 5 * 1024 * 1024) { alert('Image size must be below 5MB.'); return; }
+    const validationError = validateImageFile(file);
+    if (validationError) { alert(validationError); return; }
     this.cropSourceFile = file;
     this.cropModalOpen = true;
   }
@@ -536,16 +537,23 @@ export class PhotographerRegistrationComponent implements OnInit {
     if (this.profileImageInputEl) this.profileImageInputEl.value = '';
   }
 
-  onProfileImageCropped(file: File) {
+  async onProfileImageCropped(file: File) {
     this.cropModalOpen = false;
     this.cropSourceFile = null;
     if (this.profileImageInputEl) this.profileImageInputEl.value = '';
     this.uploadingImage = true;
+    const compressedFile = await compressImageFile(file, 'profile');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.uploadingImage = false;
+      this.registrationError = OVERSIZE_MESSAGE;
+      this.cdr.detectChanges();
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => { this.profileImagePreview = e.target?.result as string; this.cdr.detectChanges(); };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressedFile);
     formData.append('folder', 'photographer_profiles');
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {
@@ -580,11 +588,13 @@ export class PhotographerRegistrationComponent implements OnInit {
     let failedUploads = 0;
 
     for (const file of selectedFiles) {
-      if (!file.type.startsWith('image/')) {
+      if (validateImageFile(file)) {
         failedUploads += 1;
         continue;
       }
-      if (file.size > 5 * 1024 * 1024) {
+
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
         failedUploads += 1;
         continue;
       }
@@ -593,7 +603,7 @@ export class PhotographerRegistrationComponent implements OnInit {
         const reader = new FileReader();
         reader.onload = (e) => resolve(String(e.target?.result || ''));
         reader.onerror = () => reject(new Error('preview_failed'));
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(compressedFile);
       }).catch(() => '');
 
       if (!preview) {
@@ -602,7 +612,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       }
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile);
       formData.append('folder', 'photographer_gallery');
 
       const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
