@@ -4949,8 +4949,16 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   shouldShowSubmissionToggle(c: Campaign, inv: any): boolean {
     const status = this.getHostInviteEffectiveStatus(inv);
-    if (['submitted', 'approved', 'completed', 'disputed'].includes(status)) return true;
-    return !!this.getSubmissionForInvite(c, inv);
+    const statusSuggestsSubmission = ['submitted', 'approved', 'completed', 'disputed'].includes(status);
+    if (!statusSuggestsSubmission) return !!this.getSubmissionForInvite(c, inv);
+    // A 'disputed' invite can come from a plain "report an issue" flag with no post ever
+    // submitted (e.g. reported for missing the posting deadline entirely). Once this
+    // campaign's submissions are loaded (they're fetched proactively on card expand), only
+    // show "View Post" when there's actually a submission to view.
+    if (this.campaignSubmissionsMap.has(String(c?._id || ''))) {
+      return !!this.getSubmissionForInvite(c, inv);
+    }
+    return true;
   }
 
   toggleSubmissionForInvite(c: Campaign, inv: any) {
@@ -4963,12 +4971,20 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // A 'disputed' invite can arise two ways: disputing an actual submitted post (has a
+    // submission), or a plain "report an issue" flag with no post ever submitted (never
+    // will have one). If we already fetched a fresh copy of this campaign's submissions
+    // and still found no match, that's the latter case — not a sync delay.
+    const alreadyLoaded = this.campaignSubmissionsMap.has(campaignId);
+
     this.config.getCampaignSubmissions(campaignId).subscribe({
       next: (submissions: any[]) => {
         const list = Array.isArray(submissions) ? submissions : [];
         this.campaignSubmissionsMap.set(campaignId, list);
         if (this.getSubmissionForInvite(c, inv)) {
           this.toggleSubmission(inviteId);
+        } else if (alreadyLoaded) {
+          this.toast.error('No post has been submitted for this collaboration yet.');
         } else {
           this.toast.error('Submission details are still syncing. Please try again shortly.');
         }
