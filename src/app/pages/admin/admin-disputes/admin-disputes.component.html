@@ -71,7 +71,8 @@
 
       <div class="reason">
         <b>Reason:</b>
-        <pre>{{ inv.reportedIssue?.reason || '—' }}</pre>
+        <pre>{{ disputeReason(inv) || '—' }}</pre>
+        <a *ngIf="disputeEvidenceUrl(inv)" [href]="disputeEvidenceUrl(inv)" target="_blank" rel="noopener" class="evidence-link">View evidence</a>
       </div>
 
       <div class="contacts">

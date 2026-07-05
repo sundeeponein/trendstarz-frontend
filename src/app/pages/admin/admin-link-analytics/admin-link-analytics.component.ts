@@ -15,6 +15,7 @@ export class AdminLinkAnalyticsComponent implements OnInit {
   loading = true;
   error = '';
   data: TrackingLinksAdminAnalytics | null = null;
+  activeTab: 'top' | 'byCampaign' | 'zero' = 'top';
 
   /** Populated from the first (unfiltered) load and kept stable across filtered reloads. */
   campaignOptions: { id: string; label: string; title?: string }[] = [];

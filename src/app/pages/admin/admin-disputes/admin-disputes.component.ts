@@ -145,6 +145,22 @@ export class AdminDisputesComponent implements OnInit {
     return d ? new Date(d).toLocaleString() : '';
   }
 
+  /** A brand can raise a dispute two ways: a plain "report issue", or disputing a submitted post.
+   *  The former stores its text on `reportedIssue.reason`; the latter on the linked submission. */
+  disputeReason(inv: any): string {
+    const direct = String(inv?.reportedIssue?.reason || '').trim();
+    if (direct) return direct;
+    const sub = inv?.latestSubmission;
+    const category = String(sub?.disputeIssueReason || '').trim();
+    const description = String(sub?.disputeReason || '').trim();
+    if (category && description) return `${category} — ${description}`;
+    return category || description;
+  }
+
+  disputeEvidenceUrl(inv: any): string {
+    return String(inv?.latestSubmission?.disputeEvidenceUrl || '').trim();
+  }
+
   private flash(msg: string) {
     this.toast = msg;
     setTimeout(() => {

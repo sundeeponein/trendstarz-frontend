@@ -50,7 +50,22 @@
       </div>
     </div>
 
-    <section class="panel">
+    <div class="link-tabs ts-admin-tabbar" role="tablist" aria-label="Link analytics sections">
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'top'" (click)="activeTab = 'top'">
+        Top performers
+        <span class="tab-badge">{{ d.topPerformers.length }}</span>
+      </button>
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'byCampaign'" (click)="activeTab = 'byCampaign'">
+        By campaign
+        <span class="tab-badge">{{ d.perCampaign.length }}</span>
+      </button>
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'zero'" (click)="activeTab = 'zero'">
+        Zero-activity links
+        <span class="tab-badge">{{ d.zeroActivity.length }}</span>
+      </button>
+    </div>
+
+    <section class="panel" *ngIf="activeTab === 'top'">
       <h3>Top performers</h3>
       <div class="table-wrap" *ngIf="d.topPerformers.length; else noTop">
         <table>
@@ -85,7 +100,7 @@
       <ng-template #noTop><p class="empty">No tracked links yet.</p></ng-template>
     </section>
 
-    <section class="panel">
+    <section class="panel" *ngIf="activeTab === 'byCampaign'">
       <h3>By campaign</h3>
       <div class="table-wrap" *ngIf="d.perCampaign.length; else noCampaign">
         <table>
@@ -108,7 +123,7 @@
       <ng-template #noCampaign><p class="empty">No campaigns with tracked links yet.</p></ng-template>
     </section>
 
-    <section class="panel">
+    <section class="panel" *ngIf="activeTab === 'zero'">
       <h3>Zero-activity links</h3>
       <p class="hint">Posted, but nobody has clicked yet — worth a nudge or a check that the link is actually live.</p>
       <div class="table-wrap" *ngIf="d.zeroActivity.length; else noZero">
