@@ -17,7 +17,7 @@ export interface TrackingLink {
 
 export interface TrackingLinksAdminAnalytics {
   overview: { totalLinks: number; totalClicks: number; totalUniqueClicks: number };
-  perCampaign: { campaignId: string; campaignNumber?: number; links: number; clicks: number }[];
+  perCampaign: { campaignId: string; campaignNumber?: number; campaignTitle?: string; links: number; clicks: number }[];
   topPerformers: {
     code: string;
     campaignId: string;

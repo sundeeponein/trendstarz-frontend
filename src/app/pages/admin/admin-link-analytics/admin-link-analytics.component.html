@@ -4,6 +4,31 @@
       <h2 class="ts-admin-title"><i class="bi bi-link-45deg"></i> Link Analytics</h2>
       <p class="ts-admin-subtitle">Click performance for every creator's tracked promo link, across all campaigns/collabs.</p>
     </div>
+    <div class="filter-bar">
+      <label for="campaignFilter">Campaign</label>
+      <div class="combobox">
+        <input
+          id="campaignFilter"
+          type="text"
+          autocomplete="off"
+          placeholder="All campaigns"
+          [(ngModel)]="campaignSearchTerm"
+          (focus)="openCampaignDropdown()"
+          (blur)="closeCampaignDropdown()"
+        />
+        <div class="combobox-panel" *ngIf="campaignDropdownOpen">
+          <div class="combobox-option" (mousedown)="$event.preventDefault(); selectCampaign(null)">All campaigns</div>
+          <div
+            class="combobox-option"
+            *ngFor="let opt of filteredCampaignOptions"
+            (mousedown)="$event.preventDefault(); selectCampaign(opt)"
+          >
+            {{ campaignDisplayText(opt) }}
+          </div>
+          <div class="combobox-empty" *ngIf="!filteredCampaignOptions.length">No matching campaigns</div>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div class="error" *ngIf="error">{{ error }}</div>
