@@ -455,6 +455,13 @@
                   <div class="cdm-creator-card__timestamp" *ngIf="adminInviteSubmittedAtText(item)">
                     Posted on {{ adminInviteSubmittedAtText(item) }}
                   </div>
+                  <!-- Host feedback when the submitted post is disputed / needs changes -->
+                  <div class="cdm-creator-card__dispute-reason" *ngIf="item.postSubmissionStatus === 'disputed'">
+                    Under Review:
+                    <strong *ngIf="item.disputeIssueReason">{{ item.disputeIssueReason }}</strong>
+                    {{ item.disputeReason || 'Quality issue' }}
+                    <a *ngIf="item.disputeEvidenceUrl" [href]="item.disputeEvidenceUrl" target="_blank" rel="noopener noreferrer">View evidence</a>
+                  </div>
                   <!-- Host (campaign owner) approval of the submitted post -->
                   <span class="cdm-host-approved-badge" *ngIf="item.postApproved">
                     <i class="bi bi-patch-check-fill"></i> Post Approved

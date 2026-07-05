@@ -732,6 +732,21 @@ $dk-orange:    #e06030;
     text-align: right;
     .cdm-panel--dark & { color: $dk-muted; }
   }
+
+  &__dispute-reason {
+    font-size: 0.7rem;
+    color: #b45309;
+    text-align: right;
+    max-width: 220px;
+    line-height: 1.4;
+    margin-top: 2px;
+
+    a {
+      display: block;
+      color: inherit;
+      text-decoration: underline;
+    }
+  }
 }
 
 .cdm-status-dot {

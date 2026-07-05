@@ -60,6 +60,10 @@
       <div class="meta">
         <span><b>Campaign:</b> {{ inv.campaign?.title || '—' }}</span>
         <span class="sep">·</span>
+        <button type="button" class="cmp-id-badge" (click)="goToCampaign(inv)" title="Open this campaign in Campaign Review">
+          {{ campaignIdLabel(inv.campaign) }}
+        </button>
+        <span class="sep">·</span>
         <span><b>Type:</b> {{ inv.campaign?.campaignType || '—' }}</span>
         <span class="sep">·</span>
         <span><b>Reported:</b> {{ reportedAt(inv) }}</span>

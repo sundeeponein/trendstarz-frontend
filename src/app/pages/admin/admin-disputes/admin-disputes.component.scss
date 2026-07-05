@@ -77,6 +77,24 @@
     margin-bottom: 8px;
     .sep { margin: 0 6px; color: #cbd5e1; }
     .resolved-flag { color: #1f7a3a; font-weight: 500; }
+
+    .cmp-id-badge {
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      color: #475569;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      border-radius: 999px;
+      padding: 2px 9px;
+      cursor: pointer;
+
+      &:hover {
+        background: #eef2ff;
+        border-color: #c7d2fe;
+        color: #4338ca;
+      }
+    }
   }
 
   .reason {

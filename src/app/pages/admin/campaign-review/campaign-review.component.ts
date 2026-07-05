@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, HostListener, Inject, OnInit,
 import { CommonModule, isPlatformServer } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
 import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
@@ -85,6 +85,7 @@ export class CampaignReviewComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private router: Router,
+    private route: ActivatedRoute,
     private elRef: ElementRef<HTMLElement>,
   ) {
     this.isServer = isPlatformServer(platformId);
@@ -103,7 +104,25 @@ export class CampaignReviewComponent implements OnInit {
     if (this.isServer) return;
     this.campaignFiltersExpanded = window.innerWidth >= 768;
     this.loadApprovalMode();
+    const deepLinkCampaignId = String(this.route.snapshot.queryParamMap.get('campaignId') || '').trim();
+    if (deepLinkCampaignId) {
+      this.openCampaignById(deepLinkCampaignId);
+    }
     this.loadCampaignApprovals();
+  }
+
+  /** Deep-link support (e.g. from the Disputes page) to open one specific campaign's preview directly. */
+  private openCampaignById(campaignId: string): void {
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/campaigns?${new URLSearchParams({ id: campaignId }).toString()}`, this.getAuthHeaders())
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? [];
+          const campaign = Array.isArray(data) ? data[0] : null;
+          if (campaign) this.openCampaignPreview(campaign);
+        },
+        error: () => {},
+      });
   }
 
   get reviewScope(): 'campaign' | 'collaboration' {
@@ -651,6 +670,11 @@ export class CampaignReviewComponent implements OnInit {
           postSubmissionStatus: invite?.latestSubmission?.status || null,
           postApproved: invite?.latestSubmission?.status === 'approved',
           postApprovedAt: invite?.latestSubmission?.reviewedAt || invite?.latestSubmission?.autoCompletedAt || null,
+          // Host feedback when a submitted post is disputed/needs changes.
+          brandFeedback: invite?.latestSubmission?.brandFeedback || null,
+          disputeIssueReason: invite?.latestSubmission?.disputeIssueReason || null,
+          disputeReason: invite?.latestSubmission?.disputeReason || null,
+          disputeEvidenceUrl: invite?.latestSubmission?.disputeEvidenceUrl || null,
           // Payout to the participant for this invite.
           paymentGateway: invite?.latestPayout?.gateway || null,
           hostPaymentUtr: invite?.latestPayout?.utrNumber || null,
