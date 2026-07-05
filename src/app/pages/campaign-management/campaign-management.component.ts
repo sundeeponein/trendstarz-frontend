@@ -4331,22 +4331,28 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       payload.feedback = this.submissionFeedback[inviteId];
     }
     if (action === 'dispute') {
-      const issueReason = String(this.submissionDisputeIssueReason[inviteId] || '').trim();
-      const issueDescription = String(this.submissionDisputeReason[inviteId] || '').trim();
-      if (!issueReason) {
-        this.reviewLoading.delete(inviteId);
-        this.toast.error('Please select an issue reason.');
-        return;
+      if (this.isResubmissionFinalReject(submission)) {
+        // Only one resubmission is allowed — a second dispute is a final rejection that
+        // auto-escalates straight to admin server-side, so skip the structured issue form.
+        payload.feedback = this.submissionFeedback[inviteId] || '';
+      } else {
+        const issueReason = String(this.submissionDisputeIssueReason[inviteId] || '').trim();
+        const issueDescription = String(this.submissionDisputeReason[inviteId] || '').trim();
+        if (!issueReason) {
+          this.reviewLoading.delete(inviteId);
+          this.toast.error('Please select an issue reason.');
+          return;
+        }
+        if (issueDescription.length < 20) {
+          this.reviewLoading.delete(inviteId);
+          this.toast.error('Issue description must be at least 20 characters.');
+          return;
+        }
+        payload.disputeIssueReason = issueReason;
+        payload.disputeReason = issueDescription;
+        payload.disputeEvidenceUrl = this.submissionDisputeEvidenceUrl[inviteId] || '';
+        payload.feedback = this.submissionFeedback[inviteId] || '';
       }
-      if (issueDescription.length < 20) {
-        this.reviewLoading.delete(inviteId);
-        this.toast.error('Issue description must be at least 20 characters.');
-        return;
-      }
-      payload.disputeIssueReason = issueReason;
-      payload.disputeReason = issueDescription;
-      payload.disputeEvidenceUrl = this.submissionDisputeEvidenceUrl[inviteId] || '';
-      payload.feedback = this.submissionFeedback[inviteId] || '';
     }
     this.config.reviewCampaignSubmission(inviteId, payload).subscribe({
       next: () => {
@@ -4638,6 +4644,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Unlike Mark Completed, a host can flag an issue at any point during the review window — not just after it unlocks. */
   canDisputeSubmission(submission: any): boolean {
     return !!submission && String(submission?.status || '').toLowerCase() === 'submitted';
+  }
+
+  /** True once the influencer has used their one allowed resubmission — a further dispute is a final rejection. */
+  isResubmissionFinalReject(submission: any): boolean {
+    return !!submission && Number(submission?.resubmissionCount || 0) >= 1;
   }
 
   getSubmissionApprovalWaitText(submission: any): string {

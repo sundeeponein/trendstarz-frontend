@@ -9,13 +9,14 @@ import { environment } from '../../../environments/environment';
 import { CampaignStatusBarComponent } from '../../shared/campaign-status-bar/campaign-status-bar.component';
 import { AnalyticsService } from '../../core/analytics.service';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
 
 type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 
 @Component({
   selector: 'app-campaign-submission',
   standalone: true,
-  imports: [CommonModule, FormsModule, CampaignStatusBarComponent],
+  imports: [CommonModule, FormsModule, CampaignStatusBarComponent, ConfirmActionModalComponent],
   templateUrl: './campaign-submission.component.html',
   styleUrls: ['./campaign-submission.component.scss'],
 })
@@ -88,6 +89,15 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   submissionApprovalWaitHours = 24;
   submissionAutoCompleteGraceHours = 48;
 
+  // Dispute response (Resubmit / Withdraw / Request Admin Review)
+  disputeReportedAt: Date | null = null;
+  disputeAdminReviewRequestedAt: Date | null = null;
+  disputeResponseWaitHours = 12;
+  disputeActionSubmitting = false;
+  disputeActionError = '';
+  showWithdrawConfirm = false;
+  private disputeStatusInterval: any = null;
+
   // Insights timing lock
   selectedPostDate: Date | null = null;
   insightsUnlocksAt: Date | null = null;
@@ -116,8 +126,10 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       next: (settings: any) => {
         const submissionHours = Number(settings?.submissionApprovalWaitHours);
         const autoCompleteHours = Number(settings?.submissionAutoCompleteGraceHours);
+        const disputeHours = Number(settings?.disputeResponseWaitHours);
         this.submissionApprovalWaitHours = Number.isFinite(submissionHours) && submissionHours >= 0 ? submissionHours : 24;
         this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 48;
+        this.disputeResponseWaitHours = Number.isFinite(disputeHours) && disputeHours >= 0 ? disputeHours : 12;
         this.cdr.markForCheck();
       },
       error: () => {
@@ -150,6 +162,13 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             if (res?.invite?.status || res?.invite?.payoutStatus) {
               this.inviteStatus = this.resolveInviteDisplayStatus(res.invite);
             }
+            this.disputeReportedAt = res?.invite?.reportedIssue?.reportedAt
+              ? new Date(res.invite.reportedIssue.reportedAt)
+              : null;
+            this.disputeAdminReviewRequestedAt = res?.invite?.reportedIssue?.adminReviewRequestedAt
+              ? new Date(res.invite.reportedIssue.adminReviewRequestedAt)
+              : null;
+            if (this.inviteStatus === 'disputed') this.startDisputeStatusTicker();
             // Collect platforms from socialMedia (enabled content types)
             this.campaignSocialMedia = campaign.socialMedia || [];
             this.campaignPlatforms = this.campaignSocialMedia
@@ -359,8 +378,15 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     if (input.files?.[0]) this.uploadImage(input.files[0], 'insights');
   }
 
+  /** True only while the influencer still has an unused resubmission and hasn't asked for admin review. */
+  get canResubmitDispute(): boolean {
+    return this.inviteStatus === 'disputed'
+      && !(this.existingSubmission?.resubmissionCount)
+      && !this.disputeAdminReviewRequestedAt;
+  }
+
   get isReadOnly(): boolean {
-    return ['submitted', 'completed', 'approved', 'disputed'].includes(this.inviteStatus);
+    return ['submitted', 'completed', 'approved', 'disputed'].includes(this.inviteStatus) && !this.canResubmitDispute;
   }
 
   get isAwaitingPaymentConfirmation(): boolean {
@@ -377,7 +403,20 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   get canEditSubmissionForm(): boolean {
-    return !this.isReadOnly && (this.inviteStatus === 'payment_confirmed' || this.inviteStatus === 'working');
+    return !this.isReadOnly && (this.inviteStatus === 'payment_confirmed' || this.inviteStatus === 'working' || this.canResubmitDispute);
+  }
+
+  /** Deadline for the influencer to respond to an open dispute (Resubmit/Withdraw/Request Review). */
+  get disputeRespondByAt(): Date | null {
+    if (!this.disputeReportedAt) return null;
+    return new Date(this.disputeReportedAt.getTime() + this.disputeResponseWaitHours * 60 * 60 * 1000);
+  }
+
+  /** "11h 34m"-style countdown to the auto-cancel deadline. */
+  get disputeCountdownText(): string {
+    const respondBy = this.disputeRespondByAt;
+    if (!respondBy) return 'unavailable';
+    return this.formatRemainingMs(respondBy.getTime() - Date.now());
   }
 
   private tryStartWork() {
@@ -464,7 +503,12 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       return 'Payout has been released. Your submission is locked and cannot be edited.';
     }
     if (this.inviteStatus === 'disputed') {
-      return 'This submission is under review due to a dispute. Your submission is locked and cannot be edited.';
+      // isReadOnly is only true for 'disputed' once it's escalated to admin — either the
+      // influencer explicitly asked for review, or the one allowed resubmission was also disputed.
+      if (this.disputeAdminReviewRequestedAt) {
+        return 'This dispute has been escalated to our support team for review. We\'ll update you once it\'s resolved.';
+      }
+      return 'The host raised a further issue after your resubmission. This is now with our support team for a final decision.';
     }
     return `This campaign has been ${this.inviteStatus}. Your submission is locked and cannot be edited.`;
   }
@@ -616,6 +660,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.countdownInterval) clearInterval(this.countdownInterval);
     if (this.reviewStatusInterval) clearInterval(this.reviewStatusInterval);
+    if (this.disputeStatusInterval) clearInterval(this.disputeStatusInterval);
   }
 
   private startReviewStatusTicker() {
@@ -628,6 +673,68 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       }
       this.cdr.markForCheck();
     }, 60000);
+  }
+
+  private startDisputeStatusTicker() {
+    if (this.disputeStatusInterval) return;
+    this.disputeStatusInterval = setInterval(() => {
+      if (this.inviteStatus !== 'disputed') {
+        clearInterval(this.disputeStatusInterval);
+        this.disputeStatusInterval = null;
+        return;
+      }
+      this.cdr.markForCheck();
+    }, 60000);
+  }
+
+  scrollToResubmitForm(): void {
+    document.getElementById('resubmit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  openWithdrawConfirm(): void {
+    this.showWithdrawConfirm = true;
+  }
+
+  closeWithdrawConfirm(): void {
+    if (this.disputeActionSubmitting) return;
+    this.showWithdrawConfirm = false;
+  }
+
+  confirmWithdrawFromDispute(): void {
+    if (this.disputeActionSubmitting) return;
+    this.disputeActionSubmitting = true;
+    this.disputeActionError = '';
+    this.config.withdrawFromDispute(this.inviteId).subscribe({
+      next: () => {
+        this.disputeActionSubmitting = false;
+        this.showWithdrawConfirm = false;
+        this.inviteStatus = 'withdrawn';
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        this.disputeActionSubmitting = false;
+        this.disputeActionError = err?.error?.message || 'Failed to withdraw. Please try again.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  requestAdminReviewForDispute(): void {
+    if (this.disputeActionSubmitting) return;
+    this.disputeActionSubmitting = true;
+    this.disputeActionError = '';
+    this.config.requestAdminReviewForDispute(this.inviteId).subscribe({
+      next: () => {
+        this.disputeActionSubmitting = false;
+        this.disputeAdminReviewRequestedAt = new Date();
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        this.disputeActionSubmitting = false;
+        this.disputeActionError = err?.error?.message || 'Failed to request admin review. Please try again.';
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   // Returns true when insights (screenshot + metrics) are still locked

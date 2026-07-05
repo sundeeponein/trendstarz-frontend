@@ -58,8 +58,44 @@
       </div>
     </div>
 
+    <!-- Dispute response: reason, countdown, and Resubmit / Withdraw / Request Admin Review -->
+    <div *ngIf="inviteStatus === 'disputed'" class="dispute-box mb-3">
+      <div class="dispute-box__header">
+        <i class="bi bi-flag-fill"></i>
+        <strong>Host raised a dispute</strong>
+      </div>
+      <div class="dispute-box__reason" *ngIf="existingSubmission?.disputeIssueReason || existingSubmission?.disputeReason">
+        <strong *ngIf="existingSubmission?.disputeIssueReason">{{ existingSubmission.disputeIssueReason }}</strong>
+        {{ existingSubmission?.disputeReason }}
+        <a *ngIf="existingSubmission?.disputeEvidenceUrl" [href]="existingSubmission.disputeEvidenceUrl" target="_blank" rel="noopener">View evidence</a>
+      </div>
+
+      <ng-container *ngIf="canResubmitDispute; else disputeEscalatedNotice">
+        <div class="dispute-box__countdown">
+          <i class="bi bi-hourglass-split"></i>
+          Respond within {{ disputeCountdownText }} or this collaboration will be automatically cancelled.
+        </div>
+        <div class="dispute-box__actions">
+          <button type="button" class="btn-orange" (click)="scrollToResubmitForm()">
+            <i class="bi bi-arrow-repeat"></i> Resubmit
+          </button>
+          <button type="button" class="btn-outline-danger" [disabled]="disputeActionSubmitting" (click)="openWithdrawConfirm()">
+            Withdraw
+          </button>
+          <button type="button" class="btn-outline" [disabled]="disputeActionSubmitting" (click)="requestAdminReviewForDispute()">
+            Request Admin Review
+          </button>
+        </div>
+      </ng-container>
+      <ng-template #disputeEscalatedNotice>
+        <div class="dispute-box__note">{{ readOnlyStatusMessage }}</div>
+      </ng-template>
+
+      <div *ngIf="disputeActionError" class="alert-error mt-2">{{ disputeActionError }}</div>
+    </div>
+
     <!-- Read-only notice when campaign is completed/payout released -->
-    <div *ngIf="isReadOnly && !isInAutoCompleteReviewPeriod" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
+    <div *ngIf="isReadOnly && !isInAutoCompleteReviewPeriod && inviteStatus !== 'disputed'" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
       <i class="bi bi-check-circle-fill" style="color:#22c55e"></i>
       {{ readOnlyStatusMessage }}
     </div>
@@ -165,7 +201,7 @@
     <!-- Error -->
     <div *ngIf="error" class="alert-error">{{ error }}</div>
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
-    <div class="form-section" *ngIf="canEditSubmissionForm">
+    <div class="form-section" id="resubmit-form" *ngIf="canEditSubmissionForm">
       <div class="section-heading">
         <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
         <ng-container *ngIf="isLocationCampaign">Content details</ng-container>
@@ -337,7 +373,7 @@
       >
         <span *ngIf="!submitting">
           <i class="bi bi-send-fill"></i>
-          {{ existingSubmission ? 'Update Submission' : 'Submit' }}
+          {{ canResubmitDispute ? 'Resubmit' : (existingSubmission ? 'Update Submission' : 'Submit') }}
         </span>
         <span *ngIf="submitting">
           <span class="spinner-border spinner-border-sm"></span> Submitting…
@@ -345,4 +381,23 @@
       </button>
     </div>
   </div>
+
+  <!-- Withdraw confirmation -->
+  <app-confirm-action-modal
+    [isOpen]="showWithdrawConfirm"
+    title="Withdraw from this collaboration?"
+    confirmLabel="Withdraw"
+    confirmLoadingLabel="Withdrawing…"
+    [submitting]="disputeActionSubmitting"
+    (closed)="closeWithdrawConfirm()"
+    (confirmed)="confirmWithdrawFromDispute()"
+  >
+    <p>You are withdrawing from this campaign.</p>
+    <ul>
+      <li>You will not receive payment.</li>
+      <li>This participation will be cancelled.</li>
+      <li>The Host will receive a refund (if payment was held in escrow).</li>
+    </ul>
+    <p class="mb-0">Continue?</p>
+  </app-confirm-action-modal>
 </div>

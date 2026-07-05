@@ -1032,9 +1032,17 @@
 
                     <!-- Review actions -->
                     <div class="sub-review-area" *ngIf="sub.status === 'submitted'">
+                      <div class="sub-disputed-reason sub-disputed-reason--history" *ngIf="isResubmissionFinalReject(sub)">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>
+                          Previously disputed:
+                          <strong *ngIf="sub.disputeIssueReason">{{ sub.disputeIssueReason }}</strong>
+                          {{ sub.disputeReason }}
+                        </span>
+                      </div>
                       <textarea class="sub-feedback-input" rows="2" placeholder="Optional feedback for recipient..."
                         [(ngModel)]="submissionFeedback[sub.inviteId]"></textarea>
-                      <div class="sub-dispute-form" *ngIf="disputeFormExpandedIds.has(sub.inviteId) && canDisputeSubmission(sub)">
+                      <div class="sub-dispute-form" *ngIf="disputeFormExpandedIds.has(sub.inviteId) && canDisputeSubmission(sub) && !isResubmissionFinalReject(sub)">
                         <div class="sub-dispute-form__title">
                           <i class="bi bi-flag"></i> Raise Issue
                         </div>
@@ -1116,11 +1124,18 @@
                           <i class="bi bi-check-circle"></i> Mark Completed
                         </button>
                         <button class="btn-sub-dispute" type="button"
-                          *ngIf="!disputeFormExpandedIds.has(sub.inviteId)"
+                          *ngIf="!disputeFormExpandedIds.has(sub.inviteId) && !isResubmissionFinalReject(sub)"
                           [disabled]="reviewLoading.has(sub.inviteId) || !canDisputeSubmission(sub)"
                           [title]="!canDisputeSubmission(sub) ? getSubmissionApprovalLockMessage(sub) : 'Raise only for content mismatch, missing hashtags, or quality issues'"
                           (click)="toggleDisputeForm(sub.inviteId)">
                           <i class="bi bi-flag"></i> Submit Issue
+                        </button>
+                        <button class="btn-sub-dispute" type="button"
+                          *ngIf="isResubmissionFinalReject(sub)"
+                          [disabled]="reviewLoading.has(sub.inviteId) || !canDisputeSubmission(sub)"
+                          title="The resubmission still doesn't meet the requirement — this will escalate straight to admin for a final decision, no further resubmission is allowed."
+                          (click)="reviewSubmission(sub.inviteId, c._id, 'dispute')">
+                          <i class="bi bi-flag"></i> Reject — Escalate to Admin
                         </button>
                       </div>
                     </div>

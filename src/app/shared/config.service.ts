@@ -294,6 +294,7 @@ export class ConfigService {
     submissionApprovalWaitHours?: number;
     submissionAutoCompleteGraceHours?: number;
     payoutReleaseWaitHours?: number;
+    disputeResponseWaitHours?: number;
     minCampaignStartDays?: number;
     maxCampaignDurationDays?: number;
     otpVerificationEnabled?: boolean;
@@ -1193,6 +1194,16 @@ export class ConfigService {
 
   reportInviteIssue(inviteId: string, reason: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/report`, { reason });
+  }
+
+  /** Influencer bails out of a disputed collab: no payment, host marked refunded, no admin needed. */
+  withdrawFromDispute(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/withdraw-dispute`, {});
+  }
+
+  /** Influencer contests the dispute itself — escalates to admin and pauses the auto-cancel timer. */
+  requestAdminReviewForDispute(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/request-admin-review`, {});
   }
 
   // ── Brand: needs-attention widget ────────────────────────────

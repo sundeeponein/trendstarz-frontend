@@ -45,7 +45,13 @@ export class AdminDisputesComponent implements OnInit {
     this.config.adminListDisputes(this.statusFilter).subscribe({
       next: (res: any) => {
         const payload = res?.data || res;
-        this.invites = payload?.invites || [];
+        const invites = payload?.invites || [];
+        // Influencer-requested reviews jump to the top — they've explicitly asked for a human decision.
+        this.invites = invites.slice().sort((a: any, b: any) => {
+          const aFlag = this.isAdminReviewRequested(a) ? 1 : 0;
+          const bFlag = this.isAdminReviewRequested(b) ? 1 : 0;
+          return bFlag - aFlag;
+        });
         this.loading = false;
         this.cd.detectChanges();
       },
@@ -86,6 +92,10 @@ export class AdminDisputesComponent implements OnInit {
 
   isResolved(inv: any): boolean {
     return !!inv?.reportedIssue?.resolvedAt;
+  }
+
+  isAdminReviewRequested(inv: any): boolean {
+    return !!inv?.reportedIssue?.adminReviewRequestedAt;
   }
 
   toggleSelected(inv: any, checked: boolean) {

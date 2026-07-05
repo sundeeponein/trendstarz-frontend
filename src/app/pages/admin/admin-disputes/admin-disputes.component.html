@@ -53,6 +53,9 @@
           <strong>{{ inv.brand?.name || '—' }}</strong>
           <span class="arrow">→</span>
           <strong>{{ inv.influencer?.name || '—' }}</strong>
+          <span *ngIf="isAdminReviewRequested(inv)" class="admin-review-badge" title="The influencer contested this dispute and asked for an admin review">
+            🚩 Influencer requested review
+          </span>
         </div>
         <span class="status-pill" [attr.data-status]="inv.status">{{ inv.status }}</span>
       </div>

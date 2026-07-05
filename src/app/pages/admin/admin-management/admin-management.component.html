@@ -664,9 +664,14 @@
                 <label class="form-label" style="font-size:0.9rem;">Admin payout release after (hours)</label>
                 <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.payoutReleaseWaitHours" />
               </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Influencer respond to dispute within (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.disputeResponseWaitHours" />
+              </div>
             </div>
             <small class="text-light-emphasis d-block">
               Auto-complete starts after the host mark-completed lock expires. Use 0 for immediate release after the previous step is complete.
+              If a disputed influencer neither resubmits nor withdraws within the respond-to-dispute window, the collaboration is auto-cancelled and the host is marked refunded.
             </small>
           </div>
 
