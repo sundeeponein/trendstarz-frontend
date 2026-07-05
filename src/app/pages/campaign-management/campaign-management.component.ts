@@ -205,6 +205,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     'Wrong content type',
     'Content removed',
     'Wrong account',
+    'Missed posting deadline',
     'Other',
   ];
   reviewLoading = new Set<string>();
@@ -4820,14 +4821,52 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  endCampaignModalOpen = false;
+  endCampaignTarget: Campaign | null = null;
+  endCampaignPendingCount = 0;
+  isEndCampaignSubmitting = false;
+
   endCampaign(c: Campaign) {
     if (!c._id) return;
+    const pendingCount = this.getCardWorkingCount(c);
+    if (pendingCount > 0) {
+      this.endCampaignTarget = c;
+      this.endCampaignPendingCount = pendingCount;
+      this.endCampaignModalOpen = true;
+      this.cd.detectChanges();
+      return;
+    }
+    this.performEndCampaign(c);
+  }
+
+  closeEndCampaignModal(): void {
+    if (this.isEndCampaignSubmitting) return;
+    this.endCampaignModalOpen = false;
+    this.endCampaignTarget = null;
+    this.cd.detectChanges();
+  }
+
+  confirmEndCampaign(): void {
+    if (!this.endCampaignTarget) return;
+    this.performEndCampaign(this.endCampaignTarget, true);
+  }
+
+  private performEndCampaign(c: Campaign, fromModal = false): void {
+    if (!c._id) return;
+    if (fromModal) this.isEndCampaignSubmitting = true;
     this.config.updateCampaign(c._id, { status: 'completed' as any }).subscribe({
       next: () => {
         this.campaigns = this.campaigns.map(x => x._id === c._id ? { ...x, status: 'completed' } : x);
         this.expandedCampaignId = null;
+        this.isEndCampaignSubmitting = false;
+        this.endCampaignModalOpen = false;
+        this.endCampaignTarget = null;
         this.cd.detectChanges();
-      }
+      },
+      error: () => {
+        this.isEndCampaignSubmitting = false;
+        this.cd.detectChanges();
+      },
     });
   }
 

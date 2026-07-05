@@ -510,6 +510,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         [Validators.required],
       ],
       campaignMode: [(this.campaign as any)?.campaignMode || 'invite_only', [Validators.required]],
+      postingDeadlineMode: [(this.campaign as any)?.postingDeadlineMode || 'grace_24h', [Validators.required]],
       status: [this.campaign?.status || 'draft'],
       pricePerInfluencer: [this.getInitialPricePerInfluencer(), [Validators.required, Validators.min(1)]],
       maxInfluencers: [(this.campaign as any)?.maxInfluencers || null, [Validators.required, Validators.min(1)]],
@@ -815,7 +816,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       'inviteBenefits', 'payToJoinBenefits', 'payToJoinInstructions',
       'productDescription', 'timelineStart',
       'venueName', 'venueAddress', 'venueCity', 'venueDistrict',
-      'venueState', 'venueGoogleMapUrl',
+      'venueState', 'venueGoogleMapUrl', 'postingDeadlineMode',
     ];
     setLock(acceptanceLockedFields, this.isAcceptanceLocked);
   }

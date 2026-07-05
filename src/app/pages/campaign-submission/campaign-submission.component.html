@@ -110,6 +110,11 @@
       You are now in the <strong>Working</strong> stage. Submit your post URL below to continue.
     </div>
 
+    <div *ngIf="isPastPostingDateButStillOpen" class="alert-info mb-3" style="border-left: 4px solid #d97706; background: #fffbeb; color: #92400e;">
+      <i class="bi bi-exclamation-triangle-fill" style="color:#d97706"></i>
+      {{ postingDeadlineWarningText }}
+    </div>
+
     <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
       <div class="summary-header">
         <div class="summary-title">Shared details</div>

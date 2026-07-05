@@ -307,7 +307,24 @@
           Campaign duration cannot exceed {{ maxDurationDays }} days.
         </span>
 
-        
+        <div class="field-group">
+          <label class="field-label">
+            Posting Deadline
+            <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
+          </label>
+          <select formControlName="postingDeadlineMode" class="field-input">
+            <option value="grace_24h">Allow late submissions (up to 24h grace) — Recommended</option>
+            <option value="strict">Strict deadline — no late submissions</option>
+          </select>
+          <p class="field-sublabel" *ngIf="f['postingDeadlineMode'].value === 'grace_24h'">
+            <i class="bi bi-clock-history"></i>
+            A post submitted after the selected posting date is still accepted (marked "Late") — you decide whether to approve or reject it.
+          </p>
+          <p class="field-sublabel" *ngIf="f['postingDeadlineMode'].value === 'strict'">
+            <i class="bi bi-exclamation-triangle"></i>
+            Submission closes the moment the posting date passes — no exceptions.
+          </p>
+        </div>
 
         <p class="step-indicator">Step 1 of 3</p>
       </div>

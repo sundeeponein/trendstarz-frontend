@@ -1030,6 +1030,10 @@
                       <i class="bi bi-info-circle"></i> No performance stats added yet.
                     </div>
 
+                    <div class="sub-late-badge" *ngIf="sub.isLate" title="Submitted after the influencer's selected posting date">
+                      <i class="bi bi-alarm"></i> Submitted Late ({{ sub.daysLate }} day{{ sub.daysLate === 1 ? '' : 's' }})
+                    </div>
+
                     <!-- Review actions -->
                     <div class="sub-review-area" *ngIf="sub.status === 'submitted'">
                       <div class="sub-disputed-reason sub-disputed-reason--history" *ngIf="isResubmissionFinalReject(sub)">
@@ -1785,6 +1789,27 @@
     (decline)="onModalDecline($event)"
     (validationError)="showError($event)"
   ></app-campaign-detail-modal>
+
+  <!-- ─── End Campaign confirmation (only shown when participants haven't submitted yet) ─── -->
+  <app-confirm-action-modal
+      [isOpen]="endCampaignModalOpen"
+      title="End Campaign?"
+      width="min(480px, 92vw)"
+      [submitting]="isEndCampaignSubmitting"
+      confirmLabel="End Campaign"
+      confirmLoadingLabel="Ending..."
+      (closed)="closeEndCampaignModal()"
+      (confirmed)="confirmEndCampaign()">
+    <p class="invite-action-modal__help">
+      There {{ endCampaignPendingCount === 1 ? 'is 1 participant' : ('are ' + endCampaignPendingCount + ' participants') }} who {{ endCampaignPendingCount === 1 ? 'has' : 'have' }} not submitted their content yet.
+    </p>
+    <p class="invite-action-modal__help">After ending this campaign:</p>
+    <ul class="invite-action-modal__help">
+      <li>No new submissions will be accepted.</li>
+      <li>Pending participants will be marked as Not Submitted.</li>
+      <li>Any held funds for those participants will be released according to your cancellation/refund policy.</li>
+    </ul>
+  </app-confirm-action-modal>
 
   <app-confirm-action-modal
       [isOpen]="visitConfirmModalOpen"

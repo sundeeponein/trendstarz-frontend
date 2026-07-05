@@ -101,6 +101,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   // Insights timing lock
   selectedPostDate: Date | null = null;
   insightsUnlocksAt: Date | null = null;
+  postingDeadlineMode: 'grace_24h' | 'strict' = 'grace_24h';
   insightsCountdown = '';
   startingWork = false;
   private countdownInterval: any = null;
@@ -156,6 +157,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
           if (campaign) {
             this.campaignTitle = campaign.title || campaign.campaignTitle || this.campaignTitle;
             this.campaignType = campaign.campaignType || '';
+            this.postingDeadlineMode = campaign.postingDeadlineMode === 'strict' ? 'strict' : 'grace_24h';
             // Sync real invite status from backend (overrides query param)
             // after campaign type is known so non-paid acceptance can be
             // represented as collaboration-confirmed on this page.
@@ -449,7 +451,12 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       approved:          'Payout Released',
       disputed:          'Under Review',
     };
-    return map[this.inviteStatus] || this.inviteStatus;
+    const base = map[this.inviteStatus] || this.inviteStatus;
+    if (this.inviteStatus === 'submitted' && this.existingSubmission?.isLate) {
+      const days = this.existingSubmission.daysLate;
+      return `Submitted Late (${days} day${days === 1 ? '' : 's'})`;
+    }
+    return base;
   }
 
   /** True while the post is submitted and still inside the 24h host-review window. */
@@ -541,6 +548,34 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     const unlockAt = this.submissionReviewUnlockAt;
     if (!unlockAt) return null;
     return new Date(unlockAt.getTime() + this.submissionAutoCompleteGraceHours * 60 * 60 * 1000);
+  }
+
+  /** Mirrors the backend's computeGraceDeadline exactly — pure duration arithmetic, no calendar/timezone math. */
+  private get postingStrictDeadline(): Date | null {
+    if (!this.selectedPostDate) return null;
+    return new Date(this.selectedPostDate.getTime() + 24 * 60 * 60 * 1000);
+  }
+
+  get postingSubmissionClosesAt(): Date | null {
+    const strict = this.postingStrictDeadline;
+    if (!strict) return null;
+    return this.postingDeadlineMode === 'strict' ? strict : new Date(strict.getTime() + 24 * 60 * 60 * 1000);
+  }
+
+  /** True once the selected posting date has passed but submission is still open (grace window). */
+  get isPastPostingDateButStillOpen(): boolean {
+    if (this.existingSubmission || !['payment_confirmed', 'working'].includes(this.inviteStatus)) return false;
+    const strict = this.postingStrictDeadline;
+    const closesAt = this.postingSubmissionClosesAt;
+    if (!strict || !closesAt) return false;
+    const now = Date.now();
+    return now > strict.getTime() && now <= closesAt.getTime();
+  }
+
+  get postingDeadlineWarningText(): string {
+    const closesAt = this.postingSubmissionClosesAt;
+    const closesAtText = this.formatDateTime(closesAt) || 'the deadline';
+    return `Your selected posting date has passed. You can still submit until ${closesAtText}. Late submissions may be rejected by the host.`;
   }
 
   get submissionReviewStatusMessage(): string {
