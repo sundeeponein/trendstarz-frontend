@@ -8,8 +8,8 @@ import { UserAvatarComponent } from '../components/user-avatar/user-avatar.compo
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
-import { copyTextToClipboard } from '../referral-link.util';
-import { TrackingLinksApiService } from '../tracking-links/tracking-links-api.service';
+import { campaignIdLabel, copyTextToClipboard } from '../referral-link.util';
+import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 
 export interface CampaignAcceptPayload {
@@ -396,11 +396,11 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.statusKey);
   }
 
-  private trackedLinkCache = new Map<string, string>();
+  private trackedLinkCache = new Map<string, TrackingLink>();
   private trackedLinkFetching = new Set<string>();
 
-  private trackedLinkFor(inviteId: string): string {
-    if (!inviteId) return '';
+  private trackedLinkFor(inviteId: string): TrackingLink | null {
+    if (!inviteId) return null;
     const cached = this.trackedLinkCache.get(inviteId);
     if (cached) return cached;
 
@@ -408,26 +408,31 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       this.trackedLinkFetching.add(inviteId);
       this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
         next: (res) => {
-          this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkCache.set(inviteId, res);
           this.trackedLinkFetching.delete(inviteId);
           this.cdr.detectChanges();
         },
         error: () => this.trackedLinkFetching.delete(inviteId),
       });
     }
-    return '';
+    return null;
   }
 
   /** Tracked promo link, unique to the signed-in creator viewing their own invite. */
   get generatedPromotionLink(): string {
     if (!this.resourcePromotionUrl) return '';
-    return this.trackedLinkFor(String(this.invite?._id || ''));
+    return this.trackedLinkFor(String(this.invite?._id || ''))?.url || '';
   }
 
   /** Tracked promo link for a specific creator, used in the admin roster table. */
   adminInviteTaggedPromotionLink(item: any): string {
     if (!this.resourcePromotionUrl) return '';
-    return this.trackedLinkFor(String(item?.inviteId || ''));
+    return this.trackedLinkFor(String(item?.inviteId || ''))?.url || '';
+  }
+
+  /** Click count for the admin roster's compact tracking-link display. */
+  adminInviteTrackedLinkClicks(item: any): number {
+    return this.trackedLinkFor(String(item?.inviteId || ''))?.clickCount ?? 0;
   }
 
   adminInviteShowsPromotionLink(item: any): boolean {
@@ -463,10 +468,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   get campaignIdLabel(): string {
-    const num = Number(this.campaign?.campaignNumber);
-    if (num > 0) return `CMP-${num}`;
-    const id = String(this.campaign?._id || '');
-    return id ? `CMP-${id.slice(-6).toUpperCase()}` : '';
+    return campaignIdLabel(this.campaign);
   }
 
   get payoutTypeTags(): string[] {

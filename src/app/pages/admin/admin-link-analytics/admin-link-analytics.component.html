@@ -45,8 +45,8 @@
           <tbody>
             <tr *ngFor="let row of d.topPerformers">
               <td class="mono">{{ row.code }}</td>
-              <td class="mono">{{ row.campaignId.slice(-6).toUpperCase() }}</td>
-              <td>{{ row.hostType }}</td>
+              <td class="mono">{{ campaignIdLabel(row) }}</td>
+              <td>{{ row.hostName || row.hostType }}</td>
               <td>{{ row.recipientType }}</td>
               <td>{{ row.platform || '—' }}</td>
               <td>{{ row.contentType || '—' }}</td>
@@ -73,7 +73,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let row of d.perCampaign">
-              <td class="mono">{{ row.campaignId.slice(-6).toUpperCase() }}</td>
+              <td class="mono">{{ campaignIdLabel(row) }}</td>
               <td class="num">{{ row.links }}</td>
               <td class="num">{{ row.clicks }}</td>
             </tr>
@@ -100,7 +100,7 @@
           <tbody>
             <tr *ngFor="let row of d.zeroActivity">
               <td class="mono">{{ row.code }}</td>
-              <td class="mono">{{ row.campaignId.slice(-6).toUpperCase() }}</td>
+              <td class="mono">{{ campaignIdLabel(row) }}</td>
               <td>{{ row.platform || '—' }}</td>
               <td>{{ row.contentType || '—' }}</td>
               <td>{{ formatDate(row.createdAt) }}</td>

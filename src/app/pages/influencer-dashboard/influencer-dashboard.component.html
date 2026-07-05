@@ -446,6 +446,14 @@
         <i class="bi bi-check-circle-fill"></i>
         <span>You are ready to work. Begin creating your content.</span>
       </div>
+      <!-- Tracking link — available as soon as accepted, so it's ready to go in the post itself. -->
+      <app-promo-link-card
+        *ngIf="c.promotionUrl && c.inviteStatus !== 'pending' && c.inviteStatus !== 'invited'"
+        class="mt-2 d-block"
+        [typeLabel]="promotionUrlTypeLabel(c)"
+        [destinationUrl]="c.promotionUrl"
+        [url]="taggedPromotionLink(c)">
+      </app-promo-link-card>
       <!-- Submit/view CTA: hide only when awaiting payment for paid_collab -->
       <div class="submit-post-cta mt-2"
            *ngIf="!(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
@@ -505,6 +513,7 @@
         *ngIf="c.promotionUrl"
         class="mt-2 d-block"
         [typeLabel]="promotionUrlTypeLabel(c)"
+        [destinationUrl]="c.promotionUrl"
         [url]="taggedPromotionLink(c)">
       </app-promo-link-card>
       <div class="submit-post-cta mt-2">

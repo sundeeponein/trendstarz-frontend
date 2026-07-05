@@ -1,10 +1,39 @@
-<div class="plc-row" *ngIf="url">
-  <div class="plc-row__text">
-    <strong>{{ typeLabel }}</strong>
-    <a [href]="url" target="_blank" rel="noopener noreferrer">{{ url }}</a>
+<div class="plc-card" *ngIf="destinationUrl || url">
+  <div class="plc-header">
+    <span class="plc-title"><i class="bi bi-link-45deg"></i> Tracking Link</span>
+    <span class="plc-status" [class.plc-status--inactive]="!active">
+      <span class="plc-status-dot"></span>{{ active ? 'Active' : 'Inactive' }}
+    </span>
   </div>
-  <button type="button" class="plc-copy-btn" (click)="copy()">
-    <i class="bi" [ngClass]="copied ? 'bi-check2' : 'bi-clipboard'"></i>
-    {{ copied ? 'Copied' : 'Copy' }}
-  </button>
+
+  <div class="plc-row" *ngIf="destinationHost">
+    <span class="plc-label">Destination</span>
+    <span class="plc-value">
+      {{ destinationHost }}
+      <span class="plc-type" *ngIf="typeLabel && typeLabel !== 'Link'">· {{ typeLabel }}</span>
+    </span>
+  </div>
+
+  <ng-container *ngIf="showShortLink; else statusAndClicks">
+    <div class="plc-row">
+      <span class="plc-label">Short Link</span>
+      <span class="plc-value plc-url">{{ url || 'Generating…' }}</span>
+    </div>
+
+    <button type="button" class="plc-copy-btn" (click)="copy()" [disabled]="!url">
+      <i class="bi" [ngClass]="copied ? 'bi-check-lg' : 'bi-clipboard'"></i>
+      {{ copied ? 'Copied!' : 'Copy Link' }}
+    </button>
+  </ng-container>
+
+  <ng-template #statusAndClicks>
+    <div class="plc-row">
+      <span class="plc-label">Status</span>
+      <span class="plc-value">{{ url ? 'Generated' : 'Generating…' }}</span>
+    </div>
+    <div class="plc-row">
+      <span class="plc-label">Clicks</span>
+      <span class="plc-value plc-clicks">{{ clickCount ?? 0 }}</span>
+    </div>
+  </ng-template>
 </div>

@@ -525,6 +525,7 @@
             </div>
             <div class="ccard-title-wrap">
               <span class="ccard-title">{{ c.title }}</span>
+              <span class="ccard-id">{{ campaignIdLabel(c) }}</span>
               <!-- Brand chip for influencer browse view -->
               <div class="ccard-brand-chip" *ngIf="isInfluencerBrowseMode && getCampaignBrand(c).name">
                 <img class="ccard-brand-logo" *ngIf="getCampaignBrand(c).logo"
@@ -833,6 +834,7 @@
                     <app-promo-link-card
                       *ngIf="showsPromotionLink(inv, c)"
                       [typeLabel]="promotionUrlTypeLabel(c)"
+                      [destinationUrl]="c.promotionUrl"
                       [url]="taggedPromotionLink(inv, c)">
                     </app-promo-link-card>
                   </div>

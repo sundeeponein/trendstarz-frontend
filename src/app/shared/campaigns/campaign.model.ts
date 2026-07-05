@@ -6,6 +6,7 @@ export interface CampaignInfluencer {
 
 export interface Campaign {
   _id?: string;
+  campaignNumber?: number;
   brandId: string;
   title: string;
   description?: string;
@@ -78,6 +79,17 @@ export interface Campaign {
   // Pay-to-join specific fields
   payToJoinBenefits?: string;
   payToJoinInstructions?: string;
+  // Campaign Resources — shared with the creator once accepted; source of the tracked promo link.
+  promotionUrlType?:
+    | 'website'
+    | 'app_store'
+    | 'play_store'
+    | 'instagram'
+    | 'facebook'
+    | 'youtube'
+    | 'whatsapp'
+    | 'other';
+  promotionUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }

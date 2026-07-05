@@ -20,7 +20,7 @@ import { UserAvatarComponent } from '../../shared/components/user-avatar/user-av
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { FlowHelpModalService } from '../../shared/components/flow-help-modal/flow-help-modal.service';
 import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
-import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
+import { campaignIdLabel, promotionUrlTypeLabel } from '../../shared/referral-link.util';
 import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
 import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
@@ -2656,6 +2656,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (pct === 0) return 'Not started';
     if (pct >= 100) return 'Completed';
     return `${pct}% complete`;
+  }
+
+  campaignIdLabel(c: any): string {
+    return campaignIdLabel(c);
   }
 
   getCampaignSubtitle(c: Campaign): string {

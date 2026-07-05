@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TrackingLinksApiService, TrackingLinksAdminAnalytics } from '../../../shared/tracking-links/tracking-links-api.service';
+import { campaignIdLabel } from '../../../shared/referral-link.util';
 
 @Component({
   selector: 'app-admin-link-analytics',
@@ -42,5 +43,9 @@ export class AdminLinkAnalyticsComponent implements OnInit {
 
   formatDate(value: string | null | undefined): string {
     return value ? new Date(value).toLocaleString() : '—';
+  }
+
+  campaignIdLabel(row: { campaignNumber?: number; campaignId: string }): string {
+    return campaignIdLabel({ campaignNumber: row.campaignNumber, _id: row.campaignId });
   }
 }

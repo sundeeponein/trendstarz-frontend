@@ -9,6 +9,7 @@ import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-me
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
+import { campaignIdLabel as sharedCampaignIdLabel } from '../../../shared/referral-link.util';
 
 @Component({
   selector: 'app-campaign-review',
@@ -242,10 +243,7 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   campaignIdLabel(c: any): string {
-    // Prefer the DB-stored sequential number; fall back to last-6 of _id
-    const num = Number(c?.campaignNumber);
-    if (num > 0) return `CMP-${num}`;
-    return `CMP-${String(c?._id || '').slice(-6).toUpperCase()}`;
+    return sharedCampaignIdLabel(c);
   }
 
   campaignBudgetType(c: any): string {

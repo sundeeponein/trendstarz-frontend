@@ -198,15 +198,27 @@
             </div>
           </div>
 
-          <!-- Campaign Resources (shown to the creator once accepted) -->
-          <div class="cdm-section" *ngIf="!adminReview && isAcceptedOrLater && hasCampaignResources">
+          <!-- Campaign Resources — shown to the creator once accepted, and to admin during review
+               (so moderation can check the promo link/caption/hashtags before approving). -->
+          <div class="cdm-section" *ngIf="(adminReview || isAcceptedOrLater) && hasCampaignResources">
             <div class="cdm-section__label">CAMPAIGN RESOURCES</div>
             <div class="cdm-brief-box cdm-resources-box">
+              <!-- Recipient: tracked short link, generated once their invite is accepted. -->
               <app-promo-link-card
-                *ngIf="resourcePromotionUrl"
+                *ngIf="!adminReview && resourcePromotionUrl"
                 [typeLabel]="resourcePromotionUrlTypeLabel"
+                [destinationUrl]="resourcePromotionUrl"
                 [url]="generatedPromotionLink">
               </app-promo-link-card>
+
+              <!-- Admin review: the raw destination as configured by the host — no participant exists
+                   yet to generate a tracked link for at this stage. -->
+              <div class="cdm-resource-row" *ngIf="adminReview && resourcePromotionUrl">
+                <div class="cdm-resource-row__text">
+                  <strong>Promotion Link ({{ resourcePromotionUrlTypeLabel }})</strong>
+                  <a [href]="resourcePromotionUrl" target="_blank" rel="noopener noreferrer">{{ resourcePromotionUrl }}</a>
+                </div>
+              </div>
 
               <div class="cdm-resource-row" *ngIf="resourceSuggestedCaption">
                 <div class="cdm-resource-row__text">
@@ -424,7 +436,10 @@
                     <app-promo-link-card
                       *ngIf="adminInviteShowsPromotionLink(item)"
                       [typeLabel]="resourcePromotionUrlTypeLabel"
-                      [url]="adminInviteTaggedPromotionLink(item)">
+                      [destinationUrl]="resourcePromotionUrl"
+                      [url]="adminInviteTaggedPromotionLink(item)"
+                      [showShortLink]="false"
+                      [clickCount]="adminInviteTrackedLinkClicks(item)">
                     </app-promo-link-card>
                   </div>
                 </div>

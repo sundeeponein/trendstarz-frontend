@@ -10,16 +10,21 @@ export interface TrackingLink {
   clickCount: number;
   platform: string;
   contentType: string;
+  destinationUrl: string;
+  destinationType: string;
+  moduleType: string;
 }
 
 export interface TrackingLinksAdminAnalytics {
   overview: { totalLinks: number; totalClicks: number; totalUniqueClicks: number };
-  perCampaign: { campaignId: string; links: number; clicks: number }[];
+  perCampaign: { campaignId: string; campaignNumber?: number; links: number; clicks: number }[];
   topPerformers: {
     code: string;
     campaignId: string;
+    campaignNumber?: number;
     hostId: string;
     hostType: string;
+    hostName: string;
     recipientId: string;
     recipientType: string;
     platform: string;
@@ -31,6 +36,7 @@ export interface TrackingLinksAdminAnalytics {
   zeroActivity: {
     code: string;
     campaignId: string;
+    campaignNumber?: number;
     recipientId: string;
     platform: string;
     contentType: string;
