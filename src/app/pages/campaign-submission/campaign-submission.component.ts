@@ -91,7 +91,12 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   // Dispute response (Resubmit / Withdraw / Request Admin Review)
   disputeReportedAt: Date | null = null;
+  disputeResolvedAt: Date | null = null;
   disputeAdminReviewRequestedAt: Date | null = null;
+  // A plain "Report" (e.g. "not yet posted") — a note on top of the real status, not a
+  // dispute. Distinct from the full Resubmit/Withdraw/Request-Admin-Review flow below,
+  // which only applies once the invite is genuinely 'disputed'.
+  reportedIssueReason = '';
   disputeResponseWaitHours = 12;
   disputeActionSubmitting = false;
   disputeActionError = '';
@@ -167,9 +172,13 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
             this.disputeReportedAt = res?.invite?.reportedIssue?.reportedAt
               ? new Date(res.invite.reportedIssue.reportedAt)
               : null;
+            this.disputeResolvedAt = res?.invite?.reportedIssue?.resolvedAt
+              ? new Date(res.invite.reportedIssue.resolvedAt)
+              : null;
             this.disputeAdminReviewRequestedAt = res?.invite?.reportedIssue?.adminReviewRequestedAt
               ? new Date(res.invite.reportedIssue.adminReviewRequestedAt)
               : null;
+            this.reportedIssueReason = String(res?.invite?.reportedIssue?.reason || '').trim();
             if (this.inviteStatus === 'disputed') this.startDisputeStatusTicker();
             // Collect platforms from socialMedia (enabled content types)
             this.campaignSocialMedia = campaign.socialMedia || [];
@@ -385,6 +394,11 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return this.inviteStatus === 'disputed'
       && !(this.existingSubmission?.resubmissionCount)
       && !this.disputeAdminReviewRequestedAt;
+  }
+
+  /** A plain report (e.g. "not yet posted") — informational only, no countdown/actions. */
+  get hasOpenReportOnly(): boolean {
+    return !!this.disputeReportedAt && !this.disputeResolvedAt && this.inviteStatus !== 'disputed';
   }
 
   get isReadOnly(): boolean {

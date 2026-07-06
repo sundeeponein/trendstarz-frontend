@@ -1538,6 +1538,19 @@
   i { font-size: 0.75rem; }
 }
 
+// Reason text for a report-only dispute (no submission), shown next to the "Under Review" pill
+.inv-reported-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: #9a3412;
+  margin-top: 4px;
+  line-height: 1.4;
+
+  i { margin-top: 2px; flex-shrink: 0; }
+}
+
 // Influencer accepted tab: awaiting payment row
 // Influencer accepted tab: payment confirmed row
 

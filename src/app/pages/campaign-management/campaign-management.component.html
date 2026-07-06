@@ -847,6 +847,13 @@
                     <small class="expand-updated-at" *ngIf="getInviteUpdatedAtText(inv)">
                       {{ getInviteUpdatedAtText(inv) }}
                     </small>
+
+                    <!-- Reported-issue reason: only shown here for a report-only dispute (no
+                         submission exists) — a submission-based dispute's reason is already
+                         shown in the submission detail section below instead. -->
+                    <div class="inv-reported-reason" *ngIf="inv.reportedIssue?.reason && !inv.reportedIssue?.resolvedAt && !getSubmissionForInvite(c, inv)">
+                      <i class="bi bi-info-circle"></i> {{ inv.reportedIssue.reason }}
+                    </div>
                   
                     <span class="inv-closed-chip"
                           *ngIf="isAcceptanceClosed(c) && isPendingInviteStatus(inv.status)">

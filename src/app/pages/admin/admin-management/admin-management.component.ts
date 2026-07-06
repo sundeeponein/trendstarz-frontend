@@ -415,6 +415,7 @@ export class AdminManagementComponent implements OnInit {
     submissionAutoCompleteGraceHours: 48,
     payoutReleaseWaitHours: 24,
     disputeResponseWaitHours: 12,
+    campaignAutoCloseGraceHours: 24,
     minCampaignStartDays: 3,
     maxCampaignDurationDays: 15,
     earlyAccessAssignmentMode: 'manual',
@@ -773,6 +774,7 @@ export class AdminManagementComponent implements OnInit {
           this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
           this.settings.disputeResponseWaitHours = typeof data?.disputeResponseWaitHours === 'number' ? data.disputeResponseWaitHours : 12;
+          this.settings.campaignAutoCloseGraceHours = typeof data?.campaignAutoCloseGraceHours === 'number' ? data.campaignAutoCloseGraceHours : 24;
           this.settings.minCampaignStartDays = typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3;
           this.settings.maxCampaignDurationDays = typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';

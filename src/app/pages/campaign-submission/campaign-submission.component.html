@@ -58,6 +58,16 @@
       </div>
     </div>
 
+    <!-- Plain report (e.g. "not yet posted") — a note only, no countdown/actions. Your real
+         status above still reflects the actual stage; submitting a post resolves this automatically. -->
+    <div *ngIf="hasOpenReportOnly" class="alert-info mb-3" style="border-left: 4px solid #d97706; background: #fffbeb; color: #92400e;">
+      <i class="bi bi-info-circle-fill" style="color:#d97706"></i>
+      <div class="alert-info__content">
+        <strong>Host reported an issue</strong>
+        <span>{{ reportedIssueReason }}</span>
+      </div>
+    </div>
+
     <!-- Dispute response: reason, countdown, and Resubmit / Withdraw / Request Admin Review -->
     <div *ngIf="inviteStatus === 'disputed'" class="dispute-box mb-3">
       <div class="dispute-box__header">
