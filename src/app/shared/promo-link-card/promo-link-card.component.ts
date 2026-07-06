@@ -12,7 +12,7 @@ import { copyTextToClipboard } from '../referral-link.util';
 export class PromoLinkCardComponent {
   /** e.g. "Website", "Instagram Profile" — the destination's type label. */
   @Input() typeLabel = 'Link';
-  /** The real destination (brand's site/profile) — shown as a hostname for context, never the tracked link itself. */
+  /** The real destination (brand's site/profile) — shown in full for context, never the tracked link itself. */
   @Input() destinationUrl: string | undefined = '';
   /** The tracked short link (trendstarz.in/r/CODE) — this is what gets copied. */
   @Input() url = '';
@@ -24,15 +24,8 @@ export class PromoLinkCardComponent {
   copied = false;
   private copyTimer: any;
 
-  get destinationHost(): string {
-    const raw = String(this.destinationUrl || '').trim();
-    if (!raw) return '';
-    try {
-      const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
-      return new URL(withScheme).hostname;
-    } catch {
-      return raw;
-    }
+  get destinationDisplay(): string {
+    return String(this.destinationUrl || '').trim();
   }
 
   copy(): void {

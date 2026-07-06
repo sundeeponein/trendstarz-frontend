@@ -6,10 +6,10 @@
     </span>
   </div>
 
-  <div class="plc-row" *ngIf="destinationHost">
+  <div class="plc-row" *ngIf="destinationDisplay">
     <span class="plc-label">Destination</span>
     <span class="plc-value">
-      {{ destinationHost }}
+      {{ destinationDisplay }}
       <span class="plc-type" *ngIf="typeLabel && typeLabel !== 'Link'">· {{ typeLabel }}</span>
     </span>
   </div>
