@@ -1,7 +1,7 @@
 <div class="plc-card" *ngIf="destinationUrl || url">
   <div class="plc-header">
     <span class="plc-title"><i class="bi bi-link-45deg"></i> Tracking Link</span>
-    <span class="plc-status" [class.plc-status--inactive]="!active">
+    <span class="plc-status" *ngIf="showShortLink" [class.plc-status--inactive]="!active">
       <span class="plc-status-dot"></span>{{ active ? 'Active' : 'Inactive' }}
     </span>
   </div>
@@ -18,6 +18,11 @@
     <div class="plc-row">
       <span class="plc-label">Short Link</span>
       <span class="plc-value plc-url">{{ url || 'Generating…' }}</span>
+    </div>
+
+    <div class="plc-row" *ngIf="clickCount !== null">
+      <span class="plc-label">Clicks</span>
+      <span class="plc-value plc-clicks">{{ clickCount }}</span>
     </div>
 
     <button type="button" class="plc-copy-btn" (click)="copy()" [disabled]="!url">

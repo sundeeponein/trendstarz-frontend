@@ -1035,6 +1035,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private trackedLinkCache = new Map<string, string>();
+  private trackedLinkClicksCache = new Map<string, number>();
   private trackedLinkFetching = new Set<string>();
 
   /** Tracked promo link (trendstarz.in/r/CODE), unique to the signed-in creator. Fetched once, then cached. */
@@ -1051,6 +1052,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
         next: (res) => {
           this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkClicksCache.set(inviteId, res?.clickCount ?? 0);
           this.trackedLinkFetching.delete(inviteId);
           this.cdr.detectChanges();
         },
@@ -1058,6 +1060,13 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       });
     }
     return '';
+  }
+
+  /** Click count for the creator's tracked promo link. Populated once taggedPromotionLink's fetch resolves. */
+  taggedPromotionLinkClicks(campaign: any): number | null {
+    const inviteId = String(campaign?.inviteId || '');
+    if (!inviteId) return null;
+    return this.trackedLinkClicksCache.get(inviteId) ?? null;
   }
 
   goToStats(campaign: any) {

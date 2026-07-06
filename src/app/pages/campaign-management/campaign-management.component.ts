@@ -1159,6 +1159,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   private trackedLinkCache = new Map<string, string>();
+  private trackedLinkClicksCache = new Map<string, number>();
   private trackedLinkFetching = new Set<string>();
 
   /** Tracked promo link (trendstarz.in/r/CODE) unique to this invite's creator. Fetched once, then cached. */
@@ -1175,6 +1176,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
         next: (res) => {
           this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkClicksCache.set(inviteId, res?.clickCount ?? 0);
           this.trackedLinkFetching.delete(inviteId);
           this.cd.detectChanges();
         },
@@ -1182,6 +1184,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       });
     }
     return '';
+  }
+
+  /** Click count for this invite's tracked promo link. Populated once taggedPromotionLink's fetch resolves. */
+  taggedPromotionLinkClicks(invite: any): number | null {
+    const inviteId = String(invite?._id || invite?.id || '');
+    if (!inviteId) return null;
+    return this.trackedLinkClicksCache.get(inviteId) ?? null;
   }
 
   getCampaignInviteRecipientTier(invite: any, campaign: any): string {

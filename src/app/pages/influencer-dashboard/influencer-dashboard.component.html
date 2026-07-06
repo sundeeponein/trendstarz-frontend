@@ -452,7 +452,8 @@
         class="mt-2 d-block"
         [typeLabel]="promotionUrlTypeLabel(c)"
         [destinationUrl]="c.promotionUrl"
-        [url]="taggedPromotionLink(c)">
+        [url]="taggedPromotionLink(c)"
+        [clickCount]="taggedPromotionLinkClicks(c)">
       </app-promo-link-card>
       <!-- Submit/view CTA: hide only when awaiting payment for paid_collab -->
       <div class="submit-post-cta mt-2"
@@ -514,7 +515,8 @@
         class="mt-2 d-block"
         [typeLabel]="promotionUrlTypeLabel(c)"
         [destinationUrl]="c.promotionUrl"
-        [url]="taggedPromotionLink(c)">
+        [url]="taggedPromotionLink(c)"
+        [clickCount]="taggedPromotionLinkClicks(c)">
       </app-promo-link-card>
       <div class="submit-post-cta mt-2">
         <button class="btn-submit-post" (click)="goToStats(c); $event.stopPropagation()">

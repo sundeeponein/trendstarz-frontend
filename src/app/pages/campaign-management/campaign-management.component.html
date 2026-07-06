@@ -835,7 +835,9 @@
                       *ngIf="showsPromotionLink(inv, c)"
                       [typeLabel]="promotionUrlTypeLabel(c)"
                       [destinationUrl]="c.promotionUrl"
-                      [url]="taggedPromotionLink(inv, c)">
+                      [url]="taggedPromotionLink(inv, c)"
+                      [showShortLink]="false"
+                      [clickCount]="taggedPromotionLinkClicks(inv)">
                     </app-promo-link-card>
                   </div>
 
