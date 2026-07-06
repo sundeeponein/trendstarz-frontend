@@ -622,32 +622,6 @@ $green:     #16a34a;
   &:hover { color: $text; text-decoration: underline; }
 }
 
-// ── FAB ───────────────────────────────────────────────────────────────────
-.cm-fab {
-  position: fixed;
-  bottom: 1.75rem;
-  right: 1.75rem;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: $orange;
-  color: #fff;
-  border: none;
-  font-size: 1.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba($orange, 0.45);
-  transition: transform 0.15s, box-shadow 0.15s;
-  z-index: 100;
-
-  &:hover {
-    transform: scale(1.08);
-    box-shadow: 0 6px 20px rgba($orange, 0.55);
-  }
-}
-
 // ── Moderation Modal ──────────────────────────────────────────────────────
 .moderation-modal {
   .modal-header, .modal-body, .modal-footer { color: $text; }
