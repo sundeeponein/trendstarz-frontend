@@ -14,12 +14,9 @@ export class CampaignAlertMessageComponent {
   @Input() copied = false;
   @Output() copyAlert = new EventEmitter<string>();
 
-  /** Collapsed by default — this sits at the end of the campaign detail view. */
-  expanded = false;
-
-  toggleExpanded(): void {
-    this.expanded = !this.expanded;
-  }
+  /** The two message templates are independent accordions within the body. */
+  inviteMessageExpanded = false;
+  reminderMessageExpanded = false;
 
   get isOpenToAll(): boolean {
     return String(this.campaign?.campaignMode || '') === 'tier_filtered_open';

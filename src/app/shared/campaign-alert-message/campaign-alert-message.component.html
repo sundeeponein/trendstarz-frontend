@@ -1,13 +1,12 @@
 <section class="campaign-alert-message">
-  <button type="button" class="campaign-alert-message__toggle" (click)="toggleExpanded()">
+  <div class="campaign-alert-message__header">
     <span class="campaign-alert-message__toggle-text">
       <strong>{{ statusHeaderText }}</strong>
       <small>&bull; {{ shareSectionTitle }}</small>
     </span>
-    <i class="bi" [ngClass]="expanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-  </button>
+  </div>
 
-  <div class="campaign-alert-message__body" *ngIf="expanded">
+  <div class="campaign-alert-message__body">
     <p class="campaign-alert-message__help">{{ shareHelpText }}</p>
 
     <div class="campaign-alert-message__checks" aria-label="Campaign notification channels">
@@ -21,24 +20,34 @@
     </div>
 
     <div class="campaign-alert-message__template">
-      <div class="campaign-alert-message__template-header">
+      <button type="button" class="campaign-alert-message__template-toggle" (click)="inviteMessageExpanded = !inviteMessageExpanded">
         <span>{{ relevantMessageLabel }}</span>
-        <button type="button" class="btn btn-primary btn-sm" (click)="copyRelevantMessage()">
-          {{ copied ? 'Copied' : relevantCopyButtonLabel }}
-        </button>
+        <i class="bi" [ngClass]="inviteMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <div class="campaign-alert-message__template-body" *ngIf="inviteMessageExpanded">
+        <div class="campaign-alert-message__template-actions">
+          <button type="button" class="btn btn-primary btn-sm" (click)="copyRelevantMessage()">
+            {{ copied ? 'Copied' : relevantCopyButtonLabel }}
+          </button>
+        </div>
+        <pre>{{ relevantMessage }}</pre>
       </div>
-      <pre>{{ relevantMessage }}</pre>
     </div>
 
     <!-- Applies to both invite-only and open-to-all campaigns -->
     <div class="campaign-alert-message__template">
-      <div class="campaign-alert-message__template-header">
+      <button type="button" class="campaign-alert-message__template-toggle" (click)="reminderMessageExpanded = !reminderMessageExpanded">
         <span>Upcoming Posting Reminder</span>
-        <button type="button" class="btn btn-primary btn-sm" (click)="copyReminderMessage()">
-          {{ reminderCopied ? 'Copied' : 'Copy Posting Reminder' }}
-        </button>
+        <i class="bi" [ngClass]="reminderMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <div class="campaign-alert-message__template-body" *ngIf="reminderMessageExpanded">
+        <div class="campaign-alert-message__template-actions">
+          <button type="button" class="btn btn-primary btn-sm" (click)="copyReminderMessage()">
+            {{ reminderCopied ? 'Copied' : 'Copy Posting Reminder' }}
+          </button>
+        </div>
+        <pre>{{ postingReminderMessage }}</pre>
       </div>
-      <pre>{{ postingReminderMessage }}</pre>
     </div>
   </div>
 </section>

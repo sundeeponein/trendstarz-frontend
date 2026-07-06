@@ -842,7 +842,7 @@
 
                   <div class="col-md-6">
 
-                    <span class="inv-status" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv) }}</span>
+                    <span class="inv-status" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv, c) }}</span>
                     <!-- Updated at timestamp -->
                     <small class="expand-updated-at" *ngIf="getInviteUpdatedAtText(inv)">
                       {{ getInviteUpdatedAtText(inv) }}
@@ -861,7 +861,7 @@
                     </span>
                     <!-- Payment badge: brand payment was verified for this recipient -->
                     <span class="inv-paid-badge"
-                      *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status)">
+                      *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status) && !isConfirmedNoShow(inv, c)">
                       <i class="bi bi-check-circle-fill"></i> Payment Verified
                     </span>
                     <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
@@ -1473,7 +1473,7 @@
               </div>
             </div>
             <div class="invited-right">
-              <span class="inv-status already-invited" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv) | uppercase }}</span>
+              <span class="inv-status already-invited" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv, invitePanelCampaign) | uppercase }}</span>
               <ng-container
                 [ngTemplateOutlet]="hostCounterOfferActions"
                 [ngTemplateOutletContext]="{ $implicit: inv, campaign: invitePanelCampaign }">

@@ -592,6 +592,19 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return `Your selected posting date has passed. You can still submit until ${closesAtText}. Late submissions may be rejected by the host.`;
   }
 
+  /** Mirrors the backend's submitPost deadline check exactly (campaign-invites.service.ts) — if
+   *  there's no selectedPostDate there's no deadline; otherwise submission closes at closesAt. */
+  get isSubmissionWindowClosed(): boolean {
+    const closesAt = this.postingSubmissionClosesAt;
+    if (!closesAt) return false;
+    return Date.now() > closesAt.getTime();
+  }
+
+  get submissionWindowClosedText(): string {
+    const closesAtText = this.formatDateTime(this.postingSubmissionClosesAt) || 'the deadline';
+    return `Submission window closed on ${closesAtText}. You can no longer submit for this collaboration.`;
+  }
+
   get submissionReviewStatusMessage(): string {
     const unlockAt = this.submissionReviewUnlockAt;
     if (!unlockAt) {
@@ -629,6 +642,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   canSubmit(): boolean {
     if (!this.canEditSubmissionForm) return false;
+    if (this.isSubmissionWindowClosed) return false;
     // Location campaigns: postUrl still required, screenshot is optional
     if (this.isLocationCampaign) return !!this.postUrl.trim();
     // Paid/product campaigns: postUrl required; screenshot strongly recommended but optional

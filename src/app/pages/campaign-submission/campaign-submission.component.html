@@ -125,6 +125,11 @@
       {{ postingDeadlineWarningText }}
     </div>
 
+    <div *ngIf="canEditSubmissionForm && isSubmissionWindowClosed" class="alert-info mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
+      <i class="bi bi-x-circle-fill" style="color:#dc2626"></i>
+      {{ submissionWindowClosedText }}
+    </div>
+
     <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
       <div class="summary-header">
         <div class="summary-title">Shared details</div>

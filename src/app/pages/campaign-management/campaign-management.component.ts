@@ -4563,11 +4563,32 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(status);
   }
 
+  /**
+   * True when a campaign has closed, the invite's status implies a submission was made,
+   * but no CampaignSubmission actually exists — i.e. the recipient never delivered and
+   * the invite is just stuck at a stale in-flight status.
+   */
+  isConfirmedNoShow(inv: any, campaign?: Campaign | null): boolean {
+    if (!inv || !campaign) return false;
+    const status = this.getHostInviteEffectiveStatus(inv);
+    const noSubmissionCloseoutStatuses = ['submitted', 'disputed', 'approved', 'completed', 'accepted', 'payment_confirmed', 'working'];
+    const campaignClosed = String(campaign?.status || '').toLowerCase() === 'completed';
+    return campaignClosed && noSubmissionCloseoutStatuses.includes(status) && !this.getSubmissionForInvite(campaign, inv);
+  }
+
   /** Human-readable invite status label for brand's view of an influencer */
-  brandInviteStatusLabel(invOrStatus: any): string {
+  brandInviteStatusLabel(invOrStatus: any, campaign?: Campaign | null): string {
     const status = typeof invOrStatus === 'string'
       ? String(invOrStatus || '').toLowerCase()
       : this.getHostInviteEffectiveStatus(invOrStatus);
+
+    // Some statuses (submitted/disputed/approved/completed) normally imply a submission
+    // exists; if the campaign has closed and no submission actually exists for this
+    // invite, the recipient never delivered — show that plainly instead of trusting a
+    // stale/inconsistent status.
+    if (typeof invOrStatus !== 'string' && this.isConfirmedNoShow(invOrStatus, campaign)) {
+      return 'Not Submitted';
+    }
 
     // The invite's own status never moves past "completed" — real payout
     // progress (processing vs. actually paid) only exists on the matching
