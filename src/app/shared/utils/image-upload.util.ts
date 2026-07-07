@@ -19,21 +19,21 @@ interface PresetConfig {
 // they usually contain text, and text gets noticeably blurry/artifacted
 // under the same treatment that's invisible on a photo.
 const PRESETS: Record<ImageUploadPreset, PresetConfig> = {
-  profile: { maxSizeMB: 0.2, maxWidthOrHeight: 400, quality: 0.85 },
-  gallery: { maxSizeMB: 0.8, maxWidthOrHeight: 1600, quality: 0.82 },
+  profile: { maxSizeMB: 0.05, maxWidthOrHeight: 400, quality: 0.85 },
+  gallery: { maxSizeMB: 0.15, maxWidthOrHeight: 1600, quality: 0.82 },
   screenshot: { maxSizeMB: 1, maxWidthOrHeight: 2000, quality: 0.92 },
-  cover: { maxSizeMB: 1, maxWidthOrHeight: 1920, quality: 0.85 },
+  cover: { maxSizeMB: 0.15, maxWidthOrHeight: 1920, quality: 0.85 },
 };
 
 // browser-image-compression's own fallback loop will keep shrinking
 // resolution + quality (up to 10 passes by default) until it's under
 // maxSizeMB. Left uncapped, a handful of extreme source files (huge
 // uncompressed PNGs) would get hammered down repeatedly and come out visibly
-// degraded. Capping iterations means: resize once, compress once, at most
-// one more adjustment — if that's not enough, we accept the larger result
-// and let isOversizedAfterCompression() below decide whether to warn instead
-// of silently degrading quality further.
-const MAX_COMPRESSION_ITERATIONS = 2;
+// degraded. With the small KB-range targets above, reaching them from a
+// typical phone photo needs a few passes — capped at 4 so extreme sources
+// still bail out to isOversizedAfterCompression() below instead of being
+// crushed indefinitely.
+const MAX_COMPRESSION_ITERATIONS = 4;
 
 // Backend multer limit is 10MB (see auth.controller.ts / campaign-invites.controller.ts).
 // Anything still above this after our best-effort compression would fail

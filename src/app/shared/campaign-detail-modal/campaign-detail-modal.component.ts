@@ -308,22 +308,15 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
   get resourceSuggestedCaption(): string { return String(this.campaign?.suggestedCaption || '').trim(); }
   get resourceHashtags(): string { return String(this.campaign?.hashtags || '').trim(); }
-  get resourceLogoUrl(): string { return String(this.campaign?.resourceLogo?.url || '').trim(); }
   get resourceImages(): { url: string; public_id: string }[] {
     return Array.isArray(this.campaign?.resourceImages) ? this.campaign.resourceImages : [];
-  }
-  get resourceGuidelinesUrl(): string { return String(this.campaign?.resourceGuidelines?.url || '').trim(); }
-  get resourceGuidelinesName(): string {
-    return String(this.campaign?.resourceGuidelines?.originalName || 'Guidelines').trim();
   }
   get hasCampaignResources(): boolean {
     return !!(
       this.resourcePromotionUrl ||
       this.resourceSuggestedCaption ||
       this.resourceHashtags ||
-      this.resourceLogoUrl ||
-      this.resourceImages.length ||
-      this.resourceGuidelinesUrl
+      this.resourceImages.length
     );
   }
 

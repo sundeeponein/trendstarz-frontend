@@ -75,6 +75,20 @@ $green:  #16a34a;
 .plc-type { color: $muted; font-size: 0.78rem; font-weight: 500; }
 .plc-clicks { font-size: 1.1rem; font-weight: 700; color: $text; }
 
+.plc-instruction {
+  margin: 4px 0 2px;
+  font-size: 0.8rem;
+  color: $muted;
+}
+
+.plc-url-row {
+  padding: 2px 0 4px;
+  color: $orange;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
 .plc-copy-btn {
   margin-top: 0.5rem;
   display: inline-flex;

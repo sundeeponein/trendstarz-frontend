@@ -122,22 +122,15 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   readonly maxCreatorTypeFilters = 3;
   imagePreview: string | null = null;
   selectedFile: File | null = null;
-  resourceLogoPreview: string | null = null;
-  selectedResourceLogoFile: File | null = null;
   resourceImagePreviews: string[] = [];
   selectedResourceImageFiles: File[] = [];
   existingResourceImages: { url: string; public_id: string }[] = [];
-  resourceGuidelinesFileName: string | null = null;
-  resourceGuidelinesUrl: string | null = null;
-  selectedResourceGuidelinesFile: File | null = null;
   resourcesExpanded = false;
 
   get resourcesFilledCount(): number {
     let count = 0;
     if (this.imagePreview) count++;
-    if (this.resourceLogoPreview) count++;
     if (this.resourceImagePreviews.length) count++;
-    if (this.resourceGuidelinesFileName) count++;
     if (String(this.form?.get('promotionUrl')?.value || '').trim()) count++;
     if (String(this.form?.get('suggestedCaption')?.value || '').trim()) count++;
     if (String(this.form?.get('hashtags')?.value || '').trim()) count++;
@@ -445,14 +438,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
           // Images and resources
           if (newCampaign.image?.url) this.imagePreview = newCampaign.image.url;
-          if (newCampaign.resourceLogo?.url) this.resourceLogoPreview = newCampaign.resourceLogo.url;
           if (Array.isArray(newCampaign.resourceImages)) {
             this.existingResourceImages = newCampaign.resourceImages;
             this.resourceImagePreviews = this.existingResourceImages.map((img: any) => img.url);
-          }
-          if (newCampaign.resourceGuidelines?.url) {
-            this.resourceGuidelinesUrl = newCampaign.resourceGuidelines.url;
-            this.resourceGuidelinesFileName = newCampaign.resourceGuidelines.originalName || 'Guidelines file';
           }
 
           // Hydrate selection chips and related arrays
@@ -669,16 +657,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     if (this.campaign?.image?.url) {
       this.imagePreview = this.campaign.image.url;
     }
-    if ((this.campaign as any)?.resourceLogo?.url) {
-      this.resourceLogoPreview = (this.campaign as any).resourceLogo.url;
-    }
     if (Array.isArray((this.campaign as any)?.resourceImages)) {
       this.existingResourceImages = (this.campaign as any).resourceImages;
       this.resourceImagePreviews = this.existingResourceImages.map((img) => img.url);
-    }
-    if ((this.campaign as any)?.resourceGuidelines?.url) {
-      this.resourceGuidelinesUrl = (this.campaign as any).resourceGuidelines.url;
-      this.resourceGuidelinesFileName = (this.campaign as any).resourceGuidelines.originalName || 'Guidelines file';
     }
     if (this.resourcesFilledCount > 0) {
       this.resourcesExpanded = true;
@@ -2611,33 +2592,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.selectedFile = null;
   }
 
-  async onResourceLogoSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files?.length) return;
-    const file = input.files[0];
-    const validationError = validateImageFile(file);
-    if (validationError) {
-      this.toast.error(validationError);
-      input.value = '';
-      return;
-    }
-    const compressedFile = await compressImageFile(file, 'profile');
-    if (isOversizedAfterCompression(compressedFile)) {
-      this.toast.error(OVERSIZE_MESSAGE);
-      input.value = '';
-      return;
-    }
-    this.selectedResourceLogoFile = compressedFile;
-    const reader = new FileReader();
-    reader.onload = () => { this.resourceLogoPreview = reader.result as string; };
-    reader.readAsDataURL(this.selectedResourceLogoFile);
-  }
-
-  removeResourceLogo() {
-    this.resourceLogoPreview = null;
-    this.selectedResourceLogoFile = null;
-  }
-
   async onResourceImagesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
@@ -2669,21 +2623,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     } else {
       this.existingResourceImages.splice(index, 1);
     }
-  }
-
-  onResourceGuidelinesSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.selectedResourceGuidelinesFile = input.files[0];
-      this.resourceGuidelinesFileName = this.selectedResourceGuidelinesFile.name;
-      this.resourceGuidelinesUrl = null;
-    }
-  }
-
-  removeResourceGuidelines() {
-    this.selectedResourceGuidelinesFile = null;
-    this.resourceGuidelinesFileName = null;
-    this.resourceGuidelinesUrl = null;
   }
 
   // ── Submit ───────────────────────────────────────────────────
@@ -2804,20 +2743,10 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       payload.image = this.campaign.image;
     }
     try {
-      if (this.selectedResourceLogoFile) {
-        payload.resourceLogo = await this.uploadToCloudinary(this.selectedResourceLogoFile, 'campaign_resource_logo');
-      } else if (this.isEdit && (this.campaign as any)?.resourceLogo) {
-        payload.resourceLogo = (this.campaign as any).resourceLogo;
-      }
       const uploadedResourceImages = this.selectedResourceImageFiles.length
         ? await Promise.all(this.selectedResourceImageFiles.map((file) => this.uploadToCloudinary(file, 'campaign_resource_images')))
         : [];
       payload.resourceImages = [...this.existingResourceImages, ...uploadedResourceImages];
-      if (this.selectedResourceGuidelinesFile) {
-        payload.resourceGuidelines = await this.uploadGuidelinesFile(this.selectedResourceGuidelinesFile);
-      } else if (this.isEdit && (this.campaign as any)?.resourceGuidelines?.url) {
-        payload.resourceGuidelines = (this.campaign as any).resourceGuidelines;
-      }
     } catch {
       this.uploading = false;
       this.showUploadFailureDialog();
@@ -2908,29 +2837,6 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       return { url: payload.secure_url || payload.url, public_id: payload.public_id };
     }
     throw new Error('Image upload failed');
-  }
-
-  private async uploadGuidelinesFile(file: File): Promise<{ url: string; public_id: string; originalName: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', 'campaign_guidelines');
-    const res = await fetch(
-      `${environment.apiBaseUrl}/auth/upload-verification`,
-      { method: 'POST', body: formData }
-    );
-    if (!res.ok) {
-      throw new Error('File upload failed');
-    }
-    const data = await res.json();
-    const payload = data?.data || data || {};
-    if ((payload.secure_url || payload.url) && payload.public_id) {
-      return {
-        url: payload.secure_url || payload.url,
-        public_id: payload.public_id,
-        originalName: payload.originalName || file.name,
-      };
-    }
-    throw new Error('File upload failed');
   }
 
   onCancel() {

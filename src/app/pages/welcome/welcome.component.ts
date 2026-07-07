@@ -212,7 +212,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.brands = [];
     this.photographers = [];
     this.brandCampaignStatusMap = {};
-    this.config.getFeaturedProfiles({ influencerLimit: 8, brandLimit: 6, photographerLimit: 6 }).subscribe({
+    this.config.getFeaturedProfiles({ influencerLimit: 8, brandLimit: 4, photographerLimit: 4 }).subscribe({
       next: (res) => {
         this.allInfluencers = Array.isArray(res?.influencers) ? res.influencers : [];
 

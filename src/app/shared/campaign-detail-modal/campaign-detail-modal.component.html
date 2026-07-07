@@ -242,24 +242,10 @@
                 </button>
               </div>
 
-              <div class="cdm-resource-row" *ngIf="resourceLogoUrl">
-                <div class="cdm-resource-row__text"><strong>Brand Logo</strong></div>
-                <a class="cdm-resource-copy-btn" [href]="resourceLogoUrl" target="_blank" rel="noopener noreferrer" download>
-                  <i class="bi bi-download"></i> Download
-                </a>
-              </div>
-
               <div class="cdm-resource-row" *ngFor="let img of resourceImages; let i = index">
                 <div class="cdm-resource-row__text"><strong>Brand Image {{ i + 1 }}</strong></div>
                 <a class="cdm-resource-copy-btn" [href]="img.url" target="_blank" rel="noopener noreferrer" download>
                   <i class="bi bi-download"></i> Download
-                </a>
-              </div>
-
-              <div class="cdm-resource-row" *ngIf="resourceGuidelinesUrl">
-                <div class="cdm-resource-row__text"><strong>Brand Guidelines</strong></div>
-                <a class="cdm-resource-copy-btn" [href]="resourceGuidelinesUrl" target="_blank" rel="noopener noreferrer" download>
-                  <i class="bi bi-file-earmark-arrow-down"></i> View
                 </a>
               </div>
             </div>

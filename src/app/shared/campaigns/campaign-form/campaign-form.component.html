@@ -784,7 +784,7 @@
                 <label for="campaign-img-input" class="upload-label">
                   <i class="bi bi-cloud-arrow-up"></i>
                   <span>Click to upload image</span>
-                  <small>PNG, JPG up to Max 1 MB</small>
+                  <small>PNG, JPG up to Max 150 KB</small>
                 </label>
               </div>
               <div class="image-preview" *ngIf="imagePreview">
@@ -819,21 +819,6 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label">Brand logo</label>
-              <div class="image-upload-area" *ngIf="!resourceLogoPreview">
-                <input type="file" accept="image/*" (change)="onResourceLogoSelected($event)" id="resource-logo-input" class="hidden-input" />
-                <label for="resource-logo-input" class="upload-label">
-                  <i class="bi bi-cloud-arrow-up"></i>
-                  <span>Click to upload logo</span>
-                </label>
-              </div>
-              <div class="image-preview" *ngIf="resourceLogoPreview">
-                <img [src]="resourceLogoPreview" alt="Logo preview" />
-                <button type="button" class="btn-remove-img" (click)="removeResourceLogo()"><i class="bi bi-trash"></i></button>
-              </div>
-            </div>
-
-            <div class="field-group">
               <label class="field-label">Brand / product images</label>
               <div class="image-upload-area">
                 <input type="file" accept="image/*" multiple (change)="onResourceImagesSelected($event)" id="resource-images-input" class="hidden-input" />
@@ -847,22 +832,6 @@
                   <img [src]="src" alt="Resource image preview" />
                   <button type="button" class="btn-remove-img" (click)="removeResourceImage(i)"><i class="bi bi-trash"></i></button>
                 </div>
-              </div>
-            </div>
-
-            <div class="field-group">
-              <label class="field-label">Brand guidelines (PDF)</label>
-              <div class="image-upload-area" *ngIf="!resourceGuidelinesFileName">
-                <input type="file" accept="application/pdf,image/jpeg,image/png" (change)="onResourceGuidelinesSelected($event)" id="resource-guidelines-input" class="hidden-input" />
-                <label for="resource-guidelines-input" class="upload-label">
-                  <i class="bi bi-cloud-arrow-up"></i>
-                  <span>Click to upload guidelines</span>
-                </label>
-              </div>
-              <div class="resource-file-chip" *ngIf="resourceGuidelinesFileName">
-                <i class="bi bi-file-earmark-pdf"></i>
-                <span>{{ resourceGuidelinesFileName }}</span>
-                <button type="button" class="btn-remove-img" (click)="removeResourceGuidelines()"><i class="bi bi-trash"></i></button>
               </div>
             </div>
 

@@ -41,6 +41,7 @@ interface ContentTypeOption {
   styleUrls: ['./campaign-invite-card.component.scss'],
 })
 export class CampaignInviteCardComponent {
+
   @Input() invite: any;
   @Input() busy = false;
   @Input() showViewDetails = true;
