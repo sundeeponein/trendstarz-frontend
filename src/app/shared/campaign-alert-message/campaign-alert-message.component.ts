@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { copyTextToClipboard } from '../referral-link.util';
+import { normalizeTierLabel, TIER_DESC_MAP } from '../tiers.constants';
 
 @Component({
   selector: 'app-campaign-alert-message',
@@ -13,6 +14,33 @@ export class CampaignAlertMessageComponent {
   @Input() campaign: any | null = null;
   @Input() copied = false;
   @Output() copyAlert = new EventEmitter<string>();
+
+  /** Mirrors campaign-detail-modal's ACCEPTED_OR_LATER_STATUSES — anyone who accepted, regardless of pipeline stage since. */
+  private static readonly ACCEPTED_OR_LATER_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
+
+  get requiredCreatorsCount(): number {
+    return Number(this.campaign?.maxInfluencers || this.campaign?.inviteSlots || 0) || 0;
+  }
+
+  get acceptedCreatorsCount(): number {
+    const rows = Array.isArray(this.campaign?.inviteProgress) ? this.campaign.inviteProgress : [];
+    return rows.filter((row: any) =>
+      CampaignAlertMessageComponent.ACCEPTED_OR_LATER_STATUSES.includes(String(row?.status || '').toLowerCase()),
+    ).length;
+  }
+
+  get slotsRemainingCount(): number {
+    return Math.max(this.requiredCreatorsCount - this.acceptedCreatorsCount, 0);
+  }
+
+  /** Open-to-all campaigns can restrict who's eligible to apply by a minimum tier. Empty when no tier restriction is set. */
+  get minTierLabel(): string {
+    const raw = String(this.campaign?.minInfluencerTier || '').trim();
+    if (!raw) return '';
+    const normalized = normalizeTierLabel(raw);
+    const range = TIER_DESC_MAP[normalized.toLowerCase()] || '';
+    return range ? `${normalized} (${range} followers)` : normalized;
+  }
 
   /** The two message templates are independent accordions within the body. */
   inviteMessageExpanded = false;
@@ -86,6 +114,7 @@ export class CampaignAlertMessageComponent {
   }
 
   get openCampaignMessage(): string {
+    const tierLine = this.minTierLabel ? [`🏆 Minimum Tier: ${this.minTierLabel}`] : [];
     return [
       '🎉 New Collaboration Opportunity on TrendStarz',
       '',
@@ -93,6 +122,11 @@ export class CampaignAlertMessageComponent {
       '',
       `📍 Location: ${this.locationLabel}`,
       `📅 Apply Before: ${this.lastDateLabel}`,
+      '',
+      ...tierLine,
+      `👥 Required Creators: ${this.requiredCreatorsCount}`,
+      `✅ Accepted: ${this.acceptedCreatorsCount}`,
+      `🔥 Slots Remaining: ${this.slotsRemainingCount}`,
       '',
       'We are looking for creators to participate in this campaign.',
       '',
@@ -117,6 +151,10 @@ export class CampaignAlertMessageComponent {
       '',
       `📍 Location: ${this.locationLabel}`,
       `📅 Respond Before: ${this.lastDateLabel}`,
+      '',
+      `👥 Required Creators: ${this.requiredCreatorsCount}`,
+      `✅ Accepted: ${this.acceptedCreatorsCount}`,
+      `🔥 Slots Remaining: ${this.slotsRemainingCount}`,
       '',
       'Please login to TrendStarz to view campaign details and accept your invitation.',
       '',
@@ -155,6 +193,10 @@ export class CampaignAlertMessageComponent {
       '',
       `Campaign: ${this.campaignNameLabel}`,
       `📆 Posting Window: ${this.startDateLabel} – ${this.endDateLabel}`,
+      '',
+      `👥 Required Creators: ${this.requiredCreatorsCount}`,
+      `✅ Accepted: ${this.acceptedCreatorsCount}`,
+      `🔥 Slots Remaining: ${this.slotsRemainingCount}`,
       '',
       'Please review the campaign resources, caption, hashtags, and promotion link before posting.',
       '',
