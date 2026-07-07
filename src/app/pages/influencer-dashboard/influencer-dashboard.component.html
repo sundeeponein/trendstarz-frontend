@@ -527,6 +527,29 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════
+       WITHDRAWN / MISSED CAMPAIGNS
+  ═══════════════════════════════════════════════════════ -->
+  <div *ngIf="!loading && withdrawnCampaigns.length > 0" class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--purple me-2"></span> Withdrawn / Missed Campaigns
+      <span class="section-count ms-2">{{ withdrawnCampaigns.length }}</span>
+    </div>
+    <div *ngFor="let c of withdrawnCampaigns" class="active-camp-card mt-3">
+      <div class="d-flex align-items-start gap-2">
+        <div class="active-camp-dot"></div>
+        <div class="flex-1">
+          <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
+          <div class="active-camp-desc">{{ withdrawnMessage(c) }}</div>
+        </div>
+        <span class="badge rounded-pill bg-danger ms-2">{{ withdrawnLabel(c) }}</span>
+      </div>
+      <div class="active-camp-meta mt-2">
+        <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Profile Traffic hidden - by sundeep -->
   <div class="section-card mb-4 profile-traffic-card p-2 d-none">
     <div class="section-title d-flex align-items-center mb-3">

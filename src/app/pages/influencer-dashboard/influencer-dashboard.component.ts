@@ -43,6 +43,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   collaborationRequests: any[] = [];
   activeCampaigns: any[] = [];
   completedCampaigns: any[] = [];
+  withdrawnCampaigns: any[] = [];
   loading = true;
   error = '';
   profileIncomplete = false;
@@ -331,6 +332,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.loadCollaborationRequests();
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];
+          this.withdrawnCampaigns = data.withdrawnCampaigns || [];
           const user = data.user || {};
           this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
           this.loading = false;
@@ -1032,6 +1034,19 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   promotionUrlTypeLabel(campaign: any): string {
     return promotionUrlTypeLabel(campaign?.promotionUrlType);
+  }
+
+  withdrawnLabel(c: any): string {
+    return c?.autoClosed ? 'Slots Filled' : 'Withdrawn';
+  }
+
+  withdrawnMessage(c: any): string {
+    if (c?.autoClosed) {
+      return "This campaign's accepted-creator slots filled up before your invite could be confirmed — you weren't selected this time.";
+    }
+    return c?.withdrawnReason
+      ? `Withdrawn by the host: ${c.withdrawnReason}`
+      : 'This invite was withdrawn by the host.';
   }
 
   private trackedLinkCache = new Map<string, string>();

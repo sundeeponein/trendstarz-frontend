@@ -109,7 +109,7 @@ export class CampaignAlertMessageComponent {
 
   get inviteOnlyMessage(): string {
     return [
-      "🎉 You're Invited to a Collaboration Opportunity",
+      "🎉 You've received a new collaboration invitation on TrendStarz",
       '',
       `📢 Campaign: ${this.campaignNameLabel}`,
       '',
