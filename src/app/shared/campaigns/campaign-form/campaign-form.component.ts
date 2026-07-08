@@ -2744,7 +2744,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     }
     try {
       const uploadedResourceImages = this.selectedResourceImageFiles.length
-        ? await Promise.all(this.selectedResourceImageFiles.map((file) => this.uploadToCloudinary(file, 'campaign_resource_images')))
+        ? await Promise.all(this.selectedResourceImageFiles.map((file) => this.uploadToCloudinary(file, this.campaignImagesFolder)))
         : [];
       payload.resourceImages = [...this.existingResourceImages, ...uploadedResourceImages];
     } catch {
@@ -2820,7 +2820,13 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     };
   }
 
-  private async uploadToCloudinary(file: File, folder = 'campaign_images'): Promise<{ url: string; public_id: string }> {
+  private get campaignImagesFolder(): string {
+    return this.isEdit && this.campaign?._id
+      ? `campaigns/${this.campaign._id}/images`
+      : 'campaigns/_pending/images';
+  }
+
+  private async uploadToCloudinary(file: File, folder = this.campaignImagesFolder): Promise<{ url: string; public_id: string }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', folder);

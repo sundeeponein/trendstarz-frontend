@@ -262,24 +262,6 @@
             
           </div>
 
-          <!-- Product Images -->
-          <div class="social-media-section">
-            <h3>Product Images</h3>
-            <div class="subtitle">Upload product visuals for collaborations.</div>
-            <div class="image-grid" *ngIf="productImagesPreview.length">
-              <div class="image-card" *ngFor="let img of productImagesPreview; let i = index">
-                <img *ngIf="img" [src]="img" alt="Product image preview" class="preview-image" />
-                <input type="file" accept="image/*" (change)="onProductImageFileChange($event, i)" class="form-control mt-1" />
-                <button type="button" class="btn btn-outline-secondary btn-sm mt-1" (click)="removeProductImage(i)">Remove</button>
-              </div>
-            </div>
-            <button type="button" class="add-social-btn mt-2" (click)="addProductImage()" [disabled]="!canAddProductImage()">+ Add Product Image</button>
-            <div class="text-muted mt-1" style="font-size:0.82rem">
-              Selected plan supports up to {{ selectedProductImageLimit }} product image{{ selectedProductImageLimit > 1 ? 's' : '' }}.
-            </div>
-            <div *ngIf="step2Attempted && !hasAtLeastOneProductImage()" class="text-danger mt-1">At least one company/product image is required.</div>
-          </div>
-
           <!-- Social Media — optional, for brand trust -->
           <div class="social-media-section mt-3">
             <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — Adding social links helps trust your brand profile.)</span></h3>

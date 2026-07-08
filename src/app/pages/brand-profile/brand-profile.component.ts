@@ -28,6 +28,7 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { SessionService } from '../../core/session.service';
 
 @Component({
   selector: 'app-brand-registration',
@@ -89,6 +90,7 @@ export class BrandProfileComponent implements OnInit {
     private toast: ToastService,
     private firebaseAuth: FirebaseAuthService,
     private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
 
   private loadProfileVerificationDashboard(): void {
@@ -354,7 +356,7 @@ export class BrandProfileComponent implements OnInit {
       this.brandLogoFile = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'brand_logo');
+      formData.append('folder', `brands/${this.session.getUser()?.id}/logo`);
       const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
@@ -403,10 +405,11 @@ export class BrandProfileComponent implements OnInit {
       this.productImagesFiles[index] = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'brand_products');
-      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
+      formData.append('type', 'products');
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-authenticated-image`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: { Authorization: `Bearer ${this.session.getToken()}` },
       });
       if (!response.ok) {
         this.registrationError = 'Product image upload failed.';

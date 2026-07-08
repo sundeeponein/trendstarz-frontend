@@ -1,6 +1,6 @@
 import { map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -267,6 +267,22 @@ export class ConfigService {
 
   uploadImage(formData: FormData): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/auth/upload-image`, formData).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res) || res || {};
+        return {
+          ...data,
+          url: data?.url || data?.secure_url || '',
+          public_id: data?.public_id || data?.publicId || '',
+        };
+      }),
+    );
+  }
+
+  // Gallery/product/portfolio uploads (post-login only) — requires a valid,
+  // email-verified session; the server derives the target folder itself.
+  uploadAuthenticatedImage(formData: FormData, token: string | null): Observable<any> {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token || ''}` });
+    return this.http.post<any>(`${this.apiUrl}/auth/upload-authenticated-image`, formData, { headers }).pipe(
       map((res) => {
         const data = this.extractData<any>(res) || res || {};
         return {

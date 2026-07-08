@@ -279,15 +279,9 @@ export class InfluencerRegistrationComponent implements OnInit {
   protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
   profileImageUploading = false;
-  galleryImageUploading = false;
   profileImageFile: File | null = null;
   // Cached upload result so we don't re-upload (and orphan the previous upload) on retry.
   uploadedProfileImage: { url: string; public_id: string } | null = null;
-  galleryImagesPreview: string[] = [];
-  galleryImagesData: { url: string; public_id: string }[] = [];
-  galleryUploadWarning = '';
-  freeTotalImageLimit = 3;
-  premiumTotalImageLimit = 10;
   languagesList: any[] = [];
   categoriesList: any[] = [];
   districts: any[] = [];
@@ -458,7 +452,6 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.enforcePlatformLimit();
-      this.enforceGalleryLimit();
       this.refreshStepCompletion();
     });
     this.registrationForm.valueChanges.subscribe(() => this.refreshStepCompletion());
@@ -468,18 +461,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
-      const freePlan = plans.find((plan) => (plan?.price?.monthly ?? 0) === 0);
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
-
-      const resolveImageLimit = (plan: Plan | undefined, fallback: number): number => {
-        if (!plan?.limits?.length) return fallback;
-        const hit = plan.limits.find((limit) => String(limit?.key || '').trim() === 'maxProductImages');
-        const value = Number(hit?.value);
-        return Number.isFinite(value) && value > 0 ? value : fallback;
-      };
-
-      this.freeTotalImageLimit = resolveImageLimit(freePlan, this.freeTotalImageLimit);
-      this.premiumTotalImageLimit = resolveImageLimit(paidPlan, this.premiumTotalImageLimit);
 
       if (!paidPlan) return;
 
@@ -536,20 +518,6 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   isPremiumPlan(): boolean {
     return this.registrationForm?.get('paymentOption')?.value === 'premium';
-  }
-
-  get selectedTotalImageLimit(): number {
-    return this.isPremiumPlan() ? this.premiumTotalImageLimit : this.freeTotalImageLimit;
-  }
-
-  get maxGalleryImages(): number {
-    return Math.max(0, this.selectedTotalImageLimit - 1);
-  }
-
-  private enforceGalleryLimit(): void {
-    if (this.galleryImagesData.length <= this.maxGalleryImages) return;
-    this.galleryImagesData = this.galleryImagesData.slice(0, this.maxGalleryImages);
-    this.galleryImagesPreview = this.galleryImagesPreview.slice(0, this.maxGalleryImages);
   }
 
   private computeStepComplete(step: number): boolean {
@@ -961,85 +929,6 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null; this.refreshStepCompletion();
   }
 
-  async onGalleryImagesChange(event: Event) {
-    const files = Array.from((event.target as HTMLInputElement).files || []);
-    if (!files.length) return;
-
-    const remainingSlots = this.maxGalleryImages - this.galleryImagesData.length;
-    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
-    if (!selectedFiles.length) return;
-
-    this.galleryImageUploading = true;
-    this.cdr.detectChanges();
-    let failedUploads = 0;
-
-    for (const file of selectedFiles) {
-      if (validateImageFile(file)) {
-        failedUploads += 1;
-        continue;
-      }
-
-      const compressedFile = await compressImageFile(file, 'gallery');
-      if (isOversizedAfterCompression(compressedFile)) {
-        failedUploads += 1;
-        continue;
-      }
-
-      const preview = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(String(e.target?.result || ''));
-        reader.onerror = () => reject(new Error('preview_failed'));
-        reader.readAsDataURL(compressedFile);
-      }).catch(() => '');
-
-      if (!preview) {
-        failedUploads += 1;
-        continue;
-      }
-
-      const fd = new FormData();
-      fd.append('file', compressedFile, compressedFile.name || 'gallery.jpg');
-      fd.append('folder', 'influencer_gallery_images');
-
-      const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
-        this.configService.uploadImage(fd).subscribe({
-          next: (res: any) => {
-            if (res?.url && res?.public_id) {
-              resolve({ url: res.url, public_id: res.public_id });
-              return;
-            }
-            resolve(null);
-          },
-          error: () => resolve(null),
-        });
-      });
-
-      if (!uploaded) {
-        failedUploads += 1;
-        continue;
-      }
-
-      this.galleryImagesPreview.push(preview);
-      this.galleryImagesData.push(uploaded);
-      this.cdr.detectChanges();
-    }
-
-    this.ngZone.run(() => {
-      this.galleryUploadWarning = failedUploads
-        ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
-        : '';
-      this.galleryImageUploading = false;
-      this.cdr.detectChanges();
-    });
-  }
-
-  removeGalleryImage(index: number) {
-    if (index < 0 || index >= this.galleryImagesData.length) return;
-    this.galleryImagesPreview.splice(index, 1);
-    this.galleryImagesData.splice(index, 1);
-    this.galleryUploadWarning = '';
-  }
-
   async onSubmit() {
     if (this.isSubmitting) return;
     this.submitted = true;
@@ -1097,7 +986,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       // Provide a filename so multer treats Blob output from imageCompression as a file upload.
       const filename = (this.profileImageFile as File)?.name || 'profile.jpg';
       fd.append('file', this.profileImageFile, filename);
-      fd.append('folder', 'influencer_profile_images');
+      fd.append('folder', 'influencers/_pending/profile');
       try {
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
         if (!resp.ok) {
@@ -1133,10 +1022,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       mobileVerificationMethod: this.phoneVerified ? 'OTP' : '',
       mobileVerifiedAt: this.phoneVerified ? new Date() : null,
       mobileOtpVerificationToken: this.mobileOtpVerificationToken,
-      profileImages: [
-        ...(imageUploadResult ? [imageUploadResult] : []),
-        ...this.galleryImagesData,
-      ],
+      profileImages: imageUploadResult ? [imageUploadResult] : [],
       contact: raw.contact
     };
     payload.signupAttribution = this.signupAttribution;
@@ -1168,7 +1054,6 @@ export class InfluencerRegistrationComponent implements OnInit {
           this.emailVerificationSent = !this.localAuthBypassEnabled;
           this.emailVerificationError = null;
           this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null;
-          this.galleryImagesPreview = []; this.galleryImagesData = []; this.galleryUploadWarning = '';
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;
           // Reset the form first (fires valueChanges which may clear registrationSuccess if set),
           // then on next microtask mark success and run CD — ensures the success modal renders.
@@ -1277,6 +1162,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
         const fd = new FormData();
         fd.append('file', file, file.name);
+        fd.append('folder', 'influencers/_pending/verification');
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
           method: 'POST',
           body: fd,

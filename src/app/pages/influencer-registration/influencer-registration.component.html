@@ -339,47 +339,6 @@
               </div>
             </div>
 
-          <div class="field-block mt-3">
-            <label>
-              Gallery Images <span class="text-muted" style="font-size:0.78rem;">(optional, up to {{ maxGalleryImages }} images)</span>
-              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openProfilePhotoGuidelines()" title="View image guidelines">
-                <i class="bi bi-info-circle"></i>
-              </button>
-            </label>
-            <div class="gallery-upload-wrap">
-              <label class="gallery-upload-cta" [class.disabled]="galleryImageUploading" [attr.for]="galleryImageUploading ? null : 'influencerGalleryInput'">
-                <ng-container *ngIf="galleryImageUploading">
-                  <span class="spinner-border spinner-border-sm" role="status"></span>
-                  <span>Uploading...</span>
-                </ng-container>
-                <ng-container *ngIf="!galleryImageUploading">
-                  <i class="bi bi-images"></i>
-                  <span>Add gallery images</span>
-                </ng-container>
-              </label>
-              <input
-                id="influencerGalleryInput"
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                (change)="onGalleryImagesChange($event)"
-              />
-              <div class="text-muted" style="font-size:0.84rem;">Total limit is {{ selectedTotalImageLimit }} images: 1 profile + up to {{ maxGalleryImages }} gallery images (based on selected plan).</div>
-            </div>
-
-            <div class="gallery-preview-grid" *ngIf="galleryImagesPreview.length">
-              <div class="gallery-preview-card" *ngFor="let img of galleryImagesPreview; let i = index">
-                <img [src]="img" alt="Gallery preview" class="gallery-preview-image" />
-                <button type="button" class="gallery-remove-btn" (click)="removeGalleryImage(i)">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-
-            <div *ngIf="galleryUploadWarning" class="alert alert-warning mt-2 mb-0">{{ galleryUploadWarning }}</div>
-          </div>
-
           <div class="social-media-section">
             <h3>Social Media Platforms <span class="text-danger">*</span></h3>
             <div class="subtitle">Select your platforms and set your rates for each content type.</div>

@@ -42,8 +42,6 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   styleUrls: ['./brand-registration.component.scss'],
 })
 export class BrandRegistrationComponent implements OnInit {
-  freeProductImageLimit = 1;
-  premiumProductImageLimit = 5;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
   readonly currentYear = new Date().getFullYear();
   readonly brandFoundedYears: number[] = Array.from(
@@ -132,10 +130,6 @@ export class BrandRegistrationComponent implements OnInit {
   // Cached upload result so we don't re-upload (and orphan the previous upload)
   // when the user retries onSubmit after a backend error (e.g., duplicate email).
   uploadedBrandLogo: { url: string; public_id: string } | null = null;
-  productImagesPreview: (string | null)[] = [];
-  productImagesFiles: (File | null)[] = [];
-  // Per-index cached upload result for product images.
-  uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
   signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
@@ -293,7 +287,6 @@ export class BrandRegistrationComponent implements OnInit {
     });
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
-      this.enforceProductImageLimit();
       this.refreshStepCompletion();
     });
 
@@ -302,18 +295,7 @@ export class BrandRegistrationComponent implements OnInit {
 
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('BRAND').subscribe((plans) => {
-      const freePlan = plans.find((plan) => (plan?.price?.monthly ?? 0) === 0);
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
-
-      const resolveImageLimit = (plan: Plan | undefined, fallback: number): number => {
-        if (!plan?.limits?.length) return fallback;
-        const hit = plan.limits.find((limit) => String(limit?.key || '').trim() === 'maxProductImages');
-        const value = Number(hit?.value);
-        return Number.isFinite(value) && value > 0 ? value : fallback;
-      };
-
-      this.freeProductImageLimit = resolveImageLimit(freePlan, this.freeProductImageLimit);
-      this.premiumProductImageLimit = resolveImageLimit(paidPlan, this.premiumProductImageLimit);
 
       if (!paidPlan) return;
 
@@ -379,25 +361,6 @@ export class BrandRegistrationComponent implements OnInit {
 
   isPremiumPlan(): boolean {
     return this.registrationForm.get('paymentOption')?.value === 'premium';
-  }
-
-  get selectedProductImageLimit(): number {
-    return this.isPremiumPlan() ? this.premiumProductImageLimit : this.freeProductImageLimit;
-  }
-
-  canAddProductImage(): boolean {
-    return this.productImagesFiles.length < this.selectedProductImageLimit;
-  }
-
-  hasAtLeastOneProductImage(): boolean {
-    return this.productImagesFiles.some((f) => !!f);
-  }
-
-  private enforceProductImageLimit() {
-    if (this.productImagesFiles.length > this.selectedProductImageLimit) {
-      this.productImagesFiles = this.productImagesFiles.slice(0, this.selectedProductImageLimit);
-      this.productImagesPreview = this.productImagesPreview.slice(0, this.selectedProductImageLimit);
-    }
   }
 
   onBrandUsernameInput() {
@@ -597,22 +560,6 @@ export class BrandRegistrationComponent implements OnInit {
     return validateSocialHandle(pf.handle, platform?.name || '') || '';
   }
 
-  addProductImage() {
-    if (!this.canAddProductImage()) {
-      return;
-    }
-    this.productImagesPreview.push(null);
-    this.productImagesFiles.push(null);
-    this.refreshStepCompletion();
-  }
-
-  removeProductImage(index: number) {
-    this.productImagesPreview.splice(index, 1);
-    this.productImagesFiles.splice(index, 1);
-    this.uploadedProductImages.splice(index, 1);
-    this.refreshStepCompletion();
-  }
-
   cropModalOpen = false;
   cropSourceFile: File | null = null;
   private brandLogoInputEl: HTMLInputElement | null = null;
@@ -666,36 +613,6 @@ export class BrandRegistrationComponent implements OnInit {
     this.brandLogoFile = null;
     this.uploadedBrandLogo = null;
     this.refreshStepCompletion();
-  }
-
-  async onProductImageFileChange(event: any, index: number) {
-    const file: File = event?.target?.files?.[0];
-    if (!file) return;
-    const validationError = validateImageFile(file);
-    if (validationError) {
-      this.registrationError = validationError;
-      return;
-    }
-
-    try {
-      const compressedFile = await compressImageFile(file, 'gallery');
-      if (isOversizedAfterCompression(compressedFile)) {
-        this.registrationError = OVERSIZE_MESSAGE;
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.productImagesPreview[index] = e.target.result;
-        this.productImagesFiles[index] = compressedFile as File;
-        // New file at this slot — invalidate any previously uploaded result.
-        this.uploadedProductImages[index] = null;
-        this.refreshStepCompletion();
-        this.cd.detectChanges();
-      };
-      reader.readAsDataURL(compressedFile);
-    } catch {
-      this.registrationError = 'Product image preview failed.';
-    }
   }
 
   private refreshStepCompletion() {
@@ -796,11 +713,6 @@ export class BrandRegistrationComponent implements OnInit {
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const baseValid = required.every((path) => this.registrationForm.get(path)?.valid);
       if (!baseValid) return false;
-      const hasAtLeastOneProductImage = this.hasAtLeastOneProductImage();
-      if (!hasAtLeastOneProductImage) {
-        this.registrationError = 'At least one company/product image is required.';
-        return false;
-      }
       if (!this.arePlatformsValid()) {
         // Inline platform error is already rendered in the template; do not set
         // registrationError to avoid duplicate messages.
@@ -1048,7 +960,7 @@ export class BrandRegistrationComponent implements OnInit {
     // Reuse a previously uploaded brand logo if available (avoids orphaned uploads on retry).
     let uploadedBrandLogo = this.uploadedBrandLogo;
     if (!uploadedBrandLogo) {
-      uploadedBrandLogo = await this.uploadImage(this.brandLogoFile, 'brand_logo');
+      uploadedBrandLogo = await this.uploadImage(this.brandLogoFile, 'brands/_pending/logo');
       if (uploadedBrandLogo) {
         this.uploadedBrandLogo = uploadedBrandLogo;
       }
@@ -1057,27 +969,6 @@ export class BrandRegistrationComponent implements OnInit {
       this.registrationError = 'Brand logo upload failed.';
       this.isSubmitting = false;
       return;
-    }
-
-    // Upload product images per slot, reusing any cached upload result so a retry after a
-    // backend error doesn't orphan previously uploaded files.
-    const uploadedProducts: Array<{ url: string; public_id: string }> = [];
-    for (let i = 0; i < this.productImagesFiles.length; i++) {
-      const productFile = this.productImagesFiles[i];
-      if (!productFile) continue;
-      let uploaded = this.uploadedProductImages[i];
-      if (!uploaded) {
-        uploaded = await this.uploadImage(productFile, 'brand_products');
-        if (uploaded) {
-          this.uploadedProductImages[i] = uploaded;
-        }
-      }
-      if (!uploaded) {
-        this.registrationError = 'One of the product image uploads failed.';
-        this.isSubmitting = false;
-        return;
-      }
-      uploadedProducts.push(uploaded);
     }
 
     const payload: any = {
@@ -1092,7 +983,7 @@ export class BrandRegistrationComponent implements OnInit {
       categories: categoryNames,
       socialMedia,
       brandLogo: [uploadedBrandLogo],
-      products: uploadedProducts,
+      products: [],
       contact: raw.contact
     };
     payload.signupAttribution = this.signupAttribution;
@@ -1126,9 +1017,6 @@ export class BrandRegistrationComponent implements OnInit {
         this.brandLogoPreview = null;
         this.brandLogoFile = null;
         this.uploadedBrandLogo = null;
-        this.productImagesPreview = [];
-        this.productImagesFiles = [];
-        this.uploadedProductImages = [];
         this.currentStep = 1;
         this.submitted = false;
         this.isSubmitting = false;

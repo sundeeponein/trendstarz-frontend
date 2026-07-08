@@ -171,7 +171,9 @@ export class AdminUserTableComponent implements OnInit {
     this.cropSaving = true;
     const formData = new FormData();
     formData.append('file', file, file.name);
-    formData.append('folder', role === 'brand' ? 'brand_logo' : 'registration_images');
+    const path = role === 'brand' ? 'brands' : role === 'photographer' ? 'photographers' : 'influencers';
+    const sub = role === 'brand' ? 'logo' : 'profile';
+    formData.append('folder', `${path}/${user._id}/${sub}`);
     this.configService.uploadImage(formData).subscribe({
       next: (uploaded: { url: string; public_id: string }) => {
         if (!uploaded?.url || !uploaded?.public_id) {
@@ -179,7 +181,6 @@ export class AdminUserTableComponent implements OnInit {
           alert('Image upload failed. Please try again.');
           return;
         }
-        const path = role === 'brand' ? 'brands' : role === 'photographer' ? 'photographers' : 'influencers';
         const body = role === 'brand'
           ? { brandLogo: [{ url: uploaded.url, public_id: uploaded.public_id }] }
           : { profileImages: [{ url: uploaded.url, public_id: uploaded.public_id }] };
@@ -504,6 +505,10 @@ export class AdminUserTableComponent implements OnInit {
   getUserHandle(user: any): string {
     const handle = user?.username || user?.brandUsername || user?.userName || user?.brand_username;
     return handle ? `@${handle}` : '-';
+  }
+
+  getUserPublicId(user: any): string {
+    return user?.publicId || '';
   }
 
   getUserStatusKey(user: any): 'active' | 'pending' | 'suspended' | 'rejected' | 'disabled' | 'other' {

@@ -29,6 +29,7 @@ import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { SessionService } from '../../core/session.service';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -95,6 +96,7 @@ export class InfluencerProfileComponent implements OnInit {
     private toast: ToastService,
     private firebaseAuth: FirebaseAuthService,
     private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
 
   private loadProfileVerificationDashboard(): void {
@@ -1211,9 +1213,13 @@ export class InfluencerProfileComponent implements OnInit {
       if (!preview) { failedUploads++; continue; }
       const fd = new FormData();
       fd.append('file', compressedFile, compressedFile.name || 'gallery.jpg');
-      fd.append('folder', 'influencer_gallery_images');
+      fd.append('type', 'gallery');
       try {
-        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-authenticated-image`, {
+          method: 'POST',
+          body: fd,
+          headers: { Authorization: `Bearer ${this.session.getToken()}` },
+        });
         if (!resp.ok) { failedUploads++; continue; }
         const data = await resp.json();
         if (data?.url && data?.public_id) {
@@ -1350,7 +1356,7 @@ export class InfluencerProfileComponent implements OnInit {
       try {
         const formData = new FormData();
         formData.append('file', uploadFile);
-        formData.append('folder', 'influencer_profile_images');
+        formData.append('folder', `influencers/${this.session.getUser()?.id}/profile`);
         const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
           method: 'POST',
           body: formData,
@@ -1643,6 +1649,7 @@ export class InfluencerProfileComponent implements OnInit {
 
         const fd = new FormData();
         fd.append('file', file, file.name);
+        fd.append('folder', `influencers/${this.session.getUser()?.id}/verification`);
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
           method: 'POST',
           body: fd,

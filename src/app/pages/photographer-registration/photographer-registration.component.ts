@@ -68,7 +68,6 @@ export class PhotographerRegistrationComponent implements OnInit {
   resendEmailVerificationSuccess = false;
   resendEmailVerificationError: string | null = null;
   pendingVerificationEmail = '';
-  galleryUploadWarning = '';
   showPhoneOtp = false;
   phoneOtp: string[] = ['', '', '', '', '', ''];
   phoneVerified = false;
@@ -113,10 +112,6 @@ export class PhotographerRegistrationComponent implements OnInit {
   profileImagePreview = '';
   profileImageData: { url: string; public_id: string } | null = null;
   uploadingImage = false;
-  photoshootImagesPreview: string[] = [];
-  photoshootImagesData: { url: string; public_id: string }[] = [];
-  freeTotalImageLimit = 3;
-  premiumTotalImageLimit = 10;
 
   duplicateEmailError = '';
   duplicatePhoneError = '';
@@ -167,24 +162,9 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.guidelinesService.open('influencer');
   }
 
-  openGalleryImageGuidelines(): void {
-    this.guidelinesService.open('influencer');
-  }
-
   private loadPlanConfig(): void {
     this.plansService.getActivePlans('PHOTOGRAPHER').subscribe((plans) => {
-      const freePlan = plans.find((plan) => (plan?.price?.monthly ?? 0) === 0);
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
-
-      const resolveImageLimit = (plan: Plan | undefined, fallback: number): number => {
-        if (!plan?.limits?.length) return fallback;
-        const hit = plan.limits.find((limit) => String(limit?.key || '').trim() === 'maxPortfolioImages');
-        const value = Number(hit?.value);
-        return Number.isFinite(value) && value > 0 ? value : fallback;
-      };
-
-      this.freeTotalImageLimit = resolveImageLimit(freePlan, this.freeTotalImageLimit);
-      this.premiumTotalImageLimit = resolveImageLimit(paidPlan, this.premiumTotalImageLimit);
 
       if (paidPlan) {
         const monthly = Number(paidPlan?.price?.monthly || 0);
@@ -297,7 +277,6 @@ export class PhotographerRegistrationComponent implements OnInit {
     });
 
     this.form.get('paymentOption')?.valueChanges.subscribe(() => {
-      this.enforceGalleryLimit();
       this.cdr.detectChanges();
     });
 
@@ -554,7 +533,7 @@ export class PhotographerRegistrationComponent implements OnInit {
     reader.readAsDataURL(compressedFile);
     const formData = new FormData();
     formData.append('file', compressedFile);
-    formData.append('folder', 'photographer_profiles');
+    formData.append('folder', 'photographers/_pending/profile');
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {
         if (!res?.url || !res?.public_id) {
@@ -575,80 +554,6 @@ export class PhotographerRegistrationComponent implements OnInit {
   removeProfileImage() {
     this.profileImagePreview = '';
     this.profileImageData = null;
-  }
-
-  async onPhotoshootImagesChange(event: Event) {
-    const files = Array.from((event.target as HTMLInputElement).files || []);
-    if (!files.length) return;
-
-    const remainingSlots = this.maxPhotoshootImages - this.photoshootImagesData.length;
-    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
-    if (!selectedFiles.length) return;
-
-    let failedUploads = 0;
-
-    for (const file of selectedFiles) {
-      if (validateImageFile(file)) {
-        failedUploads += 1;
-        continue;
-      }
-
-      const compressedFile = await compressImageFile(file, 'gallery');
-      if (isOversizedAfterCompression(compressedFile)) {
-        failedUploads += 1;
-        continue;
-      }
-
-      const preview = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(String(e.target?.result || ''));
-        reader.onerror = () => reject(new Error('preview_failed'));
-        reader.readAsDataURL(compressedFile);
-      }).catch(() => '');
-
-      if (!preview) {
-        failedUploads += 1;
-        continue;
-      }
-
-      const formData = new FormData();
-      formData.append('file', compressedFile);
-      formData.append('folder', 'photographer_gallery');
-
-      const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
-        this.config.uploadImage(formData).subscribe({
-          next: (res: any) => {
-            if (res?.url && res?.public_id) {
-              resolve({ url: res.url, public_id: res.public_id });
-              return;
-            }
-            resolve(null);
-          },
-          error: () => resolve(null),
-        });
-      });
-
-      if (!uploaded) {
-        failedUploads += 1;
-        continue;
-      }
-
-      this.photoshootImagesPreview.push(preview);
-      this.photoshootImagesData.push(uploaded);
-      this.cdr.detectChanges();
-    }
-
-    this.galleryUploadWarning = failedUploads
-      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
-      : '';
-
-    this.cdr.detectChanges();
-  }
-
-  removePhotoshootImage(index: number) {
-    if (index < 0 || index >= this.photoshootImagesData.length) return;
-    this.photoshootImagesPreview.splice(index, 1);
-    this.photoshootImagesData.splice(index, 1);
   }
 
   // Step navigation
@@ -689,20 +594,6 @@ export class PhotographerRegistrationComponent implements OnInit {
 
   isPremiumPlan(): boolean {
     return this.form.get('paymentOption')?.value === 'premium';
-  }
-
-  get selectedTotalImageLimit(): number {
-    return this.isPremiumPlan() ? this.premiumTotalImageLimit : this.freeTotalImageLimit;
-  }
-
-  get maxPhotoshootImages(): number {
-    return Math.max(0, this.selectedTotalImageLimit - 1);
-  }
-
-  private enforceGalleryLimit(): void {
-    if (this.photoshootImagesData.length <= this.maxPhotoshootImages) return;
-    this.photoshootImagesData = this.photoshootImagesData.slice(0, this.maxPhotoshootImages);
-    this.photoshootImagesPreview = this.photoshootImagesPreview.slice(0, this.maxPhotoshootImages);
   }
 
   resendPhoneOtp() {
@@ -887,10 +778,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       collaborationAvailability: v.collaborationAvailability,
       pricing: pricingArr,
       socialMedia,
-      profileImages: [
-        ...(this.profileImageData ? [this.profileImageData] : []),
-        ...this.photoshootImagesData,
-      ],
+      profileImages: this.profileImageData ? [this.profileImageData] : [],
       signupAttribution: captureSignupAttribution(
         this.route.snapshot.queryParamMap,
         typeof window !== 'undefined' ? window : undefined,
@@ -899,7 +787,6 @@ export class PhotographerRegistrationComponent implements OnInit {
 
     this.pendingVerificationEmail = v.email || '';
     this.registrationError = '';
-    this.galleryUploadWarning = '';
     this.config.registerPhotographer(payload).subscribe({
       next: async () => {
         if (!this.localAuthBypassEnabled) {

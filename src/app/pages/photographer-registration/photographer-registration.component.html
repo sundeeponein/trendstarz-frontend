@@ -250,42 +250,6 @@
               </div>
             </div>
 
-            <!-- Photoshoot Gallery -->
-            <div class="field-block mt-3">
-              <label>
-                Photoshoot Gallery <span class="text-muted" style="font-size:0.78rem;">(optional, up to {{ maxPhotoshootImages }} images)</span>
-                <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openGalleryImageGuidelines()" title="View gallery image guidelines">
-                  <i class="bi bi-info-circle"></i>
-                </button>
-              </label>
-              <div class="gallery-upload-wrap">
-                <label class="gallery-upload-cta" for="photoshootGalleryInput">
-                  <i class="bi bi-images"></i>
-                  <span>Add photoshoot images</span>
-                </label>
-                <input
-                  id="photoshootGalleryInput"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  hidden
-                  (change)="onPhotoshootImagesChange($event)"
-                />
-                <div class="text-muted" style="font-size:0.84rem;">Use this to showcase past shoots on your public profile. Total limit is {{ selectedTotalImageLimit }} images: 1 profile + up to {{ maxPhotoshootImages }} gallery images (based on selected plan).</div>
-              </div>
-
-              <div class="gallery-preview-grid" *ngIf="photoshootImagesPreview.length">
-                <div class="gallery-preview-card" *ngFor="let img of photoshootImagesPreview; let i = index">
-                  <img [src]="img" alt="Photoshoot preview" class="gallery-preview-image" />
-                  <button type="button" class="gallery-remove-btn" (click)="removePhotoshootImage(i)">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div *ngIf="galleryUploadWarning" class="alert alert-warning mt-2 mb-0">{{ galleryUploadWarning }}</div>
-            </div>
-
             <h3 class="mt-3 text-black">Social Media Platforms <span class="text-danger">*</span></h3>
             <p class="section-subtitle">Select your platforms and set your rates for each content type.</p>
             <div class="text-muted mt-1" style="font-size:0.92em;">Used to match you with campaigns.

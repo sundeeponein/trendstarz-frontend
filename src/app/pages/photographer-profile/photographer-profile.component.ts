@@ -920,7 +920,7 @@ export class PhotographerProfileComponent implements OnInit {
     reader.readAsDataURL(compressedFile);
     const formData = new FormData();
     formData.append('file', compressedFile);
-    formData.append('folder', 'photographer_profiles');
+    formData.append('folder', `photographers/${this.session.getUser()?.id}/profile`);
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {
         if (!res?.url || !res?.public_id) {
@@ -981,10 +981,10 @@ export class PhotographerProfileComponent implements OnInit {
 
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'photographer_gallery');
+      formData.append('type', 'gallery');
 
       const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
-        this.config.uploadImage(formData).subscribe({
+        this.config.uploadAuthenticatedImage(formData, this.session.getToken()).subscribe({
           next: (res: any) => {
             if (res?.url && res?.public_id) {
               resolve({ url: res.url, public_id: res.public_id });
