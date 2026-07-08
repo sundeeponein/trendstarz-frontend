@@ -198,59 +198,7 @@
             </div>
           </div>
 
-          <!-- Campaign Resources — shown to the creator once accepted, and to admin during review
-               (so moderation can check the promo link/caption/hashtags before approving). -->
-          <div class="cdm-section" *ngIf="(adminReview || isAcceptedOrLater) && hasCampaignResources">
-            <div class="cdm-section__label">CAMPAIGN RESOURCES</div>
-            <div class="cdm-brief-box cdm-resources-box">
-              <!-- Recipient: tracked short link, generated once their invite is accepted. -->
-              <app-promo-link-card
-                *ngIf="!adminReview && resourcePromotionUrl"
-                [typeLabel]="resourcePromotionUrlTypeLabel"
-                [destinationUrl]="resourcePromotionUrl"
-                [url]="generatedPromotionLink">
-              </app-promo-link-card>
-
-              <!-- Admin review: the raw destination as configured by the host — no participant exists
-                   yet to generate a tracked link for at this stage. -->
-              <div class="cdm-resource-row" *ngIf="adminReview && resourcePromotionUrl">
-                <div class="cdm-resource-row__text">
-                  <strong>Promotion Link ({{ resourcePromotionUrlTypeLabel }})</strong>
-                  <a [href]="resourcePromotionUrl" target="_blank" rel="noopener noreferrer">{{ resourcePromotionUrl }}</a>
-                </div>
-              </div>
-
-              <div class="cdm-resource-row" *ngIf="resourceSuggestedCaption">
-                <div class="cdm-resource-row__text">
-                  <strong>Suggested Caption</strong>
-                  <span style="white-space: pre-wrap;">{{ resourceSuggestedCaption }}</span>
-                </div>
-                <button type="button" class="cdm-resource-copy-btn" (click)="copyResourceCaption()">
-                  <i class="bi" [ngClass]="resourceCaptionCopied ? 'bi-check2' : 'bi-clipboard'"></i>
-                  {{ resourceCaptionCopied ? 'Copied' : 'Copy' }}
-                </button>
-              </div>
-
-              <div class="cdm-resource-row" *ngIf="resourceHashtags">
-                <div class="cdm-resource-row__text">
-                  <strong>Hashtags</strong>
-                  <span>{{ resourceHashtags }}</span>
-                </div>
-                <button type="button" class="cdm-resource-copy-btn" (click)="copyResourceHashtags()">
-                  <i class="bi" [ngClass]="resourceHashtagsCopied ? 'bi-check2' : 'bi-clipboard'"></i>
-                  {{ resourceHashtagsCopied ? 'Copied' : 'Copy' }}
-                </button>
-              </div>
-
-              <div class="cdm-resource-row" *ngFor="let img of resourceImages; let i = index">
-                <div class="cdm-resource-row__text"><strong>Brand Image {{ i + 1 }}</strong></div>
-                <a class="cdm-resource-copy-btn" [href]="img.url" target="_blank" rel="noopener noreferrer" download>
-                  <i class="bi bi-download"></i> Download
-                </a>
-              </div>
-            </div>
-          </div>
-
+          
           <!-- Social Platforms -->
           <div class="cdm-section" *ngIf="allCampaignPlatforms.length">
             <div class="cdm-section__label">SOCIAL PLATFORMS</div>
@@ -333,6 +281,59 @@
             </div>
             <div class="cdm-brief-box" *ngIf="!deliverableRows.length && deliverables.length" style="white-space:pre-wrap;">
               <div *ngFor="let item of deliverables">• {{ item }}</div>
+            </div>
+          </div>
+
+          <!-- Campaign Resources — shown to the creator once accepted, and to admin during review
+               (so moderation can check the promo link/caption/hashtags before approving). -->
+          <div class="cdm-section" *ngIf="(adminReview || isAcceptedOrLater) && hasCampaignResources">
+            <div class="cdm-section__label">CAMPAIGN RESOURCES</div>
+            <div class="cdm-brief-box cdm-resources-box">
+              <!-- Recipient: tracked short link, generated once their invite is accepted. -->
+              <app-promo-link-card
+                *ngIf="!adminReview && resourcePromotionUrl"
+                [typeLabel]="resourcePromotionUrlTypeLabel"
+                [destinationUrl]="resourcePromotionUrl"
+                [url]="generatedPromotionLink">
+              </app-promo-link-card>
+
+              <!-- Admin review: the raw destination as configured by the host — no participant exists
+                   yet to generate a tracked link for at this stage. -->
+              <div class="cdm-resource-row" *ngIf="adminReview && resourcePromotionUrl">
+                <div class="cdm-resource-row__text">
+                  <strong>Promotion Link ({{ resourcePromotionUrlTypeLabel }})</strong>
+                  <a [href]="resourcePromotionUrl" target="_blank" rel="noopener noreferrer">{{ resourcePromotionUrl }}</a>
+                </div>
+              </div>
+
+              <div class="cdm-resource-row" *ngIf="resourceSuggestedCaption">
+                <div class="cdm-resource-row__text">
+                  <strong>Suggested Caption</strong>
+                  <span style="white-space: pre-wrap;">{{ resourceSuggestedCaption }}</span>
+                </div>
+                <button type="button" class="cdm-resource-copy-btn" (click)="copyResourceCaption()">
+                  <i class="bi" [ngClass]="resourceCaptionCopied ? 'bi-check2' : 'bi-clipboard'"></i>
+                  {{ resourceCaptionCopied ? 'Copied' : 'Copy' }}
+                </button>
+              </div>
+
+              <div class="cdm-resource-row" *ngIf="resourceHashtags">
+                <div class="cdm-resource-row__text">
+                  <strong>Hashtags</strong>
+                  <span>{{ resourceHashtags }}</span>
+                </div>
+                <button type="button" class="cdm-resource-copy-btn" (click)="copyResourceHashtags()">
+                  <i class="bi" [ngClass]="resourceHashtagsCopied ? 'bi-check2' : 'bi-clipboard'"></i>
+                  {{ resourceHashtagsCopied ? 'Copied' : 'Copy' }}
+                </button>
+              </div>
+
+              <div class="cdm-resource-row" *ngFor="let img of resourceImages; let i = index">
+                <div class="cdm-resource-row__text"><strong>Brand Image {{ i + 1 }}</strong></div>
+                <a class="cdm-resource-copy-btn" [href]="img.url" target="_blank" rel="noopener noreferrer" download>
+                  <i class="bi bi-download"></i> Download
+                </a>
+              </div>
             </div>
           </div>
 
