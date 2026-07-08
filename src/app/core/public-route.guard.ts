@@ -1,8 +1,10 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { map, catchError, of } from 'rxjs';
+import { map, catchError, of, timeout } from 'rxjs';
 import { SessionService } from './session.service';
 import { ConfigService } from '../shared/config.service';
+
+const APP_SETTINGS_GUARD_TIMEOUT_MS = 5000;
 
 function redirectForRole(role: string): string {
   const normalized = String(role || '').toLowerCase();
@@ -40,6 +42,7 @@ export const guestOnlyGuard: CanActivateFn = (_route, state) => {
       }
       return true;
     }),
+    timeout(APP_SETTINGS_GUARD_TIMEOUT_MS),
     catchError(() => of(true)),
   );
 };
@@ -64,6 +67,7 @@ export const nonAdminSearchGuard: CanActivateFn = () => {
       }
       return true;
     }),
+    timeout(APP_SETTINGS_GUARD_TIMEOUT_MS),
     catchError(() => of(true)),
   );
 };
