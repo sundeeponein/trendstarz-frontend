@@ -1174,6 +1174,97 @@
       <div class="col-12 settings-row row-expanded">
         <div class="settings-row-header">
           <div class="settings-info">
+            <strong>Pending Upload Cleanup</strong>
+            <p>
+              Deletes profile photos / verification docs left in Cloudinary's <code>_pending</code> staging folders when a
+              registration was abandoned or failed before completing. Assets still referenced by a live user document are
+              always skipped, regardless of age.
+            </p>
+          </div>
+          <div class="form-check form-switch settings-toggle">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="pendingUploadAutoDeleteEnabled"
+              [(ngModel)]="settings.pendingUploadAutoDeleteEnabled"
+            >
+            <label class="form-check-label" for="pendingUploadAutoDeleteEnabled">
+              {{ settings.pendingUploadAutoDeleteEnabled ? 'On' : 'Off' }}
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Delete pending uploads after</span>
+            <div style="max-width: 220px;">
+              <input
+                class="form-control form-control-sm"
+                type="number"
+                min="1"
+                max="2160"
+                [(ngModel)]="settings.pendingUploadAutoDeleteHours"
+                [disabled]="!settings.pendingUploadAutoDeleteEnabled"
+              >
+              <small class="text-light-emphasis d-block mt-1">Hours since the file was uploaded.</small>
+            </div>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled/manual run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUploadAutoDeleteLastRunAt; else pendingUploadDeleteNeverRun">
+                {{ pendingUploadAutoDeleteLastRunAt | date:'medium' }}
+                - Deleted {{ pendingUploadAutoDeleteLastRunCount }} upload(s)
+                <span *ngIf="pendingUploadAutoDeleteLastRunBy"> by {{ pendingUploadAutoDeleteLastRunBy }}</span>
+              </ng-container>
+              <ng-template #pendingUploadDeleteNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Actions</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-light" type="button" (click)="previewPendingUploadCleanup()" [disabled]="pendingUploadCleanupPreviewLoading">
+                {{ pendingUploadCleanupPreviewLoading ? 'Checking...' : 'Preview (dry run)' }}
+              </button>
+              <button class="btn btn-sm btn-outline-warning" type="button" (click)="runPendingUploadCleanupNow()" [disabled]="pendingUploadCleanupRunning || !settings.pendingUploadAutoDeleteEnabled" [title]="!settings.pendingUploadAutoDeleteEnabled ? 'Turn this on and save settings first' : ''">
+                {{ pendingUploadCleanupRunning ? 'Deleting...' : 'Run Now' }}
+              </button>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="pendingUploadCleanupMessage">
+            <span class="condition-name">Latest result</span>
+            <small class="text-light-emphasis">{{ pendingUploadCleanupMessage }}</small>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3" *ngIf="pendingUploadCleanupPreview?.byFolder?.length">
+          <table class="table table-sm table-dark align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Folder</th>
+                <th>Type</th>
+                <th>Found (older than cutoff)</th>
+                <th>Still referenced (would skip)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of pendingUploadCleanupPreview.byFolder">
+                <td>{{ row.prefix }}</td>
+                <td>{{ row.resourceType }}</td>
+                <td>{{ row.found }}</td>
+                <td>{{ row.stillReferenced }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
             <strong>Pending Email Verification Report</strong>
             <p>
               Tracks users still pending with unverified email after 7 days. This is report-only and does not delete or modify users.

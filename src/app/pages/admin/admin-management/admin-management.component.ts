@@ -387,6 +387,8 @@ export class AdminManagementComponent implements OnInit {
     brandRequireMobileVerified: false,
     pendingUserAutoDeleteEnabled: false,
     pendingUserAutoDeleteDays: 45,
+    pendingUploadAutoDeleteEnabled: false,
+    pendingUploadAutoDeleteHours: 48,
     campaignApprovalMode: 'manual',
     collaborationApprovalMode: 'manual',
     paymentGatewayMode: 'razorpay_fallback',
@@ -447,6 +449,13 @@ export class AdminManagementComponent implements OnInit {
   pendingUserAutoDeleteLastRunAt: string | null = null;
   pendingUserAutoDeleteLastRunCount = 0;
   pendingUserAutoDeleteLastRunBy = '';
+  pendingUploadAutoDeleteLastRunAt: string | null = null;
+  pendingUploadAutoDeleteLastRunCount = 0;
+  pendingUploadAutoDeleteLastRunBy = '';
+  pendingUploadCleanupPreviewLoading = false;
+  pendingUploadCleanupPreview: any = null;
+  pendingUploadCleanupRunning = false;
+  pendingUploadCleanupMessage = '';
   pendingUnverifiedReportLoading = false;
   pendingUnverifiedReport: any = null;
   pendingUnverifiedReportLastRunAt: string | null = null;
@@ -739,6 +748,17 @@ export class AdminManagementComponent implements OnInit {
             ? data.pendingUserAutoDeleteLastRunCount
             : 0;
         this.pendingUserAutoDeleteLastRunBy = String(data?.pendingUserAutoDeleteLastRunBy || '');
+        this.settings.pendingUploadAutoDeleteEnabled = data?.pendingUploadAutoDeleteEnabled === true;
+        this.settings.pendingUploadAutoDeleteHours =
+          typeof data?.pendingUploadAutoDeleteHours === 'number' && data.pendingUploadAutoDeleteHours > 0
+            ? Math.floor(data.pendingUploadAutoDeleteHours)
+            : 48;
+        this.pendingUploadAutoDeleteLastRunAt = data?.pendingUploadAutoDeleteLastRunAt || null;
+        this.pendingUploadAutoDeleteLastRunCount =
+          typeof data?.pendingUploadAutoDeleteLastRunCount === 'number'
+            ? data.pendingUploadAutoDeleteLastRunCount
+            : 0;
+        this.pendingUploadAutoDeleteLastRunBy = String(data?.pendingUploadAutoDeleteLastRunBy || '');
         this.pendingUnverifiedReportLastRunAt = data?.pendingUnverifiedReportLastRunAt || null;
         this.pendingUnverifiedReportLastRunCount =
           typeof data?.pendingUnverifiedReportLastRunCount === 'number'
@@ -820,6 +840,54 @@ export class AdminManagementComponent implements OnInit {
         },
         error: () => {
           this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  previewPendingUploadCleanup() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUploadCleanupPreviewLoading = true;
+    this.pendingUploadCleanupMessage = '';
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/preview`, headers)
+      .subscribe({
+        next: (res) => {
+          this.pendingUploadCleanupPreview = res?.data ?? res;
+          this.pendingUploadCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUploadCleanupMessage = err?.error?.message || 'Preview failed.';
+          this.pendingUploadCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  runPendingUploadCleanupNow() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUploadCleanupRunning = true;
+    this.pendingUploadCleanupMessage = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/run`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.pendingUploadCleanupMessage = data?.skipped
+            ? `Skipped: ${data.reason || 'disabled in settings'}`
+            : `Deleted ${data?.totalDeleted || 0} orphaned upload(s)` +
+              (data?.totalSkippedInUse ? `, skipped ${data.totalSkippedInUse} still-referenced asset(s)` : '') + '.';
+          this.pendingUploadCleanupRunning = false;
+          this.pendingUploadCleanupPreview = null;
+          this.loadSettings();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUploadCleanupMessage = err?.error?.message || 'Cleanup run failed.';
+          this.pendingUploadCleanupRunning = false;
           this.cdr.detectChanges();
         },
       });
