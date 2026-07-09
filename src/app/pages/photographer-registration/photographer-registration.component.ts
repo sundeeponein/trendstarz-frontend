@@ -696,9 +696,29 @@ export class PhotographerRegistrationComponent implements OnInit {
     }
 
     this.submitted = true;
-    if (this.form.invalid) return;
-    if (!this.profileImagePreview) return;
-    if (!this.platformsValid) return;
+    if (!this.hasSelectedSkills || !this.hasSelectedPricing || !this.platformsValid) {
+      this.registrationError = 'Please complete the required Social Media & Skills details in Step 2.';
+      this.currentStep = 2;
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      if (!this.profileImagePreview) {
+        this.registrationError = 'Profile photo is required.';
+        this.currentStep = 1;
+      } else {
+        this.registrationError = 'Please complete all required fields.';
+      }
+      this.cdr.detectChanges();
+      return;
+    }
+    if (!this.profileImagePreview) {
+      this.registrationError = 'Profile photo is required.';
+      this.currentStep = 1;
+      this.cdr.detectChanges();
+      return;
+    }
     this.submitting = true;
     this.cdr.detectChanges();
     this.step2Complete = true;

@@ -27,6 +27,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { atLeastOneContactRequired } from '../influencer-registration/influencer-registration.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { SessionService } from '../../core/session.service';
@@ -554,7 +555,7 @@ export class InfluencerProfileComponent implements OnInit {
         whatsapp: [{ value: false, disabled: true }],
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }]
-      }),
+      }, { validators: [atLeastOneContactRequired] }),
       collaborationAvailability: this.fb.group({
         enabled: [{ value: false, disabled: true }],
         collaborationTypes: [{ value: [], disabled: true }],
@@ -1260,10 +1261,20 @@ export class InfluencerProfileComponent implements OnInit {
       if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
         this.registrationError = 'Profile image is required.';
       } else if (this.registrationForm.invalid) {
+        this.registrationForm.markAllAsTouched();
         this.registrationError = 'Please complete all required fields before saving.';
         if (!this.computeStepComplete(1)) this.currentStep = 1;
         else if (!this.computeStepComplete(2)) this.currentStep = 2;
+        else if (!this.computeStepComplete(3)) this.currentStep = 3;
       }
+      this.cd.detectChanges();
+      return;
+    }
+    if (this.registrationForm.get('professionalStatus')?.value && !(this.registrationForm.get('creatorTypes')?.value?.length > 0)) {
+      this.registrationForm.get('creatorTypes')?.markAsTouched();
+      this.registrationError = 'Please select your creator type.';
+      this.currentStep = 2;
+      this.step2Attempted = true;
       this.cd.detectChanges();
       return;
     }

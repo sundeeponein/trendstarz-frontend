@@ -1062,7 +1062,26 @@ export class PhotographerProfileComponent implements OnInit {
 
   async onSave() {
     this.submitted = true;
-    if (!this.isEditMode || this.form.invalid || this.saving) return;
+    if (this.saving || !this.isEditMode) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      if (!this.step1Complete) this.currentStep = 1;
+      else if (!this.step2Complete) this.currentStep = 2;
+      else this.currentStep = 3;
+      this.toast.error('Please complete all required fields.');
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.hasContactVisibility) {
+      const c = this.form.get('contact')?.value || {};
+      if (!(c.whatsapp || c.email || c.call)) {
+        this.form.get('contact')?.markAsTouched();
+        this.currentStep = 3;
+        this.toast.error('Please select at least one contact option.');
+        this.cdr.detectChanges();
+        return;
+      }
+    }
     if (this.selectedPlatforms().length > 0 && !this.platformsValid) {
       this.toast.error('Please select at least one content type and enter a starting rate.');
       this.cdr.detectChanges();

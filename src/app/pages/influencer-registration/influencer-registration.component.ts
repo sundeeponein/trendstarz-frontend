@@ -531,12 +531,14 @@ export class InfluencerRegistrationComponent implements OnInit {
       const f = this.registrationForm;
       const isProfessional = !!f.get('professionalStatus')?.value;
       const creatorTypeSelected = (f.get('creatorTypes')?.value?.length ?? 0) > 0;
+      const verificationConsentOk = this.verificationDocuments.length === 0 || !!f.get('verificationDisclaimerAccepted')?.value;
       const detailsValid = !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
         f.get('languages')?.valid &&
         f.get('categories')?.valid &&
-        (!isProfessional || creatorTypeSelected)
+        (!isProfessional || creatorTypeSelected) &&
+        verificationConsentOk
       );
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
@@ -687,6 +689,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+        this.showProfessionalOptional = true;
         return false;
       }
       this.verificationConsentError = '';
@@ -935,9 +938,24 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.duplicateUsernameError = ''; this.duplicateEmailError = ''; this.duplicatePhoneError = '';
 
     if (this.registrationForm.invalid || !this.profileImagePreview) {
+      this.registrationForm.markAllAsTouched();
+      this.refreshStepCompletion();
       if (this.registrationForm.get('username')?.hasError('usernameTaken'))
         this.usernameError = 'Username already exists. Please choose another.';
-      if (!this.profileImagePreview) this.registrationError = 'Profile image is required.';
+      if (!this.profileImagePreview) {
+        this.registrationError = 'Profile image is required.';
+        this.currentStep = 1;
+      } else if (!this.step1Complete) {
+        this.registrationError = 'Please complete all required fields in Profile.';
+        this.currentStep = 1;
+      } else if (!this.step2Complete) {
+        this.registrationError = 'Please complete all required fields in Social Media.';
+        this.currentStep = 2;
+        this.step2Attempted = true;
+      } else {
+        this.registrationError = 'Please complete all required fields.';
+        this.currentStep = 3;
+      }
       return;
     }
 
@@ -950,6 +968,11 @@ export class InfluencerRegistrationComponent implements OnInit {
     }
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+      this.registrationForm.get('verificationDisclaimerAccepted')?.markAsTouched();
+      this.showProfessionalOptional = true;
+      this.currentStep = 2;
+      this.step2Attempted = true;
+      this.refreshStepCompletion();
       this.isSubmitting = false;
       return;
     }

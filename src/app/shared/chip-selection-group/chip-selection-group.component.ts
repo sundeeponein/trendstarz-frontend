@@ -16,7 +16,7 @@ export class ChipSelectionGroupComponent {
   @Input() selected: string[] = [];
   @Input() max = 0;
   @Input() readonly = false;
-  @Input() emptyText = '';
+  @Input() emptyText = 'Loading options…';
   @Input() valueKey = '';
   @Input() labelKey = 'name';
   @Input() compact = false;

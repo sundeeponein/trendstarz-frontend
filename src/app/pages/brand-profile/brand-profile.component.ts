@@ -25,6 +25,7 @@ import {
 } from '../../services/profile-verification.service';
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { atLeastOneContactRequired } from '../brand-registration/brand-registration.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
@@ -494,7 +495,7 @@ export class BrandProfileComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false]
-      }),
+      }, { validators: [atLeastOneContactRequired] }),
       payout: this.fb.group({
         upiId: [''],
         mobile: [''],
@@ -1113,9 +1114,11 @@ export class BrandProfileComponent implements OnInit {
       if (!this.hasBrandLogo()) {
         this.registrationError = 'Brand logo is required.';
       } else if (this.registrationForm.invalid) {
+        this.registrationForm.markAllAsTouched();
         this.registrationError = 'Please complete all required fields before saving.';
         if (!this.computeStepComplete(1)) this.currentStep = 1;
         else if (!this.computeStepComplete(2)) this.currentStep = 2;
+        else if (!this.computeStepComplete(3)) this.currentStep = 3;
       }
       this.cd.detectChanges();
       return;

@@ -282,8 +282,9 @@
                     </div>
                   </div>
 
-                  <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value && creatorTypeOptions.length">
+                  <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
                     <app-chip-selection-group
+                      *ngIf="creatorTypeOptions.length; else loadingCreatorTypes"
                       label="Creator Type / Specialty"
                       sublabel="Select your creator type"
                       [required]="true"
@@ -294,7 +295,10 @@
                       selectionMode="single"
                       (selectedChange)="setChipValues('creatorTypes', $event)">
                     </app-chip-selection-group>
-                    <div *ngIf="(step2Attempted || registrationForm.get('creatorTypes')?.touched) && registrationForm.get('professionalStatus')?.value && !registrationForm.get('creatorTypes')?.value?.length" class="text-danger mt-1">Please select your creator type.</div>
+                    <ng-template #loadingCreatorTypes>
+                      <div class="text-muted small">Loading creator type options…</div>
+                    </ng-template>
+                    <div *ngIf="(step2Attempted || registrationForm.get('creatorTypes')?.touched) && !registrationForm.get('creatorTypes')?.value?.length" class="text-danger mt-1">Please select your creator type.</div>
                   </div>
 
                   <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value">
@@ -654,7 +658,7 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview || isSubmitting">
+            <button type="submit" class="btn btn-primary" [disabled]="!profileImagePreview || isSubmitting">
               {{ isSubmitting ? 'Registering...' : 'Complete Registration' }}
             </button>
           </div>
@@ -671,7 +675,7 @@
             [disabled]="registrationForm.get('location.state')?.invalid || registrationForm.get('location.district')?.invalid || registrationForm.get('languages')?.invalid || registrationForm.get('categories')?.invalid || selectedPlatforms().length === 0">
             <i class="bi bi-arrow-right"></i><span>Next</span>
           </button>
-          <button *ngIf="currentStep === 3" type="submit" class="btn btn-primary" [disabled]="registrationForm.invalid || !profileImagePreview || isSubmitting">
+          <button *ngIf="currentStep === 3" type="submit" class="btn btn-primary" [disabled]="!profileImagePreview || isSubmitting">
             <i class="bi bi-person-plus-fill"></i><span>{{ isSubmitting ? 'Registering...' : 'Register' }}</span>
           </button>
         </app-mobile-bottom-actions>
