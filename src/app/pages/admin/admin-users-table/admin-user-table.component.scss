@@ -289,6 +289,34 @@
   font-size: 0.9rem;
 }
 
+.db-id-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+
+  code {
+    color: #4a5468;
+    background: #f1f3f6;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+}
+
+.btn-copy-id {
+  border: 1px solid #d7dbe3;
+  background: #fff;
+  color: #4a5468;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f1f3f6;
+  }
+}
+
 .contact-line {
   display: flex;
   align-items: center;

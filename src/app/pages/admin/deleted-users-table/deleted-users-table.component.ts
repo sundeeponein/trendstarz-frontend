@@ -302,6 +302,7 @@ export class DeletedUsersTableComponent implements OnInit {
     if (!query) return true;
     const text = [
       user?._id,
+      user?.publicId,
       user?.name,
       user?.brandName,
       user?.username,

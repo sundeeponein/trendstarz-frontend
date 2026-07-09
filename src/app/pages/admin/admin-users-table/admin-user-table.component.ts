@@ -511,6 +511,43 @@ export class AdminUserTableComponent implements OnInit {
     return user?.publicId || '';
   }
 
+  copiedDatabaseId = '';
+
+  // The Mongo _id, not the cosmetic INF-prefixed publicId — this is also the
+  // Cloudinary folder name for the user's uploads, so admins can paste it
+  // straight into Cloudinary's own media library search.
+  copyDatabaseId(id: string): void {
+    const text = String(id || '').trim();
+    if (!text) return;
+    const done = () => {
+      this.copiedDatabaseId = text;
+      this.cd.detectChanges();
+      setTimeout(() => {
+        this.copiedDatabaseId = '';
+        this.cd.detectChanges();
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyDatabaseId(text, done));
+      return;
+    }
+    this.fallbackCopyDatabaseId(text, done);
+  }
+
+  private fallbackCopyDatabaseId(text: string, done: () => void): void {
+    if (typeof document === 'undefined') return;
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    done();
+  }
+
   getUserStatusKey(user: any): 'active' | 'pending' | 'suspended' | 'rejected' | 'disabled' | 'other' {
     if (this.isDeletedUser(user)) return 'disabled';
     const status = String(user?.status || '').trim().toLowerCase();
@@ -1799,6 +1836,7 @@ export class AdminUserTableComponent implements OnInit {
     if (!query) return true;
     const text = [
       user?._id,
+      user?.publicId,
       user?.name,
       user?.brandName,
       user?.username,

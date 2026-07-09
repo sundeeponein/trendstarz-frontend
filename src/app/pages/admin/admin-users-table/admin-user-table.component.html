@@ -314,6 +314,12 @@
             <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getUserStatusKey(selectedUser) === 'active'">| {{ getSelectedUserStatus() }}</span></h4>
             <div class="user-sub">{{ getUserHandle(selectedUser) }}</div>
             <div class="user-sub" *ngIf="getUserPublicId(selectedUser)">{{ getUserPublicId(selectedUser) }}</div>
+            <div class="user-sub db-id-row" *ngIf="selectedUser?._id" title="Also the Cloudinary folder name for this user's uploads">
+              DB ID: <code>{{ selectedUser._id }}</code>
+              <button type="button" class="btn-copy-id" (click)="copyDatabaseId(selectedUser._id)">
+                {{ copiedDatabaseId === selectedUser._id ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
             <div class="tag-row" *ngIf="getUserTags(selectedUser).length">
               <span class="badge rounded-pill" *ngFor="let tag of getUserTags(selectedUser)" [ngClass]="getTagBadgeClass(tag)">{{ tag }}</span>
             </div>
