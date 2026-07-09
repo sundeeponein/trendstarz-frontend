@@ -668,6 +668,10 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     this.submitted = true;
+    // Some platform sub-fields (content-type checkbox/price) mutate platformForms directly
+    // without going through the reactive form, so cached step-complete flags can lag behind
+    // the live data. Refresh first so isStepComplete() below never reads a stale value.
+    this.refreshStepCompletion();
     if (this.currentStep === 1) {
       ['name', 'username', 'phoneNumber', 'email', 'dateOfBirth', 'password', 'confirmPassword'].forEach(f =>
         this.registrationForm.get(f)?.markAsTouched());

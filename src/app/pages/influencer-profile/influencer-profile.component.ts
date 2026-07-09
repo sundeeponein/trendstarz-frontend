@@ -909,6 +909,10 @@ export class InfluencerProfileComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     this.submitted = true;
+    // Content-type checkbox/price mutate platformForms directly (outside the reactive form),
+    // so cached step-complete flags can lag behind the live data. Refresh first so
+    // isStepComplete() below never reads a stale value.
+    this.refreshStepCompletion();
 
     if (this.currentStep === 1) {
       const fields = ['name', 'username', 'phoneNumber', 'email', 'dateOfBirth'];

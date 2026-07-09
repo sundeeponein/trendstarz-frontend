@@ -374,9 +374,9 @@
                         <div class="content-types-list">
                           <ng-container *ngFor="let ct of platform.contentTypes">
                             <div class="content-type-item" *ngIf="ct.visible">
-                              <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" />
+                              <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" (ngModelChange)="refreshStepCompletion()" />
                               <span>{{ ct.name }}</span>
-                              <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" />
+                              <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" (ngModelChange)="refreshStepCompletion()" />
                             </div>
                           </ng-container>
                         </div>
