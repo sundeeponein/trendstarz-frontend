@@ -12,8 +12,11 @@ export interface TrackingLink {
   contentType: string;
   destinationUrl: string;
   destinationType: string;
+  destinationRole?: string;
   moduleType: string;
 }
+
+export type ReferralTargetRole = 'brand' | 'influencer' | 'photographer';
 
 export interface TrackingLinksAdminAnalytics {
   overview: { totalLinks: number; totalClicks: number; totalUniqueClicks: number };
@@ -42,6 +45,22 @@ export interface TrackingLinksAdminAnalytics {
     contentType: string;
     createdAt: string;
   }[];
+  referralLinks: {
+    code: string;
+    hostId: string;
+    hostType: string;
+    hostName: string;
+    destinationRole: string;
+    clickCount: number;
+    uniqueClicks: number;
+    signups: number;
+    premiumPurchases: number;
+    premiumRevenue: number;
+    campaignPayments: number;
+    campaignPaymentRevenue: number;
+    conversionRate: number;
+    createdAt: string;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -52,6 +71,13 @@ export class TrackingLinksApiService {
   getOrCreateTrackingLink(inviteId: string): Observable<TrackingLink> {
     return this.http
       .get<{ success: boolean; data: TrackingLink }>(`${environment.apiBaseUrl}/campaign-invites/${inviteId}/tracking-link`)
+      .pipe(map((res) => res.data));
+  }
+
+  /** Get-or-create the current user's self-service referral link for inviting new signups of `targetRole`. */
+  getOrCreateReferralLink(targetRole: ReferralTargetRole): Observable<TrackingLink> {
+    return this.http
+      .get<{ success: boolean; data: TrackingLink }>(`${environment.apiBaseUrl}/referral-link?targetRole=${targetRole}`)
       .pipe(map((res) => res.data));
   }
 

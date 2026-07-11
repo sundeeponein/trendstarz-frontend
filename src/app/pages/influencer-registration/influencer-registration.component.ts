@@ -295,6 +295,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   isSubmitting = false;
   stepTransitioning = false;
   signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
+  trackingLinkCode = '';
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -321,6 +322,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.route.snapshot.queryParamMap,
       typeof window !== 'undefined' ? window : undefined,
     );
+    this.trackingLinkCode = this.route.snapshot.queryParamMap.get('tlc') || '';
 
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
@@ -1053,6 +1055,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       contact: raw.contact
     };
     payload.signupAttribution = this.signupAttribution;
+    payload.trackingLinkCode = this.trackingLinkCode;
 
     this.configService.registerInfluencer(payload).subscribe({
       next: async () => {

@@ -131,6 +131,7 @@ export class BrandRegistrationComponent implements OnInit {
   // when the user retries onSubmit after a backend error (e.g., duplicate email).
   uploadedBrandLogo: { url: string; public_id: string } | null = null;
   signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
+  trackingLinkCode = '';
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -155,6 +156,7 @@ export class BrandRegistrationComponent implements OnInit {
       this.route.snapshot.queryParamMap,
       typeof window !== 'undefined' ? window : undefined,
     );
+    this.trackingLinkCode = this.route.snapshot.queryParamMap.get('tlc') || '';
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
@@ -987,6 +989,7 @@ export class BrandRegistrationComponent implements OnInit {
       contact: raw.contact
     };
     payload.signupAttribution = this.signupAttribution;
+    payload.trackingLinkCode = this.trackingLinkCode;
     delete payload.googleMapAddress;
 
     this.configService.registerBrand(payload).subscribe({

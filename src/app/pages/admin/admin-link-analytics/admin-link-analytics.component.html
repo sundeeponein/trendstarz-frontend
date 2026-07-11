@@ -63,6 +63,10 @@
         Zero-activity links
         <span class="tab-badge">{{ d.zeroActivity.length }}</span>
       </button>
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'referral'" (click)="activeTab = 'referral'">
+        Referral links
+        <span class="tab-badge">{{ d.referralLinks.length }}</span>
+      </button>
     </div>
 
     <section class="panel" *ngIf="activeTab === 'top'">
@@ -149,6 +153,44 @@
         </table>
       </div>
       <ng-template #noZero><p class="empty">Every tracked link has at least one click.</p></ng-template>
+    </section>
+
+    <section class="panel" *ngIf="activeTab === 'referral'">
+      <h3>Referral links</h3>
+      <p class="hint">Self-service "share your link" links — clicks, signups, and what those new signups went on to pay for.</p>
+      <div class="table-wrap" *ngIf="d.referralLinks.length; else noReferral">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Host</th>
+              <th>Invites</th>
+              <th>Clicks</th>
+              <th>Unique</th>
+              <th>Signups</th>
+              <th>Conv. rate</th>
+              <th>Premium</th>
+              <th>Campaign payments</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.referralLinks">
+              <td class="mono">{{ row.code }}</td>
+              <td>{{ row.hostName || row.hostType }}</td>
+              <td>{{ row.destinationRole }}</td>
+              <td class="num">{{ row.clickCount }}</td>
+              <td class="num">{{ row.uniqueClicks }}</td>
+              <td class="num">{{ row.signups }}</td>
+              <td class="num">{{ formatPercent(row.conversionRate) }}</td>
+              <td class="num">{{ row.premiumPurchases }} ({{ formatRevenue(row.premiumRevenue) }})</td>
+              <td class="num">{{ row.campaignPayments }} ({{ formatRevenue(row.campaignPaymentRevenue) }})</td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noReferral><p class="empty">No referral links shared yet.</p></ng-template>
     </section>
   </ng-container>
 </div>

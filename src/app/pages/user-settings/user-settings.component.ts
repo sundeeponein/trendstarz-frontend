@@ -4,7 +4,8 @@ import { RouterLink } from '@angular/router';
 import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
-import { buildReferralLink, copyTextToClipboard } from '../../shared/referral-link.util';
+import { copyTextToClipboard } from '../../shared/referral-link.util';
+import { TrackingLinksApiService, ReferralTargetRole } from '../../shared/tracking-links/tracking-links-api.service';
 
 @Component({
   selector: 'app-user-settings',
@@ -34,6 +35,7 @@ export class UserSettingsComponent implements OnInit {
     private readonly push: PushNotificationService,
     private readonly session: SessionService,
     private readonly config: ConfigService,
+    private readonly trackingLinksApi: TrackingLinksApiService,
   ) {}
 
   ngOnInit(): void {
@@ -42,7 +44,9 @@ export class UserSettingsComponent implements OnInit {
     this.lastOpenedAt = user?.lastOpenedAt || null;
     const role = this.normalizeRole(user?.role);
     if (role !== 'admin') {
-      this.referralLink = buildReferralLink(role, user?.username);
+      this.trackingLinksApi.getOrCreateReferralLink(role as ReferralTargetRole).subscribe((link) => {
+        this.referralLink = link.url;
+      });
     }
     this.refreshPushState();
     this.config.getUnreadNotificationsCount().subscribe((count) => {

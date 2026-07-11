@@ -803,6 +803,7 @@ export class PhotographerRegistrationComponent implements OnInit {
         this.route.snapshot.queryParamMap,
         typeof window !== 'undefined' ? window : undefined,
       ),
+      trackingLinkCode: this.route.snapshot.queryParamMap.get('tlc') || '',
     };
 
     this.pendingVerificationEmail = v.email || '';

@@ -15,7 +15,7 @@ export class AdminLinkAnalyticsComponent implements OnInit {
   loading = true;
   error = '';
   data: TrackingLinksAdminAnalytics | null = null;
-  activeTab: 'top' | 'byCampaign' | 'zero' = 'top';
+  activeTab: 'top' | 'byCampaign' | 'zero' | 'referral' = 'top';
 
   /** Populated from the first (unfiltered) load and kept stable across filtered reloads. */
   campaignOptions: { id: string; label: string; title?: string }[] = [];
@@ -64,6 +64,15 @@ export class AdminLinkAnalyticsComponent implements OnInit {
 
   formatDate(value: string | null | undefined): string {
     return value ? new Date(value).toLocaleString() : '—';
+  }
+
+  /** Amounts are stored in paise. */
+  formatRevenue(paise: number | null | undefined): string {
+    return `₹${((paise || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+  }
+
+  formatPercent(rate: number | null | undefined): string {
+    return `${((rate || 0) * 100).toFixed(1)}%`;
   }
 
   campaignIdLabel(row: { campaignNumber?: number; campaignId: string }): string {
