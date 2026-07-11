@@ -147,6 +147,19 @@
           </p>
         </div>
 
+        <div class="field-group">
+          <label class="field-label">
+            Script / Talking Points <span class="field-optional">Optional</span>
+            <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
+          </label>
+          <textarea formControlName="script" class="field-textarea field-textarea--campaign-description" rows="4"
+                    placeholder="Add a suggested Reel / Short script or key talking points for creators. Creators can adapt it to their own style and language."></textarea>
+          <div class="field-contact-warning" *ngIf="containsContactInfo(form.get('script')?.value)">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accepted/confirmed.
+          </div>
+        </div>
+
         <div class="field-group" *ngIf="showShootLocationBlock">
           <label class="field-label">{{ shootLocationTypeLabel }} <span class="required">*</span></label>
           <select formControlName="shootLocationType" class="field-input">
@@ -1123,7 +1136,7 @@
               [class.inf-row--selected]="selectedInfluencerIds.has(getRecipientId(inf))"
               [class.inf-row--invited]="isInfluencerInvited(inf)"
               [class.inf-row--disabled]="isInfluencerInvited(inf) || isInfluencerDeclined(inf) || (!selectedInfluencerIds.has(getRecipientId(inf)) && !canSelectMoreInfluencers())"
-              (click)="!isInfluencerInvited(inf) && !isInfluencerDeclined(inf) && (selectedInfluencerIds.has(getRecipientId(inf)) || canSelectMoreInfluencers()) && toggleInfluencerSelect(getRecipientId(inf))">
+              (click)="!isInfluencerInvited(inf) && !isInfluencerDeclined(inf) && toggleInfluencerSelect(getRecipientId(inf))">
               <app-user-avatar
                 [name]="getInviteRecipientName({ photographerId: inf, recipientRole: inviteRecipientRole }) || inf.fullName || inf.name || inf.username || ''"
                 [src]="getInfluencerAvatar(inf)"

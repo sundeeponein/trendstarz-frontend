@@ -10,6 +10,7 @@ export interface Campaign {
   brandId: string;
   title: string;
   description?: string;
+  script?: string;
   campaignType?:
     | 'paid_collab'
     | 'product'

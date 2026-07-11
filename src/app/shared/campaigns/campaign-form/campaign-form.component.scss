@@ -1534,6 +1534,14 @@ form {
   i { font-size: 0.68rem; }
 }
 
+.field-optional {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #9a9aa8;
+  vertical-align: middle;
+}
+
 .lock-note {
   display: flex;
   align-items: center;

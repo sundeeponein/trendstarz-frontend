@@ -395,6 +395,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
             const patch: any = {
               title: newCampaign.title || '',
               description: newCampaign.description || '',
+              script: newCampaign.script || '',
               campaignType: newCampaign.campaignType || 'paid_collab',
               inviteRecipientRole: newCampaign.inviteRecipientRole || 'influencer',
               campaignMode: newCampaign.campaignMode || 'invite_only',
@@ -488,6 +489,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       title: [this.campaign?.title || '', [Validators.required, Validators.minLength(3)]],
       brandName: [this.currentBrandName],
       description: [this.campaign?.description || ''],
+      script: [this.campaign?.script || ''],
       campaignType: [(this.campaign as any)?.campaignType || 'paid_collab', [Validators.required]],
       inviteRecipientRole: [
         this.isPhotographerCreator
@@ -794,6 +796,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     // Fields additionally locked once any influencer has accepted
     const acceptanceLockedFields = [
       'description',
+      'script',
       'inviteBenefits', 'payToJoinBenefits', 'payToJoinInstructions',
       'productDescription', 'timelineStart',
       'venueName', 'venueAddress', 'venueCity', 'venueDistrict',

@@ -141,6 +141,19 @@
             </ng-container>
           </div>
 
+          <!-- Script / Talking Points -->
+          <div class="cdm-section" *ngIf="campaignScriptSafe">
+            <div class="cdm-section__label">SCRIPT / TALKING POINTS</div>
+            <div class="cdm-brief-box" style="white-space: pre-wrap;" [innerText]="campaignScriptSafe"></div>
+            <div class="cdm-creator-tip" *ngIf="isCreatorViewer">
+              <i class="bi bi-lightbulb-fill"></i>
+              <div>
+                <strong>Creator Tip:</strong>
+                Use this script as a guide. Speak naturally in your own style and language while keeping the key campaign message.
+              </div>
+            </div>
+          </div>
+
           <!-- Price negotiation trail (user view, only when counter offer was made) -->
           <div class="cdm-section" *ngIf="!adminReview && !isPending && hasCounterOfferFlow && userNegotiationTrailText">
             <div class="cdm-section__label">PRICE NEGOTIATION</div>

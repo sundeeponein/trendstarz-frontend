@@ -593,6 +593,23 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return this.formatBriefText(this.campaignDescription);
   }
 
+  get campaignScript(): string { return this.campaign?.script || ''; }
+  /** Script cleaned of literal "undefined" / empty strings, formatted for display */
+  get campaignScriptSafe(): string {
+    const raw = String(this.campaignScript || '').trim();
+    if (!raw || raw === 'undefined' || raw === 'null') return '';
+    return this.campaignScriptFormatted;
+  }
+  get campaignScriptFormatted(): string {
+    return this.formatBriefText(this.campaignScript);
+  }
+
+  /** Only creators (influencer/photographer) see the "adapt to your own style" tip — not the brand previewing their own campaign. */
+  get isCreatorViewer(): boolean {
+    const role = String(this.session.getUser()?.role || '').toLowerCase();
+    return role.includes('influencer') || role.includes('photographer');
+  }
+
   private formatBriefText(value: string): string {
     const raw = String(value || '').trim();
     if (!raw || raw === 'undefined' || raw === 'null') return '';
