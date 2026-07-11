@@ -2634,6 +2634,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     // For tier_filtered_open publish immediately; otherwise save as draft
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.toast.error('Some fields need attention before this can be saved. Please check the highlighted fields above.');
       return;
     }
     this.uploading = true;
@@ -2706,6 +2707,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     if (this.saving || this.uploading || this.submitLocked) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.toast.error('Some fields need attention before this can be saved. Please check the highlighted fields above.');
       return;
     }
     const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
