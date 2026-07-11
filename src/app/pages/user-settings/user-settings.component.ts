@@ -4,13 +4,13 @@ import { RouterLink } from '@angular/router';
 import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
-import { copyTextToClipboard } from '../../shared/referral-link.util';
-import { TrackingLinksApiService, ReferralTargetRole } from '../../shared/tracking-links/tracking-links-api.service';
+import { ReferralTargetRole } from '../../shared/tracking-links/tracking-links-api.service';
+import { ReferralLinkCardComponent } from '../../shared/referral-link-card/referral-link-card.component';
 
 @Component({
   selector: 'app-user-settings',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ReferralLinkCardComponent],
   templateUrl: './user-settings.component.html',
   styleUrls: ['./user-settings.component.scss'],
 })
@@ -28,14 +28,12 @@ export class UserSettingsComponent implements OnInit {
   unreadCount = 0;
   lastLoginAt: string | null = null;
   lastOpenedAt: string | null = null;
-  referralLink = '';
-  referralLinkCopied = false;
+  referralRole: ReferralTargetRole | null = null;
 
   constructor(
     private readonly push: PushNotificationService,
     private readonly session: SessionService,
     private readonly config: ConfigService,
-    private readonly trackingLinksApi: TrackingLinksApiService,
   ) {}
 
   ngOnInit(): void {
@@ -43,11 +41,7 @@ export class UserSettingsComponent implements OnInit {
     this.lastLoginAt = user?.lastLoginAt || null;
     this.lastOpenedAt = user?.lastOpenedAt || null;
     const role = this.normalizeRole(user?.role);
-    if (role !== 'admin') {
-      this.trackingLinksApi.getOrCreateReferralLink(role as ReferralTargetRole).subscribe((link) => {
-        this.referralLink = link.url;
-      });
-    }
+    this.referralRole = role !== 'admin' ? (role as ReferralTargetRole) : null;
     this.refreshPushState();
     this.config.getUnreadNotificationsCount().subscribe((count) => {
       this.unreadCount = Number(count || 0);
@@ -133,13 +127,6 @@ export class UserSettingsComponent implements OnInit {
     this.pushPermission = this.push.browserPermission;
     this.pushPreference = this.push.localPreference;
     this.pushActive = await this.push.hasActiveSubscription();
-  }
-
-  copyReferralLink(): void {
-    if (!this.referralLink) return;
-    copyTextToClipboard(this.referralLink);
-    this.referralLinkCopied = true;
-    setTimeout(() => { this.referralLinkCopied = false; }, 2000);
   }
 
   private normalizeRole(role: any): 'brand' | 'influencer' | 'photographer' | 'admin' {
