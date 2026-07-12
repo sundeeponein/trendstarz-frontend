@@ -688,9 +688,17 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return Number.isFinite(max) && max > 0 ? max : 0;
   }
 
+  // Withdrawn/declined invites don't hold a slot — the cap represents
+  // active/consumed invitations, not historical attempts.
+  private readonly nonConsumingInviteStatuses = ['withdrawn', 'declined'];
+
+  private countActiveInvites(): number {
+    return this.invites.filter(inv => !this.nonConsumingInviteStatuses.includes(inv?.status)).length;
+  }
+
   get inviteSlotsRemaining(): number {
     if (!this.inviteSlotsLimit) return Number.MAX_SAFE_INTEGER;
-    return Math.max(this.inviteSlotsLimit - this.invites.length, 0);
+    return Math.max(this.inviteSlotsLimit - this.countActiveInvites(), 0);
   }
 
   canSelectInfluencerForInvite(id: string): boolean {
@@ -948,7 +956,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     } else {
       if (!this.canSelectInfluencerForInvite(id)) {
         const msg = this.inviteSlotsLimit
-          ? `Invite limit reached (${this.invites.length}/${this.inviteSlotsLimit}).`
+          ? `Invite limit reached (${this.countActiveInvites()}/${this.inviteSlotsLimit}).`
           : 'Invite limit reached for this campaign.';
         this.inviteError = msg;
         this.toast.error(msg);
