@@ -542,12 +542,15 @@ export class InfluencerRegistrationComponent implements OnInit {
       const isProfessional = !!f.get('professionalStatus')?.value;
       const creatorTypeSelected = (f.get('creatorTypes')?.value?.length ?? 0) > 0;
       const verificationConsentOk = this.verificationDocuments.length === 0 || !!f.get('verificationDisclaimerAccepted')?.value;
+      const collaborationEnabled = !!f.get('collaborationAvailability.enabled')?.value;
+      const collaborationTypeSelected = (f.get('collaborationAvailability.collaborationTypes')?.value?.length ?? 0) > 0;
       const detailsValid = !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
         f.get('languages')?.valid &&
         f.get('categories')?.valid &&
         (!isProfessional || creatorTypeSelected) &&
+        (!collaborationEnabled || collaborationTypeSelected) &&
         verificationConsentOk
       );
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
@@ -698,6 +701,13 @@ export class InfluencerRegistrationComponent implements OnInit {
       if (this.registrationForm.get('professionalStatus')?.value) {
         this.registrationForm.get('creatorTypes')?.markAsTouched();
         if (!(this.registrationForm.get('creatorTypes')?.value?.length > 0)) {
+          return false;
+        }
+      }
+      if (this.registrationForm.get('collaborationAvailability.enabled')?.value) {
+        this.registrationForm.get('collaborationAvailability.collaborationTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) {
+          this.registrationError = 'Please select at least one collaboration type.';
           return false;
         }
       }

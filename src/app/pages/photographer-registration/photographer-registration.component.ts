@@ -591,6 +591,10 @@ export class PhotographerRegistrationComponent implements OnInit {
       if (!this.hasSelectedSkills) return;
       if (!this.hasSelectedPricing) return;
       if (!this.platformsValid) return;
+      if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
+        this.registrationError = 'Please select a preferred collaboration type.';
+        return;
+      }
       this.step2Complete = true;
       this.submitted = false;
       this.currentStep = 3;
@@ -711,6 +715,12 @@ export class PhotographerRegistrationComponent implements OnInit {
     this.submitted = true;
     if (!this.hasSelectedSkills || !this.hasSelectedPricing || !this.platformsValid) {
       this.registrationError = 'Please complete the required Social Media & Skills details in Step 2.';
+      this.currentStep = 2;
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
+      this.registrationError = 'Please select a preferred collaboration type.';
       this.currentStep = 2;
       this.cdr.detectChanges();
       return;

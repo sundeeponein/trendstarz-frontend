@@ -1082,6 +1082,12 @@ export class PhotographerProfileComponent implements OnInit {
       this.cdr.detectChanges();
       return;
     }
+    if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
+      this.toast.error('Please select a preferred collaboration type.');
+      this.currentStep = 2;
+      this.cdr.detectChanges();
+      return;
+    }
     if (this.computedStartingPriceRupees <= 0) {
       this.toast.error('Set at least one pricing rate to calculate your starting price.');
       this.currentStep = 2;

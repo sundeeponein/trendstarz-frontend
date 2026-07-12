@@ -877,6 +877,7 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
         (!this.registrationForm.get('professionalStatus')?.value || (this.registrationForm.get('creatorTypes')?.value?.length > 0)) &&
+        (!this.registrationForm.get('collaborationAvailability.enabled')?.value || (this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) &&
         this.selectedPlatforms().length > 0
       );
     }
@@ -940,6 +941,13 @@ export class InfluencerProfileComponent implements OnInit {
       if (isProfessional) {
         this.registrationForm.get('creatorTypes')?.markAsTouched();
         if (!(this.registrationForm.get('creatorTypes')?.value?.length > 0)) return false;
+      }
+      if (this.registrationForm.get('collaborationAvailability.enabled')?.value) {
+        this.registrationForm.get('collaborationAvailability.collaborationTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) {
+          this.registrationError = 'Please select at least one collaboration type.';
+          return false;
+        }
       }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
