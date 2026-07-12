@@ -393,18 +393,12 @@ export class InfluencerRegistrationComponent implements OnInit {
     });
 
     this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
-      const catCtrl = this.registrationForm.get('influencerCategory');
-      if (isProfessional) {
-        catCtrl?.setValidators([Validators.required]);
-      } else {
+      // influencerCategory has no input field in this form (it's derived server-side from
+      // creatorTypes) — never require it here, matching the edit-profile flow's behavior.
+      if (!isProfessional) {
         this.showProfessionalOptional = false;
-        catCtrl?.clearValidators();
-        catCtrl?.setValue('');
-        catCtrl?.markAsUntouched();
-        catCtrl?.markAsPristine();
         this.registrationForm.get('expertiseArea')?.setValue('');
       }
-      catCtrl?.updateValueAndValidity();
       this.refreshStepCompletion();
     });
     
