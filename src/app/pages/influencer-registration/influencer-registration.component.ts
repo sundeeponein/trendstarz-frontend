@@ -223,6 +223,20 @@ export class InfluencerRegistrationComponent implements OnInit {
     return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
   }
 
+  /** All enabled, priced content-type rates across every selected platform. */
+  get selectedContentTypePricesRupees(): number[] {
+    return this.selectedPlatforms()
+      .flatMap(p => Object.values(this.platformForms[p._id]?.contentTypes || {}))
+      .filter((ct: any) => ct?.selected && Number(ct?.price) > 0)
+      .map((ct: any) => Number(ct.price));
+  }
+
+  /** Starting Price is always derived — never manually typed — as the lowest enabled content rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.selectedContentTypePricesRupees;
+    return prices.length ? Math.min(...prices) : 0;
+  }
+
   // --- Core properties ---
   readonly FREE_SOCIAL_PROFILE_LIMIT = 10;
   currentStep: 1 | 2 | 3 = 1;
@@ -340,7 +354,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
       location: this.fb.group({ state: ['', Validators.required], district: ['', Validators.required] }),
-      promotionalPrice: ['', Validators.required],
+      promotionalPrice: [''],
       languages: [[], Validators.required],
       categories: [[], Validators.required],
       creatorTypes: [[]],
@@ -545,7 +559,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
     if (step === 3) {
-      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+      return this.computedStartingPriceRupees > 0 && !!this.registrationForm.get('contact')?.valid;
     }
     return false;
   }
@@ -711,7 +725,6 @@ export class InfluencerRegistrationComponent implements OnInit {
       return this.isStepComplete(2);
     }
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
       return this.isStepComplete(3);
     }
@@ -962,6 +975,12 @@ export class InfluencerRegistrationComponent implements OnInit {
         this.registrationError = 'Please complete all required fields.';
         this.currentStep = 3;
       }
+      return;
+    }
+    if (this.computedStartingPriceRupees <= 0) {
+      this.registrationError = 'Set at least one content rate to calculate your starting price.';
+      this.currentStep = 2;
+      this.step2Attempted = true;
       return;
     }
 

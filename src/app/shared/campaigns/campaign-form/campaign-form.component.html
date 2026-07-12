@@ -1115,8 +1115,27 @@
               Already invited: <strong>{{ campaignInvites.length }}</strong>
             </div>
             <div class="invite-summary-list">
-              <span class="invite-summary-pill" *ngFor="let inv of campaignInvites">
+              <span class="invite-summary-pill" *ngFor="let inv of campaignInvites" [class.invite-summary-pill--withdrawn]="inv.status === 'withdrawn' || inv.status === 'declined'">
                 {{ getInviteRecipientName(inv) }}
+                <button
+                  type="button"
+                  class="invite-summary-pill__view"
+                  title="View profile & social links"
+                  (click)="openRecipientQuickView(getInviteRecipient(inv))">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button
+                  type="button"
+                  class="invite-summary-pill__withdraw"
+                  *ngIf="canWithdrawInvite(inv)"
+                  [disabled]="withdrawingInviteId === inv._id"
+                  [title]="inv.status === 'accepted' ? 'Remove this accepted creator (frees up a slot)' : 'Withdraw this invite (frees up a slot)'"
+                  (click)="withdrawCampaignInvite(inv)">
+                  <i class="bi bi-x-circle-fill"></i>
+                </button>
+                <span class="invite-summary-pill__status" *ngIf="inv.status === 'withdrawn' || inv.status === 'declined'">
+                  ({{ inv.status === 'withdrawn' ? 'Withdrawn' : 'Declined' }})
+                </span>
               </span>
             </div>
           </div>

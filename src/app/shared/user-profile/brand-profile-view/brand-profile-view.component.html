@@ -198,7 +198,10 @@
             </div>
             <div class="detail-row" *ngIf="brand.promotionalPrice">
               <span class="detail-key">Advertising Price</span>
-              <span class="detail-val detail-val--price">₹{{ brand.promotionalPrice }}</span>
+              <span class="detail-val detail-val--price" *ngIf="isProViewer">₹{{ brand.promotionalPrice }}</span>
+              <span class="detail-locked" *ngIf="!isProViewer">
+                <i class="bi bi-lock-fill"></i> Upgrade to view
+              </span>
             </div>
             <div class="detail-row" *ngIf="brand.foundedYear">
               <span class="detail-key">Founded</span>

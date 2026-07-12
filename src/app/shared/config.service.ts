@@ -822,6 +822,18 @@ export class ConfigService {
     );
   }
 
+  /**
+   * Hits the same by-ID routes as getInfluencerById/getPhotographerById, but does NOT
+   * swallow errors — used to consume a brand's dailyProfileViewLimit quota (e.g. before
+   * opening a candidate quick-view) and surface a 403 when today's limit is exhausted.
+   */
+  checkProfileViewQuota(id: string, role: 'influencer' | 'photographer'): Observable<any> {
+    const path = role === 'photographer'
+      ? `${this.apiUrl}/users/photographers/${encodeURIComponent(id)}`
+      : `${this.apiUrl}/users/influencers/${encodeURIComponent(id)}`;
+    return this.http.get<any>(path);
+  }
+
   getPhotographerByUsername(username: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/users/photographers/username/${encodeURIComponent(username)}`).pipe(
       map((res) => this.extractData<any>(res)),

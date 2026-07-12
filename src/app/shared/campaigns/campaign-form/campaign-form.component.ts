@@ -48,10 +48,10 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   currentBrandName = '';
     selectionLimitError = '';
 
-    /** Count of non-declined invites already sent for this campaign. */
+    /** Count of still-active invites already sent for this campaign (excludes declined/withdrawn). */
     get invitedCount(): number {
       return (this.campaignInvites || [])
-        .filter(i => String(i?.status || '').toLowerCase() !== 'declined')
+        .filter(i => !['declined', 'withdrawn'].includes(String(i?.status || '').toLowerCase()))
         .length;
     }
     /** Total slots taken = invited + currently-selected. */
@@ -72,6 +72,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       return max === -1 || this.takenSlotsCount < max;
     }
   campaignInvites: any[] = [];
+  withdrawingInviteId = '';
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
@@ -2036,6 +2037,32 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     return String(recipient?.fullName || recipient?.name || recipient?.username || '').trim() || (this.isPhotographerRecipientInvite(invite) ? 'Photo/Videographer' : 'Influencer');
   }
 
+  /** Only pending/invited/accepted invites can be withdrawn — locked once work has started. */
+  canWithdrawInvite(inv: any): boolean {
+    const removableStatuses = new Set(['pending', 'invited', 'accepted']);
+    return removableStatuses.has(String(inv?.status || '').toLowerCase());
+  }
+
+  withdrawCampaignInvite(inv: any): void {
+    if (!inv?._id || this.withdrawingInviteId) return;
+    const name = this.getInviteRecipientName(inv);
+    if (!confirm(`Withdraw the invite sent to ${name}? This frees up a slot to invite someone else.`)) return;
+    this.withdrawingInviteId = String(inv._id);
+    this.config.withdrawInvite(inv._id).subscribe({
+      next: () => {
+        inv.status = 'withdrawn';
+        this.withdrawingInviteId = '';
+        this.toast.success(`Invite to ${name} withdrawn.`);
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.withdrawingInviteId = '';
+        this.toast.error(err?.error?.message || 'Failed to withdraw invite.');
+        this.cd.detectChanges();
+      },
+    });
+  }
+
   getInviteRecipientAvatar(invite: any): string {
     return this.getInfluencerAvatar(this.getInviteRecipient(invite));
   }
@@ -2163,6 +2190,9 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
   canViewRecipientSocial(recipient: any): boolean {
     if (recipient?.socialMediaRestricted === true) return false;
+    // Once someone is actually invited/accepted, the brand is managing a real
+    // collaboration, not browsing candidates — unlock regardless of plan.
+    if (this.isInfluencerInvited(recipient)) return true;
     return this.hasPremium ||
       this.planCaps?.hasPremium === true ||
       this.plansService.getFeatureValue(this.planCaps, 'viewSocialLinks') ||
@@ -2215,7 +2245,29 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   }
 
   openRecipientQuickView(recipient: any): void {
-    this.quickViewRecipient = recipient;
+    // Already-invited/accepted people are always viewable (matches canViewRecipientSocial),
+    // and Premium brands aren't metered here — only a Free brand opening a NEW candidate's
+    // quick view consumes today's dailyProfileViewLimit credit.
+    if (this.isInfluencerInvited(recipient) || this.hasPremium || this.planCaps?.hasPremium === true) {
+      this.quickViewRecipient = recipient;
+      return;
+    }
+    const id = this.getRecipientId(recipient);
+    if (!id) {
+      this.quickViewRecipient = recipient;
+      return;
+    }
+    const role = this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer';
+    this.config.checkProfileViewQuota(id, role).subscribe({
+      next: () => {
+        this.quickViewRecipient = recipient;
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.message || "You've reached today's profile view limit. Upgrade to Premium for more.");
+        this.cd.detectChanges();
+      },
+    });
   }
 
   closeRecipientQuickView(): void {
