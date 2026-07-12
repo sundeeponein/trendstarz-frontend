@@ -24,8 +24,8 @@
 
     <div class="photographer-card__category-row">
       <div class="photographer-card__category">{{ displayCategory }}</div>
-      <div class="photographer-card__welcome-price" *ngIf="showStartingPrice && startingPrice !== null">
-        ₹{{ startingPrice | number:'1.0-0' }}
+      <div class="photographer-card__welcome-price" *ngIf="showStartingPrice && startingPrice !== null" title="Automatically calculated from service rates">
+        Starts from ₹{{ startingPrice | number:'1.0-0' }}
       </div>
     </div>
 

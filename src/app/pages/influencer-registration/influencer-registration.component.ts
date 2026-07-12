@@ -1055,6 +1055,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     const payload: any = {
       ...raw,
+      promotionalPrice: this.computedStartingPriceRupees,
       location: { state: stateObj ? stateObj.name : raw.location.state, district: districtObj ? districtObj.name : raw.location.district },
       languages: languageNames, categories: categoryNames,
       creatorTypes: creatorTypeNames,

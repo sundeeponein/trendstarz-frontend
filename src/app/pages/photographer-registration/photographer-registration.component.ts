@@ -215,7 +215,6 @@ export class PhotographerRegistrationComponent implements OnInit {
       portfolio: [''],
       password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
-      startingPrice: ['', [Validators.required, Validators.min(0)]],
       location: this.fb.group({
         state: ['', Validators.required],
         district: ['', Validators.required],
@@ -487,7 +486,21 @@ export class PhotographerRegistrationComponent implements OnInit {
   }
 
   get hasSelectedPricing(): boolean {
-    return this.pricingOptions.some((p: any) => this.pricingState[p.key]?.enabled);
+    return this.pricingOptions.some((p: any) =>
+      p.key !== 'Starting Price' && this.pricingState[p.key]?.enabled && Number(this.pricingState[p.key]?.price) > 0);
+  }
+
+  /** Pricing options shown to the photographer — Starting Price itself is derived, never a manual option. */
+  get visiblePricingOptions(): any[] {
+    return (this.pricingOptions || []).filter((p: any) => p.key !== 'Starting Price');
+  }
+
+  /** Starting Price is always derived — never manually typed — as the lowest enabled service rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.pricingOptions
+      .filter((p: any) => p.key !== 'Starting Price' && this.pricingState[p.key]?.enabled && Number(this.pricingState[p.key]?.price) > 0)
+      .map((p: any) => Number(this.pricingState[p.key].price));
+    return prices.length ? Math.min(...prices) : 0;
   }
 
   get hasSelectedSkills(): boolean {
@@ -737,7 +750,7 @@ export class PhotographerRegistrationComponent implements OnInit {
         price: Number(this.pricingState[p.key].price) || 0,
       }));
 
-    const normalizedStartingPrice = Number(v.startingPrice) || 0;
+    const normalizedStartingPrice = this.computedStartingPriceRupees;
     const startingPriceIndex = pricingArr.findIndex((entry: any) => String(entry?.name || '').trim() === 'Starting Price');
     if (startingPriceIndex > -1) {
       pricingArr[startingPriceIndex].enabled = true;

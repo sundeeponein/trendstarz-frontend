@@ -505,14 +505,16 @@
 
           <div class="field-grid">
             <div class="field-block full-width">
-              <label>Starting Price <span class="text-danger">*</span></label>
-              <input formControlName="promotionalPrice" type="number" required class="form-control" placeholder="Enter your starting price" />
-              <div class="form-text mt-1" style="font-size:0.95em">
-                Shown to brands as your starting price (visible to brands who search for you).<br>
-                Brands will also see your social platforms and content type prices. You can set this to match your lowest content price.
-              </div>
-              <div class="form-text" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
-              <div class="form-text" style="font-size:0.92em;">Flexible pricing increases chances of getting deals.</div>
+              <label>Starting Price</label>
+              <ng-container *ngIf="computedStartingPriceRupees > 0; else noStartingPrice">
+                <div class="form-control" style="background:#f8f9fa;font-weight:600;">₹{{ computedStartingPriceRupees }} onwards</div>
+                <div class="form-text mt-1" style="font-size:0.95em">
+                  Automatically calculated from your content rates. If rates change, starting price updates automatically.
+                </div>
+              </ng-container>
+              <ng-template #noStartingPrice>
+                <div class="text-danger" style="font-size:0.92em;">Set at least one content rate below to calculate your starting price.</div>
+              </ng-template>
             </div>
 
             <div class="field-block full-width payout-block" formGroupName="payout">

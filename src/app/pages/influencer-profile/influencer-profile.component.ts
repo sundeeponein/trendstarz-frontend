@@ -271,6 +271,20 @@ export class InfluencerProfileComponent implements OnInit {
     return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
   }
 
+  /** All enabled, priced content-type rates across every selected platform. */
+  get selectedContentTypePricesRupees(): number[] {
+    return this.selectedPlatforms()
+      .flatMap(p => Object.values(this.platformForms[p._id]?.contentTypes || {}))
+      .filter((ct: any) => ct?.selected && Number(ct?.price) > 0)
+      .map((ct: any) => Number(ct.price));
+  }
+
+  /** Starting Price is always derived — never manually typed — as the lowest enabled content rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.selectedContentTypePricesRupees;
+    return prices.length ? Math.min(...prices) : 0;
+  }
+
   getProfileUrl(platformName: string, handle: string): string {
     return buildSocialProfileUrl(platformName, handle);
   }
@@ -546,7 +560,7 @@ export class InfluencerProfileComponent implements OnInit {
         state: [{ value: '', disabled: true }, Validators.required],
         district: [{ value: '', disabled: true }, Validators.required]
       }),
-      promotionalPrice: [{ value: '', disabled: true }, Validators.required],
+      promotionalPrice: [{ value: '', disabled: true }],
       languages: [{ value: [], disabled: true }, Validators.required],
       categories: [{ value: [], disabled: true }, Validators.required],
       creatorTypes: [{ value: [], disabled: true }],
@@ -868,10 +882,7 @@ export class InfluencerProfileComponent implements OnInit {
     }
 
     if (step === 3) {
-      return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
-        this.registrationForm.get('contact')?.valid
-      );
+      return this.computedStartingPriceRupees > 0 && !!this.registrationForm.get('contact')?.valid;
     }
 
     return false;
@@ -950,9 +961,8 @@ export class InfluencerProfileComponent implements OnInit {
     }
 
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
-      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+      return this.computedStartingPriceRupees > 0 && !!this.registrationForm.get('contact')?.valid;
     }
 
     return false;
@@ -1289,6 +1299,12 @@ export class InfluencerProfileComponent implements OnInit {
       this.registrationSuccessMessage = '';
       return;
     }
+    if (this.computedStartingPriceRupees <= 0) {
+      this.registrationError = 'Set at least one content rate to calculate your starting price.';
+      this.currentStep = 2;
+      this.cd.detectChanges();
+      return;
+    }
     this.registrationError = '';
     this.registrationSuccess = false;
     this.registrationSuccessMessage = '';
@@ -1408,7 +1424,7 @@ export class InfluencerProfileComponent implements OnInit {
         state: stateObj ? stateObj.name : raw.location.state,
         district: districtObj ? districtObj.name : raw.location.district
       },
-      promotionalPrice: raw.promotionalPrice,
+      promotionalPrice: this.computedStartingPriceRupees,
       languages: languageNames,
       categories: categoryNames,
       creatorTypes: creatorTypeNames,

@@ -188,6 +188,10 @@ export class PhotographerProfileViewComponent implements OnInit {
     return (this.photographer?.pricing || []).filter((p: any) => p?.enabled);
   }
 
+  get startingPriceEntry(): any {
+    return (this.photographer?.pricing || []).find((p: any) => p?.name === 'Starting Price' && p?.enabled);
+  }
+
   get socialPlatforms(): any[] {
     return Array.isArray(this.photographer?.socialMedia) ? this.photographer.socialMedia : [];
   }

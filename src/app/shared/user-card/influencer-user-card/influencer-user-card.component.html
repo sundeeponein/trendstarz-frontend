@@ -32,8 +32,8 @@
     <!-- Categories + welcome-only starting price -->
     <div class="inf-card__category-row">
       <div class="inf-card__category">{{ displayCategory }}</div>
-      <div class="inf-card__welcome-price" *ngIf="showWelcomeStartingPrice && promotionalPrice">
-        ₹{{ promotionalPrice | number:'1.0-0' }}
+      <div class="inf-card__welcome-price" *ngIf="showWelcomeStartingPrice && promotionalPrice" title="Automatically calculated from content rates">
+        Starts from ₹{{ promotionalPrice | number:'1.0-0' }}
       </div>
     </div>
 

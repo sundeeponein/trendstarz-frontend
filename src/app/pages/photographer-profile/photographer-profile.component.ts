@@ -66,7 +66,6 @@ export class PhotographerProfileComponent implements OnInit {
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
   showResetPasswordModal = false;
-  startingPriceRequiredError = false;
   private originalFormValue: any = null;
   private originalPricingState: any = null;
   private originalPlatformForms: any = null;
@@ -797,19 +796,17 @@ export class PhotographerProfileComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
-  getStartingPrice(): string {
-    return this.pricingState['Starting Price']?.price || '';
+  /** Pricing options shown to the photographer — Starting Price itself is derived, never a manual option. */
+  get visiblePricingOptions(): any[] {
+    return (this.pricingOptions || []).filter((p: any) => p.key !== 'Starting Price');
   }
 
-  setStartingPrice(value: string) {
-    if (!this.pricingState['Starting Price']) {
-      this.pricingState['Starting Price'] = { enabled: true, price: '' };
-    }
-    this.pricingState['Starting Price'].enabled = true;
-    this.pricingState['Starting Price'].price = value;
-    if (String(value ?? '').trim()) {
-      this.startingPriceRequiredError = false;
-    }
+  /** Starting Price is always derived — never manually typed — as the lowest enabled service rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.pricingOptions
+      .filter((p: any) => p.key !== 'Starting Price' && this.pricingState[p.key]?.enabled && Number(this.pricingState[p.key]?.price) > 0)
+      .map((p: any) => Number(this.pricingState[p.key].price));
+    return prices.length ? Math.min(...prices) : 0;
   }
 
   goToStep(step: 1 | 2 | 3) {
@@ -1024,7 +1021,6 @@ export class PhotographerProfileComponent implements OnInit {
   enableEdit(): void {
     this.isEditMode = true;
     this.submitted = false;
-    this.startingPriceRequiredError = false;
     this.form.enable({ emitEvent: false });
     this.emailEditRequested = !this.emailVerified;
     this.originalFormValue = this.form.getRawValue();
@@ -1039,7 +1035,6 @@ export class PhotographerProfileComponent implements OnInit {
   cancelEdit(): void {
     this.isEditMode = false;
     this.submitted = false;
-    this.startingPriceRequiredError = false;
     this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.form.reset(this.originalFormValue, { emitEvent: false });
@@ -1087,13 +1082,12 @@ export class PhotographerProfileComponent implements OnInit {
       this.cdr.detectChanges();
       return;
     }
-    const startingPriceInput = String(this.getStartingPrice() ?? '').trim();
-    if (!startingPriceInput) {
-      this.startingPriceRequiredError = true;
+    if (this.computedStartingPriceRupees <= 0) {
+      this.toast.error('Set at least one pricing rate to calculate your starting price.');
+      this.currentStep = 2;
       this.cdr.detectChanges();
       return;
     }
-    this.startingPriceRequiredError = false;
     const v = this.form.getRawValue();
     if (!(await this.confirmCriticalProfileDetails(v))) {
       return;
@@ -1116,7 +1110,7 @@ export class PhotographerProfileComponent implements OnInit {
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
       .map(p => ({ name: p.key, enabled: true, price: Number(this.pricingState[p.key].price) || 0 }));
-    const normalizedStartingPrice = Number(startingPriceInput) || 0;
+    const normalizedStartingPrice = this.computedStartingPriceRupees;
     const startingPriceIndex = pricingArr.findIndex((entry: any) => String(entry?.name || '').trim() === 'Starting Price');
     if (startingPriceIndex > -1) {
       pricingArr[startingPriceIndex].enabled = true;

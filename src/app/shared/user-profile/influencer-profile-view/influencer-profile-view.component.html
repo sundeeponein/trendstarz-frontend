@@ -85,7 +85,7 @@
             <span class="stat-val" [class.stat-val--price]="isProViewer && influencer.promotionalPrice">
               {{ isProViewer && influencer.promotionalPrice ? '₹' + influencer.promotionalPrice : '—' }}
             </span>
-            <span class="stat-lbl">STARTING PRICE</span>
+            <span class="stat-lbl" title="Automatically calculated from content rates">STARTING PRICE</span>
           </div>
         </div>
       </div>
@@ -109,6 +109,7 @@
               <i class="bi bi-lock-fill"></i> Upgrade to view
             </span>
             <span class="detail-val" *ngIf="isProViewer && !influencer.promotionalPrice">—</span>
+            <div class="detail-caption" *ngIf="isProViewer && influencer.promotionalPrice">Auto-calculated from content rates</div>
           </div>
 
           <div class="detail-row" *ngIf="influencer.languages?.length">

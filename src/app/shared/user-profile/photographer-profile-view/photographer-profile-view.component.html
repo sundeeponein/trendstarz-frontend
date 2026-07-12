@@ -63,10 +63,10 @@
             <span class="stat-lbl">PLATFORMS</span>
           </div>
           <div class="stat-item">
-            <span class="stat-val" [class.stat-val--price]="isProViewer && enabledPricing.length">
-              {{ isProViewer && enabledPricing.length ? '₹' + (enabledPricing[0].price || 0) : '—' }}
+            <span class="stat-val" [class.stat-val--price]="isProViewer && startingPriceEntry">
+              {{ isProViewer && startingPriceEntry ? '₹' + (startingPriceEntry.price || 0) : '—' }}
             </span>
-            <span class="stat-lbl">STARTING PRICE</span>
+            <span class="stat-lbl" title="Automatically calculated from service rates">STARTING PRICE</span>
           </div>
         </div>
       </div>

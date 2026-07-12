@@ -525,7 +525,7 @@
             <div>{{ selectedUser.gender ? (selectedUser.gender | titlecase) : '-' }}</div>
           </div>
           <div>
-            <label>Starting Price</label>
+            <label>Starting Price <span class="text-muted" style="font-weight:400;">(auto-calculated)</span></label>
             <div class="price">{{ getUserStartingPrice(selectedUser) }}</div>
           </div>
           <div>
