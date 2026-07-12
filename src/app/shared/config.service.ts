@@ -391,6 +391,13 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 
+  // Check whether a reset token is still valid, without consuming it
+  validateResetToken(token: string) {
+    return this.http.get<{ valid: boolean }>(`${this.apiUrl}/auth/reset-password/validate`, {
+      params: { token },
+    });
+  }
+
   // Change password for logged-in user
   changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
     return this.http.post(`${this.apiUrl}/auth/change-password`, {

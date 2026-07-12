@@ -48,20 +48,40 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!this.firebaseOobCode) return;
+    if (this.firebaseOobCode) {
+      this.loading = true;
+      this.firebaseAuth.verifyPasswordResetCode(this.firebaseOobCode)
+        .then((email) => {
+          this.firebaseEmail = email;
+          this.invalidOrMissingToken = false;
+        })
+        .catch(() => {
+          this.invalidOrMissingToken = true;
+          this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+      return;
+    }
+    if (!this.token) return;
     this.loading = true;
-    this.firebaseAuth.verifyPasswordResetCode(this.firebaseOobCode)
-      .then((email) => {
-        this.firebaseEmail = email;
-        this.invalidOrMissingToken = false;
-      })
-      .catch(() => {
-        this.invalidOrMissingToken = true;
-        this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
-      })
-      .finally(() => {
+    this.configService.validateResetToken(this.token).pipe(
+      finalize(() => {
         this.loading = false;
-      });
+      }),
+    ).subscribe({
+      next: ({ valid }) => {
+        if (!valid) {
+          this.invalidOrMissingToken = true;
+          this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+        }
+      },
+      error: () => {
+        // Validation-check failure shouldn't block the form — the real
+        // reset-password call will surface the actual error on submit.
+      },
+    });
   }
 
   private resolveTokenFromUrl(): string {
