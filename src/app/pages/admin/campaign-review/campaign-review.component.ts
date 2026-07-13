@@ -803,12 +803,12 @@ export class CampaignReviewComponent implements OnInit {
       return;
     }
     this.http
-      .get<{ openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string }>(
+      .get<any>(
         `${environment.apiBaseUrl}/admin/campaigns/${encodeURIComponent(campaignId)}/share-messages`,
         this.getAuthHeaders(),
       )
       .subscribe({
-        next: (res) => onResult(res),
+        next: (res) => onResult(res?.data ?? res),
         error: () => onResult(null),
       });
   }
@@ -825,14 +825,15 @@ export class CampaignReviewComponent implements OnInit {
       return;
     }
     this.http
-      .get<{ inviteAcceptedMessage: string | null; postSubmittedMessage: string | null }>(
+      .get<any>(
         `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
         this.getAuthHeaders(),
       )
       .subscribe({
         next: (res) => {
+          const data = res?.data ?? res;
           this.selectedInviteHostMessageText =
-            (payload.type === 'accepted' ? res?.inviteAcceptedMessage : res?.postSubmittedMessage) || '';
+            (payload.type === 'accepted' ? data?.inviteAcceptedMessage : data?.postSubmittedMessage) || '';
           this.selectedInviteHostMessageLoading = false;
           this.cdr.detectChanges();
         },
