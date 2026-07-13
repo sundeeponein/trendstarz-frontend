@@ -100,7 +100,8 @@ export class LoginComponent {
         } else if (
           msg.toLowerCase().includes('not verified') ||
           msg.toLowerCase().includes('email is not verified') ||
-          msg.toLowerCase().includes('verify your email')
+          msg.toLowerCase().includes('verify your email') ||
+          msg.toLowerCase().includes('firebase verification is required')
         ) {
           this.unverifiedEmail = this.loginForm.value.email || '';
           this.emailNotVerified = true;
