@@ -429,6 +429,22 @@
                     <i class="bi bi-card-text"></i>
                     Show payment message
                   </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="isHostAcceptedMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'accepted', $event)">
+                    <i class="bi bi-card-text"></i>
+                    Show accepted message
+                  </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="isHostSubmittedMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'submitted', $event)">
+                    <i class="bi bi-card-text"></i>
+                    Show submitted message
+                  </button>
                   <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
                     {{ adminInvitePayoutStatusLabel(item) }}
                   </span>
@@ -548,6 +564,7 @@
         [copied]="alertMessageCopied"
         [openCampaignMessage]="adminShareMessages?.openCampaignMessage || ''"
         [inviteOnlyMessage]="adminShareMessages?.inviteOnlyMessage || ''"
+        [postingReminderMessage]="adminShareMessages?.postingReminderMessage || ''"
         [messagesLoading]="adminShareMessagesLoading"
         (copyAlert)="copyAdminAlertMessage($event)">
       </app-campaign-alert-message>
@@ -646,6 +663,28 @@
         <button type="button" class="cdm-foot-btn cdm-foot-btn--outline" (click)="copyPaymentReleaseMessage(payoutItem)">
           <i class="bi bi-clipboard-check"></i>
           {{ payoutMessageCopiedInviteId === payoutItem.inviteId ? 'Copied' : 'Copy payment message' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── HOST SHARE MESSAGE (invite accepted / post submitted, popup) ───── -->
+<div class="modal-backdrop show" *ngIf="hostShareMessageItem" (click)="dismissHostShareMessage.emit()"></div>
+<div class="modal d-block" *ngIf="hostShareMessageItem" tabindex="-1" (click)="dismissHostShareMessage.emit()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal cdm-payout-message-modal-content">
+      <div class="cdm-payout-message-modal-title">
+        <i class="bi bi-whatsapp"></i>
+        {{ hostShareMessageType === 'accepted' ? 'Invite Accepted Message' : 'Post Submitted Message' }}
+      </div>
+      <p *ngIf="hostShareMessageLoading">Loading message…</p>
+      <pre class="cdm-payout-message-modal-text" *ngIf="!hostShareMessageLoading">{{ hostShareMessageText }}</pre>
+      <div class="cdm-payout-message-modal-actions">
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--ghost" (click)="dismissHostShareMessage.emit()">Close</button>
+        <button type="button" class="cdm-foot-btn cdm-foot-btn--outline" [disabled]="hostShareMessageLoading || !hostShareMessageText" (click)="copyHostShareMessage()">
+          <i class="bi bi-clipboard-check"></i>
+          {{ hostMessageCopied ? 'Copied' : 'Copy message' }}
         </button>
       </div>
     </div>

@@ -6,6 +6,7 @@
     [copied]="alertMessageCopied"
     [openCampaignMessage]="approvedCampaignShareMessages?.openCampaignMessage || ''"
     [inviteOnlyMessage]="approvedCampaignShareMessages?.inviteOnlyMessage || ''"
+    [postingReminderMessage]="approvedCampaignShareMessages?.postingReminderMessage || ''"
     [messagesLoading]="approvedCampaignShareMessagesLoading"
     (copyAlert)="copyCampaignAlertMessage($event)"
   ></app-campaign-alert-message>
@@ -313,12 +314,18 @@
   [adminCanApprove]="selectedCampaignCanApprove"
   [adminCanRequestChanges]="selectedCampaignCanRequestChanges"
   [adminCanReject]="selectedCampaignCanReject"
+  [hostShareMessageItem]="selectedInviteHostMessageItem"
+  [hostShareMessageType]="selectedInviteHostMessageType"
+  [hostShareMessageText]="selectedInviteHostMessageText"
+  [hostShareMessageLoading]="selectedInviteHostMessageLoading"
   (close)="closeCampaignPreview()"
   (approve)="openModerationModal(selectedCampaign, 'approve')"
   (requestChanges)="openModerationModal(selectedCampaign, 'needs_changes')"
   (reject)="openModerationModal(selectedCampaign, 'reject')"
   (forceComplete)="onForceCompleteCampaign($event)"
   (cancelParticipation)="onCancelCampaignParticipation($event)"
+  (requestHostShareMessage)="onRequestHostShareMessage($event)"
+  (dismissHostShareMessage)="onDismissHostShareMessage()"
 ></app-campaign-detail-modal>
 
 <!-- ══ MODERATION MODAL ══ -->

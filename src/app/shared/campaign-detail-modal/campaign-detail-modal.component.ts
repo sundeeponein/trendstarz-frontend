@@ -60,7 +60,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
   /** Server-rendered "Ready to Share" message text — see campaign-alert-message.component.ts for why this isn't computed client-side. */
-  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string } | null = null;
+  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null = null;
   @Input() adminShareMessagesLoading = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
@@ -86,6 +86,14 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() validationError = new EventEmitter<string>();
   @Output() viewSubmission = new EventEmitter<void>();
   @Output() confirmReceipt = new EventEmitter<void>();
+
+  /** Per-invite "ready to share" host message (invite accepted / post submitted) — parent owns the fetch, see campaign-review.component.ts. */
+  @Output() requestHostShareMessage = new EventEmitter<{ item: any; type: 'accepted' | 'submitted' }>();
+  @Output() dismissHostShareMessage = new EventEmitter<void>();
+  @Input() hostShareMessageItem: any = null;
+  @Input() hostShareMessageType: 'accepted' | 'submitted' | null = null;
+  @Input() hostShareMessageText = '';
+  @Input() hostShareMessageLoading = false;
 
   // Emergency admin overrides — collapsed by default; both require a reason.
   showEmergencyAdminPanel = false;
@@ -159,6 +167,43 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       '',
       'Thank you for collaborating with TrendStarz!',
     ].join('\n');
+  }
+
+  private static readonly SUBMITTED_OR_LATER_STATUSES = ['submitted', 'completed', 'approved', 'disputed'];
+
+  isHostAcceptedMessageAvailable(item: any): boolean {
+    return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+  }
+
+  isHostSubmittedMessageAvailable(item: any): boolean {
+    return CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+  }
+
+  openHostShareMessage(item: any, type: 'accepted' | 'submitted', ev?: Event): void {
+    ev?.stopPropagation();
+    this.requestHostShareMessage.emit({ item, type });
+  }
+
+  hostMessageCopied = false;
+  private hostMessageCopiedTimer: any;
+
+  copyHostShareMessage(): void {
+    const text = String(this.hostShareMessageText || '').trim();
+    if (!text) return;
+    const done = () => {
+      this.hostMessageCopied = true;
+      this.cdr.detectChanges();
+      clearTimeout(this.hostMessageCopiedTimer);
+      this.hostMessageCopiedTimer = setTimeout(() => {
+        this.hostMessageCopied = false;
+        this.cdr.detectChanges();
+      }, 2500);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyAlertMessage(text, done));
+      return;
+    }
+    this.fallbackCopyAlertMessage(text, done);
   }
 
   private fallbackCopyAlertMessage(text: string, done: () => void): void {

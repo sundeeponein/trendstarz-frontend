@@ -69,15 +69,19 @@ export class CampaignReviewComponent implements OnInit {
   selectedCampaign: any | null = null;
   selectedCampaignPreviewInvite: any | null = null;
   selectedCampaignInviteProgressLoading = false;
-  selectedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string } | null = null;
+  selectedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null = null;
   selectedCampaignShareMessagesLoading = false;
+  selectedInviteHostMessageItem: any = null;
+  selectedInviteHostMessageType: 'accepted' | 'submitted' | null = null;
+  selectedInviteHostMessageText = '';
+  selectedInviteHostMessageLoading = false;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
   moderationNoteInput = '';
   moderationModalError = '';
   approvedCampaignAlert: any | null = null;
-  approvedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string } | null = null;
+  approvedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null = null;
   approvedCampaignShareMessagesLoading = false;
   alertMessageCopied = false;
 
@@ -792,14 +796,14 @@ export class CampaignReviewComponent implements OnInit {
    */
   private fetchShareMessages(
     campaignId: string,
-    onResult: (messages: { openCampaignMessage: string; inviteOnlyMessage: string } | null) => void,
+    onResult: (messages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null) => void,
   ): void {
     if (!campaignId) {
       onResult(null);
       return;
     }
     this.http
-      .get<{ openCampaignMessage: string; inviteOnlyMessage: string }>(
+      .get<{ openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string }>(
         `${environment.apiBaseUrl}/admin/campaigns/${encodeURIComponent(campaignId)}/share-messages`,
         this.getAuthHeaders(),
       )
@@ -807,6 +811,43 @@ export class CampaignReviewComponent implements OnInit {
         next: (res) => onResult(res),
         error: () => onResult(null),
       });
+  }
+
+  /** Handles campaign-detail-modal's per-invite "show message" buttons (invite accepted / post submitted). */
+  onRequestHostShareMessage(payload: { item: any; type: 'accepted' | 'submitted' }): void {
+    this.selectedInviteHostMessageItem = payload.item;
+    this.selectedInviteHostMessageType = payload.type;
+    this.selectedInviteHostMessageText = '';
+    this.selectedInviteHostMessageLoading = true;
+    const inviteId = String(payload.item?.inviteId || '').trim();
+    if (!inviteId) {
+      this.selectedInviteHostMessageLoading = false;
+      return;
+    }
+    this.http
+      .get<{ inviteAcceptedMessage: string | null; postSubmittedMessage: string | null }>(
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          this.selectedInviteHostMessageText =
+            (payload.type === 'accepted' ? res?.inviteAcceptedMessage : res?.postSubmittedMessage) || '';
+          this.selectedInviteHostMessageLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.selectedInviteHostMessageLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  onDismissHostShareMessage(): void {
+    this.selectedInviteHostMessageItem = null;
+    this.selectedInviteHostMessageType = null;
+    this.selectedInviteHostMessageText = '';
+    this.selectedInviteHostMessageLoading = false;
   }
 
   private unwrapParticipantProfile(role: 'influencer' | 'photographer', response: any): any | null {

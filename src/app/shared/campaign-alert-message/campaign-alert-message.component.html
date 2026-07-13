@@ -43,11 +43,12 @@
       </button>
       <div class="campaign-alert-message__template-body" *ngIf="reminderMessageExpanded">
         <div class="campaign-alert-message__template-actions">
-          <button type="button" class="btn btn-primary btn-sm" (click)="copyReminderMessage()">
+          <button type="button" class="btn btn-primary btn-sm" [disabled]="messagesLoading" (click)="copyReminderMessage()">
             {{ reminderCopied ? 'Copied' : 'Copy Posting Reminder' }}
           </button>
         </div>
-        <pre>{{ postingReminderMessage }}</pre>
+        <pre *ngIf="!messagesLoading">{{ postingReminderMessage }}</pre>
+        <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
       </div>
     </div>
   </div>

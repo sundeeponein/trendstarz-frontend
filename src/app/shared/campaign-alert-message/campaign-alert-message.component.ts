@@ -21,6 +21,7 @@ export class CampaignAlertMessageComponent {
    */
   @Input() openCampaignMessage = '';
   @Input() inviteOnlyMessage = '';
+  @Input() postingReminderMessage = '';
   @Input() messagesLoading = false;
 
   /** The two message templates are independent accordions within the body. */
@@ -50,24 +51,6 @@ export class CampaignAlertMessageComponent {
     return this.isApprovedStatus ? 'Ready to Share' : 'Preview — Ready to Share Once Approved';
   }
 
-  get campaignNameLabel(): string {
-    return String(this.campaign?.title || this.campaign?.campaignTitle || '').trim() || 'Campaign';
-  }
-
-  get startDateLabel(): string {
-    const raw = this.campaign?.timelineStart || this.campaign?.startDate;
-    const date = raw ? new Date(raw) : null;
-    if (!date || isNaN(date.getTime())) return 'Not specified';
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
-  get endDateLabel(): string {
-    const raw = this.campaign?.timelineEnd || this.campaign?.endDate;
-    const date = raw ? new Date(raw) : null;
-    if (!date || isNaN(date.getTime())) return 'Not specified';
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
   /** Only the message matching this campaign's actual access mode is shown — never both at once. */
   get relevantMessage(): string {
     return this.isOpenToAll ? this.openCampaignMessage : this.inviteOnlyMessage;
@@ -83,28 +66,6 @@ export class CampaignAlertMessageComponent {
 
   copyRelevantMessage() {
     this.copyAlert.emit(this.relevantMessage);
-  }
-
-  /** Applies to both invite-only and open-to-all campaigns alike — it's a posting-window nudge, not an invitation. */
-  get postingReminderMessage(): string {
-    return [
-      '📅 Reminder: Your TrendStarz campaign',
-      '',
-      'Hi,',
-      '',
-      'Your collaboration is scheduled to begin.',
-      '',
-      `Campaign: ${this.campaignNameLabel}`,
-      `📆 Posting Window: ${this.startDateLabel} – ${this.endDateLabel}`,
-      '',
-      'Please review the campaign resources, caption, hashtags, and promotion link before posting.',
-      '',
-      'Login to TrendStarz:',
-      'https://www.trendstarz.in',
-      '',
-      'Thank you,',
-      'TrendStarz Team',
-    ].join('\n');
   }
 
   reminderCopied = false;
