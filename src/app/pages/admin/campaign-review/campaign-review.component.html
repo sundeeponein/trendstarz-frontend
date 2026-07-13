@@ -4,6 +4,9 @@
     *ngIf="approvedCampaignAlert"
     [campaign]="approvedCampaignAlert"
     [copied]="alertMessageCopied"
+    [openCampaignMessage]="approvedCampaignShareMessages?.openCampaignMessage || ''"
+    [inviteOnlyMessage]="approvedCampaignShareMessages?.inviteOnlyMessage || ''"
+    [messagesLoading]="approvedCampaignShareMessagesLoading"
     (copyAlert)="copyCampaignAlertMessage($event)"
   ></app-campaign-alert-message>
 
@@ -305,6 +308,8 @@
   [busy]="moderatingCampaignId === selectedCampaign?._id"
   [adminReview]="true"
   [adminInviteProgressLoading]="selectedCampaignInviteProgressLoading"
+  [adminShareMessages]="selectedCampaignShareMessages"
+  [adminShareMessagesLoading]="selectedCampaignShareMessagesLoading"
   [adminCanApprove]="selectedCampaignCanApprove"
   [adminCanRequestChanges]="selectedCampaignCanRequestChanges"
   [adminCanReject]="selectedCampaignCanReject"

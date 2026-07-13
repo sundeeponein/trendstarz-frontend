@@ -59,6 +59,9 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanApprove = true;
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
+  /** Server-rendered "Ready to Share" message text — see campaign-alert-message.component.ts for why this isn't computed client-side. */
+  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string } | null = null;
+  @Input() adminShareMessagesLoading = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
   }

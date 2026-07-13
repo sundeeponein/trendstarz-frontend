@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { copyTextToClipboard } from '../referral-link.util';
-import { normalizeTierLabel, TIER_DESC_MAP } from '../tiers.constants';
 
 @Component({
   selector: 'app-campaign-alert-message',
@@ -15,32 +14,14 @@ export class CampaignAlertMessageComponent {
   @Input() copied = false;
   @Output() copyAlert = new EventEmitter<string>();
 
-  /** Mirrors campaign-detail-modal's ACCEPTED_OR_LATER_STATUSES — anyone who accepted, regardless of pipeline stage since. */
-  private static readonly ACCEPTED_OR_LATER_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
-
-  get requiredCreatorsCount(): number {
-    return Number(this.campaign?.maxInfluencers || this.campaign?.inviteSlots || 0) || 0;
-  }
-
-  get acceptedCreatorsCount(): number {
-    const rows = Array.isArray(this.campaign?.inviteProgress) ? this.campaign.inviteProgress : [];
-    return rows.filter((row: any) =>
-      CampaignAlertMessageComponent.ACCEPTED_OR_LATER_STATUSES.includes(String(row?.status || '').toLowerCase()),
-    ).length;
-  }
-
-  get slotsRemainingCount(): number {
-    return Math.max(this.requiredCreatorsCount - this.acceptedCreatorsCount, 0);
-  }
-
-  /** Open-to-all campaigns can restrict who's eligible to apply by a minimum tier. Empty when no tier restriction is set. */
-  get minTierLabel(): string {
-    const raw = String(this.campaign?.minInfluencerTier || '').trim();
-    if (!raw) return '';
-    const normalized = normalizeTierLabel(raw);
-    const range = TIER_DESC_MAP[normalized.toLowerCase()] || '';
-    return range ? `${normalized} (${range} followers)` : normalized;
-  }
+  /**
+   * Rendered server-side (GET /admin/campaigns/:id/share-messages) so this
+   * text can never drift from what the automated WhatsApp send uses — see
+   * trendstarz-backend/src/campaigns/campaign-alert-messages.ts.
+   */
+  @Input() openCampaignMessage = '';
+  @Input() inviteOnlyMessage = '';
+  @Input() messagesLoading = false;
 
   /** The two message templates are independent accordions within the body. */
   inviteMessageExpanded = false;
@@ -73,32 +54,6 @@ export class CampaignAlertMessageComponent {
     return String(this.campaign?.title || this.campaign?.campaignTitle || '').trim() || 'Campaign';
   }
 
-  get locationLabel(): string {
-    const values = [
-      this.campaign?.venueCity,
-      this.campaign?.city,
-      this.campaign?.targetDistrict,
-      this.campaign?.district,
-      this.campaign?.venueDistrict,
-      this.campaign?.location?.city,
-      this.campaign?.location?.district,
-      this.campaign?.targetState,
-      this.campaign?.location?.state,
-      this.campaign?.venueState,
-      this.campaign?.state,
-    ]
-      .map((value) => String(value || '').trim())
-      .filter(Boolean);
-    return values[0] || 'Not specified';
-  }
-
-  get lastDateLabel(): string {
-    const raw = this.campaign?.acceptanceDeadline || this.campaign?.endDate || this.campaign?.timelineEnd;
-    const date = raw ? new Date(raw) : null;
-    if (!date || isNaN(date.getTime())) return 'Not specified';
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
   get startDateLabel(): string {
     const raw = this.campaign?.timelineStart || this.campaign?.startDate;
     const date = raw ? new Date(raw) : null;
@@ -111,58 +66,6 @@ export class CampaignAlertMessageComponent {
     const date = raw ? new Date(raw) : null;
     if (!date || isNaN(date.getTime())) return 'Not specified';
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
-  get openCampaignMessage(): string {
-    const tierLine = this.minTierLabel ? [`🏆 Minimum Tier: ${this.minTierLabel}`] : [];
-    return [
-      '🎉 New Collaboration Opportunity on TrendStarz',
-      '',
-      `📢 Campaign: ${this.campaignNameLabel}`,
-      '',
-      `📍 Location: ${this.locationLabel}`,
-      `📅 Apply Before: ${this.lastDateLabel}`,
-      '',
-      ...tierLine,
-      `👥 Required Creators: ${this.requiredCreatorsCount}`,
-      `✅ Accepted: ${this.acceptedCreatorsCount}`,
-      `🔥 Slots Remaining: ${this.slotsRemainingCount}`,
-      '',
-      'We are looking for creators to participate in this campaign.',
-      '',
-      '✅ Apply directly through TrendStarz:',
-      'https://www.trendstarz.in',
-      '',
-      'Login → Campaigns → Apply',
-      '',
-      'Only verified creators are eligible.',
-      '',
-      '#TrendStarz #CreatorCollaboration #InfluencerMarketing',
-    ].join('\n');
-  }
-
-  get inviteOnlyMessage(): string {
-    return [
-      "🎉 You've received a new collaboration invitation on TrendStarz",
-      '',
-      `📢 Campaign: ${this.campaignNameLabel}`,
-      '',
-      'Your profile matches the campaign requirements and you have been shortlisted.',
-      '',
-      `📍 Location: ${this.locationLabel}`,
-      `📅 Respond Before: ${this.lastDateLabel}`,
-      '',
-      `👥 Required Creators: ${this.requiredCreatorsCount}`,
-      `✅ Accepted: ${this.acceptedCreatorsCount}`,
-      `🔥 Slots Remaining: ${this.slotsRemainingCount}`,
-      '',
-      'Please login to TrendStarz to view campaign details and accept your invitation.',
-      '',
-      'https://www.trendstarz.in',
-      '',
-      'Thank you,',
-      'TrendStarz Team',
-    ].join('\n');
   }
 
   /** Only the message matching this campaign's actual access mode is shown — never both at once. */

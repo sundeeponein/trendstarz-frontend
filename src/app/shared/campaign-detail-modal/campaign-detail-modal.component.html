@@ -546,6 +546,9 @@
         *ngIf="adminReview"
         [campaign]="campaign"
         [copied]="alertMessageCopied"
+        [openCampaignMessage]="adminShareMessages?.openCampaignMessage || ''"
+        [inviteOnlyMessage]="adminShareMessages?.inviteOnlyMessage || ''"
+        [messagesLoading]="adminShareMessagesLoading"
         (copyAlert)="copyAdminAlertMessage($event)">
       </app-campaign-alert-message>
 

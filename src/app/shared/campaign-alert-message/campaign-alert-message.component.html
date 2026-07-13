@@ -26,11 +26,12 @@
       </button>
       <div class="campaign-alert-message__template-body" *ngIf="inviteMessageExpanded">
         <div class="campaign-alert-message__template-actions">
-          <button type="button" class="btn btn-primary btn-sm" (click)="copyRelevantMessage()">
+          <button type="button" class="btn btn-primary btn-sm" [disabled]="messagesLoading" (click)="copyRelevantMessage()">
             {{ copied ? 'Copied' : relevantCopyButtonLabel }}
           </button>
         </div>
-        <pre>{{ relevantMessage }}</pre>
+        <pre *ngIf="!messagesLoading">{{ relevantMessage }}</pre>
+        <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
       </div>
     </div>
 

@@ -69,12 +69,16 @@ export class CampaignReviewComponent implements OnInit {
   selectedCampaign: any | null = null;
   selectedCampaignPreviewInvite: any | null = null;
   selectedCampaignInviteProgressLoading = false;
+  selectedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string } | null = null;
+  selectedCampaignShareMessagesLoading = false;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
   moderationNoteInput = '';
   moderationModalError = '';
   approvedCampaignAlert: any | null = null;
+  approvedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string } | null = null;
+  approvedCampaignShareMessagesLoading = false;
   alertMessageCopied = false;
 
   private readonly isServer: boolean;
@@ -426,6 +430,13 @@ export class CampaignReviewComponent implements OnInit {
             moderatedAt: new Date().toISOString(),
           };
           this.alertMessageCopied = false;
+          this.approvedCampaignShareMessages = null;
+          this.approvedCampaignShareMessagesLoading = true;
+          this.fetchShareMessages(String(campaign?._id || ''), (messages) => {
+            this.approvedCampaignShareMessages = messages;
+            this.approvedCampaignShareMessagesLoading = false;
+            this.cdr.detectChanges();
+          });
         }
         const labels: Record<string, string> = {
           approve: 'Campaign approved successfully.',
@@ -773,6 +784,31 @@ export class CampaignReviewComponent implements OnInit {
     );
   }
 
+  /**
+   * Fetches the server-rendered "Ready to Share" WhatsApp message text
+   * (GET /admin/campaigns/:id/share-messages) — kept server-side so it can
+   * never drift from what the automated WhatsApp send uses (see
+   * campaign-alert-messages.ts on the backend).
+   */
+  private fetchShareMessages(
+    campaignId: string,
+    onResult: (messages: { openCampaignMessage: string; inviteOnlyMessage: string } | null) => void,
+  ): void {
+    if (!campaignId) {
+      onResult(null);
+      return;
+    }
+    this.http
+      .get<{ openCampaignMessage: string; inviteOnlyMessage: string }>(
+        `${environment.apiBaseUrl}/admin/campaigns/${encodeURIComponent(campaignId)}/share-messages`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => onResult(res),
+        error: () => onResult(null),
+      });
+  }
+
   private unwrapParticipantProfile(role: 'influencer' | 'photographer', response: any): any | null {
     const payload = response?.data ?? response;
     if (!payload || typeof payload !== 'object') return null;
@@ -840,6 +876,13 @@ export class CampaignReviewComponent implements OnInit {
     this.selectedCampaign = campaign;
     this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(campaign);
     const campaignId = String(campaign?._id || '').trim();
+    this.selectedCampaignShareMessages = null;
+    this.selectedCampaignShareMessagesLoading = true;
+    this.fetchShareMessages(campaignId, (messages) => {
+      this.selectedCampaignShareMessages = messages;
+      this.selectedCampaignShareMessagesLoading = false;
+      this.cdr.detectChanges();
+    });
     if (!campaignId || !this.previewInviteProgressNeedsRefresh(campaign)) {
       this.selectedCampaignInviteProgressLoading = false;
       this.cdr.detectChanges();
