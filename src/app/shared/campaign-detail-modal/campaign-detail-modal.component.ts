@@ -162,7 +162,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return [
       `Your payment of ${amount} for the "${campaignName}" campaign has been released successfully.`,
       '',
-      `${this.adminInviteHostPaymentRefLabel(item)}: ${this.adminInviteHostPaymentRef(item)}`,
       `${this.adminInvitePayoutRefLabel(item)}: ${this.adminInvitePayoutTransactionId(item)}`,
       '',
       'Thank you for collaborating with TrendStarz!',

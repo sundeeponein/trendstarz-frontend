@@ -339,7 +339,6 @@ export class CampaignPaymentPageComponent implements OnInit {
     return [
       `Hi, your TrendStarZ payout for "${campaignTitle}" has been released.`,
       `Amount: ${amount}`,
-      `${this.transactionReferenceLabel(tx)}: ${this.transactionReference(tx)}`,
       `${this.payoutReferenceLabel(tx)}: ${this.payoutReference(tx)}${dateLine}`,
       'Thank you for completing the campaign.',
     ].join('\n');
