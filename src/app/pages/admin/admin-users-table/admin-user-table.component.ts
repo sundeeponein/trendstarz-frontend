@@ -10,6 +10,7 @@ import { environment } from '../../../../environments/environment';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../../shared/social-handle.util';
+import { emailVerificationReminderMessage as buildEmailVerificationReminderMessage } from '../../../shared/whatsapp-messages.util';
 import { TIER_DESC_MAP } from '../../../shared/tiers.constants';
 import {
   ProfileFlag,
@@ -1545,6 +1546,37 @@ export class AdminUserTableComponent implements OnInit {
 
   isMobileVerified(user: any): boolean {
     return !!user?.isMobileVerified;
+  }
+
+  copiedEmailVerificationMessage = '';
+
+  // Manual stand-in for the automatic WhatsApp reminder (sent once, 30 min after
+  // the verification email, once WhatsApp Business API sending is live) — lets
+  // admins nudge the user by hand in the meantime.
+  emailVerificationReminderMessage(user: any): string {
+    return buildEmailVerificationReminderMessage({
+      name: this.getUserDisplayName(user),
+      email: user?.email || '',
+    });
+  }
+
+  copyEmailVerificationReminderMessage(user: any): void {
+    const text = this.emailVerificationReminderMessage(user);
+    if (!text) return;
+    const userId = String(user?._id || '');
+    const done = () => {
+      this.copiedEmailVerificationMessage = userId;
+      this.cd.detectChanges();
+      setTimeout(() => {
+        this.copiedEmailVerificationMessage = '';
+        this.cd.detectChanges();
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyDatabaseId(text, done));
+      return;
+    }
+    this.fallbackCopyDatabaseId(text, done);
   }
 
   /** Mirrors the "Profile Photo" checklist item — driven by open ProfileFlag records (batched server-side into profilePhotoActionRequired), the same source of truth the detail popup's checklist uses. */

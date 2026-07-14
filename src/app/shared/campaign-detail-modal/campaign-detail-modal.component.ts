@@ -9,6 +9,7 @@ import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
 import { campaignIdLabel, copyTextToClipboard } from '../referral-link.util';
+import { paymentReleaseMessage as buildPaymentReleaseMessage } from '../whatsapp-messages.util';
 import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 
@@ -157,15 +158,12 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   paymentReleaseMessage(item: any): string {
-    const amount = this.adminInvitePayoutAmountText(item);
-    const campaignName = this.campaignTitle;
-    return [
-      `Your payment of ${amount} for the "${campaignName}" campaign has been released successfully.`,
-      '',
-      `${this.adminInvitePayoutRefLabel(item)}: ${this.adminInvitePayoutTransactionId(item)}`,
-      '',
-      'Thank you for collaborating with TrendStarz!',
-    ].join('\n');
+    return buildPaymentReleaseMessage({
+      amount: this.adminInvitePayoutAmountText(item),
+      campaignName: this.campaignTitle,
+      payoutRefLabel: this.adminInvitePayoutRefLabel(item),
+      payoutRefValue: this.adminInvitePayoutTransactionId(item),
+    });
   }
 
   private static readonly SUBMITTED_OR_LATER_STATUSES = ['submitted', 'completed', 'approved', 'disputed'];

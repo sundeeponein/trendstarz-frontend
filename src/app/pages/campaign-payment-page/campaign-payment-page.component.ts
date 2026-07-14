@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
+import { payoutReleasedMessage } from '../../shared/whatsapp-messages.util';
 
 type Tab = 'summary' | 'pay' | 'status';
 
@@ -333,15 +334,14 @@ export class CampaignPaymentPageComponent implements OnInit {
     const tx = this.primaryTx;
     if (!tx || tx.payoutStatus !== 'paid') return '';
     const campaignTitle = String(this.campaign?.title || this.campaign?.campaignName || 'your campaign').trim();
-    const amount = this.formatINR(tx.recipientPayout || tx.agreedAmount || 0);
     const paidAt = tx.payoutSettledAt || tx.paidOutAt || tx.updatedAt;
-    const dateLine = paidAt ? `\nPaid on: ${new Date(paidAt).toLocaleString('en-IN')}` : '';
-    return [
-      `Hi, your TrendStarZ payout for "${campaignTitle}" has been released.`,
-      `Amount: ${amount}`,
-      `${this.payoutReferenceLabel(tx)}: ${this.payoutReference(tx)}${dateLine}`,
-      'Thank you for completing the campaign.',
-    ].join('\n');
+    return payoutReleasedMessage({
+      campaignTitle,
+      amount: this.formatINR(tx.recipientPayout || tx.agreedAmount || 0),
+      payoutRefLabel: this.payoutReferenceLabel(tx),
+      payoutRefValue: this.payoutReference(tx),
+      paidOnLabel: paidAt ? new Date(paidAt).toLocaleString('en-IN') : undefined,
+    });
   }
 
   formatINR(paise: number | undefined | null): string {

@@ -375,6 +375,16 @@
             <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedEmail" title="This account changed email after the previous one was verified — useful signal to check for account takeover or typos.">
               Previous verified email: {{ selectedUser.previousVerifiedEmail }}
             </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary mt-1"
+              *ngIf="!isEmailVerified(selectedUser)"
+              (click)="copyEmailVerificationReminderMessage(selectedUser)"
+              title="Copy a WhatsApp reminder message to send manually. Once the WhatsApp Business API is live, this same reminder sends automatically, once, 30 minutes after the verification email."
+            >
+              <i class="bi bi-whatsapp"></i>
+              {{ copiedEmailVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
+            </button>
           </div>
           <div>
             <app-verification-field
