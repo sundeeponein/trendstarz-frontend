@@ -63,7 +63,7 @@ export function buildSocialProfileUrl(platformName: string, handle: unknown): st
   if (!clean) return '';
   const platform = String(platformName || '').toLowerCase();
   if (platform.includes('instagram')) return `https://instagram.com/${clean}`;
-  if (platform.includes('youtube')) return `https://youtube.com/@${clean}`;
+  if (platform.includes('youtube')) return `https://www.youtube.com/@${clean}`;
   if (platform.includes('twitter') || platform === 'x') return `https://x.com/${clean}`;
   if (platform.includes('facebook')) return `https://facebook.com/${clean}`;
   if (platform.includes('tiktok')) return `https://tiktok.com/@${clean}`;
