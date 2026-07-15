@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { copyTextToClipboard } from '../referral-link.util';
+import { buildWhatsAppLink } from '../whatsapp-messages.util';
 
 @Component({
   selector: 'app-campaign-alert-message',
@@ -22,11 +23,18 @@ export class CampaignAlertMessageComponent {
   @Input() openCampaignMessage = '';
   @Input() inviteOnlyMessage = '';
   @Input() postingReminderMessage = '';
+  @Input() ownerApprovedMessage = '';
+  @Input() ownerPhone = '';
   @Input() messagesLoading = false;
 
-  /** The two message templates are independent accordions within the body. */
+  /** The message templates are independent accordions within the body. */
   inviteMessageExpanded = false;
   reminderMessageExpanded = false;
+  approvedMessageExpanded = false;
+
+  get ownerApprovedWhatsAppLink(): string | null {
+    return buildWhatsAppLink(this.ownerPhone, this.ownerApprovedMessage);
+  }
 
   get isOpenToAll(): boolean {
     return String(this.campaign?.campaignMode || '') === 'tier_filtered_open';
@@ -76,5 +84,15 @@ export class CampaignAlertMessageComponent {
     this.reminderCopied = true;
     clearTimeout(this.reminderCopiedTimer);
     this.reminderCopiedTimer = setTimeout(() => (this.reminderCopied = false), 2500);
+  }
+
+  approvedMessageCopied = false;
+  private approvedMessageCopiedTimer: any;
+
+  copyOwnerApprovedMessage(): void {
+    copyTextToClipboard(this.ownerApprovedMessage);
+    this.approvedMessageCopied = true;
+    clearTimeout(this.approvedMessageCopiedTimer);
+    this.approvedMessageCopiedTimer = setTimeout(() => (this.approvedMessageCopied = false), 2500);
   }
 }

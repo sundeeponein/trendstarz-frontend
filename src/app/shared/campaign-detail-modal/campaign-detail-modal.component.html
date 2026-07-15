@@ -445,6 +445,14 @@
                     <i class="bi bi-card-text"></i>
                     Show submitted message
                   </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="isHostStartWorkMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'startWork', $event)">
+                    <i class="bi bi-card-text"></i>
+                    Show start work message
+                  </button>
                   <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
                     {{ adminInvitePayoutStatusLabel(item) }}
                   </span>
@@ -565,6 +573,8 @@
         [openCampaignMessage]="adminShareMessages?.openCampaignMessage || ''"
         [inviteOnlyMessage]="adminShareMessages?.inviteOnlyMessage || ''"
         [postingReminderMessage]="adminShareMessages?.postingReminderMessage || ''"
+        [ownerApprovedMessage]="adminShareMessages?.ownerApprovedMessage || ''"
+        [ownerPhone]="adminShareMessages?.ownerPhone || ''"
         [messagesLoading]="adminShareMessagesLoading"
         (copyAlert)="copyAdminAlertMessage($event)">
       </app-campaign-alert-message>
@@ -676,7 +686,7 @@
     <div class="modal-content ts-modal cdm-payout-message-modal-content">
       <div class="cdm-payout-message-modal-title">
         <i class="bi bi-whatsapp"></i>
-        {{ hostShareMessageType === 'accepted' ? 'Invite Accepted Message' : 'Post Submitted Message' }}
+        {{ hostShareMessageType === 'accepted' ? 'Invite Accepted Message' : hostShareMessageType === 'submitted' ? 'Post Submitted Message' : 'Start Work Message' }}
       </div>
       <p *ngIf="hostShareMessageLoading">Loading message…</p>
       <pre class="cdm-payout-message-modal-text" *ngIf="!hostShareMessageLoading">{{ hostShareMessageText }}</pre>
@@ -686,6 +696,16 @@
           <i class="bi bi-clipboard-check"></i>
           {{ hostMessageCopied ? 'Copied' : 'Copy message' }}
         </button>
+        <a
+          class="cdm-foot-btn cdm-foot-btn--primary"
+          target="_blank"
+          rel="noopener"
+          [class.disabled]="hostShareMessageLoading || !hostShareMessageWhatsAppLink"
+          [attr.href]="hostShareMessageWhatsAppLink || null"
+          [attr.aria-disabled]="hostShareMessageLoading || !hostShareMessageWhatsAppLink">
+          <i class="bi bi-whatsapp"></i>
+          Send via WhatsApp
+        </a>
       </div>
     </div>
   </div>

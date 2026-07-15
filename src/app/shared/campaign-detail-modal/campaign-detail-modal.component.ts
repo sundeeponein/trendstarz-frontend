@@ -9,7 +9,7 @@ import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
 import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
 import { campaignIdLabel, copyTextToClipboard } from '../referral-link.util';
-import { paymentReleaseMessage as buildPaymentReleaseMessage } from '../whatsapp-messages.util';
+import { paymentReleaseMessage as buildPaymentReleaseMessage, buildWhatsAppLink } from '../whatsapp-messages.util';
 import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 
@@ -61,7 +61,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
   /** Server-rendered "Ready to Share" message text — see campaign-alert-message.component.ts for why this isn't computed client-side. */
-  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null = null;
+  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string; ownerApprovedMessage?: string | null; ownerPhone?: string } | null = null;
   @Input() adminShareMessagesLoading = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
@@ -88,13 +88,23 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() viewSubmission = new EventEmitter<void>();
   @Output() confirmReceipt = new EventEmitter<void>();
 
-  /** Per-invite "ready to share" host message (invite accepted / post submitted) — parent owns the fetch, see campaign-review.component.ts. */
-  @Output() requestHostShareMessage = new EventEmitter<{ item: any; type: 'accepted' | 'submitted' }>();
+  /** Per-invite "ready to share" host message (invite accepted / post submitted / start work) — parent owns the fetch, see campaign-review.component.ts. */
+  @Output() requestHostShareMessage = new EventEmitter<{ item: any; type: 'accepted' | 'submitted' | 'startWork' }>();
   @Output() dismissHostShareMessage = new EventEmitter<void>();
   @Input() hostShareMessageItem: any = null;
-  @Input() hostShareMessageType: 'accepted' | 'submitted' | null = null;
+  @Input() hostShareMessageType: 'accepted' | 'submitted' | 'startWork' | null = null;
   @Input() hostShareMessageText = '';
   @Input() hostShareMessageLoading = false;
+  /** Recipient phone for the wa.me Send button — host's for accepted/submitted, creator's for startWork. */
+  @Input() hostShareMessageOwnerPhone = '';
+  @Input() hostShareMessageRecipientPhone = '';
+
+  get hostShareMessageWhatsAppLink(): string | null {
+    const phone = this.hostShareMessageType === 'startWork'
+      ? this.hostShareMessageRecipientPhone
+      : this.hostShareMessageOwnerPhone;
+    return buildWhatsAppLink(phone, this.hostShareMessageText);
+  }
 
   // Emergency admin overrides — collapsed by default; both require a reason.
   showEmergencyAdminPanel = false;
@@ -167,6 +177,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   private static readonly SUBMITTED_OR_LATER_STATUSES = ['submitted', 'completed', 'approved', 'disputed'];
+  private static readonly WORK_STARTED_OR_LATER_STATUSES = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
 
   isHostAcceptedMessageAvailable(item: any): boolean {
     return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
@@ -176,7 +187,11 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
   }
 
-  openHostShareMessage(item: any, type: 'accepted' | 'submitted', ev?: Event): void {
+  isHostStartWorkMessageAvailable(item: any): boolean {
+    return CampaignDetailModalComponent.WORK_STARTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+  }
+
+  openHostShareMessage(item: any, type: 'accepted' | 'submitted' | 'startWork', ev?: Event): void {
     ev?.stopPropagation();
     this.requestHostShareMessage.emit({ item, type });
   }

@@ -6,6 +6,14 @@
  * on the backend) — kept here so wording only ever needs editing in one place.
  */
 
+/** Build a WhatsApp deep-link with a prefilled message. Returns null if the phone number has no usable digits. */
+export function buildWhatsAppLink(phone: string | null | undefined, text: string): string | null {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const withCountry = digits.startsWith('91') ? digits : `91${digits}`;
+  return `https://wa.me/${withCountry}?text=${encodeURIComponent(text)}`;
+}
+
 export function paymentReleaseMessage(params: {
   amount: string;
   campaignName: string;

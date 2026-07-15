@@ -11,6 +11,14 @@ import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { campaignIdLabel as sharedCampaignIdLabel } from '../../../shared/referral-link.util';
 
+interface CampaignShareMessages {
+  openCampaignMessage: string;
+  inviteOnlyMessage: string;
+  postingReminderMessage: string;
+  ownerApprovedMessage: string | null;
+  ownerPhone: string;
+}
+
 @Component({
   selector: 'app-campaign-review',
   standalone: true,
@@ -69,19 +77,21 @@ export class CampaignReviewComponent implements OnInit {
   selectedCampaign: any | null = null;
   selectedCampaignPreviewInvite: any | null = null;
   selectedCampaignInviteProgressLoading = false;
-  selectedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null = null;
+  selectedCampaignShareMessages: CampaignShareMessages | null = null;
   selectedCampaignShareMessagesLoading = false;
   selectedInviteHostMessageItem: any = null;
-  selectedInviteHostMessageType: 'accepted' | 'submitted' | null = null;
+  selectedInviteHostMessageType: 'accepted' | 'submitted' | 'startWork' | null = null;
   selectedInviteHostMessageText = '';
   selectedInviteHostMessageLoading = false;
+  selectedInviteHostMessageOwnerPhone = '';
+  selectedInviteHostMessageRecipientPhone = '';
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
   moderationNoteInput = '';
   moderationModalError = '';
   approvedCampaignAlert: any | null = null;
-  approvedCampaignShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null = null;
+  approvedCampaignShareMessages: CampaignShareMessages | null = null;
   approvedCampaignShareMessagesLoading = false;
   alertMessageCopied = false;
 
@@ -796,7 +806,7 @@ export class CampaignReviewComponent implements OnInit {
    */
   private fetchShareMessages(
     campaignId: string,
-    onResult: (messages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string } | null) => void,
+    onResult: (messages: CampaignShareMessages | null) => void,
   ): void {
     if (!campaignId) {
       onResult(null);
@@ -813,11 +823,13 @@ export class CampaignReviewComponent implements OnInit {
       });
   }
 
-  /** Handles campaign-detail-modal's per-invite "show message" buttons (invite accepted / post submitted). */
-  onRequestHostShareMessage(payload: { item: any; type: 'accepted' | 'submitted' }): void {
+  /** Handles campaign-detail-modal's per-invite "show message" buttons (invite accepted / post submitted / start work). */
+  onRequestHostShareMessage(payload: { item: any; type: 'accepted' | 'submitted' | 'startWork' }): void {
     this.selectedInviteHostMessageItem = payload.item;
     this.selectedInviteHostMessageType = payload.type;
     this.selectedInviteHostMessageText = '';
+    this.selectedInviteHostMessageOwnerPhone = '';
+    this.selectedInviteHostMessageRecipientPhone = '';
     this.selectedInviteHostMessageLoading = true;
     const inviteId = String(payload.item?.inviteId || '').trim();
     if (!inviteId) {
@@ -832,8 +844,14 @@ export class CampaignReviewComponent implements OnInit {
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
-          this.selectedInviteHostMessageText =
-            (payload.type === 'accepted' ? data?.inviteAcceptedMessage : data?.postSubmittedMessage) || '';
+          const messageByType: Record<'accepted' | 'submitted' | 'startWork', string> = {
+            accepted: data?.inviteAcceptedMessage,
+            submitted: data?.postSubmittedMessage,
+            startWork: data?.startWorkMessage,
+          };
+          this.selectedInviteHostMessageText = messageByType[payload.type] || '';
+          this.selectedInviteHostMessageOwnerPhone = data?.ownerPhone || '';
+          this.selectedInviteHostMessageRecipientPhone = data?.recipientPhone || '';
           this.selectedInviteHostMessageLoading = false;
           this.cdr.detectChanges();
         },
@@ -848,6 +866,8 @@ export class CampaignReviewComponent implements OnInit {
     this.selectedInviteHostMessageItem = null;
     this.selectedInviteHostMessageType = null;
     this.selectedInviteHostMessageText = '';
+    this.selectedInviteHostMessageOwnerPhone = '';
+    this.selectedInviteHostMessageRecipientPhone = '';
     this.selectedInviteHostMessageLoading = false;
   }
 

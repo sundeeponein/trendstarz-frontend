@@ -51,5 +51,31 @@
         <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
       </div>
     </div>
+
+    <!-- Notifies the host that their campaign was approved — only relevant once approved -->
+    <div class="campaign-alert-message__template" *ngIf="isApprovedStatus">
+      <button type="button" class="campaign-alert-message__template-toggle" (click)="approvedMessageExpanded = !approvedMessageExpanded">
+        <span>Campaign Approved Message</span>
+        <i class="bi" [ngClass]="approvedMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <div class="campaign-alert-message__template-body" *ngIf="approvedMessageExpanded">
+        <div class="campaign-alert-message__template-actions">
+          <button type="button" class="btn btn-primary btn-sm" [disabled]="messagesLoading || !ownerApprovedMessage" (click)="copyOwnerApprovedMessage()">
+            {{ approvedMessageCopied ? 'Copied' : 'Copy Approved Message' }}
+          </button>
+          <a
+            class="btn btn-success btn-sm"
+            target="_blank"
+            rel="noopener"
+            [class.disabled]="messagesLoading || !ownerApprovedWhatsAppLink"
+            [attr.href]="ownerApprovedWhatsAppLink || null"
+            [attr.aria-disabled]="messagesLoading || !ownerApprovedWhatsAppLink">
+            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+          </a>
+        </div>
+        <pre *ngIf="!messagesLoading">{{ ownerApprovedMessage }}</pre>
+        <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
+      </div>
+    </div>
   </div>
 </section>
