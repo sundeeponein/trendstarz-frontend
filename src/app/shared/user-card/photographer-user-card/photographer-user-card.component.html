@@ -8,11 +8,8 @@
     <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" {{ name }} />
 
     <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
-      <span class="photographer-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified" tooltip="Verified" title="Verified">
-        <i class="bi bi-patch-check-fill"></i> Verified
-      </span>
       <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
-        <i class="bi bi-star-fill"></i> Premium
+        <i class="bi bi-star-fill"></i> 
       </span>
     </div>
   </div>
@@ -20,6 +17,10 @@
   <div class="photographer-card__body">
     <div class="photographer-card__name">
       {{ name || '—' }}
+      <span class="text-success" *ngIf="isTrendstarzVerified" tooltip="Verified" title="Verified">
+        <i class="bi bi-patch-check-fill"></i>
+      </span>
+      
     </div>
 
     <div class="photographer-card__category-row">

@@ -10,12 +10,12 @@
 
     <!-- Trust badges -->
     <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || (professionalStatus && visibleCreatorTypes.length)">
-      <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
-        <i class="bi bi-star-fill"></i> Premium
-      </span>
       <ng-container *ngIf="professionalStatus && visibleCreatorTypes.length">
         <span class="inf-card__img-tag badge rounded-pill badge--creator-type" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
       </ng-container>
+      <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
+        <i class="bi bi-star-fill"></i>
+      </span>
     </div>
   </div>
 

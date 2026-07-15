@@ -5,11 +5,8 @@
 
     <!-- Trust badges -->
     <div class="brand-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
-      <span class="brand-card__img-tag badge rounded-pill badge--ts-verified" *ngIf="isTrendstarzVerified"  tooltip="Verified" title="Verified">
-        <i class="bi bi-patch-check-fill"></i> Verified
-      </span>
       <span class="brand-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium"  tooltip="Premium" title="Premium">
-        <i class="bi bi-star-fill"></i> Pro
+        <i class="bi bi-star-fill"></i>
       </span>
     </div>
 
@@ -19,7 +16,10 @@
   <div class="brand-card__body">
     <!-- Name -->
     <div class="brand-card__name">
-      {{ brandName }}
+      {{ brandName }} 
+      <span class="text-success" *ngIf="isTrendstarzVerified"  tooltip="Verified" title="Verified">
+        <i class="bi bi-patch-check-fill"></i>
+      </span>
     </div>
 
     <!-- Categories -->

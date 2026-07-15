@@ -31,6 +31,12 @@ export class HeroSliderBannerComponent implements OnInit, OnDestroy {
   @Input() showTextLink = false;
   @Input() autoplayIntervalMs = 5500;
   @Input() slides: HeroSliderBannerSlide[] = [];
+  // NgComponentOutlet only supports binding @Input()s, not template
+  // (output) listeners, so callers that need to intercept a click (e.g. to
+  // open a registration-confirm modal instead of navigating) pass a
+  // callback here rather than an @Output() EventEmitter.
+  @Input() onPrimaryClick: ((slide: HeroSliderBannerSlide) => void) | null = null;
+  @Input() onSecondaryClick: ((slide: HeroSliderBannerSlide) => void) | null = null;
 
   activeSlideIndex = 0;
 
@@ -102,6 +108,20 @@ export class HeroSliderBannerComponent implements OnInit, OnDestroy {
   go(route?: string): void {
     if (!route) return;
     this.router.navigateByUrl(route);
+  }
+
+  goPrimary(): void {
+    const slide = this.activeSlide;
+    if (!slide) return;
+    if (this.onPrimaryClick) { this.onPrimaryClick(slide); return; }
+    this.go(slide.primaryRoute);
+  }
+
+  goSecondary(): void {
+    const slide = this.activeSlide;
+    if (!slide) return;
+    if (this.onSecondaryClick) { this.onSecondaryClick(slide); return; }
+    this.go(slide.secondaryRoute);
   }
 
   private startAutoplay(): void {

@@ -12,6 +12,7 @@ import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { HeroSliderBannerComponent, HeroSliderBannerSlide } from '../../shared/hero-slider-banner/hero-slider-banner.component';
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
@@ -34,6 +35,76 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
   readonly faqAccordionComponent = FaqAccordionComponent;
+  readonly heroSliderBannerComponent = HeroSliderBannerComponent;
+
+  get heroSliderBannerInputs() {
+    return {
+      badge: 'TrendStarz Marketplace',
+      ariaLabel: 'TrendStarz Hero Slides',
+      showTextLink: false,
+      autoplayIntervalMs: 5500,
+      slides: this.heroSliderSlides,
+      onPrimaryClick: (slide: HeroSliderBannerSlide) => this.onHeroSliderPrimaryClick(slide),
+    };
+  }
+
+  // Registration CTA per slide's primaryRoute — mirrors the static
+  // app-hero-banner's (primaryClick)="regConfirm.open(...)" pattern, but
+  // routed through a callback @Input() since NgComponentOutlet can't bind
+  // template (output) listeners.
+  private readonly heroSliderRegistrationRoleByRoute: Record<string, 'brand' | 'influencer' | 'photographer'> = {
+    '/register-brand': 'brand',
+    '/register-influencer': 'influencer',
+    '/register-photographer': 'photographer',
+  };
+
+  private onHeroSliderPrimaryClick(slide: HeroSliderBannerSlide): void {
+    const role = this.heroSliderRegistrationRoleByRoute[slide.primaryRoute];
+    if (!this.isLoggedIn() && role) {
+      this.regConfirm.open(role);
+      return;
+    }
+    if (slide.primaryRoute) this.router.navigateByUrl(slide.primaryRoute);
+  }
+
+  private get heroSliderSlides(): HeroSliderBannerSlide[] {
+    const loggedIn = this.isLoggedIn();
+    return [
+      {
+        heading: 'Launch Campaigns That Convert',
+        highlightText: 'Built for Brands',
+        description: 'Discover verified influencers, run targeted campaigns, and track results — all in one platform.',
+        primaryLabel: loggedIn ? 'Start a Campaign' : 'Register as Brand',
+        primaryRoute: loggedIn ? '/campaigns' : '/register-brand',
+        secondaryLabel: 'Find Creators',
+        secondaryRoute: '/search',
+        imageUrl: 'assets/banner-trendstarz-1600.jpg',
+        imageAlt: 'Brands collaborating with influencers on TrendStarz',
+      },
+      {
+        heading: 'Grow Your Influence, Get Paid',
+        highlightText: 'Built for Creators',
+        description: 'Connect with brands actively looking for creators like you and turn your content into income.',
+        primaryLabel: loggedIn ? 'Explore Campaigns' : 'Register as Influencer',
+        primaryRoute: loggedIn ? '/campaigns' : '/register-influencer',
+        secondaryLabel: 'Explore Features',
+        secondaryRoute: '/features',
+        imageUrl: 'assets/banner-trendstarz-1600.jpg',
+        imageAlt: 'Influencer creating content for a brand campaign',
+      },
+      {
+        heading: 'Showcase Your Craft to Brands',
+        highlightText: 'Built for Photo & Videographers',
+        description: 'Get discovered by brands and creators who need professional photo and video talent for their campaigns.',
+        primaryLabel: loggedIn ? 'Explore Campaigns' : 'Register as Photographer',
+        primaryRoute: loggedIn ? '/campaigns' : '/register-photographer',
+        secondaryLabel: 'How It Works',
+        secondaryRoute: '/how-it-works',
+        imageUrl: 'assets/banner-trendstarz-1600.jpg',
+        imageAlt: 'Photographer showcasing a portfolio to brands',
+      },
+    ];
+  }
   readonly builtForAudiencesInputs = {
     heading: 'Platform Features',
     subheading: 'Tools and collaboration solutions built for creators and brands.',
@@ -119,6 +190,15 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   allInfluencers: any[] = [];
   brands: any[] = [];
   photographers: any[] = [];
+  platformStats: {
+    totalInfluencers: number;
+    verifiedInfluencers: number;
+    totalPhotographers: number;
+    verifiedPhotographers: number;
+    totalBrands: number;
+    verifiedBrands: number;
+    totalCampaigns: number;
+  } | null = null;
   brandCampaignStatusMap: Record<string, string> = {};
   influencersLoading = false;
   brandsLoading = false;
@@ -133,15 +213,15 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   get showBrandsSection(): boolean {
-    return this.brands.length >= this.minPublicBrands;
+    return (this.platformStats?.totalBrands || 0) >= this.minPublicBrands && this.brands.length > 0;
   }
 
   get showInfluencersSection(): boolean {
-    return this.allInfluencers.length >= this.minPublicInfluencers;
+    return (this.platformStats?.totalInfluencers || 0) >= this.minPublicInfluencers && this.allInfluencers.length > 0;
   }
 
   get showPhotographersSection(): boolean {
-    return this.photographers.length >= this.minPublicPhotographers;
+    return (this.platformStats?.totalPhotographers || 0) >= this.minPublicPhotographers && this.photographers.length > 0;
   }
 
   get marketplaceLoading(): boolean {
@@ -252,6 +332,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   private loadPlatformStats(): void {
     this.config.getPlatformStats().subscribe((stats) => {
+      this.platformStats = stats;
       const hasData = (stats?.totalInfluencers || 0) > 0 || (stats?.totalPhotographers || 0) > 0;
       if (!hasData) return;
       const formatCount = (count: number) => (Number.isFinite(count) ? String(count) : '0');
@@ -327,12 +408,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   viewInfluencerProfile(influencer: any) {
     if (influencer) {
-      let username = influencer.username;
-      if (!username || username.trim() === '') {
-        username = influencer.name || '';
-      }
-      // Always slugify for URL safety
-      const urlUsername = this.slugify(username);
+      // Prefer the stored username as-is — it's already the canonical URL
+      // identifier and may differ from a fresh slugify() of the display name
+      // (customized at registration, disambiguation suffix, etc.). Only
+      // derive a slug from the display name when there's no stored username.
+      const storedUsername = String(influencer.username || '').trim();
+      const urlUsername = storedUsername || this.slugify(influencer.name || '');
       if (urlUsername) {
         this.config.trackInfluencerProfileClick(urlUsername).subscribe({
           next: () => {},
@@ -427,14 +508,20 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   viewBrandProfile(brand: any) {
-    if (brand && brand.brandName) {
-      const slug = this.slugify(brand.brandName);
-      this.config.trackBrandProfileClick(slug).subscribe({
-        next: () => {},
-        error: () => {}
-      });
-      this.router.navigate(['/brand', slug]);
-    }
+    if (!brand) return;
+    // Prefer the stored brandUsername as-is — it's already the canonical URL
+    // identifier and may differ from a fresh slugify() of brandName
+    // (customized at registration, disambiguation suffix, apostrophes/
+    // punctuation stripped differently, etc.). Only derive a slug from the
+    // display name when there's no stored brandUsername.
+    const storedUsername = String(brand.brandUsername || '').trim();
+    const slug = storedUsername || this.slugify(brand.brandName || '');
+    if (!slug) return;
+    this.config.trackBrandProfileClick(slug).subscribe({
+      next: () => {},
+      error: () => {}
+    });
+    this.router.navigate(['/brand', slug]);
   }
 
   filterByCategory(category: string) {
