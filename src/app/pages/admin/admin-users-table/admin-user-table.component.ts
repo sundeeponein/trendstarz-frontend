@@ -10,7 +10,11 @@ import { environment } from '../../../../environments/environment';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../../shared/social-handle.util';
-import { emailVerificationReminderMessage as buildEmailVerificationReminderMessage } from '../../../shared/whatsapp-messages.util';
+import {
+  emailVerificationReminderMessage as buildEmailVerificationReminderMessage,
+  mobileVerificationReminderMessage as buildMobileVerificationReminderMessage,
+  mobileVerificationCallbackRequestMessage as buildMobileVerificationCallbackRequestMessage,
+} from '../../../shared/whatsapp-messages.util';
 import { TIER_DESC_MAP } from '../../../shared/tiers.constants';
 import {
   ProfileFlag,
@@ -1577,6 +1581,83 @@ export class AdminUserTableComponent implements OnInit {
       return;
     }
     this.fallbackCopyDatabaseId(text, done);
+  }
+
+  copiedMobileVerificationMessage = '';
+  copiedMobileCallbackMessage = '';
+  resendingMobileOtp = false;
+
+  // Manual WhatsApp nudge for mobile verification — shown whenever mobile is
+  // still pending, regardless of whether the app is in OTP or manual-call mode.
+  mobileVerificationReminderMessage(user: any): string {
+    return buildMobileVerificationReminderMessage({
+      name: this.getUserDisplayName(user),
+    });
+  }
+
+  copyMobileVerificationReminderMessage(user: any): void {
+    const text = this.mobileVerificationReminderMessage(user);
+    if (!text) return;
+    const userId = String(user?._id || '');
+    const done = () => {
+      this.copiedMobileVerificationMessage = userId;
+      this.cd.detectChanges();
+      setTimeout(() => {
+        this.copiedMobileVerificationMessage = '';
+        this.cd.detectChanges();
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyDatabaseId(text, done));
+      return;
+    }
+    this.fallbackCopyDatabaseId(text, done);
+  }
+
+  mobileVerificationCallbackRequestMessage(user: any): string {
+    return buildMobileVerificationCallbackRequestMessage({
+      name: this.getUserDisplayName(user),
+    });
+  }
+
+  copyMobileCallbackRequestMessage(user: any): void {
+    const text = this.mobileVerificationCallbackRequestMessage(user);
+    if (!text) return;
+    const userId = String(user?._id || '');
+    const done = () => {
+      this.copiedMobileCallbackMessage = userId;
+      this.cd.detectChanges();
+      setTimeout(() => {
+        this.copiedMobileCallbackMessage = '';
+        this.cd.detectChanges();
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyDatabaseId(text, done));
+      return;
+    }
+    this.fallbackCopyDatabaseId(text, done);
+  }
+
+  /** Admin-triggered SMS OTP send — a real, separate send via the backend /otp/send
+   * endpoint, independent of the user's own in-app Firebase phone-auth flow
+   * (which can only run in that user's own browser session). */
+  resendMobileOtp(user: any): void {
+    const phone = this.getDisplayPhoneNumber(user);
+    if (!phone || phone === '-' || this.resendingMobileOtp) return;
+    this.resendingMobileOtp = true;
+    this.configService.sendPhoneOtp(phone).subscribe({
+      next: () => {
+        this.resendingMobileOtp = false;
+        this.cd.detectChanges();
+        alert(`OTP sent to ${phone}.`);
+      },
+      error: (err: any) => {
+        this.resendingMobileOtp = false;
+        this.cd.detectChanges();
+        alert('Error sending OTP: ' + (err?.error?.error || err?.error?.message || err?.message || 'Unknown error'));
+      },
+    });
   }
 
   /** Mirrors the "Profile Photo" checklist item — driven by open ProfileFlag records (batched server-side into profilePhotoActionRequired), the same source of truth the detail popup's checklist uses. */

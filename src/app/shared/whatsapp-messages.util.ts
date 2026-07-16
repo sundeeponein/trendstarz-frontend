@@ -60,3 +60,29 @@ export function emailVerificationReminderMessage(params: {
     'Thank you for joining TrendStarZ!',
   ].join('\n');
 }
+
+export function mobileVerificationReminderMessage(params: {
+  name: string;
+}): string {
+  return [
+    `Hi! ${params.name},`,
+    '',
+    'Your TrendStarZ registration is almost complete.',
+    '',
+    'Please log in to your account and complete your mobile verification to activate your profile and start receiving brand campaign invites.',
+    '',
+    'Thank you!',
+  ].join('\n');
+}
+
+export function mobileVerificationCallbackRequestMessage(params: {
+  name: string;
+}): string {
+  return [
+    `Hi ${params.name}, we tried to verify your TrendStarZ mobile number but it's still pending.`,
+    '',
+    'Reply YES to this message and our team will call you shortly to complete your mobile verification.',
+    '',
+    'Thank you for joining TrendStarZ!',
+  ].join('\n');
+}

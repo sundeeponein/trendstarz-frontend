@@ -88,9 +88,14 @@ export class PhotographerProfileComponent implements OnInit {
   phoneVerifyError = '';
   verifyingPhoneOtp = false;
   phoneOtpError = '';
+  phoneOtpTimer: number = 300;
+  canResendPhoneOtp: boolean = false;
+  private phoneOtpInterval: any;
   private firebasePhoneConfirmation: any = null;
   verificationCallNumber = '';
   otpVerificationEnabled = false;
+  requestingMobileCallback = false;
+  mobileCallbackRequested = false;
   profileConfirmOpen = false;
   profileConfirmMessage = '';
   private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
@@ -172,6 +177,42 @@ export class PhotographerProfileComponent implements OnInit {
     void this.sendFirebasePhoneOtp();
   }
 
+  resendPhoneOtp(): void {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
+
+  startPhoneOtpTimer(): void {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) {
+        clearInterval(this.phoneOtpInterval);
+      }
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
+
+  requestMobileCallback(): void {
+    const id = this.session.getUser()?.id;
+    if (!id || this.requestingMobileCallback) return;
+    this.requestingMobileCallback = true;
+    this.config.requestMobileCallback(id).subscribe({
+      next: () => {
+        this.requestingMobileCallback = false;
+        this.mobileCallbackRequested = true;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.requestingMobileCallback = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   private async sendFirebasePhoneOtp(): Promise<void> {
     try {
       const phone = this.formatFirebasePhone(this.form.get('phoneNumber')?.value);
@@ -179,6 +220,7 @@ export class PhotographerProfileComponent implements OnInit {
       this.phoneVerifyError = '';
       this.phoneOtpError = '';
       this.showPhoneOtp = true;
+      this.startPhoneOtpTimer();
     } catch (error: any) {
       this.phoneVerifyError = error?.message || 'Failed to send OTP';
     }

@@ -920,6 +920,16 @@ export class ConfigService {
     return this.http.patch(`${this.apiUrl}/users/${id}/profile-visibility`, { profileVisibility });
   }
 
+  /** Fires a fresh SMS OTP to a phone number. Used by Admin's "Resend OTP" action — a real send, independent of a user's own in-app Firebase phone-auth flow. */
+  sendPhoneOtp(phone: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/otp/send`, { type: 'phone', value: phone });
+  }
+
+  /** Self-service "please call me to verify my mobile" ask — surfaced to admins in the Admin Users table. */
+  requestMobileCallback(id: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/request-mobile-callback`, {});
+  }
+
 
   getInfluencerProfileById(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/users/influencer-profile`).pipe(

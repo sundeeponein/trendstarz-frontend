@@ -210,6 +210,11 @@
                 </div>
                 <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
               </div>
+              <div *ngIf="!phoneVerified && !otpVerificationEnabled" class="mt-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="requestingMobileCallback || mobileCallbackRequested" (click)="requestMobileCallback()">
+                  {{ mobileCallbackRequested ? 'Callback requested' : (requestingMobileCallback ? 'Requesting…' : 'Request a Callback') }}
+                </button>
+              </div>
             </div>
             <div class="field-block">
               <label>Email <span class="text-danger">*</span></label>

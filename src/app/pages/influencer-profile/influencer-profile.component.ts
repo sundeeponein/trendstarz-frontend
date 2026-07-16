@@ -349,6 +349,8 @@ export class InfluencerProfileComponent implements OnInit {
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
   private firebasePhoneConfirmation: any = null;
+  requestingMobileCallback: boolean = false;
+  mobileCallbackRequested: boolean = false;
 
 
   // Email verification resend state
@@ -396,6 +398,23 @@ export class InfluencerProfileComponent implements OnInit {
   sendPhoneOtp() {
     if (!this.otpVerificationEnabled) return;
     void this.sendFirebasePhoneOtp();
+  }
+
+  requestMobileCallback(): void {
+    const id = this.session.getUser()?.id;
+    if (!id || this.requestingMobileCallback) return;
+    this.requestingMobileCallback = true;
+    this.configService.requestMobileCallback(id).subscribe({
+      next: () => {
+        this.requestingMobileCallback = false;
+        this.mobileCallbackRequested = true;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.requestingMobileCallback = false;
+        this.cd.detectChanges();
+      },
+    });
   }
 
   private formatFirebasePhone(phone: string): string {

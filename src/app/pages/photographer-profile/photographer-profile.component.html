@@ -137,6 +137,8 @@
                 <small *ngIf="!phoneVerified && !otpVerificationEnabled" class="text-muted d-block mt-1">Mobile verification is currently manual. Our support/admin team will verify this number.</small>
                 <div *ngIf="!phoneVerified && otpVerificationEnabled" class="mt-2">
                   <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()" [disabled]="form.get('phoneNumber')?.invalid">Send Mobile OTP</button>
+                  <button type="button" class="btn btn-link btn-sm" *ngIf="showPhoneOtp && canResendPhoneOtp" (click)="resendPhoneOtp()">Resend OTP</button>
+                  <small *ngIf="showPhoneOtp && !canResendPhoneOtp" class="text-muted ms-2">Resend available shortly.</small>
                   <span *ngIf="phoneVerifyError" class="text-danger ms-2">{{ phoneVerifyError }}</span>
                   <div id="photographer-phone-recaptcha"></div>
                   <div *ngIf="showPhoneOtp" class="d-flex align-items-center gap-2 flex-wrap mt-2">
@@ -144,6 +146,11 @@
                     <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify OTP</button>
                   </div>
                   <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
+                </div>
+                <div *ngIf="!phoneVerified && !otpVerificationEnabled" class="mt-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="requestingMobileCallback || mobileCallbackRequested" (click)="requestMobileCallback()">
+                    {{ mobileCallbackRequested ? 'Callback requested' : (requestingMobileCallback ? 'Requesting…' : 'Request a Callback') }}
+                  </button>
                 </div>
               </div>
               <div class="field-block">

@@ -380,7 +380,7 @@
               class="btn btn-sm btn-outline-secondary mt-1"
               *ngIf="!isEmailVerified(selectedUser)"
               (click)="copyEmailVerificationReminderMessage(selectedUser)"
-              title="Copy a WhatsApp reminder message to send manually. Once the WhatsApp Business API is live, this same reminder sends automatically, once, 30 minutes after the verification email."
+              title=" WhatsApp reminder message to send manually. Once the WhatsApp Business API is live, this same reminder sends automatically, once, 30 minutes after the verification email."
             >
               <i class="bi bi-whatsapp"></i>
               {{ copiedEmailVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
@@ -403,6 +403,42 @@
             <div class="user-sub mt-1" *ngIf="!isMobileVerified(selectedUser)">
               <span *ngIf="otpVerificationEnabled">Self-verification via OTP is active — number may verify itself once the user completes it.</span>
               <span *ngIf="!otpVerificationEnabled">Manual verification — call this number to verify.</span>
+            </div>
+            <div class="user-sub mt-1 text-warning" *ngIf="!isMobileVerified(selectedUser) && selectedUser.mobileCallbackRequestedAt" title="The user asked to be called to complete mobile verification.">
+              <i class="bi bi-telephone-inbound-fill"></i>
+              Callback requested {{ selectedUser.mobileCallbackRequestedAt | date:'medium' }}
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary mt-1"
+              *ngIf="!isMobileVerified(selectedUser)"
+              (click)="copyMobileVerificationReminderMessage(selectedUser)"
+              title=" WhatsApp reminder message to send manually asking the user to complete mobile verification."
+            >
+              <i class="bi bi-whatsapp"></i>
+              {{ copiedMobileVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
+            </button>
+            <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && otpVerificationEnabled">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                [disabled]="resendingMobileOtp || getDisplayPhoneNumber(selectedUser) === '-'"
+                (click)="resendMobileOtp(selectedUser)"
+                title="Send a fresh SMS OTP to this number right now."
+              >
+                {{ resendingMobileOtp ? 'Sending…' : 'Resend OTP' }}
+              </button>
+            </div>
+            <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && !otpVerificationEnabled">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="copyMobileCallbackRequestMessage(selectedUser)"
+                title="Copy a WhatsApp message asking the user to reply YES so our team knows to call and verify."
+              >
+                <i class="bi bi-whatsapp"></i>
+                {{ copiedMobileCallbackMessage === selectedUser._id ? 'Copied' : 'Request a Callback' }}
+              </button>
             </div>
           </div>
           <div>

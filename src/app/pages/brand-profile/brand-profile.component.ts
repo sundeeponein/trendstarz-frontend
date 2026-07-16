@@ -178,6 +178,25 @@ export class BrandProfileComponent implements OnInit {
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
   private firebasePhoneConfirmation: any = null;
+  requestingMobileCallback: boolean = false;
+  mobileCallbackRequested: boolean = false;
+
+  requestMobileCallback(): void {
+    const id = this.session.getUser()?.id;
+    if (!id || this.requestingMobileCallback) return;
+    this.requestingMobileCallback = true;
+    this.configService.requestMobileCallback(id).subscribe({
+      next: () => {
+        this.requestingMobileCallback = false;
+        this.mobileCallbackRequested = true;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.requestingMobileCallback = false;
+        this.cd.detectChanges();
+      },
+    });
+  }
 
   startPhoneOtpTimer() {
     this.phoneOtpTimer = 300;

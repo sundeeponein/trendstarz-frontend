@@ -150,6 +150,9 @@
                   <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify</button>
                 </div>
                 <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" [disabled]="requestingMobileCallback || mobileCallbackRequested" (click)="requestMobileCallback()">
+                  {{ mobileCallbackRequested ? 'Callback requested' : (requestingMobileCallback ? 'Requesting…' : 'Request a Callback') }}
+                </button>
               </div>
             </div>
             <div class="field-block">
