@@ -119,9 +119,10 @@
     <app-homepage-feature-toggle
       [checked]="featuredInMarketing"
       [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
+      [isPremium]="isPremium"
       (checkedChange)="onFeaturedInMarketingChange($event)">
     </app-homepage-feature-toggle>
-    <p class="visibility-note" *ngIf="profileVisibility !== 'PUBLIC'">
+    <p class="visibility-note" *ngIf="isPremium && profileVisibility !== 'PUBLIC'">
       Homepage Hero Feature is only available when your profile visibility is set to Public.
     </p>
   </section>

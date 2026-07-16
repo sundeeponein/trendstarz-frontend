@@ -45,6 +45,8 @@ export interface ProfileVerificationDashboard {
   campaignEligibility: { eligible: boolean; blockers: string[] };
   campaignStatus: 'eligible' | 'profile_update_required' | 'restricted';
   profileVisibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
+  /** False for pre-existing accounts that never explicitly chose — ask during a manual verification call. */
+  profileVisibilityIsSet: boolean;
   featuredInMarketing: boolean;
   homepageEligibility: {
     emailVerified: boolean;

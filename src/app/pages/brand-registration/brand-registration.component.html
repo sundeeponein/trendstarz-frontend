@@ -445,9 +445,10 @@
               class="mt-3 d-block"
               [checked]="registrationForm.get('featuredInMarketing')?.value"
               [disabled]="registrationForm.get('profileVisibility')?.value !== 'PUBLIC'"
+              [isPremium]="registrationForm.get('paymentOption')?.value === 'premium'"
               (checkedChange)="registrationForm.get('featuredInMarketing')?.setValue($event)">
             </app-homepage-feature-toggle>
-            <p class="form-text mt-1" *ngIf="registrationForm.get('profileVisibility')?.value !== 'PUBLIC'" style="font-size:0.82em;">
+            <p class="form-text mt-1" *ngIf="registrationForm.get('paymentOption')?.value === 'premium' && registrationForm.get('profileVisibility')?.value !== 'PUBLIC'" style="font-size:0.82em;">
               Only approved, verified, and eligible profiles may be featured. Homepage Hero Feature is only available when profile visibility is Public.
             </p>
           </div>

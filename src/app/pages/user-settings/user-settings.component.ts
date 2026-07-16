@@ -9,6 +9,7 @@ import { ReferralTargetRole } from '../../shared/tracking-links/tracking-links-a
 import { ReferralLinkCardComponent } from '../../shared/referral-link-card/referral-link-card.component';
 import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { PlansService } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-user-settings',
@@ -36,6 +37,7 @@ export class UserSettingsComponent implements OnInit {
   marketingConsentBusy = false;
   profileVisibility: ProfileVisibility = 'PUBLIC';
   visibilityBusy = false;
+  isPremium = false;
   showDeleteConfirm = false;
   deletePassword = '';
   deleteBusy = false;
@@ -47,6 +49,7 @@ export class UserSettingsComponent implements OnInit {
     private readonly session: SessionService,
     private readonly config: ConfigService,
     private readonly router: Router,
+    private readonly plansService: PlansService,
   ) {}
 
   ngOnInit(): void {
@@ -72,6 +75,9 @@ export class UserSettingsComponent implements OnInit {
       });
       this.config.getProfileVisibility(this.userId).subscribe((res) => {
         this.profileVisibility = res?.profileVisibility || 'PUBLIC';
+      });
+      this.plansService.getMyCapabilities().subscribe((caps) => {
+        this.isPremium = !!caps?.hasPremium;
       });
     }
   }

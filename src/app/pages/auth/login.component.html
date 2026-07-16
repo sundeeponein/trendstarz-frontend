@@ -120,4 +120,11 @@
   </footer>
 
   <app-registration-confirm-modal></app-registration-confirm-modal>
+
+  <app-visibility-prompt-modal
+    *ngIf="showVisibilityPrompt"
+    [busy]="visibilityPromptBusy"
+    (choose)="onVisibilityChosen($event)"
+    (skip)="onVisibilitySkipped()">
+  </app-visibility-prompt-modal>
 </div>

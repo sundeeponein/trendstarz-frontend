@@ -225,6 +225,10 @@ import { HomepageFeatureToggleComponent } from '../../../shared/components/homep
 
           <div class="verify-section">
             <h6 class="verify-section-title">Visibility</h6>
+            <div class="visibility-unset-banner" *ngIf="!detail.profileVisibilityIsSet">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              This user hasn't been asked yet — ask "Who can view your TrendStarZ profile?" during this call and set it below.
+            </div>
             <app-profile-visibility-selector
               [value]="detail.profileVisibility"
               [disabled]="visibilityBusy()"
@@ -235,8 +239,12 @@ import { HomepageFeatureToggleComponent } from '../../../shared/components/homep
               class="mt-3 d-block"
               [checked]="detail.featuredInMarketing"
               [disabled]="visibilityBusy() || detail.profileVisibility !== 'PUBLIC'"
+              [isPremium]="true"
               (checkedChange)="modUpdateFeatured($event)">
             </app-homepage-feature-toggle>
+            <p class="text-muted mt-1" style="font-size:0.78rem;" *ngIf="!detail.homepageEligibility.isPremium">
+              Note: this profile is not currently Premium — the toggle above is an admin override; self-service users would see an upgrade prompt instead.
+            </p>
           </div>
 
           <div class="verify-section">
@@ -517,6 +525,18 @@ import { HomepageFeatureToggleComponent } from '../../../shared/components/homep
       margin: 0.5rem 0 0;
       padding-left: 1.1rem;
       font-weight: 400;
+    }
+    .visibility-unset-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.75rem;
     }
     .flag-type-selector {
       margin-top: 6px;

@@ -1,13 +1,20 @@
 <div class="homepage-feature-toggle">
   <div class="homepage-feature-toggle__copy">
     <h3>Homepage Hero Feature</h3>
-    <p>Get featured in the TrendStarZ homepage hero spot — a single rotating highlight, separate from the general Featured Creators/Brands listing.</p>
+    <p *ngIf="isPremium">Get featured in the TrendStarZ homepage hero spot — a single rotating highlight, separate from the general Featured Creators/Brands listing.</p>
+    <p *ngIf="!isPremium" class="homepage-feature-toggle__premium-badge">⭐ Available with Premium</p>
   </div>
-  <label class="homepage-feature-toggle__row">
+
+  <label class="homepage-feature-toggle__row" *ngIf="isPremium">
     <span>Allow TrendStarZ to feature my profile in the homepage hero spot</span>
     <span class="toggle">
       <input type="checkbox" [checked]="checked" [disabled]="disabled" (change)="onChange()" />
       <span class="slider"></span>
     </span>
   </label>
+
+  <div class="homepage-feature-toggle__upsell" *ngIf="!isPremium">
+    <p>Upgrade to Premium to become eligible for the homepage spotlight.</p>
+    <a routerLink="/upgrade-premium" class="btn btn-warning fw-bold btn-sm">Upgrade to Premium</a>
+  </div>
 </div>

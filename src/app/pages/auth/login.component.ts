@@ -13,17 +13,23 @@ import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
+import { VisibilityPromptModalComponent } from '../../shared/components/visibility-prompt-modal/visibility-prompt-modal.component';
+import { ProfileVisibility } from '../../shared/config.service';
 
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, RegistrationConfirmModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, RegistrationConfirmModalComponent, VisibilityPromptModalComponent],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
   readonly regConfirm = inject(RegistrationConfirmModalService);
+
+  showVisibilityPrompt = false;
+  visibilityPromptBusy = false;
+  private pendingUserType = '';
 
   loginForm: FormGroup;
   submitted = false;
@@ -128,28 +134,81 @@ export class LoginComponent {
 
         if (userType === 'admin') {
           this.router.navigate(['/admin']);
-        } else if (userType === 'brand') {
-          this.configService.getBrandProfileById().subscribe({
-            next: (profile: any) => {
-              // Merge profile into session user
-              const user = { ...res.user, ...(profile || {}), brandId: profile?._id || res.user?._id };
-              this.session.setUser(user);
-              // Always redirect to brand-dashboard; user can complete profile from there
-              this.router.navigateByUrl(this.returnUrl || '/brand-dashboard');
+          return;
+        }
+
+        // Pre-existing accounts that never explicitly chose a profile
+        // visibility get asked once per login, instead of silently staying
+        // on the PUBLIC display default forever.
+        const userId = res.user?.id;
+        if (userId) {
+          this.pendingUserType = userType;
+          this.configService.getProfileVisibility(userId).subscribe({
+            next: (visRes) => {
+              if (!visRes?.isSet) {
+                this.showVisibilityPrompt = true;
+                return;
+              }
+              this.proceedToDashboard(userType);
             },
-            error: () => {
-              // Even on error, go to dashboard (dashboard will show profile incomplete banner)
-              this.router.navigateByUrl(this.returnUrl || '/brand-dashboard');
-            }
+            error: () => this.proceedToDashboard(userType),
           });
-        } else if (userType === 'influencer') {
-          this.router.navigateByUrl(this.returnUrl || '/influencer-dashboard');
-        } else if (userType === 'photographer') {
-          this.router.navigateByUrl(this.returnUrl || '/photographer-dashboard');
         } else {
-          this.router.navigate(['/']);
+          this.proceedToDashboard(userType);
         }
       });
+  }
+
+  private proceedToDashboard(userType: string): void {
+    if (userType === 'brand') {
+      this.configService.getBrandProfileById().subscribe({
+        next: (profile: any) => {
+          // Merge profile into session user
+          const currentUser = this.session.getUser();
+          const user = { ...currentUser, ...(profile || {}), brandId: profile?._id || currentUser?._id };
+          this.session.setUser(user);
+          // Always redirect to brand-dashboard; user can complete profile from there
+          this.router.navigateByUrl(this.returnUrl || '/brand-dashboard');
+        },
+        error: () => {
+          // Even on error, go to dashboard (dashboard will show profile incomplete banner)
+          this.router.navigateByUrl(this.returnUrl || '/brand-dashboard');
+        }
+      });
+    } else if (userType === 'influencer') {
+      this.router.navigateByUrl(this.returnUrl || '/influencer-dashboard');
+    } else if (userType === 'photographer') {
+      this.router.navigateByUrl(this.returnUrl || '/photographer-dashboard');
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
+  onVisibilityChosen(value: ProfileVisibility): void {
+    const userId = this.session.getUser()?.id;
+    if (!userId) {
+      this.showVisibilityPrompt = false;
+      this.proceedToDashboard(this.pendingUserType);
+      return;
+    }
+    this.visibilityPromptBusy = true;
+    this.configService.updateProfileVisibility(userId, value).subscribe({
+      next: () => {
+        this.visibilityPromptBusy = false;
+        this.showVisibilityPrompt = false;
+        this.proceedToDashboard(this.pendingUserType);
+      },
+      error: () => {
+        this.visibilityPromptBusy = false;
+        this.showVisibilityPrompt = false;
+        this.proceedToDashboard(this.pendingUserType);
+      },
+    });
+  }
+
+  onVisibilitySkipped(): void {
+    this.showVisibilityPrompt = false;
+    this.proceedToDashboard(this.pendingUserType);
   }
 
   togglePasswordVisibility() {
