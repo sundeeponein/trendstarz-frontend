@@ -908,10 +908,10 @@ export class ConfigService {
   }
 
   /** Current profileVisibility — used by Settings/registration/edit-profile "Privacy & Visibility" controls. */
-  getProfileVisibility(id: string): Observable<{ profileVisibility: ProfileVisibility }> {
+  getProfileVisibility(id: string): Observable<{ profileVisibility: ProfileVisibility; isSet: boolean }> {
     return this.http.get<any>(`${this.apiUrl}/users/${id}/profile-visibility`).pipe(
-      map((res) => this.extractData<any>(res) || res || { profileVisibility: 'PUBLIC' }),
-      catchError(() => of({ profileVisibility: 'PUBLIC' as ProfileVisibility })),
+      map((res) => this.extractData<any>(res) || res || { profileVisibility: 'PUBLIC', isSet: false }),
+      catchError(() => of({ profileVisibility: 'PUBLIC' as ProfileVisibility, isSet: false })),
     );
   }
 
