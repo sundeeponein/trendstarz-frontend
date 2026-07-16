@@ -503,10 +503,10 @@
                 class="mt-3 d-block"
                 [checked]="featuredInMarketing"
                 [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
-                [isPremium]="!!planCaps?.hasPremium"
+                [isPremium]="!!planCaps.hasPremium"
                 (checkedChange)="onFeaturedInMarketingChange($event)">
               </app-homepage-feature-toggle>
-              <p class="text-muted mt-1" *ngIf="planCaps?.hasPremium && profileVisibility !== 'PUBLIC'" style="font-size:0.82em;">
+              <p class="text-muted mt-1" *ngIf="planCaps.hasPremium && profileVisibility !== 'PUBLIC'" style="font-size:0.82em;">
                 Homepage Hero Feature is only available when profile visibility is Public.
               </p>
             </div>
