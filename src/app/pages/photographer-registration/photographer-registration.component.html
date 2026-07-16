@@ -459,6 +459,23 @@
               </div>
             </div>
 
+            <div class="field-block full-width mt-4">
+              <app-profile-visibility-selector
+                [value]="form.get('profileVisibility')?.value"
+                (valueChange)="form.get('profileVisibility')?.setValue($event)">
+              </app-profile-visibility-selector>
+
+              <app-homepage-feature-toggle
+                class="mt-3 d-block"
+                [checked]="form.get('featuredInMarketing')?.value"
+                [disabled]="form.get('profileVisibility')?.value !== 'PUBLIC'"
+                (checkedChange)="form.get('featuredInMarketing')?.setValue($event)">
+              </app-homepage-feature-toggle>
+              <p class="form-text mt-1" *ngIf="form.get('profileVisibility')?.value !== 'PUBLIC'" style="font-size:0.82em;">
+                Only approved, verified, and eligible profiles may be featured. Homepage Hero Feature is only available when profile visibility is Public.
+              </p>
+            </div>
+
             <div *ngIf="registrationError" class="alert alert-danger mt-3">{{ registrationError }}</div>
 
             <div class="actions-row dual">

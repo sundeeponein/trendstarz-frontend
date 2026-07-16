@@ -21,6 +21,8 @@ import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, vali
 import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -37,7 +39,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })
@@ -167,6 +169,8 @@ export class BrandRegistrationComponent implements OnInit {
       confirmPassword: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       paymentOption: ['free', Validators.required],
+      profileVisibility: ['PUBLIC'],
+      featuredInMarketing: [false],
       location: this.fb.group({
         state: ['', Validators.required],
         district: ['', Validators.required],

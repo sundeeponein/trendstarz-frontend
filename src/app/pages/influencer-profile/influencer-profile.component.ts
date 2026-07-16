@@ -1,7 +1,7 @@
 import { environment } from '../../../environments/environment';
 import { Component, OnInit, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
-import { ConfigService } from '../../shared/config.service';
+import { ConfigService, ProfileVisibility } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
 import { map, first, catchError, debounceTime } from 'rxjs/operators';
 import { firstValueFrom, of, forkJoin } from 'rxjs';
@@ -32,11 +32,12 @@ import { MobileBottomActionsComponent } from '../../shared/components/mobile-bot
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { SessionService } from '../../core/session.service';
 import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -506,6 +507,8 @@ export class InfluencerProfileComponent implements OnInit {
   showChangePasswordModal = false;
   featuredInMarketing = false;
   marketingConsentBusy = false;
+  profileVisibility: ProfileVisibility = 'PUBLIC';
+  visibilityBusy = false;
 
   onFeaturedInMarketingChange(next: boolean): void {
     const userId = this.session.getUser()?.id;
@@ -518,6 +521,22 @@ export class InfluencerProfileComponent implements OnInit {
       },
       error: () => {
         this.marketingConsentBusy = false;
+      },
+    });
+  }
+
+  onProfileVisibilityChange(next: ProfileVisibility): void {
+    const userId = this.session.getUser()?.id;
+    if (this.visibilityBusy || !userId) return;
+    this.visibilityBusy = true;
+    this.configService.updateProfileVisibility(userId, next).subscribe({
+      next: () => {
+        this.profileVisibility = next;
+        if (next !== 'PUBLIC') this.featuredInMarketing = false;
+        this.visibilityBusy = false;
+      },
+      error: () => {
+        this.visibilityBusy = false;
       },
     });
   }
@@ -556,6 +575,9 @@ export class InfluencerProfileComponent implements OnInit {
     if (userId) {
       this.configService.getMarketingConsent(userId).subscribe((res) => {
         this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+      this.configService.getProfileVisibility(userId).subscribe((res) => {
+        this.profileVisibility = res?.profileVisibility || 'PUBLIC';
       });
     }
 

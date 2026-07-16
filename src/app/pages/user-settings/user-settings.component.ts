@@ -4,15 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
 import { SessionService } from '../../core/session.service';
-import { ConfigService } from '../../shared/config.service';
+import { ConfigService, ProfileVisibility } from '../../shared/config.service';
 import { ReferralTargetRole } from '../../shared/tracking-links/tracking-links-api.service';
 import { ReferralLinkCardComponent } from '../../shared/referral-link-card/referral-link-card.component';
 import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 
 @Component({
   selector: 'app-user-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ReferralLinkCardComponent, HomepageFeatureToggleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ReferralLinkCardComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './user-settings.component.html',
   styleUrls: ['./user-settings.component.scss'],
 })
@@ -33,6 +34,8 @@ export class UserSettingsComponent implements OnInit {
   referralRole: ReferralTargetRole | null = null;
   featuredInMarketing = false;
   marketingConsentBusy = false;
+  profileVisibility: ProfileVisibility = 'PUBLIC';
+  visibilityBusy = false;
   showDeleteConfirm = false;
   deletePassword = '';
   deleteBusy = false;
@@ -67,6 +70,9 @@ export class UserSettingsComponent implements OnInit {
       this.config.getMarketingConsent(this.userId).subscribe((res) => {
         this.featuredInMarketing = !!res?.featuredInMarketing;
       });
+      this.config.getProfileVisibility(this.userId).subscribe((res) => {
+        this.profileVisibility = res?.profileVisibility || 'PUBLIC';
+      });
     }
   }
 
@@ -80,6 +86,22 @@ export class UserSettingsComponent implements OnInit {
       },
       error: () => {
         this.marketingConsentBusy = false;
+      },
+    });
+  }
+
+  onProfileVisibilityChange(next: ProfileVisibility): void {
+    if (this.visibilityBusy || !this.userId) return;
+    this.visibilityBusy = true;
+    this.config.updateProfileVisibility(this.userId, next).subscribe({
+      next: () => {
+        this.profileVisibility = next;
+        // Setting anything but PUBLIC also disables Homepage Feature server-side.
+        if (next !== 'PUBLIC') this.featuredInMarketing = false;
+        this.visibilityBusy = false;
+      },
+      error: () => {
+        this.visibilityBusy = false;
       },
     });
   }

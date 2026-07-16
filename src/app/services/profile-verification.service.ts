@@ -44,6 +44,19 @@ export interface ProfileVerificationDashboard {
   flags: ProfileFlag[];
   campaignEligibility: { eligible: boolean; blockers: string[] };
   campaignStatus: 'eligible' | 'profile_update_required' | 'restricted';
+  profileVisibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
+  featuredInMarketing: boolean;
+  homepageEligibility: {
+    emailVerified: boolean;
+    mobileVerified: boolean;
+    profilePhotoApproved: boolean;
+    profileApproved: boolean;
+    isPremium: boolean;
+    homepageConsent: boolean;
+    profileVisibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
+    eligibleForHomepage: boolean;
+    reasons: string[];
+  };
 }
 
 export interface ModerationRow {
@@ -129,6 +142,31 @@ export class ProfileVerificationService {
     return this.http
       .patch<any>(`${this.apiUrl}/admin/profile-moderation/flags/${flagId}`, patch)
       .pipe(map((res) => this.unwrap<ProfileFlag>(res)));
+  }
+
+  /** Admin override for Profile Visibility / Homepage Feature. */
+  updateVisibility(
+    userType: string,
+    userId: string,
+    body: { profileVisibility?: string; featuredInMarketing?: boolean },
+  ) {
+    return this.http
+      .patch<any>(`${this.apiUrl}/admin/profile-moderation/${userType}/${userId}/visibility`, body)
+      .pipe(map((res) => this.unwrap<ProfileVerificationDashboard>(res)));
+  }
+
+  /** Admin "Send OTP Reminder" — nudges the user back to self-service OTP verification. */
+  sendMobileOtpVerificationReminder(userType: string, userId: string) {
+    return this.http
+      .post<any>(`${this.apiUrl}/admin/profile-moderation/${userType}/${userId}/notify-mobile-otp-reminder`, {})
+      .pipe(map((res) => this.unwrap<{ sent: boolean; reason?: string }>(res)));
+  }
+
+  /** Admin "Request Manual Call" — asks the user to reply YES for a manual verification call. */
+  sendMobileVerificationReminder(userType: string, userId: string) {
+    return this.http
+      .post<any>(`${this.apiUrl}/admin/profile-moderation/${userType}/${userId}/notify-mobile-verification`, {})
+      .pipe(map((res) => this.unwrap<{ sent: boolean; reason?: string }>(res)));
   }
 
   contactVerification(userType: string, userId: string, payload: Record<string, any>) {

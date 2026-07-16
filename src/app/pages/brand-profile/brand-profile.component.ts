@@ -2,7 +2,7 @@
 import { environment } from '../../../environments/environment';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
-import { ConfigService } from '../../shared/config.service';
+import { ConfigService, ProfileVisibility } from '../../shared/config.service';
 import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
 import { of, forkJoin, firstValueFrom } from 'rxjs';
@@ -31,11 +31,12 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { SessionService } from '../../core/session.service';
 import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -450,6 +451,8 @@ export class BrandProfileComponent implements OnInit {
 
   featuredInMarketing = false;
   marketingConsentBusy = false;
+  profileVisibility: ProfileVisibility = 'PUBLIC';
+  visibilityBusy = false;
 
   onFeaturedInMarketingChange(next: boolean): void {
     const userId = this.session.getUser()?.id;
@@ -466,6 +469,22 @@ export class BrandProfileComponent implements OnInit {
     });
   }
 
+  onProfileVisibilityChange(next: ProfileVisibility): void {
+    const userId = this.session.getUser()?.id;
+    if (this.visibilityBusy || !userId) return;
+    this.visibilityBusy = true;
+    this.configService.updateProfileVisibility(userId, next).subscribe({
+      next: () => {
+        this.profileVisibility = next;
+        if (next !== 'PUBLIC') this.featuredInMarketing = false;
+        this.visibilityBusy = false;
+      },
+      error: () => {
+        this.visibilityBusy = false;
+      },
+    });
+  }
+
   ngOnInit() {
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
@@ -478,6 +497,9 @@ export class BrandProfileComponent implements OnInit {
     if (userId) {
       this.configService.getMarketingConsent(userId).subscribe((res) => {
         this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+      this.configService.getProfileVisibility(userId).subscribe((res) => {
+        this.profileVisibility = res?.profileVisibility || 'PUBLIC';
       });
     }
     this.configService.getSupportContact().subscribe(s => {

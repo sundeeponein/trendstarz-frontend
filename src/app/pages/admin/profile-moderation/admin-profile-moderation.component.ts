@@ -10,6 +10,8 @@ import {
 import { ProfileReviewPanelComponent } from '../../../shared/profile-verification/profile-review-panel.component';
 import { FlagManagementDialogComponent } from './flag-management-dialog.component';
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
+import { ProfileVisibilitySelectorComponent } from '../../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { HomepageFeatureToggleComponent } from '../../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 @Component({
   selector: 'app-admin-profile-moderation',
@@ -20,6 +22,8 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
     ProfileReviewPanelComponent,
     FlagManagementDialogComponent,
     VerificationFieldComponent,
+    ProfileVisibilitySelectorComponent,
+    HomepageFeatureToggleComponent,
   ],
   template: `
     <main class="moderation-page">
@@ -110,6 +114,29 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
                   [verified]="modIsMobileVerified(detail)"
                   (toggled)="modToggle('isMobileVerified', !modIsMobileVerified(detail))"
                 ></app-verification-field>
+                <div class="whatsapp-reminder-actions" *ngIf="!modIsMobileVerified(detail)">
+                  <button
+                    type="button"
+                    class="whatsapp-reminder-btn"
+                    [disabled]="mobileReminderBusy()"
+                    (click)="sendMobileOtpReminder()"
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                    {{ mobileReminderBusy() ? 'Sending…' : 'Send OTP Reminder' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="whatsapp-reminder-btn whatsapp-reminder-btn--secondary"
+                    [disabled]="mobileReminderBusy()"
+                    (click)="sendMobileVerificationReminder()"
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                    {{ mobileReminderBusy() ? 'Sending…' : 'Request Manual Call' }}
+                  </button>
+                </div>
+                <div class="text-muted mt-1" style="font-size:0.78rem;" *ngIf="mobileReminderResult() as result">
+                  {{ result }}
+                </div>
               </div>
               <div>
                 <app-verification-field
@@ -193,6 +220,60 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
                   (toggled)="modToggle('paymentVerified', !modIsPaymentVerified(detail))"
                 ></app-verification-field>
               </div>
+            </div>
+          </div>
+
+          <div class="verify-section">
+            <h6 class="verify-section-title">Visibility</h6>
+            <app-profile-visibility-selector
+              [value]="detail.profileVisibility"
+              [disabled]="visibilityBusy()"
+              (valueChange)="modUpdateVisibility($event)">
+            </app-profile-visibility-selector>
+
+            <app-homepage-feature-toggle
+              class="mt-3 d-block"
+              [checked]="detail.featuredInMarketing"
+              [disabled]="visibilityBusy() || detail.profileVisibility !== 'PUBLIC'"
+              (checkedChange)="modUpdateFeatured($event)">
+            </app-homepage-feature-toggle>
+          </div>
+
+          <div class="verify-section">
+            <h6 class="verify-section-title">Eligibility Status</h6>
+            <table class="eligibility-table">
+              <tbody>
+                <tr>
+                  <td>Email Verified</td>
+                  <td>{{ detail.homepageEligibility.emailVerified ? '✅' : '❌' }}</td>
+                </tr>
+                <tr>
+                  <td>Mobile Verified</td>
+                  <td>{{ detail.homepageEligibility.mobileVerified ? '✅' : '❌' }}</td>
+                </tr>
+                <tr>
+                  <td>Profile Photo Approved</td>
+                  <td>{{ detail.homepageEligibility.profilePhotoApproved ? '✅' : '❌' }}</td>
+                </tr>
+                <tr>
+                  <td>Profile Approved</td>
+                  <td>{{ detail.homepageEligibility.profileApproved ? '✅' : '❌' }}</td>
+                </tr>
+                <tr>
+                  <td>Premium</td>
+                  <td>{{ detail.homepageEligibility.isPremium ? '✅' : '❌' }}</td>
+                </tr>
+                <tr>
+                  <td>Homepage Consent</td>
+                  <td>{{ detail.homepageEligibility.homepageConsent ? '✅' : '❌' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="eligibility-result" [class.eligible]="detail.homepageEligibility.eligibleForHomepage">
+              <strong>Eligible for Homepage Hero: {{ detail.homepageEligibility.eligibleForHomepage ? '✅ Yes' : '❌ No' }}</strong>
+              <ul *ngIf="!detail.homepageEligibility.eligibleForHomepage" class="eligibility-reasons">
+                <li *ngFor="let reason of detail.homepageEligibility.reasons">{{ reason }}</li>
+              </ul>
             </div>
           </div>
         </section>
@@ -405,6 +486,38 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
+    .eligibility-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      margin-bottom: 0.75rem;
+    }
+    .eligibility-table td {
+      padding: 0.4rem 0.25rem;
+      border-bottom: 1px solid #eef1f6;
+    }
+    .eligibility-table td:last-child {
+      text-align: right;
+      width: 2rem;
+    }
+    .eligibility-result {
+      border-radius: 8px;
+      padding: 0.75rem;
+      background: #fdeded;
+      border: 1px solid #f3c9c9;
+      color: #b42318;
+      font-size: 0.86rem;
+    }
+    .eligibility-result.eligible {
+      background: #eefaf1;
+      border-color: #bfe6c9;
+      color: #1a7f3c;
+    }
+    .eligibility-reasons {
+      margin: 0.5rem 0 0;
+      padding-left: 1.1rem;
+      font-weight: 400;
+    }
     .flag-type-selector {
       margin-top: 6px;
       display: grid;
@@ -431,6 +544,34 @@ import { VerificationFieldComponent } from '../../../shared/components/verificat
       text-decoration: underline;
       text-transform: none;
       letter-spacing: 0;
+    }
+    .whatsapp-reminder-actions {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .whatsapp-reminder-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #25d366;
+      background: #f0fdf6;
+      color: #128c4a;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .whatsapp-reminder-btn--secondary {
+      border-color: #d1d5db;
+      background: #f7f8fb;
+      color: #465468;
+    }
+    .whatsapp-reminder-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     .flag-type-btns {
       display: flex;
@@ -819,6 +960,81 @@ export class AdminProfileModerationComponent implements OnInit {
     this.api.contactVerification(row.userType, row.userId, { [field]: value }).subscribe({
       next: () => this.refreshSelected(),
       error: (err) => this.error.set(err?.error?.message || 'Verification update failed.'),
+    });
+  }
+
+  // ── Visibility / Homepage Feature (admin override) ─────────────────────────
+
+  visibilityBusy = signal(false);
+
+  modUpdateVisibility(profileVisibility: string): void {
+    const row = this.selectedRow();
+    if (!row || this.visibilityBusy()) return;
+    this.visibilityBusy.set(true);
+    this.api.updateVisibility(row.userType, row.userId, { profileVisibility }).subscribe({
+      next: (detail) => {
+        this.selectedDetail.set(detail);
+        this.visibilityBusy.set(false);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message || 'Visibility update failed.');
+        this.visibilityBusy.set(false);
+      },
+    });
+  }
+
+  modUpdateFeatured(featuredInMarketing: boolean): void {
+    const row = this.selectedRow();
+    if (!row || this.visibilityBusy()) return;
+    this.visibilityBusy.set(true);
+    this.api.updateVisibility(row.userType, row.userId, { featuredInMarketing }).subscribe({
+      next: (detail) => {
+        this.selectedDetail.set(detail);
+        this.visibilityBusy.set(false);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message || 'Homepage Feature update failed.');
+        this.visibilityBusy.set(false);
+      },
+    });
+  }
+
+  // ── Mobile verification WhatsApp reminder ───────────────────────────────
+
+  mobileReminderBusy = signal(false);
+  mobileReminderResult = signal<string | null>(null);
+
+  sendMobileOtpReminder(): void {
+    const row = this.selectedRow();
+    if (!row || this.mobileReminderBusy()) return;
+    this.mobileReminderBusy.set(true);
+    this.mobileReminderResult.set(null);
+    this.api.sendMobileOtpVerificationReminder(row.userType, row.userId).subscribe({
+      next: () => {
+        this.mobileReminderBusy.set(false);
+        this.mobileReminderResult.set('OTP reminder sent.');
+      },
+      error: (err) => {
+        this.mobileReminderBusy.set(false);
+        this.mobileReminderResult.set(err?.error?.message || 'Failed to send WhatsApp reminder.');
+      },
+    });
+  }
+
+  sendMobileVerificationReminder(): void {
+    const row = this.selectedRow();
+    if (!row || this.mobileReminderBusy()) return;
+    this.mobileReminderBusy.set(true);
+    this.mobileReminderResult.set(null);
+    this.api.sendMobileVerificationReminder(row.userType, row.userId).subscribe({
+      next: () => {
+        this.mobileReminderBusy.set(false);
+        this.mobileReminderResult.set('Manual call request sent.');
+      },
+      error: (err) => {
+        this.mobileReminderBusy.set(false);
+        this.mobileReminderResult.set(err?.error?.message || 'Failed to send WhatsApp reminder.');
+      },
     });
   }
 }

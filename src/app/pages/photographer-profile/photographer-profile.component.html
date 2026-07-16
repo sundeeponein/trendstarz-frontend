@@ -209,13 +209,6 @@
               <button type="button" class="btn btn-outline-secondary" (click)="showResetPasswordModal = true">Reset Password</button>
               <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
             </div>
-
-            <app-homepage-feature-toggle
-              class="mt-3 d-block"
-              [checked]="featuredInMarketing"
-              [disabled]="marketingConsentBusy"
-              (checkedChange)="onFeaturedInMarketingChange($event)">
-            </app-homepage-feature-toggle>
           </section>
 
           <section class="form-card" *ngIf="currentStep === 2">
@@ -497,6 +490,24 @@
                 </div>
                 <div *ngIf="!hasContactVisibility" class="text-muted mt-1">Contact options are available only when enabled by your active plan.</div>
               </div>
+            </div>
+
+            <div class="field-block full-width mt-3">
+              <app-profile-visibility-selector
+                [value]="profileVisibility"
+                [disabled]="visibilityBusy"
+                (valueChange)="onProfileVisibilityChange($event)">
+              </app-profile-visibility-selector>
+
+              <app-homepage-feature-toggle
+                class="mt-3 d-block"
+                [checked]="featuredInMarketing"
+                [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
+                (checkedChange)="onFeaturedInMarketingChange($event)">
+              </app-homepage-feature-toggle>
+              <p class="text-muted mt-1" *ngIf="profileVisibility !== 'PUBLIC'" style="font-size:0.82em;">
+                Homepage Hero Feature is only available when profile visibility is Public.
+              </p>
             </div>
 
             <div class="actions-row dual">

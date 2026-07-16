@@ -8,6 +8,7 @@ import {
   buildDefaultUserTagOptions,
 } from './constants/user-tag-options.constants';
 
+export type ProfileVisibility = 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
@@ -904,6 +905,19 @@ export class ConfigService {
       map((res) => this.extractData<any>(res) || res || { deletionPending: false, deletedAt: null, gracePeriodEndsAt: null }),
       catchError(() => of({ deletionPending: false, deletedAt: null, gracePeriodEndsAt: null })),
     );
+  }
+
+  /** Current profileVisibility — used by Settings/registration/edit-profile "Privacy & Visibility" controls. */
+  getProfileVisibility(id: string): Observable<{ profileVisibility: ProfileVisibility }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${id}/profile-visibility`).pipe(
+      map((res) => this.extractData<any>(res) || res || { profileVisibility: 'PUBLIC' }),
+      catchError(() => of({ profileVisibility: 'PUBLIC' as ProfileVisibility })),
+    );
+  }
+
+  /** Who can view this profile — PUBLIC / MEMBERS_ONLY / PRIVATE. Setting anything but PUBLIC also disables Homepage Feature. */
+  updateProfileVisibility(id: string, profileVisibility: ProfileVisibility): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/profile-visibility`, { profileVisibility });
   }
 
 
