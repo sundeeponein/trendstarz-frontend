@@ -30,11 +30,12 @@ import { MobileBottomActionsComponent } from '../../shared/components/mobile-bot
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { SessionService } from '../../core/session.service';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -447,6 +448,24 @@ export class BrandProfileComponent implements OnInit {
     }
   }
 
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    const userId = this.session.getUser()?.id;
+    if (this.marketingConsentBusy || !userId) return;
+    this.marketingConsentBusy = true;
+    this.configService.updateMarketingConsent(userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
+
   ngOnInit() {
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
@@ -455,6 +474,12 @@ export class BrandProfileComponent implements OnInit {
       this.isPremium = !!caps?.hasPremium;
       this.cd.detectChanges();
     });
+    const userId = this.session.getUser()?.id;
+    if (userId) {
+      this.configService.getMarketingConsent(userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+    }
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
     });

@@ -118,6 +118,12 @@ export class LoginComponent {
         if (res.user) {
           this.session.setUser(res.user);
         }
+
+        if (res.accountDeletionPending) {
+          this.router.navigate(['/account-deletion-pending']);
+          return;
+        }
+
         const userType = String(res.userType || res.user?.role || '').toLowerCase();
 
         if (userType === 'admin') {

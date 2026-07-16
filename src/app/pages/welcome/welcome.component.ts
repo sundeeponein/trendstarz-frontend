@@ -37,6 +37,33 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly faqAccordionComponent = FaqAccordionComponent;
   readonly heroSliderBannerComponent = HeroSliderBannerComponent;
 
+  private static readonly DEFAULT_HERO_IMAGE = 'assets/banner-trendstarz-1600.jpg';
+  private static readonly DEFAULT_HERO_ALT = 'TrendStarz hero image';
+
+  // Real, explicitly opted-in (featuredInMarketing) user photos — see
+  // ConfigService.getHeroShowcaseImages. Any entry may be null if no one has
+  // opted in yet, in which case the static default image is used instead.
+  heroShowcaseImages: {
+    influencer: { url: string; alt: string } | null;
+    brand: { url: string; alt: string } | null;
+    photographer: { url: string; alt: string } | null;
+  } | null = null;
+
+  get heroImageUrl(): string {
+    return this.heroShowcaseImages?.influencer?.url || WelcomeComponent.DEFAULT_HERO_IMAGE;
+  }
+
+  get heroImageAlt(): string {
+    return this.heroShowcaseImages?.influencer?.alt || WelcomeComponent.DEFAULT_HERO_ALT;
+  }
+
+  private loadHeroShowcaseImages(): void {
+    this.config.getHeroShowcaseImages().subscribe((images) => {
+      this.heroShowcaseImages = images;
+      this.cd.detectChanges();
+    });
+  }
+
   get heroSliderBannerInputs() {
     return {
       badge: 'TrendStarz Marketplace',
@@ -78,8 +105,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         primaryRoute: loggedIn ? '/campaigns' : '/register-brand',
         secondaryLabel: 'Find Creators',
         secondaryRoute: '/search',
-        imageUrl: 'assets/banner-trendstarz-1600.jpg',
-        imageAlt: 'Brands collaborating with influencers on TrendStarz',
+        imageUrl: this.heroShowcaseImages?.brand?.url || WelcomeComponent.DEFAULT_HERO_IMAGE,
+        imageAlt: this.heroShowcaseImages?.brand?.alt || 'Brands collaborating with influencers on TrendStarz',
       },
       {
         heading: 'Grow Your Influence, Get Paid',
@@ -89,8 +116,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         primaryRoute: loggedIn ? '/campaigns' : '/register-influencer',
         secondaryLabel: 'Explore Features',
         secondaryRoute: '/features',
-        imageUrl: 'assets/banner-trendstarz-1600.jpg',
-        imageAlt: 'Influencer creating content for a brand campaign',
+        imageUrl: this.heroShowcaseImages?.influencer?.url || WelcomeComponent.DEFAULT_HERO_IMAGE,
+        imageAlt: this.heroShowcaseImages?.influencer?.alt || 'Influencer creating content for a brand campaign',
       },
       {
         heading: 'Showcase Your Craft to Brands',
@@ -100,8 +127,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         primaryRoute: loggedIn ? '/campaigns' : '/register-photographer',
         secondaryLabel: 'How It Works',
         secondaryRoute: '/how-it-works',
-        imageUrl: 'assets/banner-trendstarz-1600.jpg',
-        imageAlt: 'Photographer showcasing a portfolio to brands',
+        imageUrl: this.heroShowcaseImages?.photographer?.url || WelcomeComponent.DEFAULT_HERO_IMAGE,
+        imageAlt: this.heroShowcaseImages?.photographer?.alt || 'Photographer showcasing a portfolio to brands',
       },
     ];
   }
@@ -264,6 +291,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     ]);
     if (!this.isBrowser) return;
     this.loadPlatformStats();
+    this.loadHeroShowcaseImages();
     this.scheduleMarketplaceBootstrap();
     this.routerSubscription = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {

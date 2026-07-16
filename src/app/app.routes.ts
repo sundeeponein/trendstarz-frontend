@@ -33,6 +33,7 @@ export const routes: Routes = [
 			{ path: 'register-influencer', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/influencer-registration/influencer-registration.component').then(m => m.InfluencerRegistrationComponent) },
 			{ path: 'register-brand', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/brand-registration/brand-registration.component').then(m => m.BrandRegistrationComponent) },
 			{ path: 'register-photographer', canActivate: [guestOnlyGuard], loadComponent: () => import('./pages/photographer-registration/photographer-registration.component').then(m => m.PhotographerRegistrationComponent) },
+			{ path: 'account-deletion-pending', canActivate: [authGuard], loadComponent: () => import('./pages/account-deletion-pending/account-deletion-pending.component').then(m => m.AccountDeletionPendingComponent) },
 			{ path: 'influencer-profile', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-profile/influencer-profile.component').then(m => m.InfluencerProfileComponent) },
 			{ path: 'influencer/:username', loadChildren: () => import('./shared/user-profile/influencer-profile-view/influencer-profile-view.route').then(m => m.default) },
 			{ path: 'brand-profile', canActivate: [authGuard], loadComponent: () => import('./pages/brand-profile/brand-profile.component').then(m => m.BrandProfileComponent) },

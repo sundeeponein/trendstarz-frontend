@@ -7,7 +7,8 @@
     [thirdLabel]="'Explore Features'"
     [thirdRoute]="'/features'"
     liveMetricText="Live: 5,400+ Campaigns active now"
-    imageUrl="assets/banner-trendstarz-1600.jpg"
+    [imageUrl]="heroImageUrl"
+    [imageAlt]="heroImageAlt"
     (primaryClick)="isLoggedIn() ? null : regConfirm.open('brand')"
     (secondaryClick)="isLoggedIn() ? null : regConfirm.open('influencer')"
   ></app-hero-banner>

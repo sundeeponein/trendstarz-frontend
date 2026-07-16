@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { ReferralTargetRole } from '../../shared/tracking-links/tracking-links-api.service';
 import { ReferralLinkCardComponent } from '../../shared/referral-link-card/referral-link-card.component';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 @Component({
   selector: 'app-user-settings',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReferralLinkCardComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ReferralLinkCardComponent, HomepageFeatureToggleComponent],
   templateUrl: './user-settings.component.html',
   styleUrls: ['./user-settings.component.scss'],
 })
@@ -29,11 +31,19 @@ export class UserSettingsComponent implements OnInit {
   lastLoginAt: string | null = null;
   lastOpenedAt: string | null = null;
   referralRole: ReferralTargetRole | null = null;
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+  showDeleteConfirm = false;
+  deletePassword = '';
+  deleteBusy = false;
+  deleteError = '';
+  private userId: string | null = null;
 
   constructor(
     private readonly push: PushNotificationService,
     private readonly session: SessionService,
     private readonly config: ConfigService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -42,6 +52,7 @@ export class UserSettingsComponent implements OnInit {
     this.lastOpenedAt = user?.lastOpenedAt || null;
     const role = this.normalizeRole(user?.role);
     this.referralRole = role !== 'admin' ? (role as ReferralTargetRole) : null;
+    this.userId = user?.id || null;
     this.refreshPushState();
     this.config.getUnreadNotificationsCount().subscribe((count) => {
       this.unreadCount = Number(count || 0);
@@ -51,6 +62,55 @@ export class UserSettingsComponent implements OnInit {
       this.mobileEnabled = prefs.mobileEnabled;
       this.campaignEnabled = prefs.campaignEnabled;
       this.paymentEnabled = prefs.paymentEnabled;
+    });
+    if (this.userId && role !== 'admin') {
+      this.config.getMarketingConsent(this.userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+    }
+  }
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    if (this.marketingConsentBusy || !this.userId) return;
+    this.marketingConsentBusy = true;
+    this.config.updateMarketingConsent(this.userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
+
+  openDeleteConfirm(): void {
+    this.showDeleteConfirm = true;
+    this.deletePassword = '';
+    this.deleteError = '';
+  }
+
+  cancelDeleteConfirm(): void {
+    if (this.deleteBusy) return;
+    this.showDeleteConfirm = false;
+    this.deletePassword = '';
+    this.deleteError = '';
+  }
+
+  confirmDeleteAccount(): void {
+    if (this.deleteBusy || !this.userId || !this.deletePassword) return;
+    this.deleteBusy = true;
+    this.deleteError = '';
+    this.config.selfDeleteAccount(this.userId, this.deletePassword).subscribe({
+      next: () => {
+        this.deleteBusy = false;
+        this.session.clearSession();
+        this.router.navigate(['/login'], { queryParams: { accountDeleted: '1' } });
+      },
+      error: (err) => {
+        this.deleteBusy = false;
+        this.deleteError = err?.error?.message || 'Incorrect password. Please try again.';
+      },
     });
   }
 

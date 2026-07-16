@@ -27,11 +27,12 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -452,12 +453,36 @@ export class PhotographerProfileComponent implements OnInit {
     });
   }
 
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    const userId = this.session.getUser()?.id;
+    if (this.marketingConsentBusy || !userId) return;
+    this.marketingConsentBusy = true;
+    this.config.updateMarketingConsent(userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
+
   ngOnInit() {
     this.config.getAppSettings().subscribe((settings) => {
       this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
       if (typeof settings.photographerFeePercent === 'number') this.platformCommissionPercent = settings.photographerFeePercent;
       this.cdr.detectChanges();
     });
+    const userId = this.session.getUser()?.id;
+    if (userId) {
+      this.config.getMarketingConsent(userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+    }
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.plansService.getMyCapabilities().subscribe((caps) => {

@@ -687,6 +687,21 @@ export class ConfigService {
     );
   }
 
+  /**
+   * Homepage hero banner + hero slider images — one eligible, explicitly
+   * opted-in image per role. Any entry may be null if no one has opted in yet.
+   */
+  getHeroShowcaseImages(): Observable<{
+    influencer: { url: string; alt: string } | null;
+    brand: { url: string; alt: string } | null;
+    photographer: { url: string; alt: string } | null;
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/users/hero-showcase-images`).pipe(
+      map((res) => this.extractData<any>(res) || res || {}),
+      catchError(() => of({ influencer: null, brand: null, photographer: null })),
+    );
+  }
+
   getInfluencersSearchResponse(options?: {
     page?: number;
     limit?: number;
@@ -854,6 +869,41 @@ export class ConfigService {
 
   updateUserImages(id: string, images: { profileImages?: any[]; brandLogo?: any[]; products?: any[] }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
+  }
+
+  /** Current opt-in state for updateMarketingConsent — used by the settings page. */
+  getMarketingConsent(id: string): Observable<{ featuredInMarketing: boolean }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${id}/marketing-consent`).pipe(
+      map((res) => this.extractData<any>(res) || res || { featuredInMarketing: false }),
+      catchError(() => of({ featuredInMarketing: false })),
+    );
+  }
+
+  /** Opt in/out of showing this user's photo/logo on public marketing surfaces (homepage hero). */
+  updateMarketingConsent(id: string, featuredInMarketing: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/marketing-consent`, { featuredInMarketing });
+  }
+
+  /** Settings → Delete Account. Requires the current password; schedules deletion after a grace period. */
+  selfDeleteAccount(id: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/${id}/self-delete`, { password });
+  }
+
+  /** Cancels a pending self-deletion request during the grace period. */
+  cancelSelfDeletion(id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/${id}/cancel-deletion`, {});
+  }
+
+  /** Whether this account has a pending self-deletion request, and when the grace period ends. */
+  getSelfDeletionStatus(id: string): Observable<{
+    deletionPending: boolean;
+    deletedAt: string | null;
+    gracePeriodEndsAt: string | null;
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${id}/deletion-status`).pipe(
+      map((res) => this.extractData<any>(res) || res || { deletionPending: false, deletedAt: null, gracePeriodEndsAt: null }),
+      catchError(() => of({ deletionPending: false, deletedAt: null, gracePeriodEndsAt: null })),
+    );
   }
 
 

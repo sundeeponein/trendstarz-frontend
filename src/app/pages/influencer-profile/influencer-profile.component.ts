@@ -31,11 +31,12 @@ import { atLeastOneContactRequired } from '../influencer-registration/influencer
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { SessionService } from '../../core/session.service';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -503,6 +504,23 @@ export class InfluencerProfileComponent implements OnInit {
   saving = false;
   usernameError: string = '';
   showChangePasswordModal = false;
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    const userId = this.session.getUser()?.id;
+    if (this.marketingConsentBusy || !userId) return;
+    this.marketingConsentBusy = true;
+    this.configService.updateMarketingConsent(userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
 
   openChangePasswordModal() {
     this.showChangePasswordModal = true;
@@ -533,6 +551,13 @@ export class InfluencerProfileComponent implements OnInit {
       if (typeof s.influencerFeePercent === 'number') this.platformCommissionPercent = s.influencerFeePercent;
       this.cd.markForCheck();
     });
+
+    const userId = this.session.getUser()?.id;
+    if (userId) {
+      this.configService.getMarketingConsent(userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+    }
 
     // Load plan capabilities
     this.plansService.getMyCapabilities().subscribe(caps => {

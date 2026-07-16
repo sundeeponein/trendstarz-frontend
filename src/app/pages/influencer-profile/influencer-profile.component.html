@@ -282,6 +282,13 @@
             <button type="button" class="btn btn-outline-secondary" (click)="openChangePasswordModal()">Reset Password</button>
             <button type="button" class="btn btn-primary" (click)="nextStep()">Next Step</button>
           </div>
+
+          <app-homepage-feature-toggle
+            class="mt-3 d-block"
+            [checked]="featuredInMarketing"
+            [disabled]="marketingConsentBusy"
+            (checkedChange)="onFeaturedInMarketingChange($event)">
+          </app-homepage-feature-toggle>
         </section>
 
         <section class="form-card" *ngIf="currentStep === 2">

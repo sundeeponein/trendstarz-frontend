@@ -72,20 +72,20 @@
           <strong>Campaign updates</strong>
           <span class="badge-priority">Priority</span>
         </div>
-        <div class="pref-category__box-row">
+        <label class="pref-category__box-row">
           <span>Invites, applications, approvals, and disputes</span>
           <span class="toggle">
             <input type="checkbox" [checked]="campaignEnabled" [disabled]="preferencesBusy" (change)="toggleCampaignEnabled()" />
             <span class="slider"></span>
           </span>
-        </div>
+        </label>
       </div>
     </div>
 
     <div class="pref-category">
       <div class="pref-category__label"><span class="dot dot--payment"></span>Financial activity</div>
       <div class="pref-category__box">
-        <div class="pref-category__box-row pref-category__box-row--icon">
+        <label class="pref-category__box-row pref-category__box-row--icon">
           <div class="pref-icon"><i class="bi bi-cash-coin"></i></div>
           <div class="pref-category__box-text">
             <strong>Payment updates</strong>
@@ -95,7 +95,7 @@
             <input type="checkbox" [checked]="paymentEnabled" [disabled]="preferencesBusy" (change)="togglePaymentEnabled()" />
             <span class="slider"></span>
           </span>
-        </div>
+        </label>
       </div>
     </div>
 
@@ -103,6 +103,13 @@
       <button type="button" class="btn-reset" (click)="resetPreferencesToDefaults()" [disabled]="preferencesBusy">Reset to defaults</button>
     </div>
   </section>
+
+  <app-homepage-feature-toggle
+    *ngIf="referralRole"
+    [checked]="featuredInMarketing"
+    [disabled]="marketingConsentBusy"
+    (checkedChange)="onFeaturedInMarketingChange($event)">
+  </app-homepage-feature-toggle>
 
   <section class="settings-section compact">
     <div>
@@ -122,4 +129,47 @@
   </section>
 
   <app-referral-link-card *ngIf="referralRole" [role]="referralRole" class="settings-section compact"></app-referral-link-card>
+
+  <section class="settings-section compact danger-zone" *ngIf="referralRole">
+    <div>
+      <h2>Delete Account</h2>
+      <p>Permanently delete your TrendStarZ account and public profile.</p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-delete"
+      *ngIf="!showDeleteConfirm"
+      (click)="openDeleteConfirm()">
+      Delete Account
+    </button>
+
+    <div class="delete-confirm" *ngIf="showDeleteConfirm">
+      <p class="delete-warning">
+        Delete your TrendStarZ account? Your public profile will be removed and you will no longer appear in
+        creator search or homepage features. Some transaction or campaign records may be retained where required
+        for legal or compliance purposes.
+      </p>
+      <label class="delete-password-label">
+        Enter your password to confirm
+        <input
+          type="password"
+          class="form-control"
+          [(ngModel)]="deletePassword"
+          [disabled]="deleteBusy"
+          autocomplete="current-password" />
+      </label>
+      <p class="delete-error" *ngIf="deleteError">{{ deleteError }}</p>
+      <div class="delete-confirm-actions">
+        <button type="button" class="btn-cancel" [disabled]="deleteBusy" (click)="cancelDeleteConfirm()">Cancel</button>
+        <button
+          type="button"
+          class="btn-delete-confirm"
+          [disabled]="deleteBusy || !deletePassword"
+          (click)="confirmDeleteAccount()">
+          {{ deleteBusy ? 'Deleting…' : 'Confirm Delete Account' }}
+        </button>
+      </div>
+    </div>
+  </section>
 </div>
