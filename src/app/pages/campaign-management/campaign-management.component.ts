@@ -7,6 +7,7 @@ import { ConfigService } from '../../shared/config.service';
 import { PlansService } from '../../shared/plans.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { resolveCampaignStatusTab } from '../../shared/campaign-status.util';
 import { UpgradeBannerComponent } from '../../shared/upgrade-banner/upgrade-banner.component';
 import { SupportBannerComponent } from '../../shared/support-banner/support-banner.component';
 import { CampaignPaymentComponent } from '../campaign-payment/campaign-payment.component';
@@ -1271,21 +1272,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   private getCampaignTabStatus(campaign: Campaign): TabStatus {
-    const status = String(campaign?.status || '').trim().toLowerCase();
-    const hasStartedWork = (this.campaignInvitesMap.get(String(campaign?._id || '')) || []).some((invite: any) => {
-      return ['accepted', 'payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed']
-        .includes(String(invite?.status || '').trim().toLowerCase());
-    });
-
-    if (status === 'completed') return 'completed';
-    if (status === 'active') return 'active';
-    if (status === 'pending' || status === 'pending_review') {
-      return hasStartedWork ? 'active' : 'pending';
-    }
-    if (status === 'rejected' || status === 'needs_changes' || status === 'draft') {
-      if (hasStartedWork || this.isExpired(campaign)) return 'completed';
-    }
-    return 'draft';
+    const inviteStatuses = (this.campaignInvitesMap.get(String(campaign?._id || '')) || []).map((invite: any) =>
+      String(invite?.status || ''),
+    );
+    return resolveCampaignStatusTab(campaign?.status, inviteStatuses, this.isExpired(campaign));
   }
 
   getCampaignModerationNote(campaign: Campaign): string {
