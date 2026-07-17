@@ -47,6 +47,15 @@
           [detail]="profileVerificationDashboard"
           [loading]="profileVerificationLoading"
           profileRoute="/influencer-profile"
+          [otpVerificationEnabled]="otpVerificationEnabled"
+          [resendingEmailVerification]="resendingEmailVerification"
+          [resendingMobileOtp]="false"
+          [requestingMobileCallback]="requestingMobileCallback"
+          [mobileCallbackRequested]="mobileCallbackRequested"
+          (resendEmail)="resendEmailVerification()"
+          (resendOtp)="sendPhoneOtp()"
+          (requestCallback)="requestMobileCallback()"
+          (updateProfile)="scrollToTop()"
         />
       </div>
 

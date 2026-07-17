@@ -37,6 +37,10 @@ export interface ProfileVerificationDashboard {
   verificationStatus: string;
   /** The real admin-approval gate — same one campaign eligibility uses. Independent of profileTier above. */
   isTrendstarzVerified: boolean;
+  /** Raw account status ("pending"/"accepted"/"declined") — what the Admin Users table's Accept/Decline buttons actually set. */
+  accountStatus: 'pending' | 'accepted' | 'declined' | 'deleted';
+  /** Set by admin alongside accountStatus "declined" — shown to the user so they know what to fix. */
+  declineReason: string;
   verificationChecks?: Record<string, any>;
   verificationBadges?: Array<{ label: string; verified: boolean }>;
   checklist: VerificationChecklistItem[];

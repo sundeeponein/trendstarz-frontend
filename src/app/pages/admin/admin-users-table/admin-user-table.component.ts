@@ -2577,8 +2577,9 @@ export class AdminUserTableComponent implements OnInit {
     });
   }
   declineUser(userId: string) {
+    const reason = (typeof window !== 'undefined' ? window.prompt('Reason for declining (shown to the user so they know what to fix):') : '') || '';
     this.showConfirm('Decline this user?', () => {
-      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/decline`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
+      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/decline`, { reason }, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
     });
   }
   deleteUser(userId: string) {

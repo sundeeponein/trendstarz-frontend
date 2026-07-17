@@ -588,15 +588,12 @@
                 Localhost mode: Firebase email verification was skipped.<br>
                 You can log in with this email and password.
               </p>
-              <div *ngIf="!isPremiumPlan() && !localAuthBypassEnabled" class="reg-success-msg">
+              <div *ngIf="!isPremiumPlan() && !localAuthBypassEnabled" class="reg-success-msg" style="text-align:left;">
                 <p>We've sent a verification link to your email address.</p>
-                <p><strong>Next Steps:</strong></p>
-                <ol style="text-align:left; margin-top:4px;">
-                  <li>Open your email inbox.</li>
-                  <li>Click the verification link.</li>
-                  <li>Check Spam, Promotions, or Updates folders.</li>
-                  <li>Return to TrendStarz and log in.</li>
-                </ol>
+                <p class="mb-1"><strong>Step 1</strong><br>✅ Verify your email address.</p>
+                <p class="mb-1"><strong>Step 2</strong><br>📞 Complete your mobile verification.</p>
+                <p class="mb-1"><strong>Step 3</strong><br>⏳ Once both are completed, your profile will be reviewed by our team.</p>
+                <p class="text-muted" style="font-size:0.9em;">You'll receive campaign invites after your profile is approved.</p>
               </div>
 
               <!-- Premium user message -->
@@ -675,6 +672,10 @@
           <div *ngIf="registrationError" class="text-danger fw-bold my-3">
             {{ registrationError }}
           </div>
+
+          <p class="form-text mb-2" style="font-size:0.85em;">
+            Complete your email verification and mobile verification to activate your profile and become eligible for brand campaign invites.
+          </p>
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>

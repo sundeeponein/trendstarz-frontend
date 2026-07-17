@@ -196,6 +196,10 @@ export class PhotographerProfileComponent implements OnInit {
     setTimeout(() => this.canResendPhoneOtp = true, 30000);
   }
 
+  scrollToTop(): void {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   requestMobileCallback(): void {
     const id = this.session.getUser()?.id;
     if (!id || this.requestingMobileCallback) return;

@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ProfileVerificationDashboard } from '../../services/profile-verification.service';
+import { RegistrationProgressComponent } from '../components/registration-progress/registration-progress.component';
 
 const PHOTO_FLAG_CODES = new Set([
   'PROFILE_PHOTO_QUALITY', 'PROFILE_PHOTO_PENDING_REVIEW', 'PROFILE_PHOTO_MISSING',
@@ -24,7 +25,7 @@ const GALLERY_FLAG_CODES = new Set([
 @Component({
   selector: 'app-profile-review-summary',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RegistrationProgressComponent],
   template: `
     <div class="review-summary" *ngIf="detail || loading">
       <div class="summary-loading" *ngIf="loading">
@@ -65,6 +66,19 @@ const GALLERY_FLAG_CODES = new Set([
 
         <div class="review-modal-body">
           <div class="simple-review" *ngIf="detail as data">
+
+            <app-registration-progress
+              [dashboard]="data"
+              [otpVerificationEnabled]="otpVerificationEnabled"
+              [resendingEmailVerification]="resendingEmailVerification"
+              [resendingMobileOtp]="resendingMobileOtp"
+              [requestingMobileCallback]="requestingMobileCallback"
+              [mobileCallbackRequested]="mobileCallbackRequested"
+              (resendEmail)="resendEmail.emit()"
+              (resendOtp)="resendOtp.emit()"
+              (requestCallback)="requestCallback.emit()"
+              (updateProfile)="open = false; updateProfile.emit()"
+            ></app-registration-progress>
 
             <!-- Progress bar -->
             <div class="simple-card">
@@ -498,6 +512,16 @@ export class ProfileReviewSummaryComponent implements OnChanges {
   @Input() loading = false;
   @Input() profileRoute = '';
   @Input() autoOpen = false;
+  @Input() otpVerificationEnabled = false;
+  @Input() resendingEmailVerification = false;
+  @Input() resendingMobileOtp = false;
+  @Input() requestingMobileCallback = false;
+  @Input() mobileCallbackRequested = false;
+
+  @Output() resendEmail = new EventEmitter<void>();
+  @Output() resendOtp = new EventEmitter<void>();
+  @Output() requestCallback = new EventEmitter<void>();
+  @Output() updateProfile = new EventEmitter<void>();
 
   open = false;
   private autoOpened = false;

@@ -1113,7 +1113,7 @@ export class BrandProfileComponent implements OnInit {
     this.scrollToTop();
   }
 
-  private scrollToTop(): void {
+  scrollToTop(): void {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }

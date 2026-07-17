@@ -47,6 +47,13 @@
           [detail]="profileVerificationDashboard"
           [loading]="profileVerificationLoading"
           profileRoute="/brand-profile"
+          [otpVerificationEnabled]="false"
+          [resendingEmailVerification]="resendingEmailVerification"
+          [requestingMobileCallback]="requestingMobileCallback"
+          [mobileCallbackRequested]="mobileCallbackRequested"
+          (resendEmail)="resendEmailVerification()"
+          (requestCallback)="requestMobileCallback()"
+          (updateProfile)="scrollToTop()"
         />
       </div>
 

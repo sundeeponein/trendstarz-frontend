@@ -45,12 +45,22 @@
           <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
         </div>
 
+
         <div class="alert alert-light border mb-4" *ngIf="profileVerificationDashboard || profileVerificationLoading">
           <strong class="d-block mb-2">Profile Review</strong>
           <app-profile-review-summary
             [detail]="profileVerificationDashboard"
             [loading]="profileVerificationLoading"
             profileRoute="/photographer-profile"
+            [otpVerificationEnabled]="otpVerificationEnabled"
+            [resendingEmailVerification]="resendingEmailVerification"
+            [resendingMobileOtp]="false"
+            [requestingMobileCallback]="requestingMobileCallback"
+            [mobileCallbackRequested]="mobileCallbackRequested"
+            (resendEmail)="resendEmailVerification()"
+            (resendOtp)="sendPhoneOtp()"
+            (requestCallback)="requestMobileCallback()"
+            (updateProfile)="scrollToTop()"
           />
         </div>
 
