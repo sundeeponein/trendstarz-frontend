@@ -1122,7 +1122,9 @@
           <div class="settings-info">
             <strong>Pending User Auto-Delete</strong>
             <p>
-              Soft-delete unapproved users automatically after a configured number of days from registration.
+              Soft-delete stalled registrations automatically after a configured number of days: unverified email,
+              unverified mobile, or admin-declined. Users who verified <strong>both</strong> email and mobile and are
+              simply waiting on admin review are never auto-deleted — that's on us, not them.
               This marks users as deleted; media retention and purge follow existing cleanup policy.
             </p>
           </div>
@@ -1168,6 +1170,50 @@
               </ng-template>
             </small>
           </div>
+          <div class="condition-item">
+            <span class="condition-name">Actions</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-light" type="button" (click)="previewPendingUserCleanup()" [disabled]="pendingUserCleanupPreviewLoading">
+                {{ pendingUserCleanupPreviewLoading ? 'Checking...' : 'Preview (dry run)' }}
+              </button>
+              <button class="btn btn-sm btn-outline-warning" type="button" (click)="runPendingUserCleanupNow()" [disabled]="pendingUserCleanupRunning || !settings.pendingUserAutoDeleteEnabled" [title]="!settings.pendingUserAutoDeleteEnabled ? 'Turn this on and save settings first' : ''">
+                {{ pendingUserCleanupRunning ? 'Deleting...' : 'Run Now' }}
+              </button>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="pendingUserCleanupMessage">
+            <span class="condition-name">Latest result</span>
+            <small class="text-light-emphasis">{{ pendingUserCleanupMessage }}</small>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3" *ngIf="pendingUserCleanupPreview?.totalDeleted">
+          <table class="table table-sm table-dark align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Reason</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Admin declined</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.admin_declined || 0 }}</td>
+              </tr>
+              <tr>
+                <td>Email pending</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.email_pending || 0 }}</td>
+              </tr>
+              <tr>
+                <td>Mobile pending</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.mobile_pending || 0 }}</td>
+              </tr>
+              <tr>
+                <td>Admin approval pending</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.admin_approval_pending || 0 }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

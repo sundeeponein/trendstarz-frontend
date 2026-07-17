@@ -449,6 +449,10 @@ export class AdminManagementComponent implements OnInit {
   pendingUserAutoDeleteLastRunAt: string | null = null;
   pendingUserAutoDeleteLastRunCount = 0;
   pendingUserAutoDeleteLastRunBy = '';
+  pendingUserCleanupPreviewLoading = false;
+  pendingUserCleanupPreview: any = null;
+  pendingUserCleanupRunning = false;
+  pendingUserCleanupMessage = '';
   pendingUploadAutoDeleteLastRunAt: string | null = null;
   pendingUploadAutoDeleteLastRunCount = 0;
   pendingUploadAutoDeleteLastRunBy = '';
@@ -840,6 +844,53 @@ export class AdminManagementComponent implements OnInit {
         },
         error: () => {
           this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  previewPendingUserCleanup() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUserCleanupPreviewLoading = true;
+    this.pendingUserCleanupMessage = '';
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/preview`, headers)
+      .subscribe({
+        next: (res) => {
+          this.pendingUserCleanupPreview = res?.data ?? res;
+          this.pendingUserCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUserCleanupMessage = err?.error?.message || 'Preview failed.';
+          this.pendingUserCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  runPendingUserCleanupNow() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUserCleanupRunning = true;
+    this.pendingUserCleanupMessage = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/run`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.pendingUserCleanupMessage = data?.skipped
+            ? `Skipped: ${data.reason || 'disabled in settings'}`
+            : `Soft-deleted ${data?.totalDeleted || 0} pending user(s).`;
+          this.pendingUserCleanupRunning = false;
+          this.pendingUserCleanupPreview = null;
+          this.loadSettings();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUserCleanupMessage = err?.error?.message || 'Cleanup run failed.';
+          this.pendingUserCleanupRunning = false;
           this.cdr.detectChanges();
         },
       });
