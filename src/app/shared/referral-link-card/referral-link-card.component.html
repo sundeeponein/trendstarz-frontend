@@ -10,3 +10,10 @@
     </button>
   </div>
 </section>
+
+<section class="referral-link-card" *ngIf="loadError">
+  <div class="referral-link-card__header">
+    <h2>My Referral Link</h2>
+    <p>Couldn't load your referral link right now. Please refresh, or try again later.</p>
+  </div>
+</section>

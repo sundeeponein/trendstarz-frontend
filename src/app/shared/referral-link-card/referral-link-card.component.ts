@@ -17,6 +17,7 @@ export class ReferralLinkCardComponent implements OnChanges {
 
   referralLink = '';
   referralLinkCopied = false;
+  loadError = false;
 
   constructor(
     private trackingLinksApi: TrackingLinksApiService,
@@ -36,9 +37,19 @@ export class ReferralLinkCardComponent implements OnChanges {
   }
 
   private loadReferralLink(): void {
-    this.trackingLinksApi.getOrCreateReferralLink(this.role).subscribe((link) => {
-      this.referralLink = link.url;
-      this.cd.detectChanges();
+    this.loadError = false;
+    this.trackingLinksApi.getOrCreateReferralLink(this.role).subscribe({
+      next: (link) => {
+        this.referralLink = link.url;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        // Previously this had no error handler at all, so a failure (e.g. the
+        // stale-index bug that broke every referral link creation) rendered
+        // as a silent empty box with nothing in the console pointing at why.
+        this.loadError = true;
+        this.cd.detectChanges();
+      },
     });
   }
 
