@@ -58,6 +58,8 @@ export function emailVerificationReminderMessage(params: {
     'If you can\'t find it, log in to TrendStarZ and tap "Resend verification email" to get a new link. It stays valid for 1 hour.',
     '',
     'Thank you for joining TrendStarZ!',
+    '',
+    'www.trendstarz.in',
   ].join('\n');
 }
 
