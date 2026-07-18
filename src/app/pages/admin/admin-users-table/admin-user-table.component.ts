@@ -516,6 +516,20 @@ export class AdminUserTableComponent implements OnInit {
     return user?.publicId || '';
   }
 
+  getUserVisibilityLabel(user: any): string {
+    const value = String(user?.profileVisibility || '').trim().toUpperCase();
+    if (value === 'MEMBERS_ONLY') return 'Members Only';
+    if (value === 'PRIVATE') return 'Private';
+    return 'Public';
+  }
+
+  getUserVisibilityBadgeClass(user: any): string {
+    const value = String(user?.profileVisibility || '').trim().toUpperCase();
+    if (value === 'MEMBERS_ONLY') return 'ts-status-pending';
+    if (value === 'PRIVATE') return 'ts-status-rejected';
+    return 'ts-status-accepted';
+  }
+
   copiedDatabaseId = '';
 
   // The Mongo _id, not the cosmetic INF-prefixed publicId — this is also the
