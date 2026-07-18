@@ -27,6 +27,11 @@ export class ResetPasswordComponent implements OnInit {
   showPassword = false;
   showConfirmPassword = false;
   invalidOrMissingToken = false;
+  showStatusModal = false;
+  modalTitle = '';
+  modalMessage = '';
+  modalType: 'success' | 'error' = 'success';
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -47,6 +52,33 @@ export class ResetPasswordComponent implements OnInit {
     }
   }
 
+  openStatusModal(title: string, message: string, type: 'success' | 'error' = 'success') {
+    this.showStatusModal = true;
+    this.modalTitle = title;
+    this.modalMessage = message;
+    this.modalType = type;
+  }
+
+  closeStatusModal() {
+    this.showStatusModal = false;
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+      this.redirectTimer = null;
+    }
+    if (this.modalType === 'success') {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  private scheduleRedirect() {
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+    }
+    this.redirectTimer = setTimeout(() => {
+      this.closeStatusModal();
+    }, 1800);
+  }
+
   ngOnInit(): void {
     if (this.firebaseOobCode) {
       this.loading = true;
@@ -58,6 +90,7 @@ export class ResetPasswordComponent implements OnInit {
         .catch(() => {
           this.invalidOrMissingToken = true;
           this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+          this.openStatusModal('Reset link unavailable', this.errorMsg, 'error');
         })
         .finally(() => {
           this.loading = false;
@@ -75,6 +108,7 @@ export class ResetPasswordComponent implements OnInit {
         if (!valid) {
           this.invalidOrMissingToken = true;
           this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+          this.openStatusModal('Reset link unavailable', this.errorMsg, 'error');
         }
       },
       error: () => {
@@ -133,6 +167,7 @@ export class ResetPasswordComponent implements OnInit {
     if (!this.token && !this.firebaseOobCode) {
       this.invalidOrMissingToken = true;
       this.errorMsg = 'This reset link is invalid or expired. Please request a new password reset link.';
+      this.openStatusModal('Reset link unavailable', this.errorMsg, 'error');
       return;
     }
     if (this.resetForm.invalid) return;
@@ -142,10 +177,12 @@ export class ResetPasswordComponent implements OnInit {
       this.firebaseAuth.completePasswordReset(this.firebaseOobCode, password)
         .then(() => {
           this.successMsg = 'Your password has been reset and your email is verified. You can now log in.';
-          setTimeout(() => this.router.navigate(['/login']), 2000);
+          this.openStatusModal('Password reset successful', this.successMsg, 'success');
+          this.scheduleRedirect();
         })
         .catch((err: any) => {
           this.errorMsg = err?.error?.message || err?.message || 'Failed to reset password. Please try again.';
+          this.openStatusModal('Unable to reset password', this.errorMsg, 'error');
         })
         .finally(() => {
           this.loading = false;
@@ -159,10 +196,12 @@ export class ResetPasswordComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.successMsg = 'Your password has been reset. You can now log in.';
-        setTimeout(() => this.router.navigate(['/login']), 2000);
+        this.openStatusModal('Password reset successful', this.successMsg, 'success');
+        this.scheduleRedirect();
       },
       error: (err: any) => {
         this.errorMsg = err?.error?.message || 'Failed to reset password. Please try again.';
+        this.openStatusModal('Unable to reset password', this.errorMsg, 'error');
       }
     });
   }
