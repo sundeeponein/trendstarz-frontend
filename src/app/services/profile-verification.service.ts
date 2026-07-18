@@ -52,6 +52,9 @@ export interface ProfileVerificationDashboard {
   /** False for pre-existing accounts that never explicitly chose — ask during a manual verification call. */
   profileVisibilityIsSet: boolean;
   featuredInMarketing: boolean;
+  phoneNumber?: string;
+  publicProfileUrl?: string;
+  referralLink?: string;
   homepageEligibility: {
     emailVerified: boolean;
     mobileVerified: boolean;

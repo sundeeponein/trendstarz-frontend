@@ -40,7 +40,7 @@ export class HomepageFeatureToggleComponent {
       return 'Available only for Public profiles. Change your profile visibility to Public to feature your profile on the homepage.';
     }
 
-    return 'Allow TrendStarZ to feature your profile in the homepage spotlight and help you get discovered by brands and visitors.';
+    return 'Allow TrendStarZ to showcase your profile in the homepage spotlight and help you get discovered by brands and visitors.';
   }
 
   onChange(): void {

@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 import {
   ModerationRow,
   ProfileVerificationDashboard,
@@ -12,6 +14,7 @@ import { FlagManagementDialogComponent } from './flag-management-dialog.componen
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 import { ProfileVisibilitySelectorComponent } from '../../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { HomepageFeatureToggleComponent } from '../../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { copyTextToClipboard } from '../../../shared/referral-link.util';
 
 @Component({
   selector: 'app-admin-profile-moderation',
@@ -224,12 +227,58 @@ import { HomepageFeatureToggleComponent } from '../../../shared/components/homep
           </div>
 
           <div class="verify-section">
-            <h6 class="verify-section-title">Visibility</h6>
+            <h6 class="verify-section-title">Profile Visibility & Discovery</h6>
             <div class="visibility-unset-banner" *ngIf="!detail.profileVisibilityIsSet">
               <i class="bi bi-exclamation-triangle-fill"></i>
               This user hasn't been asked yet — ask "Who can view your TrendStarZ profile?" during this call and set it below.
             </div>
+
+            <div class="discovery-card" [ngClass]="modDiscoveryStatus(detail).tone">
+              <div class="discovery-card__header">
+                <span class="status-pill" [ngClass]="modDiscoveryStatus(detail).tone">{{ modDiscoveryStatus(detail).label }}</span>
+                <span class="status-caption">{{ modDiscoveryStatus(detail).caption }}</span>
+              </div>
+              <p class="discovery-card__copy">{{ modDiscoveryStatus(detail).explanation }}</p>
+              <div class="discovery-card__actions">
+                <button type="button" class="mini-btn mini-btn--primary" (click)="setVisibility('PUBLIC')">Set Public</button>
+                <button type="button" class="mini-btn" (click)="setVisibility('MEMBERS_ONLY')">Members Only</button>
+                <button type="button" class="mini-btn mini-btn--danger" (click)="setVisibility('PRIVATE')">Make Private</button>
+              </div>
+              <div class="discovery-card__actions">
+                <button type="button" class="mini-btn" (click)="setHomepageFeature(true)">Enable Homepage Feature</button>
+                <button type="button" class="mini-btn mini-btn--ghost" (click)="setHomepageFeature(false)">Disable Feature</button>
+              </div>
+              <div class="discovery-card__actions">
+                <button type="button" class="mini-btn" (click)="grantPremium('1m')" [disabled]="premiumBusy()">Grant 1M Premium</button>
+                <button type="button" class="mini-btn" (click)="grantPremium('3m')" [disabled]="premiumBusy()">Grant 3M Premium</button>
+                <button type="button" class="mini-btn" (click)="grantPremium('1y')" [disabled]="premiumBusy()">Grant 1Y Premium</button>
+              </div>
+              <div class="discovery-card__actions" *ngIf="premiumMessage()">
+                <span class="status-caption">{{ premiumMessage() }}</span>
+              </div>
+            </div>
+
+            <div class="discovery-card discovery-card--compact mt-2">
+              <div class="discovery-card__header">
+                <strong>Suggested next step</strong>
+              </div>
+              <p class="discovery-card__copy">{{ modDiscoveryStatus(detail).recommendation }}</p>
+              <ul class="checklist-list">
+                <li *ngFor="let item of modDiscoveryChecklist(detail)">{{ item }}</li>
+              </ul>
+            </div>
+
+            <div class="discovery-link-row">
+              <button type="button" class="mini-btn" (click)="openPublicProfile()">Open public profile</button>
+              <button type="button" class="mini-btn" (click)="copyLink('profile')">{{ linkCopyBusy() === 'profile' ? 'Copied' : 'Copy profile link' }}</button>
+              <button type="button" class="mini-btn" (click)="copyLink('referral')">{{ linkCopyBusy() === 'referral' ? 'Copied' : 'Copy referral link' }}</button>
+              <a class="mini-btn mini-btn--link" [href]="mailtoLink(detail)" *ngIf="selectedRow()?.email">Email</a>
+              <a class="mini-btn mini-btn--link" [href]="callLink(detail)" *ngIf="detail.phoneNumber">Call</a>
+              <a class="mini-btn mini-btn--link" [href]="whatsappLink(detail)" target="_blank" rel="noopener" *ngIf="detail.phoneNumber">WhatsApp</a>
+            </div>
+
             <app-profile-visibility-selector
+              class="mt-3 d-block"
               [value]="detail.profileVisibility"
               [disabled]="visibilityBusy()"
               (valueChange)="modUpdateVisibility($event)">
@@ -589,6 +638,117 @@ import { HomepageFeatureToggleComponent } from '../../../shared/components/homep
       background: #f7f8fb;
       color: #465468;
     }
+    .discovery-card {
+      border: 1px solid #e8edf5;
+      border-radius: 12px;
+      padding: 0.8rem 0.9rem;
+      background: #fbfcfe;
+      display: grid;
+      gap: 0.65rem;
+    }
+    .discovery-card--compact {
+      background: #fff;
+    }
+    .discovery-card.discoverable {
+      border-color: #bfe6c9;
+      background: #f4fcf6;
+    }
+    .discovery-card.limited {
+      border-color: #ffd89b;
+      background: #fff8e8;
+    }
+    .discovery-card.hidden {
+      border-color: #ffc9bf;
+      background: #fff2ef;
+    }
+    .discovery-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.74rem;
+      font-weight: 900;
+      color: #16162f;
+      background: #e8edf5;
+    }
+    .status-pill.discoverable {
+      background: #e4f8ea;
+      color: #1b7f3d;
+    }
+    .status-pill.limited {
+      background: #fff0c9;
+      color: #9b4b00;
+    }
+    .status-pill.hidden {
+      background: #ffe0da;
+      color: #b42318;
+    }
+    .status-caption {
+      color: #657082;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .discovery-card__copy {
+      margin: 0;
+      color: #465468;
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+    .discovery-card__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .mini-btn {
+      border: 1px solid #d7deea;
+      border-radius: 999px;
+      background: #fff;
+      color: #16162f;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .mini-btn--primary {
+      background: #e8580c;
+      border-color: #e8580c;
+      color: #fff;
+    }
+    .mini-btn--danger {
+      background: #fff0ef;
+      border-color: #ffc9bf;
+      color: #bd2d20;
+    }
+    .mini-btn--ghost {
+      background: #f7f8fb;
+    }
+    .mini-btn--link {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .checklist-list {
+      margin: 0;
+      padding-left: 1rem;
+      color: #465468;
+      font-size: 0.82rem;
+      display: grid;
+      gap: 0.25rem;
+    }
+    .discovery-link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.55rem;
+    }
     .whatsapp-reminder-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -699,7 +859,11 @@ export class AdminProfileModerationComponent implements OnInit {
   private pendingUserType = '';
   private pendingUserId = '';
 
-  constructor(private api: ProfileVerificationService, private route: ActivatedRoute) {}
+  constructor(
+    private api: ProfileVerificationService,
+    private route: ActivatedRoute,
+    private http: HttpClient,
+  ) {}
 
   ngOnInit(): void {
     const snapshot = this.route.snapshot.queryParamMap;
@@ -986,6 +1150,9 @@ export class AdminProfileModerationComponent implements OnInit {
   // ── Visibility / Homepage Feature (admin override) ─────────────────────────
 
   visibilityBusy = signal(false);
+  premiumBusy = signal(false);
+  premiumMessage = signal<string | null>(null);
+  linkCopyBusy = signal<'profile' | 'referral' | null>(null);
 
   modUpdateVisibility(profileVisibility: string): void {
     const row = this.selectedRow();
@@ -1018,6 +1185,152 @@ export class AdminProfileModerationComponent implements OnInit {
       },
     });
   }
+
+  modDiscoveryStatus(detail: ProfileVerificationDashboard): {
+    label: string;
+    tone: 'discoverable' | 'limited' | 'hidden';
+    caption: string;
+    explanation: string;
+    recommendation: string;
+  } {
+    const visibility = detail?.profileVisibility || 'PUBLIC';
+    const eligibility = detail?.homepageEligibility;
+    const homepageEligible = !!eligibility?.eligibleForHomepage;
+    if (visibility === 'PUBLIC' && homepageEligible) {
+      return {
+        label: 'Discoverable',
+        tone: 'discoverable',
+        caption: 'Visible to guests and logged-in users, and eligible for homepage feature.',
+        explanation: 'This profile is public, premium-ready, and approved for public homepage placement.',
+        recommendation: 'Keep the current setup and explain that the profile is now discoverable and eligible for homepage visibility.',
+      };
+    }
+    if (visibility === 'MEMBERS_ONLY') {
+      return {
+        label: 'Members Only',
+        tone: 'limited',
+        caption: 'Visible after login, but hidden from public discovery.',
+        explanation: 'This profile is not publicly discoverable, so it cannot appear in the public homepage or welcome marketing sections.',
+        recommendation: 'Set visibility to Public if the user wants public discoverability, or explain that they can stay members-only until they are ready.',
+      };
+    }
+    if (visibility === 'PRIVATE') {
+      return {
+        label: 'Hidden',
+        tone: 'hidden',
+        caption: 'Private profile — invisible to everyone except the owner.',
+        explanation: 'This profile is private and should not be featured or discovered publicly.',
+        recommendation: 'Set visibility to Public when the user wants discoverability, or keep it private while discussing the onboarding intent.',
+      };
+    }
+    return {
+      label: 'Needs setup',
+      tone: 'limited',
+      caption: 'Visibility is not clearly set yet.',
+      explanation: 'The profile visibility choice has not yet been confirmed for this account.',
+      recommendation: 'Ask the user which visibility they want and set it before discussing homepage placement.',
+    };
+  }
+
+  modDiscoveryChecklist(detail: ProfileVerificationDashboard): string[] {
+    const eligibility = detail?.homepageEligibility;
+    const items: string[] = [];
+    if (!detail?.profileVisibilityIsSet) {
+      items.push('Confirm the user’s profile visibility choice during the onboarding call.');
+    }
+    if (!eligibility?.emailVerified) {
+      items.push('Verify email and ask the user to complete the confirmation step.');
+    }
+    if (!eligibility?.mobileVerified) {
+      items.push('Complete mobile verification so the profile can be trusted in public discovery.');
+    }
+    if (!eligibility?.profilePhotoApproved) {
+      items.push('Approve or replace the profile photo so it can be shown publicly.');
+    }
+    if (!eligibility?.profileApproved) {
+      items.push('Approve the profile from moderation before enabling homepage discovery.');
+    }
+    if (!eligibility?.isPremium) {
+      items.push('Upgrade the account to Premium if the user wants homepage feature eligibility.');
+    }
+    if (!eligibility?.homepageConsent) {
+      items.push('Turn on homepage consent so the profile can be eligible for featured placement.');
+    }
+    if (detail?.profileVisibility !== 'PUBLIC') {
+      items.push('Set visibility to Public if the user should be discoverable by guests and logged-in users.');
+    }
+    return items.length ? items : ['The profile already looks ready for public discovery and homepage placement.'];
+  }
+
+  setVisibility(visibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE'): void {
+    this.modUpdateVisibility(visibility);
+  }
+
+  setHomepageFeature(enabled: boolean): void {
+    this.modUpdateFeatured(enabled);
+  }
+
+  grantPremium(duration: '1m' | '3m' | '1y'): void {
+    const row = this.selectedRow();
+    if (!row || this.premiumBusy()) return;
+    this.premiumBusy.set(true);
+    this.premiumMessage.set(null);
+    this.http.patch(`${this.apiBaseUrl}/users/${row.userId}/premium`, {
+      isPremium: true,
+      premiumDuration: duration,
+      type: this.mapUserTypeToApi(row.userType),
+    }).subscribe({
+      next: () => {
+        this.premiumBusy.set(false);
+        this.premiumMessage.set(`Premium granted for ${duration}.`);
+        this.refreshSelected();
+      },
+      error: (err) => {
+        this.premiumBusy.set(false);
+        this.premiumMessage.set(err?.error?.message || 'Failed to grant premium.');
+      },
+    });
+  }
+
+  private mapUserTypeToApi(userType: string): 'influencer' | 'brand' | 'photographer' {
+    if (userType === 'Brand') return 'brand';
+    if (userType === 'Photographer') return 'photographer';
+    return 'influencer';
+  }
+
+  openPublicProfile(): void {
+    const url = this.selectedDetail()?.publicProfileUrl;
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  copyLink(kind: 'profile' | 'referral'): void {
+    const detail = this.selectedDetail();
+    const value = kind === 'profile' ? detail?.publicProfileUrl : detail?.referralLink;
+    if (!value) return;
+    copyTextToClipboard(value);
+    this.linkCopyBusy.set(kind);
+    setTimeout(() => this.linkCopyBusy.set(null), 1800);
+  }
+
+  mailtoLink(detail: ProfileVerificationDashboard): string {
+    const email = this.selectedRow()?.email || detail?.displayName || '';
+    return `mailto:${email}`;
+  }
+
+  callLink(detail: ProfileVerificationDashboard): string {
+    const phone = detail?.phoneNumber || '';
+    return phone ? `tel:${phone}` : '#';
+  }
+
+  whatsappLink(detail: ProfileVerificationDashboard): string {
+    const phone = detail?.phoneNumber || '';
+    if (!phone) return '#';
+    const digits = String(phone).replace(/[^0-9]/g, '');
+    return digits ? `https://wa.me/${digits}` : '#';
+  }
+
+  private readonly apiBaseUrl = environment.apiBaseUrl || '/api';
 
   // ── Mobile verification WhatsApp reminder ───────────────────────────────
 

@@ -1,7 +1,8 @@
 <div class="homepage-feature-toggle">
   <div class="homepage-feature-toggle__copy">
     <h3>Featured on Homepage</h3>
-    <p *ngIf="isPremium">Allow TrendStarZ to showcase your profile in the homepage spotlight to help you get discovered by brands and visitors.</p>
+    <p *ngIf="isPremium && !disabled">Feature my profile on the TrendStarZ homepage to help brands and visitors discover you.</p>
+    <p *ngIf="isPremium && disabled" class="homepage-feature-toggle__helper">{{ helperText }}</p>
     <p *ngIf="!isPremium" class="homepage-feature-toggle__premium-badge">⭐ Available with Premium</p>
   </div>
 
