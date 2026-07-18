@@ -20,8 +20,8 @@ function amountFrom(source: any, paisePaths: string[], rupeePaths: string[]): nu
   return null;
 }
 
-function formatInr(value: number): string {
-  const safe = Number(value || 0);
+function formatInr(value: number | null | undefined): string {
+  const safe = Number(value ?? 0);
   if (!Number.isFinite(safe) || safe <= 0) return '₹0';
   return `₹${safe.toLocaleString('en-IN')}`;
 }
@@ -86,35 +86,90 @@ function parseOfferTrace(source: any): {
   const socialMediaPrice = campaignContentTypePrice(source);
   const originalResolved = original || socialMediaPrice;
 
-  const counterSent = amountFrom(
-    source,
-    [
-      'counterOfferedAmountPaise',
-      'offeredAmountPaise',
-      'counterOffer.offeredAmountPaise',
-    ],
-    [
-      'counterOfferedAmount',
-      'offeredAmount',
-      'counterOffer.offeredAmount',
-    ],
-  );
+  const counterOffer = source?.counterOffer || {};
+  const counterStatus = String(source?.counterOfferStatus || counterOffer?.status || '')
+    .trim()
+    .toLowerCase();
 
-  const revised = amountFrom(
-    source,
-    [
-      'counterRequestedAmountPaise',
-      'requestedAmountPaise',
-      'revisedAmountPaise',
-      'counterOffer.requestedAmountPaise',
-    ],
-    [
-      'counterRequestedAmount',
-      'requestedAmount',
-      'revisedAmount',
-      'counterOffer.requestedAmount',
-    ],
-  );
+  const resolvedAcceptedCounter = counterStatus === 'accepted' && !counterOffer?.requestedAmount && counterOffer?.offeredAmount
+    ? Number(counterOffer?.offeredAmount || 0)
+    : 0;
+
+  const counterSent = counterStatus === 'brand_sent'
+    ? amountFrom(
+        source,
+        [
+          'counterOfferedAmountPaise',
+          'offeredAmountPaise',
+          'counterOffer.offeredAmountPaise',
+        ],
+        [
+          'counterOfferedAmount',
+          'offeredAmount',
+          'counterOffer.offeredAmount',
+        ],
+      )
+    : amountFrom(
+        source,
+        [
+          'counterRequestedAmountPaise',
+          'requestedAmountPaise',
+          'counterOffer.requestedAmountPaise',
+        ],
+        [
+          'counterRequestedAmount',
+          'requestedAmount',
+          'counterOffer.requestedAmount',
+        ],
+      ) || amountFrom(
+        source,
+        [
+          'counterOfferedAmountPaise',
+          'offeredAmountPaise',
+          'counterOffer.offeredAmountPaise',
+        ],
+        [
+          'counterOfferedAmount',
+          'offeredAmount',
+          'counterOffer.offeredAmount',
+        ],
+      );
+
+  const revised = counterStatus === 'brand_sent'
+    ? amountFrom(
+        source,
+        [
+          'counterRequestedAmountPaise',
+          'requestedAmountPaise',
+          'revisedAmountPaise',
+          'counterOffer.requestedAmountPaise',
+        ],
+        [
+          'counterRequestedAmount',
+          'requestedAmount',
+          'revisedAmount',
+          'counterOffer.requestedAmount',
+        ],
+      )
+    : counterStatus === 'accepted'
+      ? amountFrom(
+          source,
+          [
+            'counterRequestedAmountPaise',
+            'requestedAmountPaise',
+            'counterOffer.requestedAmountPaise',
+            'agreedAmountPaise',
+            'finalAmountPaise',
+          ],
+          [
+            'counterRequestedAmount',
+            'requestedAmount',
+            'counterOffer.requestedAmount',
+            'agreedAmount',
+            'finalAmount',
+          ],
+        ) || resolvedAcceptedCounter
+      : null;
 
   const final = amountFrom(
     source,
@@ -122,16 +177,16 @@ function parseOfferTrace(source: any): {
     ['agreedAmount', 'finalAmount'],
   );
 
-  const counterStatus = String(source?.counterOfferStatus || source?.counterOffer?.status || '')
-    .trim()
-    .toLowerCase();
+  const resolvedFinal = final || revised || counterSent || originalResolved;
+
   const status = String(source?.status || '').trim().toLowerCase();
   const hasCounterFlow =
     counterStatus === 'sent'
     || counterStatus === 'brand_sent'
     || counterStatus === 'accepted'
     || !!counterSent
-    || !!revised;
+    || !!revised
+    || !!resolvedFinal;
 
   return {
     status,
@@ -147,7 +202,7 @@ function parseOfferTrace(source: any): {
 export function buildAdminOfferTrailText(source: any): string {
   if (!source) return '';
   const trace = parseOfferTrace(source);
-  const finalValue = trace.final || trace.revised || trace.counterSent || trace.original;
+  const finalValue = trace.final ?? trace.revised ?? trace.counterSent ?? trace.original ?? 0;
   if (!trace.original) {
     if (trace.counterStatus === 'accepted' && trace.counterSent && trace.revised && finalValue) {
       return `Negotiation: Receiver countered ${formatInr(trace.counterSent)} -> Host revised to ${formatInr(trace.revised)} -> Final agreed ${formatInr(finalValue)}`;
@@ -167,14 +222,11 @@ export function buildAdminOfferTrailText(source: any): string {
   }
 
   if (trace.counterStatus === 'accepted') {
-    if (trace.counterSent && trace.revised && finalValue) {
-      if (trace.revised !== trace.counterSent) {
-        return `Negotiation: Host offered ${formatInr(trace.original)} -> Receiver countered ${formatInr(trace.counterSent)} -> Host revised to ${formatInr(trace.revised)} -> Final agreed ${formatInr(finalValue)}`;
-      }
-      return `Negotiation: Host offered ${formatInr(trace.original)} -> Receiver countered ${formatInr(trace.counterSent)} -> Host accepted ${formatInr(finalValue)}`;
-    }
     if (trace.counterSent && finalValue) {
       return `Negotiation: Host offered ${formatInr(trace.original)} -> Receiver countered ${formatInr(trace.counterSent)} -> Host accepted ${formatInr(finalValue)}`;
+    }
+    if (trace.revised && trace.original) {
+      return `Negotiation: Host offered ${formatInr(trace.original)} -> Receiver countered ${formatInr(trace.revised)} -> Host accepted ${formatInr(finalValue)}`;
     }
   }
 
@@ -197,7 +249,7 @@ export function buildAdminOfferTotalText(source: any): string {
   if (!source) return '';
   const trace = parseOfferTrace(source);
   if (!trace.original) return '';
-  const finalValue = trace.final || trace.revised || trace.counterSent || trace.original;
+  const finalValue = trace.final ?? trace.revised ?? trace.counterSent ?? trace.original ?? 0;
   const delta = finalValue - trace.original;
   const deltaAbs = Math.abs(delta);
   const trend = delta > 0 ? `+${formatInr(deltaAbs)}` : delta < 0 ? `-${formatInr(deltaAbs)}` : formatInr(0);
@@ -211,10 +263,10 @@ export function buildUserPriceTrailText(source: any): string {
   if (!source) return '';
   const trace = parseOfferTrace(source);
   if (!trace.original) {
-    const fallbackFinal = trace.final || trace.revised || trace.counterSent;
+    const fallbackFinal = trace.final ?? trace.revised ?? trace.counterSent ?? 0;
     return fallbackFinal ? `Final price to pay ${formatInr(fallbackFinal)}` : '';
   }
-  const finalValue = trace.final || trace.revised || trace.counterSent || trace.original;
+  const finalValue = trace.final ?? trace.revised ?? trace.counterSent ?? trace.original ?? 0;
   if (finalValue !== trace.original) {
     return `Initial price sent ${formatInr(trace.original)} -> Final price to pay ${formatInr(finalValue)}`;
   }
