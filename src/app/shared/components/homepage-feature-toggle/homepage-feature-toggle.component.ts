@@ -24,10 +24,27 @@ export class HomepageFeatureToggleComponent {
   @Input() checked = false;
   @Input() disabled = false;
   @Input() isPremium = true;
+  @Input() visibilityLabel = 'Public';
   @Output() checkedChange = new EventEmitter<boolean>();
 
+  get isUnavailable(): boolean {
+    return this.disabled || !this.isPremium;
+  }
+
+  get helperText(): string {
+    if (!this.isPremium) {
+      return 'Upgrade to Premium to become eligible for the homepage spotlight.';
+    }
+
+    if (this.disabled) {
+      return 'Available only for Public profiles. Change your profile visibility to Public to feature your profile on the homepage.';
+    }
+
+    return 'Allow TrendStarZ to feature your profile in the homepage spotlight and help you get discovered by brands and visitors.';
+  }
+
   onChange(): void {
-    if (this.disabled || !this.isPremium) return;
+    if (this.isUnavailable) return;
     this.checkedChange.emit(!this.checked);
   }
 }

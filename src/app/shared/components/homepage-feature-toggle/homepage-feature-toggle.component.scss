@@ -62,6 +62,13 @@
   }
 }
 
+.homepage-feature-toggle__row--disabled {
+  cursor: default;
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #6b7280;
+}
+
 .toggle {
   position: relative;
   display: inline-block;

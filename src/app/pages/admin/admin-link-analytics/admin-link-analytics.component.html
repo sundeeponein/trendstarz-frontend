@@ -157,40 +157,84 @@
 
     <section class="panel" *ngIf="activeTab === 'referral'">
       <h3>Referral performance</h3>
-      <p class="hint">Personal referral links shared from the Profile or Settings page. Track invitations, registrations, premium upgrades, and referral earnings.</p>
-      <div class="table-wrap" *ngIf="d.referralLinks.length; else noReferral">
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Host</th>
-              <th>Invites</th>
-              <th>Clicks</th>
-              <th>Unique</th>
-              <th>Signups</th>
-              <th>Conv. rate</th>
-              <th>Premium</th>
-              <th>Campaign payments</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let row of d.referralLinks">
-              <td class="mono">{{ row.code }}</td>
-              <td>{{ row.hostName || row.hostType }}</td>
-              <td>{{ row.destinationRole }}</td>
-              <td class="num">{{ row.clickCount }}</td>
-              <td class="num">{{ row.uniqueClicks }}</td>
-              <td class="num">{{ row.signups }}</td>
-              <td class="num">{{ formatPercent(row.conversionRate) }}</td>
-              <td class="num">{{ row.premiumPurchases }} ({{ formatRevenue(row.premiumRevenue) }})</td>
-              <td class="num">{{ row.campaignPayments }} ({{ formatRevenue(row.campaignPaymentRevenue) }})</td>
-              <td>{{ formatDate(row.createdAt) }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <p class="hint">Campaign referrals are generated while creating a campaign. User referrals are permanent links from Profile → Settings.</p>
+
+      <div class="link-tabs ts-admin-tabbar" role="tablist" aria-label="Referral sub-sections">
+        <button class="link-tab ts-admin-tab" [class.active]="referralSubTab === 'campaign'" (click)="referralSubTab = 'campaign'">
+          Campaign referrals
+        </button>
+        <button class="link-tab ts-admin-tab" [class.active]="referralSubTab === 'user'" (click)="referralSubTab = 'user'">
+          User referrals
+        </button>
       </div>
-      <ng-template #noReferral><p class="empty">No referral links shared yet.</p></ng-template>
+
+      <div *ngIf="referralSubTab === 'campaign'">
+        <div class="table-wrap" *ngIf="d.referralLinks.length; else noReferral">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Host</th>
+                <th>Campaign</th>
+                <th>Clicks</th>
+                <th>Signups</th>
+                <th>Premium</th>
+                <th>Revenue</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of d.referralLinks">
+                <td class="mono">{{ row.code }}</td>
+                <td>{{ row.hostName || row.hostType }}</td>
+                <td>{{ row.destinationRole }}</td>
+                <td class="num">{{ row.clickCount }}</td>
+                <td class="num">{{ row.signups }}</td>
+                <td class="num">{{ row.premiumPurchases }}</td>
+                <td class="num">{{ formatRevenue(row.premiumRevenue + row.campaignPaymentRevenue) }}</td>
+                <td>{{ formatDate(row.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noReferral><p class="empty">No campaign referrals recorded yet.</p></ng-template>
+      </div>
+
+      <div *ngIf="referralSubTab === 'user'">
+        <div class="table-wrap" *ngIf="d.referralLinks.length; else noUserReferral">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Referral Code</th>
+                <th>Clicks</th>
+                <th>Unique</th>
+                <th>Influencer Signups</th>
+                <th>Brand Signups</th>
+                <th>Premium Purchases</th>
+                <th>Campaign Revenue</th>
+                <th>Referral Earnings</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of d.referralLinks">
+                <td>{{ row.hostName || row.hostType }}</td>
+                <td class="mono">{{ row.code }}</td>
+                <td class="num">{{ row.clickCount }}</td>
+                <td class="num">{{ row.uniqueClicks }}</td>
+                <td class="num">{{ row.signups }}</td>
+                <td class="num">{{ row.signups }}</td>
+                <td class="num">{{ row.premiumPurchases }}</td>
+                <td class="num">{{ formatRevenue(row.campaignPaymentRevenue) }}</td>
+                <td class="num">{{ formatRevenue(row.premiumRevenue + row.campaignPaymentRevenue) }}</td>
+                <td>{{ formatDate(row.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noUserReferral><p class="empty">No user referrals recorded yet.</p></ng-template>
+      </div>
     </section>
   </ng-container>
 </div>
