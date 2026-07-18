@@ -211,6 +211,12 @@ export class LoginComponent {
     this.proceedToDashboard(this.pendingUserType);
   }
 
+  closeEmailVerificationModal(): void {
+    this.emailNotVerified = false;
+    this.resendVerificationSuccess = false;
+    this.resendVerificationError = null;
+  }
+
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }

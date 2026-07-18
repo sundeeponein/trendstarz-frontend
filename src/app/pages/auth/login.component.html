@@ -80,21 +80,6 @@
           <button type="submit" class="btn-signin" [disabled]="loggingIn">{{ loggingIn ? 'Signing in...' : 'Sign In' }}</button>
         </form>
 
-        <div *ngIf="emailNotVerified" class="email-not-verified-banner">
-          <div class="env-icon">&#9888;</div>
-          <h4 class="env-title">Email Not Verified</h4>
-          <p class="env-msg">Your email address has not been verified yet.</p>
-          <p class="env-hint">Didn't receive the email? Check your Spam or Promotions folder, or resend the verification link below.</p>
-          <div *ngIf="resendVerificationSuccess" class="env-success">Verification email sent! Check your inbox.</div>
-          <div *ngIf="resendVerificationError" class="env-error">{{ resendVerificationError }}</div>
-          <div class="env-actions">
-            <button class="btn-resend" (click)="resendVerificationEmail()" [disabled]="resendingVerification">
-              {{ resendingVerification ? 'Sending...' : 'Resend Verification Email' }}
-            </button>
-            <button class="btn-change-email" (click)="changeEmailForVerification()">Try a Different Email</button>
-          </div>
-        </div>
-
         <div class="divider"><span>Don&apos;t have an account?</span></div>
 
         <h6 class="text-center text-black">Join Now</h6>
@@ -118,6 +103,37 @@
     </nav>
     <div class="footer-copy">© 2026 TrendstarZ. All rights reserved.</div>
   </footer>
+
+  <div class="modal-backdrop show" *ngIf="emailNotVerified" (click)="closeEmailVerificationModal()"></div>
+  <div class="modal d-block" *ngIf="emailNotVerified" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="email-verification-title" (click)="closeEmailVerificationModal()">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+      <div class="modal-content email-verification-modal">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon">⚠</div>
+            <div>
+              <h4 id="email-verification-title">Email Not Verified</h4>
+              <p>Your email address has not been verified yet.</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeEmailVerificationModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-body-text">Didn't receive the email? Check your Spam or Promotions folder, or resend the verification link below.</p>
+          <div *ngIf="resendVerificationSuccess" class="env-success">Verification email sent! Check your inbox.</div>
+          <div *ngIf="resendVerificationError" class="env-error">{{ resendVerificationError }}</div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="changeEmailForVerification()">Try a Different Email</button>
+          <button type="button" class="btn btn-resend" (click)="resendVerificationEmail()" [disabled]="resendingVerification">
+            {{ resendingVerification ? 'Sending...' : 'Resend Verification Email' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <app-registration-confirm-modal></app-registration-confirm-modal>
 
