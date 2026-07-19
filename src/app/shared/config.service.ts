@@ -394,9 +394,22 @@ export class ConfigService {
 
   // Check whether a reset token is still valid, without consuming it
   validateResetToken(token: string) {
-    return this.http.get<{ valid: boolean }>(`${this.apiUrl}/auth/reset-password/validate`, {
-      params: { token },
-    });
+    return this.http
+      .get<any>(`${this.apiUrl}/auth/reset-password/validate`, {
+        params: { token },
+      })
+      .pipe(
+        map((res: any) => {
+          const data = this.extractData<any>(res) || {};
+          if (typeof data?.valid === 'boolean') {
+            return { valid: data.valid };
+          }
+          if (typeof res?.valid === 'boolean') {
+            return { valid: res.valid };
+          }
+          return { valid: false };
+        }),
+      );
   }
 
   // Change password for logged-in user
