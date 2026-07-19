@@ -40,7 +40,9 @@ test.describe('Forgot password page', () => {
     await page.fill('input[formControlName="email"]', 'user@example.com');
     await page.click('button:has-text("Send Reset Link")');
 
-    await expect(page.getByText('If your email is registered, you’ll receive a password reset link shortly.')).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/If your email is registered, you'll receive a password reset link shortly\..*most recent reset email only/i)
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test('shows same success message when email is not registered (mocked API)', async ({ page }) => {
@@ -56,7 +58,9 @@ test.describe('Forgot password page', () => {
     await page.click('button:has-text("Send Reset Link")');
 
     // Component intentionally shows success message even on error (security best practice)
-    await expect(page.getByText('If your email is registered, you’ll receive a password reset link shortly.')).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText(/If your email is registered, you'll receive a password reset link shortly\..*most recent reset email only/i)
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('Back to Login link navigates to /login', async ({ page }) => {
@@ -162,28 +166,8 @@ test.describe('Reset password page', () => {
       page.click('button:has-text("Reset Password")'),
     ]);
 
-    // Angular 21 is zoneless — trigger change detection via template interaction
-    await page.waitForTimeout(200);
-    await page.locator('input[formControlName="password"]').focus();
-    await page.locator('input[formControlName="password"]').blur();
-
-    // Success message is transient before redirect to /login; assert the component state first,
-    // then confirm the UI text if it is still mounted.
-    await expect.poll(async () => {
-      return await page.evaluate(() => {
-        const host = document.querySelector('app-reset-password') as any;
-        const ng = (window as any).ng;
-        const comp = ng?.getComponent?.(host);
-        return String(comp?.successMsg || '');
-      });
-    }, {
-      timeout: 5000,
-    }).toContain('password has been reset');
-
-    const successMessage = page.locator('.text-success', { hasText: 'Your password has been reset' });
-    if (await successMessage.count()) {
-      await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
-    }
+    await expect(page.getByRole('heading', { name: 'Password reset successful' })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Your password has been reset. You can now log in.')).toBeVisible({ timeout: 5000 });
   });
 
   test('shows error when token is invalid (mocked API)', async ({ page }) => {
@@ -209,6 +193,8 @@ test.describe('Reset password page', () => {
     await page.locator('input[formControlName="password"]').focus();
     await page.locator('input[formControlName="password"]').blur();
 
-    await expect(page.getByText('Invalid or expired token')).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText(/This reset link is invalid or expired\..*most recent link or request a new one/i)
+    ).toBeVisible({ timeout: 10000 });
   });
 });

@@ -18,6 +18,7 @@ export class ForgotPasswordComponent {
   loading = false;
   successMsg = '';
   errorMsg = '';
+  private readonly resetLinkSentMessage = 'If your email is registered, you\'ll receive a password reset link shortly. Please use the most recent reset email only and check your Inbox, Spam, or Promotions folder.';
 
   constructor(private fb: FormBuilder, private configService: ConfigService) {
     this.forgotForm = this.fb.group({
@@ -37,13 +38,13 @@ export class ForgotPasswordComponent {
     const email = this.forgotForm.get('email')?.value;
     this.configService.sendForgotPasswordLink(email).subscribe({
       next: () => {
-        this.successMsg = 'If your email is registered, you’ll receive a password reset link shortly. Please check your Inbox, Spam, or Promotions folder.';
+        this.successMsg = this.resetLinkSentMessage;
         this.loading = false;
         this.forgotForm.reset();
         this.forgotForm.disable();
       },
       error: () => {
-        this.successMsg = 'If your email is registered, you’ll receive a password reset link shortly. Please check your Inbox, Spam, or Promotions folder.';
+        this.successMsg = this.resetLinkSentMessage;
         this.loading = false;
         this.forgotForm.reset();
         this.forgotForm.disable();
