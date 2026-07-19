@@ -70,8 +70,17 @@ test.describe('Forgot password page', () => {
 // ─────────────────────────────────────────────────────────────
 test.describe('Reset password page', () => {
   const RESET_URL = '/reset-password?token=fake-reset-token-123';
+  const WRAPPED_RESET_URL = `/reset-password?link=${encodeURIComponent('https://www.trendstarz.in/reset-password?token=fake-reset-token-123')}`;
 
   test.beforeEach(async ({ page }) => {
+    await page.route('**/auth/reset-password/validate**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ valid: true }),
+      });
+    });
+
     await page.goto(RESET_URL);
     await page.waitForSelector('input[formControlName="password"]', { state: 'visible' });
     // Wait for Angular hydration to complete (SSR app)
@@ -81,7 +90,17 @@ test.describe('Reset password page', () => {
   test('renders new password and confirm password fields', async ({ page }) => {
     await expect(page.locator('input[formControlName="password"]')).toBeVisible();
     await expect(page.locator('input[formControlName="confirmPassword"]')).toBeVisible();
-    await expect(page.locator('button:has-text("Reset Password")')).toBeVisible();
+    await expect(page.locator('button[type="submit"].btn-signin')).toBeVisible();
+  });
+
+  test('accepts wrapped reset links and keeps the form usable', async ({ page }) => {
+    await page.goto(WRAPPED_RESET_URL);
+    await page.waitForSelector('input[formControlName="password"]', { state: 'visible' });
+
+    await page.fill('input[formControlName="password"]', 'Wrapped@1234');
+    await page.fill('input[formControlName="confirmPassword"]', 'Wrapped@1234');
+
+    await expect(page.locator('button:has-text("Reset Password")')).toBeEnabled();
   });
 
   test('password strength checklist appears when typing', async ({ page }) => {

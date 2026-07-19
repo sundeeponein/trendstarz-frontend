@@ -118,29 +118,105 @@ export class ResetPasswordComponent implements OnInit {
     });
   }
 
-  private resolveTokenFromUrl(): string {
-    const fromQuery = String(this.route.snapshot.queryParamMap.get('token') || '').trim();
-    if (fromQuery) return fromQuery;
+  private normalizeParam(value: unknown): string {
+    return String(value || '').trim();
+  }
+
+  private safeDecode(value: string): string {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+
+  private getFromParams(params: URLSearchParams, keys: string[]): string {
+    for (const key of keys) {
+      const value = this.normalizeParam(params.get(key));
+      if (value) return value;
+    }
+    return '';
+  }
+
+  private getFromRawUrl(raw: string, keys: string[]): string {
+    const value = this.normalizeParam(raw);
+    if (!value) return '';
+
+    const parsedAsQuery = this.getFromParams(
+      new URLSearchParams(value.startsWith('?') ? value.slice(1) : value),
+      keys,
+    );
+    if (parsedAsQuery) return parsedAsQuery;
 
     if (typeof window === 'undefined') return '';
-    const hash = String(window.location.hash || '').replace(/^#/, '');
+
+    try {
+      const parsed = new URL(value, window.location.origin);
+      const fromSearch = this.getFromParams(parsed.searchParams, keys);
+      if (fromSearch) return fromSearch;
+
+      const hash = this.normalizeParam(parsed.hash).replace(/^#/, '');
+      if (!hash) return '';
+      return this.getFromParams(
+        new URLSearchParams(hash.startsWith('?') ? hash.slice(1) : hash),
+        keys,
+      );
+    } catch {
+      return '';
+    }
+  }
+
+  private getFromNestedLinkParams(params: URLSearchParams, keys: string[]): string {
+    for (const nestedKey of ['link', 'continueUrl', 'url']) {
+      const nested = this.normalizeParam(params.get(nestedKey));
+      if (!nested) continue;
+
+      const direct = this.getFromRawUrl(nested, keys);
+      if (direct) return direct;
+
+      const decoded = this.safeDecode(nested);
+      const decodedResult = this.getFromRawUrl(decoded, keys);
+      if (decodedResult) return decodedResult;
+    }
+    return '';
+  }
+
+  private resolveParamFromCurrentUrl(keys: string[]): string {
+    if (typeof window === 'undefined') return '';
+
+    const searchParams = new URLSearchParams(window.location.search || '');
+    const fromSearch = this.getFromParams(searchParams, keys);
+    if (fromSearch) return fromSearch;
+
+    const fromSearchNested = this.getFromNestedLinkParams(searchParams, keys);
+    if (fromSearchNested) return fromSearchNested;
+
+    const hash = this.normalizeParam(window.location.hash).replace(/^#/, '');
     if (!hash) return '';
-    const params = new URLSearchParams(hash.startsWith('?') ? hash.slice(1) : hash);
-    return String(params.get('token') || '').trim();
+
+    const hashParams = new URLSearchParams(hash.startsWith('?') ? hash.slice(1) : hash);
+    const fromHash = this.getFromParams(hashParams, keys);
+    if (fromHash) return fromHash;
+
+    return this.getFromNestedLinkParams(hashParams, keys);
+  }
+
+  private resolveTokenFromUrl(): string {
+    const fromQuery = this.normalizeParam(this.route.snapshot.queryParamMap.get('token'));
+    if (fromQuery) return fromQuery;
+
+    const fromRouteFallback = this.normalizeParam(this.route.snapshot.queryParamMap.get('resetToken'));
+    if (fromRouteFallback) return fromRouteFallback;
+
+    return this.resolveParamFromCurrentUrl(['token', 'resetToken']);
   }
 
   private resolveFirebaseOobCodeFromUrl(): string {
-    const mode = String(this.route.snapshot.queryParamMap.get('mode') || '').trim();
-    const fromQuery = String(this.route.snapshot.queryParamMap.get('oobCode') || '').trim();
-    if (mode === 'resetPassword' && fromQuery) return fromQuery;
+    const fromRoute = this.normalizeParam(this.route.snapshot.queryParamMap.get('oobCode'));
+    if (fromRoute) return fromRoute.replace(/ /g, '+');
 
-    if (typeof window === 'undefined') return '';
-    const hash = String(window.location.hash || '').replace(/^#/, '');
-    if (!hash) return '';
-    const params = new URLSearchParams(hash.startsWith('?') ? hash.slice(1) : hash);
-    const hashMode = String(params.get('mode') || '').trim();
-    const fromHash = String(params.get('oobCode') || '').trim();
-    return hashMode === 'resetPassword' ? fromHash : '';
+    const fromCurrentUrl = this.resolveParamFromCurrentUrl(['oobCode']);
+    return fromCurrentUrl ? fromCurrentUrl.replace(/ /g, '+') : '';
   }
 
   get passwordChecks() {
