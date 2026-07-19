@@ -26,9 +26,18 @@
       </button>
       <div class="campaign-alert-message__template-body" *ngIf="inviteMessageExpanded">
         <div class="campaign-alert-message__template-actions">
-          <button type="button" class="btn btn-primary btn-sm" [disabled]="messagesLoading" (click)="copyRelevantMessage()">
+          <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading" (click)="copyRelevantMessage()">
             {{ copied ? 'Copied' : relevantCopyButtonLabel }}
           </button>
+          <a
+            class="btn btn-sm campaign-alert-message__wa-btn"
+            target="_blank"
+            rel="noopener"
+            [class.disabled]="messagesLoading || !relevantWhatsAppLink"
+            [attr.href]="relevantWhatsAppLink || null"
+            [attr.aria-disabled]="messagesLoading || !relevantWhatsAppLink">
+            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+          </a>
         </div>
         <pre *ngIf="!messagesLoading">{{ relevantMessage }}</pre>
         <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
@@ -43,9 +52,18 @@
       </button>
       <div class="campaign-alert-message__template-body" *ngIf="reminderMessageExpanded">
         <div class="campaign-alert-message__template-actions">
-          <button type="button" class="btn btn-primary btn-sm" [disabled]="messagesLoading" (click)="copyReminderMessage()">
+          <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading" (click)="copyReminderMessage()">
             {{ reminderCopied ? 'Copied' : 'Copy Posting Reminder' }}
           </button>
+          <a
+            class="btn btn-sm campaign-alert-message__wa-btn"
+            target="_blank"
+            rel="noopener"
+            [class.disabled]="messagesLoading || !postingReminderWhatsAppLink"
+            [attr.href]="postingReminderWhatsAppLink || null"
+            [attr.aria-disabled]="messagesLoading || !postingReminderWhatsAppLink">
+            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+          </a>
         </div>
         <pre *ngIf="!messagesLoading">{{ postingReminderMessage }}</pre>
         <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
@@ -60,11 +78,11 @@
       </button>
       <div class="campaign-alert-message__template-body" *ngIf="approvedMessageExpanded">
         <div class="campaign-alert-message__template-actions">
-          <button type="button" class="btn btn-primary btn-sm" [disabled]="messagesLoading || !ownerApprovedMessage" (click)="copyOwnerApprovedMessage()">
+          <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading || !ownerApprovedMessage" (click)="copyOwnerApprovedMessage()">
             {{ approvedMessageCopied ? 'Copied' : 'Copy Approved Message' }}
           </button>
           <a
-            class="btn btn-success btn-sm"
+            class="btn btn-sm campaign-alert-message__wa-btn"
             target="_blank"
             rel="noopener"
             [class.disabled]="messagesLoading || !ownerApprovedWhatsAppLink"

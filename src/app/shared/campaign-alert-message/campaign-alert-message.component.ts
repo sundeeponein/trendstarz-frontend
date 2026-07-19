@@ -36,6 +36,14 @@ export class CampaignAlertMessageComponent {
     return buildWhatsAppLink(this.ownerPhone, this.ownerApprovedMessage);
   }
 
+  get relevantWhatsAppLink(): string | null {
+    return buildWhatsAppLink(this.ownerPhone, this.relevantMessage);
+  }
+
+  get postingReminderWhatsAppLink(): string | null {
+    return buildWhatsAppLink(this.ownerPhone, this.postingReminderMessage);
+  }
+
   get isOpenToAll(): boolean {
     return String(this.campaign?.campaignMode || '') === 'tier_filtered_open';
   }

@@ -119,5 +119,76 @@ pre {
 .campaign-alert-message__template-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0;
+  flex-wrap: wrap;
+  width: min(100%, 430px);
+  margin-left: auto;
   margin-bottom: 0.5rem;
+}
+
+.campaign-alert-message__copy-btn {
+  background: #ff6d3a;
+  border-color: #ff6d3a;
+  color: #ffffff;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0.44rem 0.95rem;
+  border-radius: 8px 0 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  gap: 0.35rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.campaign-alert-message__copy-btn:hover:not(:disabled) {
+  background: #eb5e2d;
+  border-color: #eb5e2d;
+  color: #ffffff;
+}
+
+.campaign-alert-message__wa-btn {
+  background: #1f8f57;
+  border-color: #1f8f57;
+  color: #ffffff;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0.44rem 0.95rem;
+  border-radius: 0 8px 8px 0;
+  margin-left: -1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  gap: 0.35rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.campaign-alert-message__wa-btn:hover:not(.disabled) {
+  background: #177745;
+  border-color: #177745;
+  color: #ffffff;
+}
+
+.campaign-alert-message__wa-btn.disabled,
+.campaign-alert-message__wa-btn[aria-disabled="true"] {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .campaign-alert-message__template-actions {
+    gap: 0.35rem;
+    width: auto;
+  }
+
+  .campaign-alert-message__copy-btn,
+  .campaign-alert-message__wa-btn {
+    border-radius: 8px;
+    margin-left: 0;
+    flex: 0 1 auto;
+  }
 }

@@ -88,3 +88,17 @@ export function mobileVerificationCallbackRequestMessage(params: {
     'Thank you for joining TrendStarZ!',
   ].join('\n');
 }
+
+export function creatorTierVerificationReminderMessage(params: {
+  name: string;
+}): string {
+  return [
+    `Hi ${params.name}, your TrendStarZ social profile and creator tier verification is still pending.`,
+    '',
+    'Please update/confirm your social media handle and creator tier details in your profile so we can complete your verification.',
+    '',
+    'Thank you for joining TrendStarZ!',
+    '',
+    'www.trendstarz.in',
+  ].join('\n');
+}

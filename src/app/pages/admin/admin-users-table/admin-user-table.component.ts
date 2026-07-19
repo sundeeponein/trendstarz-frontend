@@ -11,6 +11,8 @@ import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialo
 import { buildDefaultUserTagOptions } from '../../../shared/constants/user-tag-options.constants';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../../shared/social-handle.util';
 import {
+  buildWhatsAppLink,
+  creatorTierVerificationReminderMessage as buildCreatorTierVerificationReminderMessage,
   emailVerificationReminderMessage as buildEmailVerificationReminderMessage,
   mobileVerificationReminderMessage as buildMobileVerificationReminderMessage,
   mobileVerificationCallbackRequestMessage as buildMobileVerificationCallbackRequestMessage,
@@ -1599,6 +1601,7 @@ export class AdminUserTableComponent implements OnInit {
 
   copiedMobileVerificationMessage = '';
   copiedMobileCallbackMessage = '';
+  copiedCreatorTierVerificationMessage = '';
   resendingMobileOtp = false;
 
   // Manual WhatsApp nudge for mobile verification — shown whenever mobile is
@@ -1651,6 +1654,51 @@ export class AdminUserTableComponent implements OnInit {
       return;
     }
     this.fallbackCopyDatabaseId(text, done);
+  }
+
+  creatorTierVerificationReminderMessage(user: any): string {
+    return buildCreatorTierVerificationReminderMessage({
+      name: this.getUserDisplayName(user),
+    });
+  }
+
+  copyCreatorTierVerificationReminderMessage(user: any): void {
+    const text = this.creatorTierVerificationReminderMessage(user);
+    if (!text) return;
+    const userId = String(user?._id || '');
+    const done = () => {
+      this.copiedCreatorTierVerificationMessage = userId;
+      this.cd.detectChanges();
+      setTimeout(() => {
+        this.copiedCreatorTierVerificationMessage = '';
+        this.cd.detectChanges();
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyDatabaseId(text, done));
+      return;
+    }
+    this.fallbackCopyDatabaseId(text, done);
+  }
+
+  private buildUserWhatsAppLink(user: any, text: string): string | null {
+    return buildWhatsAppLink(this.getDisplayPhoneNumber(user), text);
+  }
+
+  getEmailVerificationWhatsAppLink(user: any): string | null {
+    return this.buildUserWhatsAppLink(user, this.emailVerificationReminderMessage(user));
+  }
+
+  getMobileVerificationWhatsAppLink(user: any): string | null {
+    return this.buildUserWhatsAppLink(user, this.mobileVerificationReminderMessage(user));
+  }
+
+  getMobileCallbackRequestWhatsAppLink(user: any): string | null {
+    return this.buildUserWhatsAppLink(user, this.mobileVerificationCallbackRequestMessage(user));
+  }
+
+  getCreatorTierVerificationWhatsAppLink(user: any): string | null {
+    return this.buildUserWhatsAppLink(user, this.creatorTierVerificationReminderMessage(user));
   }
 
   /** Admin-triggered SMS OTP send — a real, separate send via the backend /otp/send

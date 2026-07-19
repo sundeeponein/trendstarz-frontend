@@ -384,16 +384,26 @@
             <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedEmail" title="This account changed email after the previous one was verified — useful signal to check for account takeover or typos.">
               Previous verified email: {{ selectedUser.previousVerifiedEmail }}
             </div>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary mt-1"
-              *ngIf="!isEmailVerified(selectedUser)"
-              (click)="copyEmailVerificationReminderMessage(selectedUser)"
-              title=" WhatsApp reminder message to send manually. Once the WhatsApp Business API is live, this same reminder sends automatically, once, 30 minutes after the verification email."
-            >
-              <i class="bi bi-whatsapp"></i>
-              {{ copiedEmailVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
-            </button>
+            <div class="ts-wa-actions mt-1" *ngIf="!isEmailVerified(selectedUser)">
+              <button
+                type="button"
+                class="btn btn-sm ts-wa-copy-btn"
+                (click)="copyEmailVerificationReminderMessage(selectedUser)"
+                title=" WhatsApp reminder message to send manually. Once the WhatsApp Business API is live, this same reminder sends automatically, once, 30 minutes after the verification email."
+              >
+                <i class="bi bi-whatsapp"></i>
+                {{ copiedEmailVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
+              </button>
+              <a
+                class="btn btn-sm ts-wa-send-btn"
+                target="_blank"
+                rel="noopener"
+                [class.disabled]="!getEmailVerificationWhatsAppLink(selectedUser)"
+                [attr.href]="getEmailVerificationWhatsAppLink(selectedUser) || null"
+                [attr.aria-disabled]="!getEmailVerificationWhatsAppLink(selectedUser)">
+                <i class="bi bi-whatsapp"></i> Send via WhatsApp
+              </a>
+            </div>
           </div>
           <div>
             <app-verification-field
@@ -417,16 +427,26 @@
               <i class="bi bi-telephone-inbound-fill"></i>
               Callback requested {{ selectedUser.mobileCallbackRequestedAt | date:'medium' }}
             </div>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary mt-1"
-              *ngIf="!isMobileVerified(selectedUser)"
-              (click)="copyMobileVerificationReminderMessage(selectedUser)"
-              title=" WhatsApp reminder message to send manually asking the user to complete mobile verification."
-            >
-              <i class="bi bi-whatsapp"></i>
-              {{ copiedMobileVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
-            </button>
+            <div class="ts-wa-actions mt-1" *ngIf="!isMobileVerified(selectedUser)">
+              <button
+                type="button"
+                class="btn btn-sm ts-wa-copy-btn"
+                (click)="copyMobileVerificationReminderMessage(selectedUser)"
+                title=" WhatsApp reminder message to send manually asking the user to complete mobile verification."
+              >
+                <i class="bi bi-whatsapp"></i>
+                {{ copiedMobileVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
+              </button>
+              <a
+                class="btn btn-sm ts-wa-send-btn"
+                target="_blank"
+                rel="noopener"
+                [class.disabled]="!getMobileVerificationWhatsAppLink(selectedUser)"
+                [attr.href]="getMobileVerificationWhatsAppLink(selectedUser) || null"
+                [attr.aria-disabled]="!getMobileVerificationWhatsAppLink(selectedUser)">
+                <i class="bi bi-whatsapp"></i> Send via WhatsApp
+              </a>
+            </div>
             <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && otpVerificationEnabled">
               <button
                 type="button"
@@ -439,15 +459,26 @@
               </button>
             </div>
             <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && !otpVerificationEnabled">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary"
-                (click)="copyMobileCallbackRequestMessage(selectedUser)"
-                title="Copy a WhatsApp message asking the user to reply YES so our team knows to call and verify."
-              >
-                <i class="bi bi-whatsapp"></i>
-                {{ copiedMobileCallbackMessage === selectedUser._id ? 'Copied' : 'Request a Callback' }}
-              </button>
+              <div class="ts-wa-actions">
+                <button
+                  type="button"
+                  class="btn btn-sm ts-wa-copy-btn"
+                  (click)="copyMobileCallbackRequestMessage(selectedUser)"
+                  title="Copy a WhatsApp message asking the user to reply YES so our team knows to call and verify."
+                >
+                  <i class="bi bi-whatsapp"></i>
+                  {{ copiedMobileCallbackMessage === selectedUser._id ? 'Copied' : 'Request a Callback' }}
+                </button>
+                <a
+                  class="btn btn-sm ts-wa-send-btn"
+                  target="_blank"
+                  rel="noopener"
+                  [class.disabled]="!getMobileCallbackRequestWhatsAppLink(selectedUser)"
+                  [attr.href]="getMobileCallbackRequestWhatsAppLink(selectedUser) || null"
+                  [attr.aria-disabled]="!getMobileCallbackRequestWhatsAppLink(selectedUser)">
+                  <i class="bi bi-whatsapp"></i> Send via WhatsApp
+                </a>
+              </div>
             </div>
           </div>
           <div>
@@ -628,6 +659,26 @@
                   [verified]="isCreatorTierVerified()"
                   (toggled)="toggleSelectedCreatorTierVerification()"
                 ></app-verification-field>
+                <div class="ts-wa-actions mt-1" *ngIf="!isCreatorTierVerified()">
+                  <button
+                    type="button"
+                    class="btn btn-sm ts-wa-copy-btn"
+                    (click)="copyCreatorTierVerificationReminderMessage(selectedUser)"
+                    title="Copy a WhatsApp reminder asking the user to complete Social Profile & Creator Tier verification."
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                    {{ copiedCreatorTierVerificationMessage === selectedUser._id ? 'Copied' : 'Copy WhatsApp reminder' }}
+                  </button>
+                  <a
+                    class="btn btn-sm ts-wa-send-btn"
+                    target="_blank"
+                    rel="noopener"
+                    [class.disabled]="!getCreatorTierVerificationWhatsAppLink(selectedUser)"
+                    [attr.href]="getCreatorTierVerificationWhatsAppLink(selectedUser) || null"
+                    [attr.aria-disabled]="!getCreatorTierVerificationWhatsAppLink(selectedUser)">
+                    <i class="bi bi-whatsapp"></i> Send via WhatsApp
+                  </a>
+                </div>
               </div>
 
               <!-- Social media: unified rows with Edit button (all user types) -->

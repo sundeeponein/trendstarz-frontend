@@ -351,6 +351,81 @@
   text-decoration: underline;
 }
 
+.ts-wa-copy-btn {
+  background: #ff6d3a;
+  border-color: #ff6d3a;
+  color: #fff;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0.44rem 0.95rem;
+  border-radius: 8px 0 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  gap: 0.35rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ts-wa-copy-btn:hover:not(:disabled) {
+  background: #eb5e2d;
+  border-color: #eb5e2d;
+  color: #fff;
+}
+
+.ts-wa-send-btn {
+  background: #1f8f57;
+  border-color: #1f8f57;
+  color: #fff;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0.44rem 0.95rem;
+  border-radius: 0 8px 8px 0;
+  margin-left: -1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  gap: 0.35rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ts-wa-send-btn:hover:not(.disabled) {
+  background: #177745;
+  border-color: #177745;
+  color: #fff;
+}
+
+.ts-wa-send-btn.disabled,
+.ts-wa-send-btn[aria-disabled="true"] {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.ts-wa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: center;
+  width: min(100%, 430px);
+}
+
+@media (max-width: 640px) {
+  .ts-wa-actions {
+    gap: 0.35rem;
+    width: auto;
+  }
+
+  .ts-wa-copy-btn,
+  .ts-wa-send-btn {
+    border-radius: 8px;
+    margin-left: 0;
+    flex: 0 1 auto;
+  }
+}
+
 .platform-chip {
   font-size: 0.68rem;
   font-weight: 700;
