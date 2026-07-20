@@ -289,6 +289,7 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
               [checked]="detail.featuredInMarketing"
               [disabled]="visibilityBusy() || detail.profileVisibility !== 'PUBLIC'"
               [isPremium]="true"
+              [isPublicProfile]="detail.profileVisibility === 'PUBLIC'"
               (checkedChange)="modUpdateFeatured($event)">
             </app-homepage-feature-toggle>
             <p class="text-muted mt-1" style="font-size:0.78rem;" *ngIf="!detail.homepageEligibility.isPremium">

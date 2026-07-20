@@ -662,6 +662,7 @@
               [checked]="registrationForm.get('featuredInMarketing')?.value"
               [disabled]="registrationForm.get('profileVisibility')?.value !== 'PUBLIC'"
               [isPremium]="registrationForm.get('paymentOption')?.value === 'premium'"
+              [isPublicProfile]="registrationForm.get('profileVisibility')?.value === 'PUBLIC'"
               (checkedChange)="registrationForm.get('featuredInMarketing')?.setValue($event)">
             </app-homepage-feature-toggle>
             <p class="form-text mt-1" *ngIf="registrationForm.get('paymentOption')?.value === 'premium' && registrationForm.get('profileVisibility')?.value !== 'PUBLIC'" style="font-size:0.82em;">

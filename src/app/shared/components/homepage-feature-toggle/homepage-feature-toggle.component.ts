@@ -24,11 +24,12 @@ export class HomepageFeatureToggleComponent {
   @Input() checked = false;
   @Input() disabled = false;
   @Input() isPremium = true;
+  @Input() isPublicProfile = true;
   @Input() visibilityLabel = 'Public';
   @Output() checkedChange = new EventEmitter<boolean>();
 
   get isUnavailable(): boolean {
-    return this.disabled || !this.isPremium;
+    return this.disabled || !this.isPremium || !this.isPublicProfile;
   }
 
   get helperText(): string {
@@ -36,7 +37,7 @@ export class HomepageFeatureToggleComponent {
       return 'Upgrade to Premium to become eligible for the homepage spotlight.';
     }
 
-    if (this.disabled) {
+    if (!this.isPublicProfile) {
       return 'Available only for Public profiles. Change your profile visibility to Public to feature your profile on the homepage.';
     }
 

@@ -483,6 +483,7 @@
               [checked]="featuredInMarketing"
               [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
               [isPremium]="hasPremiumPlan"
+              [isPublicProfile]="profileVisibility === 'PUBLIC'"
               (checkedChange)="onFeaturedInMarketingChange($event)">
             </app-homepage-feature-toggle>
             <p class="text-muted mt-1" *ngIf="hasPremiumPlan && profileVisibility !== 'PUBLIC'" style="font-size:0.82em;">

@@ -1,12 +1,12 @@
 <div class="homepage-feature-toggle">
   <div class="homepage-feature-toggle__copy">
     <h3>Featured on Homepage</h3>
-    <p *ngIf="isPremium && !disabled">Feature my profile on the TrendStarZ homepage to help brands and visitors discover you.</p>
-    <p *ngIf="isPremium && disabled" class="homepage-feature-toggle__helper">{{ helperText }}</p>
+    <p *ngIf="isPremium && isPublicProfile">Feature my profile on the TrendStarZ homepage to help brands and visitors discover you.</p>
+    <p *ngIf="isPremium && !isPublicProfile" class="homepage-feature-toggle__helper">{{ helperText }}</p>
     <p *ngIf="!isPremium" class="homepage-feature-toggle__premium-badge">⭐ Available with Premium</p>
   </div>
 
-  <label class="homepage-feature-toggle__row" *ngIf="isPremium && !disabled">
+  <label class="homepage-feature-toggle__row" *ngIf="isPremium && isPublicProfile">
     <span>Feature my profile on the TrendStarZ homepage</span>
     <span class="toggle">
       <input type="checkbox" [checked]="checked" [disabled]="disabled" (change)="onChange()" />
@@ -14,7 +14,7 @@
     </span>
   </label>
 
-  <div class="homepage-feature-toggle__row homepage-feature-toggle__row--disabled" *ngIf="isPremium && disabled">
+  <div class="homepage-feature-toggle__row homepage-feature-toggle__row--disabled" *ngIf="isPremium && !isPublicProfile">
     <span>{{ helperText }}</span>
   </div>
 

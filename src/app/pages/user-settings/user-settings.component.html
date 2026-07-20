@@ -120,6 +120,7 @@
       [checked]="featuredInMarketing"
       [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
       [isPremium]="isPremium"
+      [isPublicProfile]="profileVisibility === 'PUBLIC'"
       (checkedChange)="onFeaturedInMarketingChange($event)">
     </app-homepage-feature-toggle>
     <p class="visibility-note" *ngIf="isPremium && profileVisibility !== 'PUBLIC'">
