@@ -429,6 +429,8 @@ export class AdminManagementComponent implements OnInit {
     showRegisterInfluencerLink: true,
     showRegisterBrandLink: true,
     showRegisterPhotographerLink: true,
+    showInfluencerSearchTab: true,
+    showPhotographerSearchTab: true,
     campaignTypeConfigs: [] as CampaignTypeConfigItem[],
     campaignAccessModeConfigs: [] as CampaignAccessModeConfigItem[],
   };
@@ -812,6 +814,8 @@ export class AdminManagementComponent implements OnInit {
           this.settings.showRegisterInfluencerLink = data?.showRegisterInfluencerLink !== false;
 	          this.settings.showRegisterBrandLink = data?.showRegisterBrandLink !== false;
 	          this.settings.showRegisterPhotographerLink = data?.showRegisterPhotographerLink !== false;
+            this.settings.showInfluencerSearchTab = data?.showInfluencerSearchTab !== false;
+            this.settings.showPhotographerSearchTab = data?.showPhotographerSearchTab !== false;
 	          this.campaignTypeConfigDefaults = this.normalizeCampaignTypeConfigs(data?.campaignTypeConfigDefaults);
 	          this.campaignAccessModeConfigDefaults = this.normalizeCampaignAccessModeConfigs(
 	            data?.campaignAccessModeConfigDefaults,
@@ -1031,6 +1035,7 @@ export class AdminManagementComponent implements OnInit {
 	          'supportContactWhatsapp' in saved ||
 	          'supportContactMessage' in saved ||
 	          'supportContactEnabled' in saved;
+  	        const persistedSearchTabs = 'showInfluencerSearchTab' in saved || 'showPhotographerSearchTab' in saved;
 	        const persistedCampaignAccessModes = 'campaignAccessModeConfigs' in saved;
 	        this.settingsSaving = false;
         this.settingsSaved = true;
@@ -1046,6 +1051,11 @@ export class AdminManagementComponent implements OnInit {
 	            'Saved, but campaign access mode fields were not persisted. Please restart/deploy the backend so the new schema is loaded.',
 	          );
 	        }
+  	        if (!persistedSearchTabs) {
+  	          alert(
+  	            'Saved, but search tab visibility fields were not persisted. Please restart/deploy the backend so the new schema is loaded.',
+  	          );
+  	        }
         setTimeout(() => {
           this.settingsSaved = false;
           this.cdr.detectChanges();

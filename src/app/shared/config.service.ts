@@ -321,6 +321,8 @@ export class ConfigService {
     showRegisterInfluencerLink: boolean;
     showRegisterBrandLink: boolean;
     showRegisterPhotographerLink: boolean;
+    showInfluencerSearchTab: boolean;
+    showPhotographerSearchTab: boolean;
   }> {
     return this.http.get<any>(`${this.apiUrl}/auth/app-settings`).pipe(
       map(res => {
@@ -356,6 +358,8 @@ export class ConfigService {
           showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
           showRegisterBrandLink: data?.showRegisterBrandLink !== false,
           showRegisterPhotographerLink: data?.showRegisterPhotographerLink !== false,
+          showInfluencerSearchTab: data?.showInfluencerSearchTab !== false,
+          showPhotographerSearchTab: data?.showPhotographerSearchTab !== false,
         };
       }),
       catchError(() => of({
@@ -374,6 +378,8 @@ export class ConfigService {
         showRegisterInfluencerLink: true,
         showRegisterBrandLink: true,
         showRegisterPhotographerLink: true,
+        showInfluencerSearchTab: true,
+        showPhotographerSearchTab: true,
       }))
     );
   }
@@ -484,25 +490,23 @@ export class ConfigService {
     commission: string[];
   }> {
     const fallback = buildDefaultUserTagOptions();
-
-    const normalize = (list: unknown, defaults: string[]) => {
-      if (!Array.isArray(list)) return defaults;
-      return list
+    const normalize = (items: unknown, fallbackList: string[]): string[] => {
+      if (!Array.isArray(items)) return [...fallbackList];
+      const values = items
         .map((item: any) => {
-          if (typeof item === 'string') {
-            return item.trim();
-          }
+          if (typeof item === 'string') return item.trim();
           if (item && typeof item === 'object') {
             if (item.visible === false) return '';
             return String(item.name || '').trim();
           }
           return '';
         })
-        .filter((v: string) => !!v);
+        .filter((value: string) => !!value);
+      return values.length ? values : [...fallbackList];
     };
 
     return this.http.get<any>(`${this.apiUrl}/user-tag-options`).pipe(
-      map((res: any) => {
+      map((res) => {
         const data = this.extractData<any>(res) || res || {};
         return {
           influencer: normalize(data.influencer, fallback.influencer),
@@ -690,11 +694,17 @@ export class ConfigService {
     influencerLimit?: number;
     brandLimit?: number;
     photographerLimit?: number;
+    viewerState?: string;
+    viewerDistrict?: string;
+    viewerCountry?: string;
   }): Observable<{ influencers: any[]; brands: any[]; photographers: any[] }> {
     const params: Record<string, string> = {};
     if (options?.influencerLimit) params['influencerLimit'] = String(options.influencerLimit);
     if (options?.brandLimit) params['brandLimit'] = String(options.brandLimit);
     if (options?.photographerLimit) params['photographerLimit'] = String(options.photographerLimit);
+    if (options?.viewerState) params['viewerState'] = String(options.viewerState);
+    if (options?.viewerDistrict) params['viewerDistrict'] = String(options.viewerDistrict);
+    if (options?.viewerCountry) params['viewerCountry'] = String(options.viewerCountry);
     return this.http.get<any>(`${this.apiUrl}/users/featured-profiles`, { params }).pipe(
       map((res) => this.extractData<any>(res) || res || {}),
       catchError(() => of({ influencers: [], brands: [], photographers: [] })),
@@ -705,12 +715,20 @@ export class ConfigService {
    * Homepage hero banner + hero slider images — one eligible, explicitly
    * opted-in image per role. Any entry may be null if no one has opted in yet.
    */
-  getHeroShowcaseImages(): Observable<{
+  getHeroShowcaseImages(options?: {
+    viewerState?: string;
+    viewerDistrict?: string;
+    viewerCountry?: string;
+  }): Observable<{
     influencer: { url: string; alt: string } | null;
     brand: { url: string; alt: string } | null;
     photographer: { url: string; alt: string } | null;
   }> {
-    return this.http.get<any>(`${this.apiUrl}/users/hero-showcase-images`).pipe(
+    const params: Record<string, string> = {};
+    if (options?.viewerState) params['viewerState'] = String(options.viewerState);
+    if (options?.viewerDistrict) params['viewerDistrict'] = String(options.viewerDistrict);
+    if (options?.viewerCountry) params['viewerCountry'] = String(options.viewerCountry);
+    return this.http.get<any>(`${this.apiUrl}/users/hero-showcase-images`, { params }).pipe(
       map((res) => this.extractData<any>(res) || res || {}),
       catchError(() => of({ influencer: null, brand: null, photographer: null })),
     );
@@ -724,6 +742,7 @@ export class ConfigService {
     district?: string;
     viewerState?: string;
     viewerDistrict?: string;
+    viewerCountry?: string;
     smartLocationPriority?: boolean;
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
@@ -746,6 +765,7 @@ export class ConfigService {
     }
     if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
+    if (options?.viewerCountry) params.push(`viewerCountry=${encodeURIComponent(options.viewerCountry)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
       params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
     }
@@ -769,6 +789,7 @@ export class ConfigService {
     district?: string;
     viewerState?: string;
     viewerDistrict?: string;
+    viewerCountry?: string;
     smartLocationPriority?: boolean;
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
@@ -806,6 +827,7 @@ export class ConfigService {
     keyword?: string;
     viewerState?: string;
     viewerDistrict?: string;
+    viewerCountry?: string;
     smartLocationPriority?: boolean;
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
@@ -824,6 +846,7 @@ export class ConfigService {
     keyword?: string;
     viewerState?: string;
     viewerDistrict?: string;
+    viewerCountry?: string;
     smartLocationPriority?: boolean;
     countSearch?: boolean;
     countReason?: 'query' | 'filter' | 'pagination';
@@ -836,6 +859,7 @@ export class ConfigService {
     if (options?.keyword) params.push(`keyword=${encodeURIComponent(options.keyword)}`);
     if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
+    if (options?.viewerCountry) params.push(`viewerCountry=${encodeURIComponent(options.viewerCountry)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
       params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
     }

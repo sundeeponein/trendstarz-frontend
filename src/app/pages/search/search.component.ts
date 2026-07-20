@@ -25,6 +25,8 @@ export class SearchComponent implements OnInit {
   private brandRoleCategoryOptions: string[] = [];
   private lastSmartDiscoverySignature: Partial<Record<'influencer' | 'photographer', string>> = {};
   private keywordSearchDebounce: any = null;
+  showInfluencerTab = true;
+  showPhotographersTab = true;
 
   activeTab: 'influencers' | 'brands' | 'photographers' = 'influencers';
 
@@ -52,6 +54,7 @@ export class SearchComponent implements OnInit {
   influencersError = '';
   brandsError = '';
   photographersError = '';
+  showGuestInvitePrompt = false;
   usageSummary: UsageSummary | null = null;
 
   // Filter options (populated from data)
@@ -136,8 +139,8 @@ export class SearchComponent implements OnInit {
   get isGuestUser(): boolean { return !this.currentUser; }
 
   /** Which tabs are available per role */
-  get showInfluencerTab(): boolean { return this.isAdminUser || this.isBrandUser || this.isPhotographerUser || this.isGuestUser; }
-  get showPhotographersTab(): boolean { return this.isAdminUser || this.isBrandUser || this.isInfluencerUser || this.isGuestUser; }
+  get canShowInfluencerTab(): boolean { return this.showInfluencerTab; }
+  get canShowPhotographersTab(): boolean { return this.showPhotographersTab; }
   get showBrandsTab(): boolean { return false; /* brands hidden from public discovery */ }
 
   get defaultTab(): 'influencers' | 'photographers' {
@@ -263,6 +266,7 @@ export class SearchComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isBrowser) return;
+    this.loadSearchTabVisibility();
     if (!this.isAdminUser && !this.isGuestUser) {
       this.loadUsageSummary();
     }
@@ -276,6 +280,33 @@ export class SearchComponent implements OnInit {
     } else {
       this.fetchBrands();
     }
+  }
+
+  private loadSearchTabVisibility(): void {
+    this.config.getAppSettings().subscribe({
+      next: (settings) => {
+        this.showInfluencerTab = (this.isAdminUser || this.isBrandUser || this.isPhotographerUser || this.isGuestUser) && settings.showInfluencerSearchTab;
+        this.showPhotographersTab = (this.isAdminUser || this.isBrandUser || this.isInfluencerUser || this.isGuestUser) && settings.showPhotographerSearchTab;
+
+        if (this.activeTab === 'influencers' && !this.showInfluencerTab && this.showPhotographersTab) {
+          this.setTab('photographers');
+          return;
+        }
+        if (this.activeTab === 'photographers' && !this.showPhotographersTab && this.showInfluencerTab) {
+          this.setTab('influencers');
+          return;
+        }
+
+        if (!this.showInfluencerTab && !this.showPhotographersTab && this.activeTab !== 'brands') {
+          this.setTab('brands');
+        }
+        setTimeout(() => this.cd.detectChanges(), 0);
+      },
+      error: () => {
+        this.showInfluencerTab = this.isAdminUser || this.isBrandUser || this.isPhotographerUser || this.isGuestUser;
+        this.showPhotographersTab = this.isAdminUser || this.isBrandUser || this.isInfluencerUser || this.isGuestUser;
+      },
+    });
   }
 
   private loadUsageSummary(): void {
@@ -489,6 +520,7 @@ export class SearchComponent implements OnInit {
         limit: typeof options?.limit === 'number' ? options.limit : 120,
         viewerState: this.currentUser?.location?.state || '',
         viewerDistrict: this.currentUser?.location?.district || '',
+        viewerCountry: this.currentUser?.location?.country || '',
         smartLocationPriority: !this.infFilters.location,
         countSearch: !!options?.countSearch,
         countReason: options?.countReason,
@@ -570,6 +602,9 @@ export class SearchComponent implements OnInit {
 
   viewPhotographerProfile(photographer: any) {
     if (this.isPhotographerProfileViewDisabled(photographer)) {
+      if (this.isGuestUser) {
+        this.showGuestInvitePrompt = true;
+      }
       this.analytics.trackSearchProfileCardClick({
         targetRole: 'photographer',
         outcome: 'blocked',
@@ -690,6 +725,7 @@ export class SearchComponent implements OnInit {
         limit: typeof options?.limit === 'number' ? options.limit : 120,
         viewerState: this.currentUser?.location?.state || '',
         viewerDistrict: this.currentUser?.location?.district || '',
+        viewerCountry: this.currentUser?.location?.country || '',
         smartLocationPriority: !this.photographerFilters.location,
         countSearch: !!options?.countSearch,
         countReason: options?.countReason,
@@ -775,7 +811,7 @@ export class SearchComponent implements OnInit {
 
   private sortResults<T extends any>(rows: T[], hasLocationFilter: boolean): T[] {
     if (this.sortBy === 'recommended') {
-      return hasLocationFilter ? rows : this.sortBySmartLocationPriority(rows);
+      return rows;
     }
 
     const sorted = [...rows];
@@ -866,6 +902,9 @@ export class SearchComponent implements OnInit {
 
   viewInfluencerProfile(influencer: any) {
     if (this.isInfluencerProfileViewDisabled(influencer)) {
+      if (this.isGuestUser) {
+        this.showGuestInvitePrompt = true;
+      }
       this.analytics.trackSearchProfileCardClick({
         targetRole: 'influencer',
         outcome: 'blocked',

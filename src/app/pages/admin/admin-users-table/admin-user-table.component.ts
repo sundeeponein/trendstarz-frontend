@@ -57,6 +57,8 @@ export class AdminUserTableComponent implements OnInit {
   currentPage = 1;
   pageSize = 25;
   readonly pageSizeOptions = [25, 50, 100, 250, 500, 1000];
+  showInfluencerSection = true;
+  showPhotographerSection = true;
 
   showUserDetailsModal = false;
   selectedUser: any = null;

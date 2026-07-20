@@ -523,6 +523,21 @@
             <label class="form-check-label" for="showRegisterPhotographerLink">Show Register as Photographer link</label>
           </div>
           <small class="text-light-emphasis d-block mb-2">Changes here affect both desktop and mobile navbar links, and corresponding routes.</small>
+
+          <hr />
+
+          <h5 class="mb-3">Search Tab Visibility</h5>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showInfluencerSearchTab"
+              [(ngModel)]="settings.showInfluencerSearchTab" />
+            <label class="form-check-label" for="showInfluencerSearchTab">Show Influencers tab in Search</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="showPhotographerSearchTab"
+              [(ngModel)]="settings.showPhotographerSearchTab" />
+            <label class="form-check-label" for="showPhotographerSearchTab">Show Photo/Videographers tab in Search</label>
+          </div>
+          <small class="text-light-emphasis d-block mb-2">Use this to hide low-volume roles from the public search page without removing them from the system.</small>
         </div>
 
         <div class="col-12 col-xl-7 settings-row">

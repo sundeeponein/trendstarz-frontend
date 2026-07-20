@@ -344,6 +344,24 @@
   p { margin: 0; font-size: 0.95rem; }
 }
 
+.empty-state__hint {
+  color: #64748b;
+  margin-top: 0.35rem;
+}
+
+.guest-conversion-prompt {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fdba74;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.9rem;
+  color: #9a3412;
+}
+
+.guest-conversion-actions {
+  margin-top: 0.65rem;
+}
+
 .error-state {
   color: #dc3545;
   i { color: #dc3545; }
