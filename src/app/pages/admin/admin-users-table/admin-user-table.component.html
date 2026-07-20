@@ -444,7 +444,7 @@
                 [class.disabled]="!getMobileVerificationWhatsAppLink(selectedUser)"
                 [attr.href]="getMobileVerificationWhatsAppLink(selectedUser) || null"
                 [attr.aria-disabled]="!getMobileVerificationWhatsAppLink(selectedUser)">
-                <i class="bi bi-whatsapp"></i> Send
+                Send via <i class="bi bi-whatsapp"></i>
               </a>
             </div>
             <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && otpVerificationEnabled">
@@ -476,7 +476,7 @@
                   [class.disabled]="!getMobileCallbackRequestWhatsAppLink(selectedUser)"
                   [attr.href]="getMobileCallbackRequestWhatsAppLink(selectedUser) || null"
                   [attr.aria-disabled]="!getMobileCallbackRequestWhatsAppLink(selectedUser)">
-                  <i class="bi bi-whatsapp"></i> Send via WhatsApp
+                  Send via <i class="bi bi-whatsapp"></i>
                 </a>
               </div>
             </div>
