@@ -21,6 +21,7 @@ import { UsageSummaryComponent } from '../../shared/components/usage-summary/usa
 })
 export class SearchComponent implements OnInit {
   private readonly tierOrder = TIER_ORDER;
+  readonly searchPageSize = 12;
   private influencerRoleCategoryOptions: string[] = [];
   private brandRoleCategoryOptions: string[] = [];
   private lastSmartDiscoverySignature: Partial<Record<'influencer' | 'photographer', string>> = {};
@@ -46,6 +47,9 @@ export class SearchComponent implements OnInit {
   filteredInfluencers: any[] = [];
   filteredBrands: any[] = [];
   filteredPhotographers: any[] = [];
+  influencersPage = 1;
+  brandsPage = 1;
+  photographersPage = 1;
 
   // Loading/error states
   influencersLoading = false;
@@ -78,12 +82,17 @@ export class SearchComponent implements OnInit {
 
   onSortChange(): void {
     if (this.isPhotographerMode) {
+      this.photographersPage = 1;
       this.applyPhotographerFilters();
       return;
     }
     if (this.isInfluencerMode) {
+      this.influencersPage = 1;
       this.applyInfluencerFilters();
+      return;
     }
+    this.brandsPage = 1;
+    this.applyBrandFilters();
   }
 
   // Influencer filters
@@ -392,6 +401,7 @@ export class SearchComponent implements OnInit {
 
   setTab(tab: 'influencers' | 'brands' | 'photographers') {
     this.activeTab = tab;
+    this.resetPageForMode(tab);
     this.router.navigate([], { queryParams: { tab }, queryParamsHandling: 'merge', replaceUrl: true });
     if (tab === 'influencers' && this.allInfluencers.length === 0 && !this.influencersLoading) {
       this.fetchInfluencers({ countSearch: false });
@@ -410,28 +420,33 @@ export class SearchComponent implements OnInit {
   onKeywordChange(value: string) {
     if (this.isPhotographerMode) {
       this.photographerFilters.keyword = value;
+      this.photographersPage = 1;
       this.applyPhotographerFilters();
       this.triggerSearchFetch('query', 450);
       return;
     }
     if (this.isInfluencerMode) {
       this.infFilters.keyword = value;
+      this.influencersPage = 1;
       this.applyInfluencerFilters();
       this.triggerSearchFetch('query', 450);
       return;
     }
     this.brandFilters.keyword = value;
+    this.brandsPage = 1;
     this.applyBrandFilters();
   }
 
   onCategoryChange(value: string) {
     if (this.isInfluencerMode) {
       this.infFilters.category = value;
+      this.influencersPage = 1;
       this.applyInfluencerFilters();
       this.triggerSearchFetch('filter');
       return;
     }
     this.brandFilters.category = value;
+    this.brandsPage = 1;
     this.applyBrandFilters();
   }
 
@@ -444,6 +459,7 @@ export class SearchComponent implements OnInit {
           selectedLocation: value,
         });
       }
+      this.photographersPage = 1;
       this.applyPhotographerFilters();
       this.triggerSearchFetch('filter');
       return;
@@ -456,17 +472,20 @@ export class SearchComponent implements OnInit {
           selectedLocation: value,
         });
       }
+      this.influencersPage = 1;
       this.applyInfluencerFilters();
       this.triggerSearchFetch('filter');
       return;
     }
     this.brandFilters.location = value;
+    this.brandsPage = 1;
     this.applyBrandFilters();
   }
 
   onAgeRangeChange(value: string) {
     if (!this.isInfluencerMode) return;
     this.infFilters.ageRange = value;
+    this.influencersPage = 1;
     this.applyInfluencerFilters();
     this.triggerSearchFetch('filter');
   }
@@ -658,6 +677,7 @@ export class SearchComponent implements OnInit {
       return true;
     });
     this.filteredInfluencers = this.sortResults(filtered, !!f.location);
+    this.clampPageForMode('influencers');
   }
 
   private getInfluencerAgeRange(influencer: any): string {
@@ -696,10 +716,12 @@ export class SearchComponent implements OnInit {
       if (f.location && u.location?.state !== f.location) return false;
       return true;
     });
+    this.clampPageForMode('brands');
   }
 
   clearInfluencerFilters(countSearch = false) {
     this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0 };
+    this.influencersPage = 1;
     this.applyInfluencerFilters();
     if (countSearch) {
       this.fetchInfluencers({ countSearch: !this.isAdminUser && !this.isGuestUser, countReason: 'filter' });
@@ -708,6 +730,7 @@ export class SearchComponent implements OnInit {
 
   clearBrandFilters() {
     this.brandFilters = { keyword: '', category: '', location: '' };
+    this.brandsPage = 1;
     this.applyBrandFilters();
   }
 
@@ -774,6 +797,7 @@ export class SearchComponent implements OnInit {
       return true;
     });
     this.filteredPhotographers = this.sortResults(filtered, !!f.location);
+    this.clampPageForMode('photographers');
   }
 
   private normalizeLocationValue(value: unknown): string {
@@ -894,10 +918,118 @@ export class SearchComponent implements OnInit {
 
   clearPhotographerFilters(countSearch = false) {
     this.photographerFilters = { keyword: '', skill: '', location: '' };
+    this.photographersPage = 1;
     this.applyPhotographerFilters();
     if (countSearch) {
       this.fetchPhotographers({ countSearch: !this.isAdminUser && !this.isGuestUser, countReason: 'filter' });
     }
+  }
+
+  getPagedInfluencers(): any[] {
+    const start = (this.influencersPage - 1) * this.searchPageSize;
+    return this.filteredInfluencers.slice(start, start + this.searchPageSize);
+  }
+
+  getPagedBrands(): any[] {
+    const start = (this.brandsPage - 1) * this.searchPageSize;
+    return this.filteredBrands.slice(start, start + this.searchPageSize);
+  }
+
+  getPagedPhotographers(): any[] {
+    const start = (this.photographersPage - 1) * this.searchPageSize;
+    return this.filteredPhotographers.slice(start, start + this.searchPageSize);
+  }
+
+  getTotalActiveResults(): number {
+    if (this.isInfluencerMode) return this.filteredInfluencers.length;
+    if (this.isPhotographerMode) return this.filteredPhotographers.length;
+    return this.filteredBrands.length;
+  }
+
+  getVisibleRangeStart(): number {
+    const total = this.getTotalActiveResults();
+    if (!total) return 0;
+    return (this.getCurrentPage() - 1) * this.searchPageSize + 1;
+  }
+
+  getVisibleRangeEnd(): number {
+    return Math.min(this.getCurrentPage() * this.searchPageSize, this.getTotalActiveResults());
+  }
+
+  hasPreviousPage(): boolean {
+    return this.getCurrentPage() > 1;
+  }
+
+  hasNextPage(): boolean {
+    return this.getCurrentPage() * this.searchPageSize < this.getTotalActiveResults();
+  }
+
+  goToPreviousPage(): void {
+    if (!this.hasPreviousPage()) return;
+    this.setCurrentPage(this.getCurrentPage() - 1);
+  }
+
+  goToNextPage(): void {
+    if (!this.hasNextPage()) return;
+    this.setCurrentPage(this.getCurrentPage() + 1);
+  }
+
+  shouldShowPagination(): boolean {
+    if (this.isInfluencerMode) {
+      return !this.influencersLoading && !this.influencersError && this.filteredInfluencers.length > 0;
+    }
+    if (this.isPhotographerMode) {
+      return !this.photographersLoading && !this.photographersError && this.filteredPhotographers.length > 0;
+    }
+    return !this.brandsLoading && !this.brandsError && this.filteredBrands.length > 0;
+  }
+
+  private getCurrentPage(): number {
+    if (this.isInfluencerMode) return this.influencersPage;
+    if (this.isPhotographerMode) return this.photographersPage;
+    return this.brandsPage;
+  }
+
+  private setCurrentPage(page: number): void {
+    if (this.isInfluencerMode) {
+      this.influencersPage = page;
+      return;
+    }
+    if (this.isPhotographerMode) {
+      this.photographersPage = page;
+      return;
+    }
+    this.brandsPage = page;
+  }
+
+  private resetPageForMode(mode: 'influencers' | 'brands' | 'photographers'): void {
+    if (mode === 'influencers') {
+      this.influencersPage = 1;
+      return;
+    }
+    if (mode === 'photographers') {
+      this.photographersPage = 1;
+      return;
+    }
+    this.brandsPage = 1;
+  }
+
+  private clampPageForMode(mode: 'influencers' | 'brands' | 'photographers'): void {
+    const total = mode === 'influencers'
+      ? this.filteredInfluencers.length
+      : mode === 'photographers'
+      ? this.filteredPhotographers.length
+      : this.filteredBrands.length;
+    const totalPages = Math.max(1, Math.ceil(total / this.searchPageSize));
+    if (mode === 'influencers') {
+      this.influencersPage = Math.min(this.influencersPage, totalPages);
+      return;
+    }
+    if (mode === 'photographers') {
+      this.photographersPage = Math.min(this.photographersPage, totalPages);
+      return;
+    }
+    this.brandsPage = Math.min(this.brandsPage, totalPages);
   }
 
   viewInfluencerProfile(influencer: any) {

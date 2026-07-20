@@ -168,7 +168,7 @@
     <!-- Grid -->
     <div class="results-grid" *ngIf="!influencersLoading && !influencersError && filteredInfluencers.length > 0">
       <app-influencer-user-card
-        *ngFor="let influencer of filteredInfluencers"
+        *ngFor="let influencer of getPagedInfluencers()"
         [profileImage]="influencer.profileImage || ''"
         [profileImages]="influencer.profileImages || []"
         [name]="influencer.name || influencer.fullname || ''"
@@ -220,7 +220,7 @@
     <!-- Grid -->
     <div class="results-grid" *ngIf="!brandsLoading && !brandsError && filteredBrands.length > 0">
       <app-brand-user-card
-        *ngFor="let brand of filteredBrands"
+        *ngFor="let brand of getPagedBrands()"
         [brandLogo]="brand.brandLogo"
         [brandLogoUrl]="getBrandLogoUrl(brand)"
         [brandName]="brand.brandName || ''"
@@ -271,7 +271,7 @@
     </div>
     <div class="results-grid" *ngIf="!photographersLoading && !photographersError && filteredPhotographers.length > 0">
       <app-photographer-user-card
-        *ngFor="let p of filteredPhotographers"
+        *ngFor="let p of getPagedPhotographers()"
         [profileImage]="p.profileImage || ''"
         [profileImages]="p.profileImages || []"
         [name]="p.name || ''"
@@ -290,6 +290,20 @@
         [profileViewDisabled]="isPhotographerProfileViewDisabled(p)"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
+    </div>
+  </div>
+
+  <div class="results-pagination" *ngIf="shouldShowPagination()">
+    <div class="results-pagination__meta">
+      {{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalActiveResults() }} results
+    </div>
+    <div class="results-pagination__actions">
+      <button type="button" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <button type="button" (click)="goToNextPage()" [disabled]="!hasNextPage()">
+        <i class="bi bi-chevron-right"></i>
+      </button>
     </div>
   </div>
 
