@@ -427,7 +427,7 @@
                     *ngIf="item.payoutStatus === 'paid'"
                     (click)="openPaymentReleaseMessage(item, $event)">
                     <i class="bi bi-card-text"></i>
-                    Show payment message
+                    Payment
                   </button>
                   <button
                     type="button"
@@ -435,7 +435,7 @@
                     *ngIf="isHostAcceptedMessageAvailable(item)"
                     (click)="openHostShareMessage(item, 'accepted', $event)">
                     <i class="bi bi-card-text"></i>
-                    Show accepted message
+                    Accepted
                   </button>
                   <button
                     type="button"
@@ -443,7 +443,7 @@
                     *ngIf="isHostSubmittedMessageAvailable(item)"
                     (click)="openHostShareMessage(item, 'submitted', $event)">
                     <i class="bi bi-card-text"></i>
-                    Show submitted message
+                    Submitted
                   </button>
                   <button
                     type="button"
@@ -451,7 +451,23 @@
                     *ngIf="isHostStartWorkMessageAvailable(item)"
                     (click)="openHostShareMessage(item, 'startWork', $event)">
                     <i class="bi bi-card-text"></i>
-                    Show start work message
+                    Start work
+                  </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="isInviteOnlyMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'inviteOnly', $event)">
+                    <i class="bi bi-whatsapp"></i>
+                    Invite
+                  </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="isPostingReminderMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'postingReminder', $event)">
+                    <i class="bi bi-whatsapp"></i>
+                    Posting Reminder
                   </button>
                   <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
                     {{ adminInvitePayoutStatusLabel(item) }}
@@ -674,6 +690,16 @@
           <i class="bi bi-clipboard-check"></i>
           {{ payoutMessageCopiedInviteId === payoutItem.inviteId ? 'Copied' : 'Copy payment message' }}
         </button>
+        <a
+          class="cdm-foot-btn cdm-foot-btn--primary"
+          target="_blank"
+          rel="noopener"
+          [class.disabled]="payoutMessageRecipientPhoneLoading || !payoutMessageWhatsAppLink"
+          [attr.href]="payoutMessageWhatsAppLink || null"
+          [attr.aria-disabled]="payoutMessageRecipientPhoneLoading || !payoutMessageWhatsAppLink">
+          <i class="bi bi-whatsapp"></i>
+          Send via WhatsApp
+        </a>
       </div>
     </div>
   </div>
@@ -686,7 +712,7 @@
     <div class="modal-content ts-modal cdm-payout-message-modal-content">
       <div class="cdm-payout-message-modal-title">
         <i class="bi bi-whatsapp"></i>
-        {{ hostShareMessageType === 'accepted' ? 'Invite Accepted Message' : hostShareMessageType === 'submitted' ? 'Post Submitted Message' : 'Start Work Message' }}
+        {{ hostShareMessageTypeLabel }}
       </div>
       <p *ngIf="hostShareMessageLoading">Loading message…</p>
       <pre class="cdm-payout-message-modal-text" *ngIf="!hostShareMessageLoading">{{ hostShareMessageText }}</pre>

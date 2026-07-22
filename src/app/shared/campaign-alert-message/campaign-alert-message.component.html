@@ -19,33 +19,8 @@
       </span>
     </div>
 
-    <div class="campaign-alert-message__template">
-      <button type="button" class="campaign-alert-message__template-toggle" (click)="inviteMessageExpanded = !inviteMessageExpanded">
-        <span>{{ relevantMessageLabel }}</span>
-        <i class="bi" [ngClass]="inviteMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-      </button>
-      <div class="campaign-alert-message__template-body" *ngIf="inviteMessageExpanded">
-        <div class="campaign-alert-message__template-actions">
-          <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading" (click)="copyRelevantMessage()">
-            {{ copied ? 'Copied' : relevantCopyButtonLabel }}
-          </button>
-          <a
-            class="btn btn-sm campaign-alert-message__wa-btn"
-            target="_blank"
-            rel="noopener"
-            [class.disabled]="messagesLoading || !relevantWhatsAppLink"
-            [attr.href]="relevantWhatsAppLink || null"
-            [attr.aria-disabled]="messagesLoading || !relevantWhatsAppLink">
-            <i class="bi bi-whatsapp"></i> Send via WhatsApp
-          </a>
-        </div>
-        <pre *ngIf="!messagesLoading">{{ relevantMessage }}</pre>
-        <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
-      </div>
-    </div>
-
-    <!-- Applies to both invite-only and open-to-all campaigns -->
-    <div class="campaign-alert-message__template">
+    <!-- Only relevant once the campaign is active and someone has accepted to work -->
+    <div class="campaign-alert-message__template" *ngIf="showPostingReminder">
       <button type="button" class="campaign-alert-message__template-toggle" (click)="reminderMessageExpanded = !reminderMessageExpanded">
         <span>Upcoming Posting Reminder</span>
         <i class="bi" [ngClass]="reminderMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
@@ -66,6 +41,58 @@
           </a>
         </div>
         <pre *ngIf="!messagesLoading">{{ postingReminderMessage }}</pre>
+        <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
+      </div>
+    </div>
+
+    <!-- Invite-only campaigns: only relevant once the host has selected/invited creators -->
+    <div class="campaign-alert-message__template" *ngIf="showInviteOnlyMessage">
+      <button type="button" class="campaign-alert-message__template-toggle" (click)="inviteMessageExpanded = !inviteMessageExpanded">
+        <span>Invite Only Message</span>
+        <i class="bi" [ngClass]="inviteMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <div class="campaign-alert-message__template-body" *ngIf="inviteMessageExpanded">
+        <div class="campaign-alert-message__template-actions">
+          <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading" (click)="copyInviteOnlyMessage()">
+            {{ copied ? 'Copied' : 'Copy Invite Only Message' }}
+          </button>
+          <a
+            class="btn btn-sm campaign-alert-message__wa-btn"
+            target="_blank"
+            rel="noopener"
+            [class.disabled]="messagesLoading || !inviteOnlyWhatsAppLink"
+            [attr.href]="inviteOnlyWhatsAppLink || null"
+            [attr.aria-disabled]="messagesLoading || !inviteOnlyWhatsAppLink">
+            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+          </a>
+        </div>
+        <pre *ngIf="!messagesLoading">{{ inviteOnlyMessage }}</pre>
+        <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
+      </div>
+    </div>
+
+    <!-- Open-to-all campaigns: shown last -->
+    <div class="campaign-alert-message__template" *ngIf="showOpenToAllMessage">
+      <button type="button" class="campaign-alert-message__template-toggle" (click)="openMessageExpanded = !openMessageExpanded">
+        <span>Open Campaign Message</span>
+        <i class="bi" [ngClass]="openMessageExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <div class="campaign-alert-message__template-body" *ngIf="openMessageExpanded">
+        <div class="campaign-alert-message__template-actions">
+          <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading" (click)="copyOpenCampaignMessage()">
+            {{ copied ? 'Copied' : 'Copy Open Campaign Message' }}
+          </button>
+          <a
+            class="btn btn-sm campaign-alert-message__wa-btn"
+            target="_blank"
+            rel="noopener"
+            [class.disabled]="messagesLoading || !openCampaignWhatsAppLink"
+            [attr.href]="openCampaignWhatsAppLink || null"
+            [attr.aria-disabled]="messagesLoading || !openCampaignWhatsAppLink">
+            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+          </a>
+        </div>
+        <pre *ngIf="!messagesLoading">{{ openCampaignMessage }}</pre>
         <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
       </div>
     </div>

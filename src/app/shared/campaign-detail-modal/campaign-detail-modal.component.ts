@@ -13,6 +13,8 @@ import { paymentReleaseMessage as buildPaymentReleaseMessage, buildWhatsAppLink 
 import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 
+export type HostShareMessageType = 'accepted' | 'submitted' | 'startWork' | 'inviteOnly' | 'postingReminder';
+
 export interface CampaignAcceptPayload {
   inviteId: string;
   postDate?: string;
@@ -88,19 +90,33 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() viewSubmission = new EventEmitter<void>();
   @Output() confirmReceipt = new EventEmitter<void>();
 
-  /** Per-invite "ready to share" host message (invite accepted / post submitted / start work) — parent owns the fetch, see campaign-review.component.ts. */
-  @Output() requestHostShareMessage = new EventEmitter<{ item: any; type: 'accepted' | 'submitted' | 'startWork' }>();
+  /** Per-invite "ready to share" host message (invite accepted / post submitted / start work / invite only / posting reminder) — parent owns the fetch, see campaign-review.component.ts. */
+  @Output() requestHostShareMessage = new EventEmitter<{ item: any; type: HostShareMessageType }>();
   @Output() dismissHostShareMessage = new EventEmitter<void>();
   @Input() hostShareMessageItem: any = null;
-  @Input() hostShareMessageType: 'accepted' | 'submitted' | 'startWork' | null = null;
+  @Input() hostShareMessageType: HostShareMessageType | null = null;
   @Input() hostShareMessageText = '';
   @Input() hostShareMessageLoading = false;
-  /** Recipient phone for the wa.me Send button — host's for accepted/submitted, creator's for startWork. */
+  /** Recipient phone for the wa.me Send button — host's for accepted/submitted, creator's for startWork/inviteOnly/postingReminder. */
   @Input() hostShareMessageOwnerPhone = '';
   @Input() hostShareMessageRecipientPhone = '';
 
+  private static readonly CREATOR_FACING_MESSAGE_TYPES: HostShareMessageType[] = ['startWork', 'inviteOnly', 'postingReminder'];
+
+  private static readonly HOST_SHARE_MESSAGE_TYPE_LABELS: Record<HostShareMessageType, string> = {
+    accepted: 'Invite Accepted Message',
+    submitted: 'Post Submitted Message',
+    startWork: 'Start Work Message',
+    inviteOnly: 'Invite Only Message',
+    postingReminder: 'Upcoming Posting Reminder',
+  };
+
+  get hostShareMessageTypeLabel(): string {
+    return this.hostShareMessageType ? CampaignDetailModalComponent.HOST_SHARE_MESSAGE_TYPE_LABELS[this.hostShareMessageType] : '';
+  }
+
   get hostShareMessageWhatsAppLink(): string | null {
-    const phone = this.hostShareMessageType === 'startWork'
+    const phone = this.hostShareMessageType && CampaignDetailModalComponent.CREATOR_FACING_MESSAGE_TYPES.includes(this.hostShareMessageType)
       ? this.hostShareMessageRecipientPhone
       : this.hostShareMessageOwnerPhone;
     return buildWhatsAppLink(phone, this.hostShareMessageText);
@@ -156,9 +172,20 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     this.fallbackCopyAlertMessage(text, done);
   }
 
+  /** Recipient (creator) phone for the payout message's wa.me Send button — parent owns the fetch, see campaign-review.component.ts. */
+  @Output() requestPayoutMessagePhone = new EventEmitter<{ item: any }>();
+  @Input() payoutMessageRecipientPhone = '';
+  @Input() payoutMessageRecipientPhoneLoading = false;
+
+  get payoutMessageWhatsAppLink(): string | null {
+    if (!this.payoutMessagePreviewItem) return null;
+    return buildWhatsAppLink(this.payoutMessageRecipientPhone, this.paymentReleaseMessage(this.payoutMessagePreviewItem));
+  }
+
   openPaymentReleaseMessage(item: any, ev?: Event): void {
     ev?.stopPropagation();
     this.payoutMessagePreviewItem = item || null;
+    if (item) this.requestPayoutMessagePhone.emit({ item });
     this.cdr.detectChanges();
   }
 
@@ -187,11 +214,43 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
   }
 
+  /** Relevant from payment confirmation up to the point the creator has started/posted — hidden once submitted, since starting work is moot by then. */
   isHostStartWorkMessageAvailable(item: any): boolean {
-    return CampaignDetailModalComponent.WORK_STARTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+    const status = this.adminInviteStatusKey(item?.status);
+    return CampaignDetailModalComponent.WORK_STARTED_OR_LATER_STATUSES.includes(status)
+      && !CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(status);
   }
 
-  openHostShareMessage(item: any, type: 'accepted' | 'submitted' | 'startWork', ev?: Event): void {
+  /** Mirrors campaign-invite-card.component.ts's acceptanceDeadline getter — same campaign-level field, no per-invite override. */
+  private get acceptanceDeadline(): string {
+    return String(this.campaign?.acceptanceDeadline || '').trim();
+  }
+
+  private get isAcceptanceDeadlinePassed(): boolean {
+    const deadline = this.acceptanceDeadline;
+    if (!deadline) return false;
+    const deadlineMs = new Date(deadline).getTime();
+    return !Number.isNaN(deadlineMs) && Date.now() > deadlineMs;
+  }
+
+  /** Invite-only campaigns only, and only while the invite is still awaiting a response — hidden once accepted, declined, or the acceptance deadline has passed. */
+  isInviteOnlyMessageAvailable(item: any): boolean {
+    if (this.campaign?.campaignMode === 'tier_filtered_open' || !item) return false;
+    if (this.isAcceptanceDeadlinePassed) return false;
+    const status = this.adminInviteStatusKey(item?.status);
+    const responded = CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(status)
+      || ['declined', 'rejected', 'withdrawn'].includes(status);
+    return !responded;
+  }
+
+  /** Relevant between acceptance and the post going up — hidden once submitted, since the reminder no longer applies. */
+  isPostingReminderMessageAvailable(item: any): boolean {
+    const status = this.adminInviteStatusKey(item?.status);
+    return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(status)
+      && !CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(status);
+  }
+
+  openHostShareMessage(item: any, type: HostShareMessageType, ev?: Event): void {
     ev?.stopPropagation();
     this.requestHostShareMessage.emit({ item, type });
   }

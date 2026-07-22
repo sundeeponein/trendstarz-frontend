@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
-import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignDetailModalComponent, HostShareMessageType } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
@@ -80,11 +80,13 @@ export class CampaignReviewComponent implements OnInit {
   selectedCampaignShareMessages: CampaignShareMessages | null = null;
   selectedCampaignShareMessagesLoading = false;
   selectedInviteHostMessageItem: any = null;
-  selectedInviteHostMessageType: 'accepted' | 'submitted' | 'startWork' | null = null;
+  selectedInviteHostMessageType: HostShareMessageType | null = null;
   selectedInviteHostMessageText = '';
   selectedInviteHostMessageLoading = false;
   selectedInviteHostMessageOwnerPhone = '';
   selectedInviteHostMessageRecipientPhone = '';
+  selectedPayoutMessageRecipientPhone = '';
+  selectedPayoutMessageRecipientPhoneLoading = false;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
@@ -823,13 +825,23 @@ export class CampaignReviewComponent implements OnInit {
       });
   }
 
-  /** Handles campaign-detail-modal's per-invite "show message" buttons (invite accepted / post submitted / start work). */
-  onRequestHostShareMessage(payload: { item: any; type: 'accepted' | 'submitted' | 'startWork' }): void {
+  /**
+   * Handles campaign-detail-modal's per-invite "show message" buttons (invite accepted /
+   * post submitted / start work / invite only / posting reminder). The invite-only and
+   * posting-reminder texts are the same campaign-wide template shown in the "Ready to
+   * Share" accordion (`selectedCampaignShareMessages`) — only the recipient phone is
+   * per-invite, so those two types skip the per-invite text lookup below.
+   */
+  onRequestHostShareMessage(payload: { item: any; type: HostShareMessageType }): void {
     this.selectedInviteHostMessageItem = payload.item;
     this.selectedInviteHostMessageType = payload.type;
-    this.selectedInviteHostMessageText = '';
     this.selectedInviteHostMessageOwnerPhone = '';
     this.selectedInviteHostMessageRecipientPhone = '';
+    this.selectedInviteHostMessageText = payload.type === 'inviteOnly'
+      ? this.selectedCampaignShareMessages?.inviteOnlyMessage || ''
+      : payload.type === 'postingReminder'
+        ? this.selectedCampaignShareMessages?.postingReminderMessage || ''
+        : '';
     this.selectedInviteHostMessageLoading = true;
     const inviteId = String(payload.item?.inviteId || '').trim();
     if (!inviteId) {
@@ -844,12 +856,14 @@ export class CampaignReviewComponent implements OnInit {
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
-          const messageByType: Record<'accepted' | 'submitted' | 'startWork', string> = {
-            accepted: data?.inviteAcceptedMessage,
-            submitted: data?.postSubmittedMessage,
-            startWork: data?.startWorkMessage,
-          };
-          this.selectedInviteHostMessageText = messageByType[payload.type] || '';
+          if (payload.type === 'accepted' || payload.type === 'submitted' || payload.type === 'startWork') {
+            const messageByType: Record<'accepted' | 'submitted' | 'startWork', string> = {
+              accepted: data?.inviteAcceptedMessage,
+              submitted: data?.postSubmittedMessage,
+              startWork: data?.startWorkMessage,
+            };
+            this.selectedInviteHostMessageText = messageByType[payload.type] || '';
+          }
           this.selectedInviteHostMessageOwnerPhone = data?.ownerPhone || '';
           this.selectedInviteHostMessageRecipientPhone = data?.recipientPhone || '';
           this.selectedInviteHostMessageLoading = false;
@@ -857,6 +871,31 @@ export class CampaignReviewComponent implements OnInit {
         },
         error: () => {
           this.selectedInviteHostMessageLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  /** Handles campaign-detail-modal's Payment Message popup — fetches the recipient's phone for its Send via WhatsApp button. */
+  onRequestPayoutMessagePhone(payload: { item: any }): void {
+    this.selectedPayoutMessageRecipientPhone = '';
+    const inviteId = String(payload.item?.inviteId || '').trim();
+    if (!inviteId) return;
+    this.selectedPayoutMessageRecipientPhoneLoading = true;
+    this.http
+      .get<any>(
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.selectedPayoutMessageRecipientPhone = data?.recipientPhone || '';
+          this.selectedPayoutMessageRecipientPhoneLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.selectedPayoutMessageRecipientPhoneLoading = false;
           this.cdr.detectChanges();
         },
       });

@@ -29,15 +29,23 @@ export class CampaignAlertMessageComponent {
 
   /** The message templates are independent accordions within the body. */
   inviteMessageExpanded = false;
+  openMessageExpanded = false;
   reminderMessageExpanded = false;
   approvedMessageExpanded = false;
+
+  /** Mirrors CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES — a creator in any of these has accepted to work. */
+  private static readonly ACCEPTED_OR_LATER_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
 
   get ownerApprovedWhatsAppLink(): string | null {
     return buildWhatsAppLink(this.ownerPhone, this.ownerApprovedMessage);
   }
 
-  get relevantWhatsAppLink(): string | null {
-    return buildWhatsAppLink(this.ownerPhone, this.relevantMessage);
+  get inviteOnlyWhatsAppLink(): string | null {
+    return buildWhatsAppLink(this.ownerPhone, this.inviteOnlyMessage);
+  }
+
+  get openCampaignWhatsAppLink(): string | null {
+    return buildWhatsAppLink(this.ownerPhone, this.openCampaignMessage);
   }
 
   get postingReminderWhatsAppLink(): string | null {
@@ -46,6 +54,40 @@ export class CampaignAlertMessageComponent {
 
   get isOpenToAll(): boolean {
     return String(this.campaign?.campaignMode || '') === 'tier_filtered_open';
+  }
+
+  private get inviteProgress(): any[] {
+    return Array.isArray(this.campaign?.inviteProgress) ? this.campaign.inviteProgress : [];
+  }
+
+  /** At least one creator has been sent an invite/selected by the host. */
+  get hasSelectedInvite(): boolean {
+    return this.inviteProgress.length > 0;
+  }
+
+  /** At least one creator has accepted and moved past the invite stage (accepted to work). */
+  get hasAcceptedInvite(): boolean {
+    return this.inviteProgress.some((row) =>
+      CampaignAlertMessageComponent.ACCEPTED_OR_LATER_STATUSES.includes(String(row?.status || '').toLowerCase())
+    );
+  }
+
+  get isActiveCampaign(): boolean {
+    return String(this.campaign?.status || '').toLowerCase() === 'active';
+  }
+
+  /** Only relevant once the campaign is active and someone has actually accepted to work. */
+  get showPostingReminder(): boolean {
+    return this.isActiveCampaign && this.hasAcceptedInvite;
+  }
+
+  /** Only relevant for invite-only campaigns once the host has selected/invited creators. */
+  get showInviteOnlyMessage(): boolean {
+    return !this.isOpenToAll && this.hasSelectedInvite;
+  }
+
+  get showOpenToAllMessage(): boolean {
+    return this.isOpenToAll;
   }
 
   /** Once active/completed, this is the message that actually went out; before that, it's just a preview of what will be sent. */
@@ -67,21 +109,12 @@ export class CampaignAlertMessageComponent {
     return this.isApprovedStatus ? 'Ready to Share' : 'Preview — Ready to Share Once Approved';
   }
 
-  /** Only the message matching this campaign's actual access mode is shown — never both at once. */
-  get relevantMessage(): string {
-    return this.isOpenToAll ? this.openCampaignMessage : this.inviteOnlyMessage;
+  copyInviteOnlyMessage() {
+    this.copyAlert.emit(this.inviteOnlyMessage);
   }
 
-  get relevantMessageLabel(): string {
-    return this.isOpenToAll ? 'Open Campaign Message' : 'Invite Only Message';
-  }
-
-  get relevantCopyButtonLabel(): string {
-    return this.isOpenToAll ? 'Copy Open Campaign Message' : 'Copy Invite Only Message';
-  }
-
-  copyRelevantMessage() {
-    this.copyAlert.emit(this.relevantMessage);
+  copyOpenCampaignMessage() {
+    this.copyAlert.emit(this.openCampaignMessage);
   }
 
   reminderCopied = false;
