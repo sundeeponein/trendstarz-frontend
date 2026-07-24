@@ -1,6 +1,6 @@
 // ...existing code...
 import { environment } from '../../../environments/environment';
-import { Component, OnInit, NgZone, inject } from '@angular/core';
+import { Component, OnInit, NgZone, inject, HostListener } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
@@ -327,6 +327,17 @@ export class InfluencerRegistrationComponent implements OnInit {
     private route: ActivatedRoute,
     private guidelinesService: ImageGuidelinesService,
   ) {}
+
+  // Warn before an accidental refresh/close/navigation wipes unsaved progress.
+  // Nothing is persisted client- or server-side before a successful submit,
+  // so this is the only guard against silent data loss.
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.registrationForm?.dirty && !this.registrationSuccess) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
 
   ngOnInit(): void {
     this.loadPremiumMonthlyPrice();

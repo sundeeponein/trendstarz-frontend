@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -199,6 +199,17 @@ export class PhotographerRegistrationComponent implements OnInit {
     const hasTrialOffer = Array.isArray(plan?.offers)
       && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
     return hasTrialOffer ? 'Early Access Offer' : '';
+  }
+
+  // Warn before an accidental refresh/close/navigation wipes unsaved progress.
+  // Nothing is persisted client- or server-side before a successful submit,
+  // so this is the only guard against silent data loss.
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.form?.dirty && !this.registrationSuccess) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
   }
 
   ngOnInit() {
