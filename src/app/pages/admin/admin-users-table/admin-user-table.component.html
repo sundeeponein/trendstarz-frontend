@@ -837,58 +837,6 @@
           </div> -->
         </div>
 
-        <div class="history-block">
-          <label>Campaign / Collab History</label>
-          <div class="history-loading" *ngIf="selectedUserHistoryLoading">Loading history…</div>
-          <ng-container *ngIf="!selectedUserHistoryLoading && selectedUserHistory as history">
-            <div class="history-stats">
-              <div class="history-stat">
-                <span class="history-stat-value">{{ history.campaigns.received }}</span>
-                <span class="history-stat-label">Received</span>
-              </div>
-              <div class="history-stat">
-                <span class="history-stat-value">{{ history.campaigns.hosted }}</span>
-                <span class="history-stat-label">Hosted</span>
-              </div>
-              <div class="history-stat">
-                <span class="history-stat-value">{{ history.campaigns.accepted }}</span>
-                <span class="history-stat-label">Accepted</span>
-              </div>
-              <div class="history-stat">
-                <span class="history-stat-value">{{ history.campaigns.declined }}</span>
-                <span class="history-stat-label">Declined</span>
-              </div>
-              <div class="history-stat">
-                <span class="history-stat-value">{{ history.campaigns.withdrawn }}</span>
-                <span class="history-stat-label">Withdrawn</span>
-              </div>
-            </div>
-            <div class="history-stats history-stats-money">
-              <div class="history-stat">
-                <span class="history-stat-value">₹{{ history.amounts.spent | number }}</span>
-                <span class="history-stat-label">Spent</span>
-              </div>
-              <div class="history-stat">
-                <span class="history-stat-value">₹{{ history.amounts.received | number }}</span>
-                <span class="history-stat-label">Received Amount</span>
-              </div>
-              <div class="history-stat">
-                <span class="history-stat-value">₹{{ history.premium.totalPaid | number }}</span>
-                <span class="history-stat-label">Premium Paid</span>
-              </div>
-            </div>
-            <div class="history-premium-list" *ngIf="history.premium.subscriptions.length">
-              <div class="history-premium-row" *ngFor="let sub of history.premium.subscriptions">
-                <span class="history-premium-plan">{{ sub.planName }} <small>({{ sub.billingCycle }})</small></span>
-                <span>{{ sub.source === 'payment' ? ('₹' + (sub.amount | number)) : 'Admin granted' }}</span>
-                <span>{{ sub.startDate | date:'MMM d, y' }}</span>
-                <span class="history-premium-status" [ngClass]="sub.status">{{ sub.status }}</span>
-              </div>
-            </div>
-          </ng-container>
-          <div class="history-empty" *ngIf="!selectedUserHistoryLoading && !selectedUserHistory">Unable to load history.</div>
-        </div>
-
         <div class="notes-block">
           <label>Admin Internal Notes</label>
           <textarea
