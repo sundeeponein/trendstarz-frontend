@@ -33,6 +33,32 @@ import { ImageCropModalComponent } from '../../../shared/components/image-crop-m
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
+interface AdminUserHistory {
+  campaigns: {
+    received: number;
+    hosted: number;
+    accepted: number;
+    declined: number;
+    withdrawn: number;
+  };
+  amounts: {
+    spent: number;
+    received: number;
+  };
+  premium: {
+    totalPaid: number;
+    subscriptions: Array<{
+      planName: string;
+      billingCycle: string;
+      amount: number;
+      status: string;
+      source: string;
+      startDate: string;
+      endDate: string;
+    }>;
+  };
+}
+
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
@@ -66,6 +92,8 @@ export class AdminUserTableComponent implements OnInit {
   selectedUserInternalNotes = '';
   selectedProfileVerification: ProfileVerificationDashboard | null = null;
   selectedProfileVerificationLoading = false;
+  selectedUserHistory: AdminUserHistory | null = null;
+  selectedUserHistoryLoading = false;
   galleryModalOpen = false;
   galleryModalImages: string[] = [];
   galleryModalIndex = 0;
@@ -2081,6 +2109,7 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
     this.showUserDetailsModal = true;
     this.loadSelectedProfileVerification();
+    this.loadSelectedUserHistory();
     this.smEditModalOpen = false;
     this.smEditingIdx = null;
     this.smEditError = null;
@@ -2093,6 +2122,8 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = '';
     this.selectedProfileVerification = null;
     this.selectedProfileVerificationLoading = false;
+    this.selectedUserHistory = null;
+    this.selectedUserHistoryLoading = false;
   }
 
   onUserDetailsBackdropClick(event: MouseEvent): void {
@@ -2124,6 +2155,22 @@ export class AdminUserTableComponent implements OnInit {
       .subscribe((detail: ProfileVerificationDashboard | null) => {
         this.selectedProfileVerification = detail;
         this.selectedProfileVerificationLoading = false;
+        this.cd.detectChanges();
+      });
+  }
+
+  loadSelectedUserHistory(): void {
+    if (!this.selectedUser || !this.selectedUserType) return;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userId) return;
+    this.selectedUserHistoryLoading = true;
+    this.selectedUserHistory = null;
+    this.http
+      .get<AdminUserHistory>(`${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/history`, this.getAuthHeaders())
+      .pipe(catchError(() => of(null)))
+      .subscribe((history) => {
+        this.selectedUserHistory = history;
+        this.selectedUserHistoryLoading = false;
         this.cd.detectChanges();
       });
   }
