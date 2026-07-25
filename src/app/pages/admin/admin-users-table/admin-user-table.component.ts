@@ -2166,10 +2166,10 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserHistoryLoading = true;
     this.selectedUserHistory = null;
     this.http
-      .get<AdminUserHistory>(`${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/history`, this.getAuthHeaders())
+      .get<any>(`${environment.apiBaseUrl}/admin/users/${this.selectedUserType}/${userId}/history`, this.getAuthHeaders())
       .pipe(catchError(() => of(null)))
-      .subscribe((history) => {
-        this.selectedUserHistory = history;
+      .subscribe((res) => {
+        this.selectedUserHistory = res?.data ?? res ?? null;
         this.selectedUserHistoryLoading = false;
         this.cd.detectChanges();
       });
