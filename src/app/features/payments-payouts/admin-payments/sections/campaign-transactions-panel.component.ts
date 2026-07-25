@@ -445,8 +445,12 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     return gateway === 'razorpay' ? 'Razorpay' : 'Manual UPI';
   }
 
-  reviewFlowStatusLabel(tx: CampaignTransaction): 'Awaiting Host Completion' | 'Payout Pending' | 'Paid Out' {
+  reviewFlowStatusLabel(
+    tx: CampaignTransaction,
+  ): 'Awaiting Host Completion' | 'Payout Pending' | 'Paid Out' | 'Payout Skipped' | 'Payout Frozen' {
     if (tx.payoutStatus === 'paid') return 'Paid Out';
+    if (tx.payoutStatus === 'skipped') return 'Payout Skipped';
+    if (tx.payoutStatus === 'frozen') return 'Payout Frozen';
     return this.isInvitePayoutEligible(tx) ? 'Payout Pending' : 'Awaiting Host Completion';
   }
 
@@ -454,6 +458,8 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     const label = this.reviewFlowStatusLabel(tx);
     if (label === 'Paid Out') return 'bg-success-subtle text-success-emphasis';
     if (label === 'Payout Pending') return 'bg-info-subtle text-info-emphasis';
+    if (label === 'Payout Skipped') return 'bg-secondary-subtle text-secondary-emphasis';
+    if (label === 'Payout Frozen') return 'bg-danger-subtle text-danger-emphasis';
     return 'bg-warning-subtle text-warning-emphasis';
   }
 
@@ -547,6 +553,12 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
       const paidAt = tx.payoutSettledAt || tx.paidOutAt || tx.updatedAt;
       return paidAt ? `Paid ${this.ui.formatDateTime(paidAt)}` : 'Payout released';
     }
+    if (tx.payoutStatus === 'skipped') {
+      return `No payout · ${this.inviteStatusLabel(tx)}`;
+    }
+    if (tx.payoutStatus === 'frozen') {
+      return 'Payout frozen · Dispute open';
+    }
     if (!this.isInvitePayoutEligible(tx)) {
       return `Timer starts after host completion · ${this.inviteStatusLabel(tx)}`;
     }
@@ -559,6 +571,12 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
 
   payoutTimingSubtext(tx: CampaignTransaction): string {
     if (tx.payoutStatus === 'paid') return '';
+    if (tx.payoutStatus === 'skipped') {
+      return 'No submission was made — this collaboration will not be paid out.';
+    }
+    if (tx.payoutStatus === 'frozen') {
+      return 'Payout is on hold pending dispute resolution by admin.';
+    }
     if (!this.isInvitePayoutEligible(tx)) {
       return 'Waiting for the host to mark this work completed.';
     }
@@ -575,6 +593,8 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
 
   payoutTimingClass(tx: CampaignTransaction): string {
     if (tx.payoutStatus === 'paid') return 'tx-payout-timer--paid';
+    if (tx.payoutStatus === 'skipped') return 'tx-payout-timer--skipped';
+    if (tx.payoutStatus === 'frozen') return 'tx-payout-timer--frozen';
     if (!this.isInvitePayoutEligible(tx)) return 'tx-payout-timer--waiting';
     return this.isPayoutHoldWindowOpen(tx) ? 'tx-payout-timer--open' : 'tx-payout-timer--locked';
   }

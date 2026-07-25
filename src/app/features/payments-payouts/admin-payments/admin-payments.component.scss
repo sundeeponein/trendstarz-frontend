@@ -466,6 +466,16 @@
     background: #ecfdf5;
     color: #047857;
   }
+
+  &--skipped {
+    background: #f1f2f4;
+    color: #52525b;
+  }
+
+  &--frozen {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
 }
 
 .tx-payout-subtext,
