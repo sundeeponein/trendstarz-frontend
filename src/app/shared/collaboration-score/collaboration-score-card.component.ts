@@ -1,5 +1,6 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, OnChanges, Output, PLATFORM_ID, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, PLATFORM_ID, SimpleChanges } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   CollaborationAudit,
@@ -7,6 +8,7 @@ import {
   CollaborationScoreApiService,
 } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
+import { ToastService } from '../toast/toast.service';
 
 @Component({
   selector: 'app-collaboration-score-card',
@@ -15,7 +17,7 @@ import { CollaborationScoreUiUtilsService } from '../../services/collaboration-s
   templateUrl: './collaboration-score-card.component.html',
   styleUrls: ['./collaboration-score-card.component.scss'],
 })
-export class CollaborationScoreCardComponent implements OnChanges {
+export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   @Input() audit: CollaborationAudit | null = null;
   @Input() loading = false;
   @Input() reAnalyzing = false;
@@ -27,12 +29,65 @@ export class CollaborationScoreCardComponent implements OnChanges {
   history: CollaborationAuditHistoryEntry[] = [];
   payingForReanalysis = false;
   paymentError = '';
+  connections: { instagram: boolean; facebook: boolean } = { instagram: false, facebook: false };
+  connectingPlatform: 'instagram' | 'facebook' | null = null;
 
   constructor(
     public ui: CollaborationScoreUiUtilsService,
     private readonly api: CollaborationScoreApiService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly toast: ToastService,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
+
+  ngOnInit(): void {
+    this.loadConnections();
+
+    const connectedPlatform = this.route.snapshot.queryParamMap.get('connected');
+    const connectError = this.route.snapshot.queryParamMap.get('connectError');
+    if (connectedPlatform) {
+      this.toast.success(`${connectedPlatform === 'instagram' ? 'Instagram' : 'Facebook'} connected.`);
+      this.clearConnectQueryParams();
+    } else if (connectError) {
+      this.toast.error('Could not connect that account. Please try again.');
+      this.clearConnectQueryParams();
+    }
+  }
+
+  private clearConnectQueryParams(): void {
+    this.router.navigate([], { queryParams: { connected: null, connectError: null }, queryParamsHandling: 'merge' });
+  }
+
+  private loadConnections(): void {
+    this.api.getConnections().subscribe({
+      next: (res) => (this.connections = res),
+      error: () => {},
+    });
+  }
+
+  connectPlatform(platform: 'instagram' | 'facebook'): void {
+    if (this.connectingPlatform) return;
+    this.connectingPlatform = platform;
+    this.api.getConnectUrl(platform).subscribe({
+      next: (res) => {
+        if (isPlatformBrowser(this.platformId) && res?.authorizationUrl) {
+          window.location.href = res.authorizationUrl;
+        } else {
+          this.connectingPlatform = null;
+        }
+      },
+      error: () => {
+        this.toast.error(`Could not start the ${platform === 'instagram' ? 'Instagram' : 'Facebook'} connection.`);
+        this.connectingPlatform = null;
+      },
+    });
+  }
+
+  isConnected(platform: string): boolean {
+    const key = platform.toLowerCase();
+    return key === 'instagram' ? this.connections.instagram : key === 'facebook' ? this.connections.facebook : false;
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['audit'] && this.audit?.userId) {

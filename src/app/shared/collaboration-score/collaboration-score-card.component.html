@@ -79,6 +79,15 @@
           {{ p.confidence }}% — {{ confidenceLabel(p.confidence) }}
         </span>
         <span class="cs-card__platform-reason text-muted">{{ p.confidenceReason }}</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary cs-card__connect-btn"
+          *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && !isConnected(p.platform)"
+          [disabled]="connectingPlatform === p.platform.toLowerCase()"
+          (click)="connectPlatform(p.platform.toLowerCase() === 'instagram' ? 'instagram' : 'facebook')"
+        >
+          {{ connectingPlatform === p.platform.toLowerCase() ? 'Connecting…' : 'Connect ' + p.platform }}
+        </button>
       </div>
     </div>
 

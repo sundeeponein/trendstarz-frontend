@@ -230,4 +230,17 @@ export class CollaborationScoreApiService {
   resetSettings(): Observable<CollaborationScoreSettings> {
     return this.http.post<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings/reset`, {});
   }
+
+  /** Returns the Meta consent URL to redirect the browser to. */
+  getConnectUrl(platform: "instagram" | "facebook"): Observable<{ authorizationUrl: string }> {
+    return this.http.get<{ authorizationUrl: string }>(`${this.apiUrl}/audit/connect/${platform}`);
+  }
+
+  disconnectPlatform(platform: "instagram" | "facebook"): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.apiUrl}/audit/disconnect/${platform}`, {});
+  }
+
+  getConnections(): Observable<{ instagram: boolean; facebook: boolean }> {
+    return this.http.get<{ instagram: boolean; facebook: boolean }>(`${this.apiUrl}/audit/connections`);
+  }
 }
