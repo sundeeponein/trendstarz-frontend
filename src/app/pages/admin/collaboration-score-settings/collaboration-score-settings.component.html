@@ -57,8 +57,8 @@
               <tr>
                 <td>{{ todaySummary.audits }}</td>
                 <td>{{ todaySummary.aiCalls }}</td>
-                <td>${{ todaySummary.estimatedCostUsd | number:'1.2-4' }}</td>
-                <td>${{ todaySummary.averageCostUsd | number:'1.2-4' }}</td>
+                <td>{{ todaySummary.estimatedCostUsd == null ? 'Tracking off' : '$' + (todaySummary.estimatedCostUsd | number:'1.2-4') }}</td>
+                <td>{{ todaySummary.averageCostUsd == null ? 'Tracking off' : '$' + (todaySummary.averageCostUsd | number:'1.2-4') }}</td>
                 <td>{{ todaySummary.successCount }}</td>
                 <td>{{ todaySummary.failureCount }}</td>
               </tr>
@@ -180,12 +180,39 @@
       </div>
     </div>
 
+    <!-- Free audits & Anonymous Preview -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Free Audits &amp; Preview</h2>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="anonymousPreviewEnabled"
+            [(ngModel)]="settings.anonymousPreviewEnabled" name="anonymousPreviewEnabled">
+          <label class="form-check-label" for="anonymousPreviewEnabled">
+            Enable anonymous, pre-registration YouTube score preview
+          </label>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Free audits per account</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.freeAuditCount" name="freeAuditCount">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Audit validity (days)</label>
+            <input type="number" class="form-control" min="0"
+              [(ngModel)]="settings.auditValidityDays" name="auditValidityDays">
+            <p class="text-muted small mt-1 mb-0">Stored for future use — not yet enforced anywhere.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Re-analysis -->
     <div class="card mb-4">
       <div class="card-body">
         <h2 class="h6 fw-bold mb-3">Re-analysis</h2>
         <p class="text-muted small">
-          Creators must wait this many days between self-triggered re-analyses. Admin/nightly re-runs are never blocked. The fee is stored for display only — no payment is collected yet.
+          Creators must wait this many days between self-triggered re-analyses — a hard floor, even for paid re-analysis. After the first free audits above are used, every re-analysis requires this fee via Razorpay.
         </p>
         <div class="row g-3">
           <div class="col-md-6">
@@ -194,9 +221,47 @@
               [(ngModel)]="settings.reanalysisCooldownDays" name="reanalysisCooldownDays">
           </div>
           <div class="col-md-6">
-            <label class="form-label small fw-bold">Price (₹, display only)</label>
+            <label class="form-label small fw-bold">Price (₹)</label>
             <input type="number" class="form-control" min="0"
               [(ngModel)]="settings.reanalysisFeeRupees" name="reanalysisFeeRupees">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Analytics</h2>
+        <p class="text-muted small">Only "Track audit cost" currently gates anything (the cost fields above). The others are stored for future dashboard granularity.</p>
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackAuditCost"
+                [(ngModel)]="settings.analytics.trackAuditCost" name="trackAuditCost">
+              <label class="form-check-label" for="trackAuditCost">Track audit cost</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackAverageScore"
+                [(ngModel)]="settings.analytics.trackAverageScore" name="trackAverageScore">
+              <label class="form-check-label" for="trackAverageScore">Track average score</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackPlatformUsage"
+                [(ngModel)]="settings.analytics.trackPlatformUsage" name="trackPlatformUsage">
+              <label class="form-check-label" for="trackPlatformUsage">Track platform usage</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackAuditHistory"
+                [(ngModel)]="settings.analytics.trackAuditHistory" name="trackAuditHistory">
+              <label class="form-check-label" for="trackAuditHistory">Track audit history</label>
+            </div>
           </div>
         </div>
       </div>
@@ -206,6 +271,16 @@
     <div class="card mb-4">
       <div class="card-body">
         <h2 class="h6 fw-bold mb-3">Rollout</h2>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Version 1 name</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.version1Name" name="version1Name">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Version 2 name</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.version2Name" name="version2Name">
+          </div>
+        </div>
         <div class="form-check form-switch mb-3">
           <input class="form-check-input" type="checkbox" id="version2Enabled" [(ngModel)]="settings.version2Enabled" name="version2Enabled">
           <label class="form-check-label" for="version2Enabled">

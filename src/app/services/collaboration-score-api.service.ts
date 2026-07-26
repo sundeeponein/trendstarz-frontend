@@ -67,9 +67,19 @@ export interface CollaborationScorePlatformsEnabled {
   linkedin: boolean;
 }
 
+export interface CollaborationScoreAnalyticsToggles {
+  trackAuditCost: boolean;
+  trackAverageScore: boolean;
+  trackPlatformUsage: boolean;
+  trackAuditHistory: boolean;
+}
+
 export interface CollaborationScoreSettings {
   aiEnabled: boolean;
   aiModel: string;
+  anonymousPreviewEnabled: boolean;
+  freeAuditCount: number;
+  auditValidityDays: number;
   weights: {
     contentQuality: { rulesPercent: number; aiPercent: number };
     professionalBranding: { rulesPercent: number; aiPercent: number };
@@ -80,12 +90,15 @@ export interface CollaborationScoreSettings {
     partiallyReadyMinScore: number;
   };
   version2Enabled: boolean;
+  version1Name: string;
+  version2Name: string;
   platformsEnabled: CollaborationScorePlatformsEnabled;
   reanalysisCooldownDays: number;
   reanalysisFeeRupees: number;
   nightlyReauditEnabled: boolean;
   nightlyReauditCronHour: number;
   youtubeApiQuotaGuardPerDay: number;
+  analytics: CollaborationScoreAnalyticsToggles;
   lastNightlyRunAt: string | null;
   lastNightlyRunCount: number;
   lastNightlyRunCostUsd: number;
@@ -102,8 +115,9 @@ export interface CollaborationScorePreview {
 export interface CollaborationScoreTodaySummary {
   audits: number;
   aiCalls: number;
-  estimatedCostUsd: number;
-  averageCostUsd: number;
+  // Null when analytics.trackAuditCost is turned off in settings.
+  estimatedCostUsd: number | null;
+  averageCostUsd: number | null;
   successCount: number;
   failureCount: number;
 }
