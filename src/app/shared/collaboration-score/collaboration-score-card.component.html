@@ -1,0 +1,112 @@
+<div class="cs-card">
+  <div class="cs-card__header">
+    <div class="cs-card__title">
+      <i class="bi bi-graph-up-arrow"></i>
+      TrendStarz Collaboration Score
+    </div>
+    <button
+      type="button"
+      class="cs-card__reanalyze"
+      [disabled]="reanalyzeDisabled"
+      [title]="reanalyzeTooltip"
+      (click)="onReAnalyzeClick()"
+    >
+      <i class="bi" [ngClass]="(reAnalyzing || payingForReanalysis) ? 'bi-arrow-repeat cs-spin' : 'bi-arrow-repeat'"></i>
+      {{ reanalyzeLabel }}
+    </button>
+  </div>
+
+  <div class="cs-card__cooldown-note" *ngIf="!loading && audit && audit.canReanalyze === false && audit.reanalysisAvailableAt">
+    You can re-analyze again on {{ audit.reanalysisAvailableAt | date:'mediumDate' }}.
+  </div>
+
+  <div class="cs-card__payment-error text-danger" *ngIf="paymentError">{{ paymentError }}</div>
+
+  <div class="cs-card__loading" *ngIf="loading">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+    <span>Loading your Collaboration Score…</span>
+  </div>
+
+  <div class="cs-card__empty" *ngIf="!loading && !audit">
+    <p class="cs-card__empty-eyebrow">🎉 New Feature</p>
+    <p class="cs-card__empty-title">Your FREE Collaboration Score is ready.</p>
+    <p class="text-muted">See how brands evaluate your public profile.</p>
+    <button type="button" class="cs-card__reanalyze" (click)="onReAnalyzeClick()">Generate Free Score</button>
+  </div>
+
+  <ng-container *ngIf="!loading && audit">
+    <div class="cs-card__score-row">
+      <div class="cs-card__score-circle" [ngClass]="ui.scoreTierClass(audit.collaborationScore)">
+        {{ audit.collaborationScore }}<span class="cs-card__score-max">/100</span>
+      </div>
+      <div class="cs-card__score-meta">
+        <div class="cs-card__score-label">{{ ui.scoreTierLabel(audit.collaborationScore) }}</div>
+        <div class="cs-card__ready-line">
+          Campaign Ready: <strong>{{ audit.campaignReadiness === 'Campaign Ready' ? 'YES' : 'NO' }}</strong>
+        </div>
+        <span class="badge rounded-pill" [ngClass]="ui.campaignReadinessClass(audit.campaignReadiness)">
+          {{ audit.campaignReadiness }}
+        </span>
+        <span class="badge rounded-pill badge--recommended" *ngIf="audit.trendstarzRecommended">
+          <i class="bi bi-award-fill"></i> TrendStarz Recommended
+        </span>
+        <div class="cs-card__gap-note" *ngIf="pointsToRecommended != null">
+          TrendStarz Recommendation — Need +{{ pointsToRecommended }} points
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-card__meta-line" *ngIf="audit.profileCompletenessScore != null">
+      <span>Profile Completion: <strong>{{ audit.profileCompletenessScore }}%</strong></span>
+      <span *ngIf="audit.createdAt">· Audit Date: {{ audit.createdAt | date:'d MMM y' }}</span>
+    </div>
+
+    <div class="cs-card__history" *ngIf="lastAnalysisLabel">
+      <span>Last Analysis: {{ lastAnalysisLabel }}</span>
+      <ng-container *ngIf="previousAnalysisLabel">
+        <span>· Previous: {{ previousAnalysisLabel }}</span>
+        <span *ngIf="scoreDelta != null" [ngClass]="scoreDelta >= 0 ? 'text-success' : 'text-danger'">
+          · Score {{ scoreDelta >= 0 ? 'Increased' : 'Decreased' }}: {{ scoreDelta >= 0 ? '+' : '' }}{{ scoreDelta }}
+        </span>
+      </ng-container>
+    </div>
+
+    <div class="cs-card__platforms" *ngIf="audit.platformsCollected?.length">
+      <div class="cs-card__breakdown-title">Platform Confidence</div>
+      <div class="cs-card__platform-row" *ngFor="let p of audit.platformsCollected">
+        <span class="cs-card__platform-name">{{ p.platform }}</span>
+        <span class="badge rounded-pill" [ngClass]="p.confidence >= 90 ? 'bg-success-subtle text-success-emphasis' : (p.confidence > 0 ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary-emphasis')">
+          {{ p.confidence }}% — {{ confidenceLabel(p.confidence) }}
+        </span>
+        <span class="cs-card__platform-reason text-muted">{{ p.confidenceReason }}</span>
+      </div>
+    </div>
+
+    <div class="cs-card__breakdown" *ngIf="hasSubScoreBreakdown">
+      <div class="cs-card__breakdown-title">Score Breakdown</div>
+      <div class="cs-card__bar-row" *ngFor="let sub of subScores">
+        <div class="cs-card__bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+        <div class="progress cs-card__progress">
+          <div class="progress-bar" [style.width.%]="sub.value"></div>
+        </div>
+        <div class="cs-card__bar-value">{{ sub.value }}</div>
+      </div>
+    </div>
+
+    <div class="cs-card__pricing" *ngIf="audit.pricingSuggestion.reelPrice != null">
+      <div class="cs-card__breakdown-title">Suggested Pricing</div>
+      <div class="cs-card__pricing-row">
+        <span>Reel: ₹{{ audit.pricingSuggestion.reelPrice.toLocaleString('en-IN') }}</span>
+        <span>Story: ₹{{ audit.pricingSuggestion.storyPrice?.toLocaleString('en-IN') }}</span>
+        <span>Video: ₹{{ audit.pricingSuggestion.videoPrice?.toLocaleString('en-IN') }}</span>
+      </div>
+    </div>
+
+    <div class="cs-card__improvements" *ngIf="audit.improvements?.length">
+      <div class="cs-card__breakdown-title">Top Improvements</div>
+      <ul>
+        <li *ngFor="let item of audit.improvements?.slice(0, 3)">{{ item }}</li>
+      </ul>
+    </div>
+  </ng-container>
+</div>

@@ -7,9 +7,12 @@
   <div class="photographer-card__img-wrap">
     <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" {{ name }} />
 
-    <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
+    <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || trendstarzRecommended">
       <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
-        <i class="bi bi-star-fill"></i> 
+        <i class="bi bi-star-fill"></i>
+      </span>
+      <span class="photographer-card__img-tag badge rounded-pill badge--recommended" *ngIf="trendstarzRecommended" title="TrendStarz Recommended">
+        <i class="bi bi-award-fill"></i>
       </span>
     </div>
   </div>
@@ -32,6 +35,18 @@
 
     <div class="photographer-card__location" *ngIf="location?.state || location?.district">
       <i class="bi bi-geo-alt"></i> {{ displayLocation }}
+    </div>
+
+    <div class="photographer-card__score-row" *ngIf="collaborationScore != null">
+      <span class="badge rounded-pill" [ngClass]="collaborationScoreUi.scoreTierClass(collaborationScore)">
+        {{ collaborationScore }}
+      </span>
+      <span class="badge rounded-pill" *ngIf="campaignReady" [ngClass]="collaborationScoreUi.campaignReadinessClass(campaignReady)">
+        {{ campaignReady }}
+      </span>
+      <span class="photographer-card__suggested-price" *ngIf="suggestedPriceRange?.reelPrice != null">
+        From ₹{{ suggestedPriceRange!.reelPrice | number:'1.0-0' }}/Reel
+      </span>
     </div>
 
   </div>

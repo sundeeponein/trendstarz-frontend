@@ -73,6 +73,7 @@ export const routes: Routes = [
 			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
 			{ path: 'disputes', loadComponent: () => import('./pages/admin/admin-disputes/admin-disputes.component').then(m => m.AdminDisputesComponent) },
 			{ path: 'link-analytics', loadComponent: () => import('./pages/admin/admin-link-analytics/admin-link-analytics.component').then(m => m.AdminLinkAnalyticsComponent) },
+			{ path: 'collaboration-score-settings', loadComponent: () => import('./pages/admin/collaboration-score-settings/collaboration-score-settings.component').then(m => m.CollaborationScoreSettingsComponent) },
 			// Intentionally not linked from admin-layout's nav — reachable only via direct URL or the dashboard widget's link.
 			{ path: 'verification-funnel', loadComponent: () => import('./pages/admin/verification-funnel/verification-funnel.component').then(m => m.VerificationFunnelPageComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },

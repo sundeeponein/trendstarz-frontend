@@ -74,6 +74,7 @@ export class SearchComponent implements OnInit {
     { value: 'recently_active', label: 'Recently Active' },
     { value: 'new_members', label: 'New Members' },
     { value: 'verified_first', label: 'Verified First' },
+    { value: 'trendstarz_recommended', label: 'TrendStarz Recommended' },
     { value: 'premium_first', label: 'Premium First' },
     { value: 'lowest_price', label: 'Lowest Price' },
     { value: 'highest_followers', label: 'Highest Followers' },
@@ -856,6 +857,12 @@ export class SearchComponent implements OnInit {
         sorted.sort((a: any, b: any) =>
           Number(!!b.isPremium) - Number(!!a.isPremium) ||
           this.getTopFollowersCount(b) - this.getTopFollowersCount(a)
+        );
+        break;
+      case 'trendstarz_recommended':
+        sorted.sort((a: any, b: any) =>
+          Number(!!b.trendstarzRecommended) - Number(!!a.trendstarzRecommended) ||
+          (Number(b.collaborationScore) || 0) - (Number(a.collaborationScore) || 0)
         );
         break;
       case 'lowest_price':

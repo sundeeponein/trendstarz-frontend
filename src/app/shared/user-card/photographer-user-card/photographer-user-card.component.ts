@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CollaborationScoreUiUtilsService } from '../../../services/collaboration-score-ui-utils.service';
 
 @Component({
   selector: 'app-photographer-user-card',
@@ -27,7 +28,14 @@ export class PhotographerUserCardComponent {
   @Input() socialMediaRestricted = false;
   @Input() profileViewDisabled = false;
 
+  @Input() collaborationScore: number | null = null;
+  @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
+  @Input() trendstarzRecommended = false;
+  @Input() suggestedPriceRange: { reelPrice?: number | null } | null = null;
+
   @Output() viewProfileClick = new EventEmitter<void>();
+
+  constructor(public collaborationScoreUi: CollaborationScoreUiUtilsService) {}
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';

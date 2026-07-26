@@ -16,6 +16,9 @@
       <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
         <i class="bi bi-star-fill"></i>
       </span>
+      <span class="inf-card__img-tag badge rounded-pill badge--recommended" *ngIf="trendstarzRecommended" title="TrendStarz Recommended">
+        <i class="bi bi-award-fill"></i>
+      </span>
     </div>
   </div>
 
@@ -41,6 +44,19 @@
     <div class="inf-card__location" *ngIf="location?.state">
       <i class="bi bi-geo-alt"></i>
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
+    </div>
+
+    <!-- Collaboration Score summary -->
+    <div class="inf-card__score-row" *ngIf="collaborationScore != null">
+      <span class="badge rounded-pill" [ngClass]="collaborationScoreUi.scoreTierClass(collaborationScore)">
+        {{ collaborationScore }}
+      </span>
+      <span class="badge rounded-pill" *ngIf="campaignReady" [ngClass]="collaborationScoreUi.campaignReadinessClass(campaignReady)">
+        {{ campaignReady }}
+      </span>
+      <span class="inf-card__suggested-price" *ngIf="suggestedPriceRange?.reelPrice != null">
+        From ₹{{ suggestedPriceRange!.reelPrice | number:'1.0-0' }}/Reel
+      </span>
     </div>
 
     <!-- PRO VIEW: Contact-visible badge -->

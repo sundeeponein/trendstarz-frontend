@@ -79,6 +79,16 @@
     </div>
   </div>
 
+  <div class="section-card mb-4">
+    <app-collaboration-score-card
+      [audit]="collaborationAudit"
+      [loading]="collaborationScoreLoading"
+      [reAnalyzing]="collaborationScoreReAnalyzing"
+      (reAnalyze)="onReAnalyzeCollaborationScore()"
+      (auditRefreshed)="collaborationAudit = $event"
+    />
+  </div>
+
   <!-- Needs Attention Widget -->
   <div class="needs-attention mb-4"
        *ngIf="attentionCounts.awaitingFulfillment > 0">

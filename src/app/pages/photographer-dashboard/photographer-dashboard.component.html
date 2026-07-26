@@ -146,6 +146,16 @@
     </div>
 
     <div class="section-card mb-4">
+      <app-collaboration-score-card
+        [audit]="collaborationAudit"
+        [loading]="collaborationScoreLoading"
+        [reAnalyzing]="collaborationScoreReAnalyzing"
+        (reAnalyze)="onReAnalyzeCollaborationScore()"
+        (auditRefreshed)="collaborationAudit = $event"
+      />
+    </div>
+
+    <div class="section-card mb-4">
       <div class="section-title d-flex align-items-center mb-3">
         <span class="dot dot--blue me-2"></span>
         Brand Invites

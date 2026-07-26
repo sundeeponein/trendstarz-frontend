@@ -4,9 +4,12 @@
     <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" {{ brandName }} />
 
     <!-- Trust badges -->
-    <div class="brand-card__img-tags" *ngIf="isTrendstarzVerified || isPremium">
+    <div class="brand-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || trendstarzRecommended">
       <span class="brand-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium"  tooltip="Premium" title="Premium">
         <i class="bi bi-star-fill"></i>
+      </span>
+      <span class="brand-card__img-tag badge rounded-pill badge--recommended" *ngIf="trendstarzRecommended" title="TrendStarz Recommended">
+        <i class="bi bi-award-fill"></i>
       </span>
     </div>
 
@@ -29,6 +32,15 @@
     <div class="brand-card__location" *ngIf="location?.state">
       <i class="bi bi-geo-alt"></i>
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
+    </div>
+
+    <div class="brand-card__score-row" *ngIf="collaborationScore != null">
+      <span class="badge rounded-pill" [ngClass]="collaborationScoreUi.scoreTierClass(collaborationScore)">
+        {{ collaborationScore }}
+      </span>
+      <span class="badge rounded-pill" *ngIf="campaignReady" [ngClass]="collaborationScoreUi.campaignReadinessClass(campaignReady)">
+        {{ campaignReady }}
+      </span>
     </div>
 
     <div class="brand-card__meta" *ngIf="showWelcomeCampaignMeta && welcomeCampaignStatus">

@@ -22,11 +22,13 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
+import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreCardComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
@@ -56,6 +58,9 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   verificationCallNumber = '';
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
   profileVerificationLoading = false;
+  collaborationAudit: CollaborationAudit | null = null;
+  collaborationScoreLoading = false;
+  collaborationScoreReAnalyzing = false;
   private loadedOnce = false;
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   showFounderOfferModal = false;
@@ -85,6 +90,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     private readonly toast: ToastService,
     private readonly shippingModal: ShippingAddressModalService,
     private readonly profileVerification: ProfileVerificationService,
+    private readonly collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
   ngOnInit(): void {
@@ -110,6 +116,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     });
 
     this.loadProfileVerificationDashboard();
+    this.loadCollaborationScore();
 
     this.config.getSupportContact().subscribe({
       next: (support) => {
@@ -236,6 +243,41 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.profileVerificationDashboard = null;
         this.profileVerificationLoading = false;
+      },
+    });
+  }
+
+  private loadCollaborationScore(): void {
+    const user: any = this.session.getUser() || {};
+    const userId = String(user?._id || user?.id || '');
+    if (!userId) return;
+    this.collaborationScoreLoading = true;
+    this.collaborationScoreApi.getAudit(userId).subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationAudit = null;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onReAnalyzeCollaborationScore(): void {
+    this.collaborationScoreReAnalyzing = true;
+    this.collaborationScoreApi.runMyAudit().subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreReAnalyzing = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationScoreReAnalyzing = false;
+        this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+        this.cdr.detectChanges();
       },
     });
   }

@@ -19,6 +19,8 @@ import {
 import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
+import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -26,7 +28,7 @@ import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-o
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, FounderOfferModalComponent]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreCardComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {
@@ -67,6 +69,9 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   usageSummary: UsageSummary | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
   profileVerificationLoading = false;
+  collaborationAudit: CollaborationAudit | null = null;
+  collaborationScoreLoading = false;
+  collaborationScoreReAnalyzing = false;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardBrand = this.dashboard?.brand || {};
@@ -109,10 +114,12 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private profileVerification: ProfileVerificationService,
+    private collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
   ngOnInit(): void {
         this.loadProfileVerificationDashboard();
+        this.loadCollaborationScore();
         this.plansService.getMyCapabilities().subscribe((caps) => {
           this.planCaps = caps;
           this.founderOfferCapsLoaded = true;
@@ -281,6 +288,41 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.profileVerificationDashboard = null;
         this.profileVerificationLoading = false;
+      },
+    });
+  }
+
+  private loadCollaborationScore(): void {
+    const user: any = this.session.getUser() || {};
+    const userId = String(user?._id || user?.id || '');
+    if (!userId) return;
+    this.collaborationScoreLoading = true;
+    this.collaborationScoreApi.getAudit(userId).subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationAudit = null;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onReAnalyzeCollaborationScore(): void {
+    this.collaborationScoreReAnalyzing = true;
+    this.collaborationScoreApi.runMyAudit().subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreReAnalyzing = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationScoreReAnalyzing = false;
+        this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+        this.cdr.detectChanges();
       },
     });
   }

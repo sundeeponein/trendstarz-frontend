@@ -14,6 +14,10 @@
   ></app-hero-banner>
   <app-registration-confirm-modal></app-registration-confirm-modal>
 
+  <section class="score-preview-section py-4" *ngIf="!isLoggedIn()" aria-label="Free Collaboration Score check">
+    <app-score-preview></app-score-preview>
+  </section>
+
   <!-- <ng-container
     [ngComponentOutlet]="heroSliderBannerComponent"
     [ngComponentOutletInputs]="heroSliderBannerInputs">

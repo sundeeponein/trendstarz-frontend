@@ -20,11 +20,12 @@ import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../sha
 import { PlatformStatsStripComponent, PlatformStatItem } from '../../shared/components/platform-stats-strip/platform-stats-strip.component';
 import { TrustBadgesStripComponent } from '../../shared/components/trust-badges-strip/trust-badges-strip.component';
 import { formatBrandsStat, formatPhotographersStat, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
+import { ScorePreviewComponent } from '../../shared/score-preview/score-preview.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, PhotographerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent, PlatformStatsStripComponent, TrustBadgesStripComponent],
+  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, PhotographerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent, PlatformStatsStripComponent, TrustBadgesStripComponent, ScorePreviewComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })

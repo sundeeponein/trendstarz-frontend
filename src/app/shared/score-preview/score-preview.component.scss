@@ -1,0 +1,91 @@
+.sp-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  max-width: 480px;
+
+  &__title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  &__subtitle {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  &__form {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__form input {
+    flex: 1 1 220px;
+  }
+
+  &__error {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  &__result {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  &__score-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #4338ca;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    flex-shrink: 0;
+
+    span {
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0.7;
+    }
+  }
+
+  &__unlock-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  &__unlock-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: #374151;
+
+    i {
+      color: #9ca3af;
+      margin-right: 0.4rem;
+    }
+  }
+
+  &__register {
+    width: 100%;
+  }
+
+  &__again {
+    width: 100%;
+    text-align: center;
+  }
+}

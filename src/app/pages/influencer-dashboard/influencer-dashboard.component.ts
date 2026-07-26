@@ -29,13 +29,15 @@ import { TIER_ORDER, normalizeTierLabel } from '../../shared/tiers.constants';
 import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
 import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
 import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
+import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreCardComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -88,6 +90,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   usageSummary: UsageSummary | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
   profileVerificationLoading = false;
+  collaborationAudit: CollaborationAudit | null = null;
+  collaborationScoreLoading = false;
+  collaborationScoreReAnalyzing = false;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardUser = this.dashboard?.user || {};
@@ -134,10 +139,12 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private profileVerification: ProfileVerificationService,
     private http: HttpClient,
     private trackingLinksApi: TrackingLinksApiService,
+    private collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
   ngOnInit() {
     this.loadProfileVerificationDashboard();
+    this.loadCollaborationScore();
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;
       this.founderOfferCapsLoaded = true;
@@ -310,6 +317,45 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.profileVerificationDashboard = null;
         this.profileVerificationLoading = false;
+      },
+    });
+  }
+
+  private get currentUserId(): string {
+    const user: any = this.session.getUser() || {};
+    return String(user?._id || user?.id || '');
+  }
+
+  private loadCollaborationScore(): void {
+    const userId = this.currentUserId;
+    if (!userId) return;
+    this.collaborationScoreLoading = true;
+    this.collaborationScoreApi.getAudit(userId).subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationAudit = null;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onReAnalyzeCollaborationScore(): void {
+    this.collaborationScoreReAnalyzing = true;
+    this.collaborationScoreApi.runMyAudit().subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreReAnalyzing = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationScoreReAnalyzing = false;
+        this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+        this.cdr.detectChanges();
       },
     });
   }

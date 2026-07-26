@@ -122,6 +122,16 @@
     </div>
   </div>
 
+  <div class="section-card mb-4" *ngIf="!loading">
+    <app-collaboration-score-card
+      [audit]="collaborationAudit"
+      [loading]="collaborationScoreLoading"
+      [reAnalyzing]="collaborationScoreReAnalyzing"
+      (reAnalyze)="onReAnalyzeCollaborationScore()"
+      (auditRefreshed)="collaborationAudit = $event"
+    />
+  </div>
+
   <app-whatsapp-community-card
     *ngIf="dashboard?.user"
     [user]="dashboard.user"

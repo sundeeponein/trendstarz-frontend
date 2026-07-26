@@ -1,0 +1,48 @@
+<div class="sp-card">
+  <ng-container *ngIf="!result">
+    <h2 class="sp-card__title">Check your FREE TrendStarZ Collaboration Score</h2>
+    <p class="sp-card__subtitle">Brands don't just look at followers. They look at professional creators.</p>
+
+    <form class="sp-card__form" (ngSubmit)="check()">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Enter your YouTube channel URL"
+        [(ngModel)]="youtubeUrl"
+        name="youtubeUrl"
+        [disabled]="loading"
+      />
+      <button type="submit" class="btn btn-primary" [disabled]="loading || !youtubeUrl.trim()">
+        {{ loading ? 'Checking…' : 'Check Free Score' }}
+      </button>
+    </form>
+
+    <p class="sp-card__error text-danger" *ngIf="error">{{ error }}</p>
+  </ng-container>
+
+  <ng-container *ngIf="result">
+    <div class="sp-card__result">
+      <div class="sp-card__score-circle">{{ result.previewScore }}<span>/100</span></div>
+      <div class="sp-card__score-meta">
+        <div class="sp-card__title">TrendStarZ Collaboration Score</div>
+        <p class="sp-card__subtitle">{{ tierLabel(result.previewScore) }}</p>
+      </div>
+    </div>
+
+    <div class="sp-card__unlock">
+      <div class="sp-card__unlock-title">Register FREE to unlock</div>
+      <ul class="sp-card__unlock-list">
+        <li><i class="bi bi-lock-fill"></i> Campaign Ready Status</li>
+        <li><i class="bi bi-lock-fill"></i> Top 3 Improvements</li>
+        <li><i class="bi bi-lock-fill"></i> Save your Score</li>
+        <li><i class="bi bi-lock-fill"></i> Get discovered by Brands</li>
+      </ul>
+      <button type="button" class="btn btn-primary sp-card__register" (click)="registerFree()">
+        Register Free
+      </button>
+      <button type="button" class="btn btn-link sp-card__again" (click)="checkAnother()">
+        Check another channel
+      </button>
+    </div>
+  </ng-container>
+</div>

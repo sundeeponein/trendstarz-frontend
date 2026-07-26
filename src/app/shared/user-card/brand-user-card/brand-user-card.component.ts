@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { CollaborationScoreUiUtilsService } from '../../../services/collaboration-score-ui-utils.service';
 
 @Component({
   selector: 'app-brand-user-card',
@@ -38,8 +39,15 @@ export class BrandUserCardComponent {
   /** Backend-driven visibility guard for social profile links */
   @Input() socialMediaRestricted = false;
 
+  @Input() collaborationScore: number | null = null;
+  @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
+  @Input() trendstarzRecommended = false;
+  @Input() suggestedPriceRange: { reelPrice?: number | null } | null = null;
+
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
+
+  constructor(public collaborationScoreUi: CollaborationScoreUiUtilsService) {}
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
