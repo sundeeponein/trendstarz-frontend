@@ -30,6 +30,7 @@ import { SocialMediaEditModalComponent, AdminUser, SocialMediaEditPayload } from
 import { SessionService } from '../../../core/session.service';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { ImageCropModalComponent } from '../../../shared/components/image-crop-modal/image-crop-modal.component';
+import { CollaborationScoreApiService, CollaborationAudit } from '../../../services/collaboration-score-api.service';
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
@@ -66,6 +67,8 @@ export class AdminUserTableComponent implements OnInit {
   selectedUserInternalNotes = '';
   selectedProfileVerification: ProfileVerificationDashboard | null = null;
   selectedProfileVerificationLoading = false;
+  selectedUserCollabScore: CollaborationAudit | null = null;
+  selectedUserCollabScoreLoading = false;
   galleryModalOpen = false;
   galleryModalImages: string[] = [];
   galleryModalIndex = 0;
@@ -1097,6 +1100,7 @@ export class AdminUserTableComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private profileVerification: ProfileVerificationService,
     private session: SessionService,
+    private collabScoreApi: CollaborationScoreApiService,
   ) {}
 
   ngOnInit() {
@@ -2081,9 +2085,27 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = String(user?.verificationAdminNotes || '');
     this.showUserDetailsModal = true;
     this.loadSelectedProfileVerification();
+    this.loadSelectedUserCollabScore(user?._id);
     this.smEditModalOpen = false;
     this.smEditingIdx = null;
     this.smEditError = null;
+  }
+
+  private loadSelectedUserCollabScore(userId: string): void {
+    this.selectedUserCollabScore = null;
+    if (!userId) return;
+    this.selectedUserCollabScoreLoading = true;
+    this.collabScoreApi.getAudit(userId).subscribe({
+      next: (audit) => {
+        this.selectedUserCollabScore = audit;
+        this.selectedUserCollabScoreLoading = false;
+      },
+      error: () => {
+        // 404 = never audited yet — an expected state, not a failure.
+        this.selectedUserCollabScore = null;
+        this.selectedUserCollabScoreLoading = false;
+      },
+    });
   }
 
   closeUserDetailsModal(): void {
@@ -2093,6 +2115,8 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedUserInternalNotes = '';
     this.selectedProfileVerification = null;
     this.selectedProfileVerificationLoading = false;
+    this.selectedUserCollabScore = null;
+    this.selectedUserCollabScoreLoading = false;
   }
 
   onUserDetailsBackdropClick(event: MouseEvent): void {

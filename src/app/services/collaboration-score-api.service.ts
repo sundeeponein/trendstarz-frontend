@@ -43,12 +43,21 @@ export interface CollaborationAudit {
   improvements?: string[];
   recommendations?: string[];
   aiUsed?: boolean;
+  status?: "completed" | "failed" | "pending";
   createdAt: string;
   // Self/admin only — brand-role responses never include these.
   platformsCollected?: CollaborationScorePlatformCollected[];
   canReanalyze?: boolean;
   reanalysisAvailableAt?: string | null;
   reanalysisFeeRupees?: number;
+}
+
+export interface CollaborationReanalysisPayment {
+  amountRupees: number;
+  paymentStatus: string;
+  status: string;
+  createdAt: string;
+  archived: boolean;
 }
 
 export interface CollaborationAuditHistoryEntry {
@@ -153,6 +162,13 @@ export class CollaborationScoreApiService {
     return this.http.get<{ history: CollaborationAuditHistoryEntry[] }>(
       `${this.apiUrl}/audit/${userId}/history`,
       { params: { limit: String(limit) } },
+    );
+  }
+
+  /** Admin-only — every re-analysis payment for one creator. */
+  getReanalysisPayments(userId: string): Observable<{ payments: CollaborationReanalysisPayment[] }> {
+    return this.http.get<{ payments: CollaborationReanalysisPayment[] }>(
+      `${this.apiUrl}/audit/${userId}/payments`,
     );
   }
 

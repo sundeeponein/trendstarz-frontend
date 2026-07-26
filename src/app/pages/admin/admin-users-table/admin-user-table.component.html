@@ -338,6 +338,34 @@
       </div>
 
       <div class="modal-body pt-2">
+        <div class="collab-score-summary mb-3" *ngIf="!selectedUserCollabScoreLoading">
+          <ng-container *ngIf="selectedUserCollabScore; else noCollabScore">
+            <div class="collab-score-summary__row">
+              <span>Collaboration Score</span>
+              <strong>{{ selectedUserCollabScore.collaborationScore }}/100</strong>
+            </div>
+            <div class="collab-score-summary__row">
+              <span>Campaign Ready</span>
+              <strong>{{ selectedUserCollabScore.campaignReadiness === 'Campaign Ready' ? '✅ YES' : 'NO' }}</strong>
+            </div>
+            <div class="collab-score-summary__row">
+              <span>TrendStarZ Recommended</span>
+              <strong>{{ selectedUserCollabScore.trendstarzRecommended ? '⭐ YES' : 'NO' }}</strong>
+            </div>
+          </ng-container>
+          <ng-template #noCollabScore>
+            <div class="collab-score-summary__row text-muted">No Collaboration Score yet.</div>
+          </ng-template>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary mt-2"
+            [routerLink]="['/admin/collaboration-score', selectedUser?._id]"
+            [queryParams]="{ role: selectedRole, name: selectedUser?.name || selectedUser?.brandName || '' }"
+          >
+            View Collaboration Details
+          </button>
+        </div>
+
         <div class="verification-summary-card">
           <div class="verification-summary-head mb-3">
             <div>
