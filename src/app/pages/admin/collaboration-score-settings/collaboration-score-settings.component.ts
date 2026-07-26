@@ -29,6 +29,7 @@ export class CollaborationScoreSettingsComponent implements OnInit {
   } | null = null;
   summaryLoading = false;
   todaySummary: CollaborationScoreTodaySummary | null = null;
+  resetting = false;
 
   constructor(
     private readonly api: CollaborationScoreApiService,
@@ -64,6 +65,31 @@ export class CollaborationScoreSettingsComponent implements OnInit {
       },
       error: () => {
         this.summaryLoading = false;
+      },
+    });
+  }
+
+  get scoreWeightsSum(): number {
+    const w = this.settings?.scoreWeights;
+    if (!w) return 0;
+    return w.profileCompletion + w.contentQuality + w.postingConsistency + w.professionalBranding + w.campaignReadiness;
+  }
+
+  resetToDefaults(): void {
+    if (this.resetting) return;
+    if (!confirm('This deletes the current Collaboration Score configuration and restores the JSON defaults. Continue?')) {
+      return;
+    }
+    this.resetting = true;
+    this.api.resetSettings().subscribe({
+      next: (settings) => {
+        this.settings = settings;
+        this.resetting = false;
+        this.toast.success('Settings reset to defaults.');
+      },
+      error: () => {
+        this.resetting = false;
+        this.toast.error('Could not reset settings. Please try again.');
       },
     });
   }

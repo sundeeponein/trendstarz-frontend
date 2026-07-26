@@ -74,7 +74,16 @@ export interface CollaborationScoreAnalyticsToggles {
   trackAuditHistory: boolean;
 }
 
+export interface CollaborationScoreWeights {
+  profileCompletion: number;
+  contentQuality: number;
+  postingConsistency: number;
+  professionalBranding: number;
+  campaignReadiness: number;
+}
+
 export interface CollaborationScoreSettings {
+  schemaVersion: number;
   aiEnabled: boolean;
   aiModel: string;
   anonymousPreviewEnabled: boolean;
@@ -89,6 +98,8 @@ export interface CollaborationScoreSettings {
     campaignReadyMinScore: number;
     partiallyReadyMinScore: number;
   };
+  // Top-level criteria weights for the overall collaborationScore — must sum to 100.
+  scoreWeights: CollaborationScoreWeights;
   version2Enabled: boolean;
   version1Name: string;
   version2Name: string;
@@ -197,5 +208,10 @@ export class CollaborationScoreApiService {
 
   updateSettings(payload: Partial<CollaborationScoreSettings>): Observable<CollaborationScoreSettings> {
     return this.http.put<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings`, payload);
+  }
+
+  /** Deletes the current config and re-seeds the JSON defaults. */
+  resetSettings(): Observable<CollaborationScoreSettings> {
+    return this.http.post<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings/reset`, {});
   }
 }

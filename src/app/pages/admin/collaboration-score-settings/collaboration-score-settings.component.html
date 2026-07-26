@@ -84,12 +84,52 @@
       </div>
     </div>
 
+    <!-- Score Weights -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Score Weights</h2>
+        <p class="text-muted small">
+          How much each criterion contributes to the overall Collaboration Score. Must sum to exactly 100.
+        </p>
+        <div class="row g-3">
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-bold">Profile Completion</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.profileCompletion" name="swProfileCompletion">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-bold">Content Quality</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.contentQuality" name="swContentQuality">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-bold">Posting Consistency</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.postingConsistency" name="swPostingConsistency">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-bold">Professional Branding</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.professionalBranding" name="swProfessionalBranding">
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label small fw-bold">Campaign Readiness</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.campaignReadiness" name="swCampaignReadiness">
+          </div>
+        </div>
+        <p class="small mt-2 mb-0" [ngClass]="scoreWeightsSum === 100 ? 'text-success' : 'text-danger'">
+          Total: {{ scoreWeightsSum }} / 100 {{ scoreWeightsSum === 100 ? '✓' : '— must equal 100 to save' }}
+        </p>
+      </div>
+    </div>
+
     <!-- Weights -->
     <div class="card mb-4">
       <div class="card-body">
         <h2 class="h6 fw-bold mb-3">Rules vs. AI Blend</h2>
         <p class="text-muted small">
-          How much of Content Quality and Professional Branding comes from rules vs. AI (top-level criteria weights — 15/25/20/20/20 — are fixed).
+          How much of Content Quality and Professional Branding comes from rules vs. AI. Each pair must sum to 100.
         </p>
         <div class="row g-3">
           <div class="col-md-6">
@@ -307,8 +347,11 @@
       </div>
     </div>
 
-    <button type="button" class="btn btn-primary" [disabled]="saving" (click)="save()">
+    <button type="button" class="btn btn-primary" [disabled]="saving || scoreWeightsSum !== 100" (click)="save()">
       {{ saving ? 'Saving…' : 'Save Settings' }}
+    </button>
+    <button type="button" class="btn btn-outline-danger ms-2" [disabled]="resetting" (click)="resetToDefaults()">
+      {{ resetting ? 'Resetting…' : 'Reset to Defaults' }}
     </button>
   </ng-container>
 </div>
