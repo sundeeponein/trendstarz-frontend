@@ -2,12 +2,15 @@
   <ng-container *ngIf="!result">
     <h2 class="sp-card__title">Check your FREE TrendStarZ Collaboration Score</h2>
     <p class="sp-card__subtitle">Brands don't just look at followers. They look at professional creators.</p>
+    <p class="sp-card__platform-hint">
+      <i class="bi bi-youtube"></i> Works with YouTube channels only, for now
+    </p>
 
     <form class="sp-card__form" (ngSubmit)="check()">
       <input
         type="text"
         class="form-control"
-        placeholder="Enter your YouTube channel URL"
+        placeholder="Paste your YouTube channel URL"
         [(ngModel)]="youtubeUrl"
         name="youtubeUrl"
         [disabled]="loading"
