@@ -476,21 +476,22 @@
               </div>
 
               <ng-container *ngIf="activePlatformTab">
-                <app-social-platform-field
-                  *ngFor="let platform of selectedPlatforms()"
-                  [hidden]="platform._id !== activePlatformTab"
-                  class="m-2 d-block"
-                  [platform]="platform"
-                  [form]="platformForms[platform._id]"
-                  [tiers]="tiers"
-                  [readonly]="!isEditMode"
-                  [submitted]="submitted"
-                  [showRemove]="isEditMode"
-                  [allowConnect]="true"
-                  [supportsOAuth]="isOAuthCapable(platform)"
-                  (changed)="refreshStepCompletion()"
-                  (remove)="removePlatformCard(platform)"
-                ></app-social-platform-field>
+                <ng-container *ngFor="let platform of selectedPlatforms()">
+                  <app-social-platform-field
+                    *ngIf="platform._id === activePlatformTab"
+                    class="m-2 d-block"
+                    [platform]="platform"
+                    [form]="platformForms[platform._id]"
+                    [tiers]="tiers"
+                    [readonly]="!isEditMode"
+                    [submitted]="submitted"
+                    [showRemove]="isEditMode"
+                    [allowConnect]="true"
+                    [supportsOAuth]="isOAuthCapable(platform)"
+                    (changed)="refreshStepCompletion()"
+                    (remove)="removePlatformCard(platform)"
+                  ></app-social-platform-field>
+                </ng-container>
               </ng-container>
             </div>
             <div class="text-muted" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>
