@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CollaborationScoreApiService, CollaborationScorePreview } from '../../services/collaboration-score-api.service';
@@ -20,6 +20,7 @@ export class ScorePreviewComponent {
   constructor(
     private readonly api: CollaborationScoreApiService,
     private readonly router: Router,
+    private readonly ngZone: NgZone,
   ) {}
 
   // Non-YouTube links are the most common mistake — the headline never says
@@ -48,14 +49,24 @@ export class ScorePreviewComponent {
     this.loading = true;
     this.error = '';
     this.result = null;
+    // HttpClient is configured with withFetch() (app.config.ts) — fetch()
+    // promise continuations aren't always reliably re-entered into
+    // Angular's zone, so state set here can otherwise sit unrendered until
+    // an unrelated zone-patched event (e.g. a click) forces a CD cycle.
+    // Same class of bug already worked around elsewhere in this app
+    // (influencer-registration.component.ts's post-submit handler).
     this.api.previewFromYoutubeUrl(url).subscribe({
       next: (result) => {
-        this.result = result;
-        this.loading = false;
+        this.ngZone.run(() => {
+          this.result = result;
+          this.loading = false;
+        });
       },
       error: (err) => {
-        this.error = err?.error?.message || 'Could not check that channel. Please try again.';
-        this.loading = false;
+        this.ngZone.run(() => {
+          this.error = err?.error?.message || 'Could not check that channel. Please try again.';
+          this.loading = false;
+        });
       },
     });
   }
