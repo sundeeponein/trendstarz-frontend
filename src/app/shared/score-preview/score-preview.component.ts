@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, NgZone, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CollaborationScoreApiService, CollaborationScorePreview } from '../../services/collaboration-score-api.service';
@@ -43,6 +43,7 @@ export class ScorePreviewComponent implements OnDestroy {
     private readonly api: CollaborationScoreApiService,
     private readonly router: Router,
     private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   // Non-YouTube links are the most common mistake — the headline never says
@@ -76,6 +77,7 @@ export class ScorePreviewComponent implements OnDestroy {
     this.loadingMessageTimer = setInterval(() => {
       this.ngZone.run(() => {
         this.loadingMessageIndex = (this.loadingMessageIndex + 1) % ScorePreviewComponent.LOADING_MESSAGES.length;
+        this.cdr.detectChanges();
       });
     }, 1200);
   }
@@ -115,6 +117,7 @@ export class ScorePreviewComponent implements OnDestroy {
           this.stopLoadingMessages();
           this.result = result;
           this.loading = false;
+          this.cdr.detectChanges();
         });
       },
       error: (err) => {
@@ -122,6 +125,7 @@ export class ScorePreviewComponent implements OnDestroy {
           this.stopLoadingMessages();
           this.error = err?.error?.message || 'Could not check that channel. Please try again.';
           this.loading = false;
+          this.cdr.detectChanges();
         });
       },
     });
