@@ -32,6 +32,27 @@
     <p class="cs-card__empty-title">Your FREE Collaboration Score is ready.</p>
     <p class="text-muted">See how brands evaluate your public profile.</p>
     <button type="button" class="cs-card__reanalyze" (click)="onReAnalyzeClick()">Generate Free Score</button>
+    <div class="cs-card__empty-connect" *ngIf="!isConnected('instagram') || !isConnected('facebook')">
+      <p class="text-muted small mb-1">Get a more accurate score — connect your accounts:</p>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary me-2"
+        *ngIf="!isConnected('instagram')"
+        [disabled]="connectingPlatform === 'instagram'"
+        (click)="connectPlatform('instagram')"
+      >
+        {{ connectingPlatform === 'instagram' ? 'Connecting…' : 'Connect Instagram' }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        *ngIf="!isConnected('facebook')"
+        [disabled]="connectingPlatform === 'facebook'"
+        (click)="connectPlatform('facebook')"
+      >
+        {{ connectingPlatform === 'facebook' ? 'Connecting…' : 'Connect Facebook' }}
+      </button>
+    </div>
   </div>
 
   <ng-container *ngIf="!loading && audit">
@@ -87,6 +108,15 @@
           (click)="connectPlatform(p.platform.toLowerCase() === 'instagram' ? 'instagram' : 'facebook')"
         >
           {{ connectingPlatform === p.platform.toLowerCase() ? 'Connecting…' : 'Connect ' + p.platform }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary cs-card__connect-btn"
+          *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && isConnected(p.platform)"
+          [disabled]="disconnectingPlatform === p.platform.toLowerCase()"
+          (click)="onDisconnectPlatform(p.platform.toLowerCase() === 'instagram' ? 'instagram' : 'facebook')"
+        >
+          {{ disconnectingPlatform === p.platform.toLowerCase() ? 'Disconnecting…' : 'Disconnect' }}
         </button>
       </div>
     </div>

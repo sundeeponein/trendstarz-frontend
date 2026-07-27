@@ -56,6 +56,12 @@
     font-size: 1.05rem;
   }
 
+  &__empty-connect {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e0da;
+  }
+
   &__score-row {
     display: flex;
     align-items: center;

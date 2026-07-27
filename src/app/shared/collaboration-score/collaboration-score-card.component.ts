@@ -31,6 +31,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   paymentError = '';
   connections: { instagram: boolean; facebook: boolean } = { instagram: false, facebook: false };
   connectingPlatform: 'instagram' | 'facebook' | null = null;
+  disconnectingPlatform: 'instagram' | 'facebook' | null = null;
 
   constructor(
     public ui: CollaborationScoreUiUtilsService,
@@ -87,6 +88,26 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   isConnected(platform: string): boolean {
     const key = platform.toLowerCase();
     return key === 'instagram' ? this.connections.instagram : key === 'facebook' ? this.connections.facebook : false;
+  }
+
+  onDisconnectPlatform(platform: 'instagram' | 'facebook'): void {
+    if (this.disconnectingPlatform) return;
+    const label = platform === 'instagram' ? 'Instagram' : 'Facebook';
+    if (!confirm(`Disconnect ${label}? Future audits will use self-reported stats for this platform until you reconnect.`)) {
+      return;
+    }
+    this.disconnectingPlatform = platform;
+    this.api.disconnectPlatform(platform).subscribe({
+      next: () => {
+        this.connections = { ...this.connections, [platform]: false };
+        this.disconnectingPlatform = null;
+        this.toast.success(`${label} disconnected.`);
+      },
+      error: () => {
+        this.disconnectingPlatform = null;
+        this.toast.error(`Could not disconnect ${label}. Please try again.`);
+      },
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
