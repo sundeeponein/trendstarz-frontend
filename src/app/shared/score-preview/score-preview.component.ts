@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CollaborationScoreApiService, CollaborationScorePreview } from '../../services/collaboration-score-api.service';
+
+type PlatformId = 'instagram' | 'facebook' | 'youtube' | 'linkedin';
 
 @Component({
   selector: 'app-score-preview',
@@ -11,11 +13,31 @@ import { CollaborationScoreApiService, CollaborationScorePreview } from '../../s
   templateUrl: './score-preview.component.html',
   styleUrls: ['./score-preview.component.scss'],
 })
-export class ScorePreviewComponent {
+export class ScorePreviewComponent implements OnDestroy {
+  readonly platforms: Array<{ id: PlatformId; name: string; icon: string }> = [
+    { id: 'instagram', name: 'Instagram', icon: 'bi bi-instagram' },
+    { id: 'facebook', name: 'Facebook', icon: 'bi bi-facebook' },
+    { id: 'youtube', name: 'YouTube', icon: 'bi bi-youtube' },
+    { id: 'linkedin', name: 'LinkedIn', icon: 'bi bi-linkedin' },
+  ];
+  selectedPlatform: PlatformId = 'youtube';
+
   youtubeUrl = '';
   loading = false;
   error = '';
   result: CollaborationScorePreview | null = null;
+
+  // Cosmetic only — real backend latency varies. A score is never rendered
+  // while loading (result only ever renders in the separate *ngIf="result"
+  // block below), this just avoids a static "Checking…" the whole time.
+  private static readonly LOADING_MESSAGES = [
+    'Analyzing Profile...',
+    'Checking profile quality...',
+    'Checking completeness...',
+    'Calculating Collaboration Score...',
+  ];
+  loadingMessageIndex = 0;
+  private loadingMessageTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private readonly api: CollaborationScoreApiService,
@@ -35,7 +57,38 @@ export class ScorePreviewComponent {
     { match: /tiktok\.com/i, name: 'TikTok' },
   ];
 
+  get loadingMessage(): string {
+    return ScorePreviewComponent.LOADING_MESSAGES[this.loadingMessageIndex];
+  }
+
+  get selectedPlatformName(): string {
+    return this.platforms.find((p) => p.id === this.selectedPlatform)?.name || '';
+  }
+
+  selectPlatform(id: PlatformId): void {
+    if (this.loading) return;
+    this.selectedPlatform = id;
+    this.error = '';
+  }
+
+  private startLoadingMessages(): void {
+    this.loadingMessageIndex = 0;
+    this.loadingMessageTimer = setInterval(() => {
+      this.ngZone.run(() => {
+        this.loadingMessageIndex = (this.loadingMessageIndex + 1) % ScorePreviewComponent.LOADING_MESSAGES.length;
+      });
+    }, 1200);
+  }
+
+  private stopLoadingMessages(): void {
+    if (this.loadingMessageTimer) {
+      clearInterval(this.loadingMessageTimer);
+      this.loadingMessageTimer = null;
+    }
+  }
+
   check(): void {
+    if (this.selectedPlatform !== 'youtube') return;
     const url = this.youtubeUrl.trim();
     if (!url || this.loading) return;
 
@@ -49,6 +102,7 @@ export class ScorePreviewComponent {
     this.loading = true;
     this.error = '';
     this.result = null;
+    this.startLoadingMessages();
     // HttpClient is configured with withFetch() (app.config.ts) — fetch()
     // promise continuations aren't always reliably re-entered into
     // Angular's zone, so state set here can otherwise sit unrendered until
@@ -58,12 +112,14 @@ export class ScorePreviewComponent {
     this.api.previewFromYoutubeUrl(url).subscribe({
       next: (result) => {
         this.ngZone.run(() => {
+          this.stopLoadingMessages();
           this.result = result;
           this.loading = false;
         });
       },
       error: (err) => {
         this.ngZone.run(() => {
+          this.stopLoadingMessages();
           this.error = err?.error?.message || 'Could not check that channel. Please try again.';
           this.loading = false;
         });
@@ -86,5 +142,9 @@ export class ScorePreviewComponent {
     this.result = null;
     this.error = '';
     this.youtubeUrl = '';
+  }
+
+  ngOnDestroy(): void {
+    this.stopLoadingMessages();
   }
 }

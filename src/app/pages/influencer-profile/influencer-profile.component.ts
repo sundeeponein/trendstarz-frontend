@@ -9,7 +9,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
-import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
@@ -18,7 +17,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
-import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import { normalizeSocialHandle, validateSocialHandle } from '../../shared/social-handle.util';
 import {
   ProfileVerificationDashboard,
   ProfileVerificationService,
@@ -33,11 +32,12 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { SessionService } from '../../core/session.service';
 import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -287,32 +287,16 @@ export class InfluencerProfileComponent implements OnInit {
     return prices.length ? Math.min(...prices) : 0;
   }
 
-  getProfileUrl(platformName: string, handle: string): string {
-    return buildSocialProfileUrl(platformName, handle);
-  }
-
-  normalizePlatformHandle(platformId: string): void {
-    const pf = this.platformForms[platformId];
-    if (!pf) return;
-    pf.handle = normalizeSocialHandle(pf.handle, this.getPlatformById(platformId)?.name || '');
-    this.refreshStepCompletion();
-  }
-
-  getSocialHandleExample(platformName: string): string {
-    return socialHandleExample(platformName);
-  }
-
   getSocialHandleError(platform: any): string {
     const pf = this.platformForms[platform?._id];
     if (!pf) return 'Username is required.';
     return validateSocialHandle(pf.handle, platform?.name || '') || '';
   }
 
-  getTierOptionLabel(tier: any): string {
-    const name = String(tier?.name || '').trim();
-    const range = String(tier?.desc || '').trim();
-    if (!range) return name;
-    return `${name} (${range})`;
+  /** Meta OAuth is live for these; YouTube/LinkedIn stay manual-only ("Coming Soon"). */
+  isOAuthCapable(platform: any): boolean {
+    const name = String(platform?.name || '').toLowerCase();
+    return name.includes('instagram') || name.includes('facebook');
   }
 
 
@@ -508,7 +492,6 @@ export class InfluencerProfileComponent implements OnInit {
   collaborationAvailabilityOptions: any = {};
   creatorTypeOptions: any[] = [];
   tiers: any[] = [];
-  protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
   profileImageUploading = false;
   galleryImageUploading = false;

@@ -476,48 +476,21 @@
               </div>
 
               <ng-container *ngIf="activePlatformTab">
-                <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2" [style.--platform-color]="platform.color">
-                  <div class="platform-details-header">
-                    <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
-                    <span class="platform-name">{{ platform.name }}</span>
-                    <button *ngIf="isEditMode" type="button" class="close-btn" (click)="removePlatformCard(platform)">&times;</button>
-                  </div>
-                  <div class="platform-details-body">
-                    <div class="row">
-                      <div class="col">
-                        <label>{{ platform.name }} Username</label>
-                        <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}" type="text" class="form-control" [placeholder]="getSocialHandleExample(platform.name)" [readonly]="!isEditMode" (blur)="normalizePlatformHandle(platform._id)" (ngModelChange)="refreshStepCompletion()" />
-                        <small class="text-muted d-block mt-1" *ngIf="isEditMode">Enter only your username, not full profile URL. Example: {{ getSocialHandleExample(platform.name) }}</small>
-                        <div *ngIf="submitted && isEditMode && getSocialHandleError(platform)" class="text-danger mt-1">{{ getSocialHandleError(platform) }}</div>
-                        <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                            [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
-                            target="_blank" rel="noopener noreferrer" class="verify-profile-link">
-                          <i class="bi bi-box-arrow-up-right"></i> Verify profile
-                        </a>
-                      </div>
-                      <div class="col">
-                        <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
-                        <select [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="!isEditMode" (ngModelChange)="refreshStepCompletion()">
-                          <option value="" disabled>Select tier</option>
-                          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
-                        </select>
-                        <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
-                      </div>
-                    </div>
-                    <div class="content-types-section">
-                      <label>Content & Starting Rates</label>
-                      <div class="content-types-list">
-                        <ng-container *ngFor="let ct of platform.contentTypes">
-                          <div class="content-type-item" *ngIf="ct.visible">
-                            <input type="checkbox" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="!isEditMode" (ngModelChange)="refreshStepCompletion()" />
-                            <span>{{ ct.name }}</span>
-                            <input *ngIf="platformForms[platform._id].contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="platformForms[platform._id].contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="!isEditMode" (ngModelChange)="refreshStepCompletion()" />
-                          </div>
-                        </ng-container>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <app-social-platform-field
+                  *ngFor="let platform of selectedPlatforms()"
+                  [hidden]="platform._id !== activePlatformTab"
+                  class="m-2 d-block"
+                  [platform]="platform"
+                  [form]="platformForms[platform._id]"
+                  [tiers]="tiers"
+                  [readonly]="!isEditMode"
+                  [submitted]="submitted"
+                  [showRemove]="isEditMode"
+                  [allowConnect]="true"
+                  [supportsOAuth]="isOAuthCapable(platform)"
+                  (changed)="refreshStepCompletion()"
+                  (remove)="removePlatformCard(platform)"
+                ></app-social-platform-field>
               </ng-container>
             </div>
             <div class="text-muted" style="font-size:0.92em;">Use this as your starting quote. Brands can send offer amounts during collaboration.</div>

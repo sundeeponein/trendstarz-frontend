@@ -124,6 +124,17 @@ export interface CollaborationScoreSettings {
   lastNightlyRunCostUsd: number;
 }
 
+export interface SocialConnectionDetail {
+  handle: string | null;
+  followersCount: number | null;
+  connectedAt: string;
+}
+
+export interface SocialConnections {
+  instagram: SocialConnectionDetail | null;
+  facebook: SocialConnectionDetail | null;
+}
+
 export interface CollaborationScorePreview {
   platform: "YouTube";
   handle: string;
@@ -240,7 +251,7 @@ export class CollaborationScoreApiService {
     return this.http.post<{ success: boolean }>(`${this.apiUrl}/audit/disconnect/${platform}`, {});
   }
 
-  getConnections(): Observable<{ instagram: boolean; facebook: boolean }> {
-    return this.http.get<{ instagram: boolean; facebook: boolean }>(`${this.apiUrl}/audit/connections`);
+  getConnections(): Observable<SocialConnections> {
+    return this.http.get<SocialConnections>(`${this.apiUrl}/audit/connections`);
   }
 }

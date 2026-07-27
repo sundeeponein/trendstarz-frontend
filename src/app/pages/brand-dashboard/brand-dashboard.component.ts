@@ -20,7 +20,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
-import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
+// import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -28,7 +28,7 @@ import { CollaborationScoreCardComponent } from '../../shared/collaboration-scor
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreCardComponent]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, FounderOfferModalComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {

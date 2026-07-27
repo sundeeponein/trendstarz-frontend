@@ -6,6 +6,7 @@ import {
   CollaborationAudit,
   CollaborationAuditHistoryEntry,
   CollaborationScoreApiService,
+  SocialConnections,
 } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
 import { ToastService } from '../toast/toast.service';
@@ -29,7 +30,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   history: CollaborationAuditHistoryEntry[] = [];
   payingForReanalysis = false;
   paymentError = '';
-  connections: { instagram: boolean; facebook: boolean } = { instagram: false, facebook: false };
+  connections: SocialConnections = { instagram: null, facebook: null };
   connectingPlatform: 'instagram' | 'facebook' | null = null;
   disconnectingPlatform: 'instagram' | 'facebook' | null = null;
 
@@ -87,7 +88,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
 
   isConnected(platform: string): boolean {
     const key = platform.toLowerCase();
-    return key === 'instagram' ? this.connections.instagram : key === 'facebook' ? this.connections.facebook : false;
+    return key === 'instagram' ? !!this.connections.instagram : key === 'facebook' ? !!this.connections.facebook : false;
   }
 
   onDisconnectPlatform(platform: 'instagram' | 'facebook'): void {
@@ -99,7 +100,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     this.disconnectingPlatform = platform;
     this.api.disconnectPlatform(platform).subscribe({
       next: () => {
-        this.connections = { ...this.connections, [platform]: false };
+        this.connections = { ...this.connections, [platform]: null };
         this.disconnectingPlatform = null;
         this.toast.success(`${label} disconnected.`);
       },

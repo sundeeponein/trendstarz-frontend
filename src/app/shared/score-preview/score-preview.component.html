@@ -2,25 +2,57 @@
   <ng-container *ngIf="!result">
     <h2 class="sp-card__title">Check your FREE TrendStarZ Collaboration Score</h2>
     <p class="sp-card__subtitle">Brands don't just look at followers. They look at professional creators.</p>
-    <p class="sp-card__platform-hint">
-      <i class="bi bi-youtube"></i> Works with YouTube channels only, for now
-    </p>
 
-    <form class="sp-card__form" (ngSubmit)="check()">
+    <div class="sp-card__platform-tabs">
+      <button
+        *ngFor="let p of platforms"
+        type="button"
+        class="sp-card__platform-tab"
+        [class.sp-card__platform-tab--active]="selectedPlatform === p.id"
+        [disabled]="loading"
+        (click)="selectPlatform(p.id)"
+      >
+        <i [class]="p.icon"></i> {{ p.name }}
+      </button>
+    </div>
+
+    <ng-container *ngIf="selectedPlatform === 'youtube'">
+      <form class="sp-card__form" (ngSubmit)="check()">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Paste your YouTube channel URL"
+          [(ngModel)]="youtubeUrl"
+          name="youtubeUrl"
+          [disabled]="loading"
+        />
+        <button type="submit" class="btn btn-primary" [disabled]="loading || !youtubeUrl.trim()">
+          {{ loading ? 'Checking…' : 'Check Free Score' }}
+        </button>
+      </form>
+
+      <div class="sp-card__loading" *ngIf="loading">
+        <div class="spinner-border spinner-border-sm text-primary"></div>
+        <span>{{ loadingMessage }}</span>
+      </div>
+
+      <p class="sp-card__error text-danger" *ngIf="error && !loading">{{ error }}</p>
+    </ng-container>
+
+    <ng-container *ngIf="selectedPlatform !== 'youtube'">
       <input
         type="text"
         class="form-control"
-        placeholder="Paste your YouTube channel URL"
-        [(ngModel)]="youtubeUrl"
-        name="youtubeUrl"
-        [disabled]="loading"
+        [placeholder]="'Paste your ' + selectedPlatformName + ' username or URL'"
+        disabled
       />
-      <button type="submit" class="btn btn-primary" [disabled]="loading || !youtubeUrl.trim()">
-        {{ loading ? 'Checking…' : 'Check Free Score' }}
+      <p class="sp-card__connect-hint">
+        Real scoring for this platform requires connecting your account after you register.
+      </p>
+      <button type="button" class="btn btn-primary sp-card__register" (click)="registerFree()">
+        Register Free
       </button>
-    </form>
-
-    <p class="sp-card__error text-danger" *ngIf="error">{{ error }}</p>
+    </ng-container>
   </ng-container>
 
   <ng-container *ngIf="result">

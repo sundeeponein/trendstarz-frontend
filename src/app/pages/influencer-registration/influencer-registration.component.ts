@@ -13,12 +13,11 @@ import { passwordStrengthValidator, getPasswordChecks } from '../../shared/passw
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
-import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import { normalizeSocialHandle, validateSocialHandle } from '../../shared/social-handle.util';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
@@ -27,6 +26,7 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -43,7 +43,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent, SocialPlatformFieldComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
@@ -115,27 +115,6 @@ export class InfluencerRegistrationComponent implements OnInit {
   removePlatformCard(platform: any) {
     delete this.platformForms[platform._id];
     this.refreshStepCompletion();
-  }
-
-  getProfileUrl(platformName: string, handle: string): string {
-    return buildSocialProfileUrl(platformName, handle);
-  }
-
-  getTierOptionLabel(tier: any): string {
-    const name = String(tier?.name || '').trim();
-    const range = String(tier?.desc || '').trim();
-    if (!range) return name;
-    return `${name} (${range})`;
-  }
-
-  stripAtSign(platformId: string) {
-    const pf = this.platformForms[platformId];
-    if (!pf) return;
-    pf.handle = normalizeSocialHandle(pf.handle, this.getPlatformById(platformId)?.name || '');
-  }
-
-  getSocialHandleExample(platformName: string): string {
-    return socialHandleExample(platformName);
   }
 
   getSocialHandleError(platform: any): string {
@@ -292,7 +271,6 @@ export class InfluencerRegistrationComponent implements OnInit {
   collaborationAvailabilityOptions: any = {};
   creatorTypeOptions: any[] = [];
   tiers: any[] = [];
-  protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
   profileImageUploading = false;
   profileImageFile: File | null = null;
