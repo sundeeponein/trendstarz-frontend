@@ -15,6 +15,32 @@
       />
     </div>
 
+    <!-- Score Confidence -->
+    <div class="csc-section csc-card" *ngIf="scoreConfidence">
+      <h2 class="csc-section-title">Score Confidence</h2>
+      <div class="csc-confidence-body">
+        <span
+          class="badge rounded-pill csc-confidence-badge"
+          [ngClass]="{
+            'bg-success-subtle text-success-emphasis': scoreConfidence.level === 'High',
+            'bg-warning-subtle text-warning-emphasis': scoreConfidence.level === 'Medium',
+            'bg-secondary-subtle text-secondary-emphasis': scoreConfidence.level === 'Low'
+          }"
+        >
+          {{ scoreConfidence.level }}
+        </span>
+        <div class="csc-confidence-based-on">
+          <span class="csc-confidence-based-on-label">Based On</span>
+          <ul>
+            <li *ngFor="let item of scoreConfidence.basedOn" [class.met]="item.met">
+              <i class="bi" [ngClass]="item.met ? 'bi-check-circle-fill' : 'bi-dash-circle'"></i>
+              {{ item.met ? item.label : item.absentLabel }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <!-- Platform Status -->
     <div class="csc-section csc-card">
       <h2 class="csc-section-title">Platform Status</h2>

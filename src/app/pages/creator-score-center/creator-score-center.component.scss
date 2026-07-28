@@ -34,6 +34,65 @@
   margin-bottom: 1rem;
 }
 
+// Score Confidence
+.csc-confidence-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.csc-confidence-badge {
+  font-size: 0.95rem;
+  padding: 0.4rem 0.9rem;
+  font-weight: 700;
+}
+
+.csc-confidence-based-on {
+  flex: 1;
+  min-width: 180px;
+}
+
+.csc-confidence-based-on-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #9aa3b5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+
+.csc-confidence-based-on ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+    color: #9aa3b5;
+
+    i {
+      color: #c7cddb;
+    }
+
+    &.met {
+      color: #3a4561;
+      font-weight: 600;
+
+      i {
+        color: #1a7f4e;
+      }
+    }
+  }
+}
+
 // Platform Status
 .csc-platform-grid {
   display: flex;

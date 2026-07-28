@@ -21,6 +21,19 @@ export interface PlatformStatusRow {
   status: PlatformStatus;
 }
 
+export type ScoreConfidenceLevel = 'High' | 'Medium' | 'Low';
+
+export interface ScoreConfidenceBasedOnItem {
+  met: boolean;
+  label: string;
+  absentLabel: string;
+}
+
+export interface ScoreConfidence {
+  level: ScoreConfidenceLevel;
+  basedOn: ScoreConfidenceBasedOnItem[];
+}
+
 /**
  * The creator's permanent Score Center — everything that used to live
  * inline on the dashboard now lives here instead (see the dashboard's new
@@ -53,6 +66,29 @@ export class CreatorScoreCenterComponent implements OnInit {
   readonly futureFeaturesEnabled = false;
 
   private userId = '';
+
+  /**
+   * How much real (API-verified or self-reported) data the current score is
+   * actually based on — a rich, connected platform should read as more
+   * trustworthy than a bare, unconnected one, for both the creator and any
+   * brand who eventually sees this. Derived entirely from the existing
+   * audit.platformsCollected confidence values — no new backend field.
+   */
+  get scoreConfidence(): ScoreConfidence | null {
+    if (!this.audit) return null;
+    const platforms = this.audit.platformsCollected || [];
+    const maxConfidence = platforms.length ? Math.max(...platforms.map((p) => p.confidence || 0)) : 0;
+    const level: ScoreConfidenceLevel = maxConfidence >= 85 ? 'High' : maxConfidence >= 50 ? 'Medium' : 'Low';
+
+    const hasPlatform = (name: string) => platforms.some((p) => p.platform === name);
+    const basedOn: ScoreConfidenceBasedOnItem[] = [
+      { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
+      { met: hasPlatform('YouTube'), label: 'YouTube', absentLabel: 'YouTube not added' },
+      { met: hasPlatform('Instagram'), label: 'Instagram', absentLabel: 'Instagram not connected' },
+      { met: hasPlatform('Facebook'), label: 'Facebook', absentLabel: 'Facebook not connected' },
+    ];
+    return { level, basedOn };
+  }
 
   constructor(
     private readonly api: CollaborationScoreApiService,

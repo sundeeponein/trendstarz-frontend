@@ -154,6 +154,62 @@ describe('CreatorScoreCenterComponent', () => {
     expect(component.expandedLoading).toBe(false);
   });
 
+  describe('scoreConfidence', () => {
+    beforeEach(() => sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' }));
+
+    it('is null before any audit exists', () => {
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      expect(component.scoreConfidence).toBeNull();
+    });
+
+    it('is High when a platform has rich, verified API data', () => {
+      apiSpy.getAudit.and.returnValue(
+        of(
+          fakeAudit({
+            collaborationScore: 90,
+            platformsCollected: [{ platform: 'YouTube', method: 'API', confidence: 95, confidenceReason: '' }],
+          }) as any,
+        ),
+      );
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      expect(component.scoreConfidence?.level).toBe('High');
+      expect(component.scoreConfidence?.basedOn).toEqual([
+        { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
+        { met: true, label: 'YouTube', absentLabel: 'YouTube not added' },
+        { met: false, label: 'Instagram', absentLabel: 'Instagram not connected' },
+        { met: false, label: 'Facebook', absentLabel: 'Facebook not connected' },
+      ]);
+    });
+
+    it('is Medium for a connected platform with sparse data', () => {
+      apiSpy.getAudit.and.returnValue(
+        of(
+          fakeAudit({
+            collaborationScore: 60,
+            platformsCollected: [{ platform: 'Instagram', method: 'API', confidence: 55, confidenceReason: '' }],
+          }) as any,
+        ),
+      );
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      expect(component.scoreConfidence?.level).toBe('Medium');
+    });
+
+    it('is Low when there are no collected platforms at all', () => {
+      apiSpy.getAudit.and.returnValue(of(fakeAudit({ collaborationScore: 20, platformsCollected: [] }) as any));
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      expect(component.scoreConfidence?.level).toBe('Low');
+      expect(component.scoreConfidence?.basedOn.every((item) => item.label === 'TrendStarZ Profile' || !item.met)).toBe(true);
+    });
+  });
+
   it('onReAnalyze runs the free audit and refreshes history', () => {
     sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
     apiSpy.runMyAudit.and.returnValue(of(fakeAudit({ collaborationScore: 55 }) as any));
