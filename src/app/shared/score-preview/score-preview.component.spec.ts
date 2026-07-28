@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
 import { ScorePreviewComponent } from './score-preview.component';
 
@@ -12,8 +12,12 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
     routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
     apiSpy = jasmine.createSpyObj<CollaborationScoreApiService>('CollaborationScoreApiService', [
       'previewFromYoutubeUrl',
+      'getPlatformFlags',
     ]);
     apiSpy.previewFromYoutubeUrl.and.returnValue(of({} as any));
+    apiSpy.getPlatformFlags.and.returnValue(
+      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true } }),
+    );
 
     await TestBed.configureTestingModule({
       imports: [ScorePreviewComponent],
@@ -63,5 +67,44 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
     const roleChoice = fixture.nativeElement.querySelector('.sp-card__role-choice');
     expect(roleChoice).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.sp-card__register')).toBeFalsy();
+  });
+
+  describe('admin platform toggles', () => {
+    it('hides a tab an admin has disabled in Collaboration Score Settings', () => {
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true } }),
+      );
+      const { fixture } = createComponent();
+
+      fixture.detectChanges();
+
+      const tabLabels: string[] = Array.from(fixture.nativeElement.querySelectorAll('.sp-card__platform-tab')).map(
+        (el: any) => el.textContent.trim(),
+      );
+      expect(tabLabels).not.toContain('Instagram');
+      expect(tabLabels).toEqual(['Facebook', 'YouTube', 'LinkedIn']);
+    });
+
+    it('moves off a tab that gets disabled out from under the visitor currently on it', () => {
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: true, facebook: true, youtube: false, linkedin: true } }),
+      );
+      const { component, fixture } = createComponent();
+      component.selectedPlatform = 'youtube';
+
+      fixture.detectChanges();
+
+      expect(component.selectedPlatform).not.toBe('youtube');
+      expect(component.platformsEnabled.youtube).toBe(false);
+    });
+
+    it('keeps every tab visible (fails open) if the flags request errors', () => {
+      apiSpy.getPlatformFlags.and.returnValue(throwError(() => new Error('network down')));
+      const { fixture, component } = createComponent();
+
+      fixture.detectChanges();
+
+      expect(component.visiblePlatforms.length).toBe(4);
+    });
   });
 });

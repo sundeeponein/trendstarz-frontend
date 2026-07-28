@@ -153,6 +153,11 @@ export interface CollaborationScorePreview {
   confidenceReason: string;
 }
 
+export interface CollaborationScoreTodayPlatformCount {
+  platform: string;
+  count: number;
+}
+
 export interface CollaborationScoreTodaySummary {
   audits: number;
   aiCalls: number;
@@ -161,6 +166,7 @@ export interface CollaborationScoreTodaySummary {
   averageCostUsd: number | null;
   successCount: number;
   failureCount: number;
+  platformBreakdown: CollaborationScoreTodayPlatformCount[];
 }
 
 @Injectable({ providedIn: "root" })
@@ -180,6 +186,17 @@ export class CollaborationScoreApiService {
     return this.http
       .post<CollaborationScorePreview>(`${this.apiUrl}/audit/preview`, { youtubeUrl })
       .pipe(map((res) => unwrap<CollaborationScorePreview>(res)));
+  }
+
+  /**
+   * Public, no auth header — lets every platform-picker UI (anonymous /audit
+   * page, Connect buttons, Platform Status) hide a platform an admin has
+   * disabled in Collaboration Score Settings, without needing a JWT.
+   */
+  getPlatformFlags(): Observable<{ platformsEnabled: CollaborationScorePlatformsEnabled }> {
+    return this.http
+      .get<{ platformsEnabled: CollaborationScorePlatformsEnabled }>(`${this.apiUrl}/audit/platform-flags`)
+      .pipe(map((res) => unwrap<{ platformsEnabled: CollaborationScorePlatformsEnabled }>(res)));
   }
 
   /** Self/admin only — every past version, newest first. */

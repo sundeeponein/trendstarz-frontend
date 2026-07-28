@@ -5,7 +5,7 @@
     <div class="container">
       <div class="row align-items-center g-5">
         <div class="col-12 col-lg-6">
-          <span class="tss-eyebrow"><i class="bi bi-patch-check-fill"></i> TrendStarZ Score™</span>
+          <span class="tss-eyebrow"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> TrendStarZ Score™</span>
           <h1 class="tss-hero-title">
             Know how ready your profile is for brand collaborations.
           </h1>
@@ -32,7 +32,7 @@
               </svg>
               <div class="tss-score-ring-inner">
                 <span class="tss-score-value">{{ heroExampleScore }}<span class="tss-score-max">/100</span></span>
-                <span class="tss-score-tier"><i class="bi bi-check-circle-fill"></i> {{ heroExampleTier }}</span>
+                <span class="tss-score-tier"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> {{ heroExampleTier }}</span>
               </div>
             </div>
             <span class="tss-hero-illustration-note">Example score — illustrative only</span>
@@ -60,7 +60,7 @@
           <div class="tss-audience-card">
             <p class="tss-audience-label">The score is designed for</p>
             <ul class="tss-audience-list">
-              <li *ngFor="let audience of audienceList"><i class="bi bi-check2-circle"></i> {{ audience }}</li>
+              <li *ngFor="let audience of audienceList"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ audience }}</li>
             </ul>
           </div>
         </div>
@@ -75,7 +75,7 @@
       <div class="row g-4 mt-2">
         <div class="col-12 col-sm-6 col-lg-3" *ngFor="let card of whyCards">
           <div class="tss-feature-card">
-            <div class="tss-feature-icon"><i class="bi" [ngClass]="card.icon"></i></div>
+            <div class="tss-feature-icon"><i class="bi" [ngClass]="card.icon" aria-hidden="true"></i></div>
             <h3>{{ card.title }}</h3>
             <p>{{ card.description }}</p>
           </div>
@@ -91,10 +91,10 @@
       <div class="row g-4 mt-2">
         <div class="col-12 col-sm-6 col-lg-3" *ngFor="let card of audienceCards">
           <div class="tss-benefit-card" [ngClass]="'tint-' + card.tint">
-            <div class="tss-benefit-icon"><i class="bi" [ngClass]="card.icon"></i></div>
+            <div class="tss-benefit-icon"><i class="bi" [ngClass]="card.icon" aria-hidden="true"></i></div>
             <h3>{{ card.role }}</h3>
             <ul>
-              <li *ngFor="let benefit of card.benefits"><i class="bi bi-check-lg"></i> {{ benefit }}</li>
+              <li *ngFor="let benefit of card.benefits"><i class="bi bi-check-lg" aria-hidden="true"></i> {{ benefit }}</li>
             </ul>
           </div>
         </div>
@@ -109,10 +109,10 @@
       <div class="tss-workflow">
         <ng-container *ngFor="let step of workflowSteps; let last = last">
           <div class="tss-workflow-step">
-            <div class="tss-workflow-icon"><i class="bi" [ngClass]="step.icon"></i></div>
+            <div class="tss-workflow-icon"><i class="bi" [ngClass]="step.icon" aria-hidden="true"></i></div>
             <span>{{ step.label }}</span>
           </div>
-          <div class="tss-workflow-arrow" *ngIf="!last"><i class="bi bi-arrow-down"></i></div>
+          <div class="tss-workflow-arrow" *ngIf="!last"><i class="bi bi-arrow-down" aria-hidden="true"></i></div>
         </ng-container>
       </div>
     </div>
@@ -128,7 +128,7 @@
       <div class="row g-4 mt-2 justify-content-center">
         <div class="col-12 col-sm-6 col-lg-3" *ngFor="let component of scoreComponents">
           <div class="tss-component-card">
-            <div class="tss-component-icon"><i class="bi" [ngClass]="component.icon"></i></div>
+            <div class="tss-component-icon"><i class="bi" [ngClass]="component.icon" aria-hidden="true"></i></div>
             <h3>{{ component.title }}</h3>
             <p>{{ component.description }}</p>
           </div>
@@ -167,7 +167,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let row of platformSupport">
-              <td class="tss-platform-name"><i class="bi" [ngClass]="row.icon"></i> {{ row.platform }}</td>
+              <td class="tss-platform-name"><i class="bi" [ngClass]="row.icon" aria-hidden="true"></i> {{ row.platform }}</td>
               <td>{{ row.preview }}</td>
               <td>{{ row.connected }}</td>
             </tr>
@@ -184,13 +184,13 @@
   <section class="tss-section tss-section--muted">
     <div class="container">
       <div class="tss-privacy-card">
-        <div class="tss-privacy-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <div class="tss-privacy-icon"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i></div>
         <div>
           <h2 class="tss-section-title">Privacy &amp; Security</h2>
           <ul class="tss-privacy-list">
-            <li><i class="bi bi-check-lg"></i> TrendStarZ never posts to your social accounts.</li>
-            <li><i class="bi bi-check-lg"></i> Only the information required to calculate your TrendStarZ Score is accessed after you explicitly authorize the connection.</li>
-            <li><i class="bi bi-check-lg"></i> You can disconnect connected accounts at any time.</li>
+            <li><i class="bi bi-check-lg" aria-hidden="true"></i> TrendStarZ never posts to your social accounts.</li>
+            <li><i class="bi bi-check-lg" aria-hidden="true"></i> Only the information required to calculate your TrendStarZ Score is accessed after you explicitly authorize the connection.</li>
+            <li><i class="bi bi-check-lg" aria-hidden="true"></i> You can disconnect connected accounts at any time.</li>
           </ul>
         </div>
       </div>

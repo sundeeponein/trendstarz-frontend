@@ -51,12 +51,17 @@ export class SocialPlatformFieldComponent implements OnInit {
   connection: SocialConnectionDetail | null = null;
   connecting = false;
   disconnecting = false;
+  // Optimistic default — an admin disabling this platform's collector hides
+  // the Connect option (never the manual handle/tier fields, which are just
+  // profile data unrelated to the collector) for at most one round-trip.
+  platformCollectorEnabled = true;
 
   constructor(@Inject(PLATFORM_ID) private readonly platformId: object) {}
 
   ngOnInit(): void {
     if (this.allowConnect && this.supportsOAuth) {
       this.loadConnection();
+      this.loadPlatformCollectorFlag();
     }
   }
 
@@ -67,6 +72,13 @@ export class SocialPlatformFieldComponent implements OnInit {
   private loadConnection(): void {
     this.api.getConnections().subscribe({
       next: (res) => (this.connection = res[this.platformKey] || null),
+      error: () => {},
+    });
+  }
+
+  private loadPlatformCollectorFlag(): void {
+    this.api.getPlatformFlags().subscribe({
+      next: (res) => (this.platformCollectorEnabled = res.platformsEnabled[this.platformKey]),
       error: () => {},
     });
   }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
@@ -21,6 +21,7 @@ describe('CreatorScoreCenterComponent', () => {
       'getConnections',
       'runMyAudit',
       'getAuditVersion',
+      'getPlatformFlags',
     ]);
     sessionSpy = jasmine.createSpyObj<SessionService>('SessionService', ['getUser']);
     configSpy = jasmine.createSpyObj<ConfigService>('ConfigService', [
@@ -32,6 +33,9 @@ describe('CreatorScoreCenterComponent', () => {
     apiSpy.getAudit.and.returnValue(of(null as any));
     apiSpy.getAuditHistory.and.returnValue(of({ history: [] }));
     apiSpy.getConnections.and.returnValue(of({ instagram: null, facebook: null }));
+    apiSpy.getPlatformFlags.and.returnValue(
+      of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: true } }),
+    );
     configSpy.getInfluencerProfileById.and.returnValue(of({ socialMedia: [] }));
     configSpy.getPhotographerProfileById.and.returnValue(of({ socialMedia: [] }));
 
@@ -124,6 +128,42 @@ describe('CreatorScoreCenterComponent', () => {
     ]);
   });
 
+  describe('admin platform toggles', () => {
+    it('drops a row entirely when an admin has disabled that platform, rather than showing it as Not Connected', () => {
+      sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: false, youtube: true, facebook: true, linkedin: true } }),
+      );
+      const { fixture, component } = createComponent();
+
+      fixture.detectChanges();
+
+      expect(component.platformStatus.map((row) => row.platform)).toEqual(['YouTube', 'Facebook', 'LinkedIn']);
+    });
+
+    it('keeps LinkedIn visible as Coming Soon regardless of its own toggle state', () => {
+      sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: false } }),
+      );
+      const { fixture, component } = createComponent();
+
+      fixture.detectChanges();
+
+      expect(component.platformStatus.find((row) => row.platform === 'LinkedIn')?.status).toBe('Coming Soon');
+    });
+
+    it('fails open (shows every row) if the flags request errors', () => {
+      sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
+      apiSpy.getPlatformFlags.and.returnValue(throwError(() => new Error('network down')));
+      const { fixture, component } = createComponent();
+
+      fixture.detectChanges();
+
+      expect(component.platformStatus.length).toBe(4);
+    });
+  });
+
   it('toggleHistoryDetail fetches and shows, then hides on a second click', () => {
     sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
     apiSpy.getAuditVersion.and.returnValue(of({ collaborationScore: 70, campaignReadiness: 'Growing' } as any));
@@ -182,7 +222,24 @@ describe('CreatorScoreCenterComponent', () => {
         { met: true, label: 'YouTube', absentLabel: 'YouTube not added' },
         { met: false, label: 'Instagram', absentLabel: 'Instagram not connected' },
         { met: false, label: 'Facebook', absentLabel: 'Facebook not connected' },
+        { met: false, label: 'LinkedIn', absentLabel: 'LinkedIn (Coming Soon)' },
       ]);
+    });
+
+    it('always lists LinkedIn as Coming Soon, never as a real connected/absent state', () => {
+      apiSpy.getAudit.and.returnValue(
+        of(
+          fakeAudit({
+            collaborationScore: 20,
+            platformsCollected: [{ platform: 'LinkedIn', method: 'SELF_REPORTED', confidence: 0, confidenceReason: '' }],
+          }) as any,
+        ),
+      );
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      const linkedIn = component.scoreConfidence?.basedOn.find((item) => item.label === 'LinkedIn');
+      expect(linkedIn).toEqual({ met: false, label: 'LinkedIn', absentLabel: 'LinkedIn (Coming Soon)' });
     });
 
     it('is Medium for a connected platform with sparse data', () => {
@@ -222,5 +279,30 @@ describe('CreatorScoreCenterComponent', () => {
     expect(component.audit?.collaborationScore).toBe(55);
     expect(component.reAnalyzing).toBe(false);
     expect(apiSpy.getAuditHistory).toHaveBeenCalled();
+  });
+
+  it('fetches connections only once and passes them to the embedded full card, instead of it fetching its own copy', () => {
+    sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
+    apiSpy.getConnections.and.returnValue(
+      of({ instagram: { handle: 'shared', followersCount: 1, connectedAt: '2026-01-01' }, facebook: null }),
+    );
+    const { fixture, component } = createComponent();
+
+    fixture.detectChanges();
+
+    expect(apiSpy.getConnections).toHaveBeenCalledTimes(1);
+    expect(component.connections?.instagram?.handle).toBe('shared');
+  });
+
+  it('ignores a second onReAnalyze() call while the first is still in flight', () => {
+    sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
+    apiSpy.runMyAudit.and.returnValue(new Subject<any>());
+    const { fixture, component } = createComponent();
+    fixture.detectChanges();
+
+    component.onReAnalyze();
+    component.onReAnalyze();
+
+    expect(apiSpy.runMyAudit).toHaveBeenCalledTimes(1);
   });
 });

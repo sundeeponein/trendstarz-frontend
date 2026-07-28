@@ -7,18 +7,24 @@ import { CollaborationAudit } from './collaboration-score-api.service';
 // status only.
 @Injectable({ providedIn: 'root' })
 export class CollaborationScoreUiUtilsService {
+  // Single source of truth for the score-tier label/badge shown everywhere
+  // (creator's own card, Score Center, search cards, admin detail) — must
+  // stay in sync with the tier copy on the /trendstarz-score marketing page.
+  // These are fixed, cosmetic display bands; they're deliberately separate
+  // from audit.trendstarzRecommended/campaignReadiness, which are computed
+  // from admin-configurable thresholds and shown as their own fields.
   scoreTierLabel(score: number): string {
-    if (score >= 80) return 'Excellent';
-    if (score >= 70) return 'Good';
-    if (score >= 40) return 'Needs Improvement';
-    return 'Just Getting Started';
+    if (score >= 90) return 'TrendStarZ Recommended ⭐';
+    if (score >= 75) return 'Campaign Ready';
+    if (score >= 50) return 'Growing';
+    return 'Needs Improvement';
   }
 
   scoreTierClass(score: number): string {
-    if (score >= 80) return 'bg-success-subtle text-success-emphasis';
-    if (score >= 70) return 'bg-info-subtle text-info-emphasis';
-    if (score >= 40) return 'bg-warning-subtle text-warning-emphasis';
-    return 'bg-secondary-subtle text-secondary-emphasis';
+    if (score >= 90) return 'bg-success-subtle text-success-emphasis';
+    if (score >= 75) return 'bg-primary-subtle text-primary-emphasis';
+    if (score >= 50) return 'bg-warning-subtle text-warning-emphasis';
+    return 'bg-danger-subtle text-danger-emphasis';
   }
 
   campaignReadinessClass(readiness: CollaborationAudit['campaignReadiness']): string {

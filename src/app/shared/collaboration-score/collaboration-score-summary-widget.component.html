@@ -1,11 +1,11 @@
 <div class="cssw-card text-black">
   <div class="cssw-header">
-    <i class="bi bi-graph-up-arrow"></i>
+    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
     TrendStarZ Score
   </div>
 
-  <div class="cssw-loading" *ngIf="loading">
-    <div class="spinner-border spinner-border-sm text-primary"></div>
+  <div class="cssw-loading" *ngIf="loading" role="status" aria-live="polite">
+    <div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div>
     <span>Loading…</span>
   </div>
 
@@ -19,8 +19,13 @@
     </div>
 
     <div class="cssw-summary" *ngIf="audit">
-      <div class="cssw-score-badge" [ngClass]="ui.scoreTierClass(audit.collaborationScore)">
-        {{ audit.collaborationScore }}<span class="cssw-score-max">/100</span>
+      <div
+        class="cssw-score-badge"
+        [ngClass]="ui.scoreTierClass(audit.collaborationScore)"
+        role="img"
+        [attr.aria-label]="'TrendStarZ Score: ' + audit.collaborationScore + ' out of 100'"
+      >
+        {{ audit.collaborationScore }}<span class="cssw-score-max" aria-hidden="true">/100</span>
       </div>
       <div class="cssw-summary-meta">
         <div class="cssw-tier">{{ audit.campaignReadiness }}</div>

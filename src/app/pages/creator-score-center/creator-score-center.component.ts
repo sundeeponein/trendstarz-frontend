@@ -57,6 +57,8 @@ export class CreatorScoreCenterComponent implements OnInit {
   historyLoading = false;
 
   platformStatus: PlatformStatusRow[] = [];
+  /** Fetched once here and passed to the embedded full card too, instead of it fetching its own copy. */
+  connections: SocialConnections | null = null;
 
   expandedVersion: number | null = null;
   expandedDetail: CollaborationAudit | null = null;
@@ -86,6 +88,9 @@ export class CreatorScoreCenterComponent implements OnInit {
       { met: hasPlatform('YouTube'), label: 'YouTube', absentLabel: 'YouTube not added' },
       { met: hasPlatform('Instagram'), label: 'Instagram', absentLabel: 'Instagram not connected' },
       { met: hasPlatform('Facebook'), label: 'Facebook', absentLabel: 'Facebook not connected' },
+      // LinkedIn has no OAuth support at all yet — never "met", always shown
+      // as its own informational state rather than a real absent/connected pair.
+      { met: false, label: 'LinkedIn', absentLabel: 'LinkedIn (Coming Soon)' },
     ];
     return { level, basedOn };
   }
@@ -150,34 +155,58 @@ export class CreatorScoreCenterComponent implements OnInit {
 
   private loadPlatformStatus(role: string): void {
     this.api.getConnections().subscribe({
-      next: (connections) => this.resolvePlatformStatus(connections, role),
-      error: () => this.resolvePlatformStatus({ instagram: null, facebook: null }, role),
+      next: (connections) => {
+        this.connections = connections;
+        this.resolvePlatformStatus(connections, role);
+      },
+      error: () => {
+        this.connections = { instagram: null, facebook: null };
+        this.resolvePlatformStatus(this.connections, role);
+      },
     });
   }
 
   private resolvePlatformStatus(connections: SocialConnections, role: string): void {
     const profile$ = role === 'photographer' ? this.config.getPhotographerProfileById() : this.config.getInfluencerProfileById();
     profile$.subscribe({
-      next: (profile: any) => this.setPlatformStatus(connections, profile),
-      error: () => this.setPlatformStatus(connections, null),
+      next: (profile: any) => this.loadPlatformFlagsThenSetStatus(connections, profile),
+      error: () => this.loadPlatformFlagsThenSetStatus(connections, null),
     });
   }
 
-  private setPlatformStatus(connections: SocialConnections, profile: any): void {
+  private loadPlatformFlagsThenSetStatus(connections: SocialConnections, profile: any): void {
+    this.api.getPlatformFlags().subscribe({
+      next: (res) => this.setPlatformStatus(connections, profile, res.platformsEnabled),
+      // Fetch failed — fail open (show every row) rather than hiding the
+      // whole grid because of an unrelated network hiccup.
+      error: () => this.setPlatformStatus(connections, profile, { instagram: true, youtube: true, facebook: true, linkedin: true }),
+    });
+  }
+
+  private setPlatformStatus(
+    connections: SocialConnections,
+    profile: any,
+    platformsEnabled: { instagram: boolean; youtube: boolean; facebook: boolean; linkedin: boolean },
+  ): void {
     const hasYoutube = (profile?.socialMedia || []).some(
       (s: any) => String(s?.platform || '').toLowerCase() === 'youtube' && s?.handle,
     );
-    this.platformStatus = [
-      { platform: 'Instagram', icon: 'bi-instagram', status: connections.instagram ? 'Connected' : 'Not Connected' },
-      { platform: 'YouTube', icon: 'bi-youtube', status: hasYoutube ? 'Connected' : 'Not Connected' },
-      { platform: 'Facebook', icon: 'bi-facebook', status: connections.facebook ? 'Connected' : 'Not Connected' },
-      { platform: 'LinkedIn', icon: 'bi-linkedin', status: 'Coming Soon' },
+    const rows: Array<PlatformStatusRow & { enabled: boolean }> = [
+      { platform: 'Instagram', icon: 'bi-instagram', status: connections.instagram ? 'Connected' : 'Not Connected', enabled: platformsEnabled.instagram },
+      { platform: 'YouTube', icon: 'bi-youtube', status: hasYoutube ? 'Connected' : 'Not Connected', enabled: platformsEnabled.youtube },
+      { platform: 'Facebook', icon: 'bi-facebook', status: connections.facebook ? 'Connected' : 'Not Connected', enabled: platformsEnabled.facebook },
+      // LinkedIn stays visible regardless of its toggle — it's always "Coming
+      // Soon" today (no collector exists yet), so admin-disabling it changes
+      // nothing a user would see either way.
+      { platform: 'LinkedIn', icon: 'bi-linkedin', status: 'Coming Soon', enabled: true },
     ];
+    this.platformStatus = rows.filter((row) => row.enabled).map(({ enabled, ...row }) => row);
     this.cdr.detectChanges();
   }
 
   /** First-ever free audit only — CollaborationScoreCardComponent runs its own paid re-analysis flow internally. */
   onReAnalyze(): void {
+    if (this.reAnalyzing) return;
     this.reAnalyzing = true;
     this.api.runMyAudit().subscribe({
       next: (audit) => {

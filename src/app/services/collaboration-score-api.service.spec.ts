@@ -112,6 +112,20 @@ describe('CollaborationScoreApiService', () => {
     expect(result.collaborationScore).toBe(70);
   });
 
+  it('unwraps getPlatformFlags from the envelope', () => {
+    let result: any;
+    service.getPlatformFlags().subscribe((res) => (result = res));
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/audit/platform-flags'));
+    req.flush({
+      success: true,
+      data: { platformsEnabled: { instagram: false, youtube: true, facebook: true, linkedin: false } },
+    });
+
+    expect(result.platformsEnabled.instagram).toBe(false);
+    expect(result.platformsEnabled.youtube).toBe(true);
+  });
+
   it('unwraps getSettings from the envelope', () => {
     let result: any;
     service.getSettings().subscribe((res) => (result = res));

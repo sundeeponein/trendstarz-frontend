@@ -22,6 +22,14 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   @Input() audit: CollaborationAudit | null = null;
   @Input() loading = false;
   @Input() reAnalyzing = false;
+  /**
+   * Optional — lets a parent that already fetched connections (e.g.
+   * CreatorScoreCenterComponent, which needs them for its own Platform
+   * Status section) pass them straight through instead of this component
+   * fetching them again itself. Falls back to its own fetch when omitted,
+   * so every other existing consumer is unaffected.
+   */
+  @Input() initialConnections?: SocialConnections | null;
   /** Emitted only for the free, first-ever audit — parent runs its existing runMyAudit() flow. */
   @Output() reAnalyze = new EventEmitter<void>();
   /** Emitted after a paid re-analysis completes — parent should replace its audit state with this. */
@@ -33,6 +41,10 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   connections: SocialConnections = { instagram: null, facebook: null };
   connectingPlatform: 'instagram' | 'facebook' | null = null;
   disconnectingPlatform: 'instagram' | 'facebook' | null = null;
+  // True the moment a parent binds [initialConnections] at all — even while
+  // its own fetch is still resolving to null — so ngOnInit never starts a
+  // redundant self-fetch racing against the parent's.
+  private parentManagesConnections = false;
 
   constructor(
     public ui: CollaborationScoreUiUtilsService,
@@ -44,7 +56,9 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    this.loadConnections();
+    if (!this.parentManagesConnections) {
+      this.loadConnections();
+    }
 
     const connectedPlatform = this.route.snapshot.queryParamMap.get('connected');
     const connectError = this.route.snapshot.queryParamMap.get('connectError');
@@ -112,6 +126,12 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialConnections']) {
+      this.parentManagesConnections = true;
+      if (this.initialConnections) {
+        this.connections = this.initialConnections;
+      }
+    }
     if (changes['audit'] && this.audit?.userId) {
       this.loadHistory(this.audit.userId);
     }

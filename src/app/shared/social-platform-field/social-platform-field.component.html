@@ -7,7 +7,7 @@
 
   <div class="platform-details-body">
 
-    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth">
+    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled">
       <ng-container *ngIf="connection; else spfNotConnected">
         <div class="spf-connect-status spf-connect-status--connected">
           <span class="spf-connect-badge">Connected ✓</span>

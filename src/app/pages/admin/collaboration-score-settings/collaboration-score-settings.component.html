@@ -1,5 +1,5 @@
 <div class="container-fluid py-4">
-  <h1 class="h4 fw-bold mb-1">Collaboration Score Settings</h1>
+  <h1 class="h4 fw-bold mb-1 text-black">Collaboration Score Settings</h1>
   <p class="text-muted mb-4">
     Control the AI layer, scoring thresholds, and rollout for the TrendStarz Collaboration Score.
   </p>
@@ -65,6 +65,31 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Audits by platform, same today-only window as the table above —
+             one audit can contribute to more than one platform's count. -->
+        <div *ngIf="!summaryLoading && todaySummary">
+          <h3 class="h6 fw-bold mt-4 mb-2">Audits by Platform (Today)</h3>
+          <p class="text-muted small mb-2" *ngIf="!todaySummary.platformBreakdown.length">
+            No platform data collected yet today.
+          </p>
+          <div class="table-responsive" *ngIf="todaySummary.platformBreakdown.length">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Platform</th>
+                  <th>Audits</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of todaySummary.platformBreakdown">
+                  <td>{{ row.platform }}</td>
+                  <td>{{ row.count }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -92,27 +117,27 @@
           How much each criterion contributes to the overall Collaboration Score. Must sum to exactly 100.
         </p>
         <div class="row g-3">
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md-2">
             <label class="form-label small fw-bold">Profile Completion</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.profileCompletion" name="swProfileCompletion">
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md-2">
             <label class="form-label small fw-bold">Content Quality</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.contentQuality" name="swContentQuality">
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md-2">
             <label class="form-label small fw-bold">Posting Consistency</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.postingConsistency" name="swPostingConsistency">
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md-2">
             <label class="form-label small fw-bold">Professional Branding</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.professionalBranding" name="swProfessionalBranding">
           </div>
-          <div class="col-6 col-md-3">
+          <div class="col-6 col-md-2">
             <label class="form-label small fw-bold">Campaign Readiness</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.campaignReadiness" name="swCampaignReadiness">

@@ -345,6 +345,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   onReAnalyzeCollaborationScore(): void {
+    if (this.collaborationScoreReAnalyzing) return;
     this.collaborationScoreReAnalyzing = true;
     this.collaborationScoreApi.runMyAudit().subscribe({
       next: (audit) => {

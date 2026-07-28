@@ -21,8 +21,12 @@ describe('SocialPlatformFieldComponent', () => {
       'getConnections',
       'getConnectUrl',
       'disconnectPlatform',
+      'getPlatformFlags',
     ]);
     apiSpy.getConnections.and.returnValue(of({ instagram: null, facebook: null }));
+    apiSpy.getPlatformFlags.and.returnValue(
+      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true } }),
+    );
     toastSpy = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'warning']);
 
     await TestBed.configureTestingModule({
@@ -162,5 +166,40 @@ describe('SocialPlatformFieldComponent', () => {
     component.form.handle = 'creator_handle';
 
     expect(component.profileUrl).toBe('https://instagram.com/creator_handle');
+  });
+
+  describe('admin platform toggles', () => {
+    it('hides the Connect block entirely when an admin disables this platform\'s collector', () => {
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true } }),
+      );
+      const { fixture } = createComponent({ allowConnect: true, supportsOAuth: true });
+
+      expect(fixture.nativeElement.querySelector('.spf-connect-block')).toBeFalsy();
+    });
+
+    it('keeps manual handle/tier fields untouched even when the collector is disabled', () => {
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true } }),
+      );
+      const { fixture } = createComponent({ allowConnect: true, supportsOAuth: true });
+
+      expect(fixture.nativeElement.querySelector('input')).toBeTruthy();
+    });
+
+    it('shows the Connect block again once re-enabled (does not cache the disabled state)', () => {
+      apiSpy.getPlatformFlags.and.returnValue(
+        of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true } }),
+      );
+      const { fixture } = createComponent({ allowConnect: true, supportsOAuth: true });
+
+      expect(fixture.nativeElement.querySelector('.spf-connect-block')).toBeTruthy();
+    });
+
+    it('does not fetch platform flags for registration (allowConnect false)', () => {
+      createComponent({ allowConnect: false, supportsOAuth: true });
+
+      expect(apiSpy.getPlatformFlags).not.toHaveBeenCalled();
+    });
   });
 });

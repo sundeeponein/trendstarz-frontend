@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { InfluencerDashboardComponent } from './influencer-dashboard.component';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
@@ -9,6 +9,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { ShippingAddressModalService } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { MonetizationApiService } from '../../services/monetization-api.service';
 import { Router } from '@angular/router';
+import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
 
 describe('InfluencerDashboardComponent usage summary', () => {
   async function createComponent(options?: { includeUsage?: boolean }) {
@@ -71,6 +72,13 @@ describe('InfluencerDashboardComponent usage summary', () => {
       getFeatureValue: () => false,
     };
 
+    const collaborationScoreApiSpy = jasmine.createSpyObj<CollaborationScoreApiService>(
+      'CollaborationScoreApiService',
+      ['getAudit', 'runMyAudit'],
+    );
+    collaborationScoreApiSpy.getAudit.and.returnValue(of(null as any));
+    collaborationScoreApiSpy.runMyAudit.and.returnValue(of({ collaborationScore: 50 } as any));
+
     await TestBed.configureTestingModule({
       imports: [InfluencerDashboardComponent],
       providers: [
@@ -79,6 +87,7 @@ describe('InfluencerDashboardComponent usage summary', () => {
         { provide: DashboardService, useValue: dashboardServiceStub },
         { provide: PlansService, useValue: plansStub },
         { provide: MonetizationApiService, useValue: monetizationStub },
+        { provide: CollaborationScoreApiService, useValue: collaborationScoreApiSpy },
         { provide: ToastService, useValue: { info: jasmine.createSpy('info'), success: jasmine.createSpy('success'), error: jasmine.createSpy('error') } },
         { provide: ShippingAddressModalService, useValue: { prompt: () => Promise.resolve(null) } },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
@@ -119,5 +128,19 @@ describe('InfluencerDashboardComponent usage summary', () => {
 
     expect(text).not.toContain('Daily profile views:');
     expect(text).not.toContain('Daily searches:');
+  });
+
+  it('ignores a second onReAnalyzeCollaborationScore() call while the first is still in flight', async () => {
+    const fixture = await createComponent();
+    const api = TestBed.inject(CollaborationScoreApiService) as jasmine.SpyObj<CollaborationScoreApiService>;
+    // A never-completing Subject keeps the request "in flight" across both
+    // synchronous calls below — of(...) would resolve immediately and reset
+    // the guard flag before the second call, hiding the bug this protects.
+    api.runMyAudit.and.returnValue(new Subject<any>());
+
+    fixture.componentInstance.onReAnalyzeCollaborationScore();
+    fixture.componentInstance.onReAnalyzeCollaborationScore();
+
+    expect(api.runMyAudit).toHaveBeenCalledTimes(1);
   });
 });

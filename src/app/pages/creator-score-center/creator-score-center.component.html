@@ -10,6 +10,7 @@
         [audit]="audit"
         [loading]="loading"
         [reAnalyzing]="reAnalyzing"
+        [initialConnections]="connections"
         (reAnalyze)="onReAnalyze()"
         (auditRefreshed)="onAuditRefreshed($event)"
       />
@@ -30,10 +31,10 @@
           {{ scoreConfidence.level }}
         </span>
         <div class="csc-confidence-based-on">
-          <span class="csc-confidence-based-on-label">Based On</span>
-          <ul>
+          <span class="csc-confidence-based-on-label" id="csc-based-on-label">Based On</span>
+          <ul aria-labelledby="csc-based-on-label">
             <li *ngFor="let item of scoreConfidence.basedOn" [class.met]="item.met">
-              <i class="bi" [ngClass]="item.met ? 'bi-check-circle-fill' : 'bi-dash-circle'"></i>
+              <i class="bi" [ngClass]="item.met ? 'bi-check-circle-fill' : 'bi-dash-circle'" aria-hidden="true"></i>
               {{ item.met ? item.label : item.absentLabel }}
             </li>
           </ul>
@@ -46,7 +47,7 @@
       <h2 class="csc-section-title">Platform Status</h2>
       <div class="csc-platform-grid">
         <div class="csc-platform-row" *ngFor="let row of platformStatus">
-          <span class="csc-platform-name"><i class="bi" [ngClass]="row.icon"></i> {{ row.platform }}</span>
+          <span class="csc-platform-name"><i class="bi" [ngClass]="row.icon" aria-hidden="true"></i> {{ row.platform }}</span>
           <span
             class="badge rounded-pill"
             [ngClass]="{
@@ -65,8 +66,9 @@
     <div class="csc-section csc-card">
       <h2 class="csc-section-title">Audit History</h2>
 
-      <div class="csc-history-loading" *ngIf="historyLoading">
-        <div class="spinner-border spinner-border-sm text-primary"></div>
+      <div class="csc-history-loading" *ngIf="historyLoading" role="status" aria-live="polite">
+        <div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div>
+        <span class="visually-hidden">Loading audit history…</span>
       </div>
 
       <p class="text-muted small mb-0" *ngIf="!historyLoading && !history.length">No audits yet.</p>
@@ -79,18 +81,29 @@
             <span class="badge rounded-pill" [ngClass]="entry.isPaid ? 'bg-warning-subtle text-warning-emphasis' : 'bg-success-subtle text-success-emphasis'">
               {{ entry.isPaid ? 'Paid' : 'Free' }}
             </span>
-            <button type="button" class="btn btn-sm btn-outline-secondary csc-history-view">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary csc-history-view"
+              [attr.aria-expanded]="expandedVersion === entry.version"
+              [attr.aria-label]="(expandedVersion === entry.version ? 'Hide' : 'View') + ' audit from ' + (entry.createdAt | date: 'd MMM y')"
+            >
               {{ expandedVersion === entry.version ? 'Hide' : 'View' }}
             </button>
           </div>
 
           <div class="csc-history-detail" *ngIf="expandedVersion === entry.version">
-            <div class="csc-history-detail-loading" *ngIf="expandedLoading">
-              <div class="spinner-border spinner-border-sm text-primary"></div>
+            <div class="csc-history-detail-loading" *ngIf="expandedLoading" role="status" aria-live="polite">
+              <div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div>
+              <span class="visually-hidden">Loading this audit…</span>
             </div>
             <div class="csc-history-detail-body" *ngIf="!expandedLoading && expandedDetail">
-              <div class="csc-history-score-circle" [ngClass]="ui.scoreTierClass(expandedDetail.collaborationScore)">
-                {{ expandedDetail.collaborationScore }}<span class="small">/100</span>
+              <div
+                class="csc-history-score-circle"
+                [ngClass]="ui.scoreTierClass(expandedDetail.collaborationScore)"
+                role="img"
+                [attr.aria-label]="'Score: ' + expandedDetail.collaborationScore + ' out of 100'"
+              >
+                {{ expandedDetail.collaborationScore }}<span class="small" aria-hidden="true">/100</span>
               </div>
               <div class="csc-history-detail-meta">
                 <div><strong>Campaign Readiness:</strong> {{ expandedDetail.campaignReadiness }}</div>

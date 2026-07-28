@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, NgZone, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CollaborationScoreApiService, CollaborationScorePreview } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
 
 type PlatformId = 'instagram' | 'facebook' | 'youtube' | 'linkedin';
 
@@ -13,13 +14,17 @@ type PlatformId = 'instagram' | 'facebook' | 'youtube' | 'linkedin';
   templateUrl: './score-preview.component.html',
   styleUrls: ['./score-preview.component.scss'],
 })
-export class ScorePreviewComponent implements OnDestroy {
+export class ScorePreviewComponent implements OnInit, OnDestroy {
   readonly platforms: Array<{ id: PlatformId; name: string; icon: string }> = [
     { id: 'instagram', name: 'Instagram', icon: 'bi bi-instagram' },
     { id: 'facebook', name: 'Facebook', icon: 'bi bi-facebook' },
     { id: 'youtube', name: 'YouTube', icon: 'bi bi-youtube' },
     { id: 'linkedin', name: 'LinkedIn', icon: 'bi bi-linkedin' },
   ];
+  // Optimistic default (all enabled) until the real flags load, so tabs
+  // don't flash away right after render — an admin-disabled platform stays
+  // visible for at most one HTTP round-trip, never permanently mis-hidden.
+  platformsEnabled: Record<PlatformId, boolean> = { instagram: true, facebook: true, youtube: true, linkedin: true };
   selectedPlatform: PlatformId = 'youtube';
 
   youtubeUrl = '';
@@ -44,6 +49,7 @@ export class ScorePreviewComponent implements OnDestroy {
     private readonly router: Router,
     private readonly ngZone: NgZone,
     private readonly cdr: ChangeDetectorRef,
+    public readonly ui: CollaborationScoreUiUtilsService,
   ) {}
 
   // Non-YouTube links are the most common mistake — the headline never says
@@ -62,8 +68,31 @@ export class ScorePreviewComponent implements OnDestroy {
     return ScorePreviewComponent.LOADING_MESSAGES[this.loadingMessageIndex];
   }
 
+  get visiblePlatforms(): Array<{ id: PlatformId; name: string; icon: string }> {
+    return this.platforms.filter((p) => this.platformsEnabled[p.id]);
+  }
+
   get selectedPlatformName(): string {
     return this.platforms.find((p) => p.id === this.selectedPlatform)?.name || '';
+  }
+
+  ngOnInit(): void {
+    this.api.getPlatformFlags().subscribe({
+      next: (res) => {
+        this.platformsEnabled = res.platformsEnabled;
+        // The tab a visitor is currently on may have just been disabled —
+        // fall back to the first one still visible rather than leaving them
+        // stranded on a tab that no longer renders.
+        if (!this.platformsEnabled[this.selectedPlatform]) {
+          this.selectedPlatform = this.visiblePlatforms[0]?.id ?? this.selectedPlatform;
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Fetch failed — keep the optimistic all-enabled default rather than
+        // hiding every platform because of an unrelated network hiccup.
+      },
+    });
   }
 
   selectPlatform(id: PlatformId): void {
@@ -129,13 +158,6 @@ export class ScorePreviewComponent implements OnDestroy {
         });
       },
     });
-  }
-
-  tierLabel(score: number): string {
-    if (score >= 80) return 'Excellent potential.';
-    if (score >= 60) return 'Good potential.';
-    if (score >= 40) return 'Room to grow.';
-    return 'Just getting started.';
   }
 
   registerAs(role: 'influencer' | 'photographer' | 'brand'): void {

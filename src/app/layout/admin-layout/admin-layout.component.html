@@ -64,12 +64,7 @@
          class="nav-tab">
         Link Analytics
       </a>
-      <a routerLink="/admin/collaboration-score-settings"
-         routerLinkActive="active"
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-        Collaboration Score
-      </a>
+      
 
     </div>
 
@@ -111,7 +106,8 @@
             <li><span class="dropdown-header">{{ adminUser.name }}</span></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-dashboard">Profile Settings</a></li>
-            <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li>
+            <!-- <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li> -->
+            <li><a class="dropdown-item" routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"> Collaboration Score </a></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" >Admin Management</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/plans">Plans</a></li>
