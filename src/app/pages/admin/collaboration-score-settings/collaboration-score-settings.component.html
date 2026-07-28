@@ -382,5 +382,9 @@
     <button type="button" class="btn btn-outline-danger ms-2" [disabled]="resetting" (click)="resetToDefaults()">
       {{ resetting ? 'Resetting…' : 'Reset to Defaults' }}
     </button>
+    <p class="text-danger small mt-2 mb-0" *ngIf="scoreWeightsSum !== 100">
+      Save is disabled — Score Weights above must sum to exactly 100 (currently {{ scoreWeightsSum }}). This blocks
+      saving every section on this page, not just Score Weights.
+    </p>
   </ng-container>
 </div>
