@@ -60,7 +60,19 @@ export class CollaborationScoreSettingsComponent implements OnInit {
     this.api.getAdminList({ summary: true, limit: 1 }).subscribe({
       next: (res) => {
         this.summary = res?.summary || null;
-        this.todaySummary = res?.todaySummary || null;
+        // Defaults platformBreakdown to [] here (not just in the template)
+        // so a backend response that predates this field — or any other gap
+        // — degrades to "no platform data" instead of throwing on `.length`.
+        this.todaySummary = res?.todaySummary
+          ? {
+              ...res.todaySummary,
+              platformBreakdown: (res.todaySummary.platformBreakdown || []).map((row) => ({
+                ...row,
+                aiCount: row.aiCount || 0,
+                paidCount: row.paidCount || 0,
+              })),
+            }
+          : null;
         this.summaryLoading = false;
       },
       error: () => {

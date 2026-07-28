@@ -79,12 +79,16 @@
                 <tr>
                   <th>Platform</th>
                   <th>Audits</th>
+                  <th>AI Calls</th>
+                  <th>Paid</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let row of todaySummary.platformBreakdown">
                   <td>{{ row.platform }}</td>
                   <td>{{ row.count }}</td>
+                  <td>{{ row.aiCount }}</td>
+                  <td>{{ row.paidCount }}</td>
                 </tr>
               </tbody>
             </table>

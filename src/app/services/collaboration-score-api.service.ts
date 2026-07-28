@@ -156,6 +156,8 @@ export interface CollaborationScorePreview {
 export interface CollaborationScoreTodayPlatformCount {
   platform: string;
   count: number;
+  aiCount: number;
+  paidCount: number;
 }
 
 export interface CollaborationScoreTodaySummary {
