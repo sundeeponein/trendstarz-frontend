@@ -1,0 +1,151 @@
+.csc-page {
+  background: #f6f7fa;
+  min-height: 60vh;
+}
+
+.csc-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #161a26;
+  margin-bottom: 0.25rem;
+}
+
+.csc-subtitle {
+  color: #5f6b84;
+  margin-bottom: 1.5rem;
+}
+
+.csc-section {
+  margin-bottom: 1.5rem;
+}
+
+.csc-card {
+  background: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.05);
+}
+
+.csc-section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #161a26;
+  margin-bottom: 1rem;
+}
+
+// Platform Status
+.csc-platform-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.csc-platform-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
+}
+
+.csc-platform-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #3a4561;
+
+  i {
+    font-size: 1.1rem;
+    color: #f55b0a;
+  }
+}
+
+// Audit History
+.csc-history-loading,
+.csc-history-detail-loading {
+  padding: 0.75rem 0;
+}
+
+.csc-history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.csc-history-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0.25rem;
+  border-bottom: 1px solid #eef0f6;
+  cursor: pointer;
+
+  &:hover {
+    background: #fafbfd;
+  }
+}
+
+.csc-history-date {
+  flex: 1;
+  color: #3a4561;
+  font-weight: 600;
+}
+
+.csc-history-score {
+  font-weight: 800;
+  color: #161a26;
+  width: 40px;
+}
+
+.csc-history-view {
+  margin-left: auto;
+}
+
+.csc-history-detail {
+  padding: 1rem 0.25rem 1.25rem;
+  border-bottom: 1px solid #eef0f6;
+}
+
+.csc-history-detail-body {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.csc-history-score-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.csc-history-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  color: #3a4561;
+}
+
+// Future Features
+.csc-future-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.csc-future-card {
+  background: #f3f5f9;
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  color: #9aa3b5;
+  font-weight: 700;
+  opacity: 0.7;
+}

@@ -1,7 +1,16 @@
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 import { environment } from "../../environments/environment";
+
+// Backend wraps every response in { success, data } via a global Nest
+// interceptor (response.interceptor.ts) unless the payload already has a
+// `success` key. Every other frontend service unwraps this defensively —
+// this one didn't, which is why fields silently read as undefined.
+function unwrap<T>(res: any): T {
+  return (res && typeof res === "object" && "data" in res ? res.data : res) as T;
+}
 
 export interface CollaborationScorePricingSuggestion {
   reelPrice: number | null;
@@ -65,6 +74,7 @@ export interface CollaborationAuditHistoryEntry {
   collaborationScore: number;
   campaignReadiness: string;
   trendstarzRecommended: boolean;
+  isPaid: boolean;
   createdAt: string;
   scoreDelta: number | null;
 }
@@ -160,37 +170,53 @@ export class CollaborationScoreApiService {
   constructor(private readonly http: HttpClient) {}
 
   getAudit(userId: string): Observable<CollaborationAudit> {
-    return this.http.get<CollaborationAudit>(`${this.apiUrl}/audit/${userId}`);
+    return this.http
+      .get<CollaborationAudit>(`${this.apiUrl}/audit/${userId}`)
+      .pipe(map((res) => unwrap<CollaborationAudit>(res)));
   }
 
   /** Anonymous, pre-registration teaser — no auth header, nothing saved server-side. */
   previewFromYoutubeUrl(youtubeUrl: string): Observable<CollaborationScorePreview> {
-    return this.http.post<CollaborationScorePreview>(`${this.apiUrl}/audit/preview`, { youtubeUrl });
+    return this.http
+      .post<CollaborationScorePreview>(`${this.apiUrl}/audit/preview`, { youtubeUrl })
+      .pipe(map((res) => unwrap<CollaborationScorePreview>(res)));
   }
 
   /** Self/admin only — every past version, newest first. */
   getAuditHistory(userId: string, limit = 10): Observable<{ history: CollaborationAuditHistoryEntry[] }> {
-    return this.http.get<{ history: CollaborationAuditHistoryEntry[] }>(
-      `${this.apiUrl}/audit/${userId}/history`,
-      { params: { limit: String(limit) } },
-    );
+    return this.http
+      .get<{ history: CollaborationAuditHistoryEntry[] }>(`${this.apiUrl}/audit/${userId}/history`, {
+        params: { limit: String(limit) },
+      })
+      .pipe(map((res) => unwrap<{ history: CollaborationAuditHistoryEntry[] }>(res)));
+  }
+
+  /** Self/admin only — a specific past audit version's full historical snapshot. */
+  getAuditVersion(userId: string, version: number): Observable<CollaborationAudit> {
+    return this.http
+      .get<CollaborationAudit>(`${this.apiUrl}/audit/${userId}/version/${version}`)
+      .pipe(map((res) => unwrap<CollaborationAudit>(res)));
   }
 
   /** Admin-only — every re-analysis payment for one creator. */
   getReanalysisPayments(userId: string): Observable<{ payments: CollaborationReanalysisPayment[] }> {
-    return this.http.get<{ payments: CollaborationReanalysisPayment[] }>(
-      `${this.apiUrl}/audit/${userId}/payments`,
-    );
+    return this.http
+      .get<{ payments: CollaborationReanalysisPayment[] }>(`${this.apiUrl}/audit/${userId}/payments`)
+      .pipe(map((res) => unwrap<{ payments: CollaborationReanalysisPayment[] }>(res)));
   }
 
   /** Self-trigger ("Re-Analyze" button) — backend infers requester from the JWT. Free only for the first-ever audit. */
   runMyAudit(): Observable<CollaborationAudit> {
-    return this.http.post<CollaborationAudit>(`${this.apiUrl}/audit/run`, {});
+    return this.http
+      .post<CollaborationAudit>(`${this.apiUrl}/audit/run`, {})
+      .pipe(map((res) => unwrap<CollaborationAudit>(res)));
   }
 
   /** Creates a Razorpay order for a paid re-analysis (every audit after the first). */
   createReanalysisOrder(): Observable<{ order: { orderId: string; amount: number; currency: string; keyId: string } }> {
-    return this.http.post<any>(`${this.apiUrl}/audit/reanalysis/order`, {});
+    return this.http
+      .post<any>(`${this.apiUrl}/audit/reanalysis/order`, {})
+      .pipe(map((res) => unwrap<{ order: { orderId: string; amount: number; currency: string; keyId: string } }>(res)));
   }
 
   /** Verifies the Razorpay payment, then runs and returns the new audit. */
@@ -199,12 +225,16 @@ export class CollaborationScoreApiService {
     paymentId: string;
     signature: string;
   }): Observable<CollaborationAudit> {
-    return this.http.post<CollaborationAudit>(`${this.apiUrl}/audit/reanalysis/verify`, payload);
+    return this.http
+      .post<CollaborationAudit>(`${this.apiUrl}/audit/reanalysis/verify`, payload)
+      .pipe(map((res) => unwrap<CollaborationAudit>(res)));
   }
 
   /** Admin-on-behalf-of trigger — requires an admin JWT server-side. */
   runAuditFor(userId: string, role: string): Observable<CollaborationAudit> {
-    return this.http.post<CollaborationAudit>(`${this.apiUrl}/audit/run`, { userId, role });
+    return this.http
+      .post<CollaborationAudit>(`${this.apiUrl}/audit/run`, { userId, role })
+      .pipe(map((res) => unwrap<CollaborationAudit>(res)));
   }
 
   getAdminList(query: {
@@ -226,32 +256,44 @@ export class CollaborationScoreApiService {
     Object.entries(query || {}).forEach(([key, value]) => {
       if (value !== undefined && value !== null) params[key] = String(value);
     });
-    return this.http.get<any>(`${this.apiUrl}/audit/admin`, { params });
+    return this.http.get<any>(`${this.apiUrl}/audit/admin`, { params }).pipe(map((res) => unwrap<any>(res)));
   }
 
   getSettings(): Observable<CollaborationScoreSettings> {
-    return this.http.get<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings`);
+    return this.http
+      .get<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings`)
+      .pipe(map((res) => unwrap<CollaborationScoreSettings>(res)));
   }
 
   updateSettings(payload: Partial<CollaborationScoreSettings>): Observable<CollaborationScoreSettings> {
-    return this.http.put<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings`, payload);
+    return this.http
+      .put<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings`, payload)
+      .pipe(map((res) => unwrap<CollaborationScoreSettings>(res)));
   }
 
   /** Deletes the current config and re-seeds the JSON defaults. */
   resetSettings(): Observable<CollaborationScoreSettings> {
-    return this.http.post<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings/reset`, {});
+    return this.http
+      .post<CollaborationScoreSettings>(`${this.apiUrl}/audit/settings/reset`, {})
+      .pipe(map((res) => unwrap<CollaborationScoreSettings>(res)));
   }
 
   /** Returns the Meta consent URL to redirect the browser to. */
   getConnectUrl(platform: "instagram" | "facebook"): Observable<{ authorizationUrl: string }> {
-    return this.http.get<{ authorizationUrl: string }>(`${this.apiUrl}/audit/connect/${platform}`);
+    return this.http
+      .get<{ authorizationUrl: string }>(`${this.apiUrl}/audit/connect/${platform}`)
+      .pipe(map((res) => unwrap<{ authorizationUrl: string }>(res)));
   }
 
   disconnectPlatform(platform: "instagram" | "facebook"): Observable<{ success: boolean }> {
-    return this.http.post<{ success: boolean }>(`${this.apiUrl}/audit/disconnect/${platform}`, {});
+    return this.http
+      .post<{ success: boolean }>(`${this.apiUrl}/audit/disconnect/${platform}`, {})
+      .pipe(map((res) => unwrap<{ success: boolean }>(res)));
   }
 
   getConnections(): Observable<SocialConnections> {
-    return this.http.get<SocialConnections>(`${this.apiUrl}/audit/connections`);
+    return this.http
+      .get<SocialConnections>(`${this.apiUrl}/audit/connections`)
+      .pipe(map((res) => unwrap<SocialConnections>(res)));
   }
 }

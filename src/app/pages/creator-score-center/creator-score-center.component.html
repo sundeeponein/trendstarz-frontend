@@ -1,0 +1,92 @@
+<div class="csc-page">
+  <div class="container py-4">
+    <h1 class="csc-title">TrendStarZ Score Center</h1>
+    <p class="csc-subtitle">Everything about your Collaboration Score, in one place.</p>
+
+    <!-- Existing full card — score, sub-scores, top improvements, pricing,
+         IG/FB connect/disconnect, and the re-analyze/payment flow. Unchanged. -->
+    <div class="csc-section">
+      <app-collaboration-score-card
+        [audit]="audit"
+        [loading]="loading"
+        [reAnalyzing]="reAnalyzing"
+        (reAnalyze)="onReAnalyze()"
+        (auditRefreshed)="onAuditRefreshed($event)"
+      />
+    </div>
+
+    <!-- Platform Status -->
+    <div class="csc-section csc-card">
+      <h2 class="csc-section-title">Platform Status</h2>
+      <div class="csc-platform-grid">
+        <div class="csc-platform-row" *ngFor="let row of platformStatus">
+          <span class="csc-platform-name"><i class="bi" [ngClass]="row.icon"></i> {{ row.platform }}</span>
+          <span
+            class="badge rounded-pill"
+            [ngClass]="{
+              'bg-success-subtle text-success-emphasis': row.status === 'Connected',
+              'bg-secondary-subtle text-secondary-emphasis': row.status === 'Not Connected',
+              'bg-warning-subtle text-warning-emphasis': row.status === 'Coming Soon'
+            }"
+          >
+            {{ row.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit History -->
+    <div class="csc-section csc-card">
+      <h2 class="csc-section-title">Audit History</h2>
+
+      <div class="csc-history-loading" *ngIf="historyLoading">
+        <div class="spinner-border spinner-border-sm text-primary"></div>
+      </div>
+
+      <p class="text-muted small mb-0" *ngIf="!historyLoading && !history.length">No audits yet.</p>
+
+      <div class="csc-history-list" *ngIf="!historyLoading && history.length">
+        <ng-container *ngFor="let entry of history">
+          <div class="csc-history-row" (click)="toggleHistoryDetail(entry)">
+            <span class="csc-history-date">{{ entry.createdAt | date: 'd MMM y' }}</span>
+            <span class="csc-history-score">{{ entry.collaborationScore }}</span>
+            <span class="badge rounded-pill" [ngClass]="entry.isPaid ? 'bg-warning-subtle text-warning-emphasis' : 'bg-success-subtle text-success-emphasis'">
+              {{ entry.isPaid ? 'Paid' : 'Free' }}
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-secondary csc-history-view">
+              {{ expandedVersion === entry.version ? 'Hide' : 'View' }}
+            </button>
+          </div>
+
+          <div class="csc-history-detail" *ngIf="expandedVersion === entry.version">
+            <div class="csc-history-detail-loading" *ngIf="expandedLoading">
+              <div class="spinner-border spinner-border-sm text-primary"></div>
+            </div>
+            <div class="csc-history-detail-body" *ngIf="!expandedLoading && expandedDetail">
+              <div class="csc-history-score-circle" [ngClass]="ui.scoreTierClass(expandedDetail.collaborationScore)">
+                {{ expandedDetail.collaborationScore }}<span class="small">/100</span>
+              </div>
+              <div class="csc-history-detail-meta">
+                <div><strong>Campaign Readiness:</strong> {{ expandedDetail.campaignReadiness }}</div>
+                <div><strong>TrendStarZ Recommended:</strong> {{ expandedDetail.trendstarzRecommended ? 'Yes' : 'No' }}</div>
+                <div *ngIf="expandedDetail.profileCompletenessScore != null">
+                  <strong>Profile Completion:</strong> {{ expandedDetail.profileCompletenessScore }}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Future Features — hidden until enabled via an admin feature flag. -->
+    <div class="csc-section csc-card" *ngIf="futureFeaturesEnabled">
+      <h2 class="csc-section-title">Coming Soon</h2>
+      <div class="csc-future-grid">
+        <div class="csc-future-card"><span>Portfolio Score</span></div>
+        <div class="csc-future-card"><span>Marketplace Visibility</span></div>
+        <div class="csc-future-card"><span>AI Recommendations</span></div>
+      </div>
+    </div>
+  </div>
+</div>

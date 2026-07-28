@@ -49,9 +49,7 @@
       <p class="sp-card__connect-hint">
         Real scoring for this platform requires connecting your account after you register.
       </p>
-      <button type="button" class="btn btn-primary sp-card__register" (click)="registerFree()">
-        Register Free
-      </button>
+      <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
     </ng-container>
   </ng-container>
 
@@ -72,12 +70,30 @@
         <li><i class="bi bi-lock-fill"></i> Save your Score</li>
         <li><i class="bi bi-lock-fill"></i> Get discovered by Brands</li>
       </ul>
-      <button type="button" class="btn btn-primary sp-card__register" (click)="registerFree()">
-        Register Free
-      </button>
+      <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
       <button type="button" class="btn btn-link sp-card__again" (click)="checkAnother()">
         Check another channel
       </button>
     </div>
   </ng-container>
 </div>
+
+<!-- Registration isn't unified across roles — don't assume Influencer.
+     Influencer/Photographer both need a real Collaboration Score, so both
+     are grouped as equal "Creator" options rather than defaulting away from
+     Photographer. -->
+<ng-template #roleChoice>
+  <div class="sp-card__role-choice">
+    <p class="sp-card__role-heading">Who are you?</p>
+    <div class="sp-card__role-group">
+      <span class="sp-card__role-group-label">Creator</span>
+      <div class="sp-card__role-buttons">
+        <button type="button" class="btn btn-outline-primary" (click)="registerAs('influencer')">Influencer</button>
+        <button type="button" class="btn btn-outline-primary" (click)="registerAs('photographer')">Photographer</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary sp-card__role-brand" (click)="registerAs('brand')">
+      Brand
+    </button>
+  </div>
+</ng-template>

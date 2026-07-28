@@ -92,27 +92,27 @@
           How much each criterion contributes to the overall Collaboration Score. Must sum to exactly 100.
         </p>
         <div class="row g-3">
-          <div class="col-6 col-md-4">
+          <div class="col-6 col-md-3">
             <label class="form-label small fw-bold">Profile Completion</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.profileCompletion" name="swProfileCompletion">
           </div>
-          <div class="col-6 col-md-4">
+          <div class="col-6 col-md-3">
             <label class="form-label small fw-bold">Content Quality</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.contentQuality" name="swContentQuality">
           </div>
-          <div class="col-6 col-md-4">
+          <div class="col-6 col-md-3">
             <label class="form-label small fw-bold">Posting Consistency</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.postingConsistency" name="swPostingConsistency">
           </div>
-          <div class="col-6 col-md-4">
+          <div class="col-6 col-md-3">
             <label class="form-label small fw-bold">Professional Branding</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.professionalBranding" name="swProfessionalBranding">
           </div>
-          <div class="col-6 col-md-4">
+          <div class="col-6 col-md-3">
             <label class="form-label small fw-bold">Campaign Readiness</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.scoreWeights.campaignReadiness" name="swCampaignReadiness">
@@ -132,22 +132,22 @@
           How much of Content Quality and Professional Branding comes from rules vs. AI. Each pair must sum to 100.
         </p>
         <div class="row g-3">
-          <div class="col-md-6">
+          <div class="col-md-3">
             <label class="form-label small fw-bold">Content Quality — Rules %</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.weights.contentQuality.rulesPercent" name="cqRules">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-3">
             <label class="form-label small fw-bold">Content Quality — AI %</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.weights.contentQuality.aiPercent" name="cqAi">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-3">
             <label class="form-label small fw-bold">Professional Branding — Rules %</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.weights.professionalBranding.rulesPercent" name="pbRules">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-3">
             <label class="form-label small fw-bold">Professional Branding — AI %</label>
             <input type="number" class="form-control" min="0" max="100"
               [(ngModel)]="settings.weights.professionalBranding.aiPercent" name="pbAi">

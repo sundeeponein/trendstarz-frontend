@@ -138,8 +138,8 @@ export class ScorePreviewComponent implements OnDestroy {
     return 'Just getting started.';
   }
 
-  registerFree(): void {
-    this.router.navigate(['/register-influencer']);
+  registerAs(role: 'influencer' | 'photographer' | 'brand'): void {
+    this.router.navigate([`/register-${role}`]);
   }
 
   checkAnother(): void {

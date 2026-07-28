@@ -23,12 +23,12 @@ import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
-import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
+import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreCardComponent],
+  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })

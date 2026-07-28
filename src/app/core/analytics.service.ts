@@ -51,6 +51,8 @@ export class AnalyticsService implements OnDestroy {
     '/register-influencer',
     '/register-brand',
     '/register-photographer',
+    '/trendstarz-score',
+    '/audit',
     '/login',
     '/auth/login',
     '/auth',
@@ -225,6 +227,35 @@ export class AnalyticsService implements OnDestroy {
     this.logEvent('campaign_completed', eventData);
     this.sendToGA4('campaign_completed', eventData);
     this.sendToClarity('campaign_completed', eventData);
+  }
+
+  /**
+   * TrendStarZ Score landing page (/trendstarz-score) — "Check My Score" CTA click.
+   */
+  trackTrendstarzScoreCheckClicked(context: { loggedIn: boolean; destination: string }): void {
+    const eventData = { loggedIn: context.loggedIn, destination: context.destination };
+    this.logEvent('trendstarz_score_check_clicked', eventData);
+    this.sendToGA4('trendstarz_score_check_clicked', eventData);
+    this.sendToClarity('trendstarz_score_check_clicked', eventData);
+  }
+
+  /**
+   * TrendStarZ Score landing page — an FAQ item was expanded.
+   */
+  trackTrendstarzScoreFaqExpanded(context: { question: string }): void {
+    const eventData = { question: context.question };
+    this.logEvent('trendstarz_score_faq_expanded', eventData);
+    this.sendToGA4('trendstarz_score_faq_expanded', eventData);
+    this.sendToClarity('trendstarz_score_faq_expanded', eventData);
+  }
+
+  /**
+   * TrendStarZ Score landing page — the Supported Platforms section scrolled into view.
+   */
+  trackTrendstarzScorePlatformSectionViewed(): void {
+    this.logEvent('trendstarz_score_platform_section_viewed');
+    this.sendToGA4('trendstarz_score_platform_section_viewed', {});
+    this.sendToClarity('trendstarz_score_platform_section_viewed', {});
   }
 
   /**

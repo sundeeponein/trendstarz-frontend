@@ -15,6 +15,8 @@ export const routes: Routes = [
 			{ path: 'search', canActivate: [nonAdminSearchGuard], loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
 			{ path: 'faqs', loadComponent: () => import('./pages/faqs/faqs.component').then(m => m.FaqsComponent) },
 			{ path: 'why-trendstarz', loadComponent: () => import('./pages/why-trendstarz/why-trendstarz.component').then(m => m.WhyTrendstarzComponent) },
+			{ path: 'trendstarz-score', loadComponent: () => import('./pages/trendstarz-score/trendstarz-score.component').then(m => m.TrendstarzScoreComponent) },
+			{ path: 'audit', loadComponent: () => import('./shared/score-preview/score-preview.component').then(m => m.ScorePreviewComponent) },
 			{ path: 'features', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent) },
 			{ path: 'features/influencers', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'influencer' } },
 			{ path: 'features/brands', loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent), data: { audience: 'brand' } },
@@ -53,6 +55,7 @@ export const routes: Routes = [
 			{ path: 'settings', canActivate: [authGuard], loadComponent: () => import('./pages/user-settings/user-settings.component').then(m => m.UserSettingsComponent) },
 			// DASHBOARDS
 			{ path: 'influencer-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/influencer-dashboard/influencer-dashboard.component').then(m => m.InfluencerDashboardComponent) },
+			{ path: 'dashboard/trendstarz-score', canActivate: [authGuard], loadComponent: () => import('./pages/creator-score-center/creator-score-center.component').then(m => m.CreatorScoreCenterComponent) },
 			{ path: 'campaign-submission/:inviteId/:slug', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-submission/campaign-submission.component').then(m => m.CampaignSubmissionComponent) },
 			{ path: 'campaign-submission/:inviteId', canActivate: [authGuard], loadComponent: () => import('./pages/campaign-submission/campaign-submission.component').then(m => m.CampaignSubmissionComponent) },
 			{ path: 'brand-dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/brand-dashboard/brand-dashboard.component').then(m => m.BrandDashboardComponent) },

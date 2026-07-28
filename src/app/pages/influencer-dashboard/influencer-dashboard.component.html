@@ -123,12 +123,11 @@
   </div>
 
   <div class="section-card mb-4" *ngIf="!loading">
-    <app-collaboration-score-card
+    <app-collaboration-score-summary-widget
       [audit]="collaborationAudit"
       [loading]="collaborationScoreLoading"
-      [reAnalyzing]="collaborationScoreReAnalyzing"
-      (reAnalyze)="onReAnalyzeCollaborationScore()"
-      (auditRefreshed)="collaborationAudit = $event"
+      [generating]="collaborationScoreReAnalyzing"
+      (generateScore)="onReAnalyzeCollaborationScore()"
     />
   </div>
 
