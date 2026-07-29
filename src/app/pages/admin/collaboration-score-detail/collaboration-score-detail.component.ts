@@ -86,6 +86,34 @@ export class CollaborationScoreDetailComponent implements OnInit {
     return gap > 0 ? gap : null;
   }
 
+  /**
+   * Same 5-criteria breakdown the creator's own Score Center shows (see
+   * CollaborationScoreCardComponent.subScores) — surfaced here so an admin
+   * can see exactly which criterion is holding a score down, instead of
+   * only the single blended total.
+   */
+  get subScores(): Array<{ label: string; value: number; weight: string }> {
+    if (!this.audit) return [];
+    return [
+      { label: 'Profile Completeness', value: this.audit.profileCompletenessScore ?? 0, weight: '15%' },
+      { label: 'Content Quality', value: this.audit.contentQualityScore ?? 0, weight: '25%' },
+      { label: 'Posting Consistency', value: this.audit.postingConsistencyScore ?? 0, weight: '20%' },
+      { label: 'Professional Branding', value: this.audit.professionalBrandingScore ?? 0, weight: '20%' },
+      { label: 'Campaign Readiness', value: this.audit.campaignReadinessScore ?? 0, weight: '20%' },
+    ];
+  }
+
+  get hasSubScoreBreakdown(): boolean {
+    return this.audit?.profileCompletenessScore != null;
+  }
+
+  /** "Verified" = real API data; "Beta" = self-reported (capped, unverified); "Not available" = no usable data. */
+  confidenceLabel(confidence: number): string {
+    if (confidence >= 90) return 'Verified';
+    if (confidence > 0) return 'Beta';
+    return 'Not available';
+  }
+
   runAudit(): void {
     if (this.running) return;
     this.running = true;

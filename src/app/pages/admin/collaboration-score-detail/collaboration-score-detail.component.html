@@ -48,6 +48,49 @@
       </div>
     </div>
 
+    <!-- Platform Confidence — same real-API-vs-self-reported picture the
+         creator's own Score Center shows, so an admin can tell whether a
+         low sub-score is because a platform isn't OAuth-connected yet. -->
+    <div class="card mb-4" *ngIf="audit.platformsCollected?.length">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Platform Confidence</h2>
+        <div class="d-flex flex-column gap-2 small">
+          <div class="d-flex align-items-center gap-2 flex-wrap" *ngFor="let p of audit.platformsCollected">
+            <strong style="min-width: 90px;">{{ p.platform }}</strong>
+            <span class="badge rounded-pill" [ngClass]="p.method === 'API' ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis'">
+              {{ p.method === 'API' ? 'Live API data' : 'Self-reported' }}
+            </span>
+            <span class="badge rounded-pill" [ngClass]="p.confidence >= 90 ? 'bg-success-subtle text-success-emphasis' : (p.confidence > 0 ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary-emphasis')">
+              {{ p.confidence }}% — {{ confidenceLabel(p.confidence) }}
+            </span>
+            <span class="text-muted">{{ p.confidenceReason }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score Breakdown — the 5 weighted criteria behind the single total
+         above; makes it possible to see, e.g., whether a capped
+         self-reported platform is actually what's holding Content
+         Quality/Posting Consistency down, versus Profile Completeness or
+         Professional Branding (which don't depend on any social platform). -->
+    <div class="card mb-4" *ngIf="hasSubScoreBreakdown">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Score Breakdown</h2>
+        <div class="d-flex flex-column gap-2">
+          <div *ngFor="let sub of subScores">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></span>
+              <strong>{{ sub.value }}</strong>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar" [style.width.%]="sub.value"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card mb-4">
       <div class="card-body">
         <h2 class="h6 fw-bold mb-3">Audit History</h2>
