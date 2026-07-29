@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
 import { ToastService } from '../toast/toast.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import { CollaborationScoreCardComponent } from './collaboration-score-card.component';
 
 // A parent that already fetched connections (CreatorScoreCenterComponent,
@@ -26,6 +27,15 @@ describe('CollaborationScoreCardComponent — connections passthrough', () => {
       providers: [
         { provide: CollaborationScoreApiService, useValue: apiSpy },
         { provide: ToastService, useValue: jasmine.createSpyObj('ToastService', ['success', 'error', 'warning']) },
+        {
+          provide: AnalyticsService,
+          useValue: jasmine.createSpyObj('AnalyticsService', [
+            'trackCollabReanalyzeClicked',
+            'trackCollabPaymentStarted',
+            'trackCollabPaymentSuccess',
+            'trackCollabPaymentFailed',
+          ]),
+        },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
         { provide: PLATFORM_ID, useValue: 'browser' },
       ],

@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import {
   CollaborationAudit,
   CollaborationAuditHistoryEntry,
@@ -19,6 +20,9 @@ export interface PlatformStatusRow {
   platform: string;
   icon: string;
   status: PlatformStatus;
+  /** Undefined until a sync-status/Sync response has been merged in. */
+  lastSyncedAt?: string | null;
+  hasChanges?: boolean;
 }
 
 export type ScoreConfidenceLevel = 'High' | 'Medium' | 'Low';
@@ -95,6 +99,9 @@ export class CreatorScoreCenterComponent implements OnInit {
     return { level, basedOn };
   }
 
+  syncing = false;
+  private syncStatusByPlatform: Record<string, { lastSyncedAt: string | null; hasChanges: boolean }> = {};
+
   constructor(
     private readonly api: CollaborationScoreApiService,
     private readonly session: SessionService,
@@ -102,6 +109,7 @@ export class CreatorScoreCenterComponent implements OnInit {
     private readonly router: Router,
     private readonly toast: ToastService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly analytics: AnalyticsService,
     public readonly ui: CollaborationScoreUiUtilsService,
   ) {}
 
@@ -119,6 +127,67 @@ export class CreatorScoreCenterComponent implements OnInit {
     this.loadAudit();
     this.loadHistory();
     this.loadPlatformStatus(role);
+    this.loadSyncStatus();
+  }
+
+  /**
+   * Read-only — reflects whatever the last Sync click (or a connect-time
+   * free rescore) already recorded. Never fetches from Instagram/Facebook/
+   * YouTube itself; that only happens when the creator explicitly clicks
+   * "Sync Latest Profile" (see onSyncLatestProfile below).
+   */
+  private loadSyncStatus(): void {
+    this.api.getSyncStatus().subscribe({
+      next: (res) => {
+        this.syncStatusByPlatform = Object.fromEntries(
+          res.platforms.map((p) => [p.platform.toLowerCase(), { lastSyncedAt: p.lastSyncedAt, hasChanges: p.hasChanges }]),
+        );
+        this.mergeSyncStatusOntoRows();
+        this.cdr.detectChanges();
+      },
+      error: () => {},
+    });
+  }
+
+  private mergeSyncStatusOntoRows(): void {
+    this.platformStatus = this.platformStatus.map((row) => {
+      const sync = this.syncStatusByPlatform[row.platform.toLowerCase()];
+      return sync ? { ...row, lastSyncedAt: sync.lastSyncedAt, hasChanges: sync.hasChanges } : row;
+    });
+  }
+
+  /** Free — fetches fresh platform data and compares it to the current audit. Never scores, never charges. */
+  onSyncLatestProfile(): void {
+    if (this.syncing) return;
+    this.syncing = true;
+    this.analytics.trackCollabSyncStarted();
+    this.api.syncLatestProfile().subscribe({
+      next: (res) => {
+        this.syncing = false;
+        this.syncStatusByPlatform = Object.fromEntries(
+          res.platforms.map((p) => [p.platform.toLowerCase(), { lastSyncedAt: p.lastSyncedAt, hasChanges: p.hasChanges }]),
+        );
+        this.mergeSyncStatusOntoRows();
+        this.analytics.trackCollabSyncCompleted({ success: true });
+        if (res.hasChanges) {
+          this.analytics.trackCollabSyncChangesDetected({
+            platforms: res.platforms.filter((p) => p.hasChanges).map((p) => p.platform),
+          });
+        } else {
+          this.analytics.trackCollabSyncNoChanges();
+        }
+        // Refresh the audit so the embedded card's canReanalyze/hasChanges
+        // reflect this sync immediately, without a page reload.
+        this.loadAudit();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.syncing = false;
+        this.analytics.trackCollabSyncCompleted({ success: false });
+        this.toast.error(err?.error?.message || 'Could not sync your profile. Please try again.');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private loadAudit(): void {
@@ -201,6 +270,7 @@ export class CreatorScoreCenterComponent implements OnInit {
       { platform: 'LinkedIn', icon: 'bi-linkedin', status: 'Coming Soon', enabled: true },
     ];
     this.platformStatus = rows.filter((row) => row.enabled).map(({ enabled, ...row }) => row);
+    this.mergeSyncStatusOntoRows();
     this.cdr.detectChanges();
   }
 

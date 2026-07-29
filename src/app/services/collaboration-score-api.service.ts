@@ -59,6 +59,21 @@ export interface CollaborationAudit {
   canReanalyze?: boolean;
   reanalysisAvailableAt?: string | null;
   reanalysisFeeRupees?: number;
+  // Self/admin only — whether a Sync Latest Profile has detected a change
+  // since the current audit. Folded into canReanalyze server-side; surfaced
+  // here too so the UI can show the right reason a Re-analyze is disabled.
+  hasChanges?: boolean;
+}
+
+export interface CollaborationSyncPlatformStatus {
+  platform: string;
+  lastSyncedAt: string | null;
+  hasChanges: boolean;
+}
+
+export interface CollaborationSyncResult {
+  platforms: CollaborationSyncPlatformStatus[];
+  hasChanges: boolean;
 }
 
 export interface CollaborationReanalysisPayment {
@@ -127,6 +142,10 @@ export interface CollaborationScoreSettings {
   reanalysisFeeRupees: number;
   nightlyReauditEnabled: boolean;
   nightlyReauditCronHour: number;
+  syncEnabled: boolean;
+  syncCooldownMinutes: number;
+  allowManualSync: boolean;
+  requireSyncBeforeReanalysis: boolean;
   youtubeApiQuotaGuardPerDay: number;
   analytics: CollaborationScoreAnalyticsToggles;
   lastNightlyRunAt: string | null;
@@ -314,5 +333,19 @@ export class CollaborationScoreApiService {
     return this.http
       .get<SocialConnections>(`${this.apiUrl}/audit/connections`)
       .pipe(map((res) => unwrap<SocialConnections>(res)));
+  }
+
+  /** Self-only — per-platform last-synced/hasChanges state, read on Score Center load. */
+  getSyncStatus(): Observable<CollaborationSyncResult> {
+    return this.http
+      .get<CollaborationSyncResult>(`${this.apiUrl}/audit/sync-status`)
+      .pipe(map((res) => unwrap<CollaborationSyncResult>(res)));
+  }
+
+  /** Self-only — free "Sync Latest Profile". Never scores, never charges, never creates audit history. */
+  syncLatestProfile(): Observable<CollaborationSyncResult> {
+    return this.http
+      .post<CollaborationSyncResult>(`${this.apiUrl}/audit/sync`, {})
+      .pipe(map((res) => unwrap<CollaborationSyncResult>(res)));
   }
 }

@@ -10,6 +10,7 @@ import {
 } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
 import { ToastService } from '../toast/toast.service';
+import { AnalyticsService } from '../../core/analytics.service';
 
 @Component({
   selector: 'app-collaboration-score-card',
@@ -52,6 +53,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly toast: ToastService,
+    private readonly analytics: AnalyticsService,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
 
@@ -215,7 +217,29 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
       const date = new Date(this.audit.reanalysisAvailableAt).toLocaleDateString();
       return `Available ${date}`;
     }
+    if (this.audit?.canReanalyze === false && this.audit.hasChanges === false) {
+      return 'Your score already reflects the latest synced profile.';
+    }
     return '';
+  }
+
+  /**
+   * Message line shown under the Re-Analyze button once the cooldown has
+   * already elapsed — distinguishes "nothing changed" from "changes found"
+   * so the creator knows whether syncing again is worth it. Not shown at
+   * all while the cooldown itself is still the blocker (that has its own
+   * date-specific note above).
+   */
+  get reanalyzeSyncMessage(): string {
+    if (!this.audit || this.audit.canReanalyze !== false) return '';
+    if (this.audit.reanalysisAvailableAt) return ''; // cooldown note already covers this case
+    if (this.audit.hasChanges === false) return 'Your score already reflects the latest synced profile.';
+    return '';
+  }
+
+  get reanalyzeChangesDetectedMessage(): string {
+    if (!this.audit || !this.audit.hasChanges) return '';
+    return 'Changes detected on your connected platforms.';
   }
 
   confidenceLabel(confidence: number): string {
@@ -231,6 +255,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
       this.reAnalyze.emit();
       return;
     }
+    this.analytics.trackCollabReanalyzeClicked();
     this.startPaidReanalysis();
   }
 
@@ -265,6 +290,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
         return;
       }
 
+      this.analytics.trackCollabPaymentStarted();
       await new Promise<void>((resolve, reject) => {
         const rz = new (window as any).Razorpay({
           key: order.keyId,
@@ -282,6 +308,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
                   signature: resp?.razorpay_signature,
                 }),
               );
+              this.analytics.trackCollabPaymentSuccess();
               this.auditRefreshed.emit(updated);
               resolve();
             } catch (e: any) {
@@ -295,6 +322,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
       });
     } catch (err: any) {
       this.paymentError = err?.message || err?.error?.message || 'Payment failed. Please try again.';
+      this.analytics.trackCollabPaymentFailed({ reason: this.paymentError });
     } finally {
       this.payingForReanalysis = false;
     }

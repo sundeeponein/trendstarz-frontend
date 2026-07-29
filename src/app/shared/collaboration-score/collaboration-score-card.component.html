@@ -20,6 +20,14 @@
     You can re-analyze again on {{ audit.reanalysisAvailableAt | date:'mediumDate' }}.
   </div>
 
+  <div class="cs-card__cooldown-note" *ngIf="!loading && reanalyzeSyncMessage">
+    {{ reanalyzeSyncMessage }}
+  </div>
+
+  <div class="cs-card__cooldown-note" *ngIf="!loading && reanalyzeChangesDetectedMessage">
+    {{ reanalyzeChangesDetectedMessage }}
+  </div>
+
   <div class="cs-card__payment-error text-danger" *ngIf="paymentError">{{ paymentError }}</div>
 
   <div class="cs-card__loading" *ngIf="loading">

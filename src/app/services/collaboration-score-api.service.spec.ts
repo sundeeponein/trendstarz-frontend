@@ -61,6 +61,36 @@ describe('CollaborationScoreApiService', () => {
     expect(result.facebook).toBeNull();
   });
 
+  it('unwraps getSyncStatus from the envelope', () => {
+    let result: any;
+    service.getSyncStatus().subscribe((res) => (result = res));
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/audit/sync-status'));
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      success: true,
+      data: { platforms: [{ platform: 'YouTube', lastSyncedAt: null, hasChanges: false }], hasChanges: false },
+    });
+
+    expect(result.hasChanges).toBe(false);
+    expect(result.platforms[0].platform).toBe('YouTube');
+  });
+
+  it('unwraps syncLatestProfile from the envelope', () => {
+    let result: any;
+    service.syncLatestProfile().subscribe((res) => (result = res));
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/audit/sync'));
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      success: true,
+      data: { platforms: [{ platform: 'YouTube', lastSyncedAt: '2026-07-29', hasChanges: true }], hasChanges: true },
+    });
+
+    expect(result.hasChanges).toBe(true);
+    expect(result.platforms[0].lastSyncedAt).toBe('2026-07-29');
+  });
+
   it('unwraps getConnectUrl so the authorizationUrl is readable for the redirect', () => {
     let result: any;
     service.getConnectUrl('instagram').subscribe((res) => (result = res));

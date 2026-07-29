@@ -58,8 +58,29 @@
           >
             {{ row.status }}
           </span>
+          <ng-container *ngIf="audit && row.status === 'Connected'">
+            <span class="text-muted small" *ngIf="row.lastSyncedAt">Last Synced {{ row.lastSyncedAt | date: 'd MMM y' }}</span>
+            <span
+              class="badge rounded-pill"
+              *ngIf="row.hasChanges !== undefined"
+              [ngClass]="row.hasChanges ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary-emphasis'"
+            >
+              {{ row.hasChanges ? 'Changes Detected' : 'No Changes' }}
+            </span>
+          </ng-container>
         </div>
       </div>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary mt-2"
+        *ngIf="audit"
+        [disabled]="syncing"
+        (click)="onSyncLatestProfile()"
+      >
+        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+        {{ syncing ? 'Syncing…' : 'Sync Latest Profile' }}
+      </button>
     </div>
 
     <!-- Audit History -->

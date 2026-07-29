@@ -298,6 +298,46 @@
       </div>
     </div>
 
+    <!-- Sync Latest Profile -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Sync Latest Profile</h2>
+        <p class="text-muted small">
+          Free comparison step gating Re-analysis above — a creator must sync and detect a change before Re-analyze unlocks. Never scores, never charges, never creates audit history.
+        </p>
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="syncEnabled"
+                [(ngModel)]="settings.syncEnabled" name="syncEnabled">
+              <label class="form-check-label" for="syncEnabled">Sync enabled</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="allowManualSync"
+                [(ngModel)]="settings.allowManualSync" name="allowManualSync">
+              <label class="form-check-label" for="allowManualSync">Allow manual sync</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="requireSyncBeforeReanalysis"
+                [(ngModel)]="settings.requireSyncBeforeReanalysis" name="requireSyncBeforeReanalysis">
+              <label class="form-check-label" for="requireSyncBeforeReanalysis">Require sync before re-analysis</label>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Sync cooldown (minutes)</label>
+            <input type="number" class="form-control" min="0" max="1440"
+              [(ngModel)]="settings.syncCooldownMinutes" name="syncCooldownMinutes">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Analytics -->
     <div class="card mb-4">
       <div class="card-body">

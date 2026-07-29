@@ -259,6 +259,82 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * TrendStarZ Score Center — "Sync Latest Profile" clicked.
+   */
+  trackCollabSyncStarted(): void {
+    this.logEvent('collab_sync_started');
+    this.sendToGA4('collab_sync_started', {});
+    this.sendToClarity('collab_sync_started', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — a Sync call finished (success or failure).
+   */
+  trackCollabSyncCompleted(context: { success: boolean }): void {
+    const eventData = { success: context.success };
+    this.logEvent('collab_sync_completed', eventData);
+    this.sendToGA4('collab_sync_completed', eventData);
+    this.sendToClarity('collab_sync_completed', eventData);
+  }
+
+  /**
+   * TrendStarZ Score Center — a Sync found at least one changed platform.
+   */
+  trackCollabSyncChangesDetected(context: { platforms: string[] }): void {
+    const eventData = { platforms: context.platforms };
+    this.logEvent('collab_sync_changes_detected', eventData);
+    this.sendToGA4('collab_sync_changes_detected', eventData);
+    this.sendToClarity('collab_sync_changes_detected', eventData);
+  }
+
+  /**
+   * TrendStarZ Score Center — a Sync found nothing changed.
+   */
+  trackCollabSyncNoChanges(): void {
+    this.logEvent('collab_sync_no_changes');
+    this.sendToGA4('collab_sync_no_changes', {});
+    this.sendToClarity('collab_sync_no_changes', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the paid "Re-Analyze" button was clicked
+   * (only reachable once Sync has detected a change).
+   */
+  trackCollabReanalyzeClicked(): void {
+    this.logEvent('collab_reanalyze_clicked');
+    this.sendToGA4('collab_reanalyze_clicked', {});
+    this.sendToClarity('collab_reanalyze_clicked', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the ₹49 re-analysis Razorpay checkout opened.
+   */
+  trackCollabPaymentStarted(): void {
+    this.logEvent('collab_payment_started');
+    this.sendToGA4('collab_payment_started', {});
+    this.sendToClarity('collab_payment_started', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the re-analysis payment was verified and a new audit ran.
+   */
+  trackCollabPaymentSuccess(): void {
+    this.logEvent('collab_payment_success');
+    this.sendToGA4('collab_payment_success', {});
+    this.sendToClarity('collab_payment_success', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the re-analysis payment failed or was cancelled.
+   */
+  trackCollabPaymentFailed(context: { reason?: string }): void {
+    const eventData = { reason: context.reason || null };
+    this.logEvent('collab_payment_failed', eventData);
+    this.sendToGA4('collab_payment_failed', eventData);
+    this.sendToClarity('collab_payment_failed', eventData);
+  }
+
+  /**
    * Track SPA page views for public/user-facing pages only.
    */
   trackPageView(rawUrl: string, pageTitle?: string): void {

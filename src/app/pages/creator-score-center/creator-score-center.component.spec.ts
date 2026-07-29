@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CreatorScoreCenterComponent } from './creator-score-center.component';
@@ -12,6 +13,7 @@ describe('CreatorScoreCenterComponent', () => {
   let sessionSpy: jasmine.SpyObj<SessionService>;
   let configSpy: jasmine.SpyObj<ConfigService>;
   let toastSpy: jasmine.SpyObj<ToastService>;
+  let analyticsSpy: jasmine.SpyObj<AnalyticsService>;
   let router: Router;
 
   beforeEach(async () => {
@@ -22,6 +24,8 @@ describe('CreatorScoreCenterComponent', () => {
       'runMyAudit',
       'getAuditVersion',
       'getPlatformFlags',
+      'getSyncStatus',
+      'syncLatestProfile',
     ]);
     sessionSpy = jasmine.createSpyObj<SessionService>('SessionService', ['getUser']);
     configSpy = jasmine.createSpyObj<ConfigService>('ConfigService', [
@@ -29,6 +33,12 @@ describe('CreatorScoreCenterComponent', () => {
       'getPhotographerProfileById',
     ]);
     toastSpy = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'warning']);
+    analyticsSpy = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
+      'trackCollabSyncStarted',
+      'trackCollabSyncCompleted',
+      'trackCollabSyncChangesDetected',
+      'trackCollabSyncNoChanges',
+    ]);
 
     apiSpy.getAudit.and.returnValue(of(null as any));
     apiSpy.getAuditHistory.and.returnValue(of({ history: [] }));
@@ -36,6 +46,7 @@ describe('CreatorScoreCenterComponent', () => {
     apiSpy.getPlatformFlags.and.returnValue(
       of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: true } }),
     );
+    apiSpy.getSyncStatus.and.returnValue(of({ platforms: [], hasChanges: false }));
     configSpy.getInfluencerProfileById.and.returnValue(of({ socialMedia: [] }));
     configSpy.getPhotographerProfileById.and.returnValue(of({ socialMedia: [] }));
 
@@ -47,6 +58,7 @@ describe('CreatorScoreCenterComponent', () => {
         { provide: SessionService, useValue: sessionSpy },
         { provide: ConfigService, useValue: configSpy },
         { provide: ToastService, useValue: toastSpy },
+        { provide: AnalyticsService, useValue: analyticsSpy },
       ],
     }).compileComponents();
     router = TestBed.inject(Router);
@@ -292,6 +304,70 @@ describe('CreatorScoreCenterComponent', () => {
 
     expect(apiSpy.getConnections).toHaveBeenCalledTimes(1);
     expect(component.connections?.instagram?.handle).toBe('shared');
+  });
+
+  describe('onSyncLatestProfile', () => {
+    beforeEach(() => sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' }));
+
+    it('merges the sync result onto platformStatus and refreshes the audit', () => {
+      apiSpy.getAudit.and.returnValue(of(fakeAudit({ collaborationScore: 60 }) as any));
+      configSpy.getInfluencerProfileById.and.returnValue(
+        of({ socialMedia: [{ platform: 'YouTube', handle: 'creator' }] }),
+      );
+      apiSpy.syncLatestProfile.and.returnValue(
+        of({ platforms: [{ platform: 'YouTube', lastSyncedAt: '2026-07-29', hasChanges: true }], hasChanges: true }),
+      );
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+      apiSpy.getAudit.calls.reset();
+
+      component.onSyncLatestProfile();
+
+      expect(analyticsSpy.trackCollabSyncStarted).toHaveBeenCalled();
+      expect(analyticsSpy.trackCollabSyncCompleted).toHaveBeenCalledWith({ success: true });
+      expect(analyticsSpy.trackCollabSyncChangesDetected).toHaveBeenCalledWith({ platforms: ['YouTube'] });
+      expect(component.syncing).toBe(false);
+      expect(apiSpy.getAudit).toHaveBeenCalled();
+      const youtubeRow = component.platformStatus.find((row) => row.platform === 'YouTube');
+      expect(youtubeRow?.hasChanges).toBe(true);
+      expect(youtubeRow?.lastSyncedAt).toBe('2026-07-29');
+    });
+
+    it('tracks NoChanges when nothing changed', () => {
+      apiSpy.syncLatestProfile.and.returnValue(
+        of({ platforms: [{ platform: 'YouTube', lastSyncedAt: '2026-07-29', hasChanges: false }], hasChanges: false }),
+      );
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      component.onSyncLatestProfile();
+
+      expect(analyticsSpy.trackCollabSyncNoChanges).toHaveBeenCalled();
+      expect(analyticsSpy.trackCollabSyncChangesDetected).not.toHaveBeenCalled();
+    });
+
+    it('shows a toast and tracks failure when the sync call errors', () => {
+      apiSpy.syncLatestProfile.and.returnValue(throwError(() => ({ error: { message: 'boom' } })));
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      component.onSyncLatestProfile();
+
+      expect(analyticsSpy.trackCollabSyncCompleted).toHaveBeenCalledWith({ success: false });
+      expect(toastSpy.error).toHaveBeenCalledWith('boom');
+      expect(component.syncing).toBe(false);
+    });
+
+    it('ignores a second onSyncLatestProfile() call while the first is still in flight', () => {
+      apiSpy.syncLatestProfile.and.returnValue(new Subject<any>());
+      const { fixture, component } = createComponent();
+      fixture.detectChanges();
+
+      component.onSyncLatestProfile();
+      component.onSyncLatestProfile();
+
+      expect(apiSpy.syncLatestProfile).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('ignores a second onReAnalyze() call while the first is still in flight', () => {
