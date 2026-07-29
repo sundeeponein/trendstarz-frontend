@@ -104,7 +104,7 @@
         </div>
 
         <div class="csd-row-2col">
-          <div class="csd-pricing-dark" *ngIf="audit.pricingSuggestion.reelPrice != null">
+          <div class="csd-pricing-dark" *ngIf="audit.pricingSuggestion.reelPrice != null" hidden>
             <div class="csd-pricing-dark-title">Suggested Pricing</div>
             <div class="csd-pricing-dark-row"><span>Reel</span><strong>₹{{ audit.pricingSuggestion.reelPrice.toLocaleString('en-IN') }}</strong></div>
             <div class="csd-pricing-dark-row"><span>Story</span><strong>₹{{ audit.pricingSuggestion.storyPrice?.toLocaleString('en-IN') }}</strong></div>

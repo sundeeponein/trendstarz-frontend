@@ -129,7 +129,7 @@
     </div>
 
     <div class="cs-card__row-2col">
-      <div class="cs-card__pricing-dark" *ngIf="audit.pricingSuggestion.reelPrice != null">
+      <div class="cs-card__pricing-dark" *ngIf="audit.pricingSuggestion.reelPrice != null" hidden>
         <div class="cs-card__pricing-dark-title">Suggested Pricing</div>
         <div class="cs-card__pricing-dark-row"><span>Reel</span><strong>₹{{ audit.pricingSuggestion.reelPrice.toLocaleString('en-IN') }}</strong></div>
         <div class="cs-card__pricing-dark-row"><span>Story</span><strong>₹{{ audit.pricingSuggestion.storyPrice?.toLocaleString('en-IN') }}</strong></div>
