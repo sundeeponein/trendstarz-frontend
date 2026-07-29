@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -34,6 +34,8 @@ export class CollaborationScoreSettingsComponent implements OnInit {
   constructor(
     private readonly api: CollaborationScoreApiService,
     private readonly toast: ToastService,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -41,16 +43,29 @@ export class CollaborationScoreSettingsComponent implements OnInit {
     this.loadSummary();
   }
 
+  // HttpClient is configured with withFetch() (app.config.ts) — fetch()
+  // promise continuations aren't always reliably re-entered into Angular's
+  // zone, so state set in a plain .subscribe() callback can sit unrendered
+  // (stuck spinner/button) until an unrelated zone-patched event (e.g. a
+  // click) forces a CD cycle. Same workaround already used elsewhere in
+  // this app — see score-preview.component.ts and
+  // influencer-registration.component.ts's post-submit handler.
   private loadSettings(): void {
     this.loading = true;
     this.api.getSettings().subscribe({
       next: (settings) => {
-        this.settings = settings;
-        this.loading = false;
+        this.ngZone.run(() => {
+          this.settings = settings;
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.loading = false;
-        this.toast.error('Could not load Collaboration Score settings.');
+        this.ngZone.run(() => {
+          this.loading = false;
+          this.toast.error('Could not load Collaboration Score settings.');
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -59,24 +74,30 @@ export class CollaborationScoreSettingsComponent implements OnInit {
     this.summaryLoading = true;
     this.api.getAdminList({ summary: true, limit: 1 }).subscribe({
       next: (res) => {
-        this.summary = res?.summary || null;
-        // Defaults platformBreakdown to [] here (not just in the template)
-        // so a backend response that predates this field — or any other gap
-        // — degrades to "no platform data" instead of throwing on `.length`.
-        this.todaySummary = res?.todaySummary
-          ? {
-              ...res.todaySummary,
-              platformBreakdown: (res.todaySummary.platformBreakdown || []).map((row) => ({
-                ...row,
-                aiCount: row.aiCount || 0,
-                paidCount: row.paidCount || 0,
-              })),
-            }
-          : null;
-        this.summaryLoading = false;
+        this.ngZone.run(() => {
+          this.summary = res?.summary || null;
+          // Defaults platformBreakdown to [] here (not just in the template)
+          // so a backend response that predates this field — or any other gap
+          // — degrades to "no platform data" instead of throwing on `.length`.
+          this.todaySummary = res?.todaySummary
+            ? {
+                ...res.todaySummary,
+                platformBreakdown: (res.todaySummary.platformBreakdown || []).map((row) => ({
+                  ...row,
+                  aiCount: row.aiCount || 0,
+                  paidCount: row.paidCount || 0,
+                })),
+              }
+            : null;
+          this.summaryLoading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.summaryLoading = false;
+        this.ngZone.run(() => {
+          this.summaryLoading = false;
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -95,13 +116,19 @@ export class CollaborationScoreSettingsComponent implements OnInit {
     this.resetting = true;
     this.api.resetSettings().subscribe({
       next: (settings) => {
-        this.settings = settings;
-        this.resetting = false;
-        this.toast.success('Settings reset to defaults.');
+        this.ngZone.run(() => {
+          this.settings = settings;
+          this.resetting = false;
+          this.toast.success('Settings reset to defaults.');
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.resetting = false;
-        this.toast.error('Could not reset settings. Please try again.');
+        this.ngZone.run(() => {
+          this.resetting = false;
+          this.toast.error('Could not reset settings. Please try again.');
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -111,13 +138,19 @@ export class CollaborationScoreSettingsComponent implements OnInit {
     this.saving = true;
     this.api.updateSettings(this.settings).subscribe({
       next: (settings) => {
-        this.settings = settings;
-        this.saving = false;
-        this.toast.success('Collaboration Score settings saved.');
+        this.ngZone.run(() => {
+          this.settings = settings;
+          this.saving = false;
+          this.toast.success('Collaboration Score settings saved.');
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.saving = false;
-        this.toast.error('Could not save settings. Please try again.');
+        this.ngZone.run(() => {
+          this.saving = false;
+          this.toast.error('Could not save settings. Please try again.');
+          this.cdr.detectChanges();
+        });
       },
     });
   }

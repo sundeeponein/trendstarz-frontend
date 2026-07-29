@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, PLATFORM_ID, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Inject, Input, NgZone, OnChanges, OnInit, Output, PLATFORM_ID, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -54,6 +54,8 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     private readonly router: Router,
     private readonly toast: ToastService,
     private readonly analytics: AnalyticsService,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
 
@@ -77,9 +79,20 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     this.router.navigate([], { queryParams: { connected: null, connectError: null }, queryParamsHandling: 'merge' });
   }
 
+  // HttpClient is configured with withFetch() (app.config.ts) — fetch()
+  // promise continuations aren't always reliably re-entered into Angular's
+  // zone, so state set in a plain .subscribe() callback can sit unrendered
+  // until an unrelated zone-patched event (e.g. a click) forces a CD cycle.
+  // Same workaround used elsewhere in this app — see
+  // score-preview.component.ts.
   private loadConnections(): void {
     this.api.getConnections().subscribe({
-      next: (res) => (this.connections = res),
+      next: (res) => {
+        this.ngZone.run(() => {
+          this.connections = res;
+          this.cdr.detectChanges();
+        });
+      },
       error: () => {},
     });
   }
@@ -92,12 +105,18 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
         if (isPlatformBrowser(this.platformId) && res?.authorizationUrl) {
           window.location.href = res.authorizationUrl;
         } else {
-          this.connectingPlatform = null;
+          this.ngZone.run(() => {
+            this.connectingPlatform = null;
+            this.cdr.detectChanges();
+          });
         }
       },
       error: () => {
-        this.toast.error(`Could not start the ${platform === 'instagram' ? 'Instagram' : 'Facebook'} connection.`);
-        this.connectingPlatform = null;
+        this.ngZone.run(() => {
+          this.toast.error(`Could not start the ${platform === 'instagram' ? 'Instagram' : 'Facebook'} connection.`);
+          this.connectingPlatform = null;
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -116,13 +135,19 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     this.disconnectingPlatform = platform;
     this.api.disconnectPlatform(platform).subscribe({
       next: () => {
-        this.connections = { ...this.connections, [platform]: null };
-        this.disconnectingPlatform = null;
-        this.toast.success(`${label} disconnected.`);
+        this.ngZone.run(() => {
+          this.connections = { ...this.connections, [platform]: null };
+          this.disconnectingPlatform = null;
+          this.toast.success(`${label} disconnected.`);
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.disconnectingPlatform = null;
-        this.toast.error(`Could not disconnect ${label}. Please try again.`);
+        this.ngZone.run(() => {
+          this.disconnectingPlatform = null;
+          this.toast.error(`Could not disconnect ${label}. Please try again.`);
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -141,20 +166,46 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
 
   private loadHistory(userId: string): void {
     this.api.getAuditHistory(userId).subscribe({
-      next: (res) => (this.history = res?.history || []),
-      error: () => (this.history = []),
+      next: (res) => {
+        this.ngZone.run(() => {
+          this.history = res?.history || [];
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.history = [];
+          this.cdr.detectChanges();
+        });
+      },
     });
   }
 
-  get subScores(): Array<{ label: string; value: number; weight: string }> {
+  // Weight percentages mirror the default admin-configurable scoreWeights
+  // (Collaboration Score Settings → Score Weights) — not persisted per-audit,
+  // so this reflects the current defaults rather than whatever was actually
+  // configured at the moment this specific audit ran, same imprecision the
+  // weight label next to each score already had before Contribution existed.
+  get subScores(): Array<{ label: string; value: number; weight: string; contribution: number }> {
     if (!this.audit) return [];
-    return [
-      { label: 'Profile Completeness', value: this.audit.profileCompletenessScore ?? 0, weight: '15%' },
-      { label: 'Content Quality', value: this.audit.contentQualityScore ?? 0, weight: '25%' },
-      { label: 'Posting Consistency', value: this.audit.postingConsistencyScore ?? 0, weight: '20%' },
-      { label: 'Professional Branding', value: this.audit.professionalBrandingScore ?? 0, weight: '20%' },
-      { label: 'Campaign Readiness', value: this.audit.campaignReadinessScore ?? 0, weight: '20%' },
+    const rows = [
+      { label: 'Profile Completeness', value: this.audit.profileCompletenessScore ?? 0, weightPercent: 15 },
+      { label: 'Content Quality', value: this.audit.contentQualityScore ?? 0, weightPercent: 25 },
+      { label: 'Posting Consistency', value: this.audit.postingConsistencyScore ?? 0, weightPercent: 20 },
+      { label: 'Professional Branding', value: this.audit.professionalBrandingScore ?? 0, weightPercent: 20 },
+      { label: 'Campaign Readiness', value: this.audit.campaignReadinessScore ?? 0, weightPercent: 20 },
     ];
+    return rows.map((r) => ({
+      label: r.label,
+      value: r.value,
+      weight: `${r.weightPercent}%`,
+      contribution: Math.round(r.value * r.weightPercent) / 100,
+    }));
+  }
+
+  /** Sum of each row's Contribution — the pre-rounding total; audit.collaborationScore is this, rounded server-side. */
+  get subScoresTotal(): number {
+    return Math.round(this.subScores.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
   }
 
   get hasSubScoreBreakdown(): boolean {
@@ -280,13 +331,19 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
       const orderRes = await firstValueFrom(this.api.createReanalysisOrder());
       const order = orderRes?.order;
       if (!order?.orderId || !order?.keyId) {
-        this.paymentError = 'Failed to initialize payment. Please try again.';
+        this.ngZone.run(() => {
+          this.paymentError = 'Failed to initialize payment. Please try again.';
+          this.cdr.detectChanges();
+        });
         return;
       }
 
       const loaded = await this.ensureRazorpayLoaded();
       if (!loaded) {
-        this.paymentError = 'Failed to load Razorpay checkout.';
+        this.ngZone.run(() => {
+          this.paymentError = 'Failed to load Razorpay checkout.';
+          this.cdr.detectChanges();
+        });
         return;
       }
 
@@ -309,7 +366,10 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
                 }),
               );
               this.analytics.trackCollabPaymentSuccess();
-              this.auditRefreshed.emit(updated);
+              this.ngZone.run(() => {
+                this.auditRefreshed.emit(updated);
+                this.cdr.detectChanges();
+              });
               resolve();
             } catch (e: any) {
               reject(new Error(e?.error?.message || 'Payment verification failed'));
@@ -321,10 +381,16 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
         rz.open();
       });
     } catch (err: any) {
-      this.paymentError = err?.message || err?.error?.message || 'Payment failed. Please try again.';
-      this.analytics.trackCollabPaymentFailed({ reason: this.paymentError });
+      this.ngZone.run(() => {
+        this.paymentError = err?.message || err?.error?.message || 'Payment failed. Please try again.';
+        this.analytics.trackCollabPaymentFailed({ reason: this.paymentError });
+        this.cdr.detectChanges();
+      });
     } finally {
-      this.payingForReanalysis = false;
+      this.ngZone.run(() => {
+        this.payingForReanalysis = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 }

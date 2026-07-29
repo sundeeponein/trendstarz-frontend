@@ -1,4 +1,16 @@
 .cs-card {
+  // Matches .csc-card in creator-score-center.component.scss (Score
+  // Confidence / Platform Status / Audit History) — this component renders
+  // in its own view-encapsulated stylesheet, so that class can't be reused
+  // directly; duplicating the exact values keeps this card visually
+  // consistent with the rest of the Score Center page instead of sitting
+  // flush on the page background with no boundary.
+  background: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.05);
+
   &__header {
     display: flex;
     align-items: center;
@@ -171,11 +183,19 @@
 
   &__bar-row {
     display: grid;
-    grid-template-columns: 1fr 2fr auto;
+    grid-template-columns: 1fr 2fr auto auto;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.4rem;
     font-size: 0.8rem;
+
+    &--total {
+      grid-template-columns: 1fr auto;
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #e7eaf0;
+      font-size: 0.85rem;
+    }
   }
 
   &__progress {
@@ -185,6 +205,11 @@
   &__bar-value {
     font-weight: 700;
     width: 2.5rem;
+    text-align: right;
+  }
+
+  &__bar-contribution {
+    width: 3.5rem;
     text-align: right;
   }
 

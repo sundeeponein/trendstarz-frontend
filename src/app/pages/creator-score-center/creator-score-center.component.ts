@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
@@ -86,7 +86,12 @@ export class CreatorScoreCenterComponent implements OnInit {
     const maxConfidence = platforms.length ? Math.max(...platforms.map((p) => p.confidence || 0)) : 0;
     const level: ScoreConfidenceLevel = maxConfidence >= 85 ? 'High' : maxConfidence >= 50 ? 'Medium' : 'Low';
 
-    const hasPlatform = (name: string) => platforms.some((p) => p.platform === name);
+    // Confidence > 0 required, not just "present in platformsCollected" — a
+    // platform with 0% confidence (e.g. self-reported with no stats filled
+    // in) is excluded from the score entirely by the rules engine, so
+    // showing it as "met" here would contradict the Platform Confidence
+    // section right above, which correctly calls it out as unavailable.
+    const hasPlatform = (name: string) => platforms.some((p) => p.platform === name && (p.confidence || 0) > 0);
     const basedOn: ScoreConfidenceBasedOnItem[] = [
       { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
       { met: hasPlatform('YouTube'), label: 'YouTube', absentLabel: 'YouTube not added' },
@@ -110,6 +115,7 @@ export class CreatorScoreCenterComponent implements OnInit {
     private readonly toast: ToastService,
     private readonly cdr: ChangeDetectorRef,
     private readonly analytics: AnalyticsService,
+    private readonly ngZone: NgZone,
     public readonly ui: CollaborationScoreUiUtilsService,
   ) {}
 
@@ -139,11 +145,13 @@ export class CreatorScoreCenterComponent implements OnInit {
   private loadSyncStatus(): void {
     this.api.getSyncStatus().subscribe({
       next: (res) => {
-        this.syncStatusByPlatform = Object.fromEntries(
-          res.platforms.map((p) => [p.platform.toLowerCase(), { lastSyncedAt: p.lastSyncedAt, hasChanges: p.hasChanges }]),
-        );
-        this.mergeSyncStatusOntoRows();
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.syncStatusByPlatform = Object.fromEntries(
+            res.platforms.map((p) => [p.platform.toLowerCase(), { lastSyncedAt: p.lastSyncedAt, hasChanges: p.hasChanges }]),
+          );
+          this.mergeSyncStatusOntoRows();
+          this.cdr.detectChanges();
+        });
       },
       error: () => {},
     });
@@ -163,45 +171,60 @@ export class CreatorScoreCenterComponent implements OnInit {
     this.analytics.trackCollabSyncStarted();
     this.api.syncLatestProfile().subscribe({
       next: (res) => {
-        this.syncing = false;
-        this.syncStatusByPlatform = Object.fromEntries(
-          res.platforms.map((p) => [p.platform.toLowerCase(), { lastSyncedAt: p.lastSyncedAt, hasChanges: p.hasChanges }]),
-        );
-        this.mergeSyncStatusOntoRows();
-        this.analytics.trackCollabSyncCompleted({ success: true });
-        if (res.hasChanges) {
-          this.analytics.trackCollabSyncChangesDetected({
-            platforms: res.platforms.filter((p) => p.hasChanges).map((p) => p.platform),
-          });
-        } else {
-          this.analytics.trackCollabSyncNoChanges();
-        }
-        // Refresh the audit so the embedded card's canReanalyze/hasChanges
-        // reflect this sync immediately, without a page reload.
-        this.loadAudit();
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.syncing = false;
+          this.syncStatusByPlatform = Object.fromEntries(
+            res.platforms.map((p) => [p.platform.toLowerCase(), { lastSyncedAt: p.lastSyncedAt, hasChanges: p.hasChanges }]),
+          );
+          this.mergeSyncStatusOntoRows();
+          this.analytics.trackCollabSyncCompleted({ success: true });
+          if (res.hasChanges) {
+            this.analytics.trackCollabSyncChangesDetected({
+              platforms: res.platforms.filter((p) => p.hasChanges).map((p) => p.platform),
+            });
+          } else {
+            this.analytics.trackCollabSyncNoChanges();
+          }
+          // Refresh the audit so the embedded card's canReanalyze/hasChanges
+          // reflect this sync immediately, without a page reload.
+          this.loadAudit();
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
-        this.syncing = false;
-        this.analytics.trackCollabSyncCompleted({ success: false });
-        this.toast.error(err?.error?.message || 'Could not sync your profile. Please try again.');
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.syncing = false;
+          this.analytics.trackCollabSyncCompleted({ success: false });
+          this.toast.error(err?.error?.message || 'Could not sync your profile. Please try again.');
+          this.cdr.detectChanges();
+        });
       },
     });
   }
 
+  // HttpClient is configured with withFetch() (app.config.ts) — fetch()
+  // promise continuations aren't always reliably re-entered into Angular's
+  // zone, so state set in a plain .subscribe() callback can sit unrendered
+  // until an unrelated zone-patched event (e.g. a click) forces a CD cycle.
+  // Every subscribe callback in this component is wrapped in ngZone.run()
+  // for that reason — same workaround used elsewhere in this app (see
+  // score-preview.component.ts).
   private loadAudit(): void {
     this.loading = true;
     this.api.getAudit(this.userId).subscribe({
       next: (audit) => {
-        this.audit = audit;
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.audit = audit;
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.audit = null;
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.audit = null;
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -210,14 +233,18 @@ export class CreatorScoreCenterComponent implements OnInit {
     this.historyLoading = true;
     this.api.getAuditHistory(this.userId, 20).subscribe({
       next: (res) => {
-        this.history = res?.history || [];
-        this.historyLoading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.history = res?.history || [];
+          this.historyLoading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.history = [];
-        this.historyLoading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.history = [];
+          this.historyLoading = false;
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -225,12 +252,16 @@ export class CreatorScoreCenterComponent implements OnInit {
   private loadPlatformStatus(role: string): void {
     this.api.getConnections().subscribe({
       next: (connections) => {
-        this.connections = connections;
-        this.resolvePlatformStatus(connections, role);
+        this.ngZone.run(() => {
+          this.connections = connections;
+          this.resolvePlatformStatus(connections, role);
+        });
       },
       error: () => {
-        this.connections = { instagram: null, facebook: null };
-        this.resolvePlatformStatus(this.connections, role);
+        this.ngZone.run(() => {
+          this.connections = { instagram: null, facebook: null };
+          this.resolvePlatformStatus(this.connections, role);
+        });
       },
     });
   }
@@ -238,17 +269,20 @@ export class CreatorScoreCenterComponent implements OnInit {
   private resolvePlatformStatus(connections: SocialConnections, role: string): void {
     const profile$ = role === 'photographer' ? this.config.getPhotographerProfileById() : this.config.getInfluencerProfileById();
     profile$.subscribe({
-      next: (profile: any) => this.loadPlatformFlagsThenSetStatus(connections, profile),
-      error: () => this.loadPlatformFlagsThenSetStatus(connections, null),
+      next: (profile: any) => this.ngZone.run(() => this.loadPlatformFlagsThenSetStatus(connections, profile)),
+      error: () => this.ngZone.run(() => this.loadPlatformFlagsThenSetStatus(connections, null)),
     });
   }
 
   private loadPlatformFlagsThenSetStatus(connections: SocialConnections, profile: any): void {
     this.api.getPlatformFlags().subscribe({
-      next: (res) => this.setPlatformStatus(connections, profile, res.platformsEnabled),
+      next: (res) => this.ngZone.run(() => this.setPlatformStatus(connections, profile, res.platformsEnabled)),
       // Fetch failed — fail open (show every row) rather than hiding the
       // whole grid because of an unrelated network hiccup.
-      error: () => this.setPlatformStatus(connections, profile, { instagram: true, youtube: true, facebook: true, linkedin: true }),
+      error: () =>
+        this.ngZone.run(() =>
+          this.setPlatformStatus(connections, profile, { instagram: true, youtube: true, facebook: true, linkedin: true }),
+        ),
     });
   }
 
@@ -280,15 +314,19 @@ export class CreatorScoreCenterComponent implements OnInit {
     this.reAnalyzing = true;
     this.api.runMyAudit().subscribe({
       next: (audit) => {
-        this.audit = audit;
-        this.reAnalyzing = false;
-        this.loadHistory();
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.audit = audit;
+          this.reAnalyzing = false;
+          this.loadHistory();
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.reAnalyzing = false;
-        this.toast.error('Could not refresh your Collaboration Score. Please try again.');
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.reAnalyzing = false;
+          this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+          this.cdr.detectChanges();
+        });
       },
     });
   }
@@ -309,14 +347,18 @@ export class CreatorScoreCenterComponent implements OnInit {
     this.expandedLoading = true;
     this.api.getAuditVersion(this.userId, entry.version).subscribe({
       next: (detail) => {
-        this.expandedDetail = detail;
-        this.expandedLoading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.expandedDetail = detail;
+          this.expandedLoading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.expandedLoading = false;
-        this.toast.error('Could not load that audit.');
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.expandedLoading = false;
+          this.toast.error('Could not load that audit.');
+          this.cdr.detectChanges();
+        });
       },
     });
   }

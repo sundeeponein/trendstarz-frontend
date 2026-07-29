@@ -1,4 +1,4 @@
-<div class="cs-card text-black px-3">
+<div class="cs-card text-black">
   <div class="cs-card__header">
     <div class="cs-card__title">
       <i class="bi bi-graph-up-arrow"></i>
@@ -137,6 +137,11 @@
           <div class="progress-bar" [style.width.%]="sub.value"></div>
         </div>
         <div class="cs-card__bar-value">{{ sub.value }}</div>
+        <div class="cs-card__bar-contribution text-muted small">+{{ sub.contribution }}</div>
+      </div>
+      <div class="cs-card__bar-row cs-card__bar-row--total">
+        <div class="cs-card__bar-label"><strong>Total</strong></div>
+        <div class="cs-card__bar-value"><strong>{{ subScoresTotal }} → {{ audit?.collaborationScore }}</strong></div>
       </div>
     </div>
 
