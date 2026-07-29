@@ -3,7 +3,11 @@
     <a routerLink="/admin/admin-user-table" class="small d-inline-block mb-3">&larr; Back to Users</a>
     <p class="csd-eyebrow">Performance Insights</p>
     <h1 class="csd-title">Score Center</h1>
-    <p class="csd-subtitle" *ngIf="creatorName">Creator: {{ creatorName }}</p>
+    <p class="csd-subtitle" *ngIf="username">
+      Creator:
+      <a *ngIf="publicProfileUrl" [routerLink]="publicProfileUrl" target="_blank" rel="noopener noreferrer" class="csd-username-link">@{{ username }}</a>
+      <span *ngIf="!publicProfileUrl">@{{ username }}</span>
+    </p>
 
     <div *ngIf="loading" class="d-flex align-items-center gap-2 text-muted">
       <div class="spinner-border spinner-border-sm text-primary"></div>

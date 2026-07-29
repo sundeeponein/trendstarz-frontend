@@ -21,9 +21,10 @@ import { ScoreRingComponent } from '../../../shared/collaboration-score/score-ri
 export class CollaborationScoreDetailComponent implements OnInit {
   userId = '';
   role = 'influencer';
-  creatorName = '';
   /** TrendStarZ admin-verification flag — passed through from the admin user table's link (selectedUser.verifiedByTrendStarz), not re-fetched here. */
   verified = false;
+  /** Passed through from the admin user table's link (selectedUser.username) — same identifier the public profile view uses. */
+  username = '';
 
   loading = false;
   running = false;
@@ -45,8 +46,8 @@ export class CollaborationScoreDetailComponent implements OnInit {
   ngOnInit(): void {
     this.userId = String(this.route.snapshot.paramMap.get('userId') || '');
     this.role = String(this.route.snapshot.queryParamMap.get('role') || 'influencer');
-    this.creatorName = String(this.route.snapshot.queryParamMap.get('name') || '');
     this.verified = this.route.snapshot.queryParamMap.get('verified') === 'true';
+    this.username = String(this.route.snapshot.queryParamMap.get('username') || '');
     this.load();
   }
 
@@ -114,6 +115,13 @@ export class CollaborationScoreDetailComponent implements OnInit {
         });
       },
     });
+  }
+
+  /** Same route the public profile view itself uses (app.routes.ts: photographer/:username, influencer/:username) — Collaboration Score is never available for Brand accounts. */
+  get publicProfileUrl(): string | null {
+    if (!this.username) return null;
+    const segment = this.role === 'photographer' ? 'photographer' : 'influencer';
+    return `/${segment}/${this.username}`;
   }
 
   get pointsToRecommended(): number | null {

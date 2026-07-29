@@ -41,6 +41,17 @@
   margin-bottom: 1rem;
 }
 
+.csd-username-link {
+  color: #f55b0a;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .csd-card {
   background: #fff;
   border: 1px solid #e7eaf0;
