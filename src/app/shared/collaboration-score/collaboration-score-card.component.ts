@@ -8,14 +8,15 @@ import {
   CollaborationScoreApiService,
   SocialConnections,
 } from '../../services/collaboration-score-api.service';
-import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
+import { CollaborationScoreUiUtilsService, ScoreConfidence, SubScoreRow } from '../../services/collaboration-score-ui-utils.service';
 import { ToastService } from '../toast/toast.service';
 import { AnalyticsService } from '../../core/analytics.service';
+import { ScoreRingComponent } from './score-ring.component';
 
 @Component({
   selector: 'app-collaboration-score-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ScoreRingComponent],
   templateUrl: './collaboration-score-card.component.html',
   styleUrls: ['./collaboration-score-card.component.scss'],
 })
@@ -23,6 +24,8 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   @Input() audit: CollaborationAudit | null = null;
   @Input() loading = false;
   @Input() reAnalyzing = false;
+  /** TrendStarZ admin-verification flag (profile.verifiedByTrendStarz) — real data, not derived from the audit. */
+  @Input() verified = false;
   /**
    * Optional — lets a parent that already fetched connections (e.g.
    * CreatorScoreCenterComponent, which needs them for its own Platform
@@ -181,35 +184,27 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     });
   }
 
-  // Weight percentages mirror the default admin-configurable scoreWeights
-  // (Collaboration Score Settings → Score Weights) — not persisted per-audit,
-  // so this reflects the current defaults rather than whatever was actually
-  // configured at the moment this specific audit ran, same imprecision the
-  // weight label next to each score already had before Contribution existed.
-  get subScores(): Array<{ label: string; value: number; weight: string; contribution: number }> {
-    if (!this.audit) return [];
-    const rows = [
-      { label: 'Profile Completeness', value: this.audit.profileCompletenessScore ?? 0, weightPercent: 15 },
-      { label: 'Content Quality', value: this.audit.contentQualityScore ?? 0, weightPercent: 25 },
-      { label: 'Posting Consistency', value: this.audit.postingConsistencyScore ?? 0, weightPercent: 20 },
-      { label: 'Professional Branding', value: this.audit.professionalBrandingScore ?? 0, weightPercent: 20 },
-      { label: 'Campaign Readiness', value: this.audit.campaignReadinessScore ?? 0, weightPercent: 20 },
-    ];
-    return rows.map((r) => ({
-      label: r.label,
-      value: r.value,
-      weight: `${r.weightPercent}%`,
-      contribution: Math.round(r.value * r.weightPercent) / 100,
-    }));
+  // Delegated to CollaborationScoreUiUtilsService — single source of truth
+  // shared with the admin detail page, so both always show identical
+  // Score Breakdown numbers.
+  get subScores(): SubScoreRow[] {
+    return this.ui.subScores(this.audit);
   }
 
-  /** Sum of each row's Contribution — the pre-rounding total; audit.collaborationScore is this, rounded server-side. */
   get subScoresTotal(): number {
-    return Math.round(this.subScores.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
+    return this.ui.subScoresTotal(this.subScores);
   }
 
   get hasSubScoreBreakdown(): boolean {
-    return this.audit?.profileCompletenessScore != null;
+    return this.subScores.length > 0;
+  }
+
+  get scoreConfidence(): ScoreConfidence | null {
+    return this.ui.scoreConfidence(this.audit);
+  }
+
+  get lastAnalysisDateTime(): string {
+    return this.ui.lastAnalysisDateTime(this.audit);
   }
 
   /** Points still needed to cross the TrendStarz Recommended threshold; null once recommended or unknown. */
@@ -293,10 +288,13 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     return 'Changes detected on your connected platforms.';
   }
 
-  confidenceLabel(confidence: number): string {
-    if (confidence >= 90) return 'Verified';
-    if (confidence > 0) return 'Beta';
-    return 'Not available';
+  platformIcon(platform: string): string {
+    const key = platform.toLowerCase();
+    if (key === 'instagram') return 'bi-instagram';
+    if (key === 'youtube') return 'bi-youtube';
+    if (key === 'facebook') return 'bi-facebook';
+    if (key === 'linkedin') return 'bi-linkedin';
+    return 'bi-globe';
   }
 
   onReAnalyzeClick(): void {

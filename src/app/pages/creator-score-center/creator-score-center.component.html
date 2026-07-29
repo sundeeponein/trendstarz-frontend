@@ -1,86 +1,71 @@
 <div class="csc-page">
   <div class="container py-4">
-    <h1 class="csc-title">TrendStarZ Score Center</h1>
+    <p class="csc-eyebrow">Performance Insights</p>
+    <h1 class="csc-title">Score Center</h1>
     <p class="csc-subtitle">Everything about your Collaboration Score, in one place.</p>
 
-    <!-- Existing full card — score, sub-scores, top improvements, pricing,
-         IG/FB connect/disconnect, and the re-analyze/payment flow. Unchanged. -->
+    <!-- Main score card — ring, pills, Confidence checklist, pricing,
+         top improvement, Score Breakdown, platform pills, IG/FB
+         connect/disconnect, and the re-analyze/payment flow. -->
     <div class="csc-section">
       <app-collaboration-score-card
         [audit]="audit"
         [loading]="loading"
         [reAnalyzing]="reAnalyzing"
         [initialConnections]="connections"
+        [verified]="verified"
         (reAnalyze)="onReAnalyze()"
         (auditRefreshed)="onAuditRefreshed($event)"
       />
     </div>
 
-    <!-- Score Confidence -->
-    <div class="csc-section csc-card" *ngIf="scoreConfidence">
-      <h2 class="csc-section-title">Score Confidence</h2>
-      <div class="csc-confidence-body">
-        <span
-          class="badge rounded-pill csc-confidence-badge"
-          [ngClass]="{
-            'bg-success-subtle text-success-emphasis': scoreConfidence.level === 'High',
-            'bg-warning-subtle text-warning-emphasis': scoreConfidence.level === 'Medium',
-            'bg-secondary-subtle text-secondary-emphasis': scoreConfidence.level === 'Low'
-          }"
-        >
-          {{ scoreConfidence.level }}
-        </span>
-        <div class="csc-confidence-based-on">
-          <span class="csc-confidence-based-on-label" id="csc-based-on-label">Based On</span>
-          <ul aria-labelledby="csc-based-on-label">
-            <li *ngFor="let item of scoreConfidence.basedOn" [class.met]="item.met">
-              <i class="bi" [ngClass]="item.met ? 'bi-check-circle-fill' : 'bi-dash-circle'" aria-hidden="true"></i>
-              {{ item.met ? item.label : item.absentLabel }}
-            </li>
-          </ul>
-        </div>
+    <!-- Sync Latest Profile — free comparison step gating the paid
+         Re-Analyze above; own card since it's not part of the reference
+         design but is a real, already-shipped feature. -->
+    <div class="csc-section csc-card" *ngIf="audit">
+      <div class="csc-section-header-row">
+        <h2 class="csc-section-title mb-0">Sync Latest Profile</h2>
+        <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="syncing" (click)="onSyncLatestProfile()">
+          <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+          {{ syncing ? 'Syncing…' : 'Sync Latest Profile' }}
+        </button>
       </div>
+      <p class="text-muted small mb-0">
+        Free — fetches the latest data from your connected platforms and checks for changes since your last audit. Never scores, never charges.
+      </p>
     </div>
 
     <!-- Platform Status -->
     <div class="csc-section csc-card">
       <h2 class="csc-section-title">Platform Status</h2>
-      <div class="csc-platform-grid">
-        <div class="csc-platform-row" *ngFor="let row of platformStatus">
-          <span class="csc-platform-name"><i class="bi" [ngClass]="row.icon" aria-hidden="true"></i> {{ row.platform }}</span>
-          <span
-            class="badge rounded-pill"
-            [ngClass]="{
-              'bg-success-subtle text-success-emphasis': row.status === 'Connected',
-              'bg-secondary-subtle text-secondary-emphasis': row.status === 'Not Connected',
-              'bg-warning-subtle text-warning-emphasis': row.status === 'Coming Soon'
-            }"
-          >
-            {{ row.status }}
-          </span>
-          <ng-container *ngIf="audit && row.status === 'Connected'">
-            <span class="text-muted small" *ngIf="row.lastSyncedAt">Last Synced {{ row.lastSyncedAt | date: 'd MMM y' }}</span>
+      <div class="csc-platform-pill-row">
+        <div class="csc-platform-pill" *ngFor="let row of platformStatus">
+          <i class="bi" [ngClass]="row.icon" aria-hidden="true"></i>
+          <div class="csc-platform-pill-meta">
+            <div class="csc-platform-pill-name">{{ row.platform }}</div>
             <span
               class="badge rounded-pill"
-              *ngIf="row.hasChanges !== undefined"
-              [ngClass]="row.hasChanges ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary-emphasis'"
+              [ngClass]="{
+                'bg-success-subtle text-success-emphasis': row.status === 'Connected',
+                'bg-secondary-subtle text-secondary-emphasis': row.status === 'Not Connected',
+                'bg-warning-subtle text-warning-emphasis': row.status === 'Coming Soon'
+              }"
             >
-              {{ row.hasChanges ? 'Changes Detected' : 'No Changes' }}
+              {{ row.status }}
             </span>
-          </ng-container>
+            <ng-container *ngIf="audit && row.status === 'Connected'">
+              <div class="text-muted small" *ngIf="row.lastSyncedAt">Last Synced {{ row.lastSyncedAt | date: 'd MMM y' }}</div>
+              <span
+                class="badge rounded-pill"
+                *ngIf="row.hasChanges !== undefined"
+                [ngClass]="row.hasChanges ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary-emphasis'"
+              >
+                {{ row.hasChanges ? 'Changes Detected' : 'No Changes' }}
+              </span>
+            </ng-container>
+          </div>
         </div>
       </div>
-
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-primary mt-2"
-        *ngIf="audit"
-        [disabled]="syncing"
-        (click)="onSyncLatestProfile()"
-      >
-        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-        {{ syncing ? 'Syncing…' : 'Sync Latest Profile' }}
-      </button>
     </div>
 
     <!-- Audit History -->
@@ -94,22 +79,25 @@
 
       <p class="text-muted small mb-0" *ngIf="!historyLoading && !history.length">No audits yet.</p>
 
-      <div class="csc-history-list" *ngIf="!historyLoading && history.length">
-        <ng-container *ngFor="let entry of history">
-          <div class="csc-history-row" (click)="toggleHistoryDetail(entry)">
-            <span class="csc-history-date">{{ entry.createdAt | date: 'd MMM y' }}</span>
-            <span class="csc-history-score">{{ entry.collaborationScore }}</span>
+      <div class="csc-history-cards" *ngIf="!historyLoading && history.length">
+        <ng-container *ngFor="let entry of history; let i = index">
+          <div
+            class="csc-history-card"
+            (click)="toggleHistoryDetail(entry)"
+            [attr.aria-expanded]="expandedVersion === entry.version"
+            [attr.aria-label]="(expandedVersion === entry.version ? 'Hide' : 'View') + ' audit from ' + (entry.createdAt | date: 'd MMM y')"
+          >
+            <div class="csc-history-card-chip" [ngClass]="ui.scoreTierClass(entry.collaborationScore)">{{ entry.collaborationScore }}</div>
+            <div class="csc-history-card-meta">
+              <div class="csc-history-card-title">{{ i === 0 ? 'Current Audit' : 'Previous Audit' }}</div>
+              <div class="text-muted small">Generated {{ entry.createdAt | date: 'd MMM y' }}</div>
+            </div>
             <span class="badge rounded-pill" [ngClass]="entry.isPaid ? 'bg-warning-subtle text-warning-emphasis' : 'bg-success-subtle text-success-emphasis'">
               {{ entry.isPaid ? 'Paid' : 'Free' }}
             </span>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary csc-history-view"
-              [attr.aria-expanded]="expandedVersion === entry.version"
-              [attr.aria-label]="(expandedVersion === entry.version ? 'Hide' : 'View') + ' audit from ' + (entry.createdAt | date: 'd MMM y')"
-            >
-              {{ expandedVersion === entry.version ? 'Hide' : 'View' }}
-            </button>
+            <span class="csc-history-card-view" aria-hidden="true">
+              <i class="bi" [ngClass]="expandedVersion === entry.version ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </span>
           </div>
 
           <div class="csc-history-detail" *ngIf="expandedVersion === entry.version">

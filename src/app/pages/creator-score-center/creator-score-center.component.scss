@@ -3,6 +3,15 @@
   min-height: 60vh;
 }
 
+.csc-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f55b0a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
 .csc-title {
   font-size: 1.6rem;
   font-weight: 800;
@@ -17,6 +26,15 @@
 
 .csc-section {
   margin-bottom: 1.5rem;
+}
+
+.csc-section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .csc-card {
@@ -34,92 +52,39 @@
   margin-bottom: 1rem;
 }
 
-// Score Confidence
-.csc-confidence-body {
+// Platform Status
+.csc-platform-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.csc-platform-pill {
   display: flex;
   align-items: flex-start;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
+  flex: 1 1 220px;
+
+  > i {
+    font-size: 1.1rem;
+    color: #f55b0a;
+    margin-top: 0.15rem;
+  }
 }
 
-.csc-confidence-badge {
-  font-size: 0.95rem;
-  padding: 0.4rem 0.9rem;
-  font-weight: 700;
-}
-
-.csc-confidence-based-on {
-  flex: 1;
-  min-width: 180px;
-}
-
-.csc-confidence-based-on-label {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #9aa3b5;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.4rem;
-}
-
-.csc-confidence-based-on ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.csc-platform-pill-meta {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-
-  li {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.88rem;
-    color: #9aa3b5;
-
-    i {
-      color: #c7cddb;
-    }
-
-    &.met {
-      color: #3a4561;
-      font-weight: 600;
-
-      i {
-        color: #1a7f4e;
-      }
-    }
-  }
+  min-width: 0;
 }
 
-// Platform Status
-.csc-platform-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.csc-platform-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid #eef0f6;
-  border-radius: 10px;
-}
-
-.csc-platform-name {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.csc-platform-pill-name {
   font-weight: 600;
   color: #3a4561;
-
-  i {
-    font-size: 1.1rem;
-    color: #f55b0a;
-  }
 }
 
 // Audit History
@@ -128,17 +93,19 @@
   padding: 0.75rem 0;
 }
 
-.csc-history-list {
+.csc-history-cards {
   display: flex;
   flex-direction: column;
+  gap: 0.6rem;
 }
 
-.csc-history-row {
+.csc-history-card {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 0.25rem;
-  border-bottom: 1px solid #eef0f6;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
   cursor: pointer;
 
   &:hover {
@@ -146,20 +113,31 @@
   }
 }
 
-.csc-history-date {
-  flex: 1;
-  color: #3a4561;
-  font-weight: 600;
-}
-
-.csc-history-score {
-  font-weight: 800;
-  color: #161a26;
+.csc-history-card-chip {
   width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
-.csc-history-view {
-  margin-left: auto;
+.csc-history-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.csc-history-card-title {
+  font-weight: 700;
+  color: #161a26;
+}
+
+.csc-history-card-view {
+  color: #9aa3b5;
+  font-size: 1.1rem;
 }
 
 .csc-history-detail {

@@ -7,13 +7,14 @@ import {
   CollaborationReanalysisPayment,
   CollaborationScoreApiService,
 } from '../../../services/collaboration-score-api.service';
-import { CollaborationScoreUiUtilsService } from '../../../services/collaboration-score-ui-utils.service';
+import { CollaborationScoreUiUtilsService, ScoreConfidence, SubScoreRow } from '../../../services/collaboration-score-ui-utils.service';
 import { ToastService } from '../../../shared/toast/toast.service';
+import { ScoreRingComponent } from '../../../shared/collaboration-score/score-ring.component';
 
 @Component({
   selector: 'app-collaboration-score-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ScoreRingComponent],
   templateUrl: './collaboration-score-detail.component.html',
   styleUrls: ['./collaboration-score-detail.component.scss'],
 })
@@ -21,6 +22,8 @@ export class CollaborationScoreDetailComponent implements OnInit {
   userId = '';
   role = 'influencer';
   creatorName = '';
+  /** TrendStarZ admin-verification flag — passed through from the admin user table's link (selectedUser.verifiedByTrendStarz), not re-fetched here. */
+  verified = false;
 
   loading = false;
   running = false;
@@ -43,6 +46,7 @@ export class CollaborationScoreDetailComponent implements OnInit {
     this.userId = String(this.route.snapshot.paramMap.get('userId') || '');
     this.role = String(this.route.snapshot.queryParamMap.get('role') || 'influencer');
     this.creatorName = String(this.route.snapshot.queryParamMap.get('name') || '');
+    this.verified = this.route.snapshot.queryParamMap.get('verified') === 'true';
     this.load();
   }
 
@@ -120,47 +124,36 @@ export class CollaborationScoreDetailComponent implements OnInit {
     return gap > 0 ? gap : null;
   }
 
-  /**
-   * Same 5-criteria breakdown the creator's own Score Center shows (see
-   * CollaborationScoreCardComponent.subScores) — surfaced here so an admin
-   * can see exactly which criterion is holding a score down, instead of
-   * only the single blended total. Weight percentages mirror the default
-   * admin-configurable scoreWeights (Collaboration Score Settings → Score
-   * Weights) — not persisted per-audit, so Contribution reflects the
-   * current defaults rather than whatever was actually configured at the
-   * moment this specific audit ran.
-   */
-  get subScores(): Array<{ label: string; value: number; weight: string; contribution: number }> {
-    if (!this.audit) return [];
-    const rows = [
-      { label: 'Profile Completeness', value: this.audit.profileCompletenessScore ?? 0, weightPercent: 15 },
-      { label: 'Content Quality', value: this.audit.contentQualityScore ?? 0, weightPercent: 25 },
-      { label: 'Posting Consistency', value: this.audit.postingConsistencyScore ?? 0, weightPercent: 20 },
-      { label: 'Professional Branding', value: this.audit.professionalBrandingScore ?? 0, weightPercent: 20 },
-      { label: 'Campaign Readiness', value: this.audit.campaignReadinessScore ?? 0, weightPercent: 20 },
-    ];
-    return rows.map((r) => ({
-      label: r.label,
-      value: r.value,
-      weight: `${r.weightPercent}%`,
-      contribution: Math.round(r.value * r.weightPercent) / 100,
-    }));
+  // Delegated to CollaborationScoreUiUtilsService — single source of truth
+  // shared with the creator's own Score Center card, so both always show
+  // identical numbers, not just identical styling.
+  get subScores(): SubScoreRow[] {
+    return this.ui.subScores(this.audit);
   }
 
-  /** Sum of each row's Contribution — the pre-rounding total; audit.collaborationScore is this, rounded server-side. */
   get subScoresTotal(): number {
-    return Math.round(this.subScores.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
+    return this.ui.subScoresTotal(this.subScores);
   }
 
   get hasSubScoreBreakdown(): boolean {
-    return this.audit?.profileCompletenessScore != null;
+    return this.subScores.length > 0;
   }
 
-  /** "Verified" = real API data; "Beta" = self-reported (capped, unverified); "Not available" = no usable data. */
-  confidenceLabel(confidence: number): string {
-    if (confidence >= 90) return 'Verified';
-    if (confidence > 0) return 'Beta';
-    return 'Not available';
+  get scoreConfidence(): ScoreConfidence | null {
+    return this.ui.scoreConfidence(this.audit);
+  }
+
+  get lastAnalysisDateTime(): string {
+    return this.ui.lastAnalysisDateTime(this.audit);
+  }
+
+  platformIcon(platform: string): string {
+    const key = platform.toLowerCase();
+    if (key === 'instagram') return 'bi-instagram';
+    if (key === 'youtube') return 'bi-youtube';
+    if (key === 'facebook') return 'bi-facebook';
+    if (key === 'linkedin') return 'bi-linkedin';
+    return 'bi-globe';
   }
 
   runAudit(): void {

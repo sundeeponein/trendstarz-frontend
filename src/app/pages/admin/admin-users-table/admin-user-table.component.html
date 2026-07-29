@@ -360,7 +360,7 @@
             type="button"
             class="btn btn-sm btn-outline-primary mt-2"
             [routerLink]="['/admin/collaboration-score', selectedUser?._id]"
-            [queryParams]="{ role: selectedRole, name: selectedUser?.name || selectedUser?.brandName || '' }"
+            [queryParams]="{ role: selectedRole, name: selectedUser?.name || selectedUser?.brandName || '', verified: (selectedUser?.verifiedByTrendStarz === true).toString() }"
           >
             View Collaboration Details
           </button>

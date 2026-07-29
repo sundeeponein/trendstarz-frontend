@@ -10,7 +10,7 @@ import {
   CollaborationScoreApiService,
   SocialConnections,
 } from '../../services/collaboration-score-api.service';
-import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
+import { CollaborationScoreUiUtilsService, ScoreConfidence } from '../../services/collaboration-score-ui-utils.service';
 import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -23,19 +23,6 @@ export interface PlatformStatusRow {
   /** Undefined until a sync-status/Sync response has been merged in. */
   lastSyncedAt?: string | null;
   hasChanges?: boolean;
-}
-
-export type ScoreConfidenceLevel = 'High' | 'Medium' | 'Low';
-
-export interface ScoreConfidenceBasedOnItem {
-  met: boolean;
-  label: string;
-  absentLabel: string;
-}
-
-export interface ScoreConfidence {
-  level: ScoreConfidenceLevel;
-  basedOn: ScoreConfidenceBasedOnItem[];
 }
 
 /**
@@ -73,36 +60,13 @@ export class CreatorScoreCenterComponent implements OnInit {
 
   private userId = '';
 
-  /**
-   * How much real (API-verified or self-reported) data the current score is
-   * actually based on — a rich, connected platform should read as more
-   * trustworthy than a bare, unconnected one, for both the creator and any
-   * brand who eventually sees this. Derived entirely from the existing
-   * audit.platformsCollected confidence values — no new backend field.
-   */
+  /** Delegated to CollaborationScoreUiUtilsService (shared with the card and the admin detail page). */
   get scoreConfidence(): ScoreConfidence | null {
-    if (!this.audit) return null;
-    const platforms = this.audit.platformsCollected || [];
-    const maxConfidence = platforms.length ? Math.max(...platforms.map((p) => p.confidence || 0)) : 0;
-    const level: ScoreConfidenceLevel = maxConfidence >= 85 ? 'High' : maxConfidence >= 50 ? 'Medium' : 'Low';
-
-    // Confidence > 0 required, not just "present in platformsCollected" — a
-    // platform with 0% confidence (e.g. self-reported with no stats filled
-    // in) is excluded from the score entirely by the rules engine, so
-    // showing it as "met" here would contradict the Platform Confidence
-    // section right above, which correctly calls it out as unavailable.
-    const hasPlatform = (name: string) => platforms.some((p) => p.platform === name && (p.confidence || 0) > 0);
-    const basedOn: ScoreConfidenceBasedOnItem[] = [
-      { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
-      { met: hasPlatform('YouTube'), label: 'YouTube', absentLabel: 'YouTube not added' },
-      { met: hasPlatform('Instagram'), label: 'Instagram', absentLabel: 'Instagram not connected' },
-      { met: hasPlatform('Facebook'), label: 'Facebook', absentLabel: 'Facebook not connected' },
-      // LinkedIn has no OAuth support at all yet — never "met", always shown
-      // as its own informational state rather than a real absent/connected pair.
-      { met: false, label: 'LinkedIn', absentLabel: 'LinkedIn (Coming Soon)' },
-    ];
-    return { level, basedOn };
+    return this.ui.scoreConfidence(this.audit);
   }
+
+  /** TrendStarZ admin-verification flag — fetched alongside platform status (see setPlatformStatus). */
+  verified = false;
 
   syncing = false;
   private syncStatusByPlatform: Record<string, { lastSyncedAt: string | null; hasChanges: boolean }> = {};
@@ -294,6 +258,7 @@ export class CreatorScoreCenterComponent implements OnInit {
     const hasYoutube = (profile?.socialMedia || []).some(
       (s: any) => String(s?.platform || '').toLowerCase() === 'youtube' && s?.handle,
     );
+    this.verified = profile?.verifiedByTrendStarz === true;
     const rows: Array<PlatformStatusRow & { enabled: boolean }> = [
       { platform: 'Instagram', icon: 'bi-instagram', status: connections.instagram ? 'Connected' : 'Not Connected', enabled: platformsEnabled.instagram },
       { platform: 'YouTube', icon: 'bi-youtube', status: hasYoutube ? 'Connected' : 'Not Connected', enabled: platformsEnabled.youtube },
