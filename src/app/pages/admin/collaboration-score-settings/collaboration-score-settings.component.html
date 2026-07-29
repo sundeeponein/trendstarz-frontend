@@ -426,5 +426,14 @@
       Save is disabled — Score Weights above must sum to exactly 100 (currently {{ scoreWeightsSum }}). This blocks
       saving every section on this page, not just Score Weights.
     </p>
+
+    <!-- Debug line — if a Save doesn't seem to stick, reload this page and
+         compare: a changed "Doc" id means a different document is being
+         read back than the one just saved to; an unchanged "Updated"
+         timestamp right after a successful save means the write isn't
+         landing where this page reads from. -->
+    <p class="text-muted small mt-2 mb-0" *ngIf="settings._id">
+      Doc: {{ settings._id }} · Updated: {{ settings.updatedAt | date:'medium' }}
+    </p>
   </ng-container>
 </div>

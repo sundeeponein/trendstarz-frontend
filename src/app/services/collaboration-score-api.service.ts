@@ -117,6 +117,11 @@ export interface CollaborationScoreWeights {
 }
 
 export interface CollaborationScoreSettings {
+  // Debug-only — lets the admin page prove a Save actually persisted
+  // (updatedAt changes) and that repeated loads read the same document
+  // (_id stays stable), without needing server log access.
+  _id?: string | null;
+  updatedAt?: string | null;
   schemaVersion: number;
   aiEnabled: boolean;
   aiModel: string;
