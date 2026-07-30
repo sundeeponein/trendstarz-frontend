@@ -180,7 +180,7 @@
               {{ p.confidence }}% {{ ui.confidenceLabel(p.confidence) }}
             </div>
             <div class="cs-card__platform-pill-score text-muted" *ngIf="p.miniScore != null" [title]="'Content Quality + Posting Consistency for ' + p.platform + ' alone — not the full Collaboration Score.'">
-              Platform Score: <strong>{{ p.miniScore }}/100</strong>
+              Platform Quality: <strong>{{ p.miniScore }}/100</strong>
             </div>
           </div>
           <button
