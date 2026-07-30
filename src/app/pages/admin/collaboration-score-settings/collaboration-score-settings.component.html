@@ -290,6 +290,9 @@
         <p class="text-muted small">
           Creators must wait this many days between self-triggered re-analyses — a hard floor, even for paid re-analysis. After the first free audits above are used, every re-analysis requires this fee via Razorpay.
         </p>
+        <p class="text-muted small font-monospace" style="word-break: break-all;">
+          DEBUG settings.reanalysisCooldownDays = {{ settings.reanalysisCooldownDays }} (typeof {{ typeofValue(settings.reanalysisCooldownDays) }}) · settings.reanalysisFeeRupees = {{ settings.reanalysisFeeRupees }} (typeof {{ typeofValue(settings.reanalysisFeeRupees) }})
+        </p>
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label small fw-bold">Cooldown (days)</label>

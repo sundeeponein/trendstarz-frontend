@@ -102,6 +102,11 @@ export class CollaborationScoreSettingsComponent implements OnInit {
     });
   }
 
+  // Debug-only — see the template's DEBUG line next to Cooldown/Price.
+  typeofValue(v: unknown): string {
+    return typeof v;
+  }
+
   get scoreWeightsSum(): number {
     const w = this.settings?.scoreWeights;
     if (!w) return 0;
