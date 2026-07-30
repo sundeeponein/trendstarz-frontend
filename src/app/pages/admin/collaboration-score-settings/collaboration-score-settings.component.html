@@ -216,6 +216,13 @@
         <p class="text-muted small">
           Disable a platform's collector without a code deploy (e.g. while it's unreliable). Disabled platforms are skipped during audits.
         </p>
+        <!-- Debug-only — shows exactly what this component's own bound
+             model contains, so a mismatch against the toggles below proves
+             it's a rendering bug (model correct, checkbox wrong) rather
+             than a data bug (model itself wrong). Remove once diagnosed. -->
+        <p class="text-muted small font-monospace" style="word-break: break-all;">
+          DEBUG settings.platformsEnabled = {{ settings.platformsEnabled | json }}
+        </p>
         <div class="row g-2">
           <div class="col-6 col-md-3">
             <div class="form-check form-switch">
