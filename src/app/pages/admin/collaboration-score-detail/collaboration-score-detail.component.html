@@ -160,6 +160,9 @@
                 <div class="csd-platform-pill-status" [ngClass]="p.confidence >= 90 ? 'text-success' : (p.confidence > 0 ? 'text-warning' : 'text-muted')">
                   {{ p.confidence }}% {{ ui.confidenceLabel(p.confidence) }}
                 </div>
+                <div class="csd-platform-pill-score text-muted" *ngIf="p.miniScore != null" [title]="'Content Quality + Posting Consistency for ' + p.platform + ' alone — not the full Collaboration Score.'">
+                  Platform Score: <strong>{{ p.miniScore }}/100</strong>
+                </div>
               </div>
               <span class="badge rounded-pill" [ngClass]="p.method === 'API' ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis'">
                 {{ p.method === 'API' ? 'Live API' : 'Self-reported' }}

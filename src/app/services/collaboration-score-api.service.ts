@@ -27,6 +27,8 @@ export interface CollaborationScorePlatformCollected {
   collectedAt?: string;
   confidence: number;
   confidenceReason: string;
+  /** This platform's own Content Quality + Posting Consistency in isolation (0-100) — shown alongside, never instead of, the real collaborationScore. */
+  miniScore?: number;
 }
 
 export interface CollaborationAudit {
