@@ -124,6 +124,7 @@ export interface CollaborationScoreSettings {
   // (_id stays stable), without needing server log access.
   _id?: string | null;
   updatedAt?: string | null;
+  _serverInstanceId?: string | null;
   schemaVersion: number;
   aiEnabled: boolean;
   aiModel: string;

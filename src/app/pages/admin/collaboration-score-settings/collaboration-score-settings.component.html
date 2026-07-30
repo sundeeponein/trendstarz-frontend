@@ -3,6 +3,9 @@
   <p class="text-muted mb-4">
     Control the AI layer, scoring thresholds, and rollout for the TrendStarz Collaboration Score.
   </p>
+  <p *ngIf="settings" class="text-muted small font-monospace" style="word-break: break-all;">
+    DEBUG server instance = {{ settings._serverInstanceId }} · doc _id = {{ settings._id }} · updatedAt = {{ settings.updatedAt }}
+  </p>
 
   <div *ngIf="loading" class="d-flex align-items-center gap-2 text-muted">
     <div class="spinner-border spinner-border-sm text-primary"></div>
