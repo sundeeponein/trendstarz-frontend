@@ -2,6 +2,7 @@ import { Component, signal, OnInit, PLATFORM_ID, Inject } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, RouterOutlet, Router } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter } from 'rxjs';
 import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
@@ -33,6 +34,7 @@ export class App implements OnInit {
     private config: ConfigService,
     private titleService: Title,
     private meta: Meta,
+    private swUpdate: SwUpdate,
     @Inject(DOCUMENT) private document: Document,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
@@ -43,6 +45,7 @@ export class App implements OnInit {
     this.setupAnalyticsTracking();
 
     if (isPlatformBrowser(this.platformId)) {
+      this.setupServiceWorkerUpdates();
       this.markOpenedWhenVisible();
       this.session.user$.subscribe((user) => {
         if (!user) {
@@ -93,6 +96,27 @@ export class App implements OnInit {
     if (this.document.visibilityState !== 'visible') return;
     if (!this.session.getUser()) return;
     this.markSessionOpened();
+  }
+
+  // The service worker (ngsw-worker.js) prefetch-caches JS/CSS chunks
+  // (ngsw-config.json's "app" assetGroup) so the app works offline — but with
+  // no update handling, an already-open tab keeps running whatever bundle it
+  // first loaded, forever: reloading, hard-refreshing, or even a stale-tab
+  // race can silently re-render OLD component code against fresh API data,
+  // which is exactly what caused the Collaboration Score Settings page to
+  // appear to "revert" saved values after every deploy. Reloading as soon as
+  // a new version installs guarantees every tab is always running the
+  // version that was actually just deployed.
+  private setupServiceWorkerUpdates(): void {
+    if (!this.swUpdate.isEnabled) return;
+
+    this.swUpdate.versionUpdates
+      .pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'))
+      .subscribe(() => {
+        this.swUpdate.activateUpdate().then(() => this.document.location.reload());
+      });
+
+    this.swUpdate.checkForUpdate().catch(() => {});
   }
 
   private setupAnalyticsTracking(): void {
