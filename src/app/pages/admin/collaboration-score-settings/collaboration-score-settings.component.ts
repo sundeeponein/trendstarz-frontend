@@ -31,14 +31,27 @@ export class CollaborationScoreSettingsComponent implements OnInit {
   todaySummary: CollaborationScoreTodaySummary | null = null;
   resetting = false;
 
+  // Debug-only — generated once per component instance. If this ID changes
+  // between two Save clicks with no reload in between, two separate
+  // instances of this component exist simultaneously (e.g. a duplicated
+  // route outlet) and are being confused for one — otherwise it proves
+  // whatever's wrong is happening to this exact single instance's own
+  // `settings` object. Remove once the settings-revert bug is diagnosed.
+  private readonly instanceId = Math.random().toString(36).slice(2, 8);
+
   constructor(
     private readonly api: CollaborationScoreApiService,
     private readonly toast: ToastService,
     private readonly ngZone: NgZone,
     private readonly cdr: ChangeDetectorRef,
-  ) {}
+  ) {
+    // eslint-disable-next-line no-console
+    console.log(`[CollaborationScoreSettingsComponent] constructed — instance=${this.instanceId}`);
+  }
 
   ngOnInit(): void {
+    // eslint-disable-next-line no-console
+    console.log(`[CollaborationScoreSettingsComponent] ngOnInit — instance=${this.instanceId}`);
     this.loadSettings();
     this.loadSummary();
   }
@@ -57,6 +70,10 @@ export class CollaborationScoreSettingsComponent implements OnInit {
         this.ngZone.run(() => {
           this.settings = settings;
           this.loading = false;
+          // eslint-disable-next-line no-console
+          console.log(
+            `[CollaborationScoreSettingsComponent] loadSettings() instance=${this.instanceId} received platformsEnabled=${JSON.stringify(settings.platformsEnabled)} reanalysisCooldownDays=${settings.reanalysisCooldownDays} reanalysisFeeRupees=${settings.reanalysisFeeRupees}`,
+          );
           this.cdr.detectChanges();
         });
       },
@@ -141,11 +158,19 @@ export class CollaborationScoreSettingsComponent implements OnInit {
   save(): void {
     if (!this.settings) return;
     this.saving = true;
+    // eslint-disable-next-line no-console
+    console.log(
+      `[CollaborationScoreSettingsComponent] save() instance=${this.instanceId} submitting platformsEnabled=${JSON.stringify(this.settings.platformsEnabled)} reanalysisCooldownDays=${this.settings.reanalysisCooldownDays} reanalysisFeeRupees=${this.settings.reanalysisFeeRupees}`,
+    );
     this.api.updateSettings(this.settings).subscribe({
       next: (settings) => {
         this.ngZone.run(() => {
           this.settings = settings;
           this.saving = false;
+          // eslint-disable-next-line no-console
+          console.log(
+            `[CollaborationScoreSettingsComponent] save() instance=${this.instanceId} response platformsEnabled=${JSON.stringify(settings.platformsEnabled)} reanalysisCooldownDays=${settings.reanalysisCooldownDays} reanalysisFeeRupees=${settings.reanalysisFeeRupees}`,
+          );
           this.toast.success('Collaboration Score settings saved.');
           this.cdr.detectChanges();
         });
