@@ -836,7 +836,10 @@
           <div class="status-card">
             <div>
               <strong>Premium Subscription</strong>
-              <div class="user-sub" *ngIf="getPremiumPeriod(selectedUser) as period">Active until {{ period.end | date:'MMM yyyy' }}</div>
+              <div class="user-sub" *ngIf="getPremiumPeriod(selectedUser) as period">
+                Active until {{ period.end | date:'MMM yyyy' }}
+                <span *ngIf="selectedUser.premiumSource === 'admin'" class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Granted by Admin</span>
+              </div>
               <div class="user-sub" *ngIf="!selectedUser.isPremium">Free plan</div>
             </div>
             <span class="tier-badge" [ngClass]="getTierValue(selectedUser) === 'premium' ? 'premium' : 'free'">

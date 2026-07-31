@@ -828,8 +828,9 @@ export class AdminUserTableComponent implements OnInit {
   getUserPremiumLabel(user: any): string {
     if (!user?.isPremium) return 'Free';
     const period = this.getPremiumPeriod(user);
-    if (period?.end) return `Premium till ${period.end.toLocaleDateString('en-IN')}`;
-    return 'Premium';
+    const grantedByAdmin = user?.premiumSource === 'admin' ? ' — Granted by Admin' : '';
+    if (period?.end) return `Premium till ${period.end.toLocaleDateString('en-IN')}${grantedByAdmin}`;
+    return `Premium${grantedByAdmin}`;
   }
 
   getSocialMediaItems(user: any): Array<{ href: string; icon: string; label: string; handle: string; followers: number; shortLabel: string; tierLabel: string }> {
