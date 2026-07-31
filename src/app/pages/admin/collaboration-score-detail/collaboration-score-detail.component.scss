@@ -303,6 +303,27 @@
   font-size: 0.9rem;
 }
 
+.csd-breakdown-group {
+  margin-bottom: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px dashed #e7eaf0;
+
+  &:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.csd-breakdown-group-title {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  margin-bottom: 0.15rem;
+}
+
 .csd-breakdown-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -338,6 +359,14 @@
   font-weight: 700;
   width: 2.5rem;
   text-align: right;
+
+  &.text-muted {
+    // "No platform connected" is far wider than a numeric score — the
+    // fixed width above exists only to align single/double-digit values.
+    width: auto;
+    font-weight: 500;
+    white-space: nowrap;
+  }
 }
 
 .csd-bar-contribution {

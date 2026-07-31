@@ -40,6 +40,7 @@ describe('CollaborationScoreUiUtilsService — subScores/subScoresTotal', () => 
     professionalBrandingScore: 79,
     campaignReadinessScore: 100,
     collaborationScore: 71,
+    platformsCollected: [{ platform: 'YouTube' }],
   };
 
   it('returns [] when the audit has no sub-score breakdown', () => {
@@ -50,13 +51,38 @@ describe('CollaborationScoreUiUtilsService — subScores/subScoresTotal', () => 
   it('computes weight × score contribution per criterion, matching the known Sandeep Kumar example', () => {
     const rows = service.subScores(fakeAudit);
     expect(rows).toEqual([
-      { label: 'Profile Completeness', value: 85, weight: '15%', contribution: 12.75 },
-      { label: 'Content Quality', value: 80, weight: '25%', contribution: 20 },
-      { label: 'Posting Consistency', value: 10, weight: '20%', contribution: 2 },
-      { label: 'Professional Branding', value: 79, weight: '20%', contribution: 15.8 },
-      { label: 'Campaign Readiness', value: 100, weight: '20%', contribution: 20 },
+      { label: 'Profile Completeness', value: 85, weight: '15%', contribution: 12.75, noData: false, group: 'Profile' },
+      { label: 'Content Quality', value: 80, weight: '25%', contribution: 20, noData: false, group: 'Platform' },
+      { label: 'Posting Consistency', value: 10, weight: '20%', contribution: 2, noData: false, group: 'Platform' },
+      { label: 'Professional Branding', value: 79, weight: '20%', contribution: 15.8, noData: false, group: 'Profile' },
+      { label: 'Campaign Readiness', value: 100, weight: '20%', contribution: 20, noData: false, group: 'Profile' },
     ]);
     expect(service.subScoresTotal(rows)).toBe(70.55);
+  });
+
+  // A creator with zero connected platforms genuinely gets 0 for these two
+  // criteria (confidenceWeightedAverage([]) === 0) — noData distinguishes
+  // "no data exists yet" from "your content/posting is actually bad" so the
+  // breakdown UI can show "No platform connected" instead of a flat 0.
+  it('flags Content Quality / Posting Consistency as noData when zero platforms are connected', () => {
+    const rows = service.subScores({
+      ...fakeAudit,
+      contentQualityScore: 0,
+      postingConsistencyScore: 0,
+      platformsCollected: [],
+    });
+    expect(rows.find((r) => r.label === 'Content Quality')?.noData).toBe(true);
+    expect(rows.find((r) => r.label === 'Posting Consistency')?.noData).toBe(true);
+    expect(rows.find((r) => r.label === 'Profile Completeness')?.noData).toBe(false);
+    expect(rows.find((r) => r.label === 'Campaign Readiness')?.noData).toBe(false);
+  });
+
+  it('subScoreGroupSummary splits earned/max points between Profile and Platform groups', () => {
+    const rows = service.subScores(fakeAudit);
+    // Profile = Profile Completeness(15) + Professional Branding(20) + Campaign Readiness(20) = 55 max
+    expect(service.subScoreGroupSummary(rows, 'Profile')).toEqual({ earned: 48.55, max: 55 });
+    // Platform = Content Quality(25) + Posting Consistency(20) = 45 max
+    expect(service.subScoreGroupSummary(rows, 'Platform')).toEqual({ earned: 22, max: 45 });
   });
 });
 

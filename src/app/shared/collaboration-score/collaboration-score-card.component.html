@@ -150,16 +150,41 @@
         <div class="cs-card__breakdown-title">Score Breakdown</div>
         <span class="text-muted small">Weighted Analysis</span>
       </div>
-      <div class="cs-card__breakdown-grid">
-        <div class="cs-card__bar-row" *ngFor="let sub of subScores">
-          <div class="cs-card__bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
-          <div class="progress cs-card__progress">
-            <div class="progress-bar" [style.width.%]="sub.value"></div>
+
+      <div class="cs-card__breakdown-group">
+        <div class="cs-card__breakdown-group-title">TrendStarZ Profile Score</div>
+        <p class="text-muted small mb-2">Based on your profile — not affected by connected platforms.</p>
+        <div class="cs-card__breakdown-grid">
+          <div class="cs-card__bar-row" *ngFor="let sub of profileSubScores">
+            <div class="cs-card__bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+            <div class="progress cs-card__progress">
+              <div class="progress-bar" [style.width.%]="sub.value"></div>
+            </div>
+            <div class="cs-card__bar-value">{{ sub.value }}</div>
+            <div class="cs-card__bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
           </div>
-          <div class="cs-card__bar-value">{{ sub.value }}</div>
-          <div class="cs-card__bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
         </div>
+        <p class="text-muted small mb-0">Profile subtotal: {{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }} pts</p>
       </div>
+
+      <div class="cs-card__breakdown-group">
+        <div class="cs-card__breakdown-group-title">Platform Performance Score</div>
+        <p class="text-muted small mb-2">Based only on your connected social platforms.</p>
+        <div class="cs-card__breakdown-grid">
+          <div class="cs-card__bar-row" *ngFor="let sub of platformSubScores">
+            <div class="cs-card__bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+            <div class="progress cs-card__progress">
+              <div class="progress-bar" [style.width.%]="sub.value"></div>
+            </div>
+            <div class="cs-card__bar-value" [class.text-muted]="sub.noData" [class.fst-italic]="sub.noData">
+              {{ sub.noData ? 'No platform connected' : sub.value }}
+            </div>
+            <div class="cs-card__bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
+          </div>
+        </div>
+        <p class="text-muted small mb-0">Platform subtotal: {{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }} pts</p>
+      </div>
+
       <div class="cs-card__bar-row cs-card__bar-row--total">
         <div class="cs-card__bar-label"><strong>Total</strong></div>
         <div class="cs-card__bar-value"><strong>{{ subScoresTotal }} → {{ audit.collaborationScore }}</strong></div>

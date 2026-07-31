@@ -131,16 +131,41 @@
             <div class="csd-breakdown-title">Score Breakdown</div>
             <span class="text-muted small">Weighted Analysis</span>
           </div>
-          <div class="csd-breakdown-grid">
-            <div class="csd-bar-row" *ngFor="let sub of subScores">
-              <div class="csd-bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
-              <div class="progress csd-progress">
-                <div class="progress-bar" [style.width.%]="sub.value"></div>
+
+          <div class="csd-breakdown-group">
+            <div class="csd-breakdown-group-title">TrendStarZ Profile Score</div>
+            <p class="text-muted small mb-2">Based on the profile itself — not affected by connected platforms.</p>
+            <div class="csd-breakdown-grid">
+              <div class="csd-bar-row" *ngFor="let sub of profileSubScores">
+                <div class="csd-bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+                <div class="progress csd-progress">
+                  <div class="progress-bar" [style.width.%]="sub.value"></div>
+                </div>
+                <div class="csd-bar-value">{{ sub.value }}</div>
+                <div class="csd-bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
               </div>
-              <div class="csd-bar-value">{{ sub.value }}</div>
-              <div class="csd-bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
             </div>
+            <p class="text-muted small mb-0">Profile subtotal: {{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }} pts</p>
           </div>
+
+          <div class="csd-breakdown-group">
+            <div class="csd-breakdown-group-title">Platform Performance Score</div>
+            <p class="text-muted small mb-2">Based only on connected social platforms.</p>
+            <div class="csd-breakdown-grid">
+              <div class="csd-bar-row" *ngFor="let sub of platformSubScores">
+                <div class="csd-bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+                <div class="progress csd-progress">
+                  <div class="progress-bar" [style.width.%]="sub.value"></div>
+                </div>
+                <div class="csd-bar-value" [class.text-muted]="sub.noData" [class.fst-italic]="sub.noData">
+                  {{ sub.noData ? 'No platform connected' : sub.value }}
+                </div>
+                <div class="csd-bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
+              </div>
+            </div>
+            <p class="text-muted small mb-0">Platform subtotal: {{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }} pts</p>
+          </div>
+
           <div class="csd-bar-row csd-bar-row--total">
             <div class="csd-bar-label"><strong>Total</strong></div>
             <div class="csd-bar-value"><strong>{{ subScoresTotal }} → {{ audit.collaborationScore }}</strong></div>

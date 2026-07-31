@@ -19,6 +19,17 @@ export interface SubScoreRow {
   value: number;
   weight: string;
   contribution: number;
+  /** True only for platform-derived rows (Content Quality, Posting
+   * Consistency) when zero platforms are connected — their value is a
+   * genuine 0 from confidenceWeightedAverage([]), but that reads as "your
+   * content is bad" when the real story is "no data exists yet." */
+  noData?: boolean;
+  /** 'Profile' = computed from the TrendStarZ profile itself, unaffected by
+   * connected platforms. 'Platform' = computed only from connected social
+   * platform data (confidenceWeightedAverage over collectedPlatforms) — lets
+   * the UI group the breakdown into "your profile" vs. "your platforms" so
+   * it's clear which half a low score is coming from. */
+  group: 'Profile' | 'Platform';
 }
 
 // Badge/label formatting only — mirrors AdminPaymentsUiUtilsService's
@@ -79,24 +90,41 @@ export class CollaborationScoreUiUtilsService {
    */
   subScores(audit: CollaborationAudit | null): SubScoreRow[] {
     if (!audit || audit.profileCompletenessScore == null) return [];
+    const hasPlatforms = (audit.platformsCollected?.length ?? 0) > 0;
     const rows = [
-      { label: 'Profile Completeness', value: audit.profileCompletenessScore ?? 0, weightPercent: 15 },
-      { label: 'Content Quality', value: audit.contentQualityScore ?? 0, weightPercent: 25 },
-      { label: 'Posting Consistency', value: audit.postingConsistencyScore ?? 0, weightPercent: 20 },
-      { label: 'Professional Branding', value: audit.professionalBrandingScore ?? 0, weightPercent: 20 },
-      { label: 'Campaign Readiness', value: audit.campaignReadinessScore ?? 0, weightPercent: 20 },
+      { label: 'Profile Completeness', value: audit.profileCompletenessScore ?? 0, weightPercent: 15, noData: false, group: 'Profile' as const },
+      { label: 'Content Quality', value: audit.contentQualityScore ?? 0, weightPercent: 25, noData: !hasPlatforms, group: 'Platform' as const },
+      { label: 'Posting Consistency', value: audit.postingConsistencyScore ?? 0, weightPercent: 20, noData: !hasPlatforms, group: 'Platform' as const },
+      { label: 'Professional Branding', value: audit.professionalBrandingScore ?? 0, weightPercent: 20, noData: false, group: 'Profile' as const },
+      { label: 'Campaign Readiness', value: audit.campaignReadinessScore ?? 0, weightPercent: 20, noData: false, group: 'Profile' as const },
     ];
     return rows.map((r) => ({
       label: r.label,
       value: r.value,
       weight: `${r.weightPercent}%`,
       contribution: Math.round(r.value * r.weightPercent) / 100,
+      group: r.group,
+      noData: r.noData,
     }));
   }
 
   /** Sum of each row's Contribution — the pre-rounding total; audit.collaborationScore is this, rounded server-side. */
   subScoresTotal(subScores: SubScoreRow[]): number {
     return Math.round(subScores.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
+  }
+
+  /**
+   * Points actually earned within one group ('Profile' or 'Platform') out of
+   * that group's max possible (its rows' weights summed) — e.g. "7.5 / 45"
+   * for Platform when no platform is connected. Lets the breakdown show, at
+   * a glance, how much of the total score came from the profile side vs.
+   * the platform side, without the reader having to add up rows themselves.
+   */
+  subScoreGroupSummary(subScores: SubScoreRow[], group: 'Profile' | 'Platform'): { earned: number; max: number } {
+    const rows = subScores.filter((s) => s.group === group);
+    const earned = Math.round(rows.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
+    const max = rows.reduce((sum, s) => sum + parseFloat(s.weight), 0);
+    return { earned, max };
   }
 
   /** "Verified" = real API data; "Beta" = self-reported (capped, unverified); "Not available" = no usable data. */

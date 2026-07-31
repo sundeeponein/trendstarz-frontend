@@ -199,6 +199,25 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     return this.subScores.length > 0;
   }
 
+  // Split so the template can show "based on your TrendStarZ profile" vs.
+  // "based on your connected platforms" as two clearly separate groups,
+  // instead of one flat list a reader has to mentally sort themselves.
+  get profileSubScores(): SubScoreRow[] {
+    return this.subScores.filter((s) => s.group === 'Profile');
+  }
+
+  get platformSubScores(): SubScoreRow[] {
+    return this.subScores.filter((s) => s.group === 'Platform');
+  }
+
+  get profileScoreSummary(): { earned: number; max: number } {
+    return this.ui.subScoreGroupSummary(this.subScores, 'Profile');
+  }
+
+  get platformScoreSummary(): { earned: number; max: number } {
+    return this.ui.subScoreGroupSummary(this.subScores, 'Platform');
+  }
+
   get scoreConfidence(): ScoreConfidence | null {
     return this.ui.scoreConfidence(this.audit);
   }
