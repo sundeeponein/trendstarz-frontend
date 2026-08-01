@@ -33,6 +33,14 @@ export class CollaborationScoreDetailComponent implements OnInit {
   audit: CollaborationAudit | null = null;
   history: CollaborationAuditHistoryEntry[] = [];
   payments: CollaborationReanalysisPayment[] = [];
+  showFullAuditHistory = false;
+
+  // Only the current audit shows by default — a long history list buried the
+  // one thing an admin actually opens this page to see. Toggled by a button
+  // below the list, only rendered when there's more than one entry to reveal.
+  get visibleHistory(): CollaborationAuditHistoryEntry[] {
+    return this.showFullAuditHistory ? this.history : this.history.slice(0, 1);
+  }
 
   constructor(
     private readonly route: ActivatedRoute,

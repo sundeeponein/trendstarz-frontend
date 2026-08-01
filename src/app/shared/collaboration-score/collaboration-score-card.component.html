@@ -145,6 +145,23 @@
       </div>
     </div>
 
+    <!-- At-a-glance summary: both subtotals + the one thing to fix next, so
+         that's visible without scrolling into the full breakdown below. -->
+    <div class="cs-card__score-summary" *ngIf="hasSubScoreBreakdown">
+      <div class="cs-card__score-summary-item">
+        <span class="cs-card__score-summary-label">TrendStarZ Profile</span>
+        <span class="cs-card__score-summary-value">{{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }}</span>
+      </div>
+      <div class="cs-card__score-summary-item">
+        <span class="cs-card__score-summary-label">Platform Performance</span>
+        <span class="cs-card__score-summary-value">{{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }}</span>
+      </div>
+      <div class="cs-card__score-summary-next" *ngIf="audit.improvements?.length">
+        <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+        <span>{{ audit.improvements?.[0] }}</span>
+      </div>
+    </div>
+
     <div class="cs-card__breakdown" *ngIf="hasSubScoreBreakdown">
       <div class="cs-card__breakdown-header">
         <div class="cs-card__breakdown-title">Score Breakdown</div>

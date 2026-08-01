@@ -120,6 +120,23 @@
           </div>
         </div>
 
+        <!-- At-a-glance summary: both subtotals + the one thing to fix next,
+             so it's visible without scrolling into the full breakdown below. -->
+        <div class="csd-score-summary" *ngIf="hasSubScoreBreakdown">
+          <div class="csd-score-summary-item">
+            <span class="csd-score-summary-label">TrendStarZ Profile</span>
+            <span class="csd-score-summary-value">{{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }}</span>
+          </div>
+          <div class="csd-score-summary-item">
+            <span class="csd-score-summary-label">Platform Performance</span>
+            <span class="csd-score-summary-value">{{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }}</span>
+          </div>
+          <div class="csd-score-summary-next" *ngIf="audit.improvements?.length">
+            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+            <span>{{ audit.improvements?.[0] }}</span>
+          </div>
+        </div>
+
         <!-- Score Breakdown — the 5 weighted criteria behind the single
              total above; makes it possible to see, e.g., whether a capped
              self-reported platform is actually what's holding Content
@@ -203,7 +220,7 @@
       <div class="csd-card mb-4">
         <h2 class="csd-section-title">Audit History</h2>
         <div class="csd-history-cards" *ngIf="history.length; else noHistory">
-          <div class="csd-history-card" *ngFor="let entry of history; let i = index">
+          <div class="csd-history-card" *ngFor="let entry of visibleHistory; let i = index">
             <div class="csd-history-card-chip" [ngClass]="ui.scoreTierClass(entry.collaborationScore)">{{ entry.collaborationScore }}</div>
             <div class="csd-history-card-meta">
               <div class="csd-history-card-title">{{ i === 0 ? 'Current Audit' : 'Previous Audit' }}</div>
@@ -220,6 +237,14 @@
               {{ entry.isPaid ? 'Paid' : 'Free' }}
             </span>
           </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary mt-2"
+            *ngIf="history.length > 1"
+            (click)="showFullAuditHistory = !showFullAuditHistory"
+          >
+            {{ showFullAuditHistory ? 'Hide Previous Audits' : 'Show Previous Audits (' + (history.length - 1) + ')' }}
+          </button>
         </div>
         <ng-template #noHistory><p class="text-muted small mb-0">No history yet.</p></ng-template>
       </div>
