@@ -46,6 +46,14 @@ export class CreatorScoreCenterComponent implements OnInit {
 
   history: CollaborationAuditHistoryEntry[] = [];
   historyLoading = false;
+  showFullAuditHistory = false;
+
+  // Only the current audit shows by default — a long history list buried the
+  // one thing a creator actually opens this page to see. Toggled by a button
+  // below the list, only rendered when there's more than one entry to reveal.
+  get visibleHistory(): CollaborationAuditHistoryEntry[] {
+    return this.showFullAuditHistory ? this.history : this.history.slice(0, 1);
+  }
 
   platformStatus: PlatformStatusRow[] = [];
   /** Fetched once here and passed to the embedded full card too, instead of it fetching its own copy. */
