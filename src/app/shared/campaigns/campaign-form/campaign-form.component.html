@@ -1087,7 +1087,7 @@
                 <label>{{ inviteRecipientLabelSingular }} Tier</label>
                 <select class="recipient-filter-select" [(ngModel)]="filterTier" [ngModelOptions]="{standalone: true}">
                   <option value="">All tiers</option>
-                  <option *ngFor="let item of getAvailableTierFilters()" [value]="item">{{ item }}</option>
+                  <option *ngFor="let item of getAvailableTierFilters()" [value]="item">{{ getTierOptionLabel(item) }}</option>
                 </select>
               </div>
 
