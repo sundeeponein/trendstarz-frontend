@@ -2660,6 +2660,24 @@ export class AdminUserTableComponent implements OnInit {
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 
+  /**
+   * Looks the row up in whichever tab's list currently holds it — decline/
+   * delete are always triggered from a row in the active tab, so the pending-
+   * payment badge and this confirmation warning never disagree about the
+   * same user.
+   */
+  private findUserById(userId: string): any {
+    return [...this.filteredInfluencers, ...this.filteredBrands, ...this.filteredPhotographers]
+      .find((u) => String(u?._id) === String(userId));
+  }
+
+  private pendingPaymentWarning(userId: string): string {
+    const user = this.findUserById(userId);
+    return user?.hasPendingPremiumPayment
+      ? '\n\nWarning: this user has a payment submitted and awaiting approval in Premium Payments. Review/decide it there first — proceeding here does not touch that payment record.'
+      : '';
+  }
+
   acceptUser(userId: string) {
     this.showConfirm('Accept this user?', () => {
       this.http.patch(`${environment.apiBaseUrl}/users/${userId}/accept`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
@@ -2667,12 +2685,12 @@ export class AdminUserTableComponent implements OnInit {
   }
   declineUser(userId: string) {
     const reason = (typeof window !== 'undefined' ? window.prompt('Reason for declining (shown to the user so they know what to fix):') : '') || '';
-    this.showConfirm('Decline this user?', () => {
+    this.showConfirm(`Decline this user?${this.pendingPaymentWarning(userId)}`, () => {
       this.http.patch(`${environment.apiBaseUrl}/users/${userId}/decline`, { reason }, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
     });
   }
   deleteUser(userId: string) {
-    this.showConfirm('Delete this user? This cannot be undone.', () => {
+    this.showConfirm(`Delete this user? This cannot be undone.${this.pendingPaymentWarning(userId)}`, () => {
       this.isLoading = true;
       this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
         this.fetchUsers();

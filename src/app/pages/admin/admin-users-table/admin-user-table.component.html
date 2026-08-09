@@ -198,6 +198,11 @@
                 {{ getUserVisibilityLabel(user) }}
               </span>
             </div>
+            <div class="mt-1" *ngIf="user.hasPendingPremiumPayment" title="This user submitted a payment that is still awaiting admin approval/decline in Premium Payments. Review it there before accepting, declining, or deleting this account.">
+              <span class="ts-status-badge ts-status-pending">
+                <i class="bi bi-cash-coin"></i> Payment submitted — pending approval
+              </span>
+            </div>
             <div class="user-verify-admin-helper">
               <span><i class="bi bi-envelope-check" [class.text-success]="isEmailVerified(user)" [class.text-danger]="!isEmailVerified(user)"></i><small>Email</small></span>
               <span><i class="bi bi-phone" [class.text-success]="isMobileVerified(user)" [class.text-danger]="!isMobileVerified(user)"></i><small>Mobile</small></span>
@@ -823,7 +828,12 @@
             </div>
             <div>
               <label>Premium</label>
-              <div>{{ getUserPremiumLabel(selectedUser) }}</div>
+              <div>
+                {{ getUserPremiumLabel(selectedUser) }}
+                <span *ngIf="selectedUser.hasPendingPremiumPayment" class="badge bg-warning text-dark ms-1" title="A payment from this user is awaiting approval/decline in Premium Payments.">
+                  <i class="bi bi-cash-coin"></i> Payment pending approval
+                </span>
+              </div>
             </div>
             <div>
               <label>Status</label>
@@ -841,6 +851,10 @@
                 <span *ngIf="selectedUser.premiumSource === 'admin'" class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Granted by Admin</span>
               </div>
               <div class="user-sub" *ngIf="!selectedUser.isPremium">Free plan</div>
+              <div class="user-sub text-warning-emphasis" *ngIf="selectedUser.hasPendingPremiumPayment">
+                <i class="bi bi-cash-coin"></i>
+                Payment submitted{{ selectedUser.pendingPremiumPayment?.amount ? (' — ₹' + (selectedUser.pendingPremiumPayment.amount / 100)) : '' }} — awaiting approval in Premium Payments
+              </div>
             </div>
             <span class="tier-badge" [ngClass]="getTierValue(selectedUser) === 'premium' ? 'premium' : 'free'">
               {{ getTierValue(selectedUser) === 'premium' ? 'PREMIUM' : 'FREE' }}
