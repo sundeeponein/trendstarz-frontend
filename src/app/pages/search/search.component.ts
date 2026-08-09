@@ -6,7 +6,7 @@ import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
-import { TIER_ORDER, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
+import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
@@ -607,6 +607,16 @@ export class SearchComponent implements OnInit {
   private normalizeTierLabel(tier: string): string { return normalizeTierLabel(tier); }
 
   private getInfluencerPrimaryTier(u: any): string { return getInfluencerPrimaryTier(u); }
+
+  // Same reuse as the campaign invite Step 3 tier filter
+  // (campaign-form.component.ts -> getTierOptionLabel) — one follower-range
+  // source of truth (tiers.constants.ts) so a tier name reads the same
+  // "Nano (101–1,000)" everywhere it's offered as a filter.
+  getTierOptionLabel(tier: string): string {
+    const normalized = normalizeTierLabel(tier);
+    const desc = TIER_DESC_MAP[normalized.toLowerCase()] || '';
+    return desc ? `${normalized} (${desc})` : normalized || String(tier || '');
+  }
 
   buildBrandOptions(data: any[]) {
     const cats = new Set<string>(this.brandRoleCategoryOptions);

@@ -92,7 +92,7 @@
       <label class="filter-label">Tier</label>
       <select class="filter-select" [(ngModel)]="infFilters.tier" (ngModelChange)="applyInfluencerFilters()">
         <option value="">All Tiers</option>
-        <option *ngFor="let tier of tierOptions" [value]="tier">{{ tier }}</option>
+        <option *ngFor="let tier of tierOptions" [value]="tier">{{ getTierOptionLabel(tier) }}</option>
       </select>
     </div>
 
