@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PlansService, Plan } from '../../../shared/plans.service';
+import { PlansService, Plan, visiblePlanLimits } from '../../../shared/plans.service';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 @Component({
@@ -138,7 +138,10 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
       { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
-      { key: 'maxTeamSeats', label: 'Team seat' },
+      // 'maxTeamSeats' intentionally omitted — no team-member feature exists
+      // yet (no schema, no invite flow, no UI) to actually enforce this cap,
+      // so it's hidden here rather than showing admins a limit that does
+      // nothing. Re-add once brand team management ships.
       { key: 'analytics', label: 'Analytics' },
       { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
@@ -152,6 +155,13 @@ export class AdminPlansComponent implements OnInit {
       { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
   };
+
+  // Filtered out of the read-only comparison cards so admins aren't shown a
+  // cap with nothing behind it — see masterLimits.BRAND above and
+  // HIDDEN_PLAN_LIMIT_KEYS in plans.service.ts for why.
+  visibleLimits(plan: Plan): { key: string; label: string; value: number }[] {
+    return visiblePlanLimits(plan?.limits);
+  }
 
   plans: Plan[] = [];
   loading = false;
@@ -401,7 +411,6 @@ export class AdminPlansComponent implements OnInit {
           { key: 'dailySearchLimit', label: 'Daily searches', value: 250 },
           { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 20 },
-          { key: 'maxTeamSeats', label: 'Team seats', value: 5 },
           { key: 'analytics', label: 'Analytics', value: 1 },
           { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 30 },
         ],

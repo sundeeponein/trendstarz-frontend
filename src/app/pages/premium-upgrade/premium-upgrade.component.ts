@@ -19,7 +19,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { FREE_CAPABILITIES, PlansService, Plan, PlanFeature, PlanLimit } from '../../shared/plans.service';
+import { FREE_CAPABILITIES, PlansService, Plan, PlanFeature, PlanLimit, visiblePlanLimits } from '../../shared/plans.service';
 import { PaymentCheckoutComponent, BreakdownRow } from '../../shared/payment-checkout/payment-checkout.component';
 import { MonetizationApiService } from '../../services/monetization-api.service';
 import { ConfigService } from '../../shared/config.service';
@@ -193,9 +193,9 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   get freeLimits(): PlanLimit[] {
-    return this.freePlan?.limits?.length
-      ? this.freePlan.limits
-      : FREE_CAPABILITIES.limits;
+    return visiblePlanLimits(
+      this.freePlan?.limits?.length ? this.freePlan.limits : FREE_CAPABILITIES.limits,
+    );
   }
 
   get paidFeatures(): PlanFeature[] {
@@ -205,8 +205,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   get paidLimits(): PlanLimit[] {
-    const plan = this.displayPaidPlan;
-    return plan?.limits ?? [];
+    return visiblePlanLimits(this.displayPaidPlan?.limits);
   }
 
   get freeImageRetentionDays(): number {

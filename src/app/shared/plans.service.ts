@@ -66,6 +66,21 @@ export interface PlanCapabilities {
   endDate: string | null;
 }
 
+/**
+ * Limit keys that exist on saved Plan documents (old defaults, or the
+ * backend schema's own default limits list) for a feature that was never
+ * actually built — no schema, no invite/management flow, no enforcement
+ * anywhere. Filtered out wherever plan limits are displayed (admin editor,
+ * the public Premium Upgrade comparison) so nobody — admin or paying
+ * customer — is shown a cap that corresponds to nothing real. Remove a key
+ * from this list once its feature actually ships.
+ */
+export const HIDDEN_PLAN_LIMIT_KEYS: string[] = ['maxTeamSeats'];
+
+export function visiblePlanLimits(limits: PlanLimit[] | undefined | null): PlanLimit[] {
+  return (limits || []).filter((l) => !HIDDEN_PLAN_LIMIT_KEYS.includes(l.key));
+}
+
 export const FREE_CAPABILITIES: PlanCapabilities = {
   hasPremium: false,
   planName: 'Free',
