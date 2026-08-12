@@ -165,7 +165,7 @@ export class AdminDashboardComponent implements OnInit {
         this.cd.detectChanges();
       }
     };
-    this.http.get<any>(`${environment.apiBaseUrl}/payment/summary`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/payment/summary?days=7`, this.getAuthHeaders()).subscribe({
       next: (res) => {
         const d = res?.data || {};
         this.premiumPaymentsSummary = {
@@ -178,7 +178,7 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: () => done(),
     });
-    this.http.get<any>(`${environment.apiBaseUrl}/campaign-transactions/summary`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/campaign-transactions/summary?days=7`, this.getAuthHeaders()).subscribe({
       next: (res) => {
         const d = res?.data || {};
         // Stored in paise (like all campaign-transaction amounts) — convert to rupees for display.
