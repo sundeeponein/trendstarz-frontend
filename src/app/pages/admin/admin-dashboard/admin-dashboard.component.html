@@ -283,6 +283,61 @@
         <a routerLink="/admin/campaign-review" class="adm-manage-all-btn">Manage All Tasks</a>
       </article>
 
+      <!-- Payments Received -->
+      <article class="adm-card adm-payments-summary">
+        <header class="adm-card-header adm-card-header--between">
+          <div>
+            <h3 class="adm-card-title">Payments Received</h3>
+            <p class="adm-card-sub">Premium subscriptions and campaign/collab transactions.</p>
+          </div>
+          <a routerLink="/admin/payments" class="adm-view-link">
+            View All <i class="bi bi-arrow-right"></i>
+          </a>
+        </header>
+
+        <div class="adm-payments-grid">
+          <div class="adm-payments-group">
+            <div class="adm-payments-group-head">
+              <span>Premium</span>
+            </div>
+            <div class="adm-payments-group-stats">
+              <div class="adm-payments-item">
+                <span class="adm-payments-label">RECEIVED</span>
+                <span class="adm-payments-value adm-payments-value--received">₹{{ premiumPaymentsSummary.received | number:'1.0-0' }}</span>
+              </div>
+              <div class="adm-payments-item">
+                <span class="adm-payments-label">PENDING</span>
+                <span class="adm-payments-value adm-payments-value--pending">₹{{ premiumPaymentsSummary.pending | number:'1.0-0' }}</span>
+              </div>
+              <div class="adm-payments-item">
+                <span class="adm-payments-label">REFUNDED</span>
+                <span class="adm-payments-value adm-payments-value--refunded">₹{{ premiumPaymentsSummary.refunded | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="adm-payments-group">
+            <div class="adm-payments-group-head">
+              <span>Transactions</span>
+            </div>
+            <div class="adm-payments-group-stats">
+              <div class="adm-payments-item">
+                <span class="adm-payments-label">COLLECTED</span>
+                <span class="adm-payments-value adm-payments-value--received">₹{{ campaignTransactionsSummary.collected | number:'1.0-0' }}</span>
+              </div>
+              <div class="adm-payments-item">
+                <span class="adm-payments-label">PAID OUT</span>
+                <span class="adm-payments-value">₹{{ campaignTransactionsSummary.paidOut | number:'1.0-0' }}</span>
+              </div>
+              <div class="adm-payments-item">
+                <span class="adm-payments-label">PENDING PAYOUTS</span>
+                <span class="adm-payments-value adm-payments-value--pending">₹{{ campaignTransactionsSummary.pendingPayouts | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
       <!-- Platform Activity -->
       <article class="adm-card adm-activity">
         <p class="adm-activity-label">Platform Activity</p>

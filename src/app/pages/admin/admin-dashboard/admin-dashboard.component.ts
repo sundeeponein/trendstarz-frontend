@@ -103,6 +103,20 @@ export class AdminDashboardComponent implements OnInit {
   activityBars: ActivityBar[] = [];
   activityGrowthPct = 0;
 
+  premiumPaymentsSummary = {
+    received: 0,
+    pending: 0,
+    refunded: 0,
+    netReceived: 0,
+  };
+  campaignTransactionsSummary = {
+    collected: 0,
+    paidOut: 0,
+    pendingPayouts: 0,
+    netBalance: 0,
+  };
+  paymentsSummaryLoading = false;
+
   private allInfluencers: any[] = [];
   private allBrands: any[] = [];
   private allPhotographers: any[] = [];
@@ -137,7 +151,47 @@ export class AdminDashboardComponent implements OnInit {
       this.fetchCampaigns();
       this.fetchOpenDisputes();
       this.fetchVerificationFunnel();
+      this.fetchPaymentsSummary();
     }
+  }
+
+  fetchPaymentsSummary(): void {
+    this.paymentsSummaryLoading = true;
+    let pending = 2;
+    const done = () => {
+      pending--;
+      if (pending <= 0) {
+        this.paymentsSummaryLoading = false;
+        this.cd.detectChanges();
+      }
+    };
+    this.http.get<any>(`${environment.apiBaseUrl}/payment/summary`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const d = res?.data || {};
+        this.premiumPaymentsSummary = {
+          received: Number(d.received || 0),
+          pending: Number(d.pending || 0),
+          refunded: Number(d.refunded || 0),
+          netReceived: Number(d.netReceived || 0),
+        };
+        done();
+      },
+      error: () => done(),
+    });
+    this.http.get<any>(`${environment.apiBaseUrl}/campaign-transactions/summary`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const d = res?.data || {};
+        // Stored in paise (like all campaign-transaction amounts) — convert to rupees for display.
+        this.campaignTransactionsSummary = {
+          collected: Number(d.collected || 0) / 100,
+          paidOut: Number(d.paidOut || 0) / 100,
+          pendingPayouts: Number(d.pendingPayouts || 0) / 100,
+          netBalance: Number(d.netBalance || 0) / 100,
+        };
+        done();
+      },
+      error: () => done(),
+    });
   }
 
   fetchVerificationFunnel(): void {

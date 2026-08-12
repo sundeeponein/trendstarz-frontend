@@ -583,6 +583,64 @@ $green:     #16a34a;
   &:hover { background: #e5e7eb; }
 }
 
+// ── Payments Received ─────────────────────────────────────────────────────
+.adm-payments-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 380px) { grid-template-columns: 1fr; }
+}
+
+.adm-payments-group {
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid $border;
+  padding: 0.75rem;
+}
+
+.adm-payments-group-head {
+  margin-bottom: 0.6rem;
+
+  > span {
+    color: $text;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+}
+
+.adm-payments-group-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.adm-payments-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.adm-payments-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: $muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.adm-payments-value {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: $text;
+  white-space: nowrap;
+
+  &--received { color: $green; }
+  &--pending  { color: $amber; }
+  &--refunded { color: $red; }
+}
+
 // ── Platform Activity ─────────────────────────────────────────────────────
 .adm-activity {
   padding: 1.2rem;
