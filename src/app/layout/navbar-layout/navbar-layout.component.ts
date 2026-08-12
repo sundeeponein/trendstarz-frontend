@@ -3,11 +3,11 @@ import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { ImageGuidelinesModalComponent } from '../../shared/components/image-guidelines-modal/image-guidelines-modal.component';
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
-import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
+import { RegistrationConfirmModalService, RegistrationRole } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { environment } from '../../../environments/environment';
 import { filter, interval, Subscription } from 'rxjs';
 
@@ -39,6 +39,11 @@ export class NavbarLayoutComponent implements OnDestroy {
     launch_partner: 'Partner',
     zero_commission_creator: 'Early Access',
     zero_commission_brand: 'Early Access',
+  };
+  private readonly registrationRouteRoles: Record<string, RegistrationRole> = {
+    '/register-influencer': 'influencer',
+    '/register-brand': 'brand',
+    '/register-photographer': 'photographer',
   };
   private appLinkVisibility = {
     showSearchLink: true,
@@ -252,6 +257,23 @@ export class NavbarLayoutComponent implements OnDestroy {
         .subscribe(() => {
           this.closeMobileMenu();
           this.notificationsOpen = false;
+        }),
+    );
+    // Landing straight on /register-brand (or -influencer/-photographer) — via a
+    // shared link, ad, or typed URL — skips the role-confirmation popup that the
+    // nav links show. Show it here too so the experience matches regardless of
+    // entry point. Navigations that already went through the modal (nav click ->
+    // Continue) carry `fromRegModal` state and are skipped to avoid reopening it.
+    this.subs.add(
+      this.router.events
+        .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+        .subscribe((event) => {
+          const path = event.urlAfterRedirects.split('?')[0].split('#')[0];
+          const role = this.registrationRouteRoles[path];
+          const cameFromModal = typeof history !== 'undefined' && !!(history.state && history.state['fromRegModal']);
+          if (role && !cameFromModal) {
+            this.regConfirm.open(role);
+          }
         }),
     );
     // No need to call loadUserFromStorage here; handled in App root

@@ -26,7 +26,9 @@ export class RegistrationConfirmModalService {
       brand: '/register-brand',
       photographer: '/register-photographer',
     };
-    if (this.role) this.router.navigate([routes[this.role]]);
+    // Tag this navigation so navbar-layout's direct-link auto-open (below)
+    // doesn't immediately reopen the modal the user just confirmed.
+    if (this.role) this.router.navigate([routes[this.role]], { state: { fromRegModal: true } });
     this.close();
   }
 }
