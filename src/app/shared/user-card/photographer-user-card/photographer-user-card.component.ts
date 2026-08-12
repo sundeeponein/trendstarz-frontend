@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CollaborationScoreUiUtilsService } from '../../../services/collaboration-score-ui-utils.service';
 
 @Component({
   selector: 'app-photographer-user-card',
@@ -21,17 +22,29 @@ export class PhotographerUserCardComponent {
   @Input() portfolio = '';
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
+  @Input() showStartingPrice = true;
   @Input() verifiedByTrendStarz = false;
   @Input() verificationStatus = 'not_submitted';
+  @Input() socialMediaRestricted = false;
+  @Input() profileViewDisabled = false;
+
+  @Input() collaborationScore: number | null = null;
+  @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
+  @Input() trendstarzRecommended = false;
+  @Input() suggestedPriceRange: { reelPrice?: number | null } | null = null;
 
   @Output() viewProfileClick = new EventEmitter<void>();
+
+  constructor(public collaborationScoreUi: CollaborationScoreUiUtilsService) {}
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
   }
 
   get displayImage(): string {
-    return this.profileImage || this.profileImages?.[0]?.url || 'assets/default-profile.png';
+    // profileImages[0] is the live source of truth; profileImage is a legacy
+    // field that can go stale after a re-upload/recrop, so prefer the array.
+    return this.profileImages?.[0]?.url || this.profileImage || 'assets/default-profile.png';
   }
 
   get displayLocation(): string {
@@ -47,15 +60,6 @@ export class PhotographerUserCardComponent {
     return this.displaySkills[0] || '—';
   }
 
-  get displayTags(): string[] {
-    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
-    return Array.isArray(this.adminTags)
-      ? this.adminTags
-          .filter((tag) => !!String(tag || '').trim())
-          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
-      : [];
-  }
-
   get isTrendstarzVerified(): boolean {
     return this.verifiedByTrendStarz || this.verificationStatus === 'approved';
   }
@@ -69,16 +73,15 @@ export class PhotographerUserCardComponent {
     return (this.socialMedia || []).map(sm => (sm.platform || '').toLowerCase());
   }
 
-  tagBadgeClass(tag: string): string {
-    const normalized = String(tag || '').toLowerCase();
-    if (normalized.includes('founder')) return 'badge--founder';
-    if (normalized.includes('verified')) return 'badge--verified';
-    if (normalized.includes('internal')) return 'badge--internal';
-    return 'badge--neutral';
-  }
-
   onViewProfileClick(event: Event) {
     event.stopPropagation();
+    if (this.profileViewDisabled) {
+      return;
+    }
     this.viewProfileClick.emit();
+  }
+
+  get showSocialLockHint(): boolean {
+    return this.socialMediaRestricted === true;
   }
 }

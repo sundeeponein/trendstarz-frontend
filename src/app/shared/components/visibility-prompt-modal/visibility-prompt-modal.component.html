@@ -1,0 +1,19 @@
+<div class="visibility-prompt-backdrop">
+  <div class="visibility-prompt-card">
+    <h2>Who can view your TrendStarZ profile?</h2>
+    <p>This is new — please choose a visibility setting. You can change it anytime in Settings.</p>
+
+    <app-profile-visibility-selector
+      [value]="selected"
+      [disabled]="busy"
+      (valueChange)="onValueChange($event)">
+    </app-profile-visibility-selector>
+
+    <div class="visibility-prompt-actions">
+      <button type="button" class="btn-skip" [disabled]="busy" (click)="onSkip()">Skip for now</button>
+      <button type="button" class="btn-save" [disabled]="busy" (click)="onSave()">
+        {{ busy ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </div>
+</div>

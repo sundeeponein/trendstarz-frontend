@@ -1,0 +1,22 @@
+<div class="visibility-selector">
+  <p class="visibility-selector__question">Who can view my profile?</p>
+
+  <label
+    *ngFor="let opt of options"
+    class="visibility-option"
+    [class.active]="value === opt.value"
+    [class.disabled]="disabled">
+    <input
+      type="radio"
+      name="profileVisibility"
+      [value]="opt.value"
+      [checked]="value === opt.value"
+      [disabled]="disabled"
+      (change)="select(opt.value)" />
+    <span class="visibility-option__icon" aria-hidden="true">{{ opt.icon }}</span>
+    <span class="visibility-option__body">
+      <strong>{{ opt.label }}</strong>
+      <span>{{ opt.description }}</span>
+    </span>
+  </label>
+</div>

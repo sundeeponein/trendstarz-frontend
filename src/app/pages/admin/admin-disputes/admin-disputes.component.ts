@@ -1,7 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ConfigService } from '../../../shared/config.service';
+import { campaignIdLabel } from '../../../shared/referral-link.util';
 
 type DisputeStatus = 'open' | 'resolved' | 'all';
 
@@ -25,7 +27,7 @@ export class AdminDisputesComponent implements OnInit {
   bulkNote = '';
   bulkActing = false;
 
-  constructor(private config: ConfigService, private cd: ChangeDetectorRef) {}
+  constructor(private config: ConfigService, private cd: ChangeDetectorRef, private router: Router) {}
 
   ngOnInit(): void {
     this.load();
@@ -43,7 +45,13 @@ export class AdminDisputesComponent implements OnInit {
     this.config.adminListDisputes(this.statusFilter).subscribe({
       next: (res: any) => {
         const payload = res?.data || res;
-        this.invites = payload?.invites || [];
+        const invites = payload?.invites || [];
+        // Influencer-requested reviews jump to the top — they've explicitly asked for a human decision.
+        this.invites = invites.slice().sort((a: any, b: any) => {
+          const aFlag = this.isAdminReviewRequested(a) ? 1 : 0;
+          const bFlag = this.isAdminReviewRequested(b) ? 1 : 0;
+          return bFlag - aFlag;
+        });
         this.loading = false;
         this.cd.detectChanges();
       },
@@ -84,6 +92,10 @@ export class AdminDisputesComponent implements OnInit {
 
   isResolved(inv: any): boolean {
     return !!inv?.reportedIssue?.resolvedAt;
+  }
+
+  isAdminReviewRequested(inv: any): boolean {
+    return !!inv?.reportedIssue?.adminReviewRequestedAt;
   }
 
   toggleSelected(inv: any, checked: boolean) {
@@ -143,6 +155,32 @@ export class AdminDisputesComponent implements OnInit {
   reportedAt(inv: any): string {
     const d = inv?.reportedIssue?.reportedAt;
     return d ? new Date(d).toLocaleString() : '';
+  }
+
+  /** A brand can raise a dispute two ways: a plain "report issue", or disputing a submitted post.
+   *  The former stores its text on `reportedIssue.reason`; the latter on the linked submission. */
+  disputeReason(inv: any): string {
+    const direct = String(inv?.reportedIssue?.reason || '').trim();
+    if (direct) return direct;
+    const sub = inv?.latestSubmission;
+    const category = String(sub?.disputeIssueReason || '').trim();
+    const description = String(sub?.disputeReason || '').trim();
+    if (category && description) return `${category} — ${description}`;
+    return category || description;
+  }
+
+  disputeEvidenceUrl(inv: any): string {
+    return String(inv?.latestSubmission?.disputeEvidenceUrl || '').trim();
+  }
+
+  campaignIdLabel(campaign: any): string {
+    return campaignIdLabel(campaign);
+  }
+
+  goToCampaign(inv: any): void {
+    const campaignId = inv?.campaignId || inv?.campaign?._id;
+    if (!campaignId) return;
+    this.router.navigate(['/admin/campaign-review'], { queryParams: { campaignId } });
   }
 
   private flash(msg: string) {

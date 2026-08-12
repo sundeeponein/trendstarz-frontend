@@ -62,12 +62,49 @@ export class PaymentsPayoutsApiService {
     );
   }
 
+  runAutoPayoutSweep(headers: HttpHeaders): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/admin/auto-payout/run`,
+      {},
+      { headers },
+    );
+  }
+
   // ── Campaign-level payment status (brand polls after UTR submission) ──────
 
   /** Get all transaction records for a campaign (brand uses this to check status). */
   getCampaignTransactionStatus(campaignId: string, headers: HttpHeaders): Observable<{ success: boolean; data: CampaignTransaction[] }> {
     return this.http.get<{ success: boolean; data: CampaignTransaction[] }>(
       `${environment.apiBaseUrl}/campaign-transactions/campaign/${campaignId}/status`,
+      { headers },
+    );
+  }
+
+  createCampaignRazorpayOrder(
+    campaignId: string,
+    headers: HttpHeaders,
+  ): Observable<{
+    success: boolean;
+    order: { orderId: string; amount: number; currency: string; keyId: string };
+  }> {
+    return this.http.post<{
+      success: boolean;
+      order: { orderId: string; amount: number; currency: string; keyId: string };
+    }>(
+      `${environment.apiBaseUrl}/campaign-transactions/${campaignId}/razorpay/order`,
+      {},
+      { headers },
+    );
+  }
+
+  verifyCampaignRazorpayPayment(
+    campaignId: string,
+    payload: { orderId: string; paymentId: string; signature: string },
+    headers: HttpHeaders,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${campaignId}/razorpay/verify`,
+      payload,
       { headers },
     );
   }

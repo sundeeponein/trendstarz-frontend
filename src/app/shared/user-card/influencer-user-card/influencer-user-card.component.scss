@@ -3,63 +3,8 @@
 @include card.user-card-base('.inf-card', 2px);
 
 .inf-card {
-  &--selected {
-    border-color: #ff6b35;
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.18), 0 8px 24px rgba(255, 107, 53, 0.12);
-  }
-
-  &__select-btn {
-    position: absolute;
-    top: 0.6rem;
-    left: 0.6rem;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 2;
-
-    i {
-      font-size: 0.9rem;
-      color: #aaa;
-      transition: color 0.2s;
-    }
-
-    &--checked {
-      background: #ff6b35;
-      border-color: #ff6b35;
-      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
-
-      i {
-        color: #fff;
-      }
-    }
-
-    &:hover:not(#{&}--checked) {
-      background: #fff;
-      border-color: #ff6b35;
-
-      i {
-        color: #ff6b35;
-      }
-    }
-  }
-
-  &__ts-verified {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: #065f46;
-    background: #ecfdf5;
-    border: 1px solid #bbf7d0;
-    border-radius: 999px;
-    padding: 0.12rem 0.42rem;
-    white-space: nowrap;
+  &--locked {
+    cursor: not-allowed;
   }
 
   &__category {
@@ -78,6 +23,50 @@
     font-weight: 700;
     color: #1f2937;
     white-space: nowrap;
+  }
+
+  &__creator-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0 0 0.45rem;
+  }
+
+  &__pro-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0.25rem 0 0.4rem;
+  }
+
+  &__pro-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    border-radius: 999px;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.42rem;
+    text-transform: uppercase;
+  }
+
+  &__creator-type {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    border: 1px solid #dbe3ee;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.18rem 0.45rem;
   }
 
   &__stats {

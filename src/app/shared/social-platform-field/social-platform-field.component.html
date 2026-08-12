@@ -1,0 +1,81 @@
+<div class="platform-details-card" [style.--platform-color]="platform.color">
+  <div class="platform-details-header">
+    <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
+    <span class="platform-name">{{ platform.name }}</span>
+    <button *ngIf="showRemove && !readonly" type="button" class="close-btn" (click)="remove.emit()">&times;</button>
+  </div>
+
+  <div class="platform-details-body">
+
+    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled">
+      <ng-container *ngIf="connection; else spfNotConnected">
+        <div class="spf-connect-status spf-connect-status--connected">
+          <span class="spf-connect-badge">Connected ✓</span>
+          <span class="spf-connect-detail" *ngIf="connection.handle">Username: {{ connection.handle }} <em>(Auto Imported)</em></span>
+          <span class="spf-connect-detail" *ngIf="connection.followersCount != null">Followers: {{ connection.followersCount }} <em>(Auto Imported)</em></span>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary spf-connect-btn" [disabled]="disconnecting" (click)="onDisconnect()">
+          {{ disconnecting ? 'Disconnecting…' : 'Disconnect' }}
+        </button>
+      </ng-container>
+      <ng-template #spfNotConnected>
+        <div class="spf-connect-status">
+          <span class="spf-connect-badge spf-connect-badge--muted">Not Connected</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary spf-connect-btn" [disabled]="connecting" (click)="onConnect()">
+          {{ connecting ? 'Connecting…' : 'Connect ' + platform.name }}
+        </button>
+      </ng-template>
+    </div>
+    <div class="spf-connect-block spf-connect-block--soon" *ngIf="allowConnect && !supportsOAuth">
+      <span class="spf-connect-badge spf-connect-badge--muted">Not Connected</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary spf-connect-btn" disabled title="Coming soon">
+        Connect {{ platform.name }} (Coming Soon)
+      </button>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>{{ platform.name }} Username</label>
+        <input
+          [(ngModel)]="form.handle"
+          [ngModelOptions]="{standalone: true}"
+          type="text"
+          class="form-control"
+          [placeholder]="handleExample"
+          [readonly]="readonly"
+          (blur)="onHandleBlur()"
+          (ngModelChange)="onFieldChange()"
+        />
+        <small class="text-muted d-block mt-1" *ngIf="!readonly">Enter only your username, not full profile URL. Example: {{ handleExample }}</small>
+        <div *ngIf="submitted && !readonly && handleError" class="text-danger mt-1">{{ handleError }}</div>
+        <a *ngIf="form.handle && profileUrl"
+           [href]="profileUrl"
+           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
+          <i class="bi bi-box-arrow-up-right"></i> Verify profile
+        </a>
+      </div>
+      <div class="col">
+        <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
+        <select [(ngModel)]="form.tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="readonly" (ngModelChange)="onFieldChange()">
+          <option value="" disabled>Select tier</option>
+          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
+        </select>
+        <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
+      </div>
+    </div>
+
+    <div class="content-types-section">
+      <label>Content & Starting Rates</label>
+      <div class="content-types-list">
+        <ng-container *ngFor="let ct of platform.contentTypes">
+          <div class="content-type-item" *ngIf="ct.visible">
+            <input type="checkbox" [(ngModel)]="form.contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="readonly" (ngModelChange)="onFieldChange()" />
+            <span>{{ ct.name }}</span>
+            <input *ngIf="form.contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="form.contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="readonly" (ngModelChange)="onFieldChange()" />
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

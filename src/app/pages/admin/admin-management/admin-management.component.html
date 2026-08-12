@@ -15,10 +15,13 @@
     <button class="tab-chip" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social</button>
     <button class="tab-chip" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
     <button class="tab-chip" [class.active]="activeTab === 'userTags'" (click)="setTab('userTags')">User Tags</button>
+    <button class="tab-chip" [class.active]="activeTab === 'collaborationAvailability'" (click)="setTab('collaborationAvailability')">Collab Availability</button>
     <button class="tab-chip" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
     <button class="tab-chip" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-chip" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
     <button class="tab-chip" [class.active]="activeTab === 'support'" (click)="setTab('support')">Support</button>
+    <button class="tab-chip" [class.active]="activeTab === 'communities'" (click)="setTab('communities')">Community Management</button>
+    <button class="tab-chip" [class.active]="activeTab === 'socialLinks'" (click)="setTab('socialLinks')">Social Links</button>
     <button class="tab-chip" [class.active]="activeTab === 'userManagement'" (click)="setTab('userManagement')">User Management</button>
   </nav>
 
@@ -109,7 +112,7 @@
     <h2>Manage Social Media Platforms</h2>
     <ul class="list-group mb-3">
       <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let sm of config.socialMediaPlatforms; let i = index">
-        {{ sm.name }}
+        {{ sm.displayName }}
         <div class="form-check form-switch d-inline-block ms-2">
           <input class="form-check-input" type="checkbox" role="switch"
             id="switchSM{{i}}"
@@ -131,7 +134,7 @@
     <div class="section-tabs mb-3" aria-label="Category role tabs">
       <button class="tab-chip" [class.active]="categoriesRoleTab === 'influencer'" (click)="setCategoriesRoleTab('influencer')">Influencer</button>
       <button class="tab-chip" [class.active]="categoriesRoleTab === 'brand'" (click)="setCategoriesRoleTab('brand')">Brand</button>
-      <button class="tab-chip" [class.active]="categoriesRoleTab === 'photographer'" (click)="setCategoriesRoleTab('photographer')">Photographer</button>
+      <button class="tab-chip" [class.active]="categoriesRoleTab === 'photographer'" (click)="setCategoriesRoleTab('photographer')">Photo/Videographer</button>
     </div>
 
     <ul class="list-group mb-3">
@@ -195,6 +198,28 @@
       </ng-template>
     </ng-container>
 
+    <ng-container *ngIf="categoriesRoleTab === 'influencer'">
+      <h3>Manage Creator Type / Specialty</h3>
+      <ul class="list-group mb-3" *ngIf="config.creatorTypeOptions?.length; else noCreatorTypeOptions">
+        <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let item of config.creatorTypeOptions; let i = index">
+          <span>{{ item.name }}</span>
+          <div class="form-check form-switch d-inline-block ms-2">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchCreatorType' + i"
+              [checked]="item.visible"
+              (change)="toggleVisible('creatorTypeOptions', i)"
+            >
+            <label class="form-check-label" [for]="'switchCreatorType' + i">
+              {{ item.visible ? 'Show' : 'Hide' }}
+            </label>
+          </div>
+        </li>
+      </ul>
+      <ng-template #noCreatorTypeOptions>
+        <p class="text-muted mb-3">No creator type options available.</p>
+      </ng-template>
+    </ng-container>
+
     <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
@@ -204,8 +229,8 @@
     <div class="section-tabs mb-3" aria-label="User tag role tabs">
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'influencer'" (click)="setUserTagsRoleTab('influencer')">Influencer</button>
       <button class="tab-chip" [class.active]="userTagsRoleTab === 'brand'" (click)="setUserTagsRoleTab('brand')">Brand</button>
-      <button class="tab-chip" [class.active]="userTagsRoleTab === 'photographer'" (click)="setUserTagsRoleTab('photographer')">Photographer</button>
-      <button class="tab-chip" [class.active]="userTagsRoleTab === 'commission'" (click)="setUserTagsRoleTab('commission')">Commission</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'photographer'" (click)="setUserTagsRoleTab('photographer')">Photo/Videographer</button>
+      <button class="tab-chip" [class.active]="userTagsRoleTab === 'commission'" (click)="setUserTagsRoleTab('commission')">Fee Badges</button>
     </div>
 
     <ul class="list-group mb-3" *ngIf="filteredUserTags.length; else noUserTags">
@@ -232,43 +257,125 @@
 
   <div *ngIf="activeTab === 'location'">
     <h2>Manage States & Districts</h2>
-    <div class="state-tabs mb-3">
-      <button *ngFor="let state of config.locations; let i = index"
-              class="btn btn-outline-light me-2 mb-2"
-              [class.active]="districtFilterState === state.name"
-              (click)="districtFilterState = state.name">
-        {{ state.name }}
-        <span class="ms-2">
-          <input class="form-check-input" type="checkbox" role="switch"
-            [id]="'switchState' + i"
-            [checked]="state.visible"
-            (click)="$event.stopPropagation(); toggleVisible('state', i)"
-          >
-          <label class="form-check-label ms-1" [for]="'switchState' + i">
-            {{ state.visible ? 'Show' : 'Hide' }}
-          </label>
-        </span>
-      </button>
+    <p class="text-muted mb-3">
+      Locations are seeded from the permanent admin config into MongoDB. Use these switches to control what appears in registration and location filters.
+      Toggling a state applies the same visibility to its districts; you can still fine-tune individual districts after.
+    </p>
+    <div class="settings-row row-expanded location-directory-card">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Location Directory</strong>
+          <p>
+            Configured: {{ config.locations.length }} · Active: {{ activeLocationCount }}
+          </p>
+        </div>
+      </div>
+      <div class="settings-conditions">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Search by state or district name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="locationSearch"
+              placeholder="Search Maharashtra, Mumbai, Telangana..."
+            >
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="locationStatusFilter">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="text-light-emphasis">
+              Showing {{ filteredLocations.length }} of {{ config.locations.length }} states.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div *ngIf="districtFilterState">
-      <h4>Districts in {{ districtFilterState }}</h4>
-      <ul class="list-group mb-3">
+    <div class="location-accordion mb-3">
+      <div class="location-state" *ngFor="let state of filteredLocations; let i = index" [class.is-expanded]="isLocationStateExpanded(state.name)" [class.is-disabled]="state.visible === false">
+        <div class="location-state-header" role="button" tabindex="0" (click)="toggleLocationStateExpanded(state)">
+          <div class="location-state-main">
+            <i class="bi location-chevron" [class.bi-chevron-down]="isLocationStateExpanded(state.name)" [class.bi-chevron-right]="!isLocationStateExpanded(state.name)"></i>
+            <strong>{{ state.name }}</strong>
+            <span class="location-district-count">
+              {{ getVisibleDistrictCount(state.name) }}/{{ getStateDistricts(state.name).length }} districts
+            </span>
+          </div>
+          <div class="form-check form-switch location-state-switch" (click)="$event.stopPropagation()">
+            <input class="form-check-input" type="checkbox" role="switch"
+              [id]="'switchState' + i"
+              [checked]="state.visible"
+              (change)="toggleVisible('state', getStateIndex(state))"
+            >
+            <label class="form-check-label" [for]="'switchState' + i">
+              {{ state.visible ? 'Show' : 'Hide' }}
+            </label>
+          </div>
+        </div>
+
+        <div class="location-district-panel" *ngIf="isLocationStateExpanded(state.name)">
+          <div class="location-district-row"
+            *ngFor="let dist of getStateDistricts(state.name); let districtIndex = index">
+            <strong>{{ dist.name }}</strong>
+            <div class="form-check form-switch d-inline-block ms-2">
+              <input class="form-check-input" type="checkbox" role="switch"
+                [id]="'switchDist' + i + '-' + districtIndex"
+                [checked]="dist.visible"
+                (change)="toggleVisible('district', getDistrictIndex(dist))"
+              >
+              <label class="form-check-label" [for]="'switchDist' + i + '-' + districtIndex">
+                {{ dist.visible ? 'Show' : 'Hide' }}
+              </label>
+            </div>
+          </div>
+          <div class="location-empty" *ngIf="getStateDistricts(state.name).length === 0">
+            No districts configured for this state.
+          </div>
+        </div>
+      </div>
+      <div class="location-empty" *ngIf="filteredLocations.length === 0">
+        No states match your filters.
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
+  </div>
+
+  <div *ngIf="activeTab === 'collaborationAvailability'">
+    <h2>Manage Collaboration Availability</h2>
+    <p class="text-muted mb-3">Control the options shown in influencer and photographer collaboration availability sections.</p>
+
+    <div class="section-tabs mb-3" aria-label="Collaboration availability role tabs">
+      <button class="tab-chip" [class.active]="collaborationAvailabilityRoleTab === 'influencer'" (click)="setCollaborationAvailabilityRoleTab('influencer')">Influencer</button>
+      <button class="tab-chip" [class.active]="collaborationAvailabilityRoleTab === 'photographer'" (click)="setCollaborationAvailabilityRoleTab('photographer')">Photo/Videographer</button>
+    </div>
+
+    <ng-container *ngFor="let section of filteredCollaborationAvailabilitySections">
+      <h5 class="mt-3">{{ section.title }}</h5>
+      <ul class="list-group mb-3" *ngIf="getCollaborationOptionGroup(section).length; else noCollaborationOptions">
         <li class="list-group-item d-flex justify-content-between align-items-center"
-          *ngFor="let dist of filteredDistricts; let i = index">
-          <div><strong>{{ dist.name }}</strong></div>
+            *ngFor="let option of getCollaborationOptionGroup(section); let i = index">
+          {{ option.name }}
           <div class="form-check form-switch d-inline-block ms-2">
             <input class="form-check-input" type="checkbox" role="switch"
-              [id]="'switchDist' + i"
-              [checked]="dist.visible"
-              (change)="toggleVisible('district', getDistrictIndex(dist))"
-            >
-            <label class="form-check-label" [for]="'switchDist' + i">
-              {{ dist.visible ? 'Show' : 'Hide' }}
+              [id]="'switchCollab' + section.role + section.key + i"
+              [checked]="option.visible"
+              (change)="toggleVisible('collaborationOption', i, section)">
+            <label class="form-check-label" [for]="'switchCollab' + section.role + section.key + i">
+              {{ option.visible ? 'Show' : 'Hide' }}
             </label>
           </div>
         </li>
       </ul>
-    </div>
+      <ng-template #noCollaborationOptions>
+        <p class="text-muted mb-3">No {{ section.title | lowercase }} options available.</p>
+      </ng-template>
+    </ng-container>
+
     <button class="btn btn-primary" (click)="requestVisibilitySaveConfirmation()">Save</button>
   </div>
 
@@ -296,7 +403,11 @@
     <h2>Manage Tiers</h2>
     <ul class="list-group mb-3">
       <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let tier of config.tiers; let i = index">
-        {{ tier.name }}
+        <div>
+          <strong>{{ tier.name }}</strong>
+          <span class="badge rounded-pill bg-light text-dark border ms-2">{{ getTierUsageCount(tier) }} users</span>
+          <div class="text-muted small" *ngIf="tier.desc">{{ tier.desc }}</div>
+        </div>
         <div class="form-check form-switch d-inline-block ms-2">
           <input class="form-check-input" type="checkbox" role="switch"
             id="switchTier{{i}}"
@@ -324,7 +435,7 @@
     <div class="container">
       <div class="row">
 
-        <div class="col-12 col-xl-7 settings-row">
+        <div class="col-12 col-xl-5 settings-row">
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="supportEnabled"
               [(ngModel)]="settings.supportContactEnabled" />
@@ -376,81 +487,363 @@
               [(ngModel)]="settings.verificationCallNumber" />
             <small class="text-light-emphasis">Shown below the Mobile Number field on registration &amp; profile forms. Leave blank to hide the hint.</small>
           </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="otpVerificationEnabled"
+              [(ngModel)]="settings.otpVerificationEnabled" />
+            <label class="form-check-label" for="otpVerificationEnabled">
+              Enable mobile OTP verification
+            </label>
+            <small class="text-light-emphasis d-block">
+              Keep off until an SMS/OTP provider is configured. When off, mobile verification remains manual/admin support.
+            </small>
+          </div>
+
+          <hr />
+
+          <h5 class="mb-3">Navbar Link Visibility</h5>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showSearchLink"
+              [(ngModel)]="settings.showSearchLink" />
+            <label class="form-check-label" for="showSearchLink">Show Search link</label>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showRegisterInfluencerLink"
+              [(ngModel)]="settings.showRegisterInfluencerLink" />
+            <label class="form-check-label" for="showRegisterInfluencerLink">Show Register as Influencer link</label>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showRegisterBrandLink"
+              [(ngModel)]="settings.showRegisterBrandLink" />
+            <label class="form-check-label" for="showRegisterBrandLink">Show Register as Brand link</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="showRegisterPhotographerLink"
+              [(ngModel)]="settings.showRegisterPhotographerLink" />
+            <label class="form-check-label" for="showRegisterPhotographerLink">Show Register as Photographer link</label>
+          </div>
+          <small class="text-light-emphasis d-block mb-2">Changes here affect both desktop and mobile navbar links, and corresponding routes.</small>
+
+          <hr />
+
+          <h5 class="mb-3">Search Tab Visibility</h5>
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="showInfluencerSearchTab"
+              [(ngModel)]="settings.showInfluencerSearchTab" />
+            <label class="form-check-label" for="showInfluencerSearchTab">Show Influencers tab in Search</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="showPhotographerSearchTab"
+              [(ngModel)]="settings.showPhotographerSearchTab" />
+            <label class="form-check-label" for="showPhotographerSearchTab">Show Photo/Videographers tab in Search</label>
+          </div>
+          <small class="text-light-emphasis d-block mb-2">Use this to hide low-volume roles from the public search page without removing them from the system.</small>
         </div>
 
-        <div class="col-12 col-xl-5 settings-row">
-          <h4>Platform commission & GST</h4>
-          <div class="form-check form-switch mb-3">
+        <div class="col-12 col-xl-7 settings-row">
+          <h4>Platform Commission & GST</h4>
+          <div class="form-check form-switch mb-1">
             <input class="form-check-input" type="checkbox" id="platformFeeEnabled"
               [(ngModel)]="settings.platformFeeEnabled" />
             <label class="form-check-label" for="platformFeeEnabled">Enable platform commission on campaigns</label>
           </div>
-          <div class="row mb-3">
-            <div class="col">
-              <label class="form-label">Commission (%)</label>
-              <input type="number" class="form-control" [(ngModel)]="settings.platformFeePercent" min="0" max="100" />
+          <small class="text-muted d-block mb-3">When enabled, all host/payer fees, recipient payout fees and GST below are applied across all roles.</small>
+
+          <!-- GST — global, applies to all platform commission (not role-specific) -->
+          <div class="mb-3 p-2 rounded" style="background:#fffde7; border:1px solid #fff176;">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <div>
+                <label class="form-label mb-1 fw-semibold" style="font-size:0.88rem;">GST on Platform Commission (%)</label>
+                <div class="input-group input-group-sm" style="max-width:160px;">
+                  <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+              <small class="text-muted" style="font-size:0.8rem;">
+                Applied to <strong>platform commission only</strong> (not on the agreed campaign amount) — for all roles.<br>
+                e.g. ₹500 campaign × {{ effectiveRoleFee('brandFeePercent') }}% commission = ₹{{ (500 * effectiveRoleFee('brandFeePercent') / 100).toFixed(0) }} → {{ settings.gstPercent }}% GST = ₹{{ (500 * effectiveRoleFee('brandFeePercent') / 100 * settings.gstPercent / 100).toFixed(2) }}
+              </small>
             </div>
-            <div class="col">
-              <label class="form-label">GST (%)</label>
-              <input type="number" class="form-control" [(ngModel)]="settings.gstPercent" min="0" max="100" />
+            <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
+              Applies when platform commission is enabled · shown in the Host (payer) breakdown as "GST on commission" and in the Recipient breakdown as "GST on payout fee"
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Platform Commission (%) by Role — Host/Payer</label>
+            <div class="row g-3">
+              <!-- Regular campaigns: Brand pays -->
+              <div class="col-12 col-md-4">
+                <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
+                  <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#1b5e20;">Brands</div>
+                  <div class="mb-0">
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.brandFeePercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">All regular campaign types</small>
+                </div>
+              </div>
+              <!-- Influencer commission -->
+              <div class="col-12 col-md-4">
+                <div class="p-2 rounded" style="background:#e3f2fd; border:1px solid #bbdefb;">
+                  <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#0d47a1;">Influencers</div>
+                  <div class="mb-0">
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.influencerFeePercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
+                </div>
+              </div>
+              <!-- Photographer commission -->
+              <div class="col-12 col-md-4">
+                <div class="p-2 rounded" style="background:#fce4ec; border:1px solid #f8bbd0;">
+                  <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#880e4f;">Photo/Video</div>
+                  <div class="mb-0">
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.photographerFeePercent" min="0" max="100" placeholder="0" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recipient / Payout Fee — per role, default 0%, ready for future 1-4% activation -->
+          <div class="mb-1 mt-2">
+            <span class="fw-semibold" style="font-size:0.93rem;">Recipient Payout Fee (%) by Role</span>
+            <span class="badge bg-secondary ms-2" style="font-weight:400; font-size:0.7rem;">Default 0%</span>
+          </div>
+          <div class="row g-2 mb-3">
+            <!-- Influencer as recipient -->
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded" style="background:#e3f2fd; border:1px solid #bbdefb;">
+                <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#0d47a1;">Influencers</div>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.influencerRecipientFeePercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">Deducted from influencer payout · default 0%</small>
+              </div>
+            </div>
+            <!-- Photo/Video as recipient -->
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded" style="background:#fce4ec; border:1px solid #f8bbd0;">
+                <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#880e4f;">Photo/Video</div>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.photographerRecipientFeePercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">Deducted from photographer payout · default 0%</small>
+              </div>
+            </div>
+            <!-- Brand as recipient (future) -->
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded" style="background:#f5f5f5; border:1px solid #e0e0e0; opacity:0.75;">
+                <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#616161;">Brands <span class="badge bg-secondary ms-1" style="font-size:0.65rem; font-weight:400;">Future</span></div>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.brandRecipientFeePercent" min="0" max="100" placeholder="0" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">For when influencers/photographers invite brands · default 0%</small>
+              </div>
             </div>
           </div>
 
           <div class="mb-3">
-            <h6 class="mb-2">Commission to users</h6>
+            <h6 class="mb-2">Campaign completion & payout timing</h6>
+            <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
+              Control when hosts can mark submitted posts complete and when admin/auto payout can release funds.
+            </p>
+            <div class="row g-2 mb-2">
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Host mark completed after (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.submissionApprovalWaitHours" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Auto-complete if host silent after (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.submissionAutoCompleteGraceHours" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Admin payout release after (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.payoutReleaseWaitHours" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Influencer respond to dispute within (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.disputeResponseWaitHours" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Campaign auto-closes after end date, grace period (hours)</label>
+                <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.campaignAutoCloseGraceHours" />
+              </div>
+            </div>
+            <small class="text-light-emphasis d-block">
+              Auto-complete starts after the host mark-completed lock expires. Use 0 for immediate release after the previous step is complete.
+              If a disputed influencer neither resubmits nor withdraws within the respond-to-dispute window, the collaboration is auto-cancelled and the host is marked refunded.
+              If a campaign is left untouched past its end date plus this grace period, it closes automatically — any participant who never submitted is marked Not Submitted and the host is marked refunded, even if the host never clicks End Campaign.
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <h6 class="mb-2">Campaign scheduling window</h6>
+            <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
+              Controls the campaign creation form's date picker for brands/photographers. Lower the minimum to 0 to let support/admin post a campaign starting today, then set it back to the standard value afterward.
+            </p>
+            <div class="row g-2 mb-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label" style="font-size:0.9rem;">Minimum start date (days from today)</label>
+                <input type="number" class="form-control" min="0" max="30" step="1" [(ngModel)]="settings.minCampaignStartDays" />
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label" style="font-size:0.9rem;">Maximum campaign duration (days)</label>
+                <input type="number" class="form-control" min="1" max="365" step="1" [(ngModel)]="settings.maxCampaignDurationDays" />
+              </div>
+            </div>
+            <small class="text-light-emphasis d-block">
+              Standard values: 3 days minimum start, 15 days maximum duration. Changes apply to new campaigns immediately after saving — no redeploy needed.
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <h6 class="mb-2">User Platform Commission Discounts</h6>
             <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
               Assign commission badges via the user table. Each user can have only <strong>one badge</strong>. Badges are visible only to the user on their own profile.
             </p>
             <div class="row g-2 mb-3">
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Early Access (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Early Access Commission (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.earlyAccessCommissionPercent" />
               </div>
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Partner (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Partner Commission (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.partnerCommissionPercent" />
               </div>
               <div class="col-12 col-sm-6 col-lg-3">
-                <label class="form-label" style="font-size:0.9rem;">Internal/Test (%)</label>
+                <label class="form-label" style="font-size:0.9rem;">Internal/Test Commission (%)</label>
                 <input type="number" class="form-control" min="0" max="100" [(ngModel)]="settings.internalTestCommissionPercent" />
               </div>
             </div>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>Badge</th>
-                    <th>Commission</th>
-                    <th>Influencers</th>
-                    <th>Brands</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Normal (no badge)</td>
-                    <td>{{ settings.platformFeePercent }}%</td>
-                    <td colspan="2"><small class="text-muted">All users without a badge</small></td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
-                    <td>{{ settings.earlyAccessCommissionPercent }}%</td>
-                    <td>{{ commissionCounts.influencer.early_access_creator }}</td>
-                    <td>{{ commissionCounts.brand.early_access_brand }}</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
-                    <td>{{ settings.partnerCommissionPercent }}%</td>
-                    <td>{{ commissionCounts.influencer.partner_creator }}</td>
-                    <td>{{ commissionCounts.brand.partner_brand }}</td>
-                  </tr>
-                  <tr>
-                    <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
-                    <td>{{ settings.internalTestCommissionPercent }}%</td>
-                    <td>{{ commissionCounts.influencer.internal_test_creator }}</td>
-                    <td>{{ commissionCounts.brand.internal_test_brand }}</td>
-                  </tr>
-                </tbody>
-              </table>
+
+            <!-- Regular campaigns: Brand commission only -->
+            <div class="mb-2">
+              <div class="fw-semibold mb-1" style="font-size:0.85rem; color:#1b5e20;">Regular Campaigns — Brand Commission</div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Badge</th>
+                      <th>Brand Commission<br><small class="text-muted fw-normal">base: {{ effectiveRoleFee('brandFeePercent') }}%</small></th>
+                      <th>Brands</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Normal <small class="text-muted">(no badge)</small></td>
+                      <td>{{ effectiveRoleFee('brandFeePercent') }}%</td>
+                      <td><small class="text-muted">All brands without badge</small></td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
+                      <td>{{ settings.earlyAccessCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.earlyAccessCommissionPercent, effectiveRoleFee('brandFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.brand.early_access_brand }} brands</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
+                      <td>{{ settings.partnerCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.partnerCommissionPercent, effectiveRoleFee('brandFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.brand.partner_brand }} brands</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
+                      <td>{{ settings.internalTestCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.internalTestCommissionPercent, effectiveRoleFee('brandFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.brand.internal_test_brand }} brands</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pay-to-Join: Influencer + Photo/Video commission (default 0%) -->
+            <div class="mb-2">
+              <div class="fw-semibold mb-1" style="font-size:0.85rem; color:#bf360c;">Pay-to-Join — Creator Commission <span class="badge bg-secondary ms-1" style="font-weight:400; font-size:0.7rem;">Default 0%</span></div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Badge</th>
+                      <th>Influencer<br><small class="text-muted fw-normal">base: {{ effectiveRoleFee('influencerFeePercent') }}%</small></th>
+                      <th>Photo/Video<br><small class="text-muted fw-normal">base: {{ effectiveRoleFee('photographerFeePercent') }}%</small></th>
+                      <th>Users</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Normal <small class="text-muted">(no badge)</small></td>
+                      <td>{{ effectiveRoleFee('influencerFeePercent') }}%</td>
+                      <td>{{ effectiveRoleFee('photographerFeePercent') }}%</td>
+                      <td><small class="text-muted">All creators without badge</small></td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Early Access</span></td>
+                      <td>{{ settings.earlyAccessCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.earlyAccessCommissionPercent, effectiveRoleFee('influencerFeePercent')) }})</small></td>
+                      <td>{{ settings.earlyAccessCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.earlyAccessCommissionPercent, effectiveRoleFee('photographerFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.influencer.early_access_creator }} inf · {{ commissionCounts.photographer.early_access_photographer }} photo</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Partner</span></td>
+                      <td>{{ settings.partnerCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.partnerCommissionPercent, effectiveRoleFee('influencerFeePercent')) }})</small></td>
+                      <td>{{ settings.partnerCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.partnerCommissionPercent, effectiveRoleFee('photographerFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.influencer.partner_creator }} inf · {{ commissionCounts.photographer.partner_photographer }} photo</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge rounded-pill border text-primary border-primary">Internal/Test</span></td>
+                      <td>{{ settings.internalTestCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.internalTestCommissionPercent, effectiveRoleFee('influencerFeePercent')) }})</small></td>
+                      <td>{{ settings.internalTestCommissionPercent }}% <small class="text-success">({{ platformFeeSavingsText(settings.internalTestCommissionPercent, effectiveRoleFee('photographerFeePercent')) }})</small></td>
+                      <td>{{ commissionCounts.influencer.internal_test_creator }} inf · {{ commissionCounts.photographer.internal_test_photographer }} photo</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="mt-3 p-3 rounded" style="background:#f8f9fa; border:1px solid #dee2e6; font-size:0.85rem;">
+              <strong>How platform commission applies</strong>
+              <div class="row mt-2 g-2">
+                <div class="col-12 col-md-6">
+                  <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
+                    <strong style="color:#1b5e20;">Regular campaigns</strong><br>
+                    <small style="color:#388e3c;">Paid collab · Product · Location invite · Reel collab · Portfolio</small>
+                    <div class="mt-1" style="color:#2e7d32;">
+                      Brand pays: agreed amount + commission ({{ effectiveRoleFee('brandFeePercent') }}%)<br>
+                      Creator receives: full agreed amount<br>
+                      <small class="text-muted">Commission added on top — creator is never docked. GST applies on commission.</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <div class="p-2 rounded" style="background:#fff3e0; border:1px solid #ffe0b2;">
+                    <strong style="color:#bf360c;">Pay-to-Join campaigns</strong><br>
+                    <small style="color:#e65100;">Product collab · Invite to location · Enable from Campaign Types above</small>
+                    <div class="mt-1" style="color:#e65100;">
+                      Creator pays: join fee (face value)<br>
+                      Creator commission ({{ effectiveRoleFee('influencerFeePercent') }}% / {{ effectiveRoleFee('photographerFeePercent') }}%) deducted — currently 0%<br>
+                      Host receives: join fees minus creator commission<br>
+                      <small class="text-muted">Set Influencer/Photo-Video % above to activate. Badge overrides apply to the paying creator.</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="mb-0 mt-2 text-muted" style="font-size:0.8rem;">Brand badge overrides apply to Regular campaigns. Creator badge overrides apply to Pay-to-Join. Assign badges via Users table → Fee Badges tab.</p>
             </div>
           </div>
         </div>
@@ -464,6 +857,180 @@
       </div>
     </div>
 
+  </div>
+
+  <div *ngIf="activeTab === 'communities'">
+    <h2>Community Management</h2>
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      Manage state-wise WhatsApp communities used for open campaign alerts and verified creator onboarding.
+    </p>
+
+    <div class="settings-row row-expanded">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>{{ editingWhatsappCommunityId ? 'Edit Community' : 'Add Community' }}</strong>
+          <p>Creators see the matching community after email, mobile, and profile completion checks pass.</p>
+        </div>
+      </div>
+      <div class="settings-conditions">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">State</label>
+            <input class="form-control" [(ngModel)]="whatsappCommunityForm.state" placeholder="AP & Telangana">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Community Name</label>
+            <input class="form-control" [(ngModel)]="whatsappCommunityForm.communityName" placeholder="TrendStarz AP & Telangana">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">WhatsApp Link</label>
+            <input class="form-control" [(ngModel)]="whatsappCommunityForm.communityLink" placeholder="https://chat.whatsapp.com/xxxxx">
+          </div>
+          <div class="col-12 d-flex align-items-center gap-3 flex-wrap">
+            <label class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="whatsappCommunityForm.isActive">
+              <span class="form-check-label">Active</span>
+            </label>
+            <button class="btn btn-primary" type="button" (click)="saveWhatsappCommunity()" [disabled]="whatsappCommunitySaving">
+              {{ whatsappCommunitySaving ? 'Saving...' : (editingWhatsappCommunityId ? 'Update' : 'Add') }}
+            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="resetWhatsappCommunityForm()" *ngIf="editingWhatsappCommunityId">
+              Cancel Edit
+            </button>
+            <span class="text-danger" *ngIf="whatsappCommunityError">{{ whatsappCommunityError }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Community Directory</strong>
+          <p>
+            Configured: {{ whatsappCommunities.length }} · Active: {{ activeWhatsappCommunityCount }} ·
+            Joined users: {{ totalWhatsappJoinedUserCount }}
+          </p>
+        </div>
+      </div>
+      <div class="settings-conditions">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Search by state or community name</label>
+            <input
+              class="form-control"
+              [(ngModel)]="whatsappCommunitySearch"
+              placeholder="Search Andhra Pradesh, Karnataka, TrendStarz..."
+            >
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="whatsappCommunityStatusFilter">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="text-light-emphasis">
+              Showing {{ filteredWhatsappCommunities.length }} of {{ whatsappCommunities.length }} communities.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-3">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Community Name</th>
+            <th>Joined Users</th>
+            <th>QR Code</th>
+            <th>WhatsApp Actions</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="whatsappCommunitiesLoading">
+            <td colspan="7" class="text-muted">Loading communities...</td>
+          </tr>
+          <tr *ngFor="let item of filteredWhatsappCommunities">
+            <td>{{ item.state }}</td>
+            <td>{{ item.communityName }}</td>
+            <td>{{ item.joinedUserCount || 0 }}</td>
+            <td>
+              <img
+                *ngIf="item.communityLink"
+                class="whatsapp-community-qr"
+                [src]="getWhatsappQrUrl(item.communityLink)"
+                alt="WhatsApp invite QR code"
+              >
+              <span *ngIf="!item.communityLink" class="text-muted">-</span>
+            </td>
+            <td>
+              <a class="btn btn-outline-primary btn-sm me-2" [href]="item.communityLink" target="_blank" rel="noopener">Join</a>
+              <button class="btn btn-outline-secondary btn-sm" type="button" (click)="copyWhatsappCommunityLink(item)">Copy Link</button>
+            </td>
+            <td>{{ item.isActive === false ? 'Inactive' : 'Active' }}</td>
+            <td>
+              <button class="btn btn-outline-secondary btn-sm me-2" type="button" (click)="editWhatsappCommunity(item)">Edit</button>
+              <button class="btn btn-outline-danger btn-sm" type="button" (click)="deleteWhatsappCommunity(item)">Delete</button>
+            </td>
+          </tr>
+          <tr *ngIf="!whatsappCommunitiesLoading && filteredWhatsappCommunities.length === 0">
+            <td colspan="7" class="text-muted">
+              {{ whatsappCommunities.length === 0 ? 'No WhatsApp communities configured.' : 'No communities match your search.' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Social Links Tab -->
+  <div *ngIf="activeTab === 'socialLinks'">
+    <h2>Generate Social Link</h2>
+    <p style="color:#aaa; margin-bottom:1.5rem;">
+      Create a trackable trendstarz.in registration link for an influencer, brand, or photographer/videographer to post on their own social profile. Meta Ads links are handled separately by the TrendStarz team.
+    </p>
+
+    <div class="settings-row row-expanded">
+      <div class="settings-conditions">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Role</label>
+            <select class="form-select" [(ngModel)]="referralLinkRole">
+              <option value="influencer">Influencer</option>
+              <option value="brand">Brand</option>
+              <option value="photographer">Photographer/Videographer</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Username / Name</label>
+            <input class="form-control" [(ngModel)]="referralLinkUsername" placeholder="riya_creates">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Platform (optional)</label>
+            <select class="form-select" [(ngModel)]="referralLinkPlatform">
+              <option value="">Not specified</option>
+              <option *ngFor="let platform of REFERRAL_LINK_PLATFORMS" [value]="platform">{{ platform }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" type="button" (click)="copyReferralLink()" [disabled]="!generatedReferralLink">
+              {{ referralLinkCopied ? 'Copied!' : 'Copy Link' }}
+            </button>
+          </div>
+        </div>
+        <div class="mt-3" *ngIf="generatedReferralLink">
+          <label class="form-label">Generated Link</label>
+          <input class="form-control" [value]="generatedReferralLink" readonly (click)="selectReferralLinkText($event)">
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- User Management Tab -->
@@ -561,6 +1128,298 @@
                 {{ settings.brandRequireMobileVerified ? 'Yes' : 'No' }}
               </label>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong>Pending User Auto-Delete</strong>
+            <p>
+              Soft-delete stalled registrations automatically after a configured number of days: unverified email,
+              unverified mobile, or admin-declined. Users who verified <strong>both</strong> email and mobile and are
+              simply waiting on admin review are never auto-deleted — that's on us, not them.
+              This marks users as deleted; media retention and purge follow existing cleanup policy.
+            </p>
+          </div>
+          <div class="form-check form-switch settings-toggle">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="pendingUserAutoDeleteEnabled"
+              [(ngModel)]="settings.pendingUserAutoDeleteEnabled"
+            >
+            <label class="form-check-label" for="pendingUserAutoDeleteEnabled">
+              {{ settings.pendingUserAutoDeleteEnabled ? 'On' : 'Off' }}
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Delete pending users after</span>
+            <div style="max-width: 220px;">
+              <input
+                class="form-control form-control-sm"
+                type="number"
+                min="1"
+                max="3650"
+                [(ngModel)]="settings.pendingUserAutoDeleteDays"
+                [disabled]="!settings.pendingUserAutoDeleteEnabled"
+              >
+              <small class="text-light-emphasis d-block mt-1">Days from first registration (or created date fallback).</small>
+            </div>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUserAutoDeleteLastRunAt; else pendingDeleteNeverRun">
+                {{ pendingUserAutoDeleteLastRunAt | date:'medium' }}
+                - Deleted {{ pendingUserAutoDeleteLastRunCount }} user(s)
+                <span *ngIf="pendingUserAutoDeleteLastRunBy"> by {{ pendingUserAutoDeleteLastRunBy }}</span>
+              </ng-container>
+              <ng-template #pendingDeleteNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Actions</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-light" type="button" (click)="previewPendingUserCleanup()" [disabled]="pendingUserCleanupPreviewLoading">
+                {{ pendingUserCleanupPreviewLoading ? 'Checking...' : 'Preview (dry run)' }}
+              </button>
+              <button class="btn btn-sm btn-outline-warning" type="button" (click)="runPendingUserCleanupNow()" [disabled]="pendingUserCleanupRunning || !settings.pendingUserAutoDeleteEnabled" [title]="!settings.pendingUserAutoDeleteEnabled ? 'Turn this on and save settings first' : ''">
+                {{ pendingUserCleanupRunning ? 'Deleting...' : 'Run Now' }}
+              </button>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="pendingUserCleanupMessage">
+            <span class="condition-name">Latest result</span>
+            <small class="text-light-emphasis">{{ pendingUserCleanupMessage }}</small>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3" *ngIf="pendingUserCleanupPreview?.totalDeleted">
+          <table class="table table-sm table-dark align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Reason</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Admin declined</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.admin_declined || 0 }}</td>
+              </tr>
+              <tr>
+                <td>Email pending</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.email_pending || 0 }}</td>
+              </tr>
+              <tr>
+                <td>Mobile pending</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.mobile_pending || 0 }}</td>
+              </tr>
+              <tr>
+                <td>Admin approval pending</td>
+                <td>{{ pendingUserCleanupPreview.byReason?.admin_approval_pending || 0 }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong>Pending Upload Cleanup</strong>
+            <p>
+              Deletes profile photos / verification docs left in Cloudinary's <code>_pending</code> staging folders when a
+              registration was abandoned or failed before completing. Assets still referenced by a live user document are
+              always skipped, regardless of age.
+            </p>
+          </div>
+          <div class="form-check form-switch settings-toggle">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="pendingUploadAutoDeleteEnabled"
+              [(ngModel)]="settings.pendingUploadAutoDeleteEnabled"
+            >
+            <label class="form-check-label" for="pendingUploadAutoDeleteEnabled">
+              {{ settings.pendingUploadAutoDeleteEnabled ? 'On' : 'Off' }}
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Delete pending uploads after</span>
+            <div style="max-width: 220px;">
+              <input
+                class="form-control form-control-sm"
+                type="number"
+                min="1"
+                max="2160"
+                [(ngModel)]="settings.pendingUploadAutoDeleteHours"
+                [disabled]="!settings.pendingUploadAutoDeleteEnabled"
+              >
+              <small class="text-light-emphasis d-block mt-1">Hours since the file was uploaded.</small>
+            </div>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled/manual run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUploadAutoDeleteLastRunAt; else pendingUploadDeleteNeverRun">
+                {{ pendingUploadAutoDeleteLastRunAt | date:'medium' }}
+                - Deleted {{ pendingUploadAutoDeleteLastRunCount }} upload(s)
+                <span *ngIf="pendingUploadAutoDeleteLastRunBy"> by {{ pendingUploadAutoDeleteLastRunBy }}</span>
+              </ng-container>
+              <ng-template #pendingUploadDeleteNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Actions</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-light" type="button" (click)="previewPendingUploadCleanup()" [disabled]="pendingUploadCleanupPreviewLoading">
+                {{ pendingUploadCleanupPreviewLoading ? 'Checking...' : 'Preview (dry run)' }}
+              </button>
+              <button class="btn btn-sm btn-outline-warning" type="button" (click)="runPendingUploadCleanupNow()" [disabled]="pendingUploadCleanupRunning || !settings.pendingUploadAutoDeleteEnabled" [title]="!settings.pendingUploadAutoDeleteEnabled ? 'Turn this on and save settings first' : ''">
+                {{ pendingUploadCleanupRunning ? 'Deleting...' : 'Run Now' }}
+              </button>
+            </div>
+          </div>
+          <div class="condition-item" *ngIf="pendingUploadCleanupMessage">
+            <span class="condition-name">Latest result</span>
+            <small class="text-light-emphasis">{{ pendingUploadCleanupMessage }}</small>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3" *ngIf="pendingUploadCleanupPreview?.byFolder?.length">
+          <table class="table table-sm table-dark align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Folder</th>
+                <th>Type</th>
+                <th>Found (older than cutoff)</th>
+                <th>Still referenced (would skip)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of pendingUploadCleanupPreview.byFolder">
+                <td>{{ row.prefix }}</td>
+                <td>{{ row.resourceType }}</td>
+                <td>{{ row.found }}</td>
+                <td>{{ row.stillReferenced }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong>Pending Email Verification Report</strong>
+            <p>
+              Tracks users still pending with unverified email after 7 days. This is report-only and does not delete or modify users.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline-light" type="button" (click)="loadPendingUnverifiedReport()" [disabled]="pendingUnverifiedReportLoading">
+            {{ pendingUnverifiedReportLoading ? 'Refreshing...' : 'Refresh Report' }}
+          </button>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Current report</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUnverifiedReport; else pendingUnverifiedLoading">
+                {{ pendingUnverifiedReport.total || 0 }} user(s)
+                - Influencers {{ pendingUnverifiedReport.counts?.influencers || 0 }},
+                Brands {{ pendingUnverifiedReport.counts?.brands || 0 }},
+                Photo/Videographers {{ pendingUnverifiedReport.counts?.photographers || 0 }}
+              </ng-container>
+              <ng-template #pendingUnverifiedLoading>
+                {{ pendingUnverifiedReportLoading ? 'Loading...' : 'Not loaded yet.' }}
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="pendingUnverifiedReportLastRunAt; else pendingUnverifiedNeverRun">
+                {{ pendingUnverifiedReportLastRunAt | date:'medium' }}
+                - Found {{ pendingUnverifiedReportLastRunCount }} user(s)
+              </ng-container>
+              <ng-template #pendingUnverifiedNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3" *ngIf="pendingUnverifiedReport?.users?.length">
+          <table class="table table-sm table-dark align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Registered</th>
+                <th>First Login</th>
+                <th>Last Opened</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of pendingUnverifiedReport.users">
+                <td>{{ user.userType }}</td>
+                <td>{{ user.name || '-' }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ (user.firstRegisteredAt || user.createdAt) | date:'mediumDate' }}</td>
+                <td>{{ user.lastLoginAt ? (user.lastLoginAt | date:'medium') : 'Never' }}</td>
+                <td>{{ user.lastOpenedAt ? (user.lastOpenedAt | date:'medium') : 'Never' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-12 settings-row row-expanded">
+        <div class="settings-row-header">
+          <div class="settings-info">
+            <strong>Firebase Email Verification Sync</strong>
+            <p>
+              Nightly safety sync: if Firebase says emailVerified is true but MongoDB is still false, MongoDB is updated and pending users are activated.
+            </p>
+          </div>
+          <button class="btn btn-sm btn-outline-light" type="button" (click)="runFirebaseEmailSync()" [disabled]="firebaseEmailSyncRunning">
+            {{ firebaseEmailSyncRunning ? 'Syncing...' : 'Run One-Time Sync' }}
+          </button>
+        </div>
+
+        <div class="settings-conditions">
+          <div class="condition-item">
+            <span class="condition-name">Last scheduled/manual run</span>
+            <small class="text-light-emphasis">
+              <ng-container *ngIf="firebaseEmailSyncLastRunAt; else firebaseEmailSyncNeverRun">
+                {{ firebaseEmailSyncLastRunAt | date:'medium' }}
+                - Updated {{ firebaseEmailSyncLastRunCount }} MongoDB user(s)
+              </ng-container>
+              <ng-template #firebaseEmailSyncNeverRun>
+                Not run yet.
+              </ng-template>
+            </small>
+          </div>
+          <div class="condition-item" *ngIf="firebaseEmailSyncMessage">
+            <span class="condition-name">Latest result</span>
+            <small class="text-light-emphasis">{{ firebaseEmailSyncMessage }}</small>
           </div>
         </div>
       </div>
@@ -867,12 +1726,12 @@
       </div>
 
       <div class="settings-conditions">
-        <span class="conditions-label">Current moderation mode:</span>
+        <span class="conditions-label text-black">Current moderation mode:</span>
         <div class="condition-item">
-          <span class="condition-name" *ngIf="settings.campaignApprovalMode === 'manual'">
+          <span class="condition-name text-black" *ngIf="settings.campaignApprovalMode === 'manual'">
             Manual: New campaign submits as <strong>Pending Review</strong> and needs admin decision.
           </span>
-          <span class="condition-name" *ngIf="settings.campaignApprovalMode === 'auto_live'">
+          <span class="condition-name text-black" *ngIf="settings.campaignApprovalMode === 'auto_live'">
             Auto-live: Campaign goes public immediately (still appears in admin queue for audit).
           </span>
         </div>
@@ -883,6 +1742,62 @@
           <span class="condition-name">
             Review submissions on the separate <a routerLink="/admin/campaign-review">Campaign Review</a> page.
           </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Payment Gateway Mode</strong>
+          <p>Controls which payment method(s) appear on the Premium upgrade page.</p>
+        </div>
+      </div>
+
+      <div class="settings-conditions">
+        <div class="condition-item">
+          <span class="condition-name">Mode</span>
+          <div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="paymentGatewayModeManual"
+                name="paymentGatewayMode"
+                value="manual"
+                [(ngModel)]="settings.paymentGatewayMode"
+              />
+              <label class="form-check-label" for="paymentGatewayModeManual">Manual Only</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="paymentGatewayModeFallback"
+                name="paymentGatewayMode"
+                value="razorpay_fallback"
+                [(ngModel)]="settings.paymentGatewayMode"
+              />
+              <label class="form-check-label" for="paymentGatewayModeFallback">Razorpay + Manual Fallback</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="paymentGatewayModeRazorpayOnly"
+                name="paymentGatewayMode"
+                value="razorpay_only"
+                [(ngModel)]="settings.paymentGatewayMode"
+              />
+              <label class="form-check-label" for="paymentGatewayModeRazorpayOnly">Razorpay Only</label>
+            </div>
+          </div>
+        </div>
+        <div class="condition-item">
+          <span class="condition-name">Note</span>
+          <small class="text-light-emphasis">
+            Razorpay options are hidden automatically if RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET aren't configured on the server, regardless of this setting.
+          </small>
         </div>
       </div>
     </div>
@@ -926,6 +1841,201 @@
             Review submissions on the separate <a routerLink="/admin/collaboration-review">Collaboration Review</a> page.
           </span>
         </div>
+      </div>
+    </div>
+
+	    <div class="settings-row row-expanded mt-3">
+	      <div class="settings-row-header">
+	        <div class="settings-info">
+	          <strong>Campaign Access Modes</strong>
+	          <p>Control which campaign access modes appear in campaign forms and whether they require Premium.</p>
+	        </div>
+	      </div>
+
+	      <div class="table-responsive campaign-type-table-wrap">
+	        <table class="table table-sm align-middle mb-0 campaign-type-table">
+	          <thead>
+	            <tr>
+	              <th>Access mode</th>
+	              <th>Enabled</th>
+	              <th>Premium only</th>
+	              <th>Free Users</th>
+	              <th>Premium Users</th>
+	            </tr>
+	          </thead>
+	          <tbody>
+	            <tr *ngFor="let item of campaignAccessModeConfigs">
+	              <td>{{ item.label }}</td>
+	              <td class="campaign-type-col-toggle">
+	                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+	              </td>
+	              <td class="campaign-type-col-toggle">
+	                <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
+	              </td>
+	              <td>
+	                <span class="campaign-type-badge" [ngClass]="item.enabled && !item.premiumOnly ? 'is-yes' : 'is-no'">
+	                  {{ item.enabled && !item.premiumOnly ? 'Yes' : 'No' }}
+	                </span>
+	              </td>
+	              <td>
+	                <span class="campaign-type-badge" [ngClass]="item.enabled ? 'is-yes' : 'is-no'">
+	                  {{ item.enabled ? 'Yes' : 'No' }}
+	                </span>
+	              </td>
+	            </tr>
+	          </tbody>
+	        </table>
+	      </div>
+	    </div>
+
+	    <div class="settings-row row-expanded mt-3">
+	      <div class="settings-row-header">
+	        <div class="settings-info">
+	          <strong>Requirement Types (Brand → Influencer/Photographer)</strong>
+	          <p>Control which requirement types appear in campaign forms and whether they require Premium.</p>
+	        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm settings-reset-btn" (click)="resetCampaignTypeConfigs()">
+          Reset defaults
+        </button>
+      </div>
+
+      <p *ngIf="campaignTypeResetMessage" class="text-success mb-3">{{ campaignTypeResetMessage }}</p>
+
+      <div class="table-responsive campaign-type-table-wrap">
+        <table class="table table-sm align-middle mb-0 campaign-type-table">
+          <thead>
+            <tr>
+	              <th>Requirement Type</th>
+	              <th>Order</th>
+	              <th>Enabled</th>
+	              <th>Premium only</th>
+              <th>Free Users</th>
+              <th>Premium Users</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of brandCampaignTypeConfigs">
+              <td>{{ item.label }}</td>
+              <td>
+                <div class="campaign-type-order-controls">
+                  <input
+                    type="number"
+                    class="form-control form-control-sm campaign-order-input"
+                    min="1"
+                    [(ngModel)]="item.sortOrder"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onCampaignTypeSortOrderChange('brand', item)"
+                  />
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Requirement type order controls">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('brand', item, -1)"
+                      [disabled]="!canMoveCampaignType('brand', item, -1)"
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('brand', item, 1)"
+                      [disabled]="!canMoveCampaignType('brand', item, 1)"
+                    >
+                      Down
+                    </button>
+                  </div>
+                </div>
+              </td>
+	              <td class="campaign-type-col-toggle">
+	                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td>
+                <span class="campaign-type-badge" [ngClass]="item.premiumOnly ? 'is-no' : 'is-yes'">
+                  {{ item.premiumOnly ? 'No' : 'Yes' }}
+                </span>
+              </td>
+              <td>
+                <span class="campaign-type-badge is-yes">Yes</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="settings-row row-expanded mt-3">
+      <div class="settings-row-header">
+        <div class="settings-info">
+          <strong>Collaboration Types (Photographer → Influencer)</strong>
+          <p>Control visibility and premium lock for photographer-led collaboration types.</p>
+        </div>
+      </div>
+
+      <div class="table-responsive campaign-type-table-wrap">
+        <table class="table table-sm align-middle mb-0 campaign-type-table">
+          <thead>
+            <tr>
+	              <th>Collaboration Type</th>
+	              <th>Order</th>
+	              <th>Enabled</th>
+              <th>Premium only</th>
+              <th>Free Users</th>
+              <th>Premium Users</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of photographerCampaignTypeConfigs">
+              <td>{{ item.label }}</td>
+              <td>
+                <div class="campaign-type-order-controls">
+                  <input
+                    type="number"
+                    class="form-control form-control-sm campaign-order-input"
+                    min="1"
+                    [(ngModel)]="item.sortOrder"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onCampaignTypeSortOrderChange('photographer', item)"
+                  />
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Collaboration type order controls">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('photographer', item, -1)"
+                      [disabled]="!canMoveCampaignType('photographer', item, -1)"
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      (click)="moveCampaignType('photographer', item, 1)"
+                      [disabled]="!canMoveCampaignType('photographer', item, 1)"
+                    >
+                      Down
+                    </button>
+                  </div>
+                </div>
+              </td>
+	              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.enabled" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td class="campaign-type-col-toggle">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="item.premiumOnly" [ngModelOptions]="{ standalone: true }" />
+              </td>
+              <td>
+                <span class="campaign-type-badge" [ngClass]="item.premiumOnly ? 'is-no' : 'is-yes'">
+                  {{ item.premiumOnly ? 'No' : 'Yes' }}
+                </span>
+              </td>
+              <td>
+                <span class="campaign-type-badge is-yes">Yes</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 

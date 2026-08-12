@@ -40,12 +40,14 @@ export class TransactionsComponent implements OnInit {
   }
 
   get isInfluencer(): boolean { return this.role === 'influencer'; }
+  get isPhotographer(): boolean { return this.role === 'photographer'; }
   get isBrand(): boolean { return this.role === 'brand'; }
+  get isRecipient(): boolean { return this.isInfluencer || this.isPhotographer; }
 
   /** Tabs labelling by role */
   get pendingLabel(): string { return 'Pending'; }
   get completedLabel(): string {
-    return this.isInfluencer ? 'Received' : 'Paid Out';
+    return this.isRecipient ? 'Received' : 'Paid Out';
   }
 
   get totalRecordsCount(): number {
@@ -54,8 +56,8 @@ export class TransactionsComponent implements OnInit {
 
   get pendingTab(): any[] {
     return this.transactions.filter(tx => {
-      if (this.isInfluencer) {
-        // influencer is the recipient; pending = collection verified but payout not yet paid
+      if (this.isRecipient) {
+        // recipient is influencer/photographer; pending = collection verified but payout not yet paid
         return tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing'
           || (tx.collectionStatus !== 'verified' && tx.payoutStatus !== 'paid');
       }
@@ -66,7 +68,7 @@ export class TransactionsComponent implements OnInit {
 
   get completedTab(): any[] {
     return this.transactions.filter(tx => {
-      if (this.isInfluencer) {
+      if (this.isRecipient) {
         return tx.payoutStatus === 'paid';
       }
       // brand: collection verified (payment confirmed / accepted by admin)
@@ -100,12 +102,22 @@ export class TransactionsComponent implements OnInit {
   }
 
   private computeSummary(rows: any[]) {
-    if (this.isInfluencer) {
+    const payoutProcessingStage = (tx: any) => {
+      const inviteStatus = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+      const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+      return ['completed', 'approved'].includes(inviteStatus) || workStatus === 'approved';
+    };
+
+    if (this.isRecipient) {
       this.summary.totalEarned = rows
-        .filter(r => r.payoutStatus === 'paid' && r.recipientRole === 'influencer')
+        .filter(r => r.payoutStatus === 'paid' && (r.recipientRole === 'influencer' || r.recipientRole === 'photographer'))
         .reduce((s, r) => s + Number(r.recipientPayout || 0), 0);
       this.summary.totalPending = rows
-        .filter(r => (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') && r.recipientRole === 'influencer')
+        .filter(r =>
+          (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') &&
+          (r.recipientRole === 'influencer' || r.recipientRole === 'photographer') &&
+          payoutProcessingStage(r)
+        )
         .reduce((s, r) => s + Number(r.recipientPayout || 0), 0);
     } else {
       this.summary.totalPaid = rows
@@ -133,12 +145,19 @@ export class TransactionsComponent implements OnInit {
   }
 
   statusLabel(tx: any): string {
-    if (this.isInfluencer) {
-      if (tx.payoutStatus === 'paid') return 'Received';
-      if (tx.payoutStatus === 'processing') return 'Processing';
-      if (tx.collectionStatus === 'verified') return 'Awaiting Payout';
+    if (this.isRecipient) {
+      const inviteStatus = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+      const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+      const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
+      if (payoutStatus === 'paid') return `Paid ${this.formatPaise(tx.recipientPayout || 0)}`;
+      if (payoutStatus === 'processing' || ['completed', 'approved'].includes(inviteStatus) || workStatus === 'approved') return 'Payout Processing (4-6 hrs)';
+      if (inviteStatus === 'submitted') return 'Under Review (24 hrs)';
+      if (inviteStatus === 'working') return 'Complete your Reel/Post';
+      if (inviteStatus === 'payment_confirmed') return 'Ready to Start';
+      if (inviteStatus === 'accepted') return 'Waiting for Host Confirmation';
       if (tx.collectionStatus === 'proof_submitted') return 'Payment Under Review';
-      return 'Awaiting Brand Payment';
+      if (tx.collectionStatus === 'verified') return 'Ready to Start';
+      return 'Waiting for Host Confirmation';
     } else {
       if (tx.collectionStatus === 'verified') return 'Payment Verified';
       if (tx.collectionStatus === 'proof_submitted') return 'Proof Under Review';
@@ -150,6 +169,13 @@ export class TransactionsComponent implements OnInit {
   statusClass(tx: any): string {
     const s = tx.payoutStatus;
     const c = tx.collectionStatus;
+    if (this.isRecipient) {
+      const label = this.statusLabel(tx).toLowerCase();
+      if (label.includes('paid')) return 'status--green';
+      if (label.includes('processing') || label.includes('under review') || label.includes('ready')) return 'status--blue';
+      if (label.includes('rejected')) return 'status--red';
+      return 'status--amber';
+    }
     if (s === 'paid' || c === 'verified') return 'status--green';
     if (s === 'processing' || c === 'proof_submitted') return 'status--blue';
     if (c === 'failed') return 'status--red';
@@ -158,17 +184,17 @@ export class TransactionsComponent implements OnInit {
 
   /** Amount shown from the current user's perspective */
   amountDisplay(tx: any): string {
-    if (this.isInfluencer) return '+' + this.formatPaise(tx.recipientPayout);
+    if (this.isRecipient) return '+' + this.formatPaise(tx.recipientPayout);
     return '-' + this.formatPaise(tx.payerTotal);
   }
 
   groupAmountDisplay(group: { totalAmount: number }): string {
-    return (this.isInfluencer ? '+' : '-') + this.formatPaise(group.totalAmount);
+    return (this.isRecipient ? '+' : '-') + this.formatPaise(group.totalAmount);
   }
 
   groupPartyLabel(group: { count: number; partyNames: string[]; primary: any }): string {
-    if (this.isInfluencer) return group.primary?.otherPartyName || '';
-    if (group.count > 1) return `${group.count} influencers`;
+    if (this.isRecipient) return group.primary?.otherPartyName || '';
+    if (group.count > 1) return `${group.count} recipients`;
     return group.partyNames[0] || group.primary?.otherPartyName || '';
   }
 
@@ -181,7 +207,7 @@ export class TransactionsComponent implements OnInit {
 
     for (const tx of rows) {
       const key = this.groupKey(tx);
-      const amount = this.isInfluencer ? Number(tx.recipientPayout || 0) : Number(tx.payerTotal || 0);
+      const amount = this.isRecipient ? Number(tx.recipientPayout || 0) : Number(tx.payerTotal || 0);
       const fee = Number(tx.platformFee || 0);
 
       if (!groups.has(key)) {
@@ -237,7 +263,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   influencerAmountDisplay(tx: any): string {
-    if (this.isInfluencer) return '+' + this.formatPaise(tx.recipientPayout);
+    if (this.isRecipient) return '+' + this.formatPaise(tx.recipientPayout);
     return this.formatPaise(tx.recipientPayout);
   }
 }

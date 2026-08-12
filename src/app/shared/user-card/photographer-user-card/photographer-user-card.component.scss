@@ -3,6 +3,10 @@
 @include card.user-card-base('.photographer-card', 2px);
 
 .photographer-card {
+  &--locked {
+    cursor: not-allowed;
+  }
+
   &__name {
     font-size: 1rem;
     font-weight: 700;
@@ -12,23 +16,6 @@
     align-items: center;
     gap: 0.35rem;
     flex-wrap: wrap;
-  }
-
-  &__verified {
-    color: #ff6b35;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-  }
-
-  &__ts-verified {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: #065f46;
-    background: #ecfdf5;
-    border: 1px solid #bbf7d0;
-    border-radius: 999px;
-    padding: 0.12rem 0.42rem;
-    white-space: nowrap;
   }
 
   &__category-row {
@@ -80,23 +67,4 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   }
 
-  .badge--founder {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .badge--verified {
-    background: #dcfce7;
-    color: #166534;
-  }
-
-  .badge--internal {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .badge--neutral {
-    background: #eef2ff;
-    color: #4338ca;
-  }
 }

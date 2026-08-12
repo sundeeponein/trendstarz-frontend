@@ -7,8 +7,11 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
+import { payoutReleasedMessage } from '../../shared/whatsapp-messages.util';
 
 type Tab = 'summary' | 'pay' | 'status';
+
+type RazorpayOrder = { orderId: string; amount: number; currency: string; keyId: string };
 
 @Component({
   selector: 'app-campaign-payment-page',
@@ -30,11 +33,15 @@ export class CampaignPaymentPageComponent implements OnInit {
   platformFeePercent = 0;
   gstPercent = 0;
 
+  calculatedPayment: any = null;
   utrNumber = '';
   submitting = false;
+  processingRazorpay = false;
   successMessage = '';
   submitError = '';
   copied = false;
+  payoutMessageVisible = false;
+  payoutMessageCopied = false;
 
   statusTransactions: CampaignTransaction[] = [];
 
@@ -117,6 +124,40 @@ export class CampaignPaymentPageComponent implements OnInit {
     }).catch(() => {});
   }
 
+  togglePayoutMessage() {
+    this.payoutMessageVisible = !this.payoutMessageVisible;
+    this.cd.markForCheck();
+  }
+
+  copyPayoutWhatsAppMessage() {
+    const text = this.payoutWhatsAppMessage;
+    if (!text) return;
+    const done = () => {
+      this.payoutMessageCopied = true;
+      setTimeout(() => { this.payoutMessageCopied = false; this.cd.markForCheck(); }, 2000);
+      this.cd.markForCheck();
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopy(text, done));
+      return;
+    }
+    this.fallbackCopy(text, done);
+  }
+
+  private fallbackCopy(text: string, done: () => void) {
+    if (typeof document === 'undefined') return;
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    done();
+  }
+
   get canSubmit(): boolean {
     return !!this.utrNumber.trim() && !this.submitting;
   }
@@ -142,6 +183,92 @@ export class CampaignPaymentPageComponent implements OnInit {
       this.submitError = e?.error?.message || 'Failed to submit proof. Please try again.';
     } finally {
       this.submitting = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  private async ensureRazorpayLoaded(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    if ((window as any).Razorpay) return true;
+
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Razorpay checkout script'));
+      document.body.appendChild(script);
+    });
+
+    return !!(window as any).Razorpay;
+  }
+
+  async payWithRazorpay() {
+    if (!this.campaignId) return;
+    this.processingRazorpay = true;
+    this.submitError = '';
+    try {
+      const token = this.getToken();
+      if (!token) {
+        this.submitError = 'Not authenticated';
+        return;
+      }
+      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+      const orderRes = await firstValueFrom(
+        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers),
+      );
+      const order: RazorpayOrder | undefined = orderRes?.order;
+      if (!order?.orderId || !order?.keyId) {
+        this.submitError = 'Failed to initialize Razorpay order.';
+        return;
+      }
+
+      const loaded = await this.ensureRazorpayLoaded();
+      if (!loaded) {
+        this.submitError = 'Failed to load Razorpay checkout.';
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const rz = new (window as any).Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'TrendstarZ',
+          description: 'Campaign payment',
+          order_id: order.orderId,
+          handler: async (resp: any) => {
+            try {
+              await firstValueFrom(
+                this.txApi.verifyCampaignRazorpayPayment(
+                  this.campaignId,
+                  {
+                    orderId: resp?.razorpay_order_id,
+                    paymentId: resp?.razorpay_payment_id,
+                    signature: resp?.razorpay_signature,
+                  },
+                  headers,
+                ),
+              );
+              this.successMessage = 'Razorpay payment verified. Influencers can now start work.';
+              await this.fetchStatus();
+              this.setTab('status');
+              resolve();
+            } catch (e: any) {
+              reject(new Error(e?.error?.message || 'Payment verification failed'));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment cancelled.')),
+          },
+          theme: { color: '#f59e0b' },
+        });
+        rz.open();
+      });
+    } catch (e: any) {
+      this.submitError = e?.message || e?.error?.message || 'Razorpay payment failed. Please try manual UTR.';
+    } finally {
+      this.processingRazorpay = false;
       this.cd.markForCheck();
     }
   }
@@ -174,7 +301,58 @@ export class CampaignPaymentPageComponent implements OnInit {
     return m[status] || status;
   }
 
+  transactionReference(tx: CampaignTransaction | null): string {
+    if (!tx) return '-';
+    if (String(tx.gateway || '').toLowerCase() === 'razorpay') {
+      return String(tx.gatewayPaymentId || tx.gatewayOrderId || '-');
+    }
+    return String(tx.utrNumber || '-');
+  }
+
+  transactionReferenceLabel(tx: CampaignTransaction | null): string {
+    return String(tx?.gateway || '').toLowerCase() === 'razorpay'
+      ? 'Host paid Razorpay ref'
+      : 'Host paid UTR';
+  }
+
+  payoutReference(tx: CampaignTransaction | null): string {
+    if (!tx) return '-';
+    const payoutGateway = String(tx.payoutGatewayProvider || 'manual_upi').toLowerCase();
+    if (payoutGateway === 'razorpayx') {
+      return String(tx.payoutTransferId || tx.payoutUtr || '-');
+    }
+    return String(tx.payoutUtr || tx.payoutTransferId || '-');
+  }
+
+  payoutReferenceLabel(tx: CampaignTransaction | null): string {
+    return String(tx?.payoutGatewayProvider || 'manual_upi').toLowerCase() === 'razorpayx'
+      ? 'Admin to user Razorpay ref'
+      : 'Admin to user payout UTR';
+  }
+
+  get payoutWhatsAppMessage(): string {
+    const tx = this.primaryTx;
+    if (!tx || tx.payoutStatus !== 'paid') return '';
+    const campaignTitle = String(this.campaign?.title || this.campaign?.campaignName || 'your campaign').trim();
+    const paidAt = tx.payoutSettledAt || tx.paidOutAt || tx.updatedAt;
+    return payoutReleasedMessage({
+      campaignTitle,
+      amount: this.formatINR(tx.recipientPayout || tx.agreedAmount || 0),
+      payoutRefLabel: this.payoutReferenceLabel(tx),
+      payoutRefValue: this.payoutReference(tx),
+      paidOnLabel: paidAt ? new Date(paidAt).toLocaleString('en-IN') : undefined,
+    });
+  }
+
   formatINR(paise: number | undefined | null): string {
     return '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  }
+
+  get upiQrUrl(): string {
+    const tx = this.primaryTx;
+    if (!tx || !tx.agreedAmount) return '';
+    const amount = Number(tx.agreedAmount || 0) / 100;
+    const upiString = `upi://pay?pa=${this.paymentUpiId}&pn=${encodeURIComponent(this.payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('TrendstarZ Campaign')}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiString)}`;
   }
 }

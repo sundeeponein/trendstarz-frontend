@@ -1,9 +1,9 @@
 import { environment } from '../../../environments/environment';
-import imageCompression from 'browser-image-compression';
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, ValidatorFn } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { map, first } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -14,6 +14,15 @@ import { TierInfoService } from '../../shared/components/tier-info-modal/tier-in
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import { captureSignupAttribution } from '../../shared/signup-attribution.util';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -30,29 +39,20 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, ChipSelectionGroupComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent],
   templateUrl: './brand-registration.component.html',
   styleUrls: ['./brand-registration.component.scss'],
 })
 export class BrandRegistrationComponent implements OnInit {
-  readonly FREE_PRODUCT_IMAGE_LIMIT = 1;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
-  readonly MAX_IMAGE_SIZE_MB = 5; // reject images larger than this before attempting compression/upload
   readonly currentYear = new Date().getFullYear();
   readonly brandFoundedYears: number[] = Array.from(
     { length: this.currentYear - 1899 },
     (_, index) => this.currentYear - index,
   );
 
-  toggleChip(field: 'languages' | 'categories', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-    } else {
-      arr.push(id);
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  setChipValues(field: 'languages' | 'categories', values: string[]): void {
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
   }
 
@@ -87,12 +87,17 @@ export class BrandRegistrationComponent implements OnInit {
   submitted = false;
   isSubmitting = false;
   registrationSuccess = false;
+  registrationEmailSendFailed = false;
   registrationError = '';
   preApproveActive = false;
   showPassword = false;
   showConfirmPassword = false;
   togglePasswordVisibility() { this.showPassword = !this.showPassword; }
   toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
+
+  get localAuthBypassEnabled(): boolean {
+    return this.firebaseAuth.isLocalAuthBypassEnabled();
+  }
 
   emailVerificationSent: boolean = false;
   emailVerificationError: string | null = null;
@@ -120,17 +125,15 @@ export class BrandRegistrationComponent implements OnInit {
   protected tierInfo = inject(TierInfoService);
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  readonly maxCategories = 5;
 
   brandLogoPreview: string | null = null;
   brandLogoFile: File | null = null;
   // Cached upload result so we don't re-upload (and orphan the previous upload)
   // when the user retries onSubmit after a backend error (e.g., duplicate email).
   uploadedBrandLogo: { url: string; public_id: string } | null = null;
-  productImagesPreview: (string | null)[] = [];
-  productImagesFiles: (File | null)[] = [];
-  // Per-index cached upload result for product images.
-  uploadedProductImages: ({ url: string; public_id: string } | null)[] = [];
-  signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
+  trackingLinkCode = '';
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -138,11 +141,23 @@ export class BrandRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private firebaseAuth: FirebaseAuthService,
     private plansService: PlansService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     private guidelinesService: ImageGuidelinesService,
   ) {}
+
+  // Warn before an accidental refresh/close/navigation wipes unsaved progress.
+  // Nothing is persisted client- or server-side before a successful submit,
+  // so this is the only guard against silent data loss.
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.registrationForm?.dirty && !this.registrationSuccess) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
 
   ngOnInit() {
     this.loadPremiumMonthlyPrice();
@@ -150,13 +165,11 @@ export class BrandRegistrationComponent implements OnInit {
       this.verificationCallNumber = s.verificationCallNumber || '';
     });
 
-    const source = this.route.snapshot.queryParamMap.get('source') || '';
-    const audience = this.route.snapshot.queryParamMap.get('audience') || '';
-    this.signupAttribution = {
-      source: source || undefined,
-      audience: audience || undefined,
-      referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    };
+    this.signupAttribution = captureSignupAttribution(
+      this.route.snapshot.queryParamMap,
+      typeof window !== 'undefined' ? window : undefined,
+    );
+    this.trackingLinkCode = this.route.snapshot.queryParamMap.get('tlc') || '';
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
@@ -167,6 +180,8 @@ export class BrandRegistrationComponent implements OnInit {
       confirmPassword: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       paymentOption: ['free', Validators.required],
+      profileVisibility: ['PUBLIC'],
+      featuredInMarketing: [false],
       location: this.fb.group({
         state: ['', Validators.required],
         district: ['', Validators.required],
@@ -177,15 +192,19 @@ export class BrandRegistrationComponent implements OnInit {
       website: [''],
       foundedYear: [''],
       companySize: [''],
-      promotionalPrice: ['', [Validators.required, Validators.min(0)]],
       googleMapAddress: [''],
-      description: [''],
+      description: ['', Validators.required],
 
       contact: this.fb.group({
         whatsapp: [false],
         email: [false],
         call: [false]
-      }, { validators: [atLeastOneContactRequired] })
+      }, { validators: [atLeastOneContactRequired] }),
+      payout: this.fb.group({
+        upiId: [''],
+        mobile: [''],
+        accountHolderName: [''],
+      })
     }, { validators: [passwordMatchValidator] });
 
     // Defensive defaults: ensure arrays/objects exist to avoid runtime nulls
@@ -285,7 +304,6 @@ export class BrandRegistrationComponent implements OnInit {
     });
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
-      this.enforceProductImageLimit();
       this.refreshStepCompletion();
     });
 
@@ -295,6 +313,7 @@ export class BrandRegistrationComponent implements OnInit {
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('BRAND').subscribe((plans) => {
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+
       if (!paidPlan) return;
 
       const monthly = paidPlan?.price?.monthly ?? 0;
@@ -324,8 +343,11 @@ export class BrandRegistrationComponent implements OnInit {
   }
 
   private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
-    if (plan?.discountLabel) return plan.discountLabel;
-    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
     const hasTrialOffer = Array.isArray(plan?.offers)
       && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
     return hasTrialOffer ? 'Early Access Offer' : '';
@@ -358,24 +380,6 @@ export class BrandRegistrationComponent implements OnInit {
     return this.registrationForm.get('paymentOption')?.value === 'premium';
   }
 
-  canAddProductImage(): boolean {
-    return this.isPremiumPlan() || this.productImagesFiles.length < this.FREE_PRODUCT_IMAGE_LIMIT;
-  }
-
-  hasAtLeastOneProductImage(): boolean {
-    return this.productImagesFiles.some((f) => !!f);
-  }
-
-  private enforceProductImageLimit() {
-    if (this.isPremiumPlan()) {
-      return;
-    }
-    if (this.productImagesFiles.length > this.FREE_PRODUCT_IMAGE_LIMIT) {
-      this.productImagesFiles = this.productImagesFiles.slice(0, this.FREE_PRODUCT_IMAGE_LIMIT);
-      this.productImagesPreview = this.productImagesPreview.slice(0, this.FREE_PRODUCT_IMAGE_LIMIT);
-    }
-  }
-
   onBrandUsernameInput() {
     const ctrl = this.registrationForm.get('brandUsername');
     if (!ctrl) return;
@@ -389,6 +393,88 @@ export class BrandRegistrationComponent implements OnInit {
     if (ctrl) {
       ctrl.setValue(this.slugifyUsername(ctrl.value || ''), { emitEvent: false });
     }
+  }
+
+  onEmailBlur(): void {
+    const emailCtrl = this.registrationForm.get('email');
+    const email = String(emailCtrl?.value || '').trim();
+
+    this.duplicateEmailError = '';
+    if (!emailCtrl || !email || emailCtrl.hasError('email')) {
+      this.clearDuplicateError(emailCtrl);
+      return;
+    }
+
+    this.configService
+      .checkRegistrationConflicts({
+        userType: 'BRAND',
+        email,
+      })
+      .subscribe((result) => {
+        if (result?.email) {
+          this.duplicateEmailError = 'Email already exists. Please use another email or login.';
+          emailCtrl.setErrors({ ...(emailCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(emailCtrl);
+      });
+  }
+
+  onPhoneBlur(): void {
+    const phoneCtrl = this.registrationForm.get('phoneNumber');
+    const phoneNumber = String(phoneCtrl?.value || '').trim();
+
+    this.duplicatePhoneError = '';
+    if (!phoneCtrl || !phoneNumber) {
+      this.clearDuplicateError(phoneCtrl);
+      return;
+    }
+
+    this.configService
+      .checkRegistrationConflicts({
+        userType: 'BRAND',
+        phoneNumber,
+      })
+      .subscribe((result) => {
+        if (result?.phoneNumber) {
+          this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
+          phoneCtrl.setErrors({ ...(phoneCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(phoneCtrl);
+      });
+  }
+
+  onPhoneNumberBlur(): void {
+    const phoneCtrl = this.registrationForm.get('phoneNumber');
+    const phoneNumber = String(phoneCtrl?.value || '').trim();
+
+    this.duplicatePhoneError = '';
+    if (!phoneCtrl || !phoneNumber || phoneCtrl.hasError('required')) {
+      this.clearDuplicateError(phoneCtrl);
+      return;
+    }
+
+    this.configService
+      .checkRegistrationConflicts({
+        userType: 'BRAND',
+        phoneNumber,
+      })
+      .subscribe((result) => {
+        if (result?.phoneNumber) {
+          this.duplicatePhoneError = 'Mobile number already exists. Please use another number.';
+          phoneCtrl.setErrors({ ...(phoneCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(phoneCtrl);
+      });
+  }
+
+  private clearDuplicateError(control: AbstractControl | null): void {
+    if (!control?.errors?.['duplicate']) return;
+    const next = { ...(control.errors || {}) } as Record<string, any>;
+    delete next['duplicate'];
+    control.setErrors(Object.keys(next).length ? next : null);
   }
 
   brandUsernameUniqueValidator(): AsyncValidatorFn {
@@ -447,7 +533,7 @@ export class BrandRegistrationComponent implements OnInit {
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !!this.getSocialHandleError(p) || !(pf.tier || '').trim();
     });
   }
 
@@ -472,55 +558,58 @@ export class BrandRegistrationComponent implements OnInit {
   }
 
   getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
+    return buildSocialProfileUrl(platformName, handle);
   }
 
   stripAtSign(platformId: string) {
     const pf = this.platformForms[platformId];
     if (!pf) return;
-    pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
+    pf.handle = normalizeSocialHandle(pf.handle, this.getPlatformById(platformId)?.name || '');
   }
 
-  addProductImage() {
-    if (!this.canAddProductImage()) {
-      return;
-    }
-    this.productImagesPreview.push(null);
-    this.productImagesFiles.push(null);
-    this.refreshStepCompletion();
+  getSocialHandleExample(platformName: string): string {
+    return socialHandleExample(platformName);
   }
 
-  removeProductImage(index: number) {
-    this.productImagesPreview.splice(index, 1);
-    this.productImagesFiles.splice(index, 1);
-    this.uploadedProductImages.splice(index, 1);
-    this.refreshStepCompletion();
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
   }
 
-  async onBrandLogoFileChange(event: any) {
-    const file: File = event?.target?.files?.[0];
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private brandLogoInputEl: HTMLInputElement | null = null;
+
+  onBrandLogoFileChange(event: any) {
+    this.brandLogoInputEl = event?.target as HTMLInputElement;
+    const file: File = this.brandLogoInputEl?.files?.[0] as File;
     if (!file) return;
-    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
-    if (!validation.valid) {
-      this.registrationError = validation.reason || 'Invalid image file.';
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.registrationError = validationError;
       return;
     }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
 
+  onBrandLogoCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
+  }
+
+  async onBrandLogoCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
     try {
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.1,
-        maxWidthOrHeight: 1024,
-        useWebWorker: true,
-      });
+      const compressedFile = await compressImageFile(file, 'profile');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.registrationError = OVERSIZE_MESSAGE;
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.brandLogoPreview = e.target.result;
@@ -543,45 +632,6 @@ export class BrandRegistrationComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
-  async onProductImageFileChange(event: any, index: number) {
-    const file: File = event?.target?.files?.[0];
-    if (!file) return;
-    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
-    if (!validation.valid) {
-      this.registrationError = validation.reason || 'Invalid product image.';
-      return;
-    }
-
-    try {
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 0.1,
-        maxWidthOrHeight: 1024,
-        useWebWorker: true,
-      });
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.productImagesPreview[index] = e.target.result;
-        this.productImagesFiles[index] = compressedFile as File;
-        // New file at this slot — invalidate any previously uploaded result.
-        this.uploadedProductImages[index] = null;
-        this.refreshStepCompletion();
-        this.cd.detectChanges();
-      };
-      reader.readAsDataURL(compressedFile);
-    } catch {
-      this.registrationError = 'Product image preview failed.';
-    }
-  }
-
-  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
-    if (!file) return { valid: false, reason: 'No file selected.' };
-    if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
-    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
-    return { valid: true };
-  }
-
   private refreshStepCompletion() {
     this.step1Complete = this.computeStepComplete(1);
     this.step2Complete = this.computeStepComplete(2);
@@ -598,6 +648,7 @@ export class BrandRegistrationComponent implements OnInit {
         f.get('email')?.valid &&
         f.get('phoneNumber')?.valid &&
         f.get('categories')?.valid &&
+        f.get('description')?.valid &&
         f.get('password')?.valid &&
         f.get('confirmPassword')?.valid &&
         !f.errors?.['passwordMismatch'] &&
@@ -660,7 +711,7 @@ export class BrandRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'password', 'confirmPassword'];
+      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'description', 'password', 'confirmPassword'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       this.submitted = true;
 
@@ -679,11 +730,6 @@ export class BrandRegistrationComponent implements OnInit {
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const baseValid = required.every((path) => this.registrationForm.get(path)?.valid);
       if (!baseValid) return false;
-      const hasAtLeastOneProductImage = this.hasAtLeastOneProductImage();
-      if (!hasAtLeastOneProductImage) {
-        this.registrationError = 'At least one company/product image is required.';
-        return false;
-      }
       if (!this.arePlatformsValid()) {
         // Inline platform error is already rendered in the template; do not set
         // registrationError to avoid duplicate messages.
@@ -705,14 +751,24 @@ export class BrandRegistrationComponent implements OnInit {
     return false;
   }
 
+  isNextStepLoading = false;
+
   async nextStep() {
+    if (this.isNextStepLoading) return;
     if (!this.validateCurrentStep()) return;
 
     if (this.currentStep === 1) {
-      const noConflicts = await this.validateStep1Uniqueness();
+      this.isNextStepLoading = true;
+      let noConflicts = false;
+      try {
+        noConflicts = await this.validateStep1Uniqueness();
+      } finally {
+        this.isNextStepLoading = false;
+      }
       if (!noConflicts) {
         this.currentStep = 1;
         this.refreshStepCompletion();
+        this.cd.detectChanges();
         return;
       }
     }
@@ -726,6 +782,7 @@ export class BrandRegistrationComponent implements OnInit {
       }
       this.refreshStepCompletion();
       this.scrollToTop();
+      this.cd.detectChanges();
     }
   }
 
@@ -883,6 +940,7 @@ export class BrandRegistrationComponent implements OnInit {
     this.registrationError = '';
     this.registrationSuccess = false;
     this.isSubmitting = true;
+    this.cd.detectChanges();
 
     const raw = this.registrationForm.value;
     // Auto-generate username from brandName if not set
@@ -907,7 +965,7 @@ export class BrandRegistrationComponent implements OnInit {
       const pf = this.platformForms[platform._id];
       return {
         platform: platform.name,
-        handle: pf.handle,
+        handle: normalizeSocialHandle(pf.handle, platform.name),
         followersCount: Number(pf.followersCount) || 0,
         tier: pf.tier,
         contentTypes: Object.keys(pf.contentTypes)
@@ -919,7 +977,7 @@ export class BrandRegistrationComponent implements OnInit {
     // Reuse a previously uploaded brand logo if available (avoids orphaned uploads on retry).
     let uploadedBrandLogo = this.uploadedBrandLogo;
     if (!uploadedBrandLogo) {
-      uploadedBrandLogo = await this.uploadImage(this.brandLogoFile, 'brand_logo');
+      uploadedBrandLogo = await this.uploadImage(this.brandLogoFile, 'brands/_pending/logo');
       if (uploadedBrandLogo) {
         this.uploadedBrandLogo = uploadedBrandLogo;
       }
@@ -930,31 +988,9 @@ export class BrandRegistrationComponent implements OnInit {
       return;
     }
 
-    // Upload product images per slot, reusing any cached upload result so a retry after a
-    // backend error doesn't orphan previously uploaded files.
-    const uploadedProducts: Array<{ url: string; public_id: string }> = [];
-    for (let i = 0; i < this.productImagesFiles.length; i++) {
-      const productFile = this.productImagesFiles[i];
-      if (!productFile) continue;
-      let uploaded = this.uploadedProductImages[i];
-      if (!uploaded) {
-        uploaded = await this.uploadImage(productFile, 'brand_products');
-        if (uploaded) {
-          this.uploadedProductImages[i] = uploaded;
-        }
-      }
-      if (!uploaded) {
-        this.registrationError = 'One of the product image uploads failed.';
-        this.isSubmitting = false;
-        return;
-      }
-      uploadedProducts.push(uploaded);
-    }
-
     const payload: any = {
       ...raw,
       foundedYear: raw.foundedYear ? Number(raw.foundedYear) : undefined,
-      promotionalPrice: Number(raw.promotionalPrice) || 0,
       location: {
         state: stateObj ? stateObj.name : raw.location.state,
         district: districtObj ? districtObj.name : raw.location.district,
@@ -964,28 +1000,41 @@ export class BrandRegistrationComponent implements OnInit {
       categories: categoryNames,
       socialMedia,
       brandLogo: [uploadedBrandLogo],
-      products: uploadedProducts,
+      products: [],
       contact: raw.contact
     };
-    if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
-      payload.signupAttribution = this.signupAttribution;
-    }
+    payload.signupAttribution = this.signupAttribution;
+    payload.trackingLinkCode = this.trackingLinkCode;
     delete payload.googleMapAddress;
 
     this.configService.registerBrand(payload).subscribe({
-      next: () => {
+      next: async () => {
+        if (!this.localAuthBypassEnabled) {
+          try {
+            await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
+          } catch (error: any) {
+            this.pendingVerificationEmail = raw.email;
+            this.showEmailVerificationPrompt = true;
+            this.emailVerificationSent = false;
+            this.emailVerificationError =
+              this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
+              'Verification email could not be sent.';
+            this.registrationError = '';
+            this.registrationEmailSendFailed = true;
+            this.isSubmitting = false;
+            this.cd.detectChanges();
+            return;
+          }
+        }
         this.pendingVerificationEmail = raw.email;
-        this.showEmailVerificationPrompt = true;
-        this.emailVerificationSent = true;
+        this.showEmailVerificationPrompt = !this.localAuthBypassEnabled;
+        this.emailVerificationSent = !this.localAuthBypassEnabled;
         this.emailVerificationError = null;
         this.platformForms = {};
         this.activePlatformTab = null;
         this.brandLogoPreview = null;
         this.brandLogoFile = null;
         this.uploadedBrandLogo = null;
-        this.productImagesPreview = [];
-        this.productImagesFiles = [];
-        this.uploadedProductImages = [];
         this.currentStep = 1;
         this.submitted = false;
         this.isSubmitting = false;
@@ -994,12 +1043,12 @@ export class BrandRegistrationComponent implements OnInit {
         // under zoneless change detection.
         this.registrationForm.reset({
           paymentOption: 'free',
-          promotionalPrice: '',
           contact: { whatsapp: false, email: false, call: false }
         });
         this.refreshStepCompletion();
         queueMicrotask(() => {
           this.registrationSuccess = true;
+          this.registrationEmailSendFailed = false;
           this.cd.detectChanges();
         });
       },
@@ -1082,5 +1131,14 @@ export class BrandRegistrationComponent implements OnInit {
     this.submitted = false;
     this.pendingVerificationEmail = '';
     window.location.href = '/';
+  }
+
+  closeEmailSendFailedModal() {
+    this.registrationEmailSendFailed = false;
+    this.brandLogoPreview = null;
+    this.brandLogoFile = null;
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/login';
   }
 }

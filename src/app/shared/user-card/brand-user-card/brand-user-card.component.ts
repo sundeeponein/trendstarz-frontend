@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { CollaborationScoreUiUtilsService } from '../../../services/collaboration-score-ui-utils.service';
 
 @Component({
   selector: 'app-brand-user-card',
@@ -22,6 +23,8 @@ export class BrandUserCardComponent {
   @Input() website = '';
   @Input() adminTags: string[] = [];
   @Input() isPremium = false;
+  @Input() verifiedByTrendStarz = false;
+  @Input() verificationStatus = 'not_submitted';
   @Input() productImages: any[] = [];
   @Input() socialMedia: any[] = [];
   /** Show the "+ Campaign" button — pass true for brand users */
@@ -33,9 +36,18 @@ export class BrandUserCardComponent {
   @Input() isProViewer = false;
   /** Backend-driven visibility guard for contact details */
   @Input() contactRestricted = true;
+  /** Backend-driven visibility guard for social profile links */
+  @Input() socialMediaRestricted = false;
+
+  @Input() collaborationScore: number | null = null;
+  @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
+  @Input() trendstarzRecommended = false;
+  @Input() suggestedPriceRange: { reelPrice?: number | null } | null = null;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
+
+  constructor(public collaborationScoreUi: CollaborationScoreUiUtilsService) {}
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
@@ -55,13 +67,8 @@ export class BrandUserCardComponent {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
-  get displayTags(): string[] {
-    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
-    return Array.isArray(this.adminTags)
-      ? this.adminTags
-          .filter((tag) => !!String(tag || '').trim())
-          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
-      : [];
+  get isTrendstarzVerified(): boolean {
+    return this.verifiedByTrendStarz === true || String(this.verificationStatus || '').toLowerCase() === 'approved';
   }
 
   /** Tier of the first social handle the user added (entry order). */
@@ -81,18 +88,14 @@ export class BrandUserCardComponent {
     return 'bi-globe';
   }
 
-  tagBadgeClass(tag: string): string {
-    const normalized = String(tag || '').toLowerCase();
-    if (normalized.includes('founder')) return 'badge--founder';
-    if (normalized.includes('verified')) return 'badge--verified';
-    if (normalized.includes('internal')) return 'badge--internal';
-    return 'badge--neutral';
-  }
-
   formatFollowers(count: number | undefined): string {
     if (!count) return '—';
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
     return count.toString();
+  }
+
+  get showSocialLockHint(): boolean {
+    return this.socialMediaRestricted === true;
   }
 }

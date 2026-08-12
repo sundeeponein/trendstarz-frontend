@@ -2,22 +2,42 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
+import { HttpClient } from '@angular/common/http';
 import { CommonModule, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize, timeout } from 'rxjs/operators';
-import { CampaignDetailModalComponent } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignDetailModalComponent, CampaignAcceptPayload } from '../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { InviteAcceptPayload, InviteDeclinePayload } from '../../shared/campaign-invite-card/campaign-invite-card.component';
 import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
+import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
+import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
+import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
+import { environment } from '../../../environments/environment';
+import { TIER_ORDER, normalizeTierLabel } from '../../shared/tiers.constants';
+import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
+import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
+import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
+import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule]
+  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -25,6 +45,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   collaborationRequests: any[] = [];
   activeCampaigns: any[] = [];
   completedCampaigns: any[] = [];
+  withdrawnCampaigns: any[] = [];
   loading = true;
   error = '';
   profileIncomplete = false;
@@ -46,19 +67,32 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     accountHolderName: '',
   };
   selectedInviteQualifyingPlatform: string | null = null;
+  selectedInviteQualifyingPlatforms: string[] = [];
   selectedInviteQualifyingTier: string | null = null;
   myInfluencerSocialMedia: Array<{ platform: string; tier: string }> = [];
   paymentHistory: any[] = [];
   paymentSummary = {
     earnedThisMonth: 0,
     pending: 0,
+    confirmedWorkValue: 0,
     frozen: 0,
     paidInPayToJoin: 0,
   };
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
+  showFounderOfferModal = false;
+  private founderOfferAlreadySeen = true;
+  private founderOfferCapsLoaded = false;
+  private showingEligibilityUpgradePrompt = false;
   emailBannerDismissed = false;
+  adminSocialNotifications: any[] = [];
   verificationCallNumber = '';
+  usageSummary: UsageSummary | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
+  collaborationAudit: CollaborationAudit | null = null;
+  collaborationScoreLoading = false;
+  collaborationScoreReAnalyzing = false;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardUser = this.dashboard?.user || {};
@@ -78,6 +112,17 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return dashboardUser.lastLoginAt || sessionUser.lastLoginAt || null;
   }
 
+  get lastOpenedAtDisplay(): string | null {
+    const dashboardUser = this.dashboard?.user || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return dashboardUser.lastOpenedAt || sessionUser.lastOpenedAt || null;
+  }
+
+  get isMobileVerified(): boolean {
+    const user = this.dashboard?.user || {};
+    return !!(user.isMobileVerified ?? user.mobileVerified ?? user.phoneVerified ?? user.isPhoneVerified);
+  }
+
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
 
@@ -87,13 +132,33 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private session: SessionService,
     private config: ConfigService,
     private plansService: PlansService,
+    private monetizationApi: MonetizationApiService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
+    private shippingModal: ShippingAddressModalService,
+    private profileVerification: ProfileVerificationService,
+    private http: HttpClient,
+    private trackingLinksApi: TrackingLinksApiService,
+    private collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
   ngOnInit() {
+    this.loadProfileVerificationDashboard();
+    this.loadCollaborationScore();
     this.plansService.getMyCapabilities().subscribe((caps) => {
       this.planCaps = caps;
+      this.founderOfferCapsLoaded = true;
+      this.maybeShowFounderOfferModal();
+      this.maybeShowUpgradeEligibilityModal();
+    });
+    this.monetizationApi.getMyUsage().subscribe({
+      next: (res) => {
+        this.usageSummary = res?.usage || null;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.usageSummary = null;
+      },
     });
 
     if (typeof window !== 'undefined') {
@@ -129,6 +194,9 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
               accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
             };
             this.myInfluencerSocialMedia = (profile?.socialMedia || []).map((sm: any) => ({ platform: sm.platform || '', tier: sm.tier || '' }));
+            this.adminSocialNotifications = profile?.adminSocialNotifications || [];
+            this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
+            this.maybeShowFounderOfferModal();
             // Only call setUser if profile data is different
             const merged = { ...user, ...profile };
             const isSame = JSON.stringify(user) === JSON.stringify(merged);
@@ -150,6 +218,149 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     // Removed router event subscription to prevent infinite reloads
   }
 
+  private maybeShowFounderOfferModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    this.showFounderOfferModal = true;
+  }
+
+  onFounderOfferModalClosed(): void {
+    if (this.showingEligibilityUpgradePrompt) {
+      this.markEligibilityUpgradePromptSeen();
+      this.showingEligibilityUpgradePrompt = false;
+    }
+    this.showFounderOfferModal = false;
+  }
+
+  private maybeShowUpgradeEligibilityModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.showFounderOfferModal) return;
+    if (!this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    if (!this.hasStarterEligibilityClosed()) return;
+    if (this.hasSeenEligibilityUpgradePrompt()) return;
+
+    this.showingEligibilityUpgradePrompt = true;
+    this.showFounderOfferModal = true;
+  }
+
+  private hasStarterEligibilityClosed(): boolean {
+    const cap = this.starterCampaignEligibilityCap();
+    if (cap <= 0) return false;
+    return this.completedStarterCampaignCountThisMonth() >= cap;
+  }
+
+  private starterCampaignEligibilityCap(): number {
+    const limits = Array.isArray(this.planCaps?.limits) ? this.planCaps.limits : [];
+    const values = ['maxActiveCampaigns', 'maxInvitesPerMonth', 'maxInvitesPerCampaign', 'maxCampaignPosts']
+      .map(key => Number(limits.find((limit: any) => limit?.key === key)?.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+    return values.length ? Math.min(...values) : 1;
+  }
+
+  private completedStarterCampaignCountThisMonth(): number {
+    const completedIds = new Set<string>();
+
+    for (const campaign of this.completedCampaigns) {
+      if (!this.isInCurrentMonth(campaign?.completedAt || campaign?.updatedAt || campaign?.createdAt)) continue;
+      completedIds.add(String(campaign?.inviteId || campaign?._id || campaign?.campaignId || completedIds.size));
+    }
+
+    for (const tx of this.paymentHistory) {
+      if (tx?.recipientRole !== 'influencer') continue;
+      if (!this.isPayoutProcessingStage(tx)) continue;
+      if (!this.isInCurrentMonth(tx?.completedAt || tx?.paidOutAt || tx?.updatedAt || tx?.createdAt)) continue;
+      completedIds.add(String(tx?.inviteId || tx?.campaignId || tx?._id || completedIds.size));
+    }
+
+    return completedIds.size;
+  }
+
+  private isInCurrentMonth(value?: string | Date | null): boolean {
+    if (!value) return false;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return false;
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }
+
+  private eligibilityUpgradePromptKey(): string {
+    const user = this.dashboard?.user || this.session.getUser() || {};
+    const id = user?._id || user?.id || user?.email || 'current';
+    return `trendstarz:upgrade-eligibility-prompt:influencer:${id}:${this.currentMonthKey()}`;
+  }
+
+  private currentMonthKey(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private hasSeenEligibilityUpgradePrompt(): boolean {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(this.eligibilityUpgradePromptKey()) === '1';
+  }
+
+  private markEligibilityUpgradePromptSeen(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.eligibilityUpgradePromptKey(), '1');
+  }
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
+
+  private get currentUserId(): string {
+    const user: any = this.session.getUser() || {};
+    return String(user?._id || user?.id || '');
+  }
+
+  private loadCollaborationScore(): void {
+    const userId = this.currentUserId;
+    if (!userId) return;
+    this.collaborationScoreLoading = true;
+    this.collaborationScoreApi.getAudit(userId).subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationAudit = null;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onReAnalyzeCollaborationScore(): void {
+    if (this.collaborationScoreReAnalyzing) return;
+    this.collaborationScoreReAnalyzing = true;
+    this.collaborationScoreApi.runMyAudit().subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreReAnalyzing = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationScoreReAnalyzing = false;
+        this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   ngOnDestroy(): void {
     if (this.routerSub) this.routerSub.unsubscribe();
     if (this.userSub) this.userSub.unsubscribe();
@@ -168,11 +379,13 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
           this.loadCollaborationRequests();
           this.activeCampaigns = data.activeCampaigns || [];
           this.completedCampaigns = data.completedCampaigns || [];
+          this.withdrawnCampaigns = data.withdrawnCampaigns || [];
           const user = data.user || {};
           this.profileIncomplete = !user.name || !user.categories?.length || !user.socialMedia?.length || !user.location?.state;
           this.loading = false;
           this.loadPaymentHistory();
           this.loadAttentionCounts();
+          this.maybeShowUpgradeEligibilityModal();
 
           this.cdr.detectChanges();
         }, 0);
@@ -200,7 +413,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   private mapInviteToDashboardStatus(inviteStatus: string): string {
     const status = String(inviteStatus || '').toLowerCase();
-    if (status === 'pending' || status === 'invited') return 'pending_review';
+    if (status === 'pending' || status === 'invited' || status === 'counter_sent') return 'pending_review';
     if (status === 'accepted' || status === 'payment_confirmed' || status === 'working' || status === 'submitted') return 'active';
     if (status === 'completed' || status === 'approved') return 'completed';
     if (status === 'declined' || status === 'withdrawn') return 'rejected';
@@ -229,7 +442,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.invites = (rows || []).filter((i: any) => {
           const status = String(i?.status || '').toLowerCase();
-          return (status === 'pending' || status === 'invited') && !this.isCollabInvite(i);
+          return (status === 'pending' || status === 'invited' || status === 'counter_sent') && !this.isCollabInvite(i);
         });
         this.cdr.markForCheck();
       },
@@ -289,6 +502,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.paymentHistory = rows;
         this.recomputePaymentSummary(rows);
+        this.maybeShowUpgradeEligibilityModal();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -313,7 +527,19 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
     const pending = rows
-      .filter((r: any) => r.recipientRole === 'influencer' && (r.payoutStatus === 'pending' || r.payoutStatus === 'processing'))
+      .filter((r: any) =>
+        r.recipientRole === 'influencer' &&
+        (r.payoutStatus === 'pending' || r.payoutStatus === 'processing') &&
+        this.isPayoutProcessingStage(r)
+      )
+      .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
+
+    const confirmedWorkValue = rows
+      .filter((r: any) => {
+        if (r.recipientRole !== 'influencer') return false;
+        if (r.payoutStatus === 'paid' || r.payoutStatus === 'skipped' || r.payoutStatus === 'frozen') return false;
+        return !this.isPayoutProcessingStage(r);
+      })
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
     const frozen = rows
@@ -324,7 +550,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .filter((r: any) => r.payerRole === 'influencer')
       .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
 
-    this.paymentSummary = { earnedThisMonth, pending, frozen, paidInPayToJoin };
+    this.paymentSummary = { earnedThisMonth, pending, confirmedWorkValue, frozen, paidInPayToJoin };
   }
 
   /** Only non-paid / non-skipped transactions for the dashboard snapshot */
@@ -332,6 +558,44 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return this.paymentHistory.filter(tx =>
       tx.payoutStatus !== 'paid' && tx.payoutStatus !== 'skipped'
     );
+  }
+
+  private inviteStage(tx: any): string {
+    return String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
+  }
+
+  private isPayoutProcessingStage(tx: any): boolean {
+    const stage = this.inviteStage(tx);
+    const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
+    return ['completed', 'approved'].includes(stage) || workStatus === 'approved';
+  }
+
+  paymentFlowStatusLabel(tx: any): string {
+    const stage = this.inviteStage(tx);
+    const collectionStatus = String(tx?.collectionStatus || '').trim().toLowerCase();
+    const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
+
+    if (payoutStatus === 'frozen') return 'Dispute open';
+    if (payoutStatus === 'paid') return `Paid ${this.formatPaise(tx?.recipientPayout || 0)}`;
+    if (payoutStatus === 'processing' || this.isPayoutProcessingStage(tx)) return 'Payout Processing (4-6 hrs)';
+    if (stage === 'submitted') return 'Under Review (24 hrs)';
+    if (stage === 'working') return 'Complete your Reel/Post';
+    if (stage === 'payment_confirmed') return 'Ready to Start';
+    if (stage === 'accepted') return 'Waiting for Host Confirmation';
+    if (collectionStatus === 'proof_submitted') return 'Payment verifying';
+    if (collectionStatus === 'failed') return 'Payment rejected';
+    if (collectionStatus === 'verified') return 'Ready to Start';
+    return 'Waiting for Host Confirmation';
+  }
+
+  paymentFlowStatusClass(tx: any): Record<string, boolean> {
+    const label = this.paymentFlowStatusLabel(tx).toLowerCase();
+    return {
+      'idb-status--frozen': label.includes('dispute') || String(tx?.payoutStatus || '') === 'frozen',
+      'idb-status--processing': label.includes('processing') || label.includes('under review') || label.includes('ready'),
+      'idb-status--pending': label.includes('waiting') || label.includes('complete your') || label.includes('verifying'),
+      'idb-status--rejected': label.includes('rejected'),
+    };
   }
 
   get frozenPayouts(): any[] {
@@ -353,51 +617,104 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  respond(inviteId: string, status: 'accepted' | 'declined') {
+  respond(
+    inviteId: string,
+    status: 'accepted' | 'declined' | 'counter_sent',
+    counterAmount?: number,
+    counterMessage?: string,
+  ) {
     if (this.responding) return;
-    const selectedPostDate = status === 'accepted' ? this.selectedPostDates[inviteId] : undefined;
-    if (status === 'accepted' && !selectedPostDate) {
+    const selectedPostDate = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedPostDates[inviteId]
+      : undefined;
+    if ((status === 'accepted' || status === 'counter_sent') && !selectedPostDate) {
       this.error = 'Please choose a posting date before accepting invite.';
       return;
     }
     const invite = this.invites.find(i => i._id === inviteId) || this.selectedInvite;
-    if (status === 'accepted' && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
+    if ((status === 'accepted' || status === 'counter_sent') && invite && !this.isPostDateWithinCampaign(invite, selectedPostDate!)) {
       this.error = 'Posting date must be within campaign start and end dates.';
       return;
     }
     const options = this.getInviteContentTypeOptions(invite);
     let chosen = this.selectedContentTypes[inviteId];
-    if (status === 'accepted' && options.length === 1 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length === 1 && !chosen) {
       chosen = options[0].key;
       this.selectedContentTypes[inviteId] = chosen;
     }
-    if (status === 'accepted' && options.length > 0 && !chosen) {
+    if ((status === 'accepted' || status === 'counter_sent') && options.length > 0 && !chosen) {
       this.error = 'Please select what you will create for this campaign.';
       return;
     }
     const [selPlatform, selContentType] = chosen ? chosen.split('::') : [undefined, undefined];
-    const payout = status === 'accepted' ? this.selectedPayouts[inviteId] : undefined;
-    this.responding = inviteId;
-    this.dashboardService.respondToInvite(inviteId, status, selectedPostDate, selPlatform, selContentType, payout).pipe(
-      timeout(20000),
-      finalize(() => {
-        this.responding = null;
-        this.cdr.markForCheck();
-      }),
-    ).subscribe({
-      next: () => {
-        // update in-place — no full reload
-        this.invites = this.invites.filter(i => i._id !== inviteId);
-        if (this.selectedInvite?._id === inviteId) {
-          this.selectedInvite = null;
+    const payout = status === 'accepted' || status === 'counter_sent'
+      ? this.selectedPayouts[inviteId]
+      : undefined;
+
+    const finish = (shippingAddress?: ShippingAddress) => {
+      this.responding = inviteId;
+      this.dashboardService.respondToInvite(
+        inviteId,
+        status,
+        selectedPostDate,
+        selPlatform,
+        selContentType,
+        counterAmount,
+        counterMessage,
+        payout,
+        shippingAddress,
+      ).pipe(
+        timeout(20000),
+        finalize(() => {
+          this.responding = null;
+          this.cdr.markForCheck();
+        }),
+      ).subscribe({
+        next: () => {
+          // update in-place — no full reload
+          this.invites = this.invites.filter(i => i._id !== inviteId);
+          if (this.selectedInvite?._id === inviteId) {
+            this.selectedInvite = null;
+          }
+          this.toast.success(
+            status === 'accepted'
+              ? 'Invite accepted!'
+              : status === 'counter_sent'
+                ? 'Price flow updated: counter sent.'
+                : 'Invite declined.',
+          );
+          this.loadAttentionCounts();
+        },
+        error: (err: any) => {
+          this.toast.error(err?.error?.message || 'Failed to respond to invite.');
         }
-        this.toast.success(status === 'accepted' ? 'Invite accepted!' : 'Invite declined.');
-        this.loadAttentionCounts();
-      },
-      error: (err: any) => {
-        this.toast.error(err?.error?.message || 'Failed to respond to invite.');
-      }
-    });
+      });
+    };
+
+    if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
+      const campaign = invite?.campaignId || {};
+      this.shippingModal.prompt({
+        campaignTitle: campaign?.title || campaign?.name || 'Product collab',
+        productLabel: campaign?.productDescription
+          || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
+      }).then((address) => {
+        if (!address) {
+          this.toast.error('Shipping address is required to accept this product collab.');
+          return;
+        }
+        finish(address);
+      });
+      return;
+    }
+
+    finish();
+  }
+
+  /** Returns true when invite is a brand product collab requiring shipping. */
+  private inviteRequiresShippingAddress(invite: any): boolean {
+    const campaign = invite?.campaignId;
+    if (!campaign || typeof campaign !== 'object') return false;
+    return campaign.campaignType === 'product' && campaign.productShippingRequired === true;
   }
 
   /** Returns enabled content type options for an invite's campaign */
@@ -446,16 +763,22 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.error = '';
     this.selectedInvite = invite;
     this.selectedInviteManual = true;
-    // compute qualifying platform/tier for this invite's campaign (treat minInfluencerTier as tier-filtered)
+    // Qualifying platform/tier is only relevant for open tier-filtered campaigns where
+    // the influencer must meet a minimum tier to participate. For direct invites the
+    // host already chose this person explicitly — no tier gate should restrict which
+    // content types are shown.
     const campaign = invite?.campaign || invite?.campaignId || null;
-    const isTierFiltered = !!campaign && (String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!campaign?.minInfluencerTier);
-    if (campaign && isTierFiltered) {
+    const isOpenTierFiltered = !!campaign &&
+      String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open';
+    if (campaign && isOpenTierFiltered) {
       const qual = this.computeQualifyingPlatformAndTierForCampaign(campaign);
       this.selectedInviteQualifyingPlatform = qual?.platform || null;
       this.selectedInviteQualifyingTier = qual?.tier || null;
+      this.selectedInviteQualifyingPlatforms = this.computeAllQualifyingPlatforms(campaign);
     } else {
       this.selectedInviteQualifyingPlatform = null;
       this.selectedInviteQualifyingTier = null;
+      this.selectedInviteQualifyingPlatforms = [];
     }
     this.cdr.markForCheck();
   }
@@ -464,16 +787,29 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.selectedInvite = null;
     this.selectedInviteManual = false;
     this.selectedInviteQualifyingPlatform = null;
+    this.selectedInviteQualifyingPlatforms = [];
     this.selectedInviteQualifyingTier = null;
     this.cdr.markForCheck();
   }
 
-  onModalAccept(payload: { inviteId: string; postDate?: string; platform?: string; contentType?: string }) {
+  onModalAccept(payload: CampaignAcceptPayload) {
     if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
     if (payload.platform && payload.contentType) {
       this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
     }
-    this.respond(payload.inviteId, 'accepted');
+    if (payload.payout) {
+      this.selectedPayouts[payload.inviteId] = {
+        upiId: payload.payout.upiId || '',
+        mobile: payload.payout.mobile || '',
+        accountHolderName: payload.payout.accountHolderName || '',
+      };
+    }
+    this.respond(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
   }
 
   onModalDecline(payload: { inviteId: string }) {
@@ -489,13 +825,20 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     if (payload.postDate) this.selectedPostDates[payload.inviteId] = payload.postDate;
     if (payload.platform && payload.contentType) {
       this.selectedContentTypes[payload.inviteId] = `${payload.platform}::${payload.contentType}`;
-    }    if (payload.payout) {
+    }
+    if (payload.payout) {
       this.selectedPayouts[payload.inviteId] = {
         upiId: payload.payout.upiId || '',
         mobile: payload.payout.mobile || '',
         accountHolderName: payload.payout.accountHolderName || '',
       };
-    }    this.respond(payload.inviteId, 'accepted');
+    }
+    this.respond(
+      payload.inviteId,
+      payload.responseType === 'counter' ? 'counter_sent' : 'accepted',
+      payload.counterAmount,
+      payload.counterMessage,
+    );
   }
 
   onCardDecline(payload: InviteDeclinePayload) {
@@ -507,36 +850,79 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private computeQualifyingPlatformAndTierForCampaign(campaign: any): { platform?: string; tier?: string } | null {
-    const TIER_ORDER = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
     const normalized = (s: string) => (s || '').toLowerCase().trim();
     const mySm = this.myInfluencerSocialMedia || [];
     if (!mySm.length) return null;
 
+    const campaignSm: any[] = Array.isArray(campaign?.socialMedia) ? campaign.socialMedia : [];
+    const campaignPlatformKeys = new Set<string>([
+      ...campaignSm.map((sm: any) => normalized(sm?.platform || '')).filter(Boolean),
+      ...((campaign as any)?.platforms || []).map((p: string) => normalized(p)).filter(Boolean),
+    ]);
+
     let candidates = mySm;
-    const campaignPlatforms: string[] = (campaign as any)?.platforms || [];
-    if (campaignPlatforms.length > 0) {
-      candidates = candidates.filter(smEntry => campaignPlatforms.some(p => normalized(p) === normalized(smEntry.platform)));
+    if (campaignPlatformKeys.size > 0) {
+      candidates = candidates.filter(smEntry => campaignPlatformKeys.has(normalized(smEntry.platform)));
     }
     if (!candidates.length) return null;
 
-    const minTier: string = (campaign as any)?.minInfluencerTier || '';
+    const minTier = normalizeTierLabel((campaign as any)?.minInfluencerTier || '');
     const minIdx = TIER_ORDER.indexOf(minTier);
     if (minIdx !== -1) {
       candidates = candidates.filter(smEntry => {
-        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
-        return idx !== -1 && idx === minIdx;
+        const idx = TIER_ORDER.indexOf(normalizeTierLabel(smEntry.tier || ''));
+        return idx !== -1 && idx >= minIdx;
       });
     }
     if (!candidates.length) return null;
 
     // pick highest tier among candidates (safe in case multiple match)
     let best = candidates[0];
-    let bestIdx = TIER_ORDER.indexOf(best.tier || '');
+    let bestIdx = TIER_ORDER.indexOf(normalizeTierLabel(best.tier || ''));
     for (const c of candidates) {
-      const idx = TIER_ORDER.indexOf(c.tier || '');
+      const idx = TIER_ORDER.indexOf(normalizeTierLabel(c.tier || ''));
       if (idx > bestIdx) { bestIdx = idx; best = c; }
     }
     return { platform: best.platform, tier: best.tier };
+  }
+
+  private computeAllQualifyingPlatforms(campaign: any): string[] {
+    const normalized = (s: string) => (s || '').toLowerCase().trim();
+    const mySm = this.myInfluencerSocialMedia || [];
+    if (!mySm.length) return [];
+
+    // Build the full set of campaign platforms from both old and new schema fields
+    const campaignSm: any[] = campaign?.socialMedia || [];
+    const campaignPlatformKeys = new Set<string>([
+      ...campaignSm.map((sm: any) => normalized(sm.platform || '')).filter(Boolean),
+      ...(campaign?.platforms || []).map((p: string) => normalized(p)).filter(Boolean),
+    ]);
+
+    let candidates = campaignPlatformKeys.size
+      ? mySm.filter(smEntry => campaignPlatformKeys.has(normalized(smEntry.platform)))
+      : [...mySm];
+
+    if (!candidates.length) return [];
+
+    const minTier = normalizeTierLabel(campaign?.minInfluencerTier || '');
+    const minIdx = TIER_ORDER.indexOf(minTier);
+    if (minIdx !== -1) {
+      candidates = candidates.filter(smEntry => {
+        const idx = TIER_ORDER.indexOf(normalizeTierLabel(smEntry.tier || ''));
+        return idx !== -1 && idx >= minIdx;
+      });
+    }
+    if (!candidates.length) return [];
+
+    const seen = new Set<string>();
+    return candidates
+      .map(c => c.platform)
+      .filter(p => {
+        const key = normalized(p);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   }
 
   onCardContentTypeChange(inviteId: string, key: string) {
@@ -629,6 +1015,28 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  dismissAdminSocialNotifications() {
+    this.respondToAdminSocialNotifications();
+  }
+
+  respondToAdminSocialNotifications(action?: 'confirmed' | 'cancelled') {
+    this.adminSocialNotifications = [];
+    this.cdr.markForCheck();
+    this.http.patch(
+      `${environment.apiBaseUrl}/users/influencer-profile/admin-social-notifications/dismiss`,
+      action ? { action } : {}
+    ).subscribe({
+      next: () => {
+        if (action === 'confirmed') this.toast.success('Social media update confirmed.');
+        if (action === 'cancelled') this.toast.info('Social media update dismissed. You can edit your profile anytime.');
+      },
+    });
+  }
+
+  editAdminSocialDetails() {
+    this.router.navigate(['/influencer-profile'], { queryParams: { step: 'social' } });
+  }
+
   onUpgrade() {
     // Navigate to upgrade premium page
     window.location.href = '/upgrade-premium';
@@ -639,10 +1047,24 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     window.location.href = '/influencer-profile';
   }
 
+  private slugify(title: string): string {
+    return String(title || 'campaign')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'campaign';
+  }
+
+  private campaignSubmissionRoute(inviteId: string, title: string): string[] {
+    return ['/campaign-submission', inviteId, this.slugify(title)];
+  }
+
   goToSubmit(campaign: any) {
-    this.router.navigate(['/campaign-submission', campaign.inviteId], {
+    const title = campaign.title || '';
+    this.router.navigate(this.campaignSubmissionRoute(campaign.inviteId, title), {
       queryParams: {
-        campaignTitle: campaign.title || '',
         inviteStatus: campaign.inviteStatus || 'working'
       }
     });
@@ -651,16 +1073,68 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   get stats() {
     return [
       { label: 'Invited', value: this.dashboard?.invites?.invited || 0 },
-      { label: 'Accepted', value: this.dashboard?.invites?.accepted || 0 },
-      { label: 'Submitted', value: this.dashboard?.invites?.submitted || 0 },
+      { label: 'Working', value: this.dashboard?.invites?.accepted || 0 },
+      { label: 'Under Review', value: this.dashboard?.invites?.submitted || 0 },
       { label: 'Completed', value: this.dashboard?.invites?.completed || 0 },
     ];
   }
 
+  promotionUrlTypeLabel(campaign: any): string {
+    return promotionUrlTypeLabel(campaign?.promotionUrlType);
+  }
+
+  withdrawnLabel(c: any): string {
+    return c?.autoClosed ? 'Slots Filled' : 'Withdrawn';
+  }
+
+  withdrawnMessage(c: any): string {
+    if (c?.autoClosed) {
+      return "This campaign's accepted-creator slots filled up before your invite could be confirmed — you weren't selected this time.";
+    }
+    return c?.withdrawnReason
+      ? `Withdrawn by the host: ${c.withdrawnReason}`
+      : 'This invite was withdrawn by the host.';
+  }
+
+  private trackedLinkCache = new Map<string, string>();
+  private trackedLinkClicksCache = new Map<string, number>();
+  private trackedLinkFetching = new Set<string>();
+
+  /** Tracked promo link (trendstarz.in/r/CODE), unique to the signed-in creator. Fetched once, then cached. */
+  taggedPromotionLink(campaign: any): string {
+    if (!campaign?.promotionUrl) return '';
+    const inviteId = String(campaign?.inviteId || '');
+    if (!inviteId) return '';
+
+    const cached = this.trackedLinkCache.get(inviteId);
+    if (cached) return cached;
+
+    if (!this.trackedLinkFetching.has(inviteId)) {
+      this.trackedLinkFetching.add(inviteId);
+      this.trackingLinksApi.getOrCreateTrackingLink(inviteId).subscribe({
+        next: (res) => {
+          this.trackedLinkCache.set(inviteId, res?.url || '');
+          this.trackedLinkClicksCache.set(inviteId, res?.clickCount ?? 0);
+          this.trackedLinkFetching.delete(inviteId);
+          this.cdr.detectChanges();
+        },
+        error: () => this.trackedLinkFetching.delete(inviteId),
+      });
+    }
+    return '';
+  }
+
+  /** Click count for the creator's tracked promo link. Populated once taggedPromotionLink's fetch resolves. */
+  taggedPromotionLinkClicks(campaign: any): number | null {
+    const inviteId = String(campaign?.inviteId || '');
+    if (!inviteId) return null;
+    return this.trackedLinkClicksCache.get(inviteId) ?? null;
+  }
+
   goToStats(campaign: any) {
-    this.router.navigate(['/campaign-submission', campaign.inviteId], {
+    const title = campaign.title || '';
+    this.router.navigate(this.campaignSubmissionRoute(campaign.inviteId, title), {
       queryParams: {
-        campaignTitle: campaign.title || '',
         inviteStatus: campaign.inviteStatus || 'completed',
         statsOnly: 'true'
       }

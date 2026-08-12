@@ -21,10 +21,13 @@
       <!-- Profile card -->
       <div class="profile-card">
         <div class="profile-photo-wrap">
-          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" />
+          <img [src]="displayImage" [attr.srcset]="getProfileSrcSet()" sizes="110px" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
           <span class="pro-badge" *ngIf="influencer.isPremium">PRO</span>
         </div>
         <h2 class="profile-name">{{ influencer.name }}</h2>
+        <div *ngIf="isTrendstarzVerified">
+          <span class="verified-badge" title="Verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+        </div>
         <div class="profile-tags" *ngIf="displayTags.length">
           <span
             *ngFor="let tag of displayTags"
@@ -38,14 +41,30 @@
             <span>{{ cat }}</span><span *ngIf="!last" class="cat-sep"> · </span>
           </ng-container>
         </p>
+        <div class="professional-tags" *ngIf="influencer.professionalStatus && visibleCreatorTypes.length">
+          <!-- <span class="professional-badge">Professional Creator</span> -->
+          <span class="creator-type-badge" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
+        </div>
         <p class="profile-location" *ngIf="influencer.location?.state">
           <i class="bi bi-geo-alt"></i>
           <ng-container *ngIf="influencer.location.district">{{ influencer.location.district }}, </ng-container>{{ influencer.location.state }}, India
         </p>
 
         <div class="profile-actions">
-          <a class="btn-follow" *ngIf="isLoggedIn" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+          <!-- <a
+            class="btn-follow"
+            *ngIf="isLoggedIn"
+            [href]="getMainSocialLink()"
+            [attr.target]="hasMainSocialLink ? '_blank' : null"
+            [attr.rel]="hasMainSocialLink ? 'noopener noreferrer' : null"
+            [class.btn-follow--disabled]="!hasMainSocialLink"
+            (click)="!hasMainSocialLink && $event.preventDefault(); onFollowClick()"
+          >Follow</a> -->
           <!-- <button type="button" class="btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
+        </div>
+
+        <div class="detail-locked" *ngIf="isLoggedIn && !canOpenSocialProfiles">
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
         </div>
 
         <!-- Stats row -->
@@ -54,10 +73,10 @@
             <span class="stat-val">{{ formatFollowers(getTotalFollowers()) }}</span>
             <span class="stat-lbl">FOLLOWERS / SUBS</span>
           </div> -->
-          <div class="stat-item">
+          <!-- <div class="stat-item">
             <span class="stat-val">{{ getPrimaryTier() || '—' }}</span>
             <span class="stat-lbl">TIER</span>
-          </div>
+          </div> -->
           <div class="stat-item">
             <span class="stat-val">{{ influencer.socialMedia?.length || 0 }}</span>
             <span class="stat-lbl">PLATFORMS</span>
@@ -66,7 +85,7 @@
             <span class="stat-val" [class.stat-val--price]="isProViewer && influencer.promotionalPrice">
               {{ isProViewer && influencer.promotionalPrice ? '₹' + influencer.promotionalPrice : '—' }}
             </span>
-            <span class="stat-lbl">AD PRICE</span>
+            <span class="stat-lbl" title="Automatically calculated from content rates">STARTING PRICE</span>
           </div>
         </div>
       </div>
@@ -77,12 +96,12 @@
         <div class="detail-list">
 
           <div class="detail-row" *ngIf="influencer.username">
-            <span class="detail-key">Username</span>
+            <div><span class="detail-key">Username</span></div>
             <span class="detail-val">@{{ influencer.username }}</span>
           </div>
 
           <div class="detail-row">
-            <span class="detail-key">Advertising price</span>
+            <div><span class="detail-key">Advertising price</span></div>
             <span class="detail-val detail-val--price" *ngIf="isProViewer && influencer.promotionalPrice">
               ₹{{ influencer.promotionalPrice }}
             </span>
@@ -90,31 +109,39 @@
               <i class="bi bi-lock-fill"></i> Upgrade to view
             </span>
             <span class="detail-val" *ngIf="isProViewer && !influencer.promotionalPrice">—</span>
+            <div class="detail-caption" *ngIf="isProViewer && influencer.promotionalPrice">Auto-calculated from content rates</div>
           </div>
 
           <div class="detail-row" *ngIf="influencer.languages?.length">
-            <span class="detail-key">Languages</span>
+            <div><span class="detail-key">Languages</span></div>
             <div class="chip-list">
               <span *ngFor="let lang of influencer.languages" class="chip chip--gray">{{ lang }}</span>
             </div>
           </div>
 
           <div class="detail-row" *ngIf="influencer.categories?.length">
-            <span class="detail-key">Categories</span>
+            <div><span class="detail-key">Categories</span></div>
             <div class="chip-list">
               <span *ngFor="let cat of influencer.categories" class="chip chip--accent">{{ cat }}</span>
             </div>
           </div>
 
+          <div class="detail-row" *ngIf="influencer.professionalStatus && visibleCreatorTypes.length">
+            <div><span class="detail-key">Professional Status</span></div>
+            <div class="chip-list">
+              <span *ngFor="let type of visibleCreatorTypes" class="chip chip--gray">{{ type }}</span>
+            </div>
+          </div>
+
           <div class="detail-row" *ngIf="influencer.website">
-            <span class="detail-key">Website</span>
-            <a class="detail-val" [href]="influencer.website" target="_blank" rel="noopener">
+            <div><span class="detail-key">Website</span></div>
+            <a class="detail-val" [href]="influencer.website" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(influencer.website) }}
             </a>
           </div>
 
           <div class="detail-row" *ngIf="influencer.gender">
-            <span class="detail-key">Gender</span>
+            <div><span class="detail-key">Gender</span></div>
             <span class="detail-val">{{ influencer.gender }}</span>
           </div>
 
@@ -141,80 +168,53 @@
         </p>
       </div>
 
-      <div class="info-card" *ngIf="galleryImages.length">
-        <h5 class="section-label">PROFILE IMAGES</h5>
-        <div class="profile-gallery-grid">
-          <img
-            *ngFor="let imageUrl of galleryImages"
-            [src]="imageUrl"
-            (error)="onImgError($event)"
-            alt="Influencer profile"
-            class="profile-gallery-image"
-          />
+      @defer (on idle) {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PROFILE IMAGES</h5>
+          <div class="profile-gallery-grid">
+            <img
+              *ngFor="let imageUrl of galleryImages; let i = index"
+              [src]="imageUrl"
+              (click)="openGalleryModal(i)"
+              (error)="onImgError($event)"
+              [attr.srcset]="getGallerySrcSet(imageUrl)"
+              sizes="(max-width: 768px) 44vw, 240px"
+              alt="Influencer profile"
+              class="profile-gallery-image"
+              width="360"
+              height="360"
+              loading="lazy"
+              fetchpriority="low"
+              decoding="async"
+            />
+          </div>
         </div>
-      </div>
+      } @placeholder {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PROFILE IMAGES</h5>
+          <p class="about-text text-muted mb-0">Loading images...</p>
+        </div>
+      }
 
       <!-- Social Platforms & Pricing -->
-      <div class="info-card" *ngIf="influencer.socialMedia?.length">
-        <div class="pricing-card-header">
-          <h5 class="section-label mb-0">SOCIAL PLATFORMS & PRICING</h5>
-          <span class="per-type-label">per<br>content<br>type</span>
-        </div>
+      @defer (on idle) {
+        <app-profile-social-platforms
+          title="SOCIAL PLATFORMS & PRICING"
+          variant="influencer"
+          [platforms]="influencer.socialMedia || []"
+          [locked]="!isProViewer || !!influencer.socialMediaRestricted"
+          lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+          [canOpen]="isProViewer && canOpenSocialProfiles"
+          [isProViewer]="isProViewer"
+          [showEngagement]="true"
+          [showContentTypes]="true"
+          (platformClick)="onPlatformClick($event)"
+        ></app-profile-social-platforms>
+      }
 
-        <div *ngFor="let sm of influencer.socialMedia; let last = last"
-             class="platform-section"
-             [class.platform-section--last]="last">
-
-          <!-- Platform header row -->
-          <div class="platform-header-row">
-            <span class="platform-icon-circle">
-              <i [class]="getSocialIcon(sm)"></i>
-            </span>
-            <span class="eng-badge" *ngIf="sm.engagementRate && isProViewer">
-              {{ sm.engagementRate }}%<br><small>eng.</small>
-            </span>
-            <div class="platform-followers-block">
-              <strong>{{ sm.tier || '—' }}</strong>
-              <span>tier</span>
-            </div>
-          </div>
-
-          <!-- Handle (clickable) -->
-          <div class="platform-handle-row" *ngIf="sm.handle">
-            <a *ngIf="getSocialUrl(sm); else handleText"
-               [href]="getSocialUrl(sm)"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="platform-handle-link">
-              <i class="bi bi-box-arrow-up-right"></i> &#64;{{ sm.handle }}
-            </a>
-            <ng-template #handleText>
-              <span class="platform-handle-text">&#64;{{ sm.handle }}</span>
-            </ng-template>
-          </div>
-
-          <!-- Content type rows -->
-          <ng-container *ngIf="sm.contentTypes?.length">
-            <div class="content-rates-label">Content &amp; Starting Rates</div>
-            <div *ngFor="let ct of sm.contentTypes" class="ct-row">
-              <span class="ct-name">{{ ct.name }}</span>
-              <span class="ct-price" *ngIf="isProViewer">₹{{ ct.price }}</span>
-              <span class="ct-locked" *ngIf="!isProViewer">
-                <i class="bi bi-lock-fill"></i> Pro only
-              </span>
-            </div>
-            <!-- Total package -->
-            <div class="ct-row ct-row--total">
-              <strong class="ct-name">Total package</strong>
-              <strong class="ct-price ct-price--total" *ngIf="isProViewer">₹{{ getSmTotal(sm) }}</strong>
-              <span class="ct-locked" *ngIf="!isProViewer">
-                <i class="bi bi-lock-fill"></i> Pro only
-              </span>
-            </div>
-          </ng-container>
-
-        </div>
-      </div>
+      <app-collaboration-availability-view
+        [availability]="influencer.collaborationAvailability">
+      </app-collaboration-availability-view>
 
     </div>
 
@@ -272,7 +272,10 @@
           <span class="contact-icon-wrap ci--email"><i class="bi bi-envelope"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Email</span>
-            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.email">{{ influencer.email }}</span>
+            <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && influencer.email">
+              {{ influencer.email }}
+              <i class="bi bi-patch-check-fill contact-verified" *ngIf="isEmailVerified" title="Email verified"></i>
+            </span>
             <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.email">••••••••••</span>
           </div>
         </div>
@@ -282,7 +285,10 @@
           <span class="contact-icon-wrap ci--phone"><i class="bi bi-telephone"></i></span>
           <div class="contact-content">
             <span class="contact-field-lbl">Phone / Call</span>
-            <span class="contact-field-val" *ngIf="canViewContactDetails && influencer.phoneNumber">+91 {{ influencer.phoneNumber }}</span>
+            <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && influencer.phoneNumber">
+              +91 {{ influencer.phoneNumber }}
+              <i class="bi bi-patch-check-fill contact-verified" *ngIf="isPhoneVerified" title="Mobile verified"></i>
+            </span>
             <span class="contact-field-blur" *ngIf="!canViewContactDetails || !influencer.phoneNumber">••••••••••</span>
           </div>
         </div>
@@ -293,7 +299,7 @@
           <div class="contact-content">
             <span class="contact-field-lbl">Website</span>
             <a class="contact-field-val" *ngIf="canViewContactDetails && influencer.website"
-               [href]="influencer.website" target="_blank" rel="noopener">
+              [href]="influencer.website" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(influencer.website) }}
             </a>
             <span class="contact-field-upgrade" *ngIf="!canViewContactDetails || !influencer.website">
@@ -306,7 +312,7 @@
       <!-- Premium Insights -->
       <div class="insights-card">
         <div class="insights-badge-wrap">
-          <span class="insights-badge"><i class="bi bi-star-fill"></i> Premium insights</span>
+          <span class="insights-badge"><i class="bi bi-star-fill"></i> Premium insights - coming soon</span>
         </div>
 
         <!-- Free viewer: teaser -->
@@ -348,24 +354,26 @@
     </div>
 
     <!-- Reviews Section -->
-    <div class="reviews-wrapper" *ngIf="influencer">
-      <!-- Brand (premium) write review button -->
-      <div class="write-review-cta" *ngIf="isBrandViewer && isProViewer && completedInviteId">
-        <button class="btn-write-review" (click)="showWriteReview = true">
-          <i class="bi bi-pencil-square"></i> Write a Review
-        </button>
-      </div>
-      <div class="write-review-upgrade" *ngIf="isBrandViewer && !isProViewer">
-        <i class="bi bi-lock-fill"></i>
-        Upgrade to <strong>Pro</strong> to write reviews for influencers.
-      </div>
+    @defer (on idle) {
+      <div class="reviews-wrapper" *ngIf="influencer">
+        <!-- Brand (premium) write review button -->
+        <div class="write-review-cta" *ngIf="isBrandViewer && isProViewer && completedInviteId">
+          <button class="btn-write-review" (click)="showWriteReview = true">
+            <i class="bi bi-pencil-square"></i> Write a Review
+          </button>
+        </div>
+        <div class="write-review-upgrade" *ngIf="isBrandViewer && !isProViewer">
+          <i class="bi bi-lock-fill"></i>
+          Upgrade to <strong>Pro</strong> to write reviews for influencers.
+        </div>
 
-      <!-- Review list (shown to premium influencers and premium brands) -->
-      <app-review-list
-        [targetId]="influencer._id"
-        [canRead]="isProViewer"
-      ></app-review-list>
-    </div>
+        <!-- Review list (shown to premium influencers and premium brands) -->
+        <app-review-list
+          [targetId]="influencer._id"
+          [canRead]="isProViewer"
+        ></app-review-list>
+      </div>
+    }
 
     <!-- Write review modal -->
     <app-write-review
@@ -378,3 +386,13 @@
 
   </div>
 </div>
+
+<app-image-gallery-modal
+  [open]="galleryModalOpen"
+  title="Profile Images"
+  [images]="galleryImages"
+  [(selectedIndex)]="galleryModalIndex"
+  imageAlt="Selected profile image"
+  thumbnailAlt="Profile thumbnail"
+  (closed)="closeGalleryModal()"
+></app-image-gallery-modal>

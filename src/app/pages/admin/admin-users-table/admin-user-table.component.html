@@ -7,21 +7,23 @@
   (cancel)="onConfirmDialogCancel()"
 ></admin-confirm-dialog>
 
-<div class="admin-users-page">
-  <div class="row">
-    <div class="admin-users-header col-6">
-      <h4>Admin Users</h4>
-      <small>Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
+<div class="admin-users-page ts-admin-page">
+  <div class="admin-users-page-header ts-admin-page-header">
+    <div class="admin-users-header ts-admin-heading">
+      <div class="admin-title-row">
+        <h2 class="ts-admin-title">Admin Users</h2>
+      </div>
+      <small class="ts-admin-subtitle">Manage platform stakeholders, review credentials, and maintain editorial quality control.</small>
     </div>
 
-    <div class="role-tabs col-6" role="tablist" aria-label="User Roles">
-      <button class="role-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-      <button class="role-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-      <button class="role-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
+    <div class="role-tabs ts-admin-tabbar" role="tablist" aria-label="User Roles">
+      <button class="role-tab ts-admin-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+      <button class="role-tab ts-admin-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+      <button class="role-tab ts-admin-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
     </div>
   </div>
 
-  <div class="filters-grid">
+  <div class="toolbar-row">
     <div class="search-wrap">
       <i class="bi bi-search"></i>
       <input
@@ -32,42 +34,148 @@
       />
     </div>
 
-    <select [ngModel]="getActiveFilterValue('status')" (change)="setActiveFilterValue('status', $any($event.target).value)">
-      <option value="">Status: All</option>
-      <option *ngFor="let status of statusArray" [value]="status">Status: {{ status | titlecase }}</option>
+    <div class="toolbar-actions">
+      <button type="button" class="refresh-btn" (click)="fetchUsers()" [disabled]="isLoading" title="Refresh">
+        <i class="bi bi-arrow-clockwise" [class.spin]="isLoading"></i>
+        Refresh
+      </button>
+      <button class="download-users-btn" (click)="downloadUsersData()">
+        <i class="bi bi-download"></i>
+        Download
+      </button>
+      <button type="button" class="filters-toggle-btn" (click)="toggleFilters()" [attr.aria-expanded]="filtersExpanded">
+        <i class="bi bi-funnel"></i>
+        <span>Filters</span>
+        <i class="bi" [ngClass]="filtersExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </button>
+      <button class="reset-btn" (click)="resetFilters(activeTab)">
+        <i class="bi bi-sliders2"></i>
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-grid" *ngIf="filtersExpanded">
+    <select class="verification-filter" [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
+      <option value="">Verification: All</option>
+      <option value="email_pending">Email pending</option>
+      <option value="mobile_pending">Mobile pending</option>
+      <option value="email_or_mobile_pending">Email or mobile pending</option>
+      <option value="both_pending">Both pending</option>
+      <option value="both_verified">Both verified</option>
+      <option value="admin_approved">Admin Approved</option>
+      <option value="admin_review_pending">Admin Review Pending</option>
+      <option value="admin_review_rejected">Admin Review Rejected</option>
+      <option value="callback_requested">Callback Requested</option>
+      <option value="featured_eligible">Featured Eligible</option>
+      <option value="search_eligible">Search Eligible</option>
+      <option value="campaign_eligible">Campaign Eligible</option>
     </select>
 
-    <select [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">
+    <select class="subscription-filter" [ngModel]="getActiveFilterValue('premium')" (change)="setActiveFilterValue('premium', $any($event.target).value)">
+      <option value="">Subscription: All</option>
+      <option value="premium">Subscription: Premium</option>
+      <option value="free">Subscription: Free</option>
+    </select>
+
+    <select class="tier-filter" [ngModel]="getActiveFilterValue('creatorTier')" (change)="setActiveFilterValue('creatorTier', $any($event.target).value)">
       <option value="">Tier: All</option>
-      <option value="premium">Tier: Premium</option>
-      <option value="free">Tier: Free</option>
+      <option *ngFor="let tier of creatorTiersArray" [value]="tier">Tier: {{ tier }}</option>
     </select>
 
-    <select [ngModel]="getActiveFilterValue('category')" (change)="setActiveFilterValue('category', $any($event.target).value)">
+    <select class="state-filter" [ngModel]="getActiveFilterValue('state')" (change)="setActiveFilterValue('state', $any($event.target).value)">
+      <option value="">State: All</option>
+      <option *ngFor="let state of statesArray" [value]="state">State: {{ state }}</option>
+    </select>
+
+    <select class="category-filter" [ngModel]="getActiveFilterValue('category')" (change)="setActiveFilterValue('category', $any($event.target).value)">
       <option value="">Category: All</option>
       <option *ngFor="let category of categoriesArray" [value]="category">Category: {{ category }}</option>
     </select>
 
-    <button class="reset-btn" (click)="resetFilters(activeTab)">
-      <i class="bi bi-sliders2"></i>
-      Reset
-    </button>
+    <select class="badge-tag-filter" [ngModel]="getActiveFilterValue('badgeTag')" (change)="setActiveFilterValue('badgeTag', $any($event.target).value)">
+      <option value="">User Tags: All</option>
+      <option *ngFor="let tag of userTagsArray" [value]="tag">User Tags: {{ tag }}</option>
+    </select>
+
+    <select class="platform-filter" [ngModel]="getActiveFilterValue('userPlatform')" (change)="setActiveFilterValue('userPlatform', $any($event.target).value)">
+      <option value="">User Platform: All</option>
+      <option *ngFor="let platform of userPlatformsArray" [value]="platform">User Platform: {{ platform }}</option>
+    </select>
+
+    <select class="sort-filter" [(ngModel)]="registeredSortOrder" (ngModelChange)="onSortOrderChange()">
+      <option value="newest">Sort: Newest registered</option>
+      <option value="oldest">Sort: Oldest registered</option>
+    </select>
+
+    <div class="registered-range-filter">
+      <label>Registered</label>
+      <input
+        type="date"
+        [ngModel]="getActiveFilterValue('registeredFrom')"
+        [max]="getActiveFilterValue('registeredTo') || null"
+        (change)="setActiveFilterValue('registeredFrom', $any($event.target).value)"
+        title="Registered from"
+      />
+      <span>to</span>
+      <input
+        type="date"
+        [ngModel]="getActiveFilterValue('registeredTo')"
+        [min]="getActiveFilterValue('registeredFrom') || null"
+        (change)="setActiveFilterValue('registeredTo', $any($event.target).value)"
+        title="Registered to"
+      />
+    </div>
   </div>
 
-  <div class="users-table-shell">
-    <table class="users-table" *ngIf="getPagedUsers().length > 0; else emptyState">
-      <thead>
+  <div class="alert alert-info py-2" *ngIf="firebaseImportMessage">
+    {{ firebaseImportMessage }}
+  </div>
+
+  <div class="row">
+    <div class="col-8 ts-status-legend admin-status-legend" aria-label="User status legend">
+      <span class="ts-status-legend-label">Status:</span>
+      <span class="ts-status-badge ts-status-accepted">Active</span>
+      <span class="ts-status-badge ts-status-pending">Pending</span>
+      <span class="ts-status-badge ts-status-rejected">Suspended</span>
+      <span class="ts-status-badge ts-status-rejected">Rejected</span>
+      <span class="ts-status-badge ts-status-deleted">Disabled</span>
+      <span class="ts-status-badge ts-status-other">Other</span>
+    </div>
+    <div class="col-4">
+      
+    </div>
+
+    
+
+    <app-paginator
+      [total]="getTotalVisibleUsers()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="pageSizeOptions"
+      [entityLabel]="getRoleTitle().toLowerCase()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)" class="my-1">
+    </app-paginator>
+  </div>
+
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
+  <div class="table-responsive">
+    <table class="table table-hover table-striped" *ngIf="getPagedUsers().length > 0; else emptyState">
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
           <th>Profile</th>
           <th>User Identity</th>
           <th>Contact Details</th>
           <th>Social Media</th>
           <th>Subscription</th>
+          <th>Community</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of getPagedUsers()">
+        <!-- (click)="openUserDetails(user)" -->
+        <tr *ngFor="let user of getPagedUsers()" [ngClass]="getUserStatusRowClass(user)" >
           <td>
             <img
               class="avatar"
@@ -77,12 +185,60 @@
             />
           </td>
           <td>
-            <div class="user-title">{{ getUserDisplayName(user) }}</div>
+            <div class="user-title">
+              {{ getUserDisplayName(user) }}
+              <span class="ts-status-badge" [ngClass]="getUserStatusBadgeClass(user)">
+                {{ getUserStatusLabel(user) }}
+              </span>
+            </div>
             <div class="user-sub">{{ getUserHandle(user) }}</div>
+            <div class="user-sub" *ngIf="getUserPublicId(user)">{{ getUserPublicId(user) }}</div>
+            <div class="mt-1">
+              <span class="ts-status-badge" [ngClass]="getUserVisibilityBadgeClass(user)">
+                {{ getUserVisibilityLabel(user) }}
+              </span>
+            </div>
+            <div class="mt-1" *ngIf="user.hasPendingPremiumPayment" title="This user submitted a payment that is still awaiting admin approval/decline in Premium Payments. Review it there before accepting, declining, or deleting this account.">
+              <span class="ts-status-badge ts-status-pending">
+                <i class="bi bi-cash-coin"></i> Payment submitted — pending approval
+              </span>
+            </div>
+            <div class="user-verify-admin-helper">
+              <span><i class="bi bi-envelope-check" [class.text-success]="isEmailVerified(user)" [class.text-danger]="!isEmailVerified(user)"></i><small>Email</small></span>
+              <span><i class="bi bi-phone" [class.text-success]="isMobileVerified(user)" [class.text-danger]="!isMobileVerified(user)"></i><small>Mobile</small></span>
+              <span><i class="bi bi-image" [class.text-success]="hasVerifiedProfilePhoto(user)" [class.text-danger]="!hasVerifiedProfilePhoto(user)"></i><small>Profile Photo</small></span>
+              <span><i class="bi bi-images" [class.text-success]="hasVerifiedGallery(user)" [class.text-danger]="!hasVerifiedGallery(user)"></i><small>Gallery</small></span>
+              <span><i class="bi bi-collection-play-fill" [class.text-success]="hasSocialMediaWithTier(user)" [class.text-danger]="!hasSocialMediaWithTier(user)"></i><small>Social Media & Tier</small></span>
+              <span><i class="bi bi-geo-alt-fill" [class.text-success]="hasVerifiedLocation(user)" [class.text-danger]="!hasVerifiedLocation(user)"></i><small>Location</small></span>
+              <span><i class="bi bi-wallet2" [class.text-success]="hasVerifiedPayment(user)" [class.text-danger]="!hasVerifiedPayment(user)"></i><small>Payment</small></span>
+              <span><i class="bi bi-person-vcard" [class.text-success]="isAdminReviewAccepted(user)" [class.text-danger]="!isAdminReviewAccepted(user)" title="admin review" tooltip="Admin Review"></i><small>Admin Review</small></span>
+            </div>
           </td>
           <td>
-            <div>{{ user.email || '-' }}</div>
-            <div class="user-sub">{{ user.phoneNumber || '-' }}</div>
+            <div class="contact-line">
+              <span>{{ user.email || '-' }}</span>
+              <i
+                *ngIf="isEmailVerified(user)"
+                class="bi bi-check2 contact-verified-icon"
+                title="Email verified"
+                aria-label="Email verified"
+              ></i>
+            </div>
+            <div class="user-sub contact-line">
+              <span>{{ getDisplayPhoneNumber(user) }}</span>
+              <i
+                *ngIf="isMobileVerified(user)"
+                class="bi bi-check2 contact-verified-icon"
+                title="Mobile verified"
+                aria-label="Mobile verified"
+              ></i>
+            </div>
+            <div class="user-sub" *ngIf="getDisplayPhoneNumber(user) !== '-'">
+              {{ getMobileVerificationSource(user) }}
+            </div>
+            <div class="ts-status-badge ts-status-pending mt-1" *ngIf="!isMobileVerified(user) && user.mobileCallbackRequestedAt" title="User requested a callback {{ user.mobileCallbackRequestedAt | date:'medium' }}">
+              <i class="bi bi-telephone-inbound-fill"></i> Callback requested
+            </div>
           </td>
           <td>
             <div class="table-social-list" *ngIf="getTableSocialMediaItems(user).length; else noTableSocial">
@@ -105,14 +261,20 @@
             </span>
           </td>
           <td>
+            <span class="ts-status-badge" [ngClass]="user.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
+              {{ user.communityJoined ? 'Joined' : 'Not Joined' }}
+            </span>
+            <div class="user-sub" *ngIf="user.communityJoined && user.communityName">{{ user.communityName }}</div>
+          </td>
+          <td class="ts-status-action-cell">
             <div class="row-actions">
-              <button class="btn btn-outline-success border-0" (click)="acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
+              <button class="btn btn-outline-success border-0" (click)="$event.stopPropagation(); acceptUser(user._id)" [disabled]="user.status === 'accepted'" title="Accept">
                 <i class="bi bi-check-circle"></i>
               </button>
-              <button class="btn btn-outline-danger border-0" (click)="declineUser(user._id)" title="Decline">
+              <button class="btn btn-outline-danger border-0" (click)="$event.stopPropagation(); declineUser(user._id)" title="Decline">
                 <i class="bi bi-x-circle"></i>
               </button>
-              <button class="btn btn-outline-info border-0" (click)="openUserDetails(user)" title="View Details">
+              <button class="btn btn-outline-info border-0" (click)="$event.stopPropagation(); openUserDetails(user)" title="View Details">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -122,16 +284,18 @@
     </table>
 
     <ng-template #emptyState>
-      <div class="empty-state">No users found for current filters.</div>
+      <div class="empty-state">{{ isLoading ? 'Loading users...' : 'No users found for current filters.' }}</div>
     </ng-template>
 
-    <div class="table-footer">
-      <div>Showing {{ getPagedUsers().length }} of {{ getTotalVisibleUsers() }} {{ getRoleTitle().toLowerCase() }}</div>
-      <div class="pager-buttons">
-        <button (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()"><i class="bi bi-chevron-left"></i></button>
-        <button (click)="goToNextPage()" [disabled]="!hasNextPage()"><i class="bi bi-chevron-right"></i></button>
-      </div>
-    </div>
+    <app-paginator
+      [total]="getTotalVisibleUsers()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="pageSizeOptions"
+      [entityLabel]="getRoleTitle().toLowerCase()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-paginator>
   </div>
 </div>
 
@@ -140,15 +304,36 @@
     <div class="modal-content details-modal">
       <div class="modal-header border-0 pb-2">
         <div class="details-head d-flex gap-3 align-items-center">
-          <img
-            class="avatar lg"
-            [src]="getUserAvatar(selectedUser, selectedUserType || activeTab)"
-            alt="Selected user"
-            (error)="$any($event.target).src = (selectedUserType || activeTab) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
-          />
+          <div class="avatar-wrap">
+            <img
+              class="avatar lg"
+              [src]="getUserAvatar(selectedUser, selectedRole)"
+              alt="Selected user"
+              (error)="$any($event.target).src = (selectedRole) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
+            />
+            <button
+              type="button"
+              class="avatar-recrop-btn"
+              *ngIf="hasRecroppableImage(selectedUser, selectedRole) && !cropSaving"
+              (click)="openRecropModal(selectedUser, selectedRole)"
+              title="Adjust crop"
+            >
+              <i class="bi bi-crop"></i>
+            </button>
+            <span class="avatar-saving-overlay" *ngIf="cropSaving">
+              <span class="spinner-border spinner-border-sm text-light" role="status"></span>
+            </span>
+          </div>
           <div>
-            <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getSelectedUserStatus() === 'accepted'">| {{ getSelectedUserStatus() | titlecase }}</span></h4>
+            <h4>{{ getUserDisplayName(selectedUser) }} <span class="status-pill" [class.ok]="getUserStatusKey(selectedUser) === 'active'">| {{ getSelectedUserStatus() }}</span></h4>
             <div class="user-sub">{{ getUserHandle(selectedUser) }}</div>
+            <div class="user-sub" *ngIf="getUserPublicId(selectedUser)">{{ getUserPublicId(selectedUser) }}</div>
+            <div class="user-sub db-id-row" *ngIf="selectedUser?._id" title="Also the Cloudinary folder name for this user's uploads">
+              DB ID: <code>{{ selectedUser._id }}</code>
+              <button type="button" class="btn-copy-id" (click)="copyDatabaseId(selectedUser._id)">
+                {{ copiedDatabaseId === selectedUser._id ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
             <div class="tag-row" *ngIf="getUserTags(selectedUser).length">
               <span class="badge rounded-pill" *ngFor="let tag of getUserTags(selectedUser)" [ngClass]="getTagBadgeClass(tag)">{{ tag }}</span>
             </div>
@@ -158,35 +343,309 @@
       </div>
 
       <div class="modal-body pt-2">
+        <div class="collab-score-summary mb-3" *ngIf="!selectedUserCollabScoreLoading">
+          <ng-container *ngIf="selectedUserCollabScore; else noCollabScore">
+            <div class="collab-score-summary__row">
+              <span>Collaboration Score</span>
+              <strong>{{ selectedUserCollabScore.collaborationScore }}/100</strong>
+            </div>
+            <div class="collab-score-summary__row">
+              <span>Campaign Ready</span>
+              <strong>{{ selectedUserCollabScore.campaignReadiness === 'Campaign Ready' ? '✅ YES' : 'NO' }}</strong>
+            </div>
+            <div class="collab-score-summary__row">
+              <span>TrendStarZ Recommended</span>
+              <strong>{{ selectedUserCollabScore.trendstarzRecommended ? '⭐ YES' : 'NO' }}</strong>
+            </div>
+          </ng-container>
+          <ng-template #noCollabScore>
+            <div class="collab-score-summary__row text-muted">No Collaboration Score yet.</div>
+          </ng-template>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary mt-2"
+            [routerLink]="['/admin/collaboration-score', selectedUser?._id]"
+            [queryParams]="{ role: selectedRole, username: selectedUser?.username || '' , verified: (selectedUser?.verifiedByTrendStarz === true).toString()}"
+          >
+            View Collaboration Details
+          </button>
+        </div>
+
+        <div class="verification-summary-card">
+          <div class="verification-summary-head mb-3">
+            <div>
+              <label>Admin Profile Review</label>
+              <h5>Verification controls</h5>
+              <p class="review-helper mb-0">
+                These controls are for admins only. Users see a simpler review popup with verified items and items needing attention.
+              </p>
+            </div>
+            <button type="button" class="flag-change-btn" (click)="showVerificationControls = !showVerificationControls">
+              {{ showVerificationControls ? 'Collapse' : 'Expand' }}
+            </button>
+          </div>
+          <app-profile-review-panel
+            *ngIf="showVerificationControls"
+            [detail]="selectedProfileVerification"
+            [loading]="selectedProfileVerificationLoading"
+            [editable]="true"
+            [showHeader]="false"
+            [showAddFlag]="false"
+            [showNotes]="false"
+            [notes]="selectedUserInternalNotes"
+            (notesChange)="selectedUserInternalNotes = $event"
+            (updateFlag)="updateSelectedProfileFlag($event.flag, $event.status)"
+            (action)="takeSelectedProfileAction($event)"
+          />
+        </div>
+
+        <div class="full-width border-bottom">
+          <h6>User Profile Data</h6>
+        </div>
+        
+        
         <div class="details-grid">
           <div>
-            <label>Email Address (<small>{{ isEmailVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
-            <div>{{ selectedUser.email || '-' }}</div>
-            <button class="btn btn-sm" [class.btn-outline-secondary]="isEmailVerified(selectedUser)" [class.btn-success]="!isEmailVerified(selectedUser)" (click)="toggleSelectedEmailVerification()">
-              {{ isEmailVerified(selectedUser) ? 'Unverify' : 'Verify' }}
-            </button>
+            <app-verification-field
+              label="Email Address"
+              [status]="isEmailVerified(selectedUser) ? 'Verified' : 'Pending'"
+              [value]="selectedUser.email || '-'"
+              [verified]="isEmailVerified(selectedUser)"
+              [lockWhenVerified]="true"
+              (toggled)="toggleSelectedEmailVerification()"
+            ></app-verification-field>
+            <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedEmail" title="This account changed email after the previous one was verified — useful signal to check for account takeover or typos.">
+              Previous verified email: {{ selectedUser.previousVerifiedEmail }}
+            </div>
+            <div class="ts-wa-actions mt-1" *ngIf="!isEmailVerified(selectedUser)">
+              <button
+                type="button"
+                class="btn btn-sm ts-wa-copy-btn"
+                (click)="copyEmailVerificationReminderMessage(selectedUser)"
+                title=" WhatsApp reminder message to send manually. Once the WhatsApp Business API is live, this same reminder sends automatically, once, 30 minutes after the verification email."
+              >
+                <i class="bi bi-whatsapp"></i>
+                {{ copiedEmailVerificationMessage === selectedUser._id ? 'Copied' : 'Copy reminder' }}
+              </button>
+              <a
+                class="btn btn-sm ts-wa-send-btn"
+                target="_blank"
+                rel="noopener"
+                [class.disabled]="!getEmailVerificationWhatsAppLink(selectedUser)"
+                [attr.href]="getEmailVerificationWhatsAppLink(selectedUser) || null"
+                [attr.aria-disabled]="!getEmailVerificationWhatsAppLink(selectedUser)">
+                <i class="bi bi-whatsapp"></i> Send
+              </a>
+            </div>
           </div>
           <div>
-            <label>Phone Number (<small>{{ isMobileVerified(selectedUser) ? 'Verified' : 'Pending' }}</small>)</label>
-            <div>{{ selectedUser.phoneNumber || '-' }}</div>
-            <button class="btn btn-sm" [class.btn-outline-secondary]="isMobileVerified(selectedUser)" [class.btn-success]="!isMobileVerified(selectedUser)" (click)="toggleSelectedMobileVerification()">
-              {{ isMobileVerified(selectedUser) ? 'Unverify' : 'Verify' }}
-            </button>
+            <app-verification-field
+              label="Phone Number"
+              [status]="isMobileVerified(selectedUser) ? 'Verified' : 'Pending'"
+              [value]="getDisplayPhoneNumber(selectedUser)"
+              [verified]="isMobileVerified(selectedUser)"
+              (toggled)="toggleSelectedMobileVerification()"
+            ></app-verification-field>
+            <div class="user-sub mt-1" *ngIf="getDisplayPhoneNumber(selectedUser) !== '-'">
+              {{ getMobileVerificationSource(selectedUser) }}
+            </div>
+            <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedMobile" title="This account changed mobile number after the previous one was verified — useful signal to check for account takeover or typos.">
+              Previous verified mobile: {{ selectedUser.previousVerifiedMobile }}
+            </div>
+            <div class="user-sub mt-1" *ngIf="!isMobileVerified(selectedUser)">
+              <span *ngIf="otpVerificationEnabled">Self-verification via OTP is active — number may verify itself once the user completes it.</span>
+              <span *ngIf="!otpVerificationEnabled">Manual verification — call this number to verify.</span>
+            </div>
+            <div class="user-sub mt-1 text-warning" *ngIf="!isMobileVerified(selectedUser) && selectedUser.mobileCallbackRequestedAt" title="The user asked to be called to complete mobile verification.">
+              <i class="bi bi-telephone-inbound-fill"></i>
+              Callback requested {{ selectedUser.mobileCallbackRequestedAt | date:'medium' }}
+            </div>
+            <div class="ts-wa-actions mt-1" *ngIf="!isMobileVerified(selectedUser)">
+              <button
+                type="button"
+                class="btn btn-sm ts-wa-copy-btn"
+                (click)="copyMobileVerificationReminderMessage(selectedUser)"
+                title=" WhatsApp reminder message to send manually asking the user to complete mobile verification."
+              >
+                <i class="bi bi-whatsapp"></i>
+                {{ copiedMobileVerificationMessage === selectedUser._id ? 'Copied' : 'Copy reminder' }}
+              </button>
+              <a
+                class="btn btn-sm ts-wa-send-btn"
+                target="_blank"
+                rel="noopener"
+                [class.disabled]="!getMobileVerificationWhatsAppLink(selectedUser)"
+                [attr.href]="getMobileVerificationWhatsAppLink(selectedUser) || null"
+                [attr.aria-disabled]="!getMobileVerificationWhatsAppLink(selectedUser)">
+                Send via <i class="bi bi-whatsapp"></i>
+              </a>
+            </div>
+            <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && otpVerificationEnabled">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                [disabled]="resendingMobileOtp || getDisplayPhoneNumber(selectedUser) === '-'"
+                (click)="resendMobileOtp(selectedUser)"
+                title="Send a fresh SMS OTP to this number right now."
+              >
+                {{ resendingMobileOtp ? 'Sending…' : 'Resend OTP' }}
+              </button>
+            </div>
+            <div class="mt-1" *ngIf="!isMobileVerified(selectedUser) && !otpVerificationEnabled">
+              <div class="ts-wa-actions">
+                <button
+                  type="button"
+                  class="btn btn-sm ts-wa-copy-btn"
+                  (click)="copyMobileCallbackRequestMessage(selectedUser)"
+                  title="Copy a WhatsApp message asking the user to reply YES so our team knows to call and verify."
+                >
+                  <i class="bi bi-whatsapp"></i>
+                  {{ copiedMobileCallbackMessage === selectedUser._id ? 'Copied' : 'Request a Callback' }}
+                </button>
+                <a
+                  class="btn btn-sm ts-wa-send-btn"
+                  target="_blank"
+                  rel="noopener"
+                  [class.disabled]="!getMobileCallbackRequestWhatsAppLink(selectedUser)"
+                  [attr.href]="getMobileCallbackRequestWhatsAppLink(selectedUser) || null"
+                  [attr.aria-disabled]="!getMobileCallbackRequestWhatsAppLink(selectedUser)">
+                  Send via <i class="bi bi-whatsapp"></i>
+                </a>
+              </div>
+            </div>
           </div>
           <div>
-            <label>Location</label>
-            <div>{{ getUserStateLabel(selectedUser) }}</div>
+            <label>WhatsApp Community</label>
+            <div>
+              <span class="ts-status-badge" [ngClass]="selectedUser.communityJoined ? 'ts-status-accepted' : 'ts-status-pending'">
+                {{ selectedUser.communityJoined ? 'Joined' : 'Not Joined' }}
+              </span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-2"
+                *ngIf="selectedUser.communityJoined"
+                (click)="markCommunityNotJoined(selectedUser, selectedRole)"
+              >
+                Not Joined
+              </button>
+            </div>
+            <div class="user-sub mt-1" *ngIf="selectedUser.communityJoined && selectedUser.communityName">{{ selectedUser.communityName }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && selectedUser.communityState">State: {{ selectedUser.communityState }}</div>
+            <div class="user-sub" *ngIf="selectedUser.communityJoined && (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate)">
+              Joined at {{ (selectedUser.communityJoinedAt || selectedUser.communityJoinedDate) | date:'medium' }}
+            </div>
           </div>
           <div>
-            <label>Starting Price</label>
+            <app-verification-field
+              label="Profile Photo"
+              [status]="getUserProfilePhotoStatus(selectedUser)"
+              [value]="getUserProfilePhotoStatus(selectedUser)"
+              [thumbSrc]="getUserAvatar(selectedUser, selectedRole)"
+              thumbAlt="Profile photo"
+              [fallbackSrc]="(selectedRole) === 'brand' ? 'assets/default-profile-brands.png' : 'assets/default-profile.png'"
+              [verified]="isProfilePhotoVerified(selectedUser)"
+              (toggled)="toggleSelectedProfilePhotoVerification()"
+            ></app-verification-field>
+            <div class="flag-type-selector" *ngIf="!isProfilePhotoVerified(selectedUser)">
+              <span class="flag-type-label">Flag reason</span>
+              <div class="flag-type-btns">
+                <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
+                  <button *ngIf="!opt.policy"
+                    type="button" class="flag-type-btn" [ngClass]="opt.cls"
+                    [class.active]="getActivePhotoFlagCode() === opt.code"
+                    (click)="setProfilePhotoFlag(opt.code)"
+                    [title]="opt.hint"
+                  >{{ opt.label }}</button>
+                </ng-container>
+              </div>
+              <div class="flag-group-divider">
+                <span>Policy Violation — HIGH severity</span>
+              </div>
+              <div class="flag-type-btns">
+                <ng-container *ngFor="let opt of PHOTO_FLAG_OPTIONS">
+                  <button *ngIf="opt.policy"
+                    type="button" class="flag-type-btn" [ngClass]="opt.cls"
+                    [class.active]="getActivePhotoFlagCode() === opt.code"
+                    (click)="setProfilePhotoFlag(opt.code)"
+                    [title]="opt.hint"
+                  >{{ opt.label }}</button>
+                </ng-container>
+              </div>
+            </div>
+            <div class="flag-chips" *ngIf="isProfilePhotoVerified(selectedUser) && getProfilePhotoOpenFlags().length">
+              <span *ngFor="let f of getProfilePhotoOpenFlags()" class="flag-chip" [ngClass]="f.cls">{{ f.label }}</span>
+            </div>
+          </div>
+          <!-- <div>
+            <app-verification-field
+              label="Social Profile & Creator Tier"
+              [status]="getUserCreatorTierStatus()"
+              [value]="getUserCreatorTierSummary(selectedUser)"
+              [verified]="isCreatorTierVerified()"
+              (toggled)="toggleSelectedCreatorTierVerification()"
+            ></app-verification-field>
+          </div> -->
+          <div>
+            <app-verification-field
+              label="Gallery Images"
+              [status]="getUserGalleryStatus(selectedUser)"
+              [value]="getUserGalleryImageCount(selectedUser) + ' attached · ' + getUserGalleryStatus(selectedUser)"
+              [verified]="isGalleryImagesVerified(selectedUser)"
+              [valueAsButton]="true"
+              [valueButtonDisabled]="!getUserGalleryImageCount(selectedUser)"
+              (valueClicked)="openUserGalleryModal(selectedUser)"
+              (toggled)="toggleSelectedGalleryImagesVerification()"
+            ></app-verification-field>
+            <div class="flag-type-selector" *ngIf="!isGalleryImagesVerified(selectedUser)">
+              <span class="flag-type-label">Flag reason</span>
+              <div class="flag-type-btns">
+                <button
+                  *ngFor="let opt of GALLERY_FLAG_OPTIONS"
+                  type="button"
+                  class="flag-type-btn flag-chip--quality"
+                  [class.active]="getActiveGalleryFlagCode() === opt.code"
+                  (click)="setGalleryFlag(opt.code)"
+                  [title]="opt.hint"
+                >{{ opt.label }}</button>
+              </div>
+            </div>
+            <div class="flag-chips" *ngIf="isGalleryImagesVerified(selectedUser) && getGalleryOpenFlags().length">
+              <span *ngFor="let f of getGalleryOpenFlags()" class="flag-chip" [ngClass]="f.cls">{{ f.label }}</span>
+            </div>
+          </div>
+          <div>
+            <app-verification-field
+              label="Location"
+              [status]="getUserLocationVerificationStatus(selectedUser)"
+              [value]="getUserStateLabel(selectedUser)"
+              [verified]="isLocationVerified(selectedUser)"
+              (toggled)="toggleSelectedLocationVerification()"
+            ></app-verification-field>
+          </div>
+          <div>
+            <app-verification-field
+              label="Payment Method"
+              [status]="getUserPaymentVerificationStatus(selectedUser)"
+              [value]="getUserPaymentMethodLabel(selectedUser)"
+              [verified]="isPaymentMethodVerified(selectedUser)"
+              (toggled)="toggleSelectedPaymentVerification()"
+            ></app-verification-field>
+          </div>
+          <div *ngIf="selectedRole === 'brand'">
+            <label>Contact Person Name</label>
+            <div>{{ selectedUser.contactPersonName || '-' }}</div>
+          </div>
+          <div>
+            <label>Date of Birth</label>
+            <div>{{ selectedUser.dateOfBirth ? (selectedUser.dateOfBirth | date:'mediumDate') : '-' }}</div>
+          </div>
+          <div>
+            <label>Gender</label>
+            <div>{{ selectedUser.gender ? (selectedUser.gender | titlecase) : '-' }}</div>
+          </div>
+          <div>
+            <label>Starting Price <span class="text-muted" style="font-weight:400;">(auto-calculated)</span></label>
             <div class="price">{{ getUserStartingPrice(selectedUser) }}</div>
-          </div>
-          <div>
-            <label>Social Reach</label>
-            <div *ngIf="getUserSocialReach(selectedUser) as reachValue; else noReachValue">{{ reachValue | number }} Total</div>
-            <ng-template #noReachValue>
-              <div>-</div>
-            </ng-template>
           </div>
           <div>
             <label>Signup Source</label>
@@ -211,28 +670,125 @@
               <label>Categories</label>
               <div>{{ getUserCategoriesLabel(selectedUser) }}</div>
             </div>
+            <div *ngIf="(selectedRole) === 'influencer' && selectedUser?.professionalStatus">
+              <label>Professional Status</label>
+              <div>{{ getUserCreatorTypesLabel(selectedUser) !== '-' ? 'Professional Creator (' + getUserCreatorTypesLabel(selectedUser) + ')' : 'Professional Creator' }}</div>
+            </div>
+            <div *ngIf="(selectedRole) === 'influencer'">
+              <label>Collaboration Availability</label>
+              <div>{{ getUserCollaborationAvailabilityLabel(selectedUser) }}</div>
+            </div>
             <div>
               <label>Languages</label>
               <div>{{ getUserLanguages(selectedUser) }}</div>
             </div>
-            <div>
-              <label>Social Media</label>
-              <div class="social-list" *ngIf="getSocialMediaItems(selectedUser).length; else noSocialLinks">
-                <a *ngFor="let social of getSocialMediaItems(selectedUser)"
-                   [href]="social.href"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   [title]="social.label"
-                   class="social-link">
-                  <i class="bi" [ngClass]="social.icon"></i>
-                  <!-- <span class="social-name">{{ social.label }}</span> -->
-                  <span>{{ social.handle }}</span>
-                  <span *ngIf="social.followers">({{ social.followers | number }})</span>
-                </a>
+            <div class="rate-details" *ngIf="selectedUser">
+              <label>Social Media{{ (selectedRole) === 'influencer' ? ' - Content & Rates' : ' Platforms' }}</label>
+              <div class="mb-2">
+                <app-verification-field
+                  label="Social Profile & Creator Tier"
+                  [status]="getUserCreatorTierStatus()"
+                  [value]="getUserCreatorTierSummary(selectedUser)"
+                  [verified]="isCreatorTierVerified()"
+                  (toggled)="toggleSelectedCreatorTierVerification()"
+                ></app-verification-field>
+                <div class="ts-wa-actions mt-1" *ngIf="!isCreatorTierVerified()">
+                  <button
+                    type="button"
+                    class="btn btn-sm ts-wa-copy-btn"
+                    (click)="copyCreatorTierVerificationReminderMessage(selectedUser)"
+                    title="Copy a WhatsApp reminder asking the user to complete Social Profile & Creator Tier verification."
+                  >
+                    <i class="bi bi-whatsapp"></i>
+                    {{ copiedCreatorTierVerificationMessage === selectedUser._id ? 'Copied' : 'Copy reminder' }}
+                  </button>
+                  <a
+                    class="btn btn-sm ts-wa-send-btn"
+                    target="_blank"
+                    rel="noopener"
+                    [class.disabled]="!getCreatorTierVerificationWhatsAppLink(selectedUser)"
+                    [attr.href]="getCreatorTierVerificationWhatsAppLink(selectedUser) || null"
+                    [attr.aria-disabled]="!getCreatorTierVerificationWhatsAppLink(selectedUser)">
+                    <i class="bi bi-whatsapp"></i> Send
+                  </a>
+                </div>
               </div>
-              <ng-template #noSocialLinks>
-                <div>-</div>
-              </ng-template>
+
+              <!-- Social media: unified rows with Edit button (all user types) -->
+              <div *ngIf="!selectedUser?.socialMedia?.length" class="text-muted small py-1">No social media platforms added.</div>
+
+              <div class="rate-platform" *ngFor="let sm of selectedUser?.socialMedia; let smIdx = index">
+                <!-- Platform header: icon · label · tier(range) · handle · Edit -->
+                <div class="rate-platform-name">
+                  <span class="rate-platform-info">
+                    <i class="bi" [ngClass]="getSocialIconForPlatform(sm?.platform)"></i>
+                    <strong>{{ getSocialLabelForPlatform(sm?.platform) }}</strong>
+                    <span class="sm-tier-badge" *ngIf="sm?.tier">{{ getTierWithRange(sm.tier) }}</span>
+                    <ng-container *ngIf="resolveSocialHrefForPlatform(sm) as href">
+                      <a [href]="href" target="_blank" rel="noopener noreferrer" class="sm-handle-link">{{ sm?.handle ? '@' + sm.handle : '' }}</a>
+                    </ng-container>
+                    <span *ngIf="!resolveSocialHrefForPlatform(sm) && sm?.handle" class="sm-handle-link">@{{ sm.handle }}</span>
+                  </span>
+                  <button class="sm-edit-btn" (click)="openSocialMediaEdit(smIdx)">
+                    <i class="bi bi-pencil-fill"></i> Edit
+                  </button>
+                </div>
+
+                <!-- Content type rates (influencer only) -->
+                <ng-container *ngIf="(selectedRole) === 'influencer'">
+                  <div class="rate-row" *ngFor="let ct of sm?.contentTypes">
+                    <ng-container *ngIf="ct?.enabled && ct?.price > 0">
+                      <span>{{ ct?.name || ct?.label }}</span>
+                      <strong>₹{{ ct.price | number:'1.0-0' }}</strong>
+                    </ng-container>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Service rates (all user types) -->
+              <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
+                <div class="rate-platform-name">Service Rates</div>
+                <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
+                  <span>{{ item.name }}</span>
+                  <strong>₹{{ item.price | number:'1.0-0' }}</strong>
+                </div>
+              </div>
+
+              <!-- Social media edit modal (popup) -->
+              <ng-container *ngIf="smEditModalOpen && smEditingIdx !== null">
+                <app-social-media-edit-modal
+                  [platform]="selectedUser?.socialMedia?.[smEditingIdx]?.platform"
+                  [platformLabel]="getSocialLabelForPlatform(selectedUser?.socialMedia?.[smEditingIdx]?.platform)"
+                  [platformIcon]="getSocialIconForPlatform(selectedUser?.socialMedia?.[smEditingIdx]?.platform)"
+                  [handle]="selectedUser?.socialMedia?.[smEditingIdx]?.handle || ''"
+                  [tier]="selectedUser?.socialMedia?.[smEditingIdx]?.tier || ''"
+                  [currentAdmin]="currentAdmin"
+                  [saving]="smEditSaving"
+                  [error]="smEditError"
+                  (save)="saveSocialMediaEdit($event)"
+                  (cancel)="cancelSocialMediaEdit()"
+                ></app-social-media-edit-modal>
+              </ng-container>
+
+              <!-- Change log -->
+              <div class="sm-changelog" *ngIf="getConsolidatedSocialMediaChanges().length">
+                <div class="sm-changelog-title">Changes Requested</div>
+                <div class="sm-changelog-entry" *ngFor="let log of getConsolidatedSocialMediaChanges()">
+                  <div class="sm-changelog-changes">
+                    <span *ngIf="log.oldHandle !== log.newHandle">
+                      <strong>{{ getSocialLabelForPlatform(log.platform) }} Handle:</strong>
+                      @{{ log.oldHandle }} &rarr; @{{ log.newHandle }}
+                    </span>
+                    <span *ngIf="log.oldTier !== log.newTier">
+                      <strong>Tier:</strong> {{ log.oldTier }} &rarr; {{ log.newTier }}
+                    </span>
+                  </div>
+                  <div class="sm-changelog-meta">
+                    <span><i class="bi bi-person-fill"></i> {{ log.changedByName || log.changedBy || 'Admin' }}</span>
+                    <span><i class="bi bi-calendar3"></i> {{ log.changedAt | date:'dd-MMM-yyyy' }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div>
               <label>Profile Traffic</label>
@@ -245,12 +801,18 @@
               <label>Document Verification</label>
               <div class="d-flex align-items-center gap-2">
                 <span class="badge"
-                      [ngClass]="getUserVerificationStatus(selectedUser) === 'approved' ? 'bg-success' : (getUserVerificationStatus(selectedUser) === 'pending' ? 'bg-info text-dark' : 'bg-secondary')">
-                  {{ getUserVerificationStatus(selectedUser) }}
+                      [ngClass]="{
+                        'bg-secondary': getUserVerificationStatus(selectedUser) === 'not_submitted',
+                        'bg-info text-dark': getUserVerificationStatus(selectedUser) === 'pending',
+                        'bg-success': getUserVerificationStatus(selectedUser) === 'approved',
+                        'bg-warning text-dark': getUserVerificationStatus(selectedUser) === 'rejected',
+                        'bg-dark': getUserVerificationStatus(selectedUser) === 'removed'
+                      }">
+                  {{ getVerificationStatusLabel(getUserVerificationStatus(selectedUser)) }}
                 </span>
                 <button class="btn btn-outline-secondary btn-sm"
                         [disabled]="!hasVerificationDocuments(selectedUser)"
-                        (click)="openVerificationDocsModal(selectedUser, selectedUserType || activeTab)">
+                        (click)="openVerificationDocsModal(selectedUser, selectedRole)">
                   View Docs
                 </button>
               </div>
@@ -266,11 +828,12 @@
             </div>
             <div>
               <label>Premium</label>
-              <div>{{ getUserPremiumLabel(selectedUser) }}</div>
-            </div>
-            <div>
-              <label>Payment Method</label>
-              <div>{{ getUserPaymentMethodLabel(selectedUser) }}</div>
+              <div>
+                {{ getUserPremiumLabel(selectedUser) }}
+                <span *ngIf="selectedUser.hasPendingPremiumPayment" class="badge bg-warning text-dark ms-1" title="A payment from this user is awaiting approval/decline in Premium Payments.">
+                  <i class="bi bi-cash-coin"></i> Payment pending approval
+                </span>
+              </div>
             </div>
             <div>
               <label>Status</label>
@@ -283,8 +846,15 @@
           <div class="status-card">
             <div>
               <strong>Premium Subscription</strong>
-              <div class="user-sub" *ngIf="getPremiumPeriod(selectedUser) as period">Active until {{ period.end | date:'MMM yyyy' }}</div>
+              <div class="user-sub" *ngIf="getPremiumPeriod(selectedUser) as period">
+                Active until {{ period.end | date:'MMM yyyy' }}
+                <span *ngIf="selectedUser.premiumSource === 'admin'" class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Granted by Admin</span>
+              </div>
               <div class="user-sub" *ngIf="!selectedUser.isPremium">Free plan</div>
+              <div class="user-sub text-warning-emphasis" *ngIf="selectedUser.hasPendingPremiumPayment">
+                <i class="bi bi-cash-coin"></i>
+                Payment submitted{{ selectedUser.pendingPremiumPayment?.amount ? (' — ₹' + (selectedUser.pendingPremiumPayment.amount / 100)) : '' }} — awaiting approval in Premium Payments
+              </div>
             </div>
             <span class="tier-badge" [ngClass]="getTierValue(selectedUser) === 'premium' ? 'premium' : 'free'">
               {{ getTierValue(selectedUser) === 'premium' ? 'PREMIUM' : 'FREE' }}
@@ -336,19 +906,28 @@
           <i class="bi bi-trash-fill"></i>
           Delete
         </button>
-        <button class="btn btn-outline-primary btn-sm" *ngIf="!selectedUser.isPremium" (click)="openPremiumModal(selectedUser._id, selectedUserType || activeTab)">
+        <button class="btn btn-outline-primary btn-sm" *ngIf="!selectedUser.isPremium" (click)="openPremiumModal(selectedUser._id, selectedRole)">
           Set Premium
         </button>
-        <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedUser.isPremium" (click)="setPremium(selectedUser._id, false, selectedUserType || activeTab)">
+        <button class="btn btn-outline-secondary btn-sm" *ngIf="selectedUser.isPremium" (click)="setPremium(selectedUser._id, false, selectedRole)">
           Set Free
         </button>
-        <button class="btn btn-outline-info btn-sm" (click)="openTagModal(selectedUser, selectedUserType || activeTab)">
+        <button class="btn btn-outline-info btn-sm" (click)="openTagModal(selectedUser, selectedRole)">
           Edit Tags
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<app-image-crop-modal
+  [open]="cropModalOpen"
+  [imageUrl]="cropSourceUrl"
+  [aspectRatio]="1"
+  title="Adjust crop"
+  (cropped)="onRecropCropped($event)"
+  (closed)="onRecropCancelled()"
+></app-image-crop-modal>
 
 <!-- Premium Duration Modal -->
 <div *ngIf="showPremiumModal" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
@@ -395,7 +974,7 @@
 
         <hr *ngIf="getCommissionTagOptions(tagType || activeTab).length" class="my-3" />
 
-        <h5>Commission to users</h5>
+        <h5>User Platform Commission Discounts</h5>
         <div class="d-flex flex-wrap gap-2" *ngIf="getCommissionTagOptions(tagType || activeTab).length">
           <button
             type="button"
@@ -416,6 +995,16 @@
     </div>
   </div>
 </div>
+
+<app-image-gallery-modal
+  [open]="galleryModalOpen"
+  title="Gallery Images"
+  [images]="galleryModalImages"
+  [(selectedIndex)]="galleryModalIndex"
+  imageAlt="Selected gallery image"
+  thumbnailAlt="Gallery thumbnail"
+  (closed)="closeGalleryModal()"
+></app-image-gallery-modal>
 
 <!-- Verification Docs Modal -->
 <div *ngIf="showVerificationDocsModal && verificationDocsUser" class="modal show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.4);">
@@ -452,10 +1041,10 @@
               'bg-warning text-dark': verificationDocsUser.verificationStatus === 'rejected',
               'bg-dark': verificationDocsUser.verificationStatus === 'removed'
             }">
-            {{ verificationDocsUser.verificationStatus || 'not_submitted' }}
+            {{ getVerificationStatusLabel(verificationDocsUser.verificationStatus) }}
           </span>
           <div *ngIf="verificationDocsUser.verifiedByTrendStarz" class="mt-2">
-            <small class="text-success fw-bold">Verified by TrendStarz</small>
+            <small class="text-success fw-bold">Verified</small>
           </div>
         </div>
 
@@ -473,16 +1062,16 @@
       <div class="modal-footer d-flex gap-2 justify-content-between">
         <button type="button" class="btn btn-outline-secondary" (click)="closeVerificationDocsModal()">Cancel</button>
         <div class="d-flex gap-2">
-          <button type="button" class="btn btn-success" (click)="updateInfluencerVerificationFromModal('approve')" title="Approve documents as authentic">
+          <button type="button" class="btn btn-success" (click)="updateProfileDocumentVerificationFromModal('approve')" title="Approve documents as authentic">
             <i class="bi bi-check-circle"></i> Approve
           </button>
-          <button type="button" class="btn btn-warning text-dark" (click)="updateInfluencerVerificationFromModal('reject')" title="Reject documents - need resubmission">
+          <button type="button" class="btn btn-warning text-dark" (click)="updateProfileDocumentVerificationFromModal('reject')" title="Reject documents - need resubmission">
             <i class="bi bi-x-circle"></i> Reject
           </button>
-          <button type="button" class="btn btn-info text-dark" (click)="updateInfluencerVerificationFromModal('pending')" title="Mark as pending review">
+          <button type="button" class="btn btn-info text-dark" (click)="updateProfileDocumentVerificationFromModal('pending')" title="Mark as pending review">
             <i class="bi bi-hourglass-split"></i> Pending
           </button>
-          <button type="button" class="btn btn-danger" (click)="updateInfluencerVerificationFromModal('remove')" title="Remove - for expired/invalid docs">
+          <button type="button" class="btn btn-danger" (click)="updateProfileDocumentVerificationFromModal('remove')" title="Remove - for expired/invalid docs">
             <i class="bi bi-trash"></i> Remove
           </button>
         </div>

@@ -2,11 +2,13 @@ import { Component, signal, OnInit, PLATFORM_ID, Inject } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, RouterOutlet, Router } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter } from 'rxjs';
 import { SessionService } from './core/session.service';
 import { WarmupService } from './core/warmup.service';
 import { PushNotificationService } from './core/push-notification.service';
 import { AnalyticsService } from './core/analytics.service';
+import { ConfigService } from './shared/config.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
@@ -21,6 +23,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
   private lastPushSubscriptionKey: string | null = null;
+  private lastSessionOpenedPing = 0;
 
   constructor(
     private session: SessionService,
@@ -28,8 +31,10 @@ export class App implements OnInit {
     private warmup: WarmupService,
     private pushService: PushNotificationService,
     private analytics: AnalyticsService,
+    private config: ConfigService,
     private titleService: Title,
     private meta: Meta,
+    private swUpdate: SwUpdate,
     @Inject(DOCUMENT) private document: Document,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
@@ -40,22 +45,78 @@ export class App implements OnInit {
     this.setupAnalyticsTracking();
 
     if (isPlatformBrowser(this.platformId)) {
+      this.setupServiceWorkerUpdates();
+      this.markOpenedWhenVisible();
       this.session.user$.subscribe((user) => {
         if (!user) {
           this.lastPushSubscriptionKey = null;
           return;
         }
 
+        this.markSessionOpened();
         const role = this.normalizeRole((user as any).role);
         const identity = String((user as any).id || (user as any)._id || (user as any).email || role);
         const key = `${role}:${identity}`;
         if (this.lastPushSubscriptionKey === key) return;
         this.lastPushSubscriptionKey = key;
 
-        // Defer slightly so login/navigation settles before asking notification permission.
-        setTimeout(() => this._initPush(role), 1200);
+        if (this.pushService.localPreference !== 'disabled') {
+          // Defer slightly so login/navigation settles before asking notification permission.
+          setTimeout(() => this._initPush(role), 1200);
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.markOpenedWhenVisible();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.session.getUser()) {
+          this.markSessionOpened();
+        }
       });
     }
+  }
+
+  private markSessionOpened(): void {
+    const now = Date.now();
+    if (now - this.lastSessionOpenedPing < 10 * 60 * 1000) return;
+    this.lastSessionOpenedPing = now;
+    this.config.markSessionOpened().subscribe({
+      next: (res) => {
+        const user = this.session.getUser();
+        if (!user || !res?.lastOpenedAt) return;
+        this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
+      },
+      error: () => {},
+    });
+  }
+
+  private markOpenedWhenVisible(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.document.visibilityState !== 'visible') return;
+    if (!this.session.getUser()) return;
+    this.markSessionOpened();
+  }
+
+  // The service worker (ngsw-worker.js) prefetch-caches JS/CSS chunks
+  // (ngsw-config.json's "app" assetGroup) so the app works offline — but with
+  // no update handling, an already-open tab keeps running whatever bundle it
+  // first loaded, forever: reloading, hard-refreshing, or even a stale-tab
+  // race can silently re-render OLD component code against fresh API data,
+  // which is exactly what caused the Collaboration Score Settings page to
+  // appear to "revert" saved values after every deploy. Reloading as soon as
+  // a new version installs guarantees every tab is always running the
+  // version that was actually just deployed.
+  private setupServiceWorkerUpdates(): void {
+    if (!this.swUpdate.isEnabled) return;
+
+    this.swUpdate.versionUpdates
+      .pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'))
+      .subscribe(() => {
+        this.swUpdate.activateUpdate().then(() => this.document.location.reload());
+      });
+
+    this.swUpdate.checkForUpdate().catch(() => {});
   }
 
   private setupAnalyticsTracking(): void {
@@ -153,6 +214,10 @@ export class App implements OnInit {
         title: 'How TrendStarz Works for Brands',
         description: 'Learn how brands can find verified creators and run campaigns with confidence.',
       },
+      '/how-it-works/photographers': {
+        title: 'How TrendStarz Works for Photographers',
+        description: 'Learn how photographers can receive collaboration requests, confirm deliverables, and complete shoots on TrendStarz.',
+      },
       '/features/influencers': {
         title: 'How TrendStarz Works for Influencers',
         description: 'Learn how influencers can build profiles, set rates, and get discovered by brands.',
@@ -161,6 +226,10 @@ export class App implements OnInit {
         title: 'How TrendStarz Works for Brands',
         description: 'Learn how brands can find verified creators and run campaigns with confidence.',
       },
+      '/features/photographers': {
+        title: 'How TrendStarz Works for Photographers',
+        description: 'Learn how photographers can receive collaboration requests, confirm deliverables, and complete shoots on TrendStarz.',
+      },
       '/register-influencer': {
         title: 'Influencer Registration | TrendStarz',
         description: 'Join TrendStarz as an influencer and create your profile to collaborate with brands.',
@@ -168,6 +237,10 @@ export class App implements OnInit {
       '/register-brand': {
         title: 'Brand Registration | TrendStarz',
         description: 'Join TrendStarz as a brand and discover verified influencers for your campaigns.',
+      },
+      '/register-photographer': {
+        title: 'Photographer Registration | TrendStarz',
+        description: 'Join TrendStarz as a photographer and create your profile to find collaboration opportunities with brands and creators.',
       },
       '/auth/login': {
         title: 'Login | TrendStarz',
@@ -226,6 +299,13 @@ export class App implements OnInit {
       return {
         title: 'Brand Profile | TrendStarz',
         description: 'View brand profile and campaign collaboration details on TrendStarz.',
+      };
+    }
+
+    if (path.startsWith('/photographer/')) {
+      return {
+        title: 'Photographer Profile | TrendStarz',
+        description: 'View photographer and videographer profile details on TrendStarz.',
       };
     }
 

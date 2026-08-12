@@ -1,0 +1,16 @@
+<ng-container *ngIf="hasContent">
+  <div class="reg-notice">
+    <div *ngIf="showActivationNotice" class="reg-notice-line approve">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>Your account will be <strong>activated immediately once you verify your email</strong> — no manual approval wait.</span>
+    </div>
+    <div *ngIf="showModerationWarning" class="reg-notice-line warn">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>Accounts with unsecured or misleading information may be <strong>removed or deleted</strong> by an admin without notice.</span>
+    </div>
+    <div *ngIf="noGuaranteeText" class="reg-notice-line info">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>{{ noGuaranteeText }}</span>
+    </div>
+  </div>
+</ng-container>

@@ -1,40 +1,55 @@
 <div class="home-shell rounded-3 shadow-sm">
   <app-hero-banner
     [primaryLabel]="isLoggedIn() ? 'Start a Campaign' : 'Register as Brand'"
-    [primaryRoute]="isLoggedIn() ? '/campaigns' : '/register-brand'"
+    [primaryRoute]="isLoggedIn() ? '/campaigns' : ''"
     [secondaryLabel]="isLoggedIn() ? 'Find Creators' : 'Register as Influencer'"
-    [secondaryRoute]="isLoggedIn() ? '/search' : '/register-influencer'"
+    [secondaryRoute]="isLoggedIn() ? '/search' : ''"
     [thirdLabel]="'Explore Features'"
     [thirdRoute]="'/features'"
     liveMetricText="Live: 5,400+ Campaigns active now"
-    imageUrl="assets/banner-trendstarz.jpg"
+    [imageUrl]="heroImageUrl"
+    [imageAlt]="heroImageAlt"
+    (primaryClick)="isLoggedIn() ? null : regConfirm.open('brand')"
+    (secondaryClick)="isLoggedIn() ? null : regConfirm.open('influencer')"
   ></app-hero-banner>
+  <app-registration-confirm-modal></app-registration-confirm-modal>
+
+  <section class="score-preview-section py-4" *ngIf="!isLoggedIn()" aria-label="Free Collaboration Score check">
+    <app-score-preview></app-score-preview>
+  </section>
+
+  <!-- <ng-container
+    [ngComponentOutlet]="heroSliderBannerComponent"
+    [ngComponentOutletInputs]="heroSliderBannerInputs">
+  </ng-container> -->
 
   <ng-container
     [ngComponentOutlet]="builtForAudiencesComponent"
     [ngComponentOutletInputs]="builtForAudiencesInputs"
   ></ng-container>
 
-  <section class="brands-strip py-5" aria-label="Brands Grid" *ngIf="isMarketplaceReadyForPublic">
+  <section class="brands-strip py-5" aria-label="Brands Grid" *ngIf="showBrandsSection">
     <div class="container">
       <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
           <h2 class="section-title mb-1">Featured Brands</h2>
           <p class="section-subtitle">Discover top companies actively hiring creators</p>
         </div>
-        <button class="btn btn-link view-all" (click)="router.navigate(['/register-brand'])" type="button">View all brands</button>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'brands' }">Explore More →</a>
       </div>
 
       <div *ngIf="brandsLoading && brands.length === 0" class="text-center text-muted">Loading brands...</div>
 
       <div class="row g-3" *ngIf="brands.length > 0">
-        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let brand of brands | slice:0:8">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let brand of brands | slice:0:4">
           <app-brand-user-card
             class="welcome-card-host"
             [brandLogo]="brand.brandLogo"
             [brandName]="brand.brandName || ''"
             [categories]="brand.categories || []"
             [isPremium]="brand.isPremium || false"
+            [verifiedByTrendStarz]="brand.verifiedByTrendStarz || false"
+            [verificationStatus]="brand.verificationStatus || 'not_submitted'"
             [adminTags]="[]"
             [location]="{ state: brand.location?.state || '' }"
             [showWelcomeCampaignMeta]="showBrandCampaignMetaOnWelcome"
@@ -46,9 +61,12 @@
     </div>
   </section>
 
-  <section class="creators-strip py-5" aria-label="Influencers Grid" *ngIf="isMarketplaceReadyForPublic">
+  <section class="creators-strip py-5" aria-label="Influencers Grid" *ngIf="showInfluencersSection">
     <div class="container">
-      <h2 class="section-title text-white mb-1">Trending Creators</h2>
+      <div class="d-flex justify-content-between align-items-end mb-3">
+        <h2 class="section-title text-white mb-0 bg-transparent border-0">Trending Creators</h2>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'influencers' }">Explore More →</a>
+      </div>
       <div class="chip-row mb-4">
         <span class="chip" [class.active]="!selectedCategory" (click)="filterByCategory('')">All Categories</span>
         <span class="chip" *ngFor="let cat of creatorCategories" [class.active]="selectedCategory === cat" (click)="filterByCategory(cat)">{{ cat }}</span>
@@ -57,17 +75,19 @@
       <div *ngIf="influencersLoading && influencers.length === 0" class="text-center text-white-50">Loading influencers...</div>
 
       <div class="row g-3" *ngIf="influencers.length > 0">
-        <div class="col-12 col-md-6 col-lg-3" *ngFor="let influencer of influencers | slice:0:6">
+        <div class="col-12 col-md-6 col-lg-3" *ngFor="let influencer of influencers | slice:0:8">
           <app-influencer-user-card
             class="welcome-card-host"
             [profileImage]="influencer.profileImage || influencer.profileImages?.[0]?.url || ''"
             [name]="influencer.name || influencer.fullname || ''"
             [influencerCategory]="influencer.influencerCategory || influencer.categories?.[0] || ''"
+            [creatorTypes]="influencer.creatorTypes || []"
+            [professionalStatus]="!!influencer.professionalStatus"
             [isPremium]="influencer.isPremium || false"
             [promotionalPrice]="influencer.promotionalPrice"
-            [showWelcomeStartingPrice]="true"
-            [verificationStatus]="'not_submitted'"
-            [verifiedByTrendStarz]="false"
+            [showWelcomeStartingPrice]="isLoggedIn()"
+            [verificationStatus]="influencer.verificationStatus || 'not_submitted'"
+            [verifiedByTrendStarz]="influencer.verifiedByTrendStarz || false"
             [location]="{ state: influencer.location?.state || '' }"
             [socialMedia]="[]"
             [adminTags]="[]"
@@ -78,51 +98,59 @@
     </div>
   </section>
 
-  <section class="prelaunch-strip py-5" aria-label="Marketplace Highlights" *ngIf="!isMarketplaceReadyForPublic">
-    <div class="container py-4">
-      <div class="row g-4 align-items-stretch">
-        <div class="col-12 col-lg-7">
-          <article class="prelaunch-card h-100">
-            <h2 class="section-title mb-2">Building India's Most Trusted Creator Marketplace</h2>
-            <p class="section-subtitle mb-4">TrendStarz helps brands discover aligned creators, launch campaigns faster, and track outcomes with confidence.</p>
-            <div class="benefit-grid">
-              <div class="benefit-item">
-                <h5>Verified Creator Network</h5>
-                <p>Identity and profile checks designed for reliable brand partnerships.</p>
-              </div>
-              <div class="benefit-item">
-                <h5>Campaign Operations</h5>
-                <p>From brief to payout, the workflow is structured to reduce coordination overhead.</p>
-              </div>
-            </div>
-          </article>
+  <section class="container py-4" aria-label="Why creators and brands trust TrendStarZ">
+    <app-trust-badges-strip></app-trust-badges-strip>
+  </section>
+
+  <section class="photographers-strip py-5" aria-label="Photo and Videographers Grid" *ngIf="showPhotographersSection">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+          <h2 class="section-title mb-1 bg-transparent">Featured Photo/Videographers</h2>
+          <p class="section-subtitle">Discover visual creators available for campaigns and collaborations</p>
         </div>
-        <div class="col-12 col-lg-5">
-          <article class="prelaunch-card h-100">
-            <h3 class="mb-3">Early Success Targets</h3>
-            <div class="metric-list">
-              <div class="metric-item" *ngFor="let metric of successMetrics">
-                <span>{{ metric.label }}</span>
-                <strong>{{ metric.value }}</strong>
-              </div>
-            </div>
-            <hr />
-            <h4 class="mb-2">Top Creator Categories</h4>
-            <div class="chip-row dark mb-3">
-              <span class="chip light" *ngFor="let cat of homepageCategories">{{ cat }}</span>
-            </div>
-          </article>
+        <a class="btn btn-link view-all" routerLink="/search" [queryParams]="{ tab: 'photographers' }">Explore More →</a>
+      </div>
+
+      <div *ngIf="photographersLoading && photographers.length === 0" class="text-center text-muted">
+        Loading photo/videographers...
+      </div>
+
+      <div class="row g-3" *ngIf="photographers.length > 0">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let photographer of photographers | slice:0:4">
+          <app-photographer-user-card
+            class="welcome-card-host"
+            [profileImage]="photographer.profileImage || ''"
+            [profileImages]="photographer.profileImages || []"
+            [name]="photographer.name || ''"
+            [username]="photographer.username || ''"
+            [location]="photographer.location || {}"
+            [skills]="photographer.skills || []"
+            [pricing]="photographer.pricing || []"
+            [equipment]="photographer.equipment || []"
+            [socialMedia]="photographer.socialMedia || []"
+            [portfolio]="photographer.portfolio || ''"
+            [adminTags]="[]"
+            [isPremium]="photographer.isPremium || false"
+            [verifiedByTrendStarz]="photographer.verifiedByTrendStarz || false"
+            [verificationStatus]="photographer.verificationStatus || 'not_submitted'"
+            [socialMediaRestricted]="photographer.socialMediaRestricted === true"
+            [showStartingPrice]="isLoggedIn()"
+            (viewProfileClick)="viewPhotographerProfile(photographer)">
+          </app-photographer-user-card>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="demo-campaigns-strip py-5" aria-label="Featured Campaign Examples" *ngIf="!isMarketplaceReadyForPublic">
+  <app-why-trendstarz-glance *ngIf="!marketplaceLoading && !isMarketplaceReadyForPublic" [categories]="homepageCategories" [counters]="glanceCounters"></app-why-trendstarz-glance>
+
+  <section class="demo-campaigns-strip py-5" aria-label="Featured Campaign Examples" *ngIf="!marketplaceLoading && !isMarketplaceReadyForPublic">
     <div class="container py-4">
-      <h2 class="section-title text-center text-white mb-4">Featured Campaign Examples</h2>
+      <h2 class="text-center text-white mb-5">Featured Campaign Examples</h2>
       <div class="row g-3">
-        <div class="col-12 col-md-6 col-lg-4" *ngFor="let campaign of featuredCampaignExamples">
-          <article class="example-item h-100">
+        <div class="col-12 col-md-6 col-lg-4" *ngFor="let campaign of featuredCampaignExamples; let i = index">
+          <article class="example-item h-100" [ngClass]="'accent-' + (i % 3)">
             <h5>{{ campaign.title }}</h5>
             <p>{{ campaign.summary }}</p>
             <span>{{ campaign.focus }}</span>
@@ -132,7 +160,24 @@
     </div>
   </section>
 
-  <section class="faq-strip py-5" aria-label="Frequently Asked Questions">
+  <section class="brand-cta-strip py-1" aria-label="Brand registration">
+    <div class="container py-4">
+      <app-action-cta
+        heading="Ready to hire the right creative talent?"
+        description="Register as a Brand to hire Influencers and Photo/Videographers for campaigns that move your business forward."
+        buttonLabel="Register as a Brand"
+        buttonRoute="/register-brand"
+        ariaLabel="Register as a Brand"
+        (buttonClick)="regConfirm.open('brand')">
+      </app-action-cta>
+    </div>
+  </section>
+
+  <section class="container py-2 d-none" aria-label="Platform milestones">
+    <app-platform-stats-strip [items]="statsStripItems"></app-platform-stats-strip>
+  </section>
+
+  <section class="faq-strip py-1" aria-label="Frequently Asked Questions">
     <div class="container py-4">
       <ng-container
         [ngComponentOutlet]="faqAccordionComponent"

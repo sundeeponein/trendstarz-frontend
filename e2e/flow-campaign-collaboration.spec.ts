@@ -139,7 +139,7 @@ test.describe('Flow spec: campaigns and collaborations', () => {
 
     await page.goto('/campaigns');
 
-    await expect(page.getByRole('heading', { name: 'Open Campaigns' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Open Campaigns|Campaign Requests/i })).toBeVisible();
     await expect(page.locator('.invite-list')).toContainText('Pending Flow Campaign');
 
     await page.locator('.pill-tab', { hasText: 'Accepted' }).click();
@@ -345,10 +345,8 @@ test.describe('Flow spec: campaigns and collaborations', () => {
       }
     });
 
-    await expect(page.getByText('My Collaboration Requests')).toBeVisible();
-    await expect(page.getByText('Influencer Posted Request')).toBeVisible();
-
-    await page.getByRole('link', { name: 'Manage all collaboration requests' }).click();
-    await expect(page).toHaveURL(/\/campaigns$/);
+    await expect(page.getByText('Photo/Videographer Collaboration Requests')).toBeVisible();
+    await page.getByRole('button', { name: 'Open Collaborations' }).click();
+    await expect(page).toHaveURL(/\/campaigns\?tab=collaborations/);
   });
 });

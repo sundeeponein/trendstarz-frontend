@@ -20,14 +20,30 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   pendingPayments: PremiumPayment[] = [];
   approvedPayments: PremiumPayment[] = [];
   rejectedPayments: PremiumPayment[] = [];
+  refundedPayments: PremiumPayment[] = [];
+
+  premiumSummary = {
+    received: 0,
+    pending: 0,
+    rejected: 0,
+    refunded: 0,
+    netReceived: 0,
+  };
 
   activeTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
-  statusTab: 'pending' | 'approved' | 'rejected' = 'pending';
+  statusTab: 'pending' | 'approved' | 'rejected' | 'refunded' = 'pending';
+  sortOption: 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc' = 'date_desc';
+  modeFilter: 'all' | 'manual' | 'razorpay' = 'all';
   loading = false;
 
   rejectionReason = '';
+  rejectionReasonError = '';
   showRejectModal = false;
   selectedPaymentForReject: PremiumPayment | null = null;
+  refundReason = '';
+  refundReasonError = '';
+  showRefundModal = false;
+  selectedPaymentForRefund: PremiumPayment | null = null;
 
   currentPage = 1;
   pageSize = 10;
@@ -44,9 +60,38 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   }
 
   loadAllPayments() {
+    this.loadPremiumSummary();
     this.loadPendingPayments();
     this.loadApprovedPayments();
     this.loadRejectedPayments();
+    this.loadRefundedPayments();
+  }
+
+  loadPremiumSummary() {
+    const token = this.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.premiumPaymentsApi.getSummary(headers).subscribe({
+      next: (res) => {
+        const data = res?.data || {};
+        this.premiumSummary = {
+          received: Number(data.received || 0),
+          pending: Number(data.pending || 0),
+          rejected: Number(data.rejected || 0),
+          refunded: Number(data.refunded || 0),
+          netReceived: Number(data.netReceived || 0),
+        };
+      },
+      error: () => {
+        this.premiumSummary = {
+          received: 0,
+          pending: 0,
+          rejected: 0,
+          refunded: 0,
+          netReceived: 0,
+        };
+      },
+    });
   }
 
   loadPendingPayments() {
@@ -105,8 +150,24 @@ export class PremiumPaymentsPanelComponent implements OnInit {
       });
   }
 
+  loadRefundedPayments() {
+    const token = this.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.premiumPaymentsApi
+      .listByStatus('refunded', headers)
+      .subscribe({
+        next: (data) => {
+          this.refundedPayments = Array.isArray(data?.payments) ? data.payments : [];
+        },
+        error: () => {
+          this.refundedPayments = [];
+        },
+      });
+  }
+
   approvePayment(payment: PremiumPayment) {
-    if (!confirm(`Approve payment of ₹${payment.amount} from ${this.ui.getUserDisplayName(payment)}?`)) return;
+    if (!confirm(`Approve payment of ${this.ui.formatPremiumPaymentAmount(payment)} from ${this.ui.getUserDisplayName(payment)}?`)) return;
 
     const token = this.getToken();
     if (!token) {
@@ -129,6 +190,7 @@ export class PremiumPaymentsPanelComponent implements OnInit {
   openRejectModal(payment: PremiumPayment) {
     this.selectedPaymentForReject = payment;
     this.rejectionReason = '';
+    this.rejectionReasonError = '';
     this.showRejectModal = true;
   }
 
@@ -136,12 +198,14 @@ export class PremiumPaymentsPanelComponent implements OnInit {
     this.showRejectModal = false;
     this.selectedPaymentForReject = null;
     this.rejectionReason = '';
+    this.rejectionReasonError = '';
   }
 
   rejectPayment() {
     if (!this.selectedPaymentForReject) return;
+    this.rejectionReasonError = '';
     if (!this.rejectionReason.trim()) {
-      this.errorMessage.emit('Please provide a rejection reason');
+      this.rejectionReasonError = 'Please provide a rejection reason';
       return;
     }
 
@@ -162,6 +226,49 @@ export class PremiumPaymentsPanelComponent implements OnInit {
         },
         error: (err) => {
           this.errorMessage.emit(err?.error?.message || 'Failed to reject payment');
+        },
+      });
+  }
+
+  openRefundModal(payment: PremiumPayment) {
+    this.selectedPaymentForRefund = payment;
+    this.refundReason = '';
+    this.refundReasonError = '';
+    this.showRefundModal = true;
+  }
+
+  closeRefundModal() {
+    this.showRefundModal = false;
+    this.selectedPaymentForRefund = null;
+    this.refundReason = '';
+    this.refundReasonError = '';
+  }
+
+  refundPayment() {
+    if (!this.selectedPaymentForRefund) return;
+    this.refundReasonError = '';
+    if (!this.refundReason.trim()) {
+      this.refundReasonError = 'Please provide a refund reason';
+      return;
+    }
+
+    const token = this.getToken();
+    if (!token) {
+      this.errorMessage.emit('Not authenticated');
+      return;
+    }
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    this.premiumPaymentsApi
+      .refundPayment(this.selectedPaymentForRefund._id, this.refundReason.trim(), headers)
+      .subscribe({
+        next: (res) => {
+          this.successMessage.emit(res.message || 'Payment refunded');
+          this.closeRefundModal();
+          this.loadAllPayments();
+        },
+        error: (err) => {
+          this.errorMessage.emit(err?.error?.message || 'Failed to refund payment');
         },
       });
   }
@@ -198,9 +305,32 @@ export class PremiumPaymentsPanelComponent implements OnInit {
 
   get filteredPayments(): PremiumPayment[] {
     const type = this.currentUserType;
-    if (this.statusTab === 'pending') return this.pendingPayments.filter((p) => p.userType === type);
-    if (this.statusTab === 'approved') return this.approvedPayments.filter((p) => p.userType === type);
-    return this.rejectedPayments.filter((p) => p.userType === type);
+    let rows: PremiumPayment[];
+    if (this.statusTab === 'pending') rows = this.pendingPayments.filter((p) => p.userType === type);
+    else if (this.statusTab === 'approved') rows = this.approvedPayments.filter((p) => p.userType === type);
+    else if (this.statusTab === 'rejected') rows = this.rejectedPayments.filter((p) => p.userType === type);
+    else rows = this.refundedPayments.filter((p) => p.userType === type);
+    return this.sortPayments(this.filterByMode(rows));
+  }
+
+  private filterByMode(rows: PremiumPayment[]): PremiumPayment[] {
+    if (this.modeFilter === 'all') return rows;
+    return rows.filter((p) => {
+      const gateway = String(p.gatewayProvider || 'manual_upi').toLowerCase();
+      return this.modeFilter === 'razorpay' ? gateway === 'razorpay' : gateway !== 'razorpay';
+    });
+  }
+
+  private sortPayments(rows: PremiumPayment[]): PremiumPayment[] {
+    const sorted = [...rows];
+    sorted.sort((a, b) => {
+      if (this.sortOption === 'amount_desc') return (b.amount || 0) - (a.amount || 0);
+      if (this.sortOption === 'amount_asc') return (a.amount || 0) - (b.amount || 0);
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return this.sortOption === 'date_asc' ? aTime - bTime : bTime - aTime;
+    });
+    return sorted;
   }
 
   get pendingCount(): number {
@@ -213,5 +343,9 @@ export class PremiumPaymentsPanelComponent implements OnInit {
 
   get rejectedCount(): number {
     return this.rejectedPayments.filter((p) => p.userType === this.currentUserType).length;
+  }
+
+  get refundedCount(): number {
+    return this.refundedPayments.filter((p) => p.userType === this.currentUserType).length;
   }
 }

@@ -1,0 +1,192 @@
+<div class="user-settings-page">
+  <header class="settings-header">
+    <div>
+      <h1>Settings</h1>
+      <p>Manage notification access and account activity for this device.</p>
+    </div>
+    <a routerLink="/" class="settings-back">Back</a>
+  </header>
+
+  <section class="settings-section notif-card">
+    <div class="notif-card__header">
+      <div class="settings-section__main">
+        <div class="settings-icon">
+          <i class="bi bi-bell"></i>
+          <span class="settings-count" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </div>
+        <div>
+          <h2>Push Notifications</h2>
+          <p>Get real-time alerts on this device, even when the app is closed.</p>
+          <div class="settings-status">{{ notificationStatusLabel }}</div>
+        </div>
+      </div>
+
+      <div class="settings-actions" *ngIf="pushSupported">
+        <button type="button" class="btn-enable" (click)="enablePush()" [disabled]="pushBusy || pushPermission === 'denied' || pushActive">
+          {{ pushBusy ? 'Saving...' : 'Enable' }}
+        </button>
+        <button type="button" class="btn-disable" (click)="disablePush()" [disabled]="pushBusy || (!pushActive && pushPreference === 'disabled')">
+          Disable
+        </button>
+      </div>
+    </div>
+
+    <p class="notif-pref-hint">Applies to every device of that type on your account, not just this one.</p>
+
+    <div class="device-grid">
+      <label class="device-box">
+        <div class="device-box__icon device-box__icon--web"><i class="bi bi-laptop"></i></div>
+        <div class="device-box__body">
+          <strong>Web browsers</strong>
+          <span>Desktop &amp; laptop browser alerts</span>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" [checked]="webEnabled" [disabled]="preferencesBusy" (change)="toggleWebEnabled()" />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label class="device-box">
+        <div class="device-box__icon device-box__icon--mobile"><i class="bi bi-phone"></i></div>
+        <div class="device-box__body">
+          <strong>Mobile browsers</strong>
+          <span>Phone browser alerts</span>
+        </div>
+        <span class="toggle">
+          <input type="checkbox" [checked]="mobileEnabled" [disabled]="preferencesBusy" (change)="toggleMobileEnabled()" />
+          <span class="slider"></span>
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <section class="settings-section compact notif-pref-card">
+    <div>
+      <h2>Notification Preferences</h2>
+      <p>Fine-tune exactly what updates reach you.</p>
+    </div>
+
+    <div class="pref-category">
+      <div class="pref-category__label"><span class="dot dot--campaign"></span>Campaign management</div>
+      <div class="pref-category__box">
+        <div class="pref-category__box-header">
+          <strong>Campaign updates</strong>
+          <span class="badge-priority">Priority</span>
+        </div>
+        <label class="pref-category__box-row">
+          <span>Invites, applications, approvals, and disputes</span>
+          <span class="toggle">
+            <input type="checkbox" [checked]="campaignEnabled" [disabled]="preferencesBusy" (change)="toggleCampaignEnabled()" />
+            <span class="slider"></span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="pref-category">
+      <div class="pref-category__label"><span class="dot dot--payment"></span>Financial activity</div>
+      <div class="pref-category__box">
+        <label class="pref-category__box-row pref-category__box-row--icon">
+          <div class="pref-icon"><i class="bi bi-cash-coin"></i></div>
+          <div class="pref-category__box-text">
+            <strong>Payment updates</strong>
+            <span>Payments verified, payouts, and premium billing</span>
+          </div>
+          <span class="toggle">
+            <input type="checkbox" [checked]="paymentEnabled" [disabled]="preferencesBusy" (change)="togglePaymentEnabled()" />
+            <span class="slider"></span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="pref-reset">
+      <button type="button" class="btn-reset" (click)="resetPreferencesToDefaults()" [disabled]="preferencesBusy">Reset to defaults</button>
+    </div>
+  </section>
+
+  <section class="settings-section compact privacy-visibility" *ngIf="referralRole">
+    <div>
+      <h2>Privacy &amp; Visibility</h2>
+      <p>Control who can see your profile and whether it's eligible for the homepage hero spot.</p>
+    </div>
+
+    <app-profile-visibility-selector
+      [value]="profileVisibility"
+      [disabled]="visibilityBusy"
+      (valueChange)="onProfileVisibilityChange($event)">
+    </app-profile-visibility-selector>
+
+    <app-homepage-feature-toggle
+      [checked]="featuredInMarketing"
+      [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
+      [isPremium]="isPremium"
+      [isPublicProfile]="profileVisibility === 'PUBLIC'"
+      (checkedChange)="onFeaturedInMarketingChange($event)">
+    </app-homepage-feature-toggle>
+    <p class="visibility-note" *ngIf="isPremium && profileVisibility !== 'PUBLIC'">
+      Homepage Hero Feature is only available when your profile visibility is set to Public.
+    </p>
+  </section>
+
+  <section class="settings-section compact">
+    <div>
+      <h2>Account Activity</h2>
+      <p>Login and app-open activity are tracked separately.</p>
+    </div>
+    <div class="activity-grid">
+      <div>
+        <span>Last login</span>
+        <strong>{{ lastLoginAt ? (lastLoginAt | date:'medium') : '-' }}</strong>
+      </div>
+      <div>
+        <span>Last opened</span>
+        <strong>{{ lastOpenedAt ? (lastOpenedAt | date:'medium') : '-' }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <app-referral-link-card *ngIf="referralRole" [role]="referralRole" class="settings-section compact"></app-referral-link-card>
+
+  <section class="settings-section compact danger-zone" *ngIf="referralRole">
+    <div>
+      <h2>Delete Account</h2>
+      <p>Permanently delete your TrendStarZ account and public profile.</p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-delete"
+      *ngIf="!showDeleteConfirm"
+      (click)="openDeleteConfirm()">
+      Delete Account
+    </button>
+
+    <div class="delete-confirm" *ngIf="showDeleteConfirm">
+      <p class="delete-warning">
+        Delete your TrendStarZ account? Your public profile will be removed and you will no longer appear in
+        creator search or homepage features. Some transaction or campaign records may be retained where required
+        for legal or compliance purposes.
+      </p>
+      <label class="delete-password-label">
+        Enter your password to confirm
+        <input
+          type="password"
+          class="form-control"
+          [(ngModel)]="deletePassword"
+          [disabled]="deleteBusy"
+          autocomplete="current-password" />
+      </label>
+      <p class="delete-error" *ngIf="deleteError">{{ deleteError }}</p>
+      <div class="delete-confirm-actions">
+        <button type="button" class="btn-cancel" [disabled]="deleteBusy" (click)="cancelDeleteConfirm()">Cancel</button>
+        <button
+          type="button"
+          class="btn-delete-confirm"
+          [disabled]="deleteBusy || !deletePassword"
+          (click)="confirmDeleteAccount()">
+          {{ deleteBusy ? 'Deleting…' : 'Confirm Delete Account' }}
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

@@ -451,12 +451,6 @@ test.describe('Influencer — submit campaign post', () => {
         body: JSON.stringify({ success: true, submission: null }) });
     });
 
-    // Cloudinary upload (already in mockCommonRoutes but also here for the screenshot upload)
-    await page.route('**/api.cloudinary.com/**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ secure_url: 'https://res.cloudinary.com/test/image/upload/screenshot.png' }) });
-    });
-
     // Submit endpoint
     await page.route('**/campaign-invites/invite_001/submit', async (route) => {
       await route.fulfill({ status: 201, contentType: 'application/json',
@@ -480,20 +474,6 @@ test.describe('Influencer — submit campaign post', () => {
     // Select post type (Reel pill)
     const reelPill = page.locator('.pill:has-text("Reel")').first();
     if (await reelPill.count() > 0) await reelPill.click();
-
-    // Upload screenshot (required for canSubmit())
-    const screenshotInput = page.locator('input[type="file"][accept*="image"]').first();
-    await screenshotInput.setInputFiles({
-      name: 'screenshot.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'),
-    });
-    // Wait for Cloudinary mock upload to complete and set postScreenshotUrl
-    await page.waitForTimeout(2000);
-    // Trigger CD (zoneless)
-    await postUrlInput.focus();
-    await postUrlInput.blur();
-    await page.waitForTimeout(500);
 
     // Submit
     const submitBtn = page.locator('.btn-submit').first();

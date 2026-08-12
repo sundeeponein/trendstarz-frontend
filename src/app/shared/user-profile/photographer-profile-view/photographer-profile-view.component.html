@@ -14,11 +14,14 @@
     <div class="left-col">
       <div class="profile-card">
         <div class="profile-photo-wrap">
-          <img [src]="displayImage" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" />
+            <img [src]="displayImage" [attr.srcset]="getProfileSrcSet()" sizes="110px" (error)="onImgError($event)" alt="Profile photo" class="profile-photo" width="110" height="110" loading="eager" fetchpriority="high" decoding="sync" />
           <span class="pro-badge" *ngIf="photographer.isPremium">PRO</span>
         </div>
 
         <h2 class="profile-name">{{ photographer.name }}</h2>
+        <div *ngIf="isTrendstarzVerified">
+          <span class="verified-badge" title="Verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+        </div>
         <div class="profile-tags" *ngIf="displayTags.length">
           <span *ngFor="let tag of displayTags" class="profile-tag badge rounded-pill" [ngClass]="tagBadgeClass(tag)">
             {{ tag }}
@@ -36,23 +39,34 @@
         </p>
 
         <div class="profile-actions" *ngIf="isLoggedIn">
-          <a class="btn-follow" [href]="getMainSocialLink()" target="_blank" rel="noopener noreferrer">Follow</a>
+          <a
+            class="btn-follow"
+            [href]="getMainSocialLink()"
+            [attr.target]="hasMainSocialLink ? '_blank' : null"
+            [attr.rel]="hasMainSocialLink ? 'noopener noreferrer' : null"
+            [class.btn-follow--disabled]="!hasMainSocialLink"
+            (click)="!hasMainSocialLink && $event.preventDefault(); onFollowClick()"
+          >Follow</a>
+        </div>
+
+        <div class="detail-locked" *ngIf="isLoggedIn && !canOpenSocialProfiles">
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
         </div>
 
         <div class="stats-row">
-          <div class="stat-item">
+          <!-- <div class="stat-item">
             <span class="stat-val">{{ getPrimaryTier() || '—' }}</span>
             <span class="stat-lbl">TIER</span>
-          </div>
+          </div> -->
           <div class="stat-item">
             <span class="stat-val">{{ socialPlatforms.length }}</span>
             <span class="stat-lbl">PLATFORMS</span>
           </div>
           <div class="stat-item">
-            <span class="stat-val" [class.stat-val--price]="isProViewer && enabledPricing.length">
-              {{ isProViewer && enabledPricing.length ? '₹' + (enabledPricing[0].price || 0) : '—' }}
+            <span class="stat-val" [class.stat-val--price]="isProViewer && startingPriceEntry">
+              {{ isProViewer && startingPriceEntry ? '₹' + (startingPriceEntry.price || 0) : '—' }}
             </span>
-            <span class="stat-lbl">STARTING</span>
+            <span class="stat-lbl" title="Automatically calculated from service rates">STARTING PRICE</span>
           </div>
         </div>
       </div>
@@ -61,25 +75,25 @@
         <h6 class="section-label">DETAILS</h6>
         <div class="detail-list">
           <div class="detail-row" *ngIf="displayUsername">
-            <span class="detail-key">Username</span>
+            <div><span class="detail-key">Username</span></div>
             <span class="detail-val">@{{ displayUsername }}</span>
           </div>
 
-          <div class="detail-row">
-            <span class="detail-key">Pricing visibility</span>
+          <!-- <div class="detail-row">
+            <span class="detail-key">Pricing visibility</span><br>
             <span class="detail-val detail-val--price" *ngIf="isProViewer">Visible</span>
             <span class="detail-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Upgrade to view values</span>
-          </div>
+          </div> -->
 
           <div class="detail-row" *ngIf="getEquipmentChips().length">
-            <span class="detail-key">Equipment</span>
+            <div><span class="detail-key">Equipment</span></div>
             <div class="chip-list">
               <span *ngFor="let eq of getEquipmentChips()" class="chip chip--gray">{{ eq }}</span>
             </div>
           </div>
 
           <div class="detail-row" *ngIf="canViewContactDetails && photographer.portfolio">
-            <span class="detail-key">Portfolio</span>
+            <div><span class="detail-key">Portfolio</span></div>
             <a class="detail-val" [href]="photographer.portfolio" target="_blank" rel="noopener noreferrer">
               {{ stripProtocol(photographer.portfolio) }}
             </a>
@@ -100,37 +114,51 @@
         </p>
       </div>
 
-      <div class="info-card" *ngIf="galleryImages.length">
-        <h5 class="section-label">PORTFOLIO IMAGES</h5>
-        <div class="profile-gallery-grid">
-          <img *ngFor="let imageUrl of galleryImages" [src]="imageUrl" (error)="onImgError($event)" alt="Photographer profile" class="profile-gallery-image" />
-        </div>
-      </div>
-
-      <div class="info-card" *ngIf="enabledPricing.length">
-        <h5 class="section-label">SERVICES & PRICING</h5>
-        <div class="pricing-list">
-          <div class="pricing-row" *ngFor="let item of enabledPricing">
-            <span class="pricing-name">{{ getPriceLabel(item) }}</span>
-            <span class="pricing-value" *ngIf="isProViewer">₹{{ item.price | number }}</span>
-            <span class="pricing-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+      @defer (on idle) {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PORTFOLIO IMAGES</h5>
+          <div class="profile-gallery-grid">
+            <img *ngFor="let imageUrl of galleryImages; let i = index" [src]="getGalleryImageSrc(imageUrl)" (click)="openGalleryModal(i)" (error)="onImgError($event)" [attr.srcset]="getGallerySrcSet(imageUrl)" sizes="(max-width: 768px) 44vw, 240px" alt="Photographer profile" class="profile-gallery-image" width="360" height="360" loading="lazy" fetchpriority="low" decoding="async" />
           </div>
         </div>
-      </div>
-
-      <div class="info-card" *ngIf="socialPlatforms.length">
-        <h5 class="section-label">SOCIAL PLATFORMS</h5>
-        <div class="social-list">
-          <a *ngFor="let sm of socialPlatforms" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-item">
-            <span class="social-icon-circle"><i [class]="'bi ' + getSocialIcon(sm.platform)"></i></span>
-            <div>
-              <strong>{{ getPlatformLabel(sm) }}</strong>
-              <div class="social-handle" *ngIf="sm.handle">&#64;{{ sm.handle }}</div>
-            </div>
-            <span class="social-tier" *ngIf="sm.tier">{{ sm.tier }}</span>
-          </a>
+      } @placeholder {
+        <div class="info-card" *ngIf="galleryImages.length">
+          <h5 class="section-label">PORTFOLIO IMAGES</h5>
+          <p class="about-text text-muted mb-0">Loading images...</p>
         </div>
-      </div>
+      }
+
+      @defer (on idle) {
+        <div class="info-card" *ngIf="enabledPricing.length">
+          <h5 class="section-label">SERVICES & PRICING</h5>
+          <div class="pricing-list">
+            <div class="pricing-row" *ngFor="let item of enabledPricing">
+              <span class="pricing-name">{{ getPriceLabel(item) }}</span>
+              <span class="pricing-value text-black" *ngIf="isProViewer">₹{{ item.price | number }}</span>
+              <span class="pricing-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Pro only</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      @defer (on idle) {
+        <app-profile-social-platforms
+          title="SOCIAL PLATFORMS"
+          variant="influencer"
+          [platforms]="socialPlatforms"
+          [locked]="!isProViewer || !!photographer.socialMediaRestricted"
+          lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+          [canOpen]="isProViewer && canOpenSocialProfiles"
+          [isProViewer]="isProViewer"
+          [showEngagement]="false"
+          [showContentTypes]="true"
+          (platformClick)="onPlatformClick($event)"
+        ></app-profile-social-platforms>
+      }
+
+      <app-collaboration-availability-view
+        [availability]="photographer.collaborationAvailability">
+      </app-collaboration-availability-view>
     </div>
 
     <div class="right-col">
@@ -149,7 +177,7 @@
           <span style="font-size:1.3em;">🔒</span>
           <div>
             <strong>Free Plan</strong>
-            <div><small>Pricing values and contact are shown only after campaign invite acceptance and unlock.</small></div>
+            <div><small>Pricing values and contact are shown only after payment-confirmed campaign unlock; only verified email/mobile are visible.</small></div>
           </div>
         </div>
         <a *ngIf="isBrandViewer" routerLink="/campaigns" class="plan-status-card__btn">Start Campaign</a>
@@ -183,7 +211,10 @@
             <span class="contact-icon-wrap ci--email"><i class="bi bi-envelope"></i></span>
             <div class="contact-content">
               <span class="contact-field-lbl">Email</span>
-              <span class="contact-field-val" *ngIf="canViewContactDetails && photographer.email && photographer.contact?.email">{{ photographer.email }}</span>
+              <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && photographer.email && photographer.contact?.email">
+                {{ photographer.email }}
+                <i class="bi bi-patch-check-fill contact-verified" *ngIf="isEmailVerified" title="Email verified"></i>
+              </span>
               <span class="contact-field-blur" *ngIf="!canViewContactDetails || !photographer.contact?.email">••••••••••</span>
             </div>
           </div>
@@ -191,7 +222,10 @@
             <span class="contact-icon-wrap ci--phone"><i class="bi bi-telephone"></i></span>
             <div class="contact-content">
               <span class="contact-field-lbl">Phone / Call</span>
-              <span class="contact-field-val" *ngIf="canViewContactDetails && photographer.phoneNumber && photographer.contact?.call">+91 {{ photographer.phoneNumber }}</span>
+              <span class="contact-field-val contact-field-val--with-status" *ngIf="canViewContactDetails && photographer.phoneNumber && photographer.contact?.call">
+                +91 {{ photographer.phoneNumber }}
+                <i class="bi bi-patch-check-fill contact-verified" *ngIf="isPhoneVerified" title="Mobile verified"></i>
+              </span>
               <span class="contact-field-blur" *ngIf="!canViewContactDetails || !photographer.contact?.call">••••••••••</span>
             </div>
           </div>
@@ -212,7 +246,7 @@
       </div>
 
       <div class="insights-card">
-        <div class="insights-badge-wrap"><span class="insights-badge"><i class="bi bi-star-fill"></i> Premium insights</span></div>
+        <div class="insights-badge-wrap"><span class="insights-badge"><i class="bi bi-star-fill"></i> Premium insights - coming soon</span></div>
         <ng-container *ngIf="!isProViewer">
           <p class="insights-tease">Unlock detailed pricing, equipment insights, and performance indicators.</p>
           <div class="insights-blur-row"></div>
@@ -246,3 +280,13 @@
     </div>
   </div>
 </div>
+
+<app-image-gallery-modal
+  [open]="galleryModalOpen"
+  title="Portfolio Images"
+  [images]="galleryImages"
+  [(selectedIndex)]="galleryModalIndex"
+  imageAlt="Selected portfolio image"
+  thumbnailAlt="Portfolio thumbnail"
+  (closed)="closeGalleryModal()"
+></app-image-gallery-modal>

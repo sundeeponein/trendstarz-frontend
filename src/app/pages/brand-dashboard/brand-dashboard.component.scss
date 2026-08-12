@@ -1,24 +1,5 @@
 @use '../../shared/styles/dashboard-layout' as *;
 
-// Brand-dashboard overrides
-.section-card {
-  padding: 1.2rem 1rem 1.5rem 1rem;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-}
-
-.section-count { margin-left: 0.5rem; }
-
-.dot {
-  &--orange { background: #f5c29e; }
-  &--blue { background: #a3d3f5; }
-  &--purple { background: #bba3f5; }
-}
-
-.section-empty { margin-top: 2.5rem; }
-
-
 .payments-summary {
   display: grid;
   gap: 0.35rem;
@@ -44,65 +25,6 @@
   }
 }
 
-.txn-see-all {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f3f4f6;
-  &__link {
-    font-size: 0.85rem;
-    color: #2563eb;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 500;
-    &:hover { text-decoration: underline; }
-  }
-}
-
-.profile-traffic-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
-  gap: 0.75rem;
-}
-
-.traffic-stat-box {
-  border: 1px solid #eceff4;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  background: #f9fafb;
-}
-
-.traffic-stat-label {
-  font-size: 0.82rem;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.traffic-stat-value {
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.traffic-stat-meta {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  color: #6b7280;
-  font-size: 0.82rem;
-}
-
-.traffic-locked-state {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #4b5563;
-  font-size: 0.9rem;
-}
-
 .needs-attention {
   .attention-card {
     cursor: pointer;
@@ -114,4 +36,3 @@
     &.fulfillment { border-left: 4px solid #0dcaf0 !important; }
   }
 }
-

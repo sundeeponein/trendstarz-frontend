@@ -1,0 +1,32 @@
+.score-ring {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.score-ring__inner {
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.score-ring__value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #161a26;
+}
+
+.score-ring__max {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #9aa3b5;
+  margin-top: 0.15rem;
+}

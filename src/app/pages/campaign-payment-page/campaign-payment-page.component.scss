@@ -256,6 +256,57 @@
   &--ok { background: #d1fae5; color: #065f46; }
 }
 
+.cmp-payout-message {
+  margin: 12px 0;
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  background: #f0fdf4;
+  overflow: hidden;
+}
+
+.cmp-payout-message-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+
+  strong {
+    display: block;
+    color: #064e3b;
+    font-size: 0.9rem;
+  }
+
+  span {
+    color: #047857;
+    font-size: 0.76rem;
+  }
+}
+
+.cmp-payout-message-body {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+
+  pre {
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    background: #fff;
+    color: #111827;
+    font-family: inherit;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .cmp-copy-btn {
+    justify-self: end;
+  }
+}
+
 .cmp-resubmit {
   margin-top: 16px;
   p { font-size: 0.85rem; color: #374151; margin-bottom: 8px; }
@@ -274,4 +325,49 @@
   font-size: 0.8rem;
   color: #9ca3af;
   a { color: #6b7280; }
+}
+
+// ── QR + UPI Grid Layout ──
+.cmp-pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cmp-section-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cmp-qr-block {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.cmp-qr-img {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.cmp-qr-hint {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  letter-spacing: 0.05em;
 }

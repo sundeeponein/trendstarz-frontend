@@ -2,7 +2,8 @@
   <div class="navbar-content d-flex justify-content-between w-100">
     <div class="navbar-brand">
       <a routerLink="/" class="logo-link">
-        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
+        <!-- <img src="assets/logo-trendstarz-text-white.png" alt="TrendStarz" class="logo-image" width="200" height="40" /> -->
+         <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" width="200" height="40" />
       </a>
     </div>
 
@@ -17,9 +18,9 @@
         Dashboard
       </a>
       <!-- will active on in 30days so dont remove this code  -->
-      <!-- <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+      <a *ngIf="showSearchLink" [routerLink]="searchRoute" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         {{ searchLabel }}
-      </a> -->
+      </a>
       <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand'" class="nav-tab">
         Campaigns
       </a>
@@ -35,22 +36,30 @@
       <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="nav-tab" [class.active]="isPhotographerCollaborationsNavActive">
         Collaborations
       </a>
-      <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
+      <!-- <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="nav-tab">
         Transactions
-      </a>
-      <a routerLink="/features" routerLinkActive="active" class="nav-tab">
-        Features
-      </a>
-      <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
-        Register as Influencer
-      </a>
-      <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="nav-tab">
-        Register as Brand
-      </a>
-
-      <!-- <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="!user" class="nav-tab">
-        Register as Photographer
       </a> -->
+      <a routerLink="/how-it-works" routerLinkActive="active" class="nav-tab">
+        How It Works
+      </a>
+      <a routerLink="/why-trendstarz" routerLinkActive="active" class="nav-tab">
+        Why TrendStarz
+      </a>
+      <a *ngIf="!user" routerLink="/trendstarz-score" routerLinkActive="active" class="nav-tab">
+        TrendStarZ Score ⭐
+      </a>
+      <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+        TrendStarZ Score ⭐
+      </a>
+      <a *ngIf="showRegisterInfluencerLink" class="nav-tab" (click)="regConfirm.open('influencer')" style="cursor:pointer;">
+        Join as Influencer
+      </a>
+      <a *ngIf="showRegisterBrandLink" class="nav-tab" (click)="regConfirm.open('brand')" style="cursor:pointer;">
+        Join as Brand
+      </a>
+      <a *ngIf="showRegisterPhotographerLink" class="nav-tab" (click)="regConfirm.open('photographer')" style="cursor:pointer;">
+        Join as Photographer
+      </a>
     </div>
 
     <div class="navbar-actions">
@@ -66,7 +75,7 @@
           <div class="notifications-menu" *ngIf="notificationsOpen">
             <div class="notifications-header">
               <strong>Notifications</strong>
-              <button type="button" class="mark-all-btn" *ngIf="unreadNotificationCount > 0" (click)="markAllNotificationsRead()">Mark all read</button>
+              <button type="button" class="mark-all-btn" *ngIf="notifications.length > 0" (click)="markAllNotificationsRead()">Clear all</button>
             </div>
 
             <button
@@ -90,33 +99,50 @@
           Login
         </a>
 
-        <span class="badge rounded-pill bg-success d-none d-md-block" *ngIf="user && user.isPremium">Pro plan</span>
-        <span class="badge rounded-pill bg-secondary d-none d-md-block" *ngIf="user && !user.isPremium">Free plan</span>
-        <span class="badge rounded-pill d-none d-md-inline-flex commission-badge" *ngIf="user && hasCommissionBadge" [ngClass]="commissionBadgeClass">{{ commissionBadgeLabel }}</span>
 
         <div class="profile-dropdown d-none d-md-block" *ngIf="user">
-          <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
+          <button class="profile-btn" (click)="toggleDropdown()" [attr.aria-expanded]="dropdownOpen">
             <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'"
                  [alt]="user.name || user.brandName || 'User'"
-                 class="profile-avatar" />
+                 class="profile-avatar"
+                 width="40"
+                 height="40" />
             <span class="profile-name">
               {{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : 'User') }}
             </span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
-            <li><span class="dropdown-header">{{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : user.email) }}</span></li>
+            <li>
+              <span class="dropdown-header">{{ (user.name && user.name !== user.email) ? user.name : (user.brandName && user.brandName !== user.email ? user.brandName : user.email) }}</span>
+            </li>
             <li><hr class="dropdown-divider"></li>
+            <!-- plans subscription and Badgs given by admin -->
+            <li class="dropdown-item">
+              <span class="ml-3 badge rounded-pill bg-success d-none d-md-block d-md-inline-flex" *ngIf="user && user.isPremium">Pro</span>
+              <!-- <span class="badge rounded-pill bg-secondary d-none d-md-block d-md-inline-flex" *ngIf="user && !user.isPremium">Free plan</span> -->
+              <span class="badge rounded-pill d-none d-md-inline-flex commission-badge" *ngIf="user && hasCommissionBadge" [ngClass]="commissionBadgeClass">{{ commissionBadgeLabel }}</span>
+            </li>
+            <!-- influencers visible links -->
             <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/influencer-profile">Profile</a></li>
+            <!-- <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }">Campaigns</a></li> -->
+            <!-- <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }">Collaborations</a></li> -->
+            
+            <!-- Brands visible links -->
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/brand-profile">Profile</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-profile">Profile</a></li>
             <li *ngIf="user?.role === 'brand'"><a class="dropdown-item" routerLink="/campaigns">Campaigns</a></li>
-            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'campaigns' }">Campaigns</a></li>
-            <li *ngIf="user?.role === 'influencer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }">Collaborations</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }">Campaigns</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }">Collaborations</a></li>
-            <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/transactions">Transactions</a></li>
-            <li *ngIf="user?.role === 'influencer' || user?.role === 'brand'"><a class="dropdown-item" routerLink="/payment-history">Subscription History</a></li>
-            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-dashboard">Dashboard</a></li>
+
+            <!-- photographer visible links -->
+            <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-profile">Profile</a></li>
+            <!-- <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/photographer-dashboard">Dashboard</a></li> -->
+            <!-- <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }">Campaigns</a></li> -->
+            <!-- <li *ngIf="user?.role === 'photographer'"><a class="dropdown-item" routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }">Collaborations</a></li> -->
+            
+            <!-- influencer & brand visible links -->
+            <li *ngIf="user?.role === 'influencer' || user?.role === 'brand' || user?.role === 'photographer'"><a class="dropdown-item" routerLink="/transactions">Transactions</a></li>
+            <li *ngIf="user?.role === 'influencer' || user?.role === 'brand' || user?.role === 'photographer'"><a class="dropdown-item" routerLink="/payment-history">Subscription History</a></li>
+            <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
+            
+            <!-- Admin visible links -->
             <li *ngIf="user?.role === 'admin'"><a class="dropdown-item" routerLink="/admin/deleted-users">Admin Panel</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
@@ -160,7 +186,7 @@
 
       <div class="mobile-user-card" *ngIf="user">
         <div class="mobile-user-meta-wrap">
-          <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" [alt]="displayName" class="mobile-avatar" />
+          <img [src]="validProfileImage || 'assets/logo-trendstarz-logo.png'" [alt]="displayName" class="mobile-avatar" width="100" height="100" />
         
           <div class="mobile-user-name-row">
             <div class="mobile-user-name">{{ displayName }}</div>
@@ -177,7 +203,12 @@
             <a *ngIf="user?.role === 'influencer'" class="mobile-link" routerLink="/influencer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             <a *ngIf="user?.role === 'brand'" class="mobile-link" routerLink="/brand-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             <a *ngIf="user?.role === 'photographer'" class="mobile-link" routerLink="/photographer-profile" (click)="closeMobileMenu()"><i class="bi bi-person-circle"></i><span>Profile</span></a>
-            <a *ngIf="user?.role === 'influencer' || user?.role === 'brand'" class="mobile-link" routerLink="/payment-history" (click)="closeMobileMenu()"><i class="bi bi-clock-history"></i><span>Subscription History</span></a>
+            <a class="mobile-link mobile-link--with-count" routerLink="/settings" (click)="closeMobileMenu()">
+              <i class="bi bi-bell"></i>
+              <span>Notification Settings</span>
+              <span class="mobile-notif-count" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
+            </a>
+            <a *ngIf="user?.role === 'influencer' || user?.role === 'brand' || user?.role === 'photographer'" class="mobile-link" routerLink="/payment-history" (click)="closeMobileMenu()"><i class="bi bi-clock-history"></i><span>Subscription History</span></a>
             <a *ngIf="user?.role === 'photographer'" class="mobile-link" routerLink="/photographer-dashboard" (click)="closeMobileMenu()"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
             <a *ngIf="user?.role === 'admin'" class="mobile-link" routerLink="/admin/deleted-users" (click)="closeMobileMenu()"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>
           </div>
@@ -198,12 +229,15 @@
         <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" *ngIf="user?.role === 'influencer'" class="mobile-link" [class.active]="isInfluencerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCampaignsNavActive" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
-        <a routerLink="/search" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
-        <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
-        <a routerLink="/features" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>Features</span></a>
-        <a routerLink="/register-influencer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
-        <a routerLink="/register-brand" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-building"></i><span>Register as Brand</span></a>
-        <a routerLink="/register-photographer" routerLinkActive="active" *ngIf="!user" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
+        <a *ngIf="showSearchLink" [routerLink]="searchRoute" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
+        <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer' || user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
+        <a routerLink="/how-it-works" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>How It Works</span></a>
+        <a routerLink="/why-trendstarz" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
+        <a *ngIf="!user" routerLink="/trendstarz-score" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendStarZ Score ⭐</span></a>
+        <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendStarZ Score ⭐</span></a>
+        <a *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('influencer')" style="cursor:pointer;"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
+        <a *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('brand')" style="cursor:pointer;"><i class="bi bi-building"></i><span>Register as Brand</span></a>
+        <a *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('photographer')" style="cursor:pointer;"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
       </div>
 
       <div class="mobile-upgrade" *ngIf="user && !user?.isPremium">
@@ -226,3 +260,4 @@
 <app-footer></app-footer>
 
 <app-image-guidelines-modal></app-image-guidelines-modal>
+<app-registration-confirm-modal></app-registration-confirm-modal>

@@ -4,9 +4,14 @@
   <div class="page-header">
     <div class="header-content">
       <div class="header-text">
-        <h1 class="page-title">
-          {{ pageTitle }}
-        </h1>
+        <div class="page-title-row">
+          <h1 class="page-title">
+            {{ pageTitle }}
+          </h1>
+          <div class="page-usage d-none" *ngIf="showUsageSummary">
+            <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary>
+          </div>
+        </div>
         <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading) || (isPhotographerMode && !photographersLoading)">
           {{ pageSubtitle }}
         </p>
@@ -21,40 +26,35 @@
   </div>
 
   <!-- Tab Toggle (real) -->
-  <div class="search-tabs-row" *ngIf="showInfluencerTab || showPhotographersTab">
+  <div class="search-tabs-row" *ngIf="canShowInfluencerTab || canShowPhotographersTab">
     <div class="pill-tabs">
-      <button class="pill-tab" *ngIf="showInfluencerTab" [class.active]="activeTab === 'influencers'" (click)="setTab('influencers')">
+      <button class="pill-tab" *ngIf="canShowInfluencerTab" [class.active]="activeTab === 'influencers'" (click)="setTab('influencers')">
         <i class="bi bi-people-fill"></i> Influencers
       </button>
-      <button class="pill-tab" *ngIf="showPhotographersTab" [class.active]="activeTab === 'photographers'" (click)="setTab('photographers')">
-        <i class="bi bi-camera-fill"></i> Photographers
+      <button class="pill-tab" *ngIf="canShowPhotographersTab" [class.active]="activeTab === 'photographers'" (click)="setTab('photographers')">
+        <i class="bi bi-camera-fill"></i> Photo/Videographers
       </button>
     </div>
   </div>
-
-  <!-- Tab Toggle (commented old) -->
-  <!-- <div class="search-tabs-row">
-    <div class="pill-tabs">
-      <button class="pill-tab" [class.active]="activeTab === 'influencers'" (click)="setTab('influencers')">
-        <i class="bi bi-people-fill"></i> Influencers
-      </button>
-      <button class="pill-tab" [class.active]="activeTab === 'brands'" (click)="setTab('brands')">
-        <i class="bi bi-building"></i> Brands
-      </button>
-    </div>
-  </div> -->
 
   <!-- Upgrade Banner (shown only for logged-in free users) -->
   <div class="upgrade-banner" *ngIf="isFreeUser">
     <div class="upgrade-banner__content">
-      <strong>Upgrade to Pro — unlock contact details &amp; advanced filters</strong>
-      <p>Free users see limited info. Pro brands see WhatsApp, email, phone, pricing &amp; engagement rates.</p>
+      <strong>{{ isAdminUser ? 'Starter (Free) preview' : 'Upgrade to Pro — unlock contact details & advanced filters' }}</strong>
+      <p>{{ isAdminUser ? 'This is how the search page appears to a Starter user.' : 'Free users see limited info. Pro brands see WhatsApp, email, phone, pricing & engagement rates.' }}</p>
     </div>
-    <a routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
+    <a *ngIf="!isAdminUser" routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
   </div>
 
   <!-- ───── REUSABLE FILTERS ───── -->
-  <div class="filter-bar">
+  <button type="button" class="mobile-filter-toggle" (click)="toggleMobileFilters()" [attr.aria-expanded]="showMobileFilters">
+    <i class="bi bi-sliders"></i>
+    <span>Filters</span>
+    <span class="mobile-filter-count" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+    <i class="bi" [ngClass]="showMobileFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+  </button>
+
+  <div class="filter-bar" [class.is-collapsed]="!showMobileFilters">
     <!-- Keyword Search -->
     <div class="filter-item search-item">
       <label class="filter-label">Search</label>
@@ -92,7 +92,7 @@
       <label class="filter-label">Tier</label>
       <select class="filter-select" [(ngModel)]="infFilters.tier" (ngModelChange)="applyInfluencerFilters()">
         <option value="">All Tiers</option>
-        <option *ngFor="let tier of tierOptions" [value]="tier">{{ tier }}</option>
+        <option *ngFor="let tier of tierOptions" [value]="tier">{{ getTierOptionLabel(tier) }}</option>
       </select>
     </div>
 
@@ -113,6 +113,14 @@
       </select>
     </div>
 
+    <!-- Sort -->
+    <div class="filter-item" *ngIf="isInfluencerMode || isPhotographerMode">
+      <label class="filter-label">Sort By</label>
+      <select class="filter-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+        <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+    </div>
+
     <!-- Actions -->
     <div class="filter-actions">
       <button class="btn-clear" (click)="clearActiveFilters()">
@@ -123,6 +131,15 @@
 
   <!-- ───── INFLUENCER RESULTS ───── -->
   <div class="results-area" *ngIf="isInfluencerMode">
+    <div class="guest-conversion-prompt" *ngIf="showGuestInvitePrompt && isGuestUser">
+      <strong>Create a free Brand account to invite verified creators and start campaigns.</strong>
+      <div class="guest-conversion-actions">
+        <button type="button" class="btn-create-campaign" (click)="router.navigate(['/register-brand'])">
+          Create Free Brand Account
+        </button>
+      </div>
+    </div>
+
     <!-- Pro users appear first hint -->
     <div class="pro-first-hint" *ngIf="!isProView">
       <i class="bi bi-star-fill"></i> Pro users appear first
@@ -143,20 +160,23 @@
     <!-- Empty -->
     <div class="empty-state" *ngIf="!influencersLoading && !influencersError && filteredInfluencers.length === 0">
       <i class="bi bi-people"></i>
-      <p>No influencers found matching your filters.</p>
+      <p><strong>No creators found in your area.</strong></p>
+      <p class="empty-state__hint">Try expanding your search to nearby districts or states, or adjust your filters.</p>
       <button class="btn-clear" (click)="clearInfluencerFilters()">Clear Filters</button>
     </div>
 
     <!-- Grid -->
     <div class="results-grid" *ngIf="!influencersLoading && !influencersError && filteredInfluencers.length > 0">
       <app-influencer-user-card
-        *ngFor="let influencer of filteredInfluencers"
+        *ngFor="let influencer of getPagedInfluencers()"
         [profileImage]="influencer.profileImage || ''"
         [profileImages]="influencer.profileImages || []"
         [name]="influencer.name || influencer.fullname || ''"
         [username]="influencer.username || ''"
         [categories]="influencer.categories || []"
         [influencerCategory]="influencer.influencerCategory || ''"
+        [creatorTypes]="influencer.creatorTypes || []"
+        [professionalStatus]="!!influencer.professionalStatus"
         [verificationStatus]="influencer.verificationStatus || 'not_submitted'"
         [verifiedByTrendStarz]="!!influencer.verifiedByTrendStarz"
         [location]="influencer.location || {}"
@@ -166,13 +186,16 @@
         [promotionalPrice]="influencer.promotionalPrice"
         [engagementRate]="getEngagementRate(influencer)"
         [showCampaignBtn]="isBrandUser"
-        [selectable]="isBrandUser"
-        [selected]="isInfluencerSelected(influencer)"
         [isProViewer]="isProView"
         [contactRestricted]="influencer.contactRestricted !== false"
+        [socialMediaRestricted]="influencer.socialMediaRestricted === true"
+        [profileViewDisabled]="isInfluencerProfileViewDisabled(influencer)"
+        [collaborationScore]="influencer.collaborationScore ?? null"
+        [campaignReady]="influencer.campaignReadiness ?? null"
+        [trendstarzRecommended]="influencer.trendstarzRecommended === true"
+        [suggestedPriceRange]="influencer.suggestedPriceRange ?? null"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
-        (createCampaignClick)="createCampaignForOne(influencer)"
-        (toggleSelect)="toggleInfluencerSelection(influencer)">
+        (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-influencer-user-card>
     </div>
   </div>
@@ -201,7 +224,7 @@
     <!-- Grid -->
     <div class="results-grid" *ngIf="!brandsLoading && !brandsError && filteredBrands.length > 0">
       <app-brand-user-card
-        *ngFor="let brand of filteredBrands"
+        *ngFor="let brand of getPagedBrands()"
         [brandLogo]="brand.brandLogo"
         [brandLogoUrl]="getBrandLogoUrl(brand)"
         [brandName]="brand.brandName || ''"
@@ -210,12 +233,15 @@
         [socialMedia]="brand.socialMedia || []"
         [adminTags]="brand.adminTags || []"
         [isPremium]="brand.isPremium || false"
+        [verifiedByTrendStarz]="brand.verifiedByTrendStarz || false"
+        [verificationStatus]="brand.verificationStatus || 'not_submitted'"
         [promotionalPrice]="brand.promotionalPrice"
         [products]="brand.products || []"
         [website]="brand.website || ''"
         [showCampaignBtn]="isBrandUser"
         [isProViewer]="isProView"
         [contactRestricted]="brand.contactRestricted !== false"
+        [socialMediaRestricted]="brand.socialMediaRestricted === true"
         (viewProfileClick)="viewBrandProfile(brand)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-brand-user-card>
@@ -224,6 +250,15 @@
 
   <!-- ───── PHOTOGRAPHER RESULTS ───── -->
   <div class="results-area" *ngIf="isPhotographerMode">
+    <div class="guest-conversion-prompt" *ngIf="showGuestInvitePrompt && isGuestUser">
+      <strong>Create a free Brand account to invite verified creators and start campaigns.</strong>
+      <div class="guest-conversion-actions">
+        <button type="button" class="btn-create-campaign" (click)="router.navigate(['/register-brand'])">
+          Create Free Brand Account
+        </button>
+      </div>
+    </div>
+
     <div class="loading-state" *ngIf="photographersLoading">
       <div class="spinner-border text-primary" role="status"></div>
       <p>Loading photographers…</p>
@@ -234,12 +269,13 @@
     </div>
     <div class="empty-state" *ngIf="!photographersLoading && !photographersError && filteredPhotographers.length === 0">
       <i class="bi bi-camera"></i>
-      <p>No photographers found matching your filters.</p>
+      <p><strong>No creators found in your area.</strong></p>
+      <p class="empty-state__hint">Try expanding your search to nearby districts or states, or adjust your filters.</p>
       <button class="btn-clear" (click)="clearPhotographerFilters()">Clear Filters</button>
     </div>
     <div class="results-grid" *ngIf="!photographersLoading && !photographersError && filteredPhotographers.length > 0">
       <app-photographer-user-card
-        *ngFor="let p of filteredPhotographers"
+        *ngFor="let p of getPagedPhotographers()"
         [profileImage]="p.profileImage || ''"
         [profileImages]="p.profileImages || []"
         [name]="p.name || ''"
@@ -254,26 +290,29 @@
         [isPremium]="p.isPremium || false"
         [verifiedByTrendStarz]="p.verifiedByTrendStarz || false"
         [verificationStatus]="p.verificationStatus || 'not_submitted'"
+        [socialMediaRestricted]="p.socialMediaRestricted === true"
+        [profileViewDisabled]="isPhotographerProfileViewDisabled(p)"
+        [collaborationScore]="p.collaborationScore ?? null"
+        [campaignReady]="p.campaignReadiness ?? null"
+        [trendstarzRecommended]="p.trendstarzRecommended === true"
+        [suggestedPriceRange]="p.suggestedPriceRange ?? null"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
     </div>
   </div>
 
-  <!-- ───── FLOATING SELECTION TRAY (brand users) ───── -->
-  <div class="selection-tray" *ngIf="isBrandUser && selectedCount > 0">
-    <div class="selection-tray__info">
-      <i class="bi bi-people-fill"></i>
-      <span><strong>{{ selectedCount }}</strong> influencer{{ selectedCount > 1 ? 's' : '' }} selected</span>
+  <div class="results-pagination" *ngIf="shouldShowPagination()">
+    <div class="results-pagination__meta">
+      {{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalActiveResults() }} results
     </div>
-    <div class="selection-tray__actions">
-      <button class="tray-btn tray-btn--ghost" (click)="clearSelection()">
-        <i class="bi bi-x-lg"></i> Clear
+    <div class="results-pagination__actions">
+      <button type="button" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()">
+        <i class="bi bi-chevron-left"></i>
       </button>
-      <button class="tray-btn tray-btn--primary" (click)="router.navigate(['/campaigns'])">
-        <i class="bi bi-send-fill"></i> Go to Create Campaign
+      <button type="button" (click)="goToNextPage()" [disabled]="!hasNextPage()">
+        <i class="bi bi-chevron-right"></i>
       </button>
     </div>
   </div>
-
 
 </div>

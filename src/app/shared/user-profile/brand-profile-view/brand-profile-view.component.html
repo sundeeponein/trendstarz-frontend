@@ -17,6 +17,9 @@
         <img [src]="displayImage" (error)="onImgError($event)" alt="Brand logo" class="brand-logo" />
         <div class="brand-header-info">
           <h1 class="brand-name">{{ brand.brandName || brand.name }}</h1>
+          <div *ngIf="isTrendstarzVerified">
+            <span class="verified-badge" title="Verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+          </div>
           <div class="brand-tags" *ngIf="displayTags.length">
             <span
               *ngFor="let tag of displayTags"
@@ -41,15 +44,33 @@
           [attr.target]="hasFollowLink ? '_blank' : null"
           [attr.rel]="hasFollowLink ? 'noopener noreferrer' : null"
           [class.btn-follow--disabled]="!hasFollowLink"
-          (click)="!hasFollowLink && $event.preventDefault()"
+          (click)="!hasFollowLink && $event.preventDefault(); onFollowClick()"
         >Follow</a>
         <!-- <button class="btn btn-contact" *ngIf="isLoggedIn" (click)="onContactClick()">Contact</button> -->
+      </div>
+    </div>
+
+    <div class="contact-info-card" *ngIf="isLoggedIn && !canOpenSocialProfiles">
+      <h6 class="section-label">Social Profiles Locked</h6>
+      <div class="contact-row">
+        <span class="contact-icon-wrap ci--website"><i class="bi bi-lock-fill"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-upgrade">Upgrade to Premium to open creator social profiles and send collaboration invites.</span>
+        </div>
       </div>
     </div>
 
     <!-- Contact details (toggled, logged-in only) -->
     <div *ngIf="showContact && isLoggedIn && canViewContactDetails" class="contact-info-card">
       <h6 class="section-label">Contact Info</h6>
+
+      <div class="contact-row" *ngIf="brand.contactPersonName">
+        <span class="contact-icon-wrap ci--person"><i class="bi bi-person-fill"></i></span>
+        <div class="contact-content">
+          <span class="contact-field-lbl">Contact Person</span>
+          <span class="contact-field-val">{{ brand.contactPersonName }}</span>
+        </div>
+      </div>
 
       <div class="contact-row" *ngIf="brand.contact?.whatsapp">
         <span class="contact-icon-wrap ci--whatsapp"><i class="bi bi-whatsapp"></i></span>
@@ -177,7 +198,10 @@
             </div>
             <div class="detail-row" *ngIf="brand.promotionalPrice">
               <span class="detail-key">Advertising Price</span>
-              <span class="detail-val detail-val--price">₹{{ brand.promotionalPrice }}</span>
+              <span class="detail-val detail-val--price" *ngIf="isProViewer">₹{{ brand.promotionalPrice }}</span>
+              <span class="detail-locked" *ngIf="!isProViewer">
+                <i class="bi bi-lock-fill"></i> Upgrade to view
+              </span>
             </div>
             <div class="detail-row" *ngIf="brand.foundedYear">
               <span class="detail-key">Founded</span>
@@ -200,20 +224,17 @@
           </div>
 
           <!-- Social links (clickable only for premium viewers) -->
-          <div *ngIf="brand.socialMedia?.length" class="social-links">
-            <ng-container *ngFor="let sm of brand.socialMedia">
-              <!-- Premium: clickable link with tier -->
-              <a *ngIf="isProViewer" [href]="getSocialUrl(sm)" target="_blank" rel="noopener noreferrer" class="social-pill">
-                <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
-                <span *ngIf="sm.tier" class="social-tier-badge">{{ sm.tier }}</span>
-              </a>
-              <!-- Non-premium: click disabled, no href -->
-              <span *ngIf="!isProViewer" class="social-pill social-pill--locked" title="Upgrade to Pro to view social platforms">
-                <i [class]="getSocialIcon(sm)"></i> {{ getSocialLabel(sm) }}
-                <i class="bi bi-lock-fill social-lock-icon"></i>
-              </span>
-            </ng-container>
-          </div>
+          <app-profile-social-platforms
+            title="SOCIAL PLATFORMS"
+            variant="brand"
+            [platforms]="brand.socialMedia || []"
+            [locked]="!isProViewer || !!brand.socialMediaRestricted"
+            lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+            [canOpen]="isProViewer && canOpenSocialProfiles"
+            [isProViewer]="isProViewer"
+            [showContentTypes]="true"
+            (platformClick)="onPlatformClick($event)"
+          ></app-profile-social-platforms>
         </div>
       </div>
 

@@ -26,6 +26,12 @@ export class AnalyticsService implements OnDestroy {
   private readonly FLUSH_INTERVAL_MS = 30000; // 30 seconds
   private readonly ANALYTICS_ENDPOINT = `${environment.apiBaseUrl}/analytics/events`;
   private readonly GA_MEASUREMENT_ID = 'G-5912TSJYW5';
+  private readonly onPageHide = () => this.flush();
+  private readonly onVisibilityChange = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      this.flush();
+    }
+  };
 
   private readonly blockedPathPrefixes = ['/admin'];
   private readonly publicExactPaths = new Set([
@@ -45,6 +51,8 @@ export class AnalyticsService implements OnDestroy {
     '/register-influencer',
     '/register-brand',
     '/register-photographer',
+    '/trendstarz-score',
+    '/audit',
     '/login',
     '/auth/login',
     '/auth',
@@ -80,15 +88,19 @@ export class AnalyticsService implements OnDestroy {
         }
       }, this.FLUSH_INTERVAL_MS);
 
-      // Flush on page unload
-      window.addEventListener('beforeunload', () => this.flush());
-      window.addEventListener('unload', () => this.flush());
+      // Flush when tab is hidden or page is put in bfcache-friendly pagehide state.
+      window.addEventListener('pagehide', this.onPageHide);
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
     }
   }
 
   private cleanup(): void {
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pagehide', this.onPageHide);
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
     this.flush();
   }
@@ -153,6 +165,31 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * Track profile card click behavior from Search results, including
+   * whether navigation was allowed or blocked by plan restrictions.
+   */
+  trackSearchProfileCardClick(context: {
+    targetRole: 'influencer' | 'photographer' | 'brand';
+    outcome: 'allowed' | 'blocked';
+    targetId?: string;
+    targetUsername?: string;
+  }): void {
+    const viewer = this.session.getUser();
+    const viewerTier = viewer ? (viewer.isPremium ? 'pro' : 'free') : 'guest';
+    const eventData = {
+      targetRole: context.targetRole,
+      outcome: context.outcome,
+      targetId: context.targetId || null,
+      targetUsername: context.targetUsername || null,
+      viewerTier,
+      viewerRole: String(viewer?.role || '').toLowerCase() || 'guest',
+    };
+    this.logEvent('search_profile_card_click', eventData);
+    this.sendToGA4('search_profile_card_click', eventData);
+    this.sendToClarity('search_profile_card_click', eventData);
+  }
+
+  /**
    * Track campaign invite sent event (for end-to-end campaign flow metrics).
    */
   trackCampaignInviteSent(context: {
@@ -190,6 +227,111 @@ export class AnalyticsService implements OnDestroy {
     this.logEvent('campaign_completed', eventData);
     this.sendToGA4('campaign_completed', eventData);
     this.sendToClarity('campaign_completed', eventData);
+  }
+
+  /**
+   * TrendStarZ Score landing page (/trendstarz-score) — "Check My Score" CTA click.
+   */
+  trackTrendstarzScoreCheckClicked(context: { loggedIn: boolean; destination: string }): void {
+    const eventData = { loggedIn: context.loggedIn, destination: context.destination };
+    this.logEvent('trendstarz_score_check_clicked', eventData);
+    this.sendToGA4('trendstarz_score_check_clicked', eventData);
+    this.sendToClarity('trendstarz_score_check_clicked', eventData);
+  }
+
+  /**
+   * TrendStarZ Score landing page — an FAQ item was expanded.
+   */
+  trackTrendstarzScoreFaqExpanded(context: { question: string }): void {
+    const eventData = { question: context.question };
+    this.logEvent('trendstarz_score_faq_expanded', eventData);
+    this.sendToGA4('trendstarz_score_faq_expanded', eventData);
+    this.sendToClarity('trendstarz_score_faq_expanded', eventData);
+  }
+
+  /**
+   * TrendStarZ Score landing page — the Supported Platforms section scrolled into view.
+   */
+  trackTrendstarzScorePlatformSectionViewed(): void {
+    this.logEvent('trendstarz_score_platform_section_viewed');
+    this.sendToGA4('trendstarz_score_platform_section_viewed', {});
+    this.sendToClarity('trendstarz_score_platform_section_viewed', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — "Sync Latest Profile" clicked.
+   */
+  trackCollabSyncStarted(): void {
+    this.logEvent('collab_sync_started');
+    this.sendToGA4('collab_sync_started', {});
+    this.sendToClarity('collab_sync_started', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — a Sync call finished (success or failure).
+   */
+  trackCollabSyncCompleted(context: { success: boolean }): void {
+    const eventData = { success: context.success };
+    this.logEvent('collab_sync_completed', eventData);
+    this.sendToGA4('collab_sync_completed', eventData);
+    this.sendToClarity('collab_sync_completed', eventData);
+  }
+
+  /**
+   * TrendStarZ Score Center — a Sync found at least one changed platform.
+   */
+  trackCollabSyncChangesDetected(context: { platforms: string[] }): void {
+    const eventData = { platforms: context.platforms };
+    this.logEvent('collab_sync_changes_detected', eventData);
+    this.sendToGA4('collab_sync_changes_detected', eventData);
+    this.sendToClarity('collab_sync_changes_detected', eventData);
+  }
+
+  /**
+   * TrendStarZ Score Center — a Sync found nothing changed.
+   */
+  trackCollabSyncNoChanges(): void {
+    this.logEvent('collab_sync_no_changes');
+    this.sendToGA4('collab_sync_no_changes', {});
+    this.sendToClarity('collab_sync_no_changes', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the paid "Re-Analyze" button was clicked
+   * (only reachable once Sync has detected a change).
+   */
+  trackCollabReanalyzeClicked(): void {
+    this.logEvent('collab_reanalyze_clicked');
+    this.sendToGA4('collab_reanalyze_clicked', {});
+    this.sendToClarity('collab_reanalyze_clicked', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the ₹49 re-analysis Razorpay checkout opened.
+   */
+  trackCollabPaymentStarted(): void {
+    this.logEvent('collab_payment_started');
+    this.sendToGA4('collab_payment_started', {});
+    this.sendToClarity('collab_payment_started', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the re-analysis payment was verified and a new audit ran.
+   */
+  trackCollabPaymentSuccess(): void {
+    this.logEvent('collab_payment_success');
+    this.sendToGA4('collab_payment_success', {});
+    this.sendToClarity('collab_payment_success', {});
+  }
+
+  /**
+   * TrendStarZ Score Center — the re-analysis payment failed or was cancelled.
+   */
+  trackCollabPaymentFailed(context: { reason?: string }): void {
+    const eventData = { reason: context.reason || null };
+    this.logEvent('collab_payment_failed', eventData);
+    this.sendToGA4('collab_payment_failed', eventData);
+    this.sendToClarity('collab_payment_failed', eventData);
   }
 
   /**

@@ -27,6 +27,27 @@
     margin: 0 0 0.25rem;
   }
 
+  .page-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .page-usage {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+    color: #475569;
+
+    strong {
+      color: #1a1a2e;
+      font-weight: 700;
+    }
+  }
+
   .page-subtitle {
     color: #6c757d;
     font-size: 0.9rem;
@@ -39,42 +60,6 @@
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-}
-
-// ── Viewing As Toggle ──────────────────────────────────────────
-.viewing-as-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #f4f5f7;
-  border: 1px solid #e0e5ef;
-  border-radius: 0.6rem;
-  padding: 0.25rem 0.5rem;
-}
-
-.viewing-as-label {
-  font-size: 0.8rem;
-  color: #6b7280;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.viewing-as-btn {
-  padding: 0.3rem 0.85rem;
-  border-radius: 0.45rem;
-  border: none;
-  background: transparent;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.18s ease;
-
-  &.active {
-    background: #fff;
-    color: #1a1a2e;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-  }
 }
 
 // ── Upgrade Banner ─────────────────────────────────────────────
@@ -176,6 +161,11 @@
 // ── Tabs (pill-tabs global, layout override only) ────
 .search-tabs-row {
   margin: 0 0 20px;
+}
+
+// ── Mobile filter toggle (hidden on desktop) ─────────
+.mobile-filter-toggle {
+  display: none;
 }
 
 // ── Filter Bar ───────────────────────────────────────
@@ -319,11 +309,66 @@
   min-height: 200px;
 }
 
+.results-pagination {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.results-pagination__meta {
+  font-size: 0.84rem;
+  color: #4b5563;
+}
+
+.results-pagination__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  button {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.55rem;
+    background: #fff;
+    color: #374151;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    &:hover:not(:disabled) {
+      border-color: #ff6b35;
+      color: #ff6b35;
+      background: #fff3ee;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
 // Grid
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.25rem;
+
+  // Grid items default to min-width: auto, so a child with unwrappable content
+  // (long text/badges) can force its track wider than the grid, blowing out
+  // the row horizontally. Let items shrink to their track's actual width.
+  > * {
+    min-width: 0;
+  }
 }
 
 // Loading / empty / error states
@@ -345,6 +390,24 @@
   }
 
   p { margin: 0; font-size: 0.95rem; }
+}
+
+.empty-state__hint {
+  color: #64748b;
+  margin-top: 0.35rem;
+}
+
+.guest-conversion-prompt {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fdba74;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.9rem;
+  color: #9a3412;
+}
+
+.guest-conversion-actions {
+  margin-top: 0.65rem;
 }
 
 .error-state {
@@ -443,9 +506,49 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    color: #1a1a2e;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    i.bi-sliders { color: #ff6b35; }
+
+    span:not(.mobile-filter-count) { flex: 0 0 auto; }
+
+    i:last-child {
+      margin-left: auto;
+      color: #9ca3af;
+    }
+  }
+
+  .mobile-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: #ff6b35;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
   .filter-bar {
     flex-direction: column;
     gap: 0.75rem;
+
+    &.is-collapsed { display: none; }
   }
 
   .filter-item,
@@ -459,6 +562,11 @@
 
   .results-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .results-pagination {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

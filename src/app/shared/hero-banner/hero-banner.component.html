@@ -6,18 +6,26 @@
         <h1 class="hero-title mt-3">{{ titleMain }} <span class="highlight">{{ titleHighlight }}</span> Platform</h1>
         <p class="hero-copy mt-3">{{ subtitle }}</p>
         <div class="d-flex flex-wrap gap-3 mt-4">
-          <button class="btn btn-lg btn-primary" (click)="go(primaryRoute)">{{ primaryLabel }}</button>
-          <button class="btn btn-lg btn-dark" (click)="go(secondaryRoute)">{{ secondaryLabel }}</button>
-          <button *ngIf="thirdLabel" class="btn btn-lg btn-text" style="font-size: 14px;" (click)="go(thirdRoute)">{{ thirdLabel }}</button>
+          <button class="btn btn-lg btn-primary" (click)="goPrimary()">{{ primaryLabel }}</button>
+          <button class="btn btn-lg btn-dark" (click)="goSecondary()">{{ secondaryLabel }}</button>
+          <button *ngIf="thirdLabel" class="btn btn-lg btn-text" (click)="go(thirdRoute)">{{ thirdLabel }} <i class="bi bi-arrow-right"></i></button>
         </div>
       </div>
       <div class="col-12 col-lg-6">
-        <div class="hero-media" [style.background-image]="'url(' + imageUrl + ')'" role="img" aria-label="Hero image">
+        <div class="hero-media">
+          <img
+            class="hero-media-bg"
+            [ngSrc]="'assets/banner-trendstarz-1600.jpg'"
+            [alt]="'TrendStarz hero image'"
+            width="1600"
+            height="900"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async" />
           <!-- <div class="live-metric" *ngIf="liveMetricText">
             <span class="dot"></span>
             <span>{{ liveMetricText }}</span>
           </div> -->
-          <img class="corner-thumb" [src]="imageUrl" alt="" aria-hidden="true" />
         </div>
       </div>
     </div>

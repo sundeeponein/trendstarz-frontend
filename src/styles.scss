@@ -1,5 +1,6 @@
 @use 'app/shared/_admin-global-styles' as *;
 @use 'app/shared/styles/modal-overlay' as mo;
+@use 'app/shared/styles/dashboard-layout' as *;
 
 @use 'bootstrap-custom' as *;
 
@@ -72,6 +73,192 @@ body {
 }
 
 .premium-icon {color: gold; font-size: 1rem;}
+
+/* Shared status colors for admin tables, legends, and badges.
+   Uses Bootstrap's default status palette so screens stay consistent. */
+.ts-status-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #4b5565;
+  font-size: 0.84rem;
+}
+
+.ts-status-legend-label {
+  font-weight: 800;
+  color: #1f2530;
+}
+
+.ts-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ts-status-accepted,
+.ts-status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
+  border-color: #badbcc;
+}
+
+.ts-status-pending,
+.ts-status-needs-changes {
+  background: #fff3cd;
+  color: #664d03;
+  border-color: #ffecb5;
+}
+
+.ts-status-rejected,
+.ts-status-declined,
+.ts-status-withdrawn {
+  background: #f8d7da;
+  color: #842029;
+  border-color: #f5c2c7;
+}
+
+.ts-status-deleted {
+  background: #e2e3e5;
+  color: #41464b;
+  border-color: #d3d6d8;
+}
+
+.ts-status-submitted {
+  background: #cfe2ff;
+  color: #084298;
+  border-color: #b6d4fe;
+}
+
+.ts-status-working {
+  background: #cff4fc;
+  color: #055160;
+  border-color: #b6effb;
+}
+
+.ts-status-other {
+  background: #cff4fc;
+  color: #055160;
+  border-color: #b6effb;
+}
+
+.ts-status-row > td:first-child {
+  border-left: 4px solid transparent;
+}
+
+.ts-status-row--accepted > td:first-child,
+.ts-status-row--completed > td:first-child {
+  border-left-color: #198754;
+}
+
+.ts-status-row--pending > td:first-child,
+.ts-status-row--needs-changes > td:first-child {
+  border-left-color: #ffc107;
+}
+
+.ts-status-row--rejected > td:first-child,
+.ts-status-row--declined > td:first-child,
+.ts-status-row--withdrawn > td:first-child {
+  border-left-color: #dc3545;
+}
+
+.ts-status-row--deleted > td:first-child {
+  border-left-color: #6c757d;
+}
+
+.ts-status-row--submitted > td:first-child {
+  border-left-color: #0d6efd;
+}
+
+.ts-status-row--working > td:first-child,
+.ts-status-row--other > td:first-child {
+  border-left-color: #0dcaf0;
+}
+
+.ts-status-row--accepted .ts-status-action-cell,
+.ts-status-row--completed .ts-status-action-cell {
+  background: #d1e7dd;
+}
+
+.ts-status-row--pending .ts-status-action-cell,
+.ts-status-row--needs-changes .ts-status-action-cell {
+  background: #fff3cd;
+}
+
+.ts-status-row--rejected .ts-status-action-cell,
+.ts-status-row--declined .ts-status-action-cell,
+.ts-status-row--withdrawn .ts-status-action-cell {
+  background: #f8d7da;
+}
+
+.ts-status-row--deleted .ts-status-action-cell {
+  background: #e2e3e5;
+}
+
+.ts-status-row--submitted .ts-status-action-cell {
+  background: #cfe2ff;
+}
+
+.ts-status-row--working .ts-status-action-cell,
+.ts-status-row--other .ts-status-action-cell {
+  background: #cff4fc;
+}
+
+.ts-status-tab {
+  --ts-status-tab-bg: transparent;
+  --ts-status-tab-color: inherit;
+  --ts-status-tab-shadow: none;
+}
+
+.ts-status-tab.active,
+.admin-tabs .tab-btn.ts-status-tab.active {
+  background: var(--ts-status-tab-bg);
+  background-color: var(--ts-status-tab-bg);
+  color: var(--ts-status-tab-color);
+  box-shadow: var(--ts-status-tab-shadow);
+}
+
+.ts-status-tab--accepted.active,
+.ts-status-tab--completed.active {
+  --ts-status-tab-bg: #198754;
+  --ts-status-tab-color: #fff;
+  --ts-status-tab-shadow: 0 2px 10px rgba(25, 135, 84, 0.35);
+}
+
+.ts-status-tab--pending.active,
+.ts-status-tab--needs-changes.active {
+  --ts-status-tab-bg: #ffc107;
+  --ts-status-tab-color: #1f2530;
+  --ts-status-tab-shadow: 0 2px 10px rgba(255, 193, 7, 0.35);
+}
+
+.ts-status-tab--rejected.active,
+.ts-status-tab--declined.active,
+.ts-status-tab--withdrawn.active {
+  --ts-status-tab-bg: #dc3545;
+  --ts-status-tab-color: #fff;
+  --ts-status-tab-shadow: 0 2px 10px rgba(220, 53, 69, 0.35);
+}
+
+.ts-status-tab--submitted.active {
+  --ts-status-tab-bg: #0d6efd;
+  --ts-status-tab-color: #fff;
+  --ts-status-tab-shadow: 0 2px 10px rgba(13, 110, 253, 0.35);
+}
+
+.ts-status-tab--working.active,
+.ts-status-tab--other.active {
+  --ts-status-tab-bg: #0dcaf0;
+  --ts-status-tab-color: #052c65;
+  --ts-status-tab-shadow: 0 2px 10px rgba(13, 202, 240, 0.35);
+}
 
 /* Premium locked plan display — used in profile pages */
 .premium-locked-field {

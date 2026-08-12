@@ -1,0 +1,38 @@
+<label>{{ label }} (<small>{{ status }}</small>)</label>
+
+<div class="verification-field-value" [class.with-thumb]="thumbSrc">
+  <img
+    *ngIf="thumbSrc"
+    [src]="thumbSrc"
+    [alt]="thumbAlt || label"
+    class="verification-field-thumb"
+    (error)="onImageError($event)"
+  />
+
+  <button
+    *ngIf="valueAsButton; else plainValue"
+    type="button"
+    class="verification-field-link"
+    [disabled]="valueButtonDisabled"
+    (click)="valueClicked.emit()"
+  >
+    {{ displayValue }}
+  </button>
+
+  <ng-template #plainValue>
+    <span>{{ displayValue }}</span>
+  </ng-template>
+</div>
+
+<button
+  *ngIf="showAction"
+  type="button"
+  class="btn btn-sm mt-1"
+  [class.btn-outline-secondary]="verified"
+  [class.btn-success]="!verified"
+  [disabled]="actionDisabled"
+  [title]="actionDisabled ? lockedTitle : ''"
+  (click)="toggled.emit()"
+>
+  {{ verified ? unverifyLabel : verifyLabel }}
+</button>

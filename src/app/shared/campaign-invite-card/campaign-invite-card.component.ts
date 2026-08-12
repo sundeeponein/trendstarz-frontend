@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { TIER_ORDER, normalizeTierLabel } from '../tiers.constants';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -15,6 +16,9 @@ export interface InviteAcceptPayload {
   platform?: string;
   contentType?: string;
   payout?: InvitePayoutDetails;
+  responseType?: 'accept' | 'counter';
+  counterAmount?: number;
+  counterMessage?: string;
 }
 
 export interface InviteDeclinePayload {
@@ -32,15 +36,20 @@ interface ContentTypeOption {
 @Component({
   selector: 'app-campaign-invite-card',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './campaign-invite-card.component.html',
   styleUrls: ['./campaign-invite-card.component.scss'],
 })
 export class CampaignInviteCardComponent {
+
   @Input() invite: any;
   @Input() busy = false;
+  @Input() showViewDetails = true;
   @Input() qualifyingPlatforms: string[] | null = null;
   @Input() influencerSocialMedia: Array<{ platform: string; tier: string }> | null = null;
+  @Input() submissionApprovalWaitHours = 24;
+  @Input() submissionAutoCompleteGraceHours = 48;
+  @Input() payoutReleaseWaitHours = 24;
   /** initial value for the post-date input (one-shot seed) */
   @Input() set initialPostDate(v: string | undefined) {
     if (v && !this.postDate) this.postDate = v;
@@ -64,18 +73,44 @@ export class CampaignInviteCardComponent {
   @Output() validationError = new EventEmitter<string>();
   /** Emits when the influencer clicks "Submit your post" */
   @Output() submitPost = new EventEmitter<void>();
-  /** Emits when the influencer clicks "View / Edit Submission" */
+  /** Emits when the influencer clicks "View Submission" */
   @Output() viewSubmission = new EventEmitter<void>();
 
   postDate = '';
   selectedContentTypeKey = '';
   logoErrored = false;
+  briefExpanded = false;
 
   // Payout details (where influencer wants to be paid)
   payoutUpiId = '';
   payoutMobile = '';
   payoutName = '';
   payoutEditing = false;
+  counterEditing = false;
+  counterAmountInput: number | null = null;
+  counterReasonInput = '';
+
+  get brandAvatarBg(): string {
+    const palette = ['#f97316', '#8b5cf6', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#ef4444'];
+    const code = (this.brandName || 'B').charCodeAt(0);
+    return palette[code % palette.length];
+  }
+
+  get primaryActionLabel(): string {
+    if (this.showViewSubmission) return 'View Submission';
+    if (this.showSubmitCTA) return 'Submit Post';
+    if (this.showPaymentAwaited) return 'Awaiting Payment';
+    if (this.showPaymentConfirmed) return 'Payment Confirmed';
+    if (this.showPayoutPendingInfo) return 'Post Approved';
+    if (this.isActionable) return 'Review & Accept';
+    return '';
+  }
+
+  get hasPrimaryAction(): boolean { return !!this.primaryActionLabel; }
+
+  private get inviteCampaignContext(): any {
+    return this.invite?.campaign || this.invite?.campaignId || {};
+  }
 
   togglePayoutEdit(ev?: Event) {
     if (ev) ev.stopPropagation();
@@ -100,20 +135,65 @@ export class CampaignInviteCardComponent {
 
   // ── Data accessors ─────────────────────────────────────────────
   private get campaign(): any { return this.invite?.campaign || this.invite?.campaignId || {}; }
-  private get brand(): any { return this.invite?.brand || this.invite?.brandId || {}; }
+  private get brand(): any {
+    const fromInviteBrand = this.toObject(this.invite?.brand);
+    const fromInviteBrandId = this.toObject(this.invite?.brandId);
+    const fromCampaignBrand = this.toObject(this.campaign?.brand);
+    const fromCampaignBrandId = this.toObject(this.campaign?.brandId);
+
+    return {
+      ...fromCampaignBrandId,
+      ...fromCampaignBrand,
+      ...fromInviteBrandId,
+      ...fromInviteBrand,
+    };
+  }
 
   get inviteId(): string { return this.invite?._id || ''; }
   get status(): string { return (this.invite?.status || 'pending').toLowerCase(); }
-  get isActionable(): boolean { return this.status === 'pending' || this.status === 'invited'; }
+  get counterOfferStatus(): string {
+    return String(this.invite?.counterOffer?.status || '').toLowerCase();
+  }
+  private get isActionableStatus(): boolean {
+    if (this.status === 'pending' || this.status === 'invited') return true;
+    return this.status === 'counter_sent' && this.counterOfferStatus === 'brand_sent';
+  }
+  private get isCampaignClosed(): boolean {
+    const campaignStatus = String(this.campaign?.status || '').toLowerCase();
+    return campaignStatus === 'completed';
+  }
+  get acceptanceDeadline(): string {
+    return String(this.campaign?.acceptanceDeadline || this.invite?.acceptanceDeadline || '').trim();
+  }
+  get hasAcceptanceDeadline(): boolean {
+    const deadline = this.acceptanceDeadline;
+    if (!deadline) return false;
+    return !Number.isNaN(new Date(deadline).getTime());
+  }
+  get isAcceptanceExpired(): boolean {
+    if (!this.isActionableStatus || !this.hasAcceptanceDeadline) return false;
+    return Date.now() > new Date(this.acceptanceDeadline).getTime();
+  }
+  get isActionable(): boolean { return this.isActionableStatus && !this.isAcceptanceExpired && !this.isCampaignClosed; }
+  get showMissedAcceptance(): boolean { return this.isActionableStatus && this.isAcceptanceExpired && !this.isCampaignClosed; }
+  get missedAcceptanceText(): string {
+    return this.isCollabInvite
+      ? 'You have missed the collaboration invitation.'
+      : 'You have missed the campaign invitation.';
+  }
 
   // ── Unlock state (mirrors brand-side unlocked flag) ─────────────
   get isUnlocked(): boolean { return !!this.invite?.unlocked; }
-  /** Show "Waiting for brand to unlock contact" once accepted but not unlocked. */
+  /** Show confirmation wait-state once accepted but not unlocked. */
   get showWaitingUnlock(): boolean {
     const s = this.status;
     if (this.isUnlocked) return false;
-    if (s === 'accepted' && this.campaignTypeKey === 'paid_collab') return false;
-    return ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(s);
+    if (['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(s)) return false;
+    return s === 'accepted' || s === 'counter_sent';
+  }
+
+  get waitingUnlockText(): string {
+    return 'Waiting for host confirmation to unlock coordination details.';
   }
 
   // ── Payment-flow CTA logic ──────────────────────────────────────
@@ -134,17 +214,171 @@ export class CampaignInviteCardComponent {
     if (s === 'accepted' && this.campaignTypeKey !== 'paid_collab') return true;
     return false;
   }
-  /** Show view/edit submission button */
+  /** Show view submission button */
   get showViewSubmission(): boolean {
     return ['submitted', 'completed', 'approved', 'disputed'].includes(this.status);
+  }
+  get showSubmissionReviewInfo(): boolean {
+    return this.status === 'submitted';
+  }
+  get submissionPostedAt(): Date | null {
+    const candidates = [
+      this.invite?.latestSubmission?.submittedAt,
+      this.invite?.submission?.submittedAt,
+      this.invite?.submittedAt,
+      this.invite?.latestSubmission?.createdAt,
+      this.invite?.submission?.createdAt,
+      this.invite?.updatedAt,
+      this.invite?.createdAt,
+    ];
+    for (const value of candidates) {
+      if (!value) continue;
+      const dt = new Date(value);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+    return null;
+  }
+  get submissionPostedAtText(): string {
+    const postedAt = this.submissionPostedAt;
+    if (!postedAt) return 'posted time unavailable';
+    return postedAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get submissionReviewUnlockAt(): Date | null {
+    const postedAt = this.submissionPostedAt;
+    if (!postedAt) return null;
+    const hours = Number(this.submissionApprovalWaitHours);
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+    return new Date(postedAt.getTime() + safeHours * 60 * 60 * 1000);
+  }
+  get submissionReviewWaitText(): string {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return `after ${this.formatHoursLabel(this.submissionApprovalWaitHours)} from posting`;
+    const remainingMs = unlockAt.getTime() - Date.now();
+    if (remainingMs <= 0) return 'now';
+    return this.formatRemainingMs(remainingMs);
+  }
+  get submissionReviewUnlockAtText(): string {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return 'completion time unavailable';
+    return unlockAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get submissionAutoCompleteAt(): Date | null {
+    const unlockAt = this.submissionReviewUnlockAt;
+    if (!unlockAt) return null;
+    const hours = Number(this.submissionAutoCompleteGraceHours);
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 48;
+    return new Date(unlockAt.getTime() + safeHours * 60 * 60 * 1000);
+  }
+  get submissionAutoCompleteAtText(): string {
+    const autoAt = this.submissionAutoCompleteAt;
+    if (!autoAt) return 'auto-complete time unavailable';
+    return autoAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get submissionReviewMessage(): string {
+    const waitText = this.submissionReviewWaitText;
+    if (waitText === 'now') {
+      return `Host review window is open. If the host does not mark completed or raise an issue, this will auto-complete at ${this.submissionAutoCompleteAtText}.`;
+    }
+    return `Host can mark completed or raise an issue in ${waitText} (at ${this.submissionReviewUnlockAtText}). Auto-complete if no response by ${this.submissionAutoCompleteAtText}.`;
+  }
+  get showPayoutPendingInfo(): boolean {
+    return this.status === 'completed';
+  }
+  get showPayoutReleasedInfo(): boolean {
+    return this.status === 'approved';
+  }
+  get payoutReleaseUnlockAt(): Date | null {
+    const completedAt = this.inviteCompletedAt;
+    if (!completedAt) return null;
+    const hours = Number(this.payoutReleaseWaitHours);
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 24;
+    return new Date(completedAt.getTime() + safeHours * 60 * 60 * 1000);
+  }
+  get payoutReleaseWaitText(): string {
+    const unlockAt = this.payoutReleaseUnlockAt;
+    if (!unlockAt) return `after ${this.formatHoursLabel(this.payoutReleaseWaitHours)} from post approval`;
+    const remainingMs = unlockAt.getTime() - Date.now();
+    if (remainingMs <= 0) return 'now';
+    return this.formatRemainingMs(remainingMs);
+  }
+  get payoutReleaseUnlockAtText(): string {
+    const unlockAt = this.payoutReleaseUnlockAt;
+    if (!unlockAt) return 'release time unavailable';
+    return unlockAt.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  get payoutPendingMessage(): string {
+    const waitText = this.payoutReleaseWaitText;
+    if (waitText === 'now') {
+      return 'Payout window is open. Waiting for admin release.';
+    }
+    return `Payout can be released in ${waitText} (at ${this.payoutReleaseUnlockAtText}).`;
   }
   /** Reminder badge — only worth showing while invite still actionable. */
   get showReminderBadge(): boolean {
     const count = Number(this.invite?.remindersSent || 0);
     if (count <= 0) return false;
+    if (this.showMissedAcceptance) return false;
     return ['pending', 'invited', 'accepted', 'payment_confirmed', 'working'].includes(this.status);
   }
   get reminderCount(): number { return Number(this.invite?.remindersSent || 0); }
+
+  private get inviteCompletedAt(): Date | null {
+    const candidates = [
+      this.invite?.completedAt,
+      this.invite?.approvedAt,
+      this.invite?.updatedAt,
+    ];
+    for (const value of candidates) {
+      if (!value) continue;
+      const dt = new Date(value);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+    return null;
+  }
+
+  private formatHoursLabel(hours: number): string {
+    const value = Number(hours);
+    if (!Number.isFinite(value)) return '24 hours';
+    if (value === 1) return '1 hour';
+    return `${value} hours`;
+  }
+
+  private formatRemainingMs(ms: number): string {
+    const totalMinutes = Math.max(1, Math.floor(ms / 60000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours <= 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  }
 
   // ── Brand-side fulfillment visibility (read-only on influencer card) ──
   get productFulfillment(): any { return this.invite?.productFulfillment || null; }
@@ -160,15 +394,20 @@ export class CampaignInviteCardComponent {
 
   get statusLabel(): string {
     const s = this.status;
+    if (s === 'counter_sent' && this.counterOfferStatus === 'brand_sent') {
+      return 'Revised offer received';
+    }
     const labels: Record<string, string> = {
       pending:           'Pending',
       invited:           'Invited',
-      accepted:          this.campaignTypeKey === 'paid_collab' ? 'Awaiting payment' : 'Accepted',
-      payment_confirmed: 'Payment secured — start work',
-      working:           'In progress',
-      submitted:         'Under review',
+      counter_sent:      'Confirmation Pending',
+      accepted:          this.campaignTypeKey === 'paid_collab' ? 'Confirmation Pending' : 'Working',
+      payment_confirmed: 'Confirmed — Start Work',
+      working:           'Working',
+      submitted:         'Under Review',
       completed:         'Completed',
-      disputed:          'Dispute open',
+      approved:          'Payout Released',
+      disputed:          'Under Review',
       withdrawn:         'Withdrawn',
       declined:          'Declined',
     };
@@ -177,13 +416,15 @@ export class CampaignInviteCardComponent {
   get statusBadgeClass(): string {
     switch (this.status) {
       case 'accepted':          return 'bg-warning text-dark';
-      case 'payment_confirmed': return 'bg-success';
+      case 'payment_confirmed': return 'bg-primary';
       case 'working':           return 'bg-primary';
-      case 'submitted':         return 'bg-info text-dark';
-      case 'completed':         return 'bg-purple text-white';
-      case 'disputed':          return 'bg-danger';
+      case 'submitted':         return 'bg-warning text-dark';
+      case 'completed':         return 'bg-success';
+      case 'approved':          return 'bg-info text-dark';
+      case 'disputed':          return 'bg-warning text-dark';
       case 'declined':
       case 'withdrawn':         return 'bg-secondary';
+      case 'counter_sent':      return 'bg-primary';
       case 'pending':
       case 'invited':
       default:                  return 'bg-info text-dark';
@@ -219,6 +460,117 @@ export class CampaignInviteCardComponent {
   get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
+
+  get isPerContentPricingFlow(): boolean {
+    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    if (this.campaignTypeKey === 'reel_collab') return true;
+    return this.campaignTypeKey === 'paid_collab' && ownerType !== 'photographer';
+  }
+
+  get offeredPayoutRupees(): number {
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) return Number(selected.price || 0);
+    const paise = Number(this.campaign?.pricePerInfluencer || 0);
+    return paise > 0 ? Math.floor(paise / 100) : 0;
+  }
+
+  get hasValidCounterAmount(): boolean {
+    const amount = Number(this.counterAmountInput || 0);
+    return Number.isFinite(amount) && amount > 0;
+  }
+
+  get hasUsedCounterOffer(): boolean {
+    const status = String(this.invite?.counterOffer?.status || '').toLowerCase();
+    return status === 'sent' || status === 'brand_sent' || status === 'accepted' || status === 'declined';
+  }
+
+  get canSendCounterOffer(): boolean {
+    return this.isActionable && !this.hasUsedCounterOffer;
+  }
+
+  get isPhotographerCollabFlow(): boolean {
+    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    const requestKind = String(this.campaign?.requestKind || '').toLowerCase();
+    return this.isCollabInvite || ownerType === 'photographer' || requestKind === 'photographer_collaboration';
+  }
+
+  get counterReasonOptions(): string[] {
+    if (this.isPhotographerCollabFlow) {
+      return [
+        'Travel effort',
+        'Editing effort',
+        'Equipment setup',
+        'Long shoot duration',
+        'Outdoor location effort',
+        'Additional revisions',
+      ];
+    }
+    if (this.campaignTypeKey === 'invite_location') {
+      return [
+        'Travel effort',
+        'Event duration',
+        'Equipment requirement',
+        'Outdoor shoot effort',
+        'Long shoot hours',
+        'Editing effort',
+        'Additional deliverables',
+      ];
+    }
+    return [
+      'Higher editing effort',
+      'Long-form content',
+      'Usage rights',
+      'Tight deadline',
+      'Additional revisions',
+      'Audience reach',
+      'Custom creative requirement',
+    ];
+  }
+
+  get selectedCounterReason(): string {
+    const reason = String(this.counterReasonInput || '').trim();
+    return this.counterReasonOptions.includes(reason) ? reason : '';
+  }
+
+  get counterHintText(): string {
+    if (!this.hasValidCounterAmount) return '';
+    return `Counter offer: ₹${Number(this.counterAmountInput || 0).toLocaleString('en-IN')}`;
+  }
+
+  get revisedOfferHintText(): string {
+    if (!(this.status === 'counter_sent' && this.counterOfferStatus === 'brand_sent')) return '';
+    const amount = Number(this.invite?.counterOffer?.requestedAmount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) return 'Brand sent a revised offer. You can accept or decline.';
+    return `Brand revised offer: ₹${amount.toLocaleString('en-IN')} (accept or decline)`;
+  }
+
+  get counterDeclinedHintText(): string {
+    if (!(this.isActionable && this.counterOfferStatus === 'declined')) return '';
+    const offeredAmount = Number(this.invite?.counterOffer?.offeredAmount || 0);
+    if (Number.isFinite(offeredAmount) && offeredAmount > 0) {
+      return `Your counter was declined. You can still accept initial price ₹${offeredAmount.toLocaleString('en-IN')} or decline this invite.`;
+    }
+    return 'Your counter was declined. You can still accept the initial price or decline this invite.';
+  }
+
+  get counterReasonText(): string {
+    return String(this.invite?.counterOffer?.message || '').trim();
+  }
+
+  get counterSentAmountText(): string {
+    if (this.status !== 'counter_sent') return '';
+    const amount = Number(this.invite?.counterOffer?.requestedAmount || 0);
+    return amount > 0 ? `₹${amount.toLocaleString('en-IN')}` : '';
+  }
+
+  private get isLocationPaymentConfirmed(): boolean {
+    const paymentConfirmedOrLater = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(this.status);
+    if (paymentConfirmedOrLater) return true;
+    // For invite_location, accepted + brand unlock is sufficient.
+    return this.isUnlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(this.status);
+  }
 
   get inviteBenefits(): string { return (this.campaign?.inviteBenefits || '').trim(); }
 
@@ -262,9 +614,28 @@ export class CampaignInviteCardComponent {
     return 'bi-tag-fill';
   }
 
+  get canRevealExactVenueDetails(): boolean {
+    return this.isLocationPaymentConfirmed;
+  }
+
   get venueShortText(): string {
     const c = this.campaign || {};
-    const parts = [c.venueName, c.venueCity, c.venueDistrict, c.venueState].filter((p: string) => !!p);
+    const parts = this.canRevealExactVenueDetails
+      ? [c.venueName, c.venueCity, c.venueDistrict, c.venueState]
+      : [c.venueDistrict, c.venueState];
+    return parts.filter((p: string) => !!p).join(', ');
+  }
+  get venuePreviewText(): string {
+    const c = this.campaign || {};
+    const parts = [c.venueDistrict, c.venueState]
+      .map((p: any) => String(p || '').trim())
+      .filter(Boolean);
+    if (!parts.length) {
+      const fallback = [c.venueCity, c.venueDistrict, c.venueState]
+        .map((p: any) => String(p || '').trim())
+        .filter(Boolean);
+      return fallback.join(', ');
+    }
     return parts.join(', ');
   }
   get venueFullAddress(): string {
@@ -291,6 +662,13 @@ export class CampaignInviteCardComponent {
   get shootLocationAddress(): string {
     return String(this.campaign?.shootLocationAddress || '').trim();
   }
+  get shootLocationPreviewText(): string {
+    const c = this.campaign || {};
+    return [c.venueDistrict, c.venueState]
+      .map((p: any) => String(p || '').trim())
+      .filter(Boolean)
+      .join(', ');
+  }
   get shootLocationMapUrl(): string {
     return String(this.campaign?.shootLocationMapUrl || '').trim();
   }
@@ -299,6 +677,13 @@ export class CampaignInviteCardComponent {
   }
   get hasShootLocationDetails(): boolean {
     return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
+  }
+  get canRevealExactShootLocation(): boolean {
+    return this.isLocationPaymentConfirmed;
+  }
+
+  get canRevealBrandContact(): boolean {
+    return this.isLocationPaymentConfirmed;
   }
 
   get payToJoinFeeText(): string {
@@ -314,6 +699,21 @@ export class CampaignInviteCardComponent {
   }
 
   get yourPayoutText(): string {
+    const status = this.status;
+    const acceptedOrLater = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+      .includes(status);
+    if (acceptedOrLater) {
+      const agreedPaise = Number(this.invite?.agreedAmountPaise || 0);
+      const agreedRupees = Number(this.invite?.agreedAmount || 0);
+      if (agreedPaise > 0) {
+        const rupees = Math.floor(agreedPaise / 100);
+        return `₹${rupees.toLocaleString('en-IN')}`;
+      }
+      if (agreedRupees > 0) {
+        return `₹${agreedRupees.toLocaleString('en-IN')}`;
+      }
+    }
+
     const selected = this.selectedContentTypeOption;
     if (selected?.price) {
       return `₹${selected.price.toLocaleString('en-IN')}`;
@@ -407,7 +807,14 @@ export class CampaignInviteCardComponent {
     return (v || '').toLowerCase().trim();
   }
 
+  private get isTierFilteredCampaign(): boolean {
+    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
+    return campaignMode === 'tier_filtered_open'
+      || (campaignMode !== 'invite_only' && !!String(this.campaign?.minInfluencerTier || '').trim());
+  }
+
   private get qualifyingPlatformChoices(): string[] {
+    if (!this.isTierFilteredCampaign) return [];
     const explicitChoices = Array.isArray(this.qualifyingPlatforms) ? this.qualifyingPlatforms : [];
     const derivedChoices = explicitChoices.length ? explicitChoices : this.deriveTierQualifyingPlatforms();
     const seen = new Set<string>();
@@ -422,9 +829,7 @@ export class CampaignInviteCardComponent {
   }
 
   private deriveTierQualifyingPlatforms(): string[] {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
-    if (!isTierFiltered) return [];
+    if (!this.isTierFilteredCampaign) return [];
     const socials = Array.isArray(this.influencerSocialMedia) && this.influencerSocialMedia.length
       ? this.influencerSocialMedia
       : Array.isArray(this.invite?.influencerId?.socialMedia)
@@ -432,13 +837,16 @@ export class CampaignInviteCardComponent {
         : [];
     if (!socials.length) return [];
 
-    const tierOrder = ['Starter', 'Nano', 'Micro', 'Mid-Tier', 'Macro', 'Mega / Celebrity'];
-    const requiredTier = String(this.campaign?.minInfluencerTier || '').trim();
-    const requiredTierIndex = tierOrder.indexOf(requiredTier);
+    const requiredTier = normalizeTierLabel(this.campaign?.minInfluencerTier || '');
+    const requiredTierIndex = TIER_ORDER.indexOf(requiredTier);
     if (requiredTier && requiredTierIndex === -1) return [];
 
+    const campaignSocialMedia = Array.isArray(this.campaign?.socialMedia) ? this.campaign.socialMedia : [];
     const campaignPlatforms = Array.isArray(this.campaign?.platforms) ? this.campaign.platforms : [];
-    const allowedPlatforms = new Set(campaignPlatforms.map((platform: string) => this.normalized(platform)));
+    const allowedPlatforms = new Set([
+      ...campaignSocialMedia.map((sm: any) => this.normalized(sm?.platform || '')).filter(Boolean),
+      ...campaignPlatforms.map((platform: string) => this.normalized(platform)).filter(Boolean),
+    ]);
 
     return socials
       .filter((entry: any) => {
@@ -446,7 +854,8 @@ export class CampaignInviteCardComponent {
         if (!platformKey) return false;
         if (allowedPlatforms.size && !allowedPlatforms.has(platformKey)) return false;
         if (requiredTierIndex === -1) return true;
-        return tierOrder.indexOf(String(entry?.tier || '').trim()) === requiredTierIndex;
+        const tierIndex = TIER_ORDER.indexOf(normalizeTierLabel(entry?.tier || ''));
+        return tierIndex !== -1 && tierIndex >= requiredTierIndex;
       })
       .map((entry: any) => String(entry?.platform || '').trim())
       .filter(Boolean);
@@ -472,8 +881,7 @@ export class CampaignInviteCardComponent {
   }
 
   get lockedPlatform(): string {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    if (this.isActionable && (campaignMode === 'tier_filtered_open' || this.hasMultiplePlatformChoices)) return '';
+    if (this.isActionable && (this.isTierFilteredCampaign || this.hasMultiplePlatformChoices)) return '';
     return String(this.invite?.selectedPlatform || '').trim();
   }
 
@@ -516,10 +924,8 @@ export class CampaignInviteCardComponent {
 
   /** UI options shown to influencer; for tier-locked invites we show only relevant platform choices. */
   get displayContentTypeOptions(): ContentTypeOption[] {
-    const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
     const qualifying = this.qualifyingPlatformKeySet;
-    if (isTierFiltered && qualifying.size === 0) {
+    if (this.isTierFilteredCampaign && qualifying.size === 0) {
       // If a campaign requires an exact tier but we couldn't determine
       // any qualifying platform for this influencer, do not show
       // content-type options (prevents showing irrelevant platforms).
@@ -571,8 +977,21 @@ export class CampaignInviteCardComponent {
   get brandInitial(): string { return (this.brandName || '?')[0].toUpperCase(); }
 
   /** Brand contact details — only populated by backend when invite.unlocked === true */
-  get brandEmail(): string { return this.brand?.email || ''; }
-  get brandPhone(): string { return this.brand?.phoneNumber || ''; }
+  get brandEmail(): string {
+    return this.firstNonEmptyString([
+      this.brand?.email,
+      this.brand?.contactEmail,
+      this.brand?.emailAddress,
+    ]);
+  }
+  get brandPhone(): string {
+    return this.firstNonEmptyString([
+      this.brand?.phoneNumber,
+      this.brand?.mobile,
+      this.brand?.contactMobile,
+      this.brand?.phone,
+    ]);
+  }
   get brandLogo(): string | null {
     const b = this.brand;
     let url: string | null = null;
@@ -619,6 +1038,43 @@ export class CampaignInviteCardComponent {
     return url;
   }
 
+  private toObject(value: any): Record<string, any> {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value;
+    }
+    return {};
+  }
+
+  private firstNonEmptyString(values: any[]): string {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  }
+
+  /** Normalized set of platforms the influencer has in their profile (from input) */
+  private get influencerPlatformKeySet(): Set<string> {
+    const set = new Set<string>();
+    if (!Array.isArray(this.influencerSocialMedia)) return set;
+    for (const p of this.influencerSocialMedia) {
+      const name = String(p?.platform || '').trim().toLowerCase();
+      if (name) set.add(name);
+    }
+    return set;
+  }
+
+  /** Content type options the influencer actually has platforms for (shown on card) */
+  get availableContentTypeOptions(): ContentTypeOption[] {
+    const base = this.lockedPlatform || this.qualifyingPlatforms?.length
+      ? this.selectableContentTypeOptions
+      : this.contentTypeOptions;
+    const set = this.influencerPlatformKeySet;
+    if (!set.size) return base; // if no influencer profile platforms provided, show all
+    return base.filter((opt) => set.has((opt.platform || '').toLowerCase().trim()));
+  }
+
   // ── Event handlers ─────────────────────────────────────────
   onCardClick() { this.view.emit(this.invite); }
   onView(ev: Event) { ev.stopPropagation(); this.view.emit(this.invite); }
@@ -639,6 +1095,10 @@ export class CampaignInviteCardComponent {
   onAccept(ev: Event) {
     ev.stopPropagation();
     if (!this.inviteId) return;
+    if (this.showMissedAcceptance) {
+      this.validationError.emit(this.missedAcceptanceText);
+      return;
+    }
     if (!this.postDate) {
       this.validationError.emit('Please select a posting date before accepting.');
       return;
@@ -687,12 +1147,94 @@ export class CampaignInviteCardComponent {
       platform,
       contentType,
       payout,
+      responseType: 'accept',
+    });
+  }
+
+  onToggleCounter(ev: Event) {
+    ev.stopPropagation();
+    this.counterEditing = !this.counterEditing;
+    if (!this.counterEditing) {
+      this.counterAmountInput = null;
+      this.counterReasonInput = '';
+    }
+  }
+
+  onSendCounter(ev: Event) {
+    ev.stopPropagation();
+    if (!this.inviteId) return;
+    if (!this.canSendCounterOffer) {
+      this.validationError.emit('Only one counter offer is allowed for this invite. Please accept or decline.');
+      return;
+    }
+    if (this.showMissedAcceptance) {
+      this.validationError.emit(this.missedAcceptanceText);
+      return;
+    }
+    if (!this.postDate) {
+      this.validationError.emit('Please select a posting date before sending a counter offer.');
+      return;
+    }
+    if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
+      this.validationError.emit('Please select what you will create before sending a counter offer.');
+      return;
+    }
+    if (!this.hasValidCounterAmount) {
+      this.validationError.emit('Please enter a valid counter amount.');
+      return;
+    }
+    if (this.selectedContentTypeKey && !this.selectedContentTypeOption) {
+      this.validationError.emit(
+        this.lockedPlatform
+          ? `Please choose a content option only for ${this.platformLabel(this.lockedPlatform)}.`
+          : 'Please select a valid content option.',
+      );
+      return;
+    }
+
+    if (this.needsPayoutDetails) {
+      const upi = (this.payoutUpiId || '').trim();
+      const mobile = (this.payoutMobile || '').trim();
+      if (!upi && !mobile) {
+        this.payoutEditing = true;
+        this.validationError.emit(
+          'Please add a UPI ID or mobile number where you want to receive payment.',
+        );
+        return;
+      }
+    }
+
+    const [platform, contentType] = this.selectedContentTypeKey
+      ? this.selectedContentTypeKey.split('::')
+      : [undefined, undefined];
+
+    const payout: InvitePayoutDetails | undefined = this.needsPayoutDetails
+      ? {
+          upiId: (this.payoutUpiId || '').trim(),
+          mobile: (this.payoutMobile || '').trim(),
+          accountHolderName: (this.payoutName || '').trim(),
+        }
+      : undefined;
+
+    this.accept.emit({
+      inviteId: this.inviteId,
+      postDate: this.postDate || undefined,
+      platform,
+      contentType,
+      payout,
+      responseType: 'counter',
+      counterAmount: Number(this.counterAmountInput || 0),
+      counterMessage: this.selectedCounterReason || undefined,
     });
   }
 
   onDecline(ev: Event) {
     ev.stopPropagation();
     if (!this.inviteId) return;
+    if (this.showMissedAcceptance) {
+      this.validationError.emit(this.missedAcceptanceText);
+      return;
+    }
     this.decline.emit({ inviteId: this.inviteId });
   }
 

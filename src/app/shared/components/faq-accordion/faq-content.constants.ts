@@ -11,7 +11,7 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   },
   {
     question: 'Is TrendStarz free to use?',
-    answer: 'Yes, registration is currently free for early users during the MVP phase.'
+    answer: 'Yes, registration is currently free for all users. Join TrendStarZ and start connecting with brands, creators, and industry professionals.'
   },
   {
     question: 'How do brands use TrendStarz?',
@@ -41,35 +41,35 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
     question: 'How do I get started?',
     answer: 'Simply create an account, complete your profile, and start exploring campaigns and collaborations.'
   },
-  {
-    question: 'How do payments work?',
-    answer: 'TrendStarz currently helps creators and brands connect for collaborations and campaigns. Direct payment management and secure transaction workflows are planned for future updates.',
-    label: 'Coming Soon'
-  },
+  // {
+  //   question: 'How do payments work?',
+  //   answer: 'TrendStarz currently helps creators and brands connect for collaborations and campaigns. Direct payment management and secure transaction workflows are planned for future updates.',
+  //   label: 'Coming Soon'
+  // },
   {
     question: 'How do collaborations get approved?',
     answer: 'Campaigns and collaboration requests submitted on TrendStarz are reviewed by the admin team before being published. This helps maintain quality, reduce spam, and improve trust across the platform.'
   },
-  {
-    question: 'Can agencies join TrendStarz?',
-    answer: 'Agency onboarding is currently under consideration. TrendStarz is initially focused on direct collaborations between brands, influencers, photographers, and creators.',
-    label: 'Planned'
-  },
-  {
-    question: 'How does creator verification work?',
-    answer: 'Creator verification features are planned to help brands identify authentic creators and improve collaboration trust. More verification options will be introduced in future updates.',
-    label: 'Coming Soon'
-  },
-  {
-    question: 'Can creators chat directly on the platform?',
-    answer: 'Direct messaging and in-platform chat features are planned for future releases. Currently, collaborations and applications are managed through platform workflows.',
-    label: 'In Development'
-  },
-  {
-    question: 'Is there a mobile app for TrendStarz?',
-    answer: 'TrendStarz is currently available as a web platform. Mobile app support for Android and iOS is planned in future phases.',
-    label: 'Coming Soon'
-  },
+  // {
+  //   question: 'Can agencies join TrendStarz?',
+  //   answer: 'Agency onboarding is currently under consideration. TrendStarz is initially focused on direct collaborations between brands, influencers, photographers, and creators.',
+  //   label: 'Planned'
+  // },
+  // {
+  //   question: 'How does creator verification work?',
+  //   answer: 'Creator verification features are planned to help brands identify authentic creators and improve collaboration trust. More verification options will be introduced in future updates.',
+  //   label: 'Coming Soon'
+  // },
+  // {
+  //   question: 'Can creators chat directly on the platform?',
+  //   answer: 'Direct messaging and in-platform chat features are planned for future releases. Currently, collaborations and applications are managed through platform workflows.',
+  //   label: 'In Development'
+  // },
+  // {
+  //   question: 'Is there a mobile app for TrendStarz?',
+  //   answer: 'TrendStarz is currently available as a web platform. Mobile app support for Android and iOS is planned in future phases.',
+  //   label: 'Coming Soon'
+  // },
   {
     question: 'How does TrendStarz handle fake users or spam?',
     answer: 'TrendStarz reviews campaigns and collaboration requests to help reduce spam and maintain a safer collaboration environment. Additional moderation and verification systems will continue improving over time.'

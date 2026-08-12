@@ -1,9 +1,7 @@
 import { environment } from '../../../environments/environment';
-const CLOUDINARY_UPLOAD_PRESET = environment.cloudinaryUploadPreset;
-const CLOUDINARY_CLOUD_NAME = environment.cloudinaryCloudName;
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
-import { ConfigService } from '../../shared/config.service';
+import { ConfigService, ProfileVisibility } from '../../shared/config.service';
 import { OtpService } from '../../shared/otp.service';
 import { map, first, catchError, debounceTime } from 'rxjs/operators';
 import { firstValueFrom, of, forkJoin } from 'rxjs';
@@ -11,21 +9,43 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RouterModule } from '@angular/router';
-import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
-import imageCompression from 'browser-image-compression';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { normalizeSocialHandle, validateSocialHandle } from '../../shared/social-handle.util';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { atLeastOneContactRequired } from '../influencer-registration/influencer-registration.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { SessionService } from '../../core/session.service';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
 
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  readonly maxCategories = 5;
+  readonly maxCreatorTypes = 3;
+  readonly maxCollaborationTypes = 3;
+  readonly maxAvailableFor = 2;
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -37,8 +57,12 @@ export class InfluencerProfileComponent implements OnInit {
   verificationStatusDisplay = 'not_submitted';
   verificationAdminNotesDisplay = '';
   commissionAccessTags: string[] = [];
+  platformCommissionPercent: number = 0;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
+  communityProfileUser: any | null = null;
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -48,15 +72,14 @@ export class InfluencerProfileComponent implements OnInit {
       .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
   }
 
-  toggleChip(field: 'languages' | 'categories', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-    } else {
-      arr.push(id);
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  onInfluencerCategoryChange(values: string[]): void {
+    this.registrationForm.get('influencerCategory')?.setValue(values[0] || '');
+    this.registrationForm.get('influencerCategory')?.markAsTouched();
+  }
+
+  setChipValues(field: 'languages' | 'categories' | 'creatorTypes', values: string[]): void {
+    if (!this.isEditMode) return;
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
   }
 
@@ -71,9 +94,28 @@ export class InfluencerProfileComponent implements OnInit {
     private otpService: OtpService,
     private plansService: PlansService,
     private cd: ChangeDetectorRef,
+    private ngZone: NgZone,
     private guidelinesService: ImageGuidelinesService,
     private toast: ToastService,
+    private firebaseAuth: FirebaseAuthService,
+    private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
@@ -83,6 +125,9 @@ export class InfluencerProfileComponent implements OnInit {
   originalPlatformForms: { [platformId: string]: any } = {};
   /** Currently visible platform tab in the social media section. */
   activePlatformTab: string | null = null;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
 
   isPlatformSelected(platform: any): boolean {
     return !!this.platformForms[platform._id];
@@ -129,16 +174,88 @@ export class InfluencerProfileComponent implements OnInit {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
+  private buildCriticalProfileMessage(raw: any): string {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const state = this.states.find((s: any) => s._id === raw?.location?.state || s.name === raw?.location?.state)?.name || raw?.location?.state || '-';
+    const district = this.districts.find((d: any) => d._id === raw?.location?.district || d.name === raw?.location?.district)?.name || raw?.location?.district || '-';
+    const hasProfilePhoto = !!(this.profileImagePreview || this.profileImagesFormArray?.at(0)?.value?.url);
+    return [
+      'Please verify these details before saving:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${hasProfilePhoto ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      '',
+      'Continue saving profile?'
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cd.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  private confirmEditVerifiedEmail(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your email is currently verified. Changing it will mark it as unverified, and some features may be restricted until you verify the new address. Continue?';
+    this.profileConfirmOpen = true;
+    this.cd.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  private confirmEditVerifiedPhone(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your mobile number is currently verified. Changing it will mark it as unverified, and you will need to re-verify the new number before some features are available again. Continue?';
+    this.profileConfirmOpen = true;
+    this.cd.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  async requestPhoneEdit(): Promise<void> {
+    if (!this.isEditMode) return;
+    if (this.phoneVerified && !(await this.confirmEditVerifiedPhone())) return;
+    this.phoneEditRequested = true;
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
+  }
+
   /** Selected platforms missing handle or tier. */
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !!this.getSocialHandleError(p) || !(pf.tier || '').trim() || !this.hasSelectedPricedContentType(pf);
     });
   }
 
   arePlatformsValid(): boolean {
     return this.invalidPlatforms().length === 0;
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
   }
 
   getPlatformTotal(platform: any): number {
@@ -156,24 +273,30 @@ export class InfluencerProfileComponent implements OnInit {
     return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
   }
 
-  getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
+  /** All enabled, priced content-type rates across every selected platform. */
+  get selectedContentTypePricesRupees(): number[] {
+    return this.selectedPlatforms()
+      .flatMap(p => Object.values(this.platformForms[p._id]?.contentTypes || {}))
+      .filter((ct: any) => ct?.selected && Number(ct?.price) > 0)
+      .map((ct: any) => Number(ct.price));
   }
 
-  getTierOptionLabel(tier: any): string {
-    const name = String(tier?.name || '').trim();
-    const range = String(tier?.desc || '').trim();
-    if (!range) return name;
-    return `${name} (${range})`;
+  /** Starting Price is always derived — never manually typed — as the lowest enabled content rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.selectedContentTypePricesRupees;
+    return prices.length ? Math.min(...prices) : 0;
+  }
+
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
+  }
+
+  /** Meta OAuth is live for these; YouTube/LinkedIn stay manual-only ("Coming Soon"). */
+  isOAuthCapable(platform: any): boolean {
+    const name = String(platform?.name || '').toLowerCase();
+    return name.includes('instagram') || name.includes('facebook');
   }
 
 
@@ -191,10 +314,16 @@ export class InfluencerProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  phoneEditRequested: boolean = false;
   verificationCallNumber = '';
+  otpVerificationEnabled = false;
 
   emailVerified: boolean = false;
+  emailEditRequested: boolean = false;
   showEmailVerificationPrompt: boolean = false;
+  emailJustChanged: boolean = false;
+  previousVerifiedEmail: string = '';
+  pendingVerificationEmail: string = '';
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -203,6 +332,9 @@ export class InfluencerProfileComponent implements OnInit {
   verifyingPhoneOtp: boolean = false;
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
+  private firebasePhoneConfirmation: any = null;
+  requestingMobileCallback: boolean = false;
+  mobileCallbackRequested: boolean = false;
 
 
   // Email verification resend state
@@ -248,23 +380,68 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   sendPhoneOtp() {
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    this.otpService.sendOtp('phone', phone).subscribe({
-      next: () => { this.phoneVerifyError = ''; },
-      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
-    });
-    this.phoneOtpError = '';
-    this.startPhoneOtpTimer();
+    if (!this.otpVerificationEnabled) return;
+    void this.sendFirebasePhoneOtp();
   }
+
+  requestMobileCallback(): void {
+    const id = this.session.getUser()?.id;
+    if (!id || this.requestingMobileCallback) return;
+    this.requestingMobileCallback = true;
+    this.configService.requestMobileCallback(id).subscribe({
+      next: () => {
+        this.requestingMobileCallback = false;
+        this.mobileCallbackRequested = true;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.requestingMobileCallback = false;
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  private formatFirebasePhone(phone: string): string {
+    const value = String(phone || '').trim();
+    if (value.startsWith('+')) return value;
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10 ? `+91${digits}` : `+${digits}`;
+  }
+
+  private async sendFirebasePhoneOtp(): Promise<void> {
+    try {
+      const phone = this.formatFirebasePhone(this.registrationForm.get('phoneNumber')?.value);
+      this.firebasePhoneConfirmation = await this.firebaseAuth.sendPhoneOtp(phone, 'influencer-phone-recaptcha');
+      this.phoneVerifyError = '';
+      this.phoneOtpError = '';
+      this.showPhoneOtp = true;
+      this.startPhoneOtpTimer();
+    } catch (error: any) {
+      this.phoneVerifyError = error?.message || 'Failed to send OTP';
+    }
+  }
+
   confirmPhoneOtp() {
+    void this.confirmFirebasePhoneOtp();
+  }
+
+  private async confirmFirebasePhoneOtp(): Promise<void> {
+    if (!this.firebasePhoneConfirmation) {
+      this.phoneOtpError = 'Please request an OTP first.';
+      return;
+    }
     this.verifyingPhoneOtp = true;
     this.phoneOtpError = '';
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    const otp = this.phoneOtp.join('');
-    this.otpService.verifyOtp('phone', phone, otp).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
-      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
-    });
+    try {
+      await this.firebaseAuth.confirmPhoneOtp(this.firebasePhoneConfirmation, this.phoneOtp.join(''));
+      this.phoneVerified = true;
+      this.showPhoneOtp = false;
+      this.phoneVerifyError = '';
+    } catch (error: any) {
+      this.phoneOtpError = error?.message || 'Invalid or expired OTP.';
+    } finally {
+      this.verifyingPhoneOtp = false;
+    }
   }
   sendEmailOtp() {
     const email = this.registrationForm.get('email')?.value;
@@ -291,11 +468,20 @@ export class InfluencerProfileComponent implements OnInit {
   myPayments: any[] = [];
   latestPendingPayment: any = null;
 
+  // Razorpay payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
+  get latestPendingPaymentAmount(): number {
+    const p = this.latestPendingPayment;
+    if (!p) return 0;
+    return p.paymentMethod === 'razorpay' ? (p.amount || 0) / 100 : (p.amount || 0);
+  }
+
   // Plan capabilities
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   get maxImages(): number { return this.plansService.getLimitValue(this.planCaps, 'maxProductImages'); }
-  get currentImageCount(): number { return this.profileImagesFormArray?.length ?? 0; }
+  get maxGalleryImages(): number { return Math.max(0, this.maxImages - 1); }
+  get currentImageCount(): number { return 1 + this.galleryImagesData.length; }
   get imageUploadAllowed(): boolean { return this.currentImageCount < this.maxImages; }
+  get hasPremiumPlan(): boolean { return !!this.planCaps?.hasPremium; }
   registrationSuccess = false;
   registrationError = '';
   registrationSuccessMessage = '';
@@ -303,18 +489,59 @@ export class InfluencerProfileComponent implements OnInit {
   states: any[] = [];
   districts: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
+  creatorTypeOptions: any[] = [];
   tiers: any[] = [];
-  protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
+  profileImageUploading = false;
+  galleryImageUploading = false;
   profileImageFile: File | null = null;
-  readonly MAX_IMAGE_SIZE_MB = 5; // allow up to 5 MB before rejecting
+  galleryImagesPreview: string[] = [];
+  galleryImagesData: { url: string; public_id: string }[] = [];
+  galleryUploadWarning = '';
   languagesList: any[] = [];
   categoriesList: any[] = [];
   isEditMode = false;
   originalFormValue: any = null;
   submitted = false;
+  saving = false;
   usernameError: string = '';
   showChangePasswordModal = false;
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+  profileVisibility: ProfileVisibility = 'PUBLIC';
+  visibilityBusy = false;
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    const userId = this.session.getUser()?.id;
+    if (this.marketingConsentBusy || !userId) return;
+    this.marketingConsentBusy = true;
+    this.configService.updateMarketingConsent(userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
+
+  onProfileVisibilityChange(next: ProfileVisibility): void {
+    const userId = this.session.getUser()?.id;
+    if (this.visibilityBusy || !userId) return;
+    this.visibilityBusy = true;
+    this.configService.updateProfileVisibility(userId, next).subscribe({
+      next: () => {
+        this.profileVisibility = next;
+        if (next !== 'PUBLIC') this.featuredInMarketing = false;
+        this.visibilityBusy = false;
+      },
+      error: () => {
+        this.visibilityBusy = false;
+      },
+    });
+  }
 
   openChangePasswordModal() {
     this.showChangePasswordModal = true;
@@ -334,11 +561,27 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
       this.cd.markForCheck();
     });
+    this.configService.getAppSettings().subscribe(s => {
+      this.otpVerificationEnabled = !!s.otpVerificationEnabled;
+      if (typeof s.influencerFeePercent === 'number') this.platformCommissionPercent = s.influencerFeePercent;
+      this.cd.markForCheck();
+    });
+
+    const userId = this.session.getUser()?.id;
+    if (userId) {
+      this.configService.getMarketingConsent(userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+      this.configService.getProfileVisibility(userId).subscribe((res) => {
+        this.profileVisibility = res?.profileVisibility || 'PUBLIC';
+      });
+    }
 
     // Load plan capabilities
     this.plansService.getMyCapabilities().subscribe(caps => {
@@ -366,14 +609,22 @@ export class InfluencerProfileComponent implements OnInit {
         state: [{ value: '', disabled: true }, Validators.required],
         district: [{ value: '', disabled: true }, Validators.required]
       }),
-      promotionalPrice: [{ value: '', disabled: true }, Validators.required],
+      promotionalPrice: [{ value: '', disabled: true }],
       languages: [{ value: [], disabled: true }, Validators.required],
       categories: [{ value: [], disabled: true }, Validators.required],
+      creatorTypes: [{ value: [], disabled: true }],
       profileImages: this.fb.array([]),
       contact: this.fb.group({
         whatsapp: [{ value: false, disabled: true }],
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }]
+      }, { validators: [atLeastOneContactRequired] }),
+      collaborationAvailability: this.fb.group({
+        enabled: [{ value: false, disabled: true }],
+        collaborationTypes: [{ value: [], disabled: true }],
+        preference: [{ value: '', disabled: true }],
+        availableFor: [{ value: [], disabled: true }],
+        openToTravel: [{ value: false, disabled: true }],
       }),
       website: [{ value: '', disabled: true }],
       payout: this.fb.group({
@@ -396,20 +647,14 @@ export class InfluencerProfileComponent implements OnInit {
     this.registrationForm.statusChanges.subscribe(() => this.refreshStepCompletion());
 
     // Clear professional fields when professionalStatus is unchecked
-    // Dynamic validator for influencerCategory based on professionalStatus
     this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
-      const catCtrl = this.registrationForm.get('influencerCategory');
-      if (isProfessional) {
-        catCtrl?.setValidators([Validators.required]);
-      } else {
+      if (!isProfessional) {
         this.showProfessionalOptional = false;
-        catCtrl?.clearValidators();
-        catCtrl?.setValue('');
-        catCtrl?.markAsUntouched();
-        catCtrl?.markAsPristine();
+        this.registrationForm.get('creatorTypes')?.setValue([]);
+        this.registrationForm.get('creatorTypes')?.markAsUntouched();
+        this.registrationForm.get('creatorTypes')?.markAsPristine();
         this.registrationForm.get('expertiseArea')?.setValue('');
       }
-      catCtrl?.updateValueAndValidity();
       this.refreshStepCompletion();
     });
 
@@ -434,7 +679,9 @@ export class InfluencerProfileComponent implements OnInit {
       tiers: this.configService.getTiers(),
       socialMedia: this.configService.getSocialMedia(),
       languages: this.configService.getLanguages(),
-      categories: this.configService.getCategories('influencer')
+      categories: this.configService.getCategories('influencer'),
+      collaborationAvailabilityOptions: this.configService.getCollaborationAvailabilityOptions(),
+      creatorTypeOptions: this.configService.getCreatorTypeOptions(),
     }).subscribe({
       next: (dropdownData) => {
         this.states = dropdownData.states || [];
@@ -443,6 +690,8 @@ export class InfluencerProfileComponent implements OnInit {
         this.socialMediaList = dropdownData.socialMedia || [];
         this.languagesList = dropdownData.languages || [];
         this.categoriesList = dropdownData.categories || [];
+        this.collaborationAvailabilityOptions = dropdownData.collaborationAvailabilityOptions || {};
+        this.creatorTypeOptions = dropdownData.creatorTypeOptions || [];
 
         // Now fetch influencer profile after dropdown data is loaded
         const token = this.getToken();
@@ -455,6 +704,12 @@ export class InfluencerProfileComponent implements OnInit {
           }
           this.emailVerified = !!profile.isEmailVerified;
           this.phoneVerified = !!profile.isMobileVerified;
+          this.communityProfileUser = {
+            ...profile,
+            isEmailVerified: this.emailVerified,
+            isMobileVerified: this.phoneVerified,
+            location: profile.location || {},
+          };
           this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
           this.firstRegisteredAt = profile.firstRegisteredAt || profile.createdAt || null;
           this.lastLoginAt = profile.lastLoginAt || null;
@@ -470,6 +725,9 @@ export class InfluencerProfileComponent implements OnInit {
           const categoryIds = (profile.categories || []).map((name: string) =>
             this.categoriesList.find(c => c.name === name)?._id
           ).filter(Boolean);
+          const creatorTypeIds = (profile.creatorTypes || [])
+            .map((name: string) => String(name || '').trim())
+            .filter(Boolean);
           // Load districts for the state, then patch form
             const patchForm = (districtId: string) => {
             this.registrationForm.patchValue({
@@ -479,9 +737,7 @@ export class InfluencerProfileComponent implements OnInit {
               email: profile.email || '',
               dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
               gender: profile.gender || '',
-              influencerCategory:
-                this.categoriesList.find((c: any) => c.name === profile.influencerCategory)?._id ||
-                '',
+              influencerCategory: profile.influencerCategory || '',
               professionalStatus: !!profile.professionalStatus,
               expertiseArea: profile.expertiseArea || '',
               verificationDocuments: profile.verificationDocuments || [],
@@ -491,7 +747,15 @@ export class InfluencerProfileComponent implements OnInit {
               promotionalPrice: profile.promotionalPrice || '',
               languages: languageIds,
             categories: categoryIds,
+            creatorTypes: creatorTypeIds,
             contact: profile.contact || { whatsapp: false, email: false, call: false },
+            collaborationAvailability: profile.collaborationAvailability || {
+              enabled: false,
+              collaborationTypes: [],
+              preference: '',
+              availableFor: [],
+              openToTravel: false,
+            },
             website: profile.website || '',
             payout: {
               upiId: profile.payout?.upiId || '',
@@ -515,6 +779,10 @@ export class InfluencerProfileComponent implements OnInit {
           this.profileImagePreview = (profile.profileImages && profile.profileImages[0]?.url) ? this.normalizeImageUrl(profile.profileImages[0].url) : null;
           // Do not set profileImageFile to the remote image object — only File objects should be used for upload
           this.profileImageFile = null;
+          // Populate gallery images from index 1 onward
+          const gallerySource = (profile.profileImages || []).slice(1).filter((img: any) => !!img?.url);
+          this.galleryImagesData = gallerySource.map((img: any) => ({ url: img.url, public_id: img.public_id }));
+          this.galleryImagesPreview = gallerySource.map((img: any) => this.normalizeImageUrl(img.url) || img.url);
           // Patch socialMedia into platformForms
           this.platformForms = {};
           (profile.socialMedia || []).forEach((sm: any) => {
@@ -566,7 +834,9 @@ export class InfluencerProfileComponent implements OnInit {
           // Load payment status
           this.configService.getMyPayments(5).subscribe(payments => {
             this.myPayments = payments;
-            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending') || null;
+            // Razorpay is auto-verified via webhook, never reviewed by an admin — a 'pending'
+            // razorpay record only means checkout was abandoned/cancelled, not awaiting review.
+            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending' && p.paymentMethod !== 'razorpay') || null;
           });
           this.refreshStepCompletion();
         },
@@ -617,8 +887,11 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
-    if (plan?.discountLabel) return plan.discountLabel;
-    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
     const hasTrialOffer = Array.isArray(plan?.offers)
       && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
     return hasTrialOffer ? 'Early Access Offer' : '';
@@ -648,21 +921,18 @@ export class InfluencerProfileComponent implements OnInit {
 
     if (step === 2) {
       return !!(
-        this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
         this.registrationForm.get('categories')?.valid &&
-        (!this.registrationForm.get('professionalStatus')?.value || this.registrationForm.get('influencerCategory')?.valid) &&
+        (!this.registrationForm.get('professionalStatus')?.value || (this.registrationForm.get('creatorTypes')?.value?.length > 0)) &&
+        (!this.registrationForm.get('collaborationAvailability.enabled')?.value || (this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) &&
         this.selectedPlatforms().length > 0
       );
     }
 
     if (step === 3) {
-      return !!(
-        this.registrationForm.get('promotionalPrice')?.valid &&
-        this.registrationForm.get('contact')?.valid
-      );
+      return this.computedStartingPriceRupees > 0 && !!this.registrationForm.get('contact')?.valid;
     }
 
     return false;
@@ -692,7 +962,7 @@ export class InfluencerProfileComponent implements OnInit {
     this.scrollToTop();
   }
 
-  private scrollToTop(): void {
+  scrollToTop(): void {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -700,6 +970,10 @@ export class InfluencerProfileComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     this.submitted = true;
+    // Content-type checkbox/price mutate platformForms directly (outside the reactive form),
+    // so cached step-complete flags can lag behind the live data. Refresh first so
+    // isStepComplete() below never reads a stale value.
+    this.refreshStepCompletion();
 
     if (this.currentStep === 1) {
       const fields = ['name', 'username', 'phoneNumber', 'email', 'dateOfBirth'];
@@ -710,11 +984,19 @@ export class InfluencerProfileComponent implements OnInit {
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages', 'categories'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       const isProfessional = !!this.registrationForm.get('professionalStatus')?.value;
       if (isProfessional) {
-        this.registrationForm.get('influencerCategory')?.markAsTouched();
+        this.registrationForm.get('creatorTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('creatorTypes')?.value?.length > 0)) return false;
+      }
+      if (this.registrationForm.get('collaborationAvailability.enabled')?.value) {
+        this.registrationForm.get('collaborationAvailability.collaborationTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) {
+          this.registrationError = 'Please select at least one collaboration type.';
+          return false;
+        }
       }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
@@ -722,8 +1004,7 @@ export class InfluencerProfileComponent implements OnInit {
       }
       this.verificationConsentError = '';
       const requiredValid = required.every((path) => this.registrationForm.get(path)?.valid);
-      const influencerCatValid = !isProfessional || !!this.registrationForm.get('influencerCategory')?.valid;
-      if (!requiredValid || !influencerCatValid) return false;
+      if (!requiredValid) return false;
       if (this.selectedPlatforms().length === 0) {
         this.registrationError = 'Please select at least one social media platform.';
         return false;
@@ -737,9 +1018,8 @@ export class InfluencerProfileComponent implements OnInit {
     }
 
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
-      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+      return this.computedStartingPriceRupees > 0 && !!this.registrationForm.get('contact')?.valid;
     }
 
     return false;
@@ -809,16 +1089,19 @@ export class InfluencerProfileComponent implements OnInit {
     await this.fetchAndPatchProfile();
   this.isEditMode = true;
   this.registrationForm.enable({ emitEvent: false });
+  this.emailEditRequested = !this.emailVerified;
   // Enable username for editing
   this.registrationForm.get('username')?.enable({ emitEvent: false });
   // Keep password fields disabled for security
   this.registrationForm.get('password')?.disable();
   this.registrationForm.get('confirmPassword')?.disable();
   this.refreshStepCompletion();
+  this.cd.detectChanges();
   }
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
@@ -862,19 +1145,6 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
 
-  // Helper to map category ID to name safely for template
-    getCategoryName(catId: string): string {
-      if (!this.categoriesList) return catId;
-      const found = this.categoriesList.find((c: any) => c._id === catId);
-      return found ? found.name : catId;
-    }
-
-    // Helper to map language ID to name safely for template
-    getLanguageName(langId: string): string {
-      if (!this.languagesList) return langId;
-      const found = this.languagesList.find((l: any) => l._id === langId);
-      return found ? found.name : langId;
-    }
       // Helper to map district ID to name safely for template
       getDistrictName(districtId: string): string {
         if (!this.districts) return districtId;
@@ -897,12 +1167,11 @@ export class InfluencerProfileComponent implements OnInit {
     return url;
   }
 
-  private isValidImageFile(file: any, maxMB = 5): { valid: boolean; reason?: string } {
+  private isValidImageFile(file: any): { valid: boolean; reason?: string } {
     if (!file) return { valid: false, reason: 'No file selected.' };
     if (!(file instanceof File)) return { valid: false, reason: 'Selected value is not a file.' };
-    if (!file.type || !file.type.startsWith('image/')) return { valid: false, reason: 'Please select an image file.' };
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > maxMB) return { valid: false, reason: `Image exceeds ${maxMB} MB limit.` };
+    const reason = validateImageFile(file);
+    if (reason) return { valid: false, reason };
     return { valid: true };
   }
 
@@ -918,40 +1187,71 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
 
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private profileImageInputEl: HTMLInputElement | null = null;
+
   // Only allow 1 image for now (can extend for premium)
-  async onProfileImageFileChange(event: any) {
+  onProfileImageFileChange(event: any) {
     if (!this.isEditMode) return;
-    this.profileImagePreview = null;
-    this.profileImageFile = null;
-    const file: File = event.target.files && event.target.files[0];
+    this.profileImageInputEl = event.target as HTMLInputElement;
+    const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
-    const validation = this.isValidImageFile(file, this.MAX_IMAGE_SIZE_MB);
+    const validation = this.isValidImageFile(file);
     if (!validation.valid) {
       this.toast.error(validation.reason || 'Please select a valid image file.');
       return;
     }
-    // Compress and resize before upload
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onProfileImageCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+  }
+
+  async onProfileImageCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.profileImageUploading = true;
+    this.cd.detectChanges();
     try {
-      const options = {
-        maxSizeMB: 0.2, // 200 KB
-        maxWidthOrHeight: 1024,
-        useWebWorker: true
-      };
-      const compressedFile = await imageCompression(file, options);
+      const compressedFile = await compressImageFile(file, 'profile');
       const uploadFile = this.normalizeUploadFile(compressedFile as File | Blob, file.name || 'profile-image.jpg');
       if (!uploadFile) {
         this.toast.error('Please select a valid image file.');
+        this.profileImageUploading = false;
+        this.cd.detectChanges();
+        return;
+      }
+      if (isOversizedAfterCompression(uploadFile)) {
+        this.toast.error(OVERSIZE_MESSAGE);
+        this.profileImageUploading = false;
+        this.cd.detectChanges();
         return;
       }
       this.profileImageFile = uploadFile;
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.profileImagePreview = e.target.result;
-        this.refreshStepCompletion();
+        this.ngZone.run(() => {
+          this.profileImagePreview = e.target.result;
+          this.profileImageUploading = false;
+          this.cd.detectChanges();
+          this.refreshStepCompletion();
+        });
       };
       reader.readAsDataURL(uploadFile);
     } catch (err) {
-      this.toast.error('Image compression failed.');
+      this.ngZone.run(() => {
+        this.toast.error('Image compression failed.');
+        this.profileImageUploading = false;
+        this.cd.detectChanges();
+      });
       return;
     }
   }
@@ -962,15 +1262,91 @@ export class InfluencerProfileComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
+  async onGalleryImagesChange(event: Event) {
+    if (!this.isEditMode) return;
+    const files = Array.from((event.target as HTMLInputElement).files || []);
+    if (!files.length) return;
+    const remainingSlots = this.maxGalleryImages - this.galleryImagesData.length;
+    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
+    if (!selectedFiles.length) return;
+    this.galleryImageUploading = true;
+    this.cd.detectChanges();
+    let failedUploads = 0;
+    for (const file of selectedFiles) {
+      if (validateImageFile(file)) { failedUploads++; continue; }
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) { failedUploads++; continue; }
+      const preview = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e.target?.result || ''));
+        reader.onerror = () => reject(new Error('preview_failed'));
+        reader.readAsDataURL(compressedFile);
+      }).catch(() => '');
+      if (!preview) { failedUploads++; continue; }
+      const fd = new FormData();
+      fd.append('file', compressedFile, compressedFile.name || 'gallery.jpg');
+      fd.append('type', 'gallery');
+      try {
+        const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-authenticated-image`, {
+          method: 'POST',
+          body: fd,
+          headers: { Authorization: `Bearer ${this.session.getToken()}` },
+        });
+        if (!resp.ok) { failedUploads++; continue; }
+        const data = await resp.json();
+        if (data?.url && data?.public_id) {
+          this.galleryImagesPreview.push(preview);
+          this.galleryImagesData.push({ url: data.url, public_id: data.public_id });
+          this.cd.detectChanges();
+        } else { failedUploads++; }
+      } catch { failedUploads++; }
+    }
+    this.ngZone.run(() => {
+      this.galleryUploadWarning = failedUploads
+        ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+        : '';
+      this.galleryImageUploading = false;
+      this.cd.detectChanges();
+    });
+  }
+
+  removeGalleryImage(index: number) {
+    if (!this.isEditMode) return;
+    this.galleryImagesPreview.splice(index, 1);
+    this.galleryImagesData.splice(index, 1);
+    this.galleryUploadWarning = '';
+    this.cd.detectChanges();
+  }
+
 
 
   async onSubmit() {
+    if (this.saving) {
+      return;
+    }
+
     this.submitted = true;
+    this.cd.detectChanges();
 
     if (!this.isEditMode || this.registrationForm.invalid || (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url))) {
       if (!this.profileImagePreview && (!this.profileImagesFormArray.controls.length || !this.profileImagesFormArray.at(0).value || !this.profileImagesFormArray.at(0).value.url)) {
         this.registrationError = 'Profile image is required.';
+      } else if (this.registrationForm.invalid) {
+        this.registrationForm.markAllAsTouched();
+        this.registrationError = 'Please complete all required fields before saving.';
+        if (!this.computeStepComplete(1)) this.currentStep = 1;
+        else if (!this.computeStepComplete(2)) this.currentStep = 2;
+        else if (!this.computeStepComplete(3)) this.currentStep = 3;
       }
+      this.cd.detectChanges();
+      return;
+    }
+    if (this.registrationForm.get('professionalStatus')?.value && !(this.registrationForm.get('creatorTypes')?.value?.length > 0)) {
+      this.registrationForm.get('creatorTypes')?.markAsTouched();
+      this.registrationError = 'Please select your creator type.';
+      this.currentStep = 2;
+      this.step2Attempted = true;
+      this.cd.detectChanges();
       return;
     }
     if (!this.arePlatformsValid()) {
@@ -980,15 +1356,33 @@ export class InfluencerProfileComponent implements OnInit {
       this.registrationSuccessMessage = '';
       return;
     }
+    if (this.computedStartingPriceRupees <= 0) {
+      this.registrationError = 'Set at least one content rate to calculate your starting price.';
+      this.currentStep = 2;
+      this.cd.detectChanges();
+      return;
+    }
     this.registrationError = '';
     this.registrationSuccess = false;
     this.registrationSuccessMessage = '';
     const raw = this.registrationForm.getRawValue();
+    if (!(await this.confirmCriticalProfileDetails(raw))) {
+      return;
+    }
+    const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    const currentEmail = String(raw?.email || '').trim().toLowerCase();
+    const emailChanged = !!currentEmail && previousEmail !== currentEmail;
+    const previousEmailWasVerified = this.emailVerified;
+    const previousPhone = String(this.originalFormValue?.phoneNumber || '').trim();
+    const currentPhone = String(raw?.phoneNumber || '').trim();
+    const phoneChanged = !!currentPhone && previousPhone !== currentPhone;
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
       return;
     }
     this.verificationConsentError = '';
+    this.saving = true;
+    this.cd.detectChanges();
     // Always slugify username before saving
     if (raw.username) {
       raw.username = this.slugifyUsername(raw.username);
@@ -1019,15 +1413,18 @@ export class InfluencerProfileComponent implements OnInit {
       const cat = this.categoriesList.find((c: any) => c._id === id);
       return cat ? cat.name : id;
     });
+    const creatorTypeNames = (raw.creatorTypes || [])
+      .map((name: string) => String(name || '').trim())
+      .filter((name: string) => !!name);
     const influencerCategoryName = raw.influencerCategory
-      ? (this.categoriesList.find((c: any) => c._id === raw.influencerCategory)?.name || raw.influencerCategory)
+      ? (this.creatorTypeOptions.find((x: any) => x.name === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
     // Build social media from platformForms
     const socialMedia = this.selectedPlatforms().map(platform => {
       const pf = this.platformForms[platform._id];
       return {
         platform: platform.name,
-        handle: pf.handle,
+        handle: normalizeSocialHandle(pf.handle, platform.name),
         followersCount: Number(pf.followersCount) || 0,
         tier: pf.tier,
         contentTypes: Object.entries(pf.contentTypes)
@@ -1041,34 +1438,41 @@ export class InfluencerProfileComponent implements OnInit {
       const uploadFile = this.normalizeUploadFile(this.profileImageFile, this.profileImageFile.name || 'profile-image.jpg');
       if (!uploadFile || !uploadFile.type || !uploadFile.type.startsWith('image/')) {
         this.registrationError = 'Invalid profile image file.';
+        this.saving = false;
         return;
       }
       try {
         const formData = new FormData();
         formData.append('file', uploadFile);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        formData.append('folder', `influencers/${this.session.getUser()?.id}/profile`);
+        const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
           method: 'POST',
-          body: formData
+          body: formData,
         });
+        if (!response.ok) {
+          this.registrationError = 'Profile image upload failed.';
+          this.saving = false;
+          return;
+        }
         const data = await response.json();
-        if (data.secure_url && data.public_id) {
-          // Always include all images present in the FormArray (old image)
-          profileImages = [
-            ...raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img),
-            { url: data.secure_url, public_id: data.public_id }
-          ];
+        const uploaded = data?.data || data;
+        if (uploaded?.url && uploaded?.public_id) {
+          // New profile image at index 0, keep gallery images
+          profileImages = [{ url: uploaded.url, public_id: uploaded.public_id }, ...this.galleryImagesData];
         } else {
           this.registrationError = 'Profile image upload failed.';
+          this.saving = false;
           return;
         }
       } catch (err) {
         this.registrationError = 'Profile image upload failed.';
+        this.saving = false;
         return;
       }
     } else if (raw.profileImages && Array.isArray(raw.profileImages) && raw.profileImages.length > 0) {
-      // If editing and image already exists, just send it as-is
-      profileImages = raw.profileImages.filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
+      // Keep existing profile image (index 0), combine with current gallery
+      const existingProfile = raw.profileImages.slice(0, 1).filter((img: any) => img && typeof img === 'object' && 'url' in img && 'public_id' in img);
+      profileImages = [...existingProfile, ...this.galleryImagesData];
     }
     const payload: any = {
       ...raw,
@@ -1077,14 +1481,16 @@ export class InfluencerProfileComponent implements OnInit {
         state: stateObj ? stateObj.name : raw.location.state,
         district: districtObj ? districtObj.name : raw.location.district
       },
-      promotionalPrice: raw.promotionalPrice,
+      promotionalPrice: this.computedStartingPriceRupees,
       languages: languageNames,
       categories: categoryNames,
+      creatorTypes: creatorTypeNames,
       influencerCategory: influencerCategoryName,
       professionalStatus: !!raw.professionalStatus,
       expertiseArea: raw.expertiseArea || '',
       verificationDocuments: this.verificationDocuments,
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
+      collaborationAvailability: raw.collaborationAvailability,
       socialMedia,
       profileImages,
       contact: raw.contact,
@@ -1100,11 +1506,9 @@ export class InfluencerProfileComponent implements OnInit {
     delete payload.premiumEnd;
     delete payload.premiumStart;
     delete payload.premiumDuration;
-    // debug: payload prepared for PATCH
-    const token = this.getToken();
     this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
-        // debug: PATCH response received
+        this.saving = false;
         this.registrationSuccess = true;
         const payoutSummary = payload.payout?.upiId
           ? ` Payout saved: ${payload.payout.upiId}`
@@ -1138,14 +1542,43 @@ export class InfluencerProfileComponent implements OnInit {
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
+        if (emailChanged) {
+          // Server may have auto-verified the new email (local dev bypass) —
+          // trust its returned state instead of assuming it's pending.
+          this.emailVerified = !!serverUser?.isEmailVerified;
+          this.emailEditRequested = true;
+          if (!this.emailVerified) {
+            this.showEmailVerificationPrompt = true;
+            this.emailJustChanged = true;
+            this.previousVerifiedEmail = previousEmailWasVerified ? previousEmail : '';
+            this.pendingVerificationEmail = currentEmail;
+            this.resendEmailVerification();
+          }
+        } else {
+          this.emailEditRequested = false;
+        }
+        if (phoneChanged) {
+          this.phoneVerified = false;
+          this.phoneEditRequested = true;
+        } else {
+          this.phoneEditRequested = false;
+        }
         this.fetchAndPatchProfile().catch(() => {});
       },
       error: err => {
+        this.saving = false;
         this.registrationSuccessMessage = '';
         this.registrationError = 'Update failed. Please try again.';
         console.error('[PATCH error]', err);
+        this.cd.detectChanges();
       }
     });
+  }
+
+  async requestEmailEdit(): Promise<void> {
+    if (!this.isEditMode) return;
+    if (this.emailVerified && !(await this.confirmEditVerifiedEmail())) return;
+    this.emailEditRequested = true;
   }
 
   async fetchAndPatchProfile(): Promise<void> {
@@ -1172,6 +1605,9 @@ export class InfluencerProfileComponent implements OnInit {
             const categoryIds = (profile.categories || []).map((name: string) =>
               (this.categoriesList || []).find((c: any) => c.name === name)?._id
             ).filter(Boolean);
+            const creatorTypeIds = (profile.creatorTypes || [])
+              .map((name: string) => String(name || '').trim())
+              .filter(Boolean);
             const doPatch = (districtId: string) => {
               this.registrationForm.patchValue({
                 name: profile.name || '',
@@ -1180,9 +1616,7 @@ export class InfluencerProfileComponent implements OnInit {
                 email: profile.email || '',
                 dateOfBirth: this.normalizeDateForInput(profile.dateOfBirth),
                 gender: profile.gender || '',
-                influencerCategory:
-                  (this.categoriesList || []).find((c: any) => c.name === profile.influencerCategory)?._id ||
-                  '',
+                influencerCategory: profile.influencerCategory || '',
                 professionalStatus: !!profile.professionalStatus,
                 expertiseArea: profile.expertiseArea || '',
                 verificationDocuments: profile.verificationDocuments || [],
@@ -1191,7 +1625,15 @@ export class InfluencerProfileComponent implements OnInit {
                 location: { state: stateId, district: districtId },
                 languages: languageIds,
                 categories: categoryIds,
+                creatorTypes: creatorTypeIds,
                 contact: profile.contact || { whatsapp: false, email: false, call: false },
+                collaborationAvailability: profile.collaborationAvailability || {
+                  enabled: false,
+                  collaborationTypes: [],
+                  preference: '',
+                  availableFor: [],
+                  openToTravel: false,
+                },
                 website: profile.website || '',
                 payout: {
                   upiId: profile.payout?.upiId || '',
@@ -1295,6 +1737,7 @@ export class InfluencerProfileComponent implements OnInit {
 
         const fd = new FormData();
         fd.append('file', file, file.name);
+        fd.append('folder', `influencers/${this.session.getUser()?.id}/verification`);
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
           method: 'POST',
           body: fd,
@@ -1347,4 +1790,3 @@ export class InfluencerProfileComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 }
-
