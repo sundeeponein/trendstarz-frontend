@@ -16,6 +16,7 @@ import {
   emailVerificationReminderMessage as buildEmailVerificationReminderMessage,
   mobileVerificationReminderMessage as buildMobileVerificationReminderMessage,
   mobileVerificationCallbackRequestMessage as buildMobileVerificationCallbackRequestMessage,
+  premiumGrantedMessage as buildPremiumGrantedMessage,
 } from '../../../shared/whatsapp-messages.util';
 import { TIER_DESC_MAP } from '../../../shared/tiers.constants';
 import {
@@ -1609,6 +1610,7 @@ export class AdminUserTableComponent implements OnInit {
   copiedMobileVerificationMessage = '';
   copiedMobileCallbackMessage = '';
   copiedCreatorTierVerificationMessage = '';
+  copiedPremiumGrantedMessage = '';
   resendingMobileOtp = false;
 
   // Manual WhatsApp nudge for mobile verification — shown whenever mobile is
@@ -1688,6 +1690,36 @@ export class AdminUserTableComponent implements OnInit {
     this.fallbackCopyDatabaseId(text, done);
   }
 
+  // Manual WhatsApp nudge for a just-granted admin Premium — mirrors the
+  // mobile/email verification reminder pattern above (copy + wa.me send).
+  premiumGrantedMessage(user: any): string {
+    const period = this.getPremiumPeriod(user);
+    return buildPremiumGrantedMessage({
+      name: this.getUserDisplayName(user),
+      durationLabel: this.getPremiumDurationLabel(user?.premiumDuration) || 'Premium',
+      expiryDateLabel: period?.end ? period.end.toLocaleDateString('en-IN') : '-',
+    });
+  }
+
+  copyPremiumGrantedMessage(user: any): void {
+    const text = this.premiumGrantedMessage(user);
+    if (!text) return;
+    const userId = String(user?._id || '');
+    const done = () => {
+      this.copiedPremiumGrantedMessage = userId;
+      this.cd.detectChanges();
+      setTimeout(() => {
+        this.copiedPremiumGrantedMessage = '';
+        this.cd.detectChanges();
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyDatabaseId(text, done));
+      return;
+    }
+    this.fallbackCopyDatabaseId(text, done);
+  }
+
   private buildUserWhatsAppLink(user: any, text: string): string | null {
     return buildWhatsAppLink(this.getDisplayPhoneNumber(user), text);
   }
@@ -1706,6 +1738,10 @@ export class AdminUserTableComponent implements OnInit {
 
   getCreatorTierVerificationWhatsAppLink(user: any): string | null {
     return this.buildUserWhatsAppLink(user, this.creatorTierVerificationReminderMessage(user));
+  }
+
+  getPremiumGrantedWhatsAppLink(user: any): string | null {
+    return this.buildUserWhatsAppLink(user, this.premiumGrantedMessage(user));
   }
 
   /** Admin-triggered SMS OTP send — a real, separate send via the backend /otp/send

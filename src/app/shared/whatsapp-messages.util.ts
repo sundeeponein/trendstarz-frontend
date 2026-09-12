@@ -89,6 +89,25 @@ export function mobileVerificationCallbackRequestMessage(params: {
   ].join('\n');
 }
 
+export function premiumGrantedMessage(params: {
+  name: string;
+  durationLabel: string;
+  expiryDateLabel: string;
+}): string {
+  return [
+    `Hi ${params.name}, great news! Your TrendStarZ profile has been upgraded to Premium by our team.`,
+    '',
+    `Plan: ${params.durationLabel}`,
+    `Valid till: ${params.expiryDateLabel}`,
+    '',
+    'Log in to TrendStarZ to see your Premium badge and enjoy the added benefits on your profile.',
+    '',
+    'Thank you for being part of TrendStarZ!',
+    '',
+    'www.trendstarz.in',
+  ].join('\n');
+}
+
 export function creatorTierVerificationReminderMessage(params: {
   name: string;
 }): string {

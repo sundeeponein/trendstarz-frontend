@@ -834,6 +834,26 @@
                   <i class="bi bi-cash-coin"></i> Payment pending approval
                 </span>
               </div>
+              <div class="ts-wa-actions mt-1" *ngIf="selectedUser.isPremium && selectedUser.premiumSource === 'admin'">
+                <button
+                  type="button"
+                  class="btn btn-sm ts-wa-copy-btn"
+                  (click)="copyPremiumGrantedMessage(selectedUser)"
+                  title="Copy a WhatsApp message letting the user know Premium was granted, and for how long."
+                >
+                  <i class="bi bi-whatsapp"></i>
+                  {{ copiedPremiumGrantedMessage === selectedUser._id ? 'Copied' : 'Copy Premium message' }}
+                </button>
+                <a
+                  class="btn btn-sm ts-wa-send-btn"
+                  target="_blank"
+                  rel="noopener"
+                  [class.disabled]="!getPremiumGrantedWhatsAppLink(selectedUser)"
+                  [attr.href]="getPremiumGrantedWhatsAppLink(selectedUser) || null"
+                  [attr.aria-disabled]="!getPremiumGrantedWhatsAppLink(selectedUser)">
+                  Send via <i class="bi bi-whatsapp"></i>
+                </a>
+              </div>
             </div>
             <div>
               <label>Status</label>
