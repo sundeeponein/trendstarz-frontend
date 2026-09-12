@@ -1,28 +1,34 @@
-import { Component, ChangeDetectorRef, HostListener, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectorRef, HostListener, OnDestroy, inject } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { ImageGuidelinesModalComponent } from '../../shared/components/image-guidelines-modal/image-guidelines-modal.component';
+import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
+import { RegistrationConfirmModalService, RegistrationRole } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { environment } from '../../../environments/environment';
-import { filter, Subscription } from 'rxjs';
+import { filter, interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FooterComponent, ImageGuidelinesModalComponent],
+  imports: [CommonModule, RouterModule, FooterComponent, ImageGuidelinesModalComponent, RegistrationConfirmModalComponent],
   templateUrl: './navbar-layout.component.html',
   styleUrl: './navbar-layout.component.scss'
 })
 export class NavbarLayoutComponent implements OnDestroy {
+  readonly regConfirm = inject(RegistrationConfirmModalService);
+
   mobileMenuOpen = false;
   mobileProfileMenuOpen = false;
   notificationsOpen = false;
   notifications: any[] = [];
   unreadNotificationCount = 0;
   private readonly subs = new Subscription();
+  private readonly NOTIFICATION_POLL_INTERVAL_MS = 60000;
+  private notificationPollStarted = false;
   private readonly commissionBadgeMap: Record<string, string> = {
     early_access_creator: 'Early Access',
     partner_creator: 'Partner',
@@ -34,6 +40,29 @@ export class NavbarLayoutComponent implements OnDestroy {
     zero_commission_creator: 'Early Access',
     zero_commission_brand: 'Early Access',
   };
+  private readonly registrationRouteRoles: Record<string, RegistrationRole> = {
+    '/register-influencer': 'influencer',
+    '/register-brand': 'brand',
+    '/register-photographer': 'photographer',
+  };
+  private appLinkVisibility = {
+    showSearchLink: true,
+    showRegisterInfluencerLink: true,
+    showRegisterBrandLink: true,
+    showRegisterPhotographerLink: true,
+  };
+
+  private loadAppLinkVisibility(): void {
+    this.config.getAppSettings().subscribe((settings: any) => {
+      this.appLinkVisibility = {
+        showSearchLink: settings?.showSearchLink !== false,
+        showRegisterInfluencerLink: settings?.showRegisterInfluencerLink !== false,
+        showRegisterBrandLink: settings?.showRegisterBrandLink !== false,
+        showRegisterPhotographerLink: settings?.showRegisterPhotographerLink !== false,
+      };
+      this.cdr.detectChanges();
+    });
+  }
 
   private setMobileMenuState(open: boolean) {
     this.mobileMenuOpen = open;
@@ -62,8 +91,32 @@ export class NavbarLayoutComponent implements OnDestroy {
     return 'Search';
   }
 
+  get isAdminUser(): boolean {
+    return String(this.user?.role || '').toLowerCase() === 'admin';
+  }
+
   get showSearchLink(): boolean {
-    return true;
+    return !this.isAdminUser && this.appLinkVisibility.showSearchLink;
+  }
+
+  get searchRoute(): string {
+    return '/search';
+  }
+
+  get showRegisterLinks(): boolean {
+    return !this.user;
+  }
+
+  get showRegisterInfluencerLink(): boolean {
+    return this.showRegisterLinks && this.appLinkVisibility.showRegisterInfluencerLink;
+  }
+
+  get showRegisterBrandLink(): boolean {
+    return this.showRegisterLinks && this.appLinkVisibility.showRegisterBrandLink;
+  }
+
+  get showRegisterPhotographerLink(): boolean {
+    return this.showRegisterLinks && this.appLinkVisibility.showRegisterPhotographerLink;
   }
 
   get searchTooltip(): string {
@@ -116,6 +169,8 @@ export class NavbarLayoutComponent implements OnDestroy {
     return 'commission-badge--early';
   }
   ngOnInit() {
+    this.loadAppLinkVisibility();
+
     // Sync isPremium from the live profile API into the session
     // so the navbar always reflects the correct plan status without requiring re-login
     const user = this.session.getUser();
@@ -146,6 +201,7 @@ export class NavbarLayoutComponent implements OnDestroy {
 
       this.refreshNotifications();
       this.refreshNotificationCount();
+      this.startNotificationPolling();
     }
   }
 
@@ -184,10 +240,14 @@ export class NavbarLayoutComponent implements OnDestroy {
     this.subs.add(
       this.session.user$.subscribe(user => {
         this.user = user;
+        this.loadAppLinkVisibility();
         if (!user) {
           this.notificationsOpen = false;
           this.notifications = [];
           this.unreadNotificationCount = 0;
+        } else {
+          this.refreshNotificationCount();
+          this.startNotificationPolling();
         }
       }),
     );
@@ -197,6 +257,23 @@ export class NavbarLayoutComponent implements OnDestroy {
         .subscribe(() => {
           this.closeMobileMenu();
           this.notificationsOpen = false;
+        }),
+    );
+    // Landing straight on /register-brand (or -influencer/-photographer) — via a
+    // shared link, ad, or typed URL — skips the role-confirmation popup that the
+    // nav links show. Show it here too so the experience matches regardless of
+    // entry point. Navigations that already went through the modal (nav click ->
+    // Continue) carry `fromRegModal` state and are skipped to avoid reopening it.
+    this.subs.add(
+      this.router.events
+        .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+        .subscribe((event) => {
+          const path = event.urlAfterRedirects.split('?')[0].split('#')[0];
+          const role = this.registrationRouteRoles[path];
+          const cameFromModal = typeof history !== 'undefined' && !!(history.state && history.state['fromRegModal']);
+          if (role && !cameFromModal) {
+            this.regConfirm.open(role);
+          }
         }),
     );
     // No need to call loadUserFromStorage here; handled in App root
@@ -212,6 +289,14 @@ export class NavbarLayoutComponent implements OnDestroy {
 
   toggleDropdown() {
     this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('.profile-dropdown')) {
+      this.dropdownOpen = false;
+    }
   }
 
   toggleMobileMenu() {
@@ -253,6 +338,18 @@ export class NavbarLayoutComponent implements OnDestroy {
     );
   }
 
+  private startNotificationPolling() {
+    if (this.notificationPollStarted) return;
+    this.notificationPollStarted = true;
+    this.subs.add(
+      interval(this.NOTIFICATION_POLL_INTERVAL_MS).subscribe(() => {
+        if (this.user) {
+          this.refreshNotificationCount();
+        }
+      }),
+    );
+  }
+
   openNotification(item: any) {
     if (!item) return;
     if (!item.read) {
@@ -274,7 +371,7 @@ export class NavbarLayoutComponent implements OnDestroy {
   markAllNotificationsRead() {
     this.subs.add(
       this.config.markAllNotificationsRead().subscribe(() => {
-        this.notifications = this.notifications.map((n) => ({ ...n, read: true }));
+        this.notifications = [];
         this.unreadNotificationCount = 0;
         this.cdr.detectChanges();
       }),

@@ -1,0 +1,479 @@
+.cs-card {
+  // Matches .csc-card in creator-score-center.component.scss (Platform
+  // Status / Sync / Audit History) — this component renders in its own
+  // view-encapsulated stylesheet, so that class can't be reused directly;
+  // duplicating the exact values keeps this card visually consistent with
+  // the rest of the Score Center page instead of sitting flush on the page
+  // background with no boundary.
+  background: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.05);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  &__title {
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  &__reanalyze {
+    border: none;
+    background: #f55b0a;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.4rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    padding: 1rem 0;
+  }
+
+  &__empty {
+    padding: 1rem 0;
+
+    p {
+      margin-bottom: 0.3rem;
+    }
+  }
+
+  &__empty-eyebrow {
+    font-weight: 700;
+    color: #4338ca;
+  }
+
+  &__empty-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  &__empty-connect {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e0da;
+  }
+
+  &__payment-error {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  &__cooldown-note {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+  }
+
+  // Main score block — ring + pills/copy/status on the left, Confidence
+  // checklist on the right. Wraps to a single column below ~720px.
+  &__main {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid #eef0f6;
+
+    @media (max-width: 720px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__main-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  &__main-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  &__heading {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #161a26;
+    margin: 0.25rem 0 0;
+  }
+
+  &__copy {
+    font-size: 0.88rem;
+    color: #5f6b84;
+    margin: 0;
+  }
+
+  &__status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 0.4rem;
+  }
+
+  &__status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__status-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9aa3b5;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__confidence {
+    min-width: 220px;
+    padding-left: 1.5rem;
+    border-left: 1px solid #eef0f6;
+
+    @media (max-width: 720px) {
+      padding-left: 0;
+      border-left: none;
+      padding-top: 1rem;
+      border-top: 1px solid #eef0f6;
+    }
+  }
+
+  &__confidence-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+
+  &__confidence-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: #9aa3b5;
+
+      i {
+        color: #c7cddb;
+      }
+
+      &.met {
+        color: #3a4561;
+        font-weight: 600;
+
+        i {
+          color: #1a7f4e;
+        }
+      }
+    }
+  }
+
+  &__row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__pricing-dark {
+    background: linear-gradient(135deg, #b8460e, #8a3308);
+    color: #fff;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+  }
+
+  &__pricing-dark-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+    margin-bottom: 0.6rem;
+  }
+
+  &__pricing-dark-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  &__improvement {
+    background: #fdf1e9;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  &__improvement-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f9d8c2;
+    color: #b8460e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__improvement-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+  }
+
+  &__score-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    background: #f8f9fc;
+    border: 1px solid #e7eaf0;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.82rem;
+  }
+
+  &__score-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  &__score-summary-label {
+    color: #6b7280;
+  }
+
+  &__score-summary-value {
+    font-weight: 700;
+  }
+
+  &__score-summary-next {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #c2650a;
+    font-weight: 600;
+    margin-left: auto;
+
+    i {
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 640px) {
+      margin-left: 0;
+    }
+  }
+
+  &__breakdown {
+    margin-bottom: 1.25rem;
+  }
+
+  &__breakdown-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  &__breakdown-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  &__breakdown-group {
+    margin-bottom: 1.1rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px dashed #e7eaf0;
+
+    &:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  &__breakdown-group-title {
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6b7280;
+    margin-bottom: 0.15rem;
+  }
+
+  &__breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1.5rem;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__platforms {
+    .cs-card__breakdown-title {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  &__platform-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  &__platform-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid #eef0f6;
+    border-radius: 10px;
+    padding: 0.6rem 0.85rem;
+    flex: 1 1 220px;
+
+    > i {
+      font-size: 1.1rem;
+      color: #f55b0a;
+    }
+  }
+
+  &__platform-pill-meta {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__platform-pill-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #3a4561;
+  }
+
+  &__platform-pill-status {
+    font-size: 0.75rem;
+  }
+
+  &__platform-pill-score {
+    font-size: 0.72rem;
+    margin-top: 0.1rem;
+  }
+
+  &__platform-reason {
+    font-size: 0.75rem;
+    margin: 0.4rem 0 0;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__connect-btn {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.6rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  &__bar-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto auto;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+
+    &--total {
+      grid-template-columns: 1fr auto;
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #e7eaf0;
+      font-size: 0.85rem;
+    }
+  }
+
+  &__progress {
+    height: 6px;
+  }
+
+  &__bar-value {
+    font-weight: 700;
+    width: 2.5rem;
+    text-align: right;
+
+    &.text-muted {
+      // "No platform connected" is far wider than a numeric score — the
+      // fixed width above exists only to align single/double-digit values.
+      width: auto;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+  }
+
+  &__bar-contribution {
+    width: 4.5rem;
+    text-align: right;
+  }
+}
+
+.badge--recommended {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.cs-spin {
+  animation: cs-spin 1s linear infinite;
+}
+
+@keyframes cs-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

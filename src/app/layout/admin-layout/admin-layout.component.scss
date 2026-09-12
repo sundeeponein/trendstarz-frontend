@@ -204,12 +204,13 @@
 
 // Admin content area
 .admin-container {
-  background: linear-gradient(135deg, shared.$primary-dark 0%, shared.$secondary-dark 100%);
-  min-height: calc(100vh - 70px);
-  padding: 2rem;
+  background: #f6f7fb;
+  min-height: calc(100vh - 92px);
+  padding: 0;
 
-  @media (max-width: 768px) { padding: 1rem; }
+  @media (max-width: 768px) {
+    min-height: calc(100vh - 70px);
+  }
 }
 
 :host ::ng-deep { @include shared.ng-deep-overrides; }
-

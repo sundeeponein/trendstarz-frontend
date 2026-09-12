@@ -1,0 +1,518 @@
+// Same visual values as creator-score-center.component.scss (.csc-*) and
+// collaboration-score-card.component.scss (.cs-card__*) — duplicated here
+// rather than shared (Angular view encapsulation, and this page's actions
+// genuinely differ: no Connect/Disconnect, a free admin Re-Analyze instead
+// of the paid Razorpay flow) so the admin detail page renders identically
+// to the creator's own Score Center without forcing one component to own
+// both sets of actions.
+
+.csd-page {
+  background: #f6f7fa;
+  min-height: 60vh;
+  // Forces a dark default text color on every descendant that doesn't set
+  // its own — mirrors the creator card's root `class="cs-card text-black"`
+  // (collaboration-score-card.component.html:1). Without this, unstyled
+  // text (Score Breakdown labels/values, the Total row, Audit
+  // Version/Status) silently inherits this admin layout's ambient text
+  // color, which is too light to read against these white cards — only
+  // elements with an explicit Bootstrap text-* class were visible before
+  // this fix.
+  color: #161a26;
+}
+
+.csd-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f55b0a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+.csd-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #161a26;
+  margin-bottom: 0.25rem;
+}
+
+.csd-subtitle {
+  color: #5f6b84;
+  margin-bottom: 1rem;
+}
+
+.csd-username-link {
+  color: #f55b0a;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.csd-card {
+  background: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.05);
+}
+
+.csd-section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #161a26;
+  margin-bottom: 1rem;
+}
+
+.csd-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.csd-reanalyze {
+  border: none;
+  background: #f55b0a;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.4rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.csd-spin {
+  animation: csd-spin 1s linear infinite;
+}
+
+@keyframes csd-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.csd-main {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #eef0f6;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.csd-main-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.csd-main-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.csd-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.csd-badge--recommended {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.csd-heading {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #161a26;
+  margin: 0.25rem 0 0;
+}
+
+.csd-copy {
+  font-size: 0.88rem;
+  color: #5f6b84;
+  margin: 0;
+}
+
+.csd-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 0.4rem;
+}
+
+.csd-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.csd-status-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9aa3b5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.csd-confidence {
+  min-width: 220px;
+  padding-left: 1.5rem;
+  border-left: 1px solid #eef0f6;
+
+  @media (max-width: 720px) {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 1rem;
+    border-top: 1px solid #eef0f6;
+  }
+}
+
+.csd-confidence-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.csd-confidence-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: #9aa3b5;
+
+    i {
+      color: #c7cddb;
+    }
+
+    &.met {
+      color: #3a4561;
+      font-weight: 600;
+
+      i {
+        color: #1a7f4e;
+      }
+    }
+  }
+}
+
+.csd-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.csd-pricing-dark {
+  background: linear-gradient(135deg, #b8460e, #8a3308);
+  color: #fff;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+}
+
+.csd-pricing-dark-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  margin-bottom: 0.6rem;
+}
+
+.csd-pricing-dark-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+}
+
+.csd-improvement {
+  background: #fdf1e9;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.csd-improvement-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f9d8c2;
+  color: #b8460e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.csd-improvement-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+.csd-score-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  background: #f8f9fc;
+  border: 1px solid #e7eaf0;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.82rem;
+}
+
+.csd-score-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.csd-score-summary-label {
+  color: #6b7280;
+}
+
+.csd-score-summary-value {
+  font-weight: 700;
+}
+
+.csd-score-summary-next {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #c2650a;
+  font-weight: 600;
+  margin-left: auto;
+
+  i {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    margin-left: 0;
+  }
+}
+
+.csd-breakdown {
+  margin-bottom: 1.25rem;
+}
+
+.csd-breakdown-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.csd-breakdown-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.csd-breakdown-group {
+  margin-bottom: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px dashed #e7eaf0;
+
+  &:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.csd-breakdown-group-title {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  margin-bottom: 0.15rem;
+}
+
+.csd-breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.csd-bar-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+
+  &--total {
+    grid-template-columns: 1fr auto;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid #e7eaf0;
+    font-size: 0.85rem;
+  }
+}
+
+.csd-progress {
+  height: 6px;
+}
+
+.csd-bar-value {
+  font-weight: 700;
+  width: 2.5rem;
+  text-align: right;
+
+  &.text-muted {
+    // "No platform connected" is far wider than a numeric score — the
+    // fixed width above exists only to align single/double-digit values.
+    width: auto;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+}
+
+.csd-bar-contribution {
+  width: 4.5rem;
+  text-align: right;
+}
+
+.csd-platforms {
+  .csd-breakdown-title {
+    margin-bottom: 0.75rem;
+  }
+}
+
+.csd-platform-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.csd-platform-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  flex: 1 1 220px;
+
+  > i {
+    font-size: 1.1rem;
+    color: #f55b0a;
+  }
+}
+
+.csd-platform-pill-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.csd-platform-pill-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #3a4561;
+}
+
+.csd-platform-pill-status {
+  font-size: 0.75rem;
+}
+
+.csd-platform-pill-score {
+  font-size: 0.72rem;
+  margin-top: 0.1rem;
+}
+
+.csd-platform-reason {
+  font-size: 0.75rem;
+  margin: 0.4rem 0 0;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Audit History
+.csd-history-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.csd-history-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
+}
+
+.csd-history-card-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.csd-history-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.csd-history-card-title {
+  font-weight: 700;
+  color: #161a26;
+}
+
+.csd-history-card-delta {
+  font-weight: 700;
+  font-size: 0.85rem;
+}

@@ -1,0 +1,253 @@
+<div class="cs-card text-black">
+  <div class="cs-card__header">
+    <div class="cs-card__title">
+      <i class="bi bi-graph-up-arrow"></i>
+      Collaboration Score
+    </div>
+    <button
+      type="button"
+      class="cs-card__reanalyze"
+      [disabled]="reanalyzeDisabled"
+      [title]="reanalyzeTooltip"
+      (click)="onReAnalyzeClick()"
+    >
+      <i class="bi" [ngClass]="(reAnalyzing || payingForReanalysis) ? 'bi-arrow-repeat cs-spin' : 'bi-arrow-repeat'"></i>
+      {{ reanalyzeLabel }}
+    </button>
+  </div>
+
+  <div class="cs-card__cooldown-note" *ngIf="!loading && audit && audit.canReanalyze === false && audit.reanalysisAvailableAt">
+    You can re-analyze again on {{ audit.reanalysisAvailableAt | date:'mediumDate' }}.
+  </div>
+
+  <div class="cs-card__cooldown-note" *ngIf="!loading && reanalyzeSyncMessage">
+    {{ reanalyzeSyncMessage }}
+  </div>
+
+  <div class="cs-card__cooldown-note" *ngIf="!loading && reanalyzeChangesDetectedMessage">
+    {{ reanalyzeChangesDetectedMessage }}
+  </div>
+
+  <div class="cs-card__payment-error text-danger" *ngIf="paymentError">{{ paymentError }}</div>
+
+  <div class="cs-card__loading" *ngIf="loading">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+    <span>Loading your Collaboration Score…</span>
+  </div>
+
+  <div class="cs-card__empty" *ngIf="!loading && !audit">
+    <p class="cs-card__empty-eyebrow">🎉 New Feature</p>
+    <p class="cs-card__empty-title">Your FREE Collaboration Score is ready.</p>
+    <p class="text-muted">See how brands evaluate your public profile.</p>
+    <button type="button" class="cs-card__reanalyze" (click)="onReAnalyzeClick()">Generate Free Score</button>
+    <div class="cs-card__empty-connect" *ngIf="!isConnected('instagram') || !isConnected('facebook')">
+      <p class="text-muted small mb-1">Get a more accurate score — connect your accounts:</p>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary me-2"
+        *ngIf="!isConnected('instagram')"
+        [disabled]="connectingPlatform === 'instagram'"
+        (click)="connectPlatform('instagram')"
+      >
+        {{ connectingPlatform === 'instagram' ? 'Connecting…' : 'Connect Instagram' }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        *ngIf="!isConnected('facebook')"
+        [disabled]="connectingPlatform === 'facebook'"
+        (click)="connectPlatform('facebook')"
+      >
+        {{ connectingPlatform === 'facebook' ? 'Connecting…' : 'Connect Facebook' }}
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading && audit">
+    <div class="cs-card__main">
+      <div class="cs-card__main-left">
+        <app-score-ring [score]="audit.collaborationScore" [sizePx]="96"></app-score-ring>
+
+        <div class="cs-card__main-body">
+          <div class="cs-card__pills">
+            <span class="badge rounded-pill" [ngClass]="ui.scoreTierClass(audit.collaborationScore)">
+              {{ ui.scoreTierLabel(audit.collaborationScore) | uppercase }}
+            </span>
+            <span class="badge rounded-pill" [ngClass]="ui.campaignReadinessClass(audit.campaignReadiness)">
+              <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+              Campaign Ready: {{ audit.campaignReadiness === 'Campaign Ready' ? 'YES' : 'NO' }}
+            </span>
+            <span class="badge rounded-pill badge--recommended" *ngIf="audit.trendstarzRecommended">
+              <i class="bi bi-award-fill"></i> TrendStarZ Recommended
+            </span>
+          </div>
+
+          <h2 class="cs-card__heading">Collaboration Score</h2>
+          <p class="cs-card__copy" *ngIf="audit.profileCompletenessScore != null">
+            Your profile completion is at <strong>{{ audit.profileCompletenessScore }}%</strong>.
+            <ng-container *ngIf="pointsToRecommended != null"> Need +{{ pointsToRecommended }} points to reach TrendStarZ Recommended.</ng-container>
+            <ng-container *ngIf="audit.trendstarzRecommended"> You've reached TrendStarZ Recommended status.</ng-container>
+          </p>
+
+          <div class="cs-card__status-row">
+            <div class="cs-card__status-item">
+              <span class="cs-card__status-label">Status</span>
+              <strong [ngClass]="verified ? 'text-success' : 'text-muted'">
+                {{ verified ? 'Verified' : 'Not Verified' }}
+                <span *ngIf="verified" aria-hidden="true">●</span>
+              </strong>
+            </div>
+            <div class="cs-card__status-item" *ngIf="lastAnalysisDateTime">
+              <span class="cs-card__status-label">Last Analysis</span>
+              <strong>{{ lastAnalysisDateTime }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cs-card__confidence" *ngIf="scoreConfidence">
+        <div class="cs-card__confidence-header">
+          <span class="cs-card__status-label">Confidence</span>
+          <span
+            class="badge rounded-pill"
+            [ngClass]="{
+              'bg-success-subtle text-success-emphasis': scoreConfidence.level === 'High',
+              'bg-warning-subtle text-warning-emphasis': scoreConfidence.level === 'Medium',
+              'bg-secondary-subtle text-secondary-emphasis': scoreConfidence.level === 'Low'
+            }"
+          >
+            {{ scoreConfidence.level | uppercase }}
+          </span>
+        </div>
+        <ul class="cs-card__confidence-list">
+          <li *ngFor="let item of scoreConfidence.basedOn" [class.met]="item.met">
+            <i class="bi" [ngClass]="item.met ? 'bi-check-circle-fill' : 'bi-dash-circle'" aria-hidden="true"></i>
+            {{ item.met ? item.label : item.absentLabel }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cs-card__row-2col">
+      <div class="cs-card__pricing-dark" *ngIf="audit.pricingSuggestion.reelPrice != null" hidden>
+        <div class="cs-card__pricing-dark-title">Suggested Pricing</div>
+        <div class="cs-card__pricing-dark-row"><span>Reel</span><strong>₹{{ audit.pricingSuggestion.reelPrice.toLocaleString('en-IN') }}</strong></div>
+        <div class="cs-card__pricing-dark-row"><span>Story</span><strong>₹{{ audit.pricingSuggestion.storyPrice?.toLocaleString('en-IN') }}</strong></div>
+        <div class="cs-card__pricing-dark-row"><span>Video</span><strong>₹{{ audit.pricingSuggestion.videoPrice?.toLocaleString('en-IN') }}</strong></div>
+      </div>
+
+      <div class="cs-card__improvement" *ngIf="audit.improvements?.length">
+        <div class="cs-card__improvement-icon"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
+        <div>
+          <div class="cs-card__improvement-title">Top Improvement</div>
+          <p class="mb-0">{{ audit.improvements?.[0] }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- At-a-glance summary: both subtotals + the one thing to fix next, so
+         that's visible without scrolling into the full breakdown below. -->
+    <div class="cs-card__score-summary" *ngIf="hasSubScoreBreakdown">
+      <div class="cs-card__score-summary-item">
+        <span class="cs-card__score-summary-label">TrendStarZ Profile</span>
+        <span class="cs-card__score-summary-value">{{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }}</span>
+      </div>
+      <div class="cs-card__score-summary-item">
+        <span class="cs-card__score-summary-label">Platform Performance</span>
+        <span class="cs-card__score-summary-value">{{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }}</span>
+      </div>
+      <div class="cs-card__score-summary-next" *ngIf="audit.improvements?.length">
+        <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+        <span>{{ audit.improvements?.[0] }}</span>
+      </div>
+    </div>
+
+    <div class="cs-card__breakdown" *ngIf="hasSubScoreBreakdown">
+      <div class="cs-card__breakdown-header">
+        <div class="cs-card__breakdown-title">Score Breakdown</div>
+        <span class="text-muted small">Weighted Analysis</span>
+      </div>
+
+      <div class="cs-card__breakdown-group">
+        <div class="cs-card__breakdown-group-title">TrendStarZ Profile Score</div>
+        <p class="text-muted small mb-2">Based on your profile — not affected by connected platforms.</p>
+        <div class="cs-card__breakdown-grid">
+          <div class="cs-card__bar-row" *ngFor="let sub of profileSubScores">
+            <div class="cs-card__bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+            <div class="progress cs-card__progress">
+              <div class="progress-bar" [style.width.%]="sub.value"></div>
+            </div>
+            <div class="cs-card__bar-value">{{ sub.value }}</div>
+            <div class="cs-card__bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
+          </div>
+        </div>
+        <p class="text-muted small mb-0">Profile subtotal: {{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }} pts</p>
+      </div>
+
+      <div class="cs-card__breakdown-group">
+        <div class="cs-card__breakdown-group-title">Platform Performance Score</div>
+        <p class="text-muted small mb-2">Based only on your connected social platforms.</p>
+        <div class="cs-card__breakdown-grid">
+          <div class="cs-card__bar-row" *ngFor="let sub of platformSubScores">
+            <div class="cs-card__bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+            <div class="progress cs-card__progress">
+              <div class="progress-bar" [style.width.%]="sub.value"></div>
+            </div>
+            <div class="cs-card__bar-value" [class.text-muted]="sub.noData" [class.fst-italic]="sub.noData">
+              {{ sub.noData ? 'No platform connected' : sub.value }}
+            </div>
+            <div class="cs-card__bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
+          </div>
+        </div>
+        <p class="text-muted small mb-0">Platform subtotal: {{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }} pts</p>
+      </div>
+
+      <div class="cs-card__bar-row cs-card__bar-row--total">
+        <div class="cs-card__bar-label"><strong>Total</strong></div>
+        <div class="cs-card__bar-value"><strong>{{ subScoresTotal }} → {{ audit.collaborationScore }}</strong></div>
+      </div>
+    </div>
+
+    <div class="cs-card__platforms" *ngIf="audit.platformsCollected?.length">
+      <div class="cs-card__breakdown-title">Platform Status</div>
+      <div class="cs-card__platform-pills">
+        <div class="cs-card__platform-pill" *ngFor="let p of audit.platformsCollected">
+          <i class="bi" [ngClass]="platformIcon(p.platform)" aria-hidden="true"></i>
+          <div class="cs-card__platform-pill-meta">
+            <div class="cs-card__platform-pill-name">{{ p.platform }}</div>
+            <div
+              class="cs-card__platform-pill-status"
+              [ngClass]="p.confidence >= 90 ? 'text-success' : (p.confidence > 0 ? 'text-warning' : 'text-muted')"
+            >
+              {{ p.confidence }}% {{ ui.confidenceLabel(p.confidence) }}
+            </div>
+            <div class="cs-card__platform-pill-score text-muted" *ngIf="p.miniScore != null" [title]="'Content Quality + Posting Consistency for ' + p.platform + ' alone — not the full Collaboration Score.'">
+              Platform Quality: <strong>{{ p.miniScore }}/100</strong>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary cs-card__connect-btn"
+            *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && !isConnected(p.platform)"
+            [disabled]="connectingPlatform === p.platform.toLowerCase()"
+            (click)="connectPlatform(p.platform.toLowerCase() === 'instagram' ? 'instagram' : 'facebook')"
+          >
+            {{ connectingPlatform === p.platform.toLowerCase() ? 'Connecting…' : 'Connect' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary cs-card__connect-btn"
+            *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && isConnected(p.platform)"
+            [disabled]="disconnectingPlatform === p.platform.toLowerCase()"
+            (click)="onDisconnectPlatform(p.platform.toLowerCase() === 'instagram' ? 'instagram' : 'facebook')"
+          >
+            {{ disconnectingPlatform === p.platform.toLowerCase() ? 'Disconnecting…' : 'Disconnect' }}
+          </button>
+        </div>
+      </div>
+      <p class="cs-card__platform-reason text-muted" *ngFor="let p of audit.platformsCollected">
+        <span *ngIf="p.confidenceReason"><strong>{{ p.platform }}:</strong> {{ p.confidenceReason }}</span>
+      </p>
+    </div>
+  </ng-container>
+</div>

@@ -39,6 +39,20 @@ export interface Plan {
   isActive?: boolean;
   sortOrder?: number;
   discountLabel?: string;
+  /** First-login Founder Launch Offer popup title — admin-renameable (e.g. "Festival Offer"). */
+  founderOfferName?: string;
+  /** Founder Launch Offer countdown window, in days. */
+  founderOfferWindowDays?: number;
+  /** Show the popup to users who registered within founderOfferWindowDays of now. */
+  founderOfferForNewUsers?: boolean;
+  /** Show the popup to users who registered before that window. */
+  founderOfferForExistingUsers?: boolean;
+  /** Optional cap for the role audience; 0 or empty means unlimited. */
+  founderOfferAudienceCap?: number;
+  /** Current total users for this plan role, returned by the API for launch cap checks. */
+  founderOfferAudienceCount?: number;
+  /** Optional date after which the Founder Offer no longer appears or grants bonuses. */
+  founderOfferEndsAt?: string | Date | null;
 }
 
 export interface PlanCapabilities {
@@ -52,6 +66,21 @@ export interface PlanCapabilities {
   endDate: string | null;
 }
 
+/**
+ * Limit keys that exist on saved Plan documents (old defaults, or the
+ * backend schema's own default limits list) for a feature that was never
+ * actually built — no schema, no invite/management flow, no enforcement
+ * anywhere. Filtered out wherever plan limits are displayed (admin editor,
+ * the public Premium Upgrade comparison) so nobody — admin or paying
+ * customer — is shown a cap that corresponds to nothing real. Remove a key
+ * from this list once its feature actually ships.
+ */
+export const HIDDEN_PLAN_LIMIT_KEYS: string[] = ['maxTeamSeats'];
+
+export function visiblePlanLimits(limits: PlanLimit[] | undefined | null): PlanLimit[] {
+  return (limits || []).filter((l) => !HIDDEN_PLAN_LIMIT_KEYS.includes(l.key));
+}
+
 export const FREE_CAPABILITIES: PlanCapabilities = {
   hasPremium: false,
   planName: 'Free',
@@ -61,7 +90,8 @@ export const FREE_CAPABILITIES: PlanCapabilities = {
     { key: 'priorityListing', label: 'Priority Listing in Search', value: false },
   ],
   limits: [
-    { key: 'maxImages', label: 'Max Images Upload', value: 2 },
+    { key: 'maxProductImages', label: 'Profile images', value: 3 },
+    { key: 'maxPortfolioImages', label: 'Portfolio images', value: 3 },
     { key: 'maxCampaigns', label: 'Max Campaigns', value: 1 },
   ],
   policies: { imageRetentionDaysAfterExpiry: 45 },

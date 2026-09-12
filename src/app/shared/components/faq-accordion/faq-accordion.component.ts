@@ -1,5 +1,5 @@
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, Inject, Input, OnDestroy, OnInit, PLATFORM_ID, Renderer2 } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, PLATFORM_ID, Renderer2 } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 export interface FaqAccordionItem {
@@ -34,6 +34,9 @@ export class FaqAccordionComponent implements OnInit, OnDestroy {
     { label: 'Explore Opportunities', route: '/search', className: 'btn btn-outline-dark' },
   ];
 
+  /** Fires whenever an item is opened (not on close) — for page-level analytics. */
+  @Output() itemToggled = new EventEmitter<{ index: number; question: string }>();
+
   activeIndex = -1;
   private readonly isBrowser: boolean;
 
@@ -57,6 +60,9 @@ export class FaqAccordionComponent implements OnInit, OnDestroy {
 
   toggle(index: number): void {
     this.activeIndex = this.activeIndex === index ? -1 : index;
+    if (this.activeIndex === index) {
+      this.itemToggled.emit({ index, question: this.items[index]?.question || '' });
+    }
   }
 
   private upsertFaqSchema(): void {

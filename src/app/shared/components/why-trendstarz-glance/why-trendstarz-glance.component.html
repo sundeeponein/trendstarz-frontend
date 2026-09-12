@@ -1,0 +1,52 @@
+<section id="why-trendstarz" class="why-glance-strip py-5" aria-label="Why Trendstarz">
+  <div class="container py-4">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-12 col-lg-7">
+        <article class="glance-card h-100">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+              <h2 class="section-title mb-2">{{ heading }}</h2>
+              <p class="section-subtitle mb-4">{{ subheading }}</p>
+            </div>
+            <a [routerLink]="learnMoreRoute" class="view-all">Learn more →</a>
+          </div>
+
+          <div class="benefit-grid">
+            <div class="benefit-item" *ngFor="let benefit of benefits">
+              <h5>{{ benefit.title }}</h5>
+              <p>{{ benefit.description }}</p>
+            </div>
+          </div>
+
+          <div class="growing-row">
+            <div class="avatar-stack" aria-hidden="true">
+              <span class="avatar-photo avatar-photo--1"></span>
+              <span class="avatar-photo avatar-photo--2"></span>
+              <span class="avatar-badge">+5K</span>
+            </div>
+            <div class="growing-copy">
+              <span class="growing-label">{{ growingLabel }}</span>
+              <span class="growing-sub">{{ growingSub }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="col-12 col-lg-5">
+        <article class="glance-card glance-card--dark h-100">
+          <h3 class="mb-3">{{ glanceHeading }}</h3>
+          <div class="metric-list">
+            <div class="metric-item" *ngFor="let counter of counters">
+              <span>{{ counter.label }}</span>
+              <strong [class.is-muted]="!counter.emphasis">{{ counter.value }}</strong>
+            </div>
+          </div>
+          <span class="glance-categories-label">{{ categoriesLabel }}</span>
+          <div class="chip-row">
+            <span class="chip" *ngFor="let cat of categories">{{ cat }}</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>

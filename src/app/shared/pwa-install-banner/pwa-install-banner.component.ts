@@ -24,7 +24,7 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
       <!-- iOS instruction -->
       <ng-container *ngIf="isIos; else promptBanner">
         <div class="pwa-inner">
-          <img src="/favicon.png" class="pwa-icon" alt="TrendStarZ" />
+          <img src="/favicon.ico" class="pwa-icon" alt="TrendStarZ" />
           <div class="pwa-text">
             <strong>iPhone Safari/Chrome</strong>
             <span>Tap <span class="share-icon">⎙</span> then <em>Add to Home Screen</em></span>
@@ -37,7 +37,7 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
       <!-- Chrome / Android prompt -->
       <ng-template #promptBanner>
         <div class="pwa-inner">
-          <img src="/favicon.png" class="pwa-icon" alt="TrendStarZ" />
+          <img src="/favicon.ico" class="pwa-icon" alt="TrendStarZ" />
           <div class="pwa-text">
             <strong>Android Chrome</strong>
             <span>Install TrendStarZ for a faster experience</span>
@@ -158,6 +158,12 @@ export class PwaInstallBannerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
+
+    // Keep informational pages lightweight for first paint.
+    const path = (window.location && window.location.pathname) || '/';
+    const skipOnPrefixes = ['/how-it-works', '/features', '/influencer/', '/photographer/', '/brand/'];
+    const skipBanner = skipOnPrefixes.some((prefix) => path === prefix || path.startsWith(prefix));
+    if (skipBanner) return;
 
     // Don't show if already running as installed PWA
     if (window.matchMedia('(display-mode: standalone)').matches) return;

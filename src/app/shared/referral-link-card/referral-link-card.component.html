@@ -1,0 +1,19 @@
+<section class="referral-link-card" *ngIf="referralLink">
+  <div class="referral-link-card__header">
+    <h2>My Referral Link</h2>
+    <p>Invite new {{ roleLabel }} to Trendstarz. Signups through this link are credited to you.</p>
+  </div>
+  <div class="referral-link-row">
+    <input class="referral-link-input" type="text" [value]="referralLink" readonly (click)="$any($event.target).select()">
+    <button type="button" class="referral-link-copy-btn" (click)="copyReferralLink()">
+      {{ referralLinkCopied ? 'Copied!' : 'Copy' }}
+    </button>
+  </div>
+</section>
+
+<section class="referral-link-card" *ngIf="loadError">
+  <div class="referral-link-card__header">
+    <h2>My Referral Link</h2>
+    <p>Couldn't load your referral link right now. Please refresh, or try again later.</p>
+  </div>
+</section>

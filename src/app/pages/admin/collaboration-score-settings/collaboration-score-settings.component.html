@@ -1,0 +1,452 @@
+<div class="container-fluid py-4">
+  <h1 class="h4 fw-bold mb-1 text-black">Collaboration Score Settings</h1>
+  <p class="text-muted mb-4">
+    Control the AI layer, scoring thresholds, and rollout for the TrendStarz Collaboration Score.
+  </p>
+  <p *ngIf="settings" class="text-muted small font-monospace" style="word-break: break-all;">
+    DEBUG server instance = {{ settings._serverInstanceId }} · doc _id = {{ settings._id }} · updatedAt = {{ settings.updatedAt }}
+  </p>
+
+  <div *ngIf="loading" class="d-flex align-items-center gap-2 text-muted">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+    <span>Loading settings…</span>
+  </div>
+
+  <ng-container *ngIf="!loading && settings">
+    <!-- AI Cost Dashboard -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">AI Cost (current audits)</h2>
+        <div *ngIf="summaryLoading" class="text-muted">Loading…</div>
+        <div class="row g-3" *ngIf="!summaryLoading && summary">
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Total AI Cost</div>
+            <div class="fw-bold">${{ summary.totalAiCostUsd | number:'1.2-4' }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">AI-Scored Audits</div>
+            <div class="fw-bold">{{ summary.aiAuditCount }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Avg. Score</div>
+            <div class="fw-bold">{{ summary.avgScore | number:'1.0-1' }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">TrendStarz Recommended</div>
+            <div class="fw-bold">{{ summary.recommendedCount }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Today</h2>
+        <div *ngIf="summaryLoading" class="text-muted">Loading…</div>
+        <div class="table-responsive" *ngIf="!summaryLoading && todaySummary">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Audits</th>
+                <th>AI Calls</th>
+                <th>Estimated Cost</th>
+                <th>Average Cost</th>
+                <th>Success</th>
+                <th>Failed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ todaySummary.audits }}</td>
+                <td>{{ todaySummary.aiCalls }}</td>
+                <td>{{ todaySummary.estimatedCostUsd == null ? 'Tracking off' : '$' + (todaySummary.estimatedCostUsd | number:'1.2-4') }}</td>
+                <td>{{ todaySummary.averageCostUsd == null ? 'Tracking off' : '$' + (todaySummary.averageCostUsd | number:'1.2-4') }}</td>
+                <td>{{ todaySummary.successCount }}</td>
+                <td>{{ todaySummary.failureCount }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Audits by platform, same today-only window as the table above —
+             one audit can contribute to more than one platform's count. -->
+        <div *ngIf="!summaryLoading && todaySummary">
+          <h3 class="h6 fw-bold mt-4 mb-2">Audits by Platform (Today)</h3>
+          <p class="text-muted small mb-2" *ngIf="!todaySummary.platformBreakdown.length">
+            No platform data collected yet today.
+          </p>
+          <div class="table-responsive" *ngIf="todaySummary.platformBreakdown.length">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Platform</th>
+                  <th>Audits</th>
+                  <th>AI Calls</th>
+                  <th>Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of todaySummary.platformBreakdown">
+                  <td>{{ row.platform }}</td>
+                  <td>{{ row.count }}</td>
+                  <td>{{ row.aiCount }}</td>
+                  <td>{{ row.paidCount }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Toggle -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">AI Analysis</h2>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="aiEnabled" [(ngModel)]="settings.aiEnabled" name="aiEnabled">
+          <label class="form-check-label" for="aiEnabled">
+            Enable AI content analysis ({{ settings.aiModel }})
+          </label>
+        </div>
+        <p class="text-muted small mb-0">
+          When off, every audit uses the rules-only score — no Claude API calls, no cost. Turn this on only once you're ready to spend on AI-scored audits.
+        </p>
+      </div>
+    </div>
+
+    <!-- Score Weights -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Score Weights</h2>
+        <p class="text-muted small">
+          How much each criterion contributes to the overall Collaboration Score. Must sum to exactly 100.
+        </p>
+        <div class="row g-3">
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-bold">Profile Completion</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.profileCompletion" name="swProfileCompletion">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-bold">Content Quality</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.contentQuality" name="swContentQuality">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-bold">Posting Consistency</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.postingConsistency" name="swPostingConsistency">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-bold">Professional Branding</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.professionalBranding" name="swProfessionalBranding">
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small fw-bold">Campaign Readiness</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.scoreWeights.campaignReadiness" name="swCampaignReadiness">
+          </div>
+        </div>
+        <p class="small mt-2 mb-0" [ngClass]="scoreWeightsSum === 100 ? 'text-success' : 'text-danger'">
+          Total: {{ scoreWeightsSum }} / 100 {{ scoreWeightsSum === 100 ? '✓' : '— must equal 100 to save' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Weights -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Rules vs. AI Blend</h2>
+        <p class="text-muted small">
+          How much of Content Quality and Professional Branding comes from rules vs. AI. Each pair must sum to 100.
+        </p>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Content Quality — Rules %</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.weights.contentQuality.rulesPercent" name="cqRules">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Content Quality — AI %</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.weights.contentQuality.aiPercent" name="cqAi">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Professional Branding — Rules %</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.weights.professionalBranding.rulesPercent" name="pbRules">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Professional Branding — AI %</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.weights.professionalBranding.aiPercent" name="pbAi">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thresholds -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Thresholds</h2>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">TrendStarz Recommended — min score</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.thresholds.trendstarzRecommendedMinScore" name="recThreshold">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Campaign Ready — min score</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.thresholds.campaignReadyMinScore" name="readyThreshold">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Partially Ready — min score</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.thresholds.partiallyReadyMinScore" name="partialThreshold">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platforms -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Platforms</h2>
+        <p class="text-muted small">
+          Disable a platform's collector without a code deploy (e.g. while it's unreliable). Disabled platforms are skipped during audits.
+        </p>
+        <!-- Debug-only — shows exactly what this component's own bound
+             model contains, so a mismatch against the toggles below proves
+             it's a rendering bug (model correct, checkbox wrong) rather
+             than a data bug (model itself wrong). Remove once diagnosed. -->
+        <p class="text-muted small font-monospace" style="word-break: break-all;">
+          DEBUG settings.platformsEnabled = {{ settings.platformsEnabled | json }}
+        </p>
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="platInstagram"
+                [(ngModel)]="settings.platformsEnabled.instagram" name="platInstagram">
+              <label class="form-check-label" for="platInstagram">Instagram</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="platYoutube"
+                [(ngModel)]="settings.platformsEnabled.youtube" name="platYoutube">
+              <label class="form-check-label" for="platYoutube">YouTube</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="platFacebook"
+                [(ngModel)]="settings.platformsEnabled.facebook" name="platFacebook">
+              <label class="form-check-label" for="platFacebook">Facebook</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="platLinkedin"
+                [(ngModel)]="settings.platformsEnabled.linkedin" name="platLinkedin">
+              <label class="form-check-label" for="platLinkedin">LinkedIn</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Free audits & Anonymous Preview -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Free Audits &amp; Preview</h2>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="anonymousPreviewEnabled"
+            [(ngModel)]="settings.anonymousPreviewEnabled" name="anonymousPreviewEnabled">
+          <label class="form-check-label" for="anonymousPreviewEnabled">
+            Enable anonymous, pre-registration YouTube score preview
+          </label>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Free audits per account</label>
+            <input type="number" class="form-control" min="0" max="100"
+              [(ngModel)]="settings.freeAuditCount" name="freeAuditCount">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Audit validity (days)</label>
+            <input type="number" class="form-control" min="0"
+              [(ngModel)]="settings.auditValidityDays" name="auditValidityDays">
+            <p class="text-muted small mt-1 mb-0">Stored for future use — not yet enforced anywhere.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Re-analysis -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Re-analysis</h2>
+        <p class="text-muted small">
+          Creators must wait this many days between self-triggered re-analyses — a hard floor, even for paid re-analysis. After the first free audits above are used, every re-analysis requires this fee via Razorpay.
+        </p>
+        <p class="text-muted small font-monospace" style="word-break: break-all;">
+          DEBUG settings.reanalysisCooldownDays = {{ settings.reanalysisCooldownDays }} (typeof {{ typeofValue(settings.reanalysisCooldownDays) }}) · settings.reanalysisFeeRupees = {{ settings.reanalysisFeeRupees }} (typeof {{ typeofValue(settings.reanalysisFeeRupees) }})
+        </p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Cooldown (days)</label>
+            <input type="number" class="form-control" min="0" max="365"
+              [(ngModel)]="settings.reanalysisCooldownDays" name="reanalysisCooldownDays">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Price (₹)</label>
+            <input type="number" class="form-control" min="0"
+              [(ngModel)]="settings.reanalysisFeeRupees" name="reanalysisFeeRupees">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sync Latest Profile -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Sync Latest Profile</h2>
+        <p class="text-muted small">
+          Free comparison step gating Re-analysis above — a creator must sync and detect a change before Re-analyze unlocks. Never scores, never charges, never creates audit history.
+        </p>
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="syncEnabled"
+                [(ngModel)]="settings.syncEnabled" name="syncEnabled">
+              <label class="form-check-label" for="syncEnabled">Sync enabled</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="allowManualSync"
+                [(ngModel)]="settings.allowManualSync" name="allowManualSync">
+              <label class="form-check-label" for="allowManualSync">Allow manual sync</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="requireSyncBeforeReanalysis"
+                [(ngModel)]="settings.requireSyncBeforeReanalysis" name="requireSyncBeforeReanalysis">
+              <label class="form-check-label" for="requireSyncBeforeReanalysis">Require sync before re-analysis</label>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Sync cooldown (minutes)</label>
+            <input type="number" class="form-control" min="0" max="1440"
+              [(ngModel)]="settings.syncCooldownMinutes" name="syncCooldownMinutes">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Analytics</h2>
+        <p class="text-muted small">Only "Track audit cost" currently gates anything (the cost fields above). The others are stored for future dashboard granularity.</p>
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackAuditCost"
+                [(ngModel)]="settings.analytics.trackAuditCost" name="trackAuditCost">
+              <label class="form-check-label" for="trackAuditCost">Track audit cost</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackAverageScore"
+                [(ngModel)]="settings.analytics.trackAverageScore" name="trackAverageScore">
+              <label class="form-check-label" for="trackAverageScore">Track average score</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackPlatformUsage"
+                [(ngModel)]="settings.analytics.trackPlatformUsage" name="trackPlatformUsage">
+              <label class="form-check-label" for="trackPlatformUsage">Track platform usage</label>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="trackAuditHistory"
+                [(ngModel)]="settings.analytics.trackAuditHistory" name="trackAuditHistory">
+              <label class="form-check-label" for="trackAuditHistory">Track audit history</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rollout -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 fw-bold mb-3">Rollout</h2>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Version 1 name</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.version1Name" name="version1Name">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Version 2 name</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.version2Name" name="version2Name">
+          </div>
+        </div>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="version2Enabled" [(ngModel)]="settings.version2Enabled" name="version2Enabled">
+          <label class="form-check-label" for="version2Enabled">
+            Enable Version 2 (AI-enhanced scoring, pricing suggestions, category-match search boosting)
+          </label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="nightlyEnabled" [(ngModel)]="settings.nightlyReauditEnabled" name="nightlyEnabled">
+          <label class="form-check-label" for="nightlyEnabled">
+            Enable nightly bulk re-audit
+          </label>
+        </div>
+        <div class="row g-3" *ngIf="settings.nightlyReauditEnabled">
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Run at hour (0–23, server time)</label>
+            <input type="number" class="form-control" min="0" max="23"
+              [(ngModel)]="settings.nightlyReauditCronHour" name="cronHour">
+          </div>
+        </div>
+        <p class="text-muted small mt-2" *ngIf="settings.lastNightlyRunAt">
+          Last run: {{ settings.lastNightlyRunAt | date:'medium' }} —
+          {{ settings.lastNightlyRunCount }} profiles, ${{ settings.lastNightlyRunCostUsd | number:'1.2-4' }}
+        </p>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" [disabled]="saving || scoreWeightsSum !== 100" (click)="save()">
+      {{ saving ? 'Saving…' : 'Save Settings' }}
+    </button>
+    <button type="button" class="btn btn-outline-danger ms-2" [disabled]="resetting" (click)="resetToDefaults()">
+      {{ resetting ? 'Resetting…' : 'Reset to Defaults' }}
+    </button>
+    <p class="text-danger small mt-2 mb-0" *ngIf="scoreWeightsSum !== 100">
+      Save is disabled — Score Weights above must sum to exactly 100 (currently {{ scoreWeightsSum }}). This blocks
+      saving every section on this page, not just Score Weights.
+    </p>
+
+    <!-- Debug line — if a Save doesn't seem to stick, reload this page and
+         compare: a changed "Doc" id means a different document is being
+         read back than the one just saved to; an unchanged "Updated"
+         timestamp right after a successful save means the write isn't
+         landing where this page reads from. -->
+    <p class="text-muted small mt-2 mb-0" *ngIf="settings._id">
+      Doc: {{ settings._id }} · Updated: {{ settings.updatedAt | date:'medium' }}
+    </p>
+  </ng-container>
+</div>

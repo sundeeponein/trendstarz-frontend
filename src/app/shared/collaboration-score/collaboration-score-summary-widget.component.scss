@@ -1,0 +1,74 @@
+.cssw-card {
+  padding: 1.1rem 1rem;
+}
+
+.cssw-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.cssw-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  padding: 0.5rem 0;
+}
+
+.cssw-empty {
+  p {
+    margin-bottom: 0.4rem;
+  }
+}
+
+.cssw-empty-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.cssw-empty-copy {
+  color: #6b7280;
+  font-size: 0.88rem;
+}
+
+.cssw-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cssw-score-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.cssw-score-max {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.cssw-summary-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cssw-tier {
+  font-weight: 700;
+}
+
+.cssw-last-checked {
+  color: #6b7280;
+  font-size: 0.85rem;
+}

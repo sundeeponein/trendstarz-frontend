@@ -1,7 +1,7 @@
 <div class="modal-backdrop show" (click)="onCancel()"></div>
 
 <div class="modal d-block" tabindex="-1" (click)="onCancel()">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ts-dialog-workspace" (click)="$event.stopPropagation()">
     <div class="modal-content pcf-modal">
       <div class="pcf-header">
         <h3>{{ isEdit ? 'Edit Collaboration Request' : 'Create Collaboration Request' }}</h3>
@@ -16,24 +16,36 @@
           </div>
 
           <div class="pcf-field pcf-full">
-            <label>Description *</label>
+            <div class="pcf-label-row">
+              <label>Description *</label>
+              <button type="button" class="pcf-guide-btn" (click)="openDescriptionGuide()" title="Open guidelines and example briefs">
+                <i class="bi bi-question-circle"></i> View guide &amp; examples
+              </button>
+            </div>
             <textarea class="form-control" rows="4" formControlName="description" placeholder="Describe your shoot objective, expectations, and what creators should know."></textarea>
+            <small class="text-muted">Click <strong>View guide &amp; examples</strong> for ready-made briefs you can copy and edit. Budget, deliverables and platforms are captured in the structured fields below.</small>
           </div>
 
           <div class="pcf-field">
             <label>Collaboration Type *</label>
             <select class="form-select" formControlName="collaborationType">
-              <option *ngFor="let type of collaborationTypes" [value]="type.value" [disabled]="!hasPremium && !!type.premiumOnly">
-                {{ type.label }}{{ (!hasPremium && !!type.premiumOnly) ? ' (Premium)' : '' }}
+              <option *ngFor="let type of collaborationTypes" [value]="type.value" [disabled]="type.enabled === false || (!hasPremium && !!type.premiumOnly)">
+                {{ type.label }}{{ (!hasPremium && !!type.premiumOnly) ? ' (Premium)' : '' }}{{ (type.enabled === false) ? ' (Unavailable)' : '' }}
               </option>
             </select>
           </div>
 
           <div class="pcf-field">
-            <label>Collaboration Access Mode *</label>
-            <select class="form-select" formControlName="campaignMode">
-              <option *ngFor="let mode of accessModes" [value]="mode.value">{{ mode.label }}</option>
-            </select>
+	            <label>Collaboration Access Mode *</label>
+	            <select class="form-select" formControlName="campaignMode">
+	              <option
+	                *ngFor="let mode of accessModes"
+	                [value]="mode.value"
+	                [disabled]="mode.enabled === false || (!hasPremium && !!mode.premiumOnly)"
+	              >
+	                {{ mode.label }}{{ (!hasPremium && !!mode.premiumOnly) ? ' (Premium)' : '' }}{{ (mode.enabled === false) ? ' (Unavailable)' : '' }}
+	              </option>
+	            </select>
           </div>
 
           <div class="pcf-field">
@@ -81,13 +93,18 @@
             <small class="text-danger" *ngIf="paidBudgetInvalid">Budget is required for paid collaborations.</small>
           </div>
 
-          <div class="pcf-field">
-            <label>Min Accepted *</label>
+          <div class="pcf-field" *ngIf="shouldShowMinimumParticipantsField">
+            <label>Minimum participants required <span class="text-muted" style="font-weight:400;">(optional)</span></label>
             <input class="form-control" type="number" min="1" formControlName="minInfluencers" />
           </div>
 
+          <div class="pcf-field" *ngIf="!shouldShowMinimumParticipantsField">
+            <label>Minimum participants required</label>
+            <div class="form-control" style="display:flex; align-items:center;">1 (default)</div>
+          </div>
+
           <div class="pcf-field">
-            <label>Max Creators *</label>
+            <label>Max participants *</label>
             <input class="form-control" type="number" min="1" formControlName="maxInfluencers" />
           </div>
 
@@ -140,7 +157,7 @@
           </div>
 
           <div class="pcf-field pcf-full" *ngIf="minMaxInvalid">
-            <small class="text-danger">Min accepted creators cannot be greater than max creators.</small>
+            <small class="text-danger">Minimum participants cannot be greater than max participants.</small>
           </div>
 
           <div class="pcf-field pcf-full" *ngIf="ageRangeInvalid">
@@ -184,16 +201,25 @@
           </div>
 
           <div class="pcf-field pcf-full">
-            <label>Additional Instructions</label>
+            <div class="pcf-label-row">
+              <label>Additional Instructions</label>
+              <button type="button" class="pcf-guide-btn" (click)="openSpecialInstructionsGuide()" title="Open dos, don'ts and must-include guidance">
+                <i class="bi bi-question-circle"></i> View guide &amp; examples
+              </button>
+            </div>
             <textarea class="form-control" rows="3" formControlName="specialInstructions" placeholder="Any special notes for creators"></textarea>
           </div>
         </div>
 
         <div class="pcf-actions">
-          <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">Cancel</button>
-          <button type="submit" class="btn btn-primary">{{ isEdit ? 'Update Collaboration Request' : 'Create Collaboration Request' }}</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="saving || submitLocked">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving || submitLocked">
+            {{ (saving || submitLocked) ? 'Saving...' : (isEdit ? 'Update Collaboration Request' : 'Create Collaboration Request') }}
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<app-campaign-guide-modal></app-campaign-guide-modal>

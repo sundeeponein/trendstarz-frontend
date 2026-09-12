@@ -1,0 +1,6 @@
+<div class="score-ring" [ngStyle]="ringStyle" role="img" [attr.aria-label]="'Collaboration Score: ' + score + ' out of 100'">
+  <div class="score-ring__inner">
+    <span class="score-ring__value">{{ score }}</span>
+    <span class="score-ring__max">/ 100</span>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-<div class="registration-shell">
+<div class="registration-shell mobile-actions-enabled">
   <div class="registration-wrap">
 
     <main class="content-panel">
@@ -21,7 +21,15 @@
         </button>
       </div>
       <div *ngIf="showEmailVerificationPrompt && !emailVerified" class="alert alert-warning mb-4">
-        <strong>Email verification pending.</strong> Please check your inbox and click the verification link.
+        <ng-container *ngIf="emailJustChanged; else genericEmailPrompt">
+          <strong>⚠ Your new email address is not verified.</strong>
+          <span *ngIf="previousVerifiedEmail"> Your previous email ({{ previousVerifiedEmail }}) was verified.</span>
+          Some features may be restricted until verification is completed.
+          <div class="mt-1">Verification email sent to: <strong>{{ pendingVerificationEmail }}</strong></div>
+        </ng-container>
+        <ng-template #genericEmailPrompt>
+          <strong>⚠ Your email address is not verified.</strong> Some features may be restricted until verification is completed.
+        </ng-template>
         <button class="btn btn-link p-0 ms-2" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">Resend Verification Email</button>
         <span *ngIf="resendEmailVerificationSuccess" class="text-success ms-2">Verification email sent!</span>
         <span *ngIf="resendEmailVerificationError" class="text-danger ms-2">{{ resendEmailVerificationError }}</span>
@@ -33,16 +41,64 @@
         Please ensure your mobile number is valid and reachable.
       </div>
 
-      <div *ngIf="commissionAccessTags.length" class="alert alert-info mb-4">
-        <strong>Access Badge:</strong>
-        <span class="badge rounded-pill bg-primary ms-2 me-2" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
+      <div class="alert alert-light border mb-4" *ngIf="profileVerificationDashboard || profileVerificationLoading">
+        <strong class="d-block mb-2">Profile Review</strong>
+        <app-profile-review-summary
+          [detail]="profileVerificationDashboard"
+          [loading]="profileVerificationLoading"
+          profileRoute="/brand-profile"
+          [otpVerificationEnabled]="false"
+          [resendingEmailVerification]="resendingEmailVerification"
+          [requestingMobileCallback]="requestingMobileCallback"
+          [mobileCallbackRequested]="mobileCallbackRequested"
+          (resendEmail)="resendEmailVerification()"
+          (requestCallback)="requestMobileCallback()"
+          (updateProfile)="scrollToTop()"
+        />
       </div>
+
+      <app-registration-notice
+        role="brand"
+        [showModerationWarning]="true">
+      </app-registration-notice>
 
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <section class="form-card" *ngIf="currentStep === 1">
-          <h2>Brand Info</h2>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h2>Brand Info</h2>
+            <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+              <span class="badge rounded-pill bg-primary" *ngFor="let tag of commissionAccessTags">{{ tag }}</span>
+              <span class="badge rounded-pill" style="background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; font-weight:500;">
+                Platform Commission: {{ platformCommissionPercent }}%
+              </span>
+            </div>
+          </div>
           <p class="section-subtitle">Update core brand identity and contact details.</p>
 
+          <div class="field-block media-uploader mt-3">
+            <label>
+              Brand Logo
+              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openBrandImageGuidelines()" title="View image guidelines">
+                <i class="bi bi-info-circle"></i>
+              </button>
+            </label>
+            <div class="upload-box">
+              <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand logo preview" class="preview-image" />
+              <img *ngIf="!brandLogoPreview && brandLogoFormArray.length > 0 && brandLogoFormArray.at(0).value?.url" [src]="brandLogoFormArray.at(0).value.url" alt="Current brand logo" class="preview-image" />
+              <p *ngIf="!brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)">No brand logo uploaded.</p>
+              <input *ngIf="isEditMode" type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
+            </div>
+            <div *ngIf="submitted && !brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)" class="text-danger mt-1">Brand logo is required.</div>
+            <app-image-crop-modal
+              [open]="cropModalOpen"
+              [imageFile]="cropSourceFile"
+              [aspectRatio]="1"
+              title="Adjust brand logo"
+              (cropped)="onBrandLogoCropped($event)"
+              (closed)="onBrandLogoCropCancelled()"
+            ></app-image-crop-modal>
+          </div>
+          
           <div class="field-grid">
             <div class="field-block">
               <label>Brand Name <span class="text-danger">*</span></label>
@@ -62,10 +118,13 @@
             <div class="field-block">
               <label>Email <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" />
+                <input formControlName="email" type="email" class="form-control" style="flex: 1 1 auto;" [readonly]="isEditMode && emailVerified && !emailEditRequested" />
                 <span *ngIf="emailVerified" class="verified-icon" title="Email verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
+                <span *ngIf="!emailVerified" class="verified-icon" title="Email verification pending" style="color: #f59e0b; font-size: 1.2em;"><i class="bi bi-hourglass-split"></i></span>
+                <button type="button" class="btn btn-link p-0" *ngIf="isEditMode && emailVerified && !emailEditRequested" (click)="requestEmailEdit()">Edit</button>
               </div>
               <div *ngIf="submitted && registrationForm.get('email')?.invalid" class="text-danger mt-1">Valid email is required.</div>
+              <small *ngIf="!emailVerified" class="text-muted d-block mt-1">🟡 Pending verification. Please verify the latest email address.</small>
             </div>
             <div class="field-block">
               <label>Contact Person Name <span class="text-danger">*</span></label>
@@ -75,17 +134,33 @@
             <div class="field-block">
               <label>Phone Number <span class="text-danger">*</span></label>
               <div style="display: flex; align-items: center; gap: 0.5em;">
-                <input formControlName="phoneNumber" type="text" class="form-control" />
+                <input formControlName="phoneNumber" type="text" class="form-control" [readonly]="isEditMode && phoneVerified && !phoneEditRequested" />
                 <span *ngIf="phoneVerified" class="verified-icon" title="Mobile verified" style="color: #22c55e; font-size: 1.5em;">✔️</span>
                 <span *ngIf="!phoneVerified" class="verified-icon" title="Mobile verification pending" style="color: #f59e0b; font-size: 1.2em;"><i class="bi bi-hourglass-split"></i></span>
+                <button type="button" class="btn btn-link p-0" *ngIf="isEditMode && phoneVerified && !phoneEditRequested" (click)="requestPhoneEdit()">Edit</button>
               </div>
               <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid" class="text-danger mt-1">Phone number is required.</div>
+              <small *ngIf="phoneVerified && !phoneEditRequested" class="text-muted d-block mt-1">✅ Verified by TrendStarz Team.</small>
+              <small *ngIf="phoneVerified && phoneEditRequested" class="text-warning d-block mt-1">Changing your verified number will require re-verification before it's trusted again.</small>
               <small *ngIf="verificationCallNumber && !phoneVerified" class="text-muted mt-1">
                 You may receive a verification call from our team.
               </small>
               <small *ngIf="!phoneVerified" class="text-muted d-block mt-1">
                 Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.
               </small>
+              <div *ngIf="!phoneVerified" class="mt-2">
+                <!-- <button type="button" class="btn btn-outline-primary btn-sm" (click)="sendPhoneOtp()">Send Mobile OTP</button> -->
+                <span *ngIf="phoneVerifyError" class="text-danger ms-2">{{ phoneVerifyError }}</span>
+                <div id="brand-phone-recaptcha"></div>
+                <div *ngIf="showPhoneOtp" class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                  <input *ngFor="let item of phoneOtp; let i = index" [(ngModel)]="phoneOtp[i]" [ngModelOptions]="{standalone: true}" maxlength="1" inputmode="numeric" class="form-control text-center" style="width:42px;" />
+                  <button type="button" class="btn btn-primary btn-sm" (click)="confirmPhoneOtp()" [disabled]="verifyingPhoneOtp">Verify</button>
+                </div>
+                <small *ngIf="phoneOtpError" class="text-danger d-block mt-1">{{ phoneOtpError }}</small>
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" [disabled]="requestingMobileCallback || mobileCallbackRequested" (click)="requestMobileCallback()">
+                  {{ mobileCallbackRequested ? 'Callback requested' : (requestingMobileCallback ? 'Requesting…' : 'Request a Callback') }}
+                </button>
+              </div>
             </div>
             <div class="field-block">
               <label>Website</label>
@@ -110,50 +185,27 @@
               </select>
             </div>
             <div class="field-block full-width">
-              <label>Category / Industry <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <ng-container *ngIf="isEditMode; else viewCategories">
-                  <div
-                    *ngFor="let cat of categoriesList"
-                    class="chip"
-                    [class.chip--selected]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
-                    (click)="toggleChip('categories', cat._id)"
-                    tabindex="0"
-                    (keydown.enter)="toggleChip('categories', cat._id)"
-                    (keydown.space)="toggleChip('categories', cat._id)"
-                    [attr.aria-pressed]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
-                    role="button"
-                  >{{ cat.name }}</div>
-                </ng-container>
-                <ng-template #viewCategories>
-                  <div *ngFor="let catId of registrationForm.get('categories')?.value">
-                    <span class="chip chip--selected">{{ getCategoryName(catId) }}</span>
-                  </div>
-                </ng-template>
-              </div>
-              <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
+              <app-chip-selection-group
+                label="Category / Industry"
+                [required]="true"
+                [options]="categoriesList"
+                [selected]="registrationForm.get('categories')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                [max]="maxCategories"
+                [readonly]="!isEditMode"
+                (selectedChange)="setChipValues('categories', $event)">
+              </app-chip-selection-group>
+              <div *ngIf="(submitted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
             <div class="field-block full-width">
-              <label>Brand Description</label>
-              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell influencers about your brand..."></textarea>
+              <label>Brand Description <span class="text-danger">*</span></label>
+              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell about your brand..."></textarea>
+              <div *ngIf="submitted && registrationForm.get('description')?.invalid" class="text-danger mt-1">Brand description is required.</div>
             </div>
           </div>
 
-          <div class="field-block media-uploader mt-3">
-            <label>
-              Brand Logo
-              <button type="button" class="btn btn-sm btn-outline-primary ms-2" (click)="openBrandImageGuidelines()" title="View image guidelines">
-                <i class="bi bi-info-circle"></i>
-              </button>
-            </label>
-            <div class="upload-box">
-              <img *ngIf="brandLogoPreview" [src]="brandLogoPreview" alt="Brand logo preview" class="preview-image" />
-              <img *ngIf="!brandLogoPreview && brandLogoFormArray.length > 0 && brandLogoFormArray.at(0).value?.url" [src]="brandLogoFormArray.at(0).value.url" alt="Current brand logo" class="preview-image" />
-              <p *ngIf="!brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)">No brand logo uploaded.</p>
-              <input *ngIf="isEditMode" type="file" accept="image/*" (change)="onBrandLogoFileChange($event)" />
-            </div>
-            <div *ngIf="submitted && !brandLogoPreview && (brandLogoFormArray.length === 0 || !brandLogoFormArray.at(0).value?.url)" class="text-danger mt-1">Brand logo is required.</div>
-          </div>
+          
 
           <!-- Payout details: where the brand receives money for pay_to_join campaigns -->
           <div class="field-block full-width payout-block" formGroupName="payout">
@@ -217,29 +269,16 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Languages <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <ng-container *ngIf="isEditMode; else viewLanguages">
-                  <div
-                    *ngFor="let lang of languagesList"
-                    class="chip"
-                    [class.chip--selected]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
-                    (click)="toggleChip('languages', lang._id)"
-                    tabindex="0"
-                    (keydown.enter)="toggleChip('languages', lang._id)"
-                    (keydown.space)="toggleChip('languages', lang._id)"
-                    [attr.aria-pressed]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
-                    role="button"
-                  >
-                    {{ lang.name }}
-                  </div>
-                </ng-container>
-                <ng-template #viewLanguages>
-                  <div *ngFor="let langId of registrationForm.get('languages')?.value">
-                    <span class="chip chip--selected">{{ getLanguageName(langId) }}</span>
-                  </div>
-                </ng-template>
-              </div>
+              <app-chip-selection-group
+                label="Languages"
+                [required]="true"
+                [options]="languagesList"
+                [selected]="registrationForm.get('languages')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                [readonly]="!isEditMode"
+                (selectedChange)="setChipValues('languages', $event)">
+              </app-chip-selection-group>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
 
@@ -247,10 +286,6 @@
               <label>Google Map Address</label>
               <input formControlName="googleMapAddress" type="text" class="form-control" />
             </div>
-          </div>
-
-          <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger fw-bold mt-2">
-            Please select at least one category.
           </div>
 
           <div class="social-media-section mt-3">
@@ -273,7 +308,7 @@
 
           <!-- Social Media — optional, for brand trust -->
           <div class="social-media-section mt-3">
-            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — helps build trust with influencers)</span></h3>
+            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — Adding social links helps to trust your brand profile.)</span></h3>
             <div class="subtitle">Add your social handles so influencers can verify your brand.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="isEditMode && togglePlatform(platform)">
@@ -286,12 +321,12 @@
               <div class="platform-tab-strip">
                 <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
                   [class.platform-tab--active]="activePlatformTab === platform._id" (click)="activePlatformTab = platform._id">
-                  <i [class]="platform.icon"></i> {{ platform.name }}
+                  <i [class]="platform.icon"></i> <span>{{ platform.name }}</span>
                 </button>
                 <div class="platform-tab-spacer"></div>
                 <button type="button" class="tab-remove" *ngIf="activePlatformTab && isEditMode"
                   (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
-                  <i class="bi bi-x-lg"></i> Remove
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
 
@@ -305,9 +340,11 @@
                   <div class="platform-details-body">
                     <div class="row g-2">
                       <div class="col">
-                        <label>{{ platform.handleLabel || 'Handle' }}</label>
+                        <label>{{ platform.name }} Username</label>
                         <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}"
-                          type="text" class="form-control" placeholder="yourhandle" [disabled]="!isEditMode" (blur)="stripAtSign(platform._id)" />
+                          type="text" class="form-control" [placeholder]="getSocialHandleExample(platform.name)" [disabled]="!isEditMode" (blur)="stripAtSign(platform._id)" />
+                        <small class="text-muted d-block mt-1" *ngIf="isEditMode">Enter only your username, not full profile URL. Example: {{ getSocialHandleExample(platform.name) }}</small>
+                        <div *ngIf="submitted && isEditMode && getSocialHandleError(platform)" class="text-danger mt-1">{{ getSocialHandleError(platform) }}</div>
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                           [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
@@ -320,6 +357,8 @@
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
+                        <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
+                        
                       </div>
                     </div>
                   </div>
@@ -360,16 +399,14 @@
           </ng-container>
           <ng-template #planSelectCards>
             <div class="plan-cards">
-              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'free'"
-                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('free')">
+              <div class="plan-card" [class.selected]="!hasPremiumPlan">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Starter</span>
                   <span class="plan-card-price free">Free</span>
                 </div>
                 <div class="plan-card-desc">Basic visibility, Post campaigns</div>
               </div>
-              <div class="plan-card" [class.selected]="registrationForm.get('paymentOption')?.value === 'premium'"
-                (click)="isEditMode && registrationForm.get('paymentOption')?.setValue('premium')">
+              <div class="plan-card" [class.selected]="hasPremiumPlan">
                 <div class="plan-card-top">
                   <span class="plan-card-name">Premium <span class="plan-star">⭐</span></span>
                   <span class="plan-card-price premium">
@@ -387,12 +424,12 @@
               <span style="font-size:1.3em;">⏳</span>
               <div>
                 <strong>Payment Pending</strong>
-                <div><small>Your payment of ₹{{ latestPendingPayment.amount }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
+                <div><small>Your payment of ₹{{ latestPendingPaymentAmount | number:'1.0-2' }} ({{ latestPendingPayment.premiumDuration | uppercase }}) is waiting for admin verification.</small></div>
               </div>
             </div>
 
             <!-- Premium upgrade CTA -->
-            <div *ngIf="!latestPendingPayment && registrationForm.get('paymentOption')?.value === 'premium'" class="premium-upgrade-cta mt-2">
+            <div *ngIf="!latestPendingPayment && !hasPremiumPlan" class="premium-upgrade-cta mt-2">
               <div class="premium-cta-content">
                 <span class="premium-cta-icon">🌟</span>
                 <div>
@@ -405,22 +442,13 @@
           </ng-template>
 
           <div class="field-grid mt-3">
-            <div class="field-block full-width">
-              <label>Starting Price</label>
-              <div class="input-group">
-                <span class="input-group-text">₹</span>
-                <input formControlName="promotionalPrice" type="number" min="0" class="form-control" placeholder="500" />
-              </div>
-              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
-            </div>
-
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">
-                Contact details are shared only with influencers in campaign flow after acceptance.
-                Email is shown to influencers only when email is verified. Call/WhatsApp are shown to influencers only when mobile is verified.
+                Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
+                Email is shown only when email is verified. Call/WhatsApp are shown only when mobile is verified.
                 <br>
-                <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+                <span class="text-warning">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
               </div>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
@@ -443,6 +471,26 @@
             </div>
           </div>
 
+          <div class="field-block full-width mt-3">
+            <app-profile-visibility-selector
+              [value]="profileVisibility"
+              [disabled]="visibilityBusy"
+              (valueChange)="onProfileVisibilityChange($event)">
+            </app-profile-visibility-selector>
+
+            <app-homepage-feature-toggle
+              class="mt-3 d-block"
+              [checked]="featuredInMarketing"
+              [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
+              [isPremium]="hasPremiumPlan"
+              [isPublicProfile]="profileVisibility === 'PUBLIC'"
+              (checkedChange)="onFeaturedInMarketingChange($event)">
+            </app-homepage-feature-toggle>
+            <p class="text-muted mt-1" *ngIf="hasPremiumPlan && profileVisibility !== 'PUBLIC'" style="font-size:0.82em;">
+              Homepage Hero Feature is only available when profile visibility is Public.
+            </p>
+          </div>
+
           <div *ngIf="registrationSuccess" class="text-success fw-bold my-3">Profile updated successfully.</div>
           <div *ngIf="isEditMode && selectedPlatforms().length > 0 && !arePlatformsValid()" class="text-danger fw-bold my-3">
             Please enter both Handle and Tier for every selected platform, or remove it.
@@ -451,10 +499,23 @@
 
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-            <button type="submit" class="btn btn-primary" *ngIf="isEditMode">Save Profile</button>
+            <button type="submit" class="btn btn-primary" *ngIf="isEditMode" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Save Profile' }}
+            </button>
             <button type="button" class="btn btn-outline-secondary" *ngIf="!isEditMode" (click)="enableEdit()">Enable Edit</button>
           </div>
         </section>
+
+        <app-mobile-bottom-actions ariaLabel="Brand profile actions">
+          <button *ngIf="currentStep > 1" type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()"><i class="bi bi-arrow-left"></i><span>Back</span></button>
+          <button *ngIf="!isEditMode" type="button" class="btn btn-outline-secondary" (click)="enableEdit()"><i class="bi bi-pencil"></i><span>Edit</span></button>
+          <button *ngIf="isEditMode" type="button" class="btn btn-outline-secondary" (click)="cancelEdit()"><i class="bi bi-x-circle"></i><span>Cancel</span></button>
+          <button *ngIf="currentStep === 1" type="button" class="btn btn-outline-secondary" (click)="openChangePasswordModal()"><i class="bi bi-shield-lock"></i><span>Password</span></button>
+          <button *ngIf="currentStep < 3" type="button" class="btn btn-primary" (click)="nextStep()"><i class="bi bi-arrow-right"></i><span>Next</span></button>
+          <button *ngIf="currentStep === 3 && isEditMode" type="submit" class="btn btn-primary" [disabled]="saving">
+            <i class="bi bi-check-circle"></i><span>{{ saving ? 'Saving...' : 'Save' }}</span>
+          </button>
+        </app-mobile-bottom-actions>
       </form>
     </main>
   </div>

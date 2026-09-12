@@ -1,28 +1,22 @@
-<div class="tx-toolbar">
-  <button class="btn btn-warning btn-sm" (click)="runAutoApproveStaleSubmissions()">
-    Auto-approve stale (48h)
-  </button>
-</div>
-
 <div class="tx-summary-grid">
-  <div class="tx-card">
+  <div class="tx-card tx-card--collected">
     <div class="tx-label">Collected</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.collected) }}</div>
   </div>
   <div class="tx-card">
-    <div class="tx-label">Platform Fees</div>
+    <div class="tx-label">Platform Commission</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.fees) }}</div>
   </div>
-  <div class="tx-card">
+  <div class="tx-card tx-card--pending">
     <div class="tx-label">Pending Payouts</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.pendingPayouts) }}</div>
   </div>
-  <div class="tx-card">
+  <div class="tx-card tx-card--paid">
     <div class="tx-label">Paid Out</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.paidOut) }}</div>
   </div>
   <div class="tx-card tx-card--accent">
-    <div class="tx-label">Net TrendStarz Balance</div>
+    <div class="tx-label">Net Balance</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.netBalance) }}</div>
   </div>
 </div>
@@ -39,6 +33,26 @@
   </button>
 </div>
 
+<div class="tx-toolbar">
+  <div class="tx-filter-group">
+    <select class="sort-select ts-admin-filter-control" [(ngModel)]="modeFilter" (ngModelChange)="onModeFilterChange()" aria-label="Filter by payment mode">
+      <option value="all">All modes</option>
+      <option value="manual">Manual</option>
+      <option value="razorpay">Auto (Razorpay)</option>
+    </select>
+    <select class="sort-select ts-admin-filter-control" [(ngModel)]="sortOption" (ngModelChange)="onSortChange()" aria-label="Sort transactions">
+      <option value="date_desc">Newest first</option>
+      <option value="date_asc">Oldest first</option>
+      <option value="amount_desc">Amount: High to Low</option>
+      <option value="amount_asc">Amount: Low to High</option>
+    </select>
+  </div>
+  <button class="tx-auto-btn" type="button" (click)="runAutoApproveStaleSubmissions()">
+    <i class="bi bi-clock-history"></i>
+    Auto-approve stale (48h)
+  </button>
+</div>
+
 <div *ngIf="transactionLoading" class="loading">Loading transactions...</div>
 
 <div class="payments-section" *ngIf="!transactionLoading">
@@ -46,39 +60,84 @@
     <p>No transactions in this filter.</p>
   </div>
 
+  <div class="table-scroll-wrap">
   <table *ngIf="visibleTransactions.length > 0" class="table table-hover payments-table-grid">
     <thead>
       <tr>
-        <th>Type</th>
-        <th>Campaign</th>
+        <th>Type / Campaign</th>
         <th>Payer → Recipient</th>
-        <th>They Paid</th>
-        <th>Platform Fee</th>
-        <th>Recipient Gets</th>
-        <th>UTR</th>
-        <th>Collection</th>
-        <th>Payout</th>
+        <th>Financials</th>
+        <th>Mode / Ref</th>
+        <th>Status</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let tx of visibleTransactions">
-        <td>{{ ui.getTransactionLabel(tx.transactionType) }}</td>
-        <td><code>{{ tx.campaignId }}</code></td>
-        <td>{{ tx.payerRole }} → {{ tx.recipientRole }}</td>
-        <td class="col-amount">{{ ui.formatPaise(tx.payerTotal) }}</td>
-        <td>{{ ui.formatPaise(tx.platformFee) }}</td>
-        <td>{{ ui.formatPaise(tx.recipientPayout) }}</td>
+      <tr *ngFor="let tx of pagedVisibleTransactions">
         <td>
-          <code>{{ tx.utrNumber || '-' }}</code>
-          <button class="btn btn-link btn-sm" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">View proof</button>
+          <div class="tx-type-cell">
+            <strong>{{ ui.getTransactionLabel(tx.transactionType) }}</strong>
+            <code>{{ shortCampaignId(tx.campaignId) }}</code>
+          </div>
         </td>
-        <td>{{ ui.collectionStatusLabel(tx.collectionStatus) }}</td>
         <td>
-          {{ ui.payoutStatusLabel(tx.payoutStatus) }}
-          <span class="dispute-pill" *ngIf="tx.disputeStatus === 'open'">
-            <i class="bi bi-lock-fill"></i> Frozen
-          </span>
+          <div class="tx-party-cell">
+            <div><strong>{{ partyName(tx, 'payer') }}</strong> <span>({{ tx.payerRole }})</span></div>
+            <div class="tx-recipient-line">
+              <i class="bi bi-arrow-right-short"></i>
+              <strong>{{ partyName(tx, 'recipient') }}</strong> <span>({{ tx.recipientRole }})</span>
+            </div>
+            <small>{{ payoutDestinationCompactLabel(tx) }}</small>
+          </div>
+        </td>
+        <td>
+          <div class="tx-financials-cell">
+            <strong>{{ ui.formatPaise(tx.payerTotal) }} Paid</strong>
+            <span>Fee: {{ ui.formatPaise(tx.platformFee) }}</span>
+            <span>Gets: {{ ui.formatPaise(tx.recipientPayout) }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="tx-ref-cell">
+            <strong>{{ collectionModeLabel(tx) }}</strong>
+            <span class="tx-ref-line">
+              <span>{{ transactionReferenceLabel(tx) }}</span>
+              <code>{{ transactionReference(tx) }}</code>
+            </span>
+            <span class="tx-ref-line">
+              <span>{{ payoutReferenceLabel(tx) }}</span>
+              <code>{{ payoutReference(tx) }}</code>
+            </span>
+            <button class="tx-proof-link" type="button" *ngIf="tx.paymentProofUrl" (click)="openProofPreview(tx.paymentProofUrl)">
+              View proof
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="tx-status-cell">
+            <span class="tx-collection-label">{{ ui.collectionStatusLabel(tx.collectionStatus) }}</span>
+            <span class="badge rounded-pill" [ngClass]="reviewFlowStatusClass(tx)">
+              {{ reviewFlowStatusLabel(tx) }}
+            </span>
+            <div class="tx-payout-timer" [ngClass]="payoutTimingClass(tx)">
+              <i class="bi bi-clock"></i>
+              <span>{{ payoutTimingLabel(tx) }}</span>
+            </div>
+            <div class="tx-payout-subtext" *ngIf="payoutTimingSubtext(tx)">
+              {{ payoutTimingSubtext(tx) }}
+            </div>
+            <div class="tx-gateway-note" *ngIf="tx.payoutGatewayProvider === 'razorpayx' && tx.payoutTransferStatus">
+              Gateway: {{ tx.payoutTransferStatus }}
+              <span *ngIf="tx.payoutTransferId">({{ tx.payoutTransferId }})</span>
+            </div>
+            <div class="tx-error-note" *ngIf="tx.payoutFailureReason">
+              {{ tx.payoutFailureReason }}
+            </div>
+            <div class="tx-gateway-note" *ngIf="tx.payoutRetryCount && tx.payoutRetryCount > 0">
+              Retries: {{ tx.payoutRetryCount }}
+              <span *ngIf="tx.payoutLastRetryAt">· Last: {{ ui.formatDateTime(tx.payoutLastRetryAt) }}</span>
+            </div>
+          </div>
         </td>
         <td class="col-actions">
           <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)">
@@ -87,17 +146,40 @@
           <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)">
             Reject
           </button>
-          <button class="btn btn-warning btn-sm me-1" *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')" [disabled]="!canMarkPaid(tx)" (click)="openPayoutModal(tx)">
-            Mark Paid
+          <button class="btn btn-warning btn-sm me-1"
+                  *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && isManualSettlement(tx)"
+                  (click)="openPayoutModal(tx)"
+                  [disabled]="!canMarkPaid(tx)"
+                  [title]="canMarkPaid(tx) ? markPaidActionLabel(tx) : markPaidDisabledReason(tx)">
+            {{ markPaidActionLabel(tx) }}
           </button>
+          <div
+            class="tx-action-timer"
+            *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing')">
+            {{ actionPayoutHint(tx) }}
+          </div>
           <!-- Dispute resolve button -->
           <button class="btn btn-sm btn-dispute-resolve" *ngIf="tx.disputeStatus === 'open'" (click)="openDisputeModal(tx)">
             <i class="bi bi-shield-exclamation"></i> Resolve Dispute
           </button>
+          <span class="tx-no-action" *ngIf="hasNoPrimaryAction(tx)">No actions needed</span>
         </td>
       </tr>
     </tbody>
   </table>
+  </div><!-- /.table-scroll-wrap -->
+
+  <div class="tx-table-footer" *ngIf="visibleTransactions.length > 0">
+    <app-paginator
+      [total]="filteredTransactionCount"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="pageSizeOptions"
+      entityLabel="transactions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-paginator>
+  </div>
 </div>
 
 <div class="modal-backdrop show" *ngIf="showTxRejectModal" (click)="closeRejectTxModal()"></div>
@@ -128,6 +210,35 @@
     <h2>Mark Payout Paid</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Payout amount: <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      Invite status: <strong>{{ inviteStatusLabel(selectedTx) }}</strong> ·
+      Agreed payout: <strong>{{ agreedAmountSummary(selectedTx) }}</strong> ·
+      Unlock: <strong>{{ selectedTx.inviteSnapshot?.unlocked ? 'Unlocked' : 'Locked' }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      Offer trail: <strong>{{ offerTrailSummary(selectedTx) }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx">
+      Release mode: <strong>{{ settlementModeLabel(selectedTx) }}</strong> ·
+      Send to: <strong>{{ payoutDestinationLabel(selectedTx) }}</strong>
+    </p>
+    <div class="payout-reference-info" *ngIf="selectedTx">
+      <div class="pri-row">
+        <span class="pri-label">Payment mode</span>
+        <strong>{{ collectionModeLabel(selectedTx) }}</strong>
+      </div>
+      <div class="pri-row">
+        <span class="pri-label">{{ transactionReferenceLabel(selectedTx) }}</span>
+        <code>{{ transactionReference(selectedTx) }}</code>
+      </div>
+      <div class="pri-row">
+        <span class="pri-label">{{ payoutReferenceLabel(selectedTx) }}</span>
+        <code>{{ payoutReference(selectedTx) }}</code>
+      </div>
+    </div>
+    <p class="modal-info" *ngIf="selectedTx">
+      {{ payoutWindowSummary(selectedTx) }}
     </p>
     <div class="recipient-info" *ngIf="selectedTx?.recipient as r">
       <div class="ri-row"><i class="bi bi-person-circle"></i>

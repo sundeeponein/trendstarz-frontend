@@ -1,4 +1,10 @@
 <div class="cm-page influencer-dashboard p-4">
+  <app-founder-offer-modal
+    [open]="showFounderOfferModal"
+    role="INFLUENCER"
+    [registeredAt]="firstRegisteredAtDisplay"
+    (closed)="onFounderOfferModalClosed()">
+  </app-founder-offer-modal>
   <div class="dashboard-welcome-bar mb-4">
     <div class="dashboard-welcome-left">
       <h1 class="welcome-title mb-1">Welcome, {{ dashboard?.user?.name || 'Influencer' }}</h1>
@@ -7,11 +13,62 @@
     <div class="dashboard-welcome-right account-meta-card">
       <div><strong>Registered on:</strong> {{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</div>
       <div><strong>Last Login:</strong> {{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</div>
+      <div><strong>Last Opened:</strong> {{ lastOpenedAtDisplay ? (lastOpenedAtDisplay | date:'medium') : '-' }}</div>
+      <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
     </div>
   </div>
 
+  <!-- Admin Social Media Change Notifications -->
+  <div *ngIf="adminSocialNotifications.length" class="admin-social-notif-banner mb-4">
+    <div class="admin-social-notif-header">
+      <span><i class="bi bi-shield-check me-2"></i><strong>Your social media details were updated by Admin</strong></span>
+      <button class="admin-social-notif-dismiss" (click)="dismissAdminSocialNotifications()" title="Dismiss">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="admin-social-notif-list">
+      <div class="admin-social-notif-item" *ngFor="let n of adminSocialNotifications">
+        <div class="admin-social-notif-main">
+          <span class="admin-social-notif-platform">
+            <i class="bi bi-instagram" *ngIf="n.platform === 'instagram'"></i>
+            <i class="bi bi-youtube" *ngIf="n.platform === 'youtube'"></i>
+            <i class="bi bi-twitter-x" *ngIf="n.platform === 'twitter' || n.platform === 'x'"></i>
+            <i class="bi bi-facebook" *ngIf="n.platform === 'facebook'"></i>
+            <i class="bi bi-share" *ngIf="!['instagram','youtube','twitter','x','facebook'].includes(n.platform)"></i>
+            <strong>{{ n.platform | titlecase }}</strong>
+          </span>
+          <span *ngIf="n.oldHandle !== n.newHandle" class="admin-social-notif-change">
+            Handle: <span class="notif-old">@{{ n.oldHandle }}</span>
+            <i class="bi bi-arrow-right mx-1"></i>
+            <span class="notif-new">@{{ n.newHandle }}</span>
+          </span>
+          <span *ngIf="n.oldTier !== n.newTier" class="admin-social-notif-change">
+            Tier: <span class="notif-old">{{ n.oldTier }}</span>
+            <i class="bi bi-arrow-right mx-1"></i>
+            <span class="notif-new">{{ n.newTier }}</span>
+          </span>
+          <span class="admin-social-notif-by">by {{ n.changedByName || 'Admin' }} &middot; {{ n.changedAt | date:'dd MMM yyyy' }}</span>
+        </div>
+        <div class="admin-social-notif-actions">
+          <button type="button" class="admin-social-action admin-social-action--confirm" (click)="respondToAdminSocialNotifications('confirmed')">
+            <i class="bi bi-check2-circle"></i> Confirm
+          </button>
+          <button type="button" class="admin-social-action admin-social-action--edit" (click)="editAdminSocialDetails()">
+            <i class="bi bi-pencil-square"></i> Edit
+          </button>
+          <button type="button" class="admin-social-action admin-social-action--cancel" (click)="respondToAdminSocialNotifications('cancelled')">
+            <i class="bi bi-x-circle"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No-guarantee notice -->
+  <app-registration-notice role="influencer" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
+
   <!-- Alert Cards Row -->
-  <div class="row mb-4 gx-3">
+  <div class="row mb-4 gx-3" *ngIf="!loading">
     <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.user?.isEmailVerified">
       <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">
@@ -31,17 +88,17 @@
       </div>
     </div>
     <div class="col-md-4 mb-3 mb-md-0">
-      <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
+      <div class="alert-card alert-card--mobile d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">
           <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
           <div>
-            <div class="alert-card-title fw-bold">{{ dashboard?.user?.isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
-            <div class="alert-card-desc">Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.</div>
-            <div *ngIf="verificationCallNumber" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+            <div class="alert-card-title fw-bold">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+            <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+            <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
           </div>
         </div>
-        <a *ngIf="dashboard?.user && dashboard?.user.isMobileVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
-        <span *ngIf="dashboard?.user && dashboard?.user.isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+        <a *ngIf="dashboard?.user && !isMobileVerified" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+        <span *ngIf="dashboard?.user && isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
       </div>
     </div>
     <div class="col-md-4">
@@ -55,9 +112,32 @@
         </div>
         <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Go to profile</a>
         <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+        <app-profile-review-summary
+          [detail]="profileVerificationDashboard"
+          [loading]="profileVerificationLoading"
+          profileRoute="/influencer-profile"
+          [autoOpen]="true"
+        />
       </div>
     </div>
   </div>
+
+  <div class="section-card mb-4" *ngIf="!loading">
+    <app-collaboration-score-summary-widget
+      [audit]="collaborationAudit"
+      [loading]="collaborationScoreLoading"
+      [generating]="collaborationScoreReAnalyzing"
+      (generateScore)="onReAnalyzeCollaborationScore()"
+    />
+  </div>
+
+  <app-whatsapp-community-card
+    *ngIf="dashboard?.user"
+    [user]="dashboard.user"
+    variant="strip"
+    [respectSkip]="false"
+    [showSkipAction]="false"
+  ></app-whatsapp-community-card>
 
   <div class="section-card mb-4" *ngIf="!loading">
     <div class="section-title d-flex align-items-center mb-3">
@@ -122,7 +202,7 @@
         <div class="card attention-card disputed shadow-sm border-0">
           <div class="card-body py-3">
             <div class="display-6 fw-bold mb-1 text-danger">{{ attentionCounts.disputedAgainstMe }}</div>
-            <div class="text-muted">Disputed invites</div>
+            <div class="text-muted">Invites under review</div>
           </div>
         </div>
       </div>
@@ -141,14 +221,14 @@
           <div class="card-body py-3">
             <div class="display-6 fw-bold mb-1" [ngClass]="{
               'text-warning': stat.label === 'Invited',
-              'text-success': stat.label === 'Accepted',
-              'text-primary': stat.label === 'Submitted',
+              'text-success': stat.label === 'Working',
+              'text-primary': stat.label === 'Under Review',
               'text-dark': stat.label === 'Completed'
             }">{{ stat.value }}</div>
             <div class="text-muted">{{ stat.label }}</div>
             <span *ngIf="stat.label === 'Invited'" class="badge rounded-pill bg-warning text-dark">Invited</span>
-            <span *ngIf="stat.label === 'Accepted'" class="badge rounded-pill bg-success">Accepted</span>
-            <span *ngIf="stat.label === 'Submitted'" class="badge rounded-pill bg-info text-dark">Submitted</span>
+            <span *ngIf="stat.label === 'Working'" class="badge rounded-pill bg-success">Working</span>
+            <span *ngIf="stat.label === 'Under Review'" class="badge rounded-pill bg-warning text-dark">Under Review</span>
             <span *ngIf="stat.label === 'Completed'" class="badge rounded-pill bg-dark">Completed</span>
           </div>
         </div>
@@ -264,7 +344,13 @@
     </div>
 
     <div class="invite-summary" *ngIf="pendingPaymentHistory.length">
-      <div>Pending payout: <strong>{{ formatPaise(paymentSummary.pending) }}</strong></div>
+      <div *ngIf="paymentSummary.pending > 0">
+        Payout processing: <strong>{{ formatPaise(paymentSummary.pending) }}</strong>
+      </div>
+      <div *ngIf="paymentSummary.pending === 0 && paymentSummary.confirmedWorkValue > 0">
+        Confirmed upcoming earnings: <strong>{{ formatPaise(paymentSummary.confirmedWorkValue) }}</strong>
+        <span class="idb-summary-note">Release starts after work is completed and approved.</span>
+      </div>
       <div *ngIf="paymentSummary.frozen > 0" class="idb-frozen-note">
         <i class="bi bi-exclamation-triangle-fill"></i>
         {{ formatPaise(paymentSummary.frozen) }} frozen — dispute under review
@@ -301,16 +387,8 @@
               <span *ngIf="tx.payerRole === 'influencer'">-{{ formatPaise(tx.payerTotal) }}</span>
             </td>
             <td>
-              <span class="idb-status-chip" [ngClass]="{
-                'idb-status--frozen': tx.payoutStatus === 'frozen',
-                'idb-status--processing': tx.payoutStatus === 'processing',
-                'idb-status--pending': tx.payoutStatus === 'pending' || tx.payoutStatus === null
-              }">
-                {{ tx.payoutStatus === 'frozen' ? '🔒 Dispute open' :
-                   tx.payoutStatus === 'processing' ? 'Processing' :
-                   tx.collectionStatus === 'verified' ? 'Awaiting payout' :
-                   tx.collectionStatus === 'proof_submitted' ? 'Payment verifying' :
-                   tx.collectionStatus === 'failed' ? 'Payment rejected' : 'Awaiting payment' }}
+              <span class="idb-status-chip" [ngClass]="paymentFlowStatusClass(tx)">
+                {{ paymentFlowStatusLabel(tx) }}
               </span>
             </td>
             <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>
@@ -335,7 +413,7 @@
   <!-- ═══════════════════════════════════════════════════════
        ACTIVE CAMPAIGNS
   ═══════════════════════════════════════════════════════ -->
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div *ngIf="!loading && activeCampaigns.length > 0" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--blue me-2"></span> Active Campaigns
       <span class="section-count ms-2">{{ activeCampaigns.length }}</span>
@@ -343,7 +421,7 @@
     <div *ngIf="activeCampaigns.length === 0" class="section-empty py-3">
       <div class="section-empty-icon"><i class="bi bi-rocket"></i></div>
       <div class="section-empty-title">No active work</div>
-      <div class="section-empty-desc">Projects you've accepted will appear here.</div>
+      <div class="section-empty-desc">Projects in your Working stage will appear here.</div>
     </div>
     <div *ngFor="let c of activeCampaigns" class="active-camp-card">
       <div class="d-flex align-items-start gap-2" (click)="openDetail({campaignId: c, inviteStatus: c.inviteStatus})">
@@ -355,10 +433,11 @@
             <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
           </div>
         </div>
-        <span *ngIf="c.inviteStatus === 'accepted'" class="badge rounded-pill bg-success ms-2">Accepted</span>
-        <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Payment Confirmed</span>
-        <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">In Progress</span>
-        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Work Submitted</span>
+        <span *ngIf="c.inviteStatus === 'accepted' && c.campaignType === 'paid_collab'" class="badge rounded-pill bg-warning text-dark ms-2">Confirmation Pending</span>
+        <span *ngIf="c.inviteStatus === 'accepted' && c.campaignType !== 'paid_collab'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
+        <span *ngIf="c.inviteStatus === 'payment_confirmed'" class="badge rounded-pill bg-primary text-white ms-2">Ready to Start</span>
+        <span *ngIf="c.inviteStatus === 'working'" class="badge rounded-pill bg-primary text-white ms-2">Working</span>
+        <span *ngIf="c.inviteStatus === 'submitted'" class="badge rounded-pill bg-info text-dark ms-2">Submitted</span>
         <span *ngIf="c.inviteStatus === 'pending'" class="badge rounded-pill bg-warning text-dark ms-2">Pending</span>
       </div>
       <div class="active-camp-meta mt-2">
@@ -369,23 +448,32 @@
       <div class="payment-awaited-row mt-2"
            *ngIf="c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted'">
         <i class="bi bi-clock-history"></i>
-        <span>Awaiting brand confirmation to begin — you'll be notified once confirmed.</span>
+        <span>Waiting for host confirmation to unlock coordination details.</span>
       </div>
-      <!-- Payment confirmed: start work prompt -->
+      <!-- Working stage: start work prompt -->
       <div class="payment-confirmed-row mt-2" *ngIf="c.inviteStatus === 'payment_confirmed'">
         <i class="bi bi-check-circle-fill"></i>
-        <span>Payment confirmed! Begin creating your content.</span>
+        <span>You are ready to work. Begin creating your content.</span>
       </div>
+      <!-- Tracking link — available as soon as accepted, so it's ready to go in the post itself. -->
+      <app-promo-link-card
+        *ngIf="c.promotionUrl && c.inviteStatus !== 'pending' && c.inviteStatus !== 'invited'"
+        class="mt-2 d-block"
+        [typeLabel]="promotionUrlTypeLabel(c)"
+        [destinationUrl]="c.promotionUrl"
+        [url]="taggedPromotionLink(c)"
+        [clickCount]="taggedPromotionLinkClicks(c)">
+      </app-promo-link-card>
       <!-- Submit/view CTA: hide only when awaiting payment for paid_collab -->
       <div class="submit-post-cta mt-2"
            *ngIf="!(c.campaignType === 'paid_collab' && c.inviteStatus === 'accepted')">
         <button class="btn-submit-post" (click)="goToSubmit(c); $event.stopPropagation()">
           <i class="bi" [class.bi-eye-fill]="c.inviteStatus === 'submitted'" [class.bi-send-fill]="c.inviteStatus !== 'submitted'"></i>
-          {{ c.inviteStatus === 'submitted' ? 'View submitted proof' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your proof of work' : 'Submit your post') }}
+          {{ c.inviteStatus === 'submitted' ? 'View Submission' : ((c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working') ? 'Submit your post URL' : 'Submit your post') }}
         </button>
       </div>
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">
-        <i class="bi bi-hourglass-split"></i> Post submitted — awaiting brand review
+        <i class="bi bi-hourglass-split"></i> 24-hour review period — auto-completes if no issue is reported
       </div>
     </div>
     <div class="txn-see-all" *ngIf="activeCampaigns.length">
@@ -398,7 +486,7 @@
   <!-- ═══════════════════════════════════════════════════════
        COMPLETED CAMPAIGNS
   ═══════════════════════════════════════════════════════ -->
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div *ngIf="!loading && completedCampaigns.length > 0" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span> Completed Campaigns
       <span class="section-count ms-2">{{ completedCampaigns.length }}</span>
@@ -406,20 +494,21 @@
     <div *ngIf="completedCampaigns.length === 0" class="section-empty py-3">
       <div class="section-empty-icon"><i class="bi bi-check2-circle"></i></div>
       <div class="section-empty-title">No completed campaigns yet</div>
-      <div class="section-empty-desc">Campaigns approved by the brand will appear here.</div>
+      <div class="section-empty-desc">Campaigns in Completed or Payout Released will appear here.</div>
     </div>
-    <div *ngFor="let c of completedCampaigns" class="active-camp-card completed">
+    <div *ngFor="let c of completedCampaigns" class="active-camp-card completed mt-3">
       <div class="d-flex align-items-start gap-2" (click)="goToStats(c)">
         <div class="active-camp-dot completed-dot"></div>
         <div class="flex-1">
           <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
           <div class="active-camp-desc" *ngIf="c.description">{{ c.description | slice:0:80 }}{{ c.description?.length > 80 ? '…' : '' }}</div>
           <div class="d-flex gap-2 mt-1 flex-wrap">
-            <span class="badge rounded-pill bg-light text-dark" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
+            <span class="badge rounded-pill bg-dark text-white" *ngFor="let cat of (c.categories || [])">{{ cat }}</span>
           </div>
         </div>
-        <span *ngIf="c.inviteStatus === 'completed' || c.inviteStatus === 'approved'" class="badge rounded-pill bg-dark ms-2">Completed</span>
-        <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-danger ms-2">Disputed</span>
+        <span *ngIf="c.inviteStatus === 'completed'" class="badge rounded-pill bg-success ms-2">Completed</span>
+        <span *ngIf="c.inviteStatus === 'approved'" class="badge rounded-pill bg-info text-dark ms-2">Payout Released</span>
+        <span *ngIf="c.inviteStatus === 'disputed'" class="badge rounded-pill bg-warning text-dark ms-2">Under Review</span>
       </div>
       <div class="active-camp-meta mt-2">
         <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
@@ -430,6 +519,14 @@
         <span *ngIf="c.metrics.likesCount != null"><i class="bi bi-heart"></i> {{ c.metrics.likesCount }} likes</span>
         <span *ngIf="c.metrics.commentsCount != null"><i class="bi bi-chat"></i> {{ c.metrics.commentsCount }} comments</span>
       </div>
+      <app-promo-link-card
+        *ngIf="c.promotionUrl"
+        class="mt-2 d-block"
+        [typeLabel]="promotionUrlTypeLabel(c)"
+        [destinationUrl]="c.promotionUrl"
+        [url]="taggedPromotionLink(c)"
+        [clickCount]="taggedPromotionLinkClicks(c)">
+      </app-promo-link-card>
       <div class="submit-post-cta mt-2">
         <button class="btn-submit-post" (click)="goToStats(c); $event.stopPropagation()">
           <i class="bi bi-eye-fill"></i>
@@ -438,9 +535,32 @@
       </div>
     </div>
   </div>
-</div>
 
-<div class="section-card mb-4 profile-traffic-card">
+  <!-- ═══════════════════════════════════════════════════════
+       WITHDRAWN / MISSED CAMPAIGNS
+  ═══════════════════════════════════════════════════════ -->
+  <div *ngIf="!loading && withdrawnCampaigns.length > 0" class="section-card mb-4">
+    <div class="section-title d-flex align-items-center mb-3">
+      <span class="dot dot--purple me-2"></span> Withdrawn / Missed Campaigns
+      <span class="section-count ms-2">{{ withdrawnCampaigns.length }}</span>
+    </div>
+    <div *ngFor="let c of withdrawnCampaigns" class="active-camp-card mt-3">
+      <div class="d-flex align-items-start gap-2">
+        <div class="active-camp-dot"></div>
+        <div class="flex-1">
+          <div class="active-camp-title">{{ c.title || '(untitled)' }}</div>
+          <div class="active-camp-desc">{{ withdrawnMessage(c) }}</div>
+        </div>
+        <span class="badge rounded-pill bg-danger ms-2">{{ withdrawnLabel(c) }}</span>
+      </div>
+      <div class="active-camp-meta mt-2">
+        <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Traffic hidden - by sundeep -->
+  <div class="section-card mb-4 profile-traffic-card p-2 d-none">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span>
       Profile Traffic
@@ -469,7 +589,10 @@
         <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
       </div>
     </ng-template>
+    <br>
+    <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>
   </div>
+</div>
 
 <!-- Shared Campaign Detail Modal -->
 <app-campaign-detail-modal
@@ -477,6 +600,7 @@
   [invite]="selectedInvite"
   [visible]="!!selectedInvite"
   [qualifyingPlatform]="selectedInviteQualifyingPlatform"
+  [qualifyingPlatforms]="selectedInviteQualifyingPlatforms"
   [qualifyingTier]="selectedInviteQualifyingTier"
   [busy]="responding === selectedInvite._id"
   [initialPostDate]="selectedPostDates[selectedInvite._id]"
@@ -486,3 +610,4 @@
   (decline)="onModalDecline($event)"
   (validationError)="onModalValidationError($event)"
 ></app-campaign-detail-modal>
+<app-shipping-address-modal></app-shipping-address-modal>

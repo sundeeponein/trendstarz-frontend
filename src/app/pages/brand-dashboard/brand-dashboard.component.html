@@ -2,19 +2,30 @@
     {{ error }}
   </div>
 <div class="cm-page brand-dashboard p-4">
+    <app-founder-offer-modal
+      [open]="showFounderOfferModal"
+      role="BRAND"
+      [registeredAt]="firstRegisteredAtDisplay"
+      (closed)="onFounderOfferModalClosed()">
+    </app-founder-offer-modal>
     <div class="dashboard-welcome-bar mb-4">
       <div class="dashboard-welcome-left">
-        <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Influencer' }}</h1>
+        <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Brand' }}</h1>
         <div class="welcome-subtitle">Here is what is happening with your brand campaigns today.</div>
       </div>
       <div class="dashboard-welcome-right account-meta-card">
         <div><strong>Registered on:</strong> {{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</div>
         <div><strong>Last Login:</strong> {{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</div>
+        <div><strong>Last Opened:</strong> {{ lastOpenedAtDisplay ? (lastOpenedAtDisplay | date:'medium') : '-' }}</div>
+        <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
       </div>
     </div>
 
+  <!-- Role-based notice -->
+  <app-registration-notice role="brand" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
+
   <!-- Alert Cards Row -->
-  <div class="row mb-4 gx-3">
+  <div class="row mb-4 gx-3" *ngIf="!loading">
     <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.brand?.isEmailVerified">
       <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
         <div class="d-flex align-items-start">
@@ -38,13 +49,13 @@
         <div class="d-flex align-items-start">
           <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
           <div>
-            <div class="alert-card-title fw-bold">{{ dashboard?.brand?.isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
-            <div class="alert-card-desc">Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.</div>
-            <div *ngIf="verificationCallNumber" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+            <div class="alert-card-title fw-bold">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+            <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+            <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
           </div>
         </div>
-        <a *ngIf="dashboard?.brand && dashboard?.brand.isMobileVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
-        <span *ngIf="dashboard?.brand && dashboard?.brand.isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+        <a *ngIf="dashboard?.brand && !isMobileVerified" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+        <span *ngIf="dashboard?.brand && isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
       </div>
     </div>
     <div class="col-md-4">
@@ -58,9 +69,25 @@
         </div>
         <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Go to profile</a>
         <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+        <app-profile-review-summary
+          [detail]="profileVerificationDashboard"
+          [loading]="profileVerificationLoading"
+          profileRoute="/brand-profile"
+          [autoOpen]="true"
+        />
       </div>
     </div>
   </div>
+
+  <!-- <div class="section-card mb-4">
+    <app-collaboration-score-card
+      [audit]="collaborationAudit"
+      [loading]="collaborationScoreLoading"
+      [reAnalyzing]="collaborationScoreReAnalyzing"
+      (reAnalyze)="onReAnalyzeCollaborationScore()"
+      (auditRefreshed)="collaborationAudit = $event"
+    />
+  </div> -->
 
   <!-- Needs Attention Widget -->
   <div class="needs-attention mb-4"
@@ -127,36 +154,7 @@
     </div>
   </div>
 
-  <div class="section-card mb-4 profile-traffic-card">
-    <div class="section-title d-flex align-items-center mb-2">
-      <span class="dot dot--purple me-2"></span> Profile Traffic
-      <span class="section-count ms-auto">Last 30 days</span>
-    </div>
-
-    <div class="profile-traffic-grid" *ngIf="canViewProfileTraffic; else brandTrafficLocked">
-      <div class="traffic-stat-box">
-        <div class="traffic-stat-label">Impressions</div>
-        <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
-      </div>
-      <div class="traffic-stat-box">
-        <div class="traffic-stat-label">Clicks</div>
-        <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
-      </div>
-      <div class="traffic-stat-meta">
-        <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ profileTraffic.lastImpressionAt | date:'medium' }}</span>
-        <span *ngIf="profileTraffic.lastClickAt">Last click: {{ profileTraffic.lastClickAt | date:'medium' }}</span>
-      </div>
-    </div>
-
-    <ng-template #brandTrafficLocked>
-      <div class="traffic-locked-state">
-        <i class="bi bi-lock-fill"></i>
-        <span>Upgrade to Premium to view profile traffic analytics.</span>
-        <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
-      </div>
-    </ng-template>
-  </div>
-
+  
   <!-- Campaign Sections -->
   <div class="row mb-4 gx-3">
     <div class="col-md-4 mb-3 mb-md-0">
@@ -276,4 +274,38 @@
       </a>
     </div>
   </div>
+
+  <!-- Profile Traffic hidden - by sundeep -->
+  <div class="section-card mb-4 profile-traffic-card p-2 d-none">
+    <div class="section-title d-flex align-items-center mb-2">
+      <span class="dot dot--purple me-2"></span> Profile Traffic
+      <span class="section-count ms-auto">Last 30 days</span>
+    </div>
+
+    <div class="profile-traffic-grid" *ngIf="canViewProfileTraffic; else brandTrafficLocked">
+      <div class="traffic-stat-box">
+        <div class="traffic-stat-label">Impressions</div>
+        <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
+      </div>
+      <div class="traffic-stat-box">
+        <div class="traffic-stat-label">Clicks</div>
+        <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
+      </div>
+      <div class="traffic-stat-meta">
+        <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ profileTraffic.lastImpressionAt | date:'medium' }}</span>
+        <span *ngIf="profileTraffic.lastClickAt">Last click: {{ profileTraffic.lastClickAt | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <ng-template #brandTrafficLocked>
+      <div class="traffic-locked-state">
+        <i class="bi bi-lock-fill"></i>
+        <span>Upgrade to Premium to view profile traffic analytics.</span>
+        <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
+      </div>
+    </ng-template>
+  </div>
+
+  <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>
+
 </div>

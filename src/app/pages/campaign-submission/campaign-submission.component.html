@@ -3,7 +3,7 @@
   <!-- ── Success Screen ───────────────────────────────── -->
   <div *ngIf="submitted" class="success-screen">
     <div class="success-icon"><i class="bi bi-check-circle-fill"></i></div>
-    <h2>Report Submitted!</h2>
+    <h2>Submitted For Review</h2>
     <p>The brand will review your post within 48 hours.</p>
     <button class="btn-orange" (click)="goBack()">Back to Dashboard</button>
   </div>
@@ -34,29 +34,105 @@
     <!-- Campaign stage chip -->
     <div class="stage-chip-row mb-3">
       <span class="stage-chip"
-            [class.stage-accepted]="inviteStatus === 'accepted' || inviteStatus === 'working'"
-            [class.stage-submitted]="inviteStatus === 'submitted'"
-            [class.stage-completed]="inviteStatus === 'completed' || inviteStatus === 'approved'"
-            [class.stage-disputed]="inviteStatus === 'disputed'">
-        <i class="bi"
-           [class.bi-hourglass-split]="inviteStatus === 'submitted'"
-           [class.bi-check-circle-fill]="inviteStatus === 'completed' || inviteStatus === 'approved'"
-           [class.bi-exclamation-triangle-fill]="inviteStatus === 'disputed'"
-           [class.bi-calendar-check]="inviteStatus === 'accepted' || inviteStatus === 'working'"></i>
+            [class.stage-working]="inviteStageKey === 'working'"
+            [class.stage-submitted]="inviteStageKey === 'submitted'"
+            [class.stage-under-review]="inviteStageKey === 'under_review'"
+            [class.stage-completed]="inviteStageKey === 'completed'"
+            [class.stage-payout-released]="inviteStageKey === 'payout_released'">
+        <i class="bi" [ngClass]="inviteStageIconClass"></i>
         Campaign stage: <strong>{{ inviteStatusLabel }}</strong>
       </span>
     </div>
 
 
-    <!-- Read-only notice when campaign is completed/approved -->
-    <div *ngIf="isReadOnly" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
+    <!-- 24-hour review period notice, shown right after the creator submits -->
+    <div *ngIf="isInAutoCompleteReviewPeriod" class="review-period-box mb-3">
+      <div class="review-period-box__title">24-hour Review Period</div>
+      <p class="review-period-box__desc">
+        Your post has been submitted successfully. The host has 24 hours to report any issues.
+        If no issue is reported, this collaboration will be completed automatically.
+      </p>
+      <div class="review-period-box__countdown">
+        <i class="bi bi-hourglass-split"></i>
+        Auto-completes in {{ submissionAutoCompleteCountdownText }} if no issue is reported.
+      </div>
+    </div>
+
+    <!-- Plain report (e.g. "not yet posted") — a note only, no countdown/actions. Your real
+         status above still reflects the actual stage; submitting a post resolves this automatically. -->
+    <div *ngIf="hasOpenReportOnly" class="alert-info mb-3" style="border-left: 4px solid #d97706; background: #fffbeb; color: #92400e;">
+      <i class="bi bi-info-circle-fill" style="color:#d97706"></i>
+      <div class="alert-info__content">
+        <strong>Host reported an issue</strong>
+        <span>{{ reportedIssueReason }}</span>
+      </div>
+    </div>
+
+    <!-- Dispute response: reason, countdown, and Resubmit / Withdraw / Request Admin Review -->
+    <div *ngIf="inviteStatus === 'disputed'" class="dispute-box mb-3">
+      <div class="dispute-box__header">
+        <i class="bi bi-flag-fill"></i>
+        <strong>Host raised a dispute</strong>
+      </div>
+      <div class="dispute-box__reason" *ngIf="existingSubmission?.disputeIssueReason || existingSubmission?.disputeReason">
+        <strong *ngIf="existingSubmission?.disputeIssueReason">{{ existingSubmission.disputeIssueReason }}</strong>
+        {{ existingSubmission?.disputeReason }}
+        <a *ngIf="existingSubmission?.disputeEvidenceUrl" [href]="existingSubmission.disputeEvidenceUrl" target="_blank" rel="noopener">View evidence</a>
+      </div>
+
+      <ng-container *ngIf="canResubmitDispute; else disputeEscalatedNotice">
+        <div class="dispute-box__countdown">
+          <i class="bi bi-hourglass-split"></i>
+          Respond within {{ disputeCountdownText }} or this collaboration will be automatically cancelled.
+        </div>
+        <div class="dispute-box__actions">
+          <button type="button" class="btn-orange" (click)="scrollToResubmitForm()">
+            <i class="bi bi-arrow-repeat"></i> Resubmit
+          </button>
+          <button type="button" class="btn-outline-danger" [disabled]="disputeActionSubmitting" (click)="openWithdrawConfirm()">
+            Withdraw
+          </button>
+          <button type="button" class="btn-outline" [disabled]="disputeActionSubmitting" (click)="requestAdminReviewForDispute()">
+            Request Admin Review
+          </button>
+        </div>
+      </ng-container>
+      <ng-template #disputeEscalatedNotice>
+        <div class="dispute-box__note">{{ readOnlyStatusMessage }}</div>
+      </ng-template>
+
+      <div *ngIf="disputeActionError" class="alert-error mt-2">{{ disputeActionError }}</div>
+    </div>
+
+    <!-- Read-only notice when campaign is completed/payout released -->
+    <div *ngIf="isReadOnly && !isInAutoCompleteReviewPeriod && inviteStatus !== 'disputed'" class="alert-info mb-3" style="border-left: 4px solid #22c55e; background: #f0fdf4; color: #166534;">
       <i class="bi bi-check-circle-fill" style="color:#22c55e"></i>
-      This campaign has been <strong>{{ inviteStatus }}</strong>. Your submission is locked and cannot be edited.
+      {{ readOnlyStatusMessage }}
+    </div>
+
+    <div *ngIf="isAwaitingPaymentConfirmation" class="alert-info mb-3" style="border-left: 4px solid #3b82f6; background: #eff6ff; color: #1e3a8a;">
+      <i class="bi bi-clock-history" style="color:#3b82f6"></i>
+      Payment verification is in progress. You can start work once the status moves to <strong>Working</strong>.
+    </div>
+
+    <div *ngIf="isCollaborationConfirmedWaitingStart" class="alert-info mb-3" style="border-left: 4px solid #10b981; background: #ecfdf5; color: #065f46;">
+      <i class="bi bi-check-circle-fill" style="color:#10b981"></i>
+      You are now in the <strong>Working</strong> stage. Submit your post URL below to continue.
+    </div>
+
+    <div *ngIf="isPastPostingDateButStillOpen" class="alert-info mb-3" style="border-left: 4px solid #d97706; background: #fffbeb; color: #92400e;">
+      <i class="bi bi-exclamation-triangle-fill" style="color:#d97706"></i>
+      {{ postingDeadlineWarningText }}
+    </div>
+
+    <div *ngIf="canEditSubmissionForm && isSubmissionWindowClosed" class="alert-info mb-3" style="border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b;">
+      <i class="bi bi-x-circle-fill" style="color:#dc2626"></i>
+      {{ submissionWindowClosedText }}
     </div>
 
     <div *ngIf="isReadOnly && hasSubmittedContent" class="read-only-summary mb-3">
       <div class="summary-header">
-        <div class="summary-title">Submitted details</div>
+        <div class="summary-title">Shared details</div>
         <div class="summary-subtitle">What you shared for this campaign</div>
       </div>
 
@@ -126,14 +202,14 @@
     </div>
 
     <!-- Campaign platform hint -->
-    <div *ngIf="!isReadOnly && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
+    <div *ngIf="canEditSubmissionForm && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
       <i class="bi bi-info-circle"></i>
       Campaign platforms: <strong>{{ campaignPlatforms.join(', ') }}</strong>.
       Only relevant post types are shown below.
     </div>
 
     <!-- Special instructions (editing only) -->
-    <div *ngIf="!isReadOnly && specialInstructions" class="alert-info alert-info--instructions mb-3">
+    <div *ngIf="canEditSubmissionForm && specialInstructions" class="alert-info alert-info--instructions mb-3">
       <i class="bi bi-chat-left-text"></i>
       <div class="alert-info__content">
         <strong>Brand instructions</strong>
@@ -145,7 +221,7 @@
     <!-- Error -->
     <div *ngIf="error" class="alert-error">{{ error }}</div>
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
-    <div class="form-section" *ngIf="!isReadOnly">
+    <div class="form-section" id="resubmit-form" *ngIf="canEditSubmissionForm">
       <div class="section-heading">
         <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
         <ng-container *ngIf="isLocationCampaign">Content details</ng-container>
@@ -191,7 +267,7 @@
         </div>
       </div>
 
-      <!-- Caption -->
+      <!-- MVP: hide caption field initially
       <div class="field-group">
         <label class="field-label">Caption used <span class="opt">(optional)</span></label>
         <textarea
@@ -202,18 +278,13 @@
           [placeholder]="isLocationCampaign ? 'What caption did you write about your visit?' : 'What caption did you write for this post?'"
         ></textarea>
       </div>
+      -->
     </div>
 
     <!-- ─── SECTION 2: Proof ─────────────────────────── -->
-    <div class="form-section" *ngIf="!isReadOnly">
-      <div class="section-heading">
-        Proof
-        <span class="opt" style="font-size:0.82rem; font-weight:400; margin-left:6px;">
-          (recommended — helps verify your post and speeds up payment)
-        </span>
-      </div>
+    <!-- <div class="form-section" *ngIf="!isReadOnly">
+      <div class="section-heading">Post Screenshot (Optional)</div>
 
-      <!-- Screenshot tip for location campaigns -->
       <div *ngIf="isLocationCampaign" class="alert-info mb-3">
         <i class="bi bi-camera-fill"></i>
         For location campaigns, upload a screenshot of your published content (story, reel, or post) from the venue.
@@ -245,12 +316,11 @@
           </button>
         </label>
       </div>
-    </div>
+    </div> -->
 
-    <!-- ─── SECTION 3: Stats ─────────────────────────── -->
+    <!-- MVP: hide Insights Unlock Timer and Add Performance Stats initially
     <div class="form-section" *ngIf="!isReadOnly">
 
-      <!-- Insights locked: 24h window hasn't passed yet -->
       <div class="insights-lock-banner" *ngIf="insightsLocked">
         <i class="bi bi-clock-history"></i>
         <div>
@@ -308,13 +378,14 @@
         </div>
       </div>
     </div>
+    -->
 
     <!-- Submit -->
-    <div class="form-actions" *ngIf="!isReadOnly">
-      <div *ngIf="!postScreenshotUrl && postUrl.trim()" class="screenshot-nudge">
+    <div class="form-actions" *ngIf="canEditSubmissionForm">
+      <!-- <div *ngIf="!postScreenshotUrl && postUrl.trim()" class="screenshot-nudge">
         <i class="bi bi-info-circle"></i>
         Adding a screenshot helps the brand verify your post faster — but you can submit without one.
-      </div>
+      </div> -->
       <button
         class="btn-submit"
         [disabled]="!canSubmit() || submitting || screenshotUploading"
@@ -322,7 +393,7 @@
       >
         <span *ngIf="!submitting">
           <i class="bi bi-send-fill"></i>
-          {{ existingSubmission ? 'Update Submission' : 'Submit' }}
+          {{ canResubmitDispute ? 'Resubmit' : (existingSubmission ? 'Update Submission' : 'Submit') }}
         </span>
         <span *ngIf="submitting">
           <span class="spinner-border spinner-border-sm"></span> Submitting…
@@ -330,4 +401,23 @@
       </button>
     </div>
   </div>
+
+  <!-- Withdraw confirmation -->
+  <app-confirm-action-modal
+    [isOpen]="showWithdrawConfirm"
+    title="Withdraw from this collaboration?"
+    confirmLabel="Withdraw"
+    confirmLoadingLabel="Withdrawing…"
+    [submitting]="disputeActionSubmitting"
+    (closed)="closeWithdrawConfirm()"
+    (confirmed)="confirmWithdrawFromDispute()"
+  >
+    <p>You are withdrawing from this campaign.</p>
+    <ul>
+      <li>You will not receive payment.</li>
+      <li>This participation will be cancelled.</li>
+      <li>The Host will receive a refund (if payment was held in escrow).</li>
+    </ul>
+    <p class="mb-0">Continue?</p>
+  </app-confirm-action-modal>
 </div>
