@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { CollaborationScoreUiUtilsService } from '../../../services/collaboration-score-ui-utils.service';
 
 @Component({
   selector: 'app-influencer-user-card',
@@ -18,6 +19,8 @@ export class InfluencerUserCardComponent {
   @Input() phoneNumber = '';
   @Input() categories: string[] = [];
   @Input() influencerCategory = '';
+  @Input() creatorTypes: string[] = [];
+  @Input() professionalStatus = false;
   @Input() verificationStatus = 'not_submitted';
   @Input() verifiedByTrendStarz = false;
   @Input() location: any = {};
@@ -29,27 +32,55 @@ export class InfluencerUserCardComponent {
   @Input() engagementRate?: number | string;
   /** Show the "+ Campaign" button — pass true for brand users */
   @Input() showCampaignBtn = false;
-  /** Enables selection mode (shows checkbox corner) */
-  @Input() selectable = false;
-  /** Whether this card is currently selected */
-  @Input() selected = false;
 
   /** Whether the viewer has a Pro subscription (controls visible details) */
   @Input() isProViewer = false;
   /** Backend-driven visibility guard for contact details */
   @Input() contactRestricted = true;
+  /** Backend-driven visibility guard for social profile links */
+  @Input() socialMediaRestricted = false;
+  /** Disable opening profile view (used for restricted free-plan visibility). */
+  @Input() profileViewDisabled = false;
+
+  // Collaboration Score — brand-safe fields only (score/readiness/recommended/
+  // suggested price). Never "Premium" wording for these; that word is reserved
+  // for subscription status (isPremium above).
+  @Input() collaborationScore: number | null = null;
+  @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
+  @Input() trendstarzRecommended = false;
+  @Input() suggestedPriceRange: {
+    reelPrice?: number | null;
+    storyPrice?: number | null;
+    videoPrice?: number | null;
+  } | null = null;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
-  /** Emitted when the card's selection checkbox is toggled */
-  @Output() toggleSelect = new EventEmitter<void>();
+
+  constructor(public collaborationScoreUi: CollaborationScoreUiUtilsService) {}
 
   onImgError(event: Event) {
     (event.target as HTMLImageElement).src = 'assets/default-profile.png';
   }
 
   get displayImage(): string {
-    return this.profileImage || this.profileImages?.[0]?.url || 'assets/default-profile.png';
+    // profileImages[0] is the live source of truth; profileImage is a legacy
+    // field that can go stale after a re-upload/recrop, so prefer the array.
+    return this.profileImages?.[0]?.url || this.profileImage || 'assets/default-profile.png';
+  }
+
+  /** Min–max across reel/story/video prices, for the brand-facing "Suggested Pricing" range. */
+  get suggestedPriceRangeLabel(): string | null {
+    const prices = [
+      this.suggestedPriceRange?.reelPrice,
+      this.suggestedPriceRange?.storyPrice,
+      this.suggestedPriceRange?.videoPrice,
+    ].filter((p): p is number => p != null);
+    if (!prices.length) return null;
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const format = (n: number) => n.toLocaleString('en-IN');
+    return min === max ? `₹${format(min)}` : `₹${format(min)}–₹${format(max)}`;
   }
 
   get platforms(): string[] {
@@ -60,22 +91,24 @@ export class InfluencerUserCardComponent {
     return (this.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
   }
 
-  get displayTags(): string[] {
-    const hiddenCommissionTags = new Set(['early access', 'partner', 'internal/test', 'internal test']);
-    return Array.isArray(this.adminTags)
-      ? this.adminTags
-          .filter((tag) => !!String(tag || '').trim())
-          .filter((tag) => !hiddenCommissionTags.has(String(tag || '').trim().toLowerCase()))
-      : [];
-  }
-
   get displayCategory(): string {
     if (String(this.influencerCategory || '').trim()) return this.influencerCategory;
     return this.categories?.[0] || '—';
   }
 
+  get visibleCreatorTypes(): string[] {
+    return (Array.isArray(this.creatorTypes) ? this.creatorTypes : [])
+      .map((type) => String(type || '').trim())
+      .filter((type) => !!type)
+      .slice(0, 1);
+  }
+
   get isTrendstarzVerified(): boolean {
     return this.verifiedByTrendStarz || this.verificationStatus === 'approved';
+  }
+
+  get showSocialLockHint(): boolean {
+    return this.socialMediaRestricted === true;
   }
 
   /** Tier of the first social handle the user added (entry order). */
@@ -106,18 +139,18 @@ export class InfluencerUserCardComponent {
     return platform.slice(0, 2).toUpperCase();
   }
 
-  tagBadgeClass(tag: string): string {
-    const normalized = String(tag || '').toLowerCase();
-    if (normalized.includes('founder')) return 'badge--founder';
-    if (normalized.includes('verified')) return 'badge--verified';
-    if (normalized.includes('internal')) return 'badge--internal';
-    return 'badge--neutral';
-  }
-
   formatFollowers(count: number | undefined): string {
     if (!count) return '—';
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
     return count.toString();
+  }
+
+  onViewProfileClick(event: Event): void {
+    if (this.profileViewDisabled) {
+      event.stopPropagation();
+      return;
+    }
+    this.viewProfileClick.emit();
   }
 }

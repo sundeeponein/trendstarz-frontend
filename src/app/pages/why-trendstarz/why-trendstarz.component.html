@@ -1,0 +1,92 @@
+<div class="wts-page">
+  <section class="wts-hero py-5">
+    <div class="container">
+      <span class="wts-eyebrow"><i class="bi bi-record-circle-fill"></i> The Precision Curator</span>
+      <h1 class="wts-title mt-3 bg-transparent">Why Trendstarz</h1>
+      <p class="wts-subtitle mt-2">
+        Built for India's growing creator economy. We bridge the gap between creative excellence and brand
+        reliability with data-driven precision.
+      </p>
+
+      <div class="row g-4 align-items-start mt-2">
+        <!-- Left: pillars + categories -->
+        <div class="col-12 col-lg-7">
+          <article class="wts-pillar-card" *ngFor="let pillar of pillars">
+            <div class="wts-pillar-icon" [ngClass]="pillar.iconClass">
+              <i class="bi" [ngClass]="pillar.icon"></i>
+            </div>
+            <div>
+              <h5>{{ pillar.title }}</h5>
+              <p>{{ pillar.description }}</p>
+            </div>
+          </article>
+
+          <div class="wts-categories-card">
+            <span class="wts-categories-label"><i class="bi bi-diagram-2"></i> Top Creator Categories</span>
+            <div class="wts-chip-row">
+              <span class="wts-chip" *ngFor="let cat of topCategories">{{ cat }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: at a glance dark card -->
+        <div class="col-12 col-lg-5">
+          <article class="wts-glance-card">
+            <div class="wts-glance-header">
+              <div>
+                <h3>At a Glance</h3>
+                <p>Real-time platform performance metrics</p>
+              </div>
+              <i class="bi bi-graph-up-arrow wts-glance-header-icon"></i>
+            </div>
+
+            <div class="wts-glance-row" *ngFor="let stat of glanceStats">
+              <div>
+                <span class="wts-glance-label">{{ stat.label }}</span>
+                <strong class="wts-glance-value" [class.is-muted]="!stat.emphasis">{{ stat.value }}</strong>
+              </div>
+              <i class="bi wts-glance-row-icon" [ngClass]="stat.icon"></i>
+            </div>
+
+            <div class="wts-glance-banner">
+              <span class="wts-glance-dot"></span> Early Success Targets Met
+            </div>
+
+            <!-- <span class="wts-glance-fab" aria-hidden="true">
+              <i class="bi bi-plus-lg"></i>
+            </span> -->
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wts-precision py-5">
+    <div class="container">
+      <div class="row g-4 align-items-center">
+        <div class="col-12 col-lg-5">
+          <div class="wts-precision-media">
+            <span class="wts-precision-quote">
+              "Empowering the next generation of digital storytellers with administrative rigor."
+            </span>
+          </div>
+        </div>
+        <div class="col-12 col-lg-7">
+          <h2 class="wts-precision-title">
+            Empowering Growth through <span class="highlight">Precision Management</span>
+          </h2>
+          <p class="wts-precision-copy">
+            Trendstarz isn't just a marketplace; it's a dedicated core for influencer logistics. We believe that
+            true creativity thrives when the operations behind it are invisible and efficient.
+          </p>
+          <div class="wts-precision-stats">
+            <div class="wts-precision-stat" *ngFor="let stat of precisionStats">
+              <strong>{{ stat.value }}</strong>
+              <span>{{ stat.label | uppercase }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

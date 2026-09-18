@@ -1,0 +1,246 @@
+<div class="tss-page">
+
+  <!-- SECTION 1: Hero -->
+  <section class="tss-hero">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-12 col-lg-6">
+          <span class="tss-eyebrow"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> TrendStarZ Score™</span>
+          <h1 class="tss-hero-title">
+            Know how ready your profile is for brand collaborations.
+          </h1>
+          <p class="tss-hero-subtitle">
+            TrendStarZ Score helps creators and brands understand profile quality, collaboration readiness,
+            and marketplace trust using verified profile information and TrendStarZ analysis.
+          </p>
+          <div class="tss-hero-ctas">
+            <button type="button" class="btn btn-tss-primary" (click)="checkMyScore()">
+              Check My Score
+            </button>
+            <button type="button" class="btn btn-tss-secondary" (click)="scrollToHowItWorks()">
+              Learn How It Works
+            </button>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="tss-hero-illustration">
+            <div class="tss-score-ring-wrap">
+              <svg class="tss-score-ring" viewBox="0 0 200 200" width="240" height="240" aria-hidden="true">
+                <circle class="tss-score-ring-track" cx="100" cy="100" r="82"></circle>
+                <circle class="tss-score-ring-fill" cx="100" cy="100" r="82"></circle>
+              </svg>
+              <div class="tss-score-ring-inner">
+                <span class="tss-score-value">{{ heroExampleScore }}<span class="tss-score-max">/100</span></span>
+                <span class="tss-score-tier"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> {{ heroExampleTier }}</span>
+              </div>
+            </div>
+            <span class="tss-hero-illustration-note">Example score — illustrative only</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: What is TrendStarZ Score? -->
+  <section class="tss-section">
+    <div class="container">
+      <div class="row g-5 align-items-center">
+        <div class="col-12 col-lg-7">
+          <h2 class="tss-section-title">What is TrendStarZ Score?</h2>
+          <p class="tss-section-copy">
+            TrendStarZ Score is a marketplace quality score developed by TrendStarZ. It helps creators improve
+            their profiles and helps brands discover collaboration-ready creators.
+          </p>
+          <p class="tss-section-copy">
+            The score considers multiple quality indicators instead of follower count alone.
+          </p>
+        </div>
+        <div class="col-12 col-lg-5">
+          <div class="tss-audience-card">
+            <p class="tss-audience-label">The score is designed for</p>
+            <ul class="tss-audience-list">
+              <li *ngFor="let audience of audienceList"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ audience }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: Why TrendStarZ Score? -->
+  <section class="tss-section tss-section--muted">
+    <div class="container">
+      <h2 class="tss-section-title text-center">Why TrendStarZ Score?</h2>
+      <div class="row g-4 mt-2">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let card of whyCards">
+          <div class="tss-feature-card">
+            <div class="tss-feature-icon"><i class="bi" [ngClass]="card.icon" aria-hidden="true"></i></div>
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: Who Benefits? -->
+  <section class="tss-section">
+    <div class="container">
+      <h2 class="tss-section-title text-center">Who Benefits?</h2>
+      <div class="row g-4 mt-2">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let card of audienceCards">
+          <div class="tss-benefit-card" [ngClass]="'tint-' + card.tint">
+            <div class="tss-benefit-icon"><i class="bi" [ngClass]="card.icon" aria-hidden="true"></i></div>
+            <h3>{{ card.role }}</h3>
+            <ul>
+              <li *ngFor="let benefit of card.benefits"><i class="bi bi-check-lg" aria-hidden="true"></i> {{ benefit }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: How TrendStarZ Score Works -->
+  <section class="tss-section tss-section--muted" id="how-trendstarz-score-works">
+    <div class="container">
+      <h2 class="tss-section-title text-center">How TrendStarZ Score Works</h2>
+      <div class="tss-workflow">
+        <ng-container *ngFor="let step of workflowSteps; let last = last">
+          <div class="tss-workflow-step">
+            <div class="tss-workflow-icon"><i class="bi" [ngClass]="step.icon" aria-hidden="true"></i></div>
+            <span>{{ step.label }}</span>
+          </div>
+          <div class="tss-workflow-arrow" *ngIf="!last"><i class="bi bi-arrow-down" aria-hidden="true"></i></div>
+        </ng-container>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: Score Components -->
+  <section class="tss-section">
+    <div class="container">
+      <h2 class="tss-section-title text-center">Score Components</h2>
+      <p class="tss-section-subtitle text-center">
+        These indicators contribute to your overall TrendStarZ Score.
+      </p>
+      <div class="row g-4 mt-2 justify-content-center">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let component of scoreComponents">
+          <div class="tss-component-card">
+            <div class="tss-component-icon"><i class="bi" [ngClass]="component.icon" aria-hidden="true"></i></div>
+            <h3>{{ component.title }}</h3>
+            <p>{{ component.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: Score Levels -->
+  <section class="tss-section tss-section--muted">
+    <div class="container">
+      <h2 class="tss-section-title text-center">Score Levels</h2>
+      <div class="row g-4 mt-2">
+        <div class="col-12 col-sm-6 col-lg-3" *ngFor="let level of scoreLevels">
+          <div class="tss-level-card" [ngClass]="'tint-' + level.tint">
+            <span class="tss-level-range">{{ level.range }}</span>
+            <span class="tss-level-label">{{ level.label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8: Supported Platforms -->
+  <section class="tss-section" #platformsSection>
+    <div class="container">
+      <h2 class="tss-section-title text-center">Supported Platforms</h2>
+      <div class="tss-platform-table-wrap">
+        <table class="tss-platform-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Preview</th>
+              <th>Connected Account</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of platformSupport">
+              <td class="tss-platform-name"><i class="bi" [ngClass]="row.icon" aria-hidden="true"></i> {{ row.platform }}</td>
+              <td>{{ row.preview }}</td>
+              <td>{{ row.connected }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tss-section-note text-center">
+        Some platforms require account authorization before profile information can be analyzed.
+      </p>
+    </div>
+  </section>
+
+  <!-- SECTION 9: Privacy & Security -->
+  <section class="tss-section tss-section--muted">
+    <div class="container">
+      <div class="tss-privacy-card">
+        <div class="tss-privacy-icon"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i></div>
+        <div>
+          <h2 class="tss-section-title">Privacy &amp; Security</h2>
+          <ul class="tss-privacy-list">
+            <li><i class="bi bi-check-lg" aria-hidden="true"></i> TrendStarZ never posts to your social accounts.</li>
+            <li><i class="bi bi-check-lg" aria-hidden="true"></i> Only the information required to calculate your TrendStarZ Score is accessed after you explicitly authorize the connection.</li>
+            <li><i class="bi bi-check-lg" aria-hidden="true"></i> You can disconnect connected accounts at any time.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE READY — hidden until enabled via an admin feature flag. -->
+  <section class="tss-section" *ngIf="futureFeaturesEnabled">
+    <div class="container">
+      <h2 class="tss-section-title text-center">Coming Soon</h2>
+      <div class="row g-4 mt-2">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="tss-feature-card"><h3>Portfolio Score</h3></div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="tss-feature-card"><h3>Suggested Pricing</h3></div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="tss-feature-card"><h3>AI Recommendations</h3></div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="tss-feature-card"><h3>Marketplace Visibility</h3></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 10: FAQ -->
+  <section class="tss-section">
+    <div class="container">
+      <app-faq-accordion
+        heading="Frequently Asked Questions"
+        [items]="faqs"
+        [showSchema]="true"
+        schemaId="trendstarz-score-faq-schema"
+        [ctaButtons]="[]"
+        (itemToggled)="onFaqToggled($event)"
+      ></app-faq-accordion>
+    </div>
+  </section>
+
+  <!-- SECTION 11: Call To Action -->
+  <section class="tss-cta">
+    <div class="container text-center">
+      <h2>Ready to improve your profile?</h2>
+      <p>Check your TrendStarZ Score today.</p>
+      <button type="button" class="btn btn-tss-primary btn-tss-lg" (click)="checkMyScore()">
+        Check My Score
+      </button>
+    </div>
+  </section>
+
+</div>

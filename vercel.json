@@ -1,7 +1,8 @@
 {
   "outputDirectory": "dist/frontend/browser",
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "https://api.trendstarz.in/sitemap.xml" },
+    { "source": "/api/sitemap.xml", "destination": "https://api.trendstarz.in/api/sitemap.xml" },
+    { "source": "/sitemap.xml", "destination": "https://api.trendstarz.in/api/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.csr.html" }
   ]
 }

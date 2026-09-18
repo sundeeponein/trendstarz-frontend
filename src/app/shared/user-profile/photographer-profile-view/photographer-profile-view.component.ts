@@ -1,18 +1,30 @@
-import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
 import { VisibilityService } from '../../../core/visibility.service';
+import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
+import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
 import { environment } from '../../../../environments/environment';
+import { CollaborationAvailabilityViewComponent } from '../../collaboration-availability/collaboration-availability-view.component';
+import { buildSocialProfileUrl } from '../../social-handle.util';
+import { ImageGalleryModalComponent } from '../../components/image-gallery-modal/image-gallery-modal.component';
 
 @Component({
   selector: 'app-photographer-profile-view',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ProfileSocialPlatformsComponent,
+    CollaborationAvailabilityViewComponent,
+    ImageGalleryModalComponent,
+  ],
   templateUrl: './photographer-profile-view.component.html',
-  styleUrls: ['./photographer-profile-view.component.scss']
+  styleUrls: ['./photographer-profile-view.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PhotographerProfileViewComponent implements OnInit {
   photographer: any = null;
@@ -20,6 +32,8 @@ export class PhotographerProfileViewComponent implements OnInit {
   error = '';
   showContact = false;
   pricingLabelMap: Record<string, string> = {};
+  galleryModalOpen = false;
+  galleryModalIndex = 0;
 
   private readonly fallbackPricingLabelMap: Record<string, string> = {
     'Starting Price': 'Starting Price',
@@ -64,9 +78,22 @@ export class PhotographerProfileViewComponent implements OnInit {
     return !!this.photographer && this.photographer.contactRestricted !== true;
   }
 
+  get isPhoneVerified(): boolean {
+    return !!(this.photographer?.phoneVerified ?? this.photographer?.isMobileVerified);
+  }
+
+  get isEmailVerified(): boolean {
+    return !!this.photographer?.isEmailVerified;
+  }
+
   get displayImage(): string {
-    const imageUrl = this.photographer?.profileImage || this.photographer?.profileImages?.[0]?.url;
-    return this.normalizeImageUrl(imageUrl) || 'assets/default-profile.png';
+    const firstImage = this.photographer?.profileImages?.[0];
+    const firstImageUrl =
+      typeof firstImage === 'string'
+        ? firstImage
+        : (firstImage?.url || firstImage?.secure_url || '');
+    const imageUrl = firstImageUrl || this.photographer?.profileImage;
+    return this.normalizeImageUrl(imageUrl, 220, 220) || 'assets/default-profile.png';
   }
   
   get isTrendstarzVerified(): boolean {
@@ -98,6 +125,45 @@ export class PhotographerProfileViewComponent implements OnInit {
     return Array.from(new Set<string>(normalized));
   }
 
+  openGalleryModal(index: number): void {
+    if (!this.galleryImages.length) return;
+    this.galleryModalIndex = Math.max(0, Math.min(index, this.galleryImages.length - 1));
+    this.galleryModalOpen = true;
+  }
+
+  closeGalleryModal(): void {
+    this.galleryModalOpen = false;
+  }
+
+  getGalleryImageSrc(imageUrl: string): string {
+    if (!imageUrl) return '';
+    return this.normalizeImageUrl(imageUrl, 240, 240);
+  }
+
+  getProfileSrcSet(): string {
+    const firstImage = this.photographer?.profileImages?.[0];
+    const firstImageUrl =
+      typeof firstImage === 'string'
+        ? firstImage
+        : (firstImage?.url || firstImage?.secure_url || '');
+    const imageUrl = firstImageUrl || this.photographer?.profileImage;
+    if (!imageUrl) return '';
+    const base = this.normalizeImageUrl(imageUrl);
+    if (!base.includes('res.cloudinary.com')) return '';
+    return [110, 220, 330]
+      .map((size) => `${this.normalizeImageUrl(imageUrl, size, size)} ${size}w`)
+      .join(', ');
+  }
+
+  getGallerySrcSet(imageUrl: string): string {
+    if (!imageUrl) return '';
+    const base = this.normalizeImageUrl(imageUrl);
+    if (!base.includes('res.cloudinary.com')) return '';
+    return [240, 360, 480]
+      .map((size) => `${this.normalizeImageUrl(imageUrl, size, size)} ${size}w`)
+      .join(', ');
+  }
+
   get mainHeadline(): string {
     const name = String(this.photographer?.name || '').trim() || 'Photographer';
     const parts: string[] = [];
@@ -122,8 +188,20 @@ export class PhotographerProfileViewComponent implements OnInit {
     return (this.photographer?.pricing || []).filter((p: any) => p?.enabled);
   }
 
+  get startingPriceEntry(): any {
+    return (this.photographer?.pricing || []).find((p: any) => p?.name === 'Starting Price' && p?.enabled);
+  }
+
   get socialPlatforms(): any[] {
     return Array.isArray(this.photographer?.socialMedia) ? this.photographer.socialMedia : [];
+  }
+
+  get canOpenSocialProfiles(): boolean {
+    return !!this.photographer && this.photographer.socialMediaRestricted !== true;
+  }
+
+  get hasMainSocialLink(): boolean {
+    return this.getMainSocialLink() !== '#';
   }
 
   get locationLabel(): string {
@@ -151,21 +229,35 @@ export class PhotographerProfileViewComponent implements OnInit {
   }
 
   getSocialUrl(sm: any): string {
-    const p = String(sm?.platform || '').toLowerCase();
-    const handle = String(sm?.handle || '').replace(/^@+/, '').trim();
-    if (!handle) return sm?.url || '#';
-    if (p.includes('instagram')) return `https://instagram.com/${handle}`;
-    if (p.includes('youtube')) return `https://youtube.com/@${handle}`;
-    if (p.includes('facebook')) return `https://facebook.com/${handle}`;
-    if (p.includes('twitter') || p.includes('x')) return `https://x.com/${handle}`;
-    if (p.includes('tiktok')) return `https://tiktok.com/@${handle}`;
-    if (p.includes('linkedin')) return `https://linkedin.com/in/${handle}`;
-    return sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
   }
 
   getMainSocialLink(): string {
+    if (!this.canOpenSocialProfiles) return '#';
     const first = this.socialPlatforms[0];
     return first ? this.getSocialUrl(first) : '#';
+  }
+
+  onFollowClick(): void {
+    const first = this.socialPlatforms[0] || null;
+    this.trackSocialClick(first, this.getMainSocialLink(), 'photographer_profile_follow');
+  }
+
+  onPlatformClick(sm: any): void {
+    this.trackSocialClick(sm, this.getSocialUrl(sm), 'photographer_profile_platform');
+  }
+
+  private trackSocialClick(sm: any, url: string, source: string): void {
+    if (!this.isLoggedIn || !this.canOpenSocialProfiles || !this.photographer?._id) return;
+    if (!url || url === '#') return;
+    const platform = String(sm?.platform || 'website').trim() || 'website';
+    this.socialClickTracker.track({
+      targetUserId: String(this.photographer._id),
+      targetRole: 'photographer',
+      platform,
+      url,
+      source,
+    });
   }
 
   getPrimaryTier(): string {
@@ -202,20 +294,36 @@ export class PhotographerProfileViewComponent implements OnInit {
     }
   }
 
-  private normalizeImageUrl(url?: string | null): string {
+  private optimizeCloudinaryUrl(url: string, width?: number, height?: number): string {
+    if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
+    const [prefix, suffix] = url.split('/upload/');
+    if (!prefix || !suffix) return url;
+
+    const transforms = ['f_auto', 'q_auto', 'dpr_auto'];
+    if (typeof width === 'number' && width > 0) transforms.push(`w_${Math.round(width)}`);
+    if (typeof height === 'number' && height > 0) {
+      transforms.push(`h_${Math.round(height)}`);
+      transforms.push('c_fill');
+    }
+
+    return `${prefix}/upload/${transforms.join(',')}/${suffix}`;
+  }
+
+  private normalizeImageUrl(url?: string | null, width?: number, height?: number): string {
     if (!url) return '';
     if (url.startsWith('/assets/') || url.startsWith('/assets')) {
       const api = environment.apiBaseUrl || '';
       const backend = api.replace(/\/api\/?$/, '') || api.replace(/\/api$/, '');
       return backend ? backend + url : url;
     }
-    return url;
+    return this.optimizeCloudinaryUrl(url, width, height);
   }
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private config: ConfigService,
+    private socialClickTracker: SocialClickTrackerService,
     private session: SessionService,
     private visibility: VisibilityService,
     private cd: ChangeDetectorRef,
@@ -247,7 +355,7 @@ export class PhotographerProfileViewComponent implements OnInit {
       },
     });
 
-    this.route.data.subscribe(({ photographer }) => {
+    this.route.paramMap.subscribe(() => {
       const username = this.route.snapshot.paramMap.get('username') || this.route.parent?.snapshot.paramMap.get('username') || '';
       this.photographer = null;
       this.error = '';
@@ -261,18 +369,28 @@ export class PhotographerProfileViewComponent implements OnInit {
         return;
       }
 
-      const data = photographer || null;
-      if (!data) {
-        this.photographer = null;
-        this.error = 'Photographer not found.';
-        this.setDefaultMetadata();
-      } else {
-        this.photographer = data;
-        this.updateMetadata(data);
-        this.ensureCanonicalProfileUrl(data, username);
-      }
-      this.loading = false;
-      this.cd.detectChanges();
+      this.config.getPhotographerByUsername(username).subscribe({
+        next: (data: any) => {
+          if (!data) {
+            this.photographer = null;
+            this.error = 'Photographer not found.';
+            this.setDefaultMetadata();
+          } else {
+            this.photographer = data;
+            this.updateMetadata(data);
+            this.ensureCanonicalProfileUrl(data, username);
+          }
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+        error: () => {
+          this.photographer = null;
+          this.error = 'Photographer not found.';
+          this.setDefaultMetadata();
+          this.loading = false;
+          this.cd.detectChanges();
+        },
+      });
     });
   }
 

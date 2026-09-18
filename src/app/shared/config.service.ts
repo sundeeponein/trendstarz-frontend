@@ -1,6 +1,6 @@
 import { map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -8,6 +8,7 @@ import {
   buildDefaultUserTagOptions,
 } from './constants/user-tag-options.constants';
 
+export type ProfileVisibility = 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
@@ -22,6 +23,16 @@ export class ConfigService {
 
   getApiUrl(): string {
     return this.apiUrl;
+  }
+
+  private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
+  private getAuthOptions() {
+    const token = this.getToken();
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 
   /**
@@ -63,6 +74,102 @@ export class ConfigService {
           }),
         ),
       );
+  }
+
+  getWhatsappCommunityForState(state: string): Observable<any | null> {
+    const qs = state ? `?state=${encodeURIComponent(state)}` : '';
+    return this.http.get<any>(`${this.apiUrl}/public/whatsapp-community${qs}`).pipe(
+      map((res) => this.extractData<any>(res) || null),
+      catchError(() => of(null)),
+    );
+  }
+
+  getWhatsappCommunities(): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/admin/whatsapp-communities`, this.getAuthOptions()).pipe(
+      map((res) => this.extractData<any[]>(res) || []),
+      catchError(() => of([])),
+    );
+  }
+
+  createWhatsappCommunity(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/admin/whatsapp-communities`, payload, this.getAuthOptions()).pipe(
+      map((res) => this.extractData<any>(res) || res),
+    );
+  }
+
+  updateWhatsappCommunity(id: string, payload: any): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/admin/whatsapp-communities/${encodeURIComponent(id)}`, payload, this.getAuthOptions()).pipe(
+      map((res) => this.extractData<any>(res) || res),
+    );
+  }
+
+  deleteWhatsappCommunity(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/admin/whatsapp-communities/${encodeURIComponent(id)}`, this.getAuthOptions());
+  }
+
+  markCommunityJoined(communityName: string, communityState = ''): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/auth/community/joined`,
+      { communityName, communityState },
+      this.getAuthOptions(),
+    );
+  }
+
+  getCampaignTypeConfigs(): Observable<Array<{
+    key: string;
+    label: string;
+    ownerType: 'brand' | 'photographer';
+    enabled: boolean;
+    premiumOnly: boolean;
+    sortOrder: number;
+  }>> {
+    return this.http.get<any>(`${this.apiUrl}/public/campaign-type-configs`).pipe(
+      map((res) => {
+        const data = res?.data ?? res ?? {};
+        const items = Array.isArray(data?.items) ? data.items : [];
+        return items
+          .map((item: any) => ({
+            key: String(item?.key || '').trim(),
+            label: String(item?.label || '').trim(),
+            ownerType: String(item?.ownerType || 'brand') === 'photographer' ? 'photographer' : 'brand',
+            enabled: item?.enabled !== false,
+            premiumOnly: item?.premiumOnly === true,
+            sortOrder: Number.isFinite(Number(item?.sortOrder)) ? Number(item.sortOrder) : 999,
+          }))
+          .filter((item: any) => !!item.key && !!item.label)
+          .sort((a: any, b: any) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+      }),
+      catchError(() => of([])),
+    );
+  }
+
+  getCampaignAccessModeConfigs(): Observable<Array<{
+    key: 'invite_only' | 'tier_filtered_open';
+    label: string;
+    enabled: boolean;
+    premiumOnly: boolean;
+    sortOrder: number;
+  }>> {
+    return this.http.get<any>(`${this.apiUrl}/public/campaign-type-configs`).pipe(
+      map((res) => {
+        const data = res?.data ?? res ?? {};
+        const items = Array.isArray(data?.accessModes) ? data.accessModes : [];
+        return items
+          .map((item: any) => ({
+            key: String(item?.key || item?.value) === 'tier_filtered_open' ? 'tier_filtered_open' : 'invite_only',
+            label: String(item?.label || '').trim(),
+            enabled: item?.enabled !== false,
+            premiumOnly: item?.premiumOnly === true,
+            sortOrder: Number.isFinite(Number(item?.sortOrder)) ? Number(item.sortOrder) : 999,
+          }))
+          .filter((item: any) => !!item.key && !!item.label)
+          .sort((a: any, b: any) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+      }),
+      catchError(() => of([
+        { key: 'invite_only' as const, label: 'Invite only', enabled: true, premiumOnly: false, sortOrder: 10 },
+        { key: 'tier_filtered_open' as const, label: 'Open to all', enabled: true, premiumOnly: false, sortOrder: 20 },
+      ])),
+    );
   }
 
   // Check if username exists (for async validation)
@@ -160,30 +267,119 @@ export class ConfigService {
   }
 
   uploadImage(formData: FormData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/upload-image`, formData);
+    return this.http.post<any>(`${this.apiUrl}/auth/upload-image`, formData).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res) || res || {};
+        return {
+          ...data,
+          url: data?.url || data?.secure_url || '',
+          public_id: data?.public_id || data?.publicId || '',
+        };
+      }),
+    );
+  }
+
+  // Gallery/product/portfolio uploads (post-login only) — requires a valid,
+  // email-verified session; the server derives the target folder itself.
+  uploadAuthenticatedImage(formData: FormData, token: string | null): Observable<any> {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token || ''}` });
+    return this.http.post<any>(`${this.apiUrl}/auth/upload-authenticated-image`, formData, { headers }).pipe(
+      map((res) => {
+        const data = this.extractData<any>(res) || res || {};
+        return {
+          ...data,
+          url: data?.url || data?.secure_url || '',
+          public_id: data?.public_id || data?.publicId || '',
+        };
+      }),
+    );
   }
 
   getAppSettings(): Observable<{
     preApproveInfluencers: boolean; influencerRequireEmailVerified: boolean; influencerRequireMobileVerified: boolean;
     preApproveBrands: boolean; brandRequireEmailVerified: boolean; brandRequireMobileVerified: boolean;
+    platformFeeEnabled?: boolean;
+    platformFeePercent?: number;
+    brandFeePercent?: number;
+    influencerFeePercent?: number;
+    photographerFeePercent?: number;
+    influencerRecipientFeePercent?: number;
+    photographerRecipientFeePercent?: number;
+    brandRecipientFeePercent?: number;
+    gstPercent?: number;
+    paymentUpiId?: string;
+    submissionApprovalWaitHours?: number;
+    submissionAutoCompleteGraceHours?: number;
+    payoutReleaseWaitHours?: number;
+    disputeResponseWaitHours?: number;
+    minCampaignStartDays?: number;
+    maxCampaignDurationDays?: number;
+    otpVerificationEnabled?: boolean;
+    paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only';
+    razorpayConfigured: boolean;
+    showSearchLink: boolean;
+    showRegisterInfluencerLink: boolean;
+    showRegisterBrandLink: boolean;
+    showRegisterPhotographerLink: boolean;
+    showInfluencerSearchTab: boolean;
+    showPhotographerSearchTab: boolean;
   }> {
     return this.http.get<any>(`${this.apiUrl}/auth/app-settings`).pipe(
-      map(res => ({
-        preApproveInfluencers: !!res?.preApproveInfluencers,
-        influencerRequireEmailVerified: res?.influencerRequireEmailVerified !== false,
-        influencerRequireMobileVerified: !!res?.influencerRequireMobileVerified,
-        preApproveBrands: !!res?.preApproveBrands,
-        brandRequireEmailVerified: res?.brandRequireEmailVerified !== false,
-        brandRequireMobileVerified: !!res?.brandRequireMobileVerified,
-        platformFeeEnabled: !!res?.platformFeeEnabled,
-        platformFeePercent: typeof res?.platformFeePercent === 'number' ? res.platformFeePercent : undefined,
-        gstPercent: typeof res?.gstPercent === 'number' ? res.gstPercent : undefined,
-        paymentUpiId: res?.paymentUpiId || 'trendstarzin@kotak',
-      })),
+      map(res => {
+        const data = res?.data ?? res ?? {};
+        return {
+          preApproveInfluencers: !!data?.preApproveInfluencers,
+          influencerRequireEmailVerified: data?.influencerRequireEmailVerified !== false,
+          influencerRequireMobileVerified: !!data?.influencerRequireMobileVerified,
+          preApproveBrands: !!data?.preApproveBrands,
+          brandRequireEmailVerified: data?.brandRequireEmailVerified !== false,
+          brandRequireMobileVerified: !!data?.brandRequireMobileVerified,
+          platformFeeEnabled: !!data?.platformFeeEnabled,
+          platformFeePercent: typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : undefined,
+          brandFeePercent: typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : undefined,
+          influencerFeePercent: typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : undefined,
+          photographerFeePercent: typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : undefined,
+          influencerRecipientFeePercent: typeof data?.influencerRecipientFeePercent === 'number' ? data.influencerRecipientFeePercent : undefined,
+          photographerRecipientFeePercent: typeof data?.photographerRecipientFeePercent === 'number' ? data.photographerRecipientFeePercent : undefined,
+          brandRecipientFeePercent: typeof data?.brandRecipientFeePercent === 'number' ? data.brandRecipientFeePercent : undefined,
+          gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
+          paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
+          submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
+          submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48,
+          payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
+          minCampaignStartDays: typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3,
+          maxCampaignDurationDays: typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15,
+          otpVerificationEnabled: !!data?.otpVerificationEnabled,
+          paymentGatewayMode: ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
+            ? data.paymentGatewayMode
+            : 'razorpay_fallback',
+          razorpayConfigured: !!data?.razorpayConfigured,
+          showSearchLink: data?.showSearchLink !== false,
+          showRegisterInfluencerLink: data?.showRegisterInfluencerLink !== false,
+          showRegisterBrandLink: data?.showRegisterBrandLink !== false,
+          showRegisterPhotographerLink: data?.showRegisterPhotographerLink !== false,
+          showInfluencerSearchTab: data?.showInfluencerSearchTab !== false,
+          showPhotographerSearchTab: data?.showPhotographerSearchTab !== false,
+        };
+      }),
       catchError(() => of({
         preApproveInfluencers: false, influencerRequireEmailVerified: true, influencerRequireMobileVerified: false,
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
-        platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak'
+        platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak',
+        submissionApprovalWaitHours: 24,
+        submissionAutoCompleteGraceHours: 48,
+        payoutReleaseWaitHours: 24,
+        minCampaignStartDays: 3,
+        maxCampaignDurationDays: 15,
+        otpVerificationEnabled: false,
+        paymentGatewayMode: 'manual' as const,
+        razorpayConfigured: false,
+        showSearchLink: true,
+        showRegisterInfluencerLink: true,
+        showRegisterBrandLink: true,
+        showRegisterPhotographerLink: true,
+        showInfluencerSearchTab: true,
+        showPhotographerSearchTab: true,
       }))
     );
   }
@@ -200,6 +396,26 @@ export class ConfigService {
   // Reset password using token
   resetPassword(token: string, newPassword: string) {
     return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
+  }
+
+  // Check whether a reset token is still valid, without consuming it
+  validateResetToken(token: string) {
+    return this.http
+      .get<any>(`${this.apiUrl}/auth/reset-password/validate`, {
+        params: { token },
+      })
+      .pipe(
+        map((res: any) => {
+          const data = this.extractData<any>(res) || {};
+          if (typeof data?.valid === 'boolean') {
+            return { valid: data.valid };
+          }
+          if (typeof res?.valid === 'boolean') {
+            return { valid: res.valid };
+          }
+          return { valid: false };
+        }),
+      );
   }
 
   // Change password for logged-in user
@@ -274,25 +490,23 @@ export class ConfigService {
     commission: string[];
   }> {
     const fallback = buildDefaultUserTagOptions();
-
-    const normalize = (list: unknown, defaults: string[]) => {
-      if (!Array.isArray(list)) return defaults;
-      return list
+    const normalize = (items: unknown, fallbackList: string[]): string[] => {
+      if (!Array.isArray(items)) return [...fallbackList];
+      const values = items
         .map((item: any) => {
-          if (typeof item === 'string') {
-            return item.trim();
-          }
+          if (typeof item === 'string') return item.trim();
           if (item && typeof item === 'object') {
             if (item.visible === false) return '';
             return String(item.name || '').trim();
           }
           return '';
         })
-        .filter((v: string) => !!v);
+        .filter((value: string) => !!value);
+      return values.length ? values : [...fallbackList];
     };
 
     return this.http.get<any>(`${this.apiUrl}/user-tag-options`).pipe(
-      map((res: any) => {
+      map((res) => {
         const data = this.extractData<any>(res) || res || {};
         return {
           influencer: normalize(data.influencer, fallback.influencer),
@@ -359,6 +573,35 @@ export class ConfigService {
     );
   }
 
+  getCollaborationAvailabilityOptions(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/collaboration-availability-options`).pipe(
+      map((res) => this.extractData<any>(res) || res || {})
+    );
+  }
+
+  getCreatorTypeOptions(): Observable<any[]> {
+    const normalize = (items: unknown) => (Array.isArray(items) ? items : [])
+      .map((item: any) => {
+        if (typeof item === 'string') return { name: item.trim(), visible: true };
+        return {
+          ...item,
+          name: String(item?.name || '').trim(),
+          visible: item?.visible !== false,
+        };
+      })
+      .filter((item: any) => !!item.name && item.visible !== false);
+
+    return this.http.get<any>(`${this.apiUrl}/creator-type-options`).pipe(
+      map((res) => normalize(this.extractData<any[]>(res) || res || [])),
+      catchError(() =>
+        this.getConfig().pipe(
+          map((cfg: any) => normalize(cfg?.creatorTypeOptions)),
+          catchError(() => of([])),
+        ),
+      ),
+    );
+  }
+
   getEquipmentOptions(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/equipment-options`).pipe(
       map((res) => this.extractData<any[]>(res) || []),
@@ -420,6 +663,124 @@ export class ConfigService {
     return (Array.isArray(items) ? items : []).filter((item: T) => item?.showInFrontend !== false);
   }
 
+  getPlatformStats(): Observable<{
+    totalInfluencers: number;
+    verifiedInfluencers: number;
+    totalPhotographers: number;
+    verifiedPhotographers: number;
+    totalBrands: number;
+    verifiedBrands: number;
+    totalCampaigns: number;
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/users/platform-stats`).pipe(
+      map((res) => this.extractData<any>(res) || res || {}),
+      catchError(() => of({
+        totalInfluencers: 0,
+        verifiedInfluencers: 0,
+        totalPhotographers: 0,
+        verifiedPhotographers: 0,
+        totalBrands: 0,
+        verifiedBrands: 0,
+        totalCampaigns: 0,
+      }))
+    );
+  }
+
+  /**
+   * Welcome Page "Featured" sections — eligible-only, weighted-random profiles.
+   * Identical response for Guest, Registered, and Premium viewers.
+   */
+  getFeaturedProfiles(options?: {
+    influencerLimit?: number;
+    brandLimit?: number;
+    photographerLimit?: number;
+    viewerState?: string;
+    viewerDistrict?: string;
+    viewerCountry?: string;
+  }): Observable<{ influencers: any[]; brands: any[]; photographers: any[] }> {
+    const params: Record<string, string> = {};
+    if (options?.influencerLimit) params['influencerLimit'] = String(options.influencerLimit);
+    if (options?.brandLimit) params['brandLimit'] = String(options.brandLimit);
+    if (options?.photographerLimit) params['photographerLimit'] = String(options.photographerLimit);
+    if (options?.viewerState) params['viewerState'] = String(options.viewerState);
+    if (options?.viewerDistrict) params['viewerDistrict'] = String(options.viewerDistrict);
+    if (options?.viewerCountry) params['viewerCountry'] = String(options.viewerCountry);
+    return this.http.get<any>(`${this.apiUrl}/users/featured-profiles`, { params }).pipe(
+      map((res) => this.extractData<any>(res) || res || {}),
+      catchError(() => of({ influencers: [], brands: [], photographers: [] })),
+    );
+  }
+
+  /**
+   * Homepage hero banner + hero slider images — one eligible, explicitly
+   * opted-in image per role. Any entry may be null if no one has opted in yet.
+   */
+  getHeroShowcaseImages(options?: {
+    viewerState?: string;
+    viewerDistrict?: string;
+    viewerCountry?: string;
+  }): Observable<{
+    influencer: { url: string; alt: string } | null;
+    brand: { url: string; alt: string } | null;
+    photographer: { url: string; alt: string } | null;
+  }> {
+    const params: Record<string, string> = {};
+    if (options?.viewerState) params['viewerState'] = String(options.viewerState);
+    if (options?.viewerDistrict) params['viewerDistrict'] = String(options.viewerDistrict);
+    if (options?.viewerCountry) params['viewerCountry'] = String(options.viewerCountry);
+    return this.http.get<any>(`${this.apiUrl}/users/hero-showcase-images`, { params }).pipe(
+      map((res) => this.extractData<any>(res) || res || {}),
+      catchError(() => of({ influencer: null, brand: null, photographer: null })),
+    );
+  }
+
+  getInfluencersSearchResponse(options?: {
+    page?: number;
+    limit?: number;
+    lite?: boolean;
+    state?: string;
+    district?: string;
+    viewerState?: string;
+    viewerDistrict?: string;
+    viewerCountry?: string;
+    smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
+    creatorType?: string;
+    category?: string;
+    q?: string;
+    campaignEligible?: boolean;
+  }): Observable<any> {
+    const params: string[] = [];
+    if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
+    if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
+    if (typeof options?.lite === 'boolean') params.push(`lite=${options.lite ? '1' : '0'}`);
+    if (options?.state) params.push(`state=${encodeURIComponent(options.state)}`);
+    if (options?.district) params.push(`district=${encodeURIComponent(options.district)}`);
+    if (options?.creatorType) params.push(`creatorType=${encodeURIComponent(options.creatorType)}`);
+    if (options?.category) params.push(`category=${encodeURIComponent(options.category)}`);
+    if (options?.q) params.push(`q=${encodeURIComponent(options.q)}`);
+    if (typeof options?.campaignEligible === 'boolean') {
+      params.push(`campaignEligible=${options.campaignEligible ? '1' : '0'}`);
+    }
+    if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
+    if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
+    if (options?.viewerCountry) params.push(`viewerCountry=${encodeURIComponent(options.viewerCountry)}`);
+    if (typeof options?.smartLocationPriority === 'boolean') {
+      params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
+    }
+    if (typeof options?.countSearch === 'boolean') {
+      params.push(`countSearch=${options.countSearch ? '1' : '0'}`);
+    }
+    if (options?.countReason) {
+      params.push(`countReason=${encodeURIComponent(options.countReason)}`);
+    }
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<any>(`${this.apiUrl}/users/influencers${qs}`).pipe(
+      map((res) => this.extractData<any>(res) || res || {})
+    );
+  }
+
   getInfluencers(options?: {
     page?: number;
     limit?: number;
@@ -428,25 +789,17 @@ export class ConfigService {
     district?: string;
     viewerState?: string;
     viewerDistrict?: string;
+    viewerCountry?: string;
     smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
+    creatorType?: string;
+    category?: string;
+    q?: string;
+    campaignEligible?: boolean;
   }): Observable<any[]> {
-    const params: string[] = [];
-    if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
-    if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
-    if (typeof options?.lite === 'boolean') params.push(`lite=${options.lite ? '1' : '0'}`);
-    if (options?.state) params.push(`state=${encodeURIComponent(options.state)}`);
-    if (options?.district) params.push(`district=${encodeURIComponent(options.district)}`);
-    if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
-    if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
-    if (typeof options?.smartLocationPriority === 'boolean') {
-      params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
-    }
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this.http.get<any>(`${this.apiUrl}/users/influencers${qs}`).pipe(
-      map((res) => {
-        const data = this.extractData<any>(res);
-        return (data?.data || data || []) as any[];
-      }),
+    return this.getInfluencersSearchResponse(options).pipe(
+      map((data) => (data?.data || data || []) as any[]),
       catchError(() => of([]))
     );
   }
@@ -467,31 +820,58 @@ export class ConfigService {
   }
 
   getPhotographers(options?: {
+    page?: number;
     limit?: number;
     skill?: string;
     location?: string;
     keyword?: string;
     viewerState?: string;
     viewerDistrict?: string;
+    viewerCountry?: string;
     smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
   }): Observable<any[]> {
+    return this.getPhotographersSearchResponse(options).pipe(
+      map((data) => (Array.isArray(data) ? data : (data?.data || [])) as any[]),
+      catchError(() => of([]))
+    );
+  }
+
+  getPhotographersSearchResponse(options?: {
+    page?: number;
+    limit?: number;
+    skill?: string;
+    location?: string;
+    keyword?: string;
+    viewerState?: string;
+    viewerDistrict?: string;
+    viewerCountry?: string;
+    smartLocationPriority?: boolean;
+    countSearch?: boolean;
+    countReason?: 'query' | 'filter' | 'pagination';
+  }): Observable<any> {
     const params: string[] = [];
+    if (typeof options?.page === 'number') params.push(`page=${encodeURIComponent(String(options.page))}`);
     if (typeof options?.limit === 'number') params.push(`limit=${encodeURIComponent(String(options.limit))}`);
     if (options?.skill) params.push(`skill=${encodeURIComponent(options.skill)}`);
     if (options?.location) params.push(`location=${encodeURIComponent(options.location)}`);
     if (options?.keyword) params.push(`keyword=${encodeURIComponent(options.keyword)}`);
     if (options?.viewerState) params.push(`viewerState=${encodeURIComponent(options.viewerState)}`);
     if (options?.viewerDistrict) params.push(`viewerDistrict=${encodeURIComponent(options.viewerDistrict)}`);
+    if (options?.viewerCountry) params.push(`viewerCountry=${encodeURIComponent(options.viewerCountry)}`);
     if (typeof options?.smartLocationPriority === 'boolean') {
       params.push(`smartLocationPriority=${options.smartLocationPriority ? '1' : '0'}`);
     }
+    if (typeof options?.countSearch === 'boolean') {
+      params.push(`countSearch=${options.countSearch ? '1' : '0'}`);
+    }
+    if (options?.countReason) {
+      params.push(`countReason=${encodeURIComponent(options.countReason)}`);
+    }
     const qs = params.length ? `?${params.join('&')}` : '';
     return this.http.get<any>(`${this.apiUrl}/users/photographers${qs}`).pipe(
-      map((res) => {
-        const data = this.extractData<any>(res);
-        return (Array.isArray(data) ? data : (data?.data || [])) as any[];
-      }),
-      catchError(() => of([]))
+      map((res) => this.extractData<any>(res) || res || {})
     );
   }
 
@@ -500,6 +880,18 @@ export class ConfigService {
       map((res) => this.extractData<any>(res)),
       catchError(() => of(null))
     );
+  }
+
+  /**
+   * Hits the same by-ID routes as getInfluencerById/getPhotographerById, but does NOT
+   * swallow errors — used to consume a brand's dailyProfileViewLimit quota (e.g. before
+   * opening a candidate quick-view) and surface a 403 when today's limit is exhausted.
+   */
+  checkProfileViewQuota(id: string, role: 'influencer' | 'photographer'): Observable<any> {
+    const path = role === 'photographer'
+      ? `${this.apiUrl}/users/photographers/${encodeURIComponent(id)}`
+      : `${this.apiUrl}/users/influencers/${encodeURIComponent(id)}`;
+    return this.http.get<any>(path);
   }
 
   getPhotographerByUsername(username: string): Observable<any> {
@@ -515,6 +907,64 @@ export class ConfigService {
 
   updateUserImages(id: string, images: { profileImages?: any[]; brandLogo?: any[]; products?: any[] }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
+  }
+
+  /** Current opt-in state for updateMarketingConsent — used by the settings page. */
+  getMarketingConsent(id: string): Observable<{ featuredInMarketing: boolean }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${id}/marketing-consent`).pipe(
+      map((res) => this.extractData<any>(res) || res || { featuredInMarketing: false }),
+      catchError(() => of({ featuredInMarketing: false })),
+    );
+  }
+
+  /** Opt in/out of showing this user's photo/logo on public marketing surfaces (homepage hero). */
+  updateMarketingConsent(id: string, featuredInMarketing: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/marketing-consent`, { featuredInMarketing });
+  }
+
+  /** Settings → Delete Account. Requires the current password; schedules deletion after a grace period. */
+  selfDeleteAccount(id: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/${id}/self-delete`, { password });
+  }
+
+  /** Cancels a pending self-deletion request during the grace period. */
+  cancelSelfDeletion(id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/${id}/cancel-deletion`, {});
+  }
+
+  /** Whether this account has a pending self-deletion request, and when the grace period ends. */
+  getSelfDeletionStatus(id: string): Observable<{
+    deletionPending: boolean;
+    deletedAt: string | null;
+    gracePeriodEndsAt: string | null;
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${id}/deletion-status`).pipe(
+      map((res) => this.extractData<any>(res) || res || { deletionPending: false, deletedAt: null, gracePeriodEndsAt: null }),
+      catchError(() => of({ deletionPending: false, deletedAt: null, gracePeriodEndsAt: null })),
+    );
+  }
+
+  /** Current profileVisibility — used by Settings/registration/edit-profile "Privacy & Visibility" controls. */
+  getProfileVisibility(id: string): Observable<{ profileVisibility: ProfileVisibility; isSet: boolean }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${id}/profile-visibility`).pipe(
+      map((res) => this.extractData<any>(res) || res || { profileVisibility: 'PUBLIC', isSet: false }),
+      catchError(() => of({ profileVisibility: 'PUBLIC' as ProfileVisibility, isSet: false })),
+    );
+  }
+
+  /** Who can view this profile — PUBLIC / MEMBERS_ONLY / PRIVATE. Setting anything but PUBLIC also disables Homepage Feature. */
+  updateProfileVisibility(id: string, profileVisibility: ProfileVisibility): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/profile-visibility`, { profileVisibility });
+  }
+
+  /** Fires a fresh SMS OTP to a phone number. Used by Admin's "Resend OTP" action — a real send, independent of a user's own in-app Firebase phone-auth flow. */
+  sendPhoneOtp(phone: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/otp/send`, { type: 'phone', value: phone });
+  }
+
+  /** Self-service "please call me to verify my mobile" ask — surfaced to admins in the Admin Users table. */
+  requestMobileCallback(id: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/users/${id}/request-mobile-callback`, {});
   }
 
 
@@ -711,6 +1161,20 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/notifications/mark-all-read`, {});
   }
 
+  markSessionOpened(): Observable<{ success: boolean; lastOpenedAt: string }> {
+    return this.http.post<{ success: boolean; lastOpenedAt: string }>(
+      `${this.apiUrl}/auth/session/opened`,
+      {},
+    );
+  }
+
+  markFounderOfferSeen(): Observable<{ success: boolean; founderOfferSeenAt: string }> {
+    return this.http.post<{ success: boolean; founderOfferSeenAt: string }>(
+      `${this.apiUrl}/auth/founder-offer/seen`,
+      {},
+    );
+  }
+
   submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
   }
@@ -785,20 +1249,44 @@ export class ConfigService {
 
   respondToInvite(
     inviteId: string,
-    status: 'accepted' | 'declined',
+    status: 'accepted' | 'declined' | 'counter_sent',
     selectedPostDate?: string,
     selectedPlatform?: string,
     selectedContentType?: string,
+    counterAmount?: number,
+    counterMessage?: string,
     payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
+    shippingAddress?: {
+      contactName?: string; contactMobile?: string;
+      line1?: string; line2?: string;
+      city?: string; state?: string; pincode?: string; landmark?: string;
+    },
   ): Observable<any> {
     const body: any = { status };
     if (selectedPostDate) body.selectedPostDate = selectedPostDate;
     if (selectedPlatform) body.selectedPlatform = selectedPlatform;
     if (selectedContentType) body.selectedContentType = selectedContentType;
+    if (counterAmount && counterAmount > 0) body.counterAmount = counterAmount;
+    if (counterMessage) body.counterMessage = counterMessage;
     if (payout && (payout.upiId || payout.mobile || payout.accountHolderName)) {
       body.payout = payout;
     }
+    if (shippingAddress && (shippingAddress.line1 || shippingAddress.pincode)) {
+      body.shippingAddress = shippingAddress;
+    }
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/respond`, body);
+  }
+
+  respondToCounterOffer(
+    inviteId: string,
+    action: 'accept' | 'decline' | 'counter',
+    counterAmount?: number,
+    note?: string,
+  ): Observable<any> {
+    const body: any = { action };
+    if (counterAmount && counterAmount > 0) body.counterAmount = counterAmount;
+    if (note) body.note = note;
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/counter/respond`, body);
   }
 
   /** Brand-initiated contact unlock for an accepted invite. */
@@ -852,6 +1340,16 @@ export class ConfigService {
 
   reportInviteIssue(inviteId: string, reason: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/report`, { reason });
+  }
+
+  /** Influencer bails out of a disputed collab: no payment, host marked refunded, no admin needed. */
+  withdrawFromDispute(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/withdraw-dispute`, {});
+  }
+
+  /** Influencer contests the dispute itself — escalates to admin and pauses the auto-cancel timer. */
+  requestAdminReviewForDispute(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/request-admin-review`, {});
   }
 
   // ── Brand: needs-attention widget ────────────────────────────
@@ -912,6 +1410,10 @@ export class ConfigService {
   }
 
   // ── Campaign Submission endpoints ───────────────
+  startInviteWork(inviteId: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/start-work`, {});
+  }
+
   submitCampaignPost(inviteId: string, data: {
     postUrl: string;
     postType?: string;
@@ -943,6 +1445,10 @@ export class ConfigService {
 
   reviewCampaignSubmission(inviteId: string, data: { action: 'approve' | 'dispute'; feedback?: string; disputeReason?: string }): Observable<any> {
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/review`, data);
+  }
+
+  setCampaignSubmissionAutoComplete(inviteId: string, enabled: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/auto-complete`, { enabled });
   }
 
   updateSubmissionStats(inviteId: string, stats: {

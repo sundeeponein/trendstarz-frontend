@@ -1,0 +1,9 @@
+<section class="trust-badges-strip" aria-label="Why creators and brands trust TrendStarZ">
+  <div class="trust-badges-strip__item" *ngFor="let item of items">
+    <i class="bi trust-badges-strip__icon" [ngClass]="item.icon"></i>
+    <div class="trust-badges-strip__text">
+      <strong class="trust-badges-strip__title">{{ item.title }}</strong>
+      <span class="trust-badges-strip__subtitle">{{ item.subtitle }}</span>
+    </div>
+  </div>
+</section>

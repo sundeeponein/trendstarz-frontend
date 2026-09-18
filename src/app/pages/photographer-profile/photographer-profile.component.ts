@@ -5,16 +5,35 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
-import { ConfigService } from '../../shared/config.service';
+import { ConfigService, ProfileVisibility } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
+import { PlansService, PlanCapabilities, FREE_CAPABILITIES, Plan } from '../../shared/plans.service';
 import { environment } from '../../../environments/environment';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -36,6 +55,7 @@ export class PhotographerProfileComponent implements OnInit {
   loading = true;
   saving = false;
   saved = false;
+  submitted = false;
   errorMsg = '';
   isEditMode = false;
   currentStep: 1 | 2 | 3 = 1;
@@ -43,17 +63,49 @@ export class PhotographerProfileComponent implements OnInit {
   step2Complete = false;
   step3Complete = false;
   selectedPlan: 'free' | 'premium' = 'free';
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
   premiumMonthlyPrice = 399;
+  premiumOriginalMonthlyPrice: number | null = null;
+  premiumOfferChip = '';
   showResetPasswordModal = false;
   private originalFormValue: any = null;
   private originalPricingState: any = null;
   private originalPlatformForms: any = null;
   phoneVerified = false;
+  phoneEditRequested = false;
+  emailVerified = false;
+  communityProfileUser: any | null = null;
+  emailEditRequested = false;
+  showEmailVerificationPrompt = false;
+  emailJustChanged = false;
+  previousVerifiedEmail = '';
+  pendingVerificationEmail = '';
+  resendingEmailVerification = false;
+  resendEmailVerificationSuccess = false;
+  resendEmailVerificationError: string | null = null;
+  showPhoneOtp = false;
+  phoneOtp: string[] = ['', '', '', '', '', ''];
+  phoneVerifyError = '';
+  verifyingPhoneOtp = false;
+  phoneOtpError = '';
+  phoneOtpTimer: number = 300;
+  canResendPhoneOtp: boolean = false;
+  private phoneOtpInterval: any;
+  private firebasePhoneConfirmation: any = null;
   verificationCallNumber = '';
+  otpVerificationEnabled = false;
+  requestingMobileCallback = false;
+  mobileCallbackRequested = false;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
+  readonly maxSkills = 3;
+  readonly maxAvailableFor = 2;
 
   states: any[] = [];
   districts: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
   tiers: any[] = [];
 
   pricingState: { [key: string]: { enabled: boolean; price: string } } = {};
@@ -70,20 +122,267 @@ export class PhotographerProfileComponent implements OnInit {
   profileImagePreview = '';
   profileImageData: { url: string; public_id: string } | null = null;
   uploadingImage = false;
+  photoshootImagesPreview: string[] = [];
+  photoshootImagesData: { url: string; public_id: string }[] = [];
+  galleryUploadWarning = '';
+  readonly MAX_PHOTOSHOOT_IMAGES = 2;
+  private originalPhotoshootImagesPreview: string[] = [];
+  private originalPhotoshootImagesData: { url: string; public_id: string }[] = [];
   commissionAccessTags: string[] = [];
+  platformCommissionPercent: number = 0;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
 
   private apiUrl = environment.apiBaseUrl || '/api';
 
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
+    private plansService: PlansService,
     private session: SessionService,
     private toast: ToastService,
     private http: HttpClient,
+    private guidelinesService: ImageGuidelinesService,
     private cdr: ChangeDetectorRef,
+    private firebaseAuth: FirebaseAuthService,
+    private profileVerification: ProfileVerificationService,
   ) {}
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
+
+  private formatFirebasePhone(phone: string): string {
+    const value = String(phone || '').trim();
+    if (value.startsWith('+')) return value;
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10 ? `+91${digits}` : `+${digits}`;
+  }
+
+  sendPhoneOtp(): void {
+    if (!this.otpVerificationEnabled) return;
+    void this.sendFirebasePhoneOtp();
+  }
+
+  resendPhoneOtp(): void {
+    if (!this.canResendPhoneOtp) return;
+    this.sendPhoneOtp();
+    this.startPhoneOtpTimer();
+  }
+
+  startPhoneOtpTimer(): void {
+    this.phoneOtpTimer = 300;
+    this.canResendPhoneOtp = false;
+    if (this.phoneOtpInterval) clearInterval(this.phoneOtpInterval);
+    this.phoneOtpInterval = setInterval(() => {
+      this.phoneOtpTimer--;
+      if (this.phoneOtpTimer <= 0) {
+        clearInterval(this.phoneOtpInterval);
+      }
+    }, 1000);
+    setTimeout(() => this.canResendPhoneOtp = true, 30000);
+  }
+
+  scrollToTop(): void {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  requestMobileCallback(): void {
+    const id = this.session.getUser()?.id;
+    if (!id || this.requestingMobileCallback) return;
+    this.requestingMobileCallback = true;
+    this.config.requestMobileCallback(id).subscribe({
+      next: () => {
+        this.requestingMobileCallback = false;
+        this.mobileCallbackRequested = true;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.requestingMobileCallback = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private async sendFirebasePhoneOtp(): Promise<void> {
+    try {
+      const phone = this.formatFirebasePhone(this.form.get('phoneNumber')?.value);
+      this.firebasePhoneConfirmation = await this.firebaseAuth.sendPhoneOtp(phone, 'photographer-phone-recaptcha');
+      this.phoneVerifyError = '';
+      this.phoneOtpError = '';
+      this.showPhoneOtp = true;
+      this.startPhoneOtpTimer();
+    } catch (error: any) {
+      this.phoneVerifyError = error?.message || 'Failed to send OTP';
+    }
+  }
+
+  confirmPhoneOtp(): void {
+    void this.confirmFirebasePhoneOtp();
+  }
+
+  private async confirmFirebasePhoneOtp(): Promise<void> {
+    if (!this.firebasePhoneConfirmation) {
+      this.phoneOtpError = 'Please request an OTP first.';
+      return;
+    }
+    this.verifyingPhoneOtp = true;
+    this.phoneOtpError = '';
+    try {
+      await this.firebaseAuth.confirmPhoneOtp(this.firebasePhoneConfirmation, this.phoneOtp.join(''));
+      this.phoneVerified = true;
+      this.showPhoneOtp = false;
+      this.phoneVerifyError = '';
+    } catch (error: any) {
+      this.phoneOtpError = error?.message || 'Invalid or expired OTP.';
+    } finally {
+      this.verifyingPhoneOtp = false;
+    }
+  }
+
+  private buildCriticalProfileMessage(raw: any): string {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const stateValue = String(raw?.location?.state || '').trim();
+    const districtValue = String(raw?.location?.district || '').trim();
+    const state = this.states.find((s: any) => String(s?._id || '') === stateValue || String(s?.name || '').toLowerCase() === stateValue.toLowerCase())?.name || stateValue || '-';
+    const district = this.districts.find((d: any) => String(d?._id || '') === districtValue || String(d?.name || '').toLowerCase() === districtValue.toLowerCase())?.name || districtValue || '-';
+    const hasProfilePhoto = !!(this.profileImagePreview || this.profileImageData?.url);
+    return [
+      'Please verify these details before saving:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${hasProfilePhoto ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      '',
+      'Continue saving profile?'
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  private confirmEditVerifiedEmail(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your email is currently verified. Changing it will mark it as unverified, and some features may be restricted until you verify the new address. Continue?';
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  private confirmEditVerifiedPhone(): Promise<boolean> {
+    this.profileConfirmMessage = 'Your mobile number is currently verified. Changing it will mark it as unverified, and you will need to re-verify the new number before some features are available again. Continue?';
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  async requestPhoneEdit(): Promise<void> {
+    if (!this.isEditMode) return;
+    if (this.phoneVerified && !(await this.confirmEditVerifiedPhone())) return;
+    this.phoneEditRequested = true;
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
+  }
+
+  openProfilePhotoGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
+  openGalleryImageGuidelines(): void {
+    this.guidelinesService.open('influencer');
+  }
+
+  private loadPremiumMonthlyPrice(): void {
+    this.plansService.getActivePlans('PHOTOGRAPHER').subscribe((plans) => {
+      const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+      if (!paidPlan) return;
+      const monthly = Number(paidPlan?.price?.monthly || 0);
+      if (monthly > 0) this.premiumMonthlyPrice = monthly;
+
+      const discountPercent = this.getPlanDiscountPercent(paidPlan, ['discountOnPhotographerPro', 'discountMonthly']);
+      if (discountPercent > 0) {
+        this.premiumOriginalMonthlyPrice = monthly;
+        this.premiumMonthlyPrice = Math.round(monthly * (1 - discountPercent / 100));
+      }
+      this.premiumOfferChip = this.resolveOfferChipLabel(paidPlan, discountPercent);
+    });
+  }
+
+  private getPlanDiscountPercent(plan: Plan, keys: string[]): number {
+    if (!Array.isArray(plan?.offers)) return 0;
+    const offer = plan.offers.find((item) => keys.includes(item.key) && Number(item.value) > 0);
+    return offer ? Number(offer.value) : 0;
+  }
+
+  private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
+    const hasTrialOffer = Array.isArray(plan?.offers)
+      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
+    return hasTrialOffer ? 'Early Access Offer' : '';
+  }
+
+  get totalImageLimit(): number {
+    const fromPortfolio = Number(this.plansService.getLimitValue(this.planCaps, 'maxPortfolioImages'));
+    if (Number.isFinite(fromPortfolio) && fromPortfolio > 0) return fromPortfolio;
+    const fromFallback = Number(this.plansService.getLimitValue(this.planCaps, 'maxProductImages'));
+    if (Number.isFinite(fromFallback) && fromFallback > 0) return fromFallback;
+    return 3;
+  }
+
+  get maxPhotoshootImages(): number {
+    return Math.max(0, this.totalImageLimit - 1);
+  }
+
+  private enforceGalleryLimit(): void {
+    if (this.photoshootImagesData.length <= this.maxPhotoshootImages) return;
+    this.photoshootImagesData = this.photoshootImagesData.slice(0, this.maxPhotoshootImages);
+    this.photoshootImagesPreview = this.photoshootImagesPreview.slice(0, this.maxPhotoshootImages);
+  }
+
+  get hasContactVisibility(): boolean {
+    return this.plansService.getFeatureValue(this.planCaps, 'contactVisibility');
+  }
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -120,11 +419,22 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   private getProfileImage(profile: any, sessionUser: any): { url: string; public_id: string } | null {
+    const getImageUrl = (entry: any): string => {
+      if (!entry) return '';
+      if (typeof entry === 'string') return this.asText(entry);
+      return this.asText(entry?.url) || this.asText(entry?.secure_url);
+    };
+    const getImagePublicId = (entry: any): string => {
+      if (!entry || typeof entry === 'string') return '';
+      return this.asText(entry?.public_id) || this.asText(entry?.publicId);
+    };
+
     const firstProfileImage = profile?.profileImages?.[0] || sessionUser?.profileImages?.[0] || null;
+    // profileImages[0] is the live source of truth; profileImage is a legacy
+    // field that can go stale after a re-upload/recrop, so prefer the array.
     const imgUrl =
+      getImageUrl(firstProfileImage) ||
       this.asText(profile?.profileImage) ||
-      this.asText(firstProfileImage?.url) ||
-      this.asText(firstProfileImage?.secure_url) ||
       this.asText(sessionUser?.profileImage);
 
     if (!imgUrl) return null;
@@ -132,8 +442,7 @@ export class PhotographerProfileComponent implements OnInit {
       url: imgUrl,
       public_id:
         this.asText(profile?.profileImagePublicId) ||
-        this.asText(firstProfileImage?.public_id) ||
-        this.asText(firstProfileImage?.publicId),
+        getImagePublicId(firstProfileImage),
     };
   }
 
@@ -168,12 +477,18 @@ export class PhotographerProfileComponent implements OnInit {
     this.config.getDistricts(stateName, stateId).subscribe({
       next: d => {
         this.districts = Array.isArray(d) ? d : [];
-        const hasDistrict = this.districts.some(
+        const matchedDistrict = this.districts.find(
           (x: any) =>
             this.asText(x?._id) === currentDistrict ||
             this.asText(x?.name).toLowerCase() === currentDistrict.toLowerCase(),
         );
-        if (currentDistrict && !hasDistrict) {
+        if (currentDistrict && matchedDistrict) {
+          const canonicalDistrict = this.asText(matchedDistrict?._id) || this.asText(matchedDistrict?.name);
+          if (canonicalDistrict && canonicalDistrict !== currentDistrict) {
+            districtControl.setValue(canonicalDistrict, { emitEvent: false });
+          }
+        }
+        if (currentDistrict && !matchedDistrict) {
           this.districts = [...this.districts, { _id: currentDistrict, name: currentDistrict }];
         }
         this.cdr.detectChanges();
@@ -185,11 +500,73 @@ export class PhotographerProfileComponent implements OnInit {
     });
   }
 
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+  profileVisibility: ProfileVisibility = 'PUBLIC';
+  visibilityBusy = false;
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    const userId = this.session.getUser()?.id;
+    if (this.marketingConsentBusy || !userId) return;
+    this.marketingConsentBusy = true;
+    this.config.updateMarketingConsent(userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
+
+  onProfileVisibilityChange(next: ProfileVisibility): void {
+    const userId = this.session.getUser()?.id;
+    if (this.visibilityBusy || !userId) return;
+    this.visibilityBusy = true;
+    this.config.updateProfileVisibility(userId, next).subscribe({
+      next: () => {
+        this.profileVisibility = next;
+        if (next !== 'PUBLIC') this.featuredInMarketing = false;
+        this.visibilityBusy = false;
+      },
+      error: () => {
+        this.visibilityBusy = false;
+      },
+    });
+  }
+
   ngOnInit() {
+    this.config.getAppSettings().subscribe((settings) => {
+      this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
+      if (typeof settings.photographerFeePercent === 'number') this.platformCommissionPercent = settings.photographerFeePercent;
+      this.cdr.detectChanges();
+    });
+    const userId = this.session.getUser()?.id;
+    if (userId) {
+      this.config.getMarketingConsent(userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+      this.config.getProfileVisibility(userId).subscribe((res) => {
+        this.profileVisibility = res?.profileVisibility || 'PUBLIC';
+      });
+    }
+    this.loadProfileVerificationDashboard();
+    this.loadPremiumMonthlyPrice();
+    this.plansService.getMyCapabilities().subscribe((caps) => {
+      this.planCaps = caps;
+      this.selectedPlan = caps?.hasPremium ? 'premium' : 'free';
+      this.enforceGalleryLimit();
+      // Keep saved contact preferences visible even if the current plan
+      // does not allow editing them.
+      this.cdr.detectChanges();
+    });
+
     this.form = this.fb.group({
       name: [{ value: '', disabled: true }, Validators.required],
       username: [{ value: '', disabled: true }, [Validators.required, Validators.pattern('^[a-zA-Z0-9_\\-]+$')]],
       phoneNumber: [{ value: '', disabled: true }, Validators.required],
+      email: [{ value: '', disabled: true }, [Validators.email]],
       dateOfBirth: [{ value: '', disabled: true }],
       gender: [{ value: '', disabled: true }],
       portfolio: [{ value: '', disabled: true }],
@@ -203,6 +580,12 @@ export class PhotographerProfileComponent implements OnInit {
         whatsapp: [{ value: false, disabled: true }],
         email: [{ value: false, disabled: true }],
         call: [{ value: false, disabled: true }],
+      }),
+      collaborationAvailability: this.fb.group({
+        enabled: [{ value: false, disabled: true }],
+        availableFor: [{ value: [], disabled: true }],
+        preference: [{ value: '', disabled: true }],
+        openToTravel: [{ value: false, disabled: true }],
       }),
       payout: this.fb.group({
         upiId: [{ value: '', disabled: true }],
@@ -255,13 +638,15 @@ export class PhotographerProfileComponent implements OnInit {
     forkJoin({
       pricing: this.config.getPricingOptions(),
       social: this.config.getSocialMedia(),
-    }).subscribe(({ pricing, social }) => {
+      collaborationAvailabilityOptions: this.config.getCollaborationAvailabilityOptions(),
+    }).subscribe(({ pricing, social, collaborationAvailabilityOptions }) => {
       const list = Array.isArray(pricing) ? pricing : [];
       this.pricingOptions = list.length ? list : this.fallbackPricing;
       this.pricingOptions.forEach(p => {
         this.pricingState[p.key] = { enabled: false, price: '' };
       });
       this.socialMediaList = Array.isArray(social) ? social : [];
+      this.collaborationAvailabilityOptions = collaborationAvailabilityOptions || {};
       this.loadProfile();
       this.cdr.detectChanges();
     });
@@ -285,11 +670,20 @@ export class PhotographerProfileComponent implements OnInit {
         this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
         this.lastLoginAt = profile?.lastLoginAt || null;
         this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
+        this.emailVerified = !!(profile?.isEmailVerified ?? sessionUser?.isEmailVerified);
+        this.communityProfileUser = {
+          ...profile,
+          isEmailVerified: this.emailVerified,
+          isMobileVerified: this.phoneVerified,
+          location: profile?.location || { state: resolvedState, district: resolvedDistrict },
+        };
+        this.showEmailVerificationPrompt = !this.emailVerified;
         this.verificationCallNumber = String(profile?.verificationCallNumber || '');
         this.form.patchValue({
           name: profile.name || sessionUser?.name || '',
           username,
           phoneNumber: profile.phoneNumber || sessionUser?.phoneNumber || '',
+          email: profile.email || sessionUser?.email || '',
           dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().slice(0, 10) : '',
           gender: profile.gender || '',
           portfolio: profile.portfolio || '',
@@ -304,6 +698,12 @@ export class PhotographerProfileComponent implements OnInit {
             email: !!profile.contact?.email,
             call: !!profile.contact?.call,
           },
+          collaborationAvailability: profile.collaborationAvailability || {
+            enabled: false,
+            availableFor: [],
+            preference: '',
+            openToTravel: false,
+          },
           payout: {
             upiId: profile.payout?.upiId || '',
             mobile: profile.payout?.mobile || '',
@@ -311,7 +711,7 @@ export class PhotographerProfileComponent implements OnInit {
           },
         });
 
-        this.selectedPlan = profile.isPremium ? 'premium' : 'free';
+        this.selectedPlan = this.planCaps?.hasPremium ? 'premium' : (profile.isPremium ? 'premium' : 'free');
         this.syncLocationDisplay();
 
         // Pricing
@@ -358,6 +758,20 @@ export class PhotographerProfileComponent implements OnInit {
           this.profileImageData = profileImage;
         }
 
+        const sourceImages = Array.isArray(profile?.profileImages)
+          ? profile.profileImages
+          : Array.isArray(sessionUser?.profileImages)
+            ? sessionUser.profileImages
+            : [];
+        const gallerySource = sourceImages.slice(1).filter((img: any) => !!img?.url);
+        this.photoshootImagesData = gallerySource.map((img: any) => ({
+          url: String(img.url),
+          public_id: String(img.public_id || img.publicId || ''),
+        }));
+        this.photoshootImagesPreview = this.photoshootImagesData.map((img) => img.url);
+        this.enforceGalleryLimit();
+        this.galleryUploadWarning = '';
+
         this.loading = false;
         this.isEditMode = false;
         this.form.disable({ emitEvent: false });
@@ -365,6 +779,8 @@ export class PhotographerProfileComponent implements OnInit {
         this.originalFormValue = this.form.getRawValue();
         this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
+        this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
         this.refreshStepCompletion();
         this.cdr.detectChanges();
       },
@@ -375,17 +791,11 @@ export class PhotographerProfileComponent implements OnInit {
     });
   }
 
-  toggleSkill(skill: string) {
+  setSkills(values: string[]): void {
     if (!this.isEditMode) return;
-    const arr: string[] = [...(this.form.get('skills')?.value || [])];
-    const idx = arr.indexOf(skill);
-    idx > -1 ? arr.splice(idx, 1) : arr.push(skill);
-    this.form.get('skills')?.setValue(arr);
+    this.form.get('skills')?.setValue(values);
+    this.form.get('skills')?.markAsTouched();
     this.refreshStepCompletion();
-  }
-
-  isSkillSelected(skill: string): boolean {
-    return (this.form.get('skills')?.value || []).includes(skill);
   }
 
   toggleEquipment(eq: string) {
@@ -464,36 +874,32 @@ export class PhotographerProfileComponent implements OnInit {
       const hasSkills = Array.isArray(this.form.get('skills')?.value) && this.form.get('skills')?.value.length > 0;
       return !!(state || district || hasSkills || this.selectedPlatforms().length);
     }
-    if (this.selectedPlan !== 'premium') return this.step1Complete && this.step2Complete;
+    if (!this.hasContactVisibility) return this.step1Complete && this.step2Complete;
     const c = this.form.get('contact')?.value || {};
     return this.step1Complete && this.step2Complete && !!(c.whatsapp || c.email || c.call);
   }
 
   isContactEditable(): boolean {
-    return this.isEditMode && this.selectedPlan === 'premium';
+    return this.isEditMode && this.hasContactVisibility;
   }
 
   selectPlan(plan: 'free' | 'premium') {
-    if (!this.isEditMode) return;
-    this.selectedPlan = plan;
-    if (plan !== 'premium') {
-      this.form.patchValue({
-        contact: { whatsapp: false, email: false, call: false },
-      }, { emitEvent: false });
-    }
+    // Profile plan state is admin/payment managed; cards are informational here.
+    this.selectedPlan = this.planCaps?.hasPremium ? 'premium' : 'free';
     this.refreshStepCompletion();
   }
 
-  getStartingPrice(): string {
-    return this.pricingState['Starting Price']?.price || '';
+  /** Pricing options shown to the photographer — Starting Price itself is derived, never a manual option. */
+  get visiblePricingOptions(): any[] {
+    return (this.pricingOptions || []).filter((p: any) => p.key !== 'Starting Price');
   }
 
-  setStartingPrice(value: string) {
-    if (!this.pricingState['Starting Price']) {
-      this.pricingState['Starting Price'] = { enabled: true, price: '' };
-    }
-    this.pricingState['Starting Price'].enabled = true;
-    this.pricingState['Starting Price'].price = value;
+  /** Starting Price is always derived — never manually typed — as the lowest enabled service rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.pricingOptions
+      .filter((p: any) => p.key !== 'Starting Price' && this.pricingState[p.key]?.enabled && Number(this.pricingState[p.key]?.price) > 0)
+      .map((p: any) => Number(this.pricingState[p.key].price));
+    return prices.length ? Math.min(...prices) : 0;
   }
 
   goToStep(step: 1 | 2 | 3) {
@@ -528,20 +934,37 @@ export class PhotographerProfileComponent implements OnInit {
 
   stripAtSign(platformId: string) {
     const pf = this.platformForms[platformId];
-    if (pf) pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
+    if (pf) pf.handle = normalizeSocialHandle(pf.handle, this.socialMediaList.find(p => p._id === platformId)?.name || '');
   }
 
   getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
+    return buildSocialProfileUrl(platformName, handle);
+  }
+
+  getSocialHandleExample(platformName: string): string {
+    return socialHandleExample(platformName);
+  }
+
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
+  }
+
+  get platformsValid(): boolean {
+    const selected = this.selectedPlatforms();
+    if (selected.length === 0) return false;
+    return selected.every((p: any) => {
+      const pf = this.platformForms[p._id];
+      return pf && !this.getSocialHandleError(p) && (pf.tier || '').trim() && this.hasSelectedPricedContentType(pf);
+    });
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    if (!values.length) return true;
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
   }
 
   getTierOptionLabel(tier: any): string {
@@ -550,20 +973,53 @@ export class PhotographerProfileComponent implements OnInit {
     return desc ? `${name} (${desc})` : name;
   }
 
-  async onProfileImageFileChange(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private profileImageInputEl: HTMLInputElement | null = null;
+
+  onProfileImageFileChange(event: Event) {
+    this.profileImageInputEl = event.target as HTMLInputElement;
+    const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { this.toast.error('Please select a valid image file.'); return; }
-    if (file.size > 5 * 1024 * 1024) { this.toast.error('Image size must be below 5MB.'); return; }
+    const validationError = validateImageFile(file);
+    if (validationError) { this.toast.error(validationError); return; }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onProfileImageCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+  }
+
+  async onProfileImageCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
     this.uploadingImage = true;
+    const compressedFile = await compressImageFile(file, 'profile');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.uploadingImage = false;
+      this.toast.error(OVERSIZE_MESSAGE);
+      this.cdr.detectChanges();
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => { this.profileImagePreview = e.target?.result as string; this.cdr.detectChanges(); };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', 'photographer_profiles');
+    formData.append('file', compressedFile);
+    formData.append('folder', `photographers/${this.session.getUser()?.id}/profile`);
     this.config.uploadImage(formData).subscribe({
       next: (res: any) => {
+        if (!res?.url || !res?.public_id) {
+          this.uploadingImage = false;
+          this.profileImagePreview = '';
+          this.toast.error('Image upload failed. Please try again.');
+          this.cdr.detectChanges();
+          return;
+        }
         this.profileImageData = { url: res.url, public_id: res.public_id };
         this.uploadingImage = false;
         this.cdr.detectChanges();
@@ -577,18 +1033,102 @@ export class PhotographerProfileComponent implements OnInit {
     this.profileImageData = null;
   }
 
+  async onPhotoshootImagesChange(event: Event) {
+    if (!this.isEditMode) return;
+
+    const files = Array.from((event.target as HTMLInputElement).files || []);
+    if (!files.length) return;
+
+    const remainingSlots = this.maxPhotoshootImages - this.photoshootImagesData.length;
+    const selectedFiles = files.slice(0, Math.max(0, remainingSlots));
+    if (!selectedFiles.length) return;
+
+    let failedUploads = 0;
+
+    for (const file of selectedFiles) {
+      if (validateImageFile(file)) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const preview = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(String(e.target?.result || ''));
+        reader.onerror = () => reject(new Error('preview_failed'));
+        reader.readAsDataURL(compressedFile);
+      }).catch(() => '');
+
+      if (!preview) {
+        failedUploads += 1;
+        continue;
+      }
+
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('type', 'gallery');
+
+      const uploaded = await new Promise<{ url: string; public_id: string } | null>((resolve) => {
+        this.config.uploadAuthenticatedImage(formData, this.session.getToken()).subscribe({
+          next: (res: any) => {
+            if (res?.url && res?.public_id) {
+              resolve({ url: res.url, public_id: res.public_id });
+              return;
+            }
+            resolve(null);
+          },
+          error: () => resolve(null),
+        });
+      });
+
+      if (!uploaded) {
+        failedUploads += 1;
+        continue;
+      }
+
+      this.photoshootImagesPreview.push(preview);
+      this.photoshootImagesData.push(uploaded);
+      this.cdr.detectChanges();
+    }
+
+    this.galleryUploadWarning = failedUploads
+      ? `${failedUploads} gallery image${failedUploads > 1 ? 's' : ''} could not be uploaded. Uploaded images are saved and you can continue.`
+      : '';
+
+    this.cdr.detectChanges();
+  }
+
+  removePhotoshootImage(index: number) {
+    if (!this.isEditMode) return;
+    if (index < 0 || index >= this.photoshootImagesData.length) return;
+    this.photoshootImagesPreview.splice(index, 1);
+    this.photoshootImagesData.splice(index, 1);
+    this.galleryUploadWarning = '';
+  }
+
   enableEdit(): void {
     this.isEditMode = true;
+    this.submitted = false;
     this.form.enable({ emitEvent: false });
+    this.emailEditRequested = !this.emailVerified;
     this.originalFormValue = this.form.getRawValue();
     this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
     this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+    this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
+    this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
     this.refreshStepCompletion();
     this.cdr.detectChanges();
   }
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.submitted = false;
+    this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.form.reset(this.originalFormValue, { emitEvent: false });
     }
@@ -600,14 +1140,64 @@ export class PhotographerProfileComponent implements OnInit {
       const platforms = this.selectedPlatforms();
       this.activePlatformTab = platforms.length ? platforms[0]._id : null;
     }
+    this.photoshootImagesPreview = [...this.originalPhotoshootImagesPreview];
+    this.photoshootImagesData = this.originalPhotoshootImagesData.map((img) => ({ ...img }));
+    this.galleryUploadWarning = '';
     this.form.disable({ emitEvent: false });
     this.refreshStepCompletion();
     this.cdr.detectChanges();
   }
 
-  onSave() {
-    if (!this.isEditMode || this.form.invalid || this.saving) return;
+  async onSave() {
+    this.submitted = true;
+    if (this.saving || !this.isEditMode) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      if (!this.step1Complete) this.currentStep = 1;
+      else if (!this.step2Complete) this.currentStep = 2;
+      else this.currentStep = 3;
+      this.toast.error('Please complete all required fields.');
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.hasContactVisibility) {
+      const c = this.form.get('contact')?.value || {};
+      if (!(c.whatsapp || c.email || c.call)) {
+        this.form.get('contact')?.markAsTouched();
+        this.currentStep = 3;
+        this.toast.error('Please select at least one contact option.');
+        this.cdr.detectChanges();
+        return;
+      }
+    }
+    if (this.selectedPlatforms().length > 0 && !this.platformsValid) {
+      this.toast.error('Please select at least one content type and enter a starting rate.');
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
+      this.toast.error('Please select a preferred collaboration type.');
+      this.currentStep = 2;
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.computedStartingPriceRupees <= 0) {
+      this.toast.error('Set at least one pricing rate to calculate your starting price.');
+      this.currentStep = 2;
+      this.cdr.detectChanges();
+      return;
+    }
     const v = this.form.getRawValue();
+    if (!(await this.confirmCriticalProfileDetails(v))) {
+      return;
+    }
+    const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    const currentEmail = String(v?.email || '').trim().toLowerCase();
+    const emailChanged = !!currentEmail && previousEmail !== currentEmail;
+    const previousEmailWasVerified = this.emailVerified;
+    const previousPhone = String(this.originalFormValue?.phoneNumber || '').trim();
+    const currentPhone = String(v?.phoneNumber || '').trim();
+    const phoneChanged = !!currentPhone && previousPhone !== currentPhone;
     const stateValue = String(v?.location?.state || '').trim();
     const districtValue = String(v?.location?.district || '').trim();
     const stateObj = this.states.find(
@@ -619,6 +1209,18 @@ export class PhotographerProfileComponent implements OnInit {
     const pricingArr = this.pricingOptions
       .filter(p => this.pricingState[p.key]?.enabled)
       .map(p => ({ name: p.key, enabled: true, price: Number(this.pricingState[p.key].price) || 0 }));
+    const normalizedStartingPrice = this.computedStartingPriceRupees;
+    const startingPriceIndex = pricingArr.findIndex((entry: any) => String(entry?.name || '').trim() === 'Starting Price');
+    if (startingPriceIndex > -1) {
+      pricingArr[startingPriceIndex].enabled = true;
+      pricingArr[startingPriceIndex].price = normalizedStartingPrice;
+    } else {
+      pricingArr.unshift({
+        name: 'Starting Price',
+        enabled: true,
+        price: normalizedStartingPrice,
+      });
+    }
 
     const socialMedia = this.selectedPlatforms().map(p => {
       const pf = this.platformForms[p._id];
@@ -631,7 +1233,7 @@ export class PhotographerProfileComponent implements OnInit {
         }));
       return {
         platform: p.name,
-        handle: (pf.handle || '').trim(),
+        handle: normalizeSocialHandle(pf.handle, p.name),
         tier: pf.tier || '',
         followersCount: Number(pf.followersCount) || 0,
         contentTypes,
@@ -647,26 +1249,58 @@ export class PhotographerProfileComponent implements OnInit {
       },
       pricing: pricingArr,
       socialMedia,
+      collaborationAvailability: v.collaborationAvailability,
       payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },
     };
+    const profileImages = [
+      ...(this.profileImageData ? [this.profileImageData] : []),
+      ...this.photoshootImagesData,
+    ];
+    if (profileImages.length) {
+      payload.profileImages = profileImages;
+    }
     if (this.profileImageData) {
       payload.profileImage = this.profileImageData.url;
       payload.profileImagePublicId = this.profileImageData.public_id;
-      payload.profileImages = [this.profileImageData];
     }
 
     const token = this.session.getToken();
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
     this.saving = true;
     this.http.patch(`${this.apiUrl}/users/photographers/me/profile`, payload, { headers }).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.saved = true;
+        this.submitted = false;
         this.isEditMode = false;
         this.form.disable({ emitEvent: false });
         this.originalFormValue = this.form.getRawValue();
         this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
+        this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
+        this.galleryUploadWarning = '';
+        if (emailChanged) {
+          // Server may have auto-verified the new email (local dev bypass) —
+          // trust its returned state instead of assuming it's pending.
+          this.emailVerified = !!res?.isEmailVerified;
+          this.emailEditRequested = true;
+          if (!this.emailVerified) {
+            this.showEmailVerificationPrompt = true;
+            this.emailJustChanged = true;
+            this.previousVerifiedEmail = previousEmailWasVerified ? previousEmail : '';
+            this.pendingVerificationEmail = currentEmail;
+            this.resendEmailVerification();
+          }
+        } else {
+          this.emailEditRequested = false;
+        }
+        if (phoneChanged) {
+          this.phoneVerified = false;
+          this.phoneEditRequested = true;
+        } else {
+          this.phoneEditRequested = false;
+        }
         this.refreshStepCompletion();
         this.toast.success('Profile saved!');
         setTimeout(() => { this.saved = false; this.cdr.detectChanges(); }, 3000);
@@ -676,6 +1310,33 @@ export class PhotographerProfileComponent implements OnInit {
         this.saving = false;
         this.toast.error(err?.error?.message || 'Failed to save profile.');
         this.cdr.detectChanges();
+      },
+    });
+  }
+
+  async requestEmailEdit(): Promise<void> {
+    if (!this.isEditMode) return;
+    if (this.emailVerified && !(await this.confirmEditVerifiedEmail())) return;
+    this.emailEditRequested = true;
+  }
+
+  resendEmailVerification(): void {
+    const email = String(this.form.get('email')?.value || '').trim();
+    if (!email) {
+      this.resendEmailVerificationError = 'Please enter a valid email first.';
+      return;
+    }
+    this.resendingEmailVerification = true;
+    this.resendEmailVerificationSuccess = false;
+    this.resendEmailVerificationError = null;
+    this.config.sendEmailVerificationLink(email).subscribe({
+      next: () => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationSuccess = true;
+      },
+      error: (err: any) => {
+        this.resendingEmailVerification = false;
+        this.resendEmailVerificationError = err?.error?.message || 'Failed to resend verification email.';
       },
     });
   }

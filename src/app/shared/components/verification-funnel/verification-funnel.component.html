@@ -1,0 +1,14 @@
+<div class="funnel" [class.funnel--compact]="compact">
+  <div class="funnel__row" *ngFor="let stage of stages; let i = index">
+    <div class="funnel__label-row">
+      <span class="funnel__label">{{ stage.label }}</span>
+      <span class="funnel__count">{{ stage.count | number }}</span>
+    </div>
+    <div class="funnel__bar-track">
+      <div class="funnel__bar" [style.width]="barWidth(stage)"></div>
+    </div>
+    <div class="funnel__dropoff" *ngIf="!compact && dropOffPct(i) !== null">
+      <i class="bi bi-arrow-down"></i> {{ dropOffPct(i) }}% drop-off from previous stage
+    </div>
+  </div>
+</div>

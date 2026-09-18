@@ -3,7 +3,7 @@
     <!-- Logo and Brand -->
     <div class="navbar-brand">
       <a routerLink="/admin/admin-dashboard" class="logo-link">
-        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
+        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" width="200" height="40" />
       </a>
     </div>
 
@@ -39,26 +39,33 @@
          class="nav-tab">
         Payments
       </a>
-      <a routerLink="/admin/plans" 
+      <!-- <a routerLink="/admin/plans" 
          routerLinkActive="active" 
          [routerLinkActiveOptions]="{ exact: false }"
          class="nav-tab">
         Plans
-      </a>
+      </a> -->
       <a routerLink="/admin/reviews" 
          routerLinkActive="active" 
          [routerLinkActiveOptions]="{ exact: false }"
          class="nav-tab">
         Reviews
       </a>
-      <a routerLink="/admin/disputes" 
-         routerLinkActive="active" 
+      <a routerLink="/admin/disputes"
+         routerLinkActive="active"
          [routerLinkActiveOptions]="{ exact: false }"
          class="nav-tab">
         Disputes
         <span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span>
       </a>
+      <a routerLink="/admin/link-analytics"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: false }"
+         class="nav-tab">
+        Link Analytics
+      </a>
       
+
     </div>
 
     <!-- Search and Icons -->
@@ -91,14 +98,19 @@
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
             <img [src]="adminUser.profileImage || 'assets/default-profile.png'" 
                  [alt]="adminUser.name" 
-                 class="profile-avatar" />
+               class="profile-avatar"
+               width="40"
+               height="40" />
           </button>
           <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
             <li><span class="dropdown-header">{{ adminUser.name }}</span></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-dashboard">Profile Settings</a></li>
-            <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li>
+            <!-- <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li> -->
+            <li><a class="dropdown-item" routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"> Collaboration Score </a></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" >Admin Management</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" routerLink="/admin/plans">Plans</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>
@@ -167,6 +179,8 @@
         <a routerLink="/admin/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gem"></i><span>Plans</span></a>
         <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
         <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
+        <a routerLink="/admin/link-analytics" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-link-45deg"></i><span>Link Analytics</span></a>
+        <a routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>Collaboration Score</span></a>
       </div>
 
       <div class="mobile-upgrade">

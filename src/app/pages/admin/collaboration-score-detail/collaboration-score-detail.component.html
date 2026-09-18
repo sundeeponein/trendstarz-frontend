@@ -1,0 +1,269 @@
+<div class="csd-page">
+  <div class="container-fluid py-4">
+    <a routerLink="/admin/admin-user-table" class="small d-inline-block mb-3">&larr; Back to Users</a>
+    <p class="csd-eyebrow">Performance Insights</p>
+    <h1 class="csd-title">Score Center</h1>
+    <p class="csd-subtitle" *ngIf="username">
+      Creator:
+      <a *ngIf="publicProfileUrl" [routerLink]="publicProfileUrl" target="_blank" rel="noopener noreferrer" class="csd-username-link">@{{ username }}</a>
+      <span *ngIf="!publicProfileUrl">@{{ username }}</span>
+    </p>
+
+    <div *ngIf="loading" class="d-flex align-items-center gap-2 text-muted">
+      <div class="spinner-border spinner-border-sm text-primary"></div>
+      <span>Loading…</span>
+    </div>
+
+    <div class="csd-card mb-4" *ngIf="!loading && notFound">
+      <p class="mb-3">No Collaboration Score yet for this creator.</p>
+      <button type="button" class="csd-reanalyze" [disabled]="running" (click)="runAudit()">
+        {{ running ? 'Running…' : 'Run Audit' }}
+      </button>
+    </div>
+
+    <ng-container *ngIf="!loading && audit">
+      <div class="csd-card mb-4">
+        <div class="csd-header">
+          <span></span>
+          <button type="button" class="csd-reanalyze" [disabled]="running" (click)="runAudit()">
+            <i class="bi" [ngClass]="running ? 'bi-arrow-repeat csd-spin' : 'bi-arrow-repeat'" aria-hidden="true"></i>
+            {{ running ? 'Running…' : 'Re-Analyze (Free)' }}
+          </button>
+        </div>
+
+        <div class="csd-main">
+          <div class="csd-main-left">
+            <app-score-ring [score]="audit.collaborationScore" [sizePx]="96"></app-score-ring>
+
+            <div class="csd-main-body">
+              <div class="csd-pills">
+                <span class="badge rounded-pill" [ngClass]="ui.scoreTierClass(audit.collaborationScore)">
+                  {{ ui.scoreTierLabel(audit.collaborationScore) | uppercase }}
+                </span>
+                <span class="badge rounded-pill" [ngClass]="ui.campaignReadinessClass(audit.campaignReadiness)">
+                  <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                  Campaign Ready: {{ audit.campaignReadiness === 'Campaign Ready' ? 'YES' : 'NO' }}
+                </span>
+                <span class="badge rounded-pill csd-badge--recommended" *ngIf="audit.trendstarzRecommended">
+                  <i class="bi bi-award-fill"></i> TrendStarZ Recommended
+                </span>
+              </div>
+
+              <h2 class="csd-heading">Collaboration Score</h2>
+              <p class="csd-copy" *ngIf="audit.profileCompletenessScore != null">
+                Profile completion is at <strong>{{ audit.profileCompletenessScore }}%</strong>.
+                <ng-container *ngIf="pointsToRecommended != null"> Need +{{ pointsToRecommended }} points to reach TrendStarZ Recommended.</ng-container>
+                <ng-container *ngIf="audit.trendstarzRecommended"> This creator has reached TrendStarZ Recommended status.</ng-container>
+              </p>
+
+              <div class="csd-status-row">
+                <div class="csd-status-item">
+                  <span class="csd-status-label">Status</span>
+                  <strong [ngClass]="verified ? 'text-success' : 'text-muted'">
+                    {{ verified ? 'Verified' : 'Not Verified' }}
+                    <span *ngIf="verified" aria-hidden="true">●</span>
+                  </strong>
+                </div>
+                <div class="csd-status-item" *ngIf="lastAnalysisDateTime">
+                  <span class="csd-status-label">Last Analysis</span>
+                  <strong>{{ lastAnalysisDateTime }}</strong>
+                </div>
+                <div class="csd-status-item">
+                  <span class="csd-status-label">Audit Version</span>
+                  <strong>v{{ audit.version }}</strong>
+                </div>
+                <div class="csd-status-item">
+                  <span class="csd-status-label">Audit Status</span>
+                  <strong class="text-capitalize">{{ audit.status || 'completed' }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="csd-confidence" *ngIf="scoreConfidence">
+            <div class="csd-confidence-header">
+              <span class="csd-status-label">Confidence</span>
+              <span
+                class="badge rounded-pill"
+                [ngClass]="{
+                  'bg-success-subtle text-success-emphasis': scoreConfidence.level === 'High',
+                  'bg-warning-subtle text-warning-emphasis': scoreConfidence.level === 'Medium',
+                  'bg-secondary-subtle text-secondary-emphasis': scoreConfidence.level === 'Low'
+                }"
+              >
+                {{ scoreConfidence.level | uppercase }}
+              </span>
+            </div>
+            <ul class="csd-confidence-list">
+              <li *ngFor="let item of scoreConfidence.basedOn" [class.met]="item.met">
+                <i class="bi" [ngClass]="item.met ? 'bi-check-circle-fill' : 'bi-dash-circle'" aria-hidden="true"></i>
+                {{ item.met ? item.label : item.absentLabel }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="csd-row-2col">
+          <div class="csd-pricing-dark" *ngIf="audit.pricingSuggestion.reelPrice != null" hidden>
+            <div class="csd-pricing-dark-title">Suggested Pricing</div>
+            <div class="csd-pricing-dark-row"><span>Reel</span><strong>₹{{ audit.pricingSuggestion.reelPrice.toLocaleString('en-IN') }}</strong></div>
+            <div class="csd-pricing-dark-row"><span>Story</span><strong>₹{{ audit.pricingSuggestion.storyPrice?.toLocaleString('en-IN') }}</strong></div>
+            <div class="csd-pricing-dark-row"><span>Video</span><strong>₹{{ audit.pricingSuggestion.videoPrice?.toLocaleString('en-IN') }}</strong></div>
+          </div>
+
+          <div class="csd-improvement" *ngIf="audit.improvements?.length">
+            <div class="csd-improvement-icon"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></div>
+            <div>
+              <div class="csd-improvement-title">Top Improvement</div>
+              <p class="mb-0">{{ audit.improvements?.[0] }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- At-a-glance summary: both subtotals + the one thing to fix next,
+             so it's visible without scrolling into the full breakdown below. -->
+        <div class="csd-score-summary" *ngIf="hasSubScoreBreakdown">
+          <div class="csd-score-summary-item">
+            <span class="csd-score-summary-label">TrendStarZ Profile</span>
+            <span class="csd-score-summary-value">{{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }}</span>
+          </div>
+          <div class="csd-score-summary-item">
+            <span class="csd-score-summary-label">Platform Performance</span>
+            <span class="csd-score-summary-value">{{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }}</span>
+          </div>
+          <div class="csd-score-summary-next" *ngIf="audit.improvements?.length">
+            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+            <span>{{ audit.improvements?.[0] }}</span>
+          </div>
+        </div>
+
+        <!-- Score Breakdown — the 5 weighted criteria behind the single
+             total above; makes it possible to see, e.g., whether a capped
+             self-reported platform is actually what's holding Content
+             Quality/Posting Consistency down, versus Profile Completeness
+             or Professional Branding (which don't depend on any social
+             platform). -->
+        <div class="csd-breakdown" *ngIf="hasSubScoreBreakdown">
+          <div class="csd-breakdown-header">
+            <div class="csd-breakdown-title">Score Breakdown</div>
+            <span class="text-muted small">Weighted Analysis</span>
+          </div>
+
+          <div class="csd-breakdown-group">
+            <div class="csd-breakdown-group-title">TrendStarZ Profile Score</div>
+            <p class="text-muted small mb-2">Based on the profile itself — not affected by connected platforms.</p>
+            <div class="csd-breakdown-grid">
+              <div class="csd-bar-row" *ngFor="let sub of profileSubScores">
+                <div class="csd-bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+                <div class="progress csd-progress">
+                  <div class="progress-bar" [style.width.%]="sub.value"></div>
+                </div>
+                <div class="csd-bar-value">{{ sub.value }}</div>
+                <div class="csd-bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
+              </div>
+            </div>
+            <p class="text-muted small mb-0">Profile subtotal: {{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }} pts</p>
+          </div>
+
+          <div class="csd-breakdown-group">
+            <div class="csd-breakdown-group-title">Platform Performance Score</div>
+            <p class="text-muted small mb-2">Based only on connected social platforms.</p>
+            <div class="csd-breakdown-grid">
+              <div class="csd-bar-row" *ngFor="let sub of platformSubScores">
+                <div class="csd-bar-label">{{ sub.label }} <span class="text-muted">({{ sub.weight }})</span></div>
+                <div class="progress csd-progress">
+                  <div class="progress-bar" [style.width.%]="sub.value"></div>
+                </div>
+                <div class="csd-bar-value" [class.text-muted]="sub.noData" [class.fst-italic]="sub.noData">
+                  {{ sub.noData ? 'No platform connected' : sub.value }}
+                </div>
+                <div class="csd-bar-contribution text-muted small">+{{ sub.contribution }} PTS</div>
+              </div>
+            </div>
+            <p class="text-muted small mb-0">Platform subtotal: {{ platformScoreSummary.earned }} / {{ platformScoreSummary.max }} pts</p>
+          </div>
+
+          <div class="csd-bar-row csd-bar-row--total">
+            <div class="csd-bar-label"><strong>Total</strong></div>
+            <div class="csd-bar-value"><strong>{{ subScoresTotal }} → {{ audit.collaborationScore }}</strong></div>
+          </div>
+        </div>
+
+        <!-- Platform Status — read-only. No Connect/Disconnect buttons here:
+             those are self-service OAuth actions an admin can't perform on
+             a creator's behalf. -->
+        <div class="csd-platforms" *ngIf="audit.platformsCollected?.length">
+          <div class="csd-breakdown-title">Platform Status</div>
+          <div class="csd-platform-pills">
+            <div class="csd-platform-pill" *ngFor="let p of audit.platformsCollected">
+              <i class="bi" [ngClass]="platformIcon(p.platform)" aria-hidden="true"></i>
+              <div class="csd-platform-pill-meta">
+                <div class="csd-platform-pill-name">{{ p.platform }}</div>
+                <div class="csd-platform-pill-status" [ngClass]="p.confidence >= 90 ? 'text-success' : (p.confidence > 0 ? 'text-warning' : 'text-muted')">
+                  {{ p.confidence }}% {{ ui.confidenceLabel(p.confidence) }}
+                </div>
+                <div class="csd-platform-pill-score text-muted" *ngIf="p.miniScore != null" [title]="'Content Quality + Posting Consistency for ' + p.platform + ' alone — not the full Collaboration Score.'">
+                  Platform Quality: <strong>{{ p.miniScore }}/100</strong>
+                </div>
+              </div>
+              <span class="badge rounded-pill" [ngClass]="p.method === 'API' ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis'">
+                {{ p.method === 'API' ? 'Live API' : 'Self-reported' }}
+              </span>
+            </div>
+          </div>
+          <p class="csd-platform-reason text-muted" *ngFor="let p of audit.platformsCollected">
+            <span *ngIf="p.confidenceReason"><strong>{{ p.platform }}:</strong> {{ p.confidenceReason }}</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="csd-card mb-4">
+        <h2 class="csd-section-title">Audit History</h2>
+        <div class="csd-history-cards" *ngIf="history.length; else noHistory">
+          <div class="csd-history-card" *ngFor="let entry of visibleHistory; let i = index">
+            <div class="csd-history-card-chip" [ngClass]="ui.scoreTierClass(entry.collaborationScore)">{{ entry.collaborationScore }}</div>
+            <div class="csd-history-card-meta">
+              <div class="csd-history-card-title">{{ i === 0 ? 'Current Audit' : 'Previous Audit' }}</div>
+              <div class="text-muted small">Generated {{ entry.createdAt | date: 'd MMM y' }}</div>
+            </div>
+            <span
+              class="csd-history-card-delta"
+              *ngIf="entry.scoreDelta != null"
+              [ngClass]="entry.scoreDelta >= 0 ? 'text-success' : 'text-danger'"
+            >
+              {{ entry.scoreDelta >= 0 ? '+' : '' }}{{ entry.scoreDelta }}
+            </span>
+            <span class="badge rounded-pill" [ngClass]="entry.isPaid ? 'bg-warning-subtle text-warning-emphasis' : 'bg-success-subtle text-success-emphasis'">
+              {{ entry.isPaid ? 'Paid' : 'Free' }}
+            </span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary mt-2"
+            *ngIf="history.length > 1"
+            (click)="showFullAuditHistory = !showFullAuditHistory"
+          >
+            {{ showFullAuditHistory ? 'Hide Previous Audits' : 'Show Previous Audits (' + (history.length - 1) + ')' }}
+          </button>
+        </div>
+        <ng-template #noHistory><p class="text-muted small mb-0">No history yet.</p></ng-template>
+      </div>
+
+      <div class="csd-card mb-4">
+        <h2 class="csd-section-title">Payments</h2>
+        <div class="d-flex justify-content-between small mb-2">
+          <span>First Audit</span>
+          <strong>FREE</strong>
+        </div>
+        <div class="d-flex justify-content-between small mb-2" *ngFor="let p of payments">
+          <span>Re-analysis{{ p.archived ? ' (archived)' : '' }}</span>
+          <strong>₹{{ p.amountRupees }} — {{ p.createdAt | date:'d MMM y' }}</strong>
+        </div>
+        <p class="text-muted small mb-0" *ngIf="!payments.length">No paid re-analyses yet.</p>
+        <p class="text-muted small mb-0 mt-2" *ngIf="audit.reanalysisAvailableAt">
+          Next eligible: {{ audit.reanalysisAvailableAt | date:'d MMM y' }}
+        </p>
+      </div>
+    </ng-container>
+  </div>
+</div>

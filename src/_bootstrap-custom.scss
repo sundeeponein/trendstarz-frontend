@@ -33,6 +33,7 @@
 @import "bootstrap/scss/modal";
 @import "bootstrap/scss/list-group";
 @import "bootstrap/scss/spinners";
+@import "bootstrap/scss/accordion";
 
 // 6. Helpers (visually-hidden, etc.)
 @import "bootstrap/scss/helpers";
@@ -42,5 +43,5 @@
 @import "bootstrap/scss/utilities/api";
 
 // NOT imported (unused):
-// _accordion, _breadcrumb, _button-group, _carousel, _nav, _navbar,
+// _breadcrumb, _button-group, _carousel, _nav, _navbar,
 // _offcanvas, _pagination, _placeholders, _popover, _progress, _toasts, _tooltip

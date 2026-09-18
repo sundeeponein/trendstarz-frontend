@@ -1,4 +1,4 @@
-<div class="registration-shell">
+<div class="registration-shell mobile-actions-enabled">
   <div class="registration-wrap">
     <main class="content-panel">
 
@@ -37,16 +37,11 @@
         Please ensure your mobile number is valid and reachable.
       </div>
 
-      <div *ngIf="preApproveActive" class="auto-approve-notice">
-        <div class="auto-approve-notice-line approve">
-          <i class="bi bi-check-circle-fill"></i>
-          Your account will be <strong>activated immediately once you verify your email</strong> — no manual approval wait.
-        </div>
-        <div class="auto-approve-notice-line warn">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          Accounts with unsecured or misleading information may be <strong>removed or deleted</strong> by an admin without notice.
-        </div>
-      </div>
+      <app-registration-notice
+        role="brand"
+        [showActivationNotice]="preApproveActive"
+        [showModerationWarning]="preApproveActive">
+      </app-registration-notice>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <!-- ═══ STEP 1: BRAND INFO ═══ -->
         <section class="form-card" *ngIf="currentStep === 1">
@@ -72,6 +67,14 @@
             </div>
             <button type="button" class="btn btn-outline-secondary btn-sm mt-1" (click)="removeBrandLogo()" *ngIf="brandLogoPreview">Remove</button>
             <div *ngIf="submitted && !brandLogoPreview" class="text-danger mt-1">Brand logo is required.</div>
+            <app-image-crop-modal
+              [open]="cropModalOpen"
+              [imageFile]="cropSourceFile"
+              [aspectRatio]="1"
+              title="Adjust brand logo"
+              (cropped)="onBrandLogoCropped($event)"
+              (closed)="onBrandLogoCropCancelled()"
+            ></app-image-crop-modal>
           </div>
 
           <div class="field-grid">
@@ -100,29 +103,33 @@
               <label>Email <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input formControlName="email" type="email" class="form-control" placeholder="brand@email.com" />
+                <input formControlName="email" type="email" class="form-control" placeholder="brand@email.com" (blur)="onEmailBlur()" />
               </div>
-              <div *ngIf="submitted && registrationForm.get('email')?.invalid && !duplicateEmailError" class="text-danger mt-1">Valid email is required.</div>
-              <div *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</div>
-            </div>
-
-            <div class="field-block">
-              <label>Contact Person Name <span class="text-danger">*</span></label>
-              <input formControlName="contactPersonName" type="text" class="form-control" placeholder="Primary contact person" />
-              <div *ngIf="submitted && registrationForm.get('contactPersonName')?.invalid" class="text-danger mt-1">Contact person name is required.</div>
+              <small class="text-muted mt-1">A verification link will be sent after successful registration.</small>
+              <small *ngIf="submitted && registrationForm.get('email')?.invalid && !duplicateEmailError" class="text-danger mt-1">Valid email is required.</small>
+              <small *ngIf="duplicateEmailError" class="text-danger mt-1">{{ duplicateEmailError }}</small>
             </div>
 
             <div class="field-block">
               <label>Phone <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text">+91</span>
-                <input formControlName="phoneNumber" type="text" class="form-control" placeholder="xxxxxxxxxx" />
+                  <input formControlName="phoneNumber" type="text" class="form-control" placeholder="xxxxxxxxxx" (blur)="onPhoneNumberBlur()" />
               </div>
-              <div *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</div>
-              <div *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</div>
               <small *ngIf="verificationCallNumber" class="text-muted mt-1">
                 You may receive a verification call from our team.
               </small>
+              <small *ngIf="submitted && registrationForm.get('phoneNumber')?.invalid && !duplicatePhoneError" class="text-danger mt-1">Phone number is required.</small>
+              <small *ngIf="duplicatePhoneError" class="text-danger mt-1">{{ duplicatePhoneError }}</small>
+              
+            </div>
+
+
+
+            <div class="field-block">
+              <label>Contact Person Name <span class="text-danger">*</span></label>
+              <input formControlName="contactPersonName" type="text" class="form-control" placeholder="Primary contact person" />
+              <small *ngIf="submitted && registrationForm.get('contactPersonName')?.invalid" class="text-danger mt-1">Contact person name is required.</small>
             </div>
 
             <div class="field-block">
@@ -151,26 +158,23 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Category / Industry <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <div
-                  *ngFor="let cat of categoriesList"
-                  class="chip"
-                  [class.chip--selected]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
-                  (click)="toggleChip('categories', cat._id)"
-                  tabindex="0"
-                  (keydown.enter)="toggleChip('categories', cat._id)"
-                  (keydown.space)="toggleChip('categories', cat._id)"
-                  [attr.aria-pressed]="(registrationForm.get('categories')?.value || []).includes(cat._id)"
-                  role="button"
-                >{{ cat.name }}</div>
-              </div>
+              <app-chip-selection-group
+                label="Category / Industry"
+                [required]="true"
+                [options]="categoriesList"
+                [selected]="registrationForm.get('categories')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                [max]="maxCategories"
+                (selectedChange)="setChipValues('categories', $event)">
+              </app-chip-selection-group>
               <div *ngIf="submitted && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
             <div class="field-block full-width">
-              <label>Brand Description</label>
-              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell influencers about your brand..."></textarea>
+              <label>Brand Description <span class="text-danger">*</span></label>
+              <textarea formControlName="description" class="form-control" rows="3" placeholder="Tell about your brand..."></textarea>
+              <div *ngIf="submitted && registrationForm.get('description')?.invalid" class="text-danger mt-1">Brand description is required.</div>
             </div>
 
             <div class="field-block">
@@ -206,7 +210,10 @@
           <div *ngIf="registrationError && currentStep === 1" class="text-danger fw-bold mt-2">{{ registrationError }}</div>
 
           <div class="actions-row">
-            <button type="button" class="btn btn-primary" (click)="nextStep()">Continue →</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="isNextStepLoading">
+              <span *ngIf="isNextStepLoading"><span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Checking...</span>
+              <span *ngIf="!isNextStepLoading">Continue →</span>
+            </button>
           </div>
         </section>
 
@@ -235,20 +242,15 @@
             </div>
 
             <div class="field-block full-width">
-              <label>Languages <span class="text-danger">*</span></label>
-              <div class="chip-list">
-                <div
-                  *ngFor="let lang of languagesList"
-                  class="chip"
-                  [class.chip--selected]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
-                  (click)="toggleChip('languages', lang._id)"
-                  tabindex="0"
-                  (keydown.enter)="toggleChip('languages', lang._id)"
-                  (keydown.space)="toggleChip('languages', lang._id)"
-                  [attr.aria-pressed]="(registrationForm.get('languages')?.value || []).includes(lang._id)"
-                  role="button"
-                >{{ lang.name }}</div>
-              </div>
+              <app-chip-selection-group
+                label="Languages"
+                [required]="true"
+                [options]="languagesList"
+                [selected]="registrationForm.get('languages')?.value || []"
+                valueKey="_id"
+                labelKey="name"
+                (selectedChange)="setChipValues('languages', $event)">
+              </app-chip-selection-group>
               <div *ngIf="(step2Attempted || registrationForm.get('languages')?.touched) && registrationForm.get('languages')?.invalid" class="text-danger mt-1">Please select at least one language.</div>
             </div>
 
@@ -260,25 +262,9 @@
             
           </div>
 
-          <!-- Product Images -->
-          <div class="social-media-section">
-            <h3>Product Images</h3>
-            <div class="subtitle">Upload product visuals for collaborations.</div>
-            <div class="image-grid" *ngIf="productImagesPreview.length">
-              <div class="image-card" *ngFor="let img of productImagesPreview; let i = index">
-                <img *ngIf="img" [src]="img" alt="Product image preview" class="preview-image" />
-                <input type="file" accept="image/*" (change)="onProductImageFileChange($event, i)" class="form-control mt-1" />
-                <button type="button" class="btn btn-outline-secondary btn-sm mt-1" (click)="removeProductImage(i)">Remove</button>
-              </div>
-            </div>
-            <button type="button" class="add-social-btn mt-2" (click)="addProductImage()" [disabled]="!canAddProductImage()">+ Add Product Image</button>
-            <div *ngIf="!isPremiumPlan()" class="text-muted mt-1" style="font-size:0.82rem">Free users can add one product image. Upgrade to premium for multiple.</div>
-            <div *ngIf="step2Attempted && !hasAtLeastOneProductImage()" class="text-danger mt-1">At least one company/product image is required.</div>
-          </div>
-
           <!-- Social Media — optional, for brand trust -->
           <div class="social-media-section mt-3">
-            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — helps build trust with influencers)</span></h3>
+            <h3>Social Media <span class="text-muted" style="font-size:0.82rem;font-weight:400;">(optional — Adding social links helps trust your brand profile.)</span></h3>
             <div class="subtitle">Add your social handles so influencers can verify your brand.</div>
             <div class="platform-cards">
               <div *ngFor="let platform of socialMediaList" class="platform-card" [class.selected]="isPlatformSelected(platform)" (click)="togglePlatform(platform)">
@@ -291,12 +277,12 @@
               <div class="platform-tab-strip">
                 <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"
                   [class.platform-tab--active]="activePlatformTab === platform._id" (click)="activePlatformTab = platform._id">
-                  <i [class]="platform.icon"></i> {{ platform.name }}
+                  <i [class]="platform.icon"></i> <span>{{ platform.name }}</span>
                 </button>
                 <div class="platform-tab-spacer"></div>
                 <button type="button" class="tab-remove" *ngIf="activePlatformTab"
                   (click)="removePlatformCard(getPlatformById(activePlatformTab))" title="Remove platform">
-                  <i class="bi bi-x-lg"></i> Remove
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
 
@@ -311,9 +297,11 @@
                   <div class="platform-details-body">
                     <div class="row g-2">
                       <div class="col">
-                        <label>{{ platform.handleLabel || 'Handle' }}</label>
+                        <label>{{ platform.name }} Username</label>
                         <input [(ngModel)]="platformForms[platform._id].handle" [ngModelOptions]="{standalone: true}"
-                          type="text" class="form-control" placeholder="yourhandle" (blur)="stripAtSign(platform._id)" />
+                          type="text" class="form-control" [placeholder]="getSocialHandleExample(platform.name)" (blur)="stripAtSign(platform._id)" />
+                        <small class="text-muted d-block mt-1">Enter only your username, not full profile URL. Example: {{ getSocialHandleExample(platform.name) }}</small>
+                        <div *ngIf="submitted && getSocialHandleError(platform)" class="text-danger mt-1">{{ getSocialHandleError(platform) }}</div>
                         <a *ngIf="platformForms[platform._id].handle && getProfileUrl(platform.name, platformForms[platform._id].handle)"
                           [href]="getProfileUrl(platform.name, platformForms[platform._id].handle)"
                           target="_blank" rel="noopener noreferrer" class="verify-profile-link">
@@ -326,6 +314,7 @@
                           <option value="" disabled>Select tier</option>
                           <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
+                        <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
                       </div>
                     </div>
                   </div>
@@ -394,25 +383,36 @@
           </div>
 
           <div class="field-grid">
-            <div class="field-block full-width">
-              <label>Starting Price</label>
-              <div class="input-group">
-                <span class="input-group-text">₹</span>
-                <input formControlName="promotionalPrice" type="number" min="0" required class="form-control" placeholder="Enter your starting price" />
+            <div class="field-block full-width payout-block" formGroupName="payout">
+              <h3 class="payout-heading">
+                <i class="bi bi-bank2"></i>
+                Payment details
+                <small>For refunds or campaign payment support. You can also add this later in Edit Profile.</small>
+              </h3>
+              <div class="field-grid">
+                <div class="field-block">
+                  <label>UPI ID</label>
+                  <input formControlName="upiId" type="text" class="form-control" placeholder="e.g. brand@upi" />
+                </div>
+                <div class="field-block">
+                  <label>Mobile (GPay / PhonePe)</label>
+                  <input formControlName="mobile" type="tel" class="form-control" placeholder="10-digit mobile number" inputmode="tel" maxlength="15" />
+                </div>
+                <div class="field-block full-width">
+                  <label>Account holder name</label>
+                  <input formControlName="accountHolderName" type="text" class="form-control" placeholder="Name on UPI / bank account" />
+                </div>
               </div>
-              <div *ngIf="submitted && registrationForm.get('promotionalPrice')?.invalid" class="text-danger mt-1">
-                Starting price is required.
-              </div>
-              <small class="text-muted">Use this as your baseline campaign budget. Influencers can respond with proposals.</small>
+              <p class="payout-hint">Optional now. For now, payment support uses UPI.</p>
             </div>
 
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">
-                Contact details are shared only with influencers in campaign flow after acceptance.
-                Email is shown to influencers only when email is verified. Call/WhatsApp are shown to influencers only when mobile is verified.
+                Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
+                Email is shown only when email is verified. Call/WhatsApp are shown only when mobile is verified.
                 <br>
-                <span style="color: #dc2626; font-weight: 500;">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
+                <span class="text-warning">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>
               </div>
               <div class="contact-cards">
                 <label class="contact-card" [class.selected]="registrationForm.get('contact.whatsapp')?.value">
@@ -435,6 +435,25 @@
             </div>
           </div>
 
+          <div class="field-block full-width mt-4">
+            <app-profile-visibility-selector
+              [value]="registrationForm.get('profileVisibility')?.value"
+              (valueChange)="registrationForm.get('profileVisibility')?.setValue($event)">
+            </app-profile-visibility-selector>
+
+            <app-homepage-feature-toggle
+              class="mt-3 d-block"
+              [checked]="registrationForm.get('featuredInMarketing')?.value"
+              [disabled]="registrationForm.get('profileVisibility')?.value !== 'PUBLIC'"
+              [isPremium]="registrationForm.get('paymentOption')?.value === 'premium'"
+              [isPublicProfile]="registrationForm.get('profileVisibility')?.value === 'PUBLIC'"
+              (checkedChange)="registrationForm.get('featuredInMarketing')?.setValue($event)">
+            </app-homepage-feature-toggle>
+            <p class="form-text mt-1" *ngIf="registrationForm.get('paymentOption')?.value === 'premium' && registrationForm.get('profileVisibility')?.value !== 'PUBLIC'" style="font-size:0.82em;">
+              Only approved, verified, and eligible profiles may be featured. Homepage Hero Feature is only available when profile visibility is Public.
+            </p>
+          </div>
+
           <!-- Terms text -->
           <div class="brand-terms-notice">
             🔒 By registering, you agree to our Terms of Service. Payments are secured by TrendStarz escrow.
@@ -442,13 +461,28 @@
 
           <div *ngIf="registrationError" class="text-danger fw-bold my-3">{{ registrationError }}</div>
 
+          <p class="form-text mb-2" style="font-size:0.85em;">
+            Complete your email verification and mobile verification to activate your profile and become eligible for brand campaign invites.
+          </p>
+
           <div class="actions-row dual">
             <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">← Back</button>
-            <button type="submit" class="btn btn-success fw-bold" [disabled]="isSubmitting">
-              {{ isSubmitting ? 'Registering...' : '🚀 Launch Your Brand' }}
+            <button type="submit" class="btn btn-success fw-bold" [disabled]="!brandLogoFile || isSubmitting">
+              {{ isSubmitting ? 'Registering...' : 'Launch Your Brand' }}
             </button>
           </div>
         </section>
+
+        <app-mobile-bottom-actions ariaLabel="Brand registration actions">
+          <button *ngIf="currentStep > 1" type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()"><i class="bi bi-arrow-left"></i><span>Back</span></button>
+          <button *ngIf="currentStep === 1" type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="isNextStepLoading">
+            <i class="bi bi-arrow-right"></i><span>{{ isNextStepLoading ? 'Checking...' : 'Next' }}</span>
+          </button>
+          <button *ngIf="currentStep === 2" type="button" class="btn btn-primary" (click)="nextStep()"><i class="bi bi-arrow-right"></i><span>Next</span></button>
+          <button *ngIf="currentStep === 3" type="submit" class="btn btn-success fw-bold" [disabled]="!brandLogoFile || isSubmitting">
+            <i class="bi bi-rocket"></i><span>{{ isSubmitting ? 'Registering...' : 'Register' }}</span>
+          </button>
+        </app-mobile-bottom-actions>
       </form>
     </main>
   </div>
@@ -461,9 +495,19 @@
       <h3 class="reg-success-title">Successfully Registered!</h3>
 
       <!-- Free user message -->
-      <p *ngIf="!isPremiumPlan()" class="reg-success-msg">
-        Your registration is complete. The admin needs to approve your account &mdash; please login after <strong>48 hours</strong>.
+      <p *ngIf="!isPremiumPlan() && localAuthBypassEnabled" class="reg-success-msg">
+        Registration successful.<br>
+        Localhost mode: Firebase email verification was skipped.<br>
+        You can log in with this email and password.
       </p>
+      <div *ngIf="!isPremiumPlan() && !localAuthBypassEnabled" class="reg-success-msg" style="text-align:left;">
+        <p>We've sent a verification link to your email address.</p>
+        <p class="text-muted" style="font-size:0.9em;">Can't find it? Check your Promotions and Spam folders too.</p>
+        <p class="mb-1"><strong>Step 1</strong><br>✅ Verify your email address.</p>
+        <p class="mb-1"><strong>Step 2</strong><br>📞 Complete your mobile verification.</p>
+        <p class="mb-1"><strong>Step 3</strong><br>⏳ Once both are completed, your profile will be reviewed by our team.</p>
+        <p class="text-muted" style="font-size:0.9em;">You'll receive campaign invites after your profile is approved.</p>
+      </div>
 
       <!-- Premium user message -->
       <ng-container *ngIf="isPremiumPlan()">
@@ -486,9 +530,38 @@
           <a class="btn btn-outline-secondary" href="/">Back to Home</a>
         </ng-container>
         <ng-template #freeActions>
-          <button class="btn btn-primary" (click)="closeSuccessModal()">Go to Login</button>
+          <button class="btn btn-primary" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
+            {{ resendingEmailVerification ? 'Sending...' : 'Resend Verification Email' }}
+          </button>
+          <button class="btn btn-outline-secondary" (click)="closeSuccessModal()">Go to Login</button>
           <a class="btn btn-outline-secondary" href="/">Back to Home</a>
         </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="registrationEmailSendFailed" class="reg-success-modal-overlay">
+    <div class="reg-success-modal">
+      <button class="reg-success-close" (click)="closeEmailSendFailedModal()" aria-label="Close">&times;</button>
+      <div class="reg-success-icon" style="background:#f59e0b;">!</div>
+      <h3 class="reg-success-title">Registration Completed</h3>
+      <div class="reg-success-msg" style="text-align:left;">
+        <p>Your account has been created, but we could not send the verification email at this time.</p>
+        <p class="mb-1">Please try the following:</p>
+        <ul>
+          <li>Check your Inbox, Spam, and Promotions folders.</li>
+          <li>Click <strong>Resend Verification Email</strong> below.</li>
+          <li>Contact Support if the issue continues.</li>
+        </ul>
+        <p *ngIf="resendEmailVerificationSuccess" class="text-success mb-0">Verification email sent! Check your inbox.</p>
+        <p *ngIf="resendEmailVerificationError" class="text-danger mb-0">{{ resendEmailVerificationError }}</p>
+      </div>
+      <div class="reg-success-actions">
+        <button class="btn btn-primary" (click)="resendEmailVerification()" [disabled]="resendingEmailVerification">
+          {{ resendingEmailVerification ? 'Sending...' : 'Resend Verification Email' }}
+        </button>
+        <button class="btn btn-outline-secondary" (click)="closeEmailSendFailedModal()">Go to Login</button>
+        <a class="btn btn-outline-secondary" href="mailto:support@trendstarz.in">Contact Support</a>
       </div>
     </div>
   </div>

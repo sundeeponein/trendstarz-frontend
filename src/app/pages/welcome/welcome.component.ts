@@ -1,48 +1,154 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
-import { Router, NavigationEnd } from '@angular/router';
-import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
+import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../shared/components/faq-accordion/faq-accordion.component';
 import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { HeroSliderBannerComponent, HeroSliderBannerSlide } from '../../shared/hero-slider-banner/hero-slider-banner.component';
+import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
+import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
+import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
+import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
+import { PlatformStatsStripComponent, PlatformStatItem } from '../../shared/components/platform-stats-strip/platform-stats-strip.component';
+import { TrustBadgesStripComponent } from '../../shared/components/trust-badges-strip/trust-badges-strip.component';
+import { formatBrandsStat, formatPhotographersStat, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
+import { ScorePreviewComponent } from '../../shared/score-preview/score-preview.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent],
+  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, PhotographerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent, PlatformStatsStripComponent, TrustBadgesStripComponent, ScorePreviewComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
-  // Welcome brand cards: keep minimal by default (logo, name, verified, category).
-  // Flip to true when campaign meta row is needed again.
+  readonly regConfirm = inject(RegistrationConfirmModalService);
+
   readonly showBrandCampaignMetaOnWelcome = false;
 
   readonly builtForAudiencesComponent = BuiltForAudiencesComponent;
   readonly faqAccordionComponent = FaqAccordionComponent;
+  readonly heroSliderBannerComponent = HeroSliderBannerComponent;
+
+  private static readonly DEFAULT_HERO_IMAGE = 'assets/banner-trendstarz-1600.jpg';
+  private static readonly DEFAULT_HERO_ALT = 'TrendStarz hero image';
+
+  get heroImageUrl(): string {
+    return WelcomeComponent.DEFAULT_HERO_IMAGE;
+  }
+
+  get heroImageAlt(): string {
+    return WelcomeComponent.DEFAULT_HERO_ALT;
+  }
+
+  get heroSliderBannerInputs() {
+    return {
+      badge: 'TrendStarz Marketplace',
+      ariaLabel: 'TrendStarz Hero Slides',
+      showTextLink: false,
+      autoplayIntervalMs: 5500,
+      slides: this.heroSliderSlides,
+      onPrimaryClick: (slide: HeroSliderBannerSlide) => this.onHeroSliderPrimaryClick(slide),
+    };
+  }
+
+  // Registration CTA per slide's primaryRoute — mirrors the static
+  // app-hero-banner's (primaryClick)="regConfirm.open(...)" pattern, but
+  // routed through a callback @Input() since NgComponentOutlet can't bind
+  // template (output) listeners.
+  private readonly heroSliderRegistrationRoleByRoute: Record<string, 'brand' | 'influencer' | 'photographer'> = {
+    '/register-brand': 'brand',
+    '/register-influencer': 'influencer',
+    '/register-photographer': 'photographer',
+  };
+
+  private onHeroSliderPrimaryClick(slide: HeroSliderBannerSlide): void {
+    const role = this.heroSliderRegistrationRoleByRoute[slide.primaryRoute];
+    if (!this.isLoggedIn() && role) {
+      this.regConfirm.open(role);
+      return;
+    }
+    if (slide.primaryRoute) this.router.navigateByUrl(slide.primaryRoute);
+  }
+
+  private get heroSliderSlides(): HeroSliderBannerSlide[] {
+    const loggedIn = this.isLoggedIn();
+    return [
+      {
+        heading: 'Launch Campaigns That Convert',
+        highlightText: 'Built for Brands',
+        description: 'Discover verified influencers, run targeted campaigns, and track results — all in one platform.',
+        primaryLabel: loggedIn ? 'Start a Campaign' : 'Register as Brand',
+        primaryRoute: loggedIn ? '/campaigns' : '/register-brand',
+        secondaryLabel: 'Find Creators',
+        secondaryRoute: '/search',
+        imageUrl: WelcomeComponent.DEFAULT_HERO_IMAGE,
+        imageAlt: 'Brands collaborating with influencers on TrendStarz',
+      },
+      {
+        heading: 'Grow Your Influence, Get Paid',
+        highlightText: 'Built for Creators',
+        description: 'Connect with brands actively looking for creators like you and turn your content into income.',
+        primaryLabel: loggedIn ? 'Explore Campaigns' : 'Register as Influencer',
+        primaryRoute: loggedIn ? '/campaigns' : '/register-influencer',
+        secondaryLabel: 'Explore Features',
+        secondaryRoute: '/features',
+        imageUrl: WelcomeComponent.DEFAULT_HERO_IMAGE,
+        imageAlt: 'Influencer creating content for a brand campaign',
+      },
+      {
+        heading: 'Showcase Your Craft to Brands',
+        highlightText: 'Built for Photo & Videographers',
+        description: 'Get discovered by brands and creators who need professional photo and video talent for their campaigns.',
+        primaryLabel: loggedIn ? 'Explore Campaigns' : 'Register as Photographer',
+        primaryRoute: loggedIn ? '/campaigns' : '/register-photographer',
+        secondaryLabel: 'How It Works',
+        secondaryRoute: '/how-it-works',
+        imageUrl: WelcomeComponent.DEFAULT_HERO_IMAGE,
+        imageAlt: 'Photographer showcasing a portfolio to brands',
+      },
+    ];
+  }
   readonly builtForAudiencesInputs = {
-    heading: 'Built For Every Industry',
-    subheading: 'Tailored influencer marketing solutions for your niche.',
+    heading: 'Platform Features',
+    subheading: 'Tools and collaboration solutions built for creators and brands.',
     items: [
-      { icon: 'bi-person', title: 'Fashion Brands', subtitle: 'Apparel & Accessories' },
-      { icon: 'bi-geo-alt', title: 'Restaurants', subtitle: 'Food & Dining' },
-      { icon: 'bi-heart', title: 'Beauty Brands', subtitle: 'Skincare & Makeup' },
-      { icon: 'bi-display', title: 'Tech & Gadgets', subtitle: 'Electronics & Apps' },
-      { icon: 'bi-rocket', title: 'Startups', subtitle: 'Growth & Awareness' },
-      { icon: 'bi-people-fill', title: 'Lifestyle Creators', subtitle: 'Daily Life & Trends' },
-      { icon: 'bi-building', title: 'Local Businesses', subtitle: 'City & Hyperlocal Reach' },
-      { icon: 'bi-chat-left-quote', title: 'Food Bloggers', subtitle: 'Taste & Review Content' },
+      { icon: 'bi-person', title: 'Fashion Brands', subtitle: 'Apparel & Accessories tailored management.', tint: 'purple' },
+      { icon: 'bi-fork-knife', title: 'Restaurants', subtitle: 'Food & Dining visual storytelling.', tint: 'orange' },
+      { icon: 'bi-heart', title: 'Beauty Brands', subtitle: 'Skincare & Makeup brand scaling.', tint: 'blue' },
+      { icon: 'bi-display', title: 'Tech & Gadgets', subtitle: 'Electronics & Apps launch precision.', tint: 'gray' },
+      { icon: 'bi-rocket', title: 'Startups', subtitle: 'Growth & Awareness for new entities.', tint: 'red' },
+      { icon: 'bi-people-fill', title: 'Lifestyle Creators', subtitle: 'Daily Life & Trends connectivity.', tint: 'purple' },
+      { icon: 'bi-building', title: 'Local Businesses', subtitle: 'City & Hyperlocal Reach campaigns.', tint: 'gray' },
+      { icon: 'bi-chat-left-quote', title: 'Food Bloggers', subtitle: 'Taste & Review content excellence.', tint: 'orange' },
     ],
   };
 
   readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
   readonly minPublicBrands = environment.marketplacePublicMinBrands;
+  readonly minPublicPhotographers = environment.marketplacePublicMinPhotographers;
+
+  glanceCounters: TrendstarzGlanceCounter[] = [
+    { label: 'Verified Influencers', value: '108+', emphasis: true },
+    { label: 'Creator Profiles', value: '200+', emphasis: true },
+    { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
+    { label: 'Photographers', value: 'Growing the count', emphasis: false },
+  ];
+
+  statsStripItems: PlatformStatItem[] = [
+    { icon: 'bi-people-fill', value: '100+', label: 'Verified Creators' },
+    { icon: 'bi-briefcase-fill', value: '50+', label: 'Active Brands' },
+    { icon: 'bi-camera-fill', value: '20+', label: 'Photo/VideoGraphers' },
+    { icon: 'bi-patch-check-fill', value: '500+', label: 'Campaigns Created' },
+  ];
 
   readonly placeholderCategories: string[] = [
     'Fashion',
@@ -51,12 +157,6 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     'Travel',
     'Food',
     'Fitness'
-  ];
-
-  readonly successMetrics = [
-    { label: 'Campaign match time', value: '48 hrs' },
-    { label: 'Verified creator quality checks', value: '100%' },
-    { label: 'Avg. campaign completion target', value: '95%' }
   ];
 
   readonly featuredCampaignExamples = [
@@ -80,7 +180,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly homepageFaqs: FaqAccordionItem[] = TRENDSTARZ_FAQ_ITEMS.slice(0, 5);
 
   readonly faqCtaButtons: FaqCtaButton[] = [
-    { label: 'More FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
+    // { label: 'More FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
   ];
 
   get faqAccordionInputs() {
@@ -95,21 +195,49 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   private routerSubscription: any;
+  private marketplaceBootstrapScheduled = false;
+  private marketplaceBootstrapStarted = false;
+
   influencers: any[] = [];
   allInfluencers: any[] = [];
   brands: any[] = [];
+  photographers: any[] = [];
+  platformStats: {
+    totalInfluencers: number;
+    verifiedInfluencers: number;
+    totalPhotographers: number;
+    verifiedPhotographers: number;
+    totalBrands: number;
+    verifiedBrands: number;
+    totalCampaigns: number;
+  } | null = null;
   brandCampaignStatusMap: Record<string, string> = {};
   influencersLoading = false;
   brandsLoading = false;
-  influencersError: string = '';
-  brandsError: string = '';
+  photographersLoading = false;
   selectedCategory: string = '';
   creatorCategories: string[] = [];
 
   private isBrowser: boolean;
 
   get isMarketplaceReadyForPublic(): boolean {
-    return this.brands.length >= this.minPublicBrands && this.allInfluencers.length >= this.minPublicInfluencers;
+    return this.showBrandsSection || this.showInfluencersSection || this.showPhotographersSection;
+  }
+
+  get showBrandsSection(): boolean {
+    return (this.platformStats?.totalBrands || 0) >= this.minPublicBrands && this.brands.length > 0;
+  }
+
+  get showInfluencersSection(): boolean {
+    return (this.platformStats?.totalInfluencers || 0) >= this.minPublicInfluencers && this.allInfluencers.length > 0;
+  }
+
+  get showPhotographersSection(): boolean {
+    return (this.platformStats?.totalPhotographers || 0) >= this.minPublicPhotographers && this.photographers.length > 0;
+  }
+
+  get marketplaceLoading(): boolean {
+    return this.brandsLoading || this.influencersLoading || this.photographersLoading;
   }
 
   get homepageCategories(): string[] {
@@ -128,39 +256,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.isBrowser = isPlatformBrowser(platformId);
   }
   isLoggedIn(): boolean {
-    // Check for token or user in session/localStorage (adjust as per your auth/session logic)
+    if (!this.isBrowser) return false;
     return !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
   }
-
-  getUserType(): string | null {
-    // Adjust as per your session/user storage logic
-    const user = localStorage.getItem('user');
-    if (!user) return null;
-    try {
-      return JSON.parse(user).userType || null;
-    } catch {
-      return null;
-    }
-  }
-
-  handleStartCampaign(): void {
-    if (!this.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    // Redirect all logged-in users to the Campaigns page
-    this.router.navigate(['/campaigns']);
-  }
-
-  handleFindCreators(): void {
-    if (!this.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    // Redirect all logged-in users to the search page
-    this.router.navigate(['/search']);
-  }
-  
 
   ngOnInit(): void {
     this.title.setTitle('Welcome to TrendStarz Marketplace | Connect Influencers & Brands');
@@ -177,16 +275,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
     ]);
     if (!this.isBrowser) return;
-    this.ngZone.run(() => {
-      this.fetchBrands();
-      this.fetchInfluencers();
-    });
+    this.loadPlatformStats();
+    this.scheduleMarketplaceBootstrap();
     this.routerSubscription = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects || event.url;
         if (url === '/welcome' || url === '/' || url.startsWith('/welcome?')) {
-          this.fetchInfluencers();
-          this.fetchBrands();
+          this.scheduleMarketplaceBootstrap();
         }
       }
     });
@@ -197,17 +292,21 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  fetchInfluencers() {
+  /**
+   * Loads all three Welcome Page "Featured" sections in a single call —
+   * eligible-only, weighted-random profiles, identical for every viewer type.
+   */
+  fetchFeaturedProfiles(): void {
     this.influencersLoading = true;
-    this.influencersError = '';
+    this.brandsLoading = true;
+    this.photographersLoading = true;
     this.influencers = [];
-    this.config.getInfluencers().subscribe({
-      next: (data) => {
-        console.debug('WelcomeComponent.fetchInfluencers data', data);
-        const influencerArray = Array.isArray(data)
-          ? data
-          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
-        this.allInfluencers = influencerArray;
+    this.brands = [];
+    this.photographers = [];
+    this.brandCampaignStatusMap = {};
+    this.config.getFeaturedProfiles({ influencerLimit: 8, brandLimit: 4, photographerLimit: 4 }).subscribe({
+      next: (res) => {
+        this.allInfluencers = Array.isArray(res?.influencers) ? res.influencers : [];
 
         // Extract top 5 categories by registered user count (descending)
         const catCounts = new Map<string, number>();
@@ -219,16 +318,92 @@ export class WelcomeComponent implements OnInit, OnDestroy {
           .slice(0, 5)
           .map(([cat]) => cat);
         this.filterByCategory(this.selectedCategory);
+
+        const brandArray = Array.isArray(res?.brands) ? res.brands : [];
+        this.brands = brandArray;
+        if (this.showBrandCampaignMetaOnWelcome) {
+          this.populateWelcomeBrandCampaignStatus(brandArray);
+        }
+
+        this.photographers = Array.isArray(res?.photographers) ? res.photographers : [];
+
         this.influencersLoading = false;
+        this.brandsLoading = false;
+        this.photographersLoading = false;
         this.cd.detectChanges();
       },
       error: (err) => {
-        this.influencersError = 'Could not load influencers.';
         this.influencersLoading = false;
-        console.error('Influencer fetch error:', err);
+        this.brandsLoading = false;
+        this.photographersLoading = false;
+        console.error('Featured profiles fetch error:', err);
         this.cd.detectChanges();
-      }
+      },
     });
+  }
+
+  private loadPlatformStats(): void {
+    this.config.getPlatformStats().subscribe((stats) => {
+      this.platformStats = stats;
+      const hasData = (stats?.totalInfluencers || 0) > 0 || (stats?.totalPhotographers || 0) > 0;
+      if (!hasData) return;
+      const formatCount = (count: number) => (Number.isFinite(count) ? String(count) : '0');
+      const brandsStat = formatBrandsStat(stats);
+      const photographersStat = formatPhotographersStat(stats);
+      this.glanceCounters = [
+        { label: 'Verified Influencers', value: formatCount(stats.verifiedInfluencers), emphasis: true },
+        { label: 'Creator Profiles', value: formatCount(stats.totalInfluencers), emphasis: true },
+        { label: brandsStat.label, value: brandsStat.value, emphasis: true },
+        { label: photographersStat.label, value: photographersStat.value, emphasis: false },
+      ];
+      this.statsStripItems = [
+        { icon: 'bi-people-fill', value: formatMilestoneCount(stats.verifiedInfluencers), label: 'Verified Creators' },
+        { icon: 'bi-briefcase-fill', value: formatMilestoneCount(stats.totalBrands), label: 'Active Brands' },
+        { icon: 'bi-camera-fill', value: formatMilestoneCount(stats.totalPhotographers), label: 'Photo/VideoGraphers' },
+        { icon: 'bi-patch-check-fill', value: formatMilestoneCount(stats.totalCampaigns), label: 'Campaigns Created' },
+      ];
+      this.cd.detectChanges();
+    });
+  }
+
+  private scheduleMarketplaceBootstrap(): void {
+    if (!this.isBrowser || this.marketplaceBootstrapScheduled) {
+      return;
+    }
+
+    this.marketplaceBootstrapScheduled = true;
+    const browserWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+
+    const startBootstrap = () => {
+      if (this.marketplaceBootstrapStarted) {
+        return;
+      }
+
+      this.marketplaceBootstrapStarted = true;
+      this.ngZone.run(() => {
+        this.fetchFeaturedProfiles();
+      });
+    };
+
+    if (browserWindow.requestIdleCallback) {
+      browserWindow.requestIdleCallback(startBootstrap, { timeout: 4000 });
+      return;
+    }
+
+    if (document.readyState === 'complete') {
+      setTimeout(startBootstrap, 0);
+      return;
+    }
+
+    browserWindow.addEventListener(
+      'load',
+      () => {
+        setTimeout(startBootstrap, 0);
+      },
+      { once: true },
+    );
   }
 
   // Utility to slugify brand names for URLs
@@ -245,12 +420,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   viewInfluencerProfile(influencer: any) {
     if (influencer) {
-      let username = influencer.username;
-      if (!username || username.trim() === '') {
-        username = influencer.name || '';
-      }
-      // Always slugify for URL safety
-      const urlUsername = this.slugify(username);
+      // Prefer the stored username as-is — it's already the canonical URL
+      // identifier and may differ from a fresh slugify() of the display name
+      // (customized at registration, disambiguation suffix, etc.). Only
+      // derive a slug from the display name when there's no stored username.
+      const storedUsername = String(influencer.username || '').trim();
+      const urlUsername = storedUsername || this.slugify(influencer.name || '');
       if (urlUsername) {
         this.config.trackInfluencerProfileClick(urlUsername).subscribe({
           next: () => {},
@@ -261,30 +436,17 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  fetchBrands() {
-    this.brandsLoading = true;
-    this.brandsError = '';
-    this.brands = [];
-    this.brandCampaignStatusMap = {};
-    this.config.getBrands().subscribe({
-      next: (data) => {
-        console.debug('WelcomeComponent.fetchBrands data', data);
-        const brandArray = Array.isArray(data)
-          ? data
-          : (data && Array.isArray((data as any).data) ? (data as any).data : []);
-        this.brands = brandArray;
-        if (this.showBrandCampaignMetaOnWelcome) {
-          this.populateWelcomeBrandCampaignStatus(brandArray);
-        }
-        this.brandsLoading = false;        this.cd.detectChanges();
-      },
-      error: (err) => {
-        this.brandsError = 'Could not load brands.';
-        this.brandsLoading = false;
-        console.error('Brand fetch error:', err);
-        this.cd.detectChanges();
-      }
-    });
+
+  viewPhotographerProfile(photographer: any): void {
+    const username = String(photographer?.username || '').trim();
+    const id = String(photographer?._id || '').trim();
+    if (username) {
+      this.router.navigate(['/photographer', username]);
+      return;
+    }
+    if (id) {
+      this.router.navigate(['/photographer', id]);
+    }
   }
 
   private getBrandMapKey(brand: any): string {
@@ -358,14 +520,20 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   viewBrandProfile(brand: any) {
-    if (brand && brand.brandName) {
-      const slug = this.slugify(brand.brandName);
-      this.config.trackBrandProfileClick(slug).subscribe({
-        next: () => {},
-        error: () => {}
-      });
-      this.router.navigate(['/brand', slug]);
-    }
+    if (!brand) return;
+    // Prefer the stored brandUsername as-is — it's already the canonical URL
+    // identifier and may differ from a fresh slugify() of brandName
+    // (customized at registration, disambiguation suffix, apostrophes/
+    // punctuation stripped differently, etc.). Only derive a slug from the
+    // display name when there's no stored brandUsername.
+    const storedUsername = String(brand.brandUsername || '').trim();
+    const slug = storedUsername || this.slugify(brand.brandName || '');
+    if (!slug) return;
+    this.config.trackBrandProfileClick(slug).subscribe({
+      next: () => {},
+      error: () => {}
+    });
+    this.router.navigate(['/brand', slug]);
   }
 
   filterByCategory(category: string) {
@@ -380,13 +548,4 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.cd.detectChanges();
   }
 
-  getTotalFollowers(influencer: any): number {
-    return (influencer.socialMedia || []).reduce((sum: number, sm: any) => sum + (Number(sm.followersCount) || 0), 0);
-  }
-
-  formatFollowers(count: number): string {
-    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
-    return count.toString();
-  }
 }

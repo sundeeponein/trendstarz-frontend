@@ -1,10 +1,9 @@
 
 import { environment } from '../../../environments/environment';
-import imageCompression from 'browser-image-compression';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
-import { ConfigService } from '../../shared/config.service';
-import { PlansService, Plan } from '../../shared/plans.service';
+import { ConfigService, ProfileVisibility } from '../../shared/config.service';
+import { PlansService, Plan, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { map, first, catchError } from 'rxjs/operators';
 import { of, forkJoin, firstValueFrom } from 'rxjs';
 import { OtpService } from '../../shared/otp.service';
@@ -17,19 +16,38 @@ import { ImageGuidelinesService } from '../../shared/components/image-guidelines
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import { TIER_DESC_MAP } from '../../shared/tiers.constants';
 import { ToastService } from '../../shared/toast/toast.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../../shared/social-handle.util';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { atLeastOneContactRequired } from '../brand-registration/brand-registration.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { SessionService } from '../../core/session.service';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
 export class BrandProfileComponent implements OnInit {
   premiumMonthlyPrice = 999;
   commissionAccessTags: string[] = [];
+  platformCommissionPercent: number = 0;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
 
   private extractCommissionAccessTags(tags: unknown): string[] {
     const all = Array.isArray(tags) ? tags : [];
@@ -47,15 +65,9 @@ export class BrandProfileComponent implements OnInit {
   );
 
       
-  toggleChip(field: 'languages' | 'categories', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-    } else {
-      arr.push(id);
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  setChipValues(field: 'languages' | 'categories', values: string[]): void {
+    if (!this.isEditMode) return;
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
   }
 
@@ -79,7 +91,25 @@ export class BrandProfileComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private guidelinesService: ImageGuidelinesService,
     private toast: ToastService,
+    private firebaseAuth: FirebaseAuthService,
+    private profileVerification: ProfileVerificationService,
+    private session: SessionService,
   ) {}
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
 
   private showValidationMessage(message: string): void {
     this.registrationError = message;
@@ -107,10 +137,15 @@ export class BrandProfileComponent implements OnInit {
 
   // Phone/email verification status and error
   phoneVerified: boolean = false;
+  phoneEditRequested: boolean = false;
   verificationCallNumber = '';
 
   emailVerified: boolean = false;
+  emailEditRequested: boolean = false;
   showEmailVerificationPrompt: boolean = false;
+  emailJustChanged: boolean = false;
+  previousVerifiedEmail: string = '';
+  pendingVerificationEmail: string = '';
   phoneVerifyError: string = '';
   emailVerifyError: string = '';
 
@@ -142,6 +177,26 @@ export class BrandProfileComponent implements OnInit {
   verifyingPhoneOtp: boolean = false;
   phoneOtpError: string = '';
   private phoneOtpInterval: any;
+  private firebasePhoneConfirmation: any = null;
+  requestingMobileCallback: boolean = false;
+  mobileCallbackRequested: boolean = false;
+
+  requestMobileCallback(): void {
+    const id = this.session.getUser()?.id;
+    if (!id || this.requestingMobileCallback) return;
+    this.requestingMobileCallback = true;
+    this.configService.requestMobileCallback(id).subscribe({
+      next: () => {
+        this.requestingMobileCallback = false;
+        this.mobileCallbackRequested = true;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.requestingMobileCallback = false;
+        this.cd.detectChanges();
+      },
+    });
+  }
 
   startPhoneOtpTimer() {
     this.phoneOtpTimer = 300;
@@ -157,23 +212,50 @@ export class BrandProfileComponent implements OnInit {
   }
 
   sendPhoneOtp() {
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    this.otpService.sendOtp('phone', phone).subscribe({
-      next: () => { this.phoneVerifyError = ''; },
-      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
-    });
-    this.phoneOtpError = '';
-    this.startPhoneOtpTimer();
+    void this.sendFirebasePhoneOtp();
   }
+
+  private formatFirebasePhone(phone: string): string {
+    const value = String(phone || '').trim();
+    if (value.startsWith('+')) return value;
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10 ? `+91${digits}` : `+${digits}`;
+  }
+
+  private async sendFirebasePhoneOtp(): Promise<void> {
+    try {
+      const phone = this.formatFirebasePhone(this.registrationForm.get('phoneNumber')?.value);
+      this.firebasePhoneConfirmation = await this.firebaseAuth.sendPhoneOtp(phone, 'brand-phone-recaptcha');
+      this.phoneVerifyError = '';
+      this.phoneOtpError = '';
+      this.showPhoneOtp = true;
+      this.startPhoneOtpTimer();
+    } catch (error: any) {
+      this.phoneVerifyError = error?.message || 'Failed to send OTP';
+    }
+  }
+
   confirmPhoneOtp() {
+    void this.confirmFirebasePhoneOtp();
+  }
+
+  private async confirmFirebasePhoneOtp(): Promise<void> {
+    if (!this.firebasePhoneConfirmation) {
+      this.phoneOtpError = 'Please request an OTP first.';
+      return;
+    }
     this.verifyingPhoneOtp = true;
     this.phoneOtpError = '';
-    const phone = this.registrationForm.get('phoneNumber')?.value;
-    const otp = this.phoneOtp.join('');
-    this.otpService.verifyOtp('phone', phone, otp).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
-      error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
-    });
+    try {
+      await this.firebaseAuth.confirmPhoneOtp(this.firebasePhoneConfirmation, this.phoneOtp.join(''));
+      this.phoneVerified = true;
+      this.showPhoneOtp = false;
+      this.phoneVerifyError = '';
+    } catch (error: any) {
+      this.phoneOtpError = error?.message || 'Invalid or expired OTP.';
+    } finally {
+      this.verifyingPhoneOtp = false;
+    }
   }
   sendEmailOtp() {
     const email = this.registrationForm.get('email')?.value;
@@ -205,9 +287,17 @@ export class BrandProfileComponent implements OnInit {
   paymentError = '';
   myPayments: any[] = [];
   latestPendingPayment: any = null;
+
+  // Razorpay payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
+  get latestPendingPaymentAmount(): number {
+    const p = this.latestPendingPayment;
+    if (!p) return 0;
+    return p.paymentMethod === 'razorpay' ? (p.amount || 0) / 100 : (p.amount || 0);
+  }
   registrationSuccess = false;
   registrationError = '';
   submitted = false;
+  saving = false;
   registrationForm!: FormGroup;
   states: any[] = [];
   districts: any[] = [];
@@ -216,7 +306,9 @@ export class BrandProfileComponent implements OnInit {
   protected tierInfo = inject(TierInfoService);
   languagesList: any[] = [];
   categoriesList: any[] = [];
+  readonly maxCategories = 5;
   isPremium = false;
+  planCaps: PlanCapabilities = FREE_CAPABILITIES;
   showChangePasswordModal = false;
 
   // --- Social Media Platform UI ---
@@ -230,38 +322,63 @@ export class BrandProfileComponent implements OnInit {
   productImagesFiles: ({ url: string, public_id: string } | null)[] = [];
   // ...existing code...
 
+  get maxProductImagesAllowed(): number {
+    const capValue = Number(this.plansService.getLimitValue(this.planCaps, 'maxProductImages'));
+    if (Number.isFinite(capValue) && capValue > 0) return capValue;
+    return this.isPremium ? 5 : 1;
+  }
+
+  get hasPremiumPlan(): boolean {
+    return !!this.planCaps?.hasPremium;
+  }
+
   openChangePasswordModal() {
     this.showChangePasswordModal = true;
   }
 
   // Getter for brandLogo FormArray
-  // Handle brand logo file selection, compress, upload, and preview
-  async onBrandLogoFileChange(event: any) {
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private brandLogoInputEl: HTMLInputElement | null = null;
+
+  onBrandLogoFileChange(event: any) {
     if (!this.isEditMode) return;
-    const file: File = event.target.files && event.target.files[0];
+    this.brandLogoInputEl = event.target as HTMLInputElement;
+    const file = this.brandLogoInputEl.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.showValidationMessage('Please select a valid image file.');
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.showValidationMessage(validationError);
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      this.showValidationMessage('Image size must be below 2MB.');
-      return;
-    }
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onBrandLogoCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
+  }
+
+  // Handle brand logo crop confirmation: compress, upload, and preview
+  async onBrandLogoCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.brandLogoInputEl) this.brandLogoInputEl.value = '';
     // Compress image before upload
-    const options = {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 1024,
-      useWebWorker: true
-    };
     try {
-      const compressedFile = await imageCompression(file, options);
+      const compressedFile = await compressImageFile(file, 'profile');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.registrationError = OVERSIZE_MESSAGE;
+        return;
+      }
       // Upload via backend so local/prod handling stays centralized
       this.brandLogoPreview = null;
       this.brandLogoFile = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'brand_logos');
+      formData.append('folder', `brands/${this.session.getUser()?.id}/logo`);
       const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
         body: formData
@@ -293,31 +410,28 @@ export class BrandProfileComponent implements OnInit {
     if (!this.isEditMode) return;
     const file: File = event.target.files && event.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.showValidationMessage('Please select a valid image file.');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      this.showValidationMessage('Image size must be below 2MB.');
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.showValidationMessage(validationError);
       return;
     }
     // Compress image before upload
-    const options = {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 1024,
-      useWebWorker: true
-    };
     try {
-      const compressedFile = await imageCompression(file, options);
+      const compressedFile = await compressImageFile(file, 'gallery');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.showValidationMessage(OVERSIZE_MESSAGE);
+        return;
+      }
       // Upload via backend so local/prod handling stays centralized
       this.productImagesPreview[index] = null;
       this.productImagesFiles[index] = null;
       const formData = new FormData();
       formData.append('file', compressedFile);
-      formData.append('folder', 'brand_product_images');
-      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
+      formData.append('type', 'products');
+      const response = await fetch(`${environment.apiBaseUrl}/auth/upload-authenticated-image`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: { Authorization: `Bearer ${this.session.getToken()}` },
       });
       if (!response.ok) {
         this.registrationError = 'Product image upload failed.';
@@ -354,10 +468,64 @@ export class BrandProfileComponent implements OnInit {
     }
   }
 
+  featuredInMarketing = false;
+  marketingConsentBusy = false;
+  profileVisibility: ProfileVisibility = 'PUBLIC';
+  visibilityBusy = false;
+
+  onFeaturedInMarketingChange(next: boolean): void {
+    const userId = this.session.getUser()?.id;
+    if (this.marketingConsentBusy || !userId) return;
+    this.marketingConsentBusy = true;
+    this.configService.updateMarketingConsent(userId, next).subscribe({
+      next: () => {
+        this.featuredInMarketing = next;
+        this.marketingConsentBusy = false;
+      },
+      error: () => {
+        this.marketingConsentBusy = false;
+      },
+    });
+  }
+
+  onProfileVisibilityChange(next: ProfileVisibility): void {
+    const userId = this.session.getUser()?.id;
+    if (this.visibilityBusy || !userId) return;
+    this.visibilityBusy = true;
+    this.configService.updateProfileVisibility(userId, next).subscribe({
+      next: () => {
+        this.profileVisibility = next;
+        if (next !== 'PUBLIC') this.featuredInMarketing = false;
+        this.visibilityBusy = false;
+      },
+      error: () => {
+        this.visibilityBusy = false;
+      },
+    });
+  }
+
   ngOnInit() {
+    this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
+    this.plansService.getMyCapabilities().subscribe((caps) => {
+      this.planCaps = caps;
+      this.isPremium = !!caps?.hasPremium;
+      this.cd.detectChanges();
+    });
+    const userId = this.session.getUser()?.id;
+    if (userId) {
+      this.configService.getMarketingConsent(userId).subscribe((res) => {
+        this.featuredInMarketing = !!res?.featuredInMarketing;
+      });
+      this.configService.getProfileVisibility(userId).subscribe((res) => {
+        this.profileVisibility = res?.profileVisibility || 'PUBLIC';
+      });
+    }
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
+    });
+    this.configService.getAppSettings().subscribe(s => {
+      if (typeof s.brandFeePercent === 'number') this.platformCommissionPercent = s.brandFeePercent;
     });
 
     // ngOnInit called
@@ -384,9 +552,8 @@ export class BrandProfileComponent implements OnInit {
       website: [''],
       foundedYear: [''],
       companySize: [''],
-      promotionalPrice: [500, [Validators.min(0)]],
       googleMapAddress: [''],
-      description: [''],
+      description: ['', Validators.required],
       brandLogo: this.fb.array([]),
       products: this.fb.array([]),
       productImages: this.fb.array([]),
@@ -394,7 +561,7 @@ export class BrandProfileComponent implements OnInit {
         whatsapp: [false],
         email: [false],
         call: [false]
-      }),
+      }, { validators: [atLeastOneContactRequired] }),
       payout: this.fb.group({
         upiId: [''],
         mobile: [''],
@@ -496,7 +663,6 @@ export class BrandProfileComponent implements OnInit {
             website: profile.website || '',
             foundedYear: profile.foundedYear || '',
             companySize: profile.companySize || '',
-            promotionalPrice: Number(profile.promotionalPrice ?? 500),
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
             description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false },
@@ -557,7 +723,9 @@ export class BrandProfileComponent implements OnInit {
           // Load payment status
           this.configService.getMyPayments(5).subscribe(payments => {
             this.myPayments = payments;
-            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending') || null;
+            // Razorpay is auto-verified via webhook, never reviewed by an admin — a 'pending'
+            // razorpay record only means checkout was abandoned/cancelled, not awaiting review.
+            this.latestPendingPayment = payments.find((p: any) => p.status === 'pending' && p.paymentMethod !== 'razorpay') || null;
           });
           this.registrationForm.disable({ emitEvent: false });
           this.refreshStepCompletion();
@@ -640,8 +808,11 @@ export class BrandProfileComponent implements OnInit {
   }
 
   private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
-    if (plan?.discountLabel) return plan.discountLabel;
-    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
     const hasTrialOffer = Array.isArray(plan?.offers)
       && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
     return hasTrialOffer ? 'Early Access Offer' : '';
@@ -674,30 +845,19 @@ export class BrandProfileComponent implements OnInit {
     };
   }
 
-  // Helper to map category ID to name safely for template
-      getCategoryName(catId: string): string {
-        if (!this.categoriesList) return catId;
-        const found = this.categoriesList.find((c: any) => c._id === catId);
-        return found ? found.name : catId;
-      }
-
       // Helper to map district ID to name safely for template
       getDistrictName(districtId: string): string {
         if (!this.districts) return districtId;
         const found = this.districts.find((d: any) => d._id === districtId);
         return found ? found.name : districtId;
       }
-    // Helper to map language ID to name safely for template
-    getLanguageName(langId: string): string {
-      if (!this.languagesList) return langId;
-      const found = this.languagesList.find((l: any) => l._id === langId);
-      return found ? found.name : langId;
-    }
 
   enableEdit(): void {
     this.isEditMode = true;
     this.registrationForm.enable({ emitEvent: false });
+    this.emailEditRequested = !this.emailVerified;
     this.refreshStepCompletion();
+    this.cd.detectChanges();
     this.ensureDistrictsForCurrentState();
   // Password fields are disabled and removed from the form
   }
@@ -717,6 +877,7 @@ export class BrandProfileComponent implements OnInit {
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.emailEditRequested = false;
     if (this.originalFormValue) {
       this.registrationForm.reset(this.originalFormValue, { emitEvent: false });
     }
@@ -823,7 +984,7 @@ export class BrandProfileComponent implements OnInit {
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !!this.getSocialHandleError(p) || !(pf.tier || '').trim();
     });
   }
 
@@ -847,22 +1008,23 @@ export class BrandProfileComponent implements OnInit {
   }
 
   getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
+    return buildSocialProfileUrl(platformName, handle);
   }
 
   stripAtSign(platformId: string) {
     const pf = this.platformForms[platformId];
     if (!pf) return;
-    pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
+    pf.handle = normalizeSocialHandle(pf.handle, this.getPlatformById(platformId)?.name || '');
+  }
+
+  getSocialHandleExample(platformName: string): string {
+    return socialHandleExample(platformName);
+  }
+
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
   }
 
   get productImagesFormArray(): FormArray {
@@ -870,8 +1032,7 @@ export class BrandProfileComponent implements OnInit {
   }
 
   addProductImage() {
-    const maxImages = this.isPremium ? 5 : 1;
-    if (this.productImagesFormArray.length < maxImages) {
+    if (this.productImagesFormArray.length < this.maxProductImagesAllowed) {
       this.productImagesFormArray.push(this.fb.control('', Validators.required));
     }
   }
@@ -897,17 +1058,17 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('brandUsername')?.valid &&
         this.registrationForm.get('email')?.valid &&
         this.registrationForm.get('phoneNumber')?.valid &&
+        this.registrationForm.get('categories')?.valid &&
+        this.registrationForm.get('description')?.valid &&
         this.hasBrandLogo()
       );
     }
 
     if (step === 2) {
       return !!(
-        this.registrationForm.get('paymentOption')?.valid &&
         this.registrationForm.get('location.state')?.valid &&
         this.registrationForm.get('location.district')?.valid &&
         this.registrationForm.get('languages')?.valid &&
-        this.registrationForm.get('categories')?.valid &&
         true /* social media optional */
       );
     }
@@ -952,7 +1113,7 @@ export class BrandProfileComponent implements OnInit {
     this.scrollToTop();
   }
 
-  private scrollToTop(): void {
+  scrollToTop(): void {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -962,14 +1123,14 @@ export class BrandProfileComponent implements OnInit {
     this.submitted = true;
 
     if (this.currentStep === 1) {
-      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber'];
+      const fields = ['brandName', 'contactPersonName', 'brandUsername', 'email', 'phoneNumber', 'categories', 'description'];
       fields.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return fields.every((path) => this.registrationForm.get(path)?.valid) && this.hasBrandLogo();
     }
 
     if (this.currentStep === 2) {
       this.step2Attempted = true;
-      const required = ['paymentOption', 'location.state', 'location.district', 'languages', 'categories'];
+      const required = ['location.state', 'location.district', 'languages'];
       required.forEach((path) => this.registrationForm.get(path)?.markAsTouched());
       return required.every((path) => this.registrationForm.get(path)?.valid);
     }
@@ -1009,11 +1170,23 @@ export class BrandProfileComponent implements OnInit {
   }
 
   async onSubmit() {
+    if (this.saving) {
+      return;
+    }
+
     this.submitted = true;
+    this.cd.detectChanges();
     if (!this.isEditMode || this.registrationForm.invalid || !this.hasBrandLogo()) {
       if (!this.hasBrandLogo()) {
         this.registrationError = 'Brand logo is required.';
+      } else if (this.registrationForm.invalid) {
+        this.registrationForm.markAllAsTouched();
+        this.registrationError = 'Please complete all required fields before saving.';
+        if (!this.computeStepComplete(1)) this.currentStep = 1;
+        else if (!this.computeStepComplete(2)) this.currentStep = 2;
+        else if (!this.computeStepComplete(3)) this.currentStep = 3;
       }
+      this.cd.detectChanges();
       return;
     }
     if (!this.arePlatformsValid()) {
@@ -1023,7 +1196,16 @@ export class BrandProfileComponent implements OnInit {
     }
     this.registrationError = '';
     this.registrationSuccess = false;
+    this.saving = true;
+    this.cd.detectChanges();
     const raw = this.registrationForm.getRawValue();
+    const previousEmail = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    const currentEmail = String(raw?.email || '').trim().toLowerCase();
+    const emailChanged = !!currentEmail && previousEmail !== currentEmail;
+    const previousEmailWasVerified = this.emailVerified;
+    const previousPhone = String(this.originalFormValue?.phoneNumber || '').trim();
+    const currentPhone = String(raw?.phoneNumber || '').trim();
+    const phoneChanged = !!currentPhone && previousPhone !== currentPhone;
     // Map state ID to name
     const stateObj = this.states.find(s => s._id === raw.location.state);
     let districtObj = this.districts.find(d => d._id === raw.location.district);
@@ -1054,7 +1236,7 @@ export class BrandProfileComponent implements OnInit {
       const pf = this.platformForms[platform._id];
       return {
         platform: platform.name,
-        handle: pf.handle,
+        handle: normalizeSocialHandle(pf.handle, platform.name),
         followersCount: Number(pf.followersCount) || 0,
         tier: pf.tier,
         contentTypes: Object.keys(pf.contentTypes)
@@ -1074,7 +1256,6 @@ export class BrandProfileComponent implements OnInit {
     const payload: any = {
   ...raw,
   foundedYear: raw.foundedYear ? Number(raw.foundedYear) : undefined,
-  promotionalPrice: Number(raw.promotionalPrice) || 0,
   location,
   languages: languageNames,
   categories: categoryNames,
@@ -1093,9 +1274,9 @@ export class BrandProfileComponent implements OnInit {
     delete payload.premiumDuration;
     delete payload.productImages;
     delete payload.googleMapAddress;
-    const token = this.getToken();
     this.configService.updateBrandProfile(payload).subscribe({
-      next: () => {
+      next: (res: any) => {
+        this.saving = false;
         this.registrationSuccess = true;
         this.isEditMode = false;
         this.registrationForm.disable({ emitEvent: false });
@@ -1103,6 +1284,29 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.get('confirmPassword')?.disable();
         this.originalFormValue = this.registrationForm.getRawValue();
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
+        this.cd.detectChanges();
+        const serverUser = res?.user;
+        if (emailChanged) {
+          // Server may have auto-verified the new email (local dev bypass) —
+          // trust its returned state instead of assuming it's pending.
+          this.emailVerified = !!serverUser?.isEmailVerified;
+          this.emailEditRequested = true;
+          if (!this.emailVerified) {
+            this.showEmailVerificationPrompt = true;
+            this.emailJustChanged = true;
+            this.previousVerifiedEmail = previousEmailWasVerified ? previousEmail : '';
+            this.pendingVerificationEmail = currentEmail;
+            this.resendEmailVerification();
+          }
+        } else {
+          this.emailEditRequested = false;
+        }
+        if (phoneChanged) {
+          this.phoneVerified = false;
+          this.phoneEditRequested = true;
+        } else {
+          this.phoneEditRequested = false;
+        }
         this.submitted = false;
         // Ensure districts loaded for the saved state so the view shows district name
         const stateVal = this.registrationForm.get('location.state')?.value;
@@ -1114,10 +1318,38 @@ export class BrandProfileComponent implements OnInit {
         }
       },
       error: err => {
+        this.saving = false;
         this.registrationError = 'Update failed. Please try again.';
         this.submitted = false;
+        this.cd.detectChanges();
       }
     });
   }
-  
+
+  requestEmailEdit(): void {
+    if (!this.isEditMode) return;
+    if (
+      this.emailVerified &&
+      !window.confirm(
+        'Your email is currently verified. Changing it will mark it as unverified, and some features may be restricted until you verify the new address. Continue?',
+      )
+    ) {
+      return;
+    }
+    this.emailEditRequested = true;
+  }
+
+  requestPhoneEdit(): void {
+    if (!this.isEditMode) return;
+    if (
+      this.phoneVerified &&
+      !window.confirm(
+        'Your mobile number is currently verified. Changing it will mark it as unverified, and you will need to re-verify the new number before some features are available again. Continue?',
+      )
+    ) {
+      return;
+    }
+    this.phoneEditRequested = true;
+  }
+
 }

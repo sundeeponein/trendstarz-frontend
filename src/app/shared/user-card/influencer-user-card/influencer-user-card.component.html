@@ -1,44 +1,42 @@
-<div class="inf-card" [class.inf-card--selected]="selected" (click)="viewProfileClick.emit()">
+<div
+  class="inf-card"
+  [class.inf-card--locked]="profileViewDisabled"
+  [attr.aria-disabled]="profileViewDisabled"
+  [title]="profileViewDisabled ? 'Upgrade to Pro to open this profile' : null"
+  (click)="onViewProfileClick($event)">
   <!-- Image + overlays -->
   <div class="inf-card__img-wrap">
-    <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" />
+    <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" title="{{ name }}" />
 
-    <!-- Selection checkbox (brand mode) -->
-    <button
-      *ngIf="selectable"
-      class="inf-card__select-btn"
-      [class.inf-card__select-btn--checked]="selected"
-      (click)="toggleSelect.emit(); $event.stopPropagation()"
-      [title]="selected ? 'Deselect' : 'Select'"
-      type="button">
-      <i class="bi" [class.bi-check2]="selected" [class.bi-circle]="!selected"></i>
-    </button>
-
-    <!-- Admin badges on image -->
-    <div class="inf-card__img-tags" *ngIf="displayTags.length">
-      <span
-        *ngFor="let tag of displayTags"
-        class="inf-card__img-tag badge rounded-pill"
-        [ngClass]="tagBadgeClass(tag)">
-        {{ tag }}
+    <!-- Trust badges -->
+    <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || (professionalStatus && visibleCreatorTypes.length)">
+      <ng-container *ngIf="professionalStatus && visibleCreatorTypes.length">
+        <span class="inf-card__img-tag badge rounded-pill badge--creator-type" *ngFor="let type of visibleCreatorTypes">{{ type }}</span>
+      </ng-container>
+      <span class="inf-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
+        <i class="bi bi-star-fill"></i>
+      </span>
+      <span class="inf-card__img-tag badge rounded-pill badge--recommended" *ngIf="trendstarzRecommended" title="TrendStarz Recommended">
+        <i class="bi bi-award-fill"></i>
       </span>
     </div>
   </div>
 
   <!-- Body -->
   <div class="inf-card__body">
-    <!-- Name + verified -->
+    <!-- Name -->
     <div class="inf-card__name">
-      {{ name }}
-      <i class="bi bi-patch-check-fill inf-card__verified" *ngIf="isPremium" title="Verified"></i>
-      <span class="inf-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
+      {{ name }} 
+      <span class="text-success" *ngIf="isTrendstarzVerified" title="Verified" tooltip="Verified">
+        <i class="bi bi-patch-check-fill"></i>
+      </span>
     </div>
 
     <!-- Categories + welcome-only starting price -->
     <div class="inf-card__category-row">
       <div class="inf-card__category">{{ displayCategory }}</div>
-      <div class="inf-card__welcome-price" *ngIf="showWelcomeStartingPrice && promotionalPrice">
-        ₹{{ promotionalPrice | number:'1.0-0' }}
+      <div class="inf-card__welcome-price" *ngIf="showWelcomeStartingPrice && promotionalPrice" title="Automatically calculated from content rates">
+        Starts from ₹{{ promotionalPrice | number:'1.0-0' }}
       </div>
     </div>
 
@@ -48,42 +46,23 @@
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
     </div>
 
-    <!-- Stats row -->
-    <!-- <div class="inf-card__stats">
-      <div class="inf-card__stat">
-        <span class="inf-card__stat-value">{{ primaryTier || '—' }}</span>
-        <span class="inf-card__stat-label">Tier</span>
-      </div>
-      <div class="inf-card__stat">
-        <span class="inf-card__stat-value">{{ socialMedia.length }}</span>
-        <span class="inf-card__stat-label">Platforms</span>
-      </div>
-    </div> -->
-
-    <!-- Platform icons -->
-    <!-- <div class="inf-card__platforms" *ngIf="socialMedia.length > 0">
-      <span class="inf-card__platform-icon" *ngFor="let sm of socialMedia" [title]="sm.platform">
-        <i class="bi {{ platformIcon(sm.platform) }}"></i>
+    <!-- Collaboration Score summary -->
+    <div class="inf-card__score-row" *ngIf="collaborationScore != null">
+      <span class="badge rounded-pill" [ngClass]="collaborationScoreUi.scoreTierClass(collaborationScore)">
+        {{ collaborationScore }}
       </span>
-    </div> -->
-
-    <!--
-    Pricing block intentionally hidden for influencer cards for now.
-    Keep this block commented until we re-enable based on user feedback.
-
-    <div class="inf-card__pricing-row" *ngIf="promotionalPrice">
-      <span class="inf-card__pricing-label">Starting from</span>
-      <div class="inf-card__pricing-bottom">
-        <span class="inf-card__price">₹{{ promotionalPrice | number }}</span>
-        <span class="inf-card__engagement" *ngIf="isProViewer && engagementRate">{{ engagementRate }}%<br><small>engagement</small></span>
-      </div>
+      <span class="badge rounded-pill" *ngIf="campaignReady" [ngClass]="collaborationScoreUi.campaignReadinessClass(campaignReady)">
+        {{ campaignReady }}
+      </span>
+      <span class="inf-card__suggested-price" *ngIf="suggestedPriceRangeLabel">
+        {{ suggestedPriceRangeLabel }}
+      </span>
     </div>
-    -->
 
     <!-- PRO VIEW: Contact-visible badge -->
-    <!-- <div class="inf-card__contact" *ngIf="isProViewer && !contactRestricted">
+    <div class="inf-card__contact" *ngIf="isProViewer && !contactRestricted">
       <i class="bi bi-check-circle-fill inf-card__contact-icon"></i>
       <span>Contact details visible</span>
-    </div> -->
+    </div>
   </div>
 </div>

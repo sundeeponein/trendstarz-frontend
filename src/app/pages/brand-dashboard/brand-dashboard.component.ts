@@ -10,6 +10,17 @@ import { DashboardService } from '../../services/dashboard.service';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService, PlanCapabilities, FREE_CAPABILITIES } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { MonetizationApiService, UsageSummary } from '../../services/monetization-api.service';
+import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
+import {
+  ProfileVerificationDashboard,
+  ProfileVerificationService,
+} from '../../services/profile-verification.service';
+import { ProfileReviewSummaryComponent } from '../../shared/profile-verification/profile-review-summary.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
+import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
+// import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 
 @Component({
   selector: 'app-brand-dashboard',
@@ -17,7 +28,7 @@ import { ToastService } from '../../shared/toast/toast.service';
   styleUrls: ['./brand-dashboard.component.scss'],
   providers: [DashboardService],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule]
+  imports: [CommonModule, FormsModule, RouterModule, UsageSummaryComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, FounderOfferModalComponent]
 })
 
 export class BrandDashboardComponent implements OnInit, OnDestroy {
@@ -49,8 +60,18 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   };
   verificationCallNumber = '';
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
+  showFounderOfferModal = false;
+  private founderOfferAlreadySeen = true;
+  private founderOfferCapsLoaded = false;
+  private showingEligibilityUpgradePrompt = false;
   attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
+  usageSummary: UsageSummary | null = null;
+  profileVerificationDashboard: ProfileVerificationDashboard | null = null;
+  profileVerificationLoading = false;
+  collaborationAudit: CollaborationAudit | null = null;
+  collaborationScoreLoading = false;
+  collaborationScoreReAnalyzing = false;
 
   get firstRegisteredAtDisplay(): string | null {
     const dashboardBrand = this.dashboard?.brand || {};
@@ -70,6 +91,17 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     return dashboardBrand.lastLoginAt || sessionUser.lastLoginAt || null;
   }
 
+  get lastOpenedAtDisplay(): string | null {
+    const dashboardBrand = this.dashboard?.brand || {};
+    const sessionUser: any = this.session.getUser() || {};
+    return dashboardBrand.lastOpenedAt || sessionUser.lastOpenedAt || null;
+  }
+
+  get isMobileVerified(): boolean {
+    const brand = this.dashboard?.brand || {};
+    return !!(brand.isMobileVerified ?? brand.mobileVerified ?? brand.phoneVerified ?? brand.isPhoneVerified);
+  }
+
   private routerSub: Subscription | undefined;
   private userSub: Subscription | undefined;
   constructor(
@@ -78,13 +110,30 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     private session: SessionService,
     private config: ConfigService,
     private plansService: PlansService,
+    private monetizationApi: MonetizationApiService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
+    private profileVerification: ProfileVerificationService,
+    private collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
   ngOnInit(): void {
+        this.loadProfileVerificationDashboard();
+        this.loadCollaborationScore();
         this.plansService.getMyCapabilities().subscribe((caps) => {
           this.planCaps = caps;
+          this.founderOfferCapsLoaded = true;
+          this.maybeShowFounderOfferModal();
+          this.maybeShowUpgradeEligibilityModal();
+        });
+        this.monetizationApi.getMyUsage().subscribe({
+          next: (res) => {
+            this.usageSummary = res?.usage || null;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.usageSummary = null;
+          },
         });
 
         // Ensure user is loaded from storage on direct load/refresh
@@ -112,6 +161,8 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     this.userSub = this.session.user$.subscribe(user => {
       if (user) {
         this.config.getBrandProfileById().subscribe((profile: any) => {
+          this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
+          this.maybeShowFounderOfferModal();
           const merged = { ...user, ...profile };
           const isSame = JSON.stringify(user) === JSON.stringify(merged);
           if (profile && !isSame) {
@@ -131,6 +182,149 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     });
     // Removed router event subscription to prevent infinite reloads
     // Load categories/states for filters (implement as needed)
+  }
+
+  private maybeShowFounderOfferModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    this.showFounderOfferModal = true;
+  }
+
+  onFounderOfferModalClosed(): void {
+    if (this.showingEligibilityUpgradePrompt) {
+      this.markEligibilityUpgradePromptSeen();
+      this.showingEligibilityUpgradePrompt = false;
+    }
+    this.showFounderOfferModal = false;
+  }
+
+  private maybeShowUpgradeEligibilityModal(): void {
+    if (!this.founderOfferCapsLoaded) return;
+    if (this.showFounderOfferModal) return;
+    if (!this.founderOfferAlreadySeen) return;
+    if (this.planCaps?.hasPremium) return;
+    if (!this.hasStarterEligibilityClosed()) return;
+    if (this.hasSeenEligibilityUpgradePrompt()) return;
+
+    this.showingEligibilityUpgradePrompt = true;
+    this.showFounderOfferModal = true;
+  }
+
+  private hasStarterEligibilityClosed(): boolean {
+    const cap = this.starterCampaignEligibilityCap();
+    if (cap <= 0) return false;
+    return this.completedStarterCampaignCountThisMonth() >= cap;
+  }
+
+  private starterCampaignEligibilityCap(): number {
+    const limits = Array.isArray(this.planCaps?.limits) ? this.planCaps.limits : [];
+    const values = ['maxActiveCampaigns', 'maxInvitesPerMonth', 'maxInvitesPerCampaign', 'maxCampaignPosts']
+      .map(key => Number(limits.find((limit: any) => limit?.key === key)?.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+    return values.length ? Math.min(...values) : 1;
+  }
+
+  private completedStarterCampaignCountThisMonth(): number {
+    const completedIds = new Set<string>();
+
+    for (const campaign of this.recentCampaigns) {
+      const status = String(campaign?.status || '').toLowerCase();
+      const completedCount = Number(campaign?.completed || 0);
+      const isClosed = completedCount > 0 || status === 'completed' || status === 'approved';
+      if (!isClosed) continue;
+      if (!this.isInCurrentMonth(campaign?.completedAt || campaign?.updatedAt || campaign?.createdAt)) continue;
+      completedIds.add(String(campaign?._id || campaign?.id || completedIds.size));
+    }
+
+    for (const tx of this.paymentHistory) {
+      if (tx?.payerRole !== 'brand') continue;
+      const stage = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || tx?.workStatus || '').toLowerCase();
+      if (!['completed', 'approved'].includes(stage)) continue;
+      if (!this.isInCurrentMonth(tx?.completedAt || tx?.paidOutAt || tx?.updatedAt || tx?.createdAt)) continue;
+      completedIds.add(String(tx?.inviteId || tx?.campaignId || tx?._id || completedIds.size));
+    }
+
+    return completedIds.size;
+  }
+
+  private isInCurrentMonth(value?: string | Date | null): boolean {
+    if (!value) return false;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return false;
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }
+
+  private eligibilityUpgradePromptKey(): string {
+    const brand = this.dashboard?.brand || this.session.getUser() || {};
+    const id = brand?._id || brand?.id || brand?.email || 'current';
+    return `trendstarz:upgrade-eligibility-prompt:brand:${id}:${this.currentMonthKey()}`;
+  }
+
+  private currentMonthKey(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private hasSeenEligibilityUpgradePrompt(): boolean {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(this.eligibilityUpgradePromptKey()) === '1';
+  }
+
+  private markEligibilityUpgradePromptSeen(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.eligibilityUpgradePromptKey(), '1');
+  }
+
+  private loadProfileVerificationDashboard(): void {
+    this.profileVerificationLoading = true;
+    this.profileVerification.getMyDashboard().subscribe({
+      next: (dashboard) => {
+        this.profileVerificationDashboard = dashboard;
+        this.profileVerificationLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.profileVerificationDashboard = null;
+        this.profileVerificationLoading = false;
+      },
+    });
+  }
+
+  private loadCollaborationScore(): void {
+    const user: any = this.session.getUser() || {};
+    const userId = String(user?._id || user?.id || '');
+    if (!userId) return;
+    this.collaborationScoreLoading = true;
+    this.collaborationScoreApi.getAudit(userId).subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationAudit = null;
+        this.collaborationScoreLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onReAnalyzeCollaborationScore(): void {
+    this.collaborationScoreReAnalyzing = true;
+    this.collaborationScoreApi.runMyAudit().subscribe({
+      next: (audit) => {
+        this.collaborationAudit = audit;
+        this.collaborationScoreReAnalyzing = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collaborationScoreReAnalyzing = false;
+        this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   ngOnDestroy(): void {
@@ -159,6 +353,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.loadPaymentHistory();
         this.loadAttentionCounts();
+        this.maybeShowUpgradeEligibilityModal();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -174,6 +369,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
       next: (rows: any[]) => {
         this.paymentHistory = rows;
         this.recomputePaymentSummary(rows);
+        this.maybeShowUpgradeEligibilityModal();
       },
       error: () => {
         this.paymentHistory = [];

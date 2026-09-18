@@ -1,0 +1,28 @@
+<div class="vf-page">
+  <div class="vf-header">
+    <div>
+      <a class="vf-back" routerLink="/admin/admin-dashboard"><i class="bi bi-chevron-left"></i> Back to dashboard</a>
+      <h2>Verification Funnel</h2>
+      <p class="vf-subtitle">Registration → Campaign-eligible, per stage. Not linked from the admin nav — bookmark this page.</p>
+    </div>
+    <button type="button" class="vf-refresh" (click)="load()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise" [class.spin]="loading"></i> Refresh
+    </button>
+  </div>
+
+  <div class="vf-tabs">
+    <button
+      *ngFor="let tab of tabs"
+      type="button"
+      class="vf-tab"
+      [class.active]="activeTab === tab.key"
+      (click)="setTab(tab.key)"
+    >{{ tab.label }}</button>
+  </div>
+
+  <div class="vf-card">
+    <div *ngIf="loading" class="vf-state">Loading funnel…</div>
+    <div *ngIf="error" class="vf-state vf-state--error">{{ error }}</div>
+    <app-verification-funnel *ngIf="!loading && !error" [stages]="stages"></app-verification-funnel>
+  </div>
+</div>

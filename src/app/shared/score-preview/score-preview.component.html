@@ -1,0 +1,103 @@
+<div class="sp-card">
+  <ng-container *ngIf="!result">
+    <h2 class="sp-card__title">Check your FREE TrendStarZ Collaboration Score</h2>
+    <p class="sp-card__subtitle">Brands don't just look at followers. They look at professional creators.</p>
+
+    <div class="sp-card__platform-tabs" role="tablist" aria-label="Choose a platform to check">
+      <button
+        *ngFor="let p of visiblePlatforms"
+        type="button"
+        class="sp-card__platform-tab"
+        role="tab"
+        [class.sp-card__platform-tab--active]="selectedPlatform === p.id"
+        [attr.aria-selected]="selectedPlatform === p.id"
+        [disabled]="loading"
+        (click)="selectPlatform(p.id)"
+      >
+        <i [class]="p.icon" aria-hidden="true"></i> {{ p.name }}
+      </button>
+    </div>
+
+    <ng-container *ngIf="selectedPlatform === 'youtube'">
+      <form class="sp-card__form" (ngSubmit)="check()">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Paste your YouTube channel URL"
+          [(ngModel)]="youtubeUrl"
+          name="youtubeUrl"
+          [disabled]="loading"
+        />
+        <button type="submit" class="btn btn-primary" [disabled]="loading || !youtubeUrl.trim()">
+          {{ loading ? 'Checking…' : 'Check Your Score' }}
+        </button>
+      </form>
+
+      <div class="sp-card__loading" *ngIf="loading" role="status" aria-live="polite">
+        <div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div>
+        <span>{{ loadingMessage }}</span>
+      </div>
+
+      <p class="sp-card__error text-danger" *ngIf="error && !loading">{{ error }}</p>
+    </ng-container>
+
+    <ng-container *ngIf="selectedPlatform !== 'youtube'">
+      <input
+        type="text"
+        class="form-control"
+        [placeholder]="'Paste your ' + selectedPlatformName + ' username or URL'"
+        disabled
+      />
+      <p class="sp-card__connect-hint">
+        Real scoring for this platform requires connecting your account after you register.
+      </p>
+      <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
+    </ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="result">
+    <div class="sp-card__result">
+      <div class="sp-card__score-circle" role="img" [attr.aria-label]="'Preview score: ' + result.previewScore + ' out of 100'">
+        {{ result.previewScore }}<span aria-hidden="true">/100</span>
+      </div>
+      <div class="sp-card__score-meta">
+        <div class="sp-card__title">TrendStarZ Collaboration Score</div>
+        <p class="sp-card__subtitle">{{ ui.scoreTierLabel(result.previewScore) }}</p>
+      </div>
+    </div>
+
+    <div class="sp-card__unlock">
+      <div class="sp-card__unlock-title">Register FREE to unlock</div>
+      <ul class="sp-card__unlock-list">
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Campaign Ready Status</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Top 3 Improvements</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Save your Score</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Get discovered by Brands</li>
+      </ul>
+      <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
+      <button type="button" class="btn btn-link sp-card__again" (click)="checkAnother()">
+        Check another channel
+      </button>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Registration isn't unified across roles — don't assume Influencer.
+     Influencer/Photographer both need a real Collaboration Score, so both
+     are grouped as equal "Creator" options rather than defaulting away from
+     Photographer. -->
+<ng-template #roleChoice>
+  <div class="sp-card__role-choice">
+    <p class="sp-card__role-heading">Who are you?</p>
+    <div class="sp-card__role-group">
+      <span class="sp-card__role-group-label">Creator</span>
+      <div class="sp-card__role-buttons">
+        <button type="button" class="btn btn-outline-primary" (click)="registerAs('influencer')">Influencer</button>
+        <button type="button" class="btn btn-outline-primary" (click)="registerAs('photographer')">Photographer</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary sp-card__role-brand" (click)="registerAs('brand')">
+      Brand
+    </button>
+  </div>
+</ng-template>

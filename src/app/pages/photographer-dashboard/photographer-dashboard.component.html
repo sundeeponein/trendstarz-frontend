@@ -1,4 +1,10 @@
 <div class="cm-page photographer-dashboard p-4">
+  <app-founder-offer-modal
+    [open]="showFounderOfferModal"
+    role="PHOTOGRAPHER"
+    [registeredAt]="photographer?.firstRegisteredAt || photographer?.createdAt"
+    (closed)="onFounderOfferModalClosed()">
+  </app-founder-offer-modal>
   <div class="dashboard-welcome-bar mb-4">
     <div class="dashboard-welcome-left">
       <h1 class="welcome-title mb-1">Welcome, {{ photographer?.name || 'Photographer' }}</h1>
@@ -7,8 +13,13 @@
     <div class="dashboard-welcome-right account-meta-card" *ngIf="photographer">
       <div><strong>Registered on:</strong> {{ (photographer.firstRegisteredAt || photographer.createdAt) ? ((photographer.firstRegisteredAt || photographer.createdAt) | date:'medium') : '-' }}</div>
       <div><strong>Last Login:</strong> {{ photographer.lastLoginAt ? (photographer.lastLoginAt | date:'medium') : '-' }}</div>
+      <div><strong>Last Opened:</strong> {{ photographer.lastOpenedAt ? (photographer.lastOpenedAt | date:'medium') : '-' }}</div>
+      <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
     </div>
   </div>
+
+  <!-- No-guarantee notice -->
+  <app-registration-notice role="photographer" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
 
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>
@@ -19,7 +30,7 @@
 
   <ng-container *ngIf="!loading && !error && photographer">
     <div class="row mb-4 gx-3">
-      <div class="col-md-4 mb-3 mb-md-0">
+      <div class="col-md-3 mb-3 mb-md-0">
         <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
           <div class="d-flex align-items-start">
             <span class="alert-card-icon me-3"><i class="bi bi-person-badge-fill"></i></span>
@@ -30,24 +41,45 @@
           </div>
           <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Complete profile</a>
           <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+          <app-profile-review-summary
+            [detail]="profileVerificationDashboard"
+            [loading]="profileVerificationLoading"
+            profileRoute="/photographer-profile"
+            [autoOpen]="true"
+          />
         </div>
       </div>
 
-      <div class="col-md-4 mb-3 mb-md-0">
+      <div class="col-md-3 mb-3 mb-md-0">
         <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
           <div class="d-flex align-items-start">
             <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
             <div>
-              <div class="alert-card-title fw-bold">{{ photographer.isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
-              <div class="alert-card-desc">Verified email helps brands trust your profile and increases response rates.</div>
+              <div class="alert-card-title fw-bold">{{ isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
+              <div class="alert-card-desc">{{ isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start receiving brand communication.' }}</div>
             </div>
           </div>
-          <span *ngIf="photographer.isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
-          <span *ngIf="!photographer.isEmailVerified" class="alert-card-link mt-2 fw-bold text-warning">Verify in profile</span>
+          <span *ngIf="isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+          <a *ngIf="!isEmailVerified" class="alert-card-link mt-2 fw-bold" (click)="onVerifyEmail()">Resend verification</a>
         </div>
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="alert-card alert-card--mobile d-flex flex-column justify-content-between h-100">
+          <div class="d-flex align-items-start">
+            <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
+            <div>
+              <div class="alert-card-title fw-bold">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+              <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+              <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+            </div>
+          </div>
+          <span *ngIf="isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+          <a *ngIf="!isMobileVerified" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+        </div>
+      </div>
+
+      <div class="col-md-3">
         <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
           <div class="d-flex align-items-start">
             <span class="alert-card-icon me-3"><i class="bi bi-geo-alt-fill"></i></span>
@@ -60,6 +92,13 @@
         </div>
       </div>
     </div>
+
+    <app-whatsapp-community-card
+      [user]="photographer"
+      variant="strip"
+      [respectSkip]="false"
+      [showSkipAction]="false"
+    ></app-whatsapp-community-card>
 
     <div class="performance-overview mb-4">
       <div class="d-flex align-items-center justify-content-between mb-2">
@@ -107,10 +146,19 @@
     </div>
 
     <div class="section-card mb-4">
+      <app-collaboration-score-summary-widget
+        [audit]="collaborationAudit"
+        [loading]="collaborationScoreLoading"
+        [generating]="collaborationScoreReAnalyzing"
+        (generateScore)="onReAnalyzeCollaborationScore()"
+      />
+    </div>
+
+    <div class="section-card mb-4">
       <div class="section-title d-flex align-items-center mb-3">
         <span class="dot dot--blue me-2"></span>
         Brand Invites
-        <span class="section-count ms-2">{{ brandInvites.length }}</span>
+        <span class="section-count ms-2">{{ pendingBrandInvites.length }}</span>
       </div>
 
       <div *ngIf="brandInvitesLoading" class="text-center py-3">
@@ -118,14 +166,14 @@
         <div class="mt-2 text-muted">Loading invites…</div>
       </div>
 
-      <div *ngIf="!brandInvitesLoading && brandInvites.length === 0" class="section-empty py-4">
+      <div *ngIf="!brandInvitesLoading && pendingBrandInvites.length === 0" class="section-empty py-4">
         <div class="section-empty-icon"><i class="bi bi-envelope-paper"></i></div>
         <div class="section-empty-title">No direct brand invites yet</div>
         <div class="section-empty-desc">When a brand invites you to a campaign, it will appear here.</div>
       </div>
 
-      <div class="brand-campaign-list" *ngIf="!brandInvitesLoading && brandInvites.length > 0">
-        <div class="brand-campaign-card" *ngFor="let inv of brandInvites">
+      <div class="brand-campaign-list" *ngIf="!brandInvitesLoading && pendingBrandInvites.length > 0">
+        <div class="brand-campaign-card" *ngFor="let inv of pendingBrandInvites" (click)="openDetail(inv)" style="cursor:pointer;">
           <div class="d-flex align-items-start justify-content-between gap-2">
             <div>
               <div class="brand-campaign-title">{{ inv.campaignId?.title || 'Campaign invite' }}</div>
@@ -137,12 +185,127 @@
                 {{ formatDate(inv.createdAt) }}
               </div>
             </div>
-            <span class="badge rounded-pill bg-warning text-dark">{{ inv.status || 'pending' | uppercase }}</span>
+            <div class="d-flex flex-column align-items-end gap-1">
+              <span class="badge rounded-pill bg-warning text-dark">{{ inv.status || 'pending' | uppercase }}</span>
+              <button class="btn btn-sm btn-outline-primary py-0 px-2" type="button" (click)="openDetail(inv); $event.stopPropagation()">
+                <i class="bi bi-eye"></i> View &amp; Respond
+              </button>
+            </div>
           </div>
           <div class="brand-campaign-desc" *ngIf="inv.campaignId?.description">
             {{ inv.campaignId.description | slice:0:120 }}{{ inv.campaignId?.description?.length > 120 ? '…' : '' }}
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="section-card mb-4">
+      <div class="section-title d-flex align-items-center mb-3">
+        <span class="dot dot--blue me-2"></span>
+        Active Collaborations
+        <span class="section-count ms-2">{{ activeCollaborations.length }}</span>
+      </div>
+
+      <div *ngIf="!brandInvitesLoading && activeCollaborations.length === 0" class="section-empty py-4">
+        <div class="section-empty-icon"><i class="bi bi-rocket"></i></div>
+        <div class="section-empty-title">No active work</div>
+        <div class="section-empty-desc">Accepted collaborations in progress will appear here.</div>
+      </div>
+
+      <div class="brand-campaign-list" *ngIf="activeCollaborations.length > 0">
+        <div class="brand-campaign-card" *ngFor="let inv of activeCollaborations" (click)="openDetail(inv)" style="cursor:pointer;">
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <div>
+              <div class="brand-campaign-title">{{ inv.campaignId?.title || 'Campaign invite' }}</div>
+              <div class="brand-campaign-meta">
+                <i class="bi bi-building"></i>
+                {{ inv.brandId?.brandName || 'Brand' }}
+                <span class="mx-1">•</span>
+                <i class="bi bi-calendar3"></i>
+                {{ formatDate(inv.createdAt) }}
+              </div>
+            </div>
+            <span class="badge rounded-pill bg-primary text-white">{{ activeCollabBadgeLabel(inv) }}</span>
+          </div>
+          <div class="brand-campaign-desc" *ngIf="inv.campaignId?.description">
+            {{ inv.campaignId.description | slice:0:120 }}{{ inv.campaignId?.description?.length > 120 ? '…' : '' }}
+          </div>
+          <div class="payment-awaited-row mt-2" *ngIf="inv.status === 'accepted' && inv.campaignId?.campaignType === 'paid_collab'">
+            <i class="bi bi-clock-history"></i>
+            <span>Waiting for host confirmation to unlock coordination details.</span>
+          </div>
+          <div class="payment-confirmed-row mt-2" *ngIf="inv.status === 'payment_confirmed'">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>You are ready to work. Begin creating your content.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card mb-4">
+      <div class="section-title d-flex align-items-center mb-3">
+        <span class="dot dot--blue me-2"></span>
+        Earnings / Payments
+        <span class="section-count ms-2">{{ pendingPaymentHistory.length }}</span>
+      </div>
+
+      <div class="invite-summary" *ngIf="pendingPaymentHistory.length">
+        <div>Payout processing: <strong>{{ formatPaise(paymentSummary.pending) }}</strong></div>
+        <div *ngIf="paymentSummary.frozen > 0" class="idb-frozen-note">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ formatPaise(paymentSummary.frozen) }} frozen — dispute under review
+        </div>
+      </div>
+
+      <div class="idb-dispute-alert" *ngFor="let tx of frozenPayouts">
+        <i class="bi bi-shield-exclamation"></i>
+        <div>
+          <strong>Payout frozen</strong> for <em>{{ tx.campaignTitle || 'a campaign' }}</em> —
+          a dispute is under review. Our team will resolve it within 48 hrs.
+          {{ tx.disputeReason ? 'Reason: ' + tx.disputeReason : '' }}
+        </div>
+      </div>
+
+      <div class="table-responsive" *ngIf="pendingPaymentHistory.length">
+        <table class="table table-sm payments-table">
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let tx of pendingPaymentHistory">
+              <td>{{ tx.campaignTitle || '—' }}</td>
+              <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join' }}</td>
+              <td>
+                <span *ngIf="tx.recipientRole === 'photographer'">+{{ formatPaise(tx.recipientPayout) }}</span>
+                <span *ngIf="tx.payerRole === 'photographer'">-{{ formatPaise(tx.payerTotal) }}</span>
+              </td>
+              <td>
+                <span class="idb-status-chip" [ngClass]="paymentFlowStatusClass(tx)">
+                  {{ paymentFlowStatusLabel(tx) }}
+                </span>
+              </td>
+              <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-empty" *ngIf="!pendingPaymentHistory.length">
+        <div class="section-empty-icon"><i class="bi bi-wallet2"></i></div>
+        <div class="section-empty-title">No pending payments</div>
+        <div class="section-empty-desc">You have no earnings awaiting payout right now.</div>
+      </div>
+
+      <div class="txn-see-all">
+        <a routerLink="/transactions" class="txn-see-all__link">
+          <i class="bi bi-arrow-right-circle"></i> View all transactions &amp; earnings
+        </a>
       </div>
     </div>
 
@@ -195,30 +358,6 @@
       </div>
     </div>
 
-    <div class="section-card mb-4 profile-traffic-card">
-      <div class="section-title d-flex align-items-center mb-2">
-        <span class="dot dot--purple me-2"></span>
-        {{ trafficCardTitle }}
-        <span class="section-count ms-2">Last 30 days</span>
-      </div>
-
-      <div class="profile-traffic-grid">
-        <div class="traffic-stat-box">
-          <div class="traffic-stat-label">Impressions</div>
-          <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
-        </div>
-        <div class="traffic-stat-box">
-          <div class="traffic-stat-label">Clicks</div>
-          <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
-        </div>
-        <div class="traffic-stat-meta">
-          <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ formatDate(profileTraffic.lastImpressionAt) }}</span>
-          <span *ngIf="profileTraffic.lastClickAt">Last click: {{ formatDate(profileTraffic.lastClickAt) }}</span>
-          <span *ngIf="!profileTraffic.lastImpressionAt && !profileTraffic.lastClickAt">No traffic tracked yet.</span>
-        </div>
-      </div>
-    </div>
-
     <div class="row mb-4 gx-3">
       <div class="col-md-4 mb-3 mb-md-0">
         <div class="section-card h-100">
@@ -267,4 +406,44 @@
       </div>
     </div>
   </ng-container>
+
+  <!-- Profile Traffic hidden - by sundeep -->
+    <div class="section-card mb-4 profile-traffic-card p-2 d-none">
+      <div class="section-title d-flex align-items-center mb-2">
+        <span class="dot dot--purple me-2"></span>
+        {{ trafficCardTitle }}
+        <span class="section-count ms-2">Last 30 days</span>
+      </div>
+
+      <div class="profile-traffic-grid">
+        <div class="traffic-stat-box">
+          <div class="traffic-stat-label">Impressions</div>
+          <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
+        </div>
+        <div class="traffic-stat-box">
+          <div class="traffic-stat-label">Clicks</div>
+          <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
+        </div>
+        <div class="traffic-stat-meta">
+          <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ formatDate(profileTraffic.lastImpressionAt) }}</span>
+          <span *ngIf="profileTraffic.lastClickAt">Last click: {{ formatDate(profileTraffic.lastClickAt) }}</span>
+          <span *ngIf="!profileTraffic.lastImpressionAt && !profileTraffic.lastClickAt">No traffic tracked yet.</span>
+        </div>
+      </div>
+    </div>
+
+  <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>
 </div>
+
+<app-campaign-detail-modal
+  *ngIf="selectedInvite && selectedInviteManual"
+  [invite]="selectedInvite"
+  [visible]="!!selectedInvite"
+  [busy]="responding === selectedInvite._id"
+  [initialPayout]="defaultPayout"
+  (close)="closeDetail()"
+  (accept)="onModalAccept($event)"
+  (decline)="onModalDecline($event)"
+  (validationError)="onModalValidationError($event)"
+></app-campaign-detail-modal>
+<app-shipping-address-modal></app-shipping-address-modal>

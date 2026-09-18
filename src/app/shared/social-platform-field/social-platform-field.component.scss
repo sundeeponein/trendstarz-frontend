@@ -1,0 +1,48 @@
+@use '../styles/social-platform' as *;
+
+.spf-connect-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e0e5ef;
+  border-radius: 10px;
+  background: #fff;
+
+  &--soon {
+    opacity: 0.85;
+  }
+}
+
+.spf-connect-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.spf-connect-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a7f4e;
+
+  &--muted {
+    color: #6b7d97;
+  }
+}
+
+.spf-connect-detail {
+  font-size: 0.8rem;
+  color: #3a4561;
+
+  em {
+    color: #8a97ab;
+    font-style: normal;
+  }
+}
+
+.spf-connect-btn {
+  flex-shrink: 0;
+}

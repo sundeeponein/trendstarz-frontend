@@ -1,21 +1,32 @@
 // ...existing code...
 import { environment } from '../../../environments/environment';
-import imageCompression from 'browser-image-compression';
-import { Component, OnInit, NgZone, inject } from '@angular/core';
+import { Component, OnInit, NgZone, inject, HostListener } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidatorFn, AsyncValidatorFn } from '@angular/forms';
 import { map, debounceTime, first } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
+import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { OtpService } from '../../shared/otp.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
+import { CollaborationAvailabilityFormComponent } from '../../shared/collaboration-availability/collaboration-availability-form.component';
+import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
+import { normalizeSocialHandle, validateSocialHandle } from '../../shared/social-handle.util';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
+import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
+import { captureSignupAttribution } from '../../shared/signup-attribution.util';
+import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
+import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -32,22 +43,24 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent, SocialPlatformFieldComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
-  // Toggle chip selection for languages/categories
-  toggleChip(field: 'languages' | 'categories', id: string): void {
-    const arr = this.registrationForm.get(field)?.value || [];
-    const idx = arr.indexOf(id);
-    if (idx > -1) {
-      arr.splice(idx, 1);
-    } else {
-      arr.push(id);
-    }
-    this.registrationForm.get(field)?.setValue([...arr]);
+  readonly maxCategories = 5;
+  readonly maxCreatorTypes = 3;
+  readonly maxCollaborationTypes = 3;
+  readonly maxAvailableFor = 2;
+
+  setChipValues(field: 'languages' | 'categories' | 'creatorTypes', values: string[]): void {
+    this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
+  }
+
+  onInfluencerCategoryChange(values: string[]): void {
+    this.registrationForm.get('influencerCategory')?.setValue(values[0] || '');
+    this.registrationForm.get('influencerCategory')?.markAsTouched();
   }
 
   openProfilePhotoGuidelines(): void {
@@ -64,6 +77,9 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   // Platform Tabs UI
   activePlatformTab: string | null = null;
+  profileConfirmOpen = false;
+  profileConfirmMessage = '';
+  private profileConfirmResolver: ((confirmed: boolean) => void) | null = null;
 
   getPlatformById(id: string) {
     return this.socialMediaList.find(p => p._id === id);
@@ -101,46 +117,74 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.refreshStepCompletion();
   }
 
-  getProfileUrl(platformName: string, handle: string): string {
-    const h = (handle || '').replace(/^@+/, '').trim();
-    if (!h) return '';
-    const n = (platformName || '').toLowerCase();
-    if (n.includes('instagram')) return 'https://instagram.com/' + h;
-    if (n.includes('youtube')) return 'https://youtube.com/@' + h;
-    if (n.includes('twitter') || n.includes('x')) return 'https://x.com/' + h;
-    if (n.includes('facebook')) return 'https://facebook.com/' + h;
-    if (n.includes('tiktok')) return 'https://tiktok.com/@' + h;
-    if (n.includes('linkedin')) return 'https://linkedin.com/in/' + h;
-    return '';
-  }
-
-  getTierOptionLabel(tier: any): string {
-    const name = String(tier?.name || '').trim();
-    const range = String(tier?.desc || '').trim();
-    if (!range) return name;
-    return `${name} (${range})`;
-  }
-
-  stripAtSign(platformId: string) {
-    const pf = this.platformForms[platformId];
-    if (!pf) return;
-    pf.handle = (pf.handle || '').replace(/^@+/, '').trim();
+  getSocialHandleError(platform: any): string {
+    const pf = this.platformForms[platform?._id];
+    if (!pf) return 'Username is required.';
+    return validateSocialHandle(pf.handle, platform?.name || '') || '';
   }
 
   selectedPlatforms(): any[] {
     return (this.socialMediaList || []).filter(p => this.platformForms[p._id]);
   }
 
+  private buildCriticalProfileMessage(raw: any): string {
+    const socials = this.selectedPlatforms().map((platform: any) => {
+      const pf = this.platformForms[platform._id] || {};
+      return `${platform.name}: ${pf.handle || '-'} | ${pf.tier || '-'} | ${pf.followersCount || 0} followers`;
+    });
+    const state = this.states.find((s: any) => s._id === raw?.location?.state)?.name || raw?.location?.state || '-';
+    const district = this.districts.find((d: any) => d._id === raw?.location?.district)?.name || raw?.location?.district || '-';
+    return [
+      'Please verify these details before submitting:',
+      '',
+      `Email: ${raw?.email || '-'}`,
+      `Mobile: ${raw?.phoneNumber || '-'}`,
+      `Profile photo: ${this.profileImagePreview ? 'Uploaded' : 'Missing'}`,
+      `Location: ${district} | ${state}`,
+      `Social profile & tier: ${socials.length ? socials.join('; ') : '-'}`,
+      `Payment details: ${raw?.payout?.upiId || raw?.payout?.mobile || raw?.payout?.accountHolderName ? 'Added' : 'Missing'}`,
+      '',
+      'Continue with registration?'
+    ].join('\n');
+  }
+
+  private confirmCriticalProfileDetails(raw: any): Promise<boolean> {
+    this.profileConfirmMessage = this.buildCriticalProfileMessage(raw);
+    this.profileConfirmOpen = true;
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.profileConfirmResolver = resolve;
+    });
+  }
+
+  onProfileConfirmContinue(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(true);
+    this.profileConfirmResolver = null;
+  }
+
+  onProfileConfirmCancel(): void {
+    this.profileConfirmOpen = false;
+    this.profileConfirmResolver?.(false);
+    this.profileConfirmResolver = null;
+  }
+
   /** Selected platforms missing handle or tier. */
   invalidPlatforms(): any[] {
     return this.selectedPlatforms().filter(p => {
       const pf = this.platformForms[p._id];
-      return !pf || !(pf.handle || '').trim() || !(pf.tier || '').trim();
+      return !pf || !!this.getSocialHandleError(p) || !(pf.tier || '').trim() || !this.hasSelectedPricedContentType(pf);
     });
   }
 
   arePlatformsValid(): boolean {
     return this.invalidPlatforms().length === 0;
+  }
+
+  hasSelectedPricedContentType(pf: any): boolean {
+    const values = Object.values(pf?.contentTypes || {}) as any[];
+    const selected = values.filter((ct: any) => ct?.selected === true);
+    return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
   }
 
   getPlatformTotal(platform: any): number {
@@ -160,6 +204,20 @@ export class InfluencerRegistrationComponent implements OnInit {
     return this.selectedPlatforms().reduce((sum, p) => sum + this.getPlatformTotal(p), 0);
   }
 
+  /** All enabled, priced content-type rates across every selected platform. */
+  get selectedContentTypePricesRupees(): number[] {
+    return this.selectedPlatforms()
+      .flatMap(p => Object.values(this.platformForms[p._id]?.contentTypes || {}))
+      .filter((ct: any) => ct?.selected && Number(ct?.price) > 0)
+      .map((ct: any) => Number(ct.price));
+  }
+
+  /** Starting Price is always derived — never manually typed — as the lowest enabled content rate. */
+  get computedStartingPriceRupees(): number {
+    const prices = this.selectedContentTypePricesRupees;
+    return prices.length ? Math.min(...prices) : 0;
+  }
+
   // --- Core properties ---
   readonly FREE_SOCIAL_PROFILE_LIMIT = 10;
   currentStep: 1 | 2 | 3 = 1;
@@ -175,6 +233,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   phoneOtp: string[] = ['', '', '', '', '', ''];
   emailOtp: string[] = ['', '', '', '', '', ''];
   phoneVerified = false;
+  mobileOtpVerificationToken = '';
   emailVerified = false;
   showEmailVerificationPrompt = false;
   phoneVerifyError = '';
@@ -189,8 +248,10 @@ export class InfluencerRegistrationComponent implements OnInit {
   resendEmailVerificationError: string | null = null;
   pendingVerificationEmail = '';
   registrationSuccess = false;
+  registrationEmailSendFailed = false;
   registrationError = '';
   preApproveActive = false;
+  otpVerificationEnabled = false;
   showPassword = false;
   showConfirmPassword = false;
   showProfessionalOptional = false;
@@ -200,12 +261,18 @@ export class InfluencerRegistrationComponent implements OnInit {
   verificationConsentError = '';
   togglePasswordVisibility() { this.showPassword = !this.showPassword; }
   toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
+
+  get localAuthBypassEnabled(): boolean {
+    return this.firebaseAuth.isLocalAuthBypassEnabled();
+  }
   registrationForm!: FormGroup;
   states: any[] = [];
   socialMediaList: any[] = [];
+  collaborationAvailabilityOptions: any = {};
+  creatorTypeOptions: any[] = [];
   tiers: any[] = [];
-  protected tierInfo = inject(TierInfoService);
   profileImagePreview: string | null = null;
+  profileImageUploading = false;
   profileImageFile: File | null = null;
   // Cached upload result so we don't re-upload (and orphan the previous upload) on retry.
   uploadedProfileImage: { url: string; public_id: string } | null = null;
@@ -221,7 +288,8 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   isSubmitting = false;
   stepTransitioning = false;
-  signupAttribution: { source?: string; audience?: string; referrerPath?: string } = {};
+  signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
+  trackingLinkCode = '';
   premiumMonthlyPrice = 399;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -229,6 +297,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private configService: ConfigService,
+    private firebaseAuth: FirebaseAuthService,
     private ngZone: NgZone,
     private otpService: OtpService,
     private plansService: PlansService,
@@ -237,19 +306,28 @@ export class InfluencerRegistrationComponent implements OnInit {
     private guidelinesService: ImageGuidelinesService,
   ) {}
 
+  // Warn before an accidental refresh/close/navigation wipes unsaved progress.
+  // Nothing is persisted client- or server-side before a successful submit,
+  // so this is the only guard against silent data loss.
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.registrationForm?.dirty && !this.registrationSuccess) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
   ngOnInit(): void {
     this.loadPremiumMonthlyPrice();
     this.configService.getSupportContact().subscribe(s => {
       this.verificationCallNumber = s.verificationCallNumber || '';
     });
 
-    const source = this.route.snapshot.queryParamMap.get('source') || '';
-    const audience = this.route.snapshot.queryParamMap.get('audience') || '';
-    this.signupAttribution = {
-      source: source || undefined,
-      audience: audience || undefined,
-      referrerPath: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    };
+    this.signupAttribution = captureSignupAttribution(
+      this.route.snapshot.queryParamMap,
+      typeof window !== 'undefined' ? window : undefined,
+    );
+    this.trackingLinkCode = this.route.snapshot.queryParamMap.get('tlc') || '';
 
     this.registrationForm = this.fb.group({
       name: ['', Validators.required],
@@ -266,14 +344,29 @@ export class InfluencerRegistrationComponent implements OnInit {
       password: ['', [Validators.required, passwordStrengthValidator]],
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
+      profileVisibility: ['PUBLIC'],
+      featuredInMarketing: [false],
       location: this.fb.group({ state: ['', Validators.required], district: ['', Validators.required] }),
-      promotionalPrice: ['', Validators.required],
+      promotionalPrice: [''],
       languages: [[], Validators.required],
       categories: [[], Validators.required],
+      creatorTypes: [[]],
       profileImages: this.fb.array([]),
+      payout: this.fb.group({
+        upiId: [''],
+        mobile: [''],
+        accountHolderName: [''],
+      }),
       contact: this.fb.group({
         whatsapp: [false], email: [false], call: [false]
       }, { validators: [atLeastOneContactRequired] }),
+      collaborationAvailability: this.fb.group({
+        enabled: [false],
+        collaborationTypes: [[]],
+        preference: [''],
+        availableFor: [[]],
+        openToTravel: [false],
+      }),
       website: [''],
     }, { validators: [passwordMatchValidator] });
 
@@ -293,18 +386,12 @@ export class InfluencerRegistrationComponent implements OnInit {
     });
 
     this.registrationForm.get('professionalStatus')?.valueChanges.subscribe((isProfessional: boolean) => {
-      const catCtrl = this.registrationForm.get('influencerCategory');
-      if (isProfessional) {
-        catCtrl?.setValidators([Validators.required]);
-      } else {
+      // influencerCategory has no input field in this form (it's derived server-side from
+      // creatorTypes) — never require it here, matching the edit-profile flow's behavior.
+      if (!isProfessional) {
         this.showProfessionalOptional = false;
-        catCtrl?.clearValidators();
-        catCtrl?.setValue('');
-        catCtrl?.markAsUntouched();
-        catCtrl?.markAsPristine();
         this.registrationForm.get('expertiseArea')?.setValue('');
       }
-      catCtrl?.updateValueAndValidity();
       this.refreshStepCompletion();
     });
     
@@ -333,12 +420,23 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.tiers = Array.isArray(data) ? data : [];
     });
     this.configService.getSocialMedia().subscribe(data => this.socialMediaList = data);
+    this.configService.getCollaborationAvailabilityOptions().subscribe(data => {
+      this.collaborationAvailabilityOptions = data || {};
+      this.cdr.detectChanges();
+    });
+    this.configService.getCreatorTypeOptions().subscribe(data => {
+      this.creatorTypeOptions = Array.isArray(data) ? data : [];
+      this.cdr.detectChanges();
+    });
     this.configService.getLanguages().subscribe(data => this.languagesList = data);
     this.configService.getCategories('influencer').subscribe(data => {
       this.categoriesList = data;
       this.cdr.detectChanges();
     });
-    this.configService.getAppSettings().subscribe(s => { this.preApproveActive = s.preApproveInfluencers; });
+    this.configService.getAppSettings().subscribe(s => {
+      this.preApproveActive = s.preApproveInfluencers;
+      this.otpVerificationEnabled = !!s.otpVerificationEnabled;
+    });
 
     // Load districts when state changes
     this.registrationForm.get('location.state')?.valueChanges.subscribe(stateId => {
@@ -367,6 +465,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   private loadPremiumMonthlyPrice(): void {
     this.plansService.getActivePlans('INFLUENCER').subscribe((plans) => {
       const paidPlan = plans.find((plan) => (plan?.price?.monthly ?? 0) > 0);
+
       if (!paidPlan) return;
 
       const monthly = paidPlan?.price?.monthly ?? 0;
@@ -396,8 +495,11 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   private resolveOfferChipLabel(plan: Plan, discountPercent: number): string {
-    if (plan?.discountLabel) return plan.discountLabel;
-    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%`;
+    const bonusMonths = this.getPlanDiscountPercent(plan, ['bonusMonthsMonthly']);
+    const bonusSuffix = bonusMonths > 0 ? ` · +${bonusMonths} mo free` : '';
+    if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
+    if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
+    if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
     const hasTrialOffer = Array.isArray(plan?.offers)
       && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
     return hasTrialOffer ? 'Early Access Offer' : '';
@@ -431,17 +533,23 @@ export class InfluencerRegistrationComponent implements OnInit {
     if (step === 2) {
       const f = this.registrationForm;
       const isProfessional = !!f.get('professionalStatus')?.value;
+      const creatorTypeSelected = (f.get('creatorTypes')?.value?.length ?? 0) > 0;
+      const verificationConsentOk = this.verificationDocuments.length === 0 || !!f.get('verificationDisclaimerAccepted')?.value;
+      const collaborationEnabled = !!f.get('collaborationAvailability.enabled')?.value;
+      const collaborationTypeSelected = (f.get('collaborationAvailability.collaborationTypes')?.value?.length ?? 0) > 0;
       const detailsValid = !!(
         f.get('location.state')?.valid &&
         f.get('location.district')?.valid &&
         f.get('languages')?.valid &&
         f.get('categories')?.valid &&
-        (!isProfessional || f.get('influencerCategory')?.valid)
+        (!isProfessional || creatorTypeSelected) &&
+        (!collaborationEnabled || collaborationTypeSelected) &&
+        verificationConsentOk
       );
       return detailsValid && this.selectedPlatforms().length > 0 && this.arePlatformsValid();
     }
     if (step === 3) {
-      return !!(this.registrationForm.get('promotionalPrice')?.valid && this.registrationForm.get('contact')?.valid);
+      return this.computedStartingPriceRupees > 0 && !!this.registrationForm.get('contact')?.valid;
     }
     return false;
   }
@@ -566,6 +674,10 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   private validateCurrentStep(): boolean {
     this.submitted = true;
+    // Some platform sub-fields (content-type checkbox/price) mutate platformForms directly
+    // without going through the reactive form, so cached step-complete flags can lag behind
+    // the live data. Refresh first so isStepComplete() below never reads a stale value.
+    this.refreshStepCompletion();
     if (this.currentStep === 1) {
       ['name', 'username', 'phoneNumber', 'email', 'dateOfBirth', 'password', 'confirmPassword'].forEach(f =>
         this.registrationForm.get(f)?.markAsTouched());
@@ -580,10 +692,21 @@ export class InfluencerRegistrationComponent implements OnInit {
       this.registrationForm.get('languages')?.markAsTouched();
       this.registrationForm.get('categories')?.markAsTouched();
       if (this.registrationForm.get('professionalStatus')?.value) {
-        this.registrationForm.get('influencerCategory')?.markAsTouched();
+        this.registrationForm.get('creatorTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('creatorTypes')?.value?.length > 0)) {
+          return false;
+        }
+      }
+      if (this.registrationForm.get('collaborationAvailability.enabled')?.value) {
+        this.registrationForm.get('collaborationAvailability.collaborationTypes')?.markAsTouched();
+        if (!(this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) {
+          this.registrationError = 'Please select at least one collaboration type.';
+          return false;
+        }
       }
       if (this.verificationDocuments.length > 0 && !this.registrationForm.get('verificationDisclaimerAccepted')?.value) {
         this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+        this.showProfessionalOptional = true;
         return false;
       }
       this.verificationConsentError = '';
@@ -599,7 +722,6 @@ export class InfluencerRegistrationComponent implements OnInit {
       return this.isStepComplete(2);
     }
     if (this.currentStep === 3) {
-      this.registrationForm.get('promotionalPrice')?.markAsTouched();
       this.registrationForm.get('contact')?.markAsTouched();
       return this.isStepComplete(3);
     }
@@ -631,6 +753,88 @@ export class InfluencerRegistrationComponent implements OnInit {
     };
   }
 
+  onEmailBlur(): void {
+    const emailCtrl = this.registrationForm.get('email');
+    const email = String(emailCtrl?.value || '').trim();
+
+    this.duplicateEmailError = '';
+    if (!emailCtrl || !email || emailCtrl.hasError('email')) {
+      this.clearDuplicateError(emailCtrl);
+      return;
+    }
+
+    this.configService
+      .checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        email,
+      })
+      .subscribe((result) => {
+        if (result?.email) {
+          this.duplicateEmailError = 'Email already exists.';
+          emailCtrl.setErrors({ ...(emailCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(emailCtrl);
+      });
+  }
+
+  onPhoneBlur(): void {
+    const phoneCtrl = this.registrationForm.get('phoneNumber');
+    const phoneNumber = String(phoneCtrl?.value || '').trim();
+
+    this.duplicatePhoneError = '';
+    if (!phoneCtrl || !phoneNumber) {
+      this.clearDuplicateError(phoneCtrl);
+      return;
+    }
+
+    this.configService
+      .checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        phoneNumber,
+      })
+      .subscribe((result) => {
+        if (result?.phoneNumber) {
+          this.duplicatePhoneError = 'Mobile number already exists.';
+          phoneCtrl.setErrors({ ...(phoneCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(phoneCtrl);
+      });
+  }
+
+  onPhoneNumberBlur(): void {
+    const phoneCtrl = this.registrationForm.get('phoneNumber');
+    const phoneNumber = String(phoneCtrl?.value || '').trim();
+
+    this.duplicatePhoneError = '';
+    if (!phoneCtrl || !phoneNumber || phoneCtrl.hasError('required')) {
+      this.clearDuplicateError(phoneCtrl);
+      return;
+    }
+
+    this.configService
+      .checkRegistrationConflicts({
+        userType: 'INFLUENCER',
+        phoneNumber,
+      })
+      .subscribe((result) => {
+        if (result?.phoneNumber) {
+          this.duplicatePhoneError = 'Mobile number already exists.';
+          phoneCtrl.setErrors({ ...(phoneCtrl.errors || {}), duplicate: true });
+          return;
+        }
+        this.clearDuplicateError(phoneCtrl);
+      });
+  }
+
+  private clearDuplicateError(control: AbstractControl | null): void {
+    if (!control?.errors?.['duplicate']) return;
+    const next = { ...(control.errors || {}) } as Record<string, any>;
+    delete next['duplicate'];
+    control.setErrors(Object.keys(next).length ? next : null);
+  }
+
   resendEmailVerification() {
     this.resendingEmailVerification = true;
     this.resendEmailVerificationSuccess = false;
@@ -653,8 +857,17 @@ export class InfluencerRegistrationComponent implements OnInit {
   }
 
   sendPhoneOtp() {
+    if (!this.otpVerificationEnabled) return;
     const phone = this.registrationForm.get('phoneNumber')?.value;
-    this.otpService.sendOtp('phone', phone).subscribe({ next: () => { this.phoneVerifyError = ''; }, error: () => { this.phoneVerifyError = 'Failed to send OTP'; } });
+    this.mobileOtpVerificationToken = '';
+    this.phoneVerified = false;
+    this.otpService.sendOtp('phone', phone).subscribe({
+      next: () => {
+        this.phoneVerifyError = '';
+        this.showPhoneOtp = true;
+      },
+      error: () => { this.phoneVerifyError = 'Failed to send OTP'; }
+    });
     this.phoneOtpError = ''; this.startPhoneOtpTimer();
   }
 
@@ -662,7 +875,13 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.verifyingPhoneOtp = true; this.phoneOtpError = '';
     const phone = this.registrationForm.get('phoneNumber')?.value;
     this.otpService.verifyOtp('phone', phone, this.phoneOtp.join('')).subscribe({
-      next: () => { this.phoneVerified = true; this.showPhoneOtp = false; this.phoneVerifyError = ''; },
+      next: (res: any) => {
+        this.phoneVerified = true;
+        this.mobileOtpVerificationToken = res?.verificationToken || '';
+        this.showPhoneOtp = false;
+        this.phoneVerifyError = '';
+        this.verifyingPhoneOtp = false;
+      },
       error: () => { this.phoneOtpError = 'Invalid or expired OTP.'; this.verifyingPhoneOtp = false; }
     });
   }
@@ -682,17 +901,44 @@ export class InfluencerRegistrationComponent implements OnInit {
 
   get profileImagesFormArray() { return this.registrationForm.get('profileImages') as FormArray; }
 
-  async onProfileImageFileChange(event: any) {
-    const file = event.target.files[0];
+  cropModalOpen = false;
+  cropSourceFile: File | null = null;
+  private profileImageInputEl: HTMLInputElement | null = null;
+
+  onProfileImageFileChange(event: any) {
+    this.profileImageInputEl = event.target as HTMLInputElement;
+    const file = this.profileImageInputEl.files?.[0];
     if (!file) return;
+    this.cropSourceFile = file;
+    this.cropModalOpen = true;
+  }
+
+  onProfileImageCropCancelled(): void {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+  }
+
+  async onProfileImageCropped(file: File) {
+    this.cropModalOpen = false;
+    this.cropSourceFile = null;
+    if (this.profileImageInputEl) this.profileImageInputEl.value = '';
+    this.profileImageUploading = true;
+    this.cdr.detectChanges();
     try {
-      const compressedFile = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 1024, useWebWorker: true });
+      const compressedFile = await compressImageFile(file, 'profile');
+      if (isOversizedAfterCompression(compressedFile)) {
+        this.profileImageUploading = false;
+        this.registrationError = OVERSIZE_MESSAGE;
+        this.cdr.detectChanges();
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile as File; this.uploadedProfileImage = null; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
+      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = compressedFile as File; this.uploadedProfileImage = null; this.profileImageUploading = false; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(compressedFile);
     } catch {
       const reader = new FileReader();
-      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = file; this.uploadedProfileImage = null; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
+      reader.onload = (e: any) => { this.ngZone.run(() => { this.profileImagePreview = e.target.result; this.profileImageFile = file; this.uploadedProfileImage = null; this.profileImageUploading = false; this.cdr.detectChanges(); this.refreshStepCompletion(); }); };
       reader.readAsDataURL(file);
     }
   }
@@ -708,16 +954,47 @@ export class InfluencerRegistrationComponent implements OnInit {
     this.duplicateUsernameError = ''; this.duplicateEmailError = ''; this.duplicatePhoneError = '';
 
     if (this.registrationForm.invalid || !this.profileImagePreview) {
+      this.registrationForm.markAllAsTouched();
+      this.refreshStepCompletion();
       if (this.registrationForm.get('username')?.hasError('usernameTaken'))
         this.usernameError = 'Username already exists. Please choose another.';
-      if (!this.profileImagePreview) this.registrationError = 'Profile image is required.';
+      if (!this.profileImagePreview) {
+        this.registrationError = 'Profile image is required.';
+        this.currentStep = 1;
+      } else if (!this.step1Complete) {
+        this.registrationError = 'Please complete all required fields in Profile.';
+        this.currentStep = 1;
+      } else if (!this.step2Complete) {
+        this.registrationError = 'Please complete all required fields in Social Media.';
+        this.currentStep = 2;
+        this.step2Attempted = true;
+      } else {
+        this.registrationError = 'Please complete all required fields.';
+        this.currentStep = 3;
+      }
+      return;
+    }
+    if (this.computedStartingPriceRupees <= 0) {
+      this.registrationError = 'Set at least one content rate to calculate your starting price.';
+      this.currentStep = 2;
+      this.step2Attempted = true;
       return;
     }
 
     this.isSubmitting = true; this.registrationError = ''; this.registrationSuccess = false;
+    this.cdr.detectChanges();
     const raw = this.registrationForm.value;
+    if (!(await this.confirmCriticalProfileDetails(raw))) {
+      this.isSubmitting = false;
+      return;
+    }
     if (this.verificationDocuments.length > 0 && !raw.verificationDisclaimerAccepted) {
       this.verificationConsentError = 'Please confirm the declaration for submitted verification documents.';
+      this.registrationForm.get('verificationDisclaimerAccepted')?.markAsTouched();
+      this.showProfessionalOptional = true;
+      this.currentStep = 2;
+      this.step2Attempted = true;
+      this.refreshStepCompletion();
       this.isSubmitting = false;
       return;
     }
@@ -728,15 +1005,18 @@ export class InfluencerRegistrationComponent implements OnInit {
     const districtObj = this.districts.find(d => d._id === raw.location.district);
     const languageNames = (raw.languages || []).map((id: string) => { const l = this.languagesList.find((x: any) => x._id === id); return l ? l.name : id; });
     const categoryNames = (raw.categories || []).map((id: string) => { const c = this.categoriesList.find((x: any) => x._id === id); return c ? c.name : id; });
+    const creatorTypeNames = (raw.creatorTypes || [])
+      .map((name: string) => String(name || '').trim())
+      .filter((name: string) => !!name);
     const influencerCategoryName = raw.influencerCategory
-      ? (this.categoriesList.find((x: any) => x._id === raw.influencerCategory)?.name || raw.influencerCategory)
+      ? (this.creatorTypeOptions.find((x: any) => x.name === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
 
     const socialMedia = this.selectedPlatforms().map(platform => {
       const pf = this.platformForms[platform._id];
       return {
         platform: platform.name,
-        handle: pf.handle,
+        handle: normalizeSocialHandle(pf.handle, platform.name),
         followersCount: Number(pf.followersCount) || 0,
         tier: pf.tier,
         contentTypes: Object.entries(pf.contentTypes)
@@ -751,7 +1031,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       // Provide a filename so multer treats Blob output from imageCompression as a file upload.
       const filename = (this.profileImageFile as File)?.name || 'profile.jpg';
       fd.append('file', this.profileImageFile, filename);
-      fd.append('folder', 'influencer_profile_images');
+      fd.append('folder', 'influencers/_pending/profile');
       try {
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, { method: 'POST', body: fd });
         if (!resp.ok) {
@@ -772,24 +1052,54 @@ export class InfluencerRegistrationComponent implements OnInit {
 
     const payload: any = {
       ...raw,
+      promotionalPrice: this.computedStartingPriceRupees,
       location: { state: stateObj ? stateObj.name : raw.location.state, district: districtObj ? districtObj.name : raw.location.district },
       languages: languageNames, categories: categoryNames,
+      creatorTypes: creatorTypeNames,
       influencerCategory: influencerCategoryName,
       professionalStatus: !!raw.professionalStatus,
       expertiseArea: raw.expertiseArea || '',
       verificationDocuments: this.verificationDocuments,
       verificationDisclaimerAccepted: !!raw.verificationDisclaimerAccepted,
-      socialMedia, profileImages: imageUploadResult ? [imageUploadResult] : [], contact: raw.contact
+      collaborationAvailability: raw.collaborationAvailability,
+      socialMedia,
+      isMobileVerified: !!this.phoneVerified,
+      mobileVerified: !!this.phoneVerified,
+      mobileVerificationMethod: this.phoneVerified ? 'OTP' : '',
+      mobileVerifiedAt: this.phoneVerified ? new Date() : null,
+      mobileOtpVerificationToken: this.mobileOtpVerificationToken,
+      profileImages: imageUploadResult ? [imageUploadResult] : [],
+      contact: raw.contact
     };
-    if (this.signupAttribution.source || this.signupAttribution.audience || this.signupAttribution.referrerPath) {
-      payload.signupAttribution = this.signupAttribution;
-    }
+    payload.signupAttribution = this.signupAttribution;
+    payload.trackingLinkCode = this.trackingLinkCode;
 
     this.configService.registerInfluencer(payload).subscribe({
-      next: () => {
+      next: async () => {
+        if (!this.localAuthBypassEnabled) {
+          try {
+            await this.firebaseAuth.sendVerificationEmail(raw.email, raw.password);
+          } catch (error: any) {
+            this.ngZone.run(() => {
+              this.pendingVerificationEmail = raw.email;
+              this.showEmailVerificationPrompt = true;
+              this.emailVerificationSent = false;
+              this.emailVerificationError =
+                this.firebaseAuth.getFirebaseAuthErrorMessage(error) ||
+                'Verification email could not be sent.';
+              this.registrationError = '';
+              this.registrationEmailSendFailed = true;
+              this.isSubmitting = false;
+              this.cdr.detectChanges();
+            });
+            return;
+          }
+        }
         this.ngZone.run(() => {
           this.pendingVerificationEmail = raw.email;
-          this.showEmailVerificationPrompt = true; this.emailVerificationSent = true; this.emailVerificationError = null;
+          this.showEmailVerificationPrompt = !this.localAuthBypassEnabled;
+          this.emailVerificationSent = !this.localAuthBypassEnabled;
+          this.emailVerificationError = null;
           this.profileImagePreview = null; this.profileImageFile = null; this.uploadedProfileImage = null;
           this.platformForms = {}; this.submitted = false; this.isSubmitting = false;
           // Reset the form first (fires valueChanges which may clear registrationSuccess if set),
@@ -797,6 +1107,7 @@ export class InfluencerRegistrationComponent implements OnInit {
           this.registrationForm.reset();
           queueMicrotask(() => {
             this.registrationSuccess = true;
+            this.registrationEmailSendFailed = false;
             this.cdr.detectChanges();
           });
         });
@@ -860,6 +1171,20 @@ export class InfluencerRegistrationComponent implements OnInit {
     window.location.href = '/';
   }
 
+  closeEmailSendFailedModal() {
+    this.registrationEmailSendFailed = false;
+    this.registrationForm.reset();
+    this.profileImagePreview = null;
+    this.profileImageFile = null;
+    this.verificationDocuments = [];
+    this.verificationUploadError = '';
+    this.verificationConsentError = '';
+    this.platformForms = {};
+    this.submitted = false;
+    this.pendingVerificationEmail = '';
+    window.location.href = '/login';
+  }
+
   toggleProfessionalOptional(): void {
     this.showProfessionalOptional = !this.showProfessionalOptional;
   }
@@ -884,6 +1209,7 @@ export class InfluencerRegistrationComponent implements OnInit {
 
         const fd = new FormData();
         fd.append('file', file, file.name);
+        fd.append('folder', 'influencers/_pending/verification');
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
           method: 'POST',
           body: fd,

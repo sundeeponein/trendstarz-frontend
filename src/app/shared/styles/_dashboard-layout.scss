@@ -1,63 +1,123 @@
-// Shared dashboard layout, cards, performance overview, alert cards, empty states
+// Shared user dashboard layout, cards, performance overview, alert cards, empty states
 
-// ── Dashboard page wrapper ──
+$dash-bg: #d6d8dc;
+$dash-surface: #f7f8fb;
+$dash-card: #ffffff;
+$dash-text: #252a31;
+$dash-muted: #777f8c;
+$dash-border: #e6e8ed;
+$dash-orange: #b24b10;
+$dash-blue: #0069a8;
+$dash-purple: #7460a7;
+$dash-green: #19a56d;
+
 .cm-page {
-  background: #f8f9fb;
-  color: #222;
-  border-radius: 1.2rem;
-  box-shadow: 0 2px 12px #0001;
+  // background: $dash-bg;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 100%;
+}
+
+.dashboard-welcome-bar {
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .welcome-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #222;
+  font-size: clamp(1.55rem, 2vw, 2.05rem);
+  line-height: 1.1;
+  font-weight: 800;
+  color: $dash-text;
+  letter-spacing: 0;
 }
 
 .welcome-subtitle {
-  font-size: 1.1rem;
-  color: #555;
+  max-width: 720px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #3f454e;
 }
 
-// ── Alert cards ──
+.account-meta-card {
+  background: transparent;
+  color: #1f242b;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  gap: 0.1rem;
+  text-align: right;
+  padding-top: 0.15rem;
+}
+
 .alert-card {
-  border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 1px 6px #0001;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-left: 6px solid #f5c29e;
-  min-height: 120px;
+  border-radius: 5px;
+  background: $dash-card;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+  padding: 1rem 1rem 0.9rem;
+  border: 1px solid $dash-border;
+  min-height: 158px;
 
   &--email {
-    border-color: #f5c29e;
-    background: #fff7f2;
+    border-color: $dash-border;
+    background: $dash-card;
+
+    .alert-card-icon {
+      background: #e4f1fc;
+      color: $dash-blue;
+    }
+  }
+
+  &--mobile {
+    border-color: $dash-border;
+    background: $dash-card;
+
+    .alert-card-icon {
+      background: #fff1e8;
+      color: $dash-orange;
+    }
   }
 
   &--profile {
-    border-color: #a3d3f5;
-    background: #f2f8ff;
+    border-color: $dash-border;
+    background: $dash-card;
 
-    .alert-card-link { color: #2563eb; }
+    .alert-card-icon {
+      background: #eee8fb;
+      color: $dash-purple;
+    }
   }
 }
 
+.alert-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  font-size: 0.95rem;
+}
+
 .alert-card-title {
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 0.2rem;
+  color: #595c61;
+  font-size: 1.02rem;
+  font-weight: 800;
+  margin: 0.35rem 0 0.8rem;
 }
 
 .alert-card-desc {
-  color: #555;
-  font-size: 0.98rem;
+  color: #2f353d;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  font-weight: 600;
 }
 
 .alert-card-link {
-  color: #d97706;
-  font-weight: 600;
+  color: $dash-orange;
+  font-weight: 800;
   cursor: pointer;
-  text-decoration: underline;
-  font-size: 0.97rem;
+  text-decoration: none;
+  font-size: 0.72rem;
 }
 
 .btn-dismiss-banner {
@@ -74,26 +134,63 @@
   &:hover { color: #374151; background: rgba(0,0,0,0.06); }
 }
 
-// ── Performance overview ──
 .performance-overview {
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 1px 6px #0001;
-  padding: 1.5rem;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
 .performance-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #222;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #2c2d32;
 }
 
 .performance-range {
-  font-size: 0.9rem;
-  color: #888;
-  background: #f3f3f3;
-  border-radius: 1rem;
-  padding: 0.2rem 0.8rem;
+  font-size: 0.64rem;
+  color: #2c2d32;
+  background: #fff;
+  border-radius: 2px;
+  padding: 0.26rem 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.performance-overview .card,
+.needs-attention .card {
+  border-radius: 5px;
+  min-height: 78px;
+  background: $dash-card;
+}
+
+.performance-overview .card-body,
+.needs-attention .card-body {
+  padding: 0.78rem 0.6rem !important;
+}
+
+.performance-overview .display-6,
+.needs-attention .display-6 {
+  font-size: 1.65rem;
+  line-height: 1;
+  color: #252a31;
+}
+
+.performance-overview .text-muted,
+.needs-attention .text-muted {
+  color: $dash-text;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.performance-overview .badge,
+.needs-attention .badge {
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.56rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .perf-card {
@@ -119,55 +216,204 @@
   color: #aaa;
 }
 
-// ── Section cards ──
 .section-card {
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 1px 6px #0001;
-  padding: 1.4rem 1.2rem 1.6rem 1.2rem;
+  background: $dash-card;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05);
+  border: 1px solid $dash-border;
+  padding: 0;
+  overflow: hidden;
 }
 
 .section-title {
-  font-size: 1.08rem;
-  font-weight: 600;
-  color: #222;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: $dash-text;
+  min-height: 36px;
+  background: $dash-surface;
+  border-bottom: 1px solid #eff1f4;
+  padding: 0 0.95rem;
+  margin: 0 !important;
+}
+
+.section-card > :not(.section-title):not(.txn-see-all) {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.section-card > .section-empty {
+  margin: 4.2rem auto;
+  max-width: 430px;
 }
 
 .section-count {
-  font-size: 0.93rem;
-  color: #888;
-  background: #f3f3f3;
-  border-radius: 1rem;
-  padding: 0.1rem 0.7rem;
+  font-size: 0.58rem;
+  color: #5e626a;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  font-weight: 800;
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
+
+  &--orange { background: $dash-orange; }
+  &--blue { background: $dash-blue; }
+  &--purple { background: $dash-purple; }
 }
 
-// ── Empty states ──
 .section-empty {
   text-align: center;
-  color: #aaa;
+  color: #a5abb4;
 }
 
 .section-empty-icon {
-  font-size: 2.5rem;
+  font-size: 2.55rem;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
+  color: #e3e6eb;
 }
 
 .section-empty-title {
-  font-weight: 600;
-  color: #888;
-  font-size: 1.08rem;
+  font-weight: 900;
+  color: #1f242b;
+  font-size: 0.95rem;
 }
 
 .section-empty-desc {
-  color: #bbb;
-  font-size: 0.97rem;
+  color: #3f454e;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 900;
+  border: 0;
+
+  &--brand {
+    color: $dash-orange;
+    background: #fff1e8;
+  }
+
+  &--collab {
+    color: $dash-purple;
+    background: #eee8fb;
+  }
+}
+
+.txn-see-all {
+  margin: 0;
+  padding: 0.85rem 1rem 1.05rem;
+  border-top: 0;
+  text-align: center;
+
+  &__link {
+    font-size: 0.75rem;
+    color: $dash-blue;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 800;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.profile-traffic-card {
+  border-left: 3px solid $dash-orange;
+
+  .section-title {
+    min-height: 0;
+    background: transparent;
+    border: 0;
+    color: $dash-text;
+    padding: 0;
+  }
+}
+
+.profile-traffic-grid,
+.traffic-locked-state {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.75fr) minmax(92px, 0.65fr) minmax(180px, 1.5fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.traffic-stat-box {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.traffic-stat-label {
+  font-size: 0.62rem;
+  color: #3f454e;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+.traffic-stat-value {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #1f242b;
+}
+
+.traffic-stat-meta {
+  grid-column: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  color: #4d535d;
+  font-size: 0.68rem;
+}
+
+.traffic-locked-state {
+  color: #4b5563;
+  font-size: 0.75rem;
+
+  i {
+    color: $dash-orange;
+  }
+}
+
+.dashboard-action-panel {
+  background: #f2f4f7;
+  border-radius: 6px;
+  padding: 0.95rem 1rem;
+}
+
+@media (max-width: 767px) {
+  .cm-page {
+    padding: 1rem !important;
+  }
+
+  .account-meta-card {
+    text-align: left;
+  }
+
+  .alert-card {
+    min-height: 0;
+  }
+
+  .section-card > .section-empty {
+    margin: 2.6rem 1rem;
+  }
+
+  .profile-traffic-grid,
+  .traffic-locked-state {
+    grid-template-columns: 1fr;
+  }
 }
