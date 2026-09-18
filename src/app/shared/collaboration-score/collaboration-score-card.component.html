@@ -41,11 +41,11 @@
     <p class="text-muted">See how brands evaluate your public profile.</p>
     <button type="button" class="cs-card__reanalyze" (click)="onReAnalyzeClick()">Generate Free Score</button>
     <div class="cs-card__empty-connect" *ngIf="!isConnected('instagram') || !isConnected('facebook')">
-      <p class="text-muted small mb-1">Get a more accurate score — connect your accounts:</p>
+      <p class="text-muted small mb-1">{{ metaConfigured ? 'Get a more accurate score — connect your accounts:' : 'Enter your stats manually below to get a Beta score for now.' }}</p>
       <button
         type="button"
         class="btn btn-sm btn-outline-primary me-2"
-        *ngIf="!isConnected('instagram')"
+        *ngIf="!isConnected('instagram') && metaConfigured"
         [disabled]="connectingPlatform === 'instagram'"
         (click)="connectPlatform('instagram')"
       >
@@ -54,11 +54,29 @@
       <button
         type="button"
         class="btn btn-sm btn-outline-primary"
-        *ngIf="!isConnected('facebook')"
+        *ngIf="!isConnected('facebook') && metaConfigured"
         [disabled]="connectingPlatform === 'facebook'"
         (click)="connectPlatform('facebook')"
       >
         {{ connectingPlatform === 'facebook' ? 'Connecting…' : 'Connect Facebook' }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary me-2"
+        *ngIf="!isConnected('instagram') && !metaConfigured"
+        disabled
+        title="We're finishing verification with Meta — connecting your account will be available soon."
+      >
+        Connect Instagram (Coming Soon)
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        *ngIf="!isConnected('facebook') && !metaConfigured"
+        disabled
+        title="We're finishing verification with Meta — connecting your account will be available soon."
+      >
+        Connect Facebook (Coming Soon)
       </button>
     </div>
   </div>
@@ -228,11 +246,20 @@
           <button
             type="button"
             class="btn btn-sm btn-outline-primary cs-card__connect-btn"
-            *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && !isConnected(p.platform)"
+            *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && !isConnected(p.platform) && metaConfigured"
             [disabled]="connectingPlatform === p.platform.toLowerCase()"
             (click)="connectPlatform(p.platform.toLowerCase() === 'instagram' ? 'instagram' : 'facebook')"
           >
             {{ connectingPlatform === p.platform.toLowerCase() ? 'Connecting…' : 'Connect' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary cs-card__connect-btn"
+            *ngIf="(p.platform === 'Instagram' || p.platform === 'Facebook') && !isConnected(p.platform) && !metaConfigured"
+            disabled
+            title="We're finishing verification with Meta — connecting your account will be available soon."
+          >
+            Coming Soon
           </button>
           <button
             type="button"

@@ -7,7 +7,7 @@
 
   <div class="platform-details-body">
 
-    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled">
+    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled && metaConfigured">
       <ng-container *ngIf="connection; else spfNotConnected">
         <div class="spf-connect-status spf-connect-status--connected">
           <span class="spf-connect-badge">Connected ✓</span>
@@ -32,6 +32,13 @@
       <button type="button" class="btn btn-sm btn-outline-secondary spf-connect-btn" disabled title="Coming soon">
         Connect {{ platform.name }} (Coming Soon)
       </button>
+    </div>
+    <div class="spf-connect-block spf-connect-block--soon" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled && !metaConfigured">
+      <span class="spf-connect-badge spf-connect-badge--muted">Not Connected</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary spf-connect-btn" disabled title="We're finishing verification with Meta — connecting your account will be available soon. Add your stats manually for now to still get a Beta score.">
+        Connect {{ platform.name }} (Coming Soon)
+      </button>
+      <small class="text-muted d-block mt-1">Enter your stats manually below to get a Beta score in the meantime.</small>
     </div>
 
     <div class="row">

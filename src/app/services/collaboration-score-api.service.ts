@@ -221,11 +221,14 @@ export class CollaborationScoreApiService {
    * Public, no auth header — lets every platform-picker UI (anonymous /audit
    * page, Connect buttons, Platform Status) hide a platform an admin has
    * disabled in Collaboration Score Settings, without needing a JWT.
+   * `metaConfigured` additionally tells Connect buttons whether Meta OAuth
+   * env vars are set, so they can show "Coming Soon" instead of redirecting
+   * into a connect flow that would fail.
    */
-  getPlatformFlags(): Observable<{ platformsEnabled: CollaborationScorePlatformsEnabled }> {
+  getPlatformFlags(): Observable<{ platformsEnabled: CollaborationScorePlatformsEnabled; metaConfigured: boolean }> {
     return this.http
-      .get<{ platformsEnabled: CollaborationScorePlatformsEnabled }>(`${this.apiUrl}/audit/platform-flags`)
-      .pipe(map((res) => unwrap<{ platformsEnabled: CollaborationScorePlatformsEnabled }>(res)));
+      .get<{ platformsEnabled: CollaborationScorePlatformsEnabled; metaConfigured: boolean }>(`${this.apiUrl}/audit/platform-flags`)
+      .pipe(map((res) => unwrap<{ platformsEnabled: CollaborationScorePlatformsEnabled; metaConfigured: boolean }>(res)));
   }
 
   /** Self/admin only — every past version, newest first. */

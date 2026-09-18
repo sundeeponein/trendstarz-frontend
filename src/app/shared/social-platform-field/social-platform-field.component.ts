@@ -55,6 +55,11 @@ export class SocialPlatformFieldComponent implements OnInit {
   // the Connect option (never the manual handle/tier fields, which are just
   // profile data unrelated to the collector) for at most one round-trip.
   platformCollectorEnabled = true;
+  // Optimistic default — flips to false once platform-flags confirms Meta
+  // OAuth env vars aren't set (or the app hasn't passed Meta App Review), so
+  // the Connect button shows "Coming Soon" instead of redirecting into a
+  // flow that would fail.
+  metaConfigured = true;
 
   constructor(@Inject(PLATFORM_ID) private readonly platformId: object) {}
 
@@ -78,7 +83,10 @@ export class SocialPlatformFieldComponent implements OnInit {
 
   private loadPlatformCollectorFlag(): void {
     this.api.getPlatformFlags().subscribe({
-      next: (res) => (this.platformCollectorEnabled = res.platformsEnabled[this.platformKey]),
+      next: (res) => {
+        this.platformCollectorEnabled = res.platformsEnabled[this.platformKey];
+        this.metaConfigured = res.metaConfigured;
+      },
       error: () => {},
     });
   }

@@ -45,6 +45,11 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   connections: SocialConnections = { instagram: null, facebook: null };
   connectingPlatform: 'instagram' | 'facebook' | null = null;
   disconnectingPlatform: 'instagram' | 'facebook' | null = null;
+  // Optimistic default — flips to false once platform-flags confirms Meta
+  // OAuth env vars aren't set (or the app hasn't passed Meta App Review), so
+  // Connect buttons show "Coming Soon" instead of redirecting into a flow
+  // that would fail. Existing connections still show their Disconnect button.
+  metaConfigured = true;
   // True the moment a parent binds [initialConnections] at all — even while
   // its own fetch is still resolving to null — so ngOnInit never starts a
   // redundant self-fetch racing against the parent's.
@@ -66,6 +71,13 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     if (!this.parentManagesConnections) {
       this.loadConnections();
     }
+    this.api.getPlatformFlags().subscribe({
+      next: (res) => this.ngZone.run(() => {
+        this.metaConfigured = res.metaConfigured;
+        this.cdr.detectChanges();
+      }),
+      error: () => {},
+    });
 
     const connectedPlatform = this.route.snapshot.queryParamMap.get('connected');
     const connectError = this.route.snapshot.queryParamMap.get('connectError');

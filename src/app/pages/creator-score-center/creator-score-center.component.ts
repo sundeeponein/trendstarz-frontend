@@ -248,12 +248,12 @@ export class CreatorScoreCenterComponent implements OnInit {
 
   private loadPlatformFlagsThenSetStatus(connections: SocialConnections, profile: any): void {
     this.api.getPlatformFlags().subscribe({
-      next: (res) => this.ngZone.run(() => this.setPlatformStatus(connections, profile, res.platformsEnabled)),
+      next: (res) => this.ngZone.run(() => this.setPlatformStatus(connections, profile, res.platformsEnabled, res.metaConfigured)),
       // Fetch failed — fail open (show every row) rather than hiding the
       // whole grid because of an unrelated network hiccup.
       error: () =>
         this.ngZone.run(() =>
-          this.setPlatformStatus(connections, profile, { instagram: true, youtube: true, facebook: true, linkedin: true }),
+          this.setPlatformStatus(connections, profile, { instagram: true, youtube: true, facebook: true, linkedin: true }, true),
         ),
     });
   }
@@ -262,15 +262,21 @@ export class CreatorScoreCenterComponent implements OnInit {
     connections: SocialConnections,
     profile: any,
     platformsEnabled: { instagram: boolean; youtube: boolean; facebook: boolean; linkedin: boolean },
+    metaConfigured: boolean,
   ): void {
     const hasYoutube = (profile?.socialMedia || []).some(
       (s: any) => String(s?.platform || '').toLowerCase() === 'youtube' && s?.handle,
     );
     this.verified = profile?.verifiedByTrendStarz === true;
+    // Meta OAuth env vars unset (or app not yet through Meta App Review) —
+    // show the same "Coming Soon" state as LinkedIn instead of "Not
+    // Connected", since Connect isn't actually usable yet either way.
+    const igFbStatus = (connected: boolean): PlatformStatusRow['status'] =>
+      connected ? 'Connected' : metaConfigured ? 'Not Connected' : 'Coming Soon';
     const rows: Array<PlatformStatusRow & { enabled: boolean }> = [
-      { platform: 'Instagram', icon: 'bi-instagram', status: connections.instagram ? 'Connected' : 'Not Connected', enabled: platformsEnabled.instagram },
+      { platform: 'Instagram', icon: 'bi-instagram', status: igFbStatus(!!connections.instagram), enabled: platformsEnabled.instagram },
       { platform: 'YouTube', icon: 'bi-youtube', status: hasYoutube ? 'Connected' : 'Not Connected', enabled: platformsEnabled.youtube },
-      { platform: 'Facebook', icon: 'bi-facebook', status: connections.facebook ? 'Connected' : 'Not Connected', enabled: platformsEnabled.facebook },
+      { platform: 'Facebook', icon: 'bi-facebook', status: igFbStatus(!!connections.facebook), enabled: platformsEnabled.facebook },
       // LinkedIn stays visible regardless of its toggle — it's always "Coming
       // Soon" today (no collector exists yet), so admin-disabling it changes
       // nothing a user would see either way.
