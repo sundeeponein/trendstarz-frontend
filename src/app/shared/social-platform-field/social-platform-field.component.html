@@ -7,7 +7,13 @@
 
   <div class="platform-details-body">
 
-    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled && metaConfigured">
+    <!--
+      A previously-connected account must keep showing Connected/Disconnect
+      even if metaConfigured later turns false (e.g. Meta credentials
+      unset or revoked after the fact) — only the "start a new connection"
+      path is gated on metaConfigured, never an existing connection.
+    -->
+    <div class="spf-connect-block" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled && (connection || metaConfigured)">
       <ng-container *ngIf="connection; else spfNotConnected">
         <div class="spf-connect-status spf-connect-status--connected">
           <span class="spf-connect-badge">Connected ✓</span>
@@ -33,7 +39,7 @@
         Connect {{ platform.name }} (Coming Soon)
       </button>
     </div>
-    <div class="spf-connect-block spf-connect-block--soon" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled && !metaConfigured">
+    <div class="spf-connect-block spf-connect-block--soon" *ngIf="allowConnect && supportsOAuth && platformCollectorEnabled && !connection && !metaConfigured">
       <span class="spf-connect-badge spf-connect-badge--muted">Not Connected</span>
       <button type="button" class="btn btn-sm btn-outline-secondary spf-connect-btn" disabled title="We're finishing verification with Meta — connecting your account will be available soon. Add your stats manually for now to still get a Beta score.">
         Connect {{ platform.name }} (Coming Soon)

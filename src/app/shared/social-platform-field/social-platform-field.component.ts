@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, OnInit, Output, PLATFORM_ID, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Inject, Input, NgZone, OnInit, Output, PLATFORM_ID, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CollaborationScoreApiService, SocialConnectionDetail } from '../../services/collaboration-score-api.service';
 import { TierInfoService } from '../components/tier-info-modal/tier-info.service';
@@ -61,7 +61,11 @@ export class SocialPlatformFieldComponent implements OnInit {
   // flow that would fail.
   metaConfigured = true;
 
-  constructor(@Inject(PLATFORM_ID) private readonly platformId: object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     if (this.allowConnect && this.supportsOAuth) {
@@ -74,19 +78,31 @@ export class SocialPlatformFieldComponent implements OnInit {
     return String(this.platform?.name || '').toLowerCase() === 'facebook' ? 'facebook' : 'instagram';
   }
 
+  // HttpClient is configured with withFetch() (app.config.ts) — fetch()
+  // promise continuations aren't always reliably re-entered into Angular's
+  // zone, so state set in a plain .subscribe() callback can sit unrendered
+  // until an unrelated zone-patched event (e.g. a click) forces a CD cycle.
+  // Same workaround used elsewhere in this app — see
+  // collaboration-score-card.component.ts.
   private loadConnection(): void {
     this.api.getConnections().subscribe({
-      next: (res) => (this.connection = res[this.platformKey] || null),
+      next: (res) =>
+        this.ngZone.run(() => {
+          this.connection = res[this.platformKey] || null;
+          this.cdr.detectChanges();
+        }),
       error: () => {},
     });
   }
 
   private loadPlatformCollectorFlag(): void {
     this.api.getPlatformFlags().subscribe({
-      next: (res) => {
-        this.platformCollectorEnabled = res.platformsEnabled[this.platformKey];
-        this.metaConfigured = res.metaConfigured;
-      },
+      next: (res) =>
+        this.ngZone.run(() => {
+          this.platformCollectorEnabled = res.platformsEnabled[this.platformKey];
+          this.metaConfigured = res.metaConfigured;
+          this.cdr.detectChanges();
+        }),
       error: () => {},
     });
   }
