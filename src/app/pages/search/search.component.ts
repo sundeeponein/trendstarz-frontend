@@ -1001,12 +1001,169 @@ export class SearchComponent implements OnInit {
 
   goToPreviousPage(): void {
     if (!this.hasPreviousPage()) return;
-    this.setCurrentPage(this.getCurrentPage() - 1);
+    this.goToPage(this.getCurrentPage() - 1);
   }
 
   goToNextPage(): void {
     if (!this.hasNextPage()) return;
-    this.setCurrentPage(this.getCurrentPage() + 1);
+    this.goToPage(this.getCurrentPage() + 1);
+  }
+
+  get currentPage(): number {
+    return this.getCurrentPage();
+  }
+
+  getTotalPages(): number {
+    return Math.max(1, Math.ceil(this.getTotalActiveResults() / this.searchPageSize));
+  }
+
+  /** Page buttons with gaps, e.g. [1, 2, 3, '…', 10] or [1, '…', 4, 5, 6, '…', 10]. */
+  getPageNumbers(): Array<number | '…'> {
+    const total = this.getTotalPages();
+    const current = this.getCurrentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    // Phones get a tighter window so the row fits on one line.
+    const compact = this.isBrowser && window.innerWidth < 576;
+    const pages = new Set<number>([1, total, current]);
+    if (!compact) [current - 1, current + 1].forEach((p) => pages.add(p));
+    if (!compact && current <= 3) [2, 3, 4].forEach((p) => pages.add(p));
+    if (!compact && current >= total - 2) [total - 3, total - 2, total - 1].forEach((p) => pages.add(p));
+    if (compact && current <= 2) pages.add(2);
+    if (compact && current >= total - 1) pages.add(total - 1);
+    const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+    const out: Array<number | '…'> = [];
+    sorted.forEach((p, i) => {
+      if (i > 0 && p - sorted[i - 1] > 1) out.push('…');
+      out.push(p);
+    });
+    return out;
+  }
+
+  goToPage(page: number): void {
+    const target = Math.min(Math.max(1, page), this.getTotalPages());
+    if (target === this.getCurrentPage()) return;
+    this.setCurrentPage(target);
+    if (this.isBrowser) {
+      document.querySelector('.search-tabs-row, .filter-bar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  get resultsNoun(): string {
+    return this.isBrandMode ? 'matching brands' : 'matching creators';
+  }
+
+  // ── Shortlist (brands) ────────────────────────────────────────────────────
+  // Kept per role: a campaign invites either influencers or photo/videographers.
+  private static readonly SHORTLIST_MAX = 20;
+  private readonly shortlists: Record<'influencer' | 'photographer', Map<string, any>> = {
+    influencer: new Map(),
+    photographer: new Map(),
+  };
+  shortlistNotice = '';
+
+  get shortlistRole(): 'influencer' | 'photographer' | null {
+    if (this.isInfluencerMode) return 'influencer';
+    if (this.isPhotographerMode) return 'photographer';
+    return null;
+  }
+
+  get canShortlist(): boolean {
+    return this.isBrandUser && !!this.shortlistRole;
+  }
+
+  get activeShortlist(): any[] {
+    const role = this.shortlistRole;
+    return role ? [...this.shortlists[role].values()] : [];
+  }
+
+  private entityId(entity: any): string {
+    return String(entity?._id || entity?.id || '').trim();
+  }
+
+  isShortlisted(entity: any): boolean {
+    const role = this.shortlistRole;
+    return !!role && this.shortlists[role].has(this.entityId(entity));
+  }
+
+  toggleShortlist(entity: any): void {
+    const role = this.shortlistRole;
+    const id = this.entityId(entity);
+    if (!role || !id) return;
+    const list = this.shortlists[role];
+    this.shortlistNotice = '';
+    if (list.has(id)) {
+      list.delete(id);
+      return;
+    }
+    if (list.size >= SearchComponent.SHORTLIST_MAX) {
+      this.shortlistNotice = `You can shortlist up to ${SearchComponent.SHORTLIST_MAX} creators at a time.`;
+      return;
+    }
+    list.set(id, entity);
+  }
+
+  clearShortlist(): void {
+    const role = this.shortlistRole;
+    if (role) this.shortlists[role].clear();
+    this.shortlistNotice = '';
+  }
+
+  shortlistAvatar(entity: any): string {
+    const images = Array.isArray(entity?.profileImages) ? entity.profileImages : [];
+    const first = images[0];
+    return String(entity?.profileImage || (typeof first === 'string' ? first : first?.url) || '');
+  }
+
+  shortlistName(entity: any): string {
+    return String(entity?.name || entity?.fullname || entity?.username || 'Creator');
+  }
+
+  /** Sum of each creator's largest audience — shown as an estimate, never as guaranteed reach. */
+  get shortlistReachLabel(): string {
+    const total = this.activeShortlist.reduce((sum, e) => sum + this.getTopFollowersCount(e), 0);
+    if (!total) return '';
+    if (total >= 1e6) return `~${(Math.floor(total / 1e5) / 10).toString()}M`;
+    if (total >= 1e3) return `~${Math.floor(total / 1e3)}K`;
+    return `~${total}`;
+  }
+
+  /** Combined listed starting prices; hidden unless every shortlisted creator lists one. */
+  get shortlistStartingTotal(): number | null {
+    const prices = this.activeShortlist.map((e) => this.startingPrice(e));
+    if (!prices.length || prices.some((p) => p === null)) return null;
+    return (prices as number[]).reduce((a, b) => a + b, 0);
+  }
+
+  private startingPrice(entity: any): number | null {
+    if (this.shortlistRole === 'photographer') {
+      const rows = (Array.isArray(entity?.pricing) ? entity.pricing : [])
+        .filter((p: any) => p?.enabled !== false && Number(p?.price) > 0)
+        .map((p: any) => Number(p.price));
+      return rows.length ? Math.min(...rows) : null;
+    }
+    const price = Number(entity?.promotionalPrice);
+    return price > 0 ? price : null;
+  }
+
+  pitchShortlist(): void {
+    const role = this.shortlistRole;
+    const picked = this.activeShortlist;
+    if (!role || !picked.length) return;
+    this.router.navigate(['/campaigns/new'], {
+      state: {
+        preSelectedRecipientRole: role,
+        preSelectedInfluencers: picked.map((e) => ({
+          id: this.entityId(e),
+          name: this.shortlistName(e),
+          username: e?.username || '',
+        })),
+      },
+    });
+  }
+
+  /** "Post an open campaign" in the help banner — logged-out visitors register as a brand first. */
+  get openCampaignRoute(): string {
+    return this.isBrandUser ? '/campaigns/new' : '/register-brand';
   }
 
   shouldShowPagination(): boolean {

@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Campaign } from '../../shared/campaigns/campaign.model';
+import { Campaign, CampaignInfluencer } from '../../shared/campaigns/campaign.model';
 import { ConfigService } from '../../shared/config.service';
 import { PlansService } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -18,6 +18,8 @@ import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/camp
       [mode]="mode"
       [creatorRole]="creatorRole"
       [hasPremium]="hasPremium"
+      [preSelectedInfluencers]="preSelectedInfluencers"
+      [preSelectedRecipientRole]="preSelectedRecipientRole"
       [saving]="saving"
       (save)="onSave($event)"
       (cancel)="onCancel()"
@@ -30,6 +32,8 @@ export class CampaignFormPageComponent implements OnInit {
   creatorRole: 'brand' | 'photographer' | 'influencer' = 'brand';
   hasPremium = false;
   saving = false;
+  preSelectedInfluencers: CampaignInfluencer[] = [];
+  preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -68,6 +72,13 @@ export class CampaignFormPageComponent implements OnInit {
     } else {
       this.mode = 'create';
       this.campaign = null;
+    }
+    // Shortlist handed over from Search ("Pitch Roster") — preselects invitees in the invite step.
+    if (!id && Array.isArray(navState?.preSelectedInfluencers)) {
+      this.preSelectedInfluencers = navState.preSelectedInfluencers
+        .filter((r: any) => r && r.id)
+        .map((r: any) => ({ id: String(r.id), name: String(r.name || ''), username: r.username || undefined }));
+      this.preSelectedRecipientRole = navState.preSelectedRecipientRole === 'photographer' ? 'photographer' : 'influencer';
     }
   }
 

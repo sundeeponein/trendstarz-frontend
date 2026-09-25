@@ -1,4 +1,4 @@
-<div class="search-page">
+<div class="search-page" [class.has-shortlist]="canShortlist && activeShortlist.length > 0">
 
   <!-- Page Header -->
   <div class="page-header">
@@ -167,8 +167,19 @@
 
     <!-- Grid -->
     <div class="results-grid" *ngIf="!influencersLoading && !influencersError && filteredInfluencers.length > 0">
+      <div class="result-cell" *ngFor="let influencer of getPagedInfluencers()" [class.is-shortlisted]="isShortlisted(influencer)">
+        <button
+          *ngIf="canShortlist"
+          type="button"
+          class="shortlist-toggle"
+          [class.is-on]="isShortlisted(influencer)"
+          [attr.aria-pressed]="isShortlisted(influencer)"
+          [attr.aria-label]="(isShortlisted(influencer) ? 'Remove from shortlist: ' : 'Add to shortlist: ') + shortlistName(influencer)"
+          (click)="toggleShortlist(influencer)">
+          <i class="bi" [class.bi-check-lg]="isShortlisted(influencer)" [class.bi-plus-lg]="!isShortlisted(influencer)" aria-hidden="true"></i>
+          {{ isShortlisted(influencer) ? 'Shortlisted' : 'Shortlist' }}
+        </button>
       <app-influencer-user-card
-        *ngFor="let influencer of getPagedInfluencers()"
         [profileImage]="influencer.profileImage || ''"
         [profileImages]="influencer.profileImages || []"
         [name]="influencer.name || influencer.fullname || ''"
@@ -197,6 +208,7 @@
         (viewProfileClick)="viewInfluencerProfile(influencer)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-influencer-user-card>
+      </div>
     </div>
   </div>
 
@@ -274,8 +286,19 @@
       <button class="btn-clear" (click)="clearPhotographerFilters()">Clear Filters</button>
     </div>
     <div class="results-grid" *ngIf="!photographersLoading && !photographersError && filteredPhotographers.length > 0">
+      <div class="result-cell" *ngFor="let p of getPagedPhotographers()" [class.is-shortlisted]="isShortlisted(p)">
+        <button
+          *ngIf="canShortlist"
+          type="button"
+          class="shortlist-toggle"
+          [class.is-on]="isShortlisted(p)"
+          [attr.aria-pressed]="isShortlisted(p)"
+          [attr.aria-label]="(isShortlisted(p) ? 'Remove from shortlist: ' : 'Add to shortlist: ') + shortlistName(p)"
+          (click)="toggleShortlist(p)">
+          <i class="bi" [class.bi-check-lg]="isShortlisted(p)" [class.bi-plus-lg]="!isShortlisted(p)" aria-hidden="true"></i>
+          {{ isShortlisted(p) ? 'Shortlisted' : 'Shortlist' }}
+        </button>
       <app-photographer-user-card
-        *ngFor="let p of getPagedPhotographers()"
         [profileImage]="p.profileImage || ''"
         [profileImages]="p.profileImages || []"
         [name]="p.name || ''"
@@ -298,19 +321,71 @@
         [suggestedPriceRange]="p.suggestedPriceRange ?? null"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
+      </div>
     </div>
   </div>
 
-  <div class="results-pagination" *ngIf="shouldShowPagination()">
-    <div class="results-pagination__meta">
-      {{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalActiveResults() }} results
-    </div>
-    <div class="results-pagination__actions">
-      <button type="button" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()">
-        <i class="bi bi-chevron-left"></i>
+  <nav class="results-pagination" *ngIf="shouldShowPagination()" aria-label="Search results pages">
+    <p class="results-pagination__meta">
+      Showing <strong>{{ getVisibleRangeStart() }} – {{ getVisibleRangeEnd() }}</strong> of
+      <strong>{{ getTotalActiveResults() }}</strong> {{ resultsNoun }}
+    </p>
+    <div class="results-pagination__actions" *ngIf="getTotalPages() > 1">
+      <button type="button" class="page-btn page-btn--nav" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()" aria-label="Previous page">
+        <i class="bi bi-chevron-left" aria-hidden="true"></i>
       </button>
-      <button type="button" (click)="goToNextPage()" [disabled]="!hasNextPage()">
-        <i class="bi bi-chevron-right"></i>
+      <ng-container *ngFor="let n of getPageNumbers()">
+        <span *ngIf="n === '…'" class="page-gap" aria-hidden="true">…</span>
+        <button
+          *ngIf="n !== '…'"
+          type="button"
+          class="page-btn"
+          [class.is-active]="n === currentPage"
+          [attr.aria-current]="n === currentPage ? 'page' : null"
+          [attr.aria-label]="'Page ' + n"
+          (click)="goToPage(+n)">{{ n }}</button>
+      </ng-container>
+      <button type="button" class="page-btn page-btn--nav" (click)="goToNextPage()" [disabled]="!hasNextPage()" aria-label="Next page">
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Help banner: shown on the creator tabs once results have loaded -->
+  <section class="curation-cta" *ngIf="(isInfluencerMode && !influencersLoading) || (isPhotographerMode && !photographersLoading)" aria-labelledby="curation-heading">
+    <div class="curation-cta__copy">
+      <span class="curation-cta__kicker"><i class="bi bi-stars" aria-hidden="true"></i> Talent matching help</span>
+      <h2 id="curation-heading">Can't find the exact creator niche?</h2>
+      <p>Tell us what your campaign needs and the TrendStarz team will help you shortlist suitable creators, or post an open campaign and let creators apply.</p>
+    </div>
+    <div class="curation-cta__actions">
+      <a class="curation-cta__btn" routerLink="/contact"><i class="bi bi-headset" aria-hidden="true"></i> Request Custom Curation</a>
+      <a class="curation-cta__btn curation-cta__btn--ghost" [routerLink]="openCampaignRoute">Post an Open Campaign</a>
+    </div>
+  </section>
+
+  <!-- Floating shortlist bar (brands) -->
+  <div class="shortlist-bar" *ngIf="canShortlist && activeShortlist.length > 0" role="region" aria-label="Shortlisted creators">
+    <div class="shortlist-bar__avatars" aria-hidden="true">
+      <ng-container *ngFor="let e of activeShortlist.slice(0, 3)">
+        <img *ngIf="shortlistAvatar(e); else initials" [src]="shortlistAvatar(e)" [alt]="''" />
+        <ng-template #initials><span class="shortlist-bar__initial">{{ shortlistName(e).charAt(0) }}</span></ng-template>
+      </ng-container>
+      <span *ngIf="activeShortlist.length > 3" class="shortlist-bar__initial shortlist-bar__more">+{{ activeShortlist.length - 3 }}</span>
+    </div>
+    <div class="shortlist-bar__text">
+      <strong>{{ activeShortlist.length }} {{ shortlistRole === 'photographer' ? 'Photo/Videographer' : 'Creator' }}{{ activeShortlist.length === 1 ? '' : 's' }} Selected for Shortlist</strong>
+      <span>
+        <ng-container *ngIf="shortlistReachLabel">Est. total reach: {{ shortlistReachLabel }}</ng-container>
+        <ng-container *ngIf="shortlistReachLabel && shortlistStartingTotal !== null"> • </ng-container>
+        <ng-container *ngIf="shortlistStartingTotal !== null">Starting from ₹{{ shortlistStartingTotal.toLocaleString('en-IN') }}</ng-container>
+        <ng-container *ngIf="shortlistNotice"> {{ shortlistNotice }}</ng-container>
+      </span>
+    </div>
+    <div class="shortlist-bar__actions">
+      <button type="button" class="shortlist-bar__clear" (click)="clearShortlist()">Clear</button>
+      <button type="button" class="shortlist-bar__pitch" (click)="pitchShortlist()">
+        <i class="bi bi-send" aria-hidden="true"></i> Pitch Roster ({{ activeShortlist.length }})
       </button>
     </div>
   </div>

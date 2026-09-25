@@ -504,7 +504,8 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       postingDeadlineMode: [(this.campaign as any)?.postingDeadlineMode || 'grace_24h', [Validators.required]],
       status: [this.campaign?.status || 'draft'],
       pricePerInfluencer: [this.getInitialPricePerInfluencer(), [Validators.required, Validators.min(1)]],
-      maxInfluencers: [(this.campaign as any)?.maxInfluencers || null, [Validators.required, Validators.min(1)]],
+      // A shortlist handed over from Search pre-fills the slot count so its invitees fit.
+      maxInfluencers: [(this.campaign as any)?.maxInfluencers || (this.preSelectedInfluencers?.length || null), [Validators.required, Validators.min(1)]],
       minInfluencers: [
         (this.campaign as any)?.minInfluencers || 1,
         [Validators.min(1)],
