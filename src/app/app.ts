@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, signal, OnInit, PLATFORM_ID, Inject, inject } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, RouterOutlet, Router } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -9,6 +9,8 @@ import { WarmupService } from './core/warmup.service';
 import { PushNotificationService } from './core/push-notification.service';
 import { AnalyticsService } from './core/analytics.service';
 import { ConfigService } from './shared/config.service';
+import { CollaborationScoreApiService } from './services/collaboration-score-api.service';
+import { CollaborationScoreUiUtilsService } from './services/collaboration-score-ui-utils.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
@@ -22,6 +24,8 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 })
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
+  private readonly scoreApi = inject(CollaborationScoreApiService);
+  private readonly scoreUi = inject(CollaborationScoreUiUtilsService);
   private lastPushSubscriptionKey: string | null = null;
   private lastSessionOpenedPing = 0;
 
@@ -45,6 +49,7 @@ export class App implements OnInit {
     this.setupAnalyticsTracking();
 
     if (isPlatformBrowser(this.platformId)) {
+      this.loadScoreThresholds();
       this.setupServiceWorkerUpdates();
       this.markOpenedWhenVisible();
       this.session.user$.subscribe((user) => {
@@ -88,6 +93,14 @@ export class App implements OnInit {
         this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
       },
       error: () => {},
+    });
+  }
+
+  /** Live admin badge thresholds, so every TrendScore tier label matches the badges the backend awards. */
+  private loadScoreThresholds(): void {
+    this.scoreApi.getPlatformFlags().subscribe({
+      next: (flags) => this.scoreUi.setThresholds(flags?.scoreThresholds),
+      error: () => {}, // keep the defaults
     });
   }
 

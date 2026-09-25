@@ -1,12 +1,12 @@
 <div class="sp-card">
-  <ng-container *ngIf="!result">
-    <p class="sp-card__kicker"><i class="bi bi-star-fill" aria-hidden="true"></i> Free creator tool</p>
-    <h2 class="sp-card__title sp-card__title--hero">Check Your FREE TrendScore</h2>
-    <p class="sp-card__subtitle sp-card__subtitle--hero">
-      Brands look at more than followers before signing a deal. See how your profile rates on
-      content, consistency and campaign readiness &mdash; free, in seconds.
-    </p>
+  <p class="sp-card__kicker"><i class="bi bi-star-fill" aria-hidden="true"></i> Free creator score check <span class="dot" aria-hidden="true"></span></p>
+  <h2 class="sp-card__title sp-card__title--hero">Check Your FREE <span class="sp-card__brand">TrendScore<sup>™</sup></span></h2>
+  <p class="sp-card__subtitle sp-card__subtitle--hero">
+    Brands look at far more than follower counts before offering a sponsorship. See how your profile rates on
+    content, posting consistency and campaign readiness &mdash; <span class="sp-card__accent">free, in seconds</span>.
+  </p>
 
+  <ng-container *ngIf="!result">
     <div class="sp-card__platform-tabs" role="tablist" aria-label="Choose a platform to check">
       <button
         *ngFor="let p of visiblePlatforms"
@@ -18,7 +18,7 @@
         [disabled]="loading"
         (click)="selectPlatform(p.id)"
       >
-        <i [class]="p.icon" aria-hidden="true"></i> {{ p.name }}
+        <i [class]="p.icon + ' sp-card__tab-icon sp-card__tab-icon--' + p.id" aria-hidden="true"></i> {{ p.name }}
       </button>
     </div>
 
@@ -28,7 +28,7 @@
         <input
           type="text"
           class="sp-card__input"
-          placeholder="Paste your YouTube channel URL…"
+          placeholder="Paste your YouTube channel URL (e.g. youtube.com/@yourchannel)"
           aria-label="YouTube channel URL"
           [(ngModel)]="youtubeUrl"
           name="youtubeUrl"
@@ -38,6 +38,10 @@
           {{ loading ? 'Checking…' : 'Calculate Score' }} <i *ngIf="!loading" class="bi bi-arrow-right" aria-hidden="true"></i>
         </button>
       </form>
+      <p class="sp-card__note">
+        <i class="bi bi-lock" aria-hidden="true"></i> No password or login needed for the preview
+        <span class="sep" aria-hidden="true">•</span> <span class="muted">We only read your public channel data</span>
+      </p>
 
       <div class="sp-card__loading" *ngIf="loading" role="status" aria-live="polite">
         <div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div>
@@ -53,53 +57,118 @@
         <input
           type="text"
           class="sp-card__input"
-          [placeholder]="'Paste your ' + selectedPlatformName + ' handle or profile URL…'"
+          [placeholder]="'Paste your ' + selectedPlatformName + ' handle or profile URL'"
           [attr.aria-label]="selectedPlatformName + ' handle'"
           disabled
         />
         <button type="button" class="sp-card__submit" disabled>Calculate Score <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
       </div>
-      <p class="sp-card__connect-hint">
-        Real scoring for {{ selectedPlatformName }} requires connecting your account after you register.
+      <p class="sp-card__note sp-card__connect-hint">
+        <i class="bi bi-link-45deg" aria-hidden="true"></i>
+        {{ selectedPlatformName }} scoring needs you to connect your account after you register &mdash; pick your role below to start.
       </p>
-      <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
     </ng-container>
-
-    <ul class="sp-card__features">
-      <li><i class="bi bi-bar-chart-line" aria-hidden="true"></i> Instant Score Preview</li>
-      <li><i class="bi bi-currency-rupee" aria-hidden="true"></i> Brand Deal Rate Estimate <span>(after sign-up)</span></li>
-      <li><i class="bi bi-patch-check" aria-hidden="true"></i> Campaign Readiness Check</li>
-    </ul>
   </ng-container>
 
-  <ng-container *ngIf="result">
-    <div class="sp-card__result">
-      <div class="sp-card__score-circle" role="img" [attr.aria-label]="'Preview score: ' + result.previewScore + ' out of 100'">
-        {{ result.previewScore }}<span aria-hidden="true">/100</span>
-      </div>
-      <div class="sp-card__score-meta">
-        <div class="sp-card__title">TrendScore</div>
-        <p class="sp-card__subtitle">{{ ui.scoreTierLabel(result.previewScore) }}</p>
-      </div>
+  <div class="sp-card__result" *ngIf="result">
+    <div class="sp-ring sp-ring--light" role="img" [attr.aria-label]="'Preview score: ' + result.previewScore + ' out of 100'">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="sp-ring__track" cx="60" cy="60" r="52"></circle>
+        <circle class="sp-ring__fill" cx="60" cy="60" r="52" [attr.stroke-dasharray]="ringDash(result.previewScore)"></circle>
+      </svg>
+      <span class="sp-ring__value">{{ result.previewScore }}<small>/100</small></span>
     </div>
-
-    <div class="sp-card__unlock">
-      <div class="sp-card__unlock-title">Register FREE to unlock</div>
+    <div class="sp-card__result-copy">
+      <p class="sp-card__result-label">Your preview TrendScore<ng-container *ngIf="result.handle"> · {{ result.handle }}</ng-container></p>
+      <h3>{{ ui.scoreTierLabel(result.previewScore) }}</h3>
+      <p class="sp-card__unlock-title">Register FREE to unlock</p>
       <ul class="sp-card__unlock-list">
-        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Campaign Ready Status</li>
-        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Top 3 Improvements</li>
-        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Save your Score</li>
-        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Get discovered by Brands</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Campaign Ready status</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Top 3 improvements</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Save your score</li>
+        <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Get discovered by brands</li>
       </ul>
-      <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
-      <button type="button" class="btn btn-link sp-card__again" (click)="checkAnother()">
-        Check another channel
+      <button type="button" class="btn btn-link sp-card__again" (click)="checkAnother()">Check another channel</button>
+    </div>
+  </div>
+
+  <div class="sp-card__divider"><span>Score check tailored to your role</span></div>
+
+  <!-- Registration isn't unified across roles — never assume Influencer.
+       Nothing is preselected; the sign-up button appears once a role is picked. -->
+  <div class="sp-roles">
+    <div class="sp-roles__picker">
+      <p class="sp-roles__label">Who are you?</p>
+      <div class="sp-card__role-choice" role="radiogroup" aria-label="Who are you?">
+        <button
+          *ngFor="let r of roles"
+          type="button"
+          class="sp-role"
+          role="radio"
+          [class.is-active]="selectedRole === r.id"
+          [attr.aria-checked]="selectedRole === r.id"
+          (click)="selectRole(r.id)">
+          <span class="sp-role__emoji" aria-hidden="true">{{ r.emoji }}</span>
+          <span class="sp-role__name">{{ r.name }}</span>
+          <span class="sp-role__sub">{{ r.sub }}</span>
+        </button>
+      </div>
+      <div class="sp-roles__perk">
+        <i class="bi bi-lightbulb" aria-hidden="true"></i>
+        <p *ngIf="activeRole; else pickRole"><strong>{{ activeRole.perkTitle }}:</strong> {{ activeRole.perk }}</p>
+        <ng-template #pickRole><p>Pick your role to see what your score check covers.</p></ng-template>
+      </div>
+      <button *ngIf="activeRole" type="button" class="sp-roles__cta" (click)="registerAs(activeRole.id)">
+        {{ activeRole.cta }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
       </button>
     </div>
-  </ng-container>
+
+    <!-- Illustrative only — labelled "Example" and never the visitor's real score -->
+    <div class="sp-sample" role="img" [attr.aria-label]="'Example report: ' + sample.heading">
+      <div class="sp-sample__head">
+        <span><span class="live" aria-hidden="true"></span> {{ sample.heading }}</span>
+        <span class="sp-sample__tag">Example</span>
+      </div>
+      <div class="sp-sample__body">
+        <div class="sp-ring" aria-hidden="true">
+          <svg viewBox="0 0 120 120">
+            <circle class="sp-ring__track" cx="60" cy="60" r="52"></circle>
+            <circle class="sp-ring__fill" cx="60" cy="60" r="52" [attr.stroke-dasharray]="ringDash(sample.score)"></circle>
+          </svg>
+          <span class="sp-ring__value">{{ sample.score }}<small>/100</small></span>
+        </div>
+        <ul class="sp-sample__bars">
+          <li *ngFor="let bar of sample.bars">
+            <span class="name">{{ bar.label }}</span>
+            <span class="value" [class.value--hot]="bar.hot">{{ bar.value }}</span>
+            <span class="track"><span class="fill" [class.fill--hot]="bar.hot" [style.width.%]="bar.pct"></span></span>
+          </li>
+        </ul>
+      </div>
+      <div class="sp-sample__foot">
+        <span>{{ sample.footLabel }}</span>
+        <strong>{{ sample.footValue }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <ul class="sp-card__features">
+    <li>
+      <span class="sp-feature-icon sp-feature-icon--orange"><i class="bi bi-bar-chart-line" aria-hidden="true"></i></span>
+      <span><strong>Instant Score Preview</strong><small>Free YouTube check, no login</small></span>
+    </li>
+    <li>
+      <span class="sp-feature-icon sp-feature-icon--green"><i class="bi bi-currency-rupee" aria-hidden="true"></i></span>
+      <span><strong>Brand Deal Rate Estimate</strong><small>Suggested pricing after sign-up</small></span>
+    </li>
+    <li>
+      <span class="sp-feature-icon sp-feature-icon--purple"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
+      <span><strong>Campaign Readiness Check</strong><small>See what brands look for first</small></span>
+    </li>
+  </ul>
 </div>
 
-<ul class="sp-trust container" aria-label="Why creators and brands trust TrendStarz">
+<ul class="sp-trust container" *ngIf="showTrustCards" aria-label="Why creators and brands trust TrendStarz">
   <li class="sp-trust__item" *ngFor="let t of trustItems">
     <span class="sp-trust__icon sp-trust__icon--{{ t.tone }}"><i class="bi {{ t.icon }}" aria-hidden="true"></i></span>
     <span class="sp-trust__text">
@@ -108,23 +177,3 @@
     </span>
   </li>
 </ul>
-
-<!-- Registration isn't unified across roles — don't assume Influencer.
-     Influencer/Photographer both need a real Collaboration Score, so both
-     are grouped as equal "Creator" options rather than defaulting away from
-     Photographer. -->
-<ng-template #roleChoice>
-  <div class="sp-card__role-choice">
-    <p class="sp-card__role-heading">Who are you?</p>
-    <div class="sp-card__role-group">
-      <span class="sp-card__role-group-label">Creator</span>
-      <div class="sp-card__role-buttons">
-        <button type="button" class="btn btn-outline-primary" (click)="registerAs('influencer')">Influencer</button>
-        <button type="button" class="btn btn-outline-primary" (click)="registerAs('photographer')">Photographer</button>
-      </div>
-    </div>
-    <button type="button" class="btn btn-primary sp-card__role-brand" (click)="registerAs('brand')">
-      Brand
-    </button>
-  </div>
-</ng-template>

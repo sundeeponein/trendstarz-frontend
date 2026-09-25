@@ -17,9 +17,13 @@ describe('CollaborationScoreCardComponent — connections passthrough', () => {
   beforeEach(async () => {
     apiSpy = jasmine.createSpyObj<CollaborationScoreApiService>('CollaborationScoreApiService', [
       'getConnections',
+      'getPlatformFlags',
       'getAuditHistory',
     ]);
     apiSpy.getConnections.and.returnValue(of({ instagram: null, facebook: null }));
+    apiSpy.getPlatformFlags.and.returnValue(
+      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true }, metaConfigured: true }),
+    );
     apiSpy.getAuditHistory.and.returnValue(of({ history: [] }));
 
     await TestBed.configureTestingModule({

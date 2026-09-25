@@ -44,14 +44,35 @@ describe('TrendstarzScoreComponent', () => {
 
     const title = TestBed.inject(Title);
     const meta = TestBed.inject(Meta);
-    expect(title.getTitle()).toBe('TrendStarZ Score | Measure Your Collaboration Readiness');
-    expect(meta.getTag('name="description"')?.content).toContain('Discover your TrendStarZ Score');
+    expect(title.getTitle()).toBe('TrendScore by TrendStarz | Measure Your Collaboration Readiness');
+    expect(meta.getTag('name="description"')?.content).toContain('Discover your TrendScore');
   });
 
-  it('routes an anonymous visitor to /audit and tracks loggedIn: false', () => {
+  it('scrolls an anonymous visitor to the free check on this page and tracks loggedIn: false', () => {
     sessionSpy.getToken.and.returnValue(null);
     sessionSpy.getUser.and.returnValue(null);
-    const { component } = createComponent();
+    const { fixture, component } = createComponent();
+    document.body.appendChild(fixture.nativeElement);
+    const section: HTMLElement = fixture.nativeElement.querySelector('#score-check');
+    spyOn(section, 'scrollIntoView');
+
+    component.checkMyScore();
+
+    expect(section.scrollIntoView).toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(analyticsSpy.trackTrendstarzScoreCheckClicked).toHaveBeenCalledWith({
+      loggedIn: false,
+      destination: '#score-check',
+    });
+    fixture.nativeElement.remove();
+  });
+
+  it('falls back to /audit for an anonymous visitor when the in-page check is not rendered', () => {
+    sessionSpy.getToken.and.returnValue(null);
+    sessionSpy.getUser.and.returnValue(null);
+    const { fixture, component } = createComponent();
+    fixture.nativeElement.remove();
+    document.getElementById('score-check')?.remove();
 
     component.checkMyScore();
 

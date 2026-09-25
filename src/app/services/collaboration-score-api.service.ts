@@ -172,6 +172,30 @@ export interface SocialConnections {
   facebook: SocialConnectionDetail | null;
 }
 
+/** Weight (%) of each component in the overall TrendScore; admin-configurable, sums to 100. */
+export interface CollaborationScoreWeights {
+  profileCompletion: number;
+  contentQuality: number;
+  postingConsistency: number;
+  professionalBranding: number;
+  campaignReadiness: number;
+}
+
+/** Admin-configurable badge cut-offs (Collaboration Score Settings → thresholds). */
+export interface CollaborationScoreThresholds {
+  trendstarzRecommendedMinScore: number;
+  campaignReadyMinScore: number;
+  partiallyReadyMinScore: number;
+}
+
+export interface CollaborationScorePlatformFlags {
+  platformsEnabled: CollaborationScorePlatformsEnabled;
+  metaConfigured: boolean;
+  /** Optional so older backends (and test mocks) without it still type-check. */
+  scoreWeights?: CollaborationScoreWeights;
+  scoreThresholds?: Partial<CollaborationScoreThresholds>;
+}
+
 export interface CollaborationScorePreview {
   platform: "YouTube";
   handle: string;
@@ -225,10 +249,10 @@ export class CollaborationScoreApiService {
    * env vars are set, so they can show "Coming Soon" instead of redirecting
    * into a connect flow that would fail.
    */
-  getPlatformFlags(): Observable<{ platformsEnabled: CollaborationScorePlatformsEnabled; metaConfigured: boolean }> {
+  getPlatformFlags(): Observable<CollaborationScorePlatformFlags> {
     return this.http
-      .get<{ platformsEnabled: CollaborationScorePlatformsEnabled; metaConfigured: boolean }>(`${this.apiUrl}/audit/platform-flags`)
-      .pipe(map((res) => unwrap<{ platformsEnabled: CollaborationScorePlatformsEnabled; metaConfigured: boolean }>(res)));
+      .get<CollaborationScorePlatformFlags>(`${this.apiUrl}/audit/platform-flags`)
+      .pipe(map((res) => unwrap<CollaborationScorePlatformFlags>(res)));
   }
 
   /** Self/admin only — every past version, newest first. */

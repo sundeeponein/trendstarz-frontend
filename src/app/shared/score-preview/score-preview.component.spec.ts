@@ -46,20 +46,32 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/register-brand']);
   });
 
-  it('shows Creator (Influencer/Photographer) and Brand as equal top-level choices on a non-YouTube tab', () => {
+  it('offers Influencer, Photographer and Brand as equal choices with nothing preselected', () => {
     const { fixture, component } = createComponent();
     component.selectedPlatform = 'instagram';
     fixture.detectChanges();
 
-    const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.sp-card__role-choice button'));
-    const labels = buttons.map((b) => b.textContent?.trim());
-    expect(labels).toEqual(['Influencer', 'Photographer', 'Brand']);
+    const names: string[] = Array.from(fixture.nativeElement.querySelectorAll('.sp-card__role-choice .sp-role__name')).map(
+      (el: any) => el.textContent.trim(),
+    );
+    expect(names).toEqual(['Influencer', 'Photographer', 'Brand']);
+    expect(component.selectedRole).toBeNull();
+    expect(fixture.nativeElement.querySelector('.sp-roles__cta')).toBeFalsy();
+  });
 
-    buttons[1].click();
+  it('registers the role the visitor picked (never a default)', () => {
+    const { fixture } = createComponent();
+    fixture.detectChanges();
+
+    const roleButtons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.sp-role'));
+    roleButtons[1].click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.sp-roles__cta').click();
+
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/register-photographer']);
   });
 
-  it('shows the same role choice after a YouTube preview result, instead of a single hardcoded Register Free button', () => {
+  it('keeps the role choice available after a YouTube preview result, instead of a single hardcoded Register Free button', () => {
     const { fixture, component } = createComponent();
     component.result = { platform: 'YouTube', handle: '@x', previewScore: 40, confidence: 90, confidenceReason: '' };
     fixture.detectChanges();
@@ -67,6 +79,19 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
     const roleChoice = fixture.nativeElement.querySelector('.sp-card__role-choice');
     expect(roleChoice).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.sp-card__register')).toBeFalsy();
+  });
+
+  it('labels the sample report as an example', () => {
+    const { fixture } = createComponent();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sp-sample__tag')?.textContent).toContain('Example');
+  });
+
+  it('hides the trust cards when showTrustCards is false', () => {
+    const { fixture, component } = createComponent();
+    component.showTrustCards = false;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sp-trust')).toBeFalsy();
   });
 
   describe('admin platform toggles', () => {

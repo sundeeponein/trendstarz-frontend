@@ -1,11 +1,31 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CollaborationScoreApiService, CollaborationScorePreview } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
 
 type PlatformId = 'instagram' | 'facebook' | 'youtube' | 'linkedin';
+type RoleId = 'influencer' | 'photographer' | 'brand';
+
+interface RoleOption {
+  id: RoleId;
+  emoji: string;
+  name: string;
+  sub: string;
+  perkTitle: string;
+  perk: string;
+  cta: string;
+}
+
+/** Illustrative report per role — always labelled "Example" in the UI, never a real result. */
+interface SampleReport {
+  heading: string;
+  score: number;
+  bars: Array<{ label: string; value: string; pct: number; hot?: boolean }>;
+  footLabel: string;
+  footValue: string;
+}
 
 @Component({
   selector: 'app-score-preview',
@@ -15,6 +35,102 @@ type PlatformId = 'instagram' | 'facebook' | 'youtube' | 'linkedin';
   styleUrls: ['./score-preview.component.scss'],
 })
 export class ScorePreviewComponent implements OnInit, OnDestroy {
+  /** The home page shows the four trust cards under the check; the TrendScore page has its own sections. */
+  @Input() showTrustCards = true;
+
+  readonly roles: RoleOption[] = [
+    {
+      id: 'influencer',
+      emoji: '🌟',
+      name: 'Influencer',
+      sub: 'Content Creator',
+      perkTitle: 'Creator perk',
+      perk: 'Scores your content quality, posting consistency and profile completeness, and after sign-up suggests a fair Reel / post rate in ₹.',
+      cta: 'Create Free Influencer Account',
+    },
+    {
+      id: 'photographer',
+      emoji: '📸',
+      name: 'Photographer',
+      sub: 'Photo / Video Artist',
+      perkTitle: 'Visual artist perk',
+      perk: 'Rates your portfolio, profile completeness and campaign readiness, and shows what to improve before brands review you.',
+      cta: 'Create Free Photographer Account',
+    },
+    {
+      id: 'brand',
+      emoji: '🏢',
+      name: 'Brand',
+      sub: 'Hiring Creators',
+      perkTitle: 'Brand perk',
+      perk: 'Brands don\'t need a score — compare creators by TrendScore, Campaign Ready status and verification before you invite them.',
+      cta: 'Create Free Brand Account',
+    },
+  ];
+  selectedRole: RoleId | null = null;
+
+  private static readonly SAMPLES: Record<RoleId | 'none', SampleReport> = {
+    none: {
+      heading: 'Sample score report',
+      score: 86,
+      bars: [
+        { label: 'Content Quality', value: '88 / 100', pct: 88 },
+        { label: 'Campaign Readiness', value: 'Campaign Ready', pct: 82, hot: true },
+      ],
+      footLabel: 'Suggested rate',
+      footValue: '₹8,000 – ₹15,000 / Reel',
+    },
+    influencer: {
+      heading: 'Sample creator report',
+      score: 86,
+      bars: [
+        { label: 'Posting Consistency', value: '90 / 100', pct: 90 },
+        { label: 'Campaign Readiness', value: 'Campaign Ready', pct: 82, hot: true },
+      ],
+      footLabel: 'Suggested rate',
+      footValue: '₹8,000 – ₹15,000 / Reel',
+    },
+    photographer: {
+      heading: 'Sample portfolio report',
+      score: 81,
+      bars: [
+        { label: 'Portfolio Strength', value: '84 / 100', pct: 84 },
+        { label: 'Profile Completeness', value: 'Complete', pct: 95, hot: true },
+      ],
+      footLabel: 'Suggested starting price',
+      footValue: '₹12,000 / shoot',
+    },
+    brand: {
+      heading: 'What brands see on a creator',
+      score: 86,
+      bars: [
+        { label: 'Verified by TrendStarz', value: 'Yes', pct: 100 },
+        { label: 'Campaign Readiness', value: 'Campaign Ready', pct: 82, hot: true },
+      ],
+      footLabel: 'Detailed report',
+      footValue: 'Private to the creator',
+    },
+  };
+
+  get activeRole(): RoleOption | null {
+    return this.roles.find((r) => r.id === this.selectedRole) || null;
+  }
+
+  get sample(): SampleReport {
+    return ScorePreviewComponent.SAMPLES[this.selectedRole || 'none'];
+  }
+
+  selectRole(id: RoleId): void {
+    this.selectedRole = id;
+  }
+
+  /** stroke-dasharray for a 0–100 score on the r=52 ring. */
+  ringDash(score: number): string {
+    const circumference = 2 * Math.PI * 52;
+    const filled = (Math.max(0, Math.min(100, score)) / 100) * circumference;
+    return `${filled} ${circumference}`;
+  }
+
   readonly platforms: Array<{ id: PlatformId; name: string; icon: string }> = [
     { id: 'instagram', name: 'Instagram', icon: 'bi bi-instagram' },
     { id: 'youtube', name: 'YouTube', icon: 'bi bi-youtube' },

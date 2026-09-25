@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { CollaborationAudit } from './collaboration-score-api.service';
+import { CollaborationAudit, CollaborationScoreThresholds } from './collaboration-score-api.service';
+
+/** Mirrors the backend defaults (collaboration-score-settings.default.json → thresholds). */
+export const DEFAULT_SCORE_THRESHOLDS: CollaborationScoreThresholds = {
+  trendstarzRecommendedMinScore: 80,
+  campaignReadyMinScore: 70,
+  partiallyReadyMinScore: 40,
+};
 
 export type ScoreConfidenceLevel = 'High' | 'Medium' | 'Low';
 
@@ -39,23 +46,48 @@ export interface SubScoreRow {
 @Injectable({ providedIn: 'root' })
 export class CollaborationScoreUiUtilsService {
   // Single source of truth for the score-tier label/badge shown everywhere
-  // (creator's own card, Score Center, search cards, admin detail) — must
-  // stay in sync with the tier copy on the /trendstarz-score marketing page.
-  // These are fixed, cosmetic display bands; they're deliberately separate
-  // from audit.trendstarzRecommended/campaignReadiness, which are computed
-  // from admin-configurable thresholds and shown as their own fields.
+  // (creator's own card, Score Center, search cards, admin detail, the free
+  // check and the /trendstarz-score page). The bands use the SAME
+  // admin-configurable thresholds the backend uses to award
+  // campaignReadiness and trendstarzRecommended, so a tier label never
+  // disagrees with the badge a creator actually earned. Defaults mirror
+  // collaboration-score-settings.default.json; setThresholds() applies the
+  // live admin values (loaded once at app start from /audit/platform-flags).
+  private thresholds: CollaborationScoreThresholds = { ...DEFAULT_SCORE_THRESHOLDS };
+
+  setThresholds(t: Partial<CollaborationScoreThresholds> | null | undefined): void {
+    if (!t) return;
+    const next = { ...this.thresholds };
+    (Object.keys(next) as Array<keyof CollaborationScoreThresholds>).forEach((k) => {
+      const v = Number(t[k]);
+      if (Number.isFinite(v) && v >= 0 && v <= 100) next[k] = v;
+    });
+    this.thresholds = next;
+  }
+
+  get scoreThresholds(): CollaborationScoreThresholds {
+    return this.thresholds;
+  }
+
+  private tier(score: number): 0 | 1 | 2 | 3 {
+    const t = this.thresholds;
+    if (score >= t.trendstarzRecommendedMinScore && score >= t.campaignReadyMinScore) return 3;
+    if (score >= t.campaignReadyMinScore) return 2;
+    if (score >= t.partiallyReadyMinScore) return 1;
+    return 0;
+  }
+
   scoreTierLabel(score: number): string {
-    if (score >= 90) return 'TrendStarZ Recommended ⭐';
-    if (score >= 75) return 'Campaign Ready';
-    if (score >= 50) return 'Growing';
-    return 'Needs Improvement';
+    return ['Needs Improvement', 'Growing', 'Campaign Ready', 'TrendStarZ Recommended ⭐'][this.tier(score)];
   }
 
   scoreTierClass(score: number): string {
-    if (score >= 90) return 'bg-success-subtle text-success-emphasis';
-    if (score >= 75) return 'bg-primary-subtle text-primary-emphasis';
-    if (score >= 50) return 'bg-warning-subtle text-warning-emphasis';
-    return 'bg-danger-subtle text-danger-emphasis';
+    return [
+      'bg-danger-subtle text-danger-emphasis',
+      'bg-warning-subtle text-warning-emphasis',
+      'bg-primary-subtle text-primary-emphasis',
+      'bg-success-subtle text-success-emphasis',
+    ][this.tier(score)];
   }
 
   campaignReadinessClass(readiness: CollaborationAudit['campaignReadiness']): string {
@@ -72,10 +104,7 @@ export class CollaborationScoreUiUtilsService {
 
   /** Solid color (not a Bootstrap class) for the score-ring's conic-gradient — same 4 tiers as scoreTierClass/scoreTierLabel. */
   scoreRingColor(score: number): string {
-    if (score >= 90) return '#1a7f4e';
-    if (score >= 75) return '#3b5bdb';
-    if (score >= 50) return '#c2650a';
-    return '#c92a2a';
+    return ['#c92a2a', '#c2650a', '#3b5bdb', '#1a7f4e'][this.tier(score)];
   }
 
   /**

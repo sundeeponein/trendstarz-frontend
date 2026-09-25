@@ -1,29 +1,29 @@
 <div class="search-page" [class.has-shortlist]="canShortlist && activeShortlist.length > 0">
 
   <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <div class="header-text">
-        <div class="page-title-row">
-          <h1 class="page-title">
-            {{ pageTitle }}
-          </h1>
-          <div class="page-usage d-none" *ngIf="showUsageSummary">
-            <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary>
-          </div>
-        </div>
-        <p class="page-subtitle" *ngIf="(isInfluencerMode && !influencersLoading) || (isBrandMode && !brandsLoading) || (isPhotographerMode && !photographersLoading)">
-          {{ pageSubtitle }}
-        </p>
-      </div>
-      <!-- Right actions -->
-      <div class="header-actions">
-        <button class="btn-create-campaign" *ngIf="isBrandUser" (click)="router.navigate(['/campaigns'])">
-          <i class="bi bi-plus-lg"></i> Create Campaign
-        </button>
+  <header class="discover-hero">
+    <div class="discover-hero__copy">
+      <span class="discover-hero__kicker">
+        <span class="dot" aria-hidden="true"></span>
+        Marketplace discovery<ng-container *ngIf="heroCountLabel"> • {{ heroCountLabel }}</ng-container>
+      </span>
+      <h1 class="discover-hero__title">{{ pageTitle }}</h1>
+      <p class="discover-hero__subtitle">{{ heroSubtitle }}</p>
+      <div class="page-usage d-none" *ngIf="showUsageSummary">
+        <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary>
       </div>
     </div>
-  </div>
+    <div class="discover-hero__side">
+      <button class="btn-create-campaign" *ngIf="isBrandUser" (click)="router.navigate(['/campaigns'])">
+        <i class="bi bi-plus-lg"></i> Create Campaign
+      </button>
+      <ul class="discover-hero__chips" aria-label="Why search on TrendStarz">
+        <li><i class="bi bi-shield-check chip-teal" aria-hidden="true"></i> Verified Profiles</li>
+        <li><i class="bi bi-lock chip-amber" aria-hidden="true"></i> Protected Payments</li>
+        <li><i class="bi bi-lightning-charge chip-orange" aria-hidden="true"></i> Direct Invites</li>
+      </ul>
+    </div>
+  </header>
 
   <!-- Tab Toggle (real) -->
   <div class="search-tabs-row" *ngIf="canShowInfluencerTab || canShowPhotographersTab">
@@ -46,87 +46,95 @@
     <a *ngIf="!isAdminUser" routerLink="/brand-profile" class="upgrade-banner__cta">Upgrade to Pro ₹999/mo →</a>
   </div>
 
-  <!-- ───── REUSABLE FILTERS ───── -->
-  <button type="button" class="mobile-filter-toggle" (click)="toggleMobileFilters()" [attr.aria-expanded]="showMobileFilters">
-    <i class="bi bi-sliders"></i>
-    <span>Filters</span>
-    <span class="mobile-filter-count" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
-    <i class="bi" [ngClass]="showMobileFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-  </button>
-
-  <div class="filter-bar" [class.is-collapsed]="!showMobileFilters">
-    <!-- Keyword Search -->
-    <div class="filter-item search-item">
-      <label class="filter-label">Search</label>
-      <div class="search-input-wrapper w-100">
-        <i class="bi bi-search search-icon"></i>
+  <!-- ───── FILTERS ───── -->
+  <section class="filter-card" aria-label="Search filters">
+    <form class="filter-search-row" (ngSubmit)="applySearchNow()">
+      <div class="filter-search">
+        <i class="bi bi-search" aria-hidden="true"></i>
         <input
-          type="text"
-          class="filter-input"
+          type="search"
+          name="keyword"
           [placeholder]="searchPlaceholder"
+          [attr.aria-label]="searchPlaceholder"
           [ngModel]="activeKeyword"
           (ngModelChange)="onKeywordChange($event)" />
       </div>
-    </div>
-
-    <!-- Niche / Category -->
-    <div class="filter-item">
-      <label class="filter-label">{{ categoryLabel }}</label>
-      <select class="filter-select" [ngModel]="activeCategory" (ngModelChange)="onCategoryChange($event)">
-        <option value="">{{ categoryDefaultLabel }}</option>
-        <option *ngFor="let cat of activeCategoryOptions" [value]="cat">{{ cat }}</option>
-      </select>
-    </div>
-
-    <!-- Location -->
-    <div class="filter-item">
-      <label class="filter-label">Location</label>
-      <select class="filter-select" [ngModel]="activeLocation" (ngModelChange)="onLocationChange($event)">
-        <option value="">All Locations</option>
-        <option *ngFor="let loc of activeLocationOptions" [value]="loc">{{ loc }}</option>
-      </select>
-    </div>
-
-    <!-- Tier (influencer search only) -->
-    <div class="filter-item" *ngIf="isInfluencerMode">
-      <label class="filter-label">Tier</label>
-      <select class="filter-select" [(ngModel)]="infFilters.tier" (ngModelChange)="applyInfluencerFilters()">
-        <option value="">All Tiers</option>
-        <option *ngFor="let tier of tierOptions" [value]="tier">{{ getTierOptionLabel(tier) }}</option>
-      </select>
-    </div>
-
-    <div class="filter-item" *ngIf="isInfluencerMode">
-      <label class="filter-label">Age Range</label>
-      <select class="filter-select" [ngModel]="activeAgeRange" (ngModelChange)="onAgeRangeChange($event)">
-        <option value="">All Ages</option>
-        <option *ngFor="let range of ageRangeOptions" [value]="range">{{ range }}</option>
-      </select>
-    </div>
-
-    <!-- Skill (photographer search only) -->
-    <div class="filter-item" *ngIf="isPhotographerMode">
-      <label class="filter-label">Skill</label>
-      <select class="filter-select" [(ngModel)]="photographerFilters.skill" (ngModelChange)="applyPhotographerFilters()">
-        <option value="">All Skills</option>
-        <option *ngFor="let s of photographerSkillOptions" [value]="s">{{ s }}</option>
-      </select>
-    </div>
-
-    <!-- Sort -->
-    <div class="filter-item" *ngIf="isInfluencerMode || isPhotographerMode">
-      <label class="filter-label">Sort By</label>
-      <select class="filter-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
-        <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
-      </select>
-    </div>
-
-    <!-- Actions -->
-    <div class="filter-actions">
-      <button class="btn-clear" (click)="clearActiveFilters()">
-        <i class="bi bi-x-circle"></i> Clear
+      <button type="submit" class="btn-apply-search" aria-label="Apply search">
+        <i class="bi bi-sliders" aria-hidden="true"></i><span class="btn-apply-search__label">Apply Search</span>
       </button>
+      <button type="button" class="mobile-filter-toggle" (click)="toggleMobileFilters()" [attr.aria-expanded]="showMobileFilters" aria-label="More filters">
+        <i class="bi bi-funnel" aria-hidden="true"></i>
+        <span class="mobile-filter-count" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+      </button>
+    </form>
+
+    <div class="filter-bar" [class.is-collapsed]="!showMobileFilters">
+      <!-- Niche (influencers, with live counts) / Industry (brands); photographers filter by Skill -->
+      <div class="filter-item" *ngIf="!isPhotographerMode">
+        <label class="filter-label" for="f-category">{{ categoryLabel }}</label>
+        <select id="f-category" class="filter-select" [ngModel]="activeCategory" (ngModelChange)="onCategoryChange($event)">
+          <option value="">{{ categoryDefaultLabel }}{{ isInfluencerMode && nicheTotalLabel ? ' (' + nicheTotalLabel + ')' : '' }}</option>
+          <option *ngFor="let cat of activeCategoryOptions" [value]="cat">{{ nicheOptionLabel(cat) }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label class="filter-label" for="f-location">Location</label>
+        <select id="f-location" class="filter-select" [ngModel]="activeLocation" (ngModelChange)="onLocationChange($event)">
+          <option value="">All Locations</option>
+          <option *ngFor="let loc of activeLocationOptions" [value]="loc">{{ loc }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item" *ngIf="isInfluencerMode">
+        <label class="filter-label" for="f-tier">Follower Tier</label>
+        <select id="f-tier" class="filter-select" [(ngModel)]="infFilters.tier" (ngModelChange)="applyInfluencerFilters()">
+          <option value="">All Tiers</option>
+          <option *ngFor="let tier of tierOptions" [value]="tier">{{ getTierOptionLabel(tier) }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item" *ngIf="isInfluencerMode">
+        <label class="filter-label" for="f-age">Age Range</label>
+        <select id="f-age" class="filter-select" [ngModel]="activeAgeRange" (ngModelChange)="onAgeRangeChange($event)">
+          <option value="">All Ages</option>
+          <option *ngFor="let range of ageRangeOptions" [value]="range">{{ range }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item" *ngIf="isPhotographerMode">
+        <label class="filter-label" for="f-skill">Skill</label>
+        <select id="f-skill" class="filter-select" [(ngModel)]="photographerFilters.skill" (ngModelChange)="applyPhotographerFilters()">
+          <option value="">All Skills</option>
+          <option *ngFor="let s of photographerSkillOptions" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item" *ngIf="isInfluencerMode || isPhotographerMode">
+        <label class="filter-label" for="f-sort">Sort By</label>
+        <select id="f-sort" class="filter-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+          <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-clear" (click)="clearActiveFilters()">
+          <i class="bi bi-x-lg" aria-hidden="true"></i> Clear
+        </button>
+      </div>
     </div>
+  </section>
+
+  <!-- Results summary -->
+  <div class="results-summary" *ngIf="!activeLoading">
+    <p class="results-summary__text">
+      <strong>{{ pageSubtitle }}</strong>
+      <span class="results-summary__scope"> • {{ activeLocation || (isInfluencerSmartDiscoveryActive || isPhotographerSmartDiscoveryActive ? 'Nearest first' : 'All India') }} • {{ activeCategory || (isPhotographerMode ? (photographerFilters.skill || 'All skills') : 'All categories') }}</span>
+      <span class="results-summary__sort" *ngIf="(isInfluencerMode || isPhotographerMode) && sortBy !== 'recommended'">Sort: {{ activeSortLabel }}</span>
+    </p>
+    <p class="results-summary__hint" *ngIf="!isProView && isInfluencerMode">
+      <i class="bi bi-star" aria-hidden="true"></i> Pro users appear first
+    </p>
   </div>
 
   <!-- ───── INFLUENCER RESULTS ───── -->
@@ -138,11 +146,6 @@
           Create Free Brand Account
         </button>
       </div>
-    </div>
-
-    <!-- Pro users appear first hint -->
-    <div class="pro-first-hint" *ngIf="!isProView">
-      <i class="bi bi-star-fill"></i> Pro users appear first
     </div>
 
     <!-- Loading -->

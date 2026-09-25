@@ -11,6 +11,7 @@ import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-u
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
+import { PlatformStats, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
 
 @Component({
   selector: 'app-search',
@@ -167,9 +168,72 @@ export class SearchComponent implements OnInit {
   }
 
   get pageTitle(): string {
-    if (this.isInfluencerMode) return 'Discover Influencers';
-    if (this.isPhotographerMode) return 'Discover Photo/Videographers';
+    if (this.isInfluencerMode) return 'Discover High-Impact Creators & Influencers';
+    if (this.isPhotographerMode) return 'Discover Professional Photo/Videographers';
     return 'Discover Brands';
+  }
+
+  get heroSubtitle(): string {
+    if (this.isInfluencerMode) {
+      return 'Filter by niche, location, follower tier and age range, compare TrendScores and starting rates, and invite verified creators directly.';
+    }
+    if (this.isPhotographerMode) {
+      return 'Filter by skill and location, compare portfolios and starting rates, and invite verified photo/videographers to your campaigns.';
+    }
+    return 'Find verified brands by industry and location, and see who is running campaigns.';
+  }
+
+  // ── Live counts for the hero kicker + niche chips (from /users/platform-stats) ──
+  private platformStats: PlatformStats | null = null;
+
+  get heroCountLabel(): string {
+    const s = this.platformStats;
+    if (!s) return '';
+    if (this.isInfluencerMode && s.verifiedInfluencers > 0) return `${formatMilestoneCount(s.verifiedInfluencers)} verified creators`;
+    if (this.isPhotographerMode && s.verifiedPhotographers > 0) return `${formatMilestoneCount(s.verifiedPhotographers)} verified photo/videographers`;
+    if (this.isBrandMode && s.verifiedBrands > 0) return `${formatMilestoneCount(s.verifiedBrands)} verified brands`;
+    return '';
+  }
+
+  /** "Fashion (119)" — live creator count for influencer niches; plain name elsewhere or when unknown. */
+  nicheOptionLabel(category: string): string {
+    const count = this.isInfluencerMode ? this.platformStats?.influencerCategoryCounts?.[category] || 0 : 0;
+    return count > 0 ? `${category} (${this.compactCount(count)})` : category;
+  }
+
+  get nicheTotalLabel(): string {
+    const total = this.platformStats?.totalInfluencers || 0;
+    return total ? this.compactCount(total) : '';
+  }
+
+  private compactCount(n: number): string {
+    return n >= 1000 ? `${(Math.floor(n / 100) / 10).toString()}k` : String(n);
+  }
+
+  get activeSortLabel(): string {
+    return this.sortOptions.find((o) => o.value === this.sortBy)?.label || '';
+  }
+
+  get activeLoading(): boolean {
+    if (this.isInfluencerMode) return this.influencersLoading;
+    if (this.isPhotographerMode) return this.photographersLoading;
+    return this.brandsLoading;
+  }
+
+  /** "Apply Search" — run the keyword search now instead of waiting for the typing debounce. */
+  applySearchNow(): void {
+    if (this.isBrandMode) {
+      this.applyBrandFilters();
+      return;
+    }
+    this.triggerSearchFetch('query');
+  }
+
+  private loadPlatformStats(): void {
+    this.config.getPlatformStats().subscribe((stats) => {
+      this.platformStats = stats as PlatformStats;
+      setTimeout(() => this.cd.detectChanges(), 0);
+    });
   }
 
   get pageSubtitle(): string {
@@ -281,6 +345,7 @@ export class SearchComponent implements OnInit {
       this.loadUsageSummary();
     }
     this.loadRoleCategoryOptions();
+    this.loadPlatformStats();
     const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
     this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
     // Deep link from the home niche cards, e.g. /search?tab=influencers&category=Fashion
