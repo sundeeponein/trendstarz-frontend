@@ -1,7 +1,11 @@
 <div class="sp-card">
   <ng-container *ngIf="!result">
-    <h2 class="sp-card__title">Check your FREE TrendStarZ Collaboration Score</h2>
-    <p class="sp-card__subtitle">Brands don't just look at followers. They look at professional creators.</p>
+    <p class="sp-card__kicker"><i class="bi bi-star-fill" aria-hidden="true"></i> Free creator tool</p>
+    <h2 class="sp-card__title sp-card__title--hero">Check Your FREE TrendScore</h2>
+    <p class="sp-card__subtitle sp-card__subtitle--hero">
+      Brands look at more than followers before signing a deal. See how your profile rates on
+      content, consistency and campaign readiness &mdash; free, in seconds.
+    </p>
 
     <div class="sp-card__platform-tabs" role="tablist" aria-label="Choose a platform to check">
       <button
@@ -20,16 +24,18 @@
 
     <ng-container *ngIf="selectedPlatform === 'youtube'">
       <form class="sp-card__form" (ngSubmit)="check()">
+        <i class="bi bi-at sp-card__input-icon" aria-hidden="true"></i>
         <input
           type="text"
-          class="form-control"
-          placeholder="Paste your YouTube channel URL"
+          class="sp-card__input"
+          placeholder="Paste your YouTube channel URL…"
+          aria-label="YouTube channel URL"
           [(ngModel)]="youtubeUrl"
           name="youtubeUrl"
           [disabled]="loading"
         />
-        <button type="submit" class="btn btn-primary" [disabled]="loading || !youtubeUrl.trim()">
-          {{ loading ? 'Checking…' : 'Check Your Score' }}
+        <button type="submit" class="sp-card__submit" [disabled]="loading || !youtubeUrl.trim()">
+          {{ loading ? 'Checking…' : 'Calculate Score' }} <i *ngIf="!loading" class="bi bi-arrow-right" aria-hidden="true"></i>
         </button>
       </form>
 
@@ -42,17 +48,28 @@
     </ng-container>
 
     <ng-container *ngIf="selectedPlatform !== 'youtube'">
-      <input
-        type="text"
-        class="form-control"
-        [placeholder]="'Paste your ' + selectedPlatformName + ' username or URL'"
-        disabled
-      />
+      <div class="sp-card__form sp-card__form--disabled">
+        <i class="bi bi-at sp-card__input-icon" aria-hidden="true"></i>
+        <input
+          type="text"
+          class="sp-card__input"
+          [placeholder]="'Paste your ' + selectedPlatformName + ' handle or profile URL…'"
+          [attr.aria-label]="selectedPlatformName + ' handle'"
+          disabled
+        />
+        <button type="button" class="sp-card__submit" disabled>Calculate Score <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+      </div>
       <p class="sp-card__connect-hint">
-        Real scoring for this platform requires connecting your account after you register.
+        Real scoring for {{ selectedPlatformName }} requires connecting your account after you register.
       </p>
       <ng-container *ngTemplateOutlet="roleChoice"></ng-container>
     </ng-container>
+
+    <ul class="sp-card__features">
+      <li><i class="bi bi-bar-chart-line" aria-hidden="true"></i> Instant Score Preview</li>
+      <li><i class="bi bi-currency-rupee" aria-hidden="true"></i> Brand Deal Rate Estimate <span>(after sign-up)</span></li>
+      <li><i class="bi bi-patch-check" aria-hidden="true"></i> Campaign Readiness Check</li>
+    </ul>
   </ng-container>
 
   <ng-container *ngIf="result">
@@ -61,7 +78,7 @@
         {{ result.previewScore }}<span aria-hidden="true">/100</span>
       </div>
       <div class="sp-card__score-meta">
-        <div class="sp-card__title">TrendStarZ Collaboration Score</div>
+        <div class="sp-card__title">TrendScore</div>
         <p class="sp-card__subtitle">{{ ui.scoreTierLabel(result.previewScore) }}</p>
       </div>
     </div>
@@ -81,6 +98,16 @@
     </div>
   </ng-container>
 </div>
+
+<ul class="sp-trust container" aria-label="Why creators and brands trust TrendStarz">
+  <li class="sp-trust__item" *ngFor="let t of trustItems">
+    <span class="sp-trust__icon sp-trust__icon--{{ t.tone }}"><i class="bi {{ t.icon }}" aria-hidden="true"></i></span>
+    <span class="sp-trust__text">
+      <strong>{{ t.title }}</strong>
+      <span>{{ t.text }}</span>
+    </span>
+  </li>
+</ul>
 
 <!-- Registration isn't unified across roles — don't assume Influencer.
      Influencer/Photographer both need a real Collaboration Score, so both

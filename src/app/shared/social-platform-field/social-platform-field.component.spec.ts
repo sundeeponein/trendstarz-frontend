@@ -25,7 +25,7 @@ describe('SocialPlatformFieldComponent', () => {
     ]);
     apiSpy.getConnections.and.returnValue(of({ instagram: null, facebook: null }));
     apiSpy.getPlatformFlags.and.returnValue(
-      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true } }),
+      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true }, metaConfigured: false }),
     );
     toastSpy = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'warning']);
 
@@ -171,7 +171,7 @@ describe('SocialPlatformFieldComponent', () => {
   describe('admin platform toggles', () => {
     it('hides the Connect block entirely when an admin disables this platform\'s collector', () => {
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true } }),
+        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true }, metaConfigured: false }),
       );
       const { fixture } = createComponent({ allowConnect: true, supportsOAuth: true });
 
@@ -180,7 +180,7 @@ describe('SocialPlatformFieldComponent', () => {
 
     it('keeps manual handle/tier fields untouched even when the collector is disabled', () => {
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true } }),
+        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true }, metaConfigured: false }),
       );
       const { fixture } = createComponent({ allowConnect: true, supportsOAuth: true });
 
@@ -189,7 +189,7 @@ describe('SocialPlatformFieldComponent', () => {
 
     it('shows the Connect block again once re-enabled (does not cache the disabled state)', () => {
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true } }),
+        of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true }, metaConfigured: false }),
       );
       const { fixture } = createComponent({ allowConnect: true, supportsOAuth: true });
 

@@ -11,7 +11,9 @@ import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../sha
 import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
-import { HeroBannerComponent } from '../../shared/hero-banner/hero-banner.component';
+import { HeroBannerComponent, HeroStat, HeroAction, HeroAudience } from '../../shared/hero-banner/hero-banner.component';
+import { AnalyticsService } from '../../core/analytics.service';
+import { SessionService } from '../../core/session.service';
 import { HeroSliderBannerComponent, HeroSliderBannerSlide } from '../../shared/hero-slider-banner/hero-slider-banner.component';
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
 import { RegistrationConfirmModalService } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
@@ -19,7 +21,7 @@ import { ActionCtaComponent } from '../../shared/components/action-cta/action-ct
 import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
 import { PlatformStatsStripComponent, PlatformStatItem } from '../../shared/components/platform-stats-strip/platform-stats-strip.component';
 import { TrustBadgesStripComponent } from '../../shared/components/trust-badges-strip/trust-badges-strip.component';
-import { formatBrandsStat, formatPhotographersStat, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
+import { PlatformStats, formatBrandsStat, formatPhotographersStat, formatMilestoneCount, formatRupeeCompact } from '../../shared/utils/platform-stats.util';
 import { ScorePreviewComponent } from '../../shared/score-preview/score-preview.component';
 
 @Component({
@@ -39,14 +41,42 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly heroSliderBannerComponent = HeroSliderBannerComponent;
 
   private static readonly DEFAULT_HERO_IMAGE = 'assets/banner-trendstarz-1600.jpg';
-  private static readonly DEFAULT_HERO_ALT = 'TrendStarz hero image';
+  private readonly analytics = inject(AnalyticsService);
+  private readonly session = inject(SessionService);
 
-  get heroImageUrl(): string {
-    return WelcomeComponent.DEFAULT_HERO_IMAGE;
+  /** Logged-in users get role-specific actions instead of the "I'm a …" audience CTAs. */
+  heroActions: HeroAction[] = [];
+
+  onHeroAudienceClick(audience: HeroAudience): void {
+    this.analytics.trackHeroAudienceClick(audience);
+    this.regConfirm.open(audience);
   }
 
-  get heroImageAlt(): string {
-    return WelcomeComponent.DEFAULT_HERO_ALT;
+  private buildHeroActions(): HeroAction[] {
+    if (!this.isLoggedIn()) return [];
+    const role = String(this.session.getUser()?.role || '').toLowerCase();
+    if (role === 'brand') {
+      return [
+        { label: 'Start a Campaign', route: '/campaigns/new', primary: true, icon: 'bi-plus-circle' },
+        { label: 'Find Creators', route: '/search', icon: 'bi-search' },
+      ];
+    }
+    if (role === 'influencer') {
+      return [
+        { label: 'My Dashboard', route: '/influencer-dashboard', primary: true, icon: 'bi-speedometer2' },
+        { label: 'Check My TrendScore', route: '/dashboard/trendstarz-score', icon: 'bi-graph-up-arrow' },
+      ];
+    }
+    if (role === 'photographer' || role === 'videographer') {
+      return [
+        { label: 'My Dashboard', route: '/photographer-dashboard', primary: true, icon: 'bi-speedometer2' },
+        { label: 'Explore Campaigns', route: '/campaigns', icon: 'bi-megaphone' },
+      ];
+    }
+    return [
+      { label: 'Find Creators', route: '/search', primary: true, icon: 'bi-search' },
+      { label: 'Campaigns', route: '/campaigns', icon: 'bi-megaphone' },
+    ];
   }
 
   get heroSliderBannerInputs() {
@@ -142,6 +172,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
     { label: 'Photographers', value: 'Growing the count', emphasis: false },
   ];
+
+  /** Hero stats strip — empty until platform stats load; zero-value items are omitted. */
+  heroStats: HeroStat[] = [];
 
   statsStripItems: PlatformStatItem[] = [
     { icon: 'bi-people-fill', value: '100+', label: 'Verified Creators' },
@@ -275,6 +308,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
     ]);
     if (!this.isBrowser) return;
+    this.heroActions = this.buildHeroActions();
     this.loadPlatformStats();
     this.scheduleMarketplaceBootstrap();
     this.routerSubscription = this.router.events.subscribe(event => {
@@ -342,6 +376,37 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Hero stat minimums — a small number ("6+ Brands") hurts more than it helps,
+   * so each tile waits until it clears its threshold. Max 4 tiles, in priority order.
+   */
+  private static readonly HERO_STAT_MIN = {
+    creators: 50,
+    brands: 20,
+    cities: 10,
+    escrowRupees: 100000,
+    campaigns: 25,
+    reviews: 10,
+  };
+  private static readonly HERO_STAT_MAX = 4;
+
+  private buildHeroStats(stats: PlatformStats): HeroStat[] {
+    const min = WelcomeComponent.HERO_STAT_MIN;
+    const verifiedCreators = (stats.verifiedInfluencers || 0) + (stats.verifiedPhotographers || 0);
+    const items: HeroStat[] = [];
+    if (verifiedCreators >= min.creators) items.push({ value: formatMilestoneCount(verifiedCreators), label: 'Verified Creators' });
+    if (stats.totalBrands >= min.brands) items.push({ value: formatMilestoneCount(stats.totalBrands), label: 'Brands' });
+    if ((stats.totalCities || 0) >= min.cities) items.push({ value: formatMilestoneCount(stats.totalCities!), label: 'Cities' });
+    if ((stats.creatorEscrowTotal || 0) >= min.escrowRupees) {
+      items.push({ value: formatRupeeCompact(stats.creatorEscrowTotal!), label: 'Creator Escrow', accent: true });
+    }
+    if (stats.totalCampaigns >= min.campaigns) items.push({ value: formatMilestoneCount(stats.totalCampaigns), label: 'Campaigns' });
+    if ((stats.ratingCount || 0) >= min.reviews && stats.averageRating) {
+      items.push({ value: stats.averageRating.toFixed(1), label: 'Match Rating', star: true });
+    }
+    return items.slice(0, WelcomeComponent.HERO_STAT_MAX);
+  }
+
   private loadPlatformStats(): void {
     this.config.getPlatformStats().subscribe((stats) => {
       this.platformStats = stats;
@@ -356,6 +421,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         { label: brandsStat.label, value: brandsStat.value, emphasis: true },
         { label: photographersStat.label, value: photographersStat.value, emphasis: false },
       ];
+      this.heroStats = this.buildHeroStats(stats);
       this.statsStripItems = [
         { icon: 'bi-people-fill', value: formatMilestoneCount(stats.verifiedInfluencers), label: 'Verified Creators' },
         { icon: 'bi-briefcase-fill', value: formatMilestoneCount(stats.totalBrands), label: 'Active Brands' },

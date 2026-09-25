@@ -16,7 +16,7 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
     ]);
     apiSpy.previewFromYoutubeUrl.and.returnValue(of({} as any));
     apiSpy.getPlatformFlags.and.returnValue(
-      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true } }),
+      of({ platformsEnabled: { instagram: true, facebook: true, youtube: true, linkedin: true }, metaConfigured: false }),
     );
 
     await TestBed.configureTestingModule({
@@ -72,7 +72,7 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
   describe('admin platform toggles', () => {
     it('hides a tab an admin has disabled in Collaboration Score Settings', () => {
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true } }),
+        of({ platformsEnabled: { instagram: false, facebook: true, youtube: true, linkedin: true }, metaConfigured: false }),
       );
       const { fixture } = createComponent();
 
@@ -82,12 +82,12 @@ describe('ScorePreviewComponent — role-choice CTA', () => {
         (el: any) => el.textContent.trim(),
       );
       expect(tabLabels).not.toContain('Instagram');
-      expect(tabLabels).toEqual(['Facebook', 'YouTube', 'LinkedIn']);
+      expect(tabLabels).toEqual(['YouTube', 'Facebook', 'LinkedIn']);
     });
 
     it('moves off a tab that gets disabled out from under the visitor currently on it', () => {
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: true, facebook: true, youtube: false, linkedin: true } }),
+        of({ platformsEnabled: { instagram: true, facebook: true, youtube: false, linkedin: true }, metaConfigured: false }),
       );
       const { component, fixture } = createComponent();
       component.selectedPlatform = 'youtube';

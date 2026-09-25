@@ -44,7 +44,7 @@ describe('CreatorScoreCenterComponent', () => {
     apiSpy.getAuditHistory.and.returnValue(of({ history: [] }));
     apiSpy.getConnections.and.returnValue(of({ instagram: null, facebook: null }));
     apiSpy.getPlatformFlags.and.returnValue(
-      of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: true } }),
+      of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: true }, metaConfigured: true }),
     );
     apiSpy.getSyncStatus.and.returnValue(of({ platforms: [], hasChanges: false }));
     configSpy.getInfluencerProfileById.and.returnValue(of({ socialMedia: [] }));
@@ -144,7 +144,7 @@ describe('CreatorScoreCenterComponent', () => {
     it('drops a row entirely when an admin has disabled that platform, rather than showing it as Not Connected', () => {
       sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: false, youtube: true, facebook: true, linkedin: true } }),
+        of({ platformsEnabled: { instagram: false, youtube: true, facebook: true, linkedin: true }, metaConfigured: true }),
       );
       const { fixture, component } = createComponent();
 
@@ -156,7 +156,7 @@ describe('CreatorScoreCenterComponent', () => {
     it('keeps LinkedIn visible as Coming Soon regardless of its own toggle state', () => {
       sessionSpy.getUser.and.returnValue({ _id: 'u1', role: 'influencer' });
       apiSpy.getPlatformFlags.and.returnValue(
-        of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: false } }),
+        of({ platformsEnabled: { instagram: true, youtube: true, facebook: true, linkedin: false }, metaConfigured: true }),
       );
       const { fixture, component } = createComponent();
 

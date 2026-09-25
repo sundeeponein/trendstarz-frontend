@@ -1,31 +1,135 @@
 <section class="hero-block my-3">
   <div class="container">
-    <div class="row g-4 align-items-center">
-      <div class="col-12 col-lg-6">
-        <span class="pill-label">{{ badge }}</span>
-        <h1 class="hero-title mt-3">{{ titleMain }} <span class="highlight">{{ titleHighlight }}</span> Platform</h1>
+    <div class="row g-4 g-lg-5 align-items-center">
+      <div class="col-12 col-lg-7">
+        <span class="pill-label"><span class="dot"></span>{{ badge }}</span>
+        <h1 class="hero-title mt-3">{{ titleMain }} <span class="highlight">{{ titleHighlight }}</span></h1>
         <p class="hero-copy mt-3">{{ subtitle }}</p>
-        <div class="d-flex flex-wrap gap-3 mt-4">
-          <button class="btn btn-lg btn-primary" (click)="goPrimary()">{{ primaryLabel }}</button>
-          <button class="btn btn-lg btn-dark" (click)="goSecondary()">{{ secondaryLabel }}</button>
-          <button *ngIf="thirdLabel" class="btn btn-lg btn-text" (click)="go(thirdRoute)">{{ thirdLabel }} <i class="bi bi-arrow-right"></i></button>
+
+        <div class="hero-audiences mt-4" *ngIf="!actions.length">
+          <button
+            type="button"
+            *ngFor="let a of audiences; let first = first"
+            class="audience-cta"
+            [class.primary]="first"
+            (click)="selectAudience(a.key)">
+            <span class="audience-top">
+              <i class="bi {{ a.icon }} audience-icon"></i>
+              <i class="bi bi-arrow-right audience-arrow"></i>
+            </span>
+            <strong>{{ a.label }}</strong>
+            <small>{{ a.sub }}</small>
+          </button>
+        </div>
+
+        <div class="hero-actions mt-4" *ngIf="actions.length">
+          <button
+            type="button"
+            *ngFor="let act of actions"
+            class="btn btn-lg"
+            [class.btn-hero-primary]="act.primary"
+            [class.btn-hero-secondary]="!act.primary"
+            (click)="go(act.route)">
+            <i *ngIf="act.icon" class="bi {{ act.icon }}"></i> {{ act.label }}
+          </button>
+        </div>
+
+        <ul class="trust-line mt-3" *ngIf="trustItems.length">
+          <li *ngFor="let t of trustItems"><i class="bi bi-check-circle-fill"></i> {{ t }}</li>
+        </ul>
+
+        <div class="hero-stats mt-4" *ngIf="stats.length">
+          <div class="hero-stat" *ngFor="let st of stats">
+            <span class="value" [class.accent]="st.accent">
+              {{ st.value }}<i *ngIf="st.star" class="bi bi-star-fill star"></i>
+            </span>
+            <span class="label">{{ st.label }}</span>
+          </div>
         </div>
       </div>
-      <div class="col-12 col-lg-6">
-        <div class="hero-media">
-          <img
-            class="hero-media-bg"
-            [ngSrc]="'assets/banner-trendstarz-1600.jpg'"
-            [alt]="'TrendStarz hero image'"
-            width="1600"
-            height="900"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async" />
-          <!-- <div class="live-metric" *ngIf="liveMetricText">
-            <span class="dot"></span>
-            <span>{{ liveMetricText }}</span>
-          </div> -->
+
+      <div class="col-12 col-lg-5">
+        <div
+          class="hero-showcase"
+          *ngIf="activeCard as card"
+          (mouseenter)="setPaused(true)"
+          (mouseleave)="setPaused(false)"
+          (focusin)="setPaused(true)"
+          (focusout)="setPaused(false)"
+          aria-live="polite">
+          <div class="showcase-kicker">
+            <span class="kind">
+              <ng-container [ngSwitch]="card.type">
+                <ng-container *ngSwitchCase="'creator'"><i class="bi bi-person-video3"></i> Creator</ng-container>
+                <ng-container *ngSwitchCase="'photographer'"><i class="bi bi-camera"></i> Photo/Videographer</ng-container>
+                <ng-container *ngSwitchCase="'campaign'"><i class="bi bi-megaphone"></i> Campaign</ng-container>
+              </ng-container>
+            </span>
+            <span *ngIf="card.example" class="example-tag">Example</span>
+          </div>
+
+          <!-- Creator -->
+          <ng-container *ngIf="card.type === 'creator'">
+            <div class="showcase-media" *ngIf="card.imageUrl">
+              <img class="showcase-img" [ngSrc]="card.imageUrl" [alt]="card.name" width="1600" height="900" priority />
+            </div>
+            <div class="showcase-head">
+              <h2 class="showcase-title">{{ card.name }}
+                <i *ngIf="card.verified" class="bi bi-patch-check-fill verified" title="Verified by TrendStarz"></i>
+              </h2>
+              <p class="showcase-sub" *ngIf="card.category">{{ card.category }}</p>
+            </div>
+            <div class="showcase-stats" *ngIf="card.followers || card.engagement || card.trendScore">
+              <div class="stat" *ngIf="card.followers"><span class="stat-label">Followers</span><span class="stat-value">{{ card.followers }}</span></div>
+              <div class="stat" *ngIf="card.engagement"><span class="stat-label">Engagement</span><span class="stat-value">{{ card.engagement }}</span></div>
+              <div class="stat" *ngIf="card.trendScore"><span class="stat-label">TrendScore</span><span class="stat-value accent">{{ card.trendScore }}</span></div>
+            </div>
+          </ng-container>
+
+          <!-- Photo/Videographer -->
+          <ng-container *ngIf="card.type === 'photographer'">
+            <div class="showcase-media" *ngIf="card.imageUrl; else photoArt">
+              <img class="showcase-img" [ngSrc]="card.imageUrl" [alt]="card.name" width="1600" height="900" />
+            </div>
+            <ng-template #photoArt><div class="showcase-art art-photo"><i class="bi bi-camera"></i></div></ng-template>
+            <div class="showcase-head">
+              <h2 class="showcase-title">{{ card.name }}
+                <i *ngIf="card.verified" class="bi bi-patch-check-fill verified" title="Verified by TrendStarz"></i>
+              </h2>
+              <p class="showcase-sub" *ngIf="card.specialties">{{ card.specialties }}</p>
+            </div>
+            <div class="showcase-meta">
+              <span *ngIf="card.location"><i class="bi bi-geo-alt"></i> {{ card.location }}</span>
+              <span *ngIf="card.trendScore"><i class="bi bi-graph-up-arrow"></i> TrendScore {{ card.trendScore }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Campaign -->
+          <ng-container *ngIf="card.type === 'campaign'">
+            <div class="showcase-art art-campaign"><i class="bi bi-megaphone"></i></div>
+            <div class="showcase-head">
+              <h2 class="showcase-title">{{ card.title }}</h2>
+              <p class="showcase-sub" *ngIf="card.lookingFor">Looking for: {{ card.lookingFor }}</p>
+            </div>
+            <div class="showcase-meta">
+              <span *ngIf="card.locations"><i class="bi bi-geo-alt"></i> {{ card.locations }}</span>
+            </div>
+          </ng-container>
+
+          <div class="showcase-foot">
+            <a class="card-cta" [routerLink]="card.ctaRoute">{{ card.ctaLabel }} <i class="bi bi-arrow-right"></i></a>
+            <div class="dots" *ngIf="cards.length > 1" role="tablist" aria-label="Showcase cards">
+              <button
+                type="button"
+                *ngFor="let c of cards; let i = index"
+                class="dot-btn"
+                role="tab"
+                [class.active]="i === activeIndex"
+                [attr.aria-selected]="i === activeIndex"
+                [attr.aria-label]="'Show card ' + (i + 1)"
+                (click)="showCard(i)"></button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -17,10 +17,39 @@ type PlatformId = 'instagram' | 'facebook' | 'youtube' | 'linkedin';
 export class ScorePreviewComponent implements OnInit, OnDestroy {
   readonly platforms: Array<{ id: PlatformId; name: string; icon: string }> = [
     { id: 'instagram', name: 'Instagram', icon: 'bi bi-instagram' },
-    { id: 'facebook', name: 'Facebook', icon: 'bi bi-facebook' },
     { id: 'youtube', name: 'YouTube', icon: 'bi bi-youtube' },
+    { id: 'facebook', name: 'Facebook', icon: 'bi bi-facebook' },
     { id: 'linkedin', name: 'LinkedIn', icon: 'bi bi-linkedin' },
   ];
+  // Claims here must stay true to how the platform works today — e.g. payments
+  // are held and released on work approval, but there is no bot/authenticity audit.
+  readonly trustItems: Array<{ icon: string; tone: 'teal' | 'orange' | 'indigo' | 'amber'; title: string; text: string }> = [
+    {
+      icon: 'bi-patch-check',
+      tone: 'teal',
+      title: 'Verified Profiles',
+      text: 'Reviewed and approved by the TrendStarz team, with email and mobile verified, before the badge appears.',
+    },
+    {
+      icon: 'bi-cash-stack',
+      tone: 'orange',
+      title: 'Transparent Pricing',
+      text: 'Creators show their starting rates upfront, so brands know costs before reaching out.',
+    },
+    {
+      icon: 'bi-shield-check',
+      tone: 'indigo',
+      title: 'Protected Payments',
+      text: 'Brand payments are held by TrendStarz and released to the creator once the brand approves the work.',
+    },
+    {
+      icon: 'bi-hand-thumbs-up',
+      tone: 'amber',
+      title: 'Built for Growing Brands',
+      text: 'From D2C startups to local businesses, brands find and hire creators directly.',
+    },
+  ];
+
   // Optimistic default (all enabled) until the real flags load, so tabs
   // don't flash away right after render — an admin-disabled platform stays
   // visible for at most one HTTP round-trip, never permanently mis-hidden.

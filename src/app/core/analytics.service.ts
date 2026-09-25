@@ -230,6 +230,17 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * Home hero — one of the "I'm a Brand / Influencer / Photo/Videographer" CTAs.
+   * Separate event names so each audience's conversion is visible on its own.
+   */
+  trackHeroAudienceClick(audience: 'brand' | 'influencer' | 'photographer'): void {
+    const eventName = audience === 'photographer' ? 'hero_photovideographer_click' : `hero_${audience}_click`;
+    this.logEvent(eventName, { audience });
+    this.sendToGA4(eventName, { audience });
+    this.sendToClarity(eventName, { audience });
+  }
+
+  /**
    * TrendStarZ Score landing page (/trendstarz-score) — "Check My Score" CTA click.
    */
   trackTrendstarzScoreCheckClicked(context: { loggedIn: boolean; destination: string }): void {

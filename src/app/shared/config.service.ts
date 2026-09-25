@@ -671,6 +671,10 @@ export class ConfigService {
     totalBrands: number;
     verifiedBrands: number;
     totalCampaigns: number;
+    averageRating?: number;
+    ratingCount?: number;
+    creatorEscrowTotal?: number;
+    totalCities?: number;
   }> {
     return this.http.get<any>(`${this.apiUrl}/users/platform-stats`).pipe(
       map((res) => this.extractData<any>(res) || res || {}),

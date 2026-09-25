@@ -1,20 +1,12 @@
 <div class="home-shell rounded-3 shadow-sm">
   <app-hero-banner
-    [primaryLabel]="isLoggedIn() ? 'Start a Campaign' : 'Register as Brand'"
-    [primaryRoute]="isLoggedIn() ? '/campaigns' : ''"
-    [secondaryLabel]="isLoggedIn() ? 'Find Creators' : 'Register as Influencer'"
-    [secondaryRoute]="isLoggedIn() ? '/search' : ''"
-    [thirdLabel]="'Explore Features'"
-    [thirdRoute]="'/features'"
-    liveMetricText="Live: 5,400+ Campaigns active now"
-    [imageUrl]="heroImageUrl"
-    [imageAlt]="heroImageAlt"
-    (primaryClick)="isLoggedIn() ? null : regConfirm.open('brand')"
-    (secondaryClick)="isLoggedIn() ? null : regConfirm.open('influencer')"
+    [actions]="heroActions"
+    [stats]="heroStats"
+    (audienceClick)="onHeroAudienceClick($event)"
   ></app-hero-banner>
   <app-registration-confirm-modal></app-registration-confirm-modal>
 
-  <section class="score-preview-section py-4" *ngIf="!isLoggedIn()" aria-label="Free Collaboration Score check">
+  <section class="score-preview-section py-4" *ngIf="!isLoggedIn()" aria-label="Free TrendScore check">
     <app-score-preview></app-score-preview>
   </section>
 
