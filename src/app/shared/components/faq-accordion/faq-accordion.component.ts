@@ -22,7 +22,9 @@ export interface FaqCtaButton {
   styleUrls: ['./faq-accordion.component.scss'],
 })
 export class FaqAccordionComponent implements OnInit, OnDestroy {
+  @Input() kicker = '';
   @Input() heading = 'Frequently Asked Questions';
+  @Input() subheading = '';
   @Input() items: FaqAccordionItem[] = [];
   @Input() schemaItems?: FaqAccordionItem[];
   @Input() showSchema = true;

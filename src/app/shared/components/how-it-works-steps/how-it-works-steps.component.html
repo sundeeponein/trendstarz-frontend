@@ -1,0 +1,20 @@
+<section class="hiw" aria-labelledby="hiw-heading">
+  <div class="container">
+    <header class="hiw__head">
+      <p class="hiw__kicker">{{ kicker }}</p>
+      <h2 id="hiw-heading" class="hiw__title">{{ heading }}</h2>
+      <p class="hiw__subtitle">{{ subheading }}</p>
+    </header>
+
+    <ol class="hiw__grid">
+      <li class="hiw__card" *ngFor="let step of steps; let i = index">
+        <span class="hiw__num hiw__num--{{ step.tone }}" aria-hidden="true">{{ i + 1 }}</span>
+        <h3>{{ step.title }}</h3>
+        <p>{{ step.text }}</p>
+        <span class="hiw__tag hiw__tag--{{ step.tone }}">
+          <i class="bi {{ step.tagIcon }}" aria-hidden="true"></i> {{ step.tag }}
+        </span>
+      </li>
+    </ol>
+  </div>
+</section>

@@ -675,6 +675,7 @@ export class ConfigService {
     ratingCount?: number;
     creatorEscrowTotal?: number;
     totalCities?: number;
+    influencerCategoryCounts?: Record<string, number>;
   }> {
     return this.http.get<any>(`${this.apiUrl}/users/platform-stats`).pipe(
       map((res) => this.extractData<any>(res) || res || {}),

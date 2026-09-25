@@ -2,16 +2,24 @@ import { FaqAccordionItem } from './faq-accordion.component';
 
 export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   {
-    question: 'What is TrendStarz?',
-    answer: 'TrendStarz is a creator collaboration platform connecting influencers, brands, photographers, and content creators across India for campaigns and professional collaborations.'
+    question: 'What is TrendStarz and how does it verify creators?',
+    answer: 'TrendStarz is a creator collaboration platform connecting brands with influencers and photo/videographers across India. A profile gets the Verified badge only after the TrendStarz team reviews and approves it, and its email and mobile number have been verified.'
   },
   {
     question: 'Who can join TrendStarz?',
     answer: 'Influencers, brands, photographers, videographers, models, and content creators can join TrendStarz and build professional collaborations.'
   },
   {
-    question: 'Is TrendStarz free to use?',
-    answer: 'Yes, registration is currently free for all users. Join TrendStarZ and start connecting with brands, creators, and industry professionals.'
+    question: 'Is TrendStarz free to use for creators and brands?',
+    answer: 'Yes. Creating an account is free for creators and brands. Optional Premium plans add extras such as higher daily limits and a chance to be featured on the homepage.'
+  },
+  {
+    question: 'How does TrendStarz keep brand payments safe?',
+    answer: 'For paid campaigns, brands pay through TrendStarz. The payment is held until the brand approves the creator\'s submitted work, and only then released to the creator. If there is a dispute, the payout is paused while our team reviews it.'
+  },
+  {
+    question: 'How do influencers receive payouts?',
+    answer: 'Once the brand approves your submitted work, TrendStarz releases the agreed amount to you via UPI. You can follow the status of every payout on your Transactions page.'
   },
   {
     question: 'How do brands use TrendStarz?',
@@ -41,11 +49,6 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
     question: 'How do I get started?',
     answer: 'Simply create an account, complete your profile, and start exploring campaigns and collaborations.'
   },
-  // {
-  //   question: 'How do payments work?',
-  //   answer: 'TrendStarz currently helps creators and brands connect for collaborations and campaigns. Direct payment management and secure transaction workflows are planned for future updates.',
-  //   label: 'Coming Soon'
-  // },
   {
     question: 'How do collaborations get approved?',
     answer: 'Campaigns and collaboration requests submitted on TrendStarz are reviewed by the admin team before being published. This helps maintain quality, reduce spam, and improve trust across the platform.'
@@ -75,8 +78,8 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
     answer: 'TrendStarz reviews campaigns and collaboration requests to help reduce spam and maintain a safer collaboration environment. Additional moderation and verification systems will continue improving over time.'
   },
   {
-    question: 'Will TrendStarz support paid campaigns?',
-    answer: 'Yes, support for larger campaign workflows and paid collaboration features is part of the long-term roadmap.'
+    question: 'Does TrendStarz support paid campaigns?',
+    answer: 'Yes. Brands can run paid campaigns today. Payments go through TrendStarz and are released to the creator once the brand approves the work.'
   },
   {
     question: 'Can small creators get opportunities?',
@@ -87,3 +90,16 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
     answer: 'Yes. TrendStarz aims to support creators across different regions, languages, and content categories in India.'
   }
 ];
+
+/** Home page shows these five, in this order (full list lives on /faqs). */
+const HOME_FAQ_QUESTIONS = [
+  'What is TrendStarz and how does it verify creators?',
+  'Who can join TrendStarz?',
+  'Is TrendStarz free to use for creators and brands?',
+  'How does TrendStarz keep brand payments safe?',
+  'How do influencers receive payouts?',
+];
+
+export const HOME_FAQ_ITEMS: FaqAccordionItem[] = HOME_FAQ_QUESTIONS
+  .map((q) => TRENDSTARZ_FAQ_ITEMS.find((item) => item.question === q))
+  .filter((item): item is FaqAccordionItem => !!item);

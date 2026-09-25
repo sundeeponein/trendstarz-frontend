@@ -10,6 +10,7 @@ export interface PlatformStats {
   ratingCount?: number;
   creatorEscrowTotal?: number;
   totalCities?: number;
+  influencerCategoryCounts?: Record<string, number>;
 }
 
 /** Below this many verified profiles, show a qualitative label instead of a (small-looking) real count. */

@@ -3,12 +3,12 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
-import { BuiltForAudiencesComponent } from '../../shared/components/built-for-audiences/built-for-audiences.component';
+import { BuiltForAudiencesComponent, BuiltForAudienceItem } from '../../shared/components/built-for-audiences/built-for-audiences.component';
 import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/brand-user-card.component';
 import { InfluencerUserCardComponent } from '../../shared/user-card/influencer-user-card/influencer-user-card.component';
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../shared/components/faq-accordion/faq-accordion.component';
-import { TRENDSTARZ_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
+import { HOME_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { HeroBannerComponent, HeroStat, HeroAction, HeroAudience } from '../../shared/hero-banner/hero-banner.component';
@@ -20,14 +20,14 @@ import { RegistrationConfirmModalService } from '../../shared/components/registr
 import { ActionCtaComponent } from '../../shared/components/action-cta/action-cta.component';
 import { WhyTrendstarzGlanceComponent, TrendstarzGlanceCounter } from '../../shared/components/why-trendstarz-glance/why-trendstarz-glance.component';
 import { PlatformStatsStripComponent, PlatformStatItem } from '../../shared/components/platform-stats-strip/platform-stats-strip.component';
-import { TrustBadgesStripComponent } from '../../shared/components/trust-badges-strip/trust-badges-strip.component';
+import { HowItWorksStepsComponent } from '../../shared/components/how-it-works-steps/how-it-works-steps.component';
 import { PlatformStats, formatBrandsStat, formatPhotographersStat, formatMilestoneCount, formatRupeeCompact } from '../../shared/utils/platform-stats.util';
 import { ScorePreviewComponent } from '../../shared/score-preview/score-preview.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, PhotographerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent, PlatformStatsStripComponent, TrustBadgesStripComponent, ScorePreviewComponent],
+  imports: [CommonModule, RouterModule, HeroBannerComponent, BrandUserCardComponent, InfluencerUserCardComponent, PhotographerUserCardComponent, RegistrationConfirmModalComponent, ActionCtaComponent, WhyTrendstarzGlanceComponent, PlatformStatsStripComponent, HowItWorksStepsComponent, ScorePreviewComponent],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.scss']
 })
@@ -147,20 +147,29 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       },
     ];
   }
-  readonly builtForAudiencesInputs = {
-    heading: 'Platform Features',
-    subheading: 'Tools and collaboration solutions built for creators and brands.',
-    items: [
-      { icon: 'bi-person', title: 'Fashion Brands', subtitle: 'Apparel & Accessories tailored management.', tint: 'purple' },
-      { icon: 'bi-fork-knife', title: 'Restaurants', subtitle: 'Food & Dining visual storytelling.', tint: 'orange' },
-      { icon: 'bi-heart', title: 'Beauty Brands', subtitle: 'Skincare & Makeup brand scaling.', tint: 'blue' },
-      { icon: 'bi-display', title: 'Tech & Gadgets', subtitle: 'Electronics & Apps launch precision.', tint: 'gray' },
-      { icon: 'bi-rocket', title: 'Startups', subtitle: 'Growth & Awareness for new entities.', tint: 'red' },
-      { icon: 'bi-people-fill', title: 'Lifestyle Creators', subtitle: 'Daily Life & Trends connectivity.', tint: 'purple' },
-      { icon: 'bi-building', title: 'Local Businesses', subtitle: 'City & Hyperlocal Reach campaigns.', tint: 'gray' },
-      { icon: 'bi-chat-left-quote', title: 'Food Bloggers', subtitle: 'Taste & Review content excellence.', tint: 'orange' },
-    ],
-  };
+  /** Niche cards — each `category` is an exact creator category name, so the Search link and the count match. */
+  private static readonly NICHES: BuiltForAudienceItem[] = [
+    { icon: 'bi-bag-heart', title: 'Fashion & Apparel', category: 'Fashion', subtitle: 'Lookbooks, styling reels, ethnic wear showcases and brand drops.' },
+    { icon: 'bi-cup-hot', title: 'Food & Restaurants', category: 'Food', subtitle: 'Food walkthroughs, menu launches, dine-in reels and local footfall.' },
+    { icon: 'bi-stars', title: 'Beauty & Skincare', category: 'Beauty', subtitle: 'Routines, honest product trials, before-afters and makeup tutorials.' },
+    { icon: 'bi-phone', title: 'Tech & Gadgets', category: 'Tech', subtitle: 'Unboxings, hands-on reviews, app demos and launch reels.' },
+    { icon: 'bi-rocket-takeoff', title: 'Business & Startups', category: 'Business', subtitle: 'Founder stories, D2C launches and explainer content.' },
+    { icon: 'bi-airplane', title: 'Travel', category: 'Travel', subtitle: 'Vlogs, resort stays, road trips and cinematic storytelling.' },
+    { icon: 'bi-house-heart', title: 'Lifestyle', category: 'Lifestyle', subtitle: 'Everyday routines, home, and trend-led content.' },
+    { icon: 'bi-heart-pulse', title: 'Fitness & Wellness', category: 'Fitness', subtitle: 'Workouts, nutrition tips and athlete-style endorsements.' },
+  ];
+
+  /** Below this, a niche card links to Search without showing a (small-looking) number. */
+  private static readonly NICHE_COUNT_MIN = 10;
+
+  builtForAudiencesInputs: { items: BuiltForAudienceItem[] } = { items: WelcomeComponent.NICHES };
+
+  private buildNicheItems(counts: Record<string, number> = {}): BuiltForAudienceItem[] {
+    return WelcomeComponent.NICHES.map((niche) => {
+      const count = counts[niche.category || ''] || 0;
+      return count >= WelcomeComponent.NICHE_COUNT_MIN ? { ...niche, countLabel: formatMilestoneCount(count) } : niche;
+    });
+  }
 
   readonly minPublicInfluencers = environment.marketplacePublicMinInfluencers;
   readonly minPublicBrands = environment.marketplacePublicMinBrands;
@@ -210,15 +219,17 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     }
   ];
 
-  readonly homepageFaqs: FaqAccordionItem[] = TRENDSTARZ_FAQ_ITEMS.slice(0, 5);
+  readonly homepageFaqs: FaqAccordionItem[] = HOME_FAQ_ITEMS;
 
   readonly faqCtaButtons: FaqCtaButton[] = [
-    // { label: 'More FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
+    { label: 'See all FAQs', route: '/faqs', className: 'btn btn-outline-dark' },
   ];
 
   get faqAccordionInputs() {
     return {
+      kicker: 'Got questions?',
       heading: 'Frequently Asked Questions',
+      subheading: 'Everything you need to know about working with creators and hiring through TrendStarz.',
       items: this.homepageFaqs,
       showSchema: true,
       schemaId: 'trendstarz-home-faq-schema',
@@ -422,6 +433,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         { label: photographersStat.label, value: photographersStat.value, emphasis: false },
       ];
       this.heroStats = this.buildHeroStats(stats);
+      this.builtForAudiencesInputs = { items: this.buildNicheItems(stats.influencerCategoryCounts) };
       this.statsStripItems = [
         { icon: 'bi-people-fill', value: formatMilestoneCount(stats.verifiedInfluencers), label: 'Verified Creators' },
         { icon: 'bi-briefcase-fill', value: formatMilestoneCount(stats.totalBrands), label: 'Active Brands' },

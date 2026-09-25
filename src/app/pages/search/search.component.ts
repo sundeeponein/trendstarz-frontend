@@ -283,6 +283,11 @@ export class SearchComponent implements OnInit {
     this.loadRoleCategoryOptions();
     const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
     this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
+    // Deep link from the home niche cards, e.g. /search?tab=influencers&category=Fashion
+    const urlCategory = (this.route.snapshot.queryParamMap.get('category') || '').trim();
+    if (urlCategory && this.activeTab === 'influencers') {
+      this.infFilters.category = urlCategory;
+    }
     if (this.activeTab === 'influencers') {
       this.fetchInfluencers({ countSearch: false });
     } else if (this.activeTab === 'photographers') {
@@ -441,6 +446,7 @@ export class SearchComponent implements OnInit {
   onCategoryChange(value: string) {
     if (this.isInfluencerMode) {
       this.infFilters.category = value;
+      this.syncCategoryParam(value);
       this.influencersPage = 1;
       this.applyInfluencerFilters();
       this.triggerSearchFetch('filter');
@@ -542,6 +548,8 @@ export class SearchComponent implements OnInit {
         viewerDistrict: this.currentUser?.location?.district || '',
         viewerCountry: this.currentUser?.location?.country || '',
         smartLocationPriority: !this.infFilters.location,
+        // Filter server-side so a niche isn't limited to whichever creators land in the first page.
+        category: this.infFilters.category || undefined,
         countSearch: !!options?.countSearch,
         countReason: options?.countReason,
       })
@@ -731,12 +739,22 @@ export class SearchComponent implements OnInit {
   }
 
   clearInfluencerFilters(countSearch = false) {
+    const hadCategory = !!this.infFilters.category;
     this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0 };
     this.influencersPage = 1;
     this.applyInfluencerFilters();
+    if (hadCategory) this.syncCategoryParam('');
     if (countSearch) {
       this.fetchInfluencers({ countSearch: !this.isAdminUser && !this.isGuestUser, countReason: 'filter' });
+    } else if (hadCategory) {
+      // Category is filtered server-side, so the loaded list must be refetched without it.
+      this.fetchInfluencers({ countSearch: false });
     }
+  }
+
+  /** Keeps ?category= in step with the dropdown so a refresh or shared link shows the same niche. */
+  private syncCategoryParam(category: string): void {
+    this.router.navigate([], { queryParams: { category: category || null }, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   clearBrandFilters() {
