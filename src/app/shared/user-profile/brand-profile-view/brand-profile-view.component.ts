@@ -10,12 +10,15 @@ import { CampaignCardComponent } from '../../campaigns/campaign-card/campaign-ca
 import { CampaignDetailModalComponent } from '../../campaign-detail-modal/campaign-detail-modal.component';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
+import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
+import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { environment } from '../../../../environments/environment';
+import { buildSocialProfileUrl } from '../../social-handle.util';
 
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent],
+  imports: [CommonModule, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: ['./brand-profile-view.component.scss']
 })
@@ -161,6 +164,10 @@ export class BrandProfileViewComponent implements OnInit {
       : [];
   }
 
+  get isTrendstarzVerified(): boolean {
+    return !!this.brand?.verifiedByTrendStarz || String(this.brand?.verificationStatus || '').toLowerCase() === 'approved';
+  }
+
   formatFollowers(count: number): string {
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
@@ -196,15 +203,7 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   getSocialUrl(sm: any): string {
-    const p = (sm?.platform || '').toLowerCase();
-    const handle = sm?.handle || '';
-    if (p.includes('insta')) return 'https://instagram.com/' + handle;
-    if (p.includes('youtube')) return 'https://youtube.com/' + handle;
-    if (p.includes('face')) return 'https://facebook.com/' + handle;
-    if (p.includes('twitter') || p.includes('x')) return 'https://x.com/' + handle;
-    if (p.includes('tiktok')) return 'https://tiktok.com/@' + handle;
-    if (p.includes('linkedin')) return 'https://linkedin.com/in/' + handle;
-    return sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
   }
 
   tagBadgeClass(tag: string): string {
@@ -216,6 +215,7 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   getMainSocialLink(): string {
+    if (!this.canOpenSocialProfiles) return '#';
     if (this.brand?.socialMedia?.length) {
       return this.getSocialUrl(this.brand.socialMedia[0]);
     }
@@ -226,6 +226,32 @@ export class BrandProfileViewComponent implements OnInit {
 
   get hasFollowLink(): boolean {
     return this.getMainSocialLink() !== '#';
+  }
+
+  get canOpenSocialProfiles(): boolean {
+    return !!this.brand && this.brand.socialMediaRestricted !== true;
+  }
+
+  onFollowClick(): void {
+    const first = this.brand?.socialMedia?.[0] || null;
+    this.trackSocialClick(first, this.getMainSocialLink(), 'brand_profile_follow');
+  }
+
+  onPlatformClick(sm: any): void {
+    this.trackSocialClick(sm, this.getSocialUrl(sm), 'brand_profile_platform');
+  }
+
+  private trackSocialClick(sm: any, url: string, source: string): void {
+    if (!this.isLoggedIn || !this.canOpenSocialProfiles || !this.brand?._id) return;
+    if (!url || url === '#') return;
+    const platform = String(sm?.platform || 'website').trim() || 'website';
+    this.socialClickTracker.track({
+      targetUserId: String(this.brand._id),
+      targetRole: 'brand',
+      platform,
+      url,
+      source,
+    });
   }
 
   get displayCompanySize(): string {
@@ -244,6 +270,7 @@ export class BrandProfileViewComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private config: ConfigService,
+    private socialClickTracker: SocialClickTrackerService,
     private session: SessionService,
     private cd: ChangeDetectorRef,
     private titleService: Title,

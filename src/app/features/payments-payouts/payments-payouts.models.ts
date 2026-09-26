@@ -4,16 +4,20 @@ export interface CampaignTransaction {
   inviteId?: string;
   transactionType: 'paid_collab' | 'pay_to_join';
   direction: 'brand_to_influencer' | 'influencer_to_brand';
-  payerRole: 'brand' | 'influencer';
+  payerRole: 'brand' | 'influencer' | 'photographer';
   payerId?: string;
-  recipientRole: 'brand' | 'influencer';
+  recipientRole: 'brand' | 'influencer' | 'photographer';
   recipientId?: string;
   agreedAmount: number;
   platformFee: number;
   payerTotal: number;
   recipientPayout: number;
-  /** Payment gateway. MVP = manual_upi. Future: razorpay, stripe. */
-  gateway?: 'manual_upi' | 'razorpay' | 'stripe';
+  /** Payment gateway. MVP = manual_upi. Future: razorpay. */
+  gateway?: 'manual_upi' | 'razorpay';
+  gatewayOrderId?: string;
+  gatewayPaymentId?: string;
+  gatewaySignature?: string;
+  gatewayVerifiedAt?: string;
   collectionStatus: 'awaiting_payment' | 'proof_submitted' | 'verified' | 'failed';
   /** frozen = disputed, payout on hold until admin resolves. */
   payoutStatus: 'pending' | 'processing' | 'paid' | 'skipped' | 'frozen';
@@ -32,6 +36,14 @@ export interface CampaignTransaction {
   paymentProofUrl?: string;
   payoutUpiId?: string;
   payoutUtr?: string;
+  payoutGatewayProvider?: 'manual_upi' | 'razorpayx';
+  payoutTransferId?: string;
+  payoutTransferStatus?: string;
+  payoutFailureReason?: string;
+  payoutRetryCount?: number;
+  payoutLastRetryAt?: string;
+  payoutInitiatedAt?: string;
+  payoutSettledAt?: string;
   createdAt: string;
   updatedAt?: string;
   collectedAt?: string;
@@ -39,7 +51,7 @@ export interface CampaignTransaction {
   /** Recipient profile snapshot enriched by listForAdmin (admin view only). */
   recipient?: {
     id?: string;
-    role?: 'brand' | 'influencer';
+    role?: 'brand' | 'influencer' | 'photographer';
     name?: string;
     email?: string;
     mobile?: string;
@@ -51,11 +63,28 @@ export interface CampaignTransaction {
   /** Payer profile snapshot enriched by listForAdmin (admin view only). */
   payer?: {
     id?: string;
-    role?: 'brand' | 'influencer';
+    role?: 'brand' | 'influencer' | 'photographer';
     name?: string;
     email?: string;
     mobile?: string;
   };
+  inviteSnapshot?: {
+    id?: string;
+    status?: string;
+    unlocked?: boolean;
+    unlockType?: string;
+    agreedAmount?: number;
+    agreedAmountPaise?: number;
+    counterOfferStatus?: string;
+    counterOfferedAmount?: number;
+    counterOfferedAmountPaise?: number;
+    counterRequestedAmount?: number;
+    counterRequestedAmountPaise?: number;
+    counterResolvedAt?: string | null;
+    acceptedAt?: string | null;
+    completedAt?: string | null;
+    updatedAt?: string | null;
+  } | null;
 }
 
 export interface TransactionSummary {
@@ -63,6 +92,7 @@ export interface TransactionSummary {
   fees: number;
   pendingPayouts: number;
   paidOut: number;
+  refunded?: number;
   netBalance: number;
 }
 
@@ -75,13 +105,22 @@ export interface PremiumPayment {
     email?: string;
   };
   transactionId: string;
+  orderId?: string;
+  paymentId?: string;
   amount: number;
   premiumDuration: '1m' | '3m' | '1y';
-  paymentMethod: 'upi' | 'qr';
+  paymentMethod: 'upi' | 'qr' | 'razorpay';
+  gatewayProvider?: 'manual_upi' | 'razorpay';
+  paymentStatus?: 'created' | 'authorized' | 'captured' | 'failed' | 'refunded';
+  refundStatus?: 'none' | 'requested' | 'processed' | 'failed';
+  purpose?: 'subscription' | 'invite_unlock' | 'campaign_payment';
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   approvedAt?: string;
   approvalNotes?: string;
+  refundedAt?: string;
+  refundAmount?: number;
+  refundReason?: string;
 }
 
 export interface PendingPremiumPaymentsResponse {

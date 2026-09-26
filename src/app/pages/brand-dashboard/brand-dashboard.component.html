@@ -2,173 +2,153 @@
     {{ error }}
   </div>
 <div class="cm-page brand-dashboard p-4">
+    <app-founder-offer-modal
+      [open]="showFounderOfferModal"
+      role="BRAND"
+      [registeredAt]="firstRegisteredAtDisplay"
+      (closed)="onFounderOfferModalClosed()">
+    </app-founder-offer-modal>
     <div class="dashboard-welcome-bar mb-4">
       <div class="dashboard-welcome-left">
-        <h1 class="welcome-title mb-1">Welcome {{dashboard?.brand?.brandName || 'Influencer' }}</h1>
-        <div class="welcome-subtitle">Here is what is happening with your brand campaigns today.</div>
+        <span class="dashboard-kicker"><span class="dot"></span> Brand dashboard</span>
+        <h1 class="welcome-title">Welcome, <span class="welcome-name">{{ dashboard?.brand?.brandName || 'Brand' }}</span></h1>
+        <div class="welcome-subtitle">Here is what is happening with your brand campaigns and creator partnerships today.</div>
       </div>
       <div class="dashboard-welcome-right account-meta-card">
-        <div><strong>Registered on:</strong> {{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</div>
-        <div><strong>Last Login:</strong> {{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</div>
+        <div><strong>Registered on</strong> <span>{{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</span></div>
+        <div><strong>Last login</strong> <span>{{ lastLoginAtDisplay ? (lastLoginAtDisplay | date:'medium') : '-' }}</span></div>
+        <div><strong>Last opened</strong> <span>{{ lastOpenedAtDisplay ? (lastOpenedAtDisplay | date:'medium') : '-' }}</span></div>
       </div>
     </div>
 
-  <!-- Alert Cards Row -->
-  <div class="row mb-4 gx-3">
-    <div class="col-md-4 mb-3 mb-md-0" *ngIf="!emailBannerDismissed || dashboard?.brand?.isEmailVerified">
-      <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
-        <div class="d-flex align-items-start">
-          <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
-          <div>
-            <div class="alert-card-title fw-bold">{{ dashboard?.brand?.isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
-            <div class="alert-card-desc">{{ dashboard?.brand?.isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start collaborating with influencers.' }}</div>
-            <div *ngIf="emailVerificationError" class="text-danger mt-2">{{ emailVerificationError }}</div>
-          </div>
+  <!-- Role-based notice -->
+  <app-registration-notice role="brand" [showRoleNotice]="true" class="dashboard-notice mb-4"></app-registration-notice>
+
+  <!-- Verification / profile cards -->
+  <div class="row mb-4 g-3" *ngIf="!loading">
+    <div class="col-md-4" *ngIf="!emailBannerDismissed || dashboard?.brand?.isEmailVerified">
+      <div class="alert-card alert-card--email h-100">
+        <div class="alert-card-top">
+          <span class="alert-card-icon"><i class="bi bi-envelope"></i></span>
+          <span class="alert-card-status" [class.is-ok]="dashboard?.brand?.isEmailVerified">
+            <i class="bi" [ngClass]="dashboard?.brand?.isEmailVerified ? 'bi-patch-check' : 'bi-hourglass-split'"></i>
+            {{ dashboard?.brand?.isEmailVerified ? 'Verified' : 'Pending' }}
+          </span>
           <button *ngIf="dashboard?.brand && dashboard?.brand.isEmailVerified === false"
-                  class="btn-dismiss-banner ms-2" title="Dismiss" (click)="dismissEmailBanner()">
+                  class="btn-dismiss-banner ms-auto" title="Dismiss" (click)="dismissEmailBanner()">
             <i class="bi bi-x"></i>
           </button>
         </div>
-        <a *ngIf="dashboard?.brand && dashboard?.brand.isEmailVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onVerifyEmail()">Resend verification</a>
-        <span *ngIf="dashboard?.brand && dashboard?.brand.isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
-      </div>
-    </div>
-    <div class="col-md-4 mb-3 mb-md-0">
-      <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
-        <div class="d-flex align-items-start">
-          <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
-          <div>
-            <div class="alert-card-title fw-bold">{{ dashboard?.brand?.isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
-            <div class="alert-card-desc">Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.</div>
-            <div *ngIf="verificationCallNumber" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
-          </div>
-        </div>
-        <a *ngIf="dashboard?.brand && dashboard?.brand.isMobileVerified === false" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
-        <span *ngIf="dashboard?.brand && dashboard?.brand.isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
+        <div class="alert-card-title">{{ dashboard?.brand?.isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
+        <div class="alert-card-desc">{{ dashboard?.brand?.isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start collaborating with influencers.' }}</div>
+        <div *ngIf="emailVerificationError" class="text-danger mt-2">{{ emailVerificationError }}</div>
+        <a *ngIf="dashboard?.brand && dashboard?.brand.isEmailVerified === false" class="alert-card-link" (click)="onVerifyEmail()">Resend verification <i class="bi bi-arrow-right"></i></a>
       </div>
     </div>
     <div class="col-md-4">
-      <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
-        <div class="d-flex align-items-start">
-          <span class="alert-card-icon me-3"><i class="bi bi-person-fill"></i></span>
-          <div>
-            <div class="alert-card-title fw-bold">Complete your profile</div>
-            <div class="alert-card-desc">Complete your profile to receive better campaign recommendations and platform features.</div>
-          </div>
+      <div class="alert-card alert-card--mobile h-100">
+        <div class="alert-card-top">
+          <span class="alert-card-icon"><i class="bi bi-phone"></i></span>
+          <span class="alert-card-status" [class.is-ok]="isMobileVerified">
+            <i class="bi" [ngClass]="isMobileVerified ? 'bi-patch-check' : 'bi-hourglass-split'"></i>
+            {{ isMobileVerified ? 'Verified' : 'Pending' }}
+          </span>
         </div>
-        <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Go to profile</a>
-        <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+        <div class="alert-card-title">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+        <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+        <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+        <a *ngIf="dashboard?.brand && !isMobileVerified" class="alert-card-link" (click)="onMobileVerificationHelp()">How mobile verification works <i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="alert-card alert-card--profile h-100">
+        <div class="alert-card-top">
+          <span class="alert-card-icon"><i class="bi bi-person-vcard"></i></span>
+          <span class="alert-card-status" [class.is-ok]="!profileIncomplete">
+            <i class="bi" [ngClass]="!profileIncomplete ? 'bi-patch-check' : 'bi-pencil'"></i>
+            {{ profileIncomplete ? 'Incomplete' : 'Profile complete' }}
+          </span>
+        </div>
+        <div class="alert-card-title">Complete your profile</div>
+        <div class="alert-card-desc">Complete your profile to receive better campaign recommendations and platform features.</div>
+        <app-profile-review-summary
+          [detail]="profileVerificationDashboard"
+          [loading]="profileVerificationLoading"
+          profileRoute="/brand-profile"
+          [autoOpen]="true"
+        />
+        <a *ngIf="profileIncomplete" class="alert-card-link" (click)="onCompleteProfile()">Go to profile <i class="bi bi-arrow-right"></i></a>
       </div>
     </div>
   </div>
 
-  <!-- Needs Attention Widget -->
-  <div class="needs-attention mb-4"
-       *ngIf="attentionCounts.awaitingFulfillment > 0">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <div class="performance-title">Needs Attention</div>
-    </div>
-    <div class="row gx-3">
-      <div class="col-12 col-md-4 mb-3 mb-md-0" *ngIf="attentionCounts.awaitingFulfillment > 0">
-        <a class="card attention-card fulfillment shadow-sm border-0 d-block text-decoration-none"
-           routerLink="/brand-dashboard/invites" [queryParams]="{ filter: 'awaiting-fulfillment' }">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1 text-info">{{ attentionCounts.awaitingFulfillment }}</div>
-            <div class="text-muted">Awaiting fulfillment</div>
-          </div>
-        </a>
-      </div>
-    </div>
+  <!-- Needs attention -->
+  <div class="needs-attention mb-4" *ngIf="attentionCounts.awaitingFulfillment > 0">
+    <a class="attention-banner" routerLink="/brand-dashboard/invites" [queryParams]="{ filter: 'awaiting-fulfillment' }">
+      <span class="attention-banner__count">{{ attentionCounts.awaitingFulfillment }}</span>
+      <span class="attention-banner__body">
+        <span class="attention-banner__kicker">Awaiting fulfillment</span>
+        <span class="attention-banner__title d-block">Creator {{ attentionCounts.awaitingFulfillment === 1 ? 'submission' : 'submissions' }} ready for review</span>
+        <span class="attention-banner__desc d-block">Review creator deliverables waiting on you in active campaigns.</span>
+      </span>
+      <span class="attention-banner__cta">Review <i class="bi bi-arrow-right"></i></span>
+    </a>
   </div>
 
   <!-- Performance Overview -->
   <div class="performance-overview mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <div class="performance-title">Performance Overview</div>
-      <span class="performance-range">LAST 30 DAYS</span>
+    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+      <div>
+        <div class="performance-title">Performance Overview</div>
+        <p class="performance-subtitle">Your campaigns and creator invites at a glance</p>
+      </div>
+      <span class="performance-range"><i class="bi bi-calendar3"></i> LAST 30 DAYS</span>
     </div>
-    <div class="row gx-3">
-      <div class="col-6 col-md-3 mb-3 mb-md-0">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1">{{ stats.totalCampaigns }}</div>
-            <div class="text-muted">Total Campaigns</div>
-            <span class="badge rounded-pill bg-primary">Campaigns</span>
-          </div>
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--indigo">Campaigns</span><i class="bi bi-megaphone"></i></div>
+          <div class="stat-card__value">{{ stats.totalCampaigns }}</div>
+          <div class="stat-card__label">Total campaigns</div>
         </div>
       </div>
-      <div class="col-6 col-md-3 mb-3 mb-md-0">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1">{{ stats.invitesSent }}</div>
-            <div class="text-muted">Invites Sent</div>
-            <span class="badge rounded-pill bg-info text-dark">Invited</span>
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--teal">Invited</span><i class="bi bi-send"></i></div>
+          <div class="stat-card__value">{{ stats.invitesSent }}</div>
+          <div class="stat-card__label">Invites sent</div>
         </div>
       </div>
-      <div class="col-6 col-md-3 mb-3 mb-md-0">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1">{{ stats.accepted }}</div>
-            <div class="text-muted">Accepted</div>
-            <span class="badge rounded-pill bg-success">Accepted</span>
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--green">Accepted</span><i class="bi bi-hand-thumbs-up"></i></div>
+          <div class="stat-card__value">{{ stats.accepted }}</div>
+          <div class="stat-card__label">Accepted</div>
         </div>
       </div>
-      <div class="col-6 col-md-3 mb-3 mb-md-0">
-        <div class="card text-center shadow-sm border-0">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1">{{ stats.completed }}</div>
-            <div class="text-muted">Completed</div>
-            <span class="badge rounded-pill bg-dark">Completed</span>
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--dark">Completed</span><i class="bi bi-check2-circle"></i></div>
+          <div class="stat-card__value">{{ stats.completed }}</div>
+          <div class="stat-card__label">Completed</div>
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="section-card mb-4 profile-traffic-card">
-    <div class="section-title d-flex align-items-center mb-2">
-      <span class="dot dot--purple me-2"></span> Profile Traffic
-      <span class="section-count ms-auto">Last 30 days</span>
-    </div>
-
-    <div class="profile-traffic-grid" *ngIf="canViewProfileTraffic; else brandTrafficLocked">
-      <div class="traffic-stat-box">
-        <div class="traffic-stat-label">Impressions</div>
-        <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
-      </div>
-      <div class="traffic-stat-box">
-        <div class="traffic-stat-label">Clicks</div>
-        <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
-      </div>
-      <div class="traffic-stat-meta">
-        <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ profileTraffic.lastImpressionAt | date:'medium' }}</span>
-        <span *ngIf="profileTraffic.lastClickAt">Last click: {{ profileTraffic.lastClickAt | date:'medium' }}</span>
-      </div>
-    </div>
-
-    <ng-template #brandTrafficLocked>
-      <div class="traffic-locked-state">
-        <i class="bi bi-lock-fill"></i>
-        <span>Upgrade to Premium to view profile traffic analytics.</span>
-        <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
-      </div>
-    </ng-template>
   </div>
 
   <!-- Campaign Sections -->
-  <div class="row mb-4 gx-3">
-    <div class="col-md-4 mb-3 mb-md-0">
+  <div class="row mb-4 g-3">
+    <div class="col-md-4">
       <div class="section-card h-100">
-        <div class="section-title d-flex align-items-center mb-2">
-          <span class="dot dot--orange me-2"></span> Active Campaigns
+        <div class="section-title">
+          <span class="dot dot--orange"></span> Active Campaigns
           <span class="section-count ms-auto">{{ activeCampaignList.length }}</span>
         </div>
         <div *ngIf="activeCampaignList.length === 0" class="section-empty">
           <div class="section-empty-icon"><i class="bi bi-megaphone"></i></div>
           <div class="section-empty-title">No active campaigns</div>
-          <div class="section-empty-desc">Active campaigns will appear here.</div>
+          <div class="section-empty-desc">Active campaigns and collaborations will appear here.</div>
+          <a routerLink="/campaigns/new" class="section-empty-action"><i class="bi bi-plus-circle"></i> Create New Campaign</a>
         </div>
         <ul *ngIf="activeCampaignList.length > 0" class="list-group mb-2">
           <li *ngFor="let c of activeCampaignList | slice:0:5" class="list-group-item py-3">
@@ -184,56 +164,51 @@
           </li>
         </ul>
         <div class="txn-see-all" *ngIf="recentCampaigns.length">
-          <a routerLink="/campaigns" class="txn-see-all__link">
-            <i class="bi bi-arrow-right-circle"></i> View all campaigns
-          </a>
+          <a routerLink="/campaigns" class="txn-see-all__link">View all campaigns <i class="bi bi-arrow-right"></i></a>
         </div>
-      </div>
-    </div>
-    <div class="col-md-4 mb-3 mb-md-0">
-      <div class="section-card h-100">
-        <div class="section-title d-flex align-items-center mb-2">
-          <span class="dot dot--blue me-2"></span> Recommended Influencers
-          <span class="section-count ms-auto">{{ recommendedInfluencers.length }}</span>
-        </div>
-        <div *ngIf="recommendedInfluencers.length === 0" class="section-empty">
-          <div class="section-empty-icon"><i class="bi bi-person"></i></div>
-          <div class="section-empty-title">No recommendations</div>
-          <div class="section-empty-desc">Recommended influencers will appear here as you use the platform.</div>
-        </div>
-        <!-- ...existing code for recommended influencer cards if any... -->
       </div>
     </div>
     <div class="col-md-4">
       <div class="section-card h-100">
-        <div class="section-title d-flex align-items-center mb-2">
-          <span class="dot dot--purple me-2"></span> Search Influencers
+        <div class="section-title">
+          <span class="dot dot--blue"></span> Recommended Influencers
+          <span class="section-count ms-auto">{{ recommendedInfluencers.length }}</span>
+        </div>
+        <div *ngIf="recommendedInfluencers.length === 0" class="section-empty">
+          <div class="section-empty-icon"><i class="bi bi-person-check"></i></div>
+          <div class="section-empty-title">No recommendations yet</div>
+          <div class="section-empty-desc">Recommended influencers will appear here as you use the platform.</div>
+          <a routerLink="/search" [queryParams]="{ tab: 'influencers' }" class="section-empty-action"><i class="bi bi-search"></i> Browse creators</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="section-card h-100">
+        <div class="section-title">
+          <span class="dot dot--purple"></span> Search Influencers
           <span class="section-count ms-auto">{{ filters.category || filters.state ? 'Filtered' : 'All' }}</span>
         </div>
         <div class="mb-2">
-          <select class="form-select mb-2" [(ngModel)]="filters.category">
+          <select class="form-select mb-2" [(ngModel)]="filters.category" aria-label="Category">
             <option value="">All Categories</option>
             <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
           </select>
-          <select class="form-select mb-2" [(ngModel)]="filters.state">
+          <select class="form-select mb-2" [(ngModel)]="filters.state" aria-label="State">
             <option value="">All States</option>
             <option *ngFor="let st of states" [value]="st">{{ st }}</option>
           </select>
-          <button class="btn btn-primary w-100" (click)="searchInfluencers()">Search</button>
+          <button class="btn btn-primary w-100" (click)="searchInfluencers()"><i class="bi bi-search"></i> Search Influencers</button>
         </div>
-        <div *ngIf="recommendedInfluencers.length === 0" class="section-empty">
-          <div class="section-empty-icon"><i class="bi bi-search"></i></div>
-          <div class="section-empty-title">No search results</div>
-          <div class="section-empty-desc">Use the filters above to find influencers for your campaigns.</div>
+        <div *ngIf="recommendedInfluencers.length === 0" class="dashboard-action-panel mt-3 small">
+          <i class="bi bi-funnel me-1"></i> Choose a category and state to find influencers for your campaigns.
         </div>
-        <!-- ...existing code for search results if any... -->
       </div>
     </div>
   </div>
 
   <div class="section-card mb-4">
-    <div class="section-title d-flex align-items-center mb-2">
-      <span class="dot dot--orange me-2"></span> Payments Awaiting Verification
+    <div class="section-title">
+      <span class="dot dot--orange"></span> Payments Awaiting Verification
       <span class="section-count ms-auto">{{ pendingPaymentHistory.length }}</span>
     </div>
 
@@ -271,9 +246,41 @@
     </div>
 
     <div class="txn-see-all">
-      <a routerLink="/transactions" class="txn-see-all__link">
-        <i class="bi bi-arrow-right-circle"></i> View all payment history
-      </a>
+      <a routerLink="/transactions" class="txn-see-all__link">View all payment history <i class="bi bi-arrow-right"></i></a>
     </div>
   </div>
+
+  <!-- Profile Traffic hidden - by sundeep -->
+  <div class="section-card mb-4 profile-traffic-card p-2 d-none">
+    <div class="section-title">
+      <span class="dot dot--purple"></span> Profile Traffic
+      <span class="section-count ms-auto">Last 30 days</span>
+    </div>
+
+    <div class="profile-traffic-grid" *ngIf="canViewProfileTraffic; else brandTrafficLocked">
+      <div class="traffic-stat-box">
+        <div class="traffic-stat-label">Impressions</div>
+        <div class="traffic-stat-value">{{ profileTraffic.impressions | number }}</div>
+      </div>
+      <div class="traffic-stat-box">
+        <div class="traffic-stat-label">Clicks</div>
+        <div class="traffic-stat-value">{{ profileTraffic.clicks | number }}</div>
+      </div>
+      <div class="traffic-stat-meta">
+        <span *ngIf="profileTraffic.lastImpressionAt">Last impression: {{ profileTraffic.lastImpressionAt | date:'medium' }}</span>
+        <span *ngIf="profileTraffic.lastClickAt">Last click: {{ profileTraffic.lastClickAt | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <ng-template #brandTrafficLocked>
+      <div class="traffic-locked-state">
+        <i class="bi bi-lock-fill"></i>
+        <span>Upgrade to Premium to view profile traffic analytics.</span>
+        <button class="btn btn-sm btn-outline-primary" (click)="onUpgrade()">Upgrade</button>
+      </div>
+    </ng-template>
+  </div>
+
+  <app-usage-summary *ngIf="usageSummary" [usageSummary]="usageSummary" class="dashboard-usage text-black"></app-usage-summary>
+
 </div>

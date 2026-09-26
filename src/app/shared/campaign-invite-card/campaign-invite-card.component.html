@@ -1,279 +1,174 @@
-<div class="invite-card">
-  <!-- Brand + campaign header -->
-  <div class="invite-card__header d-flex align-items-center">
-    <div class="invite-brand-logo me-2">
-      <img *ngIf="brandLogo" [src]="brandLogo" alt="brand logo" class="brand-logo-img"
-           (error)="onLogoError($event)">
-      <div class="brand-logo-placeholder" [class.d-none]="brandLogo && !logoErrored">{{ brandInitial }}</div>
-    </div>
-    <div class="invite-card__meta flex-1">
-      <div class="invite-brand-name">{{ brandName }}</div>
-      <div class="invite-campaign-title">{{ campaignTitle }}</div>
-      <div class="invite-categories" *ngIf="categories.length">
-        <span *ngFor="let cat of categories" class="badge rounded-pill bg-light text-dark me-1">{{ cat }}</span>
+<div class="cic-card">
+
+  <!-- ── MAIN BODY ──────────────────────────────────────────── -->
+  <div class="cic-main">
+
+    <!-- Brand column -->
+    <div class="cic-brand-col">
+      <div class="cic-avatar" [style.background]="brandAvatarBg">
+        <img *ngIf="brandLogo && !logoErrored" [src]="brandLogo" [alt]="brandName" (error)="onLogoError($event)" />
+        <span *ngIf="!brandLogo || logoErrored">{{ brandInitial }}</span>
+      </div>
+      <div class="cic-brand-labels">
+        <span class="cic-brand-role">{{ isCollabInvite ? 'COLLAB' : 'BRAND' }}</span>
+        <span class="cic-brand-name">{{ brandName }}</span>
       </div>
     </div>
-    <span class="badge rounded-pill ms-auto" [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
-    <span class="invite-type-badge" [class.invite-type-badge--collab]="isCollabInvite" [class.invite-type-badge--brand]="!isCollabInvite">
-      <i class="bi" [ngClass]="inviteTypeIcon"></i> {{ inviteTypeLabel }}
-    </span>
-  </div>
 
-  <!-- Brand sent a reminder -->
-  <div class="inv-reminder-banner" *ngIf="showReminderBadge">
-    <i class="bi bi-bell-fill"></i>
-    <span>Brand reminded you{{ reminderCount > 1 ? ' (' + reminderCount + ')' : '' }} — please respond.</span>
-  </div>
-
-  <!-- Budget + timeline + platform row -->
-  <div class="invite-card__details">
-    <div class="invite-detail-item" *ngIf="yourPayoutText">
-      <i class="bi bi-currency-rupee"></i>
-      <span class="invite-detail-label">Your payout</span>
-      <span class="invite-detail-val fw-semibold">{{ yourPayoutText }}</span>
-    </div>
-    <div class="invite-detail-item" *ngIf="hasTimeline">
-      <i class="bi bi-calendar3"></i>
-      <span class="invite-detail-label">Timeline</span>
-      <span class="invite-detail-val">{{ timelineText }}</span>
-    </div>
-    <div class="invite-detail-item" *ngIf="platformText">
-      <i class="bi bi-display"></i>
-      <span class="invite-detail-label">Platform</span>
-      <span class="invite-detail-val">{{ platformText }}</span>
-    </div>
-  </div>
-
-  <!-- Campaign type chip + headline compensation -->
-  <div class="invite-type-row" *ngIf="campaignTypeLabel || compensationText">
-    <span class="chip chip--type" *ngIf="campaignTypeLabel">
-      <i class="bi" [ngClass]="campaignTypeIcon"></i>
-      {{ campaignTypeLabel }}
-    </span>
-    <span class="chip chip--comp" *ngIf="compensationText">
-      <i class="bi" [ngClass]="compensationIcon"></i>
-      {{ compensationText }}
-    </span>
-  </div>
-
-  <!-- Venue summary (Invite to Location) -->
-  <div class="invite-venue" *ngIf="isInviteLocation && hasVenueDetails">
-    <div class="invite-brief__label"><i class="bi bi-geo-alt"></i> Venue</div>
-    <div class="invite-brief__text">
-      <div *ngIf="venueShortText"><strong>{{ venueShortText }}</strong></div>
-      <div *ngIf="venueFullAddress">{{ venueFullAddress }}</div>
-      <div *ngIf="inviteBenefits" class="mt-1"><i class="bi bi-stars"></i> {{ inviteBenefits }}</div>
-      <a *ngIf="venueMapUrl"
-         class="d-inline-flex align-items-center gap-1 mt-1"
-         [href]="venueMapUrl" target="_blank" rel="noopener noreferrer"
-         (click)="$event.stopPropagation()">
-        <i class="bi bi-map"></i> Open in Maps
-      </a>
-    </div>
-  </div>
-
-  <!-- Shoot location details (photographer/videographer collaborations) -->
-  <div class="invite-venue" *ngIf="hasShootLocationDetails">
-    <div class="invite-brief__label"><i class="bi bi-camera-reels"></i> Shoot location</div>
-    <div class="invite-brief__text">
-      <div *ngIf="shootLocationTypeLabel"><strong>{{ shootLocationTypeLabel }}</strong></div>
-      <div *ngIf="shootLocationAddress">{{ shootLocationAddress }}</div>
-      <div *ngIf="shootLocationNotes" class="mt-1"><i class="bi bi-info-circle"></i> {{ shootLocationNotes }}</div>
-      <a *ngIf="shootLocationMapUrl"
-         class="d-inline-flex align-items-center gap-1 mt-1"
-         [href]="shootLocationMapUrl" target="_blank" rel="noopener noreferrer"
-         (click)="$event.stopPropagation()">
-        <i class="bi bi-map"></i> Open in Maps
-      </a>
-    </div>
-  </div>
-
-  <!-- Product collaboration summary -->
-  <div class="invite-venue" *ngIf="isProduct">
-    <div class="invite-brief__label"><i class="bi bi-box-seam"></i> Product Collaboration</div>
-    <div class="invite-brief__text">
-      <div *ngIf="productDescription" style="white-space:pre-wrap;" class="mb-1">{{ productDescription }}</div>
-      <div *ngIf="productValueText"><strong>Product worth {{ productValueText }}</strong></div>
-      <div *ngIf="!productValueText && !productDescription"><strong>Barter (product gift)</strong></div>
-      <div *ngIf="productPaymentMode === 'product_plus_payment' && productPaymentAmountText" class="mt-1">
-        Plus cash component: <strong>{{ productPaymentAmountText }}</strong>
-      </div>
-    </div>
-  </div>
-
-  <div class="invite-brief" *ngIf="briefPreview">
-    <div class="invite-brief__label">Campaign brief</div>
-    <div class="invite-brief__text">{{ briefPreview }}</div>
-  </div>
-
-  <!-- Deliverables row -->
-  <div class="invite-card__deliverables" *ngIf="selectedOutputs.length">
-    <div class="deliverables-label">Selected outputs:</div>
-    <span *ngFor="let d of selectedOutputs" class="chip chip--deliv">{{ d }}</span>
-  </div>
-
-  <!-- CTA buttons -->
-  <div class="invite-card__actions" (click)="onActionsClick($event)" *ngIf="isActionable">
-    
-    <ng-container *ngIf="contentTypeOptions.length > 0">
-      <div class="inv-platform-lock" *ngIf="lockedPlatform">
-        <i class="bi bi-pin-fill"></i>
-        <span class="inv-platform-lock-label">Posting on:</span>
-        <span class="inv-platform-lock-value">{{ platformLabel(lockedPlatform) }}</span>
-      </div>
-      <div class="inv-ct-row">
-        <span class="inv-ct-row-label">Create (choose one):</span>
-        <button *ngFor="let opt of displayContentTypeOptions"
-                type="button"
-                class="inv-ct-pill"
-                [class.selected]="selectedContentTypeKey === opt.key"
-                [class.disabled]="!isOptionSelectable(opt)"
-                [disabled]="!isOptionSelectable(opt)"
-                (click)="selectContentType(opt.key)">
-          <i class="bi" [ngClass]="platformIcon(opt.platform)"></i>
-          {{ opt.label }}
-          <span class="inv-ct-price" *ngIf="opt.price">₹{{ opt.price | number }}</span>
-        </button>
-      </div>
-    </ng-container>
-    
-    <input
-      class="invite-post-date"
-      type="date"
-      [ngModel]="postDate"
-      (ngModelChange)="onPostDateChange($event)"
-      [min]="minPostDate"
-      [max]="maxPostDate"
-      title="Select posting date within campaign timeline" />
-
-    <div class="inv-payout-hint-chip" *ngIf="selectedPayoutHint">
-      <i class="bi bi-cash-coin"></i> {{ selectedPayoutHint }}
-    </div>
-
-    <!-- Payout details (where to receive money) -->
-    <div class="inv-payout" *ngIf="needsPayoutDetails">
-      <div class="inv-payout-head">
-        <i class="bi bi-bank"></i>
-        <span class="inv-payout-title">Receive payment to</span>
-        <button type="button" class="inv-payout-edit" (click)="togglePayoutEdit($event)">
-          <i class="bi" [ngClass]="payoutEditing ? 'bi-check2' : 'bi-pencil'"></i>
-          {{ payoutEditing ? 'Done' : (payoutSummary ? 'Edit' : 'Add') }}
-        </button>
-      </div>
-      <div class="inv-payout-summary" *ngIf="!payoutEditing">
-        <span *ngIf="payoutSummary">{{ payoutSummary }}</span>
-        <span class="text-muted" *ngIf="!payoutSummary">
-          Add UPI / mobile (GPay/PhonePe) before accepting
+    <!-- Campaign column -->
+    <div class="cic-campaign-col">
+      <!-- Type + status pills -->
+      <div class="cic-pills-row">
+        <span class="cic-pill cic-pill--type" [class.cic-pill--collab]="isCollabInvite">
+          <i class="bi" [ngClass]="inviteTypeIcon"></i>
+          {{ inviteTypeLabel | uppercase }}
+        </span>
+        <span class="cic-pill cic-pill--status" [ngClass]="'cic-pill--' + status">
+          {{ statusLabel | uppercase }}
+        </span>
+        <span class="cic-pill cic-pill--reminder" *ngIf="showReminderBadge">
+          <i class="bi bi-bell-fill"></i> Reminder
         </span>
       </div>
-      <div class="inv-payout-form" *ngIf="payoutEditing" (click)="onActionsClick($event)">
-        <input type="text" class="inv-payout-input" placeholder="UPI ID (e.g. name@upi)"
-               [(ngModel)]="payoutUpiId" autocomplete="off" />
-        <input type="tel" class="inv-payout-input" placeholder="Mobile (GPay / PhonePe)"
-               [(ngModel)]="payoutMobile" autocomplete="off" inputmode="tel" maxlength="15" />
-        <input type="text" class="inv-payout-input" placeholder="Account holder name"
-               [(ngModel)]="payoutName" autocomplete="off" />
-        <small class="inv-payout-hint">Saved to your profile and used by admin to send your earnings.</small>
+
+      <!-- Campaign title -->
+      <div class="cic-title">{{ campaignTitle }}</div>
+
+      <!-- Meta strip -->
+      <div class="cic-meta-strip">
+        <div class="cic-meta-item" *ngIf="yourPayoutText || campaignBudgetText">
+          <span class="cic-meta-label">YOUR PAYOUT</span>
+          <span class="cic-meta-val cic-meta-val--accent">{{ yourPayoutText || campaignBudgetText }}</span>
+        </div>
+        <div class="cic-meta-sep" *ngIf="(yourPayoutText || campaignBudgetText) && hasTimeline"></div>
+        <div class="cic-meta-item" *ngIf="hasTimeline">
+          <span class="cic-meta-label">TIMELINE</span>
+          <span class="cic-meta-val">{{ timelineText }}</span>
+        </div>
+        <div class="cic-meta-sep" *ngIf="hasTimeline && platformText"></div>
+        <div class="cic-meta-item" *ngIf="platformText">
+          <span class="cic-meta-label">PLATFORM</span>
+          <span class="cic-meta-val">
+            <i class="bi" [ngClass]="platformIcon(platformText.split(',')[0].trim())"></i>
+            {{ platformText }}
+          </span>
+        </div>
       </div>
     </div>
 
-    <button type="button" class="btn-invite-action btn-accept" (click)="onAccept($event)" [disabled]="busy" [attr.aria-busy]="busy">
-      <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Accepting…</span>
-      <span *ngIf="!busy"><i class="bi bi-check-lg"></i> Accept</span>
-    </button>
-    <button type="button" class="btn-invite-action btn-decline" (click)="onDecline($event)" [disabled]="busy" [attr.aria-busy]="busy">
-      <span *ngIf="busy"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing…</span>
-      <span *ngIf="!busy"><i class="bi bi-x-lg"></i> Decline</span>
-    </button>
-    <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
-      <i class="bi bi-eye"></i> View Details
-    </button>
-  </div>
+    <!-- Action column -->
+    <div class="cic-action-col" (click)="onActionsClick($event)">
 
-  <div class="invite-card__actions" *ngIf="!isActionable" (click)="onActionsClick($event)">
-    <p class="inv-accepted-note mb-0" *ngIf="status === 'accepted' && !showPaymentAwaited">
-      <i class="bi bi-check-circle-fill"></i> Collaboration confirmed
-    </p>
-    <!-- Influencer-side: contact-unlock state -->
-    <p class="inv-unlock-waiting mb-0" *ngIf="showWaitingUnlock">
-      <i class="bi bi-hourglass-split"></i> Waiting for brand to unlock contact
-    </p>
-    <p class="inv-unlock-done mb-0" *ngIf="isUnlocked">
-      <i class="bi bi-unlock-fill"></i> Brand has unlocked contact — they can reach you now
-    </p>
-    <!-- Brand contact details for invite_location campaigns (shown once unlocked) -->
-    <div class="inv-brand-contact" *ngIf="isUnlocked && campaignTypeKey === 'invite_location'">
-      <span class="inv-brand-contact__label"><i class="bi bi-person-lines-fill"></i> Brand contact</span>
-      <a class="contact-chip" *ngIf="brandEmail" [href]="'mailto:' + brandEmail" (click)="$event.stopPropagation()">
-        <i class="bi bi-envelope-fill"></i> {{ brandEmail }}
-      </a>
-      <a class="contact-chip" *ngIf="brandPhone" [href]="'tel:' + brandPhone" (click)="$event.stopPropagation()">
-        <i class="bi bi-telephone-fill"></i> {{ brandPhone }}
-      </a>
-      <span class="inv-brand-contact__hint" *ngIf="!brandEmail && !brandPhone">
-        Contact details will appear here once available.
-      </span>
-    </div>
-    <!-- Influencer-side: shipping info (product campaigns) -->
-    <div class="inv-shipping" *ngIf="hasShippingInfo">
-      <i class="bi bi-truck"></i>
-      <span *ngIf="productFulfillment?.status === 'delivered'">Delivered</span>
-      <span *ngIf="productFulfillment?.status === 'shipped'">Shipped</span>
-      <span *ngIf="productFulfillment?.status === 'pending'">Awaiting shipment</span>
-      <span *ngIf="productFulfillment?.status === 'returned'">Returned</span>
-      <span *ngIf="productFulfillment?.courier"> · {{ productFulfillment.courier }}</span>
-      <span *ngIf="productFulfillment?.trackingId"> · {{ productFulfillment.trackingId }}</span>
-      <a *ngIf="productFulfillment?.trackingUrl" [href]="productFulfillment.trackingUrl"
-         target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">Track</a>
-    </div>
-    <!-- Influencer-side: scheduled visit (invite_location campaigns) -->
-    <div class="inv-visit" *ngIf="hasVisitSchedule">
-      <i class="bi bi-geo-alt-fill"></i>
-      <span *ngIf="locationVisit?.status === 'checked_in'">Checked-in</span>
-      <span *ngIf="locationVisit?.status !== 'checked_in' && locationVisit?.scheduledAt">
-        Visit scheduled: {{ locationVisit.scheduledAt | date:'MMM d, h:mm a' }}
-      </span>
-    </div>
-    <button type="button" class="btn-invite-action btn-view ms-auto" (click)="onView($event)">
-      <i class="bi bi-eye"></i> View Details
-    </button>
-  </div>
+      <!-- View Submission -->
+      <button class="cic-btn cic-btn--primary"
+              *ngIf="showViewSubmission"
+              type="button"
+              (click)="viewSubmission.emit(); $event.stopPropagation()">
+        <i class="bi bi-eye-fill"></i> View Submission
+      </button>
 
-  <!-- ── Payment / Submission CTAs (influencer side) ── -->
-  <div class="invite-card__cta-row" (click)="$event.stopPropagation()">
+      <!-- Submit Post / Confirm Receipt -->
+      <button class="cic-btn cic-btn--primary"
+              *ngIf="showSubmitCTA && !showViewSubmission"
+              type="button"
+              (click)="submitPost.emit(); $event.stopPropagation()">
+        <i class="bi bi-send-fill"></i>
+        {{ isProduct ? 'Confirm Receipt' : 'Submit Post' }}
+      </button>
 
-    <!-- Paid collab awaiting brand payment -->
-    <div class="inv-cta-info inv-cta-info--warn" *ngIf="showPaymentAwaited">
-      <i class="bi bi-clock-history"></i>
-      Awaiting brand confirmation to begin — you'll be notified once confirmed.
+      <!-- Review & Accept (pending) — opens detail modal -->
+      <button class="cic-btn cic-btn--primary"
+              *ngIf="isActionable && !showViewSubmission && !showSubmitCTA"
+              type="button"
+              (click)="onView($event)">
+        <i class="bi bi-check2-circle"></i> Review &amp; Accept
+      </button>
+
+      <!-- View Details (always shown when eligible) -->
+      <button class="cic-btn cic-btn--secondary"
+              *ngIf="showViewDetails"
+              type="button"
+              (click)="onView($event)">
+        View Details
+      </button>
+
     </div>
+  </div><!-- /cic-main -->
 
-    <!-- Payment confirmed -->
-    <div class="inv-cta-info inv-cta-info--success" *ngIf="showPaymentConfirmed">
+  <!-- ── STATUS / INFO BAR (non-actionable states) ─────────── -->
+  <div class="cic-status-bar" *ngIf="!isActionable && (showPaymentConfirmed || showPaymentAwaited || showPayoutPendingInfo || showPayoutReleasedInfo || showWaitingUnlock || showMissedAcceptance || status === 'disputed')">
+    <div class="cic-status-item cic-status-item--success" *ngIf="showPaymentConfirmed">
       <i class="bi bi-check-circle-fill"></i>
-      Payment secured! You can now begin creating your content.
+      <span>Payment confirmed — start creating your content.</span>
     </div>
-
-    <!-- Dispute open (payout frozen) -->
-    <div class="inv-cta-info inv-cta-info--dispute" *ngIf="status === 'disputed'">
+    <div class="cic-status-item cic-status-item--warn" *ngIf="showPaymentAwaited">
+      <i class="bi bi-hourglass-split"></i>
+      <span>Awaiting brand payment confirmation.</span>
+    </div>
+    <div class="cic-status-item cic-status-item--info" *ngIf="showPayoutPendingInfo">
+      <i class="bi bi-clock-history"></i>
+      <span>Post Approved. {{ payoutPendingMessage }}</span>
+    </div>
+    <div class="cic-status-item cic-status-item--success" *ngIf="showPayoutReleasedInfo">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>Payout released.</span>
+    </div>
+    <div class="cic-status-item cic-status-item--muted" *ngIf="showWaitingUnlock">
+      <i class="bi bi-hourglass-split"></i>
+      <span>{{ waitingUnlockText }}</span>
+    </div>
+    <div class="cic-status-item cic-status-item--danger" *ngIf="showMissedAcceptance">
+      <i class="bi bi-exclamation-circle-fill"></i>
+      <span>{{ missedAcceptanceText }}</span>
+    </div>
+    <div class="cic-status-item cic-status-item--danger" *ngIf="status === 'disputed'">
       <i class="bi bi-exclamation-triangle-fill"></i>
-      A dispute has been raised. Our team is reviewing — your payout is held pending resolution.
+      <span>A dispute has been raised. Payout is held pending resolution.</span>
     </div>
-
-    <!-- Submit post button -->
-    <button class="inv-cta-btn inv-cta-btn--submit btn-submit-post" *ngIf="showSubmitCTA"
-            type="button" (click)="submitPost.emit()">
-      <i class="bi bi-send-fill"></i>
-      {{ status === 'payment_confirmed' ? 'Submit proof of work' : 'Submit your post' }}
-    </button>
-
-    <!-- View / Edit submission button -->
-    <button class="inv-cta-btn inv-cta-btn--view" *ngIf="showViewSubmission"
-            type="button" (click)="viewSubmission.emit()">
-      <i class="bi bi-eye-fill"></i>
-      {{ status === 'submitted' ? 'View / Edit Submission' : 'View Submission' }}
-    </button>
-
   </div>
 
-</div>
+  <!-- Under-review info for submitted -->
+  <div class="cic-status-bar" *ngIf="showSubmissionReviewInfo">
+    <div class="cic-status-item cic-status-item--info">
+      <i class="bi bi-clock-history"></i>
+      <span>Posted {{ submissionPostedAtText }}. {{ submissionReviewMessage }}</span>
+    </div>
+  </div>
+
+  <!-- Brand contact (shown after unlock) -->
+  <div class="cic-contact-bar" *ngIf="canRevealBrandContact && (brandEmail || brandPhone)">
+    <span class="cic-contact-label"><i class="bi bi-person-lines-fill"></i> Brand Contact</span>
+    <a class="cic-contact-chip" *ngIf="brandEmail" [href]="'mailto:' + brandEmail" (click)="$event.stopPropagation()">
+      <i class="bi bi-envelope-fill"></i> {{ brandEmail }}
+    </a>
+    <a class="cic-contact-chip" *ngIf="brandPhone" [href]="'tel:' + brandPhone" (click)="$event.stopPropagation()">
+      <i class="bi bi-telephone-fill"></i> {{ brandPhone }}
+    </a>
+  </div>
+
+  <!-- Shipping / fulfillment -->
+  <div class="cic-status-bar" *ngIf="hasShippingInfo">
+    <div class="cic-status-item cic-status-item--muted">
+      <i class="bi bi-truck"></i>
+      <span>
+        {{ productFulfillment?.status === 'delivered' ? 'Product delivered' : productFulfillment?.status === 'shipped' ? 'Product shipped' : 'Awaiting shipment' }}
+        <ng-container *ngIf="productFulfillment?.courier"> · {{ productFulfillment.courier }}</ng-container>
+        <ng-container *ngIf="productFulfillment?.trackingId"> · {{ productFulfillment.trackingId }}</ng-container>
+        <a *ngIf="productFulfillment?.trackingUrl" [href]="productFulfillment.trackingUrl" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()" class="ms-2">Track</a>
+      </span>
+    </div>
+  </div>
+
+  <!-- ── CAMPAIGN BRIEF HIGHLIGHTS ─────────────────────────── -->
+  <!-- <div class="cic-brief" *ngIf="briefPreview">
+    <button class="cic-brief-toggle" type="button" (click)="briefExpanded = !briefExpanded">
+      <span class="cic-brief-label">
+        <i class="bi bi-file-earmark-text-fill"></i>
+        CAMPAIGN BRIEF HIGHLIGHTS
+      </span>
+      <i class="bi" [ngClass]="briefExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+    </button>
+    <div class="cic-brief-text" [class.cic-brief-text--expanded]="briefExpanded">{{ briefPreview }}</div>
+  </div> -->
+
+</div><!-- /cic-card -->

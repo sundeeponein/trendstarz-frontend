@@ -63,7 +63,7 @@ test.describe('Login page', () => {
   });
 
   test('forgot password link navigates to forgot-password page', async ({ page }) => {
-    await page.click('a.forgot-link');
+    await page.getByRole('link', { name: /forgot/i }).first().click();
     await expect(page).toHaveURL(/\/forgot-password/);
   });
 

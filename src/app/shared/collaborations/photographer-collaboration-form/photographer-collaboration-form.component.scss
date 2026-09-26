@@ -1,6 +1,17 @@
+.ts-dialog-workspace {
+  width: min(1600px, calc(100vw - 24px));
+  max-width: min(1600px, calc(100vw - 24px));
+  height: calc(100vh - 24px);
+  margin: 12px auto;
+}
+
 .pcf-modal {
   border-radius: 14px;
   overflow: hidden;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .pcf-header {
@@ -9,6 +20,7 @@
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid #e8ecf4;
+  flex: 0 0 auto;
 }
 
 .pcf-header h3 {
@@ -19,6 +31,9 @@
 
 .pcf-form {
   padding: 16px 20px 20px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .pcf-grid {
@@ -41,6 +56,29 @@
 
 .pcf-full {
   grid-column: 1 / -1;
+}
+
+.pcf-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pcf-guide-btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &:hover { background: #eff6ff; border-color: #2563eb; }
 }
 
 .pcf-chip-wrap {

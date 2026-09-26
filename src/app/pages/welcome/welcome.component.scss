@@ -1,114 +1,38 @@
+// Design tokens for this page only.
 .home-shell {
-  background: #f4f5f7;
-  color: #101727;
+  --wp-orange: #ef6a22;
+  --wp-orange-deep: #d54a22;
+  --wp-orange-soft: #ffe9dc;
+  --wp-ink: #101727;
+  --wp-muted: #6a768f;
+  --wp-line: #e3e6ed;
+  --wp-surface: #f4f5f7;
+  --wp-dark: #0c1326;
+
+  background: var(--wp-surface);
+  color: var(--wp-ink);
 }
 
-.top-nav {
-  background: #f4f5f7;
-  border-bottom: 1px solid #e0e5ef;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.brand-mark img {
-  height: 34px;
-  width: auto;
-}
-
-.hero-block {
-  background: #f4f5f7;
-}
-
-.pill-label {
-  display: inline-block;
-  border-radius: 999px;
-  background: #ffe9dc;
-  color: #f0641c;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.hero-title {
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1.03;
-  font-weight: 800;
-  max-width: 620px;
-}
-
-.hero-title span {
-  color: #f0641c;
-}
-
-.hero-copy {
-  color: #4f5d78;
-  max-width: 540px;
-}
-
-.hero-media {
-  position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 15px 35px rgba(10, 20, 44, 0.18);
-  min-height: 260px;
-}
-
-.hero-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.media-caption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 1rem;
-  color: #fff;
-  background: linear-gradient(to top, rgba(10, 16, 30, 0.88), rgba(10, 16, 30, 0));
-}
-
-.media-caption small {
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-}
-
-.media-caption h5 {
-  margin-bottom: 0.2rem;
-  font-weight: 700;
-}
-
-.media-caption p {
-  margin: 0;
-  font-size: 0.82rem;
-}
-
+/* Section titles, shared across strips */
 .section-title {
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 800;
 }
 
 .section-subtitle {
-  color: #6a768f;
+  color: var(--wp-muted);
   margin: 0;
 }
 
-.brands-strip {
-  background: #f4f5f7;
-}
-
 .view-all {
-  color: #ef6a22;
+  color: var(--wp-orange);
   font-weight: 700;
   font-size: 0.9rem;
   text-decoration: none;
-}
 
-.view-all:hover {
-  color: #cc581b;
+  &:hover {
+    color: var(--wp-orange-deep);
+  }
 }
 
 .welcome-card-host {
@@ -116,180 +40,18 @@
   height: 100%;
 }
 
-.brand-card {
-  border: 1px solid #dde3ef;
-  border-radius: 14px;
-  background: #fff;
-  padding: 1rem;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-  cursor: pointer;
+/* Featured Brands */
+.brands-strip {
+  background: var(--wp-surface);
 }
 
-.brand-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 22px rgba(13, 23, 41, 0.12);
-}
-
-.brand-icon-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #edf1f8;
-  margin-bottom: 0.85rem;
-}
-
-.brand-icon-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.brand-card h5 {
-  margin-bottom: 0.25rem;
-  font-weight: 700;
-}
-
-.brand-card p {
-  color: #6d7992;
-  font-size: 0.87rem;
-  margin-bottom: 1rem;
-}
-
-.brand-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.67rem;
-  color: #7d889f;
-  letter-spacing: 0.02em;
-}
-
-.live-pill {
-  padding: 0.2rem 0.48rem;
-  border-radius: 999px;
-  background: #ffefe6;
-  color: #e96a29;
-  font-weight: 700;
-}
-
+/* Trending Creators */
 .creators-strip {
   background: radial-gradient(circle at 10% 20%, #18223f, #08132b 56%);
 }
 
-.prelaunch-strip {
-  background: #f4f5f7;
-}
-
-.prelaunch-card {
-  height: 100%;
-  background: #ffffff;
-  border: 1px solid #e3e6ed;
-  border-radius: 14px;
-  padding: 2rem 1.25rem;
-  box-shadow: 0 8px 24px rgba(17, 26, 45, 0.08);
-}
-
-.benefit-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.benefit-item {
-  border: 1px solid #e9d4ca;
-  border-radius: 10px;
-  padding: 0.8rem;
-  background: #fff;
-}
-
-.benefit-item h5 {
-  margin: 0 0 0.25rem;
-  font-size: 0.98rem;
-  font-weight: 700;
-}
-
-.benefit-item p {
-  margin: 0;
-  color: #5e6a85;
-  font-size: 0.9rem;
-}
-
-.metric-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.metric-item {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px dashed #d9e1ee;
-}
-
-.metric-item span {
-  color: #5f6b84;
-  font-size: 0.9rem;
-}
-
-.metric-item strong {
-  color: #d54a22;
-  font-size: 1.05rem;
-}
-
-.chip-row.dark .chip.light {
-  background: #eef3ff;
-  color: #2a3b61;
-  border-color: #d8e3ff;
-}
-
-.example-list {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.demo-campaigns-strip {
-  background: #260055;
-}
-
-.faq-strip {
-  background: #f4f5f7;
-  color: #101727;
-}
-
-.faq-strip .container {
-  max-width: 1060px;
-}
-
-.example-item {
-  border-left: 3px solid #ff6b2b;
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  padding:1.5rem 1rem;
-}
-
-.example-item h5 {
-  margin: 0 0 0.2rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.example-item p {
-  margin: 0;
-  color: #f1ebff;
-  font-size: 0.9rem;
-}
-
-.example-item span {
-  display: inline-block;
-  margin-top: 0.45rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #ff7d43;
+.photographers-strip {
+  background: #eef1f5;
 }
 
 .chip-row {
@@ -308,33 +70,81 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
 
-.chip:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.chip.active {
-  background: #ef6a22;
-  color: #fff;
-  border-color: #ef6a22;
-}
-
-@media (max-width: 991px) {
-  .hero-media {
-    min-height: 220px;
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 
-  .prelaunch-card {
-    padding: 1rem;
+  &.active {
+    background: var(--wp-orange);
+    color: #fff;
+    border-color: var(--wp-orange);
+  }
+}
+
+/* Featured Campaign Examples */
+.demo-campaigns-strip {
+  background: #1f2127;
+}
+
+.example-item {
+  border-left: 3px solid #ff6b2b;
+  background: #2b2e36;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left-width: 3px;
+  border-radius: 12px;
+  padding: 1.75rem;
+
+  h5 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  p {
+    margin: 0;
+    color: #c7cbd1;
+    font-size: 0.9rem;
+  }
+
+  span {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #ff7d43;
+  }
+
+  &.accent-0 {
+    border-left-color: #ff6b2b;
+    span { color: #ff7d43; }
+  }
+
+  &.accent-1 {
+    border-left-color: #4f8ef7;
+    span { color: #6ea8ff; }
+  }
+
+  &.accent-2 {
+    border-left-color: #a855f7;
+    span { color: #c084fc; }
+  }
+}
+
+/* FAQ */
+.faq-strip {
+  background: var(--wp-surface);
+  color: var(--wp-ink);
+
+  .container {
+    max-width: 1060px;
   }
 }
 
 @media (min-width: 768px) {
-  .benefit-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .example-item h5 {
     font-size: 1.75rem;
   }

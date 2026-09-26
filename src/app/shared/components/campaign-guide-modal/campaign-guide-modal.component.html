@@ -1,0 +1,38 @@
+<ng-container *ngIf="guide.isOpen && guide.content as content">
+  <div class="cgm-backdrop" (click)="guide.close()"></div>
+  <div class="cgm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="cgm-header">
+      <div>
+        <h3 class="cgm-title">{{ content.title }}</h3>
+        <p class="cgm-subtitle" *ngIf="content.subtitle">{{ content.subtitle }}</p>
+      </div>
+      <button type="button" class="cgm-close" aria-label="Close" (click)="guide.close()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="cgm-body">
+      <div class="cgm-section" *ngFor="let s of content.sections" [class.cgm-section--tip]="s.variant === 'tip'" [class.cgm-section--warn]="s.variant === 'warn'">
+        <div class="cgm-section-head">
+          <h4 class="cgm-section-title">{{ s.heading }}</h4>
+          <button
+            type="button"
+            class="cgm-copy-btn"
+            *ngIf="isCopyable(s)"
+            (click)="copySection(s)"
+            title="Copy this section">
+            <i class="bi bi-clipboard"></i> Copy
+          </button>
+        </div>
+        <pre class="cgm-section-body">{{ s.body }}</pre>
+      </div>
+    </div>
+
+    <div class="cgm-footer">
+      <button type="button" class="cgm-btn cgm-btn-secondary" (click)="guide.close()">Close</button>
+      <button type="button" class="cgm-btn cgm-btn-primary" (click)="copyAll()">
+        <i class="bi bi-clipboard-check"></i> Copy all
+      </button>
+    </div>
+  </div>
+</ng-container>

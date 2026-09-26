@@ -1,35 +1,5 @@
 @use '../../shared/styles/dashboard-layout' as *;
-
-// ── Influencer dashboard overrides ──
-.dot {
-  &--orange { background: #e8612d; }
-  &--blue { background: #2b6cb0; }
-  &--purple { background: #805ad5; }
-}
-
-.source-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.16rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  border: 1px solid transparent;
-
-  &--brand {
-    color: #9a3412;
-    background: #ffedd5;
-    border-color: #fdba74;
-  }
-
-  &--collab {
-    color: #5b21b6;
-    background: #f3e8ff;
-    border-color: #c4b5fd;
-  }
-}
-
+@use '../../shared/styles/campaign-badges' as cb;
 
 // ── Chips ──
 .chip {
@@ -141,52 +111,8 @@
   flex-shrink: 0;
 }
 
-.invite-card {
-  background: #fff;
-  border: 1.5px solid #f0ece8;
-  border-radius: 0.9rem;
-  padding: 1rem 1.2rem;
-  cursor: pointer;
-  transition: box-shadow 0.15s, border-color 0.15s;
-
-  &:hover { box-shadow: 0 4px 18px #e8612d20; border-color: #e8612d80; }
-
-  &__header {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.9rem;
-    margin-bottom: 0.75rem;
-  }
-
-  &__meta { flex: 1; min-width: 0; }
-
-  &__details {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.4rem;
-    margin-bottom: 0.7rem;
-  }
-
-  &__deliverables {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 0.8rem;
-  }
-
-  &__actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-}
-
 .invite-brand-name { font-size: 0.85rem; color: #888; font-weight: 500; }
 .invite-campaign-title { font-size: 1.05rem; font-weight: 700; color: #1a1a1a; margin: 0.15rem 0 0.3rem; line-height: 1.3; }
-.invite-categories { display: flex; flex-wrap: wrap; gap: 4px; }
-
 .invite-detail-item {
   display: flex;
   align-items: center;
@@ -197,73 +123,15 @@
   i { color: #e8612d; font-size: 0.95rem; }
 }
 
-.invite-detail-label { color: #999; font-size: 0.8rem; }
-.invite-detail-val { color: #333; }
-.deliverables-label { font-size: 0.82rem; color: #999; font-weight: 500; }
-
 // ── Status badges ──
 .invite-status-badge {
-  display: inline-block;
-  padding: 0.2rem 0.7rem;
-  border-radius: 2rem;
-  font-size: 0.78rem;
-  font-weight: 600;
+  @include cb.badge-pill($padding: 0.2rem 0.7rem, $radius: 2rem, $font-size: 0.78rem, $font-weight: 600, $letter-spacing: 0.04em);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
 
   &--pending { background: #fff3e0; color: #c05621; border: 1px solid #f5c29e; }
   &--accepted { background: #e6fff3; color: #1a6640; border: 1px solid #a3d9be; }
   &--declined { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
   &--completed { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
-}
-
-// ── Content type picker row ──
-.inv-ct-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  margin-bottom: 6px;
-}
-
-.inv-ct-row-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  flex-shrink: 0;
-}
-
-.inv-ct-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1.5px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-
-  .inv-ct-price {
-    font-weight: 700;
-    color: #f97316;
-  }
-
-  &.selected {
-    border-color: #f97316;
-    background: #fff7ed;
-    color: #c2410c;
-    .inv-ct-price { color: #c2410c; }
-  }
-
-  &:hover:not(.selected) {
-    border-color: #9ca3af;
-    background: #f9fafb;
-  }
 }
 
 // ── Invite action buttons ──
@@ -282,34 +150,11 @@
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
-.btn-accept {
-  background: #22b37a;
-  color: #fff;
-  &:hover:not(:disabled) { background: #1a8f61; }
-}
-
-.btn-decline {
-  background: #ef4444;
-  color: #fff;
-  &:hover:not(:disabled) { background: #c0392b; }
-}
-
 .btn-view {
   background: #f3f4f6;
   color: #374151;
   border: 1px solid #e5e7eb;
   &:hover:not(:disabled) { background: #e5e7eb; }
-}
-
-.btn-lg-action { padding: 0.55rem 1.5rem; font-size: 0.97rem; border-radius: 2rem; }
-
-.invite-post-date {
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 0.35rem 0.8rem;
-  font-size: 0.82rem;
-  color: #374151;
-  background: #fff;
 }
 
 .invite-summary {
@@ -322,6 +167,14 @@
   border-radius: 10px;
   background: #fff8f4;
   margin-bottom: 0.9rem;
+
+  .idb-summary-note {
+    display: block;
+    margin-top: 0.2rem;
+    color: #6b7280;
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
 
   .idb-frozen-note {
     color: #9a3412;
@@ -359,6 +212,7 @@
   &.idb-status--frozen { background: #fff7ed; color: #9a3412; }
   &.idb-status--processing { background: #eff6ff; color: #1e40af; }
   &.idb-status--pending { background: #f3f4f6; color: #6b7280; }
+  &.idb-status--rejected { background: #fee2e2; color: #991b1b; }
 }
 
 .payments-table {
@@ -372,65 +226,6 @@
     font-size: 0.86rem;
     color: #111827;
   }
-}
-
-.txn-see-all {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f3f4f6;
-  &__link {
-    font-size: 0.85rem;
-    color: #2563eb;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 500;
-    &:hover { text-decoration: underline; }
-  }
-}
-
-.profile-traffic-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
-  gap: 0.75rem;
-}
-
-.traffic-stat-box {
-  border: 1px solid #eceff4;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  background: #f9fafb;
-}
-
-.traffic-stat-label {
-  font-size: 0.82rem;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.traffic-stat-value {
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.traffic-stat-meta {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  color: #6b7280;
-  font-size: 0.82rem;
-}
-
-.traffic-locked-state {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #4b5563;
-  font-size: 0.9rem;
 }
 
 // ── Active / Completed campaign cards ──
@@ -479,48 +274,6 @@
   margin-top: 0.5rem;
 }
 
-
-// ── Social price table ──
-.social-price-table {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.7rem;
-  overflow: hidden;
-  font-size: 0.9rem;
-}
-
-.social-price-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0;
-  padding: 0.55rem 1rem;
-  border-bottom: 1px solid #f0f0f0;
-  align-items: center;
-
-  &:last-child { border-bottom: none; }
-  &--header { background: #f9fafb; font-weight: 700; font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
-}
-
-.social-price-group {
-  border-bottom: 2px solid #f0f0f0;
-  &:last-child { border-bottom: none; }
-}
-
-.social-platform-name {
-  padding: 0.4rem 1rem 0.2rem;
-  font-weight: 600;
-  color: #333;
-  font-size: 0.88rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #fafafa;
-
-  i { color: #e8612d; }
-}
-
-.social-handle { color: #777; font-size: 0.85rem; }
-.social-content-type { color: #374151; }
-.social-price { font-weight: 700; color: #22b37a; }
 
 // ── Campaign submission CTAs ──
 .submit-post-cta {
@@ -582,21 +335,6 @@
   i { color: #4ade80; flex-shrink: 0; }
 }
 
-.btn-add-stats {
-  padding: 0.45rem 0.9rem;
-  background: transparent;
-  color: #E8580C;
-  border: 1.5px solid #E8580C;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  margin-top: 0.5rem;
-
-  &:hover { background: #E8580C; color: #fff; }
-}
-
 .needs-attention {
   .attention-card {
     transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -604,5 +342,136 @@
     &.pending { border-left: 4px solid #0d6efd !important; }
     &.overdue { border-left: 4px solid #f59e0b !important; }
     &.disputed { border-left: 4px solid #d62828 !important; }
+  }
+}
+
+.admin-social-notif-banner {
+  background: #fff8e1;
+  border: 1.5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+
+.admin-social-notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: #92400e;
+}
+
+.admin-social-notif-dismiss {
+  background: none;
+  border: none;
+  color: #92400e;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  &:hover { background: #fde68a; }
+}
+
+.admin-social-notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-social-notif-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.875rem;
+  background: #fff;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  padding: 8px 12px;
+}
+
+.admin-social-notif-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.admin-social-notif-platform {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #374151;
+  min-width: 100px;
+}
+
+.admin-social-notif-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #374151;
+}
+
+.notif-old {
+  color: #dc2626;
+  text-decoration: line-through;
+  font-family: monospace;
+}
+
+.notif-new {
+  color: #16a34a;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.admin-social-notif-by {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.admin-social-notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.admin-social-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  padding: 5px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fff;
+  cursor: pointer;
+
+  &--confirm {
+    color: #047857;
+    border-color: rgba(5,150,105,0.28);
+    background: rgba(5,150,105,0.08);
+  }
+
+  &--edit {
+    color: #1d4ed8;
+    border-color: rgba(37,99,235,0.25);
+    background: rgba(37,99,235,0.07);
+  }
+
+  &--cancel {
+    color: #991b1b;
+    border-color: rgba(220,38,38,0.22);
+    background: rgba(220,38,38,0.06);
+  }
+
+  &:hover {
+    filter: brightness(0.97);
   }
 }

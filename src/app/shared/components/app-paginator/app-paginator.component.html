@@ -1,0 +1,22 @@
+<div class="app-paginator" *ngIf="total > 0">
+  <div class="app-paginator__left">
+    <select class="app-paginator__size-select"
+            [ngModel]="pageSize"
+            (ngModelChange)="onPageSizeSelect($event)"
+            aria-label="Rows per page">
+      <option *ngFor="let s of pageSizeOptions" [ngValue]="s">{{ s }}</option>
+    </select>
+    <span class="app-paginator__info">
+      <strong>{{ rangeStart }}&nbsp;-&nbsp;{{ rangeEnd }}</strong> of
+      <strong>{{ total }}</strong> {{ entityLabel }}
+    </span>
+  </div>
+  <div class="app-paginator__right">
+    <button class="app-paginator__btn" type="button" [disabled]="!hasPrev" (click)="onPrev()" aria-label="Previous page">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <button class="app-paginator__btn" type="button" [disabled]="!hasNext" (click)="onNext()" aria-label="Next page">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+</div>

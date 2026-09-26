@@ -1,13 +1,18 @@
-<div class="photographer-card" (click)="onViewProfileClick($event)">
+<div
+  class="photographer-card"
+  [class.photographer-card--locked]="profileViewDisabled"
+  [attr.aria-disabled]="profileViewDisabled"
+  [title]="profileViewDisabled ? 'Upgrade to Pro to open this profile' : null"
+  (click)="onViewProfileClick($event)">
   <div class="photographer-card__img-wrap">
-    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" />
+    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" {{ name }} />
 
-    <div class="photographer-card__img-tags" *ngIf="displayTags.length">
-      <span
-        *ngFor="let tag of displayTags"
-        class="photographer-card__img-tag badge rounded-pill"
-        [ngClass]="tagBadgeClass(tag)">
-        {{ tag }}
+    <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || trendstarzRecommended">
+      <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">
+        <i class="bi bi-star-fill"></i>
+      </span>
+      <span class="photographer-card__img-tag badge rounded-pill badge--recommended" *ngIf="trendstarzRecommended" title="TrendStarz Recommended">
+        <i class="bi bi-award-fill"></i>
       </span>
     </div>
   </div>
@@ -15,19 +20,34 @@
   <div class="photographer-card__body">
     <div class="photographer-card__name">
       {{ name || '—' }}
-      <i class="bi bi-patch-check-fill photographer-card__verified" *ngIf="isPremium" title="Verified"></i>
-      <span class="photographer-card__ts-verified" *ngIf="isTrendstarzVerified">Verified by TrendStarz</span>
+      <span class="text-success" *ngIf="isTrendstarzVerified" tooltip="Verified" title="Verified">
+        <i class="bi bi-patch-check-fill"></i>
+      </span>
+      
     </div>
 
     <div class="photographer-card__category-row">
       <div class="photographer-card__category">{{ displayCategory }}</div>
-      <div class="photographer-card__welcome-price" *ngIf="startingPrice !== null">
-        ₹{{ startingPrice | number:'1.0-0' }}
+      <div class="photographer-card__welcome-price" *ngIf="showStartingPrice && startingPrice !== null" title="Automatically calculated from service rates">
+        Starts from ₹{{ startingPrice | number:'1.0-0' }}
       </div>
     </div>
 
     <div class="photographer-card__location" *ngIf="location?.state || location?.district">
       <i class="bi bi-geo-alt"></i> {{ displayLocation }}
     </div>
+
+    <div class="photographer-card__score-row" *ngIf="collaborationScore != null">
+      <span class="badge rounded-pill" [ngClass]="collaborationScoreUi.scoreTierClass(collaborationScore)">
+        {{ collaborationScore }}
+      </span>
+      <span class="badge rounded-pill" *ngIf="campaignReady" [ngClass]="collaborationScoreUi.campaignReadinessClass(campaignReady)">
+        {{ campaignReady }}
+      </span>
+      <span class="photographer-card__suggested-price" *ngIf="suggestedPriceRange?.reelPrice != null">
+        From ₹{{ suggestedPriceRange!.reelPrice | number:'1.0-0' }}/Reel
+      </span>
+    </div>
+
   </div>
 </div>

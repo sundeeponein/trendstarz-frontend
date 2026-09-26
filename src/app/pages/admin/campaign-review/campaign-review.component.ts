@@ -1,45 +1,101 @@
-import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformServer } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
-import { CampaignDetailModalComponent } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { catchError, map, of, forkJoin, Observable } from 'rxjs';
+import { CampaignDetailModalComponent, HostShareMessageType } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
+import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
+import { campaignIdLabel as sharedCampaignIdLabel } from '../../../shared/referral-link.util';
+
+interface CampaignShareMessages {
+  openCampaignMessage: string;
+  inviteOnlyMessage: string;
+  postingReminderMessage: string;
+  ownerApprovedMessage: string | null;
+  ownerPhone: string;
+}
 
 @Component({
   selector: 'app-campaign-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignAlertMessageComponent, AppPaginatorComponent],
   templateUrl: './campaign-review.component.html',
   styleUrls: ['./campaign-review.component.scss'],
 })
 export class CampaignReviewComponent implements OnInit {
   readonly statusTabs: Array<{
-    key: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all';
+    key: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all';
     label: string;
   }> = [
     { key: 'pending_review', label: 'Pending Review' },
     { key: 'needs_changes', label: 'Needs Changes' },
     { key: 'rejected', label: 'Rejected' },
     { key: 'active', label: 'Approved / Live' },
+    { key: 'draft', label: 'Draft' },
+    { key: 'completed', label: 'Completed' },
     { key: 'all', label: 'All' },
   ];
-  campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' = 'pending_review';
+  campaignApprovalStatusFilter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all' = 'pending_review';
   campaignFiltersExpanded = true;
-  allCampaignApprovals: any[] = [];
+  // Current server-paginated page only — the backend now owns filtering/counting,
+  // so this never needs to hold the entire (potentially unbounded) campaign set.
+  campaignApprovals: any[] = [];
+  totalCampaigns = 0;
+  statusCounts: Record<'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all', number> = {
+    pending_review: 0,
+    needs_changes: 0,
+    rejected: 0,
+    active: 0,
+    draft: 0,
+    completed: 0,
+    all: 0,
+  };
+  newPendingCount = 0;
   campaignApprovalsLoading = false;
   campaignApprovalsError = '';
   moderatingCampaignId = '';
   isSubmittingModeration = false;
   campaignApprovalMode: 'manual' | 'auto_live' = 'manual';
   collaborationApprovalMode: 'manual' | 'auto_live' = 'manual';
+  searchQuery = '';
+  currentPage = 1;
+  pageSize = 10;
+  readonly pageSizeOptions = [10, 25, 50, 100];
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Date range filter (applies to the campaign's submitted date, i.e. createdAt/updatedAt)
+  dateFilterOpen = false;
+  dateFrom = '';
+  dateTo = '';
+  appliedDateFrom = '';
+  appliedDateTo = '';
+
   selectedCampaign: any | null = null;
+  selectedCampaignPreviewInvite: any | null = null;
+  selectedCampaignInviteProgressLoading = false;
+  selectedCampaignShareMessages: CampaignShareMessages | null = null;
+  selectedCampaignShareMessagesLoading = false;
+  selectedInviteHostMessageItem: any = null;
+  selectedInviteHostMessageType: HostShareMessageType | null = null;
+  selectedInviteHostMessageText = '';
+  selectedInviteHostMessageLoading = false;
+  selectedInviteHostMessageOwnerPhone = '';
+  selectedInviteHostMessageRecipientPhone = '';
+  selectedPayoutMessageRecipientPhone = '';
+  selectedPayoutMessageRecipientPhoneLoading = false;
   showModerationModal = false;
   moderationTargetCampaign: any | null = null;
   moderationAction: 'approve' | 'reject' | 'needs_changes' = 'needs_changes';
   moderationNoteInput = '';
   moderationModalError = '';
+  approvedCampaignAlert: any | null = null;
+  approvedCampaignShareMessages: CampaignShareMessages | null = null;
+  approvedCampaignShareMessagesLoading = false;
+  alertMessageCopied = false;
 
   private readonly isServer: boolean;
 
@@ -49,15 +105,44 @@ export class CampaignReviewComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private router: Router,
+    private route: ActivatedRoute,
+    private elRef: ElementRef<HTMLElement>,
   ) {
     this.isServer = isPlatformServer(platformId);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.dateFilterOpen) return;
+    const wrap = this.elRef.nativeElement.querySelector('.cm-date-filter-wrap');
+    if (wrap && !wrap.contains(event.target as Node)) {
+      this.closeDateFilter();
+    }
   }
 
   ngOnInit() {
     if (this.isServer) return;
     this.campaignFiltersExpanded = window.innerWidth >= 768;
     this.loadApprovalMode();
+    const deepLinkCampaignId = String(this.route.snapshot.queryParamMap.get('campaignId') || '').trim();
+    if (deepLinkCampaignId) {
+      this.openCampaignById(deepLinkCampaignId);
+    }
     this.loadCampaignApprovals();
+  }
+
+  /** Deep-link support (e.g. from the Disputes page) to open one specific campaign's preview directly. */
+  private openCampaignById(campaignId: string): void {
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/campaigns?${new URLSearchParams({ id: campaignId }).toString()}`, this.getAuthHeaders())
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? [];
+          const campaign = Array.isArray(data) ? data[0] : null;
+          if (campaign) this.openCampaignPreview(campaign);
+        },
+        error: () => {},
+      });
   }
 
   get reviewScope(): 'campaign' | 'collaboration' {
@@ -105,14 +190,39 @@ export class CampaignReviewComponent implements OnInit {
     });
   }
 
+  /** Builds the query string for the current status/search/date/page/pageSize filters. */
+  private buildCampaignsQueryParams(overrides?: { page?: number; limit?: number }): string {
+    const ownerType = this.isCollaborationScope ? 'photographer' : 'brand';
+    const params = new URLSearchParams();
+    params.set('status', this.campaignApprovalStatusFilter);
+    params.set('ownerType', ownerType);
+    params.set('page', String(overrides?.page ?? this.currentPage));
+    params.set('limit', String(overrides?.limit ?? this.pageSize));
+    if (this.searchQuery.trim()) params.set('q', this.searchQuery.trim());
+    if (this.appliedDateFrom) params.set('dateFrom', this.appliedDateFrom);
+    if (this.appliedDateTo) params.set('dateTo', this.appliedDateTo);
+    return params.toString();
+  }
+
   loadCampaignApprovals() {
     this.campaignApprovalsLoading = true;
     this.campaignApprovalsError = '';
-    const ownerType = this.isCollaborationScope ? 'photographer' : 'brand';
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?status=all&ownerType=${ownerType}`, this.getAuthHeaders()).subscribe({
+    const query = this.buildCampaignsQueryParams();
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`, this.getAuthHeaders()).subscribe({
       next: (res) => {
         const data = res?.data ?? [];
-        this.allCampaignApprovals = Array.isArray(data) ? data : [];
+        this.campaignApprovals = Array.isArray(data) ? data : [];
+        this.totalCampaigns = Number(res?.total || 0);
+        this.statusCounts = {
+          pending_review: Number(res?.statusCounts?.pending_review || 0),
+          needs_changes: Number(res?.statusCounts?.needs_changes || 0),
+          rejected: Number(res?.statusCounts?.rejected || 0),
+          active: Number(res?.statusCounts?.active || 0),
+          draft: Number(res?.statusCounts?.draft || 0),
+          completed: Number(res?.statusCounts?.completed || 0),
+          all: Number(res?.statusCounts?.all || 0),
+        };
+        this.newPendingCount = Number(res?.newPendingCount || 0);
         this.campaignApprovalsLoading = false;
         this.cdr.detectChanges();
       },
@@ -124,22 +234,125 @@ export class CampaignReviewComponent implements OnInit {
     });
   }
 
-  get campaignApprovals(): any[] {
-    if (this.campaignApprovalStatusFilter === 'all') {
-      return this.allCampaignApprovals;
+  get totalCampaignCount(): number { return this.totalCampaigns; }
+
+  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all'): number {
+    return this.statusCounts[status] ?? 0;
+  }
+
+  onPageChange(page: number): void { this.currentPage = page; this.loadCampaignApprovals(); }
+  onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; this.loadCampaignApprovals(); }
+
+  onSearchChange() {
+    this.currentPage = 1;
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = setTimeout(() => this.loadCampaignApprovals(), 350);
+  }
+
+  get hasDateFilter(): boolean { return !!(this.appliedDateFrom || this.appliedDateTo); }
+
+  toggleDateFilter(): void {
+    if (!this.dateFilterOpen) {
+      this.dateFrom = this.appliedDateFrom;
+      this.dateTo = this.appliedDateTo;
     }
-    return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, this.campaignApprovalStatusFilter));
+    this.dateFilterOpen = !this.dateFilterOpen;
   }
 
-  private matchesStatusFilter(
-    campaign: any,
-    filter: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all',
-  ): boolean {
-    if (filter === 'all') return true;
-    return this.normalizeReviewStatus(campaign?.status) === filter;
+  closeDateFilter(): void { this.dateFilterOpen = false; }
+
+  applyDateFilter(): void {
+    this.appliedDateFrom = this.dateFrom;
+    this.appliedDateTo = this.dateTo;
+    this.currentPage = 1;
+    this.dateFilterOpen = false;
+    this.cdr.detectChanges();
+    this.loadCampaignApprovals();
   }
 
-  private normalizeReviewStatus(status: unknown): 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' | 'draft' | 'completed' | 'unknown' {
+  clearDateFilter(): void {
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.appliedDateFrom = '';
+    this.appliedDateTo = '';
+    this.currentPage = 1;
+    this.dateFilterOpen = false;
+    this.cdr.detectChanges();
+    this.loadCampaignApprovals();
+  }
+
+  campaignIdLabel(c: any): string {
+    return sharedCampaignIdLabel(c);
+  }
+
+  campaignBudgetType(c: any): string {
+    const t = String(c?.campaignType || '').toLowerCase();
+    if (t === 'pay_to_join') return 'Performance Base';
+    if (t === 'paid_collab') return 'Fixed Fee';
+    if (t === 'product') return 'Product Deal';
+    if (t === 'invite_location') return 'Location Deal';
+    const mode = String(c?.pricingModel || c?.budgetType || '').toLowerCase();
+    if (mode.includes('retainer')) return 'Retainer';
+    if (mode.includes('performance')) return 'Performance Base';
+    if (mode.includes('fixed')) return 'Fixed Fee';
+    return 'Fixed Fee';
+  }
+
+  campaignSubmittedDate(c: any): string {
+    const d = new Date(c?.createdAt || c?.updatedAt || '');
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  campaignSubmittedTime(c: any): string {
+    const d = new Date(c?.createdAt || c?.updatedAt || '');
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  campaignLogoInitial(c: any): string {
+    return String(c?.title || c?.campaignTitle || '?').charAt(0).toUpperCase();
+  }
+
+  brandLogoInitial(c: any): string {
+    return String(c?.brand?.brandName || c?.brand?.name || '?').charAt(0).toUpperCase();
+  }
+
+  brandLogoUrl(c: any): string | null {
+    const logo = c?.brand?.logo || c?.brand?.profileImage || c?.brand?.avatar;
+    return typeof logo === 'string' && logo ? logo : null;
+  }
+
+  /** Exports every campaign matching the current filters (not just the visible page) — fetches a fresh, high-limit batch from the server. */
+  exportData() {
+    const query = this.buildCampaignsQueryParams({ page: 1, limit: 10000 });
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        const rows = list.map((c: any) => ({
+          id: this.campaignIdLabel(c),
+          title: c.title || '',
+          brand: c.brand?.brandName || '',
+          status: c.status || '',
+          budget: this.campaignPreviewBudget(c),
+          submitted: this.campaignSubmittedDate(c),
+        }));
+        const csv = [
+          'ID,Title,Brand,Status,Budget,Submitted',
+          ...rows.map((r: any) => `${r.id},${r.title},${r.brand},${r.status},${r.budget},${r.submitted}`),
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'campaigns.csv'; a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Failed to export campaigns.');
+      },
+    });
+  }
+
+  private normalizeReviewStatus(status: unknown): 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all' | 'draft' | 'completed' | 'cancelled' | 'unknown' {
     const normalized = String(status || '').trim().toLowerCase();
     if (!normalized) return 'unknown';
     if (normalized === 'pending_review' || normalized === 'pending') return 'pending_review';
@@ -148,6 +361,7 @@ export class CampaignReviewComponent implements OnInit {
     if (normalized === 'active' || normalized === 'approved' || normalized === 'live') return 'active';
     if (normalized === 'draft') return 'draft';
     if (normalized === 'completed') return 'completed';
+    if (normalized === 'cancelled') return 'cancelled';
     if (normalized === 'all') return 'all';
     return 'unknown';
   }
@@ -189,14 +403,11 @@ export class CampaignReviewComponent implements OnInit {
     return this.canApproveCampaign(campaign) || this.canRequestChangesCampaign(campaign) || this.canRejectCampaign(campaign);
   }
 
-  setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all') {
+  setStatusTab(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all') {
     if (this.campaignApprovalStatusFilter === status) return;
     this.campaignApprovalStatusFilter = status;
-  }
-
-  getStatusCount(status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'all'): number {
-    if (status === 'all') return this.allCampaignApprovals.length;
-    return this.allCampaignApprovals.filter((campaign) => this.matchesStatusFilter(campaign, status)).length;
+    this.currentPage = 1;
+    this.loadCampaignApprovals();
   }
 
   onCampaignApprovalFilterChange() {
@@ -209,7 +420,9 @@ export class CampaignReviewComponent implements OnInit {
 
   resetCampaignApprovalFilters() {
     this.campaignApprovalStatusFilter = 'pending_review';
+    this.currentPage = 1;
     this.cdr.detectChanges();
+    this.loadCampaignApprovals();
   }
 
   private moderateCampaign(campaign: any, action: 'approve' | 'reject' | 'needs_changes', moderationNote = '') {
@@ -225,6 +438,22 @@ export class CampaignReviewComponent implements OnInit {
       next: () => {
         this.isSubmittingModeration = false;
         this.moderatingCampaignId = '';
+        if (action === 'approve') {
+          this.approvedCampaignAlert = {
+            ...campaign,
+            status: 'active',
+            moderationNote: note,
+            moderatedAt: new Date().toISOString(),
+          };
+          this.alertMessageCopied = false;
+          this.approvedCampaignShareMessages = null;
+          this.approvedCampaignShareMessagesLoading = true;
+          this.fetchShareMessages(String(campaign?._id || ''), (messages) => {
+            this.approvedCampaignShareMessages = messages;
+            this.approvedCampaignShareMessagesLoading = false;
+            this.cdr.detectChanges();
+          });
+        }
         const labels: Record<string, string> = {
           approve: 'Campaign approved successfully.',
           needs_changes: 'Needs Changes sent to brand.',
@@ -248,6 +477,93 @@ export class CampaignReviewComponent implements OnInit {
         this.toast.error(msg);
       },
     });
+  }
+
+  /** Emergency admin override — see campaign-detail-modal's "Emergency Admin Action" panel. */
+  onForceCompleteCampaign(reason: string) {
+    const campaign = this.selectedCampaign;
+    if (!campaign?._id) return;
+    this.moderatingCampaignId = String(campaign._id);
+    this.cdr.detectChanges();
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/force-complete`, {
+      reason,
+    }, this.getAuthHeaders()).subscribe({
+      next: () => {
+        this.moderatingCampaignId = '';
+        this.closeCampaignPreview();
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.toast.success('Campaign force-completed.');
+          this.loadCampaignApprovals();
+          this.cdr.detectChanges();
+        }, 0);
+      },
+      error: (err) => {
+        this.moderatingCampaignId = '';
+        this.cdr.detectChanges();
+        this.toast.error(err?.error?.message || 'Failed to force-complete campaign.');
+      },
+    });
+  }
+
+  /** Emergency admin override — see campaign-detail-modal's "Emergency Admin Action" panel. */
+  onCancelCampaignParticipation(reason: string) {
+    const campaign = this.selectedCampaign;
+    if (!campaign?._id) return;
+    this.moderatingCampaignId = String(campaign._id);
+    this.cdr.detectChanges();
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/cancel-participation`, {
+      reason,
+    }, this.getAuthHeaders()).subscribe({
+      next: () => {
+        this.moderatingCampaignId = '';
+        this.closeCampaignPreview();
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.toast.success('Participation cancelled for pending/unconfirmed invites.');
+          this.loadCampaignApprovals();
+          this.cdr.detectChanges();
+        }, 0);
+      },
+      error: (err) => {
+        this.moderatingCampaignId = '';
+        this.cdr.detectChanges();
+        this.toast.error(err?.error?.message || 'Failed to cancel campaign participation.');
+      },
+    });
+  }
+
+  copyCampaignAlertMessage(message: string) {
+    const text = String(message || '').trim();
+    if (!text) return;
+    const done = () => {
+      this.alertMessageCopied = true;
+      this.toast.success('Alert message copied.');
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.alertMessageCopied = false;
+        this.cdr.detectChanges();
+      }, 2500);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopy(text, done));
+      return;
+    }
+    this.fallbackCopy(text, done);
+  }
+
+  private fallbackCopy(text: string, done: () => void) {
+    if (typeof document === 'undefined') return;
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    done();
   }
 
   openModerationModal(campaign: any, action: 'approve' | 'reject' | 'needs_changes') {
@@ -314,12 +630,428 @@ export class CampaignReviewComponent implements OnInit {
     this.moderateCampaign(campaign, this.moderationAction, note);
   }
 
+  private mapInviteRowsToProgress(invites: any[], campaign?: any): any[] {
+    const rows = Array.isArray(invites) ? invites : [];
+    return rows
+      .map((invite: any) => {
+        const counter = invite?.counterOffer || {};
+        const campaignPricePaise = Number(
+          invite?.campaignId?.pricePerInfluencer
+          || campaign?.pricePerInfluencer
+          || campaign?.amount
+          || 0,
+        );
+        const campaignRecipientRole = String(
+          campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+        ).trim().toLowerCase();
+        const participantRole = String(
+          invite?.recipientRole
+            || invite?.role
+            || invite?.campaignId?.inviteRecipientRole
+            || invite?.campaignId?.recipientRole
+            || campaignRecipientRole
+            || (invite?.photographerId && !invite?.influencerId ? 'photographer' : 'influencer'),
+        ).toLowerCase() === 'photographer'
+          ? 'photographer'
+          : 'influencer';
+        const recipientCandidate = participantRole === 'photographer'
+          ? (invite?.photographerId ?? invite?.influencerId ?? null)
+          : (invite?.influencerId ?? invite?.photographerId ?? null);
+        const recipient = recipientCandidate && typeof recipientCandidate === 'object'
+          ? recipientCandidate
+          : null;
+        const participantIdRaw = participantRole === 'photographer'
+          ? (recipient?._id || invite?.photographerId || invite?.influencerId || '')
+          : (recipient?._id || invite?.influencerId || invite?.photographerId || '');
+        const participantName = String(
+          recipient?.name || recipient?.fullName || recipient?.fullname || recipient?.username || '',
+        ).trim() || (participantRole === 'photographer' ? 'Photographer' : 'Influencer');
+        return {
+          inviteId: String(invite?._id || ''),
+          participantId: String(participantIdRaw || ''),
+          participantRole,
+          participantName,
+          participantAvatar: this.resolveParticipantAvatar(recipient),
+          participantUsername: this.resolveParticipantUsername(recipient),
+          participantEmail: String(recipient?.email || '').trim() || null,
+          status: String(invite?.status || 'pending').toLowerCase(),
+          selectedPlatform: String(invite?.selectedPlatform || counter?.selectedPlatform || '').trim() || null,
+          selectedContentType: String(invite?.selectedContentType || counter?.selectedContentType || '').trim() || null,
+          selectedPostDate: invite?.selectedPostDate || null,
+          acceptedAt: invite?.acceptedAt || null,
+          paymentConfirmedAt: invite?.paymentConfirmedAt || null,
+          updatedAt: invite?.updatedAt || invite?.createdAt || null,
+          campaignAmountPaise: campaignPricePaise,
+          agreedAmount: Number(invite?.agreedAmount || 0),
+          agreedAmountPaise: Number(invite?.agreedAmountPaise || 0),
+          counterOfferStatus: String(counter?.status || '').toLowerCase(),
+          counterOfferedAmount: Number(counter?.offeredAmount || 0),
+          counterOfferedAmountPaise: Number(counter?.offeredAmountPaise || 0),
+          counterRequestedAmount: Number(counter?.requestedAmount || 0),
+          counterRequestedAmountPaise: Number(counter?.requestedAmountPaise || 0),
+          counterOffer: invite?.counterOffer || null,
+          postUrl: invite?.latestSubmission?.postUrl || invite?.postUrl || null,
+          submittedAt: invite?.latestSubmission?.submittedAt || null,
+          postPlatform: invite?.latestSubmission?.postPlatform || null,
+          // Host (campaign owner) approval of the participant's submitted post.
+          postSubmissionStatus: invite?.latestSubmission?.status || null,
+          postApproved: invite?.latestSubmission?.status === 'approved',
+          postApprovedAt: invite?.latestSubmission?.reviewedAt || invite?.latestSubmission?.autoCompletedAt || null,
+          // Host feedback when a submitted post is disputed/needs changes.
+          brandFeedback: invite?.latestSubmission?.brandFeedback || null,
+          disputeIssueReason: invite?.latestSubmission?.disputeIssueReason || null,
+          disputeReason: invite?.latestSubmission?.disputeReason || null,
+          disputeEvidenceUrl: invite?.latestSubmission?.disputeEvidenceUrl || null,
+          // Payout to the participant for this invite.
+          paymentGateway: invite?.latestPayout?.gateway || null,
+          hostPaymentUtr: invite?.latestPayout?.utrNumber || null,
+          hostPaymentGatewayOrderId: invite?.latestPayout?.gatewayOrderId || null,
+          hostPaymentGatewayPaymentId: invite?.latestPayout?.gatewayPaymentId || null,
+          payoutStatus: invite?.latestPayout?.payoutStatus || null,
+          payoutAmountPaise: Number(invite?.latestPayout?.recipientPayout || 0),
+          payoutGatewayProvider: invite?.latestPayout?.payoutGatewayProvider || null,
+          payoutUtr: invite?.latestPayout?.payoutUtr || null,
+          payoutTransferId: invite?.latestPayout?.payoutTransferId || null,
+          payoutDate: invite?.latestPayout?.payoutSettledAt || null,
+          payoutInitiatedAt: invite?.latestPayout?.payoutInitiatedAt || null,
+        };
+      })
+      .sort((a: any, b: any) => {
+        const ta = new Date(a?.updatedAt || 0).getTime();
+        const tb = new Date(b?.updatedAt || 0).getTime();
+        return tb - ta;
+      });
+  }
+
+  private previewInviteProgressNeedsRefresh(campaign: any): boolean {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    if (!rows.length) return true;
+    return rows.some((row: any) => {
+      const role = String(row?.participantRole || '').trim().toLowerCase();
+      const name = String(row?.participantName || '').trim().toLowerCase();
+      const avatar = String(row?.participantAvatar || '').trim();
+      const username = String(row?.participantUsername || '').trim();
+      const payoutStatus = String(row?.payoutStatus || '').trim().toLowerCase();
+      const payoutRef = String(row?.payoutUtr || row?.payoutTransferId || '').trim();
+      const hostPaymentRef = String(row?.hostPaymentUtr || row?.hostPaymentGatewayPaymentId || row?.hostPaymentGatewayOrderId || '').trim();
+      return !role
+        || name === ''
+        || name === 'influencer'
+        || (name !== 'photographer' && !avatar)
+        || !username
+        || (payoutStatus === 'paid' && (!payoutRef || !hostPaymentRef))
+        || (this.isPhotographerTargetCampaign(campaign) && role !== 'photographer');
+    });
+  }
+
+  private isPhotographerTargetCampaign(campaign: any): boolean {
+    const explicitRole = String(
+      campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+    ).trim().toLowerCase();
+    if (explicitRole === 'photographer') return true;
+    if (explicitRole === 'influencer') return false;
+
+    const requestKind = String(campaign?.requestKind || '').trim().toLowerCase();
+    if (requestKind === 'creative_requirement') return true;
+    if (requestKind === 'photographer_collaboration') return false;
+
+    return String(campaign?.ownerType || '').trim().toLowerCase() !== 'photographer';
+  }
+
+  private resolveParticipantAvatar(recipient: any): string | null {
+    if (!recipient || typeof recipient !== 'object') return null;
+    const candidates: string[] = [];
+    if (Array.isArray(recipient?.profileImages) && recipient.profileImages.length > 0) {
+      if (typeof recipient.profileImages[0]?.url === 'string') {
+        candidates.push(recipient.profileImages[0].url);
+      }
+      if (typeof recipient.profileImages[0] === 'string') {
+        candidates.push(recipient.profileImages[0]);
+      }
+    }
+    if (typeof recipient?.profileImage === 'string') candidates.push(recipient.profileImage);
+    if (typeof recipient?.profilePicture === 'string') candidates.push(recipient.profilePicture);
+    if (typeof recipient?.avatar === 'string') candidates.push(recipient.avatar);
+
+    const apiBase = String(environment.apiBaseUrl || '').trim();
+    const backendBase = apiBase.replace(/\/api\/?$/, '');
+    for (const raw of candidates) {
+      const value = String(raw || '').trim();
+      if (!value) continue;
+      if (/^https?:\/\//i.test(value)) return value;
+      if (value.startsWith('/assets/')) {
+        return backendBase ? `${backendBase}${value}` : value;
+      }
+      return value;
+    }
+    return null;
+  }
+
+  private resolveParticipantUsername(recipient: any): string | null {
+    if (!recipient || typeof recipient !== 'object') return null;
+    const username = String(recipient?.username || recipient?.userName || '').trim();
+    return username || null;
+  }
+
+  private fetchInvitesByCampaign(campaignId: string) {
+    return this.http.get<any>(
+      `${environment.apiBaseUrl}/campaign-invites/campaign/${encodeURIComponent(campaignId)}`,
+      this.getAuthHeaders(),
+    );
+  }
+
+  /**
+   * Fetches the server-rendered "Ready to Share" WhatsApp message text
+   * (GET /admin/campaigns/:id/share-messages) — kept server-side so it can
+   * never drift from what the automated WhatsApp send uses (see
+   * campaign-alert-messages.ts on the backend).
+   */
+  private fetchShareMessages(
+    campaignId: string,
+    onResult: (messages: CampaignShareMessages | null) => void,
+  ): void {
+    if (!campaignId) {
+      onResult(null);
+      return;
+    }
+    this.http
+      .get<any>(
+        `${environment.apiBaseUrl}/admin/campaigns/${encodeURIComponent(campaignId)}/share-messages`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => onResult(res?.data ?? res),
+        error: () => onResult(null),
+      });
+  }
+
+  /**
+   * Handles campaign-detail-modal's per-invite "show message" buttons (invite accepted /
+   * post submitted / start work / invite only / posting reminder). The invite-only and
+   * posting-reminder texts are the same campaign-wide template shown in the "Ready to
+   * Share" accordion (`selectedCampaignShareMessages`) — only the recipient phone is
+   * per-invite, so those two types skip the per-invite text lookup below.
+   */
+  onRequestHostShareMessage(payload: { item: any; type: HostShareMessageType }): void {
+    this.selectedInviteHostMessageItem = payload.item;
+    this.selectedInviteHostMessageType = payload.type;
+    this.selectedInviteHostMessageOwnerPhone = '';
+    this.selectedInviteHostMessageRecipientPhone = '';
+    this.selectedInviteHostMessageText = payload.type === 'inviteOnly'
+      ? this.selectedCampaignShareMessages?.inviteOnlyMessage || ''
+      : payload.type === 'postingReminder'
+        ? this.selectedCampaignShareMessages?.postingReminderMessage || ''
+        : '';
+    this.selectedInviteHostMessageLoading = true;
+    const inviteId = String(payload.item?.inviteId || '').trim();
+    if (!inviteId) {
+      this.selectedInviteHostMessageLoading = false;
+      return;
+    }
+    this.http
+      .get<any>(
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          if (payload.type === 'accepted' || payload.type === 'submitted' || payload.type === 'startWork') {
+            const messageByType: Record<'accepted' | 'submitted' | 'startWork', string> = {
+              accepted: data?.inviteAcceptedMessage,
+              submitted: data?.postSubmittedMessage,
+              startWork: data?.startWorkMessage,
+            };
+            this.selectedInviteHostMessageText = messageByType[payload.type] || '';
+          }
+          this.selectedInviteHostMessageOwnerPhone = data?.ownerPhone || '';
+          this.selectedInviteHostMessageRecipientPhone = data?.recipientPhone || '';
+          this.selectedInviteHostMessageLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.selectedInviteHostMessageLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  /** Handles campaign-detail-modal's Payment Message popup — fetches the recipient's phone for its Send via WhatsApp button. */
+  onRequestPayoutMessagePhone(payload: { item: any }): void {
+    this.selectedPayoutMessageRecipientPhone = '';
+    const inviteId = String(payload.item?.inviteId || '').trim();
+    if (!inviteId) return;
+    this.selectedPayoutMessageRecipientPhoneLoading = true;
+    this.http
+      .get<any>(
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.selectedPayoutMessageRecipientPhone = data?.recipientPhone || '';
+          this.selectedPayoutMessageRecipientPhoneLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.selectedPayoutMessageRecipientPhoneLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  onDismissHostShareMessage(): void {
+    this.selectedInviteHostMessageItem = null;
+    this.selectedInviteHostMessageType = null;
+    this.selectedInviteHostMessageText = '';
+    this.selectedInviteHostMessageOwnerPhone = '';
+    this.selectedInviteHostMessageRecipientPhone = '';
+    this.selectedInviteHostMessageLoading = false;
+  }
+
+  private unwrapParticipantProfile(role: 'influencer' | 'photographer', response: any): any | null {
+    const payload = response?.data ?? response;
+    if (!payload || typeof payload !== 'object') return null;
+    if (role === 'photographer') {
+      return payload?.photographer || payload?.data?.photographer || payload;
+    }
+    return payload?.influencer || payload?.data?.influencer || payload;
+  }
+
+  private fetchParticipantProfile(role: 'influencer' | 'photographer', id: string): Observable<any | null> {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId) return of(null);
+    const path = role === 'photographer'
+      ? `${environment.apiBaseUrl}/users/photographers/${encodeURIComponent(normalizedId)}`
+      : `${environment.apiBaseUrl}/users/influencers/${encodeURIComponent(normalizedId)}`;
+    return this.http.get<any>(path, this.getAuthHeaders()).pipe(
+      map((res) => this.unwrapParticipantProfile(role, res)),
+      catchError(() => of(null)),
+    );
+  }
+
+  private enrichInviteRowsWithProfiles(invites: any[], campaign?: any): Observable<any[]> {
+    const rows = Array.isArray(invites) ? invites : [];
+    if (!rows.length) return of([]);
+
+    const requests = rows.map((invite: any) => {
+      const campaignRecipientRole = String(
+        campaign?.inviteRecipientRole || campaign?.recipientRole || campaign?.targetRole || '',
+      ).trim().toLowerCase();
+      const participantRole: 'influencer' | 'photographer' = String(
+        invite?.recipientRole
+          || invite?.role
+          || invite?.campaignId?.inviteRecipientRole
+          || invite?.campaignId?.recipientRole
+          || campaignRecipientRole
+          || (invite?.photographerId && !invite?.influencerId ? 'photographer' : 'influencer'),
+      ).toLowerCase() === 'photographer'
+        ? 'photographer'
+        : 'influencer';
+
+      const directRecipient = participantRole === 'photographer'
+        ? (invite?.photographerId ?? invite?.influencerId ?? null)
+        : (invite?.influencerId ?? invite?.photographerId ?? null);
+      if (directRecipient && typeof directRecipient === 'object') {
+        return of(invite);
+      }
+
+      const participantId = String(directRecipient || '').trim();
+      if (!participantId) return of(invite);
+
+      return this.fetchParticipantProfile(participantRole, participantId).pipe(
+        map((profile) => {
+          if (!profile) return invite;
+          return participantRole === 'photographer'
+            ? { ...invite, photographerId: profile, recipientRole: 'photographer' }
+            : { ...invite, influencerId: profile, recipientRole: 'influencer' };
+        }),
+      );
+    });
+
+    return forkJoin(requests);
+  }
+
   openCampaignPreview(campaign: any) {
     this.selectedCampaign = campaign;
+    this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(campaign);
+    const campaignId = String(campaign?._id || '').trim();
+    this.selectedCampaignShareMessages = null;
+    this.selectedCampaignShareMessagesLoading = true;
+    this.fetchShareMessages(campaignId, (messages) => {
+      this.selectedCampaignShareMessages = messages;
+      this.selectedCampaignShareMessagesLoading = false;
+      this.cdr.detectChanges();
+    });
+    if (!campaignId || !this.previewInviteProgressNeedsRefresh(campaign)) {
+      this.selectedCampaignInviteProgressLoading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.selectedCampaignInviteProgressLoading = true;
+    this.selectedCampaign = {
+      ...campaign,
+      inviteProgress: [],
+    };
+    this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(this.selectedCampaign);
+    this.cdr.detectChanges();
+
+    this.fetchInvitesByCampaign(campaignId).subscribe({
+      next: (res: any) => {
+        if (!this.selectedCampaign || String(this.selectedCampaign?._id || '') !== campaignId) {
+          return;
+        }
+        const payload = res?.data ?? res;
+        const invites = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+        this.enrichInviteRowsWithProfiles(invites, this.selectedCampaign).subscribe({
+          next: (resolvedInvites: any[]) => {
+            if (!this.selectedCampaign || String(this.selectedCampaign?._id || '') !== campaignId) {
+              return;
+            }
+            const mapped = this.mapInviteRowsToProgress(resolvedInvites, this.selectedCampaign);
+            this.selectedCampaign = {
+              ...this.selectedCampaign,
+              inviteProgress: mapped,
+              inviteCount: Number(this.selectedCampaign?.inviteCount || mapped.length || 0),
+            };
+            this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(this.selectedCampaign);
+            this.selectedCampaignInviteProgressLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.selectedCampaignInviteProgressLoading = false;
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.selectedCampaignInviteProgressLoading = false;
+        // Keep existing preview state when legacy invite fetch fails.
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   closeCampaignPreview() {
     this.selectedCampaign = null;
+    this.selectedCampaignPreviewInvite = null;
+    this.selectedCampaignInviteProgressLoading = false;
+  }
+
+  private buildSelectedCampaignInvite(campaign: any): any | null {
+    if (!campaign) return null;
+    return {
+      _id: campaign._id || 'campaign-review',
+      status: campaign.status || 'pending_review',
+      campaign,
+      brand: campaign.brand || campaign.brandId || null,
+    };
   }
 
   campaignPreviewTitle(campaign: any): string {
@@ -333,13 +1065,74 @@ export class CampaignReviewComponent implements OnInit {
   campaignPreviewBudget(campaign: any): string {
     const min = Number(campaign?.budgetMin ?? campaign?.budget ?? 0);
     const max = Number(campaign?.budgetMax ?? campaign?.budget ?? min);
-    if (!min && !max) {
-      const perInfluencer = Number(campaign?.pricePerInfluencer || 0);
-      if (perInfluencer > 0) return `₹${Math.floor(perInfluencer / 100).toLocaleString('en-IN')}`;
-      return 'Not specified';
+    if (min > 0 || max > 0) {
+      if (min > 0 && max > 0 && min !== max) {
+        return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
+      }
+      return `₹${(min || max).toLocaleString('en-IN')}`;
     }
-    if (min === max) return `₹${min.toLocaleString('en-IN')}`;
-    return `₹${min.toLocaleString('en-IN')} — ₹${max.toLocaleString('en-IN')}`;
+
+    const paise = this.resolveCampaignBudgetPaise(campaign);
+    if (paise > 0) {
+      return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
+    }
+
+    const rupees = this.resolveCampaignBudgetRupees(campaign);
+    if (rupees > 0) {
+      return `₹${rupees.toLocaleString('en-IN')}`;
+    }
+
+    return 'Not specified';
+  }
+
+  private resolveCampaignBudgetPaise(campaign: any): number {
+    const candidates = [
+      campaign?.pricePerInfluencer,
+      campaign?.estimatedBudget,
+      campaign?.amount,
+      campaign?.agreedAmountPaise,
+    ];
+    for (const value of candidates) {
+      const amount = Number(value || 0);
+      if (amount > 0) return amount;
+    }
+
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    for (const row of rows) {
+      const amount = Number(
+        row?.agreedAmountPaise
+          || row?.campaignAmountPaise
+          || row?.counterOfferedAmountPaise
+          || row?.counterRequestedAmountPaise
+          || 0,
+      );
+      if (amount > 0) return amount;
+    }
+    return 0;
+  }
+
+  private resolveCampaignBudgetRupees(campaign: any): number {
+    const candidates = [
+      campaign?.agreedAmount,
+      campaign?.finalAmount,
+      campaign?.pricePerInfluencerRupees,
+    ];
+    for (const value of candidates) {
+      const amount = Number(value || 0);
+      if (amount > 0) return amount;
+    }
+
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    for (const row of rows) {
+      const amount = Number(
+        row?.agreedAmount
+          || row?.counterOfferedAmount
+          || row?.counterRequestedAmount
+          || 0,
+      );
+      if (amount > 0) return amount;
+    }
+    return 0;
   }
 
   campaignPreviewUpdated(campaign: any): string {
@@ -356,17 +1149,35 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   campaignPreviewType(campaign: any): string {
-    return campaign?.campaignType || 'Campaign';
+    const key = String(campaign?.campaignType || '').trim().toLowerCase();
+    const labels: Record<string, string> = {
+      paid_collab: 'Paid Collab',
+      product: 'Product Collab',
+      invite_location: 'Invite to Location',
+      pay_to_join: 'Pay to Join',
+    };
+    return labels[key] || campaign?.campaignType || 'Campaign';
   }
 
-  get selectedCampaignInvite(): any | null {
-    if (!this.selectedCampaign) return null;
-    return {
-      _id: this.selectedCampaign._id || 'campaign-review',
-      status: this.selectedCampaign.status || 'pending_review',
-      campaign: this.selectedCampaign,
-      brand: this.selectedCampaign.brand || this.selectedCampaign.brandId || null,
-    };
+  campaignAccessModeLabel(campaign: any): string {
+    return campaign?.campaignMode === 'tier_filtered_open' ? 'Open to all' : 'Invite only';
+  }
+
+  campaignAccessDetailText(campaign: any): string {
+    if (campaign?.campaignMode !== 'tier_filtered_open') return '';
+    const details: string[] = [];
+    const minTier = String(campaign?.minInfluencerTier || '').trim();
+    if (minTier) details.push(`Tier: ${minTier}`);
+    const location = [
+      String(campaign?.targetDistrict || campaign?.venueDistrict || '').trim(),
+      String(campaign?.targetState || campaign?.venueState || '').trim(),
+    ].filter(Boolean).join(', ');
+    if (location) details.push(`Location: ${location}`);
+    const categories = Array.isArray(campaign?.categories)
+      ? campaign.categories.map((item: any) => String(item || '').trim()).filter(Boolean)
+      : [];
+    if (categories.length) details.push(`Categories: ${categories.join(', ')}`);
+    return details.join(' | ');
   }
 
   get selectedCampaignCanModerate(): boolean {
@@ -394,6 +1205,168 @@ export class CampaignReviewComponent implements OnInit {
     if (normalized === 'all') return 'All';
     if (normalized === 'draft') return 'Draft';
     if (normalized === 'completed') return 'Completed';
+    if (normalized === 'cancelled') return 'Cancelled';
     return status || 'Unknown';
+  }
+
+  getReviewTabStatusClass(
+    status: 'pending_review' | 'needs_changes' | 'rejected' | 'active' | 'draft' | 'completed' | 'all',
+  ): string {
+    if (status === 'all') return 'ts-status-tab--other';
+    return `ts-status-tab--${this.getCampaignStatusKey(status)}`;
+  }
+
+  getCampaignStatusBadgeClass(status: string): string {
+    return `ts-status-${this.getCampaignStatusKey(status)}`;
+  }
+
+  getCampaignStatusRowClass(campaign: any): string {
+    const key = this.getCampaignStatusKey(campaign?.status);
+    return `ts-status-row ts-status-row--${key}`;
+  }
+
+  getParticipantStatusBadgeClass(status: string): string {
+    return `ts-status-${this.getParticipantStatusKey(status)}`;
+  }
+
+  getCampaignStatusKey(status: string): 'accepted' | 'pending' | 'rejected' | 'completed' | 'other' {
+    const normalized = this.normalizeReviewStatus(status);
+    if (normalized === 'active') return 'accepted';
+    if (normalized === 'completed') return 'completed';
+    if (normalized === 'pending_review' || normalized === 'needs_changes' || normalized === 'draft') return 'pending';
+    if (normalized === 'rejected' || normalized === 'cancelled') return 'rejected';
+    return 'other';
+  }
+
+  private getParticipantStatusKey(status: string): 'accepted' | 'submitted' | 'working' | 'pending' | 'rejected' | 'completed' | 'other' {
+    const key = String(status || '').trim().toLowerCase();
+    if (key === 'accepted' || key === 'approved') return 'accepted';
+    if (key === 'completed') return 'completed';
+    if (key === 'submitted' || key === 'under_review' || key === 'disputed') return 'submitted';
+    if (key === 'working' || key === 'payment_confirmed') return 'working';
+    if (key === 'pending' || key === 'invited' || key === 'counter_sent') return 'pending';
+    if (key === 'withdrawn' || key === 'declined' || key === 'rejected') return 'rejected';
+    return 'other';
+  }
+
+  getAcceptedInviteCount(campaign: any): number {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    return rows.filter((row: any) => String(row?.status || '').toLowerCase() === 'accepted').length;
+  }
+
+  getProgressedInviteCount(campaign: any): number {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    const progressed = new Set([
+      'accepted',
+      'payment_confirmed',
+      'working',
+      'submitted',
+      'completed',
+      'approved',
+      'disputed',
+    ]);
+    return rows.filter((row: any) => progressed.has(String(row?.status || '').toLowerCase())).length;
+  }
+
+  getCompletedInviteCount(campaign: any): number {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    return rows.filter((row: any) => this.isParticipantCompletionStatus(row?.status)).length;
+  }
+
+  shouldShowParticipantCompletionBadge(campaign: any): boolean {
+    return this.normalizeReviewStatus(campaign?.status) !== 'completed'
+      && this.getCompletedInviteCount(campaign) > 0;
+  }
+
+  participantCompletionBadgeLabel(campaign: any): string {
+    const completed = this.getCompletedInviteCount(campaign);
+    const progressed = this.getProgressedInviteCount(campaign);
+    if (completed <= 0) return '';
+    if (progressed <= 1) return 'Completed';
+    return `${completed}/${progressed} Completed`;
+  }
+
+  participantCompletionBadgeTitle(campaign: any): string {
+    const completed = this.getCompletedInviteCount(campaign);
+    const progressed = this.getProgressedInviteCount(campaign);
+    if (completed <= 0) return '';
+    if (progressed <= 1) return 'This participant is completed and ready for payout review.';
+    return `${completed} of ${progressed} active participants completed. Remaining participants can keep working.`;
+  }
+
+  getParticipantStatusChips(campaign: any): Array<{ key: string; label: string; count: number }> {
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    const counts = new Map<string, { key: string; label: string; count: number }>();
+    for (const row of rows) {
+      const rawKey = String(row?.status || 'pending').trim().toLowerCase() || 'pending';
+      const chipKey = this.campaignInviteStatusChipKey(rawKey);
+      const label = this.campaignInviteStatusLabel(rawKey);
+      const existing = counts.get(chipKey);
+      counts.set(chipKey, {
+        key: chipKey,
+        label,
+        count: (existing?.count || 0) + 1,
+      });
+    }
+
+    const order = ['accepted', 'working', 'under_review', 'completed', 'approved', 'pending', 'withdrawn', 'declined', 'rejected'];
+    return order
+      .filter((key) => counts.has(key))
+      .slice(0, 4)
+      .map((key) => counts.get(key)!)
+      .filter((chip): chip is { key: string; label: string; count: number } => !!chip);
+  }
+
+  getCampaignWorkflowSteps(campaign: any): Array<{ label: string; doneLabel?: string; done: boolean; current: boolean }> {
+    const status = String(campaign?.status || '').toLowerCase();
+    const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
+    const statuses = rows.map((r: any) => String(r?.status || '').toLowerCase());
+    const isActive = ['active', 'completed'].includes(status);
+    const isDone = status === 'completed';
+    const hasAccepted = statuses.some((s: string) => ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasPaymentConfirmed = statuses.some((s: string) => ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasWorking = statuses.some((s: string) => ['working', 'submitted', 'completed', 'approved'].includes(s));
+    return [
+      { label: 'Created', done: true, current: false },
+      { label: 'Awaiting Admin Approval', doneLabel: 'Admin Approved', done: isActive, current: !isDone && !isActive },
+      { label: 'Awaiting Acceptance', done: hasAccepted, doneLabel: 'Accepted', current: !isDone && isActive && !hasAccepted },
+      { label: 'Awaiting Payment', done: hasPaymentConfirmed, doneLabel: 'Payment Confirmed', current: !isDone && hasAccepted && !hasPaymentConfirmed },
+      { label: 'Awaiting Work', done: hasWorking, doneLabel: 'Working', current: !isDone && hasPaymentConfirmed && !hasWorking },
+      { label: 'Awaiting Completion', done: isDone, doneLabel: 'Completed', current: !isDone && hasWorking },
+    ] as Array<{ label: string; doneLabel?: string; done: boolean; current: boolean }>;
+  }
+
+  private campaignInviteStatusChipKey(status: string): string {
+    const key = String(status || '').trim().toLowerCase();
+    if (key === 'payment_confirmed' || key === 'working') return 'working';
+    if (key === 'accepted') return 'accepted';
+    if (key === 'submitted' || key === 'disputed') return 'under_review';
+    if (key === 'pending' || key === 'invited' || key === 'counter_sent') return 'pending';
+    return key;
+  }
+
+  private isParticipantCompletionStatus(status: unknown): boolean {
+    const key = String(status || '').trim().toLowerCase();
+    return key === 'completed' || key === 'approved';
+  }
+
+  private campaignInviteStatusLabel(status: string): string {
+    const key = String(status || '').trim().toLowerCase();
+    const map: Record<string, string> = {
+      pending: 'Pending',
+      invited: 'Invited',
+      counter_sent: 'Pending',
+      accepted: 'Accepted',
+      payment_confirmed: 'Confirmed — Start Work',
+      working: 'Working',
+      submitted: 'Under Review',
+      completed: 'Completed',
+      approved: 'Payout Released',
+      withdrawn: 'Withdrawn',
+      declined: 'Declined',
+      rejected: 'Rejected',
+      disputed: 'Under Review',
+    };
+    return map[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 }

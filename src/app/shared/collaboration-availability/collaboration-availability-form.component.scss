@@ -1,0 +1,117 @@
+.ca-form {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #d8deea;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ca-form h3 {
+  margin: 0 0 12px;
+  color: #111827;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.ca-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #111827;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.ca-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #111827;
+}
+
+.ca-toggle--compact {
+  margin: 10px 0 0;
+}
+
+.ca-field {
+  margin-top: 14px;
+}
+
+.ca-field > label {
+  display: block;
+  margin-bottom: 8px;
+  color: #334155;
+  font-weight: 800;
+}
+
+.ca-chip-row,
+.ca-radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ca-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  border: 1.5px solid #d8deea;
+  background: #fff;
+  color: #111827;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  outline: none;
+}
+
+.ca-chip:hover:not(:disabled) {
+  border-color: #f55b0a;
+  color: #f55b0a;
+}
+
+.ca-chip.selected {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
+.ca-chip.selected:hover:not(:disabled) {
+  background: #f55b0a;
+  border-color: #f55b0a;
+  color: #fff;
+}
+
+.ca-chip:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.ca-chip:disabled:not(.selected) {
+  opacity: 0.45;
+}
+
+.ca-limit {
+  margin-top: 6px;
+  color: #b45309;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ca-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border: 1.5px solid #d8deea;
+  border-radius: 30px;
+  color: #111827;
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ca-radio input {
+  accent-color: #111827;
+}
